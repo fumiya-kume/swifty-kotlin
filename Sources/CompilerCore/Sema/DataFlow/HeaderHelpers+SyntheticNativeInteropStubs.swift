@@ -15,7 +15,22 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerSyntheticNativeBitSetStubs(
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
         registerSyntheticCInteropStubs(
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerSyntheticNativeVector128Stubs(
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerSyntheticNativeImmutableBlobStubs(
             symbols: symbols,
             types: types,
             interner: interner
@@ -205,6 +220,80 @@ extension DataFlowSemaPhase {
             symbols.setAnnotations(freezingAnnotations, for: freezingIsDeprecatedSymbol)
         }
 
+        let obsoleteNativeApiSymbol = ensureAnnotationClassSymbol(
+            named: "ObsoleteNativeApi",
+            in: nativePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let nativePkgSymbol {
+            symbols.setParentSymbol(nativePkgSymbol, for: obsoleteNativeApiSymbol)
+        }
+        appendStandardAnnotationMetadata(
+            to: obsoleteNativeApiSymbol,
+            targets: [
+                "AnnotationTarget.CLASS",
+                "AnnotationTarget.ANNOTATION_CLASS",
+                "AnnotationTarget.PROPERTY",
+                "AnnotationTarget.FIELD",
+                "AnnotationTarget.LOCAL_VARIABLE",
+                "AnnotationTarget.VALUE_PARAMETER",
+                "AnnotationTarget.CONSTRUCTOR",
+                "AnnotationTarget.FUNCTION",
+                "AnnotationTarget.PROPERTY_GETTER",
+                "AnnotationTarget.PROPERTY_SETTER",
+                "AnnotationTarget.TYPEALIAS",
+            ],
+            retention: "AnnotationRetention.BINARY",
+            symbols: symbols
+        )
+        var obsoleteAnnotations = symbols.annotations(for: obsoleteNativeApiSymbol)
+        let obsoleteRequiresOptIn = MetadataAnnotationRecord(
+            annotationFQName: "kotlin.RequiresOptIn",
+            arguments: [
+                "message=This API is obsolete and subject to removal in a future release.",
+                "level=RequiresOptIn.Level.ERROR",
+            ]
+        )
+        if !obsoleteAnnotations.contains(obsoleteRequiresOptIn) {
+            obsoleteAnnotations.append(obsoleteRequiresOptIn)
+            symbols.setAnnotations(obsoleteAnnotations, for: obsoleteNativeApiSymbol)
+        }
+
+        let eagerInitializationSymbol = ensureAnnotationClassSymbol(
+            named: "EagerInitialization",
+            in: nativePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let nativePkgSymbol {
+            symbols.setParentSymbol(nativePkgSymbol, for: eagerInitializationSymbol)
+        }
+        appendStandardAnnotationMetadata(
+            to: eagerInitializationSymbol,
+            targets: ["AnnotationTarget.PROPERTY"],
+            retention: "AnnotationRetention.BINARY",
+            symbols: symbols
+        )
+        var eagerInitializationAnnotations = symbols.annotations(for: eagerInitializationSymbol)
+        let eagerInitializationMetaAnnotations = [
+            MetadataAnnotationRecord(annotationFQName: "kotlin.ExperimentalStdlibApi"),
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.Deprecated",
+                arguments: [
+                    "message = \"This annotation is a temporal migration assistance and may be removed in the future releases, please consider filing an issue about the case where it is needed\"",
+                ]
+            ),
+        ]
+        var didAppendEagerInitializationMetaAnnotation = false
+        for record in eagerInitializationMetaAnnotations where !eagerInitializationAnnotations.contains(record) {
+            eagerInitializationAnnotations.append(record)
+            didAppendEagerInitializationMetaAnnotation = true
+        }
+        if didAppendEagerInitializationMetaAnnotation {
+            symbols.setAnnotations(eagerInitializationAnnotations, for: eagerInitializationSymbol)
+        }
+
         let hiddenFromObjCSymbol = ensureAnnotationClassSymbol(
             named: "HiddenFromObjC",
             in: nativePkg,
@@ -236,6 +325,603 @@ extension DataFlowSemaPhase {
         }
         if didAppendHiddenFromObjCMetaAnnotation {
             symbols.setAnnotations(hiddenFromObjCAnnotations, for: hiddenFromObjCSymbol)
+        }
+
+        let noInlineSymbol = ensureAnnotationClassSymbol(
+            named: "NoInline",
+            in: nativePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let nativePkgSymbol {
+            symbols.setParentSymbol(nativePkgSymbol, for: noInlineSymbol)
+        }
+        appendStandardAnnotationMetadata(
+            to: noInlineSymbol,
+            targets: [
+                "AnnotationTarget.FUNCTION",
+                "AnnotationTarget.PROPERTY",
+            ],
+            retention: "AnnotationRetention.BINARY",
+            symbols: symbols
+        )
+        var noInlineAnnotations = symbols.annotations(for: noInlineSymbol)
+        let experimentalNativeApiRecord = MetadataAnnotationRecord(
+            annotationFQName: "kotlin.experimental.ExperimentalNativeApi"
+        )
+        if !noInlineAnnotations.contains(experimentalNativeApiRecord) {
+            noInlineAnnotations.append(experimentalNativeApiRecord)
+            symbols.setAnnotations(noInlineAnnotations, for: noInlineSymbol)
+        }
+    }
+
+    private func registerSyntheticNativeBitSetStubs(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let nativePkg = ensurePackage(
+            path: ["kotlin", "native"],
+            symbols: symbols,
+            interner: interner
+        )
+        let nativePkgSymbol = symbols.lookup(fqName: nativePkg)
+        let bitSetSymbol = ensureClassSymbol(
+            named: "BitSet",
+            in: nativePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let nativePkgSymbol {
+            symbols.setParentSymbol(nativePkgSymbol, for: bitSetSymbol)
+        }
+
+        let bitSetType = types.make(.classType(ClassType(
+            classSymbol: bitSetSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(bitSetType, for: bitSetSymbol)
+
+        var bitSetAnnotations = symbols.annotations(for: bitSetSymbol)
+        let obsoleteNativeApiRecord = MetadataAnnotationRecord(annotationFQName: "kotlin.native.ObsoleteNativeApi")
+        if !bitSetAnnotations.contains(obsoleteNativeApiRecord) {
+            bitSetAnnotations.append(obsoleteNativeApiRecord)
+            symbols.setAnnotations(bitSetAnnotations, for: bitSetSymbol)
+        }
+
+        let companionName = interner.intern("Companion")
+        let companionFQName = nativePkg + [interner.intern("BitSet"), companionName]
+        let companionSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: companionFQName), symbols.symbol(existing)?.kind == .object {
+            companionSymbol = existing
+        } else {
+            companionSymbol = symbols.define(
+                kind: .object,
+                name: companionName,
+                fqName: companionFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .static]
+            )
+        }
+        symbols.setParentSymbol(bitSetSymbol, for: companionSymbol)
+        let companionType = types.make(.classType(ClassType(
+            classSymbol: companionSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(companionType, for: companionSymbol)
+
+        let intRangeType = syntheticClassType(
+            packagePath: ["kotlin", "ranges"],
+            name: "IntRange",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let initializerType = types.make(.functionType(FunctionType(
+            params: [types.intType],
+            returnType: types.booleanType
+        )))
+
+        registerSyntheticNativeBitSetConstructor(
+            ownerSymbol: bitSetSymbol,
+            ownerType: bitSetType,
+            parameters: [(name: "size", type: types.intType)],
+            defaultValues: [true],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetConstructor(
+            ownerSymbol: bitSetSymbol,
+            ownerType: bitSetType,
+            parameters: [
+                (name: "length", type: types.intType),
+                (name: "initializer", type: initializerType),
+            ],
+            defaultValues: [false, false],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticNativeBitSetProperty(
+            named: "isEmpty",
+            ownerSymbol: bitSetSymbol,
+            propertyType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetProperty(
+            named: "lastTrueIndex",
+            ownerSymbol: bitSetSymbol,
+            propertyType: types.intType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetProperty(
+            named: "size",
+            ownerSymbol: bitSetSymbol,
+            propertyType: types.intType,
+            flags: [.synthetic, .mutable],
+            symbols: symbols,
+            interner: interner
+        )
+
+        for name in ["and", "andNot", "or", "xor"] {
+            registerSyntheticNativeBitSetMemberFunction(
+                named: name,
+                ownerSymbol: bitSetSymbol,
+                receiverType: bitSetType,
+                parameters: [(name: "another", type: bitSetType)],
+                returnType: types.unitType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "intersects",
+            ownerSymbol: bitSetSymbol,
+            receiverType: bitSetType,
+            parameters: [(name: "another", type: bitSetType)],
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "clear",
+            ownerSymbol: bitSetSymbol,
+            receiverType: bitSetType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "clear",
+            ownerSymbol: bitSetSymbol,
+            receiverType: bitSetType,
+            parameters: [(name: "index", type: types.intType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "clear",
+            ownerSymbol: bitSetSymbol,
+            receiverType: bitSetType,
+            parameters: [(name: "range", type: intRangeType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "clear",
+            ownerSymbol: bitSetSymbol,
+            receiverType: bitSetType,
+            parameters: [
+                (name: "from", type: types.intType),
+                (name: "to", type: types.intType),
+            ],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "flip",
+            ownerSymbol: bitSetSymbol,
+            receiverType: bitSetType,
+            parameters: [(name: "index", type: types.intType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "flip",
+            ownerSymbol: bitSetSymbol,
+            receiverType: bitSetType,
+            parameters: [(name: "range", type: intRangeType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "flip",
+            ownerSymbol: bitSetSymbol,
+            receiverType: bitSetType,
+            parameters: [
+                (name: "from", type: types.intType),
+                (name: "to", type: types.intType),
+            ],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "get",
+            ownerSymbol: bitSetSymbol,
+            receiverType: bitSetType,
+            parameters: [(name: "index", type: types.intType)],
+            returnType: types.booleanType,
+            flags: [.synthetic, .operatorFunction],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "set",
+            ownerSymbol: bitSetSymbol,
+            receiverType: bitSetType,
+            parameters: [
+                (name: "index", type: types.intType),
+                (name: "value", type: types.booleanType),
+            ],
+            returnType: types.unitType,
+            defaultValues: [false, true],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "set",
+            ownerSymbol: bitSetSymbol,
+            receiverType: bitSetType,
+            parameters: [
+                (name: "range", type: intRangeType),
+                (name: "value", type: types.booleanType),
+            ],
+            returnType: types.unitType,
+            defaultValues: [false, true],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "set",
+            ownerSymbol: bitSetSymbol,
+            receiverType: bitSetType,
+            parameters: [
+                (name: "from", type: types.intType),
+                (name: "to", type: types.intType),
+                (name: "value", type: types.booleanType),
+            ],
+            returnType: types.unitType,
+            defaultValues: [false, false, true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        for name in ["nextClearBit", "nextSetBit"] {
+            registerSyntheticNativeBitSetMemberFunction(
+                named: name,
+                ownerSymbol: bitSetSymbol,
+                receiverType: bitSetType,
+                parameters: [(name: "startIndex", type: types.intType)],
+                returnType: types.intType,
+                defaultValues: [true],
+                symbols: symbols,
+                interner: interner
+            )
+        }
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "previousBit",
+            ownerSymbol: bitSetSymbol,
+            receiverType: bitSetType,
+            parameters: [
+                (name: "startIndex", type: types.intType),
+                (name: "lookFor", type: types.booleanType),
+            ],
+            returnType: types.intType,
+            symbols: symbols,
+            interner: interner
+        )
+        for name in ["previousClearBit", "previousSetBit"] {
+            registerSyntheticNativeBitSetMemberFunction(
+                named: name,
+                ownerSymbol: bitSetSymbol,
+                receiverType: bitSetType,
+                parameters: [(name: "startIndex", type: types.intType)],
+                returnType: types.intType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "equals",
+            ownerSymbol: bitSetSymbol,
+            receiverType: bitSetType,
+            parameters: [(name: "other", type: types.makeNullable(types.anyType))],
+            returnType: types.booleanType,
+            flags: [.synthetic, .operatorFunction, .overrideMember],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "hashCode",
+            ownerSymbol: bitSetSymbol,
+            receiverType: bitSetType,
+            parameters: [],
+            returnType: types.intType,
+            flags: [.synthetic, .overrideMember],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "toString",
+            ownerSymbol: bitSetSymbol,
+            receiverType: bitSetType,
+            parameters: [],
+            returnType: types.stringType,
+            flags: [.synthetic, .overrideMember],
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    private func registerSyntheticNativeImmutableBlobStubs(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let nativePkg = ensurePackage(
+            path: ["kotlin", "native"],
+            symbols: symbols,
+            interner: interner
+        )
+        let nativePkgSymbol = symbols.lookup(fqName: nativePkg)
+        let immutableBlobSymbol = ensureClassSymbol(
+            named: "ImmutableBlob",
+            in: nativePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let nativePkgSymbol {
+            symbols.setParentSymbol(nativePkgSymbol, for: immutableBlobSymbol)
+        }
+
+        let immutableBlobType = types.make(.classType(ClassType(
+            classSymbol: immutableBlobSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(immutableBlobType, for: immutableBlobSymbol)
+        appendDeprecatedImmutableBlobAnnotations(to: immutableBlobSymbol, symbols: symbols)
+
+        let kotlinPkg = ensurePackage(
+            path: ["kotlin"],
+            symbols: symbols,
+            interner: interner
+        )
+        let byteIteratorSymbol = ensureClassSymbol(
+            named: "ByteIterator",
+            in: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinPkgSymbol = symbols.lookup(fqName: kotlinPkg) {
+            symbols.setParentSymbol(kotlinPkgSymbol, for: byteIteratorSymbol)
+        }
+        let byteIteratorType = types.make(.classType(ClassType(
+            classSymbol: byteIteratorSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(byteIteratorType, for: byteIteratorSymbol)
+
+        let byteArrayType = syntheticClassType(
+            packagePath: ["kotlin"],
+            name: "ByteArray",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let uByteArrayType = syntheticClassType(
+            packagePath: ["kotlin"],
+            name: "UByteArray",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let cPointerByteVarType = cPointerType(
+            pointedTypeName: "ByteVar",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let cPointerUByteVarType = cPointerType(
+            pointedTypeName: "UByteVar",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        registerSyntheticNativeBitSetProperty(
+            named: "size",
+            ownerSymbol: immutableBlobSymbol,
+            propertyType: types.intType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "get",
+            ownerSymbol: immutableBlobSymbol,
+            receiverType: immutableBlobType,
+            parameters: [(name: "index", type: types.intType)],
+            returnType: types.intType,
+            flags: [.synthetic, .operatorFunction],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "iterator",
+            ownerSymbol: immutableBlobSymbol,
+            receiverType: immutableBlobType,
+            parameters: [],
+            returnType: byteIteratorType,
+            flags: [.synthetic, .operatorFunction],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticNativeTopLevelFunction(
+            named: "immutableBlobOf",
+            packageFQName: nativePkg,
+            receiverType: nil,
+            parameters: [(name: "elements", type: types.intType)],
+            returnType: immutableBlobType,
+            defaultValues: [false],
+            varargs: [true],
+            annotations: deprecatedImmutableBlobFactoryAnnotations(),
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeTopLevelFunction(
+            named: "toByteArray",
+            packageFQName: nativePkg,
+            receiverType: immutableBlobType,
+            parameters: [
+                (name: "startIndex", type: types.intType),
+                (name: "endIndex", type: types.intType),
+            ],
+            returnType: byteArrayType,
+            defaultValues: [true, true],
+            annotations: deprecatedImmutableBlobAnnotations(),
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeTopLevelFunction(
+            named: "toUByteArray",
+            packageFQName: nativePkg,
+            receiverType: immutableBlobType,
+            parameters: [
+                (name: "startIndex", type: types.intType),
+                (name: "endIndex", type: types.intType),
+            ],
+            returnType: uByteArrayType,
+            defaultValues: [true, true],
+            annotations: deprecatedImmutableBlobAnnotations()
+                + [MetadataAnnotationRecord(annotationFQName: "kotlin.ExperimentalUnsignedTypes")],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeTopLevelFunction(
+            named: "asCPointer",
+            packageFQName: nativePkg,
+            receiverType: immutableBlobType,
+            parameters: [(name: "offset", type: types.intType)],
+            returnType: cPointerByteVarType,
+            defaultValues: [true],
+            annotations: deprecatedImmutableBlobPointerAnnotations(),
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeTopLevelFunction(
+            named: "asUCPointer",
+            packageFQName: nativePkg,
+            receiverType: immutableBlobType,
+            parameters: [(name: "offset", type: types.intType)],
+            returnType: cPointerUByteVarType,
+            defaultValues: [true],
+            annotations: deprecatedImmutableBlobPointerAnnotations(),
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    private func registerSyntheticNativeVector128Stubs(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let nativePkg = ensurePackage(
+            path: ["kotlin", "native"],
+            symbols: symbols,
+            interner: interner
+        )
+        let nativePkgSymbol = symbols.lookup(fqName: nativePkg)
+        let cinteropPkg = ensurePackage(
+            path: ["kotlinx", "cinterop"],
+            symbols: symbols,
+            interner: interner
+        )
+        guard let cinteropVector128Symbol = symbols.lookup(fqName: cinteropPkg + [interner.intern("Vector128")]) else {
+            return
+        }
+
+        let cinteropVector128Type = types.make(.classType(ClassType(
+            classSymbol: cinteropVector128Symbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let vector128Name = interner.intern("Vector128")
+        let vector128AliasFQName = nativePkg + [vector128Name]
+        let vector128AliasSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: vector128AliasFQName),
+           symbols.symbol(existing)?.kind == .typeAlias
+        {
+            vector128AliasSymbol = existing
+            symbols.insertFlags([.synthetic], for: existing)
+        } else if symbols.lookup(fqName: vector128AliasFQName) == nil {
+            vector128AliasSymbol = symbols.define(
+                kind: .typeAlias,
+                name: vector128Name,
+                fqName: vector128AliasFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        } else {
+            return
+        }
+        if let nativePkgSymbol {
+            symbols.setParentSymbol(nativePkgSymbol, for: vector128AliasSymbol)
+        }
+        symbols.setTypeAliasUnderlyingType(cinteropVector128Type, for: vector128AliasSymbol)
+        appendMetadataAnnotations(
+            deprecatedNativeVector128TypeAliasAnnotations(),
+            to: vector128AliasSymbol,
+            symbols: symbols
+        )
+
+        let vectorOfAnnotations = deprecatedNativeVectorOfAnnotations()
+        for parameterType in [types.floatType, types.intType] {
+            registerSyntheticNativeTopLevelFunction(
+                named: "vectorOf",
+                packageFQName: nativePkg,
+                receiverType: nil,
+                parameters: [
+                    (name: "f0", type: parameterType),
+                    (name: "f1", type: parameterType),
+                    (name: "f2", type: parameterType),
+                    (name: "f3", type: parameterType),
+                ],
+                returnType: cinteropVector128Type,
+                annotations: vectorOfAnnotations,
+                symbols: symbols,
+                interner: interner
+            )
         }
     }
 
@@ -459,6 +1145,116 @@ extension DataFlowSemaPhase {
             symbols.setDirectSupertypes([cPointedSymbol], for: symbol)
             types.setNominalDirectSupertypes([cPointedSymbol], for: symbol)
         }
+
+        registerSyntheticCInteropVector128Stubs(
+            cinteropPkg: cinteropPkg,
+            cinteropPkgSymbol: cinteropPkgSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+    }
+
+    private func registerSyntheticCInteropVector128Stubs(
+        cinteropPkg: [InternedString],
+        cinteropPkgSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let vector128Symbol = ensureClassSymbol(
+            named: "Vector128",
+            in: cinteropPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let cinteropPkgSymbol {
+            symbols.setParentSymbol(cinteropPkgSymbol, for: vector128Symbol)
+        }
+        let vector128Type = types.make(.classType(ClassType(
+            classSymbol: vector128Symbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(vector128Type, for: vector128Symbol)
+        appendMetadataAnnotations(
+            [MetadataAnnotationRecord(annotationFQName: "kotlinx.cinterop.ExperimentalForeignApi")],
+            to: vector128Symbol,
+            symbols: symbols
+        )
+
+        let elementAccessors: [(name: String, returnType: TypeID)] = [
+            ("getByteAt", types.intType),
+            ("getIntAt", types.intType),
+            ("getLongAt", types.longType),
+            ("getFloatAt", types.floatType),
+            ("getDoubleAt", types.doubleType),
+            ("getUByteAt", types.ubyteType),
+            ("getUIntAt", types.uintType),
+            ("getULongAt", types.ulongType),
+        ]
+        for accessor in elementAccessors {
+            registerSyntheticNativeBitSetMemberFunction(
+                named: accessor.name,
+                ownerSymbol: vector128Symbol,
+                receiverType: vector128Type,
+                parameters: [(name: "index", type: types.intType)],
+                returnType: accessor.returnType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "equals",
+            ownerSymbol: vector128Symbol,
+            receiverType: vector128Type,
+            parameters: [(name: "other", type: types.makeNullable(types.anyType))],
+            returnType: types.booleanType,
+            flags: [.synthetic, .operatorFunction, .overrideMember],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "hashCode",
+            ownerSymbol: vector128Symbol,
+            receiverType: vector128Type,
+            parameters: [],
+            returnType: types.intType,
+            flags: [.synthetic, .overrideMember],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "toString",
+            ownerSymbol: vector128Symbol,
+            receiverType: vector128Type,
+            parameters: [],
+            returnType: types.stringType,
+            flags: [.synthetic, .overrideMember],
+            symbols: symbols,
+            interner: interner
+        )
+
+        let experimentalForeignApiAnnotations = [
+            MetadataAnnotationRecord(annotationFQName: "kotlinx.cinterop.ExperimentalForeignApi"),
+        ]
+        for parameterType in [types.floatType, types.intType] {
+            registerSyntheticNativeTopLevelFunction(
+                named: "vectorOf",
+                packageFQName: cinteropPkg,
+                receiverType: nil,
+                parameters: [
+                    (name: "f0", type: parameterType),
+                    (name: "f1", type: parameterType),
+                    (name: "f2", type: parameterType),
+                    (name: "f3", type: parameterType),
+                ],
+                returnType: vector128Type,
+                annotations: experimentalForeignApiAnnotations,
+                symbols: symbols,
+                interner: interner
+            )
+        }
     }
 
     private func appendStandardAnnotationMetadata(
@@ -484,6 +1280,415 @@ extension DataFlowSemaPhase {
             annotations.append(retentionRecord)
         }
         symbols.setAnnotations(annotations, for: symbol)
+    }
+
+    private func appendMetadataAnnotations(
+        _ records: [MetadataAnnotationRecord],
+        to symbol: SymbolID,
+        symbols: SymbolTable
+    ) {
+        var annotations = symbols.annotations(for: symbol)
+        var didAppend = false
+        for record in records where !annotations.contains(record) {
+            annotations.append(record)
+            didAppend = true
+        }
+        if didAppend {
+            symbols.setAnnotations(annotations, for: symbol)
+        }
+    }
+
+    private func syntheticClassType(
+        packagePath: [String],
+        name: String,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID {
+        let packageFQName = packagePath.map { interner.intern($0) }
+        let classFQName = packageFQName + [interner.intern(name)]
+        guard let symbol = symbols.lookup(fqName: classFQName) else {
+            return types.anyType
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: symbol,
+            args: [],
+            nullability: .nonNull
+        )))
+    }
+
+    private func cPointerType(
+        pointedTypeName: String,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID {
+        let cinteropPkg = ["kotlinx", "cinterop"].map { interner.intern($0) }
+        guard let cPointerSymbol = symbols.lookup(fqName: cinteropPkg + [interner.intern("CPointer")]),
+              let pointedSymbol = symbols.lookup(fqName: cinteropPkg + [interner.intern(pointedTypeName)])
+        else {
+            return types.anyType
+        }
+
+        let pointedType = types.make(.classType(ClassType(
+            classSymbol: pointedSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        return types.make(.classType(ClassType(
+            classSymbol: cPointerSymbol,
+            args: [.invariant(pointedType)],
+            nullability: .nonNull
+        )))
+    }
+
+    private func deprecatedImmutableBlobAnnotations() -> [MetadataAnnotationRecord] {
+        [
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.Deprecated",
+                arguments: ["message = \"ImmutableBlob is deprecated. Use ByteArray instead.\""]
+            ),
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.DeprecatedSinceKotlin",
+                arguments: [
+                    "warningSince = \"1.9\"",
+                    "errorSince = \"2.1\"",
+                ]
+            ),
+        ]
+    }
+
+    private func deprecatedImmutableBlobFactoryAnnotations() -> [MetadataAnnotationRecord] {
+        [
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.Deprecated",
+                arguments: [
+                    "message = \"ImmutableBlob is deprecated. Use ByteArray instead.\"",
+                    "replaceWith = ReplaceWith(\"byteArrayOf(*elements)\")",
+                ]
+            ),
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.DeprecatedSinceKotlin",
+                arguments: [
+                    "warningSince = \"1.9\"",
+                    "errorSince = \"2.1\"",
+                ]
+            ),
+        ]
+    }
+
+    private func deprecatedImmutableBlobPointerAnnotations() -> [MetadataAnnotationRecord] {
+        [
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.Deprecated",
+                arguments: [
+                    "message = \"ImmutableBlob is deprecated. Use ByteArray instead. To get a stable C pointer to a `ByteArray`, pin it first.\"",
+                ]
+            ),
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.DeprecatedSinceKotlin",
+                arguments: [
+                    "warningSince = \"1.9\"",
+                    "errorSince = \"2.1\"",
+                ]
+            ),
+        ]
+    }
+
+    private func deprecatedNativeVector128TypeAliasAnnotations() -> [MetadataAnnotationRecord] {
+        [
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.Deprecated",
+                arguments: [
+                    "message = \"Use kotlinx.cinterop.Vector128 instead.\"",
+                    "replaceWith = ReplaceWith(\"kotlinx.cinterop.Vector128\")",
+                ]
+            ),
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.DeprecatedSinceKotlin",
+                arguments: [
+                    "warningSince = \"1.9\"",
+                    "errorSince = \"2.1\"",
+                ]
+            ),
+            MetadataAnnotationRecord(annotationFQName: "kotlinx.cinterop.ExperimentalForeignApi"),
+        ]
+    }
+
+    private func deprecatedNativeVectorOfAnnotations() -> [MetadataAnnotationRecord] {
+        [
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.Deprecated",
+                arguments: [
+                    "message = \"Use kotlinx.cinterop.vectorOf instead.\"",
+                    "replaceWith = ReplaceWith(\"kotlinx.cinterop.vectorOf(f0, f1, f2, f3)\")",
+                ]
+            ),
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.DeprecatedSinceKotlin",
+                arguments: [
+                    "warningSince = \"1.9\"",
+                    "errorSince = \"2.1\"",
+                ]
+            ),
+            MetadataAnnotationRecord(annotationFQName: "kotlinx.cinterop.ExperimentalForeignApi"),
+        ]
+    }
+
+    private func appendDeprecatedImmutableBlobAnnotations(to symbol: SymbolID, symbols: SymbolTable) {
+        var annotations = symbols.annotations(for: symbol)
+        var didAppend = false
+        for record in deprecatedImmutableBlobAnnotations() where !annotations.contains(record) {
+            annotations.append(record)
+            didAppend = true
+        }
+        if didAppend {
+            symbols.setAnnotations(annotations, for: symbol)
+        }
+    }
+
+    private func registerSyntheticNativeBitSetConstructor(
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        defaultValues: [Bool],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let initName = interner.intern("<init>")
+        let constructorFQName = ownerInfo.fqName + [initName]
+        let parameterTypes = parameters.map(\.type)
+        let existing = symbols.lookupAll(fqName: constructorFQName).contains { symbolID in
+            guard symbols.symbol(symbolID)?.kind == .constructor,
+                  let signature = symbols.functionSignature(for: symbolID)
+            else {
+                return false
+            }
+            return signature.parameterTypes == parameterTypes
+        }
+        guard !existing else {
+            return
+        }
+
+        let constructorSymbol = symbols.define(
+            kind: .constructor,
+            name: initName,
+            fqName: constructorFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: constructorSymbol)
+
+        let valueParameterSymbols = parameters.map { parameter in
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: constructorFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(constructorSymbol, for: parameterSymbol)
+            symbols.setPropertyType(parameter.type, for: parameterSymbol)
+            return parameterSymbol
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: parameterTypes,
+                returnType: ownerType,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: defaultValues,
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+            ),
+            for: constructorSymbol
+        )
+    }
+
+    private func registerSyntheticNativeBitSetProperty(
+        named name: String,
+        ownerSymbol: SymbolID,
+        propertyType: TypeID,
+        flags: SymbolFlags = [.synthetic],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let propertyName = interner.intern(name)
+        let propertyFQName = ownerInfo.fqName + [propertyName]
+        if let existing = symbols.lookup(fqName: propertyFQName) {
+            symbols.setPropertyType(propertyType, for: existing)
+            symbols.insertFlags(flags, for: existing)
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: flags
+        )
+        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
+        symbols.setPropertyType(propertyType, for: propertySymbol)
+    }
+
+    private func registerSyntheticNativeBitSetMemberFunction(
+        named name: String,
+        ownerSymbol: SymbolID,
+        receiverType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        defaultValues: [Bool]? = nil,
+        flags: SymbolFlags = [.synthetic],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let functionName = interner.intern(name)
+        let functionFQName = ownerInfo.fqName + [functionName]
+        let parameterTypes = parameters.map(\.type)
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return signature.receiverType == receiverType
+                && signature.parameterTypes == parameterTypes
+                && signature.returnType == returnType
+        }) {
+            symbols.insertFlags(flags, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: flags
+        )
+        symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
+
+        let valueParameterSymbols = parameters.map { parameter in
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: functionFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            symbols.setPropertyType(parameter.type, for: parameterSymbol)
+            return parameterSymbol
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameterTypes,
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: defaultValues ?? Array(repeating: false, count: valueParameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerSyntheticNativeTopLevelFunction(
+        named name: String,
+        packageFQName: [InternedString],
+        receiverType: TypeID?,
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        defaultValues: [Bool]? = nil,
+        varargs: [Bool]? = nil,
+        annotations: [MetadataAnnotationRecord] = [],
+        flags: SymbolFlags = [.synthetic],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        let parameterTypes = parameters.map(\.type)
+        let functionSymbol: SymbolID
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return signature.receiverType == receiverType
+                && signature.parameterTypes == parameterTypes
+                && signature.returnType == returnType
+        }) {
+            functionSymbol = existing
+            symbols.insertFlags(flags, for: existing)
+        } else {
+            functionSymbol = symbols.define(
+                kind: .function,
+                name: functionName,
+                fqName: functionFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: flags
+            )
+            if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+                symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+            }
+
+            let valueParameterSymbols = parameters.map { parameter in
+                let parameterName = interner.intern(parameter.name)
+                let parameterSymbol = symbols.define(
+                    kind: .valueParameter,
+                    name: parameterName,
+                    fqName: functionFQName + [parameterName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+                symbols.setPropertyType(parameter.type, for: parameterSymbol)
+                return parameterSymbol
+            }
+
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: parameterTypes,
+                    returnType: returnType,
+                    isSuspend: false,
+                    valueParameterSymbols: valueParameterSymbols,
+                    valueParameterHasDefaultValues: defaultValues ?? Array(repeating: false, count: valueParameterSymbols.count),
+                    valueParameterIsVararg: varargs ?? Array(repeating: false, count: valueParameterSymbols.count)
+                ),
+                for: functionSymbol
+            )
+        }
+
+        if !annotations.isEmpty {
+            var existingAnnotations = symbols.annotations(for: functionSymbol)
+            var didAppend = false
+            for record in annotations where !existingAnnotations.contains(record) {
+                existingAnnotations.append(record)
+                didAppend = true
+            }
+            if didAppend {
+                symbols.setAnnotations(existingAnnotations, for: functionSymbol)
+            }
+        }
     }
 
     private func configureSingleTypeParameterNominal(

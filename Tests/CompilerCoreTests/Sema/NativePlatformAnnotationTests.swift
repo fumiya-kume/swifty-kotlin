@@ -196,4 +196,228 @@ final class NativePlatformAnnotationTests: XCTestCase {
         )
     }
 
+    func testNoInlineAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "native", "NoInline"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.native.NoInline must be registered"
+        )
+
+        XCTAssertEqual(sema.symbols.symbol(symbol)?.kind, .annotationClass)
+    }
+
+    func testNoInlineCarriesExperimentalNativeApiMetadata() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "native", "NoInline"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let annotations = sema.symbols.annotations(for: symbol)
+
+        XCTAssertTrue(
+            annotations.contains { $0.annotationFQName == "kotlin.experimental.ExperimentalNativeApi" },
+            "NoInline must carry @ExperimentalNativeApi metadata"
+        )
+    }
+
+    func testNoInlineCarriesFunctionPropertyTargets() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "native", "NoInline"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let target = try XCTUnwrap(
+            sema.symbols.annotations(for: symbol).first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "NoInline must carry @Target metadata"
+        )
+
+        XCTAssertEqual(
+            Set(target.arguments),
+            Set([
+                "AnnotationTarget.FUNCTION",
+                "AnnotationTarget.PROPERTY",
+            ])
+        )
+    }
+
+    func testNoInlineIsAcceptedOnFunctionAndProperty() {
+        let source = """
+        @file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)
+        import kotlin.native.NoInline
+
+        @NoInline
+        val nativeValue: Int = 1
+
+        @NoInline
+        fun nativeFunction(): Int = nativeValue
+        """
+        let ctx = runSemaCollectingDiagnostics(source)
+        let errors = ctx.diagnostics.diagnostics.filter { $0.severity == .error }
+
+        XCTAssertTrue(
+            errors.isEmpty,
+            "Expected NoInline on function/property to type-check with ExperimentalNativeApi opt-in, got \(errors)"
+        )
+    }
+
+    func testObsoleteNativeApiMarkerIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "native", "ObsoleteNativeApi"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.native.ObsoleteNativeApi must be registered"
+        )
+
+        XCTAssertEqual(sema.symbols.symbol(symbol)?.kind, .annotationClass)
+    }
+
+    func testObsoleteNativeApiCarriesRequiresOptInError() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "native", "ObsoleteNativeApi"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let requiresOptIn = try XCTUnwrap(
+            sema.symbols.annotations(for: symbol).first { $0.annotationFQName == "kotlin.RequiresOptIn" },
+            "ObsoleteNativeApi must carry @RequiresOptIn"
+        )
+
+        XCTAssertTrue(
+            requiresOptIn.arguments.contains("level=RequiresOptIn.Level.ERROR"),
+            "ObsoleteNativeApi must be an error-level opt-in marker; got \(requiresOptIn.arguments)"
+        )
+        XCTAssertTrue(
+            requiresOptIn.arguments.contains { $0.contains("obsolete and subject to removal") },
+            "ObsoleteNativeApi opt-in message should mention removal risk"
+        )
+    }
+
+    func testObsoleteNativeApiCarriesNativeTargets() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "native", "ObsoleteNativeApi"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let target = try XCTUnwrap(
+            sema.symbols.annotations(for: symbol).first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "ObsoleteNativeApi must carry @Target metadata"
+        )
+        let expectedTargets = [
+            "AnnotationTarget.CLASS",
+            "AnnotationTarget.ANNOTATION_CLASS",
+            "AnnotationTarget.PROPERTY",
+            "AnnotationTarget.FIELD",
+            "AnnotationTarget.LOCAL_VARIABLE",
+            "AnnotationTarget.VALUE_PARAMETER",
+            "AnnotationTarget.CONSTRUCTOR",
+            "AnnotationTarget.FUNCTION",
+            "AnnotationTarget.PROPERTY_GETTER",
+            "AnnotationTarget.PROPERTY_SETTER",
+            "AnnotationTarget.TYPEALIAS",
+        ]
+
+        for expectedTarget in expectedTargets {
+            XCTAssertTrue(
+                target.arguments.contains(expectedTarget),
+                "ObsoleteNativeApi @Target should include \(expectedTarget); got \(target.arguments)"
+            )
+        }
+    }
+
+    func testUsingObsoleteNativeApiWithoutOptInProducesErrorDiagnostic() {
+        let source = """
+        import kotlin.native.ObsoleteNativeApi
+
+        @ObsoleteNativeApi
+        fun obsoleteApi() {}
+
+        fun probe() {
+            obsoleteApi()
+        }
+        """
+        let ctx = runSemaCollectingDiagnostics(source)
+        let optInErrors = ctx.diagnostics.diagnostics.filter {
+            $0.code == "KSWIFTK-SEMA-OPT-IN" && $0.severity == .error
+        }
+
+        XCTAssertFalse(
+            optInErrors.isEmpty,
+            "Expected error-level opt-in diagnostic for ObsoleteNativeApi usage"
+        )
+    }
+
+    func testOptingInToObsoleteNativeApiSuppressesDiagnostic() {
+        let source = """
+        @file:OptIn(kotlin.native.ObsoleteNativeApi::class)
+        import kotlin.native.ObsoleteNativeApi
+
+        @ObsoleteNativeApi
+        fun obsoleteApi() {}
+
+        fun probe() {
+            obsoleteApi()
+        }
+        """
+        let ctx = runSemaCollectingDiagnostics(source)
+        let optInDiagnostics = ctx.diagnostics.diagnostics.filter {
+            $0.code == "KSWIFTK-SEMA-OPT-IN"
+        }
+
+        XCTAssertTrue(
+            optInDiagnostics.isEmpty,
+            "Expected no opt-in diagnostic when @OptIn(ObsoleteNativeApi::class) is present"
+        )
+    }
+
+    func testEagerInitializationAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "native", "EagerInitialization"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.native.EagerInitialization must be registered"
+        )
+
+        XCTAssertEqual(sema.symbols.symbol(symbol)?.kind, .annotationClass)
+    }
+
+    func testEagerInitializationCarriesStdlibMetadata() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "native", "EagerInitialization"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let annotations = sema.symbols.annotations(for: symbol)
+        let target = try XCTUnwrap(
+            annotations.first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "EagerInitialization must carry @Target metadata"
+        )
+        let retention = try XCTUnwrap(
+            annotations.first { $0.annotationFQName == "kotlin.annotation.Retention" },
+            "EagerInitialization must carry @Retention metadata"
+        )
+        let deprecated = try XCTUnwrap(
+            annotations.first { $0.annotationFQName == "kotlin.Deprecated" },
+            "EagerInitialization must carry @Deprecated metadata"
+        )
+
+        XCTAssertEqual(Set(target.arguments), Set(["AnnotationTarget.PROPERTY"]))
+        XCTAssertEqual(retention.arguments, ["AnnotationRetention.BINARY"])
+        XCTAssertTrue(
+            annotations.contains { $0.annotationFQName == "kotlin.ExperimentalStdlibApi" },
+            "EagerInitialization must carry @ExperimentalStdlibApi metadata"
+        )
+        XCTAssertTrue(
+            deprecated.arguments.contains { $0.contains("temporal migration assistance") },
+            "EagerInitialization deprecation message should mention temporary migration assistance"
+        )
+    }
+
+    func testEagerInitializationIsAcceptedOnPropertyWithStdlibOptIn() {
+        let source = """
+        @file:OptIn(kotlin.ExperimentalStdlibApi::class)
+        import kotlin.native.EagerInitialization
+
+        @EagerInitialization
+        val eagerValue: Int = 1
+        """
+        let ctx = runSemaCollectingDiagnostics(source)
+        let errors = ctx.diagnostics.diagnostics.filter { $0.severity == .error }
+
+        XCTAssertTrue(
+            errors.isEmpty,
+            "Expected EagerInitialization on a property to type-check with ExperimentalStdlibApi opt-in, got \(errors)"
+        )
+    }
+
 }
