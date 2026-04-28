@@ -45,6 +45,14 @@ private let systemCaptureThunk: @convention(c) (Int, UnsafeMutablePointer<Int>?)
 
 final class RuntimeSystemEdgeCaseTests: XCTestCase {
 
+    func testSystemMeasurementRuntimeSignaturesAreFixed() {
+        let _: () -> Int = kk_system_currentTimeMillis
+        let _: () -> Int = kk_system_nanoTime
+        let _: () -> Int = kk_system_process_start_nanos
+        let _: (Int, Int, UnsafeMutablePointer<Int>?) -> Int = kk_system_measureTimeMillis
+        let _: (Int, Int, UnsafeMutablePointer<Int>?) -> Int = kk_system_measureNanoTime
+    }
+
     // MARK: - kk_system_currentTimeMillis
 
     func testCurrentTimeMillisIsPositive() {
