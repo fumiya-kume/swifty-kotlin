@@ -709,6 +709,19 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         let publicStartCoroutineName = interner.intern("startCoroutine")
+        let publicStartCoroutineReceiverTypeParameterName = interner.intern("R")
+        let publicStartCoroutineReceiverTypeParameterSymbol = symbols.define(
+            kind: .typeParameter,
+            name: publicStartCoroutineReceiverTypeParameterName,
+            fqName: kotlinCoroutinesPkg + [publicStartCoroutineName, interner.intern("$synthetic"), publicStartCoroutineReceiverTypeParameterName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let publicStartCoroutineReceiverTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: publicStartCoroutineReceiverTypeParameterSymbol,
+            nullability: .nonNull
+        )))
         let publicStartCoroutineTypeParameterName = interner.intern("T")
         let publicStartCoroutineTypeParameterSymbol = symbols.define(
             kind: .typeParameter,
@@ -733,6 +746,13 @@ extension DataFlowSemaPhase {
             isSuspend: true,
             nullability: .nonNull
         )))
+        let publicStartCoroutineWithReceiverFunctionType = types.make(.functionType(FunctionType(
+            receiver: publicStartCoroutineReceiverTypeParameterType,
+            params: [],
+            returnType: publicStartCoroutineTypeParameterType,
+            isSuspend: true,
+            nullability: .nonNull
+        )))
         registerSyntheticCoroutineExtensionFunction(
             named: "startCoroutine",
             packageFQName: kotlinCoroutinesPkg,
@@ -740,6 +760,22 @@ extension DataFlowSemaPhase {
             parameters: [(name: "completion", type: publicStartCoroutineContinuationType)],
             returnType: types.unitType,
             typeParameterSymbols: [publicStartCoroutineTypeParameterSymbol],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineExtensionFunction(
+            named: "startCoroutine",
+            packageFQName: kotlinCoroutinesPkg,
+            receiverType: publicStartCoroutineWithReceiverFunctionType,
+            parameters: [
+                (name: "receiver", type: publicStartCoroutineReceiverTypeParameterType),
+                (name: "completion", type: publicStartCoroutineContinuationType),
+            ],
+            returnType: types.unitType,
+            typeParameterSymbols: [
+                publicStartCoroutineReceiverTypeParameterSymbol,
+                publicStartCoroutineTypeParameterSymbol,
+            ],
             symbols: symbols,
             interner: interner
         )

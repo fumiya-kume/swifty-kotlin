@@ -367,7 +367,7 @@
 - [ ] STDLIB-CORO-003: `kotlin.coroutines` の一部ランタイム経路をセマフォ待機から脱却する。対象: `RuntimeAsyncTask.awaitResult`, `RuntimeJobHandle.join`, `kk_with_context`, Channel send/receive, Sequence builder( `sequence`, `iterator` ) の待機部。
 - [x] STDLIB-CORO-004: `kotlin.coroutines.RestrictsSuspension` annotation を追加する
 - [x] STDLIB-CORO-005: `suspend () -> T`.`startCoroutine(completion)` を追加する
-- [ ] STDLIB-CORO-006: `suspend R.() -> T`.`startCoroutine(receiver, completion)` を追加する
+- [x] STDLIB-CORO-006: `suspend R.() -> T`.`startCoroutine(receiver, completion)` を追加する
 - [ ] STDLIB-CORO-007: `CoroutineContext.Key.getPolymorphicElement(element)` を追加する
 - [ ] STDLIB-CORO-008: `CoroutineContext.Key.minusPolymorphicKey(key)` を追加する
 - [ ] STDLIB-CONTRACTS-001: `ExperimentalExtendedContracts` marker を追加する
