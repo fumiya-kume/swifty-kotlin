@@ -270,6 +270,48 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected OptIn smoke test to compile cleanly, got: \(ctx.diagnostics.diagnostics)")
     }
 
+    func testExperimentalVersionOverloadingResolves() {
+        let source = """
+        fun marker(x: ExperimentalVersionOverloading?): Int = 0
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected ExperimentalVersionOverloading smoke test to compile cleanly, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testExperimentalVersionOverloadingAnnotationIsSyntheticAndTargetedToAnnotationClasses() throws {
+        let ctx = makeContextFromSource("fun noop() {}")
+        try runSema(ctx)
+        let sema = try XCTUnwrap(ctx.sema)
+        let symbolID = try XCTUnwrap(
+            sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("ExperimentalVersionOverloading"),
+            ]),
+            "kotlin.ExperimentalVersionOverloading must be registered"
+        )
+        let symbol = try XCTUnwrap(sema.symbols.symbol(symbolID))
+
+        XCTAssertEqual(symbol.kind, .annotationClass)
+        XCTAssertTrue(symbol.flags.contains(.synthetic))
+
+        let annotations = sema.symbols.annotations(for: symbolID)
+        XCTAssertTrue(
+            annotations.contains(where: {
+                $0.annotationFQName == KnownCompilerAnnotation.requiresOptIn.qualifiedName
+                    && $0.arguments.contains("level=RequiresOptIn.Level.ERROR")
+            }),
+            "Expected ExperimentalVersionOverloading to carry @RequiresOptIn(ERROR), got: \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains(where: {
+                $0.annotationFQName == KnownCompilerAnnotation.target.qualifiedName
+                    && $0.arguments == ["AnnotationTarget.ANNOTATION_CLASS"]
+            }),
+            "Expected ExperimentalVersionOverloading to carry @Target(AnnotationTarget.ANNOTATION_CLASS), got: \(annotations)"
+        )
+    }
+
     func testSubclassOptInRequiredResolves() {
         let source = """
         fun marker(x: SubclassOptInRequired?): Int = 0
@@ -914,8 +956,65 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.isEmpty, "Expected OPT_IN_USAGE suppression alias to suppress opt-in diagnostics, got: \(ctx.diagnostics.diagnostics)")
     }
 
-    func runSemaCollectingDiagnostics(_ source: String) -> CompilationContext {
-        let ctx = makeContextFromSource(source)
+    func testExperimentalVersionOverloadingAnnotationUsageRequiresOptIn() {
+        let source = """
+        @ExperimentalVersionOverloading
+        annotation class VersionedApi
+
+        @VersionedApi
+        fun api(): Int = 1
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-OPT-IN", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected @VersionedApi usage to require opt-in, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "ExperimentalVersionOverloading diagnostics should be errors")
+    }
+
+    func testExperimentalVersionOverloadingAnnotationUsageAllowsOptInAnnotation() {
+        let source = """
+        @ExperimentalVersionOverloading
+        annotation class VersionedApi
+
+        @OptIn(ExperimentalVersionOverloading::class)
+        @VersionedApi
+        fun api(): Int = 1
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-OPT-IN", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected @OptIn to suppress ExperimentalVersionOverloading diagnostics, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testExperimentalVersionOverloadingAnnotationUsageAllowsCompilerOptIn() {
+        let source = """
+        @ExperimentalVersionOverloading
+        annotation class VersionedApi
+
+        @VersionedApi
+        fun api(): Int = 1
+        """
+
+        let ctx = runSemaCollectingDiagnostics(
+            source,
+            frontendFlags: ["opt-in=kotlin.ExperimentalVersionOverloading"]
+        )
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-OPT-IN", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected -opt-in to suppress ExperimentalVersionOverloading diagnostics, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func runSemaCollectingDiagnostics(
+        _ source: String,
+        frontendFlags: [String] = []
+    ) -> CompilationContext {
+        let fakePath = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".kt")
+            .path
+        let ctx = makeCompilationContext(inputs: [fakePath], frontendFlags: frontendFlags)
+        _ = ctx.sourceManager.addFile(path: fakePath, contents: Data(source.utf8))
         do {
             try runSema(ctx)
         } catch {

@@ -7,6 +7,7 @@ enum KnownCompilerAnnotation {
     case requiresOptIn
     case target
     case experimentalStdlibApi
+    case experimentalVersionOverloading
     case jvmStatic
     case jvmName
     case jvmField
@@ -41,6 +42,8 @@ enum KnownCompilerAnnotation {
             "Target"
         case .experimentalStdlibApi:
             "ExperimentalStdlibApi"
+        case .experimentalVersionOverloading:
+            "ExperimentalVersionOverloading"
         case .jvmStatic:
             "JvmStatic"
         case .jvmName:
@@ -96,6 +99,8 @@ enum KnownCompilerAnnotation {
             "kotlin.annotation.Target"
         case .experimentalStdlibApi:
             "kotlin.ExperimentalStdlibApi"
+        case .experimentalVersionOverloading:
+            "kotlin.ExperimentalVersionOverloading"
         case .jvmStatic:
             "kotlin.jvm.JvmStatic"
         case .jvmName:

@@ -191,7 +191,7 @@
 - [x] STDLIB-KOTLIN-ROOT-001: `SubclassOptInRequired(markerClass: KClass<out Annotation>)` を追加し、subclass opt-in の伝播と misuse diagnostics を実装する
 - [x] STDLIB-KOTLIN-ROOT-002: `ConsistentCopyVisibility` annotation を追加し、data class `copy()` visibility migration の declaration-side diagnostics へ結び付ける
 - [x] STDLIB-KOTLIN-ROOT-003: `ExposedCopyVisibility` annotation を追加し、public `copy()` 維持モードの suppression semantics を実装する
-- [ ] STDLIB-KOTLIN-ROOT-004: `ExperimentalVersionOverloading` marker を追加し、`@OptIn` / `-opt-in` diagnostics と結び付ける
+- [x] STDLIB-KOTLIN-ROOT-004: `ExperimentalVersionOverloading` marker を追加し、`@OptIn` / `-opt-in` diagnostics と結び付ける
 - [ ] STDLIB-KOTLIN-ROOT-005: `ContextFunctionTypeParams(count: Int)` type annotation を追加する
 - [ ] STDLIB-I18N-COMMON-001: `kotlin.text` / common のフォーマット・ロケール
 - [ ] STDLIB-I18N-COMMON-002: `Char.category` を `CharCategory` enum で露出する（現状は `Int` placeholder）
