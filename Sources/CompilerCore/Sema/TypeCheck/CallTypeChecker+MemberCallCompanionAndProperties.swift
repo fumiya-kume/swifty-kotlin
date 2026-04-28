@@ -77,8 +77,7 @@ extension CallTypeChecker {
             implicitReceiverType: receiverType,
             ctx: ctx.semaCtx
         )
-        if let diagnostic = resolved.diagnostic {
-            ctx.semaCtx.diagnostics.emit(diagnostic)
+        if resolved.diagnostic != nil {
             return nil
         }
         guard let chosen = resolved.chosenCallee else {
