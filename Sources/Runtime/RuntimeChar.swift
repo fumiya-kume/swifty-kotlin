@@ -106,6 +106,14 @@ public func kk_char_titlecase(_ value: Int) -> Int {
     return charRuntimeMakeStringRaw(titlecased)
 }
 
+@_cdecl("kk_char_titlecaseChar")
+public func kk_char_titlecaseChar(_ value: Int) -> Int {
+    guard let scalar = runtimeUnicodeScalar(value) else {
+        return value
+    }
+    return runtimeSingleUnicodeScalarValue(scalar.properties.titlecaseMapping) ?? kk_char_uppercaseChar(value)
+}
+
 @_cdecl("kk_char_digitToInt")
 public func kk_char_digitToInt(_ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
