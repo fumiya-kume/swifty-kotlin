@@ -174,7 +174,7 @@
 - [x] STDLIB-RANDOM-011: `Random.nextUBytes(size)` / `nextUBytes(array)` / `nextUBytes(array, fromIndex, toIndex)` を追加する
 - [x] STDLIB-RANDOM-012: `Random.nextUInt()` / `nextUInt(until)` / `nextUInt(from, until)` / `nextUInt(range)` を追加する
 - [x] STDLIB-RANDOM-013: `Random.nextULong()` / `nextULong(until)` / `nextULong(from, until)` / `nextULong(range)` を追加する
-- [ ] STDLIB-COMP-001: `kotlin.comparisons` の対象 API 一覧を固定
+- [x] STDLIB-COMP-001: `kotlin.comparisons` の対象 API 一覧を固定
 - [ ] STDLIB-COMP-002: `Comparator` 合成の sema / lowering を整える
 - [ ] STDLIB-COMP-003: `Comparator` runtime と failure path を固定
 - [x] STDLIB-COMP-004: `compareBy(comparator, selector)` overload を追加する

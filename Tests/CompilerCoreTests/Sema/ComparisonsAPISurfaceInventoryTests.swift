@@ -26,6 +26,116 @@ import XCTest
 //   `XCTAssertTrue(links.isEmpty)` to the positive assertion once implemented.
 
 final class ComparisonsAPISurfaceInventoryTests: XCTestCase {
+    private static let officialCommonTargets: Set<String> = [
+        "fun compareBy(vararg selectors): Comparator<T>",
+        "fun compareBy(selector): Comparator<T>",
+        "fun compareBy(comparator, selector): Comparator<T>",
+        "fun compareByDescending(selector): Comparator<T>",
+        "fun compareByDescending(comparator, selector): Comparator<T>",
+        "fun compareValues(a, b): Int",
+        "fun compareValuesBy(a, b, vararg selectors): Int",
+        "fun compareValuesBy(a, b, selector): Int",
+        "fun compareValuesBy(a, b, comparator, selector): Int",
+        "fun naturalOrder(): Comparator<T>",
+        "fun nullsFirst(): Comparator<T?>",
+        "fun nullsFirst(comparator): Comparator<T?>",
+        "fun nullsLast(): Comparator<T?>",
+        "fun nullsLast(comparator): Comparator<T?>",
+        "fun Comparator<T>.reversed(): Comparator<T>",
+        "fun reverseOrder(): Comparator<T>",
+        "fun Comparator<T>.then(comparator): Comparator<T>",
+        "fun Comparator<T>.thenBy(selector): Comparator<T>",
+        "fun Comparator<T>.thenBy(comparator, selector): Comparator<T>",
+        "fun Comparator<T>.thenByDescending(selector): Comparator<T>",
+        "fun Comparator<T>.thenByDescending(comparator, selector): Comparator<T>",
+        "fun Comparator<T>.thenDescending(selector): Comparator<T>",
+        "fun maxOf(a, b, comparator): T",
+        "fun minOf(a, b, comparator): T",
+    ]
+
+    private static let implementedOfficialLinks: [String: (path: [String], link: String)] = [
+        "fun compareBy(vararg selectors): Comparator<T>": (
+            ["kotlin", "comparisons", "compareBy"],
+            "kk_comparator_from_multi_selectors_vararg"
+        ),
+        "fun compareBy(selector): Comparator<T>": (
+            ["kotlin", "comparisons", "compareBy"],
+            "kk_comparator_from_selector"
+        ),
+        "fun compareBy(comparator, selector): Comparator<T>": (
+            ["kotlin", "comparisons", "compareBy"],
+            "kk_comparator_from_comparator_selector"
+        ),
+        "fun compareByDescending(selector): Comparator<T>": (
+            ["kotlin", "comparisons", "compareByDescending"],
+            "kk_comparator_from_selector_descending"
+        ),
+        "fun compareByDescending(comparator, selector): Comparator<T>": (
+            ["kotlin", "comparisons", "compareByDescending"],
+            "kk_comparator_from_comparator_selector_descending"
+        ),
+        "fun compareValues(a, b): Int": (
+            ["kotlin", "comparisons", "compareValues"],
+            "kk_compareValues"
+        ),
+        "fun compareValuesBy(a, b, vararg selectors): Int": (
+            ["kotlin", "comparisons", "compareValuesBy"],
+            "kk_compareValuesByVararg"
+        ),
+        "fun compareValuesBy(a, b, selector): Int": (
+            ["kotlin", "comparisons", "compareValuesBy"],
+            "kk_compareValuesBy1"
+        ),
+        "fun compareValuesBy(a, b, comparator, selector): Int": (
+            ["kotlin", "comparisons", "compareValuesBy"],
+            "kk_compareValuesByComparator"
+        ),
+        "fun naturalOrder(): Comparator<T>": (
+            ["kotlin", "comparisons", "naturalOrder"],
+            "kk_comparator_natural_order"
+        ),
+        "fun Comparator<T>.reversed(): Comparator<T>": (
+            ["kotlin", "Comparator", "reversed"],
+            "kk_comparator_reversed"
+        ),
+        "fun reverseOrder(): Comparator<T>": (
+            ["kotlin", "comparisons", "reverseOrder"],
+            "kk_comparator_reverse_order"
+        ),
+        "fun Comparator<T>.thenBy(selector): Comparator<T>": (
+            ["kotlin", "Comparator", "thenBy"],
+            "kk_comparator_then_by"
+        ),
+        "fun Comparator<T>.thenBy(comparator, selector): Comparator<T>": (
+            ["kotlin", "Comparator", "thenBy"],
+            "kk_comparator_then_by_comparator_selector"
+        ),
+        "fun Comparator<T>.thenByDescending(selector): Comparator<T>": (
+            ["kotlin", "Comparator", "thenByDescending"],
+            "kk_comparator_then_by_descending"
+        ),
+        "fun Comparator<T>.thenByDescending(comparator, selector): Comparator<T>": (
+            ["kotlin", "Comparator", "thenByDescending"],
+            "kk_comparator_then_by_descending_comparator_selector"
+        ),
+        "fun Comparator<T>.thenDescending(selector): Comparator<T>": (
+            ["kotlin", "Comparator", "thenDescending"],
+            "kk_comparator_then_descending"
+        ),
+    ]
+
+    private static let registeredOnlyOfficialTargets: Set<String> = [
+        "fun maxOf(a, b, comparator): T",
+        "fun minOf(a, b, comparator): T",
+    ]
+
+    private static let knownOfficialGaps: [String: String] = [
+        "fun nullsFirst(): Comparator<T?>": "STDLIB-COMP-003",
+        "fun nullsFirst(comparator): Comparator<T?>": "STDLIB-COMP-003",
+        "fun nullsLast(): Comparator<T?>": "STDLIB-COMP-003",
+        "fun nullsLast(comparator): Comparator<T?>": "STDLIB-COMP-003",
+        "fun Comparator<T>.then(comparator): Comparator<T>": "STDLIB-COMP-002",
+    ]
 
     // MARK: - Shared sema fixture
 
@@ -71,6 +181,47 @@ final class ComparisonsAPISurfaceInventoryTests: XCTestCase {
     ) -> Bool {
         let interned = fqPath.map { interner.intern($0) }
         return sema.symbols.lookup(fqName: interned) != nil
+    }
+
+    // MARK: - 0. Official common target inventory
+
+    func testOfficialCommonTargetInventoryHasExpectedShape() {
+        XCTAssertEqual(Self.officialCommonTargets.count, 24)
+        XCTAssertEqual(Self.implementedOfficialLinks.count, 17)
+        XCTAssertEqual(Self.registeredOnlyOfficialTargets.count, 2)
+        XCTAssertEqual(Self.knownOfficialGaps.count, 5)
+    }
+
+    func testEveryOfficialCommonTargetIsClassified() {
+        let classified = Set(Self.implementedOfficialLinks.keys)
+            .union(Self.registeredOnlyOfficialTargets)
+            .union(Self.knownOfficialGaps.keys)
+        XCTAssertEqual(classified, Self.officialCommonTargets)
+    }
+
+    func testImplementedOfficialCommonTargetsResolveToSyntheticLinks() throws {
+        let (sema, interner) = try makeSema()
+        for (signature, target) in Self.implementedOfficialLinks {
+            let links = allExternalLinks(fqPath: target.path, sema: sema, interner: interner)
+            XCTAssertTrue(
+                links.contains(target.link),
+                "\(signature) should resolve to \(target.link); found: \(links)"
+            )
+        }
+    }
+
+    func testKnownOfficialComparisonGapsStayVisible() throws {
+        let (sema, interner) = try makeSema()
+        for signature in Self.knownOfficialGaps.keys {
+            let links: Set<String> = if signature.contains("nullsFirst") {
+                allExternalLinks(fqPath: ["kotlin", "comparisons", "nullsFirst"], sema: sema, interner: interner)
+            } else if signature.contains("nullsLast") {
+                allExternalLinks(fqPath: ["kotlin", "comparisons", "nullsLast"], sema: sema, interner: interner)
+            } else {
+                allExternalLinks(fqPath: ["kotlin", "Comparator", "then"], sema: sema, interner: interner)
+            }
+            XCTAssertTrue(links.isEmpty, "\(signature) should remain in knownOfficialGaps until implemented; found: \(links)")
+        }
     }
 
     // MARK: - 1. kotlin.Comparator interface
