@@ -579,6 +579,87 @@ extension LoweringPassRegressionTests {
         XCTAssertFalse(ctx.diagnostics.diagnostics.contains { $0.severity == .error })
     }
 
+    func testStartCoroutineWithReceiverLoweringStoresReceiverArgAndResumesContinuation() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let types = TypeSystem()
+
+        let mainSymbol = SymbolID(rawValue: 900)
+        let suspendSymbol = SymbolID(rawValue: 901)
+        let receiverParamSymbol = SymbolID(rawValue: 902)
+
+        let functionRefExpr = arena.appendExpr(.symbolRef(suspendSymbol))
+        let receiverExpr = arena.appendExpr(.intLiteral(41))
+        let completionExpr = arena.appendExpr(.intLiteral(17))
+
+        let mainFn = KIRFunction(
+            symbol: mainSymbol,
+            name: interner.intern("main"),
+            params: [],
+            returnType: types.unitType,
+            body: [
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("startCoroutine"),
+                    arguments: [functionRefExpr, receiverExpr, completionExpr],
+                    result: nil,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .returnUnit,
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+        let suspendFn = KIRFunction(
+            symbol: suspendSymbol,
+            name: interner.intern("startPublicWithReceiver"),
+            params: [KIRParameter(symbol: receiverParamSymbol, type: types.make(.primitive(.int, .nonNull)))],
+            returnType: types.unitType,
+            body: [.returnUnit],
+            isSuspend: true,
+            isInline: false
+        )
+
+        let mainID = arena.appendDecl(.function(mainFn))
+        _ = arena.appendDecl(.function(suspendFn))
+        let module = KIRModule(
+            files: [KIRFile(fileID: FileID(rawValue: 0), decls: [mainID])],
+            arena: arena
+        )
+
+        let ctx = CompilationContext(
+            options: CompilerOptions(
+                moduleName: "StartCoroutineReceiverTest",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            sourceManager: SourceManager(),
+            diagnostics: DiagnosticEngine(),
+            interner: interner
+        )
+        ctx.kir = module
+
+        try LoweringPhase().run(ctx)
+
+        guard case let .function(loweredMain)? = module.arena.decl(mainID) else {
+            XCTFail("expected lowered main function")
+            return
+        }
+        let mainCallees = loweredMain.body.compactMap { instruction -> String? in
+            guard case let .call(_, callee, _, _, _, _, _, _) = instruction else { return nil }
+            return interner.resolve(callee)
+        }
+        XCTAssertTrue(mainCallees.contains("kk_create_coroutine_unintercepted"))
+        XCTAssertTrue(mainCallees.contains("kk_coroutine_launcher_arg_set"))
+        XCTAssertTrue(mainCallees.contains("kk_coroutine_continuation_resume"))
+        XCTAssertFalse(mainCallees.contains("kk_start_coroutine_unintercepted_or_return"))
+        XCTAssertFalse(mainCallees.contains("startCoroutine"))
+        XCTAssertFalse(ctx.diagnostics.diagnostics.contains { $0.severity == .error })
+    }
+
     func testCoroutineLauncherWithSuspendLambdaCapturesGeneratesThunk() throws {
         // Simulates: val x = 42; runBlocking { x }
         // The lambda captures `x`, so it has 1 capture param and 0 value params.
