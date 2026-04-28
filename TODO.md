@@ -231,7 +231,7 @@
 - [ ] STDLIB-ATOMIC-008: `AtomicArray.updateAt(index, function)` を追加する
 - [ ] STDLIB-ATOMIC-009: `AtomicReference.updateAndFetch(function)` を追加する
 - [ ] STDLIB-ATOMIC-010: `AtomicArray.updateAndFetchAt(index, function)` を追加する
-- [ ] STDLIB-PROP-001: `kotlin.properties.ObservableProperty<V>` abstract class を追加し、`beforeChange` / `afterChange` hook を `Delegates.observable` / `vetoable` と結び付ける
+- [x] STDLIB-PROP-001: `kotlin.properties.ObservableProperty<V>` abstract class を追加し、`beforeChange` / `afterChange` hook を `Delegates.observable` / `vetoable` と結び付ける
 - [x] STDLIB-PROP-002: `kotlin.properties.PropertyDelegateProvider<T, D>` fun interface を追加し、provider 型付けと `provideDelegate` ベースの delegate factory surface を揃える
 
 ### Phase 4: リフレクション・数値・テキスト・その他 stdlib
