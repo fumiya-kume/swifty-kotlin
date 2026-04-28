@@ -191,6 +191,14 @@ extension DataFlowSemaPhase {
         )
 
         registerSyntheticJvmAnnotationClass(
+            named: "IgnorableReturnValue",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticJvmAnnotationClass(
             named: "ExperimentalStdlibApi",
             packageFQName: kotlinPkg,
             packageSymbol: kotlinPkgSymbol,
@@ -495,6 +503,19 @@ extension DataFlowSemaPhase {
                     arguments: ["AnnotationTarget.CLASS"]
                 ),
                 to: consistentCopyVisibilitySymbol,
+                symbols: symbols
+            )
+        }
+
+        if let ignorableReturnValueSymbol = symbols.lookup(
+            fqName: kotlinPkg + [interner.intern("IgnorableReturnValue")]
+        ) {
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.target.qualifiedName,
+                    arguments: ["AnnotationTarget.FUNCTION"]
+                ),
+                to: ignorableReturnValueSymbol,
                 symbols: symbols
             )
         }
