@@ -7847,6 +7847,7 @@ public enum RuntimeABISpec {
             + hexFormatFunctions
             + comparatorFunctions
             + resultFunctions
+            + kotlinVersionFunctions
             + deepRecursiveFunctions
             + stringBuilderFunctions
             + fileIOFunctions

@@ -304,8 +304,8 @@
 - [x] STDLIB-KOTLIN-ROOT-ANNO-010: `IgnorableReturnValue` annotation surface を追加する
 - [ ] STDLIB-KOTLIN-ROOT-ANNO-011: `IntroducedAt(version: String)` annotation surface を追加する
 - [ ] STDLIB-KOTLIN-ROOT-ANNO-012: `MustUseReturnValues` annotation surface を追加する
-- [ ] STDLIB-KOTLIN-ROOT-VERSION-001: `KotlinVersion` constructor と `major` / `minor` / `patch` properties を追加する
-- [ ] STDLIB-KOTLIN-ROOT-VERSION-002: `KotlinVersion.CURRENT` と comparison helpers（`compareTo`, `isAtLeast`）を追加する
+- [x] STDLIB-KOTLIN-ROOT-VERSION-001: `KotlinVersion` constructor と `major` / `minor` / `patch` properties を追加する
+- [x] STDLIB-KOTLIN-ROOT-VERSION-002: `KotlinVersion.CURRENT` と comparison helpers（`compareTo`, `isAtLeast`）を追加する
 - [ ] STDLIB-KOTLIN-ROOT-EXC-001: `NoWhenBranchMatchedException` class surface を追加する
 - [ ] STDLIB-KOTLIN-ROOT-EXC-002: `ConcurrentModificationException` class surface を追加する
 - [ ] STDLIB-KOTLIN-ROOT-EXC-003: Native `ArrayIndexOutOfBoundsException` class surface を追加する

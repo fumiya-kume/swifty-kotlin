@@ -15,7 +15,15 @@ extension CallLowerer {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
-        let boundType = sema.bindings.exprTypes[exprID]
+        let boolType = sema.types.booleanType
+        let boundType: TypeID? = switch op {
+        case .equal, .notEqual, .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:
+            boolType
+        case .logicalAnd, .logicalOr:
+            boolType
+        default:
+            sema.bindings.exprTypes[exprID]
+        }
         let intType = sema.types.make(.primitive(.int, .nonNull))
         let stringType = sema.types.make(.primitive(.string, .nonNull))
         let lhsID = driver.lowerExpr(
@@ -49,7 +57,6 @@ extension CallLowerer {
         // STDLIB-OP-031: Detect != desugaring to equals() call + negation.
         let isEqualsDesugaring: Bool = op == .notEqual
             && sema.bindings.callBindings[exprID] != nil
-        let boolType = sema.types.booleanType
         if let callBinding = sema.bindings.callBindings[exprID],
            let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee)
         {
