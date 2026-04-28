@@ -362,6 +362,7 @@
 - [x] STDLIB-NATIVE-REF-008: `kotlin.native.runtime.GCInfo` surface を追加する
 - [x] STDLIB-NATIVE-REF-009: `kotlin.native.runtime.RootSetStatistics` surface を追加する
 - [x] STDLIB-NATIVE-REF-010: `kotlin.native.runtime.SweepStatistics` surface を追加する
+<<<<<<< HEAD
 - [ ] STDLIB-NATIVE-REF-011: `kotlin.native.runtime.NativeRuntimeApi` marker を追加する
 - [x] STDLIB-SYSTEM-001: `kotlin.system` の対象 API 一覧を固定
 - [x] STDLIB-SYSTEM-002: `kotlin.system` の sema / lowering を整える
@@ -370,6 +371,16 @@
 - [x] STDLIB-SYSTEM-005: `kotlin.system.getTimeMillis()` top-level Native API を追加する（現状の `System.currentTimeMillis()` とは別 surface）
 - [x] STDLIB-SYSTEM-006: `kotlin.system.getTimeNanos()` top-level Native API を追加する（現状の `System.nanoTime()` とは別 surface）
 - [x] STDLIB-SYSTEM-007: `kotlin.system.measureTimeMicros { ... }` Native API を追加する
+=======
+- [x] STDLIB-NATIVE-REF-011: `kotlin.native.runtime.NativeRuntimeApi` marker を追加する
+- [x] STDLIB-SYSTEM-001: `kotlin.system` の対象 API 一覧を固定
+- [ ] STDLIB-SYSTEM-002: `kotlin.system` の sema / lowering を整える
+- [ ] STDLIB-SYSTEM-003: `kotlin.system` の runtime / 計測系テストを固定
+- [ ] STDLIB-SYSTEM-004: `kotlin.system.getTimeMicros()` top-level Native API を追加する
+- [ ] STDLIB-SYSTEM-005: `kotlin.system.getTimeMillis()` top-level Native API を追加する（現状の `System.currentTimeMillis()` とは別 surface）
+- [ ] STDLIB-SYSTEM-006: `kotlin.system.getTimeNanos()` top-level Native API を追加する（現状の `System.nanoTime()` とは別 surface）
+- [ ] STDLIB-SYSTEM-007: `kotlin.system.measureTimeMicros { ... }` Native API を追加する
+>>>>>>> 5e4e1c0d5 (Fix kotlin.system API inventory)
 - [ ] STDLIB-UUID-001: `kotlin.uuid` の対象 API 一覧を固定
 - [ ] STDLIB-UUID-002: `kotlin.uuid` の sema / lowering を整える
 - [x] STDLIB-UUID-003: `kotlin.uuid` の runtime / canonical form / failure path を固定
