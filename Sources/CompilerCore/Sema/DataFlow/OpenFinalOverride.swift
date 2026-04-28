@@ -114,6 +114,7 @@ extension DataFlowSemaPhase {
         ctx: OpenFinalOverrideContext
     ) {
         guard !hasConsistentCopyVisibilityAnnotation(classDecl),
+              !hasExposedCopyVisibilityAnnotation(classDecl),
               let symbol = ctx.symbols.symbol(classSymbol)
         else {
             return

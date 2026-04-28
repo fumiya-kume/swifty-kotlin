@@ -330,6 +330,42 @@ final class AnnotationSemanticTests: XCTestCase {
         )
     }
 
+    func testExposedCopyVisibilityResolves() {
+        let source = """
+        fun marker(x: ExposedCopyVisibility?): Int = 0
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+
+        XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected ExposedCopyVisibility smoke test to compile cleanly, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testExposedCopyVisibilityAnnotationIsSyntheticAndTargetedToClasses() throws {
+        let ctx = makeContextFromSource("fun noop() {}")
+        try runSema(ctx)
+        let sema = try XCTUnwrap(ctx.sema)
+        let symbolID = try XCTUnwrap(
+            sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("ExposedCopyVisibility"),
+            ]),
+            "kotlin.ExposedCopyVisibility must be registered"
+        )
+        let symbol = try XCTUnwrap(sema.symbols.symbol(symbolID))
+
+        XCTAssertEqual(symbol.kind, .annotationClass)
+        XCTAssertTrue(symbol.flags.contains(.synthetic))
+
+        let annotations = sema.symbols.annotations(for: symbolID)
+        XCTAssertTrue(
+            annotations.contains(where: {
+                $0.annotationFQName == KnownCompilerAnnotation.target.qualifiedName
+                    && $0.arguments == ["AnnotationTarget.CLASS"]
+            }),
+            "Expected ExposedCopyVisibility to carry @Target(AnnotationTarget.CLASS), got: \(annotations)"
+        )
+    }
+
     func testTargetAnnotationIsRejectedOnRegularClass() {
         let source = """
         @Target(AnnotationTarget.CLASS)

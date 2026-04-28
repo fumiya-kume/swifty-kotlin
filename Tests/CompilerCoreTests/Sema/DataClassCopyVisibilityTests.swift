@@ -39,6 +39,30 @@ final class DataClassCopyVisibilityTests: XCTestCase {
         XCTAssertEqual(copy.visibility, .private)
     }
 
+    func testExposedCopyVisibilitySuppressesWarningButKeepsCopyPublic() throws {
+        let source = """
+        @ExposedCopyVisibility
+        data class Token private constructor(val value: Int)
+        """
+
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-DATA-COPY-VISIBILITY", in: ctx)
+        XCTAssertTrue(diagnostics.isEmpty, "Expected @ExposedCopyVisibility to suppress declaration warning, got: \(ctx.diagnostics.diagnostics)")
+
+        let sema = try XCTUnwrap(ctx.sema)
+        let copySymbol = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: [
+                ctx.interner.intern("Token"),
+                ctx.interner.intern("copy"),
+            ]).first
+        )
+        let copy = try XCTUnwrap(sema.symbols.symbol(copySymbol))
+
+        XCTAssertEqual(copy.visibility, .public)
+    }
+
     func testUnannotatedCopyVisibilityStaysPublicDuringMigration() throws {
         let source = """
         data class Token private constructor(val value: Int)

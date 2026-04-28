@@ -267,6 +267,12 @@ extension DataFlowSemaPhase {
         }
     }
 
+    func hasExposedCopyVisibilityAnnotation(_ classDecl: ClassDecl) -> Bool {
+        classDecl.annotations.contains { annotation in
+            KnownCompilerAnnotation.exposedCopyVisibility.matches(annotation.name)
+        }
+    }
+
     func dataClassCopyVisibility(
         for classDecl: ClassDecl,
         classKind: SymbolKind,

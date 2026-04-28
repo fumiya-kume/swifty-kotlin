@@ -200,6 +200,24 @@ extension DataFlowSemaPhase {
             }
             symbols.setAnnotations(annotations, for: consistentCopyVisibilitySymbol)
         }
+        registerSyntheticJvmAnnotationClass(
+            named: "ExposedCopyVisibility",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        if let exposedCopyVisibilitySymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern("ExposedCopyVisibility")]) {
+            let record = MetadataAnnotationRecord(
+                annotationFQName: KnownCompilerAnnotation.target.qualifiedName,
+                arguments: ["AnnotationTarget.CLASS"]
+            )
+            var annotations = symbols.annotations(for: exposedCopyVisibilitySymbol)
+            if !annotations.contains(record) {
+                annotations.append(record)
+            }
+            symbols.setAnnotations(annotations, for: exposedCopyVisibilitySymbol)
+        }
 
         registerSyntheticJvmAnnotationClass(
             named: "ExperimentalStdlibApi",
