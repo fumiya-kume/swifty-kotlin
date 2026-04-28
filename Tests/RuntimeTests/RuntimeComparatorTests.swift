@@ -822,12 +822,49 @@ final class RuntimeComparatorTests: XCTestCase {
         XCTAssertEqual(kk_comparator_nulls_first_trampoline(chain, runtimeNullSentinelInt, runtimeNullSentinelInt, nil), 0)
     }
 
+    func testComparatorNullsFirstNaturalTrampoline() {
+        let chain = kk_comparator_nulls_first_natural()
+        XCTAssertLessThan(kk_comparator_nulls_first_trampoline(chain, runtimeNullSentinelInt, 5, nil), 0)
+        XCTAssertGreaterThan(kk_comparator_nulls_first_trampoline(chain, 5, runtimeNullSentinelInt, nil), 0)
+        XCTAssertLessThan(kk_comparator_nulls_first_trampoline(chain, 3, 5, nil), 0)
+    }
+
+    func testComparatorNullsFirstDispatchesComparatorObject() {
+        withComparatorObject(mode: 1) { comparatorObject in
+            let chain = kk_comparator_nulls_first(comparatorObject, 0)
+            var thrown = 0
+            XCTAssertLessThan(
+                kk_comparator_nulls_first_trampoline(chain, runtimeNullSentinelInt, 5, &thrown),
+                0
+            )
+            XCTAssertEqual(thrown, 0)
+            XCTAssertGreaterThan(kk_comparator_nulls_first_trampoline(chain, 3, 5, &thrown), 0)
+            XCTAssertEqual(thrown, 0)
+        }
+    }
+
     func testComparatorNullsLastTrampoline() {
         let chain = kk_comparator_nulls_last(comparatorPtr(comparatorNatural), 0)
         XCTAssertGreaterThan(kk_comparator_nulls_last_trampoline(chain, runtimeNullSentinelInt, 5, nil), 0)
         XCTAssertLessThan(kk_comparator_nulls_last_trampoline(chain, 5, runtimeNullSentinelInt, nil), 0)
         XCTAssertGreaterThan(kk_comparator_nulls_last_trampoline(chain, 5, 3, nil), 0)
         XCTAssertEqual(kk_comparator_nulls_last_trampoline(chain, runtimeNullSentinelInt, runtimeNullSentinelInt, nil), 0)
+    }
+
+    func testComparatorNullsLastNaturalTrampoline() {
+        let chain = kk_comparator_nulls_last_natural()
+        XCTAssertGreaterThan(kk_comparator_nulls_last_trampoline(chain, runtimeNullSentinelInt, 5, nil), 0)
+        XCTAssertLessThan(kk_comparator_nulls_last_trampoline(chain, 5, runtimeNullSentinelInt, nil), 0)
+        XCTAssertGreaterThan(kk_comparator_nulls_last_trampoline(chain, 5, 3, nil), 0)
+    }
+
+    func testComparatorNullsLastInvalidObjectReportsThrown() {
+        let invalidComparator = registerRuntimeObject(RuntimePairBox(first: 1, second: 2))
+        let chain = kk_comparator_nulls_last(invalidComparator, 0)
+        var thrown = 0
+        let result = kk_comparator_nulls_last_trampoline(chain, 5, 3, &thrown)
+        XCTAssertEqual(result, 0)
+        XCTAssertNotEqual(thrown, 0)
     }
 
     func testComparatorThenByDescendingTrampoline() {

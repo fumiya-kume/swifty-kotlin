@@ -534,6 +534,10 @@ extension BuildASTPhase {
         // Skip leading annotations (e.g. @field:FieldMark, @Deprecated("msg"))
         // so their colons are not confused with the parameter name:type colon.
         let afterAnnotations = skipLeadingAnnotations(in: withoutDefault)
+        let annotations = leadingParameterAnnotations(
+            in: withoutDefault,
+            interner: interner
+        )
 
         let colonIndex = withoutDefault[afterAnnotations...].firstIndex(where: { token in
             if case .symbol(.colon) = token.kind {
@@ -596,6 +600,7 @@ extension BuildASTPhase {
         parameters.append(ValueParamDecl(
             name: name,
             type: typeRef,
+            annotations: annotations,
             isProperty: isValProperty || isVarProperty,
             isMutableProperty: isVarProperty,
             hasDefaultValue: hasDefaultValue,
@@ -636,6 +641,24 @@ extension BuildASTPhase {
             }
         }
         return i
+    }
+
+    private func leadingParameterAnnotations(
+        in tokens: [Token],
+        interner: StringInterner
+    ) -> [AnnotationNode] {
+        var annotations: [AnnotationNode] = []
+        var index = 0
+        while let parsed = AnnotationParsingSupport.parseAnnotation(
+            from: tokens,
+            start: index,
+            interner: interner,
+            allowUseSiteTarget: true
+        ) {
+            annotations.append(parsed.annotation)
+            index = parsed.nextIndex
+        }
+        return annotations
     }
 
     private func primaryConstructorPropertyDecls(

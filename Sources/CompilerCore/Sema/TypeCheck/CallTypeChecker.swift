@@ -1819,13 +1819,13 @@ final class CallTypeChecker {
             }
         }
 
-        // --- Comparator factory functions: naturalOrder, reverseOrder (STDLIB-649) ---
+        // --- Comparator factory functions: naturalOrder, reverseOrder, nullsFirst, nullsLast ---
         if let calleeName,
            args.isEmpty,
            !isShadowedByNonSyntheticSymbol(calleeName, locals: locals, ctx: ctx)
         {
             let calleeNameStr = interner.resolve(calleeName)
-            if calleeNameStr == "naturalOrder" || calleeNameStr == "reverseOrder" {
+            if ["naturalOrder", "reverseOrder", "nullsFirst", "nullsLast"].contains(calleeNameStr) {
                 let elementType: TypeID = if let explicitTypeArg = explicitTypeArgs.first {
                     explicitTypeArg
                 } else if let expectedType,

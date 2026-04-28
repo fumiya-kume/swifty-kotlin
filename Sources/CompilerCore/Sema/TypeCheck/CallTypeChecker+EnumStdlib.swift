@@ -120,6 +120,7 @@ extension CallTypeChecker {
             )))
             let stubSymbol = sema.symbols.lookup(fqName: [
                 interner.intern("kotlin"),
+                interner.intern("enums"),
                 interner.intern("enumEntries"),
             ])
             guard let stubSymbol else {

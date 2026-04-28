@@ -668,6 +668,69 @@ final class ComparatorOverloadResolutionTests: XCTestCase {
         }
     }
 
+    func testTopLevelNullsFirstAndLastAreRegistered() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let nullsFirstLinks = Set(
+                sema.symbols.lookupAll(fqName: [
+                    ctx.interner.intern("kotlin"),
+                    ctx.interner.intern("comparisons"),
+                    ctx.interner.intern("nullsFirst"),
+                ]).compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
+            XCTAssertTrue(nullsFirstLinks.contains("kk_comparator_nulls_first_natural"))
+            XCTAssertTrue(nullsFirstLinks.contains("kk_comparator_nulls_first_comparator"))
+
+            let nullsLastLinks = Set(
+                sema.symbols.lookupAll(fqName: [
+                    ctx.interner.intern("kotlin"),
+                    ctx.interner.intern("comparisons"),
+                    ctx.interner.intern("nullsLast"),
+                ]).compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
+            XCTAssertTrue(nullsLastLinks.contains("kk_comparator_nulls_last_natural"))
+            XCTAssertTrue(nullsLastLinks.contains("kk_comparator_nulls_last_comparator"))
+        }
+    }
+
+    func testTopLevelNullsFirstAndLastResolveCorrectly() throws {
+        let source = """
+        fun sample() {
+            val a = nullsFirst<Int>()
+            val b = nullsLast(compareBy<Int> { -it })
+            listOf(3, 1, 2).sortedWith(a)
+            listOf(3, 1, 2).sortedWith(b)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let topLevelCalls = allExprIDs(in: ast) { _, expr in
+                guard case let .call(calleeExpr, _, _, _) = expr,
+                      case let .nameRef(calleeName, _) = ast.arena.expr(calleeExpr)
+                else { return false }
+                return ["nullsFirst", "nullsLast"].contains(ctx.interner.resolve(calleeName))
+            }
+            XCTAssertEqual(topLevelCalls.count, 2)
+
+            let links = Set(topLevelCalls.compactMap { exprID -> String? in
+                guard let chosen = sema.bindings.callBinding(for: exprID)?.chosenCallee else {
+                    return nil
+                }
+                return sema.symbols.externalLinkName(for: chosen)
+            })
+            XCTAssertTrue(links.contains("kk_comparator_nulls_first_natural"))
+            XCTAssertTrue(links.contains("kk_comparator_nulls_last_comparator"))
+        }
+    }
+
     func testNullsFirstCallOnComparatorResolvesCorrectly() throws {
         let source = """
         fun sample() {

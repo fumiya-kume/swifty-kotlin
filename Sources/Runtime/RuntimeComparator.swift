@@ -8,6 +8,48 @@ private func runtimeRegisterComparatorCompareMethod(
     _ = kk_object_register_itable_method(objectRaw, 0, 0, unsafeBitCast(method, to: Int.self))
 }
 
+private func runtimeInvokeComparator(
+    fnPtr: Int,
+    closureRaw: Int,
+    lhs: Int,
+    rhs: Int,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    if fnPtr == 0 && closureRaw == 0 {
+        return runtimeCompareValues(lhs, rhs)
+    }
+
+    if closureRaw == 0,
+       let rawPointer = UnsafeMutableRawPointer(bitPattern: fnPtr),
+       runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: rawPointer)) })
+    {
+        let itableCompareFnPtr = kk_itable_lookup(fnPtr, 0, 0)
+        if itableCompareFnPtr != 0 {
+            let compareFn = unsafeBitCast(itableCompareFnPtr, to: RuntimeCollectionLambda2.self)
+            return compareFn(fnPtr, maybeUnbox(lhs), maybeUnbox(rhs), outThrown)
+        }
+
+        if runtimeIsHeapObject(fnPtr) {
+            let vtableCompareFnPtr = kk_vtable_lookup(fnPtr, 0)
+            if vtableCompareFnPtr != 0 {
+                let compareFn = unsafeBitCast(vtableCompareFnPtr, to: RuntimeCollectionLambda2.self)
+                return compareFn(fnPtr, maybeUnbox(lhs), maybeUnbox(rhs), outThrown)
+            }
+        }
+
+        outThrown?.pointee = runtimeAllocateThrowable(message: "Invalid comparator object")
+        return 0
+    }
+
+    return runtimeInvokeCollectionLambda2(
+        fnPtr: fnPtr,
+        closureRaw: closureRaw,
+        lhs: lhs,
+        rhs: rhs,
+        outThrown: outThrown
+    )
+}
+
 // MARK: - Comparator from selector (STDLIB-175)
 
 private final class RuntimePrimitiveComparatorBox {
@@ -728,12 +770,32 @@ public func kk_comparator_nulls_first(_ cFn: Int, _ cClosure: Int) -> Int {
     return raw
 }
 
+@_cdecl("kk_comparator_nulls_first_natural")
+public func kk_comparator_nulls_first_natural() -> Int {
+    kk_comparator_nulls_first(0, 0)
+}
+
+@_cdecl("kk_comparator_nulls_first_comparator")
+public func kk_comparator_nulls_first_comparator(_ comparatorRaw: Int) -> Int {
+    kk_comparator_nulls_first(comparatorRaw, 0)
+}
+
 @_cdecl("kk_comparator_nulls_last")
 public func kk_comparator_nulls_last(_ cFn: Int, _ cClosure: Int) -> Int {
     let pair = RuntimePairBox(first: cFn, second: cClosure)
     let raw = registerRuntimeObject(pair)
     runtimeRegisterComparatorCompareMethod(raw, kk_comparator_nulls_last_trampoline)
     return raw
+}
+
+@_cdecl("kk_comparator_nulls_last_natural")
+public func kk_comparator_nulls_last_natural() -> Int {
+    kk_comparator_nulls_last(0, 0)
+}
+
+@_cdecl("kk_comparator_nulls_last_comparator")
+public func kk_comparator_nulls_last_comparator(_ comparatorRaw: Int) -> Int {
+    kk_comparator_nulls_last(comparatorRaw, 0)
 }
 
 @inline(__always)
@@ -769,7 +831,7 @@ public func kk_comparator_nulls_first_trampoline(
         return nullableResult
     }
     var thrown = 0
-    let result = runtimeInvokeCollectionLambda2(
+    let result = runtimeInvokeComparator(
         fnPtr: pairBox.first,
         closureRaw: pairBox.second,
         lhs: a,
@@ -802,7 +864,7 @@ public func kk_comparator_nulls_last_trampoline(
         return nullableResult
     }
     var thrown = 0
-    let result = runtimeInvokeCollectionLambda2(
+    let result = runtimeInvokeComparator(
         fnPtr: pairBox.first,
         closureRaw: pairBox.second,
         lhs: a,

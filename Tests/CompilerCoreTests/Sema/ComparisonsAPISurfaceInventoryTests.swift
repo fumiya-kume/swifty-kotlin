@@ -94,6 +94,22 @@ final class ComparisonsAPISurfaceInventoryTests: XCTestCase {
             ["kotlin", "comparisons", "naturalOrder"],
             "kk_comparator_natural_order"
         ),
+        "fun nullsFirst(): Comparator<T?>": (
+            ["kotlin", "comparisons", "nullsFirst"],
+            "kk_comparator_nulls_first_natural"
+        ),
+        "fun nullsFirst(comparator): Comparator<T?>": (
+            ["kotlin", "comparisons", "nullsFirst"],
+            "kk_comparator_nulls_first_comparator"
+        ),
+        "fun nullsLast(): Comparator<T?>": (
+            ["kotlin", "comparisons", "nullsLast"],
+            "kk_comparator_nulls_last_natural"
+        ),
+        "fun nullsLast(comparator): Comparator<T?>": (
+            ["kotlin", "comparisons", "nullsLast"],
+            "kk_comparator_nulls_last_comparator"
+        ),
         "fun Comparator<T>.reversed(): Comparator<T>": (
             ["kotlin", "Comparator", "reversed"],
             "kk_comparator_reversed"
@@ -133,12 +149,7 @@ final class ComparisonsAPISurfaceInventoryTests: XCTestCase {
         "fun minOf(a, b, comparator): T",
     ]
 
-    private static let knownOfficialGaps: [String: String] = [
-        "fun nullsFirst(): Comparator<T?>": "STDLIB-COMP-003",
-        "fun nullsFirst(comparator): Comparator<T?>": "STDLIB-COMP-003",
-        "fun nullsLast(): Comparator<T?>": "STDLIB-COMP-003",
-        "fun nullsLast(comparator): Comparator<T?>": "STDLIB-COMP-003",
-    ]
+    private static let knownOfficialGaps: [String: String] = [:]
 
     // MARK: - Shared sema fixture
 
@@ -190,9 +201,9 @@ final class ComparisonsAPISurfaceInventoryTests: XCTestCase {
 
     func testOfficialCommonTargetInventoryHasExpectedShape() {
         XCTAssertEqual(Self.officialCommonTargets.count, 24)
-        XCTAssertEqual(Self.implementedOfficialLinks.count, 18)
+        XCTAssertEqual(Self.implementedOfficialLinks.count, 22)
         XCTAssertEqual(Self.registeredOnlyOfficialTargets.count, 2)
-        XCTAssertEqual(Self.knownOfficialGaps.count, 4)
+        XCTAssertEqual(Self.knownOfficialGaps.count, 0)
     }
 
     func testEveryOfficialCommonTargetIsClassified() {
@@ -465,6 +476,37 @@ final class ComparisonsAPISurfaceInventoryTests: XCTestCase {
         )
     }
 
+    func testTopLevelNullsFirstAndLastAreRegisteredWithCorrectLinks() throws {
+        let (sema, interner) = try makeSema()
+        let nullsFirstLinks = allExternalLinks(
+            fqPath: ["kotlin", "comparisons", "nullsFirst"],
+            sema: sema,
+            interner: interner
+        )
+        XCTAssertTrue(
+            nullsFirstLinks.contains("kk_comparator_nulls_first_natural"),
+            "top-level nullsFirst() must link to kk_comparator_nulls_first_natural; found: \(nullsFirstLinks)"
+        )
+        XCTAssertTrue(
+            nullsFirstLinks.contains("kk_comparator_nulls_first_comparator"),
+            "top-level nullsFirst(comparator) must link to kk_comparator_nulls_first_comparator; found: \(nullsFirstLinks)"
+        )
+
+        let nullsLastLinks = allExternalLinks(
+            fqPath: ["kotlin", "comparisons", "nullsLast"],
+            sema: sema,
+            interner: interner
+        )
+        XCTAssertTrue(
+            nullsLastLinks.contains("kk_comparator_nulls_last_natural"),
+            "top-level nullsLast() must link to kk_comparator_nulls_last_natural; found: \(nullsLastLinks)"
+        )
+        XCTAssertTrue(
+            nullsLastLinks.contains("kk_comparator_nulls_last_comparator"),
+            "top-level nullsLast(comparator) must link to kk_comparator_nulls_last_comparator; found: \(nullsLastLinks)"
+        )
+    }
+
     // MARK: - 15. Factory: reverseOrder
 
     func testReverseOrderIsRegisteredWithCorrectLink() throws {
@@ -682,6 +724,14 @@ final class ComparisonsAPISurfaceInventoryTests: XCTestCase {
                 ["kk_comparator_from_selector_primitive"]
             ),
             (["kotlin", "comparisons", "naturalOrder"], ["kk_comparator_natural_order"]),
+            (
+                ["kotlin", "comparisons", "nullsFirst"],
+                ["kk_comparator_nulls_first_natural", "kk_comparator_nulls_first_comparator"]
+            ),
+            (
+                ["kotlin", "comparisons", "nullsLast"],
+                ["kk_comparator_nulls_last_natural", "kk_comparator_nulls_last_comparator"]
+            ),
             (["kotlin", "comparisons", "reverseOrder"], ["kk_comparator_reverse_order"]),
             (["kotlin", "comparisons", "compareValues"], ["kk_compareValues"]),
             (
