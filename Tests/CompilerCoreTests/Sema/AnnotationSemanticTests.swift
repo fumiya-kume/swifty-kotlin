@@ -402,6 +402,60 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
     }
 
+    func testIgnorableReturnValueResolvesAndTargetsFunctions() throws {
+        let source = """
+        fun marker(x: IgnorableReturnValue?): Int = 0
+        """
+
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        let sema = try XCTUnwrap(ctx.sema)
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("IgnorableReturnValue"),
+            ]),
+            "kotlin.IgnorableReturnValue must be registered"
+        )
+        let symbolInfo = try XCTUnwrap(sema.symbols.symbol(symbol))
+        XCTAssertEqual(symbolInfo.kind, .annotationClass, "IgnorableReturnValue must be an annotation class")
+
+        let annotations = sema.symbols.annotations(for: symbol)
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == KnownCompilerAnnotation.target.qualifiedName
+                    && $0.arguments == ["AnnotationTarget.FUNCTION"]
+            },
+            "IgnorableReturnValue should target functions, got: \(annotations)"
+        )
+    }
+
+    func testIgnorableReturnValueAllowsFunctionUse() {
+        let source = """
+        @IgnorableReturnValue
+        fun ignored(): Int = 1
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected @IgnorableReturnValue to be accepted on functions, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testIgnorableReturnValueRejectsClassUse() {
+        let source = """
+        @IgnorableReturnValue
+        class Bad
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected function-only annotation target diagnostic, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+    }
+
     func testPrivateDataClassCopyVisibilityMigrationWarnsAndKeepsPublicCopy() throws {
         let source = """
         package test
