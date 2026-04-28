@@ -141,8 +141,12 @@ extension ABIMismatchTests {
             "kk_comparator_then_by_descending_comparator_selector",
             "kk_comparator_then_by_descending_comparator_selector_trampoline",
             "kk_comparator_nulls_first",
+            "kk_comparator_nulls_first_natural",
+            "kk_comparator_nulls_first_comparator",
             "kk_comparator_nulls_first_trampoline",
             "kk_comparator_nulls_last",
+            "kk_comparator_nulls_last_natural",
+            "kk_comparator_nulls_last_comparator",
             "kk_comparator_nulls_last_trampoline",
         ]
         let specNames = Set(RuntimeABISpec.allFunctions.map(\.name))
@@ -165,7 +169,11 @@ extension ABIMismatchTests {
             "kk_comparator_then_by_descending": [RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue],
             "kk_comparator_then_by_descending_comparator_selector": [RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue],
             "kk_comparator_nulls_first": [RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue],
+            "kk_comparator_nulls_first_natural": [],
+            "kk_comparator_nulls_first_comparator": [RuntimeABICType.intptr.rawValue],
             "kk_comparator_nulls_last": [RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue],
+            "kk_comparator_nulls_last_natural": [],
+            "kk_comparator_nulls_last_comparator": [RuntimeABICType.intptr.rawValue],
         ]
         let expectedTrampolineTypes: [String: [String]] = [
             "kk_comparator_then_comparator_trampoline": [RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue, RuntimeABICType.intptr.rawValue, RuntimeABICType.nullableIntptrPointer.rawValue],

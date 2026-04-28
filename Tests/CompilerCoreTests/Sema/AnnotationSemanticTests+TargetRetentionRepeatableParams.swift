@@ -6,6 +6,7 @@ import XCTest
 // Covers: @Target enforcement on additional sites, @Retention(RUNTIME) metadata,
 // @Repeatable allows multiple occurrences, @MustBeDocumented on annotation class,
 // annotation class without @Target is unrestricted, getter/setter use-site targets,
+// value-parameter and primary-constructor-property use-site targets,
 // file-level @Target(FILE) acceptance, object/enum class targets,
 // annotation with default params (no-arg call is valid),
 // annotation class with named vs positional arg acceptance.
@@ -59,6 +60,39 @@ extension AnnotationSemanticTests {
 
         XCTAssertEqual(diags.count, 1, "Expected one annotation-target diagnostic for class, got: \(ctx.diagnostics.diagnostics)")
         XCTAssertTrue(diags.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+    }
+
+    func testTargetValueParameterAcceptsFunctionParameter() {
+        let source = """
+        @Target(AnnotationTarget.VALUE_PARAMETER)
+        annotation class ParamOnly
+
+        fun accepted(@ParamOnly value: Int): Int = value
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diags = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertTrue(diags.isEmpty, "Expected no annotation-target diagnostics for value parameter, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testTargetClassRejectsFunctionParameter() {
+        let source = """
+        @Target(AnnotationTarget.CLASS)
+        annotation class ClassOnly
+
+        fun rejected(@ClassOnly value: Int): Int = value
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diags = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertEqual(diags.count, 1, "Expected one annotation-target diagnostic for value parameter, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diags.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+        XCTAssertTrue(
+            diags.first?.message.contains("value parameter") == true,
+            "Expected diagnostic to mention value parameter usage, got: \(diags.map(\.message))"
+        )
     }
 
     func testAnnotationClassWithoutTargetIsUnrestricted() {
@@ -274,6 +308,56 @@ extension AnnotationSemanticTests {
         let diags = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
 
         XCTAssertTrue(diags.isEmpty, "Expected no diagnostics for @set: use-site target on PROPERTY_SETTER annotation, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testPrimaryConstructorPropertyUseSiteTargetsAreValidated() {
+        let source = """
+        @Target(AnnotationTarget.PROPERTY)
+        annotation class PropertyMark
+
+        @Target(AnnotationTarget.FIELD)
+        annotation class FieldMark
+
+        class Box(
+            @property:PropertyMark val value: Int,
+            @field:FieldMark var mutable: Int
+        )
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diags = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertTrue(diags.isEmpty, "Expected constructor property use-site annotations to be accepted, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testFieldUseSiteTargetRejectsPlainConstructorParameter() {
+        let source = """
+        @Target(AnnotationTarget.FIELD)
+        annotation class FieldMark
+
+        class Box(@field:FieldMark value: Int)
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diags = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertEqual(diags.count, 1, "Expected one annotation-target diagnostic for plain constructor parameter field target, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diags.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+    }
+
+    func testSetterUseSiteTargetRejectsImmutableConstructorProperty() {
+        let source = """
+        @Target(AnnotationTarget.PROPERTY_SETTER)
+        annotation class SetterMark
+
+        class Box(@set:SetterMark val value: Int)
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diags = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertEqual(diags.count, 1, "Expected one annotation-target diagnostic for immutable constructor property setter target, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diags.allSatisfy(isError), "Annotation-target diagnostics should be errors")
     }
 
     // MARK: - Object and enum class targets

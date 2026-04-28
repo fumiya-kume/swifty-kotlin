@@ -226,6 +226,7 @@ struct TypeCheckScopeBuilder {
             ["kotlin", "annotation"],
             ["kotlin", "collections"],
             ["kotlin", "comparisons"],
+            ["kotlin", "enums"],
             ["kotlin", "math"],
             ["kotlin", "io"],
             ["kotlin", "ranges"],
