@@ -20,6 +20,8 @@ extension CodegenBackendIntegrationTests {
             println('ß'.uppercaseChar())
             println('İ'.lowercase())
             println('İ'.lowercaseChar())
+            println('ǆ'.titlecaseChar())
+            println('ß'.titlecaseChar())
         }
         """
 
@@ -46,6 +48,8 @@ extension CodegenBackendIntegrationTests {
                 ß
                 i\u{0307}
                 i
+                ǅ
+                ß
                 """
                 + "\n"
             )
