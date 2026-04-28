@@ -351,8 +351,12 @@
 - [ ] STDLIB-TIME-EXP-004: `TestTimeSource` surface を追加する
 =======
 - [x] STDLIB-TIME-EXP-004: `TestTimeSource` surface を追加する
+<<<<<<< HEAD
 >>>>>>> f38230a7f (Add TestTimeSource surface)
 - [ ] STDLIB-TIME-EXP-005: `Instant.isDistantPast` / `Instant.isDistantFuture` properties を追加する
+=======
+- [x] STDLIB-TIME-EXP-005: `Instant.isDistantPast` / `Instant.isDistantFuture` properties を追加する
+>>>>>>> bc17f9d2c (Add Instant distant properties)
 - [ ] STDLIB-TIME-EXP-006: `TimeSource.asClock()` を追加する
 - [~] STDLIB-CORO-001: `kotlin.coroutines.intrinsics` / cancellation — 主要部分実装済み（`suspendCoroutineUninterceptedOrReturn`, `intercepted`, `CancellationException`）。残課題は別チケットへ分割。
 - [ ] STDLIB-CORO-002: `kotlin.coroutines.intrinsics` の runtime entry point（`startCoroutineUninterceptedOrReturn`, `createCoroutineUnintercepted`）を追加する。対応 C ABI 名: `kk_start_coroutine_unintercepted_or_return`, `kk_create_coroutine_unintercepted`。
