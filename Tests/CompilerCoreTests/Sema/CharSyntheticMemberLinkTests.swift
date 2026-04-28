@@ -34,6 +34,7 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
             "isLetter": "kk_char_isLetter",
             "isLetterOrDigit": "kk_char_isLetterOrDigit",
             "isWhitespace": "kk_char_isWhitespace",
+            "isDefined": "kk_char_isDefined",
             "digitToInt": "kk_char_digitToInt",
             "digitToIntOrNull": "kk_char_digitToIntOrNull",
             "uppercaseChar": "kk_char_uppercaseChar",
@@ -181,6 +182,7 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
             ch.isLetter()
             ch.isLetterOrDigit()
             ch.isWhitespace()
+            ch.isDefined()
             ch.digitToInt()
             ch.digitToIntOrNull()
             ch.uppercase()
@@ -213,6 +215,7 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
                 "isLetter": "kk_char_isLetter",
                 "isLetterOrDigit": "kk_char_isLetterOrDigit",
                 "isWhitespace": "kk_char_isWhitespace",
+                "isDefined": "kk_char_isDefined",
                 "digitToInt": "kk_char_digitToInt",
                 "digitToIntOrNull": "kk_char_digitToIntOrNull",
                 "uppercaseChar": "kk_char_uppercaseChar",

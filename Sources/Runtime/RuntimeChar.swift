@@ -65,6 +65,17 @@ public func kk_char_isWhitespace(_ value: Int) -> Int {
     return kk_box_bool(scalar.properties.isWhitespace ? 1 : 0)
 }
 
+@_cdecl("kk_char_isDefined")
+public func kk_char_isDefined(_ value: Int) -> Int {
+    if value >= 0xD800 && value <= 0xDFFF {
+        return kk_box_bool(1)
+    }
+    guard let scalar = runtimeUnicodeScalar(value) else {
+        return kk_box_bool(0)
+    }
+    return kk_box_bool(scalar.properties.generalCategory == .unassigned ? 0 : 1)
+}
+
 @_cdecl("kk_char_uppercase")
 public func kk_char_uppercase(_ value: Int) -> Int {
     guard let scalar = runtimeUnicodeScalar(value) else {

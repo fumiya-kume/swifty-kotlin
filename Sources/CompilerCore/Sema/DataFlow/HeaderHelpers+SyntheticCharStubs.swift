@@ -99,6 +99,11 @@ private let syntheticCharMemberSpecs: [SyntheticCharMemberSpec] = [
         returnKind: .boolean
     ),
     SyntheticCharMemberSpec(
+        name: "isDefined",
+        externalLinkName: "kk_char_isDefined",
+        returnKind: .boolean
+    ),
+    SyntheticCharMemberSpec(
         name: "uppercase",
         externalLinkName: "kk_char_uppercase",
         returnKind: .string
