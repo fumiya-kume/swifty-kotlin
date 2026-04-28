@@ -26,10 +26,28 @@ extension DataFlowSemaPhase {
         let rwPropertyType = types.make(.classType(ClassType(
             classSymbol: rwPropertySymbol, args: [], nullability: .nonNull
         )))
+        registerPropertyDelegateInterfaceTypeParameters(
+            ownerSymbol: rwPropertySymbol,
+            ownerPackage: kotlinPropertiesPkg,
+            ownerName: "ReadWriteProperty",
+            variances: [.in, .invariant],
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
 
         // Register kotlin.properties.ReadOnlyProperty<in T, out V> interface stub.
-        _ = ensureInterfaceSymbol(
+        let readOnlyPropertySymbol = ensureInterfaceSymbol(
             named: "ReadOnlyProperty", in: kotlinPropertiesPkg, symbols: symbols, interner: interner
+        )
+        registerPropertyDelegateInterfaceTypeParameters(
+            ownerSymbol: readOnlyPropertySymbol,
+            ownerPackage: kotlinPropertiesPkg,
+            ownerName: "ReadOnlyProperty",
+            variances: [.in, .out],
+            symbols: symbols,
+            types: types,
+            interner: interner
         )
 
         // Register kotlin.reflect.KProperty<out V> interface stub so that
@@ -64,6 +82,15 @@ extension DataFlowSemaPhase {
         registerSyntheticKTypeStubs(
             symbols: symbols, types: types, interner: interner,
             kotlinReflectPkg: kotlinReflectPkg, kotlinPkg: kotlinPkg
+        )
+
+        registerObservablePropertyStub(
+            kotlinPropertiesPkg: kotlinPropertiesPkg,
+            readWritePropertySymbol: rwPropertySymbol,
+            kPropertySymbol: kPropertySymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
         )
 
         // Register `name` property on KProperty (inherited from KCallable).
@@ -259,6 +286,38 @@ extension DataFlowSemaPhase {
         }
     }
 
+    private func registerPropertyDelegateInterfaceTypeParameters(
+        ownerSymbol: SymbolID,
+        ownerPackage: [InternedString],
+        ownerName: String,
+        variances: [TypeVariance],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let ownerName = interner.intern(ownerName)
+        let ownerFQName = ownerPackage + [ownerName]
+        let typeParamNames = ["T", "V"].map { interner.intern($0) }
+        let typeParamSymbols = typeParamNames.map { name in
+            let fqName = ownerFQName + [name]
+            if let existing = symbols.lookup(fqName: fqName) {
+                return existing
+            }
+            let symbol = symbols.define(
+                kind: .typeParameter,
+                name: name,
+                fqName: fqName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(ownerSymbol, for: symbol)
+            return symbol
+        }
+        types.setNominalTypeParameterSymbols(typeParamSymbols, for: ownerSymbol)
+        types.setNominalTypeParameterVariances(variances, for: ownerSymbol)
+    }
+
     private func registerPropertyDelegateProviderStub(
         kotlinPropertiesPkg: [InternedString],
         kPropertySymbol: SymbolID,
@@ -377,6 +436,261 @@ extension DataFlowSemaPhase {
                 classTypeParameterCount: 2
             ),
             for: provideSymbol
+        )
+    }
+
+    private func registerObservablePropertyStub(
+        kotlinPropertiesPkg: [InternedString],
+        readWritePropertySymbol: SymbolID,
+        kPropertySymbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let observableName = interner.intern("ObservableProperty")
+        let observableFQName = kotlinPropertiesPkg + [observableName]
+        let observableSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: observableFQName) {
+            observableSymbol = existing
+            symbols.insertFlags([.abstractType, .synthetic], for: existing)
+        } else {
+            observableSymbol = symbols.define(
+                kind: .class,
+                name: observableName,
+                fqName: observableFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .abstractType]
+            )
+            if let packageSymbol = symbols.lookup(fqName: kotlinPropertiesPkg), packageSymbol != .invalid {
+                symbols.setParentSymbol(packageSymbol, for: observableSymbol)
+            }
+        }
+
+        let vName = interner.intern("V")
+        let vFQName = observableFQName + [vName]
+        let vSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: vFQName) {
+            vSymbol = existing
+        } else {
+            vSymbol = symbols.define(
+                kind: .typeParameter,
+                name: vName,
+                fqName: vFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(observableSymbol, for: vSymbol)
+        }
+
+        types.setNominalTypeParameterSymbols([vSymbol], for: observableSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: observableSymbol)
+
+        let vType = types.make(.typeParam(TypeParamType(symbol: vSymbol, nullability: .nonNull)))
+        let observableType = types.make(.classType(ClassType(
+            classSymbol: observableSymbol,
+            args: [.invariant(vType)],
+            nullability: .nonNull
+        )))
+        let nullableAny = types.makeNullable(types.anyType)
+        let kPropertyType = types.make(.classType(ClassType(
+            classSymbol: kPropertySymbol,
+            args: [.star],
+            nullability: .nonNull
+        )))
+
+        symbols.setDirectSupertypes([readWritePropertySymbol], for: observableSymbol)
+        types.setNominalDirectSupertypes([readWritePropertySymbol], for: observableSymbol)
+        let readWriteArgs: [TypeArg] = [.in(nullableAny), .invariant(vType)]
+        symbols.setSupertypeTypeArgs(readWriteArgs, for: observableSymbol, supertype: readWritePropertySymbol)
+        types.setNominalSupertypeTypeArgs(readWriteArgs, for: observableSymbol, supertype: readWritePropertySymbol)
+
+        registerObservablePropertyConstructor(
+            ownerSymbol: observableSymbol,
+            ownerFQName: observableFQName,
+            ownerType: observableType,
+            valueType: vType,
+            typeParameterSymbol: vSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerObservablePropertyFunction(
+            named: "beforeChange",
+            visibility: .protected,
+            flags: [.synthetic, .openType],
+            ownerSymbol: observableSymbol,
+            ownerFQName: observableFQName,
+            ownerType: observableType,
+            parameterNames: ["property", "oldValue", "newValue"],
+            parameterTypes: [kPropertyType, vType, vType],
+            returnType: types.booleanType,
+            typeParameterSymbol: vSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerObservablePropertyFunction(
+            named: "afterChange",
+            visibility: .protected,
+            flags: [.synthetic, .openType],
+            ownerSymbol: observableSymbol,
+            ownerFQName: observableFQName,
+            ownerType: observableType,
+            parameterNames: ["property", "oldValue", "newValue"],
+            parameterTypes: [kPropertyType, vType, vType],
+            returnType: types.unitType,
+            typeParameterSymbol: vSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerObservablePropertyFunction(
+            named: "getValue",
+            flags: [.synthetic, .operatorFunction, .overrideMember, .openType],
+            ownerSymbol: observableSymbol,
+            ownerFQName: observableFQName,
+            ownerType: observableType,
+            parameterNames: ["thisRef", "property"],
+            parameterTypes: [nullableAny, kPropertyType],
+            returnType: vType,
+            typeParameterSymbol: vSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerObservablePropertyFunction(
+            named: "setValue",
+            flags: [.synthetic, .operatorFunction, .overrideMember, .openType],
+            ownerSymbol: observableSymbol,
+            ownerFQName: observableFQName,
+            ownerType: observableType,
+            parameterNames: ["thisRef", "property", "value"],
+            parameterTypes: [nullableAny, kPropertyType, vType],
+            returnType: types.unitType,
+            typeParameterSymbol: vSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerObservablePropertyFunction(
+            named: "toString",
+            flags: [.synthetic, .overrideMember, .openType],
+            ownerSymbol: observableSymbol,
+            ownerFQName: observableFQName,
+            ownerType: observableType,
+            parameterNames: [],
+            parameterTypes: [],
+            returnType: types.make(.primitive(.string, .nonNull)),
+            typeParameterSymbol: vSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    private func registerObservablePropertyConstructor(
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        ownerType: TypeID,
+        valueType: TypeID,
+        typeParameterSymbol: SymbolID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let initName = interner.intern("<init>")
+        let initFQName = ownerFQName + [initName]
+        if symbols.lookup(fqName: initFQName) != nil {
+            return
+        }
+        let constructorSymbol = symbols.define(
+            kind: .constructor,
+            name: initName,
+            fqName: initFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: constructorSymbol)
+
+        let parameterName = interner.intern("initialValue")
+        let parameterSymbol = symbols.define(
+            kind: .valueParameter,
+            name: parameterName,
+            fqName: initFQName + [parameterName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(constructorSymbol, for: parameterSymbol)
+        symbols.setPropertyType(valueType, for: parameterSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [valueType],
+                returnType: ownerType,
+                valueParameterSymbols: [parameterSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
+                typeParameterSymbols: [typeParameterSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: constructorSymbol
+        )
+    }
+
+    private func registerObservablePropertyFunction(
+        named name: String,
+        visibility: Visibility = .public,
+        flags: SymbolFlags,
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        ownerType: TypeID,
+        parameterNames: [String],
+        parameterTypes: [TypeID],
+        returnType: TypeID,
+        typeParameterSymbol: SymbolID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = ownerFQName + [functionName]
+        if symbols.lookup(fqName: functionFQName) != nil {
+            return
+        }
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: visibility,
+            flags: flags
+        )
+        symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
+
+        var parameterSymbols: [SymbolID] = []
+        for (parameterNameText, parameterType) in zip(parameterNames, parameterTypes) {
+            let parameterName = interner.intern(parameterNameText)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: functionFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            symbols.setPropertyType(parameterType, for: parameterSymbol)
+            parameterSymbols.append(parameterSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: ownerType,
+                parameterTypes: parameterTypes,
+                returnType: returnType,
+                valueParameterSymbols: parameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: parameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: parameterSymbols.count),
+                typeParameterSymbols: [typeParameterSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: functionSymbol
         )
     }
 
