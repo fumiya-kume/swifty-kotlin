@@ -360,7 +360,7 @@
 - [x] STDLIB-NATIVE-REF-006: `kotlin.native.runtime.GC` の欠損プロパティと `schedule()` を runtime レベルで追加する（`targetHeapBytes`, `targetHeapUtilization`, `maxHeapBytes`, `schedule`）
 - [x] STDLIB-NATIVE-REF-007: `kotlin.native.runtime.Debugging` の欠損トラッキング API を追加する（`gcSuspendCount`, `threadCount`, `globalObjectCount`）
 - [x] STDLIB-NATIVE-REF-008: `kotlin.native.runtime.GCInfo` surface を追加する
-- [ ] STDLIB-NATIVE-REF-009: `kotlin.native.runtime.RootSetStatistics` surface を追加する
+- [x] STDLIB-NATIVE-REF-009: `kotlin.native.runtime.RootSetStatistics` surface を追加する
 - [ ] STDLIB-NATIVE-REF-010: `kotlin.native.runtime.SweepStatistics` surface を追加する
 - [ ] STDLIB-NATIVE-REF-011: `kotlin.native.runtime.NativeRuntimeApi` marker を追加する
 - [x] STDLIB-SYSTEM-001: `kotlin.system` の対象 API 一覧を固定
