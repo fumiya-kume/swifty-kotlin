@@ -54,6 +54,8 @@ extension ABIMismatchTests {
             // String radix conversion
             "kk_string_toIntOrNull_radix",
             "kk_string_case_insensitive_order",
+            // Char locale case conversion
+            "kk_char_lowercase_locale",
             "kk_system_exitProcess",
             "kk_system_currentTimeMillis",
             "kk_system_nanoTime",
