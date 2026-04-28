@@ -4,26 +4,27 @@ import XCTest
 
 // MARK: - STDLIB-UUID-001 / STDLIB-UUID-002: kotlin.uuid.Uuid API surface inventory
 //
-// This file catalogues every Uuid-related symbol that the sema layer registers as a
-// synthetic stub and verifies that:
+// This file catalogues the Uuid-related symbols that the sema layer registers as
+// synthetic stubs and verifies that:
 //   • the kotlin.uuid package hierarchy is present after sema
 //   • Uuid class, Companion object, and all factory/instance members are wired to
 //     the correct ABI external-link names
-//   • overload resolution between Uuid.parse and Uuid.parseHex (gap: see below)
+//   • implemented companion factories are tracked in one inventory
+//   • known pending companion members are tracked as gaps
 //   • Uuid.random() return type resolves to kotlin.uuid.Uuid
 //   • toString vs toHexString dispatch is tracked as separate links
 //   • toByteArray() and toLongs() are present with their signatures
-//   • NIL constant (gap: see below)
 //   • @ExperimentalUuidApi opt-in marker: now synthesised (STDLIB-EXPERIMENTAL-ABI-001)
 //
 // Scope: sema / symbol-table level only.  Runtime correctness is in RuntimeUuidTests
 //        and the edge-case file added in PR #1221 (UUID-003).
 //
-// NOTE — known gaps detected during inventory (UUID-002):
-//   • Uuid.parseHex(hex: String) overload is not yet registered by the sema layer.
-//     `allExternalLinks` for kotlin.uuid.Uuid.Companion.parseHex returns an empty set.
-//   • Uuid.NIL companion constant is not yet registered.
-//   • @ExperimentalUuidApi: resolved in STDLIB-EXPERIMENTAL-ABI-001 (PR #1282).
+// NOTE - known gaps detected during inventory:
+//   • Uuid.parseHex(hexString: String) is pending (STDLIB-UUID-004).
+//   • Uuid.NIL is pending (STDLIB-UUID-005).
+//   • parseHexDash / parseOrNull / parseHexOrNull / parseHexDashOrNull are pending
+//     (STDLIB-UUID-007 through STDLIB-UUID-010).
+//   • SIZE_BITS / SIZE_BYTES and LEXICAL_ORDER are pending (STDLIB-UUID-011/012).
 
 final class UuidAPISurfaceInventoryTests: XCTestCase {
 
@@ -184,6 +185,32 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
         XCTAssertTrue(
             links.contains("kk_uuid_nameUUIDFromBytes"),
             "Uuid.nameUUIDFromBytes must link to kk_uuid_nameUUIDFromBytes; found: \(links)"
+        )
+    }
+
+    func testUuidFromLongsCompanionMethodIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let links = allExternalLinks(
+            fqPath: ["kotlin", "uuid", "Uuid", "Companion", "fromLongs"],
+            sema: sema,
+            interner: interner
+        )
+        XCTAssertTrue(
+            links.contains("kk_uuid_fromLongs"),
+            "Uuid.fromLongs must link to kk_uuid_fromLongs; found: \(links)"
+        )
+    }
+
+    func testUuidFromByteArrayCompanionMethodIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let links = allExternalLinks(
+            fqPath: ["kotlin", "uuid", "Uuid", "Companion", "fromByteArray"],
+            sema: sema,
+            interner: interner
+        )
+        XCTAssertTrue(
+            links.contains("kk_uuid_fromByteArray"),
+            "Uuid.fromByteArray must link to kk_uuid_fromByteArray; found: \(links)"
         )
     }
 
@@ -384,11 +411,33 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
         let (sema, interner) = try makeSema()
         let fq = ["kotlin", "uuid", "Uuid", "Companion", "NIL"].map { interner.intern($0) }
         let syms = sema.symbols.lookupAll(fqName: fq)
-        // TODO(STDLIB-UUID-002): When NIL is implemented, assert syms is non-empty.
+        // TODO(STDLIB-UUID-005): When NIL is implemented, assert syms is non-empty.
         XCTAssertTrue(
             syms.isEmpty,
             "Uuid.NIL constant is not yet registered (expected gap); found \(syms.count) symbols"
         )
+    }
+
+    func testKnownPendingUuidCompanionMembersAreTrackedAsGaps() throws {
+        let (sema, interner) = try makeSema()
+        let pendingMembers = [
+            "parseHexDash",       // STDLIB-UUID-007
+            "parseOrNull",        // STDLIB-UUID-008
+            "parseHexOrNull",     // STDLIB-UUID-009
+            "parseHexDashOrNull", // STDLIB-UUID-010
+            "SIZE_BITS",          // STDLIB-UUID-011
+            "SIZE_BYTES",         // STDLIB-UUID-011
+            "LEXICAL_ORDER",      // STDLIB-UUID-012
+        ]
+
+        for memberName in pendingMembers {
+            let fq = ["kotlin", "uuid", "Uuid", "Companion", memberName].map { interner.intern($0) }
+            let syms = sema.symbols.lookupAll(fqName: fq)
+            XCTAssertTrue(
+                syms.isEmpty,
+                "Uuid.\(memberName) is a tracked pending API and must remain absent until its TODO is implemented; found \(syms.count) symbols"
+            )
+        }
     }
 
     // MARK: - 9. @ExperimentalUuidApi opt-in annotation — now synthesised (STDLIB-EXPERIMENTAL-ABI-001)
@@ -414,9 +463,11 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
             "kk_uuid_random",
             "kk_uuid_parse",
             "kk_uuid_nameUUIDFromBytes",
+            "kk_uuid_fromLongs",
+            "kk_uuid_fromByteArray",
         ]
         var foundLinks: Set<String> = []
-        for memberName in ["random", "parse", "nameUUIDFromBytes"] {
+        for memberName in ["random", "parse", "nameUUIDFromBytes", "fromLongs", "fromByteArray"] {
             let path = companionFQ + [memberName]
             let links = allExternalLinks(fqPath: path, sema: sema, interner: interner)
             foundLinks.formUnion(links)
