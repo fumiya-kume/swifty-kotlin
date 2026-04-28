@@ -8155,6 +8155,7 @@ public enum RuntimeABISpec {
             + durationFunctions
             + timeAndPathBridgeFunctions
             + atomicFunctions
+            + nativeRefFunctions
             + threadLocalFunctions
             + threadFunctions
             + securityFunctions
