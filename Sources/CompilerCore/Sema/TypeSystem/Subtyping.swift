@@ -150,6 +150,10 @@ extension TypeSystem {
         case (.any(.nonNull), .any(.nullable)):
             return true
 
+        case let (.typeParam(leftParam), .typeParam(rightParam)):
+            return leftParam.symbol == rightParam.symbol
+                && nullabilitySubtype(leftParam.nullability, rightParam.nullability)
+
         case let (.primitive(leftPrimitive, leftNullability), .primitive(rightPrimitive, rightNullability)):
             return leftPrimitive == rightPrimitive && nullabilitySubtype(leftNullability, rightNullability)
 

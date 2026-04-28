@@ -1011,6 +1011,7 @@ extension ABILoweringPass {
             interner.intern("kk_kclass_is_data"),
             interner.intern("kk_kclass_is_sealed"),
             interner.intern("kk_kclass_is_value"),
+            interner.intern("kk_kclass_safeCast"),
             interner.intern("kk_kclass_members_count"),
             // STDLIB-REFLECT-060: KClass basic reflection non-throwing callees
             interner.intern("kk_kclass_is_final"),

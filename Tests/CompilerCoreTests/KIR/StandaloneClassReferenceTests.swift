@@ -370,4 +370,53 @@ final class StandaloneClassReferenceTests: XCTestCase {
             }
         }
     }
+
+    func testDirectKClassSafeCastEmitsNonThrowingRuntimeCall() throws {
+        let source = """
+        fun safeCastString(value: Any?): String? = String::class.safeCast(value)
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "safeCastString", in: module, interner: ctx.interner)
+            XCTAssertTrue(
+                body.contains { instruction in
+                    guard case let .call(_, callee, _, _, canThrow, _, _, _) = instruction else { return false }
+                    return ctx.interner.resolve(callee) == "kk_kclass_safeCast" && !canThrow
+                },
+                "Expected String::class.safeCast to lower to non-throwing kk_kclass_safeCast"
+            )
+        }
+    }
+
+    func testKClassSafeCastViaLocalAndParameterEmitRuntimeCall() throws {
+        let source = """
+        import kotlin.reflect.KClass
+
+        fun safeCastViaLocal(value: Any?): String? {
+            val klass = String::class
+            return klass.safeCast(value)
+        }
+
+        fun <T : Any> safeCastWithClass(klass: KClass<T>, value: Any?): T? = klass.safeCast(value)
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            for functionName in ["safeCastViaLocal", "safeCastWithClass"] {
+                let body = try findKIRFunctionBody(named: functionName, in: module, interner: ctx.interner)
+                XCTAssertTrue(
+                    body.contains { instruction in
+                        guard case let .call(_, callee, _, _, canThrow, _, _, _) = instruction else { return false }
+                        return ctx.interner.resolve(callee) == "kk_kclass_safeCast" && !canThrow
+                    },
+                    "Expected \(functionName) to lower to non-throwing kk_kclass_safeCast"
+                )
+            }
+        }
+    }
 }

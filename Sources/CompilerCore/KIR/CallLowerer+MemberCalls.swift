@@ -651,7 +651,7 @@ extension CallLowerer {
             // STDLIB-REFLECT-060 / STDLIB-REFLECT-064: basic metadata and primaryConstructor
             // STDLIB-REFLECT-065: annotations, findAnnotation
             let kclassCallees: Set<String> = [
-                "isInstance", "cast", "members", "constructors", "primaryConstructor",
+                "isInstance", "cast", "safeCast", "members", "constructors", "primaryConstructor",
                 "properties", "memberProperties", "declaredMemberProperties",
                 "functions", "memberFunctions", "declaredMemberFunctions",
                 "isFinal", "isOpen", "isAbstract", "visibility",
@@ -683,7 +683,7 @@ extension CallLowerer {
         {
             let callee = interner.resolve(calleeName)
             let kclassVarCallees: Set<String> = [
-                "isInstance", "cast", "members", "constructors", "primaryConstructor",
+                "isInstance", "cast", "safeCast", "members", "constructors", "primaryConstructor",
                 "properties", "memberProperties", "declaredMemberProperties",
                 "functions", "memberFunctions", "declaredMemberFunctions",
                 "isFinal", "isOpen", "isAbstract", "visibility",
@@ -8578,7 +8578,7 @@ extension CallLowerer {
             ))
             return result
 
-        case "cast":
+        case "cast", "safeCast":
             let valueExpr: KIRExprID
             if let firstArg = args.first {
                 valueExpr = driver.lowerExpr(
@@ -8593,12 +8593,13 @@ extension CallLowerer {
             }
             let resultType = sema.bindings.exprTypes[exprID] ?? classRefTargetType
             let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+            let canThrow = memberName == "cast"
             instructions.append(.call(
                 symbol: nil,
-                callee: interner.intern("kk_kclass_cast"),
+                callee: interner.intern(canThrow ? "kk_kclass_cast" : "kk_kclass_safeCast"),
                 arguments: [kclassExpr, valueExpr],
                 result: result,
-                canThrow: true,
+                canThrow: canThrow,
                 thrownResult: nil
             ))
             return result
@@ -8930,7 +8931,7 @@ extension CallLowerer {
             ))
             return result
 
-        case "cast":
+        case "cast", "safeCast":
             let valueExpr: KIRExprID
             if let firstArg = args.first {
                 valueExpr = driver.lowerExpr(
@@ -8945,12 +8946,13 @@ extension CallLowerer {
             }
             let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
             let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+            let canThrow = memberName == "cast"
             instructions.append(.call(
                 symbol: nil,
-                callee: interner.intern("kk_kclass_cast"),
+                callee: interner.intern(canThrow ? "kk_kclass_cast" : "kk_kclass_safeCast"),
                 arguments: [kclassExpr, valueExpr],
                 result: result,
-                canThrow: true,
+                canThrow: canThrow,
                 thrownResult: nil
             ))
             return result

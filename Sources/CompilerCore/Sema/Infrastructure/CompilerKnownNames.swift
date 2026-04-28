@@ -255,6 +255,7 @@ struct KnownCompilerNames {
     let qualifiedName: InternedString
     let isInstanceName: InternedString
     let kClassCastName: InternedString
+    let kClassSafeCastName: InternedString
     let membersName: InternedString
     let constructorsName: InternedString
     // STDLIB-REFLECT-060: KClass basic reflection features
@@ -442,6 +443,7 @@ struct KnownCompilerNames {
         qualifiedName = interner.intern("qualifiedName")
         isInstanceName = interner.intern("isInstance")
         kClassCastName = interner.intern("cast")
+        kClassSafeCastName = interner.intern("safeCast")
         membersName = interner.intern("members")
         constructorsName = interner.intern("constructors")
         // STDLIB-REFLECT-060: KClass basic reflection features

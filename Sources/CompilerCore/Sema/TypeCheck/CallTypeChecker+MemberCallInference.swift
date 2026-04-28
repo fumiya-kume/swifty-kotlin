@@ -340,6 +340,14 @@ extension CallTypeChecker {
         return knownNames.builtinType(named: symbol.name, types: sema.types) ?? nonNullTargetType
     }
 
+    private func kClassSafeCastReturnType(
+        from targetType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID {
+        sema.types.makeNullable(kClassCastReturnType(from: targetType, sema: sema, interner: interner))
+    }
+
     private func isCoroutineHandleReceiverType(
         _ receiverType: TypeID,
         sema: SemaModule,
@@ -504,6 +512,13 @@ extension CallTypeChecker {
                     _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
                     let targetType = sema.bindings.classRefTargetType(for: receiverID) ?? sema.types.anyType
                     let returnType = kClassCastReturnType(from: targetType, sema: sema, interner: interner)
+                    sema.bindings.bindExprType(id, type: returnType)
+                    return returnType
+                }
+                if calleeName == knownNames.kClassSafeCastName, args.count == 1 {
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+                    let targetType = sema.bindings.classRefTargetType(for: receiverID) ?? sema.types.anyType
+                    let returnType = kClassSafeCastReturnType(from: targetType, sema: sema, interner: interner)
                     sema.bindings.bindExprType(id, type: returnType)
                     return returnType
                 }
@@ -778,6 +793,12 @@ extension CallTypeChecker {
             if calleeName == knownNames.kClassCastName, args.count == 1 {
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
                 let returnType = kClassCastReturnType(from: kClassArgumentType, sema: sema, interner: interner)
+                sema.bindings.bindExprType(id, type: returnType)
+                return returnType
+            }
+            if calleeName == knownNames.kClassSafeCastName, args.count == 1 {
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+                let returnType = kClassSafeCastReturnType(from: kClassType.argument, sema: sema, interner: interner)
                 sema.bindings.bindExprType(id, type: returnType)
                 return returnType
             }

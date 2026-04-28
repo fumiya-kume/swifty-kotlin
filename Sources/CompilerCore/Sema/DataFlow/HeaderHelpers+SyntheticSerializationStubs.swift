@@ -88,7 +88,7 @@ extension DataFlowSemaPhase {
             args: [],
             nullability: .nonNull
         )))
-        registerKClassCastStub(
+        registerKClassCastStubs(
             kClassSymbol: kClassSymbol,
             anyType: anyType,
             nullableAnyType: types.nullableAnyType,
@@ -552,7 +552,45 @@ extension DataFlowSemaPhase {
         )
     }
 
-    private func registerKClassCastStub(
+    private func registerKClassCastStubs(
+        kClassSymbol: SymbolID,
+        anyType: TypeID,
+        nullableAnyType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        registerKClassCastOperationStub(
+            memberNameRaw: "cast",
+            externalLinkName: "kk_kclass_cast",
+            returnsNullable: false,
+            canThrow: true,
+            kClassSymbol: kClassSymbol,
+            anyType: anyType,
+            nullableAnyType: nullableAnyType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerKClassCastOperationStub(
+            memberNameRaw: "safeCast",
+            externalLinkName: "kk_kclass_safeCast",
+            returnsNullable: true,
+            canThrow: false,
+            kClassSymbol: kClassSymbol,
+            anyType: anyType,
+            nullableAnyType: nullableAnyType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+    }
+
+    private func registerKClassCastOperationStub(
+        memberNameRaw: String,
+        externalLinkName: String,
+        returnsNullable: Bool,
+        canThrow: Bool,
         kClassSymbol: SymbolID,
         anyType: TypeID,
         nullableAnyType: TypeID,
@@ -563,24 +601,28 @@ extension DataFlowSemaPhase {
         guard let ownerInfo = symbols.symbol(kClassSymbol) else {
             return
         }
-        let memberName = interner.intern("cast")
+        let memberName = interner.intern(memberNameRaw)
         let memberFQName = ownerInfo.fqName + [memberName]
         guard symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
-            symbols.externalLinkName(for: symbolID) == "kk_kclass_cast"
+            symbols.externalLinkName(for: symbolID) == externalLinkName
         }) == nil else {
             return
         }
 
+        var memberFlags: SymbolFlags = [.synthetic]
+        if canThrow {
+            memberFlags.insert(.throwingFunction)
+        }
         let memberSymbol = symbols.define(
             kind: .function,
             name: memberName,
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic, .throwingFunction]
+            flags: memberFlags
         )
         symbols.setParentSymbol(kClassSymbol, for: memberSymbol)
-        symbols.setExternalLinkName("kk_kclass_cast", for: memberSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
 
         let tName = interner.intern("T")
         let tParamSymbol = symbols.define(
@@ -606,6 +648,7 @@ extension DataFlowSemaPhase {
         symbols.setParentSymbol(memberSymbol, for: valueParamSymbol)
 
         let tType = types.make(.typeParam(TypeParamType(symbol: tParamSymbol, nullability: .nonNull)))
+        let returnType = returnsNullable ? types.makeNullable(tType) : tType
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: types.make(.classType(ClassType(
@@ -614,8 +657,8 @@ extension DataFlowSemaPhase {
                     nullability: .nonNull
                 ))),
                 parameterTypes: [nullableAnyType],
-                returnType: tType,
-                canThrow: true,
+                returnType: returnType,
+                canThrow: canThrow,
                 valueParameterSymbols: [valueParamSymbol],
                 valueParameterHasDefaultValues: [false],
                 valueParameterIsVararg: [false],

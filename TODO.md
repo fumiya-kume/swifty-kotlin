@@ -245,7 +245,7 @@
 - [x] STDLIB-REFLECT-073: `kotlin.reflect.KVariance` enum を追加する
 - [x] STDLIB-REFLECT-074: `kotlin.reflect.KTypeProjection` の data-class surface（`variance` / `type`）を追加する
 - [x] STDLIB-REFLECT-075: `KClass.cast(value)` を既存 runtime (`kk_kclass_cast`) へ接続する
-- [ ] STDLIB-REFLECT-076: `KClass.safeCast(value)` を既存 runtime へ接続する
+- [x] STDLIB-REFLECT-076: `KClass.safeCast(value)` を既存 runtime へ接続する
 - [x] STDLIB-REFLECT-077: `kotlin.reflect.AssociatedObjectKey` annotation を追加する
 - [x] STDLIB-REFLECT-078: `kotlin.reflect.ExperimentalAssociatedObjects` opt-in marker を追加する
 - [x] STDLIB-REFLECT-079: `KClass.findAssociatedObject<T>()` Native reflect surface を追加する
