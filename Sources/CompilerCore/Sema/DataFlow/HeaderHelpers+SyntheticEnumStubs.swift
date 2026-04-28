@@ -71,7 +71,6 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             types: types,
             interner: interner,
-            kotlinPkg: kotlinPkg,
             kotlinEnumsPkg: kotlinEnumsPkg
         )
     }
@@ -307,11 +306,10 @@ extension DataFlowSemaPhase {
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,
-        kotlinPkg: [InternedString],
         kotlinEnumsPkg: [InternedString]
     ) {
         let enumEntriesName = interner.intern("enumEntries")
-        let enumEntriesFQName = kotlinPkg + [enumEntriesName]
+        let enumEntriesFQName = kotlinEnumsPkg + [enumEntriesName]
         guard symbols.lookupAll(fqName: enumEntriesFQName).isEmpty else { return }
 
         let enumEntriesInterfaceName = interner.intern("EnumEntries")
@@ -343,7 +341,7 @@ extension DataFlowSemaPhase {
             visibility: .public,
             flags: [.synthetic, .inlineFunction]
         )
-        if let pkg = symbols.lookup(fqName: kotlinPkg), pkg != .invalid {
+        if let pkg = symbols.lookup(fqName: kotlinEnumsPkg), pkg != .invalid {
             symbols.setParentSymbol(pkg, for: funcSymbol)
         }
         symbols.setFunctionSignature(
