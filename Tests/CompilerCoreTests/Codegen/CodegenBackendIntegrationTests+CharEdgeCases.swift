@@ -5,6 +5,8 @@ import XCTest
 extension CodegenBackendIntegrationTests {
     func testCodegenCompilesCharEdgeCases() throws {
         let source = """
+        @file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)
+
         fun main() {
             println('5'.digitToInt())
             println('9'.digitToInt())
@@ -23,6 +25,8 @@ extension CodegenBackendIntegrationTests {
             println('ǆ'.titlecaseChar())
             println('ß'.titlecaseChar())
             println('A'.isDefined())
+            println(Char.isSupplementaryCodePoint(0x10000))
+            println(Char.isSurrogatePair('\\uD800', '\\uDC00'))
         }
         """
 
@@ -51,6 +55,8 @@ extension CodegenBackendIntegrationTests {
                 i
                 ǅ
                 ß
+                true
+                true
                 true
                 """
                 + "\n"
