@@ -4,8 +4,8 @@
 /// Verifies:
 /// 1. Name resolution — all symbols are registered and look-uppable.
 /// 2. Signature visibility — member signatures have the expected shape.
-/// 3. Experimental opt-in requirement — symbols carry the
-///    `@ExperimentalNativeApi` annotation so opt-in diagnostics fire.
+/// 3. Opt-in requirements — symbols carry their expected native opt-in marker
+///    annotations so diagnostics fire.
 
 @testable import CompilerCore
 import Foundation
@@ -91,6 +91,34 @@ final class NativeRefRuntimeSemaTests: XCTestCase {
         XCTAssertNotNil(
             sema.symbols.lookup(fqName: fqName),
             "Expected kotlin.native.runtime package to be registered"
+        )
+    }
+
+    func testNativeRuntimeApiMarkerIsRegisteredAsRequiresOptIn() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "native", "runtime", "NativeRuntimeApi"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "Expected kotlin.native.runtime.NativeRuntimeApi to be registered"
+        )
+        XCTAssertEqual(sema.symbols.symbol(symbol)?.kind, .annotationClass)
+
+        let annotations = sema.symbols.annotations(for: symbol)
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.RequiresOptIn"
+                    && $0.arguments.contains("level=RequiresOptIn.Level.ERROR")
+            },
+            "NativeRuntimeApi should carry @RequiresOptIn(ERROR), got \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.annotation.Target"
+                    && $0.arguments.contains("AnnotationTarget.FUNCTION")
+                    && $0.arguments.contains("AnnotationTarget.PROPERTY")
+                    && $0.arguments.contains("AnnotationTarget.TYPEALIAS")
+            },
+            "NativeRuntimeApi should carry the Kotlin/Native runtime target set, got \(annotations)"
         )
     }
 
@@ -292,13 +320,13 @@ final class NativeRefRuntimeSemaTests: XCTestCase {
         }
     }
 
-    func testGCIsTaggedExperimentalNativeApi() throws {
+    func testGCIsTaggedNativeRuntimeApi() throws {
         let (sema, interner) = try makeSema()
         let fqName = ["kotlin", "native", "runtime", "GC"].map { interner.intern($0) }
         let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
         XCTAssertTrue(
-            hasOptInAnnotation(on: symbol, markerContaining: "ExperimentalNativeApi", sema: sema),
-            "GC should carry @ExperimentalNativeApi annotation"
+            hasOptInAnnotation(on: symbol, markerContaining: "NativeRuntimeApi", sema: sema),
+            "GC should carry @NativeRuntimeApi annotation"
         )
     }
 
@@ -343,13 +371,13 @@ final class NativeRefRuntimeSemaTests: XCTestCase {
         )
     }
 
-    func testRootSetStatisticsIsTaggedExperimentalNativeApi() throws {
+    func testRootSetStatisticsIsTaggedNativeRuntimeApi() throws {
         let (sema, interner) = try makeSema()
         let fqName = ["kotlin", "native", "runtime", "RootSetStatistics"].map { interner.intern($0) }
         let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
         XCTAssertTrue(
-            hasOptInAnnotation(on: symbol, markerContaining: "ExperimentalNativeApi", sema: sema),
-            "RootSetStatistics should carry @ExperimentalNativeApi until NativeRuntimeApi is modeled"
+            hasOptInAnnotation(on: symbol, markerContaining: "NativeRuntimeApi", sema: sema),
+            "RootSetStatistics should carry @NativeRuntimeApi annotation"
         )
     }
 
@@ -392,13 +420,13 @@ final class NativeRefRuntimeSemaTests: XCTestCase {
         )
     }
 
-    func testSweepStatisticsIsTaggedExperimentalNativeApi() throws {
+    func testSweepStatisticsIsTaggedNativeRuntimeApi() throws {
         let (sema, interner) = try makeSema()
         let fqName = ["kotlin", "native", "runtime", "SweepStatistics"].map { interner.intern($0) }
         let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
         XCTAssertTrue(
-            hasOptInAnnotation(on: symbol, markerContaining: "ExperimentalNativeApi", sema: sema),
-            "SweepStatistics should carry @ExperimentalNativeApi until NativeRuntimeApi is modeled"
+            hasOptInAnnotation(on: symbol, markerContaining: "NativeRuntimeApi", sema: sema),
+            "SweepStatistics should carry @NativeRuntimeApi annotation"
         )
     }
 
@@ -529,6 +557,10 @@ final class NativeRefRuntimeSemaTests: XCTestCase {
         let classFQName = ["kotlin", "native", "runtime", "MemoryUsage"].map { interner.intern($0) }
         let classSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: classFQName))
         XCTAssertEqual(sema.symbols.symbol(classSymbol)?.kind, .class)
+        XCTAssertTrue(
+            hasOptInAnnotation(on: classSymbol, markerContaining: "NativeRuntimeApi", sema: sema),
+            "MemoryUsage should carry @NativeRuntimeApi annotation"
+        )
 
         let propertySymbol = try XCTUnwrap(
             sema.symbols.lookup(fqName: classFQName + [interner.intern("totalObjectsSizeBytes")])
@@ -542,13 +574,13 @@ final class NativeRefRuntimeSemaTests: XCTestCase {
         XCTAssertEqual(signature.parameterTypes, [sema.types.longType])
     }
 
-    func testGCInfoIsTaggedExperimentalNativeApi() throws {
+    func testGCInfoIsTaggedNativeRuntimeApi() throws {
         let (sema, interner) = try makeSema()
         let fqName = ["kotlin", "native", "runtime", "GCInfo"].map { interner.intern($0) }
         let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
         XCTAssertTrue(
-            hasOptInAnnotation(on: symbol, markerContaining: "ExperimentalNativeApi", sema: sema),
-            "GCInfo should carry @ExperimentalNativeApi until NativeRuntimeApi is modeled"
+            hasOptInAnnotation(on: symbol, markerContaining: "NativeRuntimeApi", sema: sema),
+            "GCInfo should carry @NativeRuntimeApi annotation"
         )
     }
 
@@ -608,13 +640,13 @@ final class NativeRefRuntimeSemaTests: XCTestCase {
         }
     }
 
-    func testDebuggingIsTaggedExperimentalNativeApi() throws {
+    func testDebuggingIsTaggedNativeRuntimeApi() throws {
         let (sema, interner) = try makeSema()
         let fqName = ["kotlin", "native", "runtime", "Debugging"].map { interner.intern($0) }
         let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
         XCTAssertTrue(
-            hasOptInAnnotation(on: symbol, markerContaining: "ExperimentalNativeApi", sema: sema),
-            "Debugging should carry @ExperimentalNativeApi annotation"
+            hasOptInAnnotation(on: symbol, markerContaining: "NativeRuntimeApi", sema: sema),
+            "Debugging should carry @NativeRuntimeApi annotation"
         )
     }
 
@@ -654,6 +686,43 @@ final class NativeRefRuntimeSemaTests: XCTestCase {
         XCTAssertTrue(
             optInDiagnostics.isEmpty,
             "Expected no opt-in diagnostic when @OptIn(ExperimentalNativeApi::class) is present"
+        )
+    }
+
+    func testUsingGCWithoutNativeRuntimeApiOptInProducesDiagnostic() {
+        let source = """
+        import kotlin.native.runtime.GC
+
+        fun probe() {
+            GC.collect()
+        }
+        """
+        let ctx = runSemaCollectingDiagnostics(source)
+        let optInDiagnostics = ctx.diagnostics.diagnostics.filter {
+            $0.code == "KSWIFTK-SEMA-OPT-IN"
+        }
+        XCTAssertFalse(
+            optInDiagnostics.isEmpty,
+            "Expected opt-in diagnostic for GC usage without @OptIn(NativeRuntimeApi::class)"
+        )
+    }
+
+    func testUsingGCWithNativeRuntimeApiOptInSuppressesDiagnostic() {
+        let source = """
+        @file:OptIn(kotlin.native.runtime.NativeRuntimeApi::class)
+        import kotlin.native.runtime.GC
+
+        fun probe() {
+            GC.collect()
+        }
+        """
+        let ctx = runSemaCollectingDiagnostics(source)
+        let optInDiagnostics = ctx.diagnostics.diagnostics.filter {
+            $0.code == "KSWIFTK-SEMA-OPT-IN"
+        }
+        XCTAssertTrue(
+            optInDiagnostics.isEmpty,
+            "Expected no opt-in diagnostic when @OptIn(NativeRuntimeApi::class) is present"
         )
     }
 }
