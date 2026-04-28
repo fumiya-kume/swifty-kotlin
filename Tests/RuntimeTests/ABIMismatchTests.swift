@@ -361,6 +361,13 @@ final class ABIMismatchTests: XCTestCase {
         }
     }
 
+    func testKKThrowablePrintStackTraceSignature() throws {
+        let spec = try requireSpec("kk_throwable_printStackTrace")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 1)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+    }
+
     func testKKNoWhenBranchMatchedExceptionConstructorsSignature() throws {
         let noArg = try requireSpec("kk_no_when_branch_matched_exception_new")
         XCTAssertEqual(noArg.returnType, .intptr)
