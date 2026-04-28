@@ -3,6 +3,7 @@ import java.util.Locale
 fun main() {
     println("%s:%d".format("age", 7))
     println("%.1f".format(3.5))
+    println(String.format(Locale("de", "DE"), "%.1f", 3.5))
 
     println("Hello".uppercase())
     println("Hello".lowercase())

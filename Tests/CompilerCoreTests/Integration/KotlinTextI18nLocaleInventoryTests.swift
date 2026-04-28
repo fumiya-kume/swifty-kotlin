@@ -16,12 +16,13 @@ import XCTest
 //   - String.toIntOrNull()                 → kk_string_toIntOrNull  (no-radix variant)
 //   - String.toIntOrNull(radix)            → kk_string_toIntOrNull_radix
 //   - String.format(format, vararg args)   → kk_string_format  (platform fmt, no locale overload)
+//   - String.Companion.format(locale, format, vararg args) → kk_string_format_locale
 //   - Char.uppercase()                     → kk_char_uppercase  (returns String per Kotlin spec)
 //   - Char.lowercase()                     → kk_char_lowercase  (returns String per Kotlin spec)
 //   - Char.titlecase()                     → kk_char_titlecase
 //
 // Gaps (absent in common scope):
-//   - String.format(locale, format, vararg args)  — locale-parameterised overload absent
+//   - String.format(locale, vararg args)  — locale-parameterised receiver overload absent
 //   - Char.uppercase(Locale)  — locale-aware single-char conversion absent
 //   - Char.lowercase(Locale)  — locale-aware single-char conversion absent
 //   - NumberFormat (java.text) is JVM/platform only, not common multiplatform
@@ -217,6 +218,18 @@ final class KotlinTextI18nLocaleInventoryTests: XCTestCase {
         try assertKotlinCompilesToKIR("""
         fun main() {
             val result = String.format("Pi is approximately %.2f", 3.14159)
+            println(result)
+        }
+        """)
+    }
+
+    func testStringCompanionFormatLocaleSpecifier() throws {
+        try assertKotlinCompilesToKIR("""
+        import java.util.Locale
+
+        fun main() {
+            val locale = Locale("de", "DE")
+            val result = String.format(locale, "Pi is approximately %.1f", 3.5)
             println(result)
         }
         """)

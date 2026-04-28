@@ -74,6 +74,7 @@ extension ABILoweringPass {
             interner.intern("kk_string_normalize"),
             interner.intern("kk_string_isNormalized"),
             interner.intern("kk_string_format"),
+            interner.intern("kk_string_format_locale"),
             interner.intern("kk_string_replace"),
             interner.intern("kk_string_replaceFirst"),
             interner.intern("kk_string_startsWith"),
