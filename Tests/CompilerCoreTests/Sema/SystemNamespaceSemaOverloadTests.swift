@@ -80,7 +80,60 @@ final class SystemNamespaceSemaOverloadTests: XCTestCase {
         }
     }
 
-    /// measureTimeMillis, measureTimeMicros, and measureNanoTime are distinct top-level symbols
+    // MARK: - STDLIB-SYSTEM-001: API list / symbol registration
+
+    func testKotlinSystemAPIInventoryMatchesTrackedSurface() throws {
+        let (sema, interner) = try makeSema()
+
+        let implementedTopLevelFunctions: [(name: String, link: String)] = [
+            ("exitProcess", "kk_system_exitProcess"),
+            ("measureTimeMillis", "kk_system_measureTimeMillis"),
+            ("measureNanoTime", "kk_system_measureNanoTime"),
+        ]
+        for function in implementedTopLevelFunctions {
+            XCTAssertEqual(
+                systemPkgExternalLink(for: function.name, sema: sema, interner: interner),
+                function.link,
+                "kotlin.system.\(function.name) should remain implemented via \(function.link)"
+            )
+        }
+
+        let pendingNativeTopLevelFunctions = [
+            "getTimeMicros",
+            "getTimeMillis",
+            "getTimeNanos",
+            "measureTimeMicros",
+        ]
+        for functionName in pendingNativeTopLevelFunctions {
+            XCTAssertTrue(
+                allSystemPkgLinks(for: functionName, sema: sema, interner: interner).isEmpty,
+                "kotlin.system.\(functionName) is intentionally tracked by later STDLIB-SYSTEM TODOs"
+            )
+        }
+
+        let systemFQ = ["kotlin", "system", "System"].map { interner.intern($0) }
+        let systemSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: systemFQ),
+            "Existing kotlin.system.System shim should remain registered"
+        )
+        let systemName = try XCTUnwrap(sema.symbols.symbol(systemSymbol)?.fqName)
+        let shimMembers = [
+            ("currentTimeMillis", "kk_system_currentTimeMillis"),
+            ("nanoTime", "kk_system_nanoTime"),
+            ("processStartNanos", "kk_system_process_start_nanos"),
+        ]
+        for member in shimMembers {
+            let memberFQ = systemName + [interner.intern(member.0)]
+            XCTAssertTrue(
+                sema.symbols.lookupAll(fqName: memberFQ).contains {
+                    sema.symbols.externalLinkName(for: $0) == member.1
+                },
+                "kotlin.system.System.\(member.0) should remain linked to \(member.1)"
+            )
+        }
+    }
+
+    /// measureTimeMillis and measureNanoTime are distinct top-level symbols
     /// in kotlin.system and map to different runtime entry points.
     func testMeasureTimeFunctionsAreRegisteredAsSeparateSymbols() throws {
         let (sema, interner) = try makeSema()
