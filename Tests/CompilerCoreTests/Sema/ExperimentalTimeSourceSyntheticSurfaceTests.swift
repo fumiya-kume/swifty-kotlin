@@ -283,4 +283,68 @@ final class ExperimentalTimeSourceSyntheticSurfaceTests: XCTestCase {
         )))
         XCTAssertEqual(markSignature.returnType, comparableTimeMarkType)
     }
+
+    func testTimeSourceAsClockExtensionIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let kotlinTime = ["kotlin", "time"].map { interner.intern($0) }
+
+        let timeSourceSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: kotlinTime + [
+            interner.intern("TimeSource"),
+        ]))
+        let instantSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: kotlinTime + [
+            interner.intern("Instant"),
+        ]))
+        let clockSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: kotlinTime + [
+            interner.intern("Clock"),
+        ]))
+        let timeSourceType = sema.types.make(.classType(ClassType(
+            classSymbol: timeSourceSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let instantType = sema.types.make(.classType(ClassType(
+            classSymbol: instantSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let clockType = sema.types.make(.classType(ClassType(
+            classSymbol: clockSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        let asClockSymbol = try XCTUnwrap(sema.symbols.lookupAll(fqName: kotlinTime + [
+            interner.intern("asClock"),
+        ]).first)
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: asClockSymbol))
+        XCTAssertEqual(sema.symbols.externalLinkName(for: asClockSymbol), "kk_time_source_as_clock")
+        XCTAssertEqual(signature.receiverType, timeSourceType)
+        XCTAssertEqual(signature.parameterTypes, [instantType])
+        XCTAssertEqual(signature.returnType, clockType)
+    }
+
+    func testTimeSourceAsClockResolvesInSource() throws {
+        let source = """
+        import kotlin.time.*
+
+        fun makeClock(source: TimeSource, origin: Instant): Clock {
+            return source.asClock(origin)
+        }
+        """
+
+        let (sema, interner) = try makeSema(source: source)
+        let makeClockSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [interner.intern("makeClock")]))
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: makeClockSymbol))
+        let clockSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("time"),
+            interner.intern("Clock"),
+        ]))
+        let clockType = sema.types.make(.classType(ClassType(
+            classSymbol: clockSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        XCTAssertEqual(signature.returnType, clockType)
+    }
 }
