@@ -253,6 +253,7 @@ struct KnownCompilerNames {
     // STDLIB-REFLECT-065: Annotation reflection
     let annotationsName: InternedString
     let findAnnotationName: InternedString
+    let findAssociatedObjectName: InternedString
     let annotationClassName: InternedString
     let size: InternedString
     let isEmpty: InternedString
@@ -438,6 +439,7 @@ struct KnownCompilerNames {
         // STDLIB-REFLECT-065: Annotation reflection
         annotationsName = interner.intern("annotations")
         findAnnotationName = interner.intern("findAnnotation")
+        findAssociatedObjectName = interner.intern("findAssociatedObject")
         annotationClassName = interner.intern("annotationClass")
         size = interner.intern("size")
         isEmpty = interner.intern("isEmpty")

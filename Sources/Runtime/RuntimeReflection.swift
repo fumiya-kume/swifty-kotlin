@@ -312,6 +312,39 @@ public func kk_kclass_find_annotation(_ kclassRaw: Int, _ nameRaw: Int) -> Int {
     return runtimeNullSentinelInt
 }
 
+/// Looks up the associated object bound by an annotation key on a KClass.
+/// The current metadata pipeline records annotation arguments as strings, so
+/// this returns null unless a future emitter stores a runtime object handle.
+@_cdecl("kk_kclass_find_associated_object")
+public func kk_kclass_find_associated_object(_ kclassRaw: Int, _ keyNameRaw: Int) -> Int {
+    guard let kclass = runtimeReflectionKClassBox(from: kclassRaw),
+          let metadata = kclass.metadata,
+          let keyName = extractString(from: UnsafeMutableRawPointer(bitPattern: keyNameRaw))
+    else {
+        return runtimeNullSentinelInt
+    }
+
+    for record in metadata.annotations where runtimeShouldExposeAnnotation(fqName: record.annotationFQName) {
+        let simpleName = record.annotationFQName.split(separator: ".").last.map(String.init) ?? record.annotationFQName
+        guard record.annotationFQName == keyName || simpleName == keyName else {
+            continue
+        }
+        return runtimeAssociatedObjectHandle(from: record.arguments)
+    }
+    return runtimeNullSentinelInt
+}
+
+private func runtimeAssociatedObjectHandle(from arguments: [String]) -> Int {
+    for argument in arguments {
+        if argument.hasPrefix("runtimeObjectRaw="),
+           let raw = Int(argument.dropFirst("runtimeObjectRaw=".count))
+        {
+            return raw
+        }
+    }
+    return runtimeNullSentinelInt
+}
+
 /// Registers a single annotation for a KClass identified by typeToken.
 /// Called during module initialization (once per annotation) to attach compile-time
 /// annotation data to the already-registered metadata entry.

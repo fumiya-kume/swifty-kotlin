@@ -3709,6 +3709,15 @@ public enum RuntimeABISpec {
             section: "Reflection"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_kclass_find_associated_object",
+            parameters: [
+                RuntimeABIParameter(name: "kclassRaw", type: .intptr),
+                RuntimeABIParameter(name: "keyNameRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Reflection"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_kclass_register_single_annotation",
             parameters: [
                 RuntimeABIParameter(name: "typeToken", type: .intptr),

@@ -332,6 +332,32 @@ extension CallTypeChecker {
         return knownNames.isChannelSymbol(symbol)
     }
 
+    private func isKClassReceiverType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+        if case .kClassType = sema.types.kind(of: nonNullReceiverType) {
+            return true
+        }
+
+        guard case let .classType(classType) = sema.types.kind(of: nonNullReceiverType),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+
+        let kotlinReflectKClassFQName = [
+            interner.intern("kotlin"),
+            interner.intern("reflect"),
+            interner.intern("KClass"),
+        ]
+        let kClassName = interner.intern("KClass")
+        return symbol.fqName == kotlinReflectKClassFQName
+            || (symbol.name == kClassName && symbol.fqName.isEmpty)
+    }
+
     // swiftlint:disable cyclomatic_complexity function_body_length
     /// This legacy inference path still owns many special cases while the split-out helpers
     /// are being migrated.
@@ -449,6 +475,17 @@ extension CallTypeChecker {
                     let nullableAnyType = sema.types.makeNullable(sema.types.anyType)
                     sema.bindings.bindExprType(id, type: nullableAnyType)
                     return nullableAnyType
+                }
+                // STDLIB-REFLECT-079: findAssociatedObject<T>()
+                if calleeName == knownNames.findAssociatedObjectName {
+                    return bindKClassFindAssociatedObjectCall(
+                        id,
+                        args: args,
+                        explicitTypeArgs: explicitTypeArgs,
+                        range: range,
+                        ctx: ctx,
+                        locals: &locals
+                    )
                 }
             }
         }
@@ -651,7 +688,7 @@ extension CallTypeChecker {
             return boundContinuationCall
         }
 
-        if case .kClassType = sema.types.kind(of: sema.types.makeNonNullable(receiverType)) {
+        if isKClassReceiverType(receiverType, sema: sema, interner: interner) {
             if calleeName == knownNames.isInstanceName, args.count == 1 {
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
                 let boolType = sema.types.booleanType
@@ -705,6 +742,17 @@ extension CallTypeChecker {
                 let nullableAnyType = sema.types.makeNullable(sema.types.anyType)
                 sema.bindings.bindExprType(id, type: nullableAnyType)
                 return nullableAnyType
+            }
+            // STDLIB-REFLECT-079: findAssociatedObject<T>()
+            if calleeName == knownNames.findAssociatedObjectName {
+                return bindKClassFindAssociatedObjectCall(
+                    id,
+                    args: args,
+                    explicitTypeArgs: explicitTypeArgs,
+                    range: range,
+                    ctx: ctx,
+                    locals: &locals
+                )
             }
         }
 
@@ -8622,5 +8670,50 @@ extension CallTypeChecker {
         let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
         sema.bindings.bindExprType(id, type: finalType)
         return finalType
+    }
+
+    private func bindKClassFindAssociatedObjectCall(
+        _ id: ExprID,
+        args: [CallArgument],
+        explicitTypeArgs: [TypeID],
+        range: SourceRange,
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
+    ) -> TypeID {
+        let sema = ctx.sema
+        let interner = ctx.interner
+
+        for arg in args {
+            _ = driver.inferExpr(arg.expr, ctx: ctx, locals: &locals)
+        }
+
+        let functionFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("reflect"),
+            interner.intern("findAssociatedObject"),
+        ]
+        if let chosen = sema.symbols.lookupAll(fqName: functionFQName).first(where: { candidate in
+            sema.symbols.symbol(candidate)?.kind == .function
+        }) {
+            sema.bindings.bindCall(
+                id,
+                binding: CallBinding(
+                    chosenCallee: chosen,
+                    substitutedTypeArguments: explicitTypeArgs,
+                    parameterMapping: [:]
+                )
+            )
+            sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+            driver.helpers.checkOptIn(
+                for: chosen,
+                ctx: ctx,
+                range: range,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+        }
+
+        let nullableAnyType = sema.types.makeNullable(sema.types.anyType)
+        sema.bindings.bindExprType(id, type: nullableAnyType)
+        return nullableAnyType
     }
 }
