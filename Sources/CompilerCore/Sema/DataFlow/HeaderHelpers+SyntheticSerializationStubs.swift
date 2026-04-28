@@ -88,6 +88,14 @@ extension DataFlowSemaPhase {
             args: [],
             nullability: .nonNull
         )))
+        registerKClassCastStub(
+            kClassSymbol: kClassSymbol,
+            anyType: anyType,
+            nullableAnyType: types.nullableAnyType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
 
         registerSyntheticEncoderStubs(
             encoderSymbol: encoderSymbol,
@@ -478,6 +486,7 @@ extension DataFlowSemaPhase {
         returnType: TypeID,
         parameters: [(name: String, type: TypeID)],
         externalLinkName: String?,
+        canThrow: Bool = false,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -497,13 +506,17 @@ extension DataFlowSemaPhase {
             return
         }
 
+        var flags: SymbolFlags = [.synthetic]
+        if canThrow {
+            flags.insert(.throwingFunction)
+        }
         let memberSymbol = symbols.define(
             kind: .function,
             name: memberName,
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: flags
         )
         symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
         if let externalLinkName, !externalLinkName.isEmpty {
@@ -530,9 +543,85 @@ extension DataFlowSemaPhase {
                 receiverType: ownerType,
                 parameterTypes: parameters.map(\.type),
                 returnType: returnType,
+                canThrow: canThrow,
                 valueParameterSymbols: valueParameterSymbols,
                 valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
                 valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+            ),
+            for: memberSymbol
+        )
+    }
+
+    private func registerKClassCastStub(
+        kClassSymbol: SymbolID,
+        anyType: TypeID,
+        nullableAnyType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(kClassSymbol) else {
+            return
+        }
+        let memberName = interner.intern("cast")
+        let memberFQName = ownerInfo.fqName + [memberName]
+        guard symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+            symbols.externalLinkName(for: symbolID) == "kk_kclass_cast"
+        }) == nil else {
+            return
+        }
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .throwingFunction]
+        )
+        symbols.setParentSymbol(kClassSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_kclass_cast", for: memberSymbol)
+
+        let tName = interner.intern("T")
+        let tParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: tName,
+            fqName: memberFQName + [tName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(memberSymbol, for: tParamSymbol)
+        symbols.setTypeParameterUpperBounds([anyType], for: tParamSymbol)
+
+        let valueName = interner.intern("value")
+        let valueParamSymbol = symbols.define(
+            kind: .valueParameter,
+            name: valueName,
+            fqName: memberFQName + [valueName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(memberSymbol, for: valueParamSymbol)
+
+        let tType = types.make(.typeParam(TypeParamType(symbol: tParamSymbol, nullability: .nonNull)))
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: types.make(.classType(ClassType(
+                    classSymbol: kClassSymbol,
+                    args: [.out(tType)],
+                    nullability: .nonNull
+                ))),
+                parameterTypes: [nullableAnyType],
+                returnType: tType,
+                canThrow: true,
+                valueParameterSymbols: [valueParamSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
+                typeParameterSymbols: [tParamSymbol],
+                typeParameterUpperBoundsList: [[anyType]],
+                classTypeParameterCount: 1
             ),
             for: memberSymbol
         )

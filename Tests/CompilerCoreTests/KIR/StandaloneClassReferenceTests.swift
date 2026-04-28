@@ -293,4 +293,53 @@ final class StandaloneClassReferenceTests: XCTestCase {
             XCTFail("kk_kclass_create call not found in main body")
         }
     }
+
+    func testDirectKClassCastEmitsThrowingRuntimeCall() throws {
+        let source = """
+        fun castString(value: Any?): String = String::class.cast(value)
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "castString", in: module, interner: ctx.interner)
+            XCTAssertTrue(
+                body.contains { instruction in
+                    guard case let .call(_, callee, _, _, canThrow, _, _, _) = instruction else { return false }
+                    return ctx.interner.resolve(callee) == "kk_kclass_cast" && canThrow
+                },
+                "Expected String::class.cast to lower to throwing kk_kclass_cast"
+            )
+        }
+    }
+
+    func testKClassCastViaLocalAndParameterEmitRuntimeCall() throws {
+        let source = """
+        import kotlin.reflect.KClass
+
+        fun castViaLocal(value: Any?): String {
+            val klass = String::class
+            return klass.cast(value)
+        }
+
+        fun <T : Any> castWithClass(klass: KClass<T>, value: Any?): T = klass.cast(value)
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            for functionName in ["castViaLocal", "castWithClass"] {
+                let body = try findKIRFunctionBody(named: functionName, in: module, interner: ctx.interner)
+                XCTAssertTrue(
+                    body.contains { instruction in
+                        guard case let .call(_, callee, _, _, canThrow, _, _, _) = instruction else { return false }
+                        return ctx.interner.resolve(callee) == "kk_kclass_cast" && canThrow
+                    },
+                    "Expected \(functionName) to lower to throwing kk_kclass_cast"
+                )
+            }
+        }
+    }
 }

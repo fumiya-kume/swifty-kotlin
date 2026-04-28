@@ -651,7 +651,7 @@ extension CallLowerer {
             // STDLIB-REFLECT-060 / STDLIB-REFLECT-064: basic metadata and primaryConstructor
             // STDLIB-REFLECT-065: annotations, findAnnotation
             let kclassCallees: Set<String> = [
-                "isInstance", "members", "constructors", "primaryConstructor",
+                "isInstance", "cast", "members", "constructors", "primaryConstructor",
                 "properties", "memberProperties", "declaredMemberProperties",
                 "functions", "memberFunctions", "declaredMemberFunctions",
                 "isFinal", "isOpen", "isAbstract", "visibility",
@@ -683,7 +683,7 @@ extension CallLowerer {
         {
             let callee = interner.resolve(calleeName)
             let kclassVarCallees: Set<String> = [
-                "isInstance", "members", "constructors", "primaryConstructor",
+                "isInstance", "cast", "members", "constructors", "primaryConstructor",
                 "properties", "memberProperties", "declaredMemberProperties",
                 "functions", "memberFunctions", "declaredMemberFunctions",
                 "isFinal", "isOpen", "isAbstract", "visibility",
@@ -6081,6 +6081,7 @@ extension CallLowerer {
             interner.intern("kk_list_runningFoldIndexed"),
             interner.intern("kk_list_runningReduceIndexed"),
             interner.intern("kk_list_scanIndexed"),
+            interner.intern("kk_kclass_cast"),
             interner.intern("kk_range_first_predicate"),
             interner.intern("kk_range_last_predicate"),
             interner.intern("kk_range_random"),
@@ -8581,6 +8582,31 @@ extension CallLowerer {
             ))
             return result
 
+        case "cast":
+            let valueExpr: KIRExprID
+            if let firstArg = args.first {
+                valueExpr = driver.lowerExpr(
+                    firstArg.expr,
+                    ast: ast, sema: sema, arena: arena, interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+            } else {
+                valueExpr = arena.appendExpr(.intLiteral(0), type: intType)
+                instructions.append(.constValue(result: valueExpr, value: .intLiteral(0)))
+            }
+            let resultType = sema.bindings.exprTypes[exprID] ?? classRefTargetType
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_kclass_cast"),
+                arguments: [kclassExpr, valueExpr],
+                result: result,
+                canThrow: true,
+                thrownResult: nil
+            ))
+            return result
+
         case "members":
             // members: Collection<KCallable<*>>
             let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
@@ -8883,6 +8909,31 @@ extension CallLowerer {
                 arguments: [kclassExpr, valueExpr],
                 result: result,
                 canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+
+        case "cast":
+            let valueExpr: KIRExprID
+            if let firstArg = args.first {
+                valueExpr = driver.lowerExpr(
+                    firstArg.expr,
+                    ast: ast, sema: sema, arena: arena, interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+            } else {
+                valueExpr = arena.appendExpr(.intLiteral(0), type: intType)
+                instructions.append(.constValue(result: valueExpr, value: .intLiteral(0)))
+            }
+            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_kclass_cast"),
+                arguments: [kclassExpr, valueExpr],
+                result: result,
+                canThrow: true,
                 thrownResult: nil
             ))
             return result

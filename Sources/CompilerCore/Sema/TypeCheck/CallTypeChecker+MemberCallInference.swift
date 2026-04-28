@@ -287,6 +287,22 @@ extension CallTypeChecker {
         return nil
     }
 
+    private func kClassCastReturnType(
+        from targetType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID {
+        let nonNullTargetType = sema.types.makeNonNullable(targetType)
+        guard case let .classType(classType) = sema.types.kind(of: nonNullTargetType),
+              let symbol = sema.symbols.symbol(classType.classSymbol),
+              symbol.fqName.dropLast() == [interner.intern("kotlin")]
+        else {
+            return nonNullTargetType
+        }
+        let knownNames = KnownCompilerNames(interner: interner)
+        return knownNames.builtinType(named: symbol.name, types: sema.types) ?? nonNullTargetType
+    }
+
     private func isCoroutineHandleReceiverType(
         _ receiverType: TypeID,
         sema: SemaModule,
@@ -400,6 +416,13 @@ extension CallTypeChecker {
                     let boolType = sema.types.booleanType
                     sema.bindings.bindExprType(id, type: boolType)
                     return boolType
+                }
+                if calleeName == knownNames.kClassCastName, args.count == 1 {
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+                    let targetType = sema.bindings.classRefTargetType(for: receiverID) ?? sema.types.anyType
+                    let returnType = kClassCastReturnType(from: targetType, sema: sema, interner: interner)
+                    sema.bindings.bindExprType(id, type: returnType)
+                    return returnType
                 }
                 // STDLIB-REFLECT-060: KClass boolean properties (isFinal, isOpen, isAbstract)
                 let kclassBooleanCallees: Set<InternedString> = [
@@ -651,12 +674,18 @@ extension CallTypeChecker {
             return boundContinuationCall
         }
 
-        if case .kClassType = sema.types.kind(of: sema.types.makeNonNullable(receiverType)) {
+        if case let .kClassType(kClassType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)) {
             if calleeName == knownNames.isInstanceName, args.count == 1 {
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
                 let boolType = sema.types.booleanType
                 sema.bindings.bindExprType(id, type: boolType)
                 return boolType
+            }
+            if calleeName == knownNames.kClassCastName, args.count == 1 {
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+                let returnType = kClassCastReturnType(from: kClassType.argument, sema: sema, interner: interner)
+                sema.bindings.bindExprType(id, type: returnType)
+                return returnType
             }
             // STDLIB-REFLECT-060: KClass boolean properties via variable receiver
             let kclassVarBooleanCallees: Set<InternedString> = [
