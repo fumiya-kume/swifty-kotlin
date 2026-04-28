@@ -436,7 +436,6 @@ extension DataFlowSemaPhase {
             isOperator: true
         )
 
-
         let monotonicFQName = ensureExperimentalTimeNestedObject(
             named: "Monotonic",
             ownerSymbol: timeSourceSymbol,
