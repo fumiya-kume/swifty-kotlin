@@ -656,7 +656,7 @@ extension CallLowerer {
                 "functions", "memberFunctions", "declaredMemberFunctions",
                 "isFinal", "isOpen", "isAbstract", "visibility",
                 "typeParameters", "supertypes",
-                "annotations", "findAnnotation",
+                "annotations", "findAnnotation", "findAssociatedObject",
             ]
             if kclassCallees.contains(callee) {
                 return lowerKClassReflectMemberCall(
@@ -688,7 +688,7 @@ extension CallLowerer {
                 "functions", "memberFunctions", "declaredMemberFunctions",
                 "isFinal", "isOpen", "isAbstract", "visibility",
                 "typeParameters", "supertypes",
-                "annotations", "findAnnotation",
+                "annotations", "findAnnotation", "findAssociatedObject",
             ]
             if kclassVarCallees.contains(callee) {
                 return lowerKClassVarReflectMemberCall(
@@ -8392,6 +8392,24 @@ extension CallLowerer {
 
     // MARK: - REFL-005: KClass.isInstance / members / constructors Lowering
 
+    private func lowerKClassReifiedTypeNameHint(
+        exprID: ExprID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        let typeArg = sema.bindings.callBindings[exprID]?.substitutedTypeArguments.first
+        let name = typeArg.flatMap { RuntimeTypeCheckToken.qualifiedName(of: $0, sema: sema, interner: interner) }
+            ?? typeArg.flatMap { RuntimeTypeCheckToken.simpleName(of: $0, sema: sema, interner: interner) }
+            ?? typeArg.map { sema.types.renderType($0) }
+            ?? ""
+        let internedName = interner.intern(name)
+        let result = arena.appendExpr(.stringLiteral(internedName), type: sema.types.stringType)
+        instructions.append(.constValue(result: result, value: .stringLiteral(internedName)))
+        return result
+    }
+
     /// Lowers `T::class.isInstance(value)`, `T::class.members`, `T::class.constructors`
     /// to runtime calls `kk_kclass_isInstance`, `kk_kclass_members`, `kk_kclass_constructors`.
     ///
@@ -8448,7 +8466,7 @@ extension CallLowerer {
 
         // STDLIB-REFLECT-065: For annotation-related calls, ensure metadata and
         // annotations are registered even if the class was never instantiated.
-        if memberName == "annotations" || memberName == "findAnnotation" {
+        if memberName == "annotations" || memberName == "findAnnotation" || memberName == "findAssociatedObject" {
             if case let .classType(classType) = sema.types.kind(of: classRefTargetType) {
                 let classSymbol = classType.classSymbol
                 if let symbol = sema.symbols.symbol(classSymbol) {
@@ -8851,6 +8869,27 @@ extension CallLowerer {
             ))
             return result
 
+        // STDLIB-REFLECT-079: findAssociatedObject<T>()
+        case "findAssociatedObject":
+            let keyNameExpr = lowerKClassReifiedTypeNameHint(
+                exprID: exprID,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.makeNullable(sema.types.anyType)
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_kclass_find_associated_object"),
+                arguments: [kclassExpr, keyNameExpr],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+
         default:
             // Fallback — should not happen.
             let result = arena.appendExpr(.intLiteral(0), type: intType)
@@ -9171,6 +9210,27 @@ extension CallLowerer {
                 symbol: nil,
                 callee: interner.intern("kk_kclass_find_annotation"),
                 arguments: [kclassExpr, searchNameExpr],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+
+        // STDLIB-REFLECT-079: findAssociatedObject<T>()
+        case "findAssociatedObject":
+            let keyNameExpr = lowerKClassReifiedTypeNameHint(
+                exprID: exprID,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.makeNullable(sema.types.anyType)
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_kclass_find_associated_object"),
+                arguments: [kclassExpr, keyNameExpr],
                 result: result,
                 canThrow: false,
                 thrownResult: nil

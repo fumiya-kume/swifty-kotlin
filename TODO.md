@@ -152,7 +152,7 @@
 - [ ] STDLIB-REFLECT-076: `KClass.safeCast(value)` を既存 runtime へ接続する
 - [x] STDLIB-REFLECT-077: `kotlin.reflect.AssociatedObjectKey` annotation を追加する
 - [x] STDLIB-REFLECT-078: `kotlin.reflect.ExperimentalAssociatedObjects` opt-in marker を追加する
-- [ ] STDLIB-REFLECT-079: `KClass.findAssociatedObject<T>()` Native reflect surface を追加する
+- [x] STDLIB-REFLECT-079: `KClass.findAssociatedObject<T>()` Native reflect surface を追加する
 - [x] STDLIB-MATH-001: `kotlin.math` の対象 API 一覧を固定
 - [ ] STDLIB-MATH-002: `kotlin.math` の sema / lowering を overload 単位で整える
 - [ ] STDLIB-MATH-003: `kotlin.math` の runtime / ABI と境界値を固定
