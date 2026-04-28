@@ -36,6 +36,10 @@ extension ABIMismatchTests {
             "kk_no_when_branch_matched_exception_new_message",
             "kk_no_when_branch_matched_exception_new_message_cause",
             "kk_no_when_branch_matched_exception_new_cause",
+            "kk_concurrent_modification_exception_new",
+            "kk_concurrent_modification_exception_new_message",
+            "kk_concurrent_modification_exception_new_message_cause",
+            "kk_concurrent_modification_exception_new_cause",
             // Comparator (STDLIB-176)
             "kk_comparator_then_comparator",
             // Collection (binarySearch)

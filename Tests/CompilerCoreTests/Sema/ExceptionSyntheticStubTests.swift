@@ -66,4 +66,59 @@ final class ExceptionSyntheticStubTests: XCTestCase {
         fun cause(cause: Throwable?): RuntimeException = NoWhenBranchMatchedException(cause)
         """)
     }
+
+    func testConcurrentModificationExceptionSurfaceIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let exceptionFQName = ["kotlin", "ConcurrentModificationException"].map { interner.intern($0) }
+        let exceptionSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: exceptionFQName))
+        XCTAssertEqual(sema.symbols.symbol(exceptionSymbol)?.kind, .class)
+
+        let runtimeExceptionFQName = ["kotlin", "RuntimeException"].map { interner.intern($0) }
+        let runtimeExceptionSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: runtimeExceptionFQName))
+        XCTAssertTrue(sema.symbols.directSupertypes(for: exceptionSymbol).contains(runtimeExceptionSymbol))
+
+        let exceptionType = sema.types.make(.classType(ClassType(
+            classSymbol: exceptionSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        XCTAssertEqual(sema.symbols.propertyType(for: exceptionSymbol), exceptionType)
+
+        let throwableFQName = ["kotlin", "Throwable"].map { interner.intern($0) }
+        let throwableSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: throwableFQName))
+        let nullableThrowableType = sema.types.make(.classType(ClassType(
+            classSymbol: throwableSymbol,
+            args: [],
+            nullability: .nullable
+        )))
+        let nullableStringType = sema.types.makeNullable(sema.types.stringType)
+
+        let constructorFQName = exceptionFQName + [interner.intern("<init>")]
+        let constructors = sema.symbols.lookupAll(fqName: constructorFQName).filter {
+            sema.symbols.symbol($0)?.kind == .constructor
+        }
+        let expected: [([TypeID], String)] = [
+            ([], "kk_concurrent_modification_exception_new"),
+            ([nullableStringType], "kk_concurrent_modification_exception_new_message"),
+            ([nullableStringType, nullableThrowableType], "kk_concurrent_modification_exception_new_message_cause"),
+            ([nullableThrowableType], "kk_concurrent_modification_exception_new_cause"),
+        ]
+        for (parameterTypes, externalLinkName) in expected {
+            let constructor = try XCTUnwrap(constructors.first {
+                sema.symbols.functionSignature(for: $0)?.parameterTypes == parameterTypes
+            })
+            XCTAssertEqual(sema.symbols.functionSignature(for: constructor)?.returnType, exceptionType)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: constructor), externalLinkName)
+        }
+    }
+
+    func testConcurrentModificationExceptionResolvesInSource() throws {
+        _ = try makeSema(source: """
+        fun noArg(): RuntimeException = ConcurrentModificationException()
+        fun message(message: String?): RuntimeException = ConcurrentModificationException(message)
+        fun messageCause(message: String?, cause: Throwable?): RuntimeException = ConcurrentModificationException(message, cause)
+        fun cause(cause: Throwable?): RuntimeException = ConcurrentModificationException(cause)
+        """)
+    }
 }
