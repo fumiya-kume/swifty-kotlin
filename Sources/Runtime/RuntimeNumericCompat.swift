@@ -300,6 +300,21 @@ public func kk_math_pow(_ base: Int, _ exp: Int) -> Int {
     return kk_double_to_bits(pow(rawBase, rawExp))
 }
 
+@_cdecl("kk_math_pow_float")
+public func kk_math_pow_float(_ base: Int, _ exp: Int) -> Int {
+    kk_float_to_bits(powf(kk_bits_to_float(base), kk_bits_to_float(exp)))
+}
+
+@_cdecl("kk_math_pow_int")
+public func kk_math_pow_int(_ base: Int, _ exp: Int) -> Int {
+    kk_double_to_bits(pow(kk_bits_to_double(base), Double(exp)))
+}
+
+@_cdecl("kk_math_pow_float_int")
+public func kk_math_pow_float_int(_ base: Int, _ exp: Int) -> Int {
+    kk_float_to_bits(powf(kk_bits_to_float(base), Float(exp)))
+}
+
 @_cdecl("kk_math_ceil")
 public func kk_math_ceil(_ value: Int) -> Int {
     kk_double_to_bits(ceil(kk_bits_to_double(value)))
@@ -1196,11 +1211,25 @@ public func kk_math_withSign_int(_ x: Int, _ sign: Int) -> Int {
     return kk_double_to_bits(copysign(d, signDouble))
 }
 
+@_cdecl("kk_math_withSign_float_int")
+public func kk_math_withSign_float_int(_ x: Int, _ sign: Int) -> Int {
+    let f = kk_bits_to_float(x)
+    let signFloat: Float = sign < 0 ? -1.0 : 1.0
+    return kk_float_to_bits(copysignf(f, signFloat))
+}
+
 @_cdecl("kk_math_nextTowards")
 public func kk_math_nextTowards(_ from: Int, _ to: Int) -> Int {
     let rawFrom = kk_bits_to_double(from)
     let rawTo = kk_bits_to_double(to)
     return kk_double_to_bits(nextafter(rawFrom, rawTo))
+}
+
+@_cdecl("kk_math_nextTowards_float")
+public func kk_math_nextTowards_float(_ from: Int, _ to: Int) -> Int {
+    let rawFrom = kk_bits_to_float(from)
+    let rawTo = kk_bits_to_float(to)
+    return kk_float_to_bits(nextafterf(rawFrom, rawTo))
 }
 
 @_cdecl("kk_println_char")

@@ -60,6 +60,43 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        let remainingFloatingMemberOverloads: [(name: String, parameters: [(name: String, type: TypeID)], returnType: TypeID, linkName: String)] = [
+            ("IEEErem", [(name: "x", type: types.doubleType), (name: "divisor", type: types.doubleType)], types.doubleType, "kk_math_IEEErem"),
+            ("IEEErem", [(name: "x", type: types.floatType), (name: "divisor", type: types.floatType)], types.floatType, "kk_math_IEEErem_float"),
+            ("nextTowards", [(name: "x", type: types.doubleType), (name: "to", type: types.doubleType)], types.doubleType, "kk_math_nextTowards"),
+            ("nextTowards", [(name: "x", type: types.floatType), (name: "to", type: types.floatType)], types.floatType, "kk_math_nextTowards_float"),
+            ("pow", [(name: "x", type: types.floatType), (name: "y", type: types.floatType)], types.floatType, "kk_math_pow_float"),
+            ("pow", [(name: "x", type: types.doubleType), (name: "n", type: types.intType)], types.doubleType, "kk_math_pow_int"),
+            ("pow", [(name: "x", type: types.floatType), (name: "n", type: types.intType)], types.floatType, "kk_math_pow_float_int"),
+            ("withSign", [(name: "x", type: types.doubleType), (name: "sign", type: types.doubleType)], types.doubleType, "kk_math_withSign"),
+            ("withSign", [(name: "x", type: types.doubleType), (name: "sign", type: types.intType)], types.doubleType, "kk_math_withSign_int"),
+            ("withSign", [(name: "x", type: types.floatType), (name: "sign", type: types.floatType)], types.floatType, "kk_math_withSign_float"),
+            ("withSign", [(name: "x", type: types.floatType), (name: "sign", type: types.intType)], types.floatType, "kk_math_withSign_float_int"),
+        ]
+        for overload in remainingFloatingMemberOverloads {
+            registerSyntheticMathTopLevelFunction(
+                named: overload.name,
+                packageFQName: kotlinMathPkg,
+                parameters: overload.parameters,
+                returnType: overload.returnType,
+                externalLinkName: overload.linkName,
+                symbols: symbols,
+                interner: interner
+            )
+            if let receiverParameter = overload.parameters.first {
+                registerSyntheticMathExtensionFunction(
+                    named: overload.name,
+                    packageFQName: kotlinMathPkg,
+                    receiverType: receiverParameter.type,
+                    parameters: Array(overload.parameters.dropFirst()),
+                    returnType: overload.returnType,
+                    externalLinkName: overload.linkName,
+                    symbols: symbols,
+                    interner: interner
+                )
+            }
+        }
+
         registerSyntheticMathTopLevelFunction(
             named: "ceil",
             packageFQName: kotlinMathPkg,
@@ -757,6 +794,72 @@ extension DataFlowSemaPhase {
 
         symbols.setFunctionSignature(
             FunctionSignature(
+                parameterTypes: parameters.map(\.type),
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerSyntheticMathExtensionFunction(
+        named name: String,
+        packageFQName: [InternedString],
+        receiverType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        externalLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let existingSignature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return existingSignature.receiverType == receiverType &&
+                existingSignature.parameterTypes == parameters.map(\.type) &&
+                existingSignature.returnType == returnType
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        var valueParameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let paramNameID = interner.intern(parameter.name)
+            let paramSymbol = symbols.define(
+                kind: .valueParameter,
+                name: paramNameID,
+                fqName: functionFQName + [paramNameID],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: paramSymbol)
+            valueParameterSymbols.append(paramSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
                 parameterTypes: parameters.map(\.type),
                 returnType: returnType,
                 isSuspend: false,

@@ -337,4 +337,63 @@ final class MathSyntheticTopLevelLinkTests: XCTestCase {
             )
         }
     }
+
+    func testRemainingFloatingMathMemberCallsResolveViaDefaultImport() throws {
+        let source = """
+        import kotlin.math.*
+
+        fun sample(d: Double, f: Float, i: Int) {
+            val ieeeD = d.IEEErem(d)
+            val ieeeF = f.IEEErem(f)
+            val nextD = d.nextTowards(d)
+            val nextF = f.nextTowards(f)
+            val powF = f.pow(f)
+            val powDI = d.pow(i)
+            val powFI = f.pow(i)
+            val signD = d.withSign(d)
+            val signDI = d.withSign(i)
+            val signF = f.withSign(f)
+            val signFI = f.withSign(i)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            XCTAssertFalse(ctx.diagnostics.hasError, "Expected remaining math member calls to resolve without diagnostics.")
+
+            var resolvedLinks: [String] = []
+            for exprIndex in ast.arena.exprs.indices {
+                let exprID = ExprID(rawValue: Int32(exprIndex))
+                guard let expr = ast.arena.expr(exprID),
+                      case let .memberCall(_, calleeName, _, _, _) = expr,
+                      ["IEEErem", "nextTowards", "pow", "withSign"].contains(ctx.interner.resolve(calleeName)),
+                      let chosenCallee = sema.bindings.callBinding(for: exprID)?.chosenCallee,
+                      let link = sema.symbols.externalLinkName(for: chosenCallee)
+                else {
+                    continue
+                }
+                resolvedLinks.append(link)
+            }
+
+            for expectedLink in [
+                "kk_math_IEEErem",
+                "kk_math_IEEErem_float",
+                "kk_math_nextTowards",
+                "kk_math_nextTowards_float",
+                "kk_math_pow_float",
+                "kk_math_pow_int",
+                "kk_math_pow_float_int",
+                "kk_math_withSign",
+                "kk_math_withSign_int",
+                "kk_math_withSign_float",
+                "kk_math_withSign_float_int",
+            ] {
+                XCTAssertTrue(resolvedLinks.contains(expectedLink), "Expected \(expectedLink), got \(resolvedLinks)")
+            }
+        }
+    }
 }

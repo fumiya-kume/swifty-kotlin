@@ -112,12 +112,43 @@ final class MathOverloadResolutionTests: XCTestCase {
         XCTAssertEqual(link, "kk_math_sqrt_float")
     }
 
-    // MARK: - pow family (Double only)
+    // MARK: - pow family (Double / Float, floating and Int exponents)
 
     func testPowDoubleOverload() throws {
         let source = "fun f(x: Double, y: Double): Double = pow(x, y)"
         let link = try resolvedLink(forCall: "pow", withSource: source)
         XCTAssertEqual(link, "kk_math_pow")
+    }
+
+    func testPowRemainingOverloads() throws {
+        let cases: [(source: String, expectedLink: String)] = [
+            ("fun f(x: Float, y: Float): Float = pow(x, y)", "kk_math_pow_float"),
+            ("fun f(x: Double, n: Int): Double = pow(x, n)", "kk_math_pow_int"),
+            ("fun f(x: Float, n: Int): Float = pow(x, n)", "kk_math_pow_float_int"),
+        ]
+
+        for testCase in cases {
+            let link = try resolvedLink(forCall: "pow", withSource: testCase.source)
+            XCTAssertEqual(link, testCase.expectedLink)
+        }
+    }
+
+    func testIEEEremNextTowardsAndWithSignOverloads() throws {
+        let cases: [(name: String, source: String, expectedLink: String)] = [
+            ("IEEErem", "fun f(x: Double, y: Double): Double = IEEErem(x, y)", "kk_math_IEEErem"),
+            ("IEEErem", "fun f(x: Float, y: Float): Float = IEEErem(x, y)", "kk_math_IEEErem_float"),
+            ("nextTowards", "fun f(x: Double, y: Double): Double = nextTowards(x, y)", "kk_math_nextTowards"),
+            ("nextTowards", "fun f(x: Float, y: Float): Float = nextTowards(x, y)", "kk_math_nextTowards_float"),
+            ("withSign", "fun f(x: Double, y: Double): Double = withSign(x, y)", "kk_math_withSign"),
+            ("withSign", "fun f(x: Double, sign: Int): Double = withSign(x, sign)", "kk_math_withSign_int"),
+            ("withSign", "fun f(x: Float, y: Float): Float = withSign(x, y)", "kk_math_withSign_float"),
+            ("withSign", "fun f(x: Float, sign: Int): Float = withSign(x, sign)", "kk_math_withSign_float_int"),
+        ]
+
+        for testCase in cases {
+            let link = try resolvedLink(forCall: testCase.name, withSource: testCase.source)
+            XCTAssertEqual(link, testCase.expectedLink)
+        }
     }
 
     // MARK: - round / ceil / floor family (Double / Float)

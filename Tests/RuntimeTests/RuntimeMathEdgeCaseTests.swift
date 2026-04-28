@@ -175,6 +175,13 @@ final class RuntimeMathEdgeCaseTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(doubleFromBits(kk_math_pow(doubleToBits(1.0), doubleToBits(Double.infinity))), 1.0)
     }
 
+    func testPowFloatAndIntOverloads() {
+        XCTAssertEqual(floatFromBits(kk_math_pow_float(floatToBits(2.0), floatToBits(3.0))), 8.0, accuracy: 1e-6)
+        XCTAssertEqual(doubleFromBits(kk_math_pow_int(doubleToBits(2.0), 3)), 8.0, accuracy: 1e-12)
+        XCTAssertEqual(floatFromBits(kk_math_pow_float_int(floatToBits(2.0), 3)), 8.0, accuracy: 1e-6)
+        XCTAssertTrue(floatFromBits(kk_math_pow_float(floatToBits(Float.nan), floatToBits(2.0))).isNaN)
+    }
+
     // MARK: - ceil / floor / truncate with special values
 
     func testCeilDoubleNaN() {
@@ -707,6 +714,11 @@ final class RuntimeMathEdgeCaseTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(floatFromBits(kk_math_withSign_float(floatToBits(3.0), floatToBits(-1.0))), -3.0)
     }
 
+    func testWithSignFloatIntSign() {
+        XCTAssertEqual(floatFromBits(kk_math_withSign_float_int(floatToBits(-3.0), 1)), 3.0)
+        XCTAssertEqual(floatFromBits(kk_math_withSign_float_int(floatToBits(3.0), -1)), -3.0)
+    }
+
     // MARK: - nextTowards edge cases
 
     func testNextTowardsDoubleUp() {
@@ -729,6 +741,18 @@ final class RuntimeMathEdgeCaseTests: IsolatedRuntimeXCTestCase {
 
     func testNextTowardsDoubleNaN() {
         XCTAssertTrue(doubleFromBits(kk_math_nextTowards(doubleToBits(Double.nan), doubleToBits(1.0))).isNaN)
+    }
+
+    func testNextTowardsFloat() {
+        XCTAssertEqual(
+            floatFromBits(kk_math_nextTowards_float(floatToBits(1.0), floatToBits(Float.infinity))),
+            Float(1.0).nextUp
+        )
+        XCTAssertEqual(
+            floatFromBits(kk_math_nextTowards_float(floatToBits(1.0), floatToBits(-Float.infinity))),
+            Float(1.0).nextDown
+        )
+        XCTAssertTrue(floatFromBits(kk_math_nextTowards_float(floatToBits(Float.nan), floatToBits(1.0))).isNaN)
     }
 
     // MARK: - ulp edge cases (Double)

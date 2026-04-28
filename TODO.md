@@ -159,7 +159,7 @@
 - [x] STDLIB-MATH-004: `absoluteValue` / `sign` / `ulp` extension property surface を公式 shape に揃える
 - [x] STDLIB-MATH-005: `expm1` / `ln1p` の Double / Float overload を追加する
 - [x] STDLIB-MATH-006: `max` / `min` の Double / Float / Int / Long / UInt / ULong overload 行列を追加する
-- [ ] STDLIB-MATH-007: `IEEErem` / `nextTowards` / `withSign` と残りの `pow` overload を追加する
+- [x] STDLIB-MATH-007: `IEEErem` / `nextTowards` / `withSign` と残りの `pow` overload を追加する
 - [ ] STDLIB-MATH-008: 公開されている非公式 rounding helper 名（`roundUp` など）を整理する
 - [ ] STDLIB-RANDOM-001: `kotlin.random` の対象 API 一覧を固定
 - [ ] STDLIB-RANDOM-002: `kotlin.random` の sema / lowering を整える
