@@ -76,6 +76,18 @@ public func kk_char_isDefined(_ value: Int) -> Int {
     return kk_box_bool(scalar.properties.generalCategory == .unassigned ? 0 : 1)
 }
 
+@_cdecl("kk_char_isSupplementaryCodePoint")
+public func kk_char_isSupplementaryCodePoint(_ codepoint: Int) -> Int {
+    kk_box_bool((codepoint >= 0x10000 && codepoint <= 0x10FFFF) ? 1 : 0)
+}
+
+@_cdecl("kk_char_isSurrogatePair")
+public func kk_char_isSurrogatePair(_ high: Int, _ low: Int) -> Int {
+    let isHighSurrogate = high >= 0xD800 && high <= 0xDBFF
+    let isLowSurrogate = low >= 0xDC00 && low <= 0xDFFF
+    return kk_box_bool((isHighSurrogate && isLowSurrogate) ? 1 : 0)
+}
+
 @_cdecl("kk_char_uppercase")
 public func kk_char_uppercase(_ value: Int) -> Int {
     guard let scalar = runtimeUnicodeScalar(value) else {

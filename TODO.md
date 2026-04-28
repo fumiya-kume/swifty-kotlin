@@ -332,7 +332,7 @@
 - [x] STDLIB-I18N-COMMON-009: `Char.uppercaseChar()` を追加する
 - [x] STDLIB-I18N-COMMON-010: `Char.titlecaseChar()` を追加する
 - [x] STDLIB-I18N-COMMON-011: `Char.isDefined()` を追加する
-- [ ] STDLIB-I18N-COMMON-012: Native `Char.isSupplementaryCodePoint()` / `Char.isSurrogatePair()` を追加する
+- [x] STDLIB-I18N-COMMON-012: Native `Char.isSupplementaryCodePoint()` / `Char.isSurrogatePair()` を追加する
 - [ ] STDLIB-I18N-COMMON-013: Native `Char.toChars()` / `Char.toCodePoint()` を追加する
 - [ ] STDLIB-TIME-EXP-001: `@ExperimentalTime` 系 API の整理（`Clock` / `TimeMark`）
 - [ ] STDLIB-TIME-STABLE-008: `DurationUnit` enum surface を追加する
