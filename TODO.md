@@ -176,7 +176,7 @@
 - [x] STDLIB-RANDOM-013: `Random.nextULong()` / `nextULong(until)` / `nextULong(from, until)` / `nextULong(range)` を追加する
 - [x] STDLIB-COMP-001: `kotlin.comparisons` の対象 API 一覧を固定
 - [x] STDLIB-COMP-002: `Comparator` 合成の sema / lowering を整える
-- [ ] STDLIB-COMP-003: `Comparator` runtime と failure path を固定
+- [x] STDLIB-COMP-003: `Comparator` runtime と failure path を固定
 - [x] STDLIB-COMP-004: `compareBy(comparator, selector)` overload を追加する
 - [x] STDLIB-COMP-005: `compareByDescending(comparator, selector)` overload を追加する
 - [x] STDLIB-COMP-006: `compareBy(vararg selectors)` の一般 vararg surface を追加する（現状は 1/2/3 selector special-case のみ）

@@ -50,6 +50,8 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             types: types,
             interner: interner,
+            comparisonsPkg: comparisonsPkg,
+            comparisonsPackageSymbol: comparisonsPackageSymbol,
             comparatorSymbol: comparatorSymbol
         )
 
@@ -900,6 +902,8 @@ extension DataFlowSemaPhase {
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,
+        comparisonsPkg: [InternedString],
+        comparisonsPackageSymbol: SymbolID,
         comparatorSymbol: SymbolID
     ) {
         guard let compInfo = symbols.symbol(comparatorSymbol) else { return }
@@ -948,6 +952,101 @@ extension DataFlowSemaPhase {
                 ),
                 for: memberSymbol
             )
+        }
+
+        for (name, naturalExtLink, comparatorExtLink) in [
+            ("nullsFirst", "kk_comparator_nulls_first_natural", "kk_comparator_nulls_first_comparator"),
+            ("nullsLast", "kk_comparator_nulls_last_natural", "kk_comparator_nulls_last_comparator"),
+        ] {
+            let functionName = interner.intern(name)
+            let functionFQName = comparisonsPkg + [functionName]
+            let functionTParamFQName = functionFQName + [tParamName]
+            let functionTParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: functionTParamFQName) {
+                existing
+            } else {
+                symbols.define(
+                    kind: .typeParameter,
+                    name: tParamName,
+                    fqName: functionTParamFQName,
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
+            }
+            let functionTParamType = types.make(.typeParam(TypeParamType(
+                symbol: functionTParamSymbol,
+                nullability: .nonNull
+            )))
+            let functionComparatorType = types.make(.classType(ClassType(
+                classSymbol: comparatorSymbol,
+                args: [.invariant(functionTParamType)],
+                nullability: .nonNull
+            )))
+
+            if !symbols.lookupAll(fqName: functionFQName).contains(where: { symbolID in
+                guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+                return sig.parameterTypes.isEmpty && sig.returnType == functionComparatorType
+            }) {
+                let funcSymbol = symbols.define(
+                    kind: .function,
+                    name: functionName,
+                    fqName: functionFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(comparisonsPackageSymbol, for: funcSymbol)
+                symbols.setExternalLinkName(naturalExtLink, for: funcSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        parameterTypes: [],
+                        returnType: functionComparatorType,
+                        isSuspend: false,
+                        typeParameterSymbols: [functionTParamSymbol],
+                        typeParameterUpperBoundsList: [[]]
+                    ),
+                    for: funcSymbol
+                )
+            }
+
+            let comparatorParamName = interner.intern("comparator")
+            if !symbols.lookupAll(fqName: functionFQName).contains(where: { symbolID in
+                guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+                return sig.parameterTypes == [functionComparatorType] && sig.returnType == functionComparatorType
+            }) {
+                let funcSymbol = symbols.define(
+                    kind: .function,
+                    name: functionName,
+                    fqName: functionFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(comparisonsPackageSymbol, for: funcSymbol)
+                symbols.setExternalLinkName(comparatorExtLink, for: funcSymbol)
+                let comparatorParamSymbol = symbols.define(
+                    kind: .valueParameter,
+                    name: comparatorParamName,
+                    fqName: functionFQName + [comparatorParamName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(funcSymbol, for: comparatorParamSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        parameterTypes: [functionComparatorType],
+                        returnType: functionComparatorType,
+                        isSuspend: false,
+                        valueParameterSymbols: [comparatorParamSymbol],
+                        valueParameterHasDefaultValues: [false],
+                        valueParameterIsVararg: [false],
+                        typeParameterSymbols: [functionTParamSymbol],
+                        typeParameterUpperBoundsList: [[]]
+                    ),
+                    for: funcSymbol
+                )
+            }
         }
     }
 
