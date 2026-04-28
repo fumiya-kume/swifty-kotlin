@@ -1040,6 +1040,79 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
     }
 
+    func testPublishedApiSurfaceIsSyntheticAndTargetsDeclarations() throws {
+        let source = """
+        fun marker(x: PublishedApi?): Int = 0
+        """
+
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        let sema = try XCTUnwrap(ctx.sema)
+        let publishedApiFQName = [
+            ctx.interner.intern("kotlin"),
+            ctx.interner.intern("PublishedApi"),
+        ]
+        let symbolID = try XCTUnwrap(
+            sema.symbols.lookup(fqName: publishedApiFQName),
+            "kotlin.PublishedApi must be registered"
+        )
+        let symbol = try XCTUnwrap(sema.symbols.symbol(symbolID))
+
+        XCTAssertEqual(symbol.visibility, .public)
+        XCTAssertTrue(symbol.flags.contains(.synthetic))
+        XCTAssertEqual(symbol.kind, .annotationClass)
+
+        let annotations = sema.symbols.annotations(for: symbolID)
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == KnownCompilerAnnotation.target.qualifiedName
+                    && $0.arguments == [
+                        "AnnotationTarget.CLASS",
+                        "AnnotationTarget.CONSTRUCTOR",
+                        "AnnotationTarget.FUNCTION",
+                        "AnnotationTarget.PROPERTY",
+                    ]
+            },
+            "PublishedApi should carry declaration target metadata, got: \(annotations)"
+        )
+    }
+
+    func testPublishedApiAcceptsDocumentedDeclarationTargets() {
+        let source = """
+        @PublishedApi
+        internal class Stable {
+            @PublishedApi
+            internal constructor()
+
+            @PublishedApi
+            internal val value: Int = 1
+
+            @PublishedApi
+            internal fun expose(): Int = value
+        }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected PublishedApi declaration targets to be accepted, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testPublishedApiRejectsFileTarget() {
+        let source = """
+        @file:PublishedApi
+
+        package sample
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected PublishedApi to reject file target, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+    }
+
     func testTargetAnnotationIsRejectedOnRegularClass() {
         let source = """
         @Target(AnnotationTarget.CLASS)
