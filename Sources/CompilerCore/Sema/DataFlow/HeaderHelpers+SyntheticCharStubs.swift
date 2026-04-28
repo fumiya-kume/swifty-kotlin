@@ -12,7 +12,7 @@ enum SyntheticCharMemberReturnKind {
     case charCategory
     case charDirectionality
 
-    func typeID(in types: TypeSystem) -> TypeID {
+    func typeID(in types: TypeSystem, charCategoryType: TypeID? = nil) -> TypeID {
         switch self {
         case .boolean:
             types.booleanType
@@ -27,8 +27,7 @@ enum SyntheticCharMemberReturnKind {
         case .nullableDouble:
             types.make(.primitive(.double, .nullable))
         case .charCategory:
-            // TODO: Define CharCategory enum type
-            types.intType // Temporarily use Int as placeholder
+            charCategoryType ?? types.intType
         case .charDirectionality:
             // TODO: Define CharDirectionality enum type
             types.intType // Temporarily use Int as placeholder
@@ -163,8 +162,56 @@ private let syntheticCharMemberSpecs: [SyntheticCharMemberSpec] = [
     ),
 ]
 
+private let syntheticCharCategoryEntries: [(name: String, code: String)] = [
+    ("UNASSIGNED", "Cn"),
+    ("UPPERCASE_LETTER", "Lu"),
+    ("LOWERCASE_LETTER", "Ll"),
+    ("TITLECASE_LETTER", "Lt"),
+    ("MODIFIER_LETTER", "Lm"),
+    ("OTHER_LETTER", "Lo"),
+    ("NON_SPACING_MARK", "Mn"),
+    ("ENCLOSING_MARK", "Me"),
+    ("COMBINING_SPACING_MARK", "Mc"),
+    ("DECIMAL_DIGIT_NUMBER", "Nd"),
+    ("LETTER_NUMBER", "Nl"),
+    ("OTHER_NUMBER", "No"),
+    ("SPACE_SEPARATOR", "Zs"),
+    ("LINE_SEPARATOR", "Zl"),
+    ("PARAGRAPH_SEPARATOR", "Zp"),
+    ("CONTROL", "Cc"),
+    ("FORMAT", "Cf"),
+    ("PRIVATE_USE", "Co"),
+    ("SURROGATE", "Cs"),
+    ("DASH_PUNCTUATION", "Pd"),
+    ("START_PUNCTUATION", "Ps"),
+    ("END_PUNCTUATION", "Pe"),
+    ("CONNECTOR_PUNCTUATION", "Pc"),
+    ("OTHER_PUNCTUATION", "Po"),
+    ("MATH_SYMBOL", "Sm"),
+    ("CURRENCY_SYMBOL", "Sc"),
+    ("MODIFIER_SYMBOL", "Sk"),
+    ("OTHER_SYMBOL", "So"),
+    ("INITIAL_QUOTE_PUNCTUATION", "Pi"),
+    ("FINAL_QUOTE_PUNCTUATION", "Pf"),
+]
+
 func syntheticCharMemberSpec(named name: String) -> SyntheticCharMemberSpec? {
     syntheticCharMemberSpecs.first { $0.name == name }
+}
+
+func syntheticCharCategoryType(
+    symbols: SymbolTable,
+    types: TypeSystem,
+    interner: StringInterner
+) -> TypeID? {
+    guard let symbol = symbols.lookup(fqName: ["kotlin", "text", "CharCategory"].map({ interner.intern($0) })) else {
+        return nil
+    }
+    return types.make(.classType(ClassType(
+        classSymbol: symbol,
+        args: [],
+        nullability: .nonNull
+    )))
 }
 
 extension DataFlowSemaPhase {
@@ -174,12 +221,34 @@ extension DataFlowSemaPhase {
         interner: StringInterner
     ) {
         let kotlinTextPkg = ensureKotlinTextPackageForCharStubs(symbols: symbols, interner: interner)
+        let charCategorySymbol = ensureSyntheticCharCategoryEnum(
+            in: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let charCategoryType = types.make(.classType(ClassType(
+            classSymbol: charCategorySymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        setSyntheticCharCategoryEntryTypes(
+            enumSymbol: charCategorySymbol,
+            enumType: charCategoryType,
+            symbols: symbols
+        )
+        registerSyntheticCharCategoryMembers(
+            enumSymbol: charCategorySymbol,
+            receiverType: charCategoryType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
         for member in syntheticCharMemberSpecs {
             registerSyntheticCharExtensionFunction(
                 named: member.name,
                 externalLinkName: member.externalLinkName,
                 receiverType: types.charType,
-                returnType: member.returnKind.typeID(in: types),
+                returnType: member.returnKind.typeID(in: types, charCategoryType: charCategoryType),
                 packageFQName: kotlinTextPkg,
                 symbols: symbols,
                 interner: interner
@@ -224,6 +293,167 @@ extension DataFlowSemaPhase {
             symbols.setParentSymbol(kotlinPackageSymbol, for: kotlinTextSymbol)
         }
         return kotlinTextPkg
+    }
+
+    private func ensureSyntheticCharCategoryEnum(
+        in packageFQName: [InternedString],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> SymbolID {
+        let enumName = interner.intern("CharCategory")
+        let enumFQName = packageFQName + [enumName]
+        let enumSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: enumFQName) {
+            enumSymbol = existing
+            if let packageSymbol = symbols.lookup(fqName: packageFQName), packageSymbol != .invalid {
+                symbols.setParentSymbol(packageSymbol, for: existing)
+            }
+        } else {
+            enumSymbol = symbols.define(
+                kind: .enumClass,
+                name: enumName,
+                fqName: enumFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            if let packageSymbol = symbols.lookup(fqName: packageFQName), packageSymbol != .invalid {
+                symbols.setParentSymbol(packageSymbol, for: enumSymbol)
+            }
+        }
+
+        for entry in syntheticCharCategoryEntries {
+            let entryName = interner.intern(entry.name)
+            let entryFQName = enumFQName + [entryName]
+            let entrySymbol: SymbolID
+            if let existing = symbols.lookup(fqName: entryFQName) {
+                entrySymbol = existing
+            } else {
+                entrySymbol = symbols.define(
+                    kind: .field,
+                    name: entryName,
+                    fqName: entryFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+            }
+            symbols.setParentSymbol(enumSymbol, for: entrySymbol)
+        }
+        return enumSymbol
+    }
+
+    private func setSyntheticCharCategoryEntryTypes(
+        enumSymbol: SymbolID,
+        enumType: TypeID,
+        symbols: SymbolTable
+    ) {
+        guard let enumInfo = symbols.symbol(enumSymbol) else { return }
+        for child in symbols.children(ofFQName: enumInfo.fqName) {
+            guard let childInfo = symbols.symbol(child), childInfo.kind == .field else {
+                continue
+            }
+            symbols.setPropertyType(enumType, for: child)
+        }
+    }
+
+    private func registerSyntheticCharCategoryMembers(
+        enumSymbol: SymbolID,
+        receiverType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        registerSyntheticCharCategoryMemberFunction(
+            named: "code",
+            externalLinkName: "kk_char_category_code",
+            enumSymbol: enumSymbol,
+            receiverType: receiverType,
+            parameters: [],
+            returnType: types.stringType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCharCategoryMemberFunction(
+            named: "contains",
+            externalLinkName: "kk_char_category_contains",
+            enumSymbol: enumSymbol,
+            receiverType: receiverType,
+            parameters: [("char", types.charType)],
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    private func registerSyntheticCharCategoryMemberFunction(
+        named name: String,
+        externalLinkName: String,
+        enumSymbol: SymbolID,
+        receiverType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let enumInfo = symbols.symbol(enumSymbol) else { return }
+        let functionName = interner.intern(name)
+        let functionFQName = enumInfo.fqName + [functionName]
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { candidate in
+            guard let symbol = symbols.symbol(candidate),
+                  symbol.kind == .function,
+                  let signature = symbols.functionSignature(for: candidate)
+            else {
+                return false
+            }
+            return signature.receiverType == receiverType
+                && signature.parameterTypes == parameters.map(\.type)
+                && signature.returnType == returnType
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(enumSymbol, for: functionSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        var parameterTypes: [TypeID] = []
+        var parameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: functionFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            parameterTypes.append(parameter.type)
+            parameterSymbols.append(parameterSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameterTypes,
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: parameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: parameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: parameterSymbols.count)
+            ),
+            for: functionSymbol
+        )
     }
 
     private func registerSyntheticCharExtensionFunction(

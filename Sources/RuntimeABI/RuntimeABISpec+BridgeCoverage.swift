@@ -207,6 +207,7 @@ public extension RuntimeABISpec {
     static let numericRuntimeBridgeFunctions: [RuntimeABIFunctionSpec] =
         [
             "kk_char_category",
+            "kk_char_category_code",
             "kk_char_code",
             "kk_char_directionality",
             "kk_char_toDouble",
@@ -214,6 +215,9 @@ public extension RuntimeABISpec {
             "kk_char_toInt",
             "kk_char_toIntOrNull",
         ].map { bridgeSpec($0, section: "Char", params: ["value"]) }
+        + [
+            bridgeSpec("kk_char_category_contains", section: "Char", params: ["category", "value"]),
+        ]
         + [
             bridgeSpec("kk_double_fromBits", section: "NumericConversion", params: ["bits"]),
             bridgeSpec("kk_double_isFinite", section: "NumericConversion", params: ["value"]),

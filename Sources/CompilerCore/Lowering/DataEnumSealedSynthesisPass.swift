@@ -24,11 +24,22 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             }
             return function.symbol
         })
-        let nominalSymbols = module.arena.declarations.compactMap { decl -> SymbolID? in
+        var nominalSymbols = module.arena.declarations.compactMap { decl -> SymbolID? in
             guard case let .nominalType(nominal) = decl else {
                 return nil
             }
             return nominal.symbol
+        }
+        var nominalSymbolSet = Set(nominalSymbols)
+        for symbol in sema.symbols.allSymbols()
+            where symbol.kind == .enumClass
+                && symbol.flags.contains(.synthetic)
+                && !nominalSymbolSet.contains(symbol.id)
+                && !enumEntrySymbols(owner: symbol, symbols: sema.symbols).isEmpty
+        {
+            _ = module.arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol.id)))
+            nominalSymbols.append(symbol.id)
+            nominalSymbolSet.insert(symbol.id)
         }
 
         for nominalSymbolID in nominalSymbols {
@@ -2120,6 +2131,9 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         for (ordinal, entry) in entries.enumerated() {
             let entryName = interner.resolve(entry.name)
             let helperName = interner.intern("\(entryName)$enumName")
+            let helperSymbol = sema.symbols.lookupAll(fqName: owner.fqName + [helperName]).first { symbolID in
+                sema.symbols.symbol(symbolID)?.kind == .function
+            }
             let resultExpr = module.arena.appendExpr(
                 .temporary(Int32(module.arena.expressions.count)),
                 type: stringType
@@ -2137,7 +2151,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             body.append(.jump(nextLabel))
             body.append(.label(matchLabel))
             body.append(.call(
-                symbol: nil,
+                symbol: helperSymbol,
                 callee: helperName,
                 arguments: [],
                 result: resultExpr,

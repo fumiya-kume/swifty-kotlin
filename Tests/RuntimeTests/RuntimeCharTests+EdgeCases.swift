@@ -261,23 +261,39 @@ final class RuntimeCharEdgeCaseTests: IsolatedRuntimeXCTestCase {
     // MARK: - category mapping
 
     func testCategoryForUppercaseLetter() {
-        // 'A' -> UPPERCASE_LETTER = 0
-        XCTAssertEqual(kk_char_category(Int(("A" as UnicodeScalar).value)), 0)
+        // 'A' -> UPPERCASE_LETTER
+        XCTAssertEqual(kk_char_category(Int(("A" as UnicodeScalar).value)), 1)
     }
 
     func testCategoryForLowercaseLetter() {
-        // 'a' -> LOWERCASE_LETTER = 1
-        XCTAssertEqual(kk_char_category(Int(("a" as UnicodeScalar).value)), 1)
+        // 'a' -> LOWERCASE_LETTER
+        XCTAssertEqual(kk_char_category(Int(("a" as UnicodeScalar).value)), 2)
     }
 
     func testCategoryForDecimalDigit() {
-        // '5' -> DECIMAL_DIGIT_NUMBER = 8
-        XCTAssertEqual(kk_char_category(Int(("5" as UnicodeScalar).value)), 8)
+        // '5' -> DECIMAL_DIGIT_NUMBER
+        XCTAssertEqual(kk_char_category(Int(("5" as UnicodeScalar).value)), 9)
     }
 
     func testCategoryForTitlecaseLetter() {
-        // U+01C5 'ǅ' -> TITLECASE_LETTER = 2
-        XCTAssertEqual(kk_char_category(0x01C5), 2)
+        // U+01C5 'ǅ' -> TITLECASE_LETTER
+        XCTAssertEqual(kk_char_category(0x01C5), 3)
+    }
+
+    func testCategoryForSurrogate() {
+        XCTAssertEqual(kk_char_category(0xD800), 18)
+    }
+
+    func testCategoryCode() {
+        XCTAssertEqual(runtimeStringValue(kk_char_category_code(1)), "Lu")
+        XCTAssertEqual(runtimeStringValue(kk_char_category_code(9)), "Nd")
+        XCTAssertEqual(runtimeStringValue(kk_char_category_code(29)), "Pf")
+    }
+
+    func testCategoryContains() {
+        XCTAssertTrue(boolValue(kk_char_category_contains(1, Int(("A" as UnicodeScalar).value))))
+        XCTAssertFalse(boolValue(kk_char_category_contains(1, Int(("a" as UnicodeScalar).value))))
+        XCTAssertTrue(boolValue(kk_char_category_contains(18, 0xD800)))
     }
 
     // MARK: - ASCII vs Unicode letter categorization

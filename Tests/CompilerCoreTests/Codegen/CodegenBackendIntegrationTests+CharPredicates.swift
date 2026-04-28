@@ -29,6 +29,32 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenCharCategorySurfaceMatchesExpectedOutput() throws {
+        let source = """
+        fun main() {
+            println('A'.category)
+            println('5'.category.code)
+            println(CharCategory.UPPERCASE_LETTER.contains('A'))
+            println(CharCategory.UPPERCASE_LETTER.contains('a'))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "CharCategoryRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "UPPERCASE_LETTER\nNd\ntrue\nfalse\n")
+        }
+    }
+
     func testCodegenCharCaseConversionHelpersHandleUnicodeMappings() throws {
         throw XCTSkip("Char case conversion feature not yet implemented")
         let source = """

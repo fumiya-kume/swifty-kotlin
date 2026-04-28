@@ -3,6 +3,39 @@ import Foundation
 import XCTest
 
 final class CharSyntheticMemberLinkTests: XCTestCase {
+    private let charCategoryEntries = [
+        "UNASSIGNED",
+        "UPPERCASE_LETTER",
+        "LOWERCASE_LETTER",
+        "TITLECASE_LETTER",
+        "MODIFIER_LETTER",
+        "OTHER_LETTER",
+        "NON_SPACING_MARK",
+        "ENCLOSING_MARK",
+        "COMBINING_SPACING_MARK",
+        "DECIMAL_DIGIT_NUMBER",
+        "LETTER_NUMBER",
+        "OTHER_NUMBER",
+        "SPACE_SEPARATOR",
+        "LINE_SEPARATOR",
+        "PARAGRAPH_SEPARATOR",
+        "CONTROL",
+        "FORMAT",
+        "PRIVATE_USE",
+        "SURROGATE",
+        "DASH_PUNCTUATION",
+        "START_PUNCTUATION",
+        "END_PUNCTUATION",
+        "CONNECTOR_PUNCTUATION",
+        "OTHER_PUNCTUATION",
+        "MATH_SYMBOL",
+        "CURRENCY_SYMBOL",
+        "MODIFIER_SYMBOL",
+        "OTHER_SYMBOL",
+        "INITIAL_QUOTE_PUNCTUATION",
+        "FINAL_QUOTE_PUNCTUATION",
+    ]
+
     private func externalLink(for member: String, sema: SemaModule, interner: StringInterner) -> String? {
         let fq = ["kotlin", "text", member].map { interner.intern($0) }
         let sym = sema.symbols.lookupAll(fqName: fq).first { symbolID in
@@ -24,6 +57,10 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
             result = (sema, ctx.interner)
         }
         return try XCTUnwrap(result)
+    }
+
+    private func charCategorySymbol(sema: SemaModule, interner: StringInterner) throws -> SymbolID {
+        try XCTUnwrap(sema.symbols.lookup(fqName: ["kotlin", "text", "CharCategory"].map { interner.intern($0) }))
     }
 
     func testCharPredicateStubsHaveCorrectExternalLinks() throws {
@@ -65,6 +102,70 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
         )
 
         XCTAssertEqual(sema.symbols.parentSymbol(for: kotlinTextSymbol), kotlinSymbol)
+    }
+
+    func testCharCategoryEnumSurfaceIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let enumSymbol = try charCategorySymbol(sema: sema, interner: interner)
+        XCTAssertEqual(sema.symbols.symbol(enumSymbol)?.kind, .enumClass)
+
+        let enumType = sema.types.make(.classType(ClassType(
+            classSymbol: enumSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        for entry in charCategoryEntries {
+            let entrySymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: ["kotlin", "text", "CharCategory", entry].map { interner.intern($0) }),
+                "CharCategory.\(entry) must be registered"
+            )
+            XCTAssertEqual(sema.symbols.parentSymbol(for: entrySymbol), enumSymbol)
+            XCTAssertEqual(sema.symbols.propertyType(for: entrySymbol), enumType)
+        }
+    }
+
+    func testCharCategoryMembersAreRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let enumSymbol = try charCategorySymbol(sema: sema, interner: interner)
+        let enumType = sema.types.make(.classType(ClassType(
+            classSymbol: enumSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        let codeSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: ["kotlin", "text", "CharCategory", "code"].map { interner.intern($0) })
+        )
+        XCTAssertEqual(sema.symbols.externalLinkName(for: codeSymbol), "kk_char_category_code")
+        let codeSignature = try XCTUnwrap(sema.symbols.functionSignature(for: codeSymbol))
+        XCTAssertEqual(codeSignature.receiverType, enumType)
+        XCTAssertEqual(codeSignature.parameterTypes, [])
+        XCTAssertEqual(codeSignature.returnType, sema.types.stringType)
+
+        let containsSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: ["kotlin", "text", "CharCategory", "contains"].map { interner.intern($0) })
+        )
+        XCTAssertEqual(sema.symbols.externalLinkName(for: containsSymbol), "kk_char_category_contains")
+        let containsSignature = try XCTUnwrap(sema.symbols.functionSignature(for: containsSymbol))
+        XCTAssertEqual(containsSignature.receiverType, enumType)
+        XCTAssertEqual(containsSignature.parameterTypes, [sema.types.charType])
+        XCTAssertEqual(containsSignature.returnType, sema.types.booleanType)
+    }
+
+    func testCharCategoryPropertyReturnsEnumType() throws {
+        let (sema, interner) = try makeSema()
+        let enumSymbol = try charCategorySymbol(sema: sema, interner: interner)
+        let categorySymbol = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: ["kotlin", "text", "category"].map { interner.intern($0) }).first { symbolID in
+                sema.symbols.functionSignature(for: symbolID)?.receiverType == sema.types.charType
+            }
+        )
+        let returnType = try XCTUnwrap(sema.symbols.functionSignature(for: categorySymbol)?.returnType)
+        guard case let .classType(classType) = sema.types.kind(of: returnType) else {
+            return XCTFail("Char.category should return kotlin.text.CharCategory")
+        }
+        XCTAssertEqual(classType.classSymbol, enumSymbol)
     }
 
     func testCharPredicateMembersResolveInCallExpressions() throws {
@@ -150,6 +251,26 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
                     )
                 }
             }
+        }
+    }
+
+    func testCharCategoryUsageResolvesInSource() throws {
+        let source = """
+        fun probe(ch: Char): Boolean {
+            val category: CharCategory = ch.category
+            val code: String = category.code
+            return CharCategory.UPPERCASE_LETTER.contains(ch) && code.length > 0
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "CharCategory enum entries, Char.category, code, and contains should resolve: \(ctx.diagnostics.diagnostics)"
+            )
         }
     }
 }

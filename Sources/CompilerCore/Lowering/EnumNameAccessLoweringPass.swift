@@ -145,7 +145,7 @@ final class EnumNameAccessLoweringPass: LoweringPass {
         printlnCallee: InternedString,
         kkPrintlnAnyCallee: InternedString
     ) -> [KIRInstruction]? {
-        guard case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall, qualifiedSuperType) = instruction,
+        guard case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall, _) = instruction,
               callee == printlnCallee || callee == kkPrintlnAnyCallee,
               arguments.count == 1,
               let classSymbol = enumClassSymbol(
@@ -206,25 +206,34 @@ final class EnumNameAccessLoweringPass: LoweringPass {
         {
             return classType.classSymbol
         }
-        return enumClassSymbolFromProducer(exprID: exprID, sema: sema, instructions: instructions)
+        return enumClassSymbolFromProducer(exprID: exprID, sema: sema, arena: arena, instructions: instructions)
     }
 
     private func enumClassSymbolFromProducer(
         exprID: KIRExprID,
         sema: SemaModule,
+        arena: KIRArena,
         instructions: [KIRInstruction]
     ) -> SymbolID? {
         for instruction in instructions.reversed() {
             switch instruction {
             case let .call(symbol, _, _, result, _, _, _, _):
                 guard result == exprID else { continue }
+                if let resultType = arena.exprType(exprID) {
+                    guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(resultType)),
+                          sema.symbols.symbol(classType.classSymbol)?.kind == .enumClass
+                    else {
+                        return nil
+                    }
+                    return classType.classSymbol
+                }
                 if let symbol {
                     return enumClassAncestor(of: symbol, sema: sema)
                 }
                 return nil
             case let .copy(from, to):
                 if to == exprID {
-                    return enumClassSymbolFromProducer(exprID: from, sema: sema, instructions: instructions)
+                    return enumClassSymbolFromProducer(exprID: from, sema: sema, arena: arena, instructions: instructions)
                 }
             default:
                 break
