@@ -375,6 +375,14 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Exception"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_throwable_printStackTrace",
+            parameters: [
+                RuntimeABIParameter(name: "throwableRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Exception"
+        ),
         // STDLIB-EXCEPT-105: Advanced exception handling
         RuntimeABIFunctionSpec(
             name: "kk_throwable_initCause",

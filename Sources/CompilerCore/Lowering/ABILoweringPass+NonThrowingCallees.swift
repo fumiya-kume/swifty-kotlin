@@ -532,6 +532,7 @@ extension ABILoweringPass {
             interner.intern("kk_throwable_message"),
             interner.intern("kk_throwable_cause"),
             interner.intern("kk_throwable_stackTraceToString"),
+            interner.intern("kk_throwable_printStackTrace"),
             interner.intern("kk_throwable_initCause"),
             interner.intern("kk_throwable_addSuppressed"),
             interner.intern("kk_throwable_getSuppressed"),
