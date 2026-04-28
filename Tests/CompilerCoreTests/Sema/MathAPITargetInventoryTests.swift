@@ -83,6 +83,8 @@ final class MathAPITargetInventoryTests: XCTestCase {
             "fun abs(Float): Float": "kk_math_abs_float",
             "fun abs(Int): Int": "kk_math_abs_int",
             "fun abs(Long): Long": "kk_math_abs_long",
+            "fun IEEErem(Double, Double): Double": "kk_math_IEEErem",
+            "fun IEEErem(Float, Float): Float": "kk_math_IEEErem_float",
             "fun max(Double, Double): Double": "kk_math_max",
             "fun max(Float, Float): Float": "kk_math_max_float",
             "fun max(Int, Int): Int": "kk_math_max_int",
@@ -97,9 +99,14 @@ final class MathAPITargetInventoryTests: XCTestCase {
             "fun min(ULong, ULong): ULong": "kk_math_min_ulong",
             "fun Double.nextDown(): Double": "kk_double_nextDown",
             "fun Float.nextDown(): Float": "kk_float_nextDown",
+            "fun Double.nextTowards(Double): Double": "kk_math_nextTowards",
+            "fun Float.nextTowards(Float): Float": "kk_math_nextTowards_float",
             "fun Double.nextUp(): Double": "kk_double_nextUp",
             "fun Float.nextUp(): Float": "kk_float_nextUp",
             "fun Double.pow(Double): Double": "kk_math_pow",
+            "fun Float.pow(Float): Float": "kk_math_pow_float",
+            "fun Double.pow(Int): Double": "kk_math_pow_int",
+            "fun Float.pow(Int): Float": "kk_math_pow_float_int",
             "fun expm1(Double): Double": "kk_math_expm1",
             "fun expm1(Float): Float": "kk_math_expm1_float",
             "fun ln1p(Double): Double": "kk_math_ln1p",
@@ -110,6 +117,10 @@ final class MathAPITargetInventoryTests: XCTestCase {
             "fun Float.roundToLong(): Long": "kk_float_roundToLong",
             "fun sign(Double): Double": "kk_math_sign",
             "fun sign(Float): Float": "kk_math_sign_float",
+            "fun Double.withSign(Double): Double": "kk_math_withSign",
+            "fun Double.withSign(Int): Double": "kk_math_withSign_int",
+            "fun Float.withSign(Float): Float": "kk_math_withSign_float",
+            "fun Float.withSign(Int): Float": "kk_math_withSign_float_int",
         ]
         for (name, doubleLink, floatLink) in unaryFloatingLinks([
             ("acos", "kk_math_acos", "kk_math_acos_float"),
@@ -149,21 +160,7 @@ final class MathAPITargetInventoryTests: XCTestCase {
         return result
     }()
 
-    private static let knownGapSignaturesByTodo: [String: Set<String>] = [
-        "STDLIB-MATH-007": [
-            "fun IEEErem(Double, Double): Double",
-            "fun IEEErem(Float, Float): Float",
-            "fun Double.nextTowards(Double): Double",
-            "fun Float.nextTowards(Float): Float",
-            "fun Float.pow(Float): Float",
-            "fun Double.pow(Int): Double",
-            "fun Float.pow(Int): Float",
-            "fun Double.withSign(Double): Double",
-            "fun Double.withSign(Int): Double",
-            "fun Float.withSign(Float): Float",
-            "fun Float.withSign(Int): Float",
-        ],
-    ]
+    private static let knownGapSignaturesByTodo: [String: Set<String>] = [:]
 
     private static let compilerOnlyCompatibilityNames: Set<String> = [
         "roundUp", "roundDown", "roundCeiling", "roundFloor",

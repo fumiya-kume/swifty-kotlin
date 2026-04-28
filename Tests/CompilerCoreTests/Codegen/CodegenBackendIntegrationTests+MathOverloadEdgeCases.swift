@@ -176,4 +176,57 @@ extension CodegenBackendIntegrationTests {
             }
         }
     }
+
+    func testCodegenRemainingFloatingMathOverloadsLowerToRuntimeHelpers() throws {
+        let source = """
+        import kotlin.math.*
+
+        fun sample(d: Double, f: Float, i: Int) {
+            val ieeeD = d.IEEErem(d)
+            val ieeeF = f.IEEErem(f)
+            val nextD = d.nextTowards(d)
+            val nextF = f.nextTowards(f)
+            val powF = f.pow(f)
+            val powDI = d.pow(i)
+            val powFI = f.pow(i)
+            val signD = d.withSign(d)
+            val signDI = d.withSign(i)
+            val signF = f.withSign(f)
+            val signFI = f.withSign(i)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "MathRemainingFloatingOverloads", emit: .kirDump)
+            try runToLowering(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "sample", in: module, interner: ctx.interner)
+            let calls = body.compactMap { instruction -> (String, Int)? in
+                guard case let .call(_, callee, arguments, _, _, _, _, _) = instruction else {
+                    return nil
+                }
+                return (ctx.interner.resolve(callee), arguments.count)
+            }
+
+            for expected in [
+                "kk_math_IEEErem",
+                "kk_math_IEEErem_float",
+                "kk_math_nextTowards",
+                "kk_math_nextTowards_float",
+                "kk_math_pow_float",
+                "kk_math_pow_int",
+                "kk_math_pow_float_int",
+                "kk_math_withSign",
+                "kk_math_withSign_int",
+                "kk_math_withSign_float",
+                "kk_math_withSign_float_int",
+            ] {
+                XCTAssertTrue(
+                    calls.contains(where: { $0 == expected && $1 == 2 }),
+                    "Expected \(expected) to lower with two arguments, got \(calls)"
+                )
+            }
+        }
+    }
 }

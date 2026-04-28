@@ -35,6 +35,106 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Math"
         ),
+        // STDLIB-MATH-007: remaining official floating-point overloads.
+        RuntimeABIFunctionSpec(
+            name: "kk_math_pow_float",
+            parameters: [
+                RuntimeABIParameter(name: "base", type: .intptr),
+                RuntimeABIParameter(name: "exp", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_pow_int",
+            parameters: [
+                RuntimeABIParameter(name: "base", type: .intptr),
+                RuntimeABIParameter(name: "exp", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_pow_float_int",
+            parameters: [
+                RuntimeABIParameter(name: "base", type: .intptr),
+                RuntimeABIParameter(name: "exp", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_IEEErem",
+            parameters: [
+                RuntimeABIParameter(name: "x", type: .intptr),
+                RuntimeABIParameter(name: "y", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_IEEErem_float",
+            parameters: [
+                RuntimeABIParameter(name: "x", type: .intptr),
+                RuntimeABIParameter(name: "y", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_nextTowards",
+            parameters: [
+                RuntimeABIParameter(name: "from", type: .intptr),
+                RuntimeABIParameter(name: "to", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_nextTowards_float",
+            parameters: [
+                RuntimeABIParameter(name: "from", type: .intptr),
+                RuntimeABIParameter(name: "to", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_withSign",
+            parameters: [
+                RuntimeABIParameter(name: "x", type: .intptr),
+                RuntimeABIParameter(name: "sign", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_withSign_float",
+            parameters: [
+                RuntimeABIParameter(name: "x", type: .intptr),
+                RuntimeABIParameter(name: "sign", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_withSign_int",
+            parameters: [
+                RuntimeABIParameter(name: "x", type: .intptr),
+                RuntimeABIParameter(name: "sign", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_withSign_float_int",
+            parameters: [
+                RuntimeABIParameter(name: "x", type: .intptr),
+                RuntimeABIParameter(name: "sign", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_math_ceil",
             parameters: [
