@@ -132,6 +132,9 @@ final class RuntimeContinuationState: @unchecked Sendable {
     /// and consumed by kk_kxmini_launch_with_exception_handler to reliably
     /// distinguish exception returns from normal (possibly non-zero) return values.
     var thrownException: Int = 0
+    private var uninterceptedEntryPointRaw: Int = 0
+    private var uninterceptedCompletionContinuation: Int = 0
+    private var hasStartedUninterceptedCoroutine = false
     private let stateLock = NSLock()
     /// STDLIB-CORO-BUG-01: one-shot resume guard.
     /// Set to `true` atomically (under `stateLock`) by the first successful resume
@@ -225,6 +228,27 @@ final class RuntimeContinuationState: @unchecked Sendable {
         self.spillSlots = spillSlots
         self.launcherArgs = launcherArgs
         self.delayTimers = delayTimers
+    }
+
+    func configureUninterceptedCoroutine(entryPointRaw: Int, completionContinuation: Int) {
+        stateLock.lock()
+        self.uninterceptedEntryPointRaw = entryPointRaw
+        self.uninterceptedCompletionContinuation = completionContinuation
+        self.hasStartedUninterceptedCoroutine = false
+        stateLock.unlock()
+    }
+
+    func takeUninterceptedCoroutineStart() -> (entryPointRaw: Int, completionContinuation: Int)? {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        guard uninterceptedEntryPointRaw != 0, !hasStartedUninterceptedCoroutine else {
+            return nil
+        }
+        hasStartedUninterceptedCoroutine = true
+        return (
+            entryPointRaw: uninterceptedEntryPointRaw,
+            completionContinuation: uninterceptedCompletionContinuation
+        )
     }
 
     deinit {
@@ -1190,6 +1214,128 @@ public func kk_coroutine_continuation_new(_ functionID: Int) -> Int {
     return Int(bitPattern: ptr)
 }
 
+@_cdecl("kk_create_coroutine_unintercepted")
+public func kk_create_coroutine_unintercepted(_ entryPointRaw: Int, _ completionContinuation: Int) -> Int {
+    let continuation = kk_coroutine_continuation_new(entryPointRaw)
+    runtimeContinuationState(from: continuation)?.configureUninterceptedCoroutine(
+        entryPointRaw: entryPointRaw,
+        completionContinuation: completionContinuation
+    )
+    return continuation
+}
+
+@_cdecl("kk_start_coroutine_unintercepted_or_return")
+public func kk_start_coroutine_unintercepted_or_return(
+    _ entryPointRaw: Int,
+    _ continuation: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    startCoroutineUninterceptedOrReturn(
+        entryPointRaw: entryPointRaw,
+        continuation: continuation,
+        completionContinuation: runtimeContinuationState(from: continuation)?.takeUninterceptedCoroutineStart()?.completionContinuation ?? 0,
+        outThrown: outThrown
+    )
+}
+
+private func startUninterceptedCoroutineFromResume(
+    entryPointRaw: Int,
+    continuation: Int,
+    completionContinuation: Int
+) {
+    var thrown = 0
+    let result = startCoroutineUninterceptedOrReturn(
+        entryPointRaw: entryPointRaw,
+        continuation: continuation,
+        completionContinuation: completionContinuation,
+        outThrown: &thrown
+    )
+    if completionContinuation == 0 {
+        return
+    }
+    if thrown != 0 {
+        kk_coroutine_continuation_resume_with_exception(completionContinuation, thrown)
+        return
+    }
+    if result != Int(bitPattern: kk_coroutine_suspended()) {
+        kk_coroutine_continuation_resume(completionContinuation, result)
+    }
+}
+
+private func continueUninterceptedCoroutineToCompletion(
+    entryPointRaw: Int,
+    continuation: Int,
+    completionContinuation: Int
+) {
+    var thrown = 0
+    let result = runSuspendEntryLoopWithContinuation(
+        entryPointRaw: entryPointRaw,
+        continuation: continuation,
+        outThrown: &thrown
+    )
+    if completionContinuation == 0 {
+        return
+    }
+    if thrown != 0 {
+        kk_coroutine_continuation_resume_with_exception(completionContinuation, thrown)
+    } else {
+        kk_coroutine_continuation_resume(completionContinuation, result)
+    }
+}
+
+private func startCoroutineUninterceptedOrReturn(
+    entryPointRaw: Int,
+    continuation: Int,
+    completionContinuation: Int,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let entryPoint = suspendEntryPoint(from: entryPointRaw) else {
+        outThrown?.pointee = 0
+        _ = kk_coroutine_state_exit(continuation, 0)
+        return 0
+    }
+    guard let state = runtimeContinuationState(from: continuation) else {
+        outThrown?.pointee = 0
+        return 0
+    }
+
+    let taskKey = RuntimeCoroutineScopeTaskKey.installFreshKey()
+    RuntimeCoroutineScope.installScope(state.scope, forTask: taskKey)
+    RuntimeContinuationState.installState(state, forTask: taskKey)
+    RuntimeJobHandle.current = state.jobHandle
+    defer {
+        RuntimeCoroutineScope.removeScope(forTask: taskKey)
+        RuntimeContinuationState.removeCurrent(forTask: taskKey)
+        RuntimeCoroutineScopeTaskKey.removeKey()
+        RuntimeJobHandle.current = nil
+    }
+
+    var thrownValue = 0
+    let result = entryPoint(continuation, &thrownValue)
+    if thrownValue != 0 {
+        outThrown?.pointee = thrownValue
+        state.thrownException = thrownValue
+        _ = kk_coroutine_state_exit(continuation, 0)
+        return 0
+    }
+
+    let suspendedToken = Int(bitPattern: kk_coroutine_suspended())
+    if result != suspendedToken {
+        outThrown?.pointee = 0
+        return result
+    }
+
+    outThrown?.pointee = 0
+    state.installResumeContinuation {
+        continueUninterceptedCoroutineToCompletion(
+            entryPointRaw: entryPointRaw,
+            continuation: continuation,
+            completionContinuation: completionContinuation
+        )
+    }
+    return suspendedToken
+}
+
 @_cdecl("kk_coroutine_state_enter")
 public func kk_coroutine_state_enter(_ continuation: Int, _ functionID: Int) -> Int {
     guard let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) else {
@@ -1298,6 +1444,28 @@ public func kk_coroutine_continuation_resume_with(_ continuation: Int, _ resultR
     }
     let state = Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
 
+    if let start = state.takeUninterceptedCoroutineStart() {
+        if resultRaw != 0,
+           let resultPtr = UnsafeMutableRawPointer(bitPattern: resultRaw),
+           let resultBox = tryCast(resultPtr, to: RuntimeResultBox.self),
+           !resultBox.isSuccess
+        {
+            if start.completionContinuation != 0 {
+                kk_coroutine_continuation_resume_with_exception(
+                    start.completionContinuation,
+                    resultBox.exception
+                )
+            }
+            return
+        }
+        startUninterceptedCoroutineFromResume(
+            entryPointRaw: start.entryPointRaw,
+            continuation: continuation,
+            completionContinuation: start.completionContinuation
+        )
+        return
+    }
+
     if resultRaw != 0,
        let resultPtr = UnsafeMutableRawPointer(bitPattern: resultRaw),
        let resultBox = tryCast(resultPtr, to: RuntimeResultBox.self)
@@ -1325,6 +1493,14 @@ public func kk_coroutine_continuation_resume(_ continuation: Int, _ value: Int) 
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_coroutine_continuation_resume received invalid continuation handle")
     }
     let state = Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
+    if let start = state.takeUninterceptedCoroutineStart() {
+        startUninterceptedCoroutineFromResume(
+            entryPointRaw: start.entryPointRaw,
+            continuation: continuation,
+            completionContinuation: start.completionContinuation
+        )
+        return
+    }
     if let ise = state.resume(with: value) {
         // STDLIB-CORO-BUG-01: double-resume detected — surface the ISE via thrownException.
         state.deliverDoubleResumeException(ise)
