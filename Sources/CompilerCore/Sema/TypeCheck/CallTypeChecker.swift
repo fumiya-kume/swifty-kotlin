@@ -419,6 +419,70 @@ final class CallTypeChecker {
             return returnType
         }
 
+        // --- Context helper: context(with, block) (STDLIB-KOTLIN-ROOT-CTX-001) ---
+        // The helper makes the first argument available as a context receiver
+        // for the block type, but does not make it an implicit receiver.
+        let contextHelperName = interner.intern("context")
+        if let calleeName, args.count == 2,
+           calleeName == contextHelperName,
+           locals[calleeName] == nil,
+           !ctx.cachedScopeLookup(calleeName).contains(where: { candidate in
+               guard let sym = ctx.cachedSymbol(candidate) else { return false }
+               return !sym.flags.contains(.synthetic)
+           })
+        {
+            let contextValueType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+            let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                contextReceivers: [contextValueType],
+                params: [],
+                returnType: expectedType ?? sema.types.anyType
+            )))
+            let lambdaType = driver.inferExpr(
+                args[1].expr,
+                ctx: ctx,
+                locals: &locals,
+                expectedType: lambdaExpectedType
+            )
+            let returnType: TypeID = if case let .functionType(fnType) = sema.types.kind(of: lambdaType) {
+                fnType.returnType
+            } else {
+                sema.bindings.exprTypes[args[1].expr].flatMap { typeID in
+                    if case let .functionType(fnType) = sema.types.kind(of: typeID) {
+                        return fnType.returnType
+                    }
+                    return nil
+                } ?? sema.types.anyType
+            }
+            if let contextSymbol = ctx.cachedScopeLookup(calleeName).first(where: { candidate in
+                guard let sym = ctx.cachedSymbol(candidate),
+                      sym.flags.contains(.synthetic),
+                      sym.fqName.map({ interner.resolve($0) }) == ["kotlin", "context"]
+                else {
+                    return false
+                }
+                return true
+            }) {
+                driver.helpers.checkOptIn(
+                    for: contextSymbol,
+                    ctx: ctx,
+                    range: range,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: contextSymbol,
+                        substitutedTypeArguments: [contextValueType, returnType],
+                        parameterMapping: [0: 0, 1: 1]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(contextSymbol))
+            }
+            sema.bindings.markScopeFunctionExpr(id, kind: .scopeContext)
+            sema.bindings.bindExprType(id, type: returnType)
+            return returnType
+        }
+
         // --- produce { ... } builder (CORO-075) ---
         if let calleeName,
            calleeName == knownNames.produce,
