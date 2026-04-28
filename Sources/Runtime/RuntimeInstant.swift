@@ -1,3 +1,4 @@
+import Dispatch
 import Foundation
 
 // MARK: - kotlin.time.Instant Runtime (STDLIB-TIME-083/086)
@@ -38,11 +39,28 @@ final class RuntimeInstantBox {
     }
 }
 
+final class RuntimeTimeSourceClockBox {
+    let originEpochSeconds: Int64
+    let originNanoOfSecond: Int32
+    let baseUptimeNanoseconds: Int64
+
+    init(origin: RuntimeInstantBox, baseUptimeNanoseconds: Int64) {
+        self.originEpochSeconds = origin.epochSeconds
+        self.originNanoOfSecond = origin.nanoOfSecond
+        self.baseUptimeNanoseconds = baseUptimeNanoseconds
+    }
+}
+
 // MARK: - Helpers
 
 private func runtimeInstantBox(from raw: Int) -> RuntimeInstantBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
     return tryCast(ptr, to: RuntimeInstantBox.self)
+}
+
+private func runtimeTimeSourceClockBox(from raw: Int) -> RuntimeTimeSourceClockBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(ptr, to: RuntimeTimeSourceClockBox.self)
 }
 
 private func saturatingAdd(_ a: Int64, _ b: Int64) -> Int64 {
@@ -51,6 +69,24 @@ private func saturatingAdd(_ a: Int64, _ b: Int64) -> Int64 {
         return b < 0 ? Int64.min : Int64.max
     }
     return result
+}
+
+private func runtimeClockMonotonicNowNanoseconds() -> Int64 {
+    let now = DispatchTime.now().uptimeNanoseconds
+    return now <= UInt64(Int64.max) ? Int64(now) : Int64.max
+}
+
+private func runtimeInstantFromTimeSourceClock(_ clock: RuntimeTimeSourceClockBox) -> Int {
+    let elapsedNanoseconds = saturatingAdd(
+        runtimeClockMonotonicNowNanoseconds(),
+        clock.baseUptimeNanoseconds == Int64.min ? Int64.max : -clock.baseUptimeNanoseconds
+    )
+    let elapsedSeconds = elapsedNanoseconds / 1_000_000_000
+    let elapsedNanoAdjustment = Int32(elapsedNanoseconds % 1_000_000_000)
+    return registerRuntimeObject(RuntimeInstantBox(
+        epochSeconds: saturatingAdd(clock.originEpochSeconds, elapsedSeconds),
+        nanoOfSecond: clock.originNanoOfSecond + elapsedNanoAdjustment
+    ))
 }
 
 private let runtimeDistantPastExclusiveEpochSeconds: Int64 = -3_217_862_419_200
@@ -87,7 +123,10 @@ public func kk_clock_system_now() -> Int {
 /// Kotlin: clock.now()
 @_cdecl("kk_clock_now")
 public func kk_clock_now(_ receiver: Int) -> Int {
-    kk_instant_now()
+    if let clock = runtimeTimeSourceClockBox(from: receiver) {
+        return runtimeInstantFromTimeSourceClock(clock)
+    }
+    return kk_instant_now()
 }
 
 /// Creates an Instant from an epoch-millisecond value.

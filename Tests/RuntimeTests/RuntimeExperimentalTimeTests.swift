@@ -1,4 +1,5 @@
 import Dispatch
+import Foundation
 @testable import Runtime
 import XCTest
 
@@ -40,5 +41,18 @@ final class RuntimeExperimentalTimeTests: IsolatedRuntimeXCTestCase {
         timer.resume()
         
         wait(for: [expectation], timeout: 1.0)
+    }
+
+    func testTimeSourceAsClockReturnsOriginBasedInstants() {
+        let origin = kk_instant_from_epoch_millis(2_000)
+        let clock = kk_time_source_as_clock(0, origin)
+
+        let first = kk_clock_now(clock)
+        XCTAssertGreaterThanOrEqual(kk_instant_compare(first, origin), 0)
+        XCTAssertLessThan(kk_duration_inWholeMilliseconds(kk_instant_until(origin, first)), 500)
+
+        Thread.sleep(forTimeInterval: 0.002)
+        let second = kk_clock_now(clock)
+        XCTAssertGreaterThanOrEqual(kk_instant_compare(second, first), 0)
     }
 }
