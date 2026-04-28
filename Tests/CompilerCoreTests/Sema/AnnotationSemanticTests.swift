@@ -312,6 +312,48 @@ final class AnnotationSemanticTests: XCTestCase {
         )
     }
 
+    func testContextFunctionTypeParamsResolves() {
+        let source = """
+        fun marker(x: ContextFunctionTypeParams?): Int = 0
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected ContextFunctionTypeParams smoke test to compile cleanly, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testContextFunctionTypeParamsAnnotationIsSyntheticAndTargetedToTypes() throws {
+        let ctx = makeContextFromSource("fun noop() {}")
+        try runSema(ctx)
+        let sema = try XCTUnwrap(ctx.sema)
+        let ownerFQName = [
+            ctx.interner.intern("kotlin"),
+            ctx.interner.intern("ContextFunctionTypeParams"),
+        ]
+        let symbolID = try XCTUnwrap(
+            sema.symbols.lookup(fqName: ownerFQName),
+            "kotlin.ContextFunctionTypeParams must be registered"
+        )
+        let symbol = try XCTUnwrap(sema.symbols.symbol(symbolID))
+
+        XCTAssertEqual(symbol.kind, .annotationClass)
+        XCTAssertTrue(symbol.flags.contains(.synthetic))
+
+        let annotations = sema.symbols.annotations(for: symbolID)
+        XCTAssertTrue(
+            annotations.contains(where: {
+                $0.annotationFQName == KnownCompilerAnnotation.target.qualifiedName
+                    && $0.arguments == ["AnnotationTarget.TYPE"]
+            }),
+            "Expected ContextFunctionTypeParams to carry @Target(AnnotationTarget.TYPE), got: \(annotations)"
+        )
+
+        let countSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: ownerFQName + [ctx.interner.intern("count")]),
+            "kotlin.ContextFunctionTypeParams.count must be registered"
+        )
+        XCTAssertEqual(sema.symbols.propertyType(for: countSymbol), sema.types.intType)
+    }
+
     func testSubclassOptInRequiredResolves() {
         let source = """
         fun marker(x: SubclassOptInRequired?): Int = 0
@@ -734,6 +776,71 @@ final class AnnotationSemanticTests: XCTestCase {
         } else {
             XCTFail("Expected typealias underlying type to resolve as functionType")
         }
+    }
+
+    func testContextFunctionTypeParamsNormalizesFunctionNToContextFunctionType() throws {
+        let source = """
+        interface Host {
+            val action: @ContextFunctionTypeParams(2) Function2<String, Int, Unit>
+        }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected context function annotation source to compile cleanly, got: \(ctx.diagnostics.diagnostics)")
+
+        let ast = try XCTUnwrap(ctx.ast)
+        let sema = try XCTUnwrap(ctx.sema)
+        let file = try XCTUnwrap(ast.files.first)
+        let interfaceDeclID = try XCTUnwrap(file.topLevelDecls.first)
+        guard case let .interfaceDecl(interfaceDecl) = ast.arena.decl(interfaceDeclID) else {
+            return XCTFail("Expected interface declaration")
+        }
+        let propertyDeclID = try XCTUnwrap(interfaceDecl.memberProperties.first)
+        let propertySymbol = try XCTUnwrap(sema.bindings.declSymbol(for: propertyDeclID))
+        let propertyType = try XCTUnwrap(sema.symbols.propertyType(for: propertySymbol))
+
+        guard case let .functionType(functionType) = sema.types.kind(of: propertyType) else {
+            return XCTFail("Expected property type to resolve as functionType")
+        }
+        XCTAssertEqual(functionType.contextReceivers, [sema.types.stringType, sema.types.intType])
+        XCTAssertNil(functionType.receiver)
+        XCTAssertTrue(functionType.params.isEmpty)
+        XCTAssertEqual(functionType.returnType, sema.types.unitType)
+    }
+
+    func testContextFunctionTypeParamsCombinesWithExtensionFunctionType() throws {
+        let source = """
+        typealias Handler = @ContextFunctionTypeParams(count = 2) @ExtensionFunctionType Function4<String, Int, Double, String, Unit>
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected combined context and extension function annotations to compile cleanly, got: \(ctx.diagnostics.diagnostics)")
+
+        let sema = try XCTUnwrap(ctx.sema)
+        let handlerSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [ctx.interner.intern("Handler")]))
+        let underlyingType = try XCTUnwrap(sema.symbols.typeAliasUnderlyingType(for: handlerSymbol))
+
+        guard case let .functionType(functionType) = sema.types.kind(of: underlyingType) else {
+            return XCTFail("Expected typealias underlying type to resolve as functionType")
+        }
+        XCTAssertEqual(functionType.contextReceivers, [sema.types.stringType, sema.types.intType])
+        XCTAssertEqual(functionType.receiver, sema.types.doubleType)
+        XCTAssertEqual(functionType.params, [sema.types.stringType])
+        XCTAssertEqual(functionType.returnType, sema.types.unitType)
+    }
+
+    func testContextFunctionTypeParamsRejectsCountLargerThanFunctionArity() {
+        let source = """
+        interface Host {
+            val invalid: @ContextFunctionTypeParams(3) Function2<String, Int, Unit>
+        }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-CONTEXT-FN-TYPE", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected one context function annotation diagnostic, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "ContextFunctionTypeParams diagnostics should be errors")
     }
 
     func testExtensionFunctionTypeRejectsFunction0() {
