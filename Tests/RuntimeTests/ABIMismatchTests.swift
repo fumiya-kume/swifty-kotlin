@@ -222,6 +222,7 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.hexFormatFunctions,
             RuntimeABISpec.comparatorFunctions,
             RuntimeABISpec.resultFunctions,
+            RuntimeABISpec.kotlinVersionFunctions,
             RuntimeABISpec.deepRecursiveFunctions,
             RuntimeABISpec.stringBuilderFunctions,
             RuntimeABISpec.fileIOFunctions,

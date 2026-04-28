@@ -235,6 +235,12 @@ extension ABIMismatchTests {
             "kk_base64_decode_instance",
             "kk_base64_encodeToByteArray_instance",
             "kk_base64_decodeFromByteArray_instance",
+            // KotlinVersion
+            "kk_kotlin_version_new",
+            "kk_kotlin_version_new_patch",
+            "kk_kotlin_version_major",
+            "kk_kotlin_version_minor",
+            "kk_kotlin_version_patch",
         ]
 
         for linkName in syntheticLinkNames {

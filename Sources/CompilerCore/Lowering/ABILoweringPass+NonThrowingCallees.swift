@@ -850,6 +850,12 @@ extension ABILoweringPass {
             interner.intern("kk_result_getOrNull"),
             interner.intern("kk_result_getOrDefault"),
             interner.intern("kk_result_exceptionOrNull"),
+            // KotlinVersion component surface.
+            interner.intern("kk_kotlin_version_new"),
+            interner.intern("kk_kotlin_version_new_patch"),
+            interner.intern("kk_kotlin_version_major"),
+            interner.intern("kk_kotlin_version_minor"),
+            interner.intern("kk_kotlin_version_patch"),
             // StringBuilder enhancements (STDLIB-311) — buildString DSL helpers
             interner.intern("kk_string_builder_append"),
             interner.intern("kk_string_builder_append_line"),
