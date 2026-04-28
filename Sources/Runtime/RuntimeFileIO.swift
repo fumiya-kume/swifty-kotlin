@@ -9,26 +9,6 @@ final class RuntimeFileBox {
 
 final class RuntimeClassLoaderBox {}
 
-final class RuntimeResourceInputStreamBox {
-    private let data: Data
-    private var offset: Int = 0
-    private var closed = false
-
-    init(data: Data) {
-        self.data = data
-    }
-
-    func readByte() -> Int {
-        guard !closed, offset < data.count else { return -1 }
-        defer { offset += 1 }
-        return Int(data[offset])
-    }
-
-    func close() {
-        closed = true
-    }
-}
-
 private func runtimeFileBox(from raw: Int) -> RuntimeFileBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
     return tryCast(ptr, to: RuntimeFileBox.self)

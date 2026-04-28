@@ -320,11 +320,6 @@ private final class RuntimeFrozenRegistry: @unchecked Sendable {
         return frozen.contains(UInt(bitPattern: raw))
     }
 
-    func reset() {
-        lock.lock()
-        defer { lock.unlock() }
-        frozen.removeAll(keepingCapacity: false)
-    }
 }
 
 @_cdecl("kk_freeze_object")
@@ -505,17 +500,6 @@ private final class RuntimeCNameRegistry: @unchecked Sendable {
         return entries[externName] ?? 0
     }
 
-    func allNames() -> [String] {
-        lock.lock()
-        defer { lock.unlock() }
-        return Array(entries.keys)
-    }
-
-    func reset() {
-        lock.lock()
-        defer { lock.unlock() }
-        entries.removeAll(keepingCapacity: false)
-    }
 }
 
 private let runtimeCNameRegistry = RuntimeCNameRegistry()

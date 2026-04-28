@@ -434,18 +434,6 @@ extension DataFlowSemaPhase {
         case .public: return "public"
         }
     }
-    
-    private func isSubclass(of parentFQName: [InternedString], child: [InternedString], symbols: SymbolTable) -> Bool {
-        // Simplified check - in practice would need full inheritance hierarchy traversal
-        guard parentFQName.count > 0, child.count > 0 else { return false }
-        
-        let parentName = parentFQName.last!
-        let childName = child.last!
-        
-        // For now, just check if they're in the same package and child name suggests inheritance
-        // A proper implementation would traverse the inheritance hierarchy
-        return parentName != childName // Placeholder logic
-    }
 
     // MARK: - Check 6: modifier combination validation
 

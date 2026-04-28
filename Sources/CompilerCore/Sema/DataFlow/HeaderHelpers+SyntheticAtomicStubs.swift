@@ -1388,32 +1388,4 @@ extension DataFlowSemaPhase {
         return fqName
     }
 
-    private func registerSyntheticAnnotationClass(
-        named name: String,
-        packageFQName: [InternedString],
-        packageSymbol: SymbolID,
-        symbols: SymbolTable,
-        interner: StringInterner
-    ) {
-        let className = interner.intern(name)
-        let classFQName = packageFQName + [className]
-        if let existing = symbols.lookup(fqName: classFQName) {
-            if packageSymbol != .invalid {
-                symbols.setParentSymbol(packageSymbol, for: existing)
-            }
-            return
-        }
-
-        let classSymbol = symbols.define(
-            kind: .annotationClass,
-            name: className,
-            fqName: classFQName,
-            declSite: nil,
-            visibility: .public,
-            flags: [.synthetic]
-        )
-        if packageSymbol != .invalid {
-            symbols.setParentSymbol(packageSymbol, for: classSymbol)
-        }
-    }
 }

@@ -258,11 +258,6 @@ final class KIRLoweringContext {
         return max(0, loopControlStack.count - 1)
     }
 
-    /// Returns the loop-control-stack depth for the loop targeted by a `continue`.
-    func continueTargetLoopDepth(for name: InternedString?) -> Int {
-        breakTargetLoopDepth(for: name)
-    }
-
     /// Temporarily trim the finally block stack to `depth` entries, execute
     /// `body`, then restore the stack to its previous state.  Uses suffix
     /// save/restore to avoid copy-on-write of the full array (CODE-001).

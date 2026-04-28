@@ -58,28 +58,4 @@ extension BuildASTPhase.ExpressionParser {
         }
     }
 
-    func tryParseTypeArgRefs() -> [TypeArgRef]? {
-        guard matches(.symbol(.lessThan)) else { return nil }
-        let savedIndex = index
-        let options = TypeRefParserCore.Options.expressionInline
-        guard let parsed = TypeRefParserCore.parseTypeArgRefsPrefix(
-            tokens[index...],
-            interner: interner,
-            astArena: astArena,
-            options: options,
-            diagnostics: diagnostics
-        ) else {
-            index = savedIndex
-            return nil
-        }
-        index += parsed.consumed
-        return parsed.args
-    }
-
-    func parseInlineTypeRef() -> TypeRefID? {
-        guard let token = current() else {
-            return nil
-        }
-        return parseTypeReference(token.range)
-    }
 }

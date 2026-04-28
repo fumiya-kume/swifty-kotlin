@@ -328,30 +328,6 @@ extension BuildASTPhase.ExpressionParser {
         ))
     }
 
-    /// Scans body tokens for a top-level reference to `it` — the implicit single-parameter name
-    /// used by Kotlin's no-arrow lambda syntax (`{ it * 2 }`).
-    private func containsImplicitItReference(in tokens: [Token]) -> Bool {
-        var braceDepth = 0
-        for token in tokens {
-            // Only consider identifiers at the top brace level; nested lambdas
-            // define their own `it` so we must not look inside them.
-            if braceDepth == 0 {
-                switch token.kind {
-                case let .identifier(name) where interner.resolve(name) == "it":
-                    return true
-                default:
-                    break
-                }
-            }
-            switch token.kind {
-            case .symbol(.lBrace): braceDepth += 1
-            case .symbol(.rBrace): braceDepth = max(0, braceDepth - 1)
-            default: break
-            }
-        }
-        return false
-    }
-
     private func isPotentialLambdaParameterList(_ tokens: [Token]) -> Bool {
         var depth = BuildASTPhase.BracketDepth()
         for token in tokens {

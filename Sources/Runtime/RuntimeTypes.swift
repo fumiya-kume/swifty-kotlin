@@ -1115,18 +1115,6 @@ final class RuntimeKTypeProjectionBox {
     }
 }
 
-/// Runtime box for `kotlin.reflect.KCallable<*>`.
-/// Represents a member (property or function) of a class.
-final class RuntimeKCallableBox {
-    let nameRaw: Int
-    let kind: RuntimeCallableRefKind
-
-    init(nameRaw: Int, kind: RuntimeCallableRefKind) {
-        self.nameRaw = nameRaw
-        self.kind = kind
-    }
-}
-
 /// Runtime box for `kotlin.reflect.KParameter`.
 /// Represents a single parameter of a KFunction or KConstructor.
 final class RuntimeKParameterBox {

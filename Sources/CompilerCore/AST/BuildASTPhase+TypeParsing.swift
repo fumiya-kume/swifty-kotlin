@@ -5,10 +5,6 @@ extension BuildASTPhase {
         TypeRefParserCore.isTypeLikeNameToken(kind)
     }
 
-    func stripDefaultValue(_ tokens: [Token]) -> [Token] {
-        splitDefaultValue(tokens).withoutDefault
-    }
-
     func splitDefaultValue(_ tokens: [Token]) -> (withoutDefault: [Token], defaultTokens: [Token]?) {
         var depth = BracketDepth()
         for (index, token) in tokens.enumerated() {

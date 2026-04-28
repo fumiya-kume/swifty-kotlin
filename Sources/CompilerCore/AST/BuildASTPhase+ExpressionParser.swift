@@ -189,22 +189,6 @@ extension BuildASTPhase {
             }
         }
 
-        private func isUnaryPrefix() -> Bool {
-            if index == tokens.startIndex { return true }
-            guard index > tokens.startIndex, index - 1 >= tokens.startIndex else { return true }
-            let prev = tokens[index - 1]
-            switch prev.kind {
-            case .intLiteral, .longLiteral, .floatLiteral, .doubleLiteral, .charLiteral,
-                 .identifier, .backtickedIdentifier,
-                 .symbol(.rParen), .symbol(.rBracket),
-                 .symbol(.bangBang),
-                 .keyword(.true), .keyword(.false):
-                return false
-            default:
-                return true
-            }
-        }
-
         func mergeRanges(_ lhs: SourceRange?, _ rhs: SourceRange?, fallback: SourceRange) -> SourceRange {
             switch (lhs, rhs) {
             case let (lhs?, rhs?):

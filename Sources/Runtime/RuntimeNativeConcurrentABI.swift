@@ -65,11 +65,6 @@ private final class WorkerIDRegistry: @unchecked Sendable {
         return newID
     }
 
-    func reset() {
-        lock.lock()
-        defer { lock.unlock() }
-        table.removeAll(keepingCapacity: false)
-    }
 }
 
 /// Returns the monotonic integer ID for a Worker.

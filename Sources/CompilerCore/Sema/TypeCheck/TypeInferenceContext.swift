@@ -54,10 +54,6 @@ struct TypeInferenceContext {
     /// DslMarker annotation as an outer receiver, the outer receiver is hidden
     /// from implicit resolution.
     var activeDslMarkerAnnotations: Set<String> = []
-    func with(scope newScope: Scope) -> TypeInferenceContext {
-        var copy = self; copy.scope = newScope; return copy
-    }
-
     func with(implicitReceiverType newType: TypeID?) -> TypeInferenceContext {
         var copy = self
         copy.implicitReceiverType = newType
@@ -70,20 +66,6 @@ struct TypeInferenceContext {
         return copy
     }
 
-    func with(loopDepth newDepth: Int) -> TypeInferenceContext {
-        var copy = self; copy.loopDepth = newDepth; return copy
-    }
-
-    func withLoopLabel(_ label: InternedString) -> TypeInferenceContext {
-        var copy = self
-        copy.loopLabelStack = loopLabelStack + [label]
-        return copy
-    }
-
-    func hasLoopLabel(_ label: InternedString) -> Bool {
-        loopLabelStack.contains(label)
-    }
-
     func withLambdaLabel(_ label: InternedString) -> TypeInferenceContext {
         var copy = self
         copy.lambdaLabelStack = lambdaLabelStack + [label]
@@ -92,10 +74,6 @@ struct TypeInferenceContext {
 
     func hasLambdaLabel(_ label: InternedString) -> Bool {
         lambdaLabelStack.contains(label)
-    }
-
-    func with(flowState newState: DataFlowState) -> TypeInferenceContext {
-        var copy = self; copy.flowState = newState; return copy
     }
 
     func with(enclosingClassSymbol newSymbol: SymbolID?) -> TypeInferenceContext {
@@ -244,17 +222,6 @@ struct TypeInferenceContext {
             }
         }
         return false
-    }
-
-    /// Returns true if the given outer receiver type is blocked by DslMarker
-    /// restrictions — i.e. the current implicit receiver carries at least one
-    /// DslMarker annotation that also applies to the outer receiver.
-    func isOuterReceiverBlockedByDslMarker(_ outerReceiverType: TypeID) -> Bool {
-        guard !activeDslMarkerAnnotations.isEmpty else {
-            return false
-        }
-        let outerDslMarkers = collectDslMarkerAnnotations(for: outerReceiverType)
-        return !activeDslMarkerAnnotations.isDisjoint(with: outerDslMarkers)
     }
 
     /// Returns true if accessing the given candidate symbol through the scope

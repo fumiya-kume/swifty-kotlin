@@ -49,54 +49,6 @@ extension CallSupportLowerer {
         return flags + Array(repeating: false, count: count - flags.count)
     }
 
-    func packVarargArguments(
-        argIndices: [Int],
-        providedArguments: [KIRExprID],
-        spreadFlags: [Bool],
-        listifyResult: Bool = true,
-        arena: KIRArena,
-        interner: StringInterner,
-        intType: TypeID,
-        anyType: TypeID,
-        emit instructions: inout KIRLoweringEmitContext
-    ) -> KIRExprID {
-        var legacyInstructions = instructions.instructions
-        let result = packVarargArguments(
-            argIndices: argIndices,
-            providedArguments: providedArguments,
-            spreadFlags: spreadFlags,
-            listifyResult: listifyResult,
-            arena: arena,
-            interner: interner,
-            intType: intType,
-            anyType: anyType,
-            instructions: &legacyInstructions
-        )
-        instructions = KIRLoweringEmitContext(legacyInstructions)
-        return result
-    }
-
-    func emitArrayNew(
-        count: Int,
-        arena: KIRArena,
-        interner: StringInterner,
-        intType: TypeID,
-        anyType: TypeID,
-        emit instructions: inout KIRLoweringEmitContext
-    ) -> KIRExprID {
-        var legacyInstructions = instructions.instructions
-        let result = emitArrayNew(
-            count: count,
-            arena: arena,
-            interner: interner,
-            intType: intType,
-            anyType: anyType,
-            instructions: &legacyInstructions
-        )
-        instructions = KIRLoweringEmitContext(legacyInstructions)
-        return result
-    }
-
     func syntheticReceiverParameterSymbol(functionSymbol: SymbolID) -> SymbolID {
         SyntheticSymbolScheme.receiverParameterSymbol(for: functionSymbol)
     }

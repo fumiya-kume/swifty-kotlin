@@ -174,16 +174,6 @@ public enum RuntimeMetadataCodec {
 
 // MARK: - Runtime box conversion helpers
 
-extension KmAnnotation {
-    init(_ record: RuntimeAnnotationRecord) {
-        self.init(className: record.annotationFQName, arguments: record.arguments)
-    }
-
-    init(_ box: RuntimeAnnotationBox) {
-        self.init(className: box.annotationFQName, arguments: box.arguments)
-    }
-}
-
 extension KmValueParameter {
     init(_ box: RuntimeKParameterBox) {
         let resolvedName = runtimeMetadataString(from: box.nameRaw)

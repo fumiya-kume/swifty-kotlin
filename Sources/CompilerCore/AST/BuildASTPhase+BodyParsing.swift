@@ -359,19 +359,6 @@ extension BuildASTPhase {
         }
     }
 
-    /// Returns true for SyntaxKind values that represent structured control flow
-    /// expressions in the CST. These nodes are parsed directly by the parser with
-    /// proper sub-node structure, so the AST builder can skip local decl/assign
-    /// probing and parse them directly as expressions.
-    func isControlFlowExprKind(_ kind: SyntaxKind) -> Bool {
-        switch kind {
-        case .ifExpr, .whenExpr, .tryExpr, .loopStmt:
-            true
-        default:
-            false
-        }
-    }
-
     // MARK: - Annotation Parsing
 
     // Extracts annotation nodes from the leading tokens of a declaration CST node.
@@ -412,77 +399,6 @@ extension BuildASTPhase {
     }
 
 
-    /// Returns the text representation of a token for annotation parsing.
-    private func tokenText(_ token: Token, interner: StringInterner) -> String? {
-        switch token.kind {
-        case let .identifier(interned):
-            interner.resolve(interned)
-        case let .backtickedIdentifier(interned):
-            interner.resolve(interned)
-        case let .keyword(keyword):
-            keyword.rawValue
-        case let .softKeyword(soft):
-            soft.rawValue
-        default:
-            nil
-        }
-    }
-
-    /// Returns a raw text representation for any token, used for annotation argument parsing.
-    private func tokenRawText(_ token: Token, interner: StringInterner) -> String {
-        switch token.kind {
-        case let .identifier(interned), let .backtickedIdentifier(interned):
-            interner.resolve(interned)
-        case let .keyword(keyword):
-            keyword.rawValue
-        case let .softKeyword(soft):
-            soft.rawValue
-        case let .stringSegment(interned):
-            "\"\(interner.resolve(interned))\""
-        case .stringQuote:
-            "\""
-        case let .multiDollarStringQuote(dollarCount):
-            String(repeating: "$", count: dollarCount) + "\""
-        case let .multiDollarRawStringQuote(dollarCount):
-            String(repeating: "$", count: dollarCount) + "\"\"\""
-        case let .intLiteral(value):
-            "\(value)"
-        case let .longLiteral(value):
-            "\(value)"
-        case let .uintLiteral(value):
-            "\(value)"
-        case let .ulongLiteral(value):
-            "\(value)"
-        case let .floatLiteral(value):
-            "\(value)"
-        case let .doubleLiteral(value):
-            "\(value)"
-        case let .charLiteral(value):
-            "'\(value)'"
-        case .symbol(.assign):
-            "="
-        case .symbol(.doubleColon):
-            "::"
-        case .symbol(.colon):
-            ":"
-        case .symbol(.dot):
-            "."
-        case .symbol(.comma):
-            ","
-        case .symbol(.lBracket):
-            "["
-        case .symbol(.rBracket):
-            "]"
-        case .symbol(.lBrace):
-            "{"
-        case .symbol(.rBrace):
-            "}"
-        default:
-            ""
-        }
-    }
-
-
     /// Checks if a token represents a declaration start keyword.
     private func isDeclarationStart(_ kind: TokenKind) -> Bool {
         switch kind {
@@ -493,13 +409,5 @@ extension BuildASTPhase {
         default:
             false
         }
-    }
-
-    /// Checks if a token is a leading declaration keyword (modifier or declaration start).
-    private func isLeadingDeclarationKeyword(_ token: Token) -> Bool {
-        guard case let .keyword(keyword) = token.kind else {
-            return false
-        }
-        return isLeadingDeclarationKeyword(keyword)
     }
 }

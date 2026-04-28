@@ -30,11 +30,6 @@ enum TypeRefParserCore {
         let consumed: Int
     }
 
-    struct TypeArgsParseResult {
-        let args: [TypeArgRef]
-        let consumed: Int
-    }
-
     static func isTypeLikeNameToken(_ kind: TokenKind) -> Bool {
         isTypeNameToken(kind, options: .declaration)
     }
@@ -61,30 +56,6 @@ enum TypeRefParserCore {
             return nil
         }
         return TypeRefParseResult(ref: parsed.ref, consumed: parsed.next)
-    }
-
-    static func parseTypeArgRefsPrefix(
-        _ tokens: ArraySlice<Token>,
-        interner: StringInterner,
-        astArena: ASTArena,
-        options: Options,
-        diagnostics: DiagnosticEngine? = nil
-    ) -> TypeArgsParseResult? {
-        guard !tokens.isEmpty else {
-            return nil
-        }
-        let buffer = Array(tokens)
-        guard let parsed = parseTypeArgRefsPrefix(
-            buffer,
-            from: 0,
-            interner: interner,
-            astArena: astArena,
-            options: options,
-            diagnostics: diagnostics
-        ) else {
-            return nil
-        }
-        return TypeArgsParseResult(args: parsed.args, consumed: parsed.next)
     }
 
     private static func parseTypeRefPrefix(

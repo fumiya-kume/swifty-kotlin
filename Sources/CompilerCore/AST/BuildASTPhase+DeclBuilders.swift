@@ -1,18 +1,6 @@
 import Foundation
 
 extension BuildASTPhase {
-    func appendDecl(
-        _ decl: Decl,
-        to arena: ASTArena,
-        declarations: inout [DeclID],
-        fileDecls: inout [Int32: [DeclID]],
-        fileRawID: Int32
-    ) {
-        let id = arena.appendDecl(decl)
-        declarations.append(id)
-        fileDecls[fileRawID, default: []].append(id)
-    }
-
     func makeClassDecl(from nodeID: NodeID, in arena: SyntaxArena, interner: StringInterner, astArena: ASTArena) -> ClassDecl {
         let node = arena.node(nodeID)
         let primaryConstructorParams = declarationValueParameters(
@@ -324,14 +312,6 @@ extension BuildASTPhase {
         }
         let rhsTokens = Array(tokens[(assignIndex + 1)...]).filter { $0.kind != .symbol(.semicolon) }
         return parseTypeRef(from: rhsTokens, interner: interner, astArena: astArena)
-    }
-
-    func makeEnumEntryDecl(from nodeID: NodeID, in arena: SyntaxArena, interner: StringInterner) -> EnumEntryDecl {
-        let node = arena.node(nodeID)
-        return EnumEntryDecl(
-            range: node.range,
-            name: declarationName(from: nodeID, in: arena, interner: interner)
-        )
     }
 
     func declarationName(from nodeID: NodeID, in arena: SyntaxArena, interner: StringInterner) -> InternedString {

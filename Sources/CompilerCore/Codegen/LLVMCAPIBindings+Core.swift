@@ -35,14 +35,6 @@ extension LLVMCAPIBindings {
         triple.withCString { setTargetFn(module, $0) }
     }
 
-    func setDataLayout(_ module: LLVMModuleRef?, dataLayout: String) {
-        dataLayout.withCString { setDataLayoutFn(module, $0) }
-    }
-
-    func setExternalWeakLinkage(_ value: LLVMValueRef?) {
-        setLinkageFn(value, 12)
-    }
-
     func setWeakAnyLinkage(_ value: LLVMValueRef?) {
         setLinkageFn(value, 5)
     }
@@ -53,10 +45,6 @@ extension LLVMCAPIBindings {
 
     func setInternalLinkage(_ value: LLVMValueRef?) {
         setLinkageFn(value, 8)
-    }
-
-    func voidType(context: LLVMContextRef?) -> LLVMTypeRef? {
-        voidTypeInContextFn(context)
     }
 
     func int8Type(context: LLVMContextRef?) -> LLVMTypeRef? {
@@ -121,19 +109,4 @@ extension LLVMCAPIBindings {
         setInitializerFn?(global, value)
     }
 
-    func constStringInContext(_ context: LLVMContextRef?, value: UnsafePointer<CChar>, length: UInt32, dontNullTerminate: Bool) -> LLVMValueRef? {
-        constStringInContextFn?(context, value, length, dontNullTerminate ? 1 : 0)
-    }
-
-    func arrayType(_ elementType: LLVMTypeRef?, count: UInt32) -> LLVMTypeRef? {
-        arrayTypeFn?(elementType, count)
-    }
-
-    func setGlobalConstant(_ global: LLVMValueRef?) {
-        setGlobalConstantFn?(global, 1)
-    }
-
-    func setUnnamedAddr(_ global: LLVMValueRef?) {
-        setUnnamedAddrFn?(global, 1)
-    }
 }

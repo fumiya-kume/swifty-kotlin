@@ -468,40 +468,10 @@ typealias RuntimeCollectionLambda1 = @convention(c) (Int, Int, UnsafeMutablePoin
 typealias RuntimeCollectionLambda2 = @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
 typealias RuntimeCollectionLambda3 = @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
 typealias RuntimeCollectionLambda4 = @convention(c) (Int, Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
-typealias ComparatorLambda = RuntimeCollectionLambda2
-
-/// Retains an object and registers it as a runtime handle.
-func runtimeRetainObjectHandle(_ object: AnyObject) -> Int {
-    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(object).toOpaque())
-    runtimeStorage.withLock { state in
-        state.objectPointers.insert(UInt(bitPattern: opaque))
-    }
-    return Int(bitPattern: opaque)
-}
 
 /// Writes a thrown payload when the caller provided an out-thrown slot.
 func runtimeSetThrown(_ outThrown: UnsafeMutablePointer<Int>?, _ value: Int) {
     outThrown?.pointee = value
-}
-
-/// Converts boxed primitive values to raw payloads where needed.
-func runtimeCollectionUnbox(_ value: Int) -> Int {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
-        return value
-    }
-    let isObjectPointer = runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: ptr))
-    }
-    guard isObjectPointer else {
-        return value
-    }
-    if let intBox = tryCast(ptr, to: RuntimeIntBox.self) {
-        return intBox.value
-    }
-    if let boolBox = tryCast(ptr, to: RuntimeBoolBox.self) {
-        return boolBox.value ? 1 : 0
-    }
-    return value
 }
 
 /// Normalizes truthiness for predicates from raw/boxed Boolean values.

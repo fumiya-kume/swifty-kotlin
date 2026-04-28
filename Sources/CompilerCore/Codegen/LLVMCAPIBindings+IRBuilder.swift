@@ -5,11 +5,6 @@ extension LLVMCAPIBindings {
     }
 
     @discardableResult
-    func buildRetVoid(_ builder: LLVMBuilderRef?) -> LLVMValueRef? {
-        buildRetVoidFn(builder)
-    }
-
-    @discardableResult
     func buildBr(_ builder: LLVMBuilderRef?, destination: LLVMBasicBlockRef?) -> LLVMValueRef? {
         buildBrFn(builder, destination)
     }
@@ -232,18 +227,6 @@ extension LLVMCAPIBindings {
 
     func constPointerNull(_ type: LLVMTypeRef?) -> LLVMValueRef? {
         constPointerNullFn?(type)
-    }
-
-    func buildInBoundsGEP2(
-        _ builder: LLVMBuilderRef?,
-        type: LLVMTypeRef?,
-        pointer: LLVMValueRef?,
-        indices: [LLVMValueRef?],
-        name: String
-    ) -> LLVMValueRef? {
-        guard let buildInBoundsGEP2Fn else { return nil }
-        var mutable = indices
-        return name.withCString { buildInBoundsGEP2Fn(builder, type, pointer, &mutable, UInt32(mutable.count), $0) }
     }
 
     /// Build a global string pointer that correctly handles embedded null bytes.

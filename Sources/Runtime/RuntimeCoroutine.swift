@@ -639,15 +639,6 @@ enum RuntimeJobHandleTaskKey {
         return ObjectIdentifier(token)
     }
 
-    static func installFreshKey() -> ObjectIdentifier {
-        let token = Token()
-        pthreadSetValue(pthreadKey, token)
-        return ObjectIdentifier(token)
-    }
-
-    static func removeKey() {
-        pthreadSetValue(pthreadKey, nil as Token?)
-    }
 }
 
 /// A job handle representing a launched coroutine. Supports join, cancellation,

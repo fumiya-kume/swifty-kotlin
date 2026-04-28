@@ -8,15 +8,6 @@ func runtimeContinuationState(from continuation: Int) -> RuntimeContinuationStat
     return Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
 }
 
-func runtimeIsRegisteredObjectPointer(_ raw: Int) -> Bool {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
-        return false
-    }
-    return runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: ptr))
-    }
-}
-
 func suspendEntryPoint(from rawValue: Int) -> KKSuspendEntryPoint? {
     guard rawValue != 0 else {
         return nil

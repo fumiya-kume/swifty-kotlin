@@ -216,20 +216,6 @@ extension OverloadResolver {
         return seen.sorted(by: { $0.rawValue < $1.rawValue })
     }
 
-    func operand(
-        for type: TypeID,
-        typeVarBySymbol: [SymbolID: TypeVarID],
-        typeSystem: TypeSystem
-    ) -> ConstraintOperand {
-        let kind = typeSystem.kind(of: type)
-        if case let .typeParam(typeParam) = kind,
-           let variable = typeVarBySymbol[typeParam.symbol]
-        {
-            return .variable(variable)
-        }
-        return .type(type)
-    }
-
     /// Checks whether a type contains any type parameters mapped in `typeVarBySymbol`.
     func containsTypeVariable(
         _ type: TypeID,
@@ -592,30 +578,6 @@ extension OverloadResolver {
             to: targetSymbol,
             targetNullability: subtype.nullability,
             typeSystem: typeSystem
-        )
-    }
-
-    /// Decomposes a pair of type arguments into constraints respecting variance.
-    /// Invariant args produce equality constraints, `out` produces subtype,
-    /// `in` produces supertype (reversed direction).
-    ///
-    /// NOTE: Variance is currently derived from the `TypeArg` enum cases (use-site
-    /// projection). A future enhancement could incorporate declaration-site variance
-    /// from the enclosing class's type parameter definitions.
-    func decomposeTypeArgConstraint(
-        subArg: TypeArg,
-        superArg: TypeArg,
-        typeVarBySymbol: [SymbolID: TypeVarID],
-        typeSystem: TypeSystem,
-        blameRange: SourceRange?
-    ) -> [VariableConstraint] {
-        decomposeTypeArgConstraintImpl(
-            subArg: subArg,
-            superArg: superArg,
-            typeVarBySymbol: typeVarBySymbol,
-            typeSystem: typeSystem,
-            blameRange: blameRange,
-            depth: 0
         )
     }
 

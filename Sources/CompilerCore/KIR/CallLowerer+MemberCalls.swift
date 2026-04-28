@@ -8299,28 +8299,6 @@ extension CallLowerer {
         return unit
     }
 
-    func lowerMemberAssignExpr(
-        _ exprID: ExprID,
-        receiverExpr: ExprID,
-        calleeName: InternedString,
-        valueExpr: ExprID,
-        shared: KIRLoweringSharedContext,
-        emit instructions: inout KIRLoweringEmitContext
-    ) -> KIRExprID {
-        lowerMemberAssignExpr(
-            exprID,
-            receiverExpr: receiverExpr,
-            calleeName: calleeName,
-            valueExpr: valueExpr,
-            ast: shared.ast,
-            sema: shared.sema,
-            arena: shared.arena,
-            interner: shared.interner,
-            propertyConstantInitializers: shared.propertyConstantInitializers,
-            instructions: &instructions.instructions
-        )
-    }
-
     /// Lowers `T::class.simpleName` / `T::class.qualifiedName` to a call to
     /// the runtime function `kk_type_token_simple_name` (or `_qualified_name`).
     ///

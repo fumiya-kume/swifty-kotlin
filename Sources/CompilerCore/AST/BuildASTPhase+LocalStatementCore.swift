@@ -28,51 +28,6 @@ extension BuildASTPhase {
     }
 
     enum LocalStatementCore {
-        static func isLocalDeclarationTokens(_ tokens: [Token]) -> Bool {
-            guard !tokens.isEmpty else {
-                return false
-            }
-            var index = 0
-            while index < tokens.count {
-                if case let .keyword(keyword) = tokens[index].kind,
-                   KotlinParser.isDeclarationModifierKeyword(keyword)
-                {
-                    index += 1
-                    continue
-                }
-                break
-            }
-            guard index < tokens.count else {
-                return false
-            }
-            switch tokens[index].kind {
-            case .keyword(.val), .keyword(.var):
-                return true
-            default:
-                return false
-            }
-        }
-
-        static func isLocalAssignmentTokens(_ tokens: [Token]) -> Bool {
-            guard tokens.count >= 2 else {
-                return false
-            }
-            let assignmentOps: [TokenKind] = [
-                .symbol(.assign),
-                .symbol(.plusAssign), .symbol(.minusAssign),
-                .symbol(.starAssign), .symbol(.slashAssign), .symbol(.percentAssign),
-                .symbol(.plusPlus), .symbol(.minusMinus),
-            ]
-            var depth = BuildASTPhase.BracketDepth()
-            for token in tokens {
-                if assignmentOps.contains(token.kind), depth.isAtTopLevel {
-                    return true
-                }
-                depth.track(token.kind)
-            }
-            return false
-        }
-
         static func parseLocalDeclaration(
             from statementTokens: [Token],
             context: LocalStatementCoreContext,
@@ -220,30 +175,6 @@ extension BuildASTPhase {
                 isDelegated: isDelegated,
                 range: range
             ))
-        }
-
-        static func isLocalDelegateFactoryExpr(
-            _ exprID: ExprID,
-            ast: ASTModule,
-            interner: StringInterner
-        ) -> Bool {
-            let knownNames = KnownCompilerNames(interner: interner)
-            guard let expr = ast.arena.expr(exprID) else {
-                return false
-            }
-            switch expr {
-            case let .call(callee, _, _, _):
-                guard let calleeExpr = ast.arena.expr(callee),
-                      case let .nameRef(calleeName, _) = calleeExpr
-                else {
-                    return false
-                }
-                return calleeName == knownNames.lazy
-            case let .memberCall(_, calleeName, _, _, _):
-                return calleeName == knownNames.observable || calleeName == knownNames.vetoable
-            default:
-                return false
-            }
         }
 
         static func parseLocalAssignment(

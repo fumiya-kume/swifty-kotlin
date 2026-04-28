@@ -41,19 +41,6 @@ func runtimeResetDebugState() {
     runtimeSetAssertionsEnabled(runtimeInitialAssertionsEnabled())
 }
 
-func runtimeAssertionErrorMessage(_ rawMessage: Int? = nil) -> String {
-    let messageBody: String
-    if let rawMessage {
-        messageBody = runtimePreconditionMessage(from: rawMessage)
-    } else {
-        messageBody = "Assertion failed."
-    }
-    if messageBody.hasPrefix("AssertionError:") {
-        return messageBody
-    }
-    return "AssertionError: \(messageBody)"
-}
-
 @_cdecl("kk_assertions_enabled")
 public func kk_assertions_enabled() -> Int {
     runtimeAreAssertionsEnabled() ? 1 : 0
