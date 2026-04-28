@@ -41,6 +41,21 @@ final class RuntimeUuidEdgeCaseTests: XCTestCase {
         return tryCast(ptr, to: RuntimeArrayBox.self)
     }
 
+    private func intFromBits(_ bits: UInt64) -> Int {
+        Int(bitPattern: UInt(bits))
+    }
+
+    private func compareWithUuidLexicalOrder(_ lhs: Int, _ rhs: Int) -> Int {
+        let comparator = kk_uuid_lexicalOrder()
+        let compareFnRaw = kk_itable_lookup(comparator, 0, 0)
+        XCTAssertNotEqual(compareFnRaw, 0, "Uuid.LEXICAL_ORDER must register Comparator.compare")
+        let compareFn = unsafeBitCast(compareFnRaw, to: RuntimeCollectionLambda2.self)
+        var thrown = 0
+        let result = compareFn(comparator, lhs, rhs, &thrown)
+        XCTAssertEqual(thrown, 0)
+        return result
+    }
+
     // MARK: - Canonical Form (8-4-4-4-12 lowercase)
 
     /// toString must emit lowercase hex digits regardless of how the UUID was created.
@@ -109,6 +124,22 @@ final class RuntimeUuidEdgeCaseTests: XCTestCase {
         XCTAssertEqual(thrown, 0)
         XCTAssertEqual(extractRuntimeString(kk_uuid_toHexString(uuidRaw)),
                        "00000000000000000000000000000000")
+    }
+
+    func testLexicalOrderComparatorUsesUnsignedUuidBits() {
+        let nilUuid = kk_uuid_fromLongs(0, 0)
+        let one = kk_uuid_fromLongs(0, 1)
+        let signedNegativeMsb = kk_uuid_fromLongs(intFromBits(0x8000_0000_0000_0000), 0)
+        let signedPositiveMsb = kk_uuid_fromLongs(intFromBits(0x7fff_ffff_ffff_ffff), 0)
+
+        XCTAssertLessThan(compareWithUuidLexicalOrder(nilUuid, one), 0)
+        XCTAssertGreaterThan(compareWithUuidLexicalOrder(one, nilUuid), 0)
+        XCTAssertEqual(compareWithUuidLexicalOrder(one, one), 0)
+        XCTAssertGreaterThan(
+            compareWithUuidLexicalOrder(signedNegativeMsb, signedPositiveMsb),
+            0,
+            "UUID lexical ordering compares the 128-bit value unsigned, not Swift signed Int order"
+        )
     }
 
     // MARK: - MAX UUID (all Fs)
