@@ -22,6 +22,7 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        attachExperimentalUuidApiAnnotation(to: uuidSymbol, symbols: symbols)
 
         let uuidType = types.make(.classType(ClassType(
             classSymbol: uuidSymbol,
@@ -220,6 +221,18 @@ extension DataFlowSemaPhase {
 
     // MARK: - Uuid Helpers
 
+    private func attachExperimentalUuidApiAnnotation(
+        to symbol: SymbolID,
+        symbols: SymbolTable
+    ) {
+        let record = MetadataAnnotationRecord(annotationFQName: "kotlin.uuid.ExperimentalUuidApi")
+        var annotations = symbols.annotations(for: symbol)
+        if !annotations.contains(record) {
+            annotations.append(record)
+            symbols.setAnnotations(annotations, for: symbol)
+        }
+    }
+
     private func ensureUuidPackageHierarchy(
         symbols: SymbolTable,
         interner: StringInterner
@@ -283,13 +296,14 @@ extension DataFlowSemaPhase {
     ) {
         let memberName = interner.intern(name)
         let memberFQName = companionFQName + [memberName]
-        guard symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+        if let existing = symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
             guard let existingSignature = symbols.functionSignature(for: symbolID) else {
                 return false
             }
             return existingSignature.parameterTypes == parameters.map(\.type) &&
                 existingSignature.returnType == returnType
-        }) == nil else {
+        }) {
+            attachExperimentalUuidApiAnnotation(to: existing, symbols: symbols)
             return
         }
 
@@ -307,6 +321,7 @@ extension DataFlowSemaPhase {
         )
         symbols.setParentSymbol(companionSymbol, for: memberSymbol)
         symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+        attachExperimentalUuidApiAnnotation(to: memberSymbol, symbols: symbols)
 
         var valueParameterSymbols: [SymbolID] = []
         for parameter in parameters {
@@ -350,13 +365,14 @@ extension DataFlowSemaPhase {
         }
         let memberName = interner.intern(name)
         let memberFQName = ownerInfo.fqName + [memberName]
-        guard symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+        if let existing = symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
             guard let existingSignature = symbols.functionSignature(for: symbolID) else {
                 return false
             }
             return existingSignature.parameterTypes == parameters.map(\.type) &&
                 existingSignature.returnType == returnType
-        }) == nil else {
+        }) {
+            attachExperimentalUuidApiAnnotation(to: existing, symbols: symbols)
             return
         }
         let memberSymbol = symbols.define(
@@ -369,6 +385,7 @@ extension DataFlowSemaPhase {
         )
         symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
         symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+        attachExperimentalUuidApiAnnotation(to: memberSymbol, symbols: symbols)
 
         var valueParameterSymbols: [SymbolID] = []
         for parameter in parameters {
@@ -416,6 +433,7 @@ extension DataFlowSemaPhase {
         }) {
             symbols.setExternalLinkName(externalLinkName, for: existing)
             symbols.setPropertyType(returnType, for: existing)
+            attachExperimentalUuidApiAnnotation(to: existing, symbols: symbols)
             return
         }
 
@@ -430,5 +448,6 @@ extension DataFlowSemaPhase {
         symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
         symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
         symbols.setPropertyType(returnType, for: propertySymbol)
+        attachExperimentalUuidApiAnnotation(to: propertySymbol, symbols: symbols)
     }
 }

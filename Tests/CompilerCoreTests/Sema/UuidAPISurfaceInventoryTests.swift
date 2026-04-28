@@ -66,6 +66,46 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
         )
     }
 
+    private func symbols(
+        fqPath: [String],
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> [SymbolID] {
+        sema.symbols.lookupAll(fqName: fqPath.map { interner.intern($0) })
+    }
+
+    private func hasExperimentalUuidApiAnnotation(_ symbol: SymbolID, sema: SemaModule) -> Bool {
+        sema.symbols.annotations(for: symbol).contains {
+            $0.annotationFQName == "kotlin.uuid.ExperimentalUuidApi"
+        }
+    }
+
+    private func runUuidSemaCollectingDiagnostics(
+        _ source: String,
+        frontendFlags: [String] = []
+    ) -> CompilationContext {
+        let fakePath = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".kt")
+            .path
+        let ctx = makeCompilationContext(inputs: [fakePath], frontendFlags: frontendFlags)
+        _ = ctx.sourceManager.addFile(path: fakePath, contents: Data(source.utf8))
+        do {
+            try runSema(ctx)
+        } catch {}
+        return ctx
+    }
+
+    private func optInDiagnostics(in ctx: CompilationContext) -> [Diagnostic] {
+        ctx.diagnostics.diagnostics.filter { $0.code == "KSWIFTK-SEMA-OPT-IN" }
+    }
+
+    private func isError(_ diagnostic: Diagnostic) -> Bool {
+        if case .error = diagnostic.severity {
+            return true
+        }
+        return false
+    }
+
     // MARK: - 1. Package hierarchy and class registration
 
     func testKotlinUuidPackageIsRegistered() throws {
@@ -402,6 +442,80 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
         XCTAssertNotNil(
             sym,
             "kotlin.uuid.ExperimentalUuidApi must be registered (STDLIB-EXPERIMENTAL-ABI-001)"
+        )
+    }
+
+    func testExperimentalUuidApiAnnotationRequiresOptIn() throws {
+        let (sema, interner) = try makeSema()
+        let fq = ["kotlin", "uuid", "ExperimentalUuidApi"].map { interner.intern($0) }
+        let sym = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fq),
+            "kotlin.uuid.ExperimentalUuidApi must be registered"
+        )
+        let annotations = sema.symbols.annotations(for: sym)
+        XCTAssertTrue(
+            annotations.contains { $0.annotationFQName == "kotlin.RequiresOptIn" },
+            "ExperimentalUuidApi must be a RequiresOptIn marker"
+        )
+    }
+
+    func testUuidApiSymbolsAreTaggedExperimentalUuidApi() throws {
+        let (sema, interner) = try makeSema()
+        let paths: [[String]] = [
+            ["kotlin", "uuid", "Uuid"],
+            ["kotlin", "uuid", "Uuid", "Companion", "random"],
+            ["kotlin", "uuid", "Uuid", "Companion", "parse"],
+            ["kotlin", "uuid", "Uuid", "Companion", "nameUUIDFromBytes"],
+            ["kotlin", "uuid", "Uuid", "Companion", "fromLongs"],
+            ["kotlin", "uuid", "Uuid", "Companion", "fromByteArray"],
+            ["kotlin", "uuid", "Uuid", "toString"],
+            ["kotlin", "uuid", "Uuid", "toHexString"],
+            ["kotlin", "uuid", "Uuid", "toLongs"],
+            ["kotlin", "uuid", "Uuid", "toByteArray"],
+            ["kotlin", "uuid", "Uuid", "version"],
+            ["kotlin", "uuid", "Uuid", "variant"],
+            ["kotlin", "uuid", "Uuid", "mostSignificantBits"],
+            ["kotlin", "uuid", "Uuid", "leastSignificantBits"],
+        ]
+
+        for path in paths {
+            let matchingSymbols = symbols(fqPath: path, sema: sema, interner: interner)
+            XCTAssertFalse(matchingSymbols.isEmpty, "\(path.joined(separator: ".")) must be registered")
+            XCTAssertTrue(
+                matchingSymbols.contains { hasExperimentalUuidApiAnnotation($0, sema: sema) },
+                "\(path.joined(separator: ".")) must be tagged with ExperimentalUuidApi"
+            )
+        }
+    }
+
+    func testUuidUsageWithoutOptInEmitsDiagnostic() {
+        let source = """
+        import kotlin.uuid.Uuid
+
+        fun uuidText(): String = Uuid.parse("550e8400-e29b-41d4-a716-446655440000").toString()
+        """
+        let ctx = runUuidSemaCollectingDiagnostics(source)
+        let diagnostics = optInDiagnostics(in: ctx)
+        XCTAssertFalse(diagnostics.isEmpty, "Uuid usage without opt-in must emit an opt-in diagnostic")
+        XCTAssertTrue(
+            diagnostics.contains(where: isError),
+            "ExperimentalUuidApi is an ERROR-level opt-in marker"
+        )
+    }
+
+    func testUuidUsageWithOptInSuppressesDiagnostic() {
+        let source = """
+        import kotlin.OptIn
+        import kotlin.uuid.ExperimentalUuidApi
+        import kotlin.uuid.Uuid
+
+        @OptIn(ExperimentalUuidApi::class)
+        fun uuidText(): String = Uuid.parse("550e8400-e29b-41d4-a716-446655440000").toString()
+        """
+        let ctx = runUuidSemaCollectingDiagnostics(source)
+        XCTAssertTrue(
+            optInDiagnostics(in: ctx).isEmpty,
+            "Uuid usage with ExperimentalUuidApi opt-in must not emit an opt-in diagnostic"
         )
     }
 
