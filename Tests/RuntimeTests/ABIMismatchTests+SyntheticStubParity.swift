@@ -179,6 +179,10 @@ extension ABIMismatchTests {
             "kk_atomic_bool_compareAndExchange",
             "kk_atomic_bool_getAndUpdate",
             "kk_atomic_bool_updateAndGet",
+            // kotlin.native.ref
+            "kk_weak_ref_create",
+            "kk_weak_ref_get",
+            "kk_weak_ref_clear",
             "kk_atomic_int_array_create",
             "kk_atomic_int_array_size",
             "kk_atomic_int_array_loadAt",
