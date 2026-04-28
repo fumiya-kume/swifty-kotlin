@@ -94,6 +94,7 @@ final class TypeCheckDriver {
                 resolver: resolver, dataFlow: dataFlow,
                 interner: interner, scope: fileScope,
                 implicitReceiverType: nil,
+                activeContextReceiverTypes: [],
                 loopDepth: 0,
                 loopLabelStack: [],
                 lambdaLabelStack: [],

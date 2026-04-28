@@ -95,6 +95,8 @@ extension CodegenBackendIntegrationTests {
             println(result)
             println(context("a", "b") { "context-two" })
             println(context(1, 2, 3, 4, 5, 6) { "context-six" })
+            println(context("context-value") { contextOf<String>() })
+            println(context("outer") { context("inner") { contextOf<String>() } })
         }
         """
 
@@ -115,6 +117,8 @@ extension CodegenBackendIntegrationTests {
                 context-ok
                 context-two
                 context-six
+                context-value
+                inner
                 """
                 + "\n"
             )

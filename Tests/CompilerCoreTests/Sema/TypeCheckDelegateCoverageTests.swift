@@ -612,6 +612,7 @@ private struct TypeCheckFixture {
             interner: interner,
             scope: scope,
             implicitReceiverType: nil,
+            activeContextReceiverTypes: [],
             loopDepth: 0,
             loopLabelStack: [], lambdaLabelStack: [],
             exportBlockLocalsForExpr: nil,

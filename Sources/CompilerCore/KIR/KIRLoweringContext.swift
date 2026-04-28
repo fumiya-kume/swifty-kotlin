@@ -5,6 +5,12 @@ import Foundation
 /// helpers (`saveScope`, `restoreScope`, `resetScopeForFunction`, `withNewScope`)
 /// so that each call site can choose the appropriate granularity.
 final class KIRLoweringContext {
+    struct ActiveContextValue {
+        let type: TypeID
+        let symbol: SymbolID
+        let exprID: KIRExprID
+    }
+
     // MARK: - Scope State (saved/restored per function/lambda)
 
     var localValuesBySymbol: [SymbolID: KIRExprID] = [:]
@@ -15,6 +21,7 @@ final class KIRLoweringContext {
     var lambdaParamNameToSymbol: [InternedString: SymbolID] = [:]
     var currentImplicitReceiverExprID: KIRExprID?
     var currentImplicitReceiverSymbol: SymbolID?
+    var activeContextValues: [ActiveContextValue] = []
     var currentFunctionSymbol: SymbolID?
     var loopControlStack: [(continueLabel: Int32, breakLabel: Int32, name: InternedString?)] = []
     /// Stack of enclosing finally block entries.
@@ -56,6 +63,7 @@ final class KIRLoweringContext {
         let lambdaParamNameToSymbol: [InternedString: SymbolID]
         let currentImplicitReceiverExprID: KIRExprID?
         let currentImplicitReceiverSymbol: SymbolID?
+        let activeContextValues: [ActiveContextValue]
         let currentFunctionSymbol: SymbolID?
         let loopControlStack: [(continueLabel: Int32, breakLabel: Int32, name: InternedString?)]
         let finallyBlockStack: [(exprID: ExprID, loopDepth: Int)]
@@ -70,6 +78,7 @@ final class KIRLoweringContext {
             lambdaParamNameToSymbol: lambdaParamNameToSymbol,
             currentImplicitReceiverExprID: currentImplicitReceiverExprID,
             currentImplicitReceiverSymbol: currentImplicitReceiverSymbol,
+            activeContextValues: activeContextValues,
             currentFunctionSymbol: currentFunctionSymbol,
             loopControlStack: loopControlStack,
             finallyBlockStack: finallyBlockStack,
@@ -84,6 +93,7 @@ final class KIRLoweringContext {
         lambdaParamNameToSymbol = snapshot.lambdaParamNameToSymbol
         currentImplicitReceiverExprID = snapshot.currentImplicitReceiverExprID
         currentImplicitReceiverSymbol = snapshot.currentImplicitReceiverSymbol
+        activeContextValues = snapshot.activeContextValues
         currentFunctionSymbol = snapshot.currentFunctionSymbol
         loopControlStack = snapshot.loopControlStack
         finallyBlockStack = snapshot.finallyBlockStack
@@ -106,6 +116,7 @@ final class KIRLoweringContext {
         lambdaParamNameToSymbol.removeAll(keepingCapacity: true)
         currentImplicitReceiverExprID = nil
         currentImplicitReceiverSymbol = nil
+        activeContextValues.removeAll(keepingCapacity: true)
         currentFunctionSymbol = nil
         loopControlStack.removeAll(keepingCapacity: true)
         finallyBlockStack.removeAll(keepingCapacity: true)
@@ -191,6 +202,28 @@ final class KIRLoweringContext {
             setImplicitReceiver(symbol: symbol, exprID: exprID)
         } else {
             clearImplicitReceiver()
+        }
+    }
+
+    func activeContextValuesSnapshot() -> [ActiveContextValue] {
+        activeContextValues
+    }
+
+    func restoreActiveContextValues(_ values: [ActiveContextValue]) {
+        activeContextValues = values
+    }
+
+    func appendActiveContextValue(type: TypeID, symbol: SymbolID, exprID: KIRExprID) {
+        activeContextValues.append(ActiveContextValue(type: type, symbol: symbol, exprID: exprID))
+    }
+
+    func appendActiveContextValues(_ values: [ActiveContextValue]) {
+        activeContextValues += values
+    }
+
+    func activeContextValue(for requestedType: TypeID, sema: SemaModule) -> ActiveContextValue? {
+        activeContextValues.reversed().first { contextValue in
+            sema.types.isSubtype(contextValue.type, requestedType)
         }
     }
 
