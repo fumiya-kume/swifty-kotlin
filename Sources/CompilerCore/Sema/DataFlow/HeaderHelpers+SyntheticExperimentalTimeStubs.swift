@@ -5,7 +5,7 @@
 /// - `TimeSource` with nested `WithComparableMarks`, `Monotonic`, and `markNow()`
 /// - `TimeMark` with elapsed/boolean checks and +/- Duration
 /// - `ComparableTimeMark` with TimeMark operations plus mark-to-mark diff/comparison
-/// - `AbstractDoubleTimeSource` surface
+/// - `AbstractDoubleTimeSource` / `AbstractLongTimeSource` surfaces
 extension DataFlowSemaPhase {
     func registerSyntheticExperimentalTimeStubs(
         symbols: SymbolTable,
@@ -299,6 +299,59 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_time_source_mark_now",
             ownerSymbol: abstractDoubleTimeSourceSymbol,
             ownerType: abstractDoubleTimeSourceType,
+            parameters: [],
+            returnType: comparableTimeMarkType,
+            symbols: symbols,
+            interner: interner,
+            flags: [.synthetic, .openType, .overrideMember]
+        )
+
+        let abstractLongTimeSourceSymbol = ensureClassSymbol(
+            named: "AbstractLongTimeSource",
+            in: kotlinTimePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        symbols.insertFlags([.abstractType, .synthetic], for: abstractLongTimeSourceSymbol)
+        symbols.setDirectSupertypes([withComparableMarksSymbol], for: abstractLongTimeSourceSymbol)
+        types.setNominalDirectSupertypes([withComparableMarksSymbol], for: abstractLongTimeSourceSymbol)
+        let abstractLongTimeSourceType = types.make(.classType(ClassType(
+            classSymbol: abstractLongTimeSourceSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        registerExperimentalTimeConstructor(
+            ownerSymbol: abstractLongTimeSourceSymbol,
+            ownerType: abstractLongTimeSourceType,
+            parameters: [(name: "unit", type: durationUnitType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerExperimentalTimeMemberProperty(
+            named: "unit",
+            ownerSymbol: abstractLongTimeSourceSymbol,
+            returnType: durationUnitType,
+            visibility: .protected,
+            symbols: symbols,
+            interner: interner
+        )
+        registerExperimentalTimeMemberFunction(
+            named: "read",
+            externalLinkName: nil,
+            ownerSymbol: abstractLongTimeSourceSymbol,
+            ownerType: abstractLongTimeSourceType,
+            parameters: [],
+            returnType: types.longType,
+            symbols: symbols,
+            interner: interner,
+            visibility: .protected,
+            flags: [.synthetic, .abstractType]
+        )
+        registerExperimentalTimeMemberFunction(
+            named: "markNow",
+            externalLinkName: "kk_time_source_mark_now",
+            ownerSymbol: abstractLongTimeSourceSymbol,
+            ownerType: abstractLongTimeSourceType,
             parameters: [],
             returnType: comparableTimeMarkType,
             symbols: symbols,
