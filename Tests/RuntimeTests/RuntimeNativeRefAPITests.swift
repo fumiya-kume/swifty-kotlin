@@ -17,6 +17,7 @@ import XCTest
 //   kotlin.native.ref shim (via kk_pin / kk_freeze):
 //     - Pinned<T> (pin / unpin / get) -> kk_pin_object / kk_unpin_object / kk_pinned_get
 //     - freeze() / isFrozen            -> kk_freeze_object / kk_is_frozen
+//     - WeakReference<T>               -> kk_weak_ref_create / kk_weak_ref_get / kk_weak_ref_clear
 //
 //   kotlin.native.runtime.GC (via kk_gc_collect):
 //     - GC.collect()  -> kk_gc_collect()  [no Kotlin-level GC object, raw C entry]
@@ -28,6 +29,7 @@ import XCTest
 // SEMA EXPOSED (compile-time stubs, covered by NativeRefRuntimeSemaTests):
 //   - kotlin.native.ref.WeakReference<T>
 //   - kotlin.native.ref.WeakReference.get()
+//   - kotlin.native.ref.WeakReference.clear()
 //   - kotlin.native.ref.createCleaner(value, block)
 //   - kotlin.native.runtime.GC.collect()
 //   - kotlin.native.runtime.GC.schedule()
@@ -35,8 +37,6 @@ import XCTest
 //   - kotlin.native.runtime.Debugging.gcSuspendCount
 //
 // RUNTIME MISSING (tracked by STDLIB-NATIVE-REF-004 and later):
-//   - WeakReference backing entry points:
-//       kk_weak_ref_create / kk_weak_ref_get / kk_weak_ref_clear
 //   - createCleaner backing entry points:
 //       kk_cleaner_create / kk_cleaner_clean / kk_cleaner_dispose
 //   - GC target heap metrics and scheduler:
