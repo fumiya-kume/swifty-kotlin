@@ -5,7 +5,11 @@
 /// - `TimeSource` with nested `WithComparableMarks`, `Monotonic`, and `markNow()`
 /// - `TimeMark` with elapsed/boolean checks and +/- Duration
 /// - `ComparableTimeMark` with TimeMark operations plus mark-to-mark diff/comparison
+<<<<<<< HEAD
 /// - `AbstractDoubleTimeSource` / `AbstractLongTimeSource` surfaces
+=======
+/// - `AbstractDoubleTimeSource` surface
+>>>>>>> c7d1e8c0b (Add AbstractDoubleTimeSource surface)
 extension DataFlowSemaPhase {
     func registerSyntheticExperimentalTimeStubs(
         symbols: SymbolTable,
@@ -306,6 +310,7 @@ extension DataFlowSemaPhase {
             flags: [.synthetic, .openType, .overrideMember]
         )
 
+<<<<<<< HEAD
         let abstractLongTimeSourceSymbol = ensureClassSymbol(
             named: "AbstractLongTimeSource",
             in: kotlinTimePkg,
@@ -359,6 +364,8 @@ extension DataFlowSemaPhase {
             flags: [.synthetic, .openType, .overrideMember]
         )
 
+=======
+>>>>>>> c7d1e8c0b (Add AbstractDoubleTimeSource surface)
         let monotonicFQName = ensureExperimentalTimeNestedObject(
             named: "Monotonic",
             ownerSymbol: timeSourceSymbol,
