@@ -5,6 +5,7 @@ import Foundation
 enum SyntheticCharMemberReturnKind {
     case boolean
     case string
+    case char
     case int
     case double
     case nullableInt
@@ -22,6 +23,8 @@ enum SyntheticCharMemberReturnKind {
             types.booleanType
         case .string:
             types.stringType
+        case .char:
+            types.charType
         case .int:
             types.intType
         case .double:
@@ -104,6 +107,11 @@ private let syntheticCharMemberSpecs: [SyntheticCharMemberSpec] = [
         name: "lowercase",
         externalLinkName: "kk_char_lowercase",
         returnKind: .string
+    ),
+    SyntheticCharMemberSpec(
+        name: "lowercaseChar",
+        externalLinkName: "kk_char_lowercaseChar",
+        returnKind: .char
     ),
     SyntheticCharMemberSpec(
         name: "titlecase",

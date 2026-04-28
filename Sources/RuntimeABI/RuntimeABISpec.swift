@@ -1398,6 +1398,14 @@ public enum RuntimeABISpec {
             section: "String"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_char_lowercaseChar",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_char_titlecase",
             parameters: [
                 RuntimeABIParameter(name: "value", type: .intptr),

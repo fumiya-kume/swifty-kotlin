@@ -8,6 +8,12 @@ final class RuntimeCharTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(runtimeStringValue(kk_char_lowercase(scalarValue(of: "İ"))), "i\u{0307}")
     }
 
+    func testLowercaseCharUsesFirstScalarOfLowercaseMapping() {
+        XCTAssertEqual(kk_char_lowercaseChar(scalarValue(of: "İ")), scalarValue(of: "i"))
+        XCTAssertEqual(kk_char_lowercaseChar(scalarValue(of: "A")), scalarValue(of: "a"))
+        XCTAssertEqual(kk_char_lowercaseChar(scalarValue(of: "5")), scalarValue(of: "5"))
+    }
+
     // MARK: - STDLIB-003-ABI-001: Char.digitToInt(radix: Int)
 
     func testDigitToIntRadix_base10() {
