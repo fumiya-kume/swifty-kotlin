@@ -160,6 +160,26 @@ final class KotlinIOCommonEdgeCaseTests: XCTestCase {
         }
     }
 
+    func testNullableAutoCloseableDirectUseResolvesWithoutSafeCall() throws {
+        let source = """
+        fun main() {
+            val nullable: AutoCloseable? = null
+            val result: String = nullable.use { resource ->
+                if (resource == null) "null-resource" else "resource"
+            }
+            println(result)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Nullable AutoCloseable.use should resolve without requiring ?.use: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     // MARK: - AutoCloseable alias resolution
     //
     // NOTE (STDLIB-030 gap): Using AutoCloseable as a generic upper bound `<T : AutoCloseable>`

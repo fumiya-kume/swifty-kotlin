@@ -9502,10 +9502,21 @@ extension CallLowerer {
             )
             instructions.append(.jump(finallyLabel))
 
-            // finally: always call close() on the receiver via virtual dispatch.
+            // finally: call close() on the receiver via virtual dispatch.
             // close() is an interface method on Closeable and requires dynamic dispatch
             // through the itable so that concrete implementations are invoked correctly.
             instructions.append(.label(finallyLabel))
+            let receiverTypeForDispatch = sema.bindings.exprTypes[receiverExpr]
+            let shouldGuardNullableClose = receiverTypeForDispatch.map {
+                sema.types.nullability(of: $0) != .nonNull
+            } ?? false
+            let closeEndLabel: Int32? = shouldGuardNullableClose ? driver.ctx.makeLoopLabel() : nil
+            if shouldGuardNullableClose, let closeEndLabel {
+                let closeCallLabel = driver.ctx.makeLoopLabel()
+                instructions.append(.jumpIfNotNull(value: loweredReceiverID, target: closeCallLabel))
+                instructions.append(.jump(closeEndLabel))
+                instructions.append(.label(closeCallLabel))
+            }
             let closeName = interner.intern("close")
             let closeResult = arena.appendExpr(
                 .temporary(Int32(arena.expressions.count)),
@@ -9518,7 +9529,6 @@ extension CallLowerer {
             ]
             let closeFQName = closeableFQName + [closeName]
             let closeSymbol = sema.symbols.lookup(fqName: closeFQName)
-            let receiverTypeForDispatch = sema.bindings.exprTypes[receiverExpr]
             let closeDispatch: KIRDispatchKind? = closeSymbol.flatMap { sym in
                 resolveVirtualDispatch(callee: sym, receiverTypeID: receiverTypeForDispatch, sema: sema)
             }
@@ -9569,6 +9579,9 @@ extension CallLowerer {
                     canThrow: true,
                     thrownResult: nil
                 ))
+            }
+            if let closeEndLabel {
+                instructions.append(.label(closeEndLabel))
             }
 
             // After finally: rethrow if an exception was caught, otherwise continue.

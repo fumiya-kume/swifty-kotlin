@@ -915,8 +915,9 @@ extension CallTypeChecker {
                 switch scopeKind {
                 case .scopeLet:
                     // let: lambda receives `it` parameter typed as T, returns R
+                    let useLambdaReceiverType = safeCall ? nonNullReceiverType : receiverType
                     let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
-                        params: [nonNullReceiverType],
+                        params: [useLambdaReceiverType],
                         returnType: expectedType ?? sema.types.anyType
                     )))
                     let lambdaType = driver.inferExpr(
