@@ -25,6 +25,11 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerSyntheticNativeVector128Stubs(
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
         registerSyntheticNativeImmutableBlobStubs(
             symbols: symbols,
             types: types,
@@ -845,6 +850,81 @@ extension DataFlowSemaPhase {
         )
     }
 
+    private func registerSyntheticNativeVector128Stubs(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let nativePkg = ensurePackage(
+            path: ["kotlin", "native"],
+            symbols: symbols,
+            interner: interner
+        )
+        let nativePkgSymbol = symbols.lookup(fqName: nativePkg)
+        let cinteropPkg = ensurePackage(
+            path: ["kotlinx", "cinterop"],
+            symbols: symbols,
+            interner: interner
+        )
+        guard let cinteropVector128Symbol = symbols.lookup(fqName: cinteropPkg + [interner.intern("Vector128")]) else {
+            return
+        }
+
+        let cinteropVector128Type = types.make(.classType(ClassType(
+            classSymbol: cinteropVector128Symbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let vector128Name = interner.intern("Vector128")
+        let vector128AliasFQName = nativePkg + [vector128Name]
+        let vector128AliasSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: vector128AliasFQName),
+           symbols.symbol(existing)?.kind == .typeAlias
+        {
+            vector128AliasSymbol = existing
+            symbols.insertFlags([.synthetic], for: existing)
+        } else if symbols.lookup(fqName: vector128AliasFQName) == nil {
+            vector128AliasSymbol = symbols.define(
+                kind: .typeAlias,
+                name: vector128Name,
+                fqName: vector128AliasFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        } else {
+            return
+        }
+        if let nativePkgSymbol {
+            symbols.setParentSymbol(nativePkgSymbol, for: vector128AliasSymbol)
+        }
+        symbols.setTypeAliasUnderlyingType(cinteropVector128Type, for: vector128AliasSymbol)
+        appendMetadataAnnotations(
+            deprecatedNativeVector128TypeAliasAnnotations(),
+            to: vector128AliasSymbol,
+            symbols: symbols
+        )
+
+        let vectorOfAnnotations = deprecatedNativeVectorOfAnnotations()
+        for parameterType in [types.floatType, types.intType] {
+            registerSyntheticNativeTopLevelFunction(
+                named: "vectorOf",
+                packageFQName: nativePkg,
+                receiverType: nil,
+                parameters: [
+                    (name: "f0", type: parameterType),
+                    (name: "f1", type: parameterType),
+                    (name: "f2", type: parameterType),
+                    (name: "f3", type: parameterType),
+                ],
+                returnType: cinteropVector128Type,
+                annotations: vectorOfAnnotations,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+    }
+
     private func registerSyntheticCInteropStubs(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -1065,6 +1145,116 @@ extension DataFlowSemaPhase {
             symbols.setDirectSupertypes([cPointedSymbol], for: symbol)
             types.setNominalDirectSupertypes([cPointedSymbol], for: symbol)
         }
+
+        registerSyntheticCInteropVector128Stubs(
+            cinteropPkg: cinteropPkg,
+            cinteropPkgSymbol: cinteropPkgSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+    }
+
+    private func registerSyntheticCInteropVector128Stubs(
+        cinteropPkg: [InternedString],
+        cinteropPkgSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let vector128Symbol = ensureClassSymbol(
+            named: "Vector128",
+            in: cinteropPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let cinteropPkgSymbol {
+            symbols.setParentSymbol(cinteropPkgSymbol, for: vector128Symbol)
+        }
+        let vector128Type = types.make(.classType(ClassType(
+            classSymbol: vector128Symbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(vector128Type, for: vector128Symbol)
+        appendMetadataAnnotations(
+            [MetadataAnnotationRecord(annotationFQName: "kotlinx.cinterop.ExperimentalForeignApi")],
+            to: vector128Symbol,
+            symbols: symbols
+        )
+
+        let elementAccessors: [(name: String, returnType: TypeID)] = [
+            ("getByteAt", types.intType),
+            ("getIntAt", types.intType),
+            ("getLongAt", types.longType),
+            ("getFloatAt", types.floatType),
+            ("getDoubleAt", types.doubleType),
+            ("getUByteAt", types.ubyteType),
+            ("getUIntAt", types.uintType),
+            ("getULongAt", types.ulongType),
+        ]
+        for accessor in elementAccessors {
+            registerSyntheticNativeBitSetMemberFunction(
+                named: accessor.name,
+                ownerSymbol: vector128Symbol,
+                receiverType: vector128Type,
+                parameters: [(name: "index", type: types.intType)],
+                returnType: accessor.returnType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "equals",
+            ownerSymbol: vector128Symbol,
+            receiverType: vector128Type,
+            parameters: [(name: "other", type: types.makeNullable(types.anyType))],
+            returnType: types.booleanType,
+            flags: [.synthetic, .operatorFunction, .overrideMember],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "hashCode",
+            ownerSymbol: vector128Symbol,
+            receiverType: vector128Type,
+            parameters: [],
+            returnType: types.intType,
+            flags: [.synthetic, .overrideMember],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "toString",
+            ownerSymbol: vector128Symbol,
+            receiverType: vector128Type,
+            parameters: [],
+            returnType: types.stringType,
+            flags: [.synthetic, .overrideMember],
+            symbols: symbols,
+            interner: interner
+        )
+
+        let experimentalForeignApiAnnotations = [
+            MetadataAnnotationRecord(annotationFQName: "kotlinx.cinterop.ExperimentalForeignApi"),
+        ]
+        for parameterType in [types.floatType, types.intType] {
+            registerSyntheticNativeTopLevelFunction(
+                named: "vectorOf",
+                packageFQName: cinteropPkg,
+                receiverType: nil,
+                parameters: [
+                    (name: "f0", type: parameterType),
+                    (name: "f1", type: parameterType),
+                    (name: "f2", type: parameterType),
+                    (name: "f3", type: parameterType),
+                ],
+                returnType: vector128Type,
+                annotations: experimentalForeignApiAnnotations,
+                symbols: symbols,
+                interner: interner
+            )
+        }
     }
 
     private func appendStandardAnnotationMetadata(
@@ -1090,6 +1280,22 @@ extension DataFlowSemaPhase {
             annotations.append(retentionRecord)
         }
         symbols.setAnnotations(annotations, for: symbol)
+    }
+
+    private func appendMetadataAnnotations(
+        _ records: [MetadataAnnotationRecord],
+        to symbol: SymbolID,
+        symbols: SymbolTable
+    ) {
+        var annotations = symbols.annotations(for: symbol)
+        var didAppend = false
+        for record in records where !annotations.contains(record) {
+            annotations.append(record)
+            didAppend = true
+        }
+        if didAppend {
+            symbols.setAnnotations(annotations, for: symbol)
+        }
     }
 
     private func syntheticClassType(
@@ -1186,6 +1392,46 @@ extension DataFlowSemaPhase {
                     "errorSince = \"2.1\"",
                 ]
             ),
+        ]
+    }
+
+    private func deprecatedNativeVector128TypeAliasAnnotations() -> [MetadataAnnotationRecord] {
+        [
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.Deprecated",
+                arguments: [
+                    "message = \"Use kotlinx.cinterop.Vector128 instead.\"",
+                    "replaceWith = ReplaceWith(\"kotlinx.cinterop.Vector128\")",
+                ]
+            ),
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.DeprecatedSinceKotlin",
+                arguments: [
+                    "warningSince = \"1.9\"",
+                    "errorSince = \"2.1\"",
+                ]
+            ),
+            MetadataAnnotationRecord(annotationFQName: "kotlinx.cinterop.ExperimentalForeignApi"),
+        ]
+    }
+
+    private func deprecatedNativeVectorOfAnnotations() -> [MetadataAnnotationRecord] {
+        [
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.Deprecated",
+                arguments: [
+                    "message = \"Use kotlinx.cinterop.vectorOf instead.\"",
+                    "replaceWith = ReplaceWith(\"kotlinx.cinterop.vectorOf(f0, f1, f2, f3)\")",
+                ]
+            ),
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.DeprecatedSinceKotlin",
+                arguments: [
+                    "warningSince = \"1.9\"",
+                    "errorSince = \"2.1\"",
+                ]
+            ),
+            MetadataAnnotationRecord(annotationFQName: "kotlinx.cinterop.ExperimentalForeignApi"),
         ]
     }
 
