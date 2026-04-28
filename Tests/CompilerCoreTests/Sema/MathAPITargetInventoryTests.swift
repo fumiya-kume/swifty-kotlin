@@ -162,7 +162,7 @@ final class MathAPITargetInventoryTests: XCTestCase {
 
     private static let knownGapSignaturesByTodo: [String: Set<String>] = [:]
 
-    private static let compilerOnlyCompatibilityNames: Set<String> = [
+    private static let unofficialRoundingHelperNames: Set<String> = [
         "roundUp", "roundDown", "roundCeiling", "roundFloor",
         "roundHalfUp", "roundHalfDown", "roundHalfEven", "roundUnnecessary",
     ]
@@ -173,7 +173,7 @@ final class MathAPITargetInventoryTests: XCTestCase {
         XCTAssertEqual(Self.targetSignatures.filter { $0.hasPrefix("val ") }.count, 12)
     }
 
-    func testCurrentSyntheticMathNamesAreEitherOfficialOrTrackedCompatibility() throws {
+    func testCurrentSyntheticMathNamesAreOfficialTargets() throws {
         let (sema, interner) = try makeSema()
         let mathPrefix = ["kotlin", "math"].map { interner.intern($0) }
         let currentNames = Set(sema.symbols.allSymbols().compactMap { symbol -> String? in
@@ -186,8 +186,19 @@ final class MathAPITargetInventoryTests: XCTestCase {
             return interner.resolve(symbol.name)
         })
 
-        let trackedNames = Self.targetNames.union(Self.compilerOnlyCompatibilityNames)
-        XCTAssertEqual(currentNames.subtracting(trackedNames).sorted(), [])
+        XCTAssertEqual(currentNames.subtracting(Self.targetNames).sorted(), [])
+    }
+
+    func testUnofficialRoundingHelpersAreNotPublished() throws {
+        let (sema, interner) = try makeSema()
+        let mathPrefix = ["kotlin", "math"].map { interner.intern($0) }
+        for name in Self.unofficialRoundingHelperNames.sorted() {
+            let fqName = mathPrefix + [interner.intern(name)]
+            XCTAssertTrue(
+                sema.symbols.lookupAll(fqName: fqName).isEmpty,
+                "\(name) should not be published as kotlin.math surface"
+            )
+        }
     }
 
     func testImplementedInventoryEntriesResolveToSyntheticLinks() throws {
