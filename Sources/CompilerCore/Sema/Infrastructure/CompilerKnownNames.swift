@@ -19,6 +19,7 @@ enum KnownCompilerAnnotation {
     case experimentalJsReflectionCreateInstance
     case experimentalJsCollectionsApi
     case throws_
+    case rootThrows
     case suppress
     case dslMarker
     case parameterName
@@ -70,6 +71,8 @@ enum KnownCompilerAnnotation {
         case .experimentalJsCollectionsApi:
             "ExperimentalJsCollectionsApi"
         case .throws_:
+            "Throws"
+        case .rootThrows:
             "Throws"
         case .suppress:
             "Suppress"
@@ -138,6 +141,8 @@ enum KnownCompilerAnnotation {
             "kotlin.js.collections.ExperimentalJsCollectionsApi"
         case .throws_:
             "kotlin.jvm.Throws"
+        case .rootThrows:
+            "kotlin.Throws"
         case .suppress:
             "kotlin.Suppress"
         case .dslMarker:
