@@ -4,6 +4,10 @@ private func runtimeUnicodeScalar(_ value: Int) -> UnicodeScalar? {
     UnicodeScalar(value)
 }
 
+private func runtimeFirstUnicodeScalarValue(_ string: String, fallback: Int) -> Int {
+    string.unicodeScalars.first.map { Int($0.value) } ?? fallback
+}
+
 @_cdecl("kk_char_isDigit")
 public func kk_char_isDigit(_ value: Int) -> Int {
     guard let scalar = runtimeUnicodeScalar(value) else {
@@ -67,6 +71,14 @@ public func kk_char_lowercase(_ value: Int) -> Int {
         return charRuntimeMakeStringRaw("\u{FFFD}")
     }
     return charRuntimeMakeStringRaw(String(scalar).lowercased())
+}
+
+@_cdecl("kk_char_lowercaseChar")
+public func kk_char_lowercaseChar(_ value: Int) -> Int {
+    guard let scalar = runtimeUnicodeScalar(value) else {
+        return value
+    }
+    return runtimeFirstUnicodeScalarValue(String(scalar).lowercased(), fallback: value)
 }
 
 @_cdecl("kk_char_titlecase")
