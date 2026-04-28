@@ -1193,6 +1193,39 @@ extension DataFlowSemaPhase {
         }
         symbols.setAnnotations(existingAnnotations, for: experimentalContractsSymbol)
 
+        let experimentalExtendedContractsSymbol = ensureAnnotationClassSymbol(
+            named: "ExperimentalExtendedContracts",
+            in: contractsFQName,
+            symbols: symbols,
+            interner: interner
+        )
+        if contractsPkg != .invalid {
+            symbols.setParentSymbol(contractsPkg, for: experimentalExtendedContractsSymbol)
+        }
+        let experimentalExtendedContractsAnnotations = [
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.RequiresOptIn"
+            ),
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: [
+                    "AnnotationTarget.CLASS",
+                    "AnnotationTarget.FUNCTION",
+                    "AnnotationTarget.PROPERTY",
+                    "AnnotationTarget.TYPEALIAS",
+                ]
+            ),
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Retention",
+                arguments: ["AnnotationRetention.BINARY"]
+            ),
+        ]
+        var existingExtendedAnnotations = symbols.annotations(for: experimentalExtendedContractsSymbol)
+        for annotation in experimentalExtendedContractsAnnotations where !existingExtendedAnnotations.contains(annotation) {
+            existingExtendedAnnotations.append(annotation)
+        }
+        symbols.setAnnotations(existingExtendedAnnotations, for: experimentalExtendedContractsSymbol)
+
         let experimentalFQName = ensurePackage(
             path: ["kotlin", "experimental"],
             symbols: symbols,
