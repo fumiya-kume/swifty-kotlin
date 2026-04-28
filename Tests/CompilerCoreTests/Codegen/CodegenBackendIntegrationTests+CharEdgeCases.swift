@@ -27,6 +27,12 @@ extension CodegenBackendIntegrationTests {
             println('A'.isDefined())
             println(Char.isSupplementaryCodePoint(0x10000))
             println(Char.isSurrogatePair('\\uD800', '\\uDC00'))
+            val bmp = Char.toChars(65)
+            println(bmp.size)
+            println(bmp[0])
+            val pair = Char.toChars(0x10000)
+            println(pair.size)
+            println(Char.toCodePoint(pair[0], pair[1]))
         }
         """
 
@@ -58,6 +64,10 @@ extension CodegenBackendIntegrationTests {
                 true
                 true
                 true
+                1
+                A
+                2
+                65536
                 """
                 + "\n"
             )

@@ -643,6 +643,20 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let charArraySymbol = ensureClassSymbol(
+            named: "CharArray",
+            in: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinSymbol = symbols.lookup(fqName: kotlinPkg) {
+            symbols.setParentSymbol(kotlinSymbol, for: charArraySymbol)
+        }
+        let charArrayType = types.make(.classType(ClassType(
+            classSymbol: charArraySymbol,
+            args: [],
+            nullability: .nonNull
+        )))
         let nativeMarkerFQName = ensureSyntheticCharExperimentalNativeApiAnnotation(
             symbols: symbols,
             interner: interner
@@ -663,6 +677,21 @@ extension DataFlowSemaPhase {
                     (name: "low", type: types.charType),
                 ],
                 returnType: types.booleanType
+            ),
+            SyntheticCharCompanionFunctionSpec(
+                name: "toChars",
+                externalLinkName: "kk_char_toChars",
+                parameters: [(name: "codePoint", type: types.intType)],
+                returnType: charArrayType
+            ),
+            SyntheticCharCompanionFunctionSpec(
+                name: "toCodePoint",
+                externalLinkName: "kk_char_toCodePoint",
+                parameters: [
+                    (name: "high", type: types.charType),
+                    (name: "low", type: types.charType),
+                ],
+                returnType: types.intType
             ),
         ]
 

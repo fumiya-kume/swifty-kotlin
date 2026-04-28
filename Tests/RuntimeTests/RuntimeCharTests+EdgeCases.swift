@@ -73,6 +73,35 @@ final class RuntimeCharEdgeCaseTests: IsolatedRuntimeXCTestCase {
         XCTAssertFalse(boolValue(kk_char_isSurrogatePair(0xDC00, 0xD800)))
     }
 
+    func testToCharsReturnsSingleCharArrayForBmpCodePoint() throws {
+        let arrayRaw = kk_char_toChars(0x0041)
+        let array = try XCTUnwrap(runtimeArrayBox(from: arrayRaw))
+        XCTAssertEqual(array.elements.count, 1)
+        XCTAssertEqual(kk_unbox_char(array.elements[0]), 0x0041)
+    }
+
+    func testToCharsReturnsSurrogatePairForSupplementaryCodePoint() throws {
+        let arrayRaw = kk_char_toChars(0x10000)
+        let array = try XCTUnwrap(runtimeArrayBox(from: arrayRaw))
+        XCTAssertEqual(array.elements.count, 2)
+        XCTAssertEqual(kk_unbox_char(array.elements[0]), 0xD800)
+        XCTAssertEqual(kk_unbox_char(array.elements[1]), 0xDC00)
+    }
+
+    func testToCharsReturnsUpperSurrogatePairBoundary() throws {
+        let arrayRaw = kk_char_toChars(0x10FFFF)
+        let array = try XCTUnwrap(runtimeArrayBox(from: arrayRaw))
+        XCTAssertEqual(array.elements.count, 2)
+        XCTAssertEqual(kk_unbox_char(array.elements[0]), 0xDBFF)
+        XCTAssertEqual(kk_unbox_char(array.elements[1]), 0xDFFF)
+    }
+
+    func testToCodePointDoesNotValidateSurrogatePair() {
+        XCTAssertEqual(kk_char_toCodePoint(0xD800, 0xDC00), 0x10000)
+        XCTAssertEqual(kk_char_toCodePoint(0xDBFF, 0xDFFF), 0x10FFFF)
+        XCTAssertEqual(kk_char_toCodePoint(0x0041, 0x0042), -56_547_262)
+    }
+
     // MARK: - Surrogate boundaries
 
     // High surrogate range: U+D800 - U+DBFF

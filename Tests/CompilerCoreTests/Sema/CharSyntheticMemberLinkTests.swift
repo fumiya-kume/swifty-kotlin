@@ -184,17 +184,40 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
         ]))
         let companionSymbol = try XCTUnwrap(sema.symbols.companionObjectSymbol(for: charSymbol))
         let companionInfo = try XCTUnwrap(sema.symbols.symbol(companionSymbol))
+        let charArraySymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("CharArray"),
+        ]))
+        let charArrayType = sema.types.make(.classType(ClassType(
+            classSymbol: charArraySymbol,
+            args: [],
+            nullability: .nonNull
+        )))
 
-        let expected: [(name: String, link: String, params: [TypeID])] = [
+        let expected: [(name: String, link: String, params: [TypeID], returnType: TypeID)] = [
             (
                 name: "isSupplementaryCodePoint",
                 link: "kk_char_isSupplementaryCodePoint",
-                params: [sema.types.intType]
+                params: [sema.types.intType],
+                returnType: sema.types.booleanType
             ),
             (
                 name: "isSurrogatePair",
                 link: "kk_char_isSurrogatePair",
-                params: [sema.types.charType, sema.types.charType]
+                params: [sema.types.charType, sema.types.charType],
+                returnType: sema.types.booleanType
+            ),
+            (
+                name: "toChars",
+                link: "kk_char_toChars",
+                params: [sema.types.intType],
+                returnType: charArrayType
+            ),
+            (
+                name: "toCodePoint",
+                link: "kk_char_toCodePoint",
+                params: [sema.types.charType, sema.types.charType],
+                returnType: sema.types.intType
             ),
         ]
 
@@ -206,7 +229,7 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
                     return false
                 }
                 return signature.parameterTypes == item.params
-                    && signature.returnType == sema.types.booleanType
+                    && signature.returnType == item.returnType
             })
             XCTAssertEqual(sema.symbols.parentSymbol(for: functionSymbol), companionSymbol)
             XCTAssertEqual(sema.symbols.externalLinkName(for: functionSymbol), item.link)
@@ -317,8 +340,11 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
         let source = #"""
         @file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)
 
-        fun probe(): Boolean {
-            return Char.isSupplementaryCodePoint(0x10000) && Char.isSurrogatePair('\uD800', '\uDC00')
+        fun probe() {
+            Char.isSupplementaryCodePoint(0x10000)
+            Char.isSurrogatePair('\uD800', '\uDC00')
+            Char.toChars(0x10000)
+            Char.toCodePoint('\uD800', '\uDC00')
         }
         """#
 
@@ -332,6 +358,8 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
             let expectedFunctionLinks: [String: String] = [
                 "isSupplementaryCodePoint": "kk_char_isSupplementaryCodePoint",
                 "isSurrogatePair": "kk_char_isSurrogatePair",
+                "toChars": "kk_char_toChars",
+                "toCodePoint": "kk_char_toCodePoint",
             ]
 
             for (memberName, externalLinkName) in expectedFunctionLinks {
