@@ -1200,6 +1200,53 @@ extension DataFlowSemaPhase {
             }
         }
 
+        // CoroutineContext.Element.minusPolymorphicKey(key: Key<*>): CoroutineContext
+        do {
+            let functionName = interner.intern("minusPolymorphicKey")
+            let functionFQName = kotlinCoroutinesPkg + [functionName]
+            if symbols.lookup(fqName: functionFQName) == nil {
+                let functionSymbol = symbols.define(
+                    kind: .function,
+                    name: functionName,
+                    fqName: functionFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                if let packageSymbol = symbols.lookup(fqName: kotlinCoroutinesPkg) {
+                    symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+                }
+                let keyType = types.make(.classType(ClassType(
+                    classSymbol: coroutineContextKeySymbol,
+                    args: [.star],
+                    nullability: .nonNull
+                )))
+                let keyParamName = interner.intern("key")
+                let keyParamSymbol = symbols.define(
+                    kind: .valueParameter,
+                    name: keyParamName,
+                    fqName: functionFQName + [keyParamName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(functionSymbol, for: keyParamSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: coroutineContextElementType,
+                        parameterTypes: [keyType],
+                        returnType: coroutineContextType,
+                        valueParameterSymbols: [keyParamSymbol],
+                        valueParameterHasDefaultValues: [false],
+                        valueParameterIsVararg: [false]
+                    ),
+                    for: functionSymbol
+                )
+                symbols.setExternalLinkName("kk_context_minusKey", for: functionSymbol)
+                attachCoroutineExperimentalStdlibApiAnnotation(to: functionSymbol, symbols: symbols)
+            }
+        }
+
         // CoroutineContext.fold(initial: R, operation: (R, Element) -> R): R
         do {
             let functionName = interner.intern("fold")
