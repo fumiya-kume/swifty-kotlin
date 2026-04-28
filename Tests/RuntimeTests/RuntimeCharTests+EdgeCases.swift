@@ -42,6 +42,22 @@ final class RuntimeCharEdgeCaseTests: IsolatedRuntimeXCTestCase {
         XCTAssertFalse(boolValue(kk_char_isWhitespace(0)))
     }
 
+    func testDefinedAsciiChar() {
+        XCTAssertTrue(boolValue(kk_char_isDefined(Int(("A" as UnicodeScalar).value))))
+    }
+
+    func testUnassignedCodePointIsNotDefined() {
+        XCTAssertFalse(boolValue(kk_char_isDefined(0x0378)))
+    }
+
+    func testSurrogateCodeUnitIsDefined() {
+        XCTAssertTrue(boolValue(kk_char_isDefined(0xD800)))
+    }
+
+    func testOutOfRangeCodePointIsNotDefined() {
+        XCTAssertFalse(boolValue(kk_char_isDefined(0x110000)))
+    }
+
     // MARK: - Surrogate boundaries
 
     // High surrogate range: U+D800 - U+DBFF
