@@ -11,6 +11,7 @@ extension BuildKIRRegressionTests {
 
         fun main() {
             val nil = Uuid.NIL
+            val lexicalOrder = Uuid.LEXICAL_ORDER
             val uuid = Uuid.parse("550e8400-e29b-41d4-a716-446655440000")
             val maybeUuid = Uuid.parseOrNull("550e8400-e29b-41d4-a716-446655440000")
             val hexUuid = Uuid.parseHex("550e8400e29b41d4a716446655440000")
@@ -43,6 +44,7 @@ extension BuildKIRRegressionTests {
             let callees = extractCallees(from: body, interner: ctx.interner)
 
             XCTAssertTrue(callees.contains("kk_uuid_nil"), "Expected Uuid.NIL runtime call")
+            XCTAssertTrue(callees.contains("kk_uuid_lexicalOrder"), "Expected Uuid.LEXICAL_ORDER runtime call")
             XCTAssertTrue(callees.contains("kk_uuid_parse"), "Expected Uuid.parse runtime call")
             XCTAssertTrue(callees.contains("kk_uuid_parseOrNull"), "Expected Uuid.parseOrNull runtime call")
             XCTAssertTrue(callees.contains("kk_uuid_parseHex"), "Expected Uuid.parseHex runtime call")
@@ -149,6 +151,7 @@ extension BuildKIRRegressionTests {
         let nonThrowingUuidCallees = [
             "kk_uuid_random",
             "kk_uuid_nil",
+            "kk_uuid_lexicalOrder",
             "kk_uuid_parseOrNull",
             "kk_uuid_parseHexOrNull",
             "kk_uuid_parseHexDashOrNull",

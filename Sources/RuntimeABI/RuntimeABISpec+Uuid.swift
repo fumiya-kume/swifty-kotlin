@@ -15,6 +15,12 @@ public extension RuntimeABISpec {
             section: "Uuid"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_uuid_lexicalOrder",
+            parameters: [],
+            returnType: .intptr,
+            section: "Uuid"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_uuid_parse",
             parameters: [
                 RuntimeABIParameter(name: "uuidString", type: .intptr),

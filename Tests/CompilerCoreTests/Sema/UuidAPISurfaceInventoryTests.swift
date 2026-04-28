@@ -20,7 +20,7 @@ import XCTest
 //        and the edge-case file added in PR #1221 (UUID-003).
 //
 // NOTE - known gaps detected during inventory:
-//   • LEXICAL_ORDER is pending (STDLIB-UUID-012).
+//   • No tracked companion-member gaps remain for the implemented UUID surface.
 
 final class UuidAPISurfaceInventoryTests: XCTestCase {
 
@@ -670,11 +670,52 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
         }
     }
 
+    func testUuidLexicalOrderComparatorIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fq = ["kotlin", "uuid", "Uuid", "Companion", "LEXICAL_ORDER"].map { interner.intern($0) }
+        let lexicalOrderSym = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: fq).first(where: { sema.symbols.symbol($0)?.kind == .property }),
+            "Uuid.LEXICAL_ORDER must be registered as a companion property"
+        )
+
+        XCTAssertEqual(
+            sema.symbols.externalLinkName(for: lexicalOrderSym),
+            "kk_uuid_lexicalOrder",
+            "Uuid.LEXICAL_ORDER must link to the UUID lexical comparator runtime"
+        )
+
+        let propType = try XCTUnwrap(sema.symbols.propertyType(for: lexicalOrderSym))
+        guard case .classType(let comparatorType) = sema.types.kind(of: propType) else {
+            XCTFail("Uuid.LEXICAL_ORDER type must be kotlin.Comparator<Uuid>")
+            return
+        }
+
+        let comparatorSym = try XCTUnwrap(
+            sema.symbols.lookup(fqName: ["kotlin", "Comparator"].map { interner.intern($0) })
+        )
+        let uuidSym = try XCTUnwrap(
+            sema.symbols.lookup(fqName: ["kotlin", "uuid", "Uuid"].map { interner.intern($0) })
+        )
+
+        XCTAssertEqual(comparatorType.classSymbol, comparatorSym)
+        guard let firstArg = comparatorType.args.first,
+              case .invariant(let uuidType) = firstArg
+        else {
+            XCTFail("Uuid.LEXICAL_ORDER Comparator type must carry invariant Uuid argument")
+            return
+        }
+        guard case .classType(let uuidClassType) = sema.types.kind(of: uuidType) else {
+            XCTFail("Uuid.LEXICAL_ORDER Comparator argument must be Uuid")
+            return
+        }
+        XCTAssertEqual(uuidClassType.classSymbol, uuidSym)
+    }
+
     func testKnownPendingUuidCompanionMembersAreTrackedAsGaps() throws {
         let (sema, interner) = try makeSema()
-        let pendingMembers = [
-            "LEXICAL_ORDER",      // STDLIB-UUID-012
-        ]
+        let pendingMembers: [String] = []
+
+        XCTAssertTrue(pendingMembers.isEmpty, "No UUID companion pending gaps should remain")
 
         for memberName in pendingMembers {
             let fq = ["kotlin", "uuid", "Uuid", "Companion", memberName].map { interner.intern($0) }
@@ -723,6 +764,7 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
             ["kotlin", "uuid", "Uuid", "Companion", "NIL"],
             ["kotlin", "uuid", "Uuid", "Companion", "SIZE_BITS"],
             ["kotlin", "uuid", "Uuid", "Companion", "SIZE_BYTES"],
+            ["kotlin", "uuid", "Uuid", "Companion", "LEXICAL_ORDER"],
             ["kotlin", "uuid", "Uuid", "Companion", "parse"],
             ["kotlin", "uuid", "Uuid", "Companion", "parseOrNull"],
             ["kotlin", "uuid", "Uuid", "Companion", "parseHex"],
@@ -796,6 +838,7 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
         let expectedCompanionLinks: Set<String> = [
             "kk_uuid_random",
             "kk_uuid_nil",
+            "kk_uuid_lexicalOrder",
             "kk_uuid_parse",
             "kk_uuid_parseOrNull",
             "kk_uuid_parseHex",
@@ -807,7 +850,7 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
             "kk_uuid_fromByteArray",
         ]
         var foundLinks: Set<String> = []
-        for memberName in ["random", "NIL", "parse", "parseOrNull", "parseHex", "parseHexOrNull", "parseHexDash", "parseHexDashOrNull", "nameUUIDFromBytes", "fromLongs", "fromByteArray"] {
+        for memberName in ["random", "NIL", "LEXICAL_ORDER", "parse", "parseOrNull", "parseHex", "parseHexOrNull", "parseHexDash", "parseHexDashOrNull", "nameUUIDFromBytes", "fromLongs", "fromByteArray"] {
             let path = companionFQ + [memberName]
             let links = allExternalLinks(fqPath: path, sema: sema, interner: interner)
             foundLinks.formUnion(links)

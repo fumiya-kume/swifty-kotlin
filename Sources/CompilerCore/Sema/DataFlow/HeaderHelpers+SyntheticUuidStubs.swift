@@ -1,7 +1,7 @@
 import Foundation
 
 /// Synthetic stdlib stubs for kotlin.uuid.Uuid.
-/// Registers the Uuid class, companion factories/properties (random, parse, parseOrNull, parseHex, parseHexOrNull, parseHexDash, parseHexDashOrNull, NIL, SIZE_BITS, SIZE_BYTES),
+/// Registers the Uuid class, companion factories/properties (random, parse, parseOrNull, parseHex, parseHexOrNull, parseHexDash, parseHexDashOrNull, NIL, SIZE_BITS, SIZE_BYTES, LEXICAL_ORDER),
 /// and instance methods (toString, toHexString, toLongs, toByteArray).
 extension DataFlowSemaPhase {
     func registerSyntheticUuidStubs(
@@ -33,6 +33,19 @@ extension DataFlowSemaPhase {
 
         let stringType = types.stringType
         let longType = types.longType
+        let comparatorType: TypeID = {
+            let comparatorFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("Comparator")]
+            guard let comparatorSymbol = symbols.lookup(fqName: comparatorFQName)
+                    ?? symbols.lookupByShortName(interner.intern("Comparator")).first
+            else {
+                return types.anyType
+            }
+            return types.make(.classType(ClassType(
+                classSymbol: comparatorSymbol,
+                args: [.invariant(uuidType)],
+                nullability: .nonNull
+            )))
+        }()
 
         // --- Companion object for factory methods ---
         let companionFQName = ensureUuidCompanionSymbol(
@@ -140,6 +153,14 @@ extension DataFlowSemaPhase {
                 named: "NIL",
                 externalLinkName: "kk_uuid_nil",
                 returnType: uuidType,
+                ownerSymbol: companionSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+            registerUuidCompanionProperty(
+                named: "LEXICAL_ORDER",
+                externalLinkName: "kk_uuid_lexicalOrder",
+                returnType: comparatorType,
                 ownerSymbol: companionSymbol,
                 symbols: symbols,
                 interner: interner
