@@ -237,7 +237,7 @@
 ### Phase 4: リフレクション・数値・テキスト・その他 stdlib
 - [ ] STDLIB-GAP-PH4: `kotlin.math` / `kotlin.random` / `kotlin.reflect` / `kotlin.comparisons` / `kotlin.annotation` / `kotlin.system` / `kotlin.uuid` / `kotlin.native` 周辺の「部分」を潰す
 - [ ] STDLIB-REFLECT-067: `KClass` / metadata / メンバ introspection の残差を詰める
-- [ ] STDLIB-REFLECT-068: `kotlin.reflect.KAnnotatedElement` interface と `annotations` surface を追加する
+- [x] STDLIB-REFLECT-068: `kotlin.reflect.KAnnotatedElement` interface と `annotations` surface を追加する
 - [ ] STDLIB-REFLECT-069: `kotlin.reflect.KDeclarationContainer` interface surface を追加し、`KClass` との継承関係を整える
 - [ ] STDLIB-REFLECT-070: `kotlin.reflect.KProperty2<D, E, V>` interface surface を追加する
 - [ ] STDLIB-REFLECT-071: `kotlin.reflect.KMutableProperty2<D, E, V>` interface surface を追加する

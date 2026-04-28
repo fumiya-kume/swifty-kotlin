@@ -66,6 +66,10 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        let kAnnotatedElementSymbol = registerSyntheticKAnnotatedElementStub(
+            symbols: symbols, types: types, interner: interner,
+            kotlinReflectPkg: kotlinReflectPkg
+        )
         let kPropertySymbol = ensureInterfaceSymbol(
             named: "KProperty", in: kotlinReflectPkg, symbols: symbols, interner: interner
         )
@@ -81,7 +85,8 @@ extension DataFlowSemaPhase {
         // STDLIB-REFLECT-066: Register kotlin.reflect.KType and typeOf<T>() stubs
         registerSyntheticKTypeStubs(
             symbols: symbols, types: types, interner: interner,
-            kotlinReflectPkg: kotlinReflectPkg, kotlinPkg: kotlinPkg
+            kotlinReflectPkg: kotlinReflectPkg, kotlinPkg: kotlinPkg,
+            kAnnotatedElementSymbol: kAnnotatedElementSymbol
         )
 
         registerObservablePropertyStub(
@@ -130,6 +135,14 @@ extension DataFlowSemaPhase {
         let kCallableSymbol = ensureInterfaceSymbol(
             named: "KCallable", in: kotlinReflectPkg, symbols: symbols, interner: interner
         )
+        addSyntheticDirectSupertypes(
+            [kAnnotatedElementSymbol], to: kCallableSymbol,
+            symbols: symbols, types: types
+        )
+        addSyntheticDirectSupertypes(
+            [kCallableSymbol], to: kPropertySymbol,
+            symbols: symbols, types: types
+        )
         // Register `name` property on KCallable as well.
         if let kCallableInfo = symbols.symbol(kCallableSymbol) {
             let namePropName = interner.intern("name")
@@ -158,6 +171,23 @@ extension DataFlowSemaPhase {
             named: "KFunction", in: kotlinReflectPkg, symbols: symbols, interner: interner
         )
         types.kFunctionInterfaceSymbol = kFunctionSymbol
+        addSyntheticDirectSupertypes(
+            [kCallableSymbol], to: kFunctionSymbol,
+            symbols: symbols, types: types
+        )
+
+        let kClassifierSymbol = ensureInterfaceSymbol(
+            named: "KClassifier", in: kotlinReflectPkg, symbols: symbols, interner: interner
+        )
+        types.kClassifierInterfaceSymbol = kClassifierSymbol
+        let kClassSymbol = ensureInterfaceSymbol(
+            named: "KClass", in: kotlinReflectPkg, symbols: symbols, interner: interner
+        )
+        types.kClassInterfaceSymbol = kClassSymbol
+        addSyntheticDirectSupertypes(
+            [kAnnotatedElementSymbol, kClassifierSymbol], to: kClassSymbol,
+            symbols: symbols, types: types
+        )
 
         // Register KFunction member properties: name, isSuspend, parameters (STDLIB-REFLECT-063).
         if let kFunctionInfo = symbols.symbol(kFunctionSymbol) {
@@ -694,13 +724,62 @@ extension DataFlowSemaPhase {
         )
     }
 
+    // STDLIB-REFLECT-068: Register KAnnotatedElement with its annotations surface.
+    private func registerSyntheticKAnnotatedElementStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinReflectPkg: [InternedString]
+    ) -> SymbolID {
+        let kAnnotatedElementSymbol = ensureInterfaceSymbol(
+            named: "KAnnotatedElement", in: kotlinReflectPkg, symbols: symbols, interner: interner
+        )
+        types.kAnnotatedElementInterfaceSymbol = kAnnotatedElementSymbol
+
+        guard let kAnnotatedElementInfo = symbols.symbol(kAnnotatedElementSymbol) else {
+            return kAnnotatedElementSymbol
+        }
+        let annotationsName = interner.intern("annotations")
+        let annotationsFQ = kAnnotatedElementInfo.fqName + [annotationsName]
+        if symbols.lookup(fqName: annotationsFQ) == nil {
+            let annotationsSymbol = symbols.define(
+                kind: .property, name: annotationsName, fqName: annotationsFQ,
+                declSite: nil, visibility: .public, flags: [.synthetic]
+            )
+            symbols.setParentSymbol(kAnnotatedElementSymbol, for: annotationsSymbol)
+            symbols.setPropertyType(types.anyType, for: annotationsSymbol)
+        }
+
+        return kAnnotatedElementSymbol
+    }
+
+    private func addSyntheticDirectSupertypes(
+        _ supertypes: [SymbolID],
+        to symbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem
+    ) {
+        var symbolSupertypes = symbols.directSupertypes(for: symbol)
+        for supertype in supertypes where !symbolSupertypes.contains(supertype) {
+            symbolSupertypes.append(supertype)
+        }
+        symbols.setDirectSupertypes(symbolSupertypes, for: symbol)
+
+        var typeSupertypes = types.directNominalSupertypes(for: symbol)
+        for supertype in supertypes where !typeSupertypes.contains(supertype) {
+            typeSupertypes.append(supertype)
+        }
+        types.setNominalDirectSupertypes(typeSupertypes, for: symbol)
+    }
+
     // STDLIB-REFLECT-066: Register KType interface stub and typeOf<T>() function stub.
     private func registerSyntheticKTypeStubs(
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,
         kotlinReflectPkg: [InternedString],
-        kotlinPkg: [InternedString]
+        kotlinPkg: [InternedString],
+        kAnnotatedElementSymbol: SymbolID
     ) {
         let anyType = types.anyType
         let boolType = types.make(.primitive(.boolean, .nonNull))
@@ -712,6 +791,10 @@ extension DataFlowSemaPhase {
         let kTypeType = types.make(.classType(ClassType(
             classSymbol: kTypeSymbol, args: [], nullability: .nonNull
         )))
+        addSyntheticDirectSupertypes(
+            [kAnnotatedElementSymbol], to: kTypeSymbol,
+            symbols: symbols, types: types
+        )
 
         if let kTypeInfo = symbols.symbol(kTypeSymbol) {
             // KType.isMarkedNullable: Boolean
@@ -775,9 +858,10 @@ extension DataFlowSemaPhase {
         )
 
         // Register kotlin.reflect.KClassifier interface stub (supertype of KClass)
-        _ = ensureInterfaceSymbol(
+        let kClassifierSymbol = ensureInterfaceSymbol(
             named: "KClassifier", in: kotlinReflectPkg, symbols: symbols, interner: interner
         )
+        types.kClassifierInterfaceSymbol = kClassifierSymbol
 
         // Register typeOf<T>(): KType — inline reified function accessible without import.
         // Available in the kotlin package as a top-level function.
@@ -1060,6 +1144,40 @@ extension DataFlowSemaPhase {
             [MetadataAnnotationRecord(annotationFQName: "kotlin.reflect.ExperimentalAssociatedObjects")],
             for: functionSymbol
         )
+    }
+
+    /// Updates `KAnnotatedElement.annotations` to `List<Annotation>` once collection stubs exist.
+    func patchKAnnotatedElementAnnotationsType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let listFQName: [InternedString] = [
+            interner.intern("kotlin"), interner.intern("collections"), interner.intern("List"),
+        ]
+        guard let listSymbol = symbols.lookup(fqName: listFQName),
+              let kAnnotatedElementSymbol = types.kAnnotatedElementInterfaceSymbol,
+              let annotationSymbol = types.annotationInterfaceSymbol,
+              let kAnnotatedElementInfo = symbols.symbol(kAnnotatedElementSymbol)
+        else {
+            return
+        }
+
+        let annotationType = types.make(.classType(ClassType(
+            classSymbol: annotationSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let listOfAnnotation = types.make(.classType(ClassType(
+            classSymbol: listSymbol,
+            args: [.out(annotationType)],
+            nullability: .nonNull
+        )))
+
+        let annotationsPropFQ = kAnnotatedElementInfo.fqName + [interner.intern("annotations")]
+        if let annotationsPropSymbol = symbols.lookup(fqName: annotationsPropFQ) {
+            symbols.setPropertyType(listOfAnnotation, for: annotationsPropSymbol)
+        }
     }
 
     /// Updates the `parameters` property type of `KFunction` to `List<Any?>` once the
