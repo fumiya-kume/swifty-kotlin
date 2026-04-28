@@ -1008,6 +1008,8 @@ extension DataFlowSemaPhase {
         patchKFunctionParametersType(symbols: symbols, types: types, interner: interner)
         // KType.arguments depends on kotlin.collections.List and KTypeProjection.
         patchKTypeArgumentsType(symbols: symbols, types: types, interner: interner)
+        // KTypeParameter.upperBounds depends on kotlin.collections.List.
+        patchKTypeParameterUpperBoundsType(symbols: symbols, types: types, interner: interner)
         registerSyntheticRangeProgressionStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticRangeUntilStubs(symbols: symbols, types: types, interner: interner)
         if types.comparableInterfaceSymbol == nil {
