@@ -92,6 +92,7 @@ public enum DiagnosticRegistry {
         "OPT_IN_USAGE": ["KSWIFTK-SEMA-OPT-IN"],
         "UNCHECKED_IS": ["KSWIFTK-SEMA-ERASED-TYPE"],
         "ANNOTATION_TARGET": ["KSWIFTK-SEMA-ANNOTATION-TARGET"],
+        "DATA_CLASS_COPY_VISIBILITY": ["KSWIFTK-SEMA-DATA-COPY-VISIBILITY"],
     ]
 
     // MARK: - Lexer pass (LEX)
@@ -517,6 +518,13 @@ public enum DiagnosticRegistry {
             pass: "SEMA",
             defaultSeverity: .error,
             summary: "Primary constructor of data class must only have property ('val' / 'var') parameters."
+        ),
+        DiagnosticDescriptor(
+            code: "KSWIFTK-SEMA-DATA-COPY-VISIBILITY",
+            pass: "SEMA",
+            defaultSeverity: .warning,
+            summary: "Data class copy() visibility does not match a non-public primary constructor.",
+            codeActions: [DiagnosticCodeAction(title: "Add '@ConsistentCopyVisibility'")]
         ),
         DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-REIFIED",

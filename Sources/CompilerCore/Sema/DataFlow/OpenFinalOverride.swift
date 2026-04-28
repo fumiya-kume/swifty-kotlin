@@ -72,6 +72,11 @@ extension DataFlowSemaPhase {
         if case let .classDecl(classDecl) = decl,
            classDecl.modifiers.contains(.data) {
             validateDataClassConstructorParams(classDecl: classDecl, ctx: ctx)
+            validateDataClassCopyVisibilityMigration(
+                classDecl: classDecl,
+                symbol: symbol,
+                ctx: ctx
+            )
         }
 
         validateMemberOverrides(
@@ -100,6 +105,49 @@ extension DataFlowSemaPhase {
                 "Primary constructor of data class must only have property ('val' / 'var') parameters.",
                 range: classDecl.range
             )
+        }
+    }
+
+    private func validateDataClassCopyVisibilityMigration(
+        classDecl: ClassDecl,
+        symbol: SymbolID,
+        ctx: OpenFinalOverrideContext
+    ) {
+        guard classDecl.hasPrimaryConstructorSyntax,
+              !dataClassUsesConsistentCopyVisibility(classDecl)
+        else {
+            return
+        }
+
+        let classSymbol = ctx.symbols.symbol(symbol)
+        let constructorVisibility = primaryConstructorVisibility(
+            for: classDecl,
+            classSymbol: classSymbol
+        )
+        guard constructorVisibility != .public else {
+            return
+        }
+
+        let className = classSymbol?.fqName.map { ctx.interner.resolve($0) }.joined(separator: ".")
+            ?? ctx.interner.resolve(classDecl.name)
+        let visibilityName = renderVisibility(constructorVisibility)
+        ctx.diagnostics.warning(
+            "KSWIFTK-SEMA-DATA-COPY-VISIBILITY",
+            "Data class '\(className)' has a \(visibilityName) primary constructor; generated copy() remains public unless '@ConsistentCopyVisibility' is applied.",
+            range: classDecl.range
+        )
+    }
+
+    private func renderVisibility(_ visibility: Visibility) -> String {
+        switch visibility {
+        case .public:
+            "public"
+        case .private:
+            "private"
+        case .internal:
+            "internal"
+        case .protected:
+            "protected"
         }
     }
 

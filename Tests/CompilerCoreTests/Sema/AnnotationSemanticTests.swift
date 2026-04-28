@@ -294,6 +294,91 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertNotNil(sema.symbols.propertyType(for: valueSymbol), "markerClass must have a property type")
     }
 
+    func testConsistentCopyVisibilityResolvesAndTargetsClasses() throws {
+        let ctx = makeContextFromSource("fun noop() {}")
+        try runSema(ctx)
+        let sema = try XCTUnwrap(ctx.sema)
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("ConsistentCopyVisibility"),
+            ]),
+            "kotlin.ConsistentCopyVisibility must be registered"
+        )
+        let annotations = sema.symbols.annotations(for: symbol)
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == KnownCompilerAnnotation.target.qualifiedName
+                    && $0.arguments == ["AnnotationTarget.CLASS"]
+            },
+            "ConsistentCopyVisibility should target classes, got: \(annotations)"
+        )
+    }
+
+    func testConsistentCopyVisibilityRejectsFunctionUse() {
+        let source = """
+        @ConsistentCopyVisibility
+        fun bad() {}
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected class-only annotation target diagnostic, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+    }
+
+    func testPrivateDataClassCopyVisibilityMigrationWarnsAndKeepsPublicCopy() throws {
+        let source = """
+        package test
+
+        data class Secret private constructor(val value: Int)
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-DATA-COPY-VISIBILITY", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected one data class copy visibility warning, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isWarning), "Data class copy visibility diagnostic should be a warning")
+        XCTAssertTrue(diagnostics[0].message.contains("private"), "Expected primary constructor visibility in message, got: \(diagnostics[0].message)")
+        XCTAssertEqual(
+            try symbolVisibility(["test", "Secret", "copy"], in: ctx),
+            .public,
+            "Unannotated migration mode should keep copy() public"
+        )
+    }
+
+    func testConsistentCopyVisibilityMakesCopyUseConstructorVisibility() throws {
+        let source = """
+        package test
+
+        @ConsistentCopyVisibility
+        data class Secret private constructor(val value: Int)
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-DATA-COPY-VISIBILITY", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected ConsistentCopyVisibility to opt in to constructor visibility, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertEqual(
+            try symbolVisibility(["test", "Secret", "copy"], in: ctx),
+            .private,
+            "Annotated data class copy() should use the private primary constructor visibility"
+        )
+    }
+
+    func testDataClassCopyVisibilityWarningCanBeSuppressedByAlias() {
+        let source = """
+        @Suppress("DATA_CLASS_COPY_VISIBILITY")
+        data class Secret private constructor(val value: Int)
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-DATA-COPY-VISIBILITY", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected DATA_CLASS_COPY_VISIBILITY suppression alias to suppress diagnostic, got: \(ctx.diagnostics.diagnostics)")
+    }
+
     func testTargetAnnotationIsRejectedOnRegularClass() {
         let source = """
         @Target(AnnotationTarget.CLASS)
@@ -989,5 +1074,13 @@ final class AnnotationSemanticTests: XCTestCase {
             return true
         }
         return false
+    }
+
+    private func symbolVisibility(_ path: [String], in ctx: CompilationContext) throws -> Visibility {
+        let sema = try XCTUnwrap(ctx.sema)
+        let fqName = path.map(ctx.interner.intern)
+        let symbolID = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let symbol = try XCTUnwrap(sema.symbols.symbol(symbolID))
+        return symbol.visibility
     }
 }
