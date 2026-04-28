@@ -112,6 +112,24 @@ extension CodegenBackendIntegrationTests {
                     "Expected \(expected) to lower with one receiver argument, got \(calls)"
                 )
             }
+
+            for extensionHelper in [
+                "kk_math_abs_int",
+                "kk_math_abs_long",
+                "kk_math_abs_float",
+                "kk_math_abs",
+                "kk_math_sign_int",
+                "kk_math_sign_long",
+                "kk_math_sign_float",
+                "kk_math_sign",
+                "kk_float_ulp",
+                "kk_double_ulp",
+            ] {
+                XCTAssertFalse(
+                    calls.contains(where: { $0 == extensionHelper && $1 == 0 }),
+                    "Extension property helper \(extensionHelper) must not be emitted as a top-level initializer"
+                )
+            }
         }
     }
 
