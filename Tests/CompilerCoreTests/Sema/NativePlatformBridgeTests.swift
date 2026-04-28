@@ -2,7 +2,7 @@
 import XCTest
 
 /// STDLIB-NATIVE-PLATFORM-002: Sema-level tests verifying that
-/// Platform, OsFamily, and CpuArchitecture are visible and correctly
+/// Platform, OsFamily, CpuArchitecture, and MemoryModel are visible and correctly
 /// bridged from a common expect declaration to a native actual declaration.
 /// No runtime edits are made; these tests exercise the symbol-table and
 /// type-checker layers only.
@@ -84,6 +84,55 @@ final class NativePlatformBridgeTests: XCTestCase {
         }
     }
 
+    // MARK: - MemoryModel visibility
+
+    func testMemoryModelEnumIsVisibleInSymbolTable() throws {
+        let ctx = makeContextFromSource("fun noop() {}")
+        try runSema(ctx)
+
+        let sema = try XCTUnwrap(ctx.sema)
+        let fqName = [
+            ctx.interner.intern("kotlin"),
+            ctx.interner.intern("native"),
+            ctx.interner.intern("MemoryModel"),
+        ]
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName).flatMap { sema.symbols.symbol($0) },
+            "kotlin.native.MemoryModel must be registered as a synthetic enum class"
+        )
+        XCTAssertEqual(symbol.kind, .enumClass)
+    }
+
+    func testMemoryModelHasExpectedEntries() throws {
+        let ctx = makeContextFromSource("fun noop() {}")
+        try runSema(ctx)
+
+        let sema = try XCTUnwrap(ctx.sema)
+        let baseFQName = [
+            ctx.interner.intern("kotlin"),
+            ctx.interner.intern("native"),
+            ctx.interner.intern("MemoryModel"),
+        ]
+        let expectedEntries = ["STRICT", "RELAXED", "EXPERIMENTAL"]
+        for entry in expectedEntries {
+            let entryFQName = baseFQName + [ctx.interner.intern(entry)]
+            let entrySymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: entryFQName),
+                "MemoryModel.\(entry) must be visible in the symbol table"
+            )
+            let entryType = try XCTUnwrap(
+                sema.symbols.propertyType(for: entrySymbol),
+                "MemoryModel.\(entry) must carry the enum type"
+            )
+            guard case .classType(let classType) = sema.types.kind(of: entryType) else {
+                XCTFail("MemoryModel.\(entry) must have a class type")
+                continue
+            }
+            let enumSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: baseFQName))
+            XCTAssertEqual(classType.classSymbol, enumSymbol)
+        }
+    }
+
     // MARK: - Platform object visibility
 
     func testPlatformObjectIsVisibleInSymbolTable() throws {
@@ -137,6 +186,35 @@ final class NativePlatformBridgeTests: XCTestCase {
         let symbol = sema.symbols.lookup(fqName: fqName).flatMap { sema.symbols.symbol($0) }
         XCTAssertNotNil(symbol, "Platform.cpuArchitecture must be registered as a property")
         XCTAssertEqual(symbol?.kind, .property)
+    }
+
+    func testPlatformMemoryModelPropertyIsVisibleAndLinked() throws {
+        let ctx = makeContextFromSource("fun noop() {}")
+        try runSema(ctx)
+
+        let sema = try XCTUnwrap(ctx.sema)
+        let fqName = [
+            ctx.interner.intern("kotlin"),
+            ctx.interner.intern("native"),
+            ctx.interner.intern("Platform"),
+            ctx.interner.intern("memoryModel"),
+        ]
+        let propertySymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "Platform.memoryModel must be registered as a property"
+        )
+        XCTAssertEqual(sema.symbols.symbol(propertySymbol)?.kind, .property)
+        XCTAssertEqual(sema.symbols.externalLinkName(for: propertySymbol), "kk_platform_memoryModel")
+
+        let propertyType = try XCTUnwrap(sema.symbols.propertyType(for: propertySymbol))
+        guard case .classType(let classType) = sema.types.kind(of: propertyType) else {
+            XCTFail("Platform.memoryModel must have type kotlin.native.MemoryModel")
+            return
+        }
+        let memoryModelSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: ["kotlin", "native", "MemoryModel"].map { ctx.interner.intern($0) })
+        )
+        XCTAssertEqual(classType.classSymbol, memoryModelSymbol)
     }
 
     func testPlatformCanAccessUnalignedPropertyIsVisible() throws {
@@ -286,6 +364,45 @@ final class NativePlatformBridgeTests: XCTestCase {
         XCTAssertEqual(sema.symbols.actualSymbol(for: expectSym.id), actualSym.id)
     }
 
+    // MARK: - Common -> Native expect/actual bridge for MemoryModel enum
+
+    func testMemoryModelLikeExpectActualBridgeResolvesCleanly() throws {
+        let sources = [
+            """
+            package sample.native
+            expect enum class MemoryModel
+            """,
+            """
+            package sample.native
+            actual enum class MemoryModel {
+                STRICT,
+                RELAXED,
+                EXPERIMENTAL
+            }
+            """,
+        ]
+
+        let ctx = makeContextFromSources(sources)
+        try runSema(ctx)
+
+        let errors = ctx.diagnostics.diagnostics.filter {
+            if case .error = $0.severity { return true }
+            return false
+        }
+        XCTAssertTrue(errors.isEmpty, "Expect/actual MemoryModel bridge must not produce errors, got: \(errors)")
+
+        let sema = try XCTUnwrap(ctx.sema)
+        let fqName = [
+            ctx.interner.intern("sample"),
+            ctx.interner.intern("native"),
+            ctx.interner.intern("MemoryModel"),
+        ]
+        let allSymbols = sema.symbols.lookupAll(fqName: fqName).compactMap { sema.symbols.symbol($0) }
+        let expectSym = try XCTUnwrap(allSymbols.first { $0.flags.contains(.expectDeclaration) })
+        let actualSym = try XCTUnwrap(allSymbols.first { $0.flags.contains(.actualDeclaration) })
+        XCTAssertEqual(sema.symbols.actualSymbol(for: expectSym.id), actualSym.id)
+    }
+
     // MARK: - Mismatch detection
 
     func testExpectEnumActualClassMismatchIsRejected() throws {
@@ -317,25 +434,4 @@ final class NativePlatformBridgeTests: XCTestCase {
         )
     }
 
-    // MARK: - MemoryModel gap note
-
-    /// NOTE: kotlin.native.MemoryModel is not yet registered as a synthetic stub in
-    /// HeaderHelpers+SyntheticTODOAndIOStubs.swift.  When that stub is added, a
-    /// companion test analogous to testOsFamilyEnumIsVisibleInSymbolTable should
-    /// be added here.  This test documents the current coverage gap.
-    func testMemoryModelStubIsAbsentUntilImplemented() throws {
-        let ctx = makeContextFromSource("fun noop() {}")
-        try runSema(ctx)
-
-        let sema = try XCTUnwrap(ctx.sema)
-        let fqName = [
-            ctx.interner.intern("kotlin"),
-            ctx.interner.intern("native"),
-            ctx.interner.intern("MemoryModel"),
-        ]
-        // MemoryModel is not yet stubbed; the lookup must return nil.
-        // When the stub is added, change this assertion to XCTAssertNotNil.
-        let symbol = sema.symbols.lookup(fqName: fqName)
-        XCTAssertNil(symbol, "MemoryModel is not yet stubbed; update this test when the stub is added")
-    }
 }

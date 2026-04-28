@@ -666,6 +666,7 @@ extension ABILoweringPass {
             interner.intern("kk_platform_osFamily"),
             interner.intern("kk_platform_cpuArchitecture"),
             interner.intern("kk_platform_getAvailableProcessors"),
+            interner.intern("kk_platform_memoryModel"),
             interner.intern("kk_system_gc"),
             interner.intern("kk_runtime_getRuntime"),
             interner.intern("kk_runtime_totalMemory"),

@@ -5,7 +5,7 @@ final class RuntimePlatformTests: XCTestCase {
 
     // MARK: - kk_platform_memoryModel
 
-    func testMemoryModelStubIsAbsentUntilImplemented() {
+    func testMemoryModelRuntimeEntryPointIsAvailable() {
         // STDLIB-NATIVE-PLATFORM-ABI-001: kk_platform_memoryModel is now implemented.
         XCTAssertNotNil(kk_platform_memoryModel(0) as Int?)
     }
@@ -19,16 +19,16 @@ final class RuntimePlatformTests: XCTestCase {
     func testMemoryModelOrdinalIsValidRange() {
         let result = kk_platform_memoryModel(0)
         let unboxed = kk_unbox_int(result)
-        // MemoryModel ordinals: EXPERIMENTAL=0, STRICT=1, RELAXED=2
+        // MemoryModel ordinals: STRICT=0, RELAXED=1, EXPERIMENTAL=2
         XCTAssertGreaterThanOrEqual(unboxed, 0)
         XCTAssertLessThanOrEqual(unboxed, 2)
     }
 
     func testMemoryModelDefaultIsExperimental() {
-        // Without KSWIFTK_MEMORY_MODEL_STRICT / _RELAXED build flags the default is EXPERIMENTAL (0).
+        // Without KSWIFTK_MEMORY_MODEL_STRICT / _RELAXED build flags the default is EXPERIMENTAL (2).
         let result = kk_platform_memoryModel(0)
         let unboxed = kk_unbox_int(result)
-        XCTAssertEqual(unboxed, 0, "Default memory model should be EXPERIMENTAL (ordinal 0)")
+        XCTAssertEqual(unboxed, 2, "Default memory model should be EXPERIMENTAL (ordinal 2)")
     }
 
     func testMemoryModelIsStableAcrossCalls() {

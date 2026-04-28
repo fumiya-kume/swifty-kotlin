@@ -372,6 +372,25 @@ extension DataFlowSemaPhase {
             enumType: cpuArchitectureType,
             symbols: symbols
         )
+        let memoryModelSymbol = ensureSyntheticPlatformEnumClass(
+            named: "MemoryModel",
+            entries: [
+                "STRICT", "RELAXED", "EXPERIMENTAL",
+            ],
+            in: kotlinNativePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let memoryModelType = types.make(.classType(ClassType(
+            classSymbol: memoryModelSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        setSyntheticPlatformEnumEntryTypes(
+            enumSymbol: memoryModelSymbol,
+            enumType: memoryModelType,
+            symbols: symbols
+        )
 
         let platformSymbol = ensureSyntheticObjectSymbol(
             named: "Platform",
@@ -416,6 +435,14 @@ extension DataFlowSemaPhase {
             name: "cpuArchitecture",
             propertyType: cpuArchitectureType,
             externalLinkName: "kk_platform_cpuArchitecture",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticObjectProperty(
+            ownerSymbol: platformSymbol,
+            name: "memoryModel",
+            propertyType: memoryModelType,
+            externalLinkName: "kk_platform_memoryModel",
             symbols: symbols,
             interner: interner
         )
