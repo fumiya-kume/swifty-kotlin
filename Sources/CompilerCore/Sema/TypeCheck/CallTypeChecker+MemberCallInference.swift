@@ -798,7 +798,7 @@ extension CallTypeChecker {
             }
             if calleeName == knownNames.kClassSafeCastName, args.count == 1 {
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
-                let returnType = kClassSafeCastReturnType(from: kClassType.argument, sema: sema, interner: interner)
+                let returnType = kClassSafeCastReturnType(from: kClassArgumentType, sema: sema, interner: interner)
                 sema.bindings.bindExprType(id, type: returnType)
                 return returnType
             }
