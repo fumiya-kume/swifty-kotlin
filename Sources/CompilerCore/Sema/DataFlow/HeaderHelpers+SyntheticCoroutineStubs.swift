@@ -650,6 +650,76 @@ extension DataFlowSemaPhase {
             isSuspend: true,
             nullability: .nonNull
         )))
+        let startCoroutineName = interner.intern("startCoroutineUninterceptedOrReturn")
+        let startCoroutineReceiverTypeParameterName = interner.intern("R")
+        let startCoroutineReceiverTypeParameterSymbol = symbols.define(
+            kind: .typeParameter,
+            name: startCoroutineReceiverTypeParameterName,
+            fqName: kotlinCoroutinesIntrinsicsPkg + [startCoroutineName, interner.intern("$synthetic"), startCoroutineReceiverTypeParameterName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let startCoroutineReceiverTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: startCoroutineReceiverTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let startCoroutineTypeParameterName = interner.intern("T")
+        let startCoroutineTypeParameterSymbol = symbols.define(
+            kind: .typeParameter,
+            name: startCoroutineTypeParameterName,
+            fqName: kotlinCoroutinesIntrinsicsPkg + [startCoroutineName, interner.intern("$synthetic"), startCoroutineTypeParameterName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let startCoroutineTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: startCoroutineTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let startCoroutineContinuationType = types.make(.classType(ClassType(
+            classSymbol: continuationSymbol,
+            args: [.invariant(startCoroutineTypeParameterType)],
+            nullability: .nonNull
+        )))
+        let startCoroutineNoReceiverFunctionType = types.make(.functionType(FunctionType(
+            params: [],
+            returnType: startCoroutineTypeParameterType,
+            isSuspend: true,
+            nullability: .nonNull
+        )))
+        let startCoroutineWithReceiverFunctionType = types.make(.functionType(FunctionType(
+            receiver: startCoroutineReceiverTypeParameterType,
+            params: [],
+            returnType: startCoroutineTypeParameterType,
+            isSuspend: true,
+            nullability: .nonNull
+        )))
+        registerSyntheticCoroutineExtensionFunction(
+            named: "startCoroutineUninterceptedOrReturn",
+            packageFQName: kotlinCoroutinesIntrinsicsPkg,
+            receiverType: startCoroutineNoReceiverFunctionType,
+            parameters: [(name: "completion", type: startCoroutineContinuationType)],
+            returnType: types.nullableAnyType,
+            flags: [.synthetic, .inlineFunction],
+            typeParameterSymbols: [startCoroutineTypeParameterSymbol],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineExtensionFunction(
+            named: "startCoroutineUninterceptedOrReturn",
+            packageFQName: kotlinCoroutinesIntrinsicsPkg,
+            receiverType: startCoroutineWithReceiverFunctionType,
+            parameters: [
+                (name: "receiver", type: startCoroutineReceiverTypeParameterType),
+                (name: "completion", type: startCoroutineContinuationType),
+            ],
+            returnType: types.nullableAnyType,
+            flags: [.synthetic, .inlineFunction],
+            typeParameterSymbols: [startCoroutineReceiverTypeParameterSymbol, startCoroutineTypeParameterSymbol],
+            symbols: symbols,
+            interner: interner
+        )
         registerSyntheticCoroutineExtensionFunction(
             named: "createCoroutineUnintercepted",
             packageFQName: kotlinCoroutinesIntrinsicsPkg,
@@ -2035,6 +2105,7 @@ extension DataFlowSemaPhase {
         parameters: [(name: String, type: TypeID)],
         returnType: TypeID,
         externalLinkName: String? = nil,
+        flags: SymbolFlags = [.synthetic],
         typeParameterSymbols: [SymbolID] = [],
         classTypeParameterCount: Int = 0,
         syntheticTypeParameterNames: [String] = [],
@@ -2065,7 +2136,7 @@ extension DataFlowSemaPhase {
             fqName: functionFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: flags
         )
         if let packageSymbol = symbols.lookup(fqName: packageFQName) {
             symbols.setParentSymbol(packageSymbol, for: functionSymbol)
