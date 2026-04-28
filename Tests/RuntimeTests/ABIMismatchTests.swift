@@ -181,7 +181,7 @@ final class ABIMismatchTests: XCTestCase {
         // - 6 STDLIB-MATH-113 floating-point helpers (IEEE remainder + sign helpers)
         XCTAssertEqual(RuntimeABISpec.mathFunctions.count, 103)
         // Random ABI includes default, seeded, bounded numeric helpers, range overloads, ULong helpers, byte array/unsigned byte helpers, SecureRandom helpers, and explicit bit extraction.
-        XCTAssertEqual(RuntimeABISpec.randomFunctions.count, 31)
+        XCTAssertEqual(RuntimeABISpec.randomFunctions.count, 32)
     }
 
     func testTotalFunctionCount() {
