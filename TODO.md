@@ -187,11 +187,8 @@
 - [x] STDLIB-ENUMS-001: `kotlin.enums.EnumEntries<E>` を正しい package で露出する（現状の `kotlin.collections.EnumEntries` synthetic surface を見直す）
 - [x] STDLIB-ENUMS-002: `kotlin.enums.enumEntries<T>()` を正しい package で露出する（現状の `kotlin.enumEntries()` synthetic surface を見直す）
 - [x] STDLIB-ANNO-001: `kotlin.annotation` の対象一覧を固定
-- [ ] STDLIB-ANNO-002: annotation sema / diagnostics を整える
+- [x] STDLIB-ANNO-002: annotation sema / diagnostics を整える
 - [x] STDLIB-KOTLIN-ROOT-001: `SubclassOptInRequired(markerClass: KClass<out Annotation>)` を追加し、subclass opt-in の伝播と misuse diagnostics を実装する
- - [x] STDLIB-ANNO-001: `kotlin.annotation` の対象一覧を固定
- - [x] STDLIB-ANNO-002: annotation sema / diagnostics を整える
- - [x] STDLIB-KOTLIN-ROOT-001: `SubclassOptInRequired(markerClass: KClass<out Annotation>)` を追加し、subclass opt-in の伝播と misuse diagnostics を実装する
 - [ ] STDLIB-KOTLIN-ROOT-002: `ConsistentCopyVisibility` annotation を追加し、data class `copy()` visibility migration の declaration-side diagnostics へ結び付ける
 - [ ] STDLIB-KOTLIN-ROOT-003: `ExposedCopyVisibility` annotation を追加し、public `copy()` 維持モードの suppression semantics を実装する
 - [ ] STDLIB-KOTLIN-ROOT-004: `ExperimentalVersionOverloading` marker を追加し、`@OptIn` / `-opt-in` diagnostics と結び付ける
