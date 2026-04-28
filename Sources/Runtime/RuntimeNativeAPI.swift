@@ -343,6 +343,93 @@ public func kk_weak_ref_clear(_ weakRefRaw: Int) -> Int {
     return 0
 }
 
+// MARK: - createCleaner
+
+/// Runtime backing for `kotlin.native.ref.createCleaner`.
+///
+/// The cleaner keeps the value and cleanup function reachable until either
+/// `clean()` invokes the function once or `dispose()` drops both handles without
+/// invoking it. Automatic finalization is intentionally not modeled here.
+final class RuntimeCleanerBox: @unchecked Sendable {
+    private let lock = NSLock()
+    private var valueRaw: Int
+    private var blockRaw: Int
+    private var isDisposed = false
+
+    init(valueRaw: Int, blockRaw: Int) {
+        self.valueRaw = valueRaw
+        self.blockRaw = blockRaw
+    }
+
+    func clean(outThrown: UnsafeMutablePointer<Int>?) -> Int {
+        lock.lock()
+        guard !isDisposed else {
+            lock.unlock()
+            return 0
+        }
+        isDisposed = true
+        let value = valueRaw
+        let block = blockRaw
+        valueRaw = 0
+        blockRaw = 0
+        lock.unlock()
+
+        guard block != 0 else {
+            outThrown?.pointee = runtimeAllocateThrowable(message: "Invalid cleaner block")
+            return 0
+        }
+        _ = kk_function_invoke(block, value, outThrown)
+        return 0
+    }
+
+    func dispose() {
+        lock.lock()
+        isDisposed = true
+        valueRaw = 0
+        blockRaw = 0
+        lock.unlock()
+    }
+}
+
+private func runtimeCleanerBox(from cleanerRaw: Int) -> RuntimeCleanerBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: cleanerRaw) else {
+        return nil
+    }
+    let key = UInt(bitPattern: ptr)
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(key)
+    }
+    guard isObjectPointer else {
+        return nil
+    }
+    return tryCast(ptr, to: RuntimeCleanerBox.self)
+}
+
+@_cdecl("kk_cleaner_create")
+public func kk_cleaner_create(_ valueRaw: Int, _ blockRaw: Int) -> Int {
+    guard blockRaw != 0 else {
+        return 0
+    }
+    return registerRuntimeObject(RuntimeCleanerBox(valueRaw: valueRaw, blockRaw: blockRaw))
+}
+
+@_cdecl("kk_cleaner_clean")
+public func kk_cleaner_clean(_ cleanerRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let box = runtimeCleanerBox(from: cleanerRaw) else {
+        return 0
+    }
+    return box.clean(outThrown: outThrown)
+}
+
+@_cdecl("kk_cleaner_dispose")
+public func kk_cleaner_dispose(_ cleanerRaw: Int) -> Int {
+    guard let box = runtimeCleanerBox(from: cleanerRaw) else {
+        return 0
+    }
+    box.dispose()
+    return 0
+}
+
 // MARK: - freeze() / isFrozen (Kotlin/Native legacy immutability)
 
 /// ABI-004: Protocol adopted by runtime boxes that store child object handles.
