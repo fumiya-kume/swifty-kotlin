@@ -115,6 +115,53 @@ final class RuntimeNativeRefMemoryTests: XCTestCase {
 }
 
 // ---------------------------------------------------------------------------
+// MARK: - WeakReference<T> runtime tests
+// ---------------------------------------------------------------------------
+
+final class RuntimeNativeRefWeakReferenceTests: IsolatedRuntimeXCTestCase {
+
+    func testWeakReferenceCreateReturnsNonZeroHandle() {
+        let objectRaw = registerRuntimeObject(RuntimeStringBox("weak"))
+        let weakRaw = kk_weak_ref_create(objectRaw)
+        XCTAssertNotEqual(weakRaw, 0)
+    }
+
+    func testWeakReferenceGetReturnsLiveRuntimeObject() {
+        let objectRaw = registerRuntimeObject(RuntimeStringBox("weak"))
+        let weakRaw = kk_weak_ref_create(objectRaw)
+        XCTAssertEqual(kk_weak_ref_get(weakRaw), objectRaw)
+    }
+
+    func testWeakReferenceClearDropsReferent() {
+        let objectRaw = registerRuntimeObject(RuntimeStringBox("weak"))
+        let weakRaw = kk_weak_ref_create(objectRaw)
+        XCTAssertEqual(kk_weak_ref_get(weakRaw), objectRaw)
+        XCTAssertEqual(kk_weak_ref_clear(weakRaw), 0)
+        XCTAssertEqual(kk_weak_ref_get(weakRaw), 0)
+    }
+
+    func testWeakReferenceToCollectedHeapObjectReturnsNull() {
+        withDummyNativeRefTypeInfo { ti in
+            let object = kk_alloc(16, ti)
+            let objectRaw = Int(bitPattern: object)
+            let weakRaw = kk_weak_ref_create(objectRaw)
+            XCTAssertEqual(kk_weak_ref_get(weakRaw), objectRaw)
+
+            kk_gc_collect()
+
+            XCTAssertEqual(kk_weak_ref_get(weakRaw), 0)
+        }
+    }
+
+    func testWeakReferenceInvalidHandleIsNullSafe() {
+        XCTAssertEqual(kk_weak_ref_get(0), 0)
+        XCTAssertEqual(kk_weak_ref_clear(0), 0)
+        XCTAssertEqual(kk_weak_ref_get(12345), 0)
+        XCTAssertEqual(kk_weak_ref_clear(12345), 0)
+    }
+}
+
+// ---------------------------------------------------------------------------
 // MARK: - Pinned<T> stability tests
 // ---------------------------------------------------------------------------
 
