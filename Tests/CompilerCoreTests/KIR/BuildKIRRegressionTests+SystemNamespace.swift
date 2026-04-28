@@ -85,12 +85,14 @@ extension BuildKIRRegressionTests {
     func testMeasureTimeCallsLowerToClockDeltaRuntimeCallees() throws {
         let source = """
         import kotlin.system.measureNanoTime
+        import kotlin.system.measureTimeMicros
         import kotlin.system.measureTimeMillis
 
         fun main(): Long {
             val millis = measureTimeMillis { }
+            val micros = measureTimeMicros { }
             val nanos = measureNanoTime { }
-            return millis + nanos
+            return millis + micros + nanos
         }
         """
         try withTemporaryFile(contents: source) { path in
@@ -112,9 +114,14 @@ extension BuildKIRRegressionTests {
                 "measureNanoTime should lower to start/end nanoTime calls"
             )
             XCTAssertGreaterThanOrEqual(
-                callees.filter { $0 == "kk_op_sub" }.count,
+                callees.filter { $0 == "kk_system_getTimeMicros" }.count,
                 2,
-                "measureTimeMillis and measureNanoTime should both lower to elapsed-time subtraction"
+                "measureTimeMicros should lower to start/end getTimeMicros calls"
+            )
+            XCTAssertGreaterThanOrEqual(
+                callees.filter { $0 == "kk_op_sub" }.count,
+                3,
+                "measureTimeMillis, measureTimeMicros, and measureNanoTime should lower to elapsed-time subtraction"
             )
         }
     }

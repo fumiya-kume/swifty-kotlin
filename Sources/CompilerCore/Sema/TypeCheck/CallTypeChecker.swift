@@ -979,6 +979,27 @@ final class CallTypeChecker {
             return longType
         }
 
+        // --- Stdlib measureTimeMicros { ... } (STDLIB-SYSTEM-007) ---
+        if let calleeName,
+           interner.resolve(calleeName) == "measureTimeMicros",
+           args.count == 1,
+           !isShadowedByNonSyntheticSymbol(calleeName, locals: locals, ctx: ctx)
+        {
+            let longType = sema.types.longType
+            // Intentionally passing expectedType:nil — same rationale as
+            // measureTimeMillis above: KIR lowering discards the lambda result
+            // and the synthetic stub enforces the () -> Unit contract.
+            _ = driver.inferExpr(
+                args[0].expr,
+                ctx: ctx,
+                locals: &locals,
+                expectedType: nil
+            )
+            sema.bindings.markStdlibSpecialCallExpr(id, kind: .measureTimeMicros)
+            sema.bindings.bindExprType(id, type: longType)
+            return longType
+        }
+
         // --- Stdlib measureNanoTime { ... } (STDLIB-550) ---
         if let calleeName,
            interner.resolve(calleeName) == "measureNanoTime",

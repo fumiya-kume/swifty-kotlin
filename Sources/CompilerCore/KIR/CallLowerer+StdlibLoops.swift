@@ -280,6 +280,81 @@ extension CallLowerer {
         return resultExpr
     }
 
+    func lowerMeasureTimeMicrosCallExpr(
+        _ exprID: ExprID,
+        args: [CallArgument],
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        guard sema.bindings.stdlibSpecialCallKind(for: exprID) == .measureTimeMicros,
+              args.count == 1
+        else {
+            return nil
+        }
+
+        let longType = sema.types.longType
+        let microTimeCallee = interner.intern("kk_system_getTimeMicros")
+        let subCallee = interner.intern("kk_op_sub")
+
+        let startTimeExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: longType)
+        instructions.append(.call(
+            symbol: nil, callee: microTimeCallee, arguments: [],
+            result: startTimeExpr, canThrow: false, thrownResult: nil
+        ))
+
+        if let actionExprNode = ast.arena.expr(args[0].expr),
+           case let .lambdaLiteral(_, bodyExpr, _, _) = actionExprNode
+        {
+            _ = driver.lowerExpr(
+                bodyExpr, ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+        } else {
+            let actionExpr = driver.lowerExpr(
+                args[0].expr, ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            if let callableInfo = driver.ctx.callableValueInfo(for: actionExpr) {
+                let unitType = sema.types.unitType
+                let actionResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: unitType)
+                let thrownResult = arena.appendExpr(
+                    .temporary(Int32(arena.expressions.count)),
+                    type: sema.types.nullableAnyType
+                )
+                instructions.append(.call(
+                    symbol: callableInfo.symbol, callee: callableInfo.callee,
+                    arguments: callableInfo.captureArguments,
+                    result: actionResult, canThrow: true, thrownResult: thrownResult
+                ))
+            } else {
+                // The sema phase guarantees the argument is a callable (lambda or
+                // callable reference) when .measureTimeMicros is marked. A nil
+                // callableValueInfo here indicates an internal invariant violation.
+                assertionFailure("lowerMeasureTimeMicrosCallExpr: callableValueInfo is nil for block argument — sema/KIR invariant violated")
+            }
+        }
+
+        let endTimeExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: longType)
+        instructions.append(.call(
+            symbol: nil, callee: microTimeCallee, arguments: [],
+            result: endTimeExpr, canThrow: false, thrownResult: nil
+        ))
+
+        let resultExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: longType)
+        instructions.append(.call(
+            symbol: nil, callee: subCallee, arguments: [endTimeExpr, startTimeExpr],
+            result: resultExpr, canThrow: false, thrownResult: nil
+        ))
+
+        return resultExpr
+    }
+
     func lowerMeasureTimeCallExpr(
         _ exprID: ExprID,
         args: [CallArgument],

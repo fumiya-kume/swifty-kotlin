@@ -4,7 +4,7 @@ import XCTest
 
 // MARK: - kotlin.system edge case coverage (STDLIB-SYSTEM-003)
 //
-// Covers: measureTimeMillis, measureNanoTime,
+// Covers: measureTimeMillis, measureTimeMicros, measureNanoTime,
 // top-level getTimeMicros/getTimeMillis/getTimeNanos,
 // System.currentTimeMillis/System.nanoTime,
 // processStartNanos, and exitProcess signature check.
@@ -55,6 +55,7 @@ final class RuntimeSystemEdgeCaseTests: XCTestCase {
         let _: () -> Int = kk_system_getTimeNanos
         let _: () -> Int = kk_system_process_start_nanos
         let _: (Int, Int, UnsafeMutablePointer<Int>?) -> Int = kk_system_measureTimeMillis
+        let _: (Int, Int, UnsafeMutablePointer<Int>?) -> Int = kk_system_measureTimeMicros
         let _: (Int, Int, UnsafeMutablePointer<Int>?) -> Int = kk_system_measureNanoTime
     }
 
@@ -278,6 +279,61 @@ final class RuntimeSystemEdgeCaseTests: XCTestCase {
         // Both should be non-negative; exact values may differ.
         XCTAssertGreaterThanOrEqual(ms1, 0)
         XCTAssertGreaterThanOrEqual(ms2, 0)
+    }
+
+    // MARK: - kk_system_measureTimeMicros
+
+    func testMeasureTimeMicrosZeroWorkIsNonNegative() {
+        let fnPtr = unsafeBitCast(systemNoopThunk, to: Int.self)
+        var thrown: Int = 0
+        let us = kk_system_measureTimeMicros(fnPtr, 0, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertGreaterThanOrEqual(us, 0, "measureTimeMicros for zero-work block must be >= 0")
+    }
+
+    func testMeasureTimeMicrosWithSleepIsPlausible() {
+        // 10ms sleep should produce >= 5ms (allowing scheduling jitter) and < 500ms
+        let fnPtr = unsafeBitCast(system10msThunk, to: Int.self)
+        var thrown: Int = 0
+        let us = kk_system_measureTimeMicros(fnPtr, 0, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertGreaterThanOrEqual(us, 5_000, "measureTimeMicros should capture at least ~5ms of a 10ms sleep")
+        XCTAssertLessThan(us, 500_000, "measureTimeMicros should not exceed 500ms for a 10ms sleep")
+    }
+
+    func testMeasureTimeMicrosExceptionReturnsZero() {
+        // Kotlin spec: if block throws, exception propagates and no return value.
+        // Runtime maps this as: outThrown is set, return value is 0.
+        let fnPtr = unsafeBitCast(systemThrowingThunk, to: Int.self)
+        var thrown: Int = 0
+        let us = kk_system_measureTimeMicros(fnPtr, 0, &thrown)
+        XCTAssertNotEqual(thrown, 0, "Exception sentinel must be propagated via outThrown")
+        XCTAssertEqual(thrown, 0xDEAD, "outThrown must carry the exact exception value")
+        XCTAssertEqual(us, 0, "Return value must be 0 when block throws")
+    }
+
+    func testMeasureTimeMicrosOutThrownResetBeforeInvocation() {
+        // Verify outThrown is cleared to 0 before the block runs.
+        let fnPtr = unsafeBitCast(systemNoopThunk, to: Int.self)
+        var thrown: Int = 0xBEEF  // garbage pre-fill
+        let us = kk_system_measureTimeMicros(fnPtr, 0, &thrown)
+        XCTAssertEqual(thrown, 0, "outThrown must be cleared for a non-throwing block")
+        XCTAssertGreaterThanOrEqual(us, 0)
+    }
+
+    func testMeasureTimeMicrosClosureRawPassthrough() {
+        systemCapturedRaw = 0
+        let fnPtr = unsafeBitCast(systemCaptureThunk, to: Int.self)
+        var thrown: Int = 0
+        _ = kk_system_measureTimeMicros(fnPtr, 123, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(systemCapturedRaw, 123, "measureTimeMicros must forward closureRaw to the thunk")
+    }
+
+    func testMeasureTimeMicrosNilOutThrownDoesNotCrash() {
+        let fnPtr = unsafeBitCast(systemNoopThunk, to: Int.self)
+        let us = kk_system_measureTimeMicros(fnPtr, 0, nil)
+        XCTAssertGreaterThanOrEqual(us, 0)
     }
 
     // MARK: - kk_system_measureNanoTime

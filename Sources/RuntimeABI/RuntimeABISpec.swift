@@ -2159,6 +2159,16 @@ public enum RuntimeABISpec {
             section: "System"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_system_measureTimeMicros",
+            parameters: [
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_system_measureNanoTime",
             parameters: [
                 RuntimeABIParameter(name: "fnPtr", type: .intptr),

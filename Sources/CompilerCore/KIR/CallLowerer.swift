@@ -245,6 +245,19 @@ final class CallLowerer {
             return loweredMeasureTime
         }
 
+        if let loweredMeasureMicros = lowerMeasureTimeMicrosCallExpr(
+            exprID,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        ) {
+            return loweredMeasureMicros
+        }
+
         if let loweredMeasureNano = lowerMeasureNanoTimeCallExpr(
             exprID,
             args: args,
