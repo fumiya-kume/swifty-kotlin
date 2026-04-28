@@ -235,14 +235,31 @@ extension DataFlowSemaPhase {
                 symbols.setPropertyType(stringType, for: namePropSymbol)
             }
         }
+        let kMutablePropertySymbol = ensureInterfaceSymbol(
+            named: "KMutableProperty", in: kotlinReflectPkg, symbols: symbols, interner: interner
+        )
         for reflectTypeName in [
             "KProperty0", "KProperty1",
-            "KMutableProperty", "KMutableProperty0", "KMutableProperty1",
+            "KMutableProperty0", "KMutableProperty1",
         ] {
             _ = ensureInterfaceSymbol(
                 named: reflectTypeName, in: kotlinReflectPkg, symbols: symbols, interner: interner
             )
         }
+        registerSyntheticKProperty2Stub(
+            kPropertySymbol: kPropertySymbol,
+            kotlinReflectPkg: kotlinReflectPkg,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerSyntheticKMutableProperty2Stub(
+            kMutablePropertySymbol: kMutablePropertySymbol,
+            kotlinReflectPkg: kotlinReflectPkg,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
 
         // Register kotlin.reflect.KFunction<out R> interface stub (STDLIB-REFLECT-063).
         // Store in TypeSystem so subtyping checks can recognise KFunction receivers.
@@ -922,6 +939,269 @@ extension DataFlowSemaPhase {
         }
 
         return kDeclarationContainerSymbol
+    }
+
+    // STDLIB-REFLECT-070: Register KProperty2<D, E, out V> with callable surface.
+    private func registerSyntheticKProperty2Stub(
+        kPropertySymbol: SymbolID,
+        kotlinReflectPkg: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let kProperty2Symbol = ensureInterfaceSymbol(
+            named: "KProperty2", in: kotlinReflectPkg, symbols: symbols, interner: interner
+        )
+        guard let kProperty2Info = symbols.symbol(kProperty2Symbol) else { return }
+
+        let typeParamSpecs: [(name: String, variance: TypeVariance)] = [
+            ("D", .invariant),
+            ("E", .invariant),
+            ("V", .out),
+        ]
+        var typeParamSymbols: [SymbolID] = []
+        var typeParamTypes: [TypeID] = []
+        for spec in typeParamSpecs {
+            let paramName = interner.intern(spec.name)
+            let paramFQ = kProperty2Info.fqName + [paramName]
+            let paramSymbol: SymbolID
+            if let existing = symbols.lookup(fqName: paramFQ) {
+                paramSymbol = existing
+            } else {
+                paramSymbol = symbols.define(
+                    kind: .typeParameter,
+                    name: paramName,
+                    fqName: paramFQ,
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(kProperty2Symbol, for: paramSymbol)
+            }
+            typeParamSymbols.append(paramSymbol)
+            typeParamTypes.append(types.make(.typeParam(TypeParamType(
+                symbol: paramSymbol,
+                nullability: .nonNull
+            ))))
+        }
+        types.setNominalTypeParameterSymbols(typeParamSymbols, for: kProperty2Symbol)
+        types.setNominalTypeParameterVariances(typeParamSpecs.map(\.variance), for: kProperty2Symbol)
+
+        addSyntheticDirectSupertypes([kPropertySymbol], to: kProperty2Symbol, symbols: symbols, types: types)
+        symbols.setSupertypeTypeArgs([.out(typeParamTypes[2])], for: kProperty2Symbol, supertype: kPropertySymbol)
+        types.setNominalSupertypeTypeArgs([.out(typeParamTypes[2])], for: kProperty2Symbol, supertype: kPropertySymbol)
+
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: kProperty2Symbol,
+            args: [.invariant(typeParamTypes[0]), .invariant(typeParamTypes[1]), .out(typeParamTypes[2])],
+            nullability: .nonNull
+        )))
+
+        registerSyntheticKProperty2Function(
+            named: "get",
+            parameterNames: ["receiver1", "receiver2"],
+            ownerSymbol: kProperty2Symbol,
+            ownerFQName: kProperty2Info.fqName,
+            receiverType: receiverType,
+            parameterTypes: [typeParamTypes[0], typeParamTypes[1]],
+            returnType: typeParamTypes[2],
+            typeParameterSymbols: typeParamSymbols,
+            flags: [.synthetic],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticKProperty2Function(
+            named: "getDelegate",
+            parameterNames: ["receiver1", "receiver2"],
+            ownerSymbol: kProperty2Symbol,
+            ownerFQName: kProperty2Info.fqName,
+            receiverType: receiverType,
+            parameterTypes: [typeParamTypes[0], typeParamTypes[1]],
+            returnType: types.nullableAnyType,
+            typeParameterSymbols: typeParamSymbols,
+            flags: [.synthetic],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticKProperty2Function(
+            named: "invoke",
+            parameterNames: ["p1", "p2"],
+            ownerSymbol: kProperty2Symbol,
+            ownerFQName: kProperty2Info.fqName,
+            receiverType: receiverType,
+            parameterTypes: [typeParamTypes[0], typeParamTypes[1]],
+            returnType: typeParamTypes[2],
+            typeParameterSymbols: typeParamSymbols,
+            flags: [.synthetic, .operatorFunction],
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    private func registerSyntheticKProperty2Function(
+        named name: String,
+        parameterNames: [String],
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        receiverType: TypeID,
+        parameterTypes: [TypeID],
+        returnType: TypeID,
+        typeParameterSymbols: [SymbolID],
+        flags: SymbolFlags,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQ = ownerFQName + [functionName]
+        guard symbols.lookup(fqName: functionFQ) == nil else { return }
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQ,
+            declSite: nil,
+            visibility: .public,
+            flags: flags
+        )
+        symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
+
+        var parameterSymbols: [SymbolID] = []
+        for parameterNameRaw in parameterNames {
+            let parameterName = interner.intern(parameterNameRaw)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: functionFQ + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            parameterSymbols.append(parameterSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameterTypes,
+                returnType: returnType,
+                valueParameterSymbols: parameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: parameterTypes.count),
+                valueParameterIsVararg: Array(repeating: false, count: parameterTypes.count),
+                typeParameterSymbols: typeParameterSymbols,
+                classTypeParameterCount: typeParameterSymbols.count
+            ),
+            for: functionSymbol
+        )
+    }
+
+    // STDLIB-REFLECT-071: Register KMutableProperty2<D, E, V> with mutable property surface.
+    private func registerSyntheticKMutableProperty2Stub(
+        kMutablePropertySymbol: SymbolID,
+        kotlinReflectPkg: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        guard let kProperty2Symbol = symbols.lookup(fqName: kotlinReflectPkg + [interner.intern("KProperty2")]) else {
+            return
+        }
+        let kMutableProperty2Symbol = ensureInterfaceSymbol(
+            named: "KMutableProperty2", in: kotlinReflectPkg, symbols: symbols, interner: interner
+        )
+        guard let kMutableProperty2Info = symbols.symbol(kMutableProperty2Symbol) else { return }
+
+        let typeParamSpecs: [(name: String, variance: TypeVariance)] = [
+            ("D", .invariant),
+            ("E", .invariant),
+            ("V", .invariant),
+        ]
+        var typeParamSymbols: [SymbolID] = []
+        var typeParamTypes: [TypeID] = []
+        for spec in typeParamSpecs {
+            let paramName = interner.intern(spec.name)
+            let paramFQ = kMutableProperty2Info.fqName + [paramName]
+            let paramSymbol: SymbolID
+            if let existing = symbols.lookup(fqName: paramFQ) {
+                paramSymbol = existing
+            } else {
+                paramSymbol = symbols.define(
+                    kind: .typeParameter,
+                    name: paramName,
+                    fqName: paramFQ,
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(kMutableProperty2Symbol, for: paramSymbol)
+            }
+            typeParamSymbols.append(paramSymbol)
+            typeParamTypes.append(types.make(.typeParam(TypeParamType(
+                symbol: paramSymbol,
+                nullability: .nonNull
+            ))))
+        }
+        types.setNominalTypeParameterSymbols(typeParamSymbols, for: kMutableProperty2Symbol)
+        types.setNominalTypeParameterVariances(typeParamSpecs.map(\.variance), for: kMutableProperty2Symbol)
+
+        addSyntheticDirectSupertypes(
+            [kProperty2Symbol, kMutablePropertySymbol],
+            to: kMutableProperty2Symbol,
+            symbols: symbols,
+            types: types
+        )
+        let kProperty2Args: [TypeArg] = [
+            .invariant(typeParamTypes[0]),
+            .invariant(typeParamTypes[1]),
+            .invariant(typeParamTypes[2]),
+        ]
+        let kMutablePropertyArgs: [TypeArg] = [.invariant(typeParamTypes[2])]
+        symbols.setSupertypeTypeArgs(kProperty2Args, for: kMutableProperty2Symbol, supertype: kProperty2Symbol)
+        symbols.setSupertypeTypeArgs(kMutablePropertyArgs, for: kMutableProperty2Symbol, supertype: kMutablePropertySymbol)
+        types.setNominalSupertypeTypeArgs(kProperty2Args, for: kMutableProperty2Symbol, supertype: kProperty2Symbol)
+        types.setNominalSupertypeTypeArgs(kMutablePropertyArgs, for: kMutableProperty2Symbol, supertype: kMutablePropertySymbol)
+
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: kMutableProperty2Symbol,
+            args: [.invariant(typeParamTypes[0]), .invariant(typeParamTypes[1]), .invariant(typeParamTypes[2])],
+            nullability: .nonNull
+        )))
+
+        registerSyntheticKProperty2Function(
+            named: "set",
+            parameterNames: ["receiver1", "receiver2", "value"],
+            ownerSymbol: kMutableProperty2Symbol,
+            ownerFQName: kMutableProperty2Info.fqName,
+            receiverType: receiverType,
+            parameterTypes: [typeParamTypes[0], typeParamTypes[1], typeParamTypes[2]],
+            returnType: types.unitType,
+            typeParameterSymbols: typeParamSymbols,
+            flags: [.synthetic],
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    func patchKProperty2FunctionSupertype(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let reflectPkg = [interner.intern("kotlin"), interner.intern("reflect")]
+        let functionPkg = [interner.intern("kotlin"), interner.intern("Function")]
+        guard let kProperty2Symbol = symbols.lookup(fqName: reflectPkg + [interner.intern("KProperty2")]),
+              let function2Symbol = symbols.lookup(fqName: functionPkg + [interner.intern("Function2")])
+        else {
+            return
+        }
+        let typeParams = types.nominalTypeParameterSymbols(for: kProperty2Symbol)
+        guard typeParams.count == 3 else { return }
+        let dType = types.make(.typeParam(TypeParamType(symbol: typeParams[0], nullability: .nonNull)))
+        let eType = types.make(.typeParam(TypeParamType(symbol: typeParams[1], nullability: .nonNull)))
+        let vType = types.make(.typeParam(TypeParamType(symbol: typeParams[2], nullability: .nonNull)))
+        addSyntheticDirectSupertypes([function2Symbol], to: kProperty2Symbol, symbols: symbols, types: types)
+        let function2Args: [TypeArg] = [.out(vType), .in(dType), .in(eType)]
+        symbols.setSupertypeTypeArgs(function2Args, for: kProperty2Symbol, supertype: function2Symbol)
+        types.setNominalSupertypeTypeArgs(function2Args, for: kProperty2Symbol, supertype: function2Symbol)
     }
 
     private func addSyntheticDirectSupertypes(
