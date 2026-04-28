@@ -69,6 +69,16 @@ final class MathAPITargetInventoryTests: XCTestCase {
         var result: [String: String] = [
             "val E: Double": "kk_math_E",
             "val PI: Double": "kk_math_PI",
+            "val Double.absoluteValue: Double": "kk_math_abs",
+            "val Float.absoluteValue: Float": "kk_math_abs_float",
+            "val Int.absoluteValue: Int": "kk_math_abs_int",
+            "val Long.absoluteValue: Long": "kk_math_abs_long",
+            "val Double.sign: Double": "kk_math_sign",
+            "val Float.sign: Float": "kk_math_sign_float",
+            "val Int.sign: Int": "kk_math_sign_int",
+            "val Long.sign: Int": "kk_math_sign_long",
+            "val Double.ulp: Double": "kk_double_ulp",
+            "val Float.ulp: Float": "kk_float_ulp",
             "fun abs(Double): Double": "kk_math_abs",
             "fun abs(Float): Float": "kk_math_abs_float",
             "fun abs(Int): Int": "kk_math_abs_int",
@@ -124,18 +134,6 @@ final class MathAPITargetInventoryTests: XCTestCase {
     }()
 
     private static let knownGapSignaturesByTodo: [String: Set<String>] = [
-        "STDLIB-MATH-004": [
-            "val Double.absoluteValue: Double",
-            "val Float.absoluteValue: Float",
-            "val Int.absoluteValue: Int",
-            "val Long.absoluteValue: Long",
-            "val Double.sign: Double",
-            "val Float.sign: Float",
-            "val Int.sign: Int",
-            "val Long.sign: Int",
-            "val Double.ulp: Double",
-            "val Float.ulp: Float",
-        ],
         "STDLIB-MATH-005": [
             "fun expm1(Double): Double",
             "fun expm1(Float): Float",

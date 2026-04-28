@@ -57,4 +57,61 @@ extension CodegenBackendIntegrationTests {
             )
         }
     }
+
+    func testCodegenMathExtensionPropertiesLowerToRuntimeHelpers() throws {
+        let source = """
+        import kotlin.math.*
+
+        fun main() {
+            val i: Int = -7
+            val l: Long = -9L
+            val f: Float = -3.5f
+            val d: Double = -4.5
+            val oneF: Float = 1.0f
+            val oneD: Double = 1.0
+            val ai: Int = i.absoluteValue
+            val al: Long = l.absoluteValue
+            val af: Float = f.absoluteValue
+            val ad: Double = d.absoluteValue
+            val si: Int = i.sign
+            val sl: Int = l.sign
+            val sf: Float = f.sign
+            val sd: Double = d.sign
+            val uf: Float = oneF.ulp
+            val ud: Double = oneD.ulp
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "MathExtensionProperties", emit: .kirDump)
+            try runToLowering(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let calls = body.compactMap { instruction -> (String, Int)? in
+                guard case let .call(_, callee, arguments, _, _, _, _, _) = instruction else {
+                    return nil
+                }
+                return (ctx.interner.resolve(callee), arguments.count)
+            }
+
+            for expected in [
+                "kk_math_abs_int",
+                "kk_math_abs_long",
+                "kk_math_abs_float",
+                "kk_math_abs",
+                "kk_math_sign_int",
+                "kk_math_sign_long",
+                "kk_math_sign_float",
+                "kk_math_sign",
+                "kk_float_ulp",
+                "kk_double_ulp",
+            ] {
+                XCTAssertTrue(
+                    calls.contains(where: { $0 == expected && $1 == 1 }),
+                    "Expected \(expected) to lower with one receiver argument, got \(calls)"
+                )
+            }
+        }
+    }
 }

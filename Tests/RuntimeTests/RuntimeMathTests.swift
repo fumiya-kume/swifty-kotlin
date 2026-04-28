@@ -210,6 +210,15 @@ final class RuntimeMathTests: IsolatedRuntimeXCTestCase {
         XCTAssertTrue(floatFromBits(kk_math_sign_float(floatToBits(Float.nan))).isNaN)
     }
 
+    func testIntegralSignProperties() {
+        XCTAssertEqual(kk_math_sign_int(-5), -1)
+        XCTAssertEqual(kk_math_sign_int(0), 0)
+        XCTAssertEqual(kk_math_sign_int(5), 1)
+        XCTAssertEqual(kk_math_sign_long(-5), -1)
+        XCTAssertEqual(kk_math_sign_long(0), 0)
+        XCTAssertEqual(kk_math_sign_long(5), 1)
+    }
+
     func testHypotFloat() {
         XCTAssertEqual(floatFromBits(kk_math_hypot_float(floatToBits(3.0), floatToBits(4.0))), 5.0, accuracy: 1e-6)
     }

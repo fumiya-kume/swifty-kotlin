@@ -602,7 +602,14 @@ public final class SymbolTable {
             return false
         }
         return existingNonPackageSymbols.allSatisfy { symbol in
-            symbol.kind == .property && symbol.flags.contains(.synthetic)
+            switch symbol.kind {
+            case .property:
+                return symbol.flags.contains(.synthetic)
+            case .function, .constructor:
+                return true
+            default:
+                return false
+            }
         }
     }
 
