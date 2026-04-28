@@ -25,6 +25,11 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerSyntheticNativeImmutableBlobStubs(
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
     }
 
     private func registerSyntheticNativeExperimentalAnnotations(
@@ -670,6 +675,176 @@ extension DataFlowSemaPhase {
         )
     }
 
+    private func registerSyntheticNativeImmutableBlobStubs(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let nativePkg = ensurePackage(
+            path: ["kotlin", "native"],
+            symbols: symbols,
+            interner: interner
+        )
+        let nativePkgSymbol = symbols.lookup(fqName: nativePkg)
+        let immutableBlobSymbol = ensureClassSymbol(
+            named: "ImmutableBlob",
+            in: nativePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let nativePkgSymbol {
+            symbols.setParentSymbol(nativePkgSymbol, for: immutableBlobSymbol)
+        }
+
+        let immutableBlobType = types.make(.classType(ClassType(
+            classSymbol: immutableBlobSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(immutableBlobType, for: immutableBlobSymbol)
+        appendDeprecatedImmutableBlobAnnotations(to: immutableBlobSymbol, symbols: symbols)
+
+        let kotlinPkg = ensurePackage(
+            path: ["kotlin"],
+            symbols: symbols,
+            interner: interner
+        )
+        let byteIteratorSymbol = ensureClassSymbol(
+            named: "ByteIterator",
+            in: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinPkgSymbol = symbols.lookup(fqName: kotlinPkg) {
+            symbols.setParentSymbol(kotlinPkgSymbol, for: byteIteratorSymbol)
+        }
+        let byteIteratorType = types.make(.classType(ClassType(
+            classSymbol: byteIteratorSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(byteIteratorType, for: byteIteratorSymbol)
+
+        let byteArrayType = syntheticClassType(
+            packagePath: ["kotlin"],
+            name: "ByteArray",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let uByteArrayType = syntheticClassType(
+            packagePath: ["kotlin"],
+            name: "UByteArray",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let cPointerByteVarType = cPointerType(
+            pointedTypeName: "ByteVar",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let cPointerUByteVarType = cPointerType(
+            pointedTypeName: "UByteVar",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        registerSyntheticNativeBitSetProperty(
+            named: "size",
+            ownerSymbol: immutableBlobSymbol,
+            propertyType: types.intType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "get",
+            ownerSymbol: immutableBlobSymbol,
+            receiverType: immutableBlobType,
+            parameters: [(name: "index", type: types.intType)],
+            returnType: types.intType,
+            flags: [.synthetic, .operatorFunction],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "iterator",
+            ownerSymbol: immutableBlobSymbol,
+            receiverType: immutableBlobType,
+            parameters: [],
+            returnType: byteIteratorType,
+            flags: [.synthetic, .operatorFunction],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticNativeTopLevelFunction(
+            named: "immutableBlobOf",
+            packageFQName: nativePkg,
+            receiverType: nil,
+            parameters: [(name: "elements", type: types.intType)],
+            returnType: immutableBlobType,
+            defaultValues: [false],
+            varargs: [true],
+            annotations: deprecatedImmutableBlobFactoryAnnotations(),
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeTopLevelFunction(
+            named: "toByteArray",
+            packageFQName: nativePkg,
+            receiverType: immutableBlobType,
+            parameters: [
+                (name: "startIndex", type: types.intType),
+                (name: "endIndex", type: types.intType),
+            ],
+            returnType: byteArrayType,
+            defaultValues: [true, true],
+            annotations: deprecatedImmutableBlobAnnotations(),
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeTopLevelFunction(
+            named: "toUByteArray",
+            packageFQName: nativePkg,
+            receiverType: immutableBlobType,
+            parameters: [
+                (name: "startIndex", type: types.intType),
+                (name: "endIndex", type: types.intType),
+            ],
+            returnType: uByteArrayType,
+            defaultValues: [true, true],
+            annotations: deprecatedImmutableBlobAnnotations()
+                + [MetadataAnnotationRecord(annotationFQName: "kotlin.ExperimentalUnsignedTypes")],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeTopLevelFunction(
+            named: "asCPointer",
+            packageFQName: nativePkg,
+            receiverType: immutableBlobType,
+            parameters: [(name: "offset", type: types.intType)],
+            returnType: cPointerByteVarType,
+            defaultValues: [true],
+            annotations: deprecatedImmutableBlobPointerAnnotations(),
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeTopLevelFunction(
+            named: "asUCPointer",
+            packageFQName: nativePkg,
+            receiverType: immutableBlobType,
+            parameters: [(name: "offset", type: types.intType)],
+            returnType: cPointerUByteVarType,
+            defaultValues: [true],
+            annotations: deprecatedImmutableBlobPointerAnnotations(),
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
     private func registerSyntheticCInteropStubs(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -936,6 +1111,96 @@ extension DataFlowSemaPhase {
         )))
     }
 
+    private func cPointerType(
+        pointedTypeName: String,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID {
+        let cinteropPkg = ["kotlinx", "cinterop"].map { interner.intern($0) }
+        guard let cPointerSymbol = symbols.lookup(fqName: cinteropPkg + [interner.intern("CPointer")]),
+              let pointedSymbol = symbols.lookup(fqName: cinteropPkg + [interner.intern(pointedTypeName)])
+        else {
+            return types.anyType
+        }
+
+        let pointedType = types.make(.classType(ClassType(
+            classSymbol: pointedSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        return types.make(.classType(ClassType(
+            classSymbol: cPointerSymbol,
+            args: [.invariant(pointedType)],
+            nullability: .nonNull
+        )))
+    }
+
+    private func deprecatedImmutableBlobAnnotations() -> [MetadataAnnotationRecord] {
+        [
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.Deprecated",
+                arguments: ["message = \"ImmutableBlob is deprecated. Use ByteArray instead.\""]
+            ),
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.DeprecatedSinceKotlin",
+                arguments: [
+                    "warningSince = \"1.9\"",
+                    "errorSince = \"2.1\"",
+                ]
+            ),
+        ]
+    }
+
+    private func deprecatedImmutableBlobFactoryAnnotations() -> [MetadataAnnotationRecord] {
+        [
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.Deprecated",
+                arguments: [
+                    "message = \"ImmutableBlob is deprecated. Use ByteArray instead.\"",
+                    "replaceWith = ReplaceWith(\"byteArrayOf(*elements)\")",
+                ]
+            ),
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.DeprecatedSinceKotlin",
+                arguments: [
+                    "warningSince = \"1.9\"",
+                    "errorSince = \"2.1\"",
+                ]
+            ),
+        ]
+    }
+
+    private func deprecatedImmutableBlobPointerAnnotations() -> [MetadataAnnotationRecord] {
+        [
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.Deprecated",
+                arguments: [
+                    "message = \"ImmutableBlob is deprecated. Use ByteArray instead. To get a stable C pointer to a `ByteArray`, pin it first.\"",
+                ]
+            ),
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.DeprecatedSinceKotlin",
+                arguments: [
+                    "warningSince = \"1.9\"",
+                    "errorSince = \"2.1\"",
+                ]
+            ),
+        ]
+    }
+
+    private func appendDeprecatedImmutableBlobAnnotations(to symbol: SymbolID, symbols: SymbolTable) {
+        var annotations = symbols.annotations(for: symbol)
+        var didAppend = false
+        for record in deprecatedImmutableBlobAnnotations() where !annotations.contains(record) {
+            annotations.append(record)
+            didAppend = true
+        }
+        if didAppend {
+            symbols.setAnnotations(annotations, for: symbol)
+        }
+    }
+
     private func registerSyntheticNativeBitSetConstructor(
         ownerSymbol: SymbolID,
         ownerType: TypeID,
@@ -1096,6 +1361,88 @@ extension DataFlowSemaPhase {
             ),
             for: functionSymbol
         )
+    }
+
+    private func registerSyntheticNativeTopLevelFunction(
+        named name: String,
+        packageFQName: [InternedString],
+        receiverType: TypeID?,
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        defaultValues: [Bool]? = nil,
+        varargs: [Bool]? = nil,
+        annotations: [MetadataAnnotationRecord] = [],
+        flags: SymbolFlags = [.synthetic],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        let parameterTypes = parameters.map(\.type)
+        let functionSymbol: SymbolID
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return signature.receiverType == receiverType
+                && signature.parameterTypes == parameterTypes
+                && signature.returnType == returnType
+        }) {
+            functionSymbol = existing
+            symbols.insertFlags(flags, for: existing)
+        } else {
+            functionSymbol = symbols.define(
+                kind: .function,
+                name: functionName,
+                fqName: functionFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: flags
+            )
+            if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+                symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+            }
+
+            let valueParameterSymbols = parameters.map { parameter in
+                let parameterName = interner.intern(parameter.name)
+                let parameterSymbol = symbols.define(
+                    kind: .valueParameter,
+                    name: parameterName,
+                    fqName: functionFQName + [parameterName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+                symbols.setPropertyType(parameter.type, for: parameterSymbol)
+                return parameterSymbol
+            }
+
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: parameterTypes,
+                    returnType: returnType,
+                    isSuspend: false,
+                    valueParameterSymbols: valueParameterSymbols,
+                    valueParameterHasDefaultValues: defaultValues ?? Array(repeating: false, count: valueParameterSymbols.count),
+                    valueParameterIsVararg: varargs ?? Array(repeating: false, count: valueParameterSymbols.count)
+                ),
+                for: functionSymbol
+            )
+        }
+
+        if !annotations.isEmpty {
+            var existingAnnotations = symbols.annotations(for: functionSymbol)
+            var didAppend = false
+            for record in annotations where !existingAnnotations.contains(record) {
+                existingAnnotations.append(record)
+                didAppend = true
+            }
+            if didAppend {
+                symbols.setAnnotations(existingAnnotations, for: functionSymbol)
+            }
+        }
     }
 
     private func configureSingleTypeParameterNominal(
