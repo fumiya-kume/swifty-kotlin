@@ -1027,6 +1027,63 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.isEmpty, "Expected compiler -opt-in flag to suppress ExperimentalVersionOverloading diagnostics, got: \(ctx.diagnostics.diagnostics)")
     }
 
+    func testExperimentalContextParametersMarkerRequiresOptIn() {
+        let source = """
+        import kotlin.ExperimentalContextParameters
+
+        @ExperimentalContextParameters
+        fun contextApi(): Int = 1
+
+        fun caller(): Int = contextApi()
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-OPT-IN", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected one ExperimentalContextParameters opt-in diagnostic, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "ExperimentalContextParameters opt-in diagnostics should be errors")
+        XCTAssertTrue(
+            diagnostics.first?.message.contains("context parameters") == true,
+            "Expected diagnostic to include the ExperimentalContextParameters message, got: \(diagnostics)"
+        )
+    }
+
+    func testExperimentalContextParametersMarkerAcceptsOptIn() {
+        let source = """
+        import kotlin.ExperimentalContextParameters
+
+        @ExperimentalContextParameters
+        fun contextApi(): Int = 1
+
+        @OptIn(ExperimentalContextParameters::class)
+        fun caller(): Int = contextApi()
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-OPT-IN", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected @OptIn to suppress ExperimentalContextParameters diagnostics, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testExperimentalContextParametersMarkerAcceptsCompilerOptInFlag() {
+        let source = """
+        import kotlin.ExperimentalContextParameters
+
+        @ExperimentalContextParameters
+        fun contextApi(): Int = 1
+
+        fun caller(): Int = contextApi()
+        """
+
+        let ctx = runSemaCollectingDiagnostics(
+            source,
+            frontendFlags: ["opt-in=kotlin.ExperimentalContextParameters"]
+        )
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-OPT-IN", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected compiler -opt-in flag to suppress ExperimentalContextParameters diagnostics, got: \(ctx.diagnostics.diagnostics)")
+    }
+
     func testSubclassOptInRequiredRejectsSubclassWithoutOptIn() {
         let source = """
         @RequiresOptIn
