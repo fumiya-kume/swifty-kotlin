@@ -228,6 +228,13 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerSyntheticJvmAnnotationClass(
+            named: "ParameterName",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
 
         registerSyntheticJvmAnnotationClass(
             named: "IgnorableReturnValue",
@@ -655,6 +662,32 @@ extension DataFlowSemaPhase {
             )
         }
 
+        if let parameterNameSymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern("ParameterName")]) {
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.target.qualifiedName,
+                    arguments: ["AnnotationTarget.TYPE"]
+                ),
+                to: parameterNameSymbol,
+                symbols: symbols
+            )
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.annotation.Retention",
+                    arguments: ["AnnotationRetention.BINARY"]
+                ),
+                to: parameterNameSymbol,
+                symbols: symbols
+            )
+            registerSyntheticParameterNameMembers(
+                ownerSymbol: parameterNameSymbol,
+                ownerFQName: kotlinPkg + [interner.intern("ParameterName")],
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
+        }
+
         if let optInSymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern("OptIn")]) {
             appendSyntheticAnnotation(
                 MetadataAnnotationRecord(
@@ -676,6 +709,87 @@ extension DataFlowSemaPhase {
                 symbols: symbols
             )
         }
+    }
+
+    private func registerSyntheticParameterNameMembers(
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let stringType = types.stringType
+        let ownerType = types.make(.classType(ClassType(
+            classSymbol: ownerSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        let name = interner.intern("name")
+        let propertyFQName = ownerFQName + [name]
+        let propertySymbol: SymbolID
+        if let existing = symbols.lookup(fqName: propertyFQName) {
+            propertySymbol = existing
+        } else {
+            propertySymbol = symbols.define(
+                kind: .property,
+                name: name,
+                fqName: propertyFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
+        symbols.setPropertyType(stringType, for: propertySymbol)
+
+        let initName = interner.intern("<init>")
+        let ctorFQName = ownerFQName + [initName]
+        let ctorSymbol: SymbolID
+        if let existing = symbols.lookupAll(fqName: ctorFQName).first(where: {
+            symbols.symbol($0)?.kind == .constructor
+        }) {
+            ctorSymbol = existing
+        } else {
+            ctorSymbol = symbols.define(
+                kind: .constructor,
+                name: initName,
+                fqName: ctorFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        symbols.setParentSymbol(ownerSymbol, for: ctorSymbol)
+
+        let parameterFQName = ctorFQName + [name]
+        let parameterSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: parameterFQName) {
+            parameterSymbol = existing
+        } else {
+            parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: name,
+                fqName: parameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+        }
+        symbols.setParentSymbol(ctorSymbol, for: parameterSymbol)
+        symbols.setPropertyType(stringType, for: parameterSymbol)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: ownerType,
+                parameterTypes: [stringType],
+                returnType: ownerType,
+                valueParameterSymbols: [parameterSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false]
+            ),
+            for: ctorSymbol
+        )
     }
 
     private func attachAnnotationIfNeeded(

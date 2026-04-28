@@ -625,6 +625,7 @@ final class AnnotationSemanticTests: XCTestCase {
             ]),
             "kotlin.ExposedCopyVisibility must be registered"
         )
+
         let annotations = sema.symbols.annotations(for: symbol)
         XCTAssertTrue(
             annotations.contains {
@@ -645,6 +646,78 @@ final class AnnotationSemanticTests: XCTestCase {
         let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
 
         XCTAssertEqual(diagnostics.count, 1, "Expected class-only annotation target diagnostic, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+    }
+
+    func testParameterNameSurfaceHasNamePropertyConstructorAndTypeTarget() throws {
+        let ctx = makeContextFromSource("fun noop() {}")
+        try runSema(ctx)
+        let sema = try XCTUnwrap(ctx.sema)
+        let fqName = [
+            ctx.interner.intern("kotlin"),
+            ctx.interner.intern("ParameterName"),
+        ]
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let declaration = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(declaration.kind, .annotationClass)
+        XCTAssertEqual(declaration.visibility, .public)
+        XCTAssertTrue(declaration.flags.contains(.synthetic))
+
+        let annotations = sema.symbols.annotations(for: symbol)
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == KnownCompilerAnnotation.target.qualifiedName
+                    && $0.arguments == ["AnnotationTarget.TYPE"]
+            },
+            "ParameterName should target type uses, got: \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.annotation.Retention"
+                    && $0.arguments == ["AnnotationRetention.BINARY"]
+            },
+            "ParameterName should carry binary retention, got: \(annotations)"
+        )
+
+        let propertySymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName + [ctx.interner.intern("name")])
+        )
+        XCTAssertEqual(sema.symbols.propertyType(for: propertySymbol), sema.types.stringType)
+
+        let ctorSymbol = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: fqName + [ctx.interner.intern("<init>")]).first {
+                sema.symbols.symbol($0)?.kind == .constructor
+            }
+        )
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: ctorSymbol))
+        XCTAssertEqual(signature.parameterTypes, [sema.types.stringType])
+        XCTAssertEqual(signature.valueParameterHasDefaultValues, [false])
+        XCTAssertEqual(signature.valueParameterIsVararg, [false])
+    }
+
+    func testParameterNameAcceptsTypeUse() {
+        let source = """
+        interface Host {
+            val value: @ParameterName(name = "value") String
+        }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+
+        XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected ParameterName on a type use to compile, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testParameterNameRejectsClassUse() {
+        let source = """
+        @ParameterName("Bad")
+        class Bad
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected ParameterName to reject class use, got: \(ctx.diagnostics.diagnostics)")
         XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
     }
 
