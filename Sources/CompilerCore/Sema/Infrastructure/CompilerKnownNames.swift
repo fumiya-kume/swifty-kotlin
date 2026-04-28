@@ -21,6 +21,7 @@ enum KnownCompilerAnnotation {
     case throws_
     case suppress
     case dslMarker
+    case parameterName
     case wasExperimental
     case sinceKotlin
     case optIn
@@ -73,6 +74,8 @@ enum KnownCompilerAnnotation {
             "Suppress"
         case .dslMarker:
             "DslMarker"
+        case .parameterName:
+            "ParameterName"
         case .wasExperimental:
             "WasExperimental"
         case .sinceKotlin:
@@ -136,6 +139,8 @@ enum KnownCompilerAnnotation {
             "kotlin.Suppress"
         case .dslMarker:
             "kotlin.DslMarker"
+        case .parameterName:
+            "kotlin.ParameterName"
         case .wasExperimental:
             "kotlin.WasExperimental"
         case .sinceKotlin:
