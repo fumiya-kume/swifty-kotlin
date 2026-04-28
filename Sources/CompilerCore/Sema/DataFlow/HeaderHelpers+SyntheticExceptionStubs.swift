@@ -484,6 +484,70 @@ extension DataFlowSemaPhase {
                 for: getSuppressedSymbol
             )
         }
+
+        // suppressedExceptions: List<Throwable>
+        let suppressedExceptionsName = interner.intern("suppressedExceptions")
+        let suppressedExceptionsFQName = kotlinPkg + [suppressedExceptionsName]
+        let suppressedExceptionsReturnType = makeSyntheticListType(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            elementType: throwableType
+        )
+        if let existing = symbols.lookupAll(fqName: suppressedExceptionsFQName).first(where: { symbolID in
+            symbols.symbol(symbolID)?.kind == .property
+                && symbols.extensionPropertyReceiverType(for: symbolID) == throwableType
+        }) {
+            symbols.setPropertyType(suppressedExceptionsReturnType, for: existing)
+            symbols.setExternalLinkName("kk_throwable_suppressedExceptions", for: existing)
+            if let getterSymbol = symbols.extensionPropertyGetterAccessor(for: existing) {
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: throwableType,
+                        parameterTypes: [],
+                        returnType: suppressedExceptionsReturnType
+                    ),
+                    for: getterSymbol
+                )
+                symbols.setExternalLinkName("kk_throwable_suppressedExceptions", for: getterSymbol)
+            }
+        } else {
+            let propertySymbol = symbols.define(
+                kind: .property,
+                name: suppressedExceptionsName,
+                fqName: suppressedExceptionsFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            if let packageSymbol = symbols.lookup(fqName: kotlinPkg) {
+                symbols.setParentSymbol(packageSymbol, for: propertySymbol)
+            }
+            symbols.setPropertyType(suppressedExceptionsReturnType, for: propertySymbol)
+            symbols.setExtensionPropertyReceiverType(throwableType, for: propertySymbol)
+            symbols.setExternalLinkName("kk_throwable_suppressedExceptions", for: propertySymbol)
+
+            let getterSymbol = symbols.define(
+                kind: .function,
+                name: interner.intern("get"),
+                fqName: suppressedExceptionsFQName + [interner.intern("$get")],
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(propertySymbol, for: getterSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: throwableType,
+                    parameterTypes: [],
+                    returnType: suppressedExceptionsReturnType
+                ),
+                for: getterSymbol
+            )
+            symbols.setExtensionPropertyGetterAccessor(getterSymbol, for: propertySymbol)
+            symbols.setAccessorOwnerProperty(propertySymbol, for: getterSymbol)
+            symbols.setExternalLinkName("kk_throwable_suppressedExceptions", for: getterSymbol)
+        }
     }
 
     private func makeSyntheticArrayType(
@@ -502,6 +566,27 @@ extension DataFlowSemaPhase {
         return types.make(.classType(ClassType(
             classSymbol: arraySymbol,
             args: [.invariant(elementType)],
+            nullability: .nonNull
+        )))
+    }
+
+    private func makeSyntheticListType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        elementType: TypeID
+    ) -> TypeID {
+        let listFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("List"),
+        ]
+        guard let listSymbol = symbols.lookup(fqName: listFQName) else {
+            return types.anyType
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: listSymbol,
+            args: [.out(elementType)],
             nullability: .nonNull
         )))
     }

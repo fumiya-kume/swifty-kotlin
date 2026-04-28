@@ -77,15 +77,16 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testExceptionFunctionCount() {
-        // kk_throwable_new, kk_throwable_is_cancellation, kk_panic, kk_abort_unreachable,
+        // kk_throwable_new, kk_throwable_is_cancellation, kk_throwable_* properties/helpers,
         // kk_no_when_branch_matched_exception_new* constructors,
         // kk_concurrent_modification_exception_new* constructors,
+        // kk_panic, kk_abort_unreachable,
         // kk_require, kk_check, kk_require_lazy, kk_check_lazy,
         // kk_precondition_assert, kk_precondition_assert_lazy,
         // kk_assertions_enabled, kk_assertions_set_enabled, kk_assertions_reset,
         // kk_reentrant_read_write_lock_read,
         // kk_error, kk_todo, kk_todo_noarg, kk_dispatch_error
-        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 34)
+        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 35)
     }
 
     func testTestFrameworkFunctionCount() {
@@ -371,6 +372,13 @@ final class ABIMismatchTests: XCTestCase {
 
     func testKKThrowableIsCancellationSignature() throws {
         let spec = try requireSpec("kk_throwable_is_cancellation")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 1)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+    }
+
+    func testKKThrowableSuppressedExceptionsSignature() throws {
+        let spec = try requireSpec("kk_throwable_suppressedExceptions")
         XCTAssertEqual(spec.returnType, .intptr)
         XCTAssertEqual(spec.parameters.count, 1)
         XCTAssertEqual(spec.parameters[0].type, .intptr)

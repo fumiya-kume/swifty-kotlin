@@ -505,6 +505,7 @@ extension ABILoweringPass {
             interner.intern("kk_throwable_initCause"),
             interner.intern("kk_throwable_addSuppressed"),
             interner.intern("kk_throwable_getSuppressed"),
+            interner.intern("kk_throwable_suppressedExceptions"),
             interner.intern("kk_abort_unreachable"),
             interner.intern("kk_op_elvis"),
             interner.intern("kk_lazy_create"),

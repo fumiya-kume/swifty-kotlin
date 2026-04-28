@@ -317,7 +317,7 @@
 - [ ] STDLIB-KOTLIN-ROOT-CTX-002: experimental `context(a, b, ..., block)` overload 群を追加する
 - [ ] STDLIB-KOTLIN-ROOT-CTX-003: experimental `contextOf<A>()` helper を追加する
 - [ ] STDLIB-KOTLIN-ROOT-REFLECT-001: `KProperty0<*>.isInitialized` root extension property を追加する
-- [ ] STDLIB-KOTLIN-ROOT-THROW-001: `Throwable.suppressedExceptions` property を追加する
+- [x] STDLIB-KOTLIN-ROOT-THROW-001: `Throwable.suppressedExceptions` property を追加する
 - [ ] STDLIB-KOTLIN-ROOT-THROW-002: `Throwable.printStackTrace()` を追加する
 - [ ] STDLIB-KOTLIN-ROOT-NUM-001: integer `floorDiv` overload 行列を追加する
 - [ ] STDLIB-KOTLIN-ROOT-NUM-002: integer/floating `mod` overload 行列を追加する

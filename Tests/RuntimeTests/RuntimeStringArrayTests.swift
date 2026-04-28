@@ -642,6 +642,20 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_array_size(suppressed), 0)
     }
 
+    func testThrowableSuppressedExceptionsReturnsList() {
+        let primary = Int(bitPattern: kk_throwable_new(makeRuntimeString("primary")))
+        let suppressed1 = Int(bitPattern: kk_throwable_new(makeRuntimeString("suppressed1")))
+        let suppressed2 = Int(bitPattern: kk_throwable_new(makeRuntimeString("suppressed2")))
+
+        _ = kk_throwable_addSuppressed(primary, suppressed1)
+        _ = kk_throwable_addSuppressed(primary, suppressed2)
+
+        let suppressed = kk_throwable_suppressedExceptions(primary)
+        XCTAssertEqual(kk_list_size(suppressed), 2)
+        XCTAssertEqual(kk_list_get(suppressed, 0), suppressed1)
+        XCTAssertEqual(kk_list_get(suppressed, 1), suppressed2)
+    }
+
     // MARK: - kk_array_new
 
     func testArrayNewCreatesArray() {

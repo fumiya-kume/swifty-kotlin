@@ -177,6 +177,15 @@ public func kk_throwable_getSuppressed(_ throwableRaw: Int) -> Int {
     return Int(bitPattern: opaque)
 }
 
+/// suppressedExceptions: List<Throwable> - returns suppressed exceptions as a Kotlin List.
+@_cdecl("kk_throwable_suppressedExceptions")
+public func kk_throwable_suppressedExceptions(_ throwableRaw: Int) -> Int {
+    guard let throwable = runtimeThrowableBox(from: throwableRaw) else {
+        return kk_emptyList()
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: throwable.suppressed), typeID: listRuntimeTypeID)
+}
+
 @_cdecl("kk_panic")
 public func kk_panic(_ cstr: UnsafePointer<CChar>) -> Never {
     fatalError(runtimePanicMessage(fromCString: cstr))
