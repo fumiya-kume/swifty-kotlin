@@ -321,6 +321,32 @@ extension TypeSystem {
             }
             return isSubtype(leftKClass.argument, rightKClass.argument)
 
+        case let (.kClassType(leftKClass), .classType(rightClass)):
+            guard let kClassSymbol = kClassInterfaceSymbol,
+                  nullabilitySubtype(leftKClass.nullability, rightClass.nullability)
+            else {
+                return false
+            }
+            if rightClass.classSymbol == kClassSymbol {
+                if rightClass.args.isEmpty { return true }
+                guard rightClass.args.count == 1 else { return false }
+                switch rightClass.args[0] {
+                case .star:
+                    return true
+                case let .out(type), let .invariant(type):
+                    return isSubtype(leftKClass.argument, type)
+                case .in:
+                    return true
+                }
+            }
+            guard isNominalSubtypeSymbol(kClassSymbol, of: rightClass.classSymbol) else {
+                return false
+            }
+            return rightClass.args.isEmpty || rightClass.args.allSatisfy {
+                if case .star = $0 { return true }
+                return false
+            }
+
         default:
             return false
         }
