@@ -1390,6 +1390,23 @@ public enum RuntimeABISpec {
             section: "String"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_char_isSupplementaryCodePoint",
+            parameters: [
+                RuntimeABIParameter(name: "codepoint", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_char_isSurrogatePair",
+            parameters: [
+                RuntimeABIParameter(name: "high", type: .intptr),
+                RuntimeABIParameter(name: "low", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_char_uppercase",
             parameters: [
                 RuntimeABIParameter(name: "value", type: .intptr),

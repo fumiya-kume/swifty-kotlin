@@ -58,6 +58,21 @@ final class RuntimeCharEdgeCaseTests: IsolatedRuntimeXCTestCase {
         XCTAssertFalse(boolValue(kk_char_isDefined(0x110000)))
     }
 
+    func testSupplementaryCodePointBoundaries() {
+        XCTAssertFalse(boolValue(kk_char_isSupplementaryCodePoint(0xFFFF)))
+        XCTAssertTrue(boolValue(kk_char_isSupplementaryCodePoint(0x10000)))
+        XCTAssertTrue(boolValue(kk_char_isSupplementaryCodePoint(0x10FFFF)))
+        XCTAssertFalse(boolValue(kk_char_isSupplementaryCodePoint(0x110000)))
+    }
+
+    func testSurrogatePairBoundaries() {
+        XCTAssertTrue(boolValue(kk_char_isSurrogatePair(0xD800, 0xDC00)))
+        XCTAssertTrue(boolValue(kk_char_isSurrogatePair(0xDBFF, 0xDFFF)))
+        XCTAssertFalse(boolValue(kk_char_isSurrogatePair(0xD7FF, 0xDC00)))
+        XCTAssertFalse(boolValue(kk_char_isSurrogatePair(0xD800, 0xE000)))
+        XCTAssertFalse(boolValue(kk_char_isSurrogatePair(0xDC00, 0xD800)))
+    }
+
     // MARK: - Surrogate boundaries
 
     // High surrogate range: U+D800 - U+DBFF
