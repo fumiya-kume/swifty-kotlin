@@ -16,6 +16,34 @@ final class ComparatorSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testComparatorThenUsesRuntimeExternalLink() throws {
+        let source = """
+        fun render(values: List<Int>) {
+            val comparator = compareBy<Int> { it % 10 }.then(reverseOrder())
+            values.sortedWith(comparator)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "then"
+            })
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(
+                sema.symbols.externalLinkName(for: chosenCallee),
+                "kk_comparator_then_comparator",
+                "Expected then(comparator) to resolve to kk_comparator_then_comparator"
+            )
+        }
+    }
+
     func testComparatorThenComparatorUsesRuntimeExternalLink() throws {
         let source = """
         fun render(values: List<Int>) {
@@ -159,6 +187,30 @@ final class ComparatorSyntheticMemberLinkTests: XCTestCase {
                 symbol.fqName.map { ctx.interner.resolve($0) },
                 ["kotlin", "Comparator", "compare"],
                 "Expected Comparator.compare to resolve to the synthetic Comparator member"
+            )
+        }
+    }
+
+    func testComparatorThenIsRegisteredAsSyntheticMember() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbolID = try XCTUnwrap(
+                sema.symbols.lookup(
+                    fqName: [
+                        ctx.interner.intern("kotlin"),
+                        ctx.interner.intern("Comparator"),
+                        ctx.interner.intern("then"),
+                    ]
+                ),
+                "Expected synthetic Comparator.then to be registered"
+            )
+            XCTAssertEqual(
+                sema.symbols.externalLinkName(for: symbolID),
+                "kk_comparator_then_comparator",
+                "Expected Comparator.then to map to kk_comparator_then_comparator"
             )
         }
     }

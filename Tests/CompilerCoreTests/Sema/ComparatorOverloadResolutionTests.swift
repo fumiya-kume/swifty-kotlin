@@ -210,6 +210,37 @@ final class ComparatorOverloadResolutionTests: XCTestCase {
         }
     }
 
+    func testComparatorThenChainedOnCompareByResolvesCorrectly() throws {
+        let source = """
+        fun sample() {
+            val cmp = compareBy<Int> { it % 10 }.then(compareBy { -it })
+            listOf(11, 21, 12, 22).sortedWith(cmp)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "then"
+            }, "Expected a then(comparator) member call")
+
+            let chosenCallee = try XCTUnwrap(
+                sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                "Expected then(comparator) to resolve to a callee"
+            )
+            XCTAssertEqual(
+                sema.symbols.externalLinkName(for: chosenCallee),
+                "kk_comparator_then_comparator",
+                "Expected then(comparator) to link to kk_comparator_then_comparator"
+            )
+        }
+    }
+
     // MARK: - thenBy { } chained
 
     func testThenByIsRegisteredAsSyntheticComparatorMember() throws {
@@ -634,6 +665,69 @@ final class ComparatorOverloadResolutionTests: XCTestCase {
                 "kk_comparator_nulls_last",
                 "Expected Comparator.nullsLast to map to kk_comparator_nulls_last"
             )
+        }
+    }
+
+    func testTopLevelNullsFirstAndLastAreRegistered() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let nullsFirstLinks = Set(
+                sema.symbols.lookupAll(fqName: [
+                    ctx.interner.intern("kotlin"),
+                    ctx.interner.intern("comparisons"),
+                    ctx.interner.intern("nullsFirst"),
+                ]).compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
+            XCTAssertTrue(nullsFirstLinks.contains("kk_comparator_nulls_first_natural"))
+            XCTAssertTrue(nullsFirstLinks.contains("kk_comparator_nulls_first_comparator"))
+
+            let nullsLastLinks = Set(
+                sema.symbols.lookupAll(fqName: [
+                    ctx.interner.intern("kotlin"),
+                    ctx.interner.intern("comparisons"),
+                    ctx.interner.intern("nullsLast"),
+                ]).compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
+            XCTAssertTrue(nullsLastLinks.contains("kk_comparator_nulls_last_natural"))
+            XCTAssertTrue(nullsLastLinks.contains("kk_comparator_nulls_last_comparator"))
+        }
+    }
+
+    func testTopLevelNullsFirstAndLastResolveCorrectly() throws {
+        let source = """
+        fun sample() {
+            val a = nullsFirst<Int>()
+            val b = nullsLast(compareBy<Int> { -it })
+            listOf(3, 1, 2).sortedWith(a)
+            listOf(3, 1, 2).sortedWith(b)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let topLevelCalls = allExprIDs(in: ast) { _, expr in
+                guard case let .call(calleeExpr, _, _, _) = expr,
+                      case let .nameRef(calleeName, _) = ast.arena.expr(calleeExpr)
+                else { return false }
+                return ["nullsFirst", "nullsLast"].contains(ctx.interner.resolve(calleeName))
+            }
+            XCTAssertEqual(topLevelCalls.count, 2)
+
+            let links = Set(topLevelCalls.compactMap { exprID -> String? in
+                guard let chosen = sema.bindings.callBinding(for: exprID)?.chosenCallee else {
+                    return nil
+                }
+                return sema.symbols.externalLinkName(for: chosen)
+            })
+            XCTAssertTrue(links.contains("kk_comparator_nulls_first_natural"))
+            XCTAssertTrue(links.contains("kk_comparator_nulls_last_comparator"))
         }
     }
 

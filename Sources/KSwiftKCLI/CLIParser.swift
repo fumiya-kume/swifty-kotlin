@@ -31,6 +31,7 @@ enum CLIParser {
                              Enable proper type inference constraints processing
       -Xir <flag>            IR/lowering feature flag (e.g. trace-lowering)
       -Xruntime <flag>       Runtime feature flag
+      -opt-in=<fqname>       Opt in to an experimental marker annotation
       -Xdiagnostics <format> Diagnostic output format (text|json)
       -g                     Emit debug info
     """
@@ -99,6 +100,12 @@ enum CLIParser {
                 try irFlags.append(requireValue(option: arg, args: args, index: &index))
             case "-Xruntime":
                 try runtimeFlags.append(requireValue(option: arg, args: args, index: &index))
+            case "-opt-in":
+                let value = try requireValue(option: arg, args: args, index: &index)
+                frontendFlags.append("opt-in=\(value)")
+            case _ where arg.hasPrefix("-opt-in="):
+                let value = String(arg.dropFirst("-opt-in=".count))
+                frontendFlags.append("opt-in=\(value)")
             case "-Xdiagnostics":
                 let value = try requireValue(option: arg, args: args, index: &index)
                 guard let fmt = DiagnosticsFormat(rawValue: value) else {

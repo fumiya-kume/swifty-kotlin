@@ -151,6 +151,33 @@ extension DataFlowSemaPhase {
             }
             symbols.setAnnotations(annotations, for: extFunctionTypeSymbol)
         }
+        registerSyntheticJvmAnnotationClass(
+            named: "ContextFunctionTypeParams",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        if let contextFunctionTypeParamsSymbol = symbols.lookup(
+            fqName: kotlinPkg + [interner.intern("ContextFunctionTypeParams")]
+        ) {
+            let record = MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: ["AnnotationTarget.TYPE"]
+            )
+            var annotations = symbols.annotations(for: contextFunctionTypeParamsSymbol)
+            if !annotations.contains(record) {
+                annotations.append(record)
+            }
+            symbols.setAnnotations(annotations, for: contextFunctionTypeParamsSymbol)
+            registerSyntheticContextFunctionTypeParamsCountProperty(
+                ownerSymbol: contextFunctionTypeParamsSymbol,
+                ownerFQName: kotlinPkg + [interner.intern("ContextFunctionTypeParams")],
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
+        }
 
         registerSyntheticJvmAnnotationClass(
             named: "Metadata",
@@ -182,6 +209,42 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerSyntheticJvmAnnotationClass(
+            named: "ConsistentCopyVisibility",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        if let consistentCopyVisibilitySymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern("ConsistentCopyVisibility")]) {
+            let record = MetadataAnnotationRecord(
+                annotationFQName: KnownCompilerAnnotation.target.qualifiedName,
+                arguments: ["AnnotationTarget.CLASS"]
+            )
+            var annotations = symbols.annotations(for: consistentCopyVisibilitySymbol)
+            if !annotations.contains(record) {
+                annotations.append(record)
+            }
+            symbols.setAnnotations(annotations, for: consistentCopyVisibilitySymbol)
+        }
+        registerSyntheticJvmAnnotationClass(
+            named: "ExposedCopyVisibility",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        if let exposedCopyVisibilitySymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern("ExposedCopyVisibility")]) {
+            let record = MetadataAnnotationRecord(
+                annotationFQName: KnownCompilerAnnotation.target.qualifiedName,
+                arguments: ["AnnotationTarget.CLASS"]
+            )
+            var annotations = symbols.annotations(for: exposedCopyVisibilitySymbol)
+            if !annotations.contains(record) {
+                annotations.append(record)
+            }
+            symbols.setAnnotations(annotations, for: exposedCopyVisibilitySymbol)
+        }
 
         registerSyntheticJvmAnnotationClass(
             named: "ExperimentalStdlibApi",
@@ -803,6 +866,33 @@ extension DataFlowSemaPhase {
             annotationType = types.anyType
         }
         symbols.setPropertyType(types.makeKClassType(argument: annotationType), for: valueSymbol)
+    }
+
+    private func registerSyntheticContextFunctionTypeParamsCountProperty(
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let valueName = interner.intern("count")
+        let valueFQName = ownerFQName + [valueName]
+        let valueSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: valueFQName) {
+            valueSymbol = existing
+        } else {
+            valueSymbol = symbols.define(
+                kind: .property,
+                name: valueName,
+                fqName: valueFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+
+        symbols.setParentSymbol(ownerSymbol, for: valueSymbol)
+        symbols.setPropertyType(types.intType, for: valueSymbol)
     }
 
     private func appendSyntheticAnnotation(

@@ -7,6 +7,7 @@ enum KnownCompilerAnnotation {
     case requiresOptIn
     case target
     case experimentalStdlibApi
+    case experimentalVersionOverloading
     case jvmStatic
     case jvmName
     case jvmField
@@ -22,6 +23,9 @@ enum KnownCompilerAnnotation {
     case wasExperimental
     case optIn
     case subclassOptInRequired
+    case consistentCopyVisibility
+    case exposedCopyVisibility
+    case contextFunctionTypeParams
     case experimentalTypeInference
     case overloadResolutionByLambdaReturnType
 
@@ -39,6 +43,8 @@ enum KnownCompilerAnnotation {
             "Target"
         case .experimentalStdlibApi:
             "ExperimentalStdlibApi"
+        case .experimentalVersionOverloading:
+            "ExperimentalVersionOverloading"
         case .jvmStatic:
             "JvmStatic"
         case .jvmName:
@@ -69,6 +75,12 @@ enum KnownCompilerAnnotation {
             "OptIn"
         case .subclassOptInRequired:
             "SubclassOptInRequired"
+        case .consistentCopyVisibility:
+            "ConsistentCopyVisibility"
+        case .exposedCopyVisibility:
+            "ExposedCopyVisibility"
+        case .contextFunctionTypeParams:
+            "ContextFunctionTypeParams"
         case .experimentalTypeInference:
             "ExperimentalTypeInference"
         case .overloadResolutionByLambdaReturnType:
@@ -90,6 +102,8 @@ enum KnownCompilerAnnotation {
             "kotlin.annotation.Target"
         case .experimentalStdlibApi:
             "kotlin.ExperimentalStdlibApi"
+        case .experimentalVersionOverloading:
+            "kotlin.ExperimentalVersionOverloading"
         case .jvmStatic:
             "kotlin.jvm.JvmStatic"
         case .jvmName:
@@ -120,6 +134,12 @@ enum KnownCompilerAnnotation {
             "kotlin.OptIn"
         case .subclassOptInRequired:
             "kotlin.SubclassOptInRequired"
+        case .consistentCopyVisibility:
+            "kotlin.ConsistentCopyVisibility"
+        case .exposedCopyVisibility:
+            "kotlin.ExposedCopyVisibility"
+        case .contextFunctionTypeParams:
+            "kotlin.ContextFunctionTypeParams"
         case .experimentalTypeInference:
             "kotlin.experimental.ExperimentalTypeInference"
         case .overloadResolutionByLambdaReturnType:

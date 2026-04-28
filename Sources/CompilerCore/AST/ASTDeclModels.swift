@@ -501,6 +501,7 @@ public struct TypeParamDecl {
 public struct ValueParamDecl: Equatable {
     public let name: InternedString
     public let type: TypeRefID?
+    public let annotations: [AnnotationNode]
     /// `true` when the primary constructor parameter is declared as a property
     /// via `val` or `var`.
     public let isProperty: Bool
@@ -513,6 +514,7 @@ public struct ValueParamDecl: Equatable {
     public init(
         name: InternedString,
         type: TypeRefID?,
+        annotations: [AnnotationNode] = [],
         isProperty: Bool = false,
         isMutableProperty: Bool = false,
         hasDefaultValue: Bool = false,
@@ -521,6 +523,7 @@ public struct ValueParamDecl: Equatable {
     ) {
         self.name = name
         self.type = type
+        self.annotations = annotations
         self.isProperty = isProperty
         self.isMutableProperty = isMutableProperty
         self.hasDefaultValue = hasDefaultValue

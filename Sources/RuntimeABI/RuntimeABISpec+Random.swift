@@ -103,6 +103,45 @@ public extension RuntimeABISpec {
             section: "Random"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_random_nextUInt",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Random"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_random_nextUInt_until",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
+                RuntimeABIParameter(name: "until", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Random"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_random_nextUInt_range",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
+                RuntimeABIParameter(name: "from", type: .intptr),
+                RuntimeABIParameter(name: "until", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Random"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_random_nextUInt_uintRange",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
+                RuntimeABIParameter(name: "range", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Random"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_random_nextULong_until",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
@@ -183,6 +222,37 @@ public extension RuntimeABISpec {
         ),
         RuntimeABIFunctionSpec(
             name: "kk_random_nextBytes_range",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
+                RuntimeABIParameter(name: "array", type: .intptr),
+                RuntimeABIParameter(name: "fromIndex", type: .intptr),
+                RuntimeABIParameter(name: "toIndex", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Random"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_random_nextUBytes",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
+                RuntimeABIParameter(name: "array", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Random"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_random_nextUBytes_size",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
+                RuntimeABIParameter(name: "size", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Random"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_random_nextUBytes_range",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
                 RuntimeABIParameter(name: "array", type: .intptr),

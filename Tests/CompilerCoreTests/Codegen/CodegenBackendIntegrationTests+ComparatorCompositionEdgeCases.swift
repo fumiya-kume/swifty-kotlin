@@ -126,6 +126,61 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenCompilesComparatorThenOfficialName() throws {
+        let source = """
+        fun main() {
+            val cmp = compareBy<Int> { it % 10 }.then(compareBy { -it })
+            println(listOf(11, 21, 12, 22).sortedWith(cmp))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ComparatorThenOfficialName",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[21, 11, 22, 12]\n")
+        }
+    }
+
+    func testCodegenCompilesTopLevelNullsFirstAndLast() throws {
+        let source = """
+        fun main() {
+            println(listOf(3, 1, 2).sortedWith(nullsFirst<Int>()))
+            println(listOf(3, 1, 2).sortedWith(nullsLast(compareBy<Int> { -it })))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "TopLevelNullsFirstAndLast",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                [1, 2, 3]
+                [3, 2, 1]
+                """
+                + "\n"
+            )
+        }
+    }
+
     func testCodegenCompilesCompareByDescendingComparatorSelector() throws {
         let source = """
         fun main() {

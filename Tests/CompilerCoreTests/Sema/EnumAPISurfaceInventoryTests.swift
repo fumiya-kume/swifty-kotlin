@@ -40,6 +40,11 @@ final class EnumAPISurfaceInventoryTests: XCTestCase {
         ]))
         let functionSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [
             interner.intern("kotlin"),
+            interner.intern("enums"),
+            interner.intern("enumEntries"),
+        ]))
+        XCTAssertNil(sema.symbols.lookup(fqName: [
+            interner.intern("kotlin"),
             interner.intern("enumEntries"),
         ]))
         let signature = try XCTUnwrap(sema.symbols.functionSignature(for: functionSymbol))
@@ -47,6 +52,14 @@ final class EnumAPISurfaceInventoryTests: XCTestCase {
             return XCTFail("enumEntries<T>() should return EnumEntries<T>")
         }
         XCTAssertEqual(returnClassType.classSymbol, enumEntriesSymbol)
+    }
+
+    func testEnumEntriesFunctionIsDefaultImportedFromKotlinEnums() throws {
+        let source = """
+        enum class Color { RED, BLUE }
+        fun sample() = enumEntries<Color>()
+        """
+        _ = try makeSema(source: source)
     }
 
     func testEnumEntriesCompanionPropertyUsesKotlinEnumsEnumEntries() throws {

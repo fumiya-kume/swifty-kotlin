@@ -4664,6 +4664,8 @@ extension CallLowerer {
                 return "kk_comparator_then_by_descending_trampoline"
             case "thenDescending":
                 return "kk_comparator_then_descending_trampoline"
+            case "then":
+                return "kk_comparator_then_comparator_trampoline"
             case "thenComparator":
                 return "kk_comparator_then_comparator_trampoline"
             case "nullsFirst":
@@ -5652,6 +5654,12 @@ extension CallLowerer {
         {
             loweredCallee = interner.intern("kk_random_nextInt_intRange")
         }
+        if loweredCallee == interner.intern("kk_random_nextUInt_until"),
+           sourceArgExprs.count == 1,
+           sema.bindings.isUIntRangeExpr(sourceArgExprs[0])
+        {
+            loweredCallee = interner.intern("kk_random_nextUInt_uintRange")
+        }
         if loweredCallee == interner.intern("kk_list_binarySearch_comparator") {
             materializeBinarySearchDefaultArguments(
                 normalized.defaultMask,
@@ -5693,6 +5701,32 @@ extension CallLowerer {
             interner: interner,
             instructions: &instructions
         )
+        let chosenCalleeName = chosenCallee
+            .flatMap { sema.symbols.symbol($0) }
+            .map { interner.resolve($0.name) }
+        if loweredCallee == interner.intern("kk_comparator_then_comparator"),
+           chosenCalleeName == "then",
+           finalArguments.count == 2,
+           sourceArgExprs.count == 1,
+           let primaryComparatorArgs = makeComparatorTrampolineArgument(
+               comparatorExprID: receiver.expr,
+               loweredComparatorID: finalArguments[0],
+               sema: sema,
+               arena: arena,
+               interner: interner,
+               instructions: &instructions
+           ),
+           let secondaryComparatorArgs = makeComparatorTrampolineArgument(
+               comparatorExprID: sourceArgExprs[0],
+               loweredComparatorID: finalArguments[1],
+               sema: sema,
+               arena: arena,
+               interner: interner,
+               instructions: &instructions
+           )
+        {
+            finalArguments = primaryComparatorArgs + secondaryComparatorArgs
+        }
         if (loweredCallee == interner.intern("kk_comparator_then_by_comparator_selector")
             || loweredCallee == interner.intern("kk_comparator_then_by_descending_comparator_selector")),
            finalArguments.count == 3,
@@ -6112,6 +6146,11 @@ extension CallLowerer {
             interner.intern("kk_ulong_range_random"),
             interner.intern("kk_sequence_runningReduceIndexed"),
             interner.intern("kk_random_nextInt_intRange"),
+            interner.intern("kk_random_nextUInt_until"),
+            interner.intern("kk_random_nextUInt_range"),
+            interner.intern("kk_random_nextUInt_uintRange"),
+            interner.intern("kk_random_nextUBytes_size"),
+            interner.intern("kk_random_nextUBytes_range"),
             interner.intern("kk_sequence_sortedBy"),
             interner.intern("kk_sequence_sumOf"),
             interner.intern("kk_sequence_associate"),

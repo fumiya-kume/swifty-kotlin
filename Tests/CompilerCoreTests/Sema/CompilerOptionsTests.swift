@@ -225,6 +225,27 @@ final class CompilerOptionsTests: XCTestCase {
         XCTAssertEqual(opts.frontendJobs, 4)
     }
 
+    func testOptInAnnotationNamesParseFrontendFlags() {
+        let opts = CompilerOptions(
+            moduleName: "Test",
+            inputs: [],
+            outputPath: "/out",
+            emit: .kirDump,
+            target: defaultTargetTriple(),
+            frontendFlags: [
+                "opt-in=kotlin.ExperimentalVersionOverloading",
+                "-opt-in=kotlin.ExperimentalStdlibApi,kotlin.uuid.ExperimentalUuidApi",
+                "-Xopt-in=kotlin.ExperimentalVersionOverloading",
+            ]
+        )
+
+        XCTAssertEqual(opts.optInAnnotationNames, [
+            "kotlin.ExperimentalVersionOverloading",
+            "kotlin.ExperimentalStdlibApi",
+            "kotlin.uuid.ExperimentalUuidApi",
+        ])
+    }
+
     // MARK: - lazyThreadSafetyMode
 
     func testLazyThreadSafetyModeDefaultIsSynchronized() {

@@ -107,6 +107,26 @@ extension DataFlowSemaPhase {
 
         switch decl {
         case let .classDecl(classDecl):
+            validateValueParameterAnnotationTargets(
+                parameters: classDecl.primaryConstructorParams,
+                ownerRange: classDecl.range,
+                file: file,
+                symbols: symbols,
+                diagnostics: diagnostics,
+                interner: interner,
+                filesByID: filesByID
+            )
+            for constructor in classDecl.secondaryConstructors {
+                validateValueParameterAnnotationTargets(
+                    parameters: constructor.valueParams,
+                    ownerRange: constructor.range,
+                    file: file,
+                    symbols: symbols,
+                    diagnostics: diagnostics,
+                    interner: interner,
+                    filesByID: filesByID
+                )
+            }
             validateMemberAnnotationTargets(
                 declIDs: classDecl.memberFunctions + classDecl.memberProperties + classDecl.nestedClasses + classDecl.nestedObjects,
                 file: file,
@@ -163,8 +183,48 @@ extension DataFlowSemaPhase {
                 interner: interner,
                 filesByID: filesByID
             )
-        case .funDecl, .propertyDecl, .typeAliasDecl, .enumEntryDecl:
+        case let .funDecl(funDecl):
+            validateValueParameterAnnotationTargets(
+                parameters: funDecl.valueParams,
+                ownerRange: funDecl.range,
+                file: file,
+                symbols: symbols,
+                diagnostics: diagnostics,
+                interner: interner,
+                filesByID: filesByID
+            )
+        case .propertyDecl, .typeAliasDecl, .enumEntryDecl:
             break
+        }
+    }
+
+    private func validateValueParameterAnnotationTargets(
+        parameters: [ValueParamDecl],
+        ownerRange: SourceRange?,
+        file: ASTFile,
+        symbols: SymbolTable,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner,
+        filesByID: [Int32: ASTFile]
+    ) {
+        for parameter in parameters {
+            for annotation in parameter.annotations {
+                guard let site = annotationUsageSite(for: annotation, on: parameter) else {
+                    continue
+                }
+                validateAnnotationTarget(
+                    annotation: annotation,
+                    site: site,
+                    ownerRange: ownerRange,
+                    decl: nil,
+                    file: file,
+                    propertySymbol: nil,
+                    symbols: symbols,
+                    diagnostics: diagnostics,
+                    interner: interner,
+                    filesByID: filesByID
+                )
+            }
         }
     }
 
@@ -273,7 +333,9 @@ extension DataFlowSemaPhase {
             case "get":
                 return .getter
             case "set":
-                return .setter
+                return .setter(hasSetter: propertyDecl(from: decl)?.isVar == true)
+            case "setparam":
+                return .setterParameter
             default:
                 return nil
             }
@@ -283,6 +345,28 @@ extension DataFlowSemaPhase {
             }
             return .typeAlias
         case .enumEntryDecl:
+            return nil
+        }
+    }
+
+    private func annotationUsageSite(
+        for annotation: AnnotationNode,
+        on parameter: ValueParamDecl
+    ) -> AnnotationUsageSite? {
+        switch annotation.useSiteTarget?.lowercased() {
+        case nil, "param":
+            return .valueParameter
+        case "property":
+            return .constructorProperty(isProperty: parameter.isProperty)
+        case "field":
+            return .constructorPropertyField(isProperty: parameter.isProperty)
+        case "get":
+            return parameter.isProperty ? .getter : nil
+        case "set":
+            return parameter.isProperty ? .setter(hasSetter: parameter.isMutableProperty) : nil
+        case "setparam":
+            return parameter.isMutableProperty ? .setterParameter : nil
+        default:
             return nil
         }
     }
@@ -489,8 +573,10 @@ extension DataFlowSemaPhase {
             return allowedTargets.contains("FIELD")
         case .getter:
             return allowedTargets.contains("PROPERTY_GETTER")
-        case .setter:
-            return allowedTargets.contains("PROPERTY_SETTER")
+        case let .setter(hasSetter):
+            return hasSetter && allowedTargets.contains("PROPERTY_SETTER")
+        case .setterParameter:
+            return allowedTargets.contains("VALUE_PARAMETER")
         case .field:
             guard let propertyDecl = decl.flatMap(propertyDecl(from:)),
                   propertyAllowsFieldTarget(propertyDecl)
@@ -505,12 +591,18 @@ extension DataFlowSemaPhase {
                 return false
             }
             return allowedTargets.contains("FIELD")
+        case let .constructorProperty(isProperty):
+            return isProperty && allowedTargets.contains("PROPERTY")
+        case let .constructorPropertyField(isProperty):
+            return isProperty && allowedTargets.contains("FIELD")
         case .file:
             return allowedTargets.contains("FILE")
         case .type:
             return allowedTargets.contains("TYPE")
         case .typeAlias:
             return allowedTargets.contains("TYPEALIAS")
+        case .valueParameter:
+            return allowedTargets.contains("VALUE_PARAMETER")
         }
     }
 
@@ -545,18 +637,26 @@ extension DataFlowSemaPhase {
             return "a property"
         case .getter:
             return "a property getter"
-        case .setter:
+        case .setter(_):
             return "a property setter"
+        case .setterParameter:
+            return "a property setter parameter"
         case .field:
             return "a backing field"
         case .delegate:
             return "a delegate storage field"
+        case .constructorProperty(_):
+            return "a primary constructor property"
+        case .constructorPropertyField(_):
+            return "a primary constructor backing field"
         case .file:
             return "the file"
         case .type:
             return "a type usage"
         case .typeAlias:
             return "a type alias declaration"
+        case .valueParameter:
+            return "a value parameter"
         }
     }
 
@@ -617,12 +717,16 @@ extension DataFlowSemaPhase {
         case function
         case property(explicitUseSiteTarget: Bool)
         case getter
-        case setter
+        case setter(hasSetter: Bool)
+        case setterParameter
         case field
         case delegate
+        case constructorProperty(isProperty: Bool)
+        case constructorPropertyField(isProperty: Bool)
         case file
         case type
         case typeAlias
+        case valueParameter
     }
 }
 

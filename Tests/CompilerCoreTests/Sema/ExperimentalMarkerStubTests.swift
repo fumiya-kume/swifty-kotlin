@@ -4,10 +4,11 @@ import XCTest
 
 // MARK: - STDLIB-EXPERIMENTAL-ABI-001: Synthetic experimental opt-in marker stubs
 //
-// Verifies that the five Kotlin stdlib experimental annotation classes discovered
+// Verifies that the Kotlin stdlib experimental annotation classes discovered
 // missing in PR #1231 are now synthesised correctly:
 //
 //   • ExperimentalUnsignedTypes  — kotlin          — severity ERROR
+//   • ExperimentalVersionOverloading — kotlin      — severity ERROR
 //   • ExperimentalUuidApi        — kotlin.uuid      — severity ERROR
 //   • ExperimentalEncodingApi    — kotlin.io.encoding — severity ERROR
 //   • ExperimentalMultiplatform  — kotlin           — severity ERROR
@@ -110,7 +111,31 @@ final class ExperimentalMarkerStubTests: XCTestCase {
         )
     }
 
+    // MARK: - ExperimentalVersionOverloading (kotlin, ERROR)
+
+    func testExperimentalVersionOverloadingIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let sym = lookupSymbol(fqPath: ["kotlin", "ExperimentalVersionOverloading"], sema: sema, interner: interner)
+        XCTAssertNotNil(sym, "kotlin.ExperimentalVersionOverloading must be registered in the symbol table")
+    }
+
+    func testExperimentalVersionOverloadingIsAnnotationClass() throws {
+        let (sema, interner) = try makeSema()
+        assertIsAnnotationClass(fqPath: ["kotlin", "ExperimentalVersionOverloading"], sema: sema, interner: interner)
+    }
+
+    func testExperimentalVersionOverloadingHasRequiresOptInWithErrorSeverity() throws {
+        let (sema, interner) = try makeSema()
+        assertHasRequiresOptIn(
+            fqPath: ["kotlin", "ExperimentalVersionOverloading"],
+            expectedSeverity: "ERROR",
+            sema: sema,
+            interner: interner
+        )
+    }
+
     // MARK: - ExperimentalUuidApi (kotlin.uuid, ERROR)
+
 
     func testExperimentalUuidApiIsRegistered() throws {
         let (sema, interner) = try makeSema()
@@ -238,6 +263,7 @@ final class ExperimentalMarkerStubTests: XCTestCase {
         }
 
         XCTAssertEqual(severity(fqPath: ["kotlin", "ExperimentalUnsignedTypes"]), "ERROR")
+        XCTAssertEqual(severity(fqPath: ["kotlin", "ExperimentalVersionOverloading"]), "ERROR")
         XCTAssertEqual(severity(fqPath: ["kotlin", "uuid", "ExperimentalUuidApi"]), "ERROR")
         XCTAssertEqual(severity(fqPath: ["kotlin", "io", "encoding", "ExperimentalEncodingApi"]), "ERROR")
         XCTAssertEqual(severity(fqPath: ["kotlin", "ExperimentalMultiplatform"]), "ERROR")

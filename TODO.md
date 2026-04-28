@@ -162,8 +162,8 @@
 - [x] STDLIB-MATH-007: `IEEErem` / `nextTowards` / `withSign` と残りの `pow` overload を追加する
 - [x] STDLIB-MATH-008: 公開されている非公式 rounding helper 名（`roundUp` など）を整理する
 - [x] STDLIB-RANDOM-001: `kotlin.random` の対象 API 一覧を固定
-- [ ] STDLIB-RANDOM-002: `kotlin.random` の sema / lowering を整える
-- [ ] STDLIB-RANDOM-003: `kotlin.random` の runtime / seed / 境界値を固定
+- [x] STDLIB-RANDOM-002: `kotlin.random` の sema / lowering を整える
+- [x] STDLIB-RANDOM-003: `kotlin.random` の runtime / seed / 境界値を固定
 - [x] STDLIB-RANDOM-004: `Random(seed: Long)` constructor を追加する
 - [x] STDLIB-RANDOM-005: `Random.Default` singleton を sema から露出する
 - [x] STDLIB-RANDOM-006: `Random.nextBytes(size: Int)` overload を追加する
@@ -171,12 +171,12 @@
 - [x] STDLIB-RANDOM-008: `Random.nextLong(range: LongRange)` extension を追加する
 - [x] STDLIB-RANDOM-009: `Random.nextBytes(array, fromIndex, toIndex)` overload を追加する
 - [x] STDLIB-RANDOM-010: `Random.nextBits(bitCount: Int)` member surface を追加する
-- [ ] STDLIB-RANDOM-011: `Random.nextUBytes(size)` / `nextUBytes(array)` / `nextUBytes(array, fromIndex, toIndex)` を追加する
-- [ ] STDLIB-RANDOM-012: `Random.nextUInt()` / `nextUInt(until)` / `nextUInt(from, until)` / `nextUInt(range)` を追加する
+- [x] STDLIB-RANDOM-011: `Random.nextUBytes(size)` / `nextUBytes(array)` / `nextUBytes(array, fromIndex, toIndex)` を追加する
+- [x] STDLIB-RANDOM-012: `Random.nextUInt()` / `nextUInt(until)` / `nextUInt(from, until)` / `nextUInt(range)` を追加する
 - [x] STDLIB-RANDOM-013: `Random.nextULong()` / `nextULong(until)` / `nextULong(from, until)` / `nextULong(range)` を追加する
-- [ ] STDLIB-COMP-001: `kotlin.comparisons` の対象 API 一覧を固定
-- [ ] STDLIB-COMP-002: `Comparator` 合成の sema / lowering を整える
-- [ ] STDLIB-COMP-003: `Comparator` runtime と failure path を固定
+- [x] STDLIB-COMP-001: `kotlin.comparisons` の対象 API 一覧を固定
+- [x] STDLIB-COMP-002: `Comparator` 合成の sema / lowering を整える
+- [x] STDLIB-COMP-003: `Comparator` runtime と failure path を固定
 - [x] STDLIB-COMP-004: `compareBy(comparator, selector)` overload を追加する
 - [x] STDLIB-COMP-005: `compareByDescending(comparator, selector)` overload を追加する
 - [x] STDLIB-COMP-006: `compareBy(vararg selectors)` の一般 vararg surface を追加する（現状は 1/2/3 selector special-case のみ）
@@ -185,17 +185,14 @@
 - [x] STDLIB-COMP-009: `Comparator<T>.thenBy(comparator, selector)` overload を追加する
 - [x] STDLIB-COMP-010: `Comparator<T>.thenByDescending(comparator, selector)` overload を追加する
 - [x] STDLIB-ENUMS-001: `kotlin.enums.EnumEntries<E>` を正しい package で露出する（現状の `kotlin.collections.EnumEntries` synthetic surface を見直す）
-- [ ] STDLIB-ENUMS-002: `kotlin.enums.enumEntries<T>()` を正しい package で露出する（現状の `kotlin.enumEntries()` synthetic surface を見直す）
+- [x] STDLIB-ENUMS-002: `kotlin.enums.enumEntries<T>()` を正しい package で露出する（現状の `kotlin.enumEntries()` synthetic surface を見直す）
 - [x] STDLIB-ANNO-001: `kotlin.annotation` の対象一覧を固定
-- [ ] STDLIB-ANNO-002: annotation sema / diagnostics を整える
+- [x] STDLIB-ANNO-002: annotation sema / diagnostics を整える
 - [x] STDLIB-KOTLIN-ROOT-001: `SubclassOptInRequired(markerClass: KClass<out Annotation>)` を追加し、subclass opt-in の伝播と misuse diagnostics を実装する
- - [x] STDLIB-ANNO-001: `kotlin.annotation` の対象一覧を固定
- - [x] STDLIB-ANNO-002: annotation sema / diagnostics を整える
- - [x] STDLIB-KOTLIN-ROOT-001: `SubclassOptInRequired(markerClass: KClass<out Annotation>)` を追加し、subclass opt-in の伝播と misuse diagnostics を実装する
-- [ ] STDLIB-KOTLIN-ROOT-002: `ConsistentCopyVisibility` annotation を追加し、data class `copy()` visibility migration の declaration-side diagnostics へ結び付ける
-- [ ] STDLIB-KOTLIN-ROOT-003: `ExposedCopyVisibility` annotation を追加し、public `copy()` 維持モードの suppression semantics を実装する
-- [ ] STDLIB-KOTLIN-ROOT-004: `ExperimentalVersionOverloading` marker を追加し、`@OptIn` / `-opt-in` diagnostics と結び付ける
-- [ ] STDLIB-KOTLIN-ROOT-005: `ContextFunctionTypeParams(count: Int)` type annotation を追加する
+- [x] STDLIB-KOTLIN-ROOT-002: `ConsistentCopyVisibility` annotation を追加し、data class `copy()` visibility migration の declaration-side diagnostics へ結び付ける
+- [x] STDLIB-KOTLIN-ROOT-003: `ExposedCopyVisibility` annotation を追加し、public `copy()` 維持モードの suppression semantics を実装する
+- [x] STDLIB-KOTLIN-ROOT-004: `ExperimentalVersionOverloading` marker を追加し、`@OptIn` / `-opt-in` diagnostics と結び付ける
+- [x] STDLIB-KOTLIN-ROOT-005: `ContextFunctionTypeParams(count: Int)` type annotation を追加する
 - [ ] STDLIB-I18N-COMMON-001: `kotlin.text` / common のフォーマット・ロケール
 - [ ] STDLIB-I18N-COMMON-002: `Char.category` を `CharCategory` enum で露出する（現状は `Int` placeholder）
 - [ ] STDLIB-I18N-COMMON-003: `String.Companion.format(locale, format, vararg args)` を追加する

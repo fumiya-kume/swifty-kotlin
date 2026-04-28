@@ -72,6 +72,11 @@ extension DataFlowSemaPhase {
         if case let .classDecl(classDecl) = decl,
            classDecl.modifiers.contains(.data) {
             validateDataClassConstructorParams(classDecl: classDecl, ctx: ctx)
+            validateDataClassCopyVisibilityMigration(
+                classDecl: classDecl,
+                classSymbol: symbol,
+                ctx: ctx
+            )
         }
 
         validateMemberOverrides(
@@ -101,6 +106,36 @@ extension DataFlowSemaPhase {
                 range: classDecl.range
             )
         }
+    }
+
+    private func validateDataClassCopyVisibilityMigration(
+        classDecl: ClassDecl,
+        classSymbol: SymbolID,
+        ctx: OpenFinalOverrideContext
+    ) {
+        guard !hasConsistentCopyVisibilityAnnotation(classDecl),
+              !hasExposedCopyVisibilityAnnotation(classDecl),
+              let symbol = ctx.symbols.symbol(classSymbol)
+        else {
+            return
+        }
+
+        let constructorVisibility = primaryConstructorVisibility(
+            for: classDecl,
+            classKind: symbol.kind,
+            declarationVisibility: symbol.visibility
+        )
+        guard constructorVisibility != .public,
+              constructorVisibility != symbol.visibility
+        else {
+            return
+        }
+
+        ctx.diagnostics.warning(
+            "KSWIFTK-SEMA-DATA-COPY-VISIBILITY",
+            "Generated copy() for data class '\(ctx.interner.resolve(symbol.name))' is still public even though the primary constructor is \(constructorVisibility.diagnosticName); add @ConsistentCopyVisibility to make copy() use the constructor visibility.",
+            range: classDecl.range
+        )
     }
 
     // MARK: - Declaration info extraction
@@ -1202,5 +1237,20 @@ extension DataFlowSemaPhase {
         
         // Check other signature aspects
         return child.isSuspend == parent.isSuspend
+    }
+}
+
+private extension Visibility {
+    var diagnosticName: String {
+        switch self {
+        case .public:
+            "public"
+        case .private:
+            "private"
+        case .internal:
+            "internal"
+        case .protected:
+            "protected"
+        }
     }
 }

@@ -2,7 +2,7 @@
 import XCTest
 
 /// Edge case and boundary value coverage for kotlin.random (STDLIB-RANDOM-003).
-/// Covers: seed reproducibility, nextBits boundaries, nextInt/nextDouble/nextBoolean/nextBytes edge cases.
+/// Covers: seed reproducibility, nextBits boundaries, nextInt/nextDouble/nextBoolean/nextBytes/nextUBytes/nextUInt edge cases.
 final class RuntimeRandomBoundaryTests: XCTestCase {
 
     // MARK: - Helpers
@@ -25,6 +25,14 @@ final class RuntimeRandomBoundaryTests: XCTestCase {
 
     private func ulongPayload(_ raw: Int) -> UInt64 {
         UInt64(UInt(bitPattern: raw))
+    }
+
+    private func uintRaw(_ value: UInt32) -> Int {
+        Int(bitPattern: UInt(value))
+    }
+
+    private func uintPayload(_ raw: Int) -> UInt32 {
+        UInt32(truncatingIfNeeded: UInt(bitPattern: raw))
     }
 
     // MARK: - Seed Reproducibility: nextInt
@@ -118,6 +126,42 @@ final class RuntimeRandomBoundaryTests: XCTestCase {
         // nextBoolean returns a boxed bool; compare unboxed semantic value.
         XCTAssertEqual(kk_unbox_bool(kk_random_nextBoolean(r1)), kk_unbox_bool(kk_random_nextBoolean(r2)))
         XCTAssertEqual(kk_random_nextInt(r1), kk_random_nextInt(r2))
+    }
+
+    func testRandomRuntimeBacklogRepresentativeSurfacesStayCovered() {
+        let r = makeSeeded(20260428)
+        var thrown: Int = 0
+
+        XCTAssertGreaterThanOrEqual(kk_random_nextBits(r, 8, &thrown), 0)
+        XCTAssertEqual(thrown, 0)
+
+        let intValue = kk_random_nextInt_range(r, -10, 10, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertGreaterThanOrEqual(intValue, -10)
+        XCTAssertLessThan(intValue, 10)
+
+        let longValue = kk_random_nextLong_range(r, -100, 100, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertGreaterThanOrEqual(longValue, -100)
+        XCTAssertLessThan(longValue, 100)
+
+        let uintValue = uintPayload(kk_random_nextUInt_range(r, uintRaw(10), uintRaw(20), &thrown))
+        XCTAssertEqual(thrown, 0)
+        XCTAssertGreaterThanOrEqual(uintValue, 10)
+        XCTAssertLessThan(uintValue, 20)
+
+        let ulongValue = ulongPayload(kk_random_nextULong_range(r, ulongRaw(10), ulongRaw(20), &thrown))
+        XCTAssertEqual(thrown, 0)
+        XCTAssertGreaterThanOrEqual(ulongValue, 10)
+        XCTAssertLessThan(ulongValue, 20)
+
+        let byteArrayRaw = kk_random_nextBytes_size(r, 4, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(runtimeListBox(from: byteArrayRaw)?.elements.count, 4)
+
+        let ubyteArrayRaw = kk_random_nextUBytes_size(r, 4, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(runtimeArrayBox(from: ubyteArrayRaw)?.elements.count, 4)
     }
 
     // MARK: - Different Seeds Produce Different Values
@@ -530,6 +574,74 @@ final class RuntimeRandomBoundaryTests: XCTestCase {
         XCTAssertEqual(list.elements, [0, 0, 0])
     }
 
+    // MARK: - nextUBytes: edge cases
+
+    func testNextUBytesSizeCreatesUByteArray() {
+        let r = makeSeeded(42)
+        var thrown = 0
+        let resultRaw = kk_random_nextUBytes_size(r, 7, &thrown)
+        XCTAssertEqual(thrown, 0)
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: resultRaw),
+              let array = tryCast(ptr, to: RuntimeArrayBox.self) else {
+            XCTFail("nextUBytes(size) should return a valid RuntimeArrayBox")
+            return
+        }
+        XCTAssertEqual(array.elements.count, 7, "nextUBytes(size) should create exactly size bytes")
+        for (index, byte) in array.elements.enumerated() {
+            XCTAssertTrue(byte >= 0 && byte <= 255,
+                          "UByte at index \(index) must be in [0, 255], got \(byte)")
+        }
+    }
+
+    func testNextUBytesSizeThrowsForNegativeSize() {
+        let r = makeSeeded(42)
+        var thrown = 0
+        let resultRaw = kk_random_nextUBytes_size(r, -1, &thrown)
+        XCTAssertEqual(resultRaw, 0)
+        XCTAssertNotEqual(thrown, 0, "nextUBytes(size) must throw for negative size")
+    }
+
+    func testNextUBytesArrayMutatesAndReturnsInput() {
+        let r = makeSeeded(42)
+        let array = RuntimeArrayBox(length: 4)
+        array.elements = [1, 2, 3, 4]
+        let arrayRaw = registerRuntimeObject(array)
+        let resultRaw = kk_random_nextUBytes(r, arrayRaw)
+        XCTAssertEqual(resultRaw, arrayRaw)
+        XCTAssertEqual(array.elements.count, 4)
+        for byte in array.elements {
+            XCTAssertTrue(byte >= 0 && byte <= 255, "Filled UByte must be in [0, 255], got \(byte)")
+        }
+    }
+
+    func testNextUBytesRangeFillsOnlyRequestedArraySlice() {
+        let r = makeSeeded(42)
+        let array = RuntimeArrayBox(length: 5)
+        array.elements = [11, 22, 33, 44, 55]
+        let arrayRaw = registerRuntimeObject(array)
+        var thrown = 0
+        let resultRaw = kk_random_nextUBytes_range(r, arrayRaw, 1, 4, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(resultRaw, arrayRaw)
+        XCTAssertEqual(array.elements[0], 11)
+        XCTAssertEqual(array.elements[4], 55)
+        for byte in array.elements[1..<4] {
+            XCTAssertTrue(byte >= 0 && byte <= 255, "Filled UByte must be in [0, 255], got \(byte)")
+        }
+    }
+
+    func testNextUBytesRangeThrowsForOutOfBoundsRange() {
+        let r = makeSeeded(42)
+        let array = RuntimeArrayBox(length: 3)
+        array.elements = [1, 2, 3]
+        let arrayRaw = registerRuntimeObject(array)
+        var thrown = 0
+        let resultRaw = kk_random_nextUBytes_range(r, arrayRaw, 2, 4, &thrown)
+        XCTAssertEqual(resultRaw, arrayRaw)
+        XCTAssertNotEqual(thrown, 0, "nextUBytes(array, fromIndex, toIndex) must throw for out-of-bounds ranges")
+        XCTAssertEqual(array.elements, [1, 2, 3])
+    }
+
     // MARK: - nextLong: boundary values (reconfirm via nextLong functions)
 
     func testNextLongRangeSingleValue() {
@@ -580,6 +692,72 @@ final class RuntimeRandomBoundaryTests: XCTestCase {
             XCTAssertEqual(thrown2, 0)
             XCTAssertEqual(v1, v2, "nextLong(range): same seed must produce identical sequence")
         }
+    }
+
+    // MARK: - nextUInt: boundary values
+
+    func testNextUIntFullRangeSeedReproducibility() {
+        let r1 = makeSeeded(42)
+        let r2 = makeSeeded(42)
+        for _ in 0..<20 {
+            XCTAssertEqual(kk_random_nextUInt(r1), kk_random_nextUInt(r2))
+        }
+    }
+
+    func testNextUIntUntil() {
+        let r = makeSeeded(42)
+        var thrown: Int = 0
+        for _ in 0..<20 {
+            let value = uintPayload(kk_random_nextUInt_until(r, uintRaw(10), &thrown))
+            XCTAssertEqual(thrown, 0)
+            XCTAssertLessThan(value, 10)
+        }
+    }
+
+    func testNextUIntRange() {
+        let r = makeSeeded(42)
+        var thrown: Int = 0
+        for _ in 0..<20 {
+            let value = uintPayload(kk_random_nextUInt_range(r, uintRaw(10), uintRaw(20), &thrown))
+            XCTAssertEqual(thrown, 0)
+            XCTAssertGreaterThanOrEqual(value, 10)
+            XCTAssertLessThan(value, 20)
+        }
+    }
+
+    func testNextUIntUIntRange() {
+        let r = makeSeeded(42)
+        let range = kk_uint_rangeTo(uintRaw(4_294_967_292), uintRaw(4_294_967_295))
+        var thrown: Int = 0
+        for _ in 0..<20 {
+            let value = uintPayload(kk_random_nextUInt_uintRange(r, range, &thrown))
+            XCTAssertEqual(thrown, 0)
+            XCTAssertGreaterThanOrEqual(value, 4_294_967_292)
+            XCTAssertLessThanOrEqual(value, 4_294_967_295)
+        }
+    }
+
+    func testNextUIntUntilThrowsOnZero() {
+        let r = makeSeeded(1)
+        var thrown: Int = 0
+        _ = kk_random_nextUInt_until(r, 0, &thrown)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testNextUIntRangeThrowsWhenFromEqualsUntil() {
+        let r = makeSeeded(1)
+        var thrown: Int = 0
+        _ = kk_random_nextUInt_range(r, uintRaw(7), uintRaw(7), &thrown)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testNextUIntRangeSupportsUInt32MaxExclusiveUpper() {
+        let r = makeSeeded(2)
+        var thrown: Int = 0
+        let value = uintPayload(kk_random_nextUInt_range(r, uintRaw(UInt32.max - 2), uintRaw(UInt32.max), &thrown))
+        XCTAssertEqual(thrown, 0)
+        XCTAssertGreaterThanOrEqual(value, UInt32.max - 2)
+        XCTAssertLessThan(value, UInt32.max)
     }
 
     // MARK: - nextULong: boundary values

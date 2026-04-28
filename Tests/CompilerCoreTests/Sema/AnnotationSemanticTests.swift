@@ -270,6 +270,90 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected OptIn smoke test to compile cleanly, got: \(ctx.diagnostics.diagnostics)")
     }
 
+    func testExperimentalVersionOverloadingResolves() {
+        let source = """
+        fun marker(x: ExperimentalVersionOverloading?): Int = 0
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected ExperimentalVersionOverloading smoke test to compile cleanly, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testExperimentalVersionOverloadingAnnotationIsSyntheticAndTargetedToAnnotationClasses() throws {
+        let ctx = makeContextFromSource("fun noop() {}")
+        try runSema(ctx)
+        let sema = try XCTUnwrap(ctx.sema)
+        let symbolID = try XCTUnwrap(
+            sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("ExperimentalVersionOverloading"),
+            ]),
+            "kotlin.ExperimentalVersionOverloading must be registered"
+        )
+        let symbol = try XCTUnwrap(sema.symbols.symbol(symbolID))
+
+        XCTAssertEqual(symbol.kind, .annotationClass)
+        XCTAssertTrue(symbol.flags.contains(.synthetic))
+
+        let annotations = sema.symbols.annotations(for: symbolID)
+        XCTAssertTrue(
+            annotations.contains(where: {
+                $0.annotationFQName == KnownCompilerAnnotation.requiresOptIn.qualifiedName
+                    && $0.arguments.contains("level=RequiresOptIn.Level.ERROR")
+            }),
+            "Expected ExperimentalVersionOverloading to carry @RequiresOptIn(ERROR), got: \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains(where: {
+                $0.annotationFQName == KnownCompilerAnnotation.target.qualifiedName
+                    && $0.arguments == ["AnnotationTarget.ANNOTATION_CLASS"]
+            }),
+            "Expected ExperimentalVersionOverloading to carry @Target(AnnotationTarget.ANNOTATION_CLASS), got: \(annotations)"
+        )
+    }
+
+    func testContextFunctionTypeParamsResolves() {
+        let source = """
+        fun marker(x: ContextFunctionTypeParams?): Int = 0
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected ContextFunctionTypeParams smoke test to compile cleanly, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testContextFunctionTypeParamsAnnotationIsSyntheticAndTargetedToTypes() throws {
+        let ctx = makeContextFromSource("fun noop() {}")
+        try runSema(ctx)
+        let sema = try XCTUnwrap(ctx.sema)
+        let ownerFQName = [
+            ctx.interner.intern("kotlin"),
+            ctx.interner.intern("ContextFunctionTypeParams"),
+        ]
+        let symbolID = try XCTUnwrap(
+            sema.symbols.lookup(fqName: ownerFQName),
+            "kotlin.ContextFunctionTypeParams must be registered"
+        )
+        let symbol = try XCTUnwrap(sema.symbols.symbol(symbolID))
+
+        XCTAssertEqual(symbol.kind, .annotationClass)
+        XCTAssertTrue(symbol.flags.contains(.synthetic))
+
+        let annotations = sema.symbols.annotations(for: symbolID)
+        XCTAssertTrue(
+            annotations.contains(where: {
+                $0.annotationFQName == KnownCompilerAnnotation.target.qualifiedName
+                    && $0.arguments == ["AnnotationTarget.TYPE"]
+            }),
+            "Expected ContextFunctionTypeParams to carry @Target(AnnotationTarget.TYPE), got: \(annotations)"
+        )
+
+        let countSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: ownerFQName + [ctx.interner.intern("count")]),
+            "kotlin.ContextFunctionTypeParams.count must be registered"
+        )
+        XCTAssertEqual(sema.symbols.propertyType(for: countSymbol), sema.types.intType)
+    }
+
     func testSubclassOptInRequiredResolves() {
         let source = """
         fun marker(x: SubclassOptInRequired?): Int = 0
@@ -292,6 +376,78 @@ final class AnnotationSemanticTests: XCTestCase {
             "kotlin.SubclassOptInRequired.markerClass must be registered"
         )
         XCTAssertNotNil(sema.symbols.propertyType(for: valueSymbol), "markerClass must have a property type")
+    }
+
+    func testConsistentCopyVisibilityResolves() {
+        let source = """
+        fun marker(x: ConsistentCopyVisibility?): Int = 0
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+
+        XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected ConsistentCopyVisibility smoke test to compile cleanly, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testConsistentCopyVisibilityAnnotationIsSyntheticAndTargetedToClasses() throws {
+        let ctx = makeContextFromSource("fun noop() {}")
+        try runSema(ctx)
+        let sema = try XCTUnwrap(ctx.sema)
+        let symbolID = try XCTUnwrap(
+            sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("ConsistentCopyVisibility"),
+            ]),
+            "kotlin.ConsistentCopyVisibility must be registered"
+        )
+        let symbol = try XCTUnwrap(sema.symbols.symbol(symbolID))
+
+        XCTAssertEqual(symbol.kind, .annotationClass)
+        XCTAssertTrue(symbol.flags.contains(.synthetic))
+
+        let annotations = sema.symbols.annotations(for: symbolID)
+        XCTAssertTrue(
+            annotations.contains(where: {
+                $0.annotationFQName == KnownCompilerAnnotation.target.qualifiedName
+                    && $0.arguments == ["AnnotationTarget.CLASS"]
+            }),
+            "Expected ConsistentCopyVisibility to carry @Target(AnnotationTarget.CLASS), got: \(annotations)"
+        )
+    }
+
+    func testExposedCopyVisibilityResolves() {
+        let source = """
+        fun marker(x: ExposedCopyVisibility?): Int = 0
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+
+        XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected ExposedCopyVisibility smoke test to compile cleanly, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testExposedCopyVisibilityAnnotationIsSyntheticAndTargetedToClasses() throws {
+        let ctx = makeContextFromSource("fun noop() {}")
+        try runSema(ctx)
+        let sema = try XCTUnwrap(ctx.sema)
+        let symbolID = try XCTUnwrap(
+            sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("ExposedCopyVisibility"),
+            ]),
+            "kotlin.ExposedCopyVisibility must be registered"
+        )
+        let symbol = try XCTUnwrap(sema.symbols.symbol(symbolID))
+
+        XCTAssertEqual(symbol.kind, .annotationClass)
+        XCTAssertTrue(symbol.flags.contains(.synthetic))
+
+        let annotations = sema.symbols.annotations(for: symbolID)
+        XCTAssertTrue(
+            annotations.contains(where: {
+                $0.annotationFQName == KnownCompilerAnnotation.target.qualifiedName
+                    && $0.arguments == ["AnnotationTarget.CLASS"]
+            }),
+            "Expected ExposedCopyVisibility to carry @Target(AnnotationTarget.CLASS), got: \(annotations)"
+        )
     }
 
     func testTargetAnnotationIsRejectedOnRegularClass() {
@@ -622,6 +778,71 @@ final class AnnotationSemanticTests: XCTestCase {
         }
     }
 
+    func testContextFunctionTypeParamsNormalizesFunctionNToContextFunctionType() throws {
+        let source = """
+        interface Host {
+            val action: @ContextFunctionTypeParams(2) Function2<String, Int, Unit>
+        }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected context function annotation source to compile cleanly, got: \(ctx.diagnostics.diagnostics)")
+
+        let ast = try XCTUnwrap(ctx.ast)
+        let sema = try XCTUnwrap(ctx.sema)
+        let file = try XCTUnwrap(ast.files.first)
+        let interfaceDeclID = try XCTUnwrap(file.topLevelDecls.first)
+        guard case let .interfaceDecl(interfaceDecl) = ast.arena.decl(interfaceDeclID) else {
+            return XCTFail("Expected interface declaration")
+        }
+        let propertyDeclID = try XCTUnwrap(interfaceDecl.memberProperties.first)
+        let propertySymbol = try XCTUnwrap(sema.bindings.declSymbol(for: propertyDeclID))
+        let propertyType = try XCTUnwrap(sema.symbols.propertyType(for: propertySymbol))
+
+        guard case let .functionType(functionType) = sema.types.kind(of: propertyType) else {
+            return XCTFail("Expected property type to resolve as functionType")
+        }
+        XCTAssertEqual(functionType.contextReceivers, [sema.types.stringType, sema.types.intType])
+        XCTAssertNil(functionType.receiver)
+        XCTAssertTrue(functionType.params.isEmpty)
+        XCTAssertEqual(functionType.returnType, sema.types.unitType)
+    }
+
+    func testContextFunctionTypeParamsCombinesWithExtensionFunctionType() throws {
+        let source = """
+        typealias Handler = @ContextFunctionTypeParams(count = 2) @ExtensionFunctionType Function4<String, Int, Double, String, Unit>
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected combined context and extension function annotations to compile cleanly, got: \(ctx.diagnostics.diagnostics)")
+
+        let sema = try XCTUnwrap(ctx.sema)
+        let handlerSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [ctx.interner.intern("Handler")]))
+        let underlyingType = try XCTUnwrap(sema.symbols.typeAliasUnderlyingType(for: handlerSymbol))
+
+        guard case let .functionType(functionType) = sema.types.kind(of: underlyingType) else {
+            return XCTFail("Expected typealias underlying type to resolve as functionType")
+        }
+        XCTAssertEqual(functionType.contextReceivers, [sema.types.stringType, sema.types.intType])
+        XCTAssertEqual(functionType.receiver, sema.types.doubleType)
+        XCTAssertEqual(functionType.params, [sema.types.stringType])
+        XCTAssertEqual(functionType.returnType, sema.types.unitType)
+    }
+
+    func testContextFunctionTypeParamsRejectsCountLargerThanFunctionArity() {
+        let source = """
+        interface Host {
+            val invalid: @ContextFunctionTypeParams(3) Function2<String, Int, Unit>
+        }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-CONTEXT-FN-TYPE", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected one context function annotation diagnostic, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "ContextFunctionTypeParams diagnostics should be errors")
+    }
+
     func testExtensionFunctionTypeRejectsFunction0() {
         let source = """
         interface Host {
@@ -842,8 +1063,65 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.isEmpty, "Expected OPT_IN_USAGE suppression alias to suppress opt-in diagnostics, got: \(ctx.diagnostics.diagnostics)")
     }
 
-    func runSemaCollectingDiagnostics(_ source: String) -> CompilationContext {
-        let ctx = makeContextFromSource(source)
+    func testExperimentalVersionOverloadingAnnotationUsageRequiresOptIn() {
+        let source = """
+        @ExperimentalVersionOverloading
+        annotation class VersionedApi
+
+        @VersionedApi
+        fun api(): Int = 1
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-OPT-IN", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected @VersionedApi usage to require opt-in, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "ExperimentalVersionOverloading diagnostics should be errors")
+    }
+
+    func testExperimentalVersionOverloadingAnnotationUsageAllowsOptInAnnotation() {
+        let source = """
+        @ExperimentalVersionOverloading
+        annotation class VersionedApi
+
+        @OptIn(ExperimentalVersionOverloading::class)
+        @VersionedApi
+        fun api(): Int = 1
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-OPT-IN", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected @OptIn to suppress ExperimentalVersionOverloading diagnostics, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testExperimentalVersionOverloadingAnnotationUsageAllowsCompilerOptIn() {
+        let source = """
+        @ExperimentalVersionOverloading
+        annotation class VersionedApi
+
+        @VersionedApi
+        fun api(): Int = 1
+        """
+
+        let ctx = runSemaCollectingDiagnostics(
+            source,
+            frontendFlags: ["opt-in=kotlin.ExperimentalVersionOverloading"]
+        )
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-OPT-IN", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected -opt-in to suppress ExperimentalVersionOverloading diagnostics, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func runSemaCollectingDiagnostics(
+        _ source: String,
+        frontendFlags: [String] = []
+    ) -> CompilationContext {
+        let fakePath = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".kt")
+            .path
+        let ctx = makeCompilationContext(inputs: [fakePath], frontendFlags: frontendFlags)
+        _ = ctx.sourceManager.addFile(path: fakePath, contents: Data(source.utf8))
         do {
             try runSema(ctx)
         } catch {
