@@ -895,6 +895,14 @@ extension DataFlowSemaPhase {
             named: "KClassifier", in: kotlinReflectPkg, symbols: symbols, interner: interner
         )
         types.kClassifierInterfaceSymbol = kClassifierSymbol
+        registerSyntheticKTypeParameterStub(
+            kClassifierSymbol: kClassifierSymbol,
+            kTypeSymbol: kTypeSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinReflectPkg: kotlinReflectPkg
+        )
 
         // Register typeOf<T>(): KType — inline reified function accessible without import.
         // Available in the kotlin package as a top-level function.
@@ -959,6 +967,121 @@ extension DataFlowSemaPhase {
                 for: funcSymbol2
             )
         }
+    }
+
+    // STDLIB-REFLECT-072: Register KTypeParameter interface and scalar properties.
+    private func registerSyntheticKTypeParameterStub(
+        kClassifierSymbol: SymbolID,
+        kTypeSymbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinReflectPkg: [InternedString]
+    ) {
+        let kTypeParameterSymbol = ensureInterfaceSymbol(
+            named: "KTypeParameter", in: kotlinReflectPkg, symbols: symbols, interner: interner
+        )
+        addKTypeParameterDirectSupertypes(
+            [kClassifierSymbol],
+            to: kTypeParameterSymbol,
+            symbols: symbols,
+            types: types
+        )
+
+        guard let kTypeParameterInfo = symbols.symbol(kTypeParameterSymbol) else { return }
+        let stringType = types.make(.primitive(.string, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        let kVarianceType: TypeID = if let kVarianceSymbol = symbols.lookup(
+            fqName: kotlinReflectPkg + [interner.intern("KVariance")]
+        ) {
+            types.make(.classType(ClassType(
+                classSymbol: kVarianceSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+        } else {
+            types.anyType
+        }
+        let kTypeType = types.make(.classType(ClassType(
+            classSymbol: kTypeSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        registerSyntheticKTypeParameterProperty(
+            named: "name",
+            ownerSymbol: kTypeParameterSymbol,
+            ownerFQName: kTypeParameterInfo.fqName,
+            propertyType: stringType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticKTypeParameterProperty(
+            named: "isReified",
+            ownerSymbol: kTypeParameterSymbol,
+            ownerFQName: kTypeParameterInfo.fqName,
+            propertyType: boolType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticKTypeParameterProperty(
+            named: "variance",
+            ownerSymbol: kTypeParameterSymbol,
+            ownerFQName: kTypeParameterInfo.fqName,
+            propertyType: kVarianceType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticKTypeParameterProperty(
+            named: "upperBounds",
+            ownerSymbol: kTypeParameterSymbol,
+            ownerFQName: kTypeParameterInfo.fqName,
+            propertyType: kTypeType,
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    private func registerSyntheticKTypeParameterProperty(
+        named name: String,
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        propertyType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let propertyName = interner.intern(name)
+        let propertyFQName = ownerFQName + [propertyName]
+        guard symbols.lookup(fqName: propertyFQName) == nil else { return }
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
+        symbols.setPropertyType(propertyType, for: propertySymbol)
+    }
+
+    private func addKTypeParameterDirectSupertypes(
+        _ supertypes: [SymbolID],
+        to symbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem
+    ) {
+        var symbolSupertypes = symbols.directSupertypes(for: symbol)
+        for supertype in supertypes where !symbolSupertypes.contains(supertype) {
+            symbolSupertypes.append(supertype)
+        }
+        symbols.setDirectSupertypes(symbolSupertypes, for: symbol)
+
+        var typeSupertypes = types.directNominalSupertypes(for: symbol)
+        for supertype in supertypes where !typeSupertypes.contains(supertype) {
+            typeSupertypes.append(supertype)
+        }
+        types.setNominalDirectSupertypes(typeSupertypes, for: symbol)
     }
 
     // STDLIB-REFLECT-074: Register KTypeProjection data-class properties.
@@ -1312,6 +1435,38 @@ extension DataFlowSemaPhase {
         let argumentsFQName = kTypeInfo.fqName + [interner.intern("arguments")]
         if let argumentsSymbol = symbols.lookup(fqName: argumentsFQName) {
             symbols.setPropertyType(listOfProjections, for: argumentsSymbol)
+        }
+    }
+
+    func patchKTypeParameterUpperBoundsType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let listFQName: [InternedString] = [
+            interner.intern("kotlin"), interner.intern("collections"), interner.intern("List"),
+        ]
+        let reflectPkg = [interner.intern("kotlin"), interner.intern("reflect")]
+        guard let listSymbol = symbols.lookup(fqName: listFQName),
+              let kTypeSymbol = symbols.lookup(fqName: reflectPkg + [interner.intern("KType")]),
+              let kTypeParameterSymbol = symbols.lookup(fqName: reflectPkg + [interner.intern("KTypeParameter")]),
+              let kTypeParameterInfo = symbols.symbol(kTypeParameterSymbol)
+        else {
+            return
+        }
+        let kTypeType = types.make(.classType(ClassType(
+            classSymbol: kTypeSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let listOfKType = types.make(.classType(ClassType(
+            classSymbol: listSymbol,
+            args: [.out(kTypeType)],
+            nullability: .nonNull
+        )))
+        let upperBoundsFQName = kTypeParameterInfo.fqName + [interner.intern("upperBounds")]
+        if let upperBoundsSymbol = symbols.lookup(fqName: upperBoundsFQName) {
+            symbols.setPropertyType(listOfKType, for: upperBoundsSymbol)
         }
     }
 }
