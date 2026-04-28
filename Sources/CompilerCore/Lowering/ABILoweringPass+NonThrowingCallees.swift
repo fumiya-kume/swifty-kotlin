@@ -71,6 +71,7 @@ extension ABILoweringPass {
             interner.intern("kk_string_lowercase_locale"),
             interner.intern("kk_string_uppercase_locale"),
             interner.intern("kk_char_lowercase_locale"),
+            interner.intern("kk_char_uppercase_locale"),
             interner.intern("kk_string_compareTo_locale"),
             interner.intern("kk_normalization_form_nfc"),
             interner.intern("kk_normalization_form_nfd"),

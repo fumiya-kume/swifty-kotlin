@@ -56,6 +56,9 @@ extension ABIMismatchTests {
             "kk_string_case_insensitive_order",
             // Char locale case conversion
             "kk_char_lowercase_locale",
+
+            "kk_char_uppercase_locale",
+            // Char locale case conversion
             "kk_system_exitProcess",
             "kk_system_currentTimeMillis",
             "kk_system_nanoTime",
