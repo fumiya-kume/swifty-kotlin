@@ -6128,7 +6128,25 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Bitwise"
         ),
-        // Int/Long modulo operators
+        // Int/Long flooring division and modulo operators
+        RuntimeABIFunctionSpec(
+            name: "kk_op_floor_div",
+            parameters: [
+                RuntimeABIParameter(name: "lhs", type: .intptr),
+                RuntimeABIParameter(name: "rhs", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_op_lfloor_div",
+            parameters: [
+                RuntimeABIParameter(name: "lhs", type: .intptr),
+                RuntimeABIParameter(name: "rhs", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_op_mod",
             parameters: [

@@ -7,6 +7,8 @@ extension ABILoweringPass {
             interner.intern("kk_op_sub"),
             interner.intern("kk_op_mul"),
             interner.intern("kk_op_div"),
+            interner.intern("kk_op_floor_div"),
+            interner.intern("kk_op_lfloor_div"),
             interner.intern("kk_op_mod"),
             interner.intern("kk_op_udiv"),
             interner.intern("kk_op_urem"),

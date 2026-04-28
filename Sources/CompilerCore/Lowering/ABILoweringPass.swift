@@ -49,6 +49,8 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_op_sub"),
             ctx.interner.intern("kk_op_mul"),
             ctx.interner.intern("kk_op_div"),
+            ctx.interner.intern("kk_op_floor_div"),
+            ctx.interner.intern("kk_op_lfloor_div"),
             ctx.interner.intern("kk_op_mod"),
             ctx.interner.intern("kk_op_udiv"),
             ctx.interner.intern("kk_op_urem"),

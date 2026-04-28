@@ -3982,6 +3982,10 @@ extension CallTypeChecker {
             // In Kotlin stdlib, small unsigned types promote to UInt for most
             // arithmetic (plus/minus/times/div/rem).  `mod` keeps the operand type.
             let isSmallUnsigned = { (t: TypeID) -> Bool in t == ubyteType || t == ushortType }
+            let isUnsignedInteger = { (t: TypeID) -> Bool in
+                t == uintType || t == ulongType || t == ubyteType || t == ushortType
+            }
+            let isSignedInteger = { (t: TypeID) -> Bool in t == intType || t == longType }
             // Use non-nullable RHS for arithmetic promotion checks
             let rhsType = sema.types.makeNonNullable(rawRhsType)
             switch interner.resolve(calleeName) {
@@ -4051,6 +4055,20 @@ extension CallTypeChecker {
                     resultType = uintType
                 } else if receiverForCheck == intType {
                     resultType = intType
+                } else {
+                    resultType = nil
+                }
+                if let resultType {
+                    let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            case "floorDiv":
+                let resultType: TypeID?
+                if isSignedInteger(receiverForCheck), isSignedInteger(rhsType) {
+                    resultType = receiverForCheck == longType || rhsType == longType ? longType : intType
+                } else if isUnsignedInteger(receiverForCheck), isUnsignedInteger(rhsType) {
+                    resultType = receiverForCheck == ulongType || rhsType == ulongType ? ulongType : uintType
                 } else {
                     resultType = nil
                 }

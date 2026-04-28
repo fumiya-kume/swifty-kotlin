@@ -2061,7 +2061,29 @@ public func kk_op_ge(_ lhs: Int, _ rhs: Int) -> Int {
     lhs >= rhs ? 1 : 0
 }
 
-// MARK: - Int/Long arithmetic ops (modulo)
+// MARK: - Int/Long arithmetic ops (flooring division and modulo)
+
+private func runtimeFloorDiv(_ lhs: Int, _ rhs: Int) -> Int {
+    if rhs == 0 { return 0 }
+    if lhs == Int.min && rhs == -1 { return lhs }
+    let quotient = lhs / rhs
+    let remainder = lhs % rhs
+    if remainder != 0 && ((lhs < 0) != (rhs < 0)) {
+        return quotient - 1
+    }
+    return quotient
+}
+
+@_cdecl("kk_op_floor_div")
+public func kk_op_floor_div(_ lhs: Int, _ rhs: Int) -> Int {
+    runtimeFloorDiv(lhs, rhs)
+}
+
+@_cdecl("kk_op_lfloor_div")
+public func kk_op_lfloor_div(_ lhs: Int, _ rhs: Int) -> Int {
+    // Long uses same Int representation on 64-bit platforms.
+    runtimeFloorDiv(lhs, rhs)
+}
 
 @_cdecl("kk_op_mod")
 public func kk_op_mod(_ lhs: Int, _ rhs: Int) -> Int {

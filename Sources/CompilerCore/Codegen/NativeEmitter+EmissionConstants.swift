@@ -50,6 +50,28 @@ extension NativeEmitter {
             lowered = bindings.buildMul(state.builder, lhs: lhs, rhs: rhs, name: "mul_\(instructionIndex)")
         case "kk_op_div":
             lowered = bindings.buildSDiv(state.builder, lhs: lhs, rhs: rhs, name: "div_\(instructionIndex)")
+        case "kk_op_floor_div", "kk_op_lfloor_div":
+            if let quotient = bindings.buildSDiv(state.builder, lhs: lhs, rhs: rhs, name: "floordiv_q_\(instructionIndex)"),
+               let product = bindings.buildMul(state.builder, lhs: quotient, rhs: rhs, name: "floordiv_p_\(instructionIndex)"),
+               let remainder = bindings.buildSub(state.builder, lhs: lhs, rhs: product, name: "floordiv_r_\(instructionIndex)"),
+               let remainderNonZero = bindings.buildICmpNotEqual(state.builder, lhs: remainder, rhs: state.zeroValue, name: "floordiv_rnz_\(instructionIndex)"),
+               let lhsNegative = bindings.buildICmpSignedLessThan(state.builder, lhs: lhs, rhs: state.zeroValue, name: "floordiv_lneg_\(instructionIndex)"),
+               let rhsNegative = bindings.buildICmpSignedLessThan(state.builder, lhs: rhs, rhs: state.zeroValue, name: "floordiv_rneg_\(instructionIndex)"),
+               let signsDiffer = bindings.buildXor(state.builder, lhs: lhsNegative, rhs: rhsNegative, name: "floordiv_sdiff_\(instructionIndex)"),
+               let shouldAdjust = bindings.buildAnd(state.builder, lhs: remainderNonZero, rhs: signsDiffer, name: "floordiv_adj_\(instructionIndex)"),
+               let one = bindings.constInt(state.int64Type, value: 1),
+               let adjustedQuotient = bindings.buildSub(state.builder, lhs: quotient, rhs: one, name: "floordiv_dec_\(instructionIndex)")
+            {
+                lowered = bindings.buildSelect(
+                    state.builder,
+                    condition: shouldAdjust,
+                    thenValue: adjustedQuotient,
+                    elseValue: quotient,
+                    name: "floordiv_\(instructionIndex)"
+                )
+            } else {
+                lowered = nil
+            }
         case "kk_op_udiv":
             lowered = bindings.buildUDiv(state.builder, lhs: lhs, rhs: rhs, name: "udiv_\(instructionIndex)")
         case "kk_op_mod":

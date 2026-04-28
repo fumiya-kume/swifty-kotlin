@@ -2100,6 +2100,8 @@ extension CallLowerer {
                 interner.intern("kk_op_mul")
             case "div":
                 isUnsignedReceiver ? interner.intern("kk_op_udiv") : interner.intern("kk_op_div")
+            case "floorDiv":
+                isUnsignedReceiver ? interner.intern("kk_op_udiv") : interner.intern("kk_op_floor_div")
             case "rem", "mod":
                 isUnsignedReceiver ? interner.intern("kk_op_urem") : interner.intern("kk_op_mod")
             case "and":
