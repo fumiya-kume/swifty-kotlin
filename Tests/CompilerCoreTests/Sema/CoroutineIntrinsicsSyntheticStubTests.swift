@@ -125,6 +125,66 @@ final class CoroutineIntrinsicsSyntheticStubTests: XCTestCase {
         XCTAssertTrue(signatures.contains(where: { $0.parameterTypes.count == 2 && $0.typeParameterSymbols.count == 2 }))
     }
 
+    func testRestrictsSuspensionAnnotationIsRegisteredWithClassTarget() throws {
+        let (sema, interner) = try makeSema()
+
+        let fqName = ["kotlin", "coroutines", "RestrictsSuspension"].map {
+            interner.intern($0)
+        }
+        let symbolID = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "Expected kotlin.coroutines.RestrictsSuspension to be registered"
+        )
+        let symbol = try XCTUnwrap(sema.symbols.symbol(symbolID))
+        XCTAssertEqual(symbol.kind, .annotationClass)
+        XCTAssertEqual(symbol.visibility, .public)
+        XCTAssertTrue(symbol.flags.contains(.synthetic))
+
+        let annotations = sema.symbols.annotations(for: symbolID)
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == KnownCompilerAnnotation.target.qualifiedName
+                    && $0.arguments == ["AnnotationTarget.CLASS"]
+            },
+            "RestrictsSuspension should target class-like declarations, got: \(annotations)"
+        )
+    }
+
+    func testRestrictsSuspensionAnnotationTargetsClassLikeDeclarationsOnly() throws {
+        let acceptedSource = """
+        import kotlin.coroutines.RestrictsSuspension
+
+        @RestrictsSuspension
+        class Scope
+
+        @RestrictsSuspension
+        interface ScopeInterface
+        """
+        let acceptedCtx = makeContextFromSource(acceptedSource)
+        try runSema(acceptedCtx)
+        let acceptedDiagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: acceptedCtx)
+        XCTAssertTrue(
+            acceptedDiagnostics.isEmpty,
+            "Expected RestrictsSuspension to accept class-like declarations, got: \(acceptedCtx.diagnostics.diagnostics)"
+        )
+
+        let rejectedSource = """
+        import kotlin.coroutines.RestrictsSuspension
+
+        @RestrictsSuspension
+        fun bad() {}
+        """
+        let rejectedCtx = makeContextFromSource(rejectedSource)
+        try runSema(rejectedCtx)
+        let rejectedDiagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: rejectedCtx)
+        XCTAssertEqual(
+            rejectedDiagnostics.count,
+            1,
+            "Expected RestrictsSuspension to reject function declarations, got: \(rejectedCtx.diagnostics.diagnostics)"
+        )
+        XCTAssertTrue(rejectedDiagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+    }
+
     func testStartCoroutineUninterceptedOrReturnResolvesInSource() throws {
         let source = """
         import kotlin.coroutines.Continuation
@@ -153,5 +213,13 @@ final class CoroutineIntrinsicsSyntheticStubTests: XCTestCase {
             XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), nil)
             XCTAssertEqual(sema.bindings.exprTypes[callExpr], sema.types.nullableAnyType)
         }
+    }
+
+    private func diagnostics(withCode code: String, in ctx: CompilationContext) -> [Diagnostic] {
+        ctx.diagnostics.diagnostics.filter { $0.code == code }
+    }
+
+    private func isError(_ diagnostic: Diagnostic) -> Bool {
+        diagnostic.severity == .error
     }
 }
