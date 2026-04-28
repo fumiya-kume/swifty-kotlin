@@ -1104,6 +1104,8 @@ extension ABILoweringPass {
             interner.intern("kk_weak_ref_create"),
             interner.intern("kk_weak_ref_get"),
             interner.intern("kk_weak_ref_clear"),
+            interner.intern("kk_cleaner_create"),
+            interner.intern("kk_cleaner_dispose"),
         ]).union(Self.kPropertyStubCallees(interner))
     }
 }
