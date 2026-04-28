@@ -28,6 +28,13 @@ extension CodegenBackendIntegrationTests {
             val earlier = later - 2.seconds
             println(earlier.epochSeconds)
             println(earlier.nanoOfSecond)
+
+            println(epoch.isDistantPast)
+            println(epoch.isDistantFuture)
+            println(Instant.fromEpochMilliseconds(-3217862419200001L).isDistantPast)
+            println(Instant.fromEpochMilliseconds(-3217862419200000L).isDistantPast)
+            println(Instant.fromEpochMilliseconds(3093527980800000L).isDistantFuture)
+            println(Instant.fromEpochMilliseconds(3093527980799999L).isDistantFuture)
         }
         """
 
@@ -54,6 +61,12 @@ extension CodegenBackendIntegrationTests {
                 500000000
                 -1
                 500000000
+                false
+                false
+                true
+                false
+                true
+                false
                 """ + "\n"
             )
         }
