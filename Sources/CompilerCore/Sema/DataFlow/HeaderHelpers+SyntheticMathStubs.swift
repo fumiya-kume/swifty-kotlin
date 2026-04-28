@@ -104,6 +104,7 @@ extension DataFlowSemaPhase {
             ("ceil", "kk_math_ceil_float"), ("floor", "kk_math_floor_float"),
             ("abs", "kk_math_abs_float"),
             ("exp", "kk_math_exp_float"), ("ln", "kk_math_ln_float"),
+            ("expm1", "kk_math_expm1_float"), ("ln1p", "kk_math_ln1p_float"),
             ("log2", "kk_math_log2_float"), ("log10", "kk_math_log10_float"),
             ("sign", "kk_math_sign_float"),
             // STDLIB-MATH-109: Hyperbolic and cbrt Float overloads
@@ -397,12 +398,34 @@ extension DataFlowSemaPhase {
         )
 
         registerSyntheticMathTopLevelFunction(
+            named: "expm1",
+            packageFQName: kotlinMathPkg,
+            parameterName: "x",
+            parameterType: types.doubleType,
+            returnType: types.doubleType,
+            externalLinkName: "kk_math_expm1",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticMathTopLevelFunction(
             named: "ln",
             packageFQName: kotlinMathPkg,
             parameterName: "x",
             parameterType: types.doubleType,
             returnType: types.doubleType,
             externalLinkName: "kk_math_ln",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticMathTopLevelFunction(
+            named: "ln1p",
+            packageFQName: kotlinMathPkg,
+            parameterName: "x",
+            parameterType: types.doubleType,
+            returnType: types.doubleType,
+            externalLinkName: "kk_math_ln1p",
             symbols: symbols,
             interner: interner
         )

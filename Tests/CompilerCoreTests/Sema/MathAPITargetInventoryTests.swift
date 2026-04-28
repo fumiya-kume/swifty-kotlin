@@ -88,6 +88,10 @@ final class MathAPITargetInventoryTests: XCTestCase {
             "fun Double.nextUp(): Double": "kk_double_nextUp",
             "fun Float.nextUp(): Float": "kk_float_nextUp",
             "fun Double.pow(Double): Double": "kk_math_pow",
+            "fun expm1(Double): Double": "kk_math_expm1",
+            "fun expm1(Float): Float": "kk_math_expm1_float",
+            "fun ln1p(Double): Double": "kk_math_ln1p",
+            "fun ln1p(Float): Float": "kk_math_ln1p_float",
             "fun Double.roundToInt(): Int": "kk_double_roundToInt",
             "fun Float.roundToInt(): Int": "kk_float_roundToInt",
             "fun Double.roundToLong(): Long": "kk_double_roundToLong",
@@ -134,12 +138,6 @@ final class MathAPITargetInventoryTests: XCTestCase {
     }()
 
     private static let knownGapSignaturesByTodo: [String: Set<String>] = [
-        "STDLIB-MATH-005": [
-            "fun expm1(Double): Double",
-            "fun expm1(Float): Float",
-            "fun ln1p(Double): Double",
-            "fun ln1p(Float): Float",
-        ],
         "STDLIB-MATH-006": [
             "fun max(Double, Double): Double",
             "fun max(Float, Float): Float",

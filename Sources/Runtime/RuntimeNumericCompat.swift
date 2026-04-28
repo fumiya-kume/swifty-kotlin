@@ -407,9 +407,19 @@ public func kk_math_exp(_ value: Int) -> Int {
     kk_double_to_bits(exp(kk_bits_to_double(value)))
 }
 
+@_cdecl("kk_math_expm1")
+public func kk_math_expm1(_ value: Int) -> Int {
+    kk_double_to_bits(expm1(kk_bits_to_double(value)))
+}
+
 @_cdecl("kk_math_ln")
 public func kk_math_ln(_ value: Int) -> Int {
     kk_double_to_bits(log(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_ln1p")
+public func kk_math_ln1p(_ value: Int) -> Int {
+    kk_double_to_bits(log1p(kk_bits_to_double(value)))
 }
 
 @_cdecl("kk_math_log2")
@@ -579,7 +589,7 @@ public func kk_math_floor_float(_ v: Int) -> Int {
     applyFloatUnaryOp(v, floorf)
 }
 
-// MARK: - STDLIB-430: additional Float overloads (abs, exp, ln, log2, log10, log, sign, hypot)
+// MARK: - STDLIB-430: additional Float overloads (abs, exp, expm1, ln, ln1p, log2, log10, log, sign, hypot)
 
 @_cdecl("kk_math_abs_float")
 public func kk_math_abs_float(_ value: Int) -> Int {
@@ -591,9 +601,19 @@ public func kk_math_exp_float(_ value: Int) -> Int {
     kk_float_to_bits(exp(kk_bits_to_float(value)))
 }
 
+@_cdecl("kk_math_expm1_float")
+public func kk_math_expm1_float(_ value: Int) -> Int {
+    kk_float_to_bits(expm1f(kk_bits_to_float(value)))
+}
+
 @_cdecl("kk_math_ln_float")
 public func kk_math_ln_float(_ value: Int) -> Int {
     kk_float_to_bits(log(kk_bits_to_float(value)))
+}
+
+@_cdecl("kk_math_ln1p_float")
+public func kk_math_ln1p_float(_ value: Int) -> Int {
+    kk_float_to_bits(log1pf(kk_bits_to_float(value)))
 }
 
 @_cdecl("kk_math_log2_float")

@@ -131,7 +131,23 @@ public extension RuntimeABISpec {
             section: "Math"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_math_expm1",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_math_ln",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_ln1p",
             parameters: [
                 RuntimeABIParameter(name: "value", type: .intptr),
             ],
@@ -299,7 +315,7 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Math"
         ),
-        // STDLIB-430: additional Float overloads (abs, exp, ln, log2, log10, log, sign, hypot)
+        // STDLIB-430: additional Float overloads (abs, exp, expm1, ln, ln1p, log2, log10, log, sign, hypot)
         RuntimeABIFunctionSpec(
             name: "kk_math_abs_float",
             parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
@@ -313,7 +329,19 @@ public extension RuntimeABISpec {
             section: "Math"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_math_expm1_float",
+            parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_math_ln_float",
+            parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_ln1p_float",
             parameters: [RuntimeABIParameter(name: "value", type: .intptr)],
             returnType: .intptr,
             section: "Math"

@@ -253,7 +253,7 @@
 - [ ] STDLIB-MATH-002: `kotlin.math` の sema / lowering を overload 単位で整える
 - [ ] STDLIB-MATH-003: `kotlin.math` の runtime / ABI と境界値を固定
 - [x] STDLIB-MATH-004: `absoluteValue` / `sign` / `ulp` extension property surface を公式 shape に揃える
-- [ ] STDLIB-MATH-005: `expm1` / `ln1p` の Double / Float overload を追加する
+- [x] STDLIB-MATH-005: `expm1` / `ln1p` の Double / Float overload を追加する
 - [ ] STDLIB-MATH-006: `max` / `min` の Double / Float / Int / Long / UInt / ULong overload 行列を追加する
 - [ ] STDLIB-MATH-007: `IEEErem` / `nextTowards` / `withSign` と残りの `pow` overload を追加する
 - [ ] STDLIB-MATH-008: 公開されている非公式 rounding helper 名（`roundUp` など）を整理する

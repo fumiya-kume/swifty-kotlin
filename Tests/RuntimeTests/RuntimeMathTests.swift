@@ -25,6 +25,16 @@ final class RuntimeMathTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(doubleFromBits(kk_math_pow(doubleToBits(2.0), doubleToBits(3.0))), 8.0)
     }
 
+    func testExpm1Double() {
+        XCTAssertEqual(doubleFromBits(kk_math_expm1(doubleToBits(0.0))), 0.0, accuracy: 1e-12)
+        XCTAssertEqual(doubleFromBits(kk_math_expm1(doubleToBits(1.0))), expm1(1.0), accuracy: 1e-12)
+    }
+
+    func testLn1pDouble() {
+        XCTAssertEqual(doubleFromBits(kk_math_ln1p(doubleToBits(0.0))), 0.0, accuracy: 1e-12)
+        XCTAssertEqual(doubleFromBits(kk_math_ln1p(doubleToBits(1.0))), log1p(1.0), accuracy: 1e-12)
+    }
+
     func testCeilDouble() {
         XCTAssertEqual(doubleFromBits(kk_math_ceil(doubleToBits(2.3))), 3.0)
         XCTAssertEqual(doubleFromBits(kk_math_ceil(doubleToBits(-2.3))), -2.0)
@@ -186,9 +196,19 @@ final class RuntimeMathTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(floatFromBits(kk_math_exp_float(floatToBits(1.0))), Float(M_E), accuracy: 1e-5)
     }
 
+    func testExpm1Float() {
+        XCTAssertEqual(floatFromBits(kk_math_expm1_float(floatToBits(0.0))), 0.0, accuracy: 1e-6)
+        XCTAssertEqual(floatFromBits(kk_math_expm1_float(floatToBits(1.0))), expm1f(1.0), accuracy: 1e-5)
+    }
+
     func testLnFloat() {
         XCTAssertEqual(floatFromBits(kk_math_ln_float(floatToBits(1.0))), 0.0, accuracy: 1e-6)
         XCTAssertEqual(floatFromBits(kk_math_ln_float(floatToBits(Float(M_E)))), 1.0, accuracy: 1e-5)
+    }
+
+    func testLn1pFloat() {
+        XCTAssertEqual(floatFromBits(kk_math_ln1p_float(floatToBits(0.0))), 0.0, accuracy: 1e-6)
+        XCTAssertEqual(floatFromBits(kk_math_ln1p_float(floatToBits(1.0))), log1pf(1.0), accuracy: 1e-6)
     }
 
     func testLog2Float() {

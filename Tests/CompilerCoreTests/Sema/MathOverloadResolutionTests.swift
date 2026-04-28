@@ -316,17 +316,21 @@ final class MathOverloadResolutionTests: XCTestCase {
             val b = ln(x)
             val c = log2(x)
             val d = log10(x)
-            return a + b + c + d
+            val e = expm1(x)
+            val f = ln1p(x)
+            return a + b + c + d + e + f
         }
         """
         let links = try resolvedLinkForFirstMatchingCall(
-            names: ["exp", "ln", "log2", "log10"],
+            names: ["exp", "ln", "log2", "log10", "expm1", "ln1p"],
             withSource: source
         )
         XCTAssertEqual(links["exp"], "kk_math_exp")
         XCTAssertEqual(links["ln"], "kk_math_ln")
         XCTAssertEqual(links["log2"], "kk_math_log2")
         XCTAssertEqual(links["log10"], "kk_math_log10")
+        XCTAssertEqual(links["expm1"], "kk_math_expm1")
+        XCTAssertEqual(links["ln1p"], "kk_math_ln1p")
     }
 
     func testLogExpFloatFamilyOverloads() throws {
@@ -336,17 +340,21 @@ final class MathOverloadResolutionTests: XCTestCase {
             val b = ln(x)
             val c = log2(x)
             val d = log10(x)
-            return a + b + c + d
+            val e = expm1(x)
+            val f = ln1p(x)
+            return a + b + c + d + e + f
         }
         """
         let links = try resolvedLinkForFirstMatchingCall(
-            names: ["exp", "ln", "log2", "log10"],
+            names: ["exp", "ln", "log2", "log10", "expm1", "ln1p"],
             withSource: source
         )
         XCTAssertEqual(links["exp"], "kk_math_exp_float")
         XCTAssertEqual(links["ln"], "kk_math_ln_float")
         XCTAssertEqual(links["log2"], "kk_math_log2_float")
         XCTAssertEqual(links["log10"], "kk_math_log10_float")
+        XCTAssertEqual(links["expm1"], "kk_math_expm1_float")
+        XCTAssertEqual(links["ln1p"], "kk_math_ln1p_float")
     }
 
     func testLogTwoArgDoubleOverload() throws {
