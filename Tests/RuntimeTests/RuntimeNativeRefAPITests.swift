@@ -45,13 +45,17 @@ import XCTest
 //   - kotlin.native.runtime.GC.targetHeapBytes
 //   - kotlin.native.runtime.GC.targetHeapUtilization
 //   - kotlin.native.runtime.GC.maxHeapBytes
+//   - kotlin.native.runtime.GCInfo
+//   - kotlin.native.runtime.GCInfo.* timing / summary properties
+//   - kotlin.native.runtime.MemoryUsage
+//   - kotlin.native.runtime.MemoryUsage.totalObjectsSizeBytes
 //   - kotlin.native.runtime.Debugging.isThreadStateRunnable
 //   - kotlin.native.runtime.Debugging.gcSuspendCount
 //   - kotlin.native.runtime.Debugging.threadCount
 //   - kotlin.native.runtime.Debugging.globalObjectCount
 //
 // RUNTIME MISSING (tracked by STDLIB-NATIVE-REF-004 and later):
-//   - GCInfo / RootSetStatistics / SweepStatistics type surfaces
+//   - RootSetStatistics / SweepStatistics property surfaces
 //   - NativeRuntimeApi marker
 
 final class RuntimeNativeRefGCTests: IsolatedRuntimeXCTestCase {
