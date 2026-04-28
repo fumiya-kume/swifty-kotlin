@@ -27,6 +27,16 @@ final class RuntimeRandomBoundaryTests: XCTestCase {
         UInt64(UInt(bitPattern: raw))
     }
 
+    private func makeRuntimeArray(_ elements: [Int]) -> Int {
+        let box = RuntimeArrayBox(length: elements.count)
+        box.elements = elements
+        return registerRuntimeObject(box)
+    }
+
+    private func arrayElements(from raw: Int) -> [Int] {
+        runtimeArrayBox(from: raw)?.elements ?? []
+    }
+
     // MARK: - Seed Reproducibility: nextInt
 
     func testSeedReproducibilityNextInt() {
@@ -511,6 +521,68 @@ final class RuntimeRandomBoundaryTests: XCTestCase {
         XCTAssertEqual(resultRaw, listRaw)
         XCTAssertNotEqual(thrown, 0, "nextBytes(array, fromIndex, toIndex) must throw for out-of-bounds ranges")
         XCTAssertEqual(list.elements, [0, 0, 0])
+    }
+
+    // MARK: - nextUBytes: edge cases
+
+    func testNextUBytesSizeProducesArrayOfRequestedLength() {
+        let r = makeSeeded(42)
+        var thrown = 0
+        let raw = kk_random_nextUBytes_size(r, 6, &thrown)
+        XCTAssertEqual(thrown, 0)
+        let elements = arrayElements(from: raw)
+        XCTAssertEqual(elements.count, 6)
+        for byte in elements {
+            XCTAssertTrue(byte >= 0 && byte <= Int(UInt8.max),
+                          "Filled UByte must be in Kotlin UByte range [0, 255], got \(byte)")
+        }
+    }
+
+    func testNextUBytesSizeThrowsForNegativeSize() {
+        let r = makeSeeded(42)
+        var thrown = 0
+        let raw = kk_random_nextUBytes_size(r, -1, &thrown)
+        XCTAssertNotEqual(thrown, 0, "nextUBytes(size) must throw for negative size")
+        XCTAssertEqual(arrayElements(from: raw), [])
+    }
+
+    func testNextUBytesArrayFillsExistingArray() {
+        let r = makeSeeded(42)
+        let arrayRaw = makeRuntimeArray([1, 2, 3, 4])
+        let resultRaw = kk_random_nextUBytes(r, arrayRaw)
+        XCTAssertEqual(resultRaw, arrayRaw)
+        let elements = arrayElements(from: arrayRaw)
+        XCTAssertEqual(elements.count, 4)
+        for byte in elements {
+            XCTAssertTrue(byte >= 0 && byte <= Int(UInt8.max),
+                          "Filled UByte must be in Kotlin UByte range [0, 255], got \(byte)")
+        }
+    }
+
+    func testNextUBytesRangeFillsOnlyRequestedSlice() {
+        let r = makeSeeded(42)
+        let arrayRaw = makeRuntimeArray([11, 22, 33, 44, 55])
+        var thrown = 0
+        let resultRaw = kk_random_nextUBytes_range(r, arrayRaw, 1, 4, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(resultRaw, arrayRaw)
+        let elements = arrayElements(from: arrayRaw)
+        XCTAssertEqual(elements[0], 11)
+        XCTAssertEqual(elements[4], 55)
+        for byte in elements[1..<4] {
+            XCTAssertTrue(byte >= 0 && byte <= Int(UInt8.max),
+                          "Filled UByte must be in Kotlin UByte range [0, 255], got \(byte)")
+        }
+    }
+
+    func testNextUBytesRangeThrowsForOutOfBoundsRange() {
+        let r = makeSeeded(42)
+        let arrayRaw = makeRuntimeArray([1, 2, 3])
+        var thrown = 0
+        let resultRaw = kk_random_nextUBytes_range(r, arrayRaw, 2, 4, &thrown)
+        XCTAssertEqual(resultRaw, arrayRaw)
+        XCTAssertNotEqual(thrown, 0, "nextUBytes(array, fromIndex, toIndex) must throw for out-of-bounds ranges")
+        XCTAssertEqual(arrayElements(from: arrayRaw), [1, 2, 3])
     }
 
     // MARK: - nextLong: boundary values (reconfirm via nextLong functions)
