@@ -31,6 +31,14 @@ final class RuntimeUuidEdgeCaseTests: XCTestCase {
         return box.value
     }
 
+    private func extractThrowableMessage(_ raw: Int) -> String {
+        extractRuntimeString(kk_throwable_message(raw))
+    }
+
+    private func intFromBits(_ bits: UInt64) -> Int {
+        Int(bitPattern: UInt(truncatingIfNeeded: bits))
+    }
+
     private func extractPairBox(_ raw: Int) -> RuntimePairBox? {
         guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
         return tryCast(ptr, to: RuntimePairBox.self)
@@ -39,10 +47,6 @@ final class RuntimeUuidEdgeCaseTests: XCTestCase {
     private func extractArrayBox(_ raw: Int) -> RuntimeArrayBox? {
         guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
         return tryCast(ptr, to: RuntimeArrayBox.self)
-    }
-
-    private func intFromBits(_ bits: UInt64) -> Int {
-        Int(bitPattern: UInt(bits))
     }
 
     private func compareWithUuidLexicalOrder(_ lhs: Int, _ rhs: Int) -> Int {
@@ -360,6 +364,64 @@ final class RuntimeUuidEdgeCaseTests: XCTestCase {
         XCTAssertEqual(kk_uuid_parseHexOrNull(0), runtimeNullSentinelInt)
     }
 
+    func testParseFailureMessageIncludesInvalidInput() {
+        var thrown = 0
+        let result = kk_uuid_parse(makeRuntimeString("not-a-uuid"), &thrown)
+
+        XCTAssertEqual(result, 0)
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(
+            extractThrowableMessage(thrown),
+            "IllegalArgumentException: Invalid UUID string: not-a-uuid"
+        )
+    }
+
+    func testParseNullRawThrowsStableMessage() {
+        var thrown = 0
+        let result = kk_uuid_parse(0, &thrown)
+
+        XCTAssertEqual(result, 0)
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(
+            extractThrowableMessage(thrown),
+            "IllegalArgumentException: Invalid UUID string: null"
+        )
+    }
+
+    func testParseSuccessClearsPreviousThrownSlot() {
+        var thrown = 12345
+        let uuidRaw = kk_uuid_parse(makeRuntimeString("550e8400-e29b-41d4-a716-446655440000"), &thrown)
+
+        XCTAssertNotEqual(uuidRaw, 0)
+        XCTAssertEqual(thrown, 0)
+    }
+
+    func testFromByteArrayWrongSizeFailureMessageIncludesActualSize() {
+        let arrayBox = RuntimeArrayBox(length: 17)
+        let arrayRaw = registerRuntimeObject(arrayBox)
+
+        var thrown = 0
+        let result = kk_uuid_fromByteArray(arrayRaw, &thrown)
+
+        XCTAssertEqual(result, 0)
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(
+            extractThrowableMessage(thrown),
+            "IllegalArgumentException: byteArray.size must be 16, was 17"
+        )
+    }
+
+    func testFromByteArraySuccessClearsPreviousThrownSlot() {
+        let arrayBox = RuntimeArrayBox(length: 16)
+        let arrayRaw = registerRuntimeObject(arrayBox)
+
+        var thrown = 12345
+        let uuidRaw = kk_uuid_fromByteArray(arrayRaw, &thrown)
+
+        XCTAssertNotEqual(uuidRaw, 0)
+        XCTAssertEqual(thrown, 0)
+    }
+
     // MARK: - Uppercase input is case-insensitive
 
     func testParseUppercaseHexStringSucceeds() {
@@ -387,6 +449,26 @@ final class RuntimeUuidEdgeCaseTests: XCTestCase {
         XCTAssertEqual(thrown, 0)
         // MAX UUID: version bits are 0xF = 15
         XCTAssertEqual(kk_uuid_version(uuidRaw), 15)
+    }
+
+    func testVariantBucketsMatchKotlinUuidRules() {
+        let cases: [(UInt64, Int, String)] = [
+            (0x0000_0000_0000_0000, 0, "NCS 0xxx"),
+            (0x4000_0000_0000_0000, 0, "NCS 0xxx"),
+            (0x8000_0000_0000_0000, 2, "IETF 10xx"),
+            (0xa000_0000_0000_0000, 2, "IETF 10xx"),
+            (0xc000_0000_0000_0000, 6, "Microsoft 110x"),
+            (0xe000_0000_0000_0000, 7, "future 111x"),
+        ]
+
+        for (lsbBits, expectedVariant, label) in cases {
+            let uuidRaw = kk_uuid_fromLongs(0, intFromBits(lsbBits))
+            XCTAssertEqual(
+                kk_uuid_variant(uuidRaw),
+                expectedVariant,
+                "Variant bucket mismatch for \(label)"
+            )
+        }
     }
 
     // MARK: - Random UUID uniqueness

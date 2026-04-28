@@ -372,7 +372,7 @@
 - [ ] STDLIB-SYSTEM-007: `kotlin.system.measureTimeMicros { ... }` Native API を追加する
 - [ ] STDLIB-UUID-001: `kotlin.uuid` の対象 API 一覧を固定
 - [ ] STDLIB-UUID-002: `kotlin.uuid` の sema / lowering を整える
-- [ ] STDLIB-UUID-003: `kotlin.uuid` の runtime / canonical form / failure path を固定
+- [x] STDLIB-UUID-003: `kotlin.uuid` の runtime / canonical form / failure path を固定
 - [ ] STDLIB-UUID-004: `Uuid.Companion.parseHex(hexString: String)` を追加する
 - [ ] STDLIB-UUID-005: `Uuid.Companion.NIL` constant を追加する
 - [x] STDLIB-UUID-006: `@ExperimentalUuidApi` marker と opt-in diagnostics を追加する
