@@ -459,6 +459,12 @@ func runtimeElementToString(_ elem: Int) -> String {
     if let sbBox = tryCast(ptr, to: RuntimeStringBuilderBox.self) {
         return sbBox.value
     }
+    if let ktypeProjectionBox = tryCast(ptr, to: RuntimeKTypeProjectionBox.self) {
+        return runtimeKTypeProjectionToString(ktypeProjectionBox)
+    }
+    if let ktypeBox = tryCast(ptr, to: RuntimeKTypeBox.self) {
+        return runtimeKTypeToString(ktypeBox)
+    }
     return "\(elem)"
 }
 
