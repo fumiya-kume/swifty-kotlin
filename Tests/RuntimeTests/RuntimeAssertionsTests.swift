@@ -211,6 +211,41 @@ final class RuntimeAssertionsTests: IsolatedRuntimeXCTestCase {
                        "Throwable should be last in hierarchy")
     }
 
+    // MARK: - RuntimeArrayIndexOutOfBoundsExceptionBox
+
+    func testArrayIndexOutOfBoundsExceptionBoxExceptionFQName() {
+        let box = RuntimeArrayIndexOutOfBoundsExceptionBox(message: "bad index")
+        XCTAssertEqual(box.exceptionFQName, "kotlin.ArrayIndexOutOfBoundsException")
+    }
+
+    func testArrayIndexOutOfBoundsExceptionBoxRenderedMessage() {
+        let box = RuntimeArrayIndexOutOfBoundsExceptionBox(message: "bad index")
+        XCTAssertEqual(box.renderedMessage, "ArrayIndexOutOfBoundsException: bad index")
+    }
+
+    func testArrayIndexOutOfBoundsExceptionBoxHierarchyContainsExpectedTypes() {
+        let box = RuntimeArrayIndexOutOfBoundsExceptionBox(message: "test")
+        let hierarchy = box.exceptionHierarchyFQNames
+        XCTAssertTrue(hierarchy.contains("kotlin.ArrayIndexOutOfBoundsException"))
+        XCTAssertTrue(hierarchy.contains("kotlin.IndexOutOfBoundsException"))
+        XCTAssertTrue(hierarchy.contains("kotlin.RuntimeException"))
+        XCTAssertTrue(hierarchy.contains("kotlin.Exception"))
+        XCTAssertTrue(hierarchy.contains("kotlin.Throwable"))
+    }
+
+    func testArrayIndexOutOfBoundsExceptionBoxHierarchyOrder() throws {
+        let box = RuntimeArrayIndexOutOfBoundsExceptionBox(message: "test")
+        let hierarchy = box.exceptionHierarchyFQNames
+        XCTAssertEqual(hierarchy.first, "kotlin.ArrayIndexOutOfBoundsException",
+                       "ArrayIndexOutOfBoundsException should be first in hierarchy")
+        XCTAssertEqual(hierarchy.last, "kotlin.Throwable",
+                       "Throwable should be last in hierarchy")
+        XCTAssertLessThan(
+            try XCTUnwrap(hierarchy.firstIndex(of: "kotlin.ArrayIndexOutOfBoundsException")),
+            try XCTUnwrap(hierarchy.firstIndex(of: "kotlin.IndexOutOfBoundsException"))
+        )
+    }
+
     // MARK: - Type Discrimination
 
     func testAssertionErrorBoxIsDistinctFromIllegalStateBox() {
@@ -236,6 +271,11 @@ final class RuntimeAssertionsTests: IsolatedRuntimeXCTestCase {
     func testConcurrentModificationBoxIsDistinctFromNoWhenBox() {
         let concurrentModificationBox = RuntimeConcurrentModificationExceptionBox(message: "test")
         XCTAssertFalse(concurrentModificationBox is RuntimeNoWhenBranchMatchedExceptionBox)
+    }
+
+    func testArrayIndexOutOfBoundsBoxIsDistinctFromConcurrentModificationBox() {
+        let arrayIndexBox = RuntimeArrayIndexOutOfBoundsExceptionBox(message: "test")
+        XCTAssertFalse(arrayIndexBox is RuntimeConcurrentModificationExceptionBox)
     }
 
     // MARK: - Cause Parameter
@@ -329,5 +369,22 @@ final class RuntimeAssertionsTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(withCauseBox.message, "modified")
         XCTAssertEqual(withCauseBox.cause, noArg)
         XCTAssertEqual(causeOnlyBox.cause, noArg)
+    }
+
+    func testArrayIndexOutOfBoundsExceptionRuntimeConstructors() {
+        let messageRaw = makeRuntimeString("bad index")
+        let messageOnly = kk_array_index_out_of_bounds_exception_new_message(messageRaw)
+        let noArg = kk_array_index_out_of_bounds_exception_new()
+
+        guard let messageOnlyPtr = UnsafeMutableRawPointer(bitPattern: messageOnly),
+              let messageOnlyBox = tryCast(messageOnlyPtr, to: RuntimeArrayIndexOutOfBoundsExceptionBox.self),
+              let noArgPtr = UnsafeMutableRawPointer(bitPattern: noArg),
+              let noArgBox = tryCast(noArgPtr, to: RuntimeArrayIndexOutOfBoundsExceptionBox.self)
+        else {
+            return XCTFail("Expected typed ArrayIndexOutOfBoundsException runtime boxes")
+        }
+
+        XCTAssertEqual(messageOnlyBox.message, "bad index")
+        XCTAssertEqual(noArgBox.message, "")
     }
 }

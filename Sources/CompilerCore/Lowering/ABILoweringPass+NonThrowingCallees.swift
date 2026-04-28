@@ -498,6 +498,8 @@ extension ABILoweringPass {
             interner.intern("kk_concurrent_modification_exception_new_message"),
             interner.intern("kk_concurrent_modification_exception_new_message_cause"),
             interner.intern("kk_concurrent_modification_exception_new_cause"),
+            interner.intern("kk_array_index_out_of_bounds_exception_new"),
+            interner.intern("kk_array_index_out_of_bounds_exception_new_message"),
             interner.intern("kk_throwable_is_cancellation"),
             interner.intern("kk_throwable_message"),
             interner.intern("kk_throwable_cause"),
