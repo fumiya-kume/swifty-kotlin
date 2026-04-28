@@ -6,7 +6,7 @@ import XCTest
 // This file documents what is implemented vs. what is missing in the KSwiftK
 // runtime with respect to the Kotlin/Native standard library API surface.
 //
-// IMPLEMENTED (tested here):
+// RUNTIME IMPLEMENTED (tested here and in RuntimeNativeRefRuntimeABITests):
 //   kotlin.native.runtime namespace (via java.lang / System shims):
 //     - System.gc()              -> kk_system_gc()     (calls kk_gc_collect internally)
 //     - Runtime.getRuntime()     -> kk_runtime_getRuntime()
@@ -25,18 +25,26 @@ import XCTest
 //     - Debugging.areAssertionsEnabled    -> kk_assertions_enabled()
 //     - Debugging.setAssertionsEnabled()  -> kk_assertions_set_enabled()
 //
-// MISSING (not implemented — no runtime entry point or compiler-side stub):
-//   - kotlin.native.ref.WeakReference<T>  (no kk_weak_ref_* entry points)
+// SEMA EXPOSED (compile-time stubs, covered by NativeRefRuntimeSemaTests):
+//   - kotlin.native.ref.WeakReference<T>
 //   - kotlin.native.ref.WeakReference.get()
-//   - kotlin.native.ref.WeakReference.clear()
-//   - createCleaner { } (no kk_cleaner_* entry points)
-//   - kotlin.native.runtime.GC.targetHeapBytes (property, not exposed)
-//   - kotlin.native.runtime.GC.targetHeapUtilization (property, not exposed)
-//   - kotlin.native.runtime.GC.maxHeapBytes (property, not exposed)
-//   - kotlin.native.runtime.GC.schedule() (separate from collect, not exposed)
+//   - kotlin.native.ref.createCleaner(value, block)
+//   - kotlin.native.runtime.GC.collect()
+//   - kotlin.native.runtime.GC.schedule()
+//   - kotlin.native.runtime.Debugging.isThreadStateRunnable
 //   - kotlin.native.runtime.Debugging.gcSuspendCount
-//   - kotlin.native.runtime.Debugging.threadCount
-//   - kotlin.native.runtime.Debugging.globalObjectCount
+//
+// RUNTIME MISSING (tracked by STDLIB-NATIVE-REF-004 and later):
+//   - WeakReference backing entry points:
+//       kk_weak_ref_create / kk_weak_ref_get / kk_weak_ref_clear
+//   - createCleaner backing entry points:
+//       kk_cleaner_create / kk_cleaner_clean / kk_cleaner_dispose
+//   - GC target heap metrics and scheduler:
+//       targetHeapBytes / targetHeapUtilization / maxHeapBytes / schedule()
+//   - Debugging tracking metrics:
+//       gcSuspendCount / threadCount / globalObjectCount
+//   - GCInfo / RootSetStatistics / SweepStatistics type surfaces
+//   - NativeRuntimeApi marker
 
 final class RuntimeNativeRefGCTests: IsolatedRuntimeXCTestCase {
 
