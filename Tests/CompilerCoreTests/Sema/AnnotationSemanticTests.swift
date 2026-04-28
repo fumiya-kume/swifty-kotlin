@@ -636,6 +636,33 @@ final class AnnotationSemanticTests: XCTestCase {
         )
     }
 
+    func testDslMarkerResolvesAndTargetsAnnotationClasses() throws {
+        let ctx = makeContextFromSource("fun noop() {}")
+        try runSema(ctx)
+        let sema = try XCTUnwrap(ctx.sema)
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("DslMarker"),
+            ]),
+            "kotlin.DslMarker must be registered"
+        )
+        let declaration = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(declaration.kind, .annotationClass)
+        XCTAssertEqual(declaration.visibility, .public)
+        XCTAssertTrue(declaration.flags.contains(.synthetic))
+
+        let annotations = sema.symbols.annotations(for: symbol)
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == KnownCompilerAnnotation.target.qualifiedName
+                    && $0.arguments == ["AnnotationTarget.ANNOTATION_CLASS"]
+            },
+            "DslMarker should target annotation classes, got: \(annotations)"
+        )
+    }
+
     func testExposedCopyVisibilityRejectsFunctionUse() {
         let source = """
         @ExposedCopyVisibility
@@ -719,6 +746,35 @@ final class AnnotationSemanticTests: XCTestCase {
 
         XCTAssertEqual(diagnostics.count, 1, "Expected ParameterName to reject class use, got: \(ctx.diagnostics.diagnostics)")
         XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+    }
+
+    func testDslMarkerAcceptsAnnotationClassAndRejectsRegularClassUse() {
+        let source = """
+        @DslMarker
+        annotation class HtmlDsl
+
+        @DslMarker
+        class Bad
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected DslMarker to reject regular class use, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+    }
+
+    func testDslMarkerCanMarkCustomDslAnnotation() {
+        let source = """
+        @DslMarker
+        annotation class HtmlDsl
+
+        @HtmlDsl
+        class Tag
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Expected custom DslMarker annotation to compile, got: \(ctx.diagnostics.diagnostics)")
     }
 
     func testPrivateDataClassCopyVisibilityMigrationWarnsAndKeepsPublicCopy() throws {
