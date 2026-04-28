@@ -3,6 +3,7 @@
 /// Kotlin defines:
 ///   interface Closeable { fun close(): Unit }
 ///   typealias AutoCloseable = Closeable          // on Kotlin/JVM they are identical
+///   fun AutoCloseable(closeAction: () -> Unit): AutoCloseable
 ///   inline fun <T : Closeable, R> T.use(block: (T) -> R): R
 ///
 /// The .use extension is inline-expanded by CallLowerer: no runtime call is needed.
@@ -96,6 +97,49 @@ extension DataFlowSemaPhase {
                 flags: [.synthetic]
             )
             symbols.setTypeAliasUnderlyingType(closeableType, for: aliasSymbol)
+        }
+        if symbols.lookupAll(fqName: autoCloseableFQName).allSatisfy({ symbols.symbol($0)?.kind != .function }) {
+            let closeActionType = types.make(.functionType(FunctionType(
+                params: [],
+                returnType: types.unitType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let closeActionParamName = interner.intern("closeAction")
+            let closeActionParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: closeActionParamName,
+                fqName: autoCloseableFQName + [closeActionParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            let factorySymbol = symbols.define(
+                kind: .function,
+                name: autoCloseableName,
+                fqName: autoCloseableFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            if let packageSymbol = symbols.lookup(fqName: kotlinPkg) {
+                symbols.setParentSymbol(packageSymbol, for: factorySymbol)
+            }
+            symbols.setParentSymbol(factorySymbol, for: closeActionParamSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: [closeActionType],
+                    returnType: closeableType,
+                    isSuspend: false,
+                    valueParameterSymbols: [closeActionParamSymbol],
+                    valueParameterHasDefaultValues: [false],
+                    valueParameterIsVararg: [false],
+                    typeParameterSymbols: []
+                ),
+                for: factorySymbol
+            )
+            symbols.setExternalLinkName("kk_auto_closeable_create", for: factorySymbol)
         }
 
         // --- java.io.Closeable interface (mirrors kotlin.io.Closeable) ---

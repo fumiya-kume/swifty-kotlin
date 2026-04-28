@@ -212,6 +212,47 @@ final class KotlinIOCommonEdgeCaseTests: XCTestCase {
         }
     }
 
+    func testAutoCloseableFactoryResolvesWithoutErrors() throws {
+        let source = """
+        fun main() {
+            val resource: AutoCloseable = AutoCloseable {
+                println("closed")
+            }
+            resource.close()
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "AutoCloseable { } factory should resolve without errors: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
+    func testAutoCloseableFactorySymbolIsRegisteredInSymbolTable() throws {
+        let source = """
+        fun main() {
+            println("ok")
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let sema = try XCTUnwrap(ctx.sema)
+            let interner = ctx.interner
+
+            let kotlinFQN: [InternedString] = [interner.intern("kotlin")]
+            let autoCloseableFQN = kotlinFQN + [interner.intern("AutoCloseable")]
+            let functionSymbol = sema.symbols.lookupAll(fqName: autoCloseableFQN).first { symbolID in
+                sema.symbols.symbol(symbolID)?.kind == .function
+            }
+            let symbol = try XCTUnwrap(functionSymbol, "kotlin.AutoCloseable factory should be registered alongside the type alias")
+            XCTAssertEqual(sema.symbols.externalLinkName(for: symbol), "kk_auto_closeable_create")
+        }
+    }
+
     // MARK: - Closeable symbol registered in symbol table
 
     func testCloseableSymbolIsRegisteredInSymbolTable() throws {
