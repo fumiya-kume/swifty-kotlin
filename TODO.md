@@ -146,7 +146,7 @@
 - [ ] STDLIB-REFLECT-070: `kotlin.reflect.KProperty2<D, E, V>` interface surface を追加する
 - [ ] STDLIB-REFLECT-071: `kotlin.reflect.KMutableProperty2<D, E, V>` interface surface を追加する
 - [ ] STDLIB-REFLECT-072: `kotlin.reflect.KTypeParameter` interface surface を追加する
-- [ ] STDLIB-REFLECT-073: `kotlin.reflect.KVariance` enum を追加する
+- [x] STDLIB-REFLECT-073: `kotlin.reflect.KVariance` enum を追加する
 - [ ] STDLIB-REFLECT-074: `kotlin.reflect.KTypeProjection` の data-class surface（`variance` / `type`）を追加する
 - [ ] STDLIB-REFLECT-075: `KClass.cast(value)` を既存 runtime (`kk_kclass_cast`) へ接続する
 - [ ] STDLIB-REFLECT-076: `KClass.safeCast(value)` を既存 runtime へ接続する

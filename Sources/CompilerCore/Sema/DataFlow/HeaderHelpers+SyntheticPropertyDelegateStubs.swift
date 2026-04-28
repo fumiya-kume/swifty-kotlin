@@ -305,6 +305,13 @@ extension DataFlowSemaPhase {
             named: "KTypeProjection", in: kotlinReflectPkg, symbols: symbols, interner: interner
         )
 
+        registerSyntheticKVarianceStub(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinReflectPkg: kotlinReflectPkg
+        )
+
         // Register kotlin.reflect.KClassifier interface stub (supertype of KClass)
         _ = ensureInterfaceSymbol(
             named: "KClassifier", in: kotlinReflectPkg, symbols: symbols, interner: interner
@@ -372,6 +379,58 @@ extension DataFlowSemaPhase {
                 ),
                 for: funcSymbol2
             )
+        }
+    }
+
+    // STDLIB-REFLECT-073: Register KVariance enum with declaration/use-site variance entries.
+    private func registerSyntheticKVarianceStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinReflectPkg: [InternedString]
+    ) {
+        let enumName = interner.intern("KVariance")
+        let enumFQName = kotlinReflectPkg + [enumName]
+        let enumSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: enumFQName) {
+            enumSymbol = existing
+        } else {
+            enumSymbol = symbols.define(
+                kind: .enumClass,
+                name: enumName,
+                fqName: enumFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            if let pkgSymbol = symbols.lookup(fqName: kotlinReflectPkg), pkgSymbol != .invalid {
+                symbols.setParentSymbol(pkgSymbol, for: enumSymbol)
+            }
+        }
+
+        let enumType = types.make(.classType(ClassType(
+            classSymbol: enumSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        for entry in ["INVARIANT", "IN", "OUT"] {
+            let entryName = interner.intern(entry)
+            let entryFQName = enumFQName + [entryName]
+            let entrySymbol: SymbolID
+            if let existing = symbols.lookup(fqName: entryFQName) {
+                entrySymbol = existing
+            } else {
+                entrySymbol = symbols.define(
+                    kind: .field,
+                    name: entryName,
+                    fqName: entryFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(enumSymbol, for: entrySymbol)
+            }
+            symbols.setPropertyType(enumType, for: entrySymbol)
         }
     }
 
