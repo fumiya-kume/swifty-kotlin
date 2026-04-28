@@ -119,6 +119,11 @@ private let syntheticCharMemberSpecs: [SyntheticCharMemberSpec] = [
         returnKind: .string
     ),
     SyntheticCharMemberSpec(
+        name: "titlecaseChar",
+        externalLinkName: "kk_char_titlecaseChar",
+        returnKind: .char
+    ),
+    SyntheticCharMemberSpec(
         name: "digitToInt",
         externalLinkName: "kk_char_digitToInt",
         returnKind: .int
