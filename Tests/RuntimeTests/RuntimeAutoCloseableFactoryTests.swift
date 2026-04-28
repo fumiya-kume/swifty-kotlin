@@ -101,6 +101,20 @@ final class RuntimeAutoCloseableFactoryTests: XCTestCase {
         XCTAssertEqual(snapshot.closureRaw, 77)
     }
 
+    func testUseAllowsNullResourceWithoutClose() {
+        var outThrown = 0
+        let result = kk_use(
+            0,
+            unsafeBitCast(autoCloseableUseBody, to: Int.self),
+            0,
+            &outThrown
+        )
+
+        XCTAssertEqual(result, 99)
+        XCTAssertEqual(outThrown, 0)
+        XCTAssertEqual(autoCloseableFactoryState.snapshot().count, 0)
+    }
+
     func testUsePropagatesFactoryCloseException() {
         let resourceRaw = kk_auto_closeable_create(
             unsafeBitCast(autoCloseableThrowingCloseAction, to: Int.self),

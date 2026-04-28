@@ -160,6 +160,68 @@ final class KotlinIOCommonEdgeCaseTests: XCTestCase {
         }
     }
 
+    func testNullableAutoCloseableDirectUseResolvesWithoutSafeCall() throws {
+        let source = """
+        fun main() {
+            val nullable: AutoCloseable? = null
+            val result: String = nullable.use { resource ->
+                if (resource == null) "null-resource" else "resource"
+            }
+            println(result)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Nullable AutoCloseable.use should resolve without requiring ?.use: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
+    func testRootAutoCloseableUseSymbolIsRegisteredInSymbolTable() throws {
+        let source = """
+        fun main() {
+            println("ok")
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let sema = try XCTUnwrap(ctx.sema)
+            let interner = ctx.interner
+
+            let kotlinFQN: [InternedString] = [interner.intern("kotlin")]
+            let rootUseFQN = kotlinFQN + [interner.intern("use")]
+            let useSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: rootUseFQN),
+                "kotlin.use should expose the common AutoCloseable?.use extension"
+            )
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: useSymbol))
+            let receiverType = try XCTUnwrap(signature.receiverType)
+            XCTAssertEqual(signature.parameterTypes.count, 1)
+            XCTAssertEqual(signature.typeParameterSymbols.count, 2)
+
+            guard case let .functionType(blockType) = sema.types.kind(of: signature.parameterTypes[0]) else {
+                return XCTFail("kotlin.use block parameter should be a function type")
+            }
+            XCTAssertEqual(blockType.params, [receiverType])
+            XCTAssertEqual(blockType.returnType, signature.returnType)
+
+            XCTAssertEqual(signature.typeParameterUpperBoundsList.count, 2)
+            let tUpperBound = try XCTUnwrap(signature.typeParameterUpperBoundsList.first?.first)
+            XCTAssertEqual(sema.types.nullability(of: tUpperBound), .nullable)
+            let nonNullBound = sema.types.makeNonNullable(tUpperBound)
+            let closeableFQN = kotlinFQN + [interner.intern("io"), interner.intern("Closeable")]
+            let closeableSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: closeableFQN))
+            guard case let .classType(boundClass) = sema.types.kind(of: nonNullBound) else {
+                return XCTFail("kotlin.use T upper bound should resolve to kotlin.io.Closeable?")
+            }
+            XCTAssertEqual(boundClass.classSymbol, closeableSymbol)
+        }
+    }
+
     // MARK: - AutoCloseable alias resolution
     //
     // NOTE (STDLIB-030 gap): Using AutoCloseable as a generic upper bound `<T : AutoCloseable>`
