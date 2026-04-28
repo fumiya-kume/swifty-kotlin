@@ -31,6 +31,11 @@ extension ABIMismatchTests {
             "kk_readline",
             "kk_readln",
             "kk_readlnOrNull",
+            // Exception constructors
+            "kk_no_when_branch_matched_exception_new",
+            "kk_no_when_branch_matched_exception_new_message",
+            "kk_no_when_branch_matched_exception_new_message_cause",
+            "kk_no_when_branch_matched_exception_new_cause",
             // Comparator (STDLIB-176)
             "kk_comparator_then_comparator",
             // Collection (binarySearch)
