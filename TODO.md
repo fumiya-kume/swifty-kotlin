@@ -339,10 +339,14 @@
 - [x] STDLIB-TIME-STABLE-009: `Int.toDuration(unit)` / `Long.toDuration(unit)` / `Double.toDuration(unit)` を追加する
 - [x] STDLIB-TIME-EXP-002: `AbstractDoubleTimeSource` surface を追加する
 <<<<<<< HEAD
+<<<<<<< HEAD
 - [x] STDLIB-TIME-EXP-003: `AbstractLongTimeSource` surface を追加する
 =======
 - [ ] STDLIB-TIME-EXP-003: `AbstractLongTimeSource` surface を追加する
 >>>>>>> c7d1e8c0b (Add AbstractDoubleTimeSource surface)
+=======
+- [x] STDLIB-TIME-EXP-003: `AbstractLongTimeSource` surface を追加する
+>>>>>>> d6254483a (Add AbstractLongTimeSource surface)
 - [ ] STDLIB-TIME-EXP-004: `TestTimeSource` surface を追加する
 - [ ] STDLIB-TIME-EXP-005: `Instant.isDistantPast` / `Instant.isDistantFuture` properties を追加する
 - [ ] STDLIB-TIME-EXP-006: `TimeSource.asClock()` を追加する
