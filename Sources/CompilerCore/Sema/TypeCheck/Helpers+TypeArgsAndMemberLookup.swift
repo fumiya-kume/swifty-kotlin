@@ -261,6 +261,11 @@ extension TypeCheckHelpers {
         switch types.kind(of: type) {
         case let .classType(classType):
             return [classType.classSymbol]
+        case .kClassType:
+            if let kClassSymbol = types.kClassInterfaceSymbol {
+                return [kClassSymbol]
+            }
+            return []
         case let .intersection(parts):
             return parts.flatMap { allNominalSymbolsImpl(of: $0, types: types, symbols: symbols, visited: &visited) }
         case let .typeParam(typeParam):

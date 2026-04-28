@@ -26,6 +26,18 @@ public final class TypeSystem {
     /// Used in subtyping to allow function types to be assigned to KFunction<R> variables.
     public internal(set) var kFunctionInterfaceSymbol: SymbolID?
 
+    /// The symbol ID of the synthetic `kotlin.reflect.KClass` interface.
+    public internal(set) var kClassInterfaceSymbol: SymbolID?
+
+    /// The symbol ID of the synthetic `kotlin.reflect.KClassifier` interface.
+    public internal(set) var kClassifierInterfaceSymbol: SymbolID?
+
+    /// The symbol ID of the synthetic `kotlin.reflect.KAnnotatedElement` interface.
+    public internal(set) var kAnnotatedElementInterfaceSymbol: SymbolID?
+
+    /// The symbol ID of the synthetic `kotlin.reflect.KDeclarationContainer` interface.
+    public internal(set) var kDeclarationContainerInterfaceSymbol: SymbolID?
+
     /// Symbol table reference for SAM (fun interface) subtyping. Set during DataFlowSemaPhase.
     public weak var symbolTable: SymbolTable?
 
