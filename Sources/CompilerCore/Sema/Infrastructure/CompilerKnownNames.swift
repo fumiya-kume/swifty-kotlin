@@ -24,6 +24,7 @@ enum KnownCompilerAnnotation {
     case optIn
     case subclassOptInRequired
     case consistentCopyVisibility
+    case builderInference
     case experimentalTypeInference
     case overloadResolutionByLambdaReturnType
 
@@ -75,6 +76,8 @@ enum KnownCompilerAnnotation {
             "SubclassOptInRequired"
         case .consistentCopyVisibility:
             "ConsistentCopyVisibility"
+        case .builderInference:
+            "BuilderInference"
         case .experimentalTypeInference:
             "ExperimentalTypeInference"
         case .overloadResolutionByLambdaReturnType:
@@ -130,6 +133,8 @@ enum KnownCompilerAnnotation {
             "kotlin.SubclassOptInRequired"
         case .consistentCopyVisibility:
             "kotlin.ConsistentCopyVisibility"
+        case .builderInference:
+            "kotlin.BuilderInference"
         case .experimentalTypeInference:
             "kotlin.experimental.ExperimentalTypeInference"
         case .overloadResolutionByLambdaReturnType:

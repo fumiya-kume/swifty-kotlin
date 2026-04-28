@@ -197,6 +197,13 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerSyntheticJvmAnnotationClass(
+            named: "BuilderInference",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
         if let optInSymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern("OptIn")]) {
             let record = MetadataAnnotationRecord(
                 annotationFQName: "kotlin.annotation.Target",
@@ -246,6 +253,37 @@ extension DataFlowSemaPhase {
                 annotations.append(experimentalRecord)
             }
             symbols.setAnnotations(annotations, for: overloadSymbol)
+        }
+        if let builderInferenceSymbol = symbols.lookup(
+            fqName: kotlinPkg + [interner.intern("BuilderInference")]
+        ) {
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.target.qualifiedName,
+                    arguments: [
+                        "AnnotationTarget.VALUE_PARAMETER",
+                        "AnnotationTarget.FUNCTION",
+                        "AnnotationTarget.PROPERTY",
+                    ]
+                ),
+                to: builderInferenceSymbol,
+                symbols: symbols
+            )
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.annotation.Retention",
+                    arguments: ["AnnotationRetention.BINARY"]
+                ),
+                to: builderInferenceSymbol,
+                symbols: symbols
+            )
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.experimentalTypeInference.qualifiedName
+                ),
+                to: builderInferenceSymbol,
+                symbols: symbols
+            )
         }
 
         let kotlinExperimentalPkg = ensurePackage(

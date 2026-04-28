@@ -328,6 +328,80 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
     }
 
+    func testBuilderInferenceAnnotationSurfaceIsSyntheticAndTargeted() throws {
+        let ctx = makeContextFromSource("fun noop() {}")
+        try runSema(ctx)
+        let sema = try XCTUnwrap(ctx.sema)
+        let symbolID = try XCTUnwrap(
+            sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("BuilderInference"),
+            ]),
+            "kotlin.BuilderInference must be registered"
+        )
+        let symbol = try XCTUnwrap(sema.symbols.symbol(symbolID))
+
+        XCTAssertEqual(symbol.kind, .annotationClass)
+        XCTAssertEqual(symbol.visibility, .public)
+        XCTAssertTrue(symbol.flags.contains(.synthetic))
+
+        let annotations = sema.symbols.annotations(for: symbolID)
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == KnownCompilerAnnotation.target.qualifiedName
+                    && $0.arguments == [
+                        "AnnotationTarget.VALUE_PARAMETER",
+                        "AnnotationTarget.FUNCTION",
+                        "AnnotationTarget.PROPERTY",
+                    ]
+            },
+            "BuilderInference should target value parameters, functions, and properties, got: \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.annotation.Retention"
+                    && $0.arguments == ["AnnotationRetention.BINARY"]
+            },
+            "BuilderInference should carry binary retention, got: \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains {
+                KnownCompilerAnnotation.experimentalTypeInference.matches($0.annotationFQName)
+            },
+            "BuilderInference should be annotated with ExperimentalTypeInference, got: \(annotations)"
+        )
+    }
+
+    func testBuilderInferenceAcceptsDocumentedTargets() {
+        let source = """
+        @BuilderInference
+        fun builderFunction(block: () -> Unit) {}
+
+        fun acceptsValueParameter(@BuilderInference block: () -> Unit) {}
+
+        @BuilderInference
+        val builderProperty: Int = 1
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected BuilderInference target uses to be accepted, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testBuilderInferenceRejectsClassTarget() {
+        let source = """
+        @BuilderInference
+        class Bad
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected class-target diagnostic for BuilderInference, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+    }
+
     func testPrivateDataClassCopyVisibilityMigrationWarnsAndKeepsPublicCopy() throws {
         let source = """
         package test
