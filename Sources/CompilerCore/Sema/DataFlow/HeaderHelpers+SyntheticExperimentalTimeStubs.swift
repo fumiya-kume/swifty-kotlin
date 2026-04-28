@@ -5,7 +5,7 @@
 /// - `TimeSource` with nested `WithComparableMarks`, `Monotonic`, and `markNow()`
 /// - `TimeMark` with elapsed/boolean checks and +/- Duration
 /// - `ComparableTimeMark` with TimeMark operations plus mark-to-mark diff/comparison
-/// - `AbstractDoubleTimeSource` / `AbstractLongTimeSource` surfaces
+/// - `AbstractDoubleTimeSource` / `AbstractLongTimeSource` / `TestTimeSource` surfaces
 extension DataFlowSemaPhase {
     func registerSyntheticExperimentalTimeStubs(
         symbols: SymbolTable,
@@ -357,6 +357,51 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner,
             flags: [.synthetic, .openType, .overrideMember]
+        )
+
+        let testTimeSourceSymbol = ensureClassSymbol(
+            named: "TestTimeSource",
+            in: kotlinTimePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        symbols.insertFlags([.synthetic], for: testTimeSourceSymbol)
+        symbols.setDirectSupertypes([abstractLongTimeSourceSymbol], for: testTimeSourceSymbol)
+        types.setNominalDirectSupertypes([abstractLongTimeSourceSymbol], for: testTimeSourceSymbol)
+        let testTimeSourceType = types.make(.classType(ClassType(
+            classSymbol: testTimeSourceSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        registerExperimentalTimeConstructor(
+            ownerSymbol: testTimeSourceSymbol,
+            ownerType: testTimeSourceType,
+            parameters: [],
+            symbols: symbols,
+            interner: interner
+        )
+        registerExperimentalTimeMemberFunction(
+            named: "read",
+            externalLinkName: nil,
+            ownerSymbol: testTimeSourceSymbol,
+            ownerType: testTimeSourceType,
+            parameters: [],
+            returnType: types.longType,
+            symbols: symbols,
+            interner: interner,
+            visibility: .protected,
+            flags: [.synthetic, .openType, .overrideMember]
+        )
+        registerExperimentalTimeMemberFunction(
+            named: "plusAssign",
+            externalLinkName: nil,
+            ownerSymbol: testTimeSourceSymbol,
+            ownerType: testTimeSourceType,
+            parameters: [(name: "duration", type: durationType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner,
+            isOperator: true
         )
 
 
