@@ -261,6 +261,33 @@ extension DataFlowSemaPhase {
         return declarationVisibility
     }
 
+    func hasConsistentCopyVisibilityAnnotation(_ classDecl: ClassDecl) -> Bool {
+        classDecl.annotations.contains { annotation in
+            KnownCompilerAnnotation.consistentCopyVisibility.matches(annotation.name)
+        }
+    }
+
+    func hasExposedCopyVisibilityAnnotation(_ classDecl: ClassDecl) -> Bool {
+        classDecl.annotations.contains { annotation in
+            KnownCompilerAnnotation.exposedCopyVisibility.matches(annotation.name)
+        }
+    }
+
+    func dataClassCopyVisibility(
+        for classDecl: ClassDecl,
+        classKind: SymbolKind,
+        declarationVisibility: Visibility
+    ) -> Visibility {
+        if hasConsistentCopyVisibilityAnnotation(classDecl) {
+            return primaryConstructorVisibility(
+                for: classDecl,
+                classKind: classKind,
+                declarationVisibility: declarationVisibility
+            )
+        }
+        return .public
+    }
+
     func flags(from modifiers: Modifiers) -> SymbolFlags {
         var value: SymbolFlags = []
         insertFunctionFlags(modifiers, into: &value)
@@ -760,7 +787,11 @@ extension DataFlowSemaPhase {
             name: copyName,
             fqName: copyFQName,
             declSite: classDecl.range,
-            visibility: .public,
+            visibility: dataClassCopyVisibility(
+                for: classDecl,
+                classKind: symbols.symbol(ownerSymbol)?.kind ?? .class,
+                declarationVisibility: symbols.symbol(ownerSymbol)?.visibility ?? .public
+            ),
             flags: [.synthetic]
         )
         symbols.setParentSymbol(ownerSymbol, for: copySymbol)

@@ -152,6 +152,29 @@ public struct CompilerOptions: Equatable {
         return 1
     }
 
+    /// Opt-in marker annotation names passed through compiler options such as
+    /// `-opt-in=kotlin.ExperimentalVersionOverloading`.
+    public var optInAnnotationNames: [String] {
+        var names: [String] = []
+        var seen: Set<String> = []
+
+        for flag in frontendFlags {
+            guard let payload = optInFlagPayload(flag) else {
+                continue
+            }
+
+            for rawName in payload.split(separator: ",") {
+                let name = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !name.isEmpty, seen.insert(name).inserted else {
+                    continue
+                }
+                names.append(name)
+            }
+        }
+
+        return names
+    }
+
     /// Thread-safety mode for `by lazy { }` delegates, parsed from
     /// `-Xfrontend lazy-thread-safety=SYNCHRONIZED|PUBLICATION|NONE`.
     /// Defaults to `.synchronized` when the flag is absent.
@@ -171,6 +194,18 @@ public struct CompilerOptions: Equatable {
             }
         }
         return .synchronized
+    }
+
+    private func optInFlagPayload(_ flag: String) -> String? {
+        let prefixes = [
+            "opt-in=",
+            "-opt-in=",
+            "-Xopt-in=",
+        ]
+        guard let prefix = prefixes.first(where: { flag.hasPrefix($0) }) else {
+            return nil
+        }
+        return String(flag.dropFirst(prefix.count))
     }
 
     /// Controls whether runtime reflection metadata includes non-public symbols.
