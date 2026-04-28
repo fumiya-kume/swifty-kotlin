@@ -50,12 +50,17 @@ final class RuntimeSystemEdgeCaseTests: XCTestCase {
     func testSystemMeasurementRuntimeSignaturesAreFixed() {
         let _: () -> Int = kk_system_currentTimeMillis
         let _: () -> Int = kk_system_nanoTime
+<<<<<<< HEAD
         let _: () -> Int = kk_system_getTimeMicros
         let _: () -> Int = kk_system_getTimeMillis
         let _: () -> Int = kk_system_getTimeNanos
         let _: () -> Int = kk_system_process_start_nanos
         let _: (Int, Int, UnsafeMutablePointer<Int>?) -> Int = kk_system_measureTimeMillis
         let _: (Int, Int, UnsafeMutablePointer<Int>?) -> Int = kk_system_measureTimeMicros
+=======
+        let _: () -> Int = kk_system_process_start_nanos
+        let _: (Int, Int, UnsafeMutablePointer<Int>?) -> Int = kk_system_measureTimeMillis
+>>>>>>> 9a6fe4272 (Cover kotlin.system runtime measurements)
         let _: (Int, Int, UnsafeMutablePointer<Int>?) -> Int = kk_system_measureNanoTime
     }
 
