@@ -30,11 +30,14 @@ import XCTest
 //   kotlin.native.runtime.Debugging (via kk_assertions_* entry points):
 //     - Debugging.areAssertionsEnabled    -> kk_assertions_enabled()
 //     - Debugging.setAssertionsEnabled()  -> kk_assertions_set_enabled()
+//     - Debugging.isThreadStateRunnable   -> kk_debugging_is_thread_state_runnable()
+//     - Debugging.gcSuspendCount          -> kk_debugging_gc_suspend_count()
+//     - Debugging.threadCount             -> kk_debugging_thread_count()
+//     - Debugging.globalObjectCount       -> kk_debugging_global_object_count()
 //
 // MISSING (not implemented — no runtime entry point or compiler-side stub):
-//   - kotlin.native.runtime.Debugging.gcSuspendCount
-//   - kotlin.native.runtime.Debugging.threadCount
-//   - kotlin.native.runtime.Debugging.globalObjectCount
+//   - GCInfo / RootSetStatistics / SweepStatistics type surfaces
+//   - NativeRuntimeApi marker
 
 final class RuntimeNativeRefGCTests: IsolatedRuntimeXCTestCase {
 
