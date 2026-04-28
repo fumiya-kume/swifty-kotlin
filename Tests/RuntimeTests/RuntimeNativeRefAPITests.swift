@@ -35,8 +35,7 @@ import XCTest
 //     - Debugging.threadCount             -> kk_debugging_thread_count()
 //     - Debugging.globalObjectCount       -> kk_debugging_global_object_count()
 //
-// MISSING (not implemented — no runtime entry point or compiler-side stub):
-//   - NativeRuntimeApi marker
+// All native.ref / native.runtime surfaces are now implemented or sema-exposed.
 
 final class RuntimeNativeRefGCTests: IsolatedRuntimeXCTestCase {
 
