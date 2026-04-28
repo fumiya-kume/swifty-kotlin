@@ -4,7 +4,7 @@ import XCTest
 
 // MARK: - STDLIB-EXPERIMENTAL-ABI-001: Synthetic experimental opt-in marker stubs
 //
-// Verifies that the five Kotlin stdlib experimental annotation classes discovered
+// Verifies that the Kotlin stdlib experimental annotation classes discovered
 // missing in PR #1231 are now synthesised correctly:
 //
 //   • ExperimentalUnsignedTypes  — kotlin          — severity ERROR
@@ -13,6 +13,7 @@ import XCTest
 //   • ExperimentalEncodingApi    — kotlin.io.encoding — severity ERROR
 //   • ExperimentalMultiplatform  — kotlin           — severity ERROR
 //   • ExperimentalSubclassOptIn  — kotlin           — severity WARNING
+//   • ExperimentalAssociatedObjects — kotlin.reflect — severity ERROR
 //
 // Each test group checks:
 //   1. The annotation class symbol is present in the symbol table.
@@ -197,6 +198,52 @@ final class ExperimentalMarkerStubTests: XCTestCase {
         )
     }
 
+    // MARK: - ExperimentalAssociatedObjects (kotlin.reflect, ERROR)
+
+    func testExperimentalAssociatedObjectsIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let sym = lookupSymbol(
+            fqPath: ["kotlin", "reflect", "ExperimentalAssociatedObjects"],
+            sema: sema,
+            interner: interner
+        )
+        XCTAssertNotNil(sym, "kotlin.reflect.ExperimentalAssociatedObjects must be registered in the symbol table")
+    }
+
+    func testExperimentalAssociatedObjectsIsAnnotationClass() throws {
+        let (sema, interner) = try makeSema()
+        assertIsAnnotationClass(
+            fqPath: ["kotlin", "reflect", "ExperimentalAssociatedObjects"],
+            sema: sema,
+            interner: interner
+        )
+    }
+
+    func testExperimentalAssociatedObjectsHasRequiresOptInWithErrorSeverity() throws {
+        let (sema, interner) = try makeSema()
+        assertHasRequiresOptIn(
+            fqPath: ["kotlin", "reflect", "ExperimentalAssociatedObjects"],
+            expectedSeverity: "ERROR",
+            sema: sema,
+            interner: interner
+        )
+    }
+
+    func testExperimentalAssociatedObjectsHasBinaryRetention() throws {
+        let (sema, interner) = try makeSema()
+        let sym = try XCTUnwrap(
+            lookupSymbol(fqPath: ["kotlin", "reflect", "ExperimentalAssociatedObjects"], sema: sema, interner: interner)
+        )
+        let annotations = sema.symbols.annotations(for: sym)
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.annotation.Retention"
+                    && $0.arguments.contains("AnnotationRetention.BINARY")
+            },
+            "Expected ExperimentalAssociatedObjects to carry @Retention(BINARY), got: \(annotations)"
+        )
+    }
+
     // MARK: - ExperimentalMultiplatform (kotlin, ERROR)
 
     func testExperimentalMultiplatformIsRegistered() throws {
@@ -265,6 +312,7 @@ final class ExperimentalMarkerStubTests: XCTestCase {
         XCTAssertEqual(severity(fqPath: ["kotlin", "ExperimentalVersionOverloading"]), "ERROR")
         XCTAssertEqual(severity(fqPath: ["kotlin", "uuid", "ExperimentalUuidApi"]), "ERROR")
         XCTAssertEqual(severity(fqPath: ["kotlin", "io", "encoding", "ExperimentalEncodingApi"]), "ERROR")
+        XCTAssertEqual(severity(fqPath: ["kotlin", "reflect", "ExperimentalAssociatedObjects"]), "ERROR")
         XCTAssertEqual(severity(fqPath: ["kotlin", "ExperimentalMultiplatform"]), "ERROR")
         XCTAssertEqual(severity(fqPath: ["kotlin", "ExperimentalSubclassOptIn"]), "WARNING")
     }
