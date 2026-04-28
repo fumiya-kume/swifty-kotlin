@@ -213,6 +213,115 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Math"
         ),
+        // STDLIB-MATH-006: max/min overload matrix.
+        RuntimeABIFunctionSpec(
+            name: "kk_math_max",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_max_float",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_max_int",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_max_long",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_max_uint",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_max_ulong",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_min",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_min_float",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_min_int",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_min_long",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_min_uint",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_min_ulong",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_math_PI",
             parameters: [],

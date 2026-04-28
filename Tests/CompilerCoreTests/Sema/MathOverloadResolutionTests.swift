@@ -383,6 +383,35 @@ final class MathOverloadResolutionTests: XCTestCase {
         XCTAssertEqual(link, "kk_math_hypot_float")
     }
 
+    // MARK: - min / max family (Double / Float / Int / Long / UInt / ULong)
+
+    func testMinMaxOverloadMatrix() throws {
+        let cases: [(name: String, type: String, expectedLink: String)] = [
+            ("max", "Double", "kk_math_max"),
+            ("max", "Float", "kk_math_max_float"),
+            ("max", "Int", "kk_math_max_int"),
+            ("max", "Long", "kk_math_max_long"),
+            ("max", "UInt", "kk_math_max_uint"),
+            ("max", "ULong", "kk_math_max_ulong"),
+            ("min", "Double", "kk_math_min"),
+            ("min", "Float", "kk_math_min_float"),
+            ("min", "Int", "kk_math_min_int"),
+            ("min", "Long", "kk_math_min_long"),
+            ("min", "UInt", "kk_math_min_uint"),
+            ("min", "ULong", "kk_math_min_ulong"),
+        ]
+
+        for testCase in cases {
+            let source = "fun f(a: \(testCase.type), b: \(testCase.type)): \(testCase.type) = \(testCase.name)(a, b)"
+            let link = try resolvedLink(forCall: testCase.name, withSource: source)
+            XCTAssertEqual(
+                link,
+                testCase.expectedLink,
+                "\(testCase.name)(\(testCase.type), \(testCase.type)) should resolve to \(testCase.expectedLink)"
+            )
+        }
+    }
+
     // MARK: - cbrt family (Double / Float)
 
     func testCbrtDoubleOverload() throws {

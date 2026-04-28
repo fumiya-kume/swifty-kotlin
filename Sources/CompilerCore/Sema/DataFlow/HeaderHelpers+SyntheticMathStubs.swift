@@ -565,6 +565,36 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // STDLIB-MATH-006: max/min overload matrix.
+        let minMaxOverloads: [(name: String, type: TypeID, linkName: String)] = [
+            ("max", types.doubleType, "kk_math_max"),
+            ("max", floatType, "kk_math_max_float"),
+            ("max", types.intType, "kk_math_max_int"),
+            ("max", types.longType, "kk_math_max_long"),
+            ("max", types.uintType, "kk_math_max_uint"),
+            ("max", types.ulongType, "kk_math_max_ulong"),
+            ("min", types.doubleType, "kk_math_min"),
+            ("min", floatType, "kk_math_min_float"),
+            ("min", types.intType, "kk_math_min_int"),
+            ("min", types.longType, "kk_math_min_long"),
+            ("min", types.uintType, "kk_math_min_uint"),
+            ("min", types.ulongType, "kk_math_min_ulong"),
+        ]
+        for overload in minMaxOverloads {
+            registerSyntheticMathTopLevelFunction(
+                named: overload.name,
+                packageFQName: kotlinMathPkg,
+                parameters: [
+                    (name: "a", type: overload.type),
+                    (name: "b", type: overload.type),
+                ],
+                returnType: overload.type,
+                externalLinkName: overload.linkName,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
         registerSyntheticMathTopLevelProperty(
             named: "PI",
             packageFQName: kotlinMathPkg,

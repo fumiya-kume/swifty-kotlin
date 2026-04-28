@@ -472,6 +472,108 @@ public func kk_math_hypot(_ x: Int, _ y: Int) -> Int {
     return kk_double_to_bits(hypot(rawX, rawY))
 }
 
+private func kotlinMathMaxDouble(_ a: Double, _ b: Double) -> Double {
+    if a.isNaN || b.isNaN { return Double.nan }
+    if a == 0.0 && b == 0.0 {
+        return a.sign == .minus && b.sign == .minus ? -Double.zero : Double.zero
+    }
+    return a >= b ? a : b
+}
+
+private func kotlinMathMinDouble(_ a: Double, _ b: Double) -> Double {
+    if a.isNaN || b.isNaN { return Double.nan }
+    if a == 0.0 && b == 0.0 {
+        return a.sign == .minus || b.sign == .minus ? -Double.zero : Double.zero
+    }
+    return a <= b ? a : b
+}
+
+private func kotlinMathMaxFloat(_ a: Float, _ b: Float) -> Float {
+    if a.isNaN || b.isNaN { return Float.nan }
+    if a == 0.0 && b == 0.0 {
+        return a.sign == .minus && b.sign == .minus ? -Float.zero : Float.zero
+    }
+    return a >= b ? a : b
+}
+
+private func kotlinMathMinFloat(_ a: Float, _ b: Float) -> Float {
+    if a.isNaN || b.isNaN { return Float.nan }
+    if a == 0.0 && b == 0.0 {
+        return a.sign == .minus || b.sign == .minus ? -Float.zero : Float.zero
+    }
+    return a <= b ? a : b
+}
+
+@inline(__always)
+private func runtimeUnsignedMax(_ a: Int, _ b: Int) -> Int {
+    UInt(bitPattern: a) >= UInt(bitPattern: b) ? a : b
+}
+
+@inline(__always)
+private func runtimeUnsignedMin(_ a: Int, _ b: Int) -> Int {
+    UInt(bitPattern: a) <= UInt(bitPattern: b) ? a : b
+}
+
+@_cdecl("kk_math_max")
+public func kk_math_max(_ a: Int, _ b: Int) -> Int {
+    kk_double_to_bits(kotlinMathMaxDouble(kk_bits_to_double(a), kk_bits_to_double(b)))
+}
+
+@_cdecl("kk_math_max_float")
+public func kk_math_max_float(_ a: Int, _ b: Int) -> Int {
+    kk_float_to_bits(kotlinMathMaxFloat(kk_bits_to_float(a), kk_bits_to_float(b)))
+}
+
+@_cdecl("kk_math_max_int")
+public func kk_math_max_int(_ a: Int, _ b: Int) -> Int {
+    Swift.max(a, b)
+}
+
+@_cdecl("kk_math_max_long")
+public func kk_math_max_long(_ a: Int, _ b: Int) -> Int {
+    Swift.max(a, b)
+}
+
+@_cdecl("kk_math_max_uint")
+public func kk_math_max_uint(_ a: Int, _ b: Int) -> Int {
+    runtimeUnsignedMax(a, b)
+}
+
+@_cdecl("kk_math_max_ulong")
+public func kk_math_max_ulong(_ a: Int, _ b: Int) -> Int {
+    runtimeUnsignedMax(a, b)
+}
+
+@_cdecl("kk_math_min")
+public func kk_math_min(_ a: Int, _ b: Int) -> Int {
+    kk_double_to_bits(kotlinMathMinDouble(kk_bits_to_double(a), kk_bits_to_double(b)))
+}
+
+@_cdecl("kk_math_min_float")
+public func kk_math_min_float(_ a: Int, _ b: Int) -> Int {
+    kk_float_to_bits(kotlinMathMinFloat(kk_bits_to_float(a), kk_bits_to_float(b)))
+}
+
+@_cdecl("kk_math_min_int")
+public func kk_math_min_int(_ a: Int, _ b: Int) -> Int {
+    Swift.min(a, b)
+}
+
+@_cdecl("kk_math_min_long")
+public func kk_math_min_long(_ a: Int, _ b: Int) -> Int {
+    Swift.min(a, b)
+}
+
+@_cdecl("kk_math_min_uint")
+public func kk_math_min_uint(_ a: Int, _ b: Int) -> Int {
+    runtimeUnsignedMin(a, b)
+}
+
+@_cdecl("kk_math_min_ulong")
+public func kk_math_min_ulong(_ a: Int, _ b: Int) -> Int {
+    runtimeUnsignedMin(a, b)
+}
+
 @_cdecl("kk_math_PI")
 public func kk_math_PI() -> Int {
     kk_double_to_bits(Double.pi)
