@@ -151,6 +151,22 @@ final class ContinuationSyntheticStubTests: XCTestCase {
         XCTAssertTrue(signatures.contains(where: { $0.parameterTypes.count == 2 && $0.typeParameterSymbols.count == 2 }))
     }
 
+    func testStartCoroutineNoReceiverOverloadIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let startCoroutineFQName = ["kotlin", "coroutines", "startCoroutine"].map { interner.intern($0) }
+        let startCoroutineSymbols = sema.symbols.lookupAll(fqName: startCoroutineFQName)
+        XCTAssertEqual(startCoroutineSymbols.count, 1)
+
+        let symbol = try XCTUnwrap(startCoroutineSymbols.first)
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbol))
+        XCTAssertEqual(sema.symbols.externalLinkName(for: symbol), nil)
+        XCTAssertNotNil(signature.receiverType)
+        XCTAssertEqual(signature.parameterTypes.count, 1)
+        XCTAssertEqual(signature.returnType, sema.types.unitType)
+        XCTAssertEqual(signature.typeParameterSymbols.count, 1)
+    }
+
     func testContinuationInterceptedResolvesInSource() throws {
         let source = """
         import kotlin.coroutines.Continuation
@@ -184,6 +200,40 @@ final class ContinuationSyntheticStubTests: XCTestCase {
                 sema.symbols.externalLinkName(for: chosenCallee),
                 "kk_continuation_intercepted"
             )
+        }
+    }
+
+    func testStartCoroutineNoReceiverResolvesInSource() throws {
+        let source = """
+        import kotlin.coroutines.Continuation
+        import kotlin.coroutines.startCoroutine
+
+        fun probe(block: suspend () -> Int, completion: Continuation<Int>) {
+            block.startCoroutine(completion)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "\(ctx.diagnostics.diagnostics)")
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, calleeName, _, _, _) = expr else {
+                    return false
+                }
+                return ctx.interner.resolve(calleeName) == "startCoroutine"
+            })
+            let chosenCallee = try XCTUnwrap(
+                sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                "Expected startCoroutine() to resolve"
+            )
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), nil)
+            XCTAssertEqual(sema.bindings.exprTypes[callExpr], sema.types.unitType)
         }
     }
 }
