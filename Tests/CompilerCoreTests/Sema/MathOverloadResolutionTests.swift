@@ -502,9 +502,9 @@ final class MathOverloadResolutionTests: XCTestCase {
         XCTAssertEqual(link, "kk_float_roundToLong")
     }
 
-    // MARK: - IEEE 754 rounding mode convenience helpers (Double / Float)
+    // MARK: - Unofficial rounding mode helpers
 
-    func testIEEERoundingModeDoubleOverloads() throws {
+    func testUnofficialRoundingModeHelpersAreNotResolvedFromKotlinMath() throws {
         let source = """
         fun f(x: Double): Double {
             val a = roundUp(x)
@@ -513,31 +513,17 @@ final class MathOverloadResolutionTests: XCTestCase {
             return a + b + c
         }
         """
-        let links = try resolvedLinkForFirstMatchingCall(
-            names: ["roundUp", "roundDown", "roundHalfEven"],
-            withSource: source
-        )
-        XCTAssertEqual(links["roundUp"], "kk_math_round_up")
-        XCTAssertEqual(links["roundDown"], "kk_math_round_down")
-        XCTAssertEqual(links["roundHalfEven"], "kk_math_round_half_even")
-    }
 
-    func testIEEERoundingModeFloatOverloads() throws {
-        let source = """
-        fun f(x: Float): Float {
-            val a = roundUp(x)
-            val b = roundDown(x)
-            val c = roundHalfEven(x)
-            return a + b + c
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(ctx.diagnostics.hasError)
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.contains { $0.code.hasPrefix("KSWIFTK-SEMA") },
+                "Expected sema diagnostics for unofficial rounding helpers"
+            )
         }
-        """
-        let links = try resolvedLinkForFirstMatchingCall(
-            names: ["roundUp", "roundDown", "roundHalfEven"],
-            withSource: source
-        )
-        XCTAssertEqual(links["roundUp"], "kk_math_round_up_float")
-        XCTAssertEqual(links["roundDown"], "kk_math_round_down_float")
-        XCTAssertEqual(links["roundHalfEven"], "kk_math_round_half_even_float")
     }
 
     // MARK: - Mixed-type overload disambiguation (Int vs Double vs Float in same scope)
