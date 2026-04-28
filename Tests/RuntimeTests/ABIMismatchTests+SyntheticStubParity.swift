@@ -53,6 +53,8 @@ extension ABIMismatchTests {
             "kk_array_of_nulls",
             // String radix conversion
             "kk_string_toIntOrNull_radix",
+            // Char locale case conversion
+            "kk_char_lowercase_locale",
             "kk_system_exitProcess",
             "kk_system_currentTimeMillis",
             "kk_system_nanoTime",
