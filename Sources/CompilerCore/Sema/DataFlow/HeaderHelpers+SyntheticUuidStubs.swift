@@ -1,7 +1,7 @@
 import Foundation
 
 /// Synthetic stdlib stubs for kotlin.uuid.Uuid.
-/// Registers the Uuid class, companion factory methods (random, parse, parseHex),
+/// Registers the Uuid class, companion factories/properties (random, parse, parseHex, NIL),
 /// and instance methods (toString, toHexString, toLongs, toByteArray).
 extension DataFlowSemaPhase {
     func registerSyntheticUuidStubs(
@@ -71,6 +71,18 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- Uuid.NIL companion constant ---
+        if let companionSymbol = symbols.lookup(fqName: companionFQName) {
+            registerUuidCompanionProperty(
+                named: "NIL",
+                externalLinkName: "kk_uuid_nil",
+                returnType: uuidType,
+                ownerSymbol: companionSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+        }
 
         // --- Instance methods ---
 
@@ -437,6 +449,40 @@ extension DataFlowSemaPhase {
             declSite: nil,
             visibility: .public,
             flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
+        symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
+        symbols.setPropertyType(returnType, for: propertySymbol)
+    }
+
+    private func registerUuidCompanionProperty(
+        named name: String,
+        externalLinkName: String,
+        returnType: TypeID,
+        ownerSymbol: SymbolID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else { return }
+        let propertyName = interner.intern(name)
+        let propertyFQName = ownerInfo.fqName + [propertyName]
+
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: {
+            symbols.symbol($0)?.kind == .property
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            symbols.setPropertyType(returnType, for: existing)
+            symbols.insertFlags([.synthetic, .static], for: existing)
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .static]
         )
         symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
         symbols.setExternalLinkName(externalLinkName, for: propertySymbol)

@@ -689,6 +689,7 @@ extension ABILoweringPass {
             interner.intern("kk_instant_is_distant_future"),
             interner.intern("kk_time_source_as_clock"),
             interner.intern("kk_uuid_random"),
+            interner.intern("kk_uuid_nil"),
             interner.intern("kk_uuid_toString"),
             interner.intern("kk_uuid_toHexString"),
             interner.intern("kk_uuid_toLongs"),

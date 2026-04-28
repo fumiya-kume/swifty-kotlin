@@ -374,7 +374,7 @@
 - [x] STDLIB-UUID-002: `kotlin.uuid` の sema / lowering を整える
 - [x] STDLIB-UUID-003: `kotlin.uuid` の runtime / canonical form / failure path を固定
 - [x] STDLIB-UUID-004: `Uuid.Companion.parseHex(hexString: String)` を追加する
-- [ ] STDLIB-UUID-005: `Uuid.Companion.NIL` constant を追加する
+- [x] STDLIB-UUID-005: `Uuid.Companion.NIL` constant を追加する
 - [ ] STDLIB-UUID-006: `@ExperimentalUuidApi` marker と opt-in diagnostics を追加する
 - [ ] STDLIB-UUID-007: `Uuid.Companion.parseHexDash(hexDashString: String)` を追加する
 - [ ] STDLIB-UUID-008: `Uuid.Companion.parseOrNull(uuidString: String)` を追加する

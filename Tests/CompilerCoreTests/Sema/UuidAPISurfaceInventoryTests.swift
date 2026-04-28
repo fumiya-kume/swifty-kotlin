@@ -20,7 +20,6 @@ import XCTest
 //        and the edge-case file added in PR #1221 (UUID-003).
 //
 // NOTE - known gaps detected during inventory:
-//   • Uuid.NIL is pending (STDLIB-UUID-005).
 //   • parseHexDash / parseOrNull / parseHexOrNull / parseHexDashOrNull are pending
 //     (STDLIB-UUID-007 through STDLIB-UUID-010).
 //   • SIZE_BITS / SIZE_BYTES and LEXICAL_ORDER are pending (STDLIB-UUID-011/012).
@@ -412,20 +411,38 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
         )
     }
 
-    // MARK: - 8. NIL constant — gap documentation
-    //
-    // STDLIB-UUID-002 gap: Uuid.NIL companion constant is not yet registered.
-    // The test asserts the current state so CI catches any unintended change.
+    // MARK: - 8. NIL constant
 
-    func testUuidNILCompanionConstantIsNotYetRegistered_Gap() throws {
+    func testUuidNILCompanionConstantIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let link = externalLink(
+            fqPath: ["kotlin", "uuid", "Uuid", "Companion", "NIL"],
+            sema: sema,
+            interner: interner
+        )
+        XCTAssertEqual(
+            link,
+            "kk_uuid_nil",
+            "Uuid.NIL companion constant must link to kk_uuid_nil"
+        )
+    }
+
+    func testUuidNILReturnTypeIsUuid() throws {
         let (sema, interner) = try makeSema()
         let fq = ["kotlin", "uuid", "Uuid", "Companion", "NIL"].map { interner.intern($0) }
-        let syms = sema.symbols.lookupAll(fqName: fq)
-        // TODO(STDLIB-UUID-005): When NIL is implemented, assert syms is non-empty.
-        XCTAssertTrue(
-            syms.isEmpty,
-            "Uuid.NIL constant is not yet registered (expected gap); found \(syms.count) symbols"
+        let nilSym = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: fq).first,
+            "Uuid.NIL must be registered"
         )
+        let propType = try XCTUnwrap(sema.symbols.propertyType(for: nilSym))
+        let uuidFQ = ["kotlin", "uuid", "Uuid"].map { interner.intern($0) }
+        let uuidSym = try XCTUnwrap(sema.symbols.lookup(fqName: uuidFQ))
+
+        guard case .classType(let ct) = sema.types.kind(of: propType) else {
+            XCTFail("Uuid.NIL property type must be a class type")
+            return
+        }
+        XCTAssertEqual(ct.classSymbol, uuidSym)
     }
 
     func testKnownPendingUuidCompanionMembersAreTrackedAsGaps() throws {
@@ -471,6 +488,7 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
         let companionFQ = ["kotlin", "uuid", "Uuid", "Companion"]
         let expectedCompanionLinks: Set<String> = [
             "kk_uuid_random",
+            "kk_uuid_nil",
             "kk_uuid_parse",
             "kk_uuid_parseHex",
             "kk_uuid_nameUUIDFromBytes",
@@ -478,7 +496,7 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
             "kk_uuid_fromByteArray",
         ]
         var foundLinks: Set<String> = []
-        for memberName in ["random", "parse", "parseHex", "nameUUIDFromBytes", "fromLongs", "fromByteArray"] {
+        for memberName in ["random", "NIL", "parse", "parseHex", "nameUUIDFromBytes", "fromLongs", "fromByteArray"] {
             let path = companionFQ + [memberName]
             let links = allExternalLinks(fqPath: path, sema: sema, interner: interner)
             foundLinks.formUnion(links)

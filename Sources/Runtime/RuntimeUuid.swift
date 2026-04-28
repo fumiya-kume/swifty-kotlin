@@ -109,6 +109,14 @@ public func kk_uuid_random() -> Int {
     return registerRuntimeObject(box)
 }
 
+// MARK: - Uuid.NIL
+
+@_cdecl("kk_uuid_nil")
+public func kk_uuid_nil() -> Int {
+    let box = RuntimeUuidBox(mostSignificantBits: 0, leastSignificantBits: 0)
+    return registerRuntimeObject(box)
+}
+
 private func kk_uuid_makeInvalidArgument(
     message: String,
     outThrown: UnsafeMutablePointer<Int>?

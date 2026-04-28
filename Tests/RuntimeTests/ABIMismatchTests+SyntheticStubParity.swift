@@ -63,6 +63,7 @@ extension ABIMismatchTests {
             "kk_system_measureNanoTime",
             // UUID
             "kk_uuid_random",
+            "kk_uuid_nil",
             "kk_uuid_parse",
             "kk_uuid_parseHex",
             "kk_uuid_toString",

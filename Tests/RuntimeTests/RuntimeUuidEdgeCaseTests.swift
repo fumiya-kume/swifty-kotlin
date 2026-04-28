@@ -119,6 +119,24 @@ final class RuntimeUuidEdgeCaseTests: XCTestCase {
                        "00000000000000000000000000000000")
     }
 
+    func testNilCompanionConstantAllZeros() {
+        let uuidRaw = kk_uuid_nil()
+
+        XCTAssertNotEqual(uuidRaw, 0)
+        XCTAssertEqual(
+            extractRuntimeString(kk_uuid_toString(uuidRaw)),
+            "00000000-0000-0000-0000-000000000000"
+        )
+        XCTAssertEqual(
+            extractRuntimeString(kk_uuid_toHexString(uuidRaw)),
+            "00000000000000000000000000000000"
+        )
+        XCTAssertEqual(kk_uuid_mostSignificantBits(uuidRaw), 0)
+        XCTAssertEqual(kk_uuid_leastSignificantBits(uuidRaw), 0)
+        XCTAssertEqual(kk_uuid_version(uuidRaw), 0)
+        XCTAssertEqual(kk_uuid_variant(uuidRaw), 0)
+    }
+
     // MARK: - MAX UUID (all Fs)
 
     func testMaxUuidAllFs() {
