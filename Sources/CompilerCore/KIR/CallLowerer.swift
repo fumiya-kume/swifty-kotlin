@@ -415,6 +415,51 @@ final class CallLowerer {
             return result
         }
 
+        // --- Context helper: context(with, block) (STDLIB-KOTLIN-ROOT-CTX-001) ---
+        if let scopeKind = sema.bindings.scopeFunctionKind(for: exprID),
+           scopeKind == .scopeContext,
+           args.count == 2
+        {
+            let boundType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+            _ = driver.lowerExpr(
+                args[0].expr,
+                ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            let loweredLambdaID = driver.lowerExpr(
+                args[1].expr,
+                ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+
+            let result = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: boundType
+            )
+            if let info = driver.ctx.callableValueInfo(for: loweredLambdaID) {
+                instructions.append(.call(
+                    symbol: info.symbol,
+                    callee: info.callee,
+                    arguments: info.captureArguments,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            } else {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("invoke"),
+                    arguments: [loweredLambdaID],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            }
+            return result
+        }
+
         // --- Scope function: top-level run(block) (STDLIB-401) ---
         if let scopeKind = sema.bindings.scopeFunctionKind(for: exprID),
            scopeKind == .scopeTopLevelRun,

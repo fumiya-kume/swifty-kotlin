@@ -1,0 +1,100 @@
+@testable import CompilerCore
+import Foundation
+import XCTest
+
+final class ContextHelperSyntheticStubTests: XCTestCase {
+    func testContextHelperIsRegisteredWithContextFunctionBlock() throws {
+        let (sema, interner) = try makeSema()
+        let contextSymbol = try XCTUnwrap(lookupSymbol(["kotlin", "context"], sema: sema, interner: interner))
+        let symbol = try XCTUnwrap(sema.symbols.symbol(contextSymbol))
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: contextSymbol))
+
+        XCTAssertTrue(symbol.flags.contains(.synthetic))
+        XCTAssertTrue(symbol.flags.contains(.inlineFunction))
+        XCTAssertEqual(signature.parameterTypes.count, 2)
+        XCTAssertEqual(signature.typeParameterSymbols.count, 2)
+        XCTAssertEqual(signature.returnType, typeParamType(signature.typeParameterSymbols[1], sema: sema))
+
+        let contextType = typeParamType(signature.typeParameterSymbols[0], sema: sema)
+        XCTAssertEqual(signature.parameterTypes[0], contextType)
+        guard case let .functionType(blockType) = sema.types.kind(of: signature.parameterTypes[1]) else {
+            XCTFail("context block parameter should be a function type")
+            return
+        }
+        XCTAssertEqual(blockType.contextReceivers, [contextType])
+        XCTAssertTrue(blockType.params.isEmpty)
+        XCTAssertEqual(blockType.returnType, signature.returnType)
+    }
+
+    func testContextHelperRequiresExperimentalContextParametersOptIn() {
+        let source = """
+        fun caller(): Int = context(1) { 2 }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-OPT-IN", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected context helper to require opt-in, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.first?.message.contains("ExperimentalContextParameters") == true)
+    }
+
+    func testContextHelperAcceptsOptInAndInfersBlockReturnType() throws {
+        let source = """
+        import kotlin.ExperimentalContextParameters
+
+        @OptIn(ExperimentalContextParameters::class)
+        fun caller(): String = context(1) { "ok" }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertTrue(
+            diagnostics(withCode: "KSWIFTK-SEMA-OPT-IN", in: ctx).isEmpty,
+            "Expected @OptIn to suppress context helper diagnostic, got: \(ctx.diagnostics.diagnostics)"
+        )
+        let sema = try XCTUnwrap(ctx.sema)
+        let interner = ctx.interner
+        let callerSymbol = try XCTUnwrap(lookupSymbol(["caller"], sema: sema, interner: interner))
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: callerSymbol))
+        XCTAssertEqual(signature.returnType, sema.types.stringType)
+    }
+
+    private func makeSema() throws -> (SemaModule, StringInterner) {
+        var result: (SemaModule, StringInterner)?
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let sema = try XCTUnwrap(ctx.sema)
+            result = (sema, ctx.interner)
+        }
+        return try XCTUnwrap(result)
+    }
+
+    private func runSemaCollectingDiagnostics(_ source: String) -> CompilationContext {
+        let fakePath = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".kt").path
+        let ctx = makeCompilationContext(inputs: [fakePath])
+        _ = ctx.sourceManager.addFile(path: fakePath, contents: Data(source.utf8))
+        do {
+            try runSema(ctx)
+        } catch {
+            // Error diagnostics are asserted by each test.
+        }
+        return ctx
+    }
+
+    private func lookupSymbol(
+        _ fqPath: [String],
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> SymbolID? {
+        sema.symbols.lookup(fqName: fqPath.map { interner.intern($0) })
+    }
+
+    private func diagnostics(withCode code: String, in ctx: CompilationContext) -> [Diagnostic] {
+        ctx.diagnostics.diagnostics.filter { $0.code == code }
+    }
+
+    private func typeParamType(_ symbol: SymbolID, sema: SemaModule) -> TypeID {
+        sema.types.make(.typeParam(TypeParamType(symbol: symbol, nullability: .nonNull)))
+    }
+}
