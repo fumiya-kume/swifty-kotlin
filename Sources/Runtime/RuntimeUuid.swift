@@ -307,6 +307,22 @@ public func kk_uuid_parseHexDash(_ stringRaw: Int, _ outThrown: UnsafeMutablePoi
     return kk_uuid_parseHexBody(hex, invalidMessage: invalidMessage, outThrown: outThrown)
 }
 
+// MARK: - Uuid.parseHexDashOrNull(hexDashString)
+
+@_cdecl("kk_uuid_parseHexDashOrNull")
+public func kk_uuid_parseHexDashOrNull(_ stringRaw: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: stringRaw),
+          let stringBox = tryCast(ptr, to: RuntimeStringBox.self)
+    else {
+        return runtimeNullSentinelInt
+    }
+
+    guard let hex = kk_uuid_hexFromHexDashString(stringBox.value) else {
+        return runtimeNullSentinelInt
+    }
+    return kk_uuid_parseHexBodyOrNull(hex)
+}
+
 // MARK: - Uuid.toString()
 
 @_cdecl("kk_uuid_toString")

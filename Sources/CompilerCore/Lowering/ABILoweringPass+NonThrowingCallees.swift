@@ -692,6 +692,7 @@ extension ABILoweringPass {
             interner.intern("kk_uuid_nil"),
             interner.intern("kk_uuid_parseOrNull"),
             interner.intern("kk_uuid_parseHexOrNull"),
+            interner.intern("kk_uuid_parseHexDashOrNull"),
             interner.intern("kk_uuid_toString"),
             interner.intern("kk_uuid_toHexString"),
             interner.intern("kk_uuid_toLongs"),
