@@ -65,8 +65,12 @@ extension ABIMismatchTests {
             "kk_system_measureNanoTime",
             // UUID
             "kk_uuid_parseHexOrNull",
+<<<<<<< HEAD
             "kk_uuid_parseHexDashOrNull",
             "kk_uuid_parseOrNull",
+=======
+            "kk_uuid_nil",
+>>>>>>> 2bb2983f1 (Add UUID NIL constant)
             "kk_instant_now",
             "kk_instant_from_epoch_millis",
             "kk_instant_epoch_seconds",

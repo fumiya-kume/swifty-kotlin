@@ -705,6 +705,7 @@ extension ABILoweringPass {
             interner.intern("kk_time_mark_minus_duration"),
             interner.intern("kk_time_mark_minus_mark"),
             interner.intern("kk_time_mark_compare"),
+            interner.intern("kk_uuid_nil"),
             interner.intern("kk_mutable_set_clear"),
             interner.intern("kk_mutable_set_addAll"),
             interner.intern("kk_mutable_set_removeAll"),

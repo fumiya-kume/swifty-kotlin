@@ -1,7 +1,11 @@
 import Foundation
 
 /// Synthetic stdlib stubs for kotlin.uuid.Uuid.
+<<<<<<< HEAD
 /// Registers the Uuid class, companion factory methods/properties (random, parse, parseOrNull, parseHexOrNull, parseHexDashOrNull, LEXICAL_ORDER, SIZE_BITS, SIZE_BYTES),
+=======
+/// Registers the Uuid class, companion factory methods/properties (random, parse, parseHexOrNull, NIL, LEXICAL_ORDER),
+>>>>>>> 2bb2983f1 (Add UUID NIL constant)
 /// and instance methods (toString, toHexString, toLongs, toByteArray).
 extension DataFlowSemaPhase {
     func registerSyntheticUuidStubs(
@@ -110,6 +114,14 @@ extension DataFlowSemaPhase {
         )
 
         if let companionSymbol = symbols.lookup(fqName: companionFQName) {
+            registerUuidCompanionProperty(
+                named: "NIL",
+                externalLinkName: "kk_uuid_nil",
+                returnType: uuidType,
+                ownerSymbol: companionSymbol,
+                symbols: symbols,
+                interner: interner
+            )
             registerUuidCompanionProperty(
                 named: "LEXICAL_ORDER",
                 externalLinkName: "kk_uuid_lexicalOrder",

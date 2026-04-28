@@ -15,7 +15,7 @@ import XCTest
 //   • Uuid.SIZE_BITS and Uuid.SIZE_BYTES resolve as const Int companion properties
 //   • toString vs toHexString dispatch is tracked as separate links
 //   • toByteArray() and toLongs() are present with their signatures
-//   • NIL constant (gap: see below)
+//   • Uuid.NIL constant resolves to kotlin.uuid.Uuid
 //   • @ExperimentalUuidApi opt-in marker: now synthesised (STDLIB-EXPERIMENTAL-ABI-001)
 //
 // Scope: sema / symbol-table level only.  Runtime correctness is in RuntimeUuidTests
@@ -24,7 +24,6 @@ import XCTest
 // NOTE — known gaps detected during inventory (UUID-002):
 //   • Uuid.parseHex(hex: String) overload is not yet registered by the sema layer.
 //     `allExternalLinks` for kotlin.uuid.Uuid.Companion.parseHex returns an empty set.
-//   • Uuid.NIL companion constant is not yet registered.
 //   • @ExperimentalUuidApi: resolved in STDLIB-EXPERIMENTAL-ABI-001 (PR #1282).
 
 final class UuidAPISurfaceInventoryTests: XCTestCase {
@@ -523,20 +522,38 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
         )
     }
 
-    // MARK: - 8. NIL constant — gap documentation
-    //
-    // STDLIB-UUID-002 gap: Uuid.NIL companion constant is not yet registered.
-    // The test asserts the current state so CI catches any unintended change.
+    // MARK: - 8. NIL constant
 
-    func testUuidNILCompanionConstantIsNotYetRegistered_Gap() throws {
+    func testUuidNILCompanionConstantIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let link = externalLink(
+            fqPath: ["kotlin", "uuid", "Uuid", "Companion", "NIL"],
+            sema: sema,
+            interner: interner
+        )
+        XCTAssertEqual(
+            link,
+            "kk_uuid_nil",
+            "Uuid.NIL companion constant must link to kk_uuid_nil"
+        )
+    }
+
+    func testUuidNILReturnTypeIsUuid() throws {
         let (sema, interner) = try makeSema()
         let fq = ["kotlin", "uuid", "Uuid", "Companion", "NIL"].map { interner.intern($0) }
-        let syms = sema.symbols.lookupAll(fqName: fq)
-        // TODO(STDLIB-UUID-002): When NIL is implemented, assert syms is non-empty.
-        XCTAssertTrue(
-            syms.isEmpty,
-            "Uuid.NIL constant is not yet registered (expected gap); found \(syms.count) symbols"
+        let nilSym = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: fq).first,
+            "Uuid.NIL must be registered"
         )
+        let propType = try XCTUnwrap(sema.symbols.propertyType(for: nilSym))
+        let uuidFQ = ["kotlin", "uuid", "Uuid"].map { interner.intern($0) }
+        let uuidSym = try XCTUnwrap(sema.symbols.lookup(fqName: uuidFQ))
+
+        guard case .classType(let ct) = sema.types.kind(of: propType) else {
+            XCTFail("Uuid.NIL property type must be a class type")
+            return
+        }
+        XCTAssertEqual(ct.classSymbol, uuidSym)
     }
 
     func testUuidLexicalOrderComparatorIsRegistered() throws {
@@ -704,6 +721,7 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
         let companionFQ = ["kotlin", "uuid", "Uuid", "Companion"]
         let expectedCompanionLinks: Set<String> = [
             "kk_uuid_random",
+            "kk_uuid_nil",
             "kk_uuid_lexicalOrder",
             "kk_uuid_parseHexDashOrNull",
             "kk_uuid_parse",
@@ -712,7 +730,11 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
             "kk_uuid_nameUUIDFromBytes",
         ]
         var foundLinks: Set<String> = []
+<<<<<<< HEAD
         for memberName in ["random", "LEXICAL_ORDER", "parse", "parseOrNull", "parseHexOrNull", "parseHexDashOrNull", "nameUUIDFromBytes"] {
+=======
+        for memberName in ["random", "NIL", "LEXICAL_ORDER", "parse", "parseHexOrNull", "nameUUIDFromBytes"] {
+>>>>>>> 2bb2983f1 (Add UUID NIL constant)
             let path = companionFQ + [memberName]
             let links = allExternalLinks(fqPath: path, sema: sema, interner: interner)
             foundLinks.formUnion(links)
