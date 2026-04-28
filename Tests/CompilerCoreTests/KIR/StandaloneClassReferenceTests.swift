@@ -125,6 +125,34 @@ final class StandaloneClassReferenceTests: XCTestCase {
         }
     }
 
+    func testFindAssociatedObjectLowersToRuntimeCall() throws {
+        let source = """
+        import kotlin.reflect.ExperimentalAssociatedObjects
+        import kotlin.reflect.findAssociatedObject
+
+        annotation class Binding
+        class Host
+
+        @OptIn(ExperimentalAssociatedObjects::class)
+        fun main() {
+            val associated = Host::class.findAssociatedObject<Binding>()
+            println(associated)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: body, interner: ctx.interner)
+            XCTAssertTrue(
+                callees.contains("kk_kclass_find_associated_object"),
+                "Expected findAssociatedObject to lower to kk_kclass_find_associated_object, got: \(callees)"
+            )
+        }
+    }
+
     // MARK: - REFL-002 Additional tests
 
     /// `this::class` inside a class method should emit `kk_kclass_create`.

@@ -145,6 +145,38 @@ final class RuntimeMetadataAPITests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(metadata.annotations.map(\.className), ["sample.Inject"])
     }
 
+    func testFindAssociatedObjectReturnsNullWhenNoRuntimeHandleIsRecorded() {
+        var classEntry = RuntimeKClassMetadataEntry(
+            qualifiedName: "sample.Host",
+            simpleName: "Host",
+            supertypeName: nil,
+            isDataClass: false,
+            isSealedClass: false,
+            isValueClass: false,
+            isInterface: false,
+            isObject: false,
+            isEnumClass: false,
+            isAnnotationClass: false,
+            isAbstract: false,
+            fieldCount: 0,
+            memberCount: 0,
+            constructorCount: 0,
+            isFinal: true,
+            isOpen: false,
+            visibility: "PUBLIC",
+            typeParameterCount: 0
+        )
+        classEntry.annotations = [
+            RuntimeAnnotationRecord(annotationFQName: "sample.Binding", arguments: ["value=sample.Associated::class"]),
+        ]
+        runtimeKClassMetadataRegistry.register(typeToken: 90210, entry: classEntry)
+
+        let kclassRaw = kk_kclass_create(90210, makeRuntimeString("Host"))
+        let result = kk_kclass_find_associated_object(kclassRaw, makeRuntimeString("Binding"))
+
+        XCTAssertEqual(result, runtimeNullSentinelInt)
+    }
+
     private func runtimeObject<T: AnyObject>(_ raw: Int, as type: T.Type) -> T? {
         guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
             return nil

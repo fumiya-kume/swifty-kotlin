@@ -37,6 +37,17 @@ extension DataFlowSemaPhase {
         let kotlinReflectPkg = ensurePackage(
             path: ["kotlin", "reflect"], symbols: symbols, interner: interner
         )
+        registerAssociatedObjectKeyAnnotation(
+            kotlinReflectPkg: kotlinReflectPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        registerFindAssociatedObjectFunction(
+            kotlinReflectPkg: kotlinReflectPkg,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
         let kPropertySymbol = ensureInterfaceSymbol(
             named: "KProperty", in: kotlinReflectPkg, symbols: symbols, interner: interner
         )
@@ -432,6 +443,104 @@ extension DataFlowSemaPhase {
             }
             symbols.setPropertyType(enumType, for: entrySymbol)
         }
+    }
+
+    private func registerAssociatedObjectKeyAnnotation(
+        kotlinReflectPkg: [InternedString],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let symbol = ensureAnnotationClassSymbol(
+            named: "AssociatedObjectKey", in: kotlinReflectPkg, symbols: symbols, interner: interner
+        )
+        let targetRecord = MetadataAnnotationRecord(
+            annotationFQName: "kotlin.annotation.Target",
+            arguments: ["AnnotationTarget.ANNOTATION_CLASS"]
+        )
+        let experimentalRecord = MetadataAnnotationRecord(
+            annotationFQName: "kotlin.reflect.ExperimentalAssociatedObjects"
+        )
+        let retentionRecord = MetadataAnnotationRecord(
+            annotationFQName: "kotlin.annotation.Retention",
+            arguments: ["AnnotationRetention.BINARY"]
+        )
+        var annotations = symbols.annotations(for: symbol)
+        for record in [experimentalRecord, retentionRecord, targetRecord] {
+            if !annotations.contains(record) {
+                annotations.append(record)
+            }
+        }
+        symbols.setAnnotations(annotations, for: symbol)
+    }
+
+    private func registerFindAssociatedObjectFunction(
+        kotlinReflectPkg: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern("findAssociatedObject")
+        let functionFQName = kotlinReflectPkg + [functionName]
+        guard symbols.lookupAll(fqName: functionFQName).isEmpty else { return }
+
+        let typeParamName = interner.intern("T")
+        let typeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: functionFQName + [typeParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.reifiedTypeParameter]
+        )
+
+        let annotationType: TypeID
+        if let annotationSymbol = types.annotationInterfaceSymbol {
+            annotationType = types.make(.classType(ClassType(
+                classSymbol: annotationSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+        } else if let annotationSymbol = symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Annotation")]) {
+            annotationType = types.make(.classType(ClassType(
+                classSymbol: annotationSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+        } else {
+            annotationType = types.anyType
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .inlineFunction]
+        )
+        if let pkg = symbols.lookup(fqName: kotlinReflectPkg), pkg != .invalid {
+            symbols.setParentSymbol(pkg, for: functionSymbol)
+        }
+        symbols.setParentSymbol(functionSymbol, for: typeParamSymbol)
+        symbols.setExternalLinkName("kk_kclass_find_associated_object", for: functionSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: types.makeKClassType(argument: types.anyType),
+                parameterTypes: [],
+                returnType: types.makeNullable(types.anyType),
+                isSuspend: false,
+                canThrow: false,
+                typeParameterSymbols: [typeParamSymbol],
+                reifiedTypeParameterIndices: [0],
+                typeParameterUpperBoundsList: [[annotationType]],
+                classTypeParameterCount: 0
+            ),
+            for: functionSymbol
+        )
+        symbols.setAnnotations(
+            [MetadataAnnotationRecord(annotationFQName: "kotlin.reflect.ExperimentalAssociatedObjects")],
+            for: functionSymbol
+        )
     }
 
     /// Updates the `parameters` property type of `KFunction` to `List<Any?>` once the
