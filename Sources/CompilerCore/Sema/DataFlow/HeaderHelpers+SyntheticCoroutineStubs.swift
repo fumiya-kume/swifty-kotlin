@@ -50,6 +50,19 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let restrictsSuspensionSymbol = ensureAnnotationClassSymbol(
+            named: "RestrictsSuspension",
+            in: kotlinCoroutinesPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinCoroutinesPkgSymbol = symbols.lookup(fqName: kotlinCoroutinesPkg) {
+            symbols.setParentSymbol(kotlinCoroutinesPkgSymbol, for: restrictsSuspensionSymbol)
+        }
+        attachRestrictsSuspensionAnnotationMetadata(
+            to: restrictsSuspensionSymbol,
+            symbols: symbols
+        )
         let channelsPkg = ensureSyntheticPackage(
             coroutinesPkg + [interner.intern("channels")],
             symbols: symbols,
@@ -2779,5 +2792,20 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+    }
+
+    private func attachRestrictsSuspensionAnnotationMetadata(
+        to symbol: SymbolID,
+        symbols: SymbolTable
+    ) {
+        let targetRecord = MetadataAnnotationRecord(
+            annotationFQName: "kotlin.annotation.Target",
+            arguments: ["AnnotationTarget.CLASS"]
+        )
+        var annotations = symbols.annotations(for: symbol)
+        if !annotations.contains(targetRecord) {
+            annotations.append(targetRecord)
+        }
+        symbols.setAnnotations(annotations, for: symbol)
     }
 }
