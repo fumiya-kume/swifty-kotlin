@@ -12,6 +12,15 @@ final class MathOverloadResolutionTests: XCTestCase {
 
     // MARK: - Helpers
 
+    /// Kotlin does not default-import `kotlin.math`; tests must opt in explicitly.
+    private func withKotlinMathImport(_ source: String) -> String {
+        let trimmed = source.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.hasPrefix("import kotlin.math") {
+            return source
+        }
+        return "import kotlin.math.*\n\n" + source
+    }
+
     private func resolvedLink(
         forCall callName: String,
         withSource source: String,
@@ -19,7 +28,7 @@ final class MathOverloadResolutionTests: XCTestCase {
         line: UInt = #line
     ) throws -> String? {
         var result: String? = nil
-        try withTemporaryFile(contents: source) { path in
+        try withTemporaryFile(contents: withKotlinMathImport(source)) { path in
             let ctx = makeCompilationContext(inputs: [path])
             try runSema(ctx)
             XCTAssertFalse(ctx.diagnostics.hasError, "Unexpected sema error for '\(callName)'", file: file, line: line)
@@ -48,7 +57,7 @@ final class MathOverloadResolutionTests: XCTestCase {
         line: UInt = #line
     ) throws -> [String: String] {
         var results: [String: String] = [:]
-        try withTemporaryFile(contents: source) { path in
+        try withTemporaryFile(contents: withKotlinMathImport(source)) { path in
             let ctx = makeCompilationContext(inputs: [path])
             try runSema(ctx)
             XCTAssertFalse(ctx.diagnostics.hasError, "Unexpected sema error", file: file, line: line)
@@ -484,7 +493,7 @@ final class MathOverloadResolutionTests: XCTestCase {
         }
         """
         var results: [(String, Int)] = []
-        try withTemporaryFile(contents: source) { path in
+        try withTemporaryFile(contents: withKotlinMathImport(source)) { path in
             let ctx = makeCompilationContext(inputs: [path])
             try runSema(ctx)
             XCTAssertFalse(ctx.diagnostics.hasError)
@@ -519,7 +528,7 @@ final class MathOverloadResolutionTests: XCTestCase {
         }
         """
         var links: [String] = []
-        try withTemporaryFile(contents: source) { path in
+        try withTemporaryFile(contents: withKotlinMathImport(source)) { path in
             let ctx = makeCompilationContext(inputs: [path])
             try runSema(ctx)
             XCTAssertFalse(ctx.diagnostics.hasError)

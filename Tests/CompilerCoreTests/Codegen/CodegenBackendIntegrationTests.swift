@@ -223,6 +223,8 @@ final class CodegenBackendIntegrationTests: XCTestCase {
 
     func testCodegenCompilesMathTopLevelCalls() throws {
         let source = """
+        import kotlin.math.*
+
         fun main() {
             println(abs(-5))
             println(abs(-5.0))

@@ -99,8 +99,10 @@ final class MathSyntheticTopLevelLinkTests: XCTestCase {
         }
     }
 
-    func testMathTopLevelCallsResolveViaDefaultImport() throws {
+    func testMathTopLevelCallsResolveWithKotlinMathImport() throws {
         let source = """
+        import kotlin.math.*
+
         fun sample(x: Int, y: Double): Double {
             val ai = abs(-x)
             val ad = abs(y)
@@ -167,8 +169,10 @@ final class MathSyntheticTopLevelLinkTests: XCTestCase {
         }
     }
 
-    func testFloatingPrecisionHelpersResolveViaDefaultImport() throws {
+    func testFloatingPrecisionHelpersResolveWithKotlinMathImport() throws {
         let source = """
+        import kotlin.math.*
+
         fun sample(x: Double, y: Float) {
             val a = ulp(x)
             val b = nextUp(x)
@@ -245,8 +249,10 @@ final class MathSyntheticTopLevelLinkTests: XCTestCase {
         }
     }
 
-    func testMathExtensionPropertiesResolveViaDefaultImport() throws {
+    func testMathExtensionPropertiesResolveWithKotlinMathImport() throws {
         let source = """
+        import kotlin.math.*
+
         fun sample(i: Int, l: Long, f: Float, d: Double) {
             val ai = i.absoluteValue
             val al = l.absoluteValue

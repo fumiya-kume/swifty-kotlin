@@ -10,6 +10,43 @@ extension CallTypeChecker {
         symbols.lookupByShortName(interner.intern(name)).first
     }
 
+    /// Receiver check for the scope fallback that restores synthetic extensions excluded from import scopes.
+    /// Aligns with `Helpers.collectMemberFunctionCandidates`: require `actual <: declared` when possible,
+    /// but keep generics such as `Continuation<T>.intercepted` where `isSubtype(Continuation<Int>, Continuation<T>)`
+    /// is not decided until inference (mirrors the `rangeUntil`/`genericReceiver` escape hatch there).
+    private func extensionSyntheticFallbackReceiverMatches(
+        callSiteReceiver: TypeID,
+        declaredReceiver: TypeID,
+        sema: SemaModule
+    ) -> Bool {
+        let actual = sema.types.makeNonNullable(callSiteReceiver)
+        let declared = sema.types.makeNonNullable(declaredReceiver)
+        if sema.types.isSubtype(actual, declared) {
+            return true
+        }
+        if case .typeParam = sema.types.kind(of: declared) {
+            return true
+        }
+        if case let .classType(declaredCt) = sema.types.kind(of: declared),
+           case let .classType(actualCt) = sema.types.kind(of: actual),
+           actualCt.classSymbol == declaredCt.classSymbol,
+           declaredCt.args.contains(where: { arg in
+               switch arg {
+               case let .invariant(t), let .out(t), let .in(t):
+                   if case .typeParam = sema.types.kind(of: sema.types.makeNonNullable(t)) {
+                       return true
+                   }
+                   return false
+               case .star:
+                   return false
+               }
+           })
+        {
+            return true
+        }
+        return false
+    }
+
     private func tryBuiltinFlowMemberCall(
         _ id: ExprID,
         calleeName: InternedString,
@@ -4708,11 +4745,17 @@ extension CallTypeChecker {
                 if !innerCtorCandidates.isEmpty {
                     allCandidates = innerCtorCandidates
                 } else {
+                    let nonNullReceiverForScope = sema.types.makeNonNullable(memberLookupType)
                     var scopeCandidates = ctx.cachedScopeLookup(calleeName).filter { candidate in
                         guard let symbol = ctx.cachedSymbol(candidate),
                               symbol.kind == .function,
                               let signature = sema.symbols.functionSignature(for: candidate) else { return false }
-                        guard signature.receiverType != nil else { return false }
+                        guard let recv = signature.receiverType else { return false }
+                        guard extensionSyntheticFallbackReceiverMatches(
+                            callSiteReceiver: nonNullReceiverForScope,
+                            declaredReceiver: recv,
+                            sema: sema
+                        ) else { return false }
                         if isSuperCall, !supertypeSymbols.isEmpty {
                             return sema.symbols.parentSymbol(for: candidate).map { supertypeSymbols.contains($0) } ?? false
                         }
@@ -4731,7 +4774,11 @@ extension CallTypeChecker {
                                   let signature = sema.symbols.functionSignature(for: candidate),
                                   let recvType = signature.receiverType
                             else { return false }
-                            return sema.types.isSubtype(nonNullReceiver, recvType)
+                            return extensionSyntheticFallbackReceiverMatches(
+                                callSiteReceiver: nonNullReceiver,
+                                declaredReceiver: recvType,
+                                sema: sema
+                            )
                         }
                     }
                     allCandidates = scopeCandidates

@@ -149,6 +149,10 @@ extension NativeEmitter {
         var currentBlock = entryBlock
         var values: [Int32: LLVMCAPIBindings.LLVMValueRef] = [:]
         var externalFunctions: [String: LLVMFunction] = [:]
+        let maxKIRArgumentCountByExternalCallee = Self.maxKIRArgumentCountByExternalCallee(
+            body: function.body,
+            interner: interner
+        )
         var generatedStringLiteralCount: Int32 = 0
         let builderState = EmissionBuilderState(builder: builder, int64Type: int64Type, zeroValue: zeroValue, context: context, module: llvmModule)
 
@@ -219,7 +223,9 @@ extension NativeEmitter {
             if let existing = externalFunctions[effectiveName] {
                 return existing
             }
-            var callParameterTypes = Array(repeating: int64Type, count: argumentCount)
+            let maxArgsSeenInBody = maxKIRArgumentCountByExternalCallee[effectiveName] ?? 0
+            let effectiveArgumentCount = max(argumentCount, maxArgsSeenInBody)
+            var callParameterTypes = Array(repeating: int64Type, count: effectiveArgumentCount)
             if appendThrownChannel {
                 callParameterTypes.append(outThrownPointerType)
             }
@@ -1378,6 +1384,42 @@ extension NativeEmitter {
         if !bindings.hasTerminator(currentBlock) {
             emitFramePop("ret_fallthrough")
             _ = bindings.buildRet(builder, value: zeroValue)
+        }
+    }
+
+    /// Maximum KIR argument count per external callee name within a function body.
+    /// Declarations are keyed only by name; if the first emitted call is arity-0 bootstrap noise
+    /// (e.g. synthetic kotlin.math loads) and a later call passes arguments, LLVM must still
+    /// declare the symbol with the maximum arity seen for declareExternalFunction.
+    fileprivate static func maxKIRArgumentCountByExternalCallee(
+        body: [KIRInstruction],
+        interner: StringInterner
+    ) -> [String: Int] {
+        var maxCount: [String: Int] = [:]
+        for instruction in body {
+            switch instruction {
+            case let .call(_, callee, arguments, _, _, _, _, _):
+                let raw = interner.resolve(callee)
+                guard !raw.isEmpty else { continue }
+                let effective = effectiveExternalCalleeNameForArity(raw, argumentCount: arguments.count)
+                maxCount[effective, default: 0] = max(maxCount[effective, default: 0], arguments.count)
+            case let .virtualCall(_, callee, _, arguments, _, _, _, _):
+                let name = interner.resolve(callee)
+                guard !name.isEmpty else { continue }
+                let receiverPlusArgs = 1 + arguments.count
+                maxCount[name, default: 0] = max(maxCount[name, default: 0], receiverPlusArgs)
+            default:
+                break
+            }
+        }
+        return maxCount
+    }
+
+    private static func effectiveExternalCalleeNameForArity(_ calleeName: String, argumentCount: Int) -> String {
+        if calleeName == "length", argumentCount == 1 {
+            "kk_string_length"
+        } else {
+            calleeName
         }
     }
 }
