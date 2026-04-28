@@ -207,6 +207,17 @@ public func kk_time_source_monotonic_mark_now(_ receiver: Int) -> Int {
     kk_time_source_mark_now(receiver)
 }
 
+@_cdecl("kk_time_source_as_clock")
+public func kk_time_source_as_clock(_ sourceRaw: Int, _ originRaw: Int) -> Int {
+    guard let origin = runtimeKotlinInstantBox(from: originRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_time_source_as_clock received invalid Instant handle")
+    }
+    return registerRuntimeObject(RuntimeTimeSourceClockBox(
+        origin: origin,
+        baseUptimeNanoseconds: runtimeMonotonicNowNanoseconds()
+    ))
+}
+
 @_cdecl("kk_time_mark_elapsed_now")
 public func kk_time_mark_elapsed_now(_ markRaw: Int) -> Int {
     guard let mark = runtimeTimeMarkBox(from: markRaw) else {
