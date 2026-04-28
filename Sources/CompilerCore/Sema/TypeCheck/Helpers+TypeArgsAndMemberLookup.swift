@@ -304,6 +304,55 @@ extension TypeCheckHelpers {
         var keyOrder: [MemberDispatchKey] = []
         var seenCandidates: Set<SymbolID> = []
 
+        func dispatchParameterTypes(
+            for signature: FunctionSignature,
+            owner: SymbolID
+        ) -> [TypeID] {
+            let nonNullReceiver = sema.types.makeNonNullable(receiverType)
+            guard case let .classType(classType) = sema.types.kind(of: nonNullReceiver),
+                  sema.types.isNominalSubtypeSymbol(classType.classSymbol, of: owner),
+                  let ownerTypeArgs = sema.types.liftedNominalSupertypeArgs(
+                      from: classType.classSymbol,
+                      childArgs: classType.args,
+                      to: owner
+                  )
+            else {
+                return signature.parameterTypes
+            }
+
+            let ownerTypeParamSymbols = sema.types.nominalTypeParameterSymbols(for: owner)
+            guard !ownerTypeParamSymbols.isEmpty else {
+                return signature.parameterTypes
+            }
+
+            let typeVarBySymbol = sema.types.makeTypeVarBySymbol(ownerTypeParamSymbols)
+            var substitution: [TypeVarID: TypeID] = [:]
+            for (index, typeParamSymbol) in ownerTypeParamSymbols.enumerated() {
+                guard index < ownerTypeArgs.count,
+                      let typeVar = typeVarBySymbol[typeParamSymbol]
+                else {
+                    continue
+                }
+                switch ownerTypeArgs[index] {
+                case let .invariant(inner), let .out(inner), let .in(inner):
+                    substitution[typeVar] = inner
+                case .star:
+                    substitution[typeVar] = sema.types.nullableAnyType
+                }
+            }
+
+            guard !substitution.isEmpty else {
+                return signature.parameterTypes
+            }
+            return signature.parameterTypes.map {
+                sema.types.substituteTypeParameters(
+                    in: $0,
+                    substitution: substitution,
+                    typeVarBySymbol: typeVarBySymbol
+                )
+            }
+        }
+
         func appendCandidates(
             owner: SymbolID,
             ownerFQName: [InternedString],
@@ -338,7 +387,7 @@ extension TypeCheckHelpers {
                 }
                 let key = MemberDispatchKey(
                     name: calleeName,
-                    parameterTypes: signature.parameterTypes,
+                    parameterTypes: dispatchParameterTypes(for: signature, owner: owner),
                     isSuspend: signature.isSuspend
                 )
                 if candidatesByKey[key] == nil {
