@@ -11,6 +11,7 @@ import XCTest
 //     the correct ABI external-link names
 //   • overload resolution between Uuid.parse and Uuid.parseHex (gap: see below)
 //   • Uuid.random() return type resolves to kotlin.uuid.Uuid
+//   • Uuid.LEXICAL_ORDER resolves to Comparator<Uuid>
 //   • toString vs toHexString dispatch is tracked as separate links
 //   • toByteArray() and toLongs() are present with their signatures
 //   • NIL constant (gap: see below)
@@ -391,6 +392,47 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
         )
     }
 
+    func testUuidLexicalOrderComparatorIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fq = ["kotlin", "uuid", "Uuid", "Companion", "LEXICAL_ORDER"].map { interner.intern($0) }
+        let lexicalOrderSym = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: fq).first(where: { sema.symbols.symbol($0)?.kind == .property }),
+            "Uuid.LEXICAL_ORDER must be registered as a companion property"
+        )
+
+        XCTAssertEqual(
+            sema.symbols.externalLinkName(for: lexicalOrderSym),
+            "kk_uuid_lexicalOrder",
+            "Uuid.LEXICAL_ORDER must link to the UUID lexical comparator runtime"
+        )
+
+        let propType = try XCTUnwrap(sema.symbols.propertyType(for: lexicalOrderSym))
+        guard case .classType(let comparatorType) = sema.types.kind(of: propType) else {
+            XCTFail("Uuid.LEXICAL_ORDER type must be kotlin.Comparator<Uuid>")
+            return
+        }
+
+        let comparatorSym = try XCTUnwrap(
+            sema.symbols.lookup(fqName: ["kotlin", "Comparator"].map { interner.intern($0) })
+        )
+        let uuidSym = try XCTUnwrap(
+            sema.symbols.lookup(fqName: ["kotlin", "uuid", "Uuid"].map { interner.intern($0) })
+        )
+
+        XCTAssertEqual(comparatorType.classSymbol, comparatorSym)
+        guard let firstArg = comparatorType.args.first,
+              case .invariant(let uuidType) = firstArg
+        else {
+            XCTFail("Uuid.LEXICAL_ORDER Comparator type must carry invariant Uuid argument")
+            return
+        }
+        guard case .classType(let uuidClassType) = sema.types.kind(of: uuidType) else {
+            XCTFail("Uuid.LEXICAL_ORDER Comparator argument must be Uuid")
+            return
+        }
+        XCTAssertEqual(uuidClassType.classSymbol, uuidSym)
+    }
+
     // MARK: - 9. @ExperimentalUuidApi opt-in annotation — now synthesised (STDLIB-EXPERIMENTAL-ABI-001)
     //
     // STDLIB-UUID-002 gap: resolved. @ExperimentalUuidApi annotation marker is now synthesised.
@@ -412,11 +454,12 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
         let companionFQ = ["kotlin", "uuid", "Uuid", "Companion"]
         let expectedCompanionLinks: Set<String> = [
             "kk_uuid_random",
+            "kk_uuid_lexicalOrder",
             "kk_uuid_parse",
             "kk_uuid_nameUUIDFromBytes",
         ]
         var foundLinks: Set<String> = []
-        for memberName in ["random", "parse", "nameUUIDFromBytes"] {
+        for memberName in ["random", "LEXICAL_ORDER", "parse", "nameUUIDFromBytes"] {
             let path = companionFQ + [memberName]
             let links = allExternalLinks(fqPath: path, sema: sema, interner: interner)
             foundLinks.formUnion(links)

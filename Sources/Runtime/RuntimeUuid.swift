@@ -68,6 +68,34 @@ final class RuntimeUuidBox {
     }
 }
 
+private final class RuntimeUuidLexicalOrderComparatorBox {}
+
+private let kkUuidLexicalOrderComparator: RuntimeCollectionLambda2 = { _, lhsRaw, rhsRaw, outThrown in
+    guard let lhs = runtimeUuidBox(from: lhsRaw),
+          let rhs = runtimeUuidBox(from: rhsRaw)
+    else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IllegalArgumentException: Uuid.LEXICAL_ORDER.compare expected Uuid arguments"
+        )
+        return 0
+    }
+    return runtimeCompareUuidLexically(lhs, rhs)
+}
+
+private func runtimeCompareUuidLexically(_ lhs: RuntimeUuidBox, _ rhs: RuntimeUuidBox) -> Int {
+    let lhsMsb = UInt64(bitPattern: lhs.mostSignificantBits)
+    let rhsMsb = UInt64(bitPattern: rhs.mostSignificantBits)
+    if lhsMsb != rhsMsb {
+        return lhsMsb < rhsMsb ? -1 : 1
+    }
+    let lhsLsb = UInt64(bitPattern: lhs.leastSignificantBits)
+    let rhsLsb = UInt64(bitPattern: rhs.leastSignificantBits)
+    if lhsLsb != rhsLsb {
+        return lhsLsb < rhsLsb ? -1 : 1
+    }
+    return 0
+}
+
 /// Extract a RuntimeUuidBox from a raw receiver value.
 private func runtimeUuidBox(from rawValue: Int) -> RuntimeUuidBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
@@ -107,6 +135,20 @@ public func kk_uuid_random() -> Int {
 
     let box = RuntimeUuidBox(mostSignificantBits: msb, leastSignificantBits: lsb)
     return registerRuntimeObject(box)
+}
+
+// MARK: - Uuid.LEXICAL_ORDER
+
+@_cdecl("kk_uuid_lexicalOrder")
+public func kk_uuid_lexicalOrder() -> Int {
+    let raw = registerRuntimeObject(RuntimeUuidLexicalOrderComparatorBox())
+    _ = kk_object_register_itable_method(
+        raw,
+        0,
+        0,
+        unsafeBitCast(kkUuidLexicalOrderComparator, to: Int.self)
+    )
+    return raw
 }
 
 // MARK: - Uuid.parse(string)
