@@ -13,6 +13,7 @@ final class NativeConcurrentAPISurfaceInventoryTests: XCTestCase {
     private static let implementedTopLevelEntries: Set<TopLevelEntry> = [
         TopLevelEntry(name: "AtomicReference", kind: .class, todo: nil),
         TopLevelEntry(name: "DetachedObjectGraph", kind: .class, todo: nil),
+        TopLevelEntry(name: "FreezingException", kind: .class, todo: nil),
         TopLevelEntry(name: "Future", kind: .class, todo: nil),
         TopLevelEntry(name: "FutureState", kind: .enumClass, todo: nil),
         TopLevelEntry(name: "SharedImmutable", kind: .annotationClass, todo: nil),
@@ -30,7 +31,6 @@ final class NativeConcurrentAPISurfaceInventoryTests: XCTestCase {
         TopLevelEntry(name: "Continuation1", kind: .class, todo: "STDLIB-NATIVE-CONCURRENT-010"),
         TopLevelEntry(name: "Continuation2", kind: .class, todo: "STDLIB-NATIVE-CONCURRENT-010"),
         TopLevelEntry(name: "FreezableAtomicReference", kind: .class, todo: "STDLIB-NATIVE-CONCURRENT-016"),
-        TopLevelEntry(name: "FreezingException", kind: .class, todo: "STDLIB-NATIVE-CONCURRENT-005"),
         TopLevelEntry(name: "InvalidMutabilityException", kind: .class, todo: "STDLIB-NATIVE-CONCURRENT-006"),
         TopLevelEntry(name: "MutableData", kind: .class, todo: "STDLIB-NATIVE-CONCURRENT-017"),
         TopLevelEntry(name: "ObsoleteWorkersApi", kind: .annotationClass, todo: "STDLIB-NATIVE-CONCURRENT-018"),
@@ -65,8 +65,8 @@ final class NativeConcurrentAPISurfaceInventoryTests: XCTestCase {
 
         XCTAssertEqual(targetEntries.count, targetNames.count)
         XCTAssertEqual(targetEntries.count, 31)
-        XCTAssertEqual(Self.implementedTopLevelEntries.count, 9)
-        XCTAssertEqual(Self.knownGapTopLevelEntries.count, 22)
+        XCTAssertEqual(Self.implementedTopLevelEntries.count, 10)
+        XCTAssertEqual(Self.knownGapTopLevelEntries.count, 21)
     }
 
     func testImplementedTopLevelEntriesAreRegistered() throws {
@@ -121,7 +121,6 @@ final class NativeConcurrentAPISurfaceInventoryTests: XCTestCase {
         XCTAssertEqual(
             todos,
             [
-                "STDLIB-NATIVE-CONCURRENT-005",
                 "STDLIB-NATIVE-CONCURRENT-006",
                 "STDLIB-NATIVE-CONCURRENT-007",
                 "STDLIB-NATIVE-CONCURRENT-008",
