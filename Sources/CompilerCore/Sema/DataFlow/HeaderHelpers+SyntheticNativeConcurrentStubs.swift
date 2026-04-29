@@ -6,6 +6,7 @@ import Foundation
 ///   - `DetachedObjectGraph<T>` class with constructors, `asCPointer`, and `attach`
 ///   - `FreezingException` class with native constructor surface
 ///   - `InvalidMutabilityException` class with native constructor surface
+///   - `WorkerBoundReference<T>` class with constructor and read-only properties
 ///   - `Worker` class with `execute`, `requestTermination`, `isTerminated`, `name` members
 ///   - `Future<T>` class with `result`, `consume`, `getState` members and `FutureState` enum
 ///   - `AtomicReference<T>` (legacy alias in `kotlin.native.concurrent`)
@@ -98,6 +99,15 @@ extension DataFlowSemaPhase {
             packageFQName: nativeConcurrentPkg,
             pkgSymbol: nativeConcurrentPkgSymbol,
             transferModeType: transferModeType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        // WorkerBoundReference<T> class
+        registerNativeConcurrentWorkerBoundReference(
+            packageFQName: nativeConcurrentPkg,
+            pkgSymbol: nativeConcurrentPkgSymbol,
             symbols: symbols,
             types: types,
             interner: interner
@@ -572,6 +582,105 @@ extension DataFlowSemaPhase {
             name: "name",
             propertyType: types.stringType,
             getterLinkName: "kk_worker_name",
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    // MARK: - WorkerBoundReference<T>
+
+    private func registerNativeConcurrentWorkerBoundReference(
+        packageFQName: [InternedString],
+        pkgSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let referenceName = interner.intern("WorkerBoundReference")
+        let referenceFQName = packageFQName + [referenceName]
+        let referenceSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: referenceFQName), symbols.symbol(existing)?.kind == .class {
+            referenceSymbol = existing
+        } else {
+            referenceSymbol = symbols.define(
+                kind: .class,
+                name: referenceName,
+                fqName: referenceFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        if let pkgSymbol {
+            symbols.setParentSymbol(pkgSymbol, for: referenceSymbol)
+        }
+
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = referenceFQName + [typeParamName]
+        let typeParamSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: typeParamFQName) {
+            typeParamSymbol = existing
+        } else {
+            typeParamSymbol = symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        symbols.setTypeParameterUpperBounds([types.anyType], for: typeParamSymbol)
+
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let referenceType = types.make(.classType(ClassType(
+            classSymbol: referenceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: referenceSymbol)
+        types.setNominalTypeParameterVariances([.out], for: referenceSymbol)
+        symbols.setPropertyType(referenceType, for: referenceSymbol)
+
+        registerNativeConcurrentConstructor(
+            ownerSymbol: referenceSymbol,
+            ownerType: referenceType,
+            parameters: [(name: "value", type: typeParamType)],
+            defaultValues: [false],
+            typeParameterSymbols: [typeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+        registerNativeConcurrentReadOnlyProperty(
+            ownerSymbol: referenceSymbol,
+            name: "value",
+            propertyType: typeParamType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerNativeConcurrentReadOnlyProperty(
+            ownerSymbol: referenceSymbol,
+            name: "valueOrNull",
+            propertyType: types.makeNullable(typeParamType),
+            symbols: symbols,
+            interner: interner
+        )
+
+        let workerType = nativeConcurrentClassType(
+            packagePath: ["kotlin", "native", "concurrent"],
+            name: "Worker",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerNativeConcurrentReadOnlyProperty(
+            ownerSymbol: referenceSymbol,
+            name: "worker",
+            propertyType: workerType,
             symbols: symbols,
             interner: interner
         )
@@ -1085,7 +1194,7 @@ extension DataFlowSemaPhase {
         ownerSymbol: SymbolID,
         name: String,
         propertyType: TypeID,
-        getterLinkName: String,
+        getterLinkName: String? = nil,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -1104,7 +1213,9 @@ extension DataFlowSemaPhase {
         )
         symbols.setParentSymbol(ownerSymbol, for: propSymbol)
         symbols.setPropertyType(propertyType, for: propSymbol)
-        symbols.setExternalLinkName(getterLinkName, for: propSymbol)
+        if let getterLinkName {
+            symbols.setExternalLinkName(getterLinkName, for: propSymbol)
+        }
     }
 
     private func appendNativeConcurrentAnnotationMetadata(

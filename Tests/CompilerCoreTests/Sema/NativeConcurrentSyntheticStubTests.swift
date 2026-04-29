@@ -511,6 +511,90 @@ final class NativeConcurrentSyntheticStubTests: XCTestCase {
         XCTAssertEqual(sema.symbols.externalLinkName(for: method), "kk_worker_new")
     }
 
+    // MARK: - WorkerBoundReference<T> class
+
+    func testWorkerBoundReferenceClassIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let reference = try symbol(
+            ["kotlin", "native", "concurrent", "WorkerBoundReference"],
+            sema: sema,
+            interner: interner
+        )
+        let typeParameters = sema.types.nominalTypeParameterSymbols(for: reference)
+
+        XCTAssertEqual(sema.symbols.symbol(reference)?.kind, .class)
+        XCTAssertEqual(typeParameters.count, 1)
+        XCTAssertEqual(sema.types.nominalTypeParameterVariances(for: reference), [.out])
+        XCTAssertEqual(
+            sema.symbols.typeParameterUpperBounds(for: try XCTUnwrap(typeParameters.first)),
+            [sema.types.anyType]
+        )
+    }
+
+    func testWorkerBoundReferenceConstructorIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let referenceFQName = ["kotlin", "native", "concurrent", "WorkerBoundReference"]
+            .map { interner.intern($0) }
+        let reference = try XCTUnwrap(sema.symbols.lookup(fqName: referenceFQName))
+        let typeParameter = try XCTUnwrap(sema.types.nominalTypeParameterSymbols(for: reference).first)
+        let typeParameterType = sema.types.make(.typeParam(TypeParamType(
+            symbol: typeParameter,
+            nullability: .nonNull
+        )))
+        let referenceType = sema.types.make(.classType(ClassType(
+            classSymbol: reference,
+            args: [.out(typeParameterType)],
+            nullability: .nonNull
+        )))
+
+        let constructors = sema.symbols.lookupAll(fqName: referenceFQName + [interner.intern("<init>")])
+        let constructor = try XCTUnwrap(constructors.first { candidate in
+            guard let signature = sema.symbols.functionSignature(for: candidate) else {
+                return false
+            }
+            return signature.parameterTypes == [typeParameterType]
+                && signature.returnType == referenceType
+        })
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: constructor))
+
+        XCTAssertEqual(sema.symbols.symbol(constructor)?.kind, .constructor)
+        XCTAssertEqual(signature.valueParameterHasDefaultValues, [false])
+        XCTAssertEqual(signature.typeParameterSymbols, [typeParameter])
+        XCTAssertEqual(signature.classTypeParameterCount, 1)
+        XCTAssertNil(sema.symbols.externalLinkName(for: constructor))
+    }
+
+    func testWorkerBoundReferencePropertiesAreRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let referenceFQName = ["kotlin", "native", "concurrent", "WorkerBoundReference"]
+            .map { interner.intern($0) }
+        let reference = try XCTUnwrap(sema.symbols.lookup(fqName: referenceFQName))
+        let typeParameter = try XCTUnwrap(sema.types.nominalTypeParameterSymbols(for: reference).first)
+        let typeParameterType = sema.types.make(.typeParam(TypeParamType(
+            symbol: typeParameter,
+            nullability: .nonNull
+        )))
+        let nullableTypeParameterType = sema.types.makeNullable(typeParameterType)
+        let workerType = try classType(
+            ["kotlin", "native", "concurrent", "Worker"],
+            sema: sema,
+            interner: interner
+        )
+
+        let value = try XCTUnwrap(sema.symbols.lookup(fqName: referenceFQName + [interner.intern("value")]))
+        let valueOrNull = try XCTUnwrap(
+            sema.symbols.lookup(fqName: referenceFQName + [interner.intern("valueOrNull")])
+        )
+        let worker = try XCTUnwrap(sema.symbols.lookup(fqName: referenceFQName + [interner.intern("worker")]))
+
+        XCTAssertEqual(sema.symbols.propertyType(for: value), typeParameterType)
+        XCTAssertEqual(sema.symbols.propertyType(for: valueOrNull), nullableTypeParameterType)
+        XCTAssertEqual(sema.symbols.propertyType(for: worker), workerType)
+        XCTAssertNil(sema.symbols.externalLinkName(for: value))
+        XCTAssertNil(sema.symbols.externalLinkName(for: valueOrNull))
+        XCTAssertNil(sema.symbols.externalLinkName(for: worker))
+    }
+
     // MARK: - Future<T> class
 
     func testFutureClassIsRegistered() throws {
