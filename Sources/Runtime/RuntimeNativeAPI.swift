@@ -126,6 +126,50 @@ public func kk_native_byteArray_getLongAt(_ arrayRaw: Int, _ index: Int) -> Int 
     return Int(Int64(bitPattern: value))
 }
 
+@_cdecl("kk_native_byteArray_getUByteAt")
+public func kk_native_byteArray_getUByteAt(_ arrayRaw: Int, _ index: Int) -> Int {
+    let value = runtimeNativeByteArrayLoadUnsigned(
+        arrayRaw,
+        index,
+        byteCount: 1,
+        functionName: "kk_native_byteArray_getUByteAt"
+    )
+    return Int(UInt8(truncatingIfNeeded: value))
+}
+
+@_cdecl("kk_native_byteArray_getUShortAt")
+public func kk_native_byteArray_getUShortAt(_ arrayRaw: Int, _ index: Int) -> Int {
+    let value = runtimeNativeByteArrayLoadUnsigned(
+        arrayRaw,
+        index,
+        byteCount: 2,
+        functionName: "kk_native_byteArray_getUShortAt"
+    )
+    return Int(UInt16(truncatingIfNeeded: value))
+}
+
+@_cdecl("kk_native_byteArray_getUIntAt")
+public func kk_native_byteArray_getUIntAt(_ arrayRaw: Int, _ index: Int) -> Int {
+    let value = runtimeNativeByteArrayLoadUnsigned(
+        arrayRaw,
+        index,
+        byteCount: 4,
+        functionName: "kk_native_byteArray_getUIntAt"
+    )
+    return Int(UInt32(truncatingIfNeeded: value))
+}
+
+@_cdecl("kk_native_byteArray_getULongAt")
+public func kk_native_byteArray_getULongAt(_ arrayRaw: Int, _ index: Int) -> Int {
+    let value = runtimeNativeByteArrayLoadUnsigned(
+        arrayRaw,
+        index,
+        byteCount: 8,
+        functionName: "kk_native_byteArray_getULongAt"
+    )
+    return Int(bitPattern: UInt(truncatingIfNeeded: value))
+}
+
 // MARK: - nativeHeap / nativeMemory allocation
 
 /// Tracks allocations made through `nativeHeap.alloc` / `nativeMemory`.

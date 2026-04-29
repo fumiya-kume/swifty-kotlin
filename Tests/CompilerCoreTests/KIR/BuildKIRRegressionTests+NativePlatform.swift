@@ -82,4 +82,48 @@ extension BuildKIRRegressionTests {
         XCTAssertTrue(callees.contains(interner.intern("kk_native_byteArray_getIntAt")))
         XCTAssertTrue(callees.contains(interner.intern("kk_native_byteArray_getLongAt")))
     }
+
+    func testNativeUnsignedByteArrayAccessorsLowerToRuntimeCallees() throws {
+        let source = """
+        @file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)
+        @file:OptIn(kotlin.ExperimentalUnsignedTypes::class)
+
+        import kotlin.native.getUByteAt
+        import kotlin.native.getUShortAt
+        import kotlin.native.getUIntAt
+        import kotlin.native.getULongAt
+
+        fun probe(bytes: ByteArray) {
+            bytes.getUByteAt(0)
+            bytes.getUShortAt(1)
+            bytes.getUIntAt(2)
+            bytes.getULongAt(0)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "probe", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: body, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_native_byteArray_getUByteAt"))
+            XCTAssertTrue(callees.contains("kk_native_byteArray_getUShortAt"))
+            XCTAssertTrue(callees.contains("kk_native_byteArray_getUIntAt"))
+            XCTAssertTrue(callees.contains("kk_native_byteArray_getULongAt"))
+        }
+    }
+
+    func testABILoweringMarksNativeUnsignedByteArrayAccessorsAsNonThrowing() {
+        let pass = ABILoweringPass()
+        let interner = StringInterner()
+        let callees = pass.nonThrowingCallees(interner: interner)
+
+        XCTAssertTrue(callees.contains(interner.intern("kk_native_byteArray_getUByteAt")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_native_byteArray_getUShortAt")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_native_byteArray_getUIntAt")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_native_byteArray_getULongAt")))
+    }
 }

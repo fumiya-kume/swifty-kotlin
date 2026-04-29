@@ -395,7 +395,7 @@
 - [x] STDLIB-NATIVE-PLATFORM-011: `Vector128` type と `vectorOf(...)` factory を追加する
 - [x] STDLIB-NATIVE-PLATFORM-012: Native `Any.asCPointer()` / `Any.asUCPointer()` を追加する
 - [x] STDLIB-NATIVE-PLATFORM-013: Native pointer `getByteAt` / `getShortAt` / `getIntAt` / `getLongAt` accessors を追加する
-- [ ] STDLIB-NATIVE-PLATFORM-014: Native pointer `getUByteAt` / `getUShortAt` / `getUIntAt` / `getULongAt` accessors を追加する
+- [x] STDLIB-NATIVE-PLATFORM-014: Native pointer `getUByteAt` / `getUShortAt` / `getUIntAt` / `getULongAt` accessors を追加する
 - [ ] STDLIB-NATIVE-PLATFORM-015: Native pointer `getCharAt` / `getFloatAt` / `getDoubleAt` accessors を追加する
 - [ ] STDLIB-NATIVE-PLATFORM-016: Native pointer `setByteAt` / `setShortAt` / `setIntAt` / `setLongAt` accessors を追加する
 - [ ] STDLIB-NATIVE-PLATFORM-017: Native pointer `setUByteAt` / `setUShortAt` / `setUIntAt` / `setULongAt` accessors を追加する

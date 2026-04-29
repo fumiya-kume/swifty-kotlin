@@ -948,11 +948,15 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        let accessors: [(name: String, returnType: TypeID, externalLinkName: String)] = [
-            ("getByteAt", types.intType, "kk_native_byteArray_getByteAt"),
-            ("getShortAt", types.intType, "kk_native_byteArray_getShortAt"),
-            ("getIntAt", types.intType, "kk_native_byteArray_getIntAt"),
-            ("getLongAt", types.longType, "kk_native_byteArray_getLongAt"),
+        let accessors: [(name: String, returnType: TypeID, externalLinkName: String, annotations: [MetadataAnnotationRecord])] = [
+            ("getByteAt", types.intType, "kk_native_byteArray_getByteAt", experimentalNativeApiAnnotations()),
+            ("getShortAt", types.intType, "kk_native_byteArray_getShortAt", experimentalNativeApiAnnotations()),
+            ("getIntAt", types.intType, "kk_native_byteArray_getIntAt", experimentalNativeApiAnnotations()),
+            ("getLongAt", types.longType, "kk_native_byteArray_getLongAt", experimentalNativeApiAnnotations()),
+            ("getUByteAt", types.ubyteType, "kk_native_byteArray_getUByteAt", experimentalNativeUnsignedApiAnnotations()),
+            ("getUShortAt", types.ushortType, "kk_native_byteArray_getUShortAt", experimentalNativeUnsignedApiAnnotations()),
+            ("getUIntAt", types.uintType, "kk_native_byteArray_getUIntAt", experimentalNativeUnsignedApiAnnotations()),
+            ("getULongAt", types.ulongType, "kk_native_byteArray_getULongAt", experimentalNativeUnsignedApiAnnotations()),
         ]
         for accessor in accessors {
             registerSyntheticNativeTopLevelFunction(
@@ -961,7 +965,7 @@ extension DataFlowSemaPhase {
                 receiverType: byteArrayType,
                 parameters: [(name: "index", type: types.intType)],
                 returnType: accessor.returnType,
-                annotations: experimentalNativeApiAnnotations(),
+                annotations: accessor.annotations,
                 externalLinkName: accessor.externalLinkName,
                 symbols: symbols,
                 interner: interner
@@ -1481,6 +1485,11 @@ extension DataFlowSemaPhase {
 
     private func experimentalNativeApiAnnotations() -> [MetadataAnnotationRecord] {
         [MetadataAnnotationRecord(annotationFQName: "kotlin.experimental.ExperimentalNativeApi")]
+    }
+
+    private func experimentalNativeUnsignedApiAnnotations() -> [MetadataAnnotationRecord] {
+        experimentalNativeApiAnnotations()
+            + [MetadataAnnotationRecord(annotationFQName: "kotlin.ExperimentalUnsignedTypes")]
     }
 
     private func appendDeprecatedImmutableBlobAnnotations(to symbol: SymbolID, symbols: SymbolTable) {
