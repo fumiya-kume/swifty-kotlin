@@ -11,6 +11,7 @@ import Foundation
 ///   - `WorkerBoundReference<T>` class with constructor and read-only properties
 ///   - `atomicLazy` top-level function
 ///   - `ensureNeverFrozen` top-level extension
+///   - `freeze` top-level extension and `isFrozen` extension property
 ///   - `waitForMultipleFutures` top-level and collection-extension functions
 ///   - `waitWorkerTermination(worker)` top-level function
 ///   - `withWorker(name, errorReporting, block)` top-level function
@@ -151,6 +152,14 @@ extension DataFlowSemaPhase {
 
         // Any.ensureNeverFrozen(): Unit
         registerNativeConcurrentEnsureNeverFrozen(
+            packageFQName: nativeConcurrentPkg,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        // T.freeze(): T and Any?.isFrozen
+        registerNativeConcurrentFreezeAndIsFrozen(
             packageFQName: nativeConcurrentPkg,
             symbols: symbols,
             types: types,
@@ -1248,6 +1257,72 @@ extension DataFlowSemaPhase {
                 valueParameterIsVararg: []
             ),
             for: functionSymbol
+        )
+    }
+
+    // MARK: - freeze / isFrozen
+
+    private func registerNativeConcurrentFreezeAndIsFrozen(
+        packageFQName: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let freezeName = interner.intern("freeze")
+        let freezeFQName = packageFQName + [freezeName]
+        let typeParameterName = interner.intern("T")
+        let typeParameterFQName = freezeFQName + [typeParameterName]
+        let typeParameterSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: typeParameterFQName) {
+            typeParameterSymbol = existing
+        } else {
+            typeParameterSymbol = symbols.define(
+                kind: .typeParameter,
+                name: typeParameterName,
+                fqName: typeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+        }
+        symbols.setTypeParameterUpperBounds([types.anyType], for: typeParameterSymbol)
+        let typeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: typeParameterSymbol,
+            nullability: .nonNull
+        )))
+
+        registerNativeConcurrentPackageFunction(
+            named: "freeze",
+            packageFQName: packageFQName,
+            receiverType: typeParameterType,
+            returnType: typeParameterType,
+            parameters: [],
+            typeParameterSymbols: [typeParameterSymbol],
+            annotations: [
+                nativeConcurrentDeprecatedErrorAnnotation(
+                    message: "Support for the legacy memory manager has been completely removed. Usages of this function can be safely dropped.",
+                    replaceWith: "this"
+                ),
+            ],
+            externalLinkName: "kk_freeze_object",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerNativeConcurrentPackageExtensionProperty(
+            named: "isFrozen",
+            packageFQName: packageFQName,
+            receiverType: types.nullableAnyType,
+            returnType: types.booleanType,
+            annotations: [
+                nativeConcurrentDeprecatedErrorAnnotation(
+                    message: "Support for the legacy memory manager has been completely removed. Consequently, this property is always `false`.",
+                    replaceWith: "false"
+                ),
+            ],
+            externalLinkName: "kk_is_frozen",
+            symbols: symbols,
+            interner: interner
         )
     }
 
@@ -2842,19 +2917,24 @@ extension DataFlowSemaPhase {
         defaultValues: [Bool]? = nil,
         typeParameterSymbols: [SymbolID],
         annotations: [MetadataAnnotationRecord] = [],
+        externalLinkName: String? = nil,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
         let functionName = interner.intern(name)
         let functionFQName = packageFQName + [functionName]
         let parameterTypes = parameters.map(\.type)
-        guard symbols.lookupAll(fqName: functionFQName).first(where: { id in
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { id in
             guard let signature = symbols.functionSignature(for: id) else { return false }
             return signature.receiverType == receiverType
                 && signature.parameterTypes == parameterTypes
                 && signature.returnType == returnType
                 && signature.typeParameterSymbols == typeParameterSymbols
-        }) == nil else {
+        }) {
+            if let externalLinkName {
+                symbols.setExternalLinkName(externalLinkName, for: existing)
+            }
+            appendNativeConcurrentMetadataAnnotations(annotations, to: existing, symbols: symbols)
             return
         }
 
@@ -2888,6 +2968,9 @@ extension DataFlowSemaPhase {
             symbols.setParentSymbol(functionSymbol, for: typeParameterSymbol)
         }
         appendNativeConcurrentMetadataAnnotations(annotations, to: functionSymbol, symbols: symbols)
+        if let externalLinkName {
+            symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+        }
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: receiverType,
@@ -2903,6 +2986,86 @@ extension DataFlowSemaPhase {
             ),
             for: functionSymbol
         )
+    }
+
+    private func registerNativeConcurrentPackageExtensionProperty(
+        named name: String,
+        packageFQName: [InternedString],
+        receiverType: TypeID,
+        returnType: TypeID,
+        annotations: [MetadataAnnotationRecord] = [],
+        externalLinkName: String? = nil,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let propertyName = interner.intern(name)
+        let propertyFQName = packageFQName + [propertyName]
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { id in
+            symbols.symbol(id)?.kind == .property
+                && symbols.extensionPropertyReceiverType(for: id) == receiverType
+        }) {
+            symbols.setPropertyType(returnType, for: existing)
+            appendNativeConcurrentMetadataAnnotations(annotations, to: existing, symbols: symbols)
+            if let externalLinkName {
+                symbols.setExternalLinkName(externalLinkName, for: existing)
+            }
+            if let getterSymbol = symbols.extensionPropertyGetterAccessor(for: existing) {
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [],
+                        returnType: returnType
+                    ),
+                    for: getterSymbol
+                )
+                appendNativeConcurrentMetadataAnnotations(annotations, to: getterSymbol, symbols: symbols)
+                if let externalLinkName {
+                    symbols.setExternalLinkName(externalLinkName, for: getterSymbol)
+                }
+            }
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: propertySymbol)
+        }
+        symbols.setPropertyType(returnType, for: propertySymbol)
+        symbols.setExtensionPropertyReceiverType(receiverType, for: propertySymbol)
+        appendNativeConcurrentMetadataAnnotations(annotations, to: propertySymbol, symbols: symbols)
+        if let externalLinkName {
+            symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
+        }
+
+        let getterSymbol = symbols.define(
+            kind: .function,
+            name: interner.intern("get"),
+            fqName: propertyFQName + [interner.intern("$get")],
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(propertySymbol, for: getterSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: returnType
+            ),
+            for: getterSymbol
+        )
+        appendNativeConcurrentMetadataAnnotations(annotations, to: getterSymbol, symbols: symbols)
+        if let externalLinkName {
+            symbols.setExternalLinkName(externalLinkName, for: getterSymbol)
+        }
+        symbols.setExtensionPropertyGetterAccessor(getterSymbol, for: propertySymbol)
     }
 
     private func nativeConcurrentLazyType(
