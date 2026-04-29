@@ -19,6 +19,7 @@ import Foundation
 ///   - `AtomicInt`, `AtomicLong`, and `AtomicNativePtr` legacy classes
 ///   - `FreezableAtomicReference<T>`
 ///   - `MutableData`
+///   - `@ObsoleteWorkersApi` marker annotation
 ///   - `AtomicReference<T>` (legacy alias in `kotlin.native.concurrent`)
 ///   - `TransferMode` enum with `SAFE` and `UNSAFE` entries
 ///   - `@SharedImmutable` annotation (PROPERTY target)
@@ -224,6 +225,46 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             types: types,
             interner: interner
+        )
+
+        // @ObsoleteWorkersApi marker annotation
+        let obsoleteWorkersApiSymbol = ensureAnnotationClassSymbol(
+            named: "ObsoleteWorkersApi",
+            in: nativeConcurrentPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let nativeConcurrentPkgSymbol {
+            symbols.setParentSymbol(nativeConcurrentPkgSymbol, for: obsoleteWorkersApiSymbol)
+        }
+        appendNativeConcurrentMetadataAnnotations(
+            [
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.RequiresOptIn",
+                    arguments: [
+                        "message = \"Workers API is obsolete and will be replaced with threads eventually\"",
+                        "level = RequiresOptIn.Level.WARNING",
+                    ]
+                ),
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.annotation.Target",
+                    arguments: [
+                        "AnnotationTarget.CLASS",
+                        "AnnotationTarget.ANNOTATION_CLASS",
+                        "AnnotationTarget.PROPERTY",
+                        "AnnotationTarget.FIELD",
+                        "AnnotationTarget.LOCAL_VARIABLE",
+                        "AnnotationTarget.VALUE_PARAMETER",
+                        "AnnotationTarget.CONSTRUCTOR",
+                        "AnnotationTarget.FUNCTION",
+                        "AnnotationTarget.PROPERTY_GETTER",
+                        "AnnotationTarget.PROPERTY_SETTER",
+                        "AnnotationTarget.TYPEALIAS",
+                    ]
+                ),
+            ],
+            to: obsoleteWorkersApiSymbol,
+            symbols: symbols
         )
 
         // @SharedImmutable annotation
