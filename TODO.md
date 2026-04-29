@@ -420,7 +420,7 @@
 - [x] STDLIB-NATIVE-CONCURRENT-015: legacy `kotlin.native.concurrent.AtomicInt` / `AtomicLong` / `AtomicNativePtr` surface を追加する
 - [x] STDLIB-NATIVE-CONCURRENT-016: `FreezableAtomicReference<T>` surface を追加する
 - [x] STDLIB-NATIVE-CONCURRENT-017: `MutableData` surface を追加する
-- [ ] STDLIB-NATIVE-CONCURRENT-018: `ObsoleteWorkersApi` marker を追加する
+- [x] STDLIB-NATIVE-CONCURRENT-018: `ObsoleteWorkersApi` marker を追加する
 - [ ] STDLIB-NATIVE-CONCURRENT-019: `Any?.isFrozen` / `<T>.freeze()` surface を追加する
 - [ ] STDLIB-EXPERIMENTAL-001: `kotlin.experimental` の marker 一覧を固定
 - [ ] STDLIB-EXPERIMENTAL-002: `kotlin.experimental` の opt-in / diagnostics を整える
