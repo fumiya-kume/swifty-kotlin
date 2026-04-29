@@ -422,7 +422,7 @@
 - [x] STDLIB-NATIVE-CONCURRENT-017: `MutableData` surface を追加する
 - [x] STDLIB-NATIVE-CONCURRENT-018: `ObsoleteWorkersApi` marker を追加する
 - [x] STDLIB-NATIVE-CONCURRENT-019: `Any?.isFrozen` / `<T>.freeze()` surface を追加する
-- [ ] STDLIB-EXPERIMENTAL-001: `kotlin.experimental` の marker 一覧を固定
+- [x] STDLIB-EXPERIMENTAL-001: `kotlin.experimental` の marker 一覧を固定
 - [ ] STDLIB-EXPERIMENTAL-002: `kotlin.experimental` の opt-in / diagnostics を整える
 - [ ] STDLIB-EXPERIMENTAL-003: `kotlin.experimental.ExpectRefinement` annotation を追加し、expect declaration metadata へ露出する
 
