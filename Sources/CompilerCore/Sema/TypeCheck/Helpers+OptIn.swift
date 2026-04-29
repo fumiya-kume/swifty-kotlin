@@ -214,12 +214,26 @@ extension TypeCheckHelpers {
             ) else {
                 continue
             }
-            guard let requirement = optInRequirement(forMarkerAnnotation: annotationSymbol, ctx: ctx),
-                  seenMarkers.insert(requirement.markerSymbol).inserted
-            else {
-                continue
+
+            if let requirement = optInRequirement(forMarkerAnnotation: annotationSymbol, ctx: ctx),
+               seenMarkers.insert(requirement.markerSymbol).inserted
+            {
+                requirements.append(requirement)
             }
-            requirements.append(requirement)
+
+            for metaAnnotation in ctx.sema.symbols.annotations(for: annotationSymbol) {
+                guard let metaAnnotationSymbol = resolveAnnotationClassSymbol(
+                    named: metaAnnotation.annotationFQName,
+                    file: sourceFile,
+                    ctx: ctx
+                ),
+                let requirement = optInRequirement(forMarkerAnnotation: metaAnnotationSymbol, ctx: ctx),
+                seenMarkers.insert(requirement.markerSymbol).inserted
+                else {
+                    continue
+                }
+                requirements.append(requirement)
+            }
         }
 
         return requirements
