@@ -1351,6 +1351,99 @@ final class NativeConcurrentSyntheticStubTests: XCTestCase {
         }
     }
 
+    // MARK: - FreezableAtomicReference<T>
+
+    func testFreezableAtomicReferenceSurfaceIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let ownerPath = ["kotlin", "native", "concurrent", "FreezableAtomicReference"]
+        let ownerSymbol = try symbol(ownerPath, sema: sema, interner: interner)
+        let typeParameter = try XCTUnwrap(sema.types.nominalTypeParameterSymbols(for: ownerSymbol).first)
+        let typeParameterType = sema.types.make(.typeParam(TypeParamType(
+            symbol: typeParameter,
+            nullability: .nonNull
+        )))
+        let ownerType = sema.types.make(.classType(ClassType(
+            classSymbol: ownerSymbol,
+            args: [.invariant(typeParameterType)],
+            nullability: .nonNull
+        )))
+
+        XCTAssertEqual(sema.symbols.symbol(ownerSymbol)?.kind, .class)
+        XCTAssertEqual(sema.types.nominalTypeParameterSymbols(for: ownerSymbol).count, 1)
+        XCTAssertTrue(
+            sema.symbols.annotations(for: ownerSymbol).contains {
+                $0.annotationFQName == "kotlin.Deprecated"
+                    && $0.arguments.contains("level = DeprecationLevel.ERROR")
+            },
+            "FreezableAtomicReference must carry Deprecated(ERROR) metadata"
+        )
+
+        let constructors = sema.symbols.lookupAll(fqName: (ownerPath + ["<init>"]).map { interner.intern($0) })
+        let constructor = try XCTUnwrap(constructors.first { candidate in
+            guard let signature = sema.symbols.functionSignature(for: candidate) else {
+                return false
+            }
+            return signature.parameterTypes == [typeParameterType] && signature.returnType == ownerType
+        }, "Expected FreezableAtomicReference(value: T)")
+        let constructorSignature = try XCTUnwrap(sema.symbols.functionSignature(for: constructor))
+        XCTAssertEqual(sema.symbols.externalLinkName(for: constructor), "kk_freezable_atomic_ref_create")
+        XCTAssertEqual(constructorSignature.valueParameterHasDefaultValues, [false])
+        XCTAssertEqual(constructorSignature.typeParameterSymbols, [typeParameter])
+        XCTAssertEqual(constructorSignature.classTypeParameterCount, 1)
+
+        try assertMutableProperty(
+            ownerPath: ownerPath,
+            named: "value",
+            type: typeParameterType,
+            sema: sema,
+            interner: interner
+        )
+        let valueProperty = try symbol(ownerPath + ["value"], sema: sema, interner: interner)
+        XCTAssertEqual(sema.symbols.externalLinkName(for: valueProperty), "kk_freezable_atomic_ref_load")
+
+        let members: [(String, [TypeID], TypeID, String?)] = [
+            (
+                "compareAndSet",
+                [typeParameterType, typeParameterType],
+                sema.types.booleanType,
+                "kk_freezable_atomic_ref_compareAndSet"
+            ),
+            (
+                "compareAndSwap",
+                [typeParameterType, typeParameterType],
+                typeParameterType,
+                "kk_freezable_atomic_ref_compareAndSwap"
+            ),
+        ]
+        for (name, parameters, returnType, linkName) in members {
+            let candidates = sema.symbols.lookupAll(fqName: (ownerPath + [name]).map { interner.intern($0) })
+            let member = try XCTUnwrap(candidates.first { candidate in
+                guard let signature = sema.symbols.functionSignature(for: candidate) else {
+                    return false
+                }
+                return signature.receiverType == ownerType
+                    && signature.parameterTypes == parameters
+                    && signature.returnType == returnType
+                    && signature.typeParameterSymbols == [typeParameter]
+                    && signature.classTypeParameterCount == 1
+            }, "Expected FreezableAtomicReference.\(name)")
+            if let linkName {
+                XCTAssertEqual(sema.symbols.externalLinkName(for: member), linkName)
+            }
+        }
+
+        let toStringCandidates = sema.symbols.lookupAll(fqName: (ownerPath + ["toString"]).map { interner.intern($0) })
+        let toString = try XCTUnwrap(toStringCandidates.first { candidate in
+            guard let signature = sema.symbols.functionSignature(for: candidate) else {
+                return false
+            }
+            return signature.receiverType == ownerType
+                && signature.parameterTypes == []
+                && signature.returnType == sema.types.stringType
+        }, "Expected FreezableAtomicReference.toString")
+        XCTAssertTrue(sema.symbols.symbol(toString)?.flags.contains(.overrideMember) == true)
+    }
+
     // MARK: - AtomicReference<T> (legacy kotlin.native.concurrent)
 
     func testLegacyAtomicReferenceIsRegistered() throws {

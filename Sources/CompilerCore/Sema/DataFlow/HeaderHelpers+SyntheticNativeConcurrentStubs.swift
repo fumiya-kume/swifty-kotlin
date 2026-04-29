@@ -17,6 +17,7 @@ import Foundation
 ///   - `Worker` class with `execute`, `requestTermination`, `isTerminated`, `name` members
 ///   - `Future<T>` class with `result`, `consume`, `getState` members and `FutureState` enum
 ///   - `AtomicInt`, `AtomicLong`, and `AtomicNativePtr` legacy classes
+///   - `FreezableAtomicReference<T>`
 ///   - `AtomicReference<T>` (legacy alias in `kotlin.native.concurrent`)
 ///   - `TransferMode` enum with `SAFE` and `UNSAFE` entries
 ///   - `@SharedImmutable` annotation (PROPERTY target)
@@ -190,6 +191,15 @@ extension DataFlowSemaPhase {
 
         // AtomicInt / AtomicLong / AtomicNativePtr legacy classes
         registerNativeConcurrentLegacyAtomicScalars(
+            packageFQName: nativeConcurrentPkg,
+            pkgSymbol: nativeConcurrentPkgSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        // FreezableAtomicReference<T>
+        registerNativeConcurrentFreezableAtomicReference(
             packageFQName: nativeConcurrentPkg,
             pkgSymbol: nativeConcurrentPkgSymbol,
             symbols: symbols,
@@ -1823,6 +1833,135 @@ extension DataFlowSemaPhase {
         )
     }
 
+    // MARK: - FreezableAtomicReference<T>
+
+    private func registerNativeConcurrentFreezableAtomicReference(
+        packageFQName: [InternedString],
+        pkgSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let className = interner.intern("FreezableAtomicReference")
+        let classFQName = packageFQName + [className]
+
+        let classSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: classFQName), symbols.symbol(existing)?.kind == .class {
+            classSymbol = existing
+        } else {
+            classSymbol = symbols.define(
+                kind: .class,
+                name: className,
+                fqName: classFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        if let pkgSymbol {
+            symbols.setParentSymbol(pkgSymbol, for: classSymbol)
+        }
+
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = classFQName + [typeParamName]
+        let typeParamSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: typeParamFQName) {
+            typeParamSymbol = existing
+        } else {
+            typeParamSymbol = symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(classSymbol, for: typeParamSymbol)
+        }
+
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let classType = types.make(.classType(ClassType(
+            classSymbol: classSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: classSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: classSymbol)
+        symbols.setPropertyType(classType, for: classSymbol)
+        appendNativeConcurrentMetadataAnnotations(
+            [
+                nativeConcurrentDeprecatedErrorAnnotation(
+                    message: "Use kotlin.concurrent.atomics.AtomicReference instead.",
+                    replaceWith: "kotlin.concurrent.atomics.AtomicReference"
+                ),
+            ],
+            to: classSymbol,
+            symbols: symbols
+        )
+
+        registerNativeConcurrentConstructor(
+            ownerSymbol: classSymbol,
+            ownerType: classType,
+            externalLinkName: "kk_freezable_atomic_ref_create",
+            parameters: [(name: "value", type: typeParamType)],
+            defaultValues: [false],
+            typeParameterSymbols: [typeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+        registerNativeConcurrentMutableProperty(
+            ownerSymbol: classSymbol,
+            name: "value",
+            propertyType: typeParamType,
+            getterLinkName: "kk_freezable_atomic_ref_load",
+            symbols: symbols,
+            interner: interner
+        )
+        registerNativeConcurrentMemberFunction(
+            ownerSymbol: classSymbol,
+            ownerType: classType,
+            name: "compareAndSet",
+            externalLinkName: "kk_freezable_atomic_ref_compareAndSet",
+            returnType: types.booleanType,
+            parameters: [
+                (name: "expected", type: typeParamType),
+                (name: "newValue", type: typeParamType),
+            ],
+            defaultValues: [false, false],
+            typeParameterSymbols: [typeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+        registerNativeConcurrentMemberFunction(
+            ownerSymbol: classSymbol,
+            ownerType: classType,
+            name: "compareAndSwap",
+            externalLinkName: "kk_freezable_atomic_ref_compareAndSwap",
+            returnType: typeParamType,
+            parameters: [
+                (name: "expected", type: typeParamType),
+                (name: "newValue", type: typeParamType),
+            ],
+            defaultValues: [false, false],
+            typeParameterSymbols: [typeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+        registerNativeConcurrentToStringMember(
+            ownerSymbol: classSymbol,
+            ownerType: classType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+    }
+
     // MARK: - AtomicReference<T> (legacy kotlin.native.concurrent)
 
     private func registerNativeConcurrentAtomicReference(
@@ -2102,6 +2241,7 @@ extension DataFlowSemaPhase {
     private func registerNativeConcurrentConstructor(
         ownerSymbol: SymbolID,
         ownerType: TypeID,
+        externalLinkName: String? = nil,
         parameters: [(name: String, type: TypeID)],
         defaultValues: [Bool],
         typeParameterSymbols: [SymbolID] = [],
@@ -2133,6 +2273,9 @@ extension DataFlowSemaPhase {
             flags: [.synthetic]
         )
         symbols.setParentSymbol(ownerSymbol, for: constructorSymbol)
+        if let externalLinkName {
+            symbols.setExternalLinkName(externalLinkName, for: constructorSymbol)
+        }
 
         let valueParameterSymbols = parameters.map { parameter in
             let paramName = interner.intern(parameter.name)
@@ -2584,6 +2727,7 @@ extension DataFlowSemaPhase {
         ownerSymbol: SymbolID,
         name: String,
         propertyType: TypeID,
+        getterLinkName: String? = nil,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -2593,6 +2737,9 @@ extension DataFlowSemaPhase {
         if let existing = symbols.lookup(fqName: propFQName) {
             symbols.insertFlags([.synthetic, .mutable], for: existing)
             symbols.setPropertyType(propertyType, for: existing)
+            if let getterLinkName {
+                symbols.setExternalLinkName(getterLinkName, for: existing)
+            }
             return
         }
 
@@ -2606,6 +2753,9 @@ extension DataFlowSemaPhase {
         )
         symbols.setParentSymbol(ownerSymbol, for: propSymbol)
         symbols.setPropertyType(propertyType, for: propSymbol)
+        if let getterLinkName {
+            symbols.setExternalLinkName(getterLinkName, for: propSymbol)
+        }
     }
 
     private func appendNativeConcurrentAnnotationMetadata(

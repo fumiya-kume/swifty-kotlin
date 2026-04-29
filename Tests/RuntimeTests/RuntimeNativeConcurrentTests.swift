@@ -518,6 +518,36 @@ final class RuntimeFreezableAtomicRefTests: IsolatedRuntimeXCTestCase {
         let result = kk_freezable_atomic_ref_store(refHandle, v)
         XCTAssertEqual(result, 1, "Storing the same value after freeze must succeed (idempotent)")
     }
+
+    func testCompareAndSetPublishesAndFreezesValue() {
+        let initial = kk_atomic_int_create(1)
+        let next = kk_atomic_int_create(2)
+        let refHandle = kk_freezable_atomic_ref_create(initial)
+        let result = kk_freezable_atomic_ref_compareAndSet(refHandle, initial, next)
+        XCTAssertEqual(result, 1)
+        XCTAssertEqual(kk_freezable_atomic_ref_is_frozen(refHandle), 1)
+        XCTAssertEqual(kk_freezable_atomic_ref_load(refHandle), next)
+    }
+
+    func testCompareAndSetRejectsExpectedMismatch() {
+        let initial = kk_atomic_int_create(1)
+        let other = kk_atomic_int_create(2)
+        let next = kk_atomic_int_create(3)
+        let refHandle = kk_freezable_atomic_ref_create(initial)
+        let result = kk_freezable_atomic_ref_compareAndSet(refHandle, other, next)
+        XCTAssertEqual(result, 0)
+        XCTAssertEqual(kk_freezable_atomic_ref_is_frozen(refHandle), 0)
+        XCTAssertEqual(kk_freezable_atomic_ref_load(refHandle), initial)
+    }
+
+    func testCompareAndSwapReturnsOldValue() {
+        let initial = kk_atomic_int_create(1)
+        let next = kk_atomic_int_create(2)
+        let refHandle = kk_freezable_atomic_ref_create(initial)
+        let oldValue = kk_freezable_atomic_ref_compareAndSwap(refHandle, initial, next)
+        XCTAssertEqual(oldValue, initial)
+        XCTAssertEqual(kk_freezable_atomic_ref_load(refHandle), next)
+    }
 }
 
 // ---------------------------------------------------------------------------

@@ -274,6 +274,29 @@ final class RuntimeFreezableAtomicRefBox: @unchecked Sendable {
         _frozen = true
         return 1
     }
+
+    func compareAndSet(expected: Int, newValue: Int) -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        guard _valueRaw == expected else { return 0 }
+        if _frozen && _valueRaw != newValue {
+            return 0
+        }
+        _valueRaw = newValue
+        _frozen = true
+        return 1
+    }
+
+    func compareAndSwap(expected: Int, newValue: Int) -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        let oldValue = _valueRaw
+        if oldValue == expected && (!_frozen || oldValue == newValue) {
+            _valueRaw = newValue
+            _frozen = true
+        }
+        return oldValue
+    }
 }
 
 @_cdecl("kk_freezable_atomic_ref_create")
@@ -301,6 +324,26 @@ public func kk_freezable_atomic_ref_store(_ refHandle: Int, _ valueRaw: Int) -> 
         return 0
     }
     return box.store(valueRaw)
+}
+
+@_cdecl("kk_freezable_atomic_ref_compareAndSet")
+public func kk_freezable_atomic_ref_compareAndSet(_ refHandle: Int, _ expectedRaw: Int, _ newRaw: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: refHandle),
+          let box = tryCast(ptr, to: RuntimeFreezableAtomicRefBox.self)
+    else {
+        return 0
+    }
+    return box.compareAndSet(expected: expectedRaw, newValue: newRaw)
+}
+
+@_cdecl("kk_freezable_atomic_ref_compareAndSwap")
+public func kk_freezable_atomic_ref_compareAndSwap(_ refHandle: Int, _ expectedRaw: Int, _ newRaw: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: refHandle),
+          let box = tryCast(ptr, to: RuntimeFreezableAtomicRefBox.self)
+    else {
+        return 0
+    }
+    return box.compareAndSwap(expected: expectedRaw, newValue: newRaw)
 }
 
 /// Returns 1 if the reference has been frozen (i.e. a value has been published), 0 otherwise.

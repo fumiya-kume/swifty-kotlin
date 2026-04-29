@@ -20,6 +20,7 @@ final class NativeConcurrentAPISurfaceInventoryTests: XCTestCase {
         TopLevelEntry(name: "Continuation2", kind: .class, todo: nil),
         TopLevelEntry(name: "DetachedObjectGraph", kind: .class, todo: nil),
         TopLevelEntry(name: "FreezingException", kind: .class, todo: nil),
+        TopLevelEntry(name: "FreezableAtomicReference", kind: .class, todo: nil),
         TopLevelEntry(name: "Future", kind: .class, todo: nil),
         TopLevelEntry(name: "FutureState", kind: .enumClass, todo: nil),
         TopLevelEntry(name: "InvalidMutabilityException", kind: .class, todo: nil),
@@ -40,7 +41,6 @@ final class NativeConcurrentAPISurfaceInventoryTests: XCTestCase {
     ]
 
     private static let knownGapTopLevelEntries: Set<TopLevelEntry> = [
-        TopLevelEntry(name: "FreezableAtomicReference", kind: .class, todo: "STDLIB-NATIVE-CONCURRENT-016"),
         TopLevelEntry(name: "MutableData", kind: .class, todo: "STDLIB-NATIVE-CONCURRENT-017"),
         TopLevelEntry(name: "ObsoleteWorkersApi", kind: .annotationClass, todo: "STDLIB-NATIVE-CONCURRENT-018"),
         TopLevelEntry(name: "freeze", kind: .function, todo: "STDLIB-NATIVE-CONCURRENT-019"),
@@ -65,8 +65,8 @@ final class NativeConcurrentAPISurfaceInventoryTests: XCTestCase {
 
         XCTAssertEqual(targetEntries.count, targetNames.count)
         XCTAssertEqual(targetEntries.count, 31)
-        XCTAssertEqual(Self.implementedTopLevelEntries.count, 26)
-        XCTAssertEqual(Self.knownGapTopLevelEntries.count, 5)
+        XCTAssertEqual(Self.implementedTopLevelEntries.count, 27)
+        XCTAssertEqual(Self.knownGapTopLevelEntries.count, 4)
     }
 
     func testImplementedTopLevelEntriesAreRegistered() throws {
@@ -121,7 +121,6 @@ final class NativeConcurrentAPISurfaceInventoryTests: XCTestCase {
         XCTAssertEqual(
             todos,
             [
-                "STDLIB-NATIVE-CONCURRENT-016",
                 "STDLIB-NATIVE-CONCURRENT-017",
                 "STDLIB-NATIVE-CONCURRENT-018",
                 "STDLIB-NATIVE-CONCURRENT-019",
