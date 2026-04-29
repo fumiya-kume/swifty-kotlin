@@ -60,6 +60,49 @@ final class NativeConcurrentSyntheticStubTests: XCTestCase {
         )))
     }
 
+    private func memberFunction(
+        ownerPath: [String],
+        named name: String,
+        parameterTypes: [TypeID],
+        returnType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) throws -> SymbolID {
+        let ownerType = try classType(ownerPath, sema: sema, interner: interner, file: file, line: line)
+        let functionFQName = (ownerPath + [name]).map { interner.intern($0) }
+        let candidates = sema.symbols.lookupAll(fqName: functionFQName)
+        return try XCTUnwrap(candidates.first { candidate in
+            guard let signature = sema.symbols.functionSignature(for: candidate) else {
+                return false
+            }
+            return signature.receiverType == ownerType
+                && signature.parameterTypes == parameterTypes
+                && signature.returnType == returnType
+        }, "Expected \(ownerPath.joined(separator: ".")).\(name)", file: file, line: line)
+    }
+
+    private func assertMutableProperty(
+        ownerPath: [String],
+        named name: String,
+        type expectedType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) throws {
+        let property = try symbol(ownerPath + [name], sema: sema, interner: interner, file: file, line: line)
+        XCTAssertEqual(sema.symbols.symbol(property)?.kind, .property, file: file, line: line)
+        XCTAssertEqual(sema.symbols.propertyType(for: property), expectedType, file: file, line: line)
+        XCTAssertTrue(
+            sema.symbols.symbol(property)?.flags.contains(.mutable) == true,
+            "\(ownerPath.joined(separator: ".")).\(name) should be mutable",
+            file: file,
+            line: line
+        )
+    }
+
     private func nativeContinuationInvokerType(
         sema: SemaModule,
         interner: StringInterner,
@@ -1140,6 +1183,172 @@ final class NativeConcurrentSyntheticStubTests: XCTestCase {
         )))
         XCTAssertEqual(sig.returnType, futureStateType)
         XCTAssertEqual(sema.symbols.externalLinkName(for: method), "kk_future_getState")
+    }
+
+    // MARK: - AtomicInt / AtomicLong / AtomicNativePtr (legacy kotlin.native.concurrent)
+
+    func testLegacyAtomicScalarClassesAreRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        for name in ["AtomicInt", "AtomicLong", "AtomicNativePtr"] {
+            let atomic = try symbol(
+                ["kotlin", "native", "concurrent", name],
+                sema: sema,
+                interner: interner
+            )
+            XCTAssertEqual(sema.symbols.symbol(atomic)?.kind, .class)
+            XCTAssertEqual(sema.types.nominalTypeParameterSymbols(for: atomic), [])
+            XCTAssertTrue(
+                sema.symbols.annotations(for: atomic).contains {
+                    $0.annotationFQName == "kotlin.Deprecated"
+                        && $0.arguments.contains("level = DeprecationLevel.ERROR")
+                },
+                "\(name) must carry Deprecated(ERROR) metadata"
+            )
+        }
+    }
+
+    func testLegacyAtomicIntSurfaceIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let ownerPath = ["kotlin", "native", "concurrent", "AtomicInt"]
+        let ownerType = try classType(ownerPath, sema: sema, interner: interner)
+        let valueType = sema.types.intType
+
+        let constructors = sema.symbols.lookupAll(fqName: (ownerPath + ["<init>"]).map { interner.intern($0) })
+        let constructor = try XCTUnwrap(constructors.first { candidate in
+            guard let signature = sema.symbols.functionSignature(for: candidate) else {
+                return false
+            }
+            return signature.parameterTypes == [valueType] && signature.returnType == ownerType
+        }, "Expected AtomicInt(value: Int)")
+        let constructorSignature = try XCTUnwrap(sema.symbols.functionSignature(for: constructor))
+        XCTAssertEqual(constructorSignature.valueParameterHasDefaultValues, [false])
+
+        try assertMutableProperty(
+            ownerPath: ownerPath,
+            named: "value",
+            type: valueType,
+            sema: sema,
+            interner: interner
+        )
+
+        let numericMembers: [(String, [TypeID], TypeID)] = [
+            ("compareAndSet", [valueType, valueType], sema.types.booleanType),
+            ("compareAndSwap", [valueType, valueType], valueType),
+            ("getAndSet", [valueType], valueType),
+            ("addAndGet", [valueType], valueType),
+            ("getAndAdd", [valueType], valueType),
+            ("getAndIncrement", [], valueType),
+            ("getAndDecrement", [], valueType),
+            ("incrementAndGet", [], valueType),
+            ("decrementAndGet", [], valueType),
+            ("increment", [], sema.types.unitType),
+            ("decrement", [], sema.types.unitType),
+            ("toString", [], sema.types.stringType),
+        ]
+        for (name, parameters, returnType) in numericMembers {
+            _ = try memberFunction(
+                ownerPath: ownerPath,
+                named: name,
+                parameterTypes: parameters,
+                returnType: returnType,
+                sema: sema,
+                interner: interner
+            )
+        }
+    }
+
+    func testLegacyAtomicLongSurfaceIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let ownerPath = ["kotlin", "native", "concurrent", "AtomicLong"]
+        let ownerType = try classType(ownerPath, sema: sema, interner: interner)
+        let valueType = sema.types.longType
+
+        let constructors = sema.symbols.lookupAll(fqName: (ownerPath + ["<init>"]).map { interner.intern($0) })
+        let constructor = try XCTUnwrap(constructors.first { candidate in
+            guard let signature = sema.symbols.functionSignature(for: candidate) else {
+                return false
+            }
+            return signature.parameterTypes == [valueType] && signature.returnType == ownerType
+        }, "Expected AtomicLong(value: Long = 0)")
+        let constructorSignature = try XCTUnwrap(sema.symbols.functionSignature(for: constructor))
+        XCTAssertEqual(constructorSignature.valueParameterHasDefaultValues, [true])
+
+        try assertMutableProperty(
+            ownerPath: ownerPath,
+            named: "value",
+            type: valueType,
+            sema: sema,
+            interner: interner
+        )
+
+        let numericMembers: [(String, [TypeID], TypeID)] = [
+            ("compareAndSet", [valueType, valueType], sema.types.booleanType),
+            ("compareAndSwap", [valueType, valueType], valueType),
+            ("getAndSet", [valueType], valueType),
+            ("addAndGet", [sema.types.intType], valueType),
+            ("addAndGet", [valueType], valueType),
+            ("getAndAdd", [valueType], valueType),
+            ("getAndIncrement", [], valueType),
+            ("getAndDecrement", [], valueType),
+            ("incrementAndGet", [], valueType),
+            ("decrementAndGet", [], valueType),
+            ("increment", [], sema.types.unitType),
+            ("decrement", [], sema.types.unitType),
+            ("toString", [], sema.types.stringType),
+        ]
+        for (name, parameters, returnType) in numericMembers {
+            _ = try memberFunction(
+                ownerPath: ownerPath,
+                named: name,
+                parameterTypes: parameters,
+                returnType: returnType,
+                sema: sema,
+                interner: interner
+            )
+        }
+    }
+
+    func testLegacyAtomicNativePtrSurfaceIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let ownerPath = ["kotlin", "native", "concurrent", "AtomicNativePtr"]
+        let ownerType = try classType(ownerPath, sema: sema, interner: interner)
+        let valueType = try classType(["kotlinx", "cinterop", "NativePtr"], sema: sema, interner: interner)
+
+        let constructors = sema.symbols.lookupAll(fqName: (ownerPath + ["<init>"]).map { interner.intern($0) })
+        let constructor = try XCTUnwrap(constructors.first { candidate in
+            guard let signature = sema.symbols.functionSignature(for: candidate) else {
+                return false
+            }
+            return signature.parameterTypes == [valueType] && signature.returnType == ownerType
+        }, "Expected AtomicNativePtr(value: NativePtr)")
+        let constructorSignature = try XCTUnwrap(sema.symbols.functionSignature(for: constructor))
+        XCTAssertEqual(constructorSignature.valueParameterHasDefaultValues, [false])
+
+        try assertMutableProperty(
+            ownerPath: ownerPath,
+            named: "value",
+            type: valueType,
+            sema: sema,
+            interner: interner
+        )
+
+        let pointerMembers: [(String, [TypeID], TypeID)] = [
+            ("compareAndSet", [valueType, valueType], sema.types.booleanType),
+            ("compareAndSwap", [valueType, valueType], valueType),
+            ("getAndSet", [valueType], valueType),
+            ("toString", [], sema.types.stringType),
+        ]
+        for (name, parameters, returnType) in pointerMembers {
+            _ = try memberFunction(
+                ownerPath: ownerPath,
+                named: name,
+                parameterTypes: parameters,
+                returnType: returnType,
+                sema: sema,
+                interner: interner
+            )
+        }
     }
 
     // MARK: - AtomicReference<T> (legacy kotlin.native.concurrent)
