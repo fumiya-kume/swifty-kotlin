@@ -384,7 +384,7 @@
 - [ ] STDLIB-UUID-012: `Uuid.Companion.LEXICAL_ORDER` comparator を追加する
 - [ ] STDLIB-NATIVE-PLATFORM-001: `kotlin.native` の platform info 残差を詰める
 - [ ] STDLIB-NATIVE-PLATFORM-002: common から見える Native bridge を整理
-- [ ] STDLIB-NATIVE-PLATFORM-003: `kotlin.native.MemoryModel` enum stub と platform bridge を追加する
+- [x] STDLIB-NATIVE-PLATFORM-003: `kotlin.native.MemoryModel` enum stub と platform bridge を追加する
 - [ ] STDLIB-NATIVE-PLATFORM-004: `FreezingIsDeprecated` marker を追加する
 - [ ] STDLIB-NATIVE-PLATFORM-005: `HiddenFromObjC` annotation を追加する
 - [ ] STDLIB-NATIVE-PLATFORM-006: `NoInline` annotation を追加する

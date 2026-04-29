@@ -6,8 +6,8 @@ import XCTest
 /// `kk_platform_canAccessUnaligned`, `kk_platform_isLittleEndian`,
 /// and `kk_platform_getAvailableProcessors`.
 ///
-/// `memoryModel` and `isDebugBinary` have no runtime entry point yet
-/// (gaps documented at the bottom of this file).
+/// `memoryModel` and `isDebugBinary` runtime coverage lives in
+/// RuntimePlatformTests.swift.
 final class RuntimePlatformInfoTests: XCTestCase {
 
     // MARK: - OsFamily
