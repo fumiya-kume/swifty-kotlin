@@ -339,18 +339,18 @@
 - [x] STDLIB-TIME-STABLE-009: `Int.toDuration(unit)` / `Long.toDuration(unit)` / `Double.toDuration(unit)` を追加する
 - [x] STDLIB-TIME-EXP-002: `AbstractDoubleTimeSource` surface を追加する
 - [x] STDLIB-TIME-EXP-003: `AbstractLongTimeSource` surface を追加する
-- [ ] STDLIB-TIME-EXP-004: `TestTimeSource` surface を追加する
-- [ ] STDLIB-TIME-EXP-005: `Instant.isDistantPast` / `Instant.isDistantFuture` properties を追加する
-- [ ] STDLIB-TIME-EXP-006: `TimeSource.asClock()` を追加する
+- [x] STDLIB-TIME-EXP-004: `TestTimeSource` surface を追加する
+- [x] STDLIB-TIME-EXP-005: `Instant.isDistantPast` / `Instant.isDistantFuture` properties を追加する
+- [x] STDLIB-TIME-EXP-006: `TimeSource.asClock()` を追加する
 - [~] STDLIB-CORO-001: `kotlin.coroutines.intrinsics` / cancellation — 主要部分実装済み（`suspendCoroutineUninterceptedOrReturn`, `intercepted`, `CancellationException`）。残課題は別チケットへ分割。
-- [ ] STDLIB-CORO-002: `kotlin.coroutines.intrinsics` の runtime entry point（`startCoroutineUninterceptedOrReturn`, `createCoroutineUnintercepted`）を追加する。対応 C ABI 名: `kk_start_coroutine_unintercepted_or_return`, `kk_create_coroutine_unintercepted`。
+- [x] STDLIB-CORO-002: `kotlin.coroutines.intrinsics` の runtime entry point（`startCoroutineUninterceptedOrReturn`, `createCoroutineUnintercepted`）を追加する。対応 C ABI 名: `kk_start_coroutine_unintercepted_or_return`, `kk_create_coroutine_unintercepted`。
 - [ ] STDLIB-CORO-003: `kotlin.coroutines` の一部ランタイム経路をセマフォ待機から脱却する。対象: `RuntimeAsyncTask.awaitResult`, `RuntimeJobHandle.join`, `kk_with_context`, Channel send/receive, Sequence builder( `sequence`, `iterator` ) の待機部。
-- [ ] STDLIB-CORO-004: `kotlin.coroutines.RestrictsSuspension` annotation を追加する
-- [ ] STDLIB-CORO-005: `suspend () -> T`.`startCoroutine(completion)` を追加する
-- [ ] STDLIB-CORO-006: `suspend R.() -> T`.`startCoroutine(receiver, completion)` を追加する
-- [ ] STDLIB-CORO-007: `CoroutineContext.Key.getPolymorphicElement(element)` を追加する
-- [ ] STDLIB-CORO-008: `CoroutineContext.Key.minusPolymorphicKey(key)` を追加する
-- [ ] STDLIB-CONTRACTS-001: `ExperimentalExtendedContracts` marker を追加する
+- [x] STDLIB-CORO-004: `kotlin.coroutines.RestrictsSuspension` annotation を追加する
+- [x] STDLIB-CORO-005: `suspend () -> T`.`startCoroutine(completion)` を追加する
+- [x] STDLIB-CORO-006: `suspend R.() -> T`.`startCoroutine(receiver, completion)` を追加する
+- [x] STDLIB-CORO-007: `CoroutineContext.Key.getPolymorphicElement(element)` を追加する
+- [x] STDLIB-CORO-008: `CoroutineContext.Key.minusPolymorphicKey(key)` を追加する
+- [x] STDLIB-CONTRACTS-001: `ExperimentalExtendedContracts` marker を追加する
 - [ ] STDLIB-CONTRACTS-002: `HoldsIn` effect surface を追加する
 - [ ] STDLIB-NATIVE-REF-001: `kotlin.native.ref` / `kotlin.native.runtime` の API 棚卸しを固定
 - [ ] STDLIB-NATIVE-REF-002: `kotlin.native.ref` / `kotlin.native.runtime` の sema 露出を整える
