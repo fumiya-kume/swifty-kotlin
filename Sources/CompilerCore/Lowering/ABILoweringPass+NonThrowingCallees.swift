@@ -84,6 +84,7 @@ extension ABILoweringPass {
             interner.intern("kk_string_split"),
             interner.intern("kk_string_split_limit"),
             interner.intern("kk_string_chunked"),
+            interner.intern("kk_string_chunkedSequence"),
             interner.intern("kk_string_zipWithNext"),
             interner.intern("kk_string_windowed_default"),
             interner.intern("kk_string_windowed"),
