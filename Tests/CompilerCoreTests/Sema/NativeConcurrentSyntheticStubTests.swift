@@ -1351,6 +1351,153 @@ final class NativeConcurrentSyntheticStubTests: XCTestCase {
         }
     }
 
+    // MARK: - MutableData
+
+    func testMutableDataSurfaceIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let ownerPath = ["kotlin", "native", "concurrent", "MutableData"]
+        let ownerSymbol = try symbol(ownerPath, sema: sema, interner: interner)
+        let ownerType = try classType(ownerPath, sema: sema, interner: interner)
+        let byteArrayType = try classType(["kotlin", "ByteArray"], sema: sema, interner: interner)
+        let cOpaquePointerType = try classType(["kotlinx", "cinterop", "COpaquePointer"], sema: sema, interner: interner)
+        let nullableCOpaquePointerType = sema.types.makeNullable(cOpaquePointerType)
+
+        XCTAssertEqual(sema.symbols.symbol(ownerSymbol)?.kind, .class)
+        XCTAssertTrue(
+            sema.symbols.annotations(for: ownerSymbol).contains {
+                $0.annotationFQName == "kotlin.Deprecated"
+                    && $0.arguments.contains("level = DeprecationLevel.ERROR")
+            },
+            "MutableData must carry Deprecated(ERROR) metadata"
+        )
+
+        let constructors = sema.symbols.lookupAll(fqName: (ownerPath + ["<init>"]).map { interner.intern($0) })
+        let constructor = try XCTUnwrap(constructors.first { candidate in
+            guard let signature = sema.symbols.functionSignature(for: candidate) else {
+                return false
+            }
+            return signature.parameterTypes == [sema.types.intType] && signature.returnType == ownerType
+        }, "Expected MutableData(capacity: Int = 16)")
+        let constructorSignature = try XCTUnwrap(sema.symbols.functionSignature(for: constructor))
+        XCTAssertEqual(constructorSignature.valueParameterHasDefaultValues, [true])
+
+        let size = try symbol(ownerPath + ["size"], sema: sema, interner: interner)
+        XCTAssertEqual(sema.symbols.propertyType(for: size), sema.types.intType)
+
+        let appendData = try memberFunction(
+            ownerPath: ownerPath,
+            named: "append",
+            parameterTypes: [ownerType],
+            returnType: sema.types.unitType,
+            sema: sema,
+            interner: interner
+        )
+        XCTAssertEqual(sema.symbols.functionSignature(for: appendData)?.valueParameterHasDefaultValues, [false])
+
+        let appendPointer = try memberFunction(
+            ownerPath: ownerPath,
+            named: "append",
+            parameterTypes: [nullableCOpaquePointerType, sema.types.intType],
+            returnType: sema.types.unitType,
+            sema: sema,
+            interner: interner
+        )
+        XCTAssertEqual(sema.symbols.functionSignature(for: appendPointer)?.valueParameterHasDefaultValues, [false, false])
+
+        let appendByteArray = try memberFunction(
+            ownerPath: ownerPath,
+            named: "append",
+            parameterTypes: [byteArrayType, sema.types.intType, sema.types.intType],
+            returnType: sema.types.unitType,
+            sema: sema,
+            interner: interner
+        )
+        XCTAssertEqual(sema.symbols.functionSignature(for: appendByteArray)?.valueParameterHasDefaultValues, [false, true, true])
+
+        let copyInto = try memberFunction(
+            ownerPath: ownerPath,
+            named: "copyInto",
+            parameterTypes: [byteArrayType, sema.types.intType, sema.types.intType, sema.types.intType],
+            returnType: sema.types.unitType,
+            sema: sema,
+            interner: interner
+        )
+        XCTAssertEqual(
+            sema.symbols.functionSignature(for: copyInto)?.valueParameterHasDefaultValues,
+            [false, false, false, false]
+        )
+
+        let get = try memberFunction(
+            ownerPath: ownerPath,
+            named: "get",
+            parameterTypes: [sema.types.intType],
+            returnType: sema.types.intType,
+            sema: sema,
+            interner: interner
+        )
+        XCTAssertTrue(sema.symbols.symbol(get)?.flags.contains(.operatorFunction) == true)
+
+        _ = try memberFunction(
+            ownerPath: ownerPath,
+            named: "reset",
+            parameterTypes: [],
+            returnType: sema.types.unitType,
+            sema: sema,
+            interner: interner
+        )
+
+        try assertMutableDataLockedMember(
+            named: "withBufferLocked",
+            ownerPath: ownerPath,
+            ownerType: ownerType,
+            blockParameterTypes: [byteArrayType, sema.types.intType],
+            sema: sema,
+            interner: interner
+        )
+        try assertMutableDataLockedMember(
+            named: "withPointerLocked",
+            ownerPath: ownerPath,
+            ownerType: ownerType,
+            blockParameterTypes: [cOpaquePointerType, sema.types.intType],
+            sema: sema,
+            interner: interner
+        )
+    }
+
+    private func assertMutableDataLockedMember(
+        named name: String,
+        ownerPath: [String],
+        ownerType: TypeID,
+        blockParameterTypes: [TypeID],
+        sema: SemaModule,
+        interner: StringInterner,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) throws {
+        let candidates = sema.symbols.lookupAll(fqName: (ownerPath + [name]).map { interner.intern($0) })
+        let member = try XCTUnwrap(candidates.first { candidate in
+            guard let signature = sema.symbols.functionSignature(for: candidate),
+                  signature.receiverType == ownerType,
+                  signature.parameterTypes.count == 1,
+                  signature.typeParameterSymbols.count == 1,
+                  signature.classTypeParameterCount == 0
+            else {
+                return false
+            }
+            let rType = sema.types.make(.typeParam(TypeParamType(
+                symbol: signature.typeParameterSymbols[0],
+                nullability: .nonNull
+            )))
+            guard signature.returnType == rType,
+                  case let .functionType(blockType) = sema.types.kind(of: signature.parameterTypes[0])
+            else {
+                return false
+            }
+            return blockType.params == blockParameterTypes && blockType.returnType == rType
+        }, "Expected MutableData.\(name)<R>", file: file, line: line)
+        XCTAssertEqual(sema.symbols.functionSignature(for: member)?.valueParameterHasDefaultValues, [false], file: file, line: line)
+    }
+
     // MARK: - FreezableAtomicReference<T>
 
     func testFreezableAtomicReferenceSurfaceIsRegistered() throws {
