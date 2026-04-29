@@ -387,8 +387,26 @@ extension TypeCheckHelpers {
         }
 
         var candidates: [SymbolID] = []
+        var overrideDepthByShape: [String: Int] = [:]
+        for grouped in candidatesByKey.values {
+            for candidate in grouped {
+                guard sema.symbols.symbol(candidate.symbol)?.flags.contains(.overrideMember) == true,
+                      let signature = sema.symbols.functionSignature(for: candidate.symbol)
+                else {
+                    continue
+                }
+                let shape = "\(signature.parameterTypes.count)#\(signature.isSuspend)"
+                overrideDepthByShape[shape] = min(overrideDepthByShape[shape] ?? candidate.depth, candidate.depth)
+            }
+        }
         for key in keyOrder {
             guard let grouped = candidatesByKey[key], !grouped.isEmpty else {
+                continue
+            }
+            let shape = "\(key.parameterTypes.count)#\(key.isSuspend)"
+            if let overrideDepth = overrideDepthByShape[shape],
+               grouped.allSatisfy({ $0.depth > overrideDepth })
+            {
                 continue
             }
             let minDepth = grouped.map(\.depth).min() ?? 0

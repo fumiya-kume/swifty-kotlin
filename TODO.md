@@ -412,7 +412,7 @@
 - [x] STDLIB-NATIVE-CONCURRENT-007: `WorkerBoundReference<T>` surface を追加する
 - [x] STDLIB-NATIVE-CONCURRENT-008: `atomicLazy(initializer)` を追加する
 - [x] STDLIB-NATIVE-CONCURRENT-009: `Any.ensureNeverFrozen()` を追加する
-- [ ] STDLIB-NATIVE-CONCURRENT-010: `Continuation0` / `Continuation1` / `Continuation2` type surface を追加する
+- [x] STDLIB-NATIVE-CONCURRENT-010: `Continuation0` / `Continuation1` / `Continuation2` type surface を追加する
 - [ ] STDLIB-NATIVE-CONCURRENT-011: `callContinuation0` / `callContinuation1` / `callContinuation2` を追加する
 - [ ] STDLIB-NATIVE-CONCURRENT-012: `waitForMultipleFutures(futures)` を追加する
 - [ ] STDLIB-NATIVE-CONCURRENT-013: `waitWorkerTermination(worker)` を追加する

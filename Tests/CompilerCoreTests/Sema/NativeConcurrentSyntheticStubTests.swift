@@ -60,6 +60,41 @@ final class NativeConcurrentSyntheticStubTests: XCTestCase {
         )))
     }
 
+    private func nativeContinuationInvokerType(
+        sema: SemaModule,
+        interner: StringInterner,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) throws -> TypeID {
+        let nullableCOpaquePointerType = sema.types.makeNullable(try classType(
+            ["kotlinx", "cinterop", "COpaquePointer"],
+            sema: sema,
+            interner: interner,
+            file: file,
+            line: line
+        ))
+        let invokerCallbackType = sema.types.make(.functionType(FunctionType(
+            params: [nullableCOpaquePointerType],
+            returnType: sema.types.unitType
+        )))
+        let cFunctionType = try classType(
+            ["kotlinx", "cinterop", "CFunction"],
+            sema: sema,
+            interner: interner,
+            args: [.invariant(invokerCallbackType)],
+            file: file,
+            line: line
+        )
+        return try classType(
+            ["kotlinx", "cinterop", "CPointer"],
+            sema: sema,
+            interner: interner,
+            args: [.invariant(cFunctionType)],
+            file: file,
+            line: line
+        )
+    }
+
     // MARK: - TransferMode enum
 
     func testTransferModeEnumIsRegistered() throws {
@@ -146,6 +181,143 @@ final class NativeConcurrentSyntheticStubTests: XCTestCase {
                 "Expected FutureState.\(entry) to be registered"
             )
         }
+    }
+
+    // MARK: - Continuation0 / Continuation1 / Continuation2 classes
+
+    func testContinuationTypesAreRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        for (name, arity) in [("Continuation0", 0), ("Continuation1", 1), ("Continuation2", 2)] {
+            let continuation = try symbol(
+                ["kotlin", "native", "concurrent", name],
+                sema: sema,
+                interner: interner
+            )
+            let functionSupertype = try symbol(
+                ["kotlin", "Function", "Function\(arity)"],
+                sema: sema,
+                interner: interner
+            )
+
+            XCTAssertEqual(sema.symbols.symbol(continuation)?.kind, .class)
+            XCTAssertEqual(sema.types.nominalTypeParameterSymbols(for: continuation).count, arity)
+            XCTAssertTrue(sema.symbols.directSupertypes(for: continuation).contains(functionSupertype))
+            XCTAssertTrue(
+                sema.symbols.annotations(for: continuation).contains { $0.annotationFQName == "kotlin.Deprecated" },
+                "\(name) must carry Deprecated metadata"
+            )
+        }
+    }
+
+    func testContinuationConstructorsAreRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let invokerType = try nativeContinuationInvokerType(sema: sema, interner: interner)
+
+        for (name, arity) in [("Continuation0", 0), ("Continuation1", 1), ("Continuation2", 2)] {
+            let continuationFQName = ["kotlin", "native", "concurrent", name].map { interner.intern($0) }
+            let continuation = try XCTUnwrap(sema.symbols.lookup(fqName: continuationFQName))
+            let typeParameters = sema.types.nominalTypeParameterSymbols(for: continuation)
+            let typeParameterTypes = typeParameters.map {
+                sema.types.make(.typeParam(TypeParamType(symbol: $0, nullability: .nonNull)))
+            }
+            let continuationType = sema.types.make(.classType(ClassType(
+                classSymbol: continuation,
+                args: typeParameterTypes.map { .invariant($0) },
+                nullability: .nonNull
+            )))
+            let blockType = sema.types.make(.functionType(FunctionType(
+                params: typeParameterTypes,
+                returnType: sema.types.unitType
+            )))
+
+            let constructors = sema.symbols.lookupAll(fqName: continuationFQName + [interner.intern("<init>")])
+            let constructor = try XCTUnwrap(constructors.first { candidate in
+                guard let signature = sema.symbols.functionSignature(for: candidate) else {
+                    return false
+                }
+                return signature.parameterTypes == [blockType, invokerType, sema.types.booleanType]
+                    && signature.returnType == continuationType
+            }, "Expected \(name) constructor")
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: constructor))
+
+            XCTAssertEqual(sema.symbols.symbol(constructor)?.kind, .constructor)
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [false, false, true])
+            XCTAssertEqual(signature.typeParameterSymbols, typeParameters)
+            XCTAssertEqual(signature.classTypeParameterCount, arity)
+        }
+    }
+
+    func testContinuationMembersAreRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        for (name, arity) in [("Continuation0", 0), ("Continuation1", 1), ("Continuation2", 2)] {
+            let continuationFQName = ["kotlin", "native", "concurrent", name].map { interner.intern($0) }
+            let continuation = try XCTUnwrap(sema.symbols.lookup(fqName: continuationFQName))
+            let typeParameters = sema.types.nominalTypeParameterSymbols(for: continuation)
+            let typeParameterTypes = typeParameters.map {
+                sema.types.make(.typeParam(TypeParamType(symbol: $0, nullability: .nonNull)))
+            }
+            let continuationType = sema.types.make(.classType(ClassType(
+                classSymbol: continuation,
+                args: typeParameterTypes.map { .invariant($0) },
+                nullability: .nonNull
+            )))
+
+            let dispose = try XCTUnwrap(
+                sema.symbols.lookupAll(fqName: continuationFQName + [interner.intern("dispose")]).first,
+                "Expected \(name).dispose"
+            )
+            let disposeSignature = try XCTUnwrap(sema.symbols.functionSignature(for: dispose))
+            XCTAssertEqual(disposeSignature.receiverType, continuationType)
+            XCTAssertEqual(disposeSignature.parameterTypes, [])
+            XCTAssertEqual(disposeSignature.returnType, sema.types.unitType)
+            XCTAssertEqual(disposeSignature.classTypeParameterCount, arity)
+
+            let invoke = try XCTUnwrap(
+                sema.symbols.lookupAll(fqName: continuationFQName + [interner.intern("invoke")]).first,
+                "Expected \(name).invoke"
+            )
+            let invokeSignature = try XCTUnwrap(sema.symbols.functionSignature(for: invoke))
+            XCTAssertEqual(invokeSignature.receiverType, continuationType)
+            XCTAssertEqual(invokeSignature.parameterTypes, typeParameterTypes)
+            XCTAssertEqual(invokeSignature.returnType, sema.types.unitType)
+            XCTAssertEqual(invokeSignature.classTypeParameterCount, arity)
+            XCTAssertTrue(sema.symbols.symbol(invoke)?.flags.contains(.operatorFunction) == true)
+            XCTAssertTrue(sema.symbols.symbol(invoke)?.flags.contains(.overrideMember) == true)
+        }
+    }
+
+    func testContinuationTypesResolveInSource() {
+        let source = """
+        import kotlin.native.concurrent.Continuation0
+        import kotlin.native.concurrent.Continuation1
+        import kotlin.native.concurrent.Continuation2
+
+        fun accept0(c: Continuation0) {
+            c.dispose()
+            c.invoke()
+            c()
+        }
+
+        fun accept1(c: Continuation1<Int>) {
+            c.dispose()
+            c.invoke(1)
+            c(1)
+        }
+
+        fun accept2(c: Continuation2<Int, String>) {
+            c.dispose()
+            c.invoke(1, "x")
+            c(1, "x")
+        }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertFalse(
+            ctx.diagnostics.hasError,
+            "Expected Continuation types to resolve cleanly, got: \(ctx.diagnostics.diagnostics.map(\.message))"
+        )
     }
 
     // MARK: - DetachedObjectGraph<T> class

@@ -3,6 +3,7 @@ import Foundation
 /// Synthetic stdlib stubs for `kotlin.native.concurrent` (STDLIB-NATIVE-CONCURRENT-002).
 ///
 /// Registers:
+///   - `Continuation0` / `Continuation1` / `Continuation2` classes
 ///   - `DetachedObjectGraph<T>` class with constructors, `asCPointer`, and `attach`
 ///   - `FreezingException` class with native constructor surface
 ///   - `InvalidMutabilityException` class with native constructor surface
@@ -66,6 +67,15 @@ extension DataFlowSemaPhase {
             enumSymbol: futureStateSymbol,
             enumType: futureStateType,
             symbols: symbols
+        )
+
+        // Continuation0/1/2 classes
+        registerNativeConcurrentContinuationTypes(
+            packageFQName: nativeConcurrentPkg,
+            pkgSymbol: nativeConcurrentPkgSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
         )
 
         // DetachedObjectGraph<T> class and attach extension
@@ -182,6 +192,197 @@ extension DataFlowSemaPhase {
             targets: ["AnnotationTarget.PROPERTY", "AnnotationTarget.CLASS"],
             retention: "AnnotationRetention.BINARY",
             symbols: symbols
+        )
+    }
+
+    // MARK: - Continuation0 / Continuation1 / Continuation2
+
+    private func registerNativeConcurrentContinuationTypes(
+        packageFQName: [InternedString],
+        pkgSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let nullableCOpaquePointerType = types.makeNullable(nativeConcurrentClassType(
+            packagePath: ["kotlinx", "cinterop"],
+            name: "COpaquePointer",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        ))
+        let invokerCallbackType = types.make(.functionType(FunctionType(
+            params: [nullableCOpaquePointerType],
+            returnType: types.unitType
+        )))
+        let cFunctionType = nativeConcurrentCFunctionType(
+            functionType: invokerCallbackType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let invokerType = nativeConcurrentCPointerType(
+            pointeeType: cFunctionType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        registerNativeConcurrentContinuationType(
+            name: "Continuation0",
+            typeParameterNames: [],
+            packageFQName: packageFQName,
+            pkgSymbol: pkgSymbol,
+            invokerType: invokerType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerNativeConcurrentContinuationType(
+            name: "Continuation1",
+            typeParameterNames: ["T1"],
+            packageFQName: packageFQName,
+            pkgSymbol: pkgSymbol,
+            invokerType: invokerType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerNativeConcurrentContinuationType(
+            name: "Continuation2",
+            typeParameterNames: ["T1", "T2"],
+            packageFQName: packageFQName,
+            pkgSymbol: pkgSymbol,
+            invokerType: invokerType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+    }
+
+    private func registerNativeConcurrentContinuationType(
+        name: String,
+        typeParameterNames: [String],
+        packageFQName: [InternedString],
+        pkgSymbol: SymbolID?,
+        invokerType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let continuationName = interner.intern(name)
+        let continuationFQName = packageFQName + [continuationName]
+        let continuationSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: continuationFQName), symbols.symbol(existing)?.kind == .class {
+            continuationSymbol = existing
+        } else {
+            continuationSymbol = symbols.define(
+                kind: .class,
+                name: continuationName,
+                fqName: continuationFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        if let pkgSymbol {
+            symbols.setParentSymbol(pkgSymbol, for: continuationSymbol)
+        }
+
+        let typeParameterSymbols = typeParameterNames.map { typeParameterName in
+            let internedName = interner.intern(typeParameterName)
+            let fqName = continuationFQName + [internedName]
+            if let existing = symbols.lookup(fqName: fqName) {
+                return existing
+            }
+            let symbol = symbols.define(
+                kind: .typeParameter,
+                name: internedName,
+                fqName: fqName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            symbols.setParentSymbol(continuationSymbol, for: symbol)
+            return symbol
+        }
+        let typeParameterTypes = typeParameterSymbols.map { symbol in
+            types.make(.typeParam(TypeParamType(symbol: symbol, nullability: .nonNull)))
+        }
+        let continuationType = types.make(.classType(ClassType(
+            classSymbol: continuationSymbol,
+            args: typeParameterTypes.map { .invariant($0) },
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols(typeParameterSymbols, for: continuationSymbol)
+        types.setNominalTypeParameterVariances(
+            Array(repeating: .invariant, count: typeParameterSymbols.count),
+            for: continuationSymbol
+        )
+        symbols.setPropertyType(continuationType, for: continuationSymbol)
+        appendNativeConcurrentMetadataAnnotations(
+            [
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.Deprecated",
+                    arguments: ["message = \"This API is deprecated without replacement\""]
+                ),
+            ],
+            to: continuationSymbol,
+            symbols: symbols
+        )
+
+        let blockType = types.make(.functionType(FunctionType(
+            params: typeParameterTypes,
+            returnType: types.unitType
+        )))
+        registerNativeConcurrentContinuationFunctionSupertype(
+            ownerSymbol: continuationSymbol,
+            functionArity: typeParameterTypes.count,
+            functionArgumentTypes: typeParameterTypes,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerNativeConcurrentConstructor(
+            ownerSymbol: continuationSymbol,
+            ownerType: continuationType,
+            parameters: [
+                (name: "block", type: blockType),
+                (name: "invoker", type: invokerType),
+                (name: "singleShot", type: types.booleanType),
+            ],
+            defaultValues: [false, false, true],
+            typeParameterSymbols: typeParameterSymbols,
+            classTypeParameterCount: typeParameterSymbols.count,
+            symbols: symbols,
+            interner: interner
+        )
+        registerNativeConcurrentMemberFunction(
+            ownerSymbol: continuationSymbol,
+            ownerType: continuationType,
+            name: "dispose",
+            returnType: types.unitType,
+            parameters: [],
+            defaultValues: [],
+            typeParameterSymbols: typeParameterSymbols,
+            classTypeParameterCount: typeParameterSymbols.count,
+            symbols: symbols,
+            interner: interner
+        )
+        registerNativeConcurrentMemberFunction(
+            ownerSymbol: continuationSymbol,
+            ownerType: continuationType,
+            name: "invoke",
+            returnType: types.unitType,
+            parameters: typeParameterTypes.enumerated().map { index, type in
+                (name: "p\(index + 1)", type: type)
+            },
+            defaultValues: [],
+            typeParameterSymbols: typeParameterSymbols,
+            classTypeParameterCount: typeParameterSymbols.count,
+            flags: [.synthetic, .operatorFunction, .overrideMember, .openType],
+            symbols: symbols,
+            interner: interner
         )
     }
 
@@ -1153,6 +1354,7 @@ extension DataFlowSemaPhase {
         defaultValues: [Bool],
         typeParameterSymbols: [SymbolID] = [],
         classTypeParameterCount: Int = 0,
+        flags: SymbolFlags = [.synthetic],
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -1170,7 +1372,7 @@ extension DataFlowSemaPhase {
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: flags
         )
         symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
         if let externalLinkName {
@@ -1326,6 +1528,159 @@ extension DataFlowSemaPhase {
             symbols.setParentSymbol(packageSymbol, for: classSymbol)
         }
         return classSymbol
+    }
+
+    private func nativeConcurrentCPointerType(
+        pointeeType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID {
+        let cPointerSymbol = nativeConcurrentClassSymbol(
+            packagePath: ["kotlinx", "cinterop"],
+            name: "CPointer",
+            symbols: symbols,
+            interner: interner
+        )
+        return types.make(.classType(ClassType(
+            classSymbol: cPointerSymbol,
+            args: [.invariant(pointeeType)],
+            nullability: .nonNull
+        )))
+    }
+
+    private func nativeConcurrentCFunctionType(
+        functionType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID {
+        let cinteropPkg = ensurePackage(
+            path: ["kotlinx", "cinterop"],
+            symbols: symbols,
+            interner: interner
+        )
+        let cinteropPkgSymbol = symbols.lookup(fqName: cinteropPkg)
+        let cFunctionSymbol = ensureClassSymbol(
+            named: "CFunction",
+            in: cinteropPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let cinteropPkgSymbol {
+            symbols.setParentSymbol(cinteropPkgSymbol, for: cFunctionSymbol)
+        }
+
+        let typeParameterName = interner.intern("T")
+        let typeParameterFQName = cinteropPkg + [interner.intern("CFunction"), typeParameterName]
+        let typeParameterSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: typeParameterFQName) {
+            typeParameterSymbol = existing
+        } else {
+            typeParameterSymbol = symbols.define(
+                kind: .typeParameter,
+                name: typeParameterName,
+                fqName: typeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            symbols.setParentSymbol(cFunctionSymbol, for: typeParameterSymbol)
+        }
+        symbols.setTypeParameterUpperBounds([types.anyType], for: typeParameterSymbol)
+        types.setNominalTypeParameterSymbols([typeParameterSymbol], for: cFunctionSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: cFunctionSymbol)
+
+        let typeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: typeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let cFunctionDeclarationType = types.make(.classType(ClassType(
+            classSymbol: cFunctionSymbol,
+            args: [.invariant(typeParameterType)],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(cFunctionDeclarationType, for: cFunctionSymbol)
+
+        let cPointedSymbol = nativeConcurrentClassSymbol(
+            packagePath: ["kotlinx", "cinterop"],
+            name: "CPointed",
+            symbols: symbols,
+            interner: interner
+        )
+        if !symbols.directSupertypes(for: cFunctionSymbol).contains(cPointedSymbol) {
+            symbols.setDirectSupertypes(
+                symbols.directSupertypes(for: cFunctionSymbol) + [cPointedSymbol],
+                for: cFunctionSymbol
+            )
+        }
+        if !types.directNominalSupertypes(for: cFunctionSymbol).contains(cPointedSymbol) {
+            types.setNominalDirectSupertypes(
+                types.directNominalSupertypes(for: cFunctionSymbol) + [cPointedSymbol],
+                for: cFunctionSymbol
+            )
+        }
+
+        return types.make(.classType(ClassType(
+            classSymbol: cFunctionSymbol,
+            args: [.invariant(functionType)],
+            nullability: .nonNull
+        )))
+    }
+
+    private func registerNativeConcurrentContinuationFunctionSupertype(
+        ownerSymbol: SymbolID,
+        functionArity: Int,
+        functionArgumentTypes: [TypeID],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let functionSymbol = nativeConcurrentFunctionInterfaceSymbol(
+            arity: functionArity,
+            symbols: symbols,
+            interner: interner
+        )
+        if !symbols.directSupertypes(for: ownerSymbol).contains(functionSymbol) {
+            symbols.setDirectSupertypes(
+                symbols.directSupertypes(for: ownerSymbol) + [functionSymbol],
+                for: ownerSymbol
+            )
+        }
+        if !types.directNominalSupertypes(for: ownerSymbol).contains(functionSymbol) {
+            types.setNominalDirectSupertypes(
+                types.directNominalSupertypes(for: ownerSymbol) + [functionSymbol],
+                for: ownerSymbol
+            )
+        }
+
+        let supertypeArgs: [TypeArg] = [.out(types.unitType)]
+            + functionArgumentTypes.map { .in($0) }
+        symbols.setSupertypeTypeArgs(supertypeArgs, for: ownerSymbol, supertype: functionSymbol)
+        types.setNominalSupertypeTypeArgs(supertypeArgs, for: ownerSymbol, supertype: functionSymbol)
+    }
+
+    private func nativeConcurrentFunctionInterfaceSymbol(
+        arity: Int,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> SymbolID {
+        let functionPkg = ensurePackage(
+            path: ["kotlin", "Function"],
+            symbols: symbols,
+            interner: interner
+        )
+        let functionPkgSymbol = symbols.lookup(fqName: functionPkg)
+        let functionSymbol = ensureInterfaceSymbol(
+            named: "Function\(arity)",
+            in: functionPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let functionPkgSymbol {
+            symbols.setParentSymbol(functionPkgSymbol, for: functionSymbol)
+        }
+        return functionSymbol
     }
 
     private func nativeConcurrentLazyType(
