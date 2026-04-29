@@ -1,3 +1,10 @@
+@file:OptIn(
+    kotlin.experimental.ExperimentalNativeApi::class,
+    kotlin.experimental.ExperimentalObjCEnum::class,
+    kotlin.experimental.ExperimentalObjCName::class,
+    kotlin.experimental.ExperimentalObjCRefinement::class,
+)
+
 package golden.sema
 
 import kotlin.experimental.ExperimentalNativeApi

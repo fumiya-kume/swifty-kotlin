@@ -176,6 +176,7 @@ final class NativePlatformAnnotationTests: XCTestCase {
 
     func testHiddenFromObjCIsAcceptedOnClassFunctionAndProperty() {
         let source = """
+        @file:OptIn(kotlin.experimental.ExperimentalObjCRefinement::class)
         import kotlin.native.HiddenFromObjC
 
         @HiddenFromObjC
@@ -192,7 +193,7 @@ final class NativePlatformAnnotationTests: XCTestCase {
 
         XCTAssertTrue(
             errors.isEmpty,
-            "Expected HiddenFromObjC on class/function/property to type-check, got \(errors)"
+            "Expected HiddenFromObjC on class/function/property to type-check with ObjC refinement opt-in, got \(errors)"
         )
     }
 
