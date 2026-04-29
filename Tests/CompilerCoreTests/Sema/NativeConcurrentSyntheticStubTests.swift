@@ -494,6 +494,63 @@ final class NativeConcurrentSyntheticStubTests: XCTestCase {
         )
     }
 
+    func testWithWorkerFunctionIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let functionFQName = ["kotlin", "native", "concurrent", "withWorker"]
+            .map { interner.intern($0) }
+        let workerType = try classType(
+            ["kotlin", "native", "concurrent", "Worker"],
+            sema: sema,
+            interner: interner
+        )
+        let function = try XCTUnwrap(sema.symbols.lookupAll(fqName: functionFQName).first { candidate in
+            guard let signature = sema.symbols.functionSignature(for: candidate) else {
+                return false
+            }
+            return signature.receiverType == nil
+                && signature.parameterTypes.count == 3
+                && signature.typeParameterSymbols.count == 1
+        }, "Expected withWorker")
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: function))
+        let typeParameter = try XCTUnwrap(signature.typeParameterSymbols.first)
+        let returnType = sema.types.make(.typeParam(TypeParamType(
+            symbol: typeParameter,
+            nullability: .nonNull
+        )))
+        let blockType = sema.types.make(.functionType(FunctionType(
+            receiver: workerType,
+            params: [],
+            returnType: returnType
+        )))
+
+        XCTAssertEqual(sema.symbols.symbol(function)?.kind, .function)
+        XCTAssertEqual(signature.parameterTypes, [
+            sema.types.makeNullable(sema.types.stringType),
+            sema.types.booleanType,
+            blockType,
+        ])
+        XCTAssertEqual(signature.returnType, returnType)
+        XCTAssertEqual(signature.valueParameterHasDefaultValues, [true, true, false])
+        XCTAssertTrue(sema.symbols.annotations(for: function).contains {
+            $0.annotationFQName == "kotlin.native.concurrent.ObsoleteWorkersApi"
+        })
+    }
+
+    func testWithWorkerResolvesInSource() {
+        let source = """
+        import kotlin.native.concurrent.withWorker
+
+        fun probe(): Int =
+            withWorker<Int>("worker", true) { 1 }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertFalse(
+            ctx.diagnostics.hasError,
+            "Expected withWorker to resolve cleanly, got: \(ctx.diagnostics.diagnostics.map(\.message))"
+        )
+    }
+
     // MARK: - DetachedObjectGraph<T> class
 
     func testDetachedObjectGraphClassIsRegistered() throws {

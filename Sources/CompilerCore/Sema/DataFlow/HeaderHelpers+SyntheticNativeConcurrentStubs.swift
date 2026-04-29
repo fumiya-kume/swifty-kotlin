@@ -13,6 +13,7 @@ import Foundation
 ///   - `ensureNeverFrozen` top-level extension
 ///   - `waitForMultipleFutures` top-level and collection-extension functions
 ///   - `waitWorkerTermination(worker)` top-level function
+///   - `withWorker(name, errorReporting, block)` top-level function
 ///   - `Worker` class with `execute`, `requestTermination`, `isTerminated`, `name` members
 ///   - `Future<T>` class with `result`, `consume`, `getState` members and `FutureState` enum
 ///   - `AtomicReference<T>` (legacy alias in `kotlin.native.concurrent`)
@@ -172,6 +173,14 @@ extension DataFlowSemaPhase {
 
         // waitWorkerTermination(worker)
         registerNativeConcurrentWaitWorkerTermination(
+            packageFQName: nativeConcurrentPkg,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        // withWorker(name, errorReporting, block)
+        registerNativeConcurrentWithWorker(
             packageFQName: nativeConcurrentPkg,
             symbols: symbols,
             types: types,
@@ -1389,6 +1398,68 @@ extension DataFlowSemaPhase {
         )
     }
 
+    // MARK: - withWorker
+
+    private func registerNativeConcurrentWithWorker(
+        packageFQName: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern("withWorker")
+        let functionFQName = packageFQName + [functionName]
+        let typeParameterName = interner.intern("R")
+        let typeParameterFQName = functionFQName + [typeParameterName]
+        let typeParameterSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: typeParameterFQName) {
+            typeParameterSymbol = existing
+        } else {
+            typeParameterSymbol = symbols.define(
+                kind: .typeParameter,
+                name: typeParameterName,
+                fqName: typeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+        }
+        let typeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: typeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let workerType = nativeConcurrentClassType(
+            packagePath: ["kotlin", "native", "concurrent"],
+            name: "Worker",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let blockType = types.make(.functionType(FunctionType(
+            receiver: workerType,
+            params: [],
+            returnType: typeParameterType
+        )))
+
+        registerNativeConcurrentPackageFunction(
+            named: "withWorker",
+            packageFQName: packageFQName,
+            receiverType: nil,
+            returnType: typeParameterType,
+            parameters: [
+                (name: "name", type: types.makeNullable(types.stringType)),
+                (name: "errorReporting", type: types.booleanType),
+                (name: "block", type: blockType),
+            ],
+            defaultValues: [true, true, false],
+            typeParameterSymbols: [typeParameterSymbol],
+            annotations: [
+                MetadataAnnotationRecord(annotationFQName: "kotlin.native.concurrent.ObsoleteWorkersApi"),
+            ],
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
     // MARK: - AtomicReference<T> (legacy kotlin.native.concurrent)
 
     private func registerNativeConcurrentAtomicReference(
@@ -1977,6 +2048,7 @@ extension DataFlowSemaPhase {
         receiverType: TypeID?,
         returnType: TypeID,
         parameters: [(name: String, type: TypeID)],
+        defaultValues: [Bool]? = nil,
         typeParameterSymbols: [SymbolID],
         annotations: [MetadataAnnotationRecord] = [],
         symbols: SymbolTable,
@@ -2032,7 +2104,8 @@ extension DataFlowSemaPhase {
                 returnType: returnType,
                 isSuspend: false,
                 valueParameterSymbols: valueParameterSymbols,
-                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
+                valueParameterHasDefaultValues: defaultValues
+                    ?? Array(repeating: false, count: valueParameterSymbols.count),
                 valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count),
                 typeParameterSymbols: typeParameterSymbols,
                 classTypeParameterCount: 0

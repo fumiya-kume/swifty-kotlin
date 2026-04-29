@@ -33,6 +33,7 @@ final class NativeConcurrentAPISurfaceInventoryTests: XCTestCase {
         TopLevelEntry(name: "ensureNeverFrozen", kind: .function, todo: nil),
         TopLevelEntry(name: "waitForMultipleFutures", kind: .function, todo: nil),
         TopLevelEntry(name: "waitWorkerTermination", kind: .function, todo: nil),
+        TopLevelEntry(name: "withWorker", kind: .function, todo: nil),
     ]
 
     private static let knownGapTopLevelEntries: Set<TopLevelEntry> = [
@@ -44,7 +45,6 @@ final class NativeConcurrentAPISurfaceInventoryTests: XCTestCase {
         TopLevelEntry(name: "ObsoleteWorkersApi", kind: .annotationClass, todo: "STDLIB-NATIVE-CONCURRENT-018"),
         TopLevelEntry(name: "freeze", kind: .function, todo: "STDLIB-NATIVE-CONCURRENT-019"),
         TopLevelEntry(name: "isFrozen", kind: .property, todo: "STDLIB-NATIVE-CONCURRENT-019"),
-        TopLevelEntry(name: "withWorker", kind: .function, todo: "STDLIB-NATIVE-CONCURRENT-014"),
     ]
 
     private static let packagePath = ["kotlin", "native", "concurrent"]
@@ -65,8 +65,8 @@ final class NativeConcurrentAPISurfaceInventoryTests: XCTestCase {
 
         XCTAssertEqual(targetEntries.count, targetNames.count)
         XCTAssertEqual(targetEntries.count, 31)
-        XCTAssertEqual(Self.implementedTopLevelEntries.count, 22)
-        XCTAssertEqual(Self.knownGapTopLevelEntries.count, 9)
+        XCTAssertEqual(Self.implementedTopLevelEntries.count, 23)
+        XCTAssertEqual(Self.knownGapTopLevelEntries.count, 8)
     }
 
     func testImplementedTopLevelEntriesAreRegistered() throws {
@@ -121,7 +121,6 @@ final class NativeConcurrentAPISurfaceInventoryTests: XCTestCase {
         XCTAssertEqual(
             todos,
             [
-                "STDLIB-NATIVE-CONCURRENT-014",
                 "STDLIB-NATIVE-CONCURRENT-015",
                 "STDLIB-NATIVE-CONCURRENT-016",
                 "STDLIB-NATIVE-CONCURRENT-017",
