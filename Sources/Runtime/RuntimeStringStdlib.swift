@@ -1900,6 +1900,23 @@ public func kk_string_chunked(_ strRaw: Int, _ size: Int) -> Int {
     return runtimeMakeStringListRaw(chunks)
 }
 
+@_cdecl("kk_string_chunkedSequence")
+public func kk_string_chunkedSequence(_ strRaw: Int, _ size: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    guard size > 0 else {
+        return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: [])]))
+    }
+    let scalars = Array(source.unicodeScalars)
+    var chunks: [Int] = []
+    var i = 0
+    while i < scalars.count {
+        let end = Swift.min(i + size, scalars.count)
+        chunks.append(runtimeMakeStringRaw(runtimeStringFromScalars(scalars[i ..< end])))
+        i = end
+    }
+    return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: chunks)]))
+}
+
 @_cdecl("kk_string_windowed_default")
 public func kk_string_windowed_default(_ strRaw: Int, _ size: Int) -> Int {
     return kk_string_windowed(strRaw, size, 1)
