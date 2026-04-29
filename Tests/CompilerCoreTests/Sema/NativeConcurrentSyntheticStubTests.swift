@@ -320,6 +320,59 @@ final class NativeConcurrentSyntheticStubTests: XCTestCase {
         )
     }
 
+    func testCallContinuationFunctionsAreRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let receiverType = try classType(
+            ["kotlinx", "cinterop", "COpaquePointer"],
+            sema: sema,
+            interner: interner
+        )
+
+        for arity in 0...2 {
+            let functionFQName = ["kotlin", "native", "concurrent", "callContinuation\(arity)"]
+                .map { interner.intern($0) }
+            let function = try XCTUnwrap(sema.symbols.lookupAll(fqName: functionFQName).first { candidate in
+                guard let signature = sema.symbols.functionSignature(for: candidate) else {
+                    return false
+                }
+                return signature.receiverType == receiverType
+                    && signature.parameterTypes.isEmpty
+                    && signature.returnType == sema.types.unitType
+                    && signature.typeParameterSymbols.count == arity
+            }, "Expected callContinuation\(arity)")
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: function))
+
+            XCTAssertEqual(sema.symbols.symbol(function)?.kind, .function)
+            XCTAssertEqual(signature.classTypeParameterCount, 0)
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [])
+            XCTAssertTrue(
+                sema.symbols.annotations(for: function).contains { $0.annotationFQName == "kotlin.Deprecated" },
+                "callContinuation\(arity) must carry Deprecated metadata"
+            )
+        }
+    }
+
+    func testCallContinuationFunctionsResolveInSource() {
+        let source = """
+        import kotlinx.cinterop.COpaquePointer
+        import kotlin.native.concurrent.callContinuation0
+        import kotlin.native.concurrent.callContinuation1
+        import kotlin.native.concurrent.callContinuation2
+
+        fun probe(pointer: COpaquePointer) {
+            pointer.callContinuation0()
+            pointer.callContinuation1<Int>()
+            pointer.callContinuation2<Int, String>()
+        }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertFalse(
+            ctx.diagnostics.hasError,
+            "Expected callContinuation functions to resolve cleanly, got: \(ctx.diagnostics.diagnostics.map(\.message))"
+        )
+    }
+
     // MARK: - DetachedObjectGraph<T> class
 
     func testDetachedObjectGraphClassIsRegistered() throws {
