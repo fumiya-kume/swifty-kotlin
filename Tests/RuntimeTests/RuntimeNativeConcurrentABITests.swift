@@ -3,11 +3,12 @@ import Foundation
 @testable import Runtime
 import XCTest
 
-// MARK: - kotlin.native.concurrent minimal runtime ABI coverage (STDLIB-NATIVE-CONCURRENT-003)
+// MARK: - kotlin.native.concurrent extended runtime ABI coverage (STDLIB-NATIVE-CONCURRENT-003)
 //
-// This file adds coverage for runtime ABI gaps not addressed by
-// RuntimeNativeConcurrentTests.swift (which covers Workers, freeze/isFrozen,
-// and basic AtomicInt/Long/Reference CAS).
+// This file adds extended runtime coverage not addressed by
+// RuntimeNativeConcurrentTests.swift, which covers Worker lifecycle,
+// freeze/isFrozen, Worker.id, Future<T>, TransferMode, FreezableAtomicReference,
+// @SharedImmutable, Worker.executeAfter, and basic AtomicInt/Long/Reference CAS.
 //
 // Implemented APIs tested here:
 //   AtomicBoolean  : kk_atomic_bool_create / load / store / exchange /
@@ -25,13 +26,8 @@ import XCTest
 //   Pinned<T>      : kk_pin_object / kk_unpin_object / kk_pinned_get
 //   @CName         : kk_cname_register / kk_cname_lookup
 //
-// Missing / not yet implemented (runtime gaps documented):
-//   - Worker.id (stable integer identifier per Worker instance)
-//   - Future<T>   (kk_future_new / kk_future_result / kk_future_consume)
-//   - TransferMode enum enforcement on Worker.execute
-//   - FreezableAtomicReference<T>
-//   - Worker.executeAfter (delayed scheduling)
-//   - @SharedImmutable top-level val freeze-on-init enforcement
+// Minimal native concurrent runtime ABI is implemented by RuntimeNativeAPI.swift,
+// RuntimeNativeConcurrentABI.swift, RuntimeAtomic.swift, and RuntimeThreadLocal.swift.
 
 // ---------------------------------------------------------------------------
 // MARK: - AtomicBoolean
