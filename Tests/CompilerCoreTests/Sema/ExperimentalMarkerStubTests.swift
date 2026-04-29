@@ -23,6 +23,22 @@ import XCTest
 //   4. The @RequiresOptIn argument encodes the correct severity level.
 
 final class ExperimentalMarkerStubTests: XCTestCase {
+    private struct ExperimentalPackageMarker: Hashable {
+        let name: String
+        let todo: String?
+    }
+
+    private static let implementedExperimentalPackageMarkers: Set<ExperimentalPackageMarker> = [
+        ExperimentalPackageMarker(name: "ExperimentalNativeApi", todo: nil),
+        ExperimentalPackageMarker(name: "ExperimentalObjCEnum", todo: nil),
+        ExperimentalPackageMarker(name: "ExperimentalObjCName", todo: nil),
+        ExperimentalPackageMarker(name: "ExperimentalObjCRefinement", todo: nil),
+        ExperimentalPackageMarker(name: "ExperimentalTypeInference", todo: nil),
+    ]
+
+    private static let knownGapExperimentalPackageMarkers: Set<ExperimentalPackageMarker> = [
+        ExperimentalPackageMarker(name: "ExpectRefinement", todo: "STDLIB-EXPERIMENTAL-003"),
+    ]
 
     // MARK: - Shared fixture
 
@@ -353,5 +369,50 @@ final class ExperimentalMarkerStubTests: XCTestCase {
         XCTAssertEqual(severity(fqPath: ["kotlin", "reflect", "ExperimentalAssociatedObjects"]), "ERROR")
         XCTAssertEqual(severity(fqPath: ["kotlin", "ExperimentalMultiplatform"]), "ERROR")
         XCTAssertEqual(severity(fqPath: ["kotlin", "ExperimentalSubclassOptIn"]), "WARNING")
+    }
+
+    // MARK: - kotlin.experimental marker inventory
+
+    func testKotlinExperimentalMarkerInventoryHasExpectedShape() {
+        let targetMarkers = Self.implementedExperimentalPackageMarkers.union(Self.knownGapExperimentalPackageMarkers)
+        let targetNames = Set(targetMarkers.map(\.name))
+
+        XCTAssertEqual(targetMarkers.count, targetNames.count)
+        XCTAssertEqual(targetMarkers.count, 6)
+        XCTAssertEqual(Self.implementedExperimentalPackageMarkers.count, 5)
+        XCTAssertEqual(Self.knownGapExperimentalPackageMarkers.count, 1)
+    }
+
+    func testImplementedKotlinExperimentalMarkersAreRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        for marker in Self.implementedExperimentalPackageMarkers {
+            let symbol = try XCTUnwrap(
+                lookupSymbol(fqPath: ["kotlin", "experimental", marker.name], sema: sema, interner: interner),
+                "kotlin.experimental.\(marker.name) should be registered"
+            )
+            XCTAssertEqual(
+                sema.symbols.symbol(symbol)?.kind,
+                .annotationClass,
+                "kotlin.experimental.\(marker.name) should be an annotation class"
+            )
+        }
+    }
+
+    func testKnownGapKotlinExperimentalMarkersRemainAbsentUntilTheirTodoIsImplemented() throws {
+        let (sema, interner) = try makeSema()
+
+        for marker in Self.knownGapExperimentalPackageMarkers {
+            let symbol = lookupSymbol(fqPath: ["kotlin", "experimental", marker.name], sema: sema, interner: interner)
+            XCTAssertNil(
+                symbol,
+                "kotlin.experimental.\(marker.name) is tracked by \(marker.todo ?? "unknown TODO") and should update this inventory when implemented"
+            )
+        }
+    }
+
+    func testKnownGapKotlinExperimentalMarkerTodosAreScoped() {
+        let todos = Set(Self.knownGapExperimentalPackageMarkers.compactMap(\.todo))
+        XCTAssertEqual(todos, ["STDLIB-EXPERIMENTAL-003"])
     }
 }
