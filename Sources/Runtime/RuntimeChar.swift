@@ -4,6 +4,18 @@ private func runtimeUnicodeScalar(_ value: Int) -> UnicodeScalar? {
     UnicodeScalar(value)
 }
 
+private func runtimeFirstUnicodeScalarValue(_ string: String, fallback: Int) -> Int {
+    string.unicodeScalars.first.map { Int($0.value) } ?? fallback
+}
+
+private func runtimeSingleUnicodeScalarValue(_ string: String) -> Int? {
+    var iterator = string.unicodeScalars.makeIterator()
+    guard let first = iterator.next(), iterator.next() == nil else {
+        return nil
+    }
+    return Int(first.value)
+}
+
 @_cdecl("kk_char_isDigit")
 public func kk_char_isDigit(_ value: Int) -> Int {
     guard let scalar = runtimeUnicodeScalar(value) else {
@@ -61,12 +73,28 @@ public func kk_char_uppercase(_ value: Int) -> Int {
     return charRuntimeMakeStringRaw(String(scalar).uppercased())
 }
 
+@_cdecl("kk_char_uppercaseChar")
+public func kk_char_uppercaseChar(_ value: Int) -> Int {
+    guard let scalar = runtimeUnicodeScalar(value) else {
+        return value
+    }
+    return runtimeSingleUnicodeScalarValue(scalar.properties.uppercaseMapping) ?? value
+}
+
 @_cdecl("kk_char_lowercase")
 public func kk_char_lowercase(_ value: Int) -> Int {
     guard let scalar = runtimeUnicodeScalar(value) else {
         return charRuntimeMakeStringRaw("\u{FFFD}")
     }
     return charRuntimeMakeStringRaw(String(scalar).lowercased())
+}
+
+@_cdecl("kk_char_lowercaseChar")
+public func kk_char_lowercaseChar(_ value: Int) -> Int {
+    guard let scalar = runtimeUnicodeScalar(value) else {
+        return value
+    }
+    return runtimeFirstUnicodeScalarValue(String(scalar).lowercased(), fallback: value)
 }
 
 @_cdecl("kk_char_titlecase")
