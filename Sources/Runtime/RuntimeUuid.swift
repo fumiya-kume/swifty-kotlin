@@ -432,6 +432,15 @@ public func kk_uuid_parseHexDashOrNull(_ stringRaw: Int) -> Int {
     return thrown == 0 ? result : runtimeNullSentinelInt
 }
 
+// MARK: - Uuid.parseOrNull(uuidString)
+
+@_cdecl("kk_uuid_parseOrNull")
+public func kk_uuid_parseOrNull(_ stringRaw: Int) -> Int {
+    var thrown = 0
+    let parsed = kk_uuid_parse(stringRaw, &thrown)
+    return thrown == 0 ? parsed : runtimeNullSentinelInt
+}
+
 // MARK: - Uuid.toString()
 
 @_cdecl("kk_uuid_toString")
