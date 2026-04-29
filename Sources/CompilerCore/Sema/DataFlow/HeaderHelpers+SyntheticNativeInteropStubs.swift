@@ -164,6 +164,46 @@ extension DataFlowSemaPhase {
                 symbols: symbols
             )
         }
+
+        let freezingIsDeprecatedSymbol = ensureAnnotationClassSymbol(
+            named: "FreezingIsDeprecated",
+            in: nativePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let nativePkgSymbol {
+            symbols.setParentSymbol(nativePkgSymbol, for: freezingIsDeprecatedSymbol)
+        }
+        appendStandardAnnotationMetadata(
+            to: freezingIsDeprecatedSymbol,
+            targets: [
+                "AnnotationTarget.CLASS",
+                "AnnotationTarget.ANNOTATION_CLASS",
+                "AnnotationTarget.PROPERTY",
+                "AnnotationTarget.FIELD",
+                "AnnotationTarget.LOCAL_VARIABLE",
+                "AnnotationTarget.VALUE_PARAMETER",
+                "AnnotationTarget.CONSTRUCTOR",
+                "AnnotationTarget.FUNCTION",
+                "AnnotationTarget.PROPERTY_GETTER",
+                "AnnotationTarget.PROPERTY_SETTER",
+                "AnnotationTarget.TYPEALIAS",
+            ],
+            retention: "AnnotationRetention.BINARY",
+            symbols: symbols
+        )
+        var freezingAnnotations = symbols.annotations(for: freezingIsDeprecatedSymbol)
+        let freezingRequiresOptIn = MetadataAnnotationRecord(
+            annotationFQName: "kotlin.RequiresOptIn",
+            arguments: [
+                "message=Freezing API is deprecated since 1.7.20. See https://kotlinlang.org/docs/native-migration-guide.html for details",
+                "level=RequiresOptIn.Level.WARNING",
+            ]
+        )
+        if !freezingAnnotations.contains(freezingRequiresOptIn) {
+            freezingAnnotations.append(freezingRequiresOptIn)
+            symbols.setAnnotations(freezingAnnotations, for: freezingIsDeprecatedSymbol)
+        }
     }
 
     private func registerSyntheticCInteropStubs(
