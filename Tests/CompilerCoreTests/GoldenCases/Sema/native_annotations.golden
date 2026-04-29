@@ -16,7 +16,7 @@ symbol s14 kind=valueParameter fq=golden.sema.nativeSum.$1.a vis=private flags=_
 symbol s15 kind=valueParameter fq=golden.sema.nativeSum.$1.b vis=private flags=_
 symbol s16 kind=function fq=golden.sema.takesPointer vis=public flags=_ sig=recv=_ params=[Class#2<Class#5>?,Class#0?,Class#1<Class#5>?] ret=Class#2<Class#5>? suspend=0 defaults=[0,0,0] vararg=[0,0,0]
 symbol s17 kind=valueParameter fq=golden.sema.takesPointer.$2.ptr vis=private flags=_
-file f0 package=golden.sema
+file f0 package=golden.sema annotations=[@file:OptIn(kotlin.experimental.ExperimentalNativeApi::class,kotlin.experimental.ExperimentalObjCEnum::class,kotlin.experimental.ExperimentalObjCName::class,kotlin.experimental.ExperimentalObjCRefinement::class)]
   decl d0 class SwiftRefined sym=s6
   decl d1 class NativeEnumBridge sym=s7
   decl d2 class ExportEnumToObjC sym=s8

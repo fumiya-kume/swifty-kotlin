@@ -1,4 +1,11 @@
 // SKIP-DIFF: kotlin.native.* and kotlinx.cinterop.* are Kotlin/Native-only APIs not available in JVM kotlinc
+@file:OptIn(
+    kotlin.experimental.ExperimentalNativeApi::class,
+    kotlin.experimental.ExperimentalObjCEnum::class,
+    kotlin.experimental.ExperimentalObjCName::class,
+    kotlin.experimental.ExperimentalObjCRefinement::class,
+)
+
 package golden.sema
 
 import kotlin.experimental.ExperimentalNativeApi
