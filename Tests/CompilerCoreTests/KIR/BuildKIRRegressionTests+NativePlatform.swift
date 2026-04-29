@@ -83,6 +83,49 @@ extension BuildKIRRegressionTests {
         XCTAssertTrue(callees.contains(interner.intern("kk_native_byteArray_getLongAt")))
     }
 
+    func testNativeByteArraySettersLowerToRuntimeCallees() throws {
+        let source = """
+        @file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)
+
+        import kotlin.native.setByteAt
+        import kotlin.native.setShortAt
+        import kotlin.native.setIntAt
+        import kotlin.native.setLongAt
+
+        fun probe(bytes: ByteArray) {
+            bytes.setByteAt(0, -1)
+            bytes.setShortAt(1, 0x1234)
+            bytes.setIntAt(2, 0x12345678)
+            bytes.setLongAt(0, 42L)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "probe", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: body, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_native_byteArray_setByteAt"))
+            XCTAssertTrue(callees.contains("kk_native_byteArray_setShortAt"))
+            XCTAssertTrue(callees.contains("kk_native_byteArray_setIntAt"))
+            XCTAssertTrue(callees.contains("kk_native_byteArray_setLongAt"))
+        }
+    }
+
+    func testABILoweringMarksNativeByteArraySettersAsNonThrowing() {
+        let pass = ABILoweringPass()
+        let interner = StringInterner()
+        let callees = pass.nonThrowingCallees(interner: interner)
+
+        XCTAssertTrue(callees.contains(interner.intern("kk_native_byteArray_setByteAt")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_native_byteArray_setShortAt")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_native_byteArray_setIntAt")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_native_byteArray_setLongAt")))
+    }
+
     func testNativeUnsignedByteArrayAccessorsLowerToRuntimeCallees() throws {
         let source = """
         @file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)

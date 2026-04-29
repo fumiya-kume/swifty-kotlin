@@ -974,6 +974,29 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
         }
+
+        let setters: [(name: String, valueType: TypeID, externalLinkName: String)] = [
+            ("setByteAt", types.intType, "kk_native_byteArray_setByteAt"),
+            ("setShortAt", types.intType, "kk_native_byteArray_setShortAt"),
+            ("setIntAt", types.intType, "kk_native_byteArray_setIntAt"),
+            ("setLongAt", types.longType, "kk_native_byteArray_setLongAt"),
+        ]
+        for setter in setters {
+            registerSyntheticNativeTopLevelFunction(
+                named: setter.name,
+                packageFQName: nativePkg,
+                receiverType: byteArrayType,
+                parameters: [
+                    (name: "index", type: types.intType),
+                    (name: "value", type: setter.valueType),
+                ],
+                returnType: types.unitType,
+                annotations: experimentalNativeApiAnnotations(),
+                externalLinkName: setter.externalLinkName,
+                symbols: symbols,
+                interner: interner
+            )
+        }
     }
 
     private func registerSyntheticCInteropStubs(
