@@ -69,6 +69,35 @@ extension BuildKIRRegressionTests {
         XCTAssertTrue(callees.contains(interner.intern("kk_native_identityHashCode")))
     }
 
+    func testNativeGetStackTraceAddressesLowersToRuntimeCallee() throws {
+        let source = """
+        @file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)
+
+        import kotlin.native.getStackTraceAddresses
+
+        fun probe(): List<Long> = getStackTraceAddresses()
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "probe", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: body, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_native_getStackTraceAddresses"))
+        }
+    }
+
+    func testABILoweringMarksNativeGetStackTraceAddressesAsNonThrowing() {
+        let pass = ABILoweringPass()
+        let interner = StringInterner()
+        let callees = pass.nonThrowingCallees(interner: interner)
+
+        XCTAssertTrue(callees.contains(interner.intern("kk_native_getStackTraceAddresses")))
+    }
+
     func testNativeByteArrayAccessorsLowerToRuntimeCallees() throws {
         let source = """
         @file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)

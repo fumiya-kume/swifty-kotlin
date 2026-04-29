@@ -82,6 +82,12 @@ public func kk_native_identityHashCode(_ objectRaw: Int) -> Int {
     return Int(truncatingIfNeeded: mixed)
 }
 
+@_cdecl("kk_native_getStackTraceAddresses")
+public func kk_native_getStackTraceAddresses() -> Int {
+    let addresses = Thread.callStackReturnAddresses.map { Int(truncating: $0) }
+    return registerRuntimeObject(RuntimeListBox(elements: addresses))
+}
+
 // MARK: - Native ByteArray accessors
 
 @inline(__always)

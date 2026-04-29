@@ -668,6 +668,7 @@ extension ABILoweringPass {
             interner.intern("kk_platform_getAvailableProcessors"),
             interner.intern("kk_platform_memoryModel"),
             interner.intern("kk_native_identityHashCode"),
+            interner.intern("kk_native_getStackTraceAddresses"),
             interner.intern("kk_native_byteArray_getByteAt"),
             interner.intern("kk_native_byteArray_getShortAt"),
             interner.intern("kk_native_byteArray_getIntAt"),

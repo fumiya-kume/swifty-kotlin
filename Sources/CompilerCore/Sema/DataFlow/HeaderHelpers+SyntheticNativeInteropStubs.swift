@@ -35,6 +35,11 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerSyntheticNativeStackTraceAddressStub(
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
         registerSyntheticNativeByteArrayAccessorStubs(
             symbols: symbols,
             types: types,
@@ -1034,6 +1039,35 @@ extension DataFlowSemaPhase {
         )
     }
 
+    private func registerSyntheticNativeStackTraceAddressStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let nativePkg = ensurePackage(
+            path: ["kotlin", "native"],
+            symbols: symbols,
+            interner: interner
+        )
+        let listLongType = syntheticListType(
+            elementType: types.longType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerSyntheticNativeTopLevelFunction(
+            named: "getStackTraceAddresses",
+            packageFQName: nativePkg,
+            receiverType: nil,
+            parameters: [],
+            returnType: listLongType,
+            annotations: experimentalNativeApiAnnotations(),
+            externalLinkName: "kk_native_getStackTraceAddresses",
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
     private func registerSyntheticCInteropStubs(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -1422,6 +1456,28 @@ extension DataFlowSemaPhase {
         return types.make(.classType(ClassType(
             classSymbol: symbol,
             args: [],
+            nullability: .nonNull
+        )))
+    }
+
+    private func syntheticListType(
+        elementType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID {
+        let collectionsPkg = ensurePackage(
+            path: ["kotlin", "collections"],
+            symbols: symbols,
+            interner: interner
+        )
+        let listFQName = collectionsPkg + [interner.intern("List")]
+        guard let listSymbol = symbols.lookup(fqName: listFQName) else {
+            return types.anyType
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: listSymbol,
+            args: [.out(elementType)],
             nullability: .nonNull
         )))
     }
