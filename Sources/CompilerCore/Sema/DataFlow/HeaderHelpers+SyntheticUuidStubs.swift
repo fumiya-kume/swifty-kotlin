@@ -1,7 +1,7 @@
 import Foundation
 
 /// Synthetic stdlib stubs for kotlin.uuid.Uuid.
-/// Registers the Uuid class, companion factory methods/properties (random, parse, parseHexOrNull, LEXICAL_ORDER, SIZE_BITS, SIZE_BYTES),
+/// Registers the Uuid class, companion factory methods/properties (random, parse, parseHexOrNull, parseHexDashOrNull, LEXICAL_ORDER, SIZE_BITS, SIZE_BYTES),
 /// and instance methods (toString, toHexString, toLongs, toByteArray).
 extension DataFlowSemaPhase {
     func registerSyntheticUuidStubs(
@@ -82,6 +82,17 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_uuid_parseHexOrNull",
             returnType: nullableUuidType,
             parameters: [(name: "hexString", type: stringType)],
+            companionFQName: companionFQName,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- Uuid.parseHexDashOrNull(hexDashString: String) companion factory ---
+        registerUuidCompanionMethod(
+            named: "parseHexDashOrNull",
+            externalLinkName: "kk_uuid_parseHexDashOrNull",
+            returnType: nullableUuidType,
+            parameters: [(name: "hexDashString", type: stringType)],
             companionFQName: companionFQName,
             symbols: symbols,
             interner: interner

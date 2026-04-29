@@ -146,6 +146,16 @@ final class RuntimeUuidEdgeCaseTests: XCTestCase {
         )
     }
 
+    func testParseHexDashOrNullAcceptsHexDashInput() {
+        let uuidRaw = kk_uuid_parseHexDashOrNull(makeRuntimeString("123e4567-e89b-12d3-a456-426614174000"))
+
+        XCTAssertNotEqual(uuidRaw, runtimeNullSentinelInt)
+        XCTAssertEqual(
+            extractRuntimeString(kk_uuid_toString(uuidRaw)),
+            "123e4567-e89b-12d3-a456-426614174000"
+        )
+    }
+
     // MARK: - MAX UUID (all Fs)
 
     func testMaxUuidAllFs() {
@@ -305,6 +315,25 @@ final class RuntimeUuidEdgeCaseTests: XCTestCase {
         let result = kk_uuid_parse(makeRuntimeString(bad), &thrown)
         XCTAssertEqual(result, 0)
         XCTAssertNotEqual(thrown, 0, "Invalid hex chars must throw")
+    }
+
+    func testParseHexDashOrNullRejectsNonHexDashInputsWithNullSentinel() {
+        XCTAssertEqual(
+            kk_uuid_parseHexDashOrNull(makeRuntimeString("123e4567e89b12d3a456426614174000")),
+            runtimeNullSentinelInt
+        )
+        XCTAssertEqual(
+            kk_uuid_parseHexDashOrNull(makeRuntimeString("123e-4567-e89b-12d3-a456426614174")),
+            runtimeNullSentinelInt
+        )
+        XCTAssertEqual(
+            kk_uuid_parseHexDashOrNull(makeRuntimeString("123e4567-e89b-12d3-a456-42661417400z")),
+            runtimeNullSentinelInt
+        )
+    }
+
+    func testParseHexDashOrNullNullRawReturnsNullSentinel() {
+        XCTAssertEqual(kk_uuid_parseHexDashOrNull(0), runtimeNullSentinelInt)
     }
 
     /// Missing dashes (31 hex chars) must throw.

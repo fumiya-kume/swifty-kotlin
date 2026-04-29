@@ -250,6 +250,31 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
         XCTAssertEqual(classType.nullability, .nullable)
     }
 
+    func testUuidParseHexDashOrNullAcceptsStringParameterAndReturnsNullableUuid() throws {
+        let (sema, interner) = try makeSema()
+        let fq = ["kotlin", "uuid", "Uuid", "Companion", "parseHexDashOrNull"].map { interner.intern($0) }
+        let syms = sema.symbols.lookupAll(fqName: fq)
+        XCTAssertFalse(syms.isEmpty, "Uuid.parseHexDashOrNull must be registered")
+        let parseHexDashOrNullSym = try XCTUnwrap(syms.first)
+        guard let sig = sema.symbols.functionSignature(for: parseHexDashOrNullSym) else {
+            XCTFail("Uuid.parseHexDashOrNull has no signature"); return
+        }
+        XCTAssertEqual(sig.parameterTypes.count, 1, "Uuid.parseHexDashOrNull must take exactly 1 parameter")
+        XCTAssertEqual(
+            sig.parameterTypes[0], sema.types.stringType,
+            "Uuid.parseHexDashOrNull parameter must be of type String (sema.types.stringType)"
+        )
+
+        let uuidFQ = ["kotlin", "uuid", "Uuid"].map { interner.intern($0) }
+        let uuidSym = try XCTUnwrap(sema.symbols.lookup(fqName: uuidFQ))
+        guard case .classType(let ct) = sema.types.kind(of: sig.returnType) else {
+            XCTFail("Uuid.parseHexDashOrNull return type must be a nullable Uuid class type")
+            return
+        }
+        XCTAssertEqual(ct.classSymbol, uuidSym)
+        XCTAssertEqual(ct.nullability, .nullable)
+    }
+
     func testUuidNameUUIDFromBytesCompanionMethodIsRegistered() throws {
         let (sema, interner) = try makeSema()
         let links = allExternalLinks(
@@ -260,6 +285,19 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
         XCTAssertTrue(
             links.contains("kk_uuid_nameUUIDFromBytes"),
             "Uuid.nameUUIDFromBytes must link to kk_uuid_nameUUIDFromBytes; found: \(links)"
+        )
+    }
+
+    func testUuidParseHexDashOrNullCompanionMethodIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let links = allExternalLinks(
+            fqPath: ["kotlin", "uuid", "Uuid", "Companion", "parseHexDashOrNull"],
+            sema: sema,
+            interner: interner
+        )
+        XCTAssertTrue(
+            links.contains("kk_uuid_parseHexDashOrNull"),
+            "Uuid.parseHexDashOrNull(hexDashString) must link to kk_uuid_parseHexDashOrNull; found: \(links)"
         )
     }
 
@@ -633,12 +671,13 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
         let expectedCompanionLinks: Set<String> = [
             "kk_uuid_random",
             "kk_uuid_lexicalOrder",
+            "kk_uuid_parseHexDashOrNull",
             "kk_uuid_parse",
             "kk_uuid_parseHexOrNull",
             "kk_uuid_nameUUIDFromBytes",
         ]
         var foundLinks: Set<String> = []
-        for memberName in ["random", "LEXICAL_ORDER", "parse", "parseHexOrNull", "nameUUIDFromBytes"] {
+        for memberName in ["random", "LEXICAL_ORDER", "parse", "parseHexOrNull", "parseHexDashOrNull", "nameUUIDFromBytes"] {
             let path = companionFQ + [memberName]
             let links = allExternalLinks(fqPath: path, sema: sema, interner: interner)
             foundLinks.formUnion(links)

@@ -379,7 +379,7 @@
 - [ ] STDLIB-UUID-007: `Uuid.Companion.parseHexDash(hexDashString: String)` を追加する
 - [ ] STDLIB-UUID-008: `Uuid.Companion.parseOrNull(uuidString: String)` を追加する
 - [x] STDLIB-UUID-009: `Uuid.Companion.parseHexOrNull(hexString: String)` を追加する
-- [ ] STDLIB-UUID-010: `Uuid.Companion.parseHexDashOrNull(hexDashString: String)` を追加する
+- [x] STDLIB-UUID-010: `Uuid.Companion.parseHexDashOrNull(hexDashString: String)` を追加する
 - [x] STDLIB-UUID-011: `Uuid.Companion.SIZE_BITS` / `SIZE_BYTES` constants を追加する
 - [x] STDLIB-UUID-012: `Uuid.Companion.LEXICAL_ORDER` comparator を追加する
 - [ ] STDLIB-NATIVE-PLATFORM-001: `kotlin.native` の platform info 残差を詰める
