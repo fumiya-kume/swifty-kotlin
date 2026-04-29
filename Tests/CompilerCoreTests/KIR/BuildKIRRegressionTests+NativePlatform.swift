@@ -252,4 +252,43 @@ extension BuildKIRRegressionTests {
         XCTAssertTrue(callees.contains(interner.intern("kk_native_byteArray_getFloatAt")))
         XCTAssertTrue(callees.contains(interner.intern("kk_native_byteArray_getDoubleAt")))
     }
+
+    func testNativePrimitiveByteArraySettersLowerToRuntimeCallees() throws {
+        let source = """
+        @file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)
+
+        import kotlin.native.setCharAt
+        import kotlin.native.setFloatAt
+        import kotlin.native.setDoubleAt
+
+        fun probe(bytes: ByteArray, c: Char, f: Float, d: Double) {
+            bytes.setCharAt(0, c)
+            bytes.setFloatAt(2, f)
+            bytes.setDoubleAt(0, d)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "probe", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: body, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_native_byteArray_setCharAt"))
+            XCTAssertTrue(callees.contains("kk_native_byteArray_setFloatAt"))
+            XCTAssertTrue(callees.contains("kk_native_byteArray_setDoubleAt"))
+        }
+    }
+
+    func testABILoweringMarksNativePrimitiveByteArraySettersAsNonThrowing() {
+        let pass = ABILoweringPass()
+        let interner = StringInterner()
+        let callees = pass.nonThrowingCallees(interner: interner)
+
+        XCTAssertTrue(callees.contains(interner.intern("kk_native_byteArray_setCharAt")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_native_byteArray_setFloatAt")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_native_byteArray_setDoubleAt")))
+    }
 }

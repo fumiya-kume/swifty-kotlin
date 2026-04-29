@@ -314,6 +314,39 @@ public func kk_native_byteArray_setULongAt(_ arrayRaw: Int, _ index: Int, _ valu
     )
 }
 
+@_cdecl("kk_native_byteArray_setCharAt")
+public func kk_native_byteArray_setCharAt(_ arrayRaw: Int, _ index: Int, _ value: Int) -> Int {
+    return runtimeNativeByteArrayStoreUnsigned(
+        arrayRaw,
+        index,
+        value: UInt64(UInt16(truncatingIfNeeded: value)),
+        byteCount: 2,
+        functionName: "kk_native_byteArray_setCharAt"
+    )
+}
+
+@_cdecl("kk_native_byteArray_setFloatAt")
+public func kk_native_byteArray_setFloatAt(_ arrayRaw: Int, _ index: Int, _ value: Int) -> Int {
+    return runtimeNativeByteArrayStoreUnsigned(
+        arrayRaw,
+        index,
+        value: UInt64(UInt32(truncatingIfNeeded: value)),
+        byteCount: 4,
+        functionName: "kk_native_byteArray_setFloatAt"
+    )
+}
+
+@_cdecl("kk_native_byteArray_setDoubleAt")
+public func kk_native_byteArray_setDoubleAt(_ arrayRaw: Int, _ index: Int, _ value: Int) -> Int {
+    return runtimeNativeByteArrayStoreUnsigned(
+        arrayRaw,
+        index,
+        value: UInt64(bitPattern: Int64(value)),
+        byteCount: 8,
+        functionName: "kk_native_byteArray_setDoubleAt"
+    )
+}
+
 // MARK: - nativeHeap / nativeMemory allocation
 
 /// Tracks allocations made through `nativeHeap.alloc` / `nativeMemory`.
