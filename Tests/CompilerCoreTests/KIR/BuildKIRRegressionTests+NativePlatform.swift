@@ -98,6 +98,52 @@ extension BuildKIRRegressionTests {
         XCTAssertTrue(callees.contains(interner.intern("kk_native_getStackTraceAddresses")))
     }
 
+    func testNativeUnhandledExceptionHooksLowerToRuntimeCallees() throws {
+        let source = """
+        @file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)
+
+        import kotlin.native.getUnhandledExceptionHook
+        import kotlin.native.setUnhandledExceptionHook
+        import kotlin.native.processUnhandledException
+        import kotlin.native.terminateWithUnhandledException
+
+        fun probe(throwable: Throwable) {
+            val hook = getUnhandledExceptionHook()
+            setUnhandledExceptionHook(hook)
+            processUnhandledException(throwable)
+        }
+
+        fun die(throwable: Throwable): Nothing = terminateWithUnhandledException(throwable)
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let probeBody = try findKIRFunctionBody(named: "probe", in: module, interner: ctx.interner)
+            let dieBody = try findKIRFunctionBody(named: "die", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: probeBody, interner: ctx.interner)
+                + extractCallees(from: dieBody, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_native_getUnhandledExceptionHook"))
+            XCTAssertTrue(callees.contains("kk_native_setUnhandledExceptionHook"))
+            XCTAssertTrue(callees.contains("kk_native_processUnhandledException"))
+            XCTAssertTrue(callees.contains("kk_native_terminateWithUnhandledException"))
+        }
+    }
+
+    func testABILoweringMarksNonThrowingNativeUnhandledExceptionHooks() {
+        let pass = ABILoweringPass()
+        let interner = StringInterner()
+        let callees = pass.nonThrowingCallees(interner: interner)
+
+        XCTAssertTrue(callees.contains(interner.intern("kk_native_getUnhandledExceptionHook")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_native_setUnhandledExceptionHook")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_native_terminateWithUnhandledException")))
+        XCTAssertFalse(callees.contains(interner.intern("kk_native_processUnhandledException")))
+    }
+
     func testNativeByteArrayAccessorsLowerToRuntimeCallees() throws {
         let source = """
         @file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)

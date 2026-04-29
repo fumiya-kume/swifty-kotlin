@@ -40,6 +40,11 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerSyntheticNativeUnhandledExceptionHookStubs(
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
         registerSyntheticNativeByteArrayAccessorStubs(
             symbols: symbols,
             types: types,
@@ -1068,6 +1073,106 @@ extension DataFlowSemaPhase {
         )
     }
 
+    private func registerSyntheticNativeUnhandledExceptionHookStubs(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let nativePkg = ensurePackage(
+            path: ["kotlin", "native"],
+            symbols: symbols,
+            interner: interner
+        )
+        let nativePkgSymbol = symbols.lookup(fqName: nativePkg)
+        let throwableType = syntheticThrowableType(
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let hookType = types.make(.functionType(FunctionType(
+            params: [throwableType],
+            returnType: types.unitType
+        )))
+        let nullableHookType = types.makeNullable(hookType)
+
+        let hookAliasName = interner.intern("ReportUnhandledExceptionHook")
+        let hookAliasFQName = nativePkg + [hookAliasName]
+        let hookAliasSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: hookAliasFQName),
+           symbols.symbol(existing)?.kind == .typeAlias
+        {
+            hookAliasSymbol = existing
+            symbols.insertFlags([.synthetic], for: existing)
+        } else if symbols.lookup(fqName: hookAliasFQName) == nil {
+            hookAliasSymbol = symbols.define(
+                kind: .typeAlias,
+                name: hookAliasName,
+                fqName: hookAliasFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        } else {
+            return
+        }
+        if let nativePkgSymbol {
+            symbols.setParentSymbol(nativePkgSymbol, for: hookAliasSymbol)
+        }
+        symbols.setTypeAliasUnderlyingType(hookType, for: hookAliasSymbol)
+        appendMetadataAnnotations(
+            experimentalNativeApiAnnotations(),
+            to: hookAliasSymbol,
+            symbols: symbols
+        )
+
+        let annotations = experimentalNativeApiAnnotations()
+        registerSyntheticNativeTopLevelFunction(
+            named: "getUnhandledExceptionHook",
+            packageFQName: nativePkg,
+            receiverType: nil,
+            parameters: [],
+            returnType: nullableHookType,
+            annotations: annotations,
+            externalLinkName: "kk_native_getUnhandledExceptionHook",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeTopLevelFunction(
+            named: "setUnhandledExceptionHook",
+            packageFQName: nativePkg,
+            receiverType: nil,
+            parameters: [("hook", nullableHookType)],
+            returnType: types.unitType,
+            annotations: annotations,
+            externalLinkName: "kk_native_setUnhandledExceptionHook",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeTopLevelFunction(
+            named: "processUnhandledException",
+            packageFQName: nativePkg,
+            receiverType: nil,
+            parameters: [("throwable", throwableType)],
+            returnType: types.unitType,
+            annotations: annotations,
+            externalLinkName: "kk_native_processUnhandledException",
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeTopLevelFunction(
+            named: "terminateWithUnhandledException",
+            packageFQName: nativePkg,
+            receiverType: nil,
+            parameters: [("throwable", throwableType)],
+            returnType: types.nothingType,
+            annotations: annotations,
+            externalLinkName: "kk_native_terminateWithUnhandledException",
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
     private func registerSyntheticCInteropStubs(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -1482,6 +1587,41 @@ extension DataFlowSemaPhase {
         )))
     }
 
+    private func syntheticThrowableType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID {
+        let kotlinPkg = ensurePackage(
+            path: ["kotlin"],
+            symbols: symbols,
+            interner: interner
+        )
+        let throwableName = interner.intern("Throwable")
+        let throwableFQName = kotlinPkg + [throwableName]
+        let throwableSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: throwableFQName) {
+            throwableSymbol = existing
+        } else {
+            throwableSymbol = symbols.define(
+                kind: .class,
+                name: throwableName,
+                fqName: throwableFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            if let kotlinPkgSymbol = symbols.lookup(fqName: kotlinPkg) {
+                symbols.setParentSymbol(kotlinPkgSymbol, for: throwableSymbol)
+            }
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: throwableSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+    }
+
     private func cPointerType(
         pointedTypeName: String,
         symbols: SymbolTable,
@@ -1794,9 +1934,14 @@ extension DataFlowSemaPhase {
         annotations: [MetadataAnnotationRecord] = [],
         externalLinkName: String? = nil,
         flags: SymbolFlags = [.synthetic],
+        canThrow: Bool = false,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
+        var functionFlags = flags
+        if canThrow {
+            functionFlags.insert(.throwingFunction)
+        }
         let functionName = interner.intern(name)
         let functionFQName = packageFQName + [functionName]
         let parameterTypes = parameters.map(\.type)
@@ -1810,7 +1955,7 @@ extension DataFlowSemaPhase {
                 && signature.returnType == returnType
         }) {
             functionSymbol = existing
-            symbols.insertFlags(flags, for: existing)
+            symbols.insertFlags(functionFlags, for: existing)
             if let externalLinkName {
                 symbols.setExternalLinkName(externalLinkName, for: existing)
             }
@@ -1821,7 +1966,7 @@ extension DataFlowSemaPhase {
                 fqName: functionFQName,
                 declSite: nil,
                 visibility: .public,
-                flags: flags
+                flags: functionFlags
             )
             if let packageSymbol = symbols.lookup(fqName: packageFQName) {
                 symbols.setParentSymbol(packageSymbol, for: functionSymbol)
@@ -1848,6 +1993,7 @@ extension DataFlowSemaPhase {
                     parameterTypes: parameterTypes,
                     returnType: returnType,
                     isSuspend: false,
+                    canThrow: canThrow,
                     valueParameterSymbols: valueParameterSymbols,
                     valueParameterHasDefaultValues: defaultValues ?? Array(repeating: false, count: valueParameterSymbols.count),
                     valueParameterIsVararg: varargs ?? Array(repeating: false, count: valueParameterSymbols.count)

@@ -88,6 +88,55 @@ public func kk_native_getStackTraceAddresses() -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: addresses))
 }
 
+private final class RuntimeUnhandledExceptionHookRegistry: @unchecked Sendable {
+    private let lock = NSLock()
+    private var hookRaw: Int = runtimeNullSentinelInt
+
+    func get() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return hookRaw
+    }
+
+    func set(_ raw: Int) {
+        lock.lock()
+        hookRaw = raw == 0 || raw == runtimeNullSentinelInt ? runtimeNullSentinelInt : raw
+        lock.unlock()
+    }
+}
+
+private let runtimeUnhandledExceptionHookRegistry = RuntimeUnhandledExceptionHookRegistry()
+
+@_cdecl("kk_native_getUnhandledExceptionHook")
+public func kk_native_getUnhandledExceptionHook() -> Int {
+    runtimeUnhandledExceptionHookRegistry.get()
+}
+
+@_cdecl("kk_native_setUnhandledExceptionHook")
+public func kk_native_setUnhandledExceptionHook(_ hookRaw: Int) -> Int {
+    runtimeUnhandledExceptionHookRegistry.set(hookRaw)
+    return 0
+}
+
+@_cdecl("kk_native_processUnhandledException")
+public func kk_native_processUnhandledException(
+    _ throwableRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let hookRaw = runtimeUnhandledExceptionHookRegistry.get()
+    guard hookRaw != 0, hookRaw != runtimeNullSentinelInt else {
+        return 0
+    }
+    _ = kk_function_invoke(hookRaw, throwableRaw, outThrown)
+    return 0
+}
+
+@_cdecl("kk_native_terminateWithUnhandledException")
+public func kk_native_terminateWithUnhandledException(_ throwableRaw: Int) -> Int {
+    _ = kk_native_processUnhandledException(throwableRaw, nil)
+    fatalError("Unhandled Kotlin exception: \(throwableRaw)")
+}
+
 // MARK: - Native ByteArray accessors
 
 @inline(__always)

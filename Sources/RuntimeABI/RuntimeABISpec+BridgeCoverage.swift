@@ -348,6 +348,17 @@ public extension RuntimeABISpec {
             bridgeSpec("kk_platform_memoryModel", section: "System", params: ["platformRaw"]),
             bridgeSpec("kk_native_identityHashCode", section: "Native", params: ["objectRaw"]),
             bridgeSpec("kk_native_getStackTraceAddresses", section: "Native", params: []),
+            bridgeSpec("kk_native_getUnhandledExceptionHook", section: "Native", params: []),
+            bridgeSpec("kk_native_setUnhandledExceptionHook", section: "Native", params: ["hookRaw"]),
+            bridgeSpec(
+                "kk_native_processUnhandledException",
+                section: "Native",
+                typedParams: [
+                    ("throwableRaw", .intptr),
+                    ("outThrown", .nullableIntptrPointer),
+                ]
+            ),
+            bridgeSpec("kk_native_terminateWithUnhandledException", section: "Native", params: ["throwableRaw"]),
             bridgeSpec("kk_native_byteArray_getByteAt", section: "Native", params: ["arrayRaw", "index"]),
             bridgeSpec("kk_native_byteArray_getShortAt", section: "Native", params: ["arrayRaw", "index"]),
             bridgeSpec("kk_native_byteArray_getIntAt", section: "Native", params: ["arrayRaw", "index"]),
