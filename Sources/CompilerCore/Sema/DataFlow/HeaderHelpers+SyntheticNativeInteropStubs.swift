@@ -119,6 +119,16 @@ extension DataFlowSemaPhase {
                 retention: retention,
                 symbols: symbols
             )
+            appendMetadataAnnotations(
+                [
+                    MetadataAnnotationRecord(
+                        annotationFQName: "kotlin.RequiresOptIn",
+                        arguments: ["level=RequiresOptIn.Level.ERROR"]
+                    ),
+                ],
+                to: symbol,
+                symbols: symbols
+            )
         }
     }
 
