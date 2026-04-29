@@ -54,13 +54,13 @@ final class RuntimeUuidBox {
 
     var variant: Int {
         let lsb = UInt64(bitPattern: leastSignificantBits)
-        let topBits = (lsb >> 62) & 0x3
-        switch topBits {
-        case 0b00:
+        let topThreeBits = (lsb >> 61) & 0x7
+        switch topThreeBits {
+        case 0b000, 0b001, 0b010, 0b011:
             return 0 // NCS backward compatibility
-        case 0b10:
+        case 0b100, 0b101:
             return 2 // RFC 4122 / IETF
-        case 0b11:
+        case 0b110:
             return 6 // Microsoft compatibility bucket
         default:
             return 7 // future reserved bucket
