@@ -403,7 +403,7 @@
 - [x] STDLIB-NATIVE-PLATFORM-019: Native `identityHashCode(obj)` を追加する
 - [x] STDLIB-NATIVE-PLATFORM-020: Native `getStackTraceAddresses()` を追加する
 - [x] STDLIB-NATIVE-PLATFORM-021: Native unhandled-exception hook APIs（`getUnhandledExceptionHook`, `setUnhandledExceptionHook`, `processUnhandledException`, `terminateWithUnhandledException`）を追加する
-- [ ] STDLIB-NATIVE-CONCURRENT-001: `kotlin.native.concurrent` の対象 API 一覧を固定
+- [x] STDLIB-NATIVE-CONCURRENT-001: `kotlin.native.concurrent` の対象 API 一覧を固定
 - [ ] STDLIB-NATIVE-CONCURRENT-002: `kotlin.native.concurrent` の sema / diagnostics を整える
 - [ ] STDLIB-NATIVE-CONCURRENT-003: `kotlin.native.concurrent` の最小 runtime / ABI を実装
 - [ ] STDLIB-NATIVE-CONCURRENT-004: `DetachedObjectGraph<T>` surface を追加する
@@ -417,6 +417,11 @@
 - [ ] STDLIB-NATIVE-CONCURRENT-012: `waitForMultipleFutures(futures)` を追加する
 - [ ] STDLIB-NATIVE-CONCURRENT-013: `waitWorkerTermination(worker)` を追加する
 - [ ] STDLIB-NATIVE-CONCURRENT-014: `withWorker(name, block)` を追加する
+- [ ] STDLIB-NATIVE-CONCURRENT-015: legacy `kotlin.native.concurrent.AtomicInt` / `AtomicLong` / `AtomicNativePtr` surface を追加する
+- [ ] STDLIB-NATIVE-CONCURRENT-016: `FreezableAtomicReference<T>` surface を追加する
+- [ ] STDLIB-NATIVE-CONCURRENT-017: `MutableData` surface を追加する
+- [ ] STDLIB-NATIVE-CONCURRENT-018: `ObsoleteWorkersApi` marker を追加する
+- [ ] STDLIB-NATIVE-CONCURRENT-019: `Any?.isFrozen` / `<T>.freeze()` surface を追加する
 - [ ] STDLIB-EXPERIMENTAL-001: `kotlin.experimental` の marker 一覧を固定
 - [ ] STDLIB-EXPERIMENTAL-002: `kotlin.experimental` の opt-in / diagnostics を整える
 - [ ] STDLIB-EXPERIMENTAL-003: `kotlin.experimental.ExpectRefinement` annotation を追加し、expect declaration metadata へ露出する
