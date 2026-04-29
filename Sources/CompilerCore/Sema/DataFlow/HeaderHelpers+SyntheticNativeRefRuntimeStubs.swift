@@ -826,7 +826,7 @@ extension DataFlowSemaPhase {
             annotationFQName: "kotlin.RequiresOptIn"
         )
         var annotations = symbols.annotations(for: markerSymbol)
-        guard !annotations.contains(requiresOptInRecord) else {
+        guard !annotations.contains(where: { $0.annotationFQName == requiresOptInRecord.annotationFQName }) else {
             return
         }
         annotations.append(requiresOptInRecord)
