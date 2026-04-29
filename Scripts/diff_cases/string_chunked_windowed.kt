@@ -36,6 +36,12 @@ fun main() {
     println(partial.size)
     println(partial.last())
 
+    // CharSequence.chunkedSequence(size)
+    val chars: CharSequence = "abcdef"
+    println(chars.chunkedSequence(2).toList())
+    println(chars.chunkedSequence(4).toList())
+    println("".chunkedSequence(3).toList())
+
     // Large chunk size
     println("x".chunked(1))
     println("xy".chunked(5))
