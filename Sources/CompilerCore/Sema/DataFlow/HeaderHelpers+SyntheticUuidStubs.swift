@@ -326,6 +326,18 @@ extension DataFlowSemaPhase {
 
     // MARK: - Uuid Helpers
 
+    private func attachExperimentalUuidApiAnnotation(
+        to symbol: SymbolID,
+        symbols: SymbolTable
+    ) {
+        let record = MetadataAnnotationRecord(annotationFQName: "kotlin.uuid.ExperimentalUuidApi")
+        var annotations = symbols.annotations(for: symbol)
+        if !annotations.contains(record) {
+            annotations.append(record)
+            symbols.setAnnotations(annotations, for: symbol)
+        }
+    }
+
     private func ensureUuidPackageHierarchy(
         symbols: SymbolTable,
         interner: StringInterner
