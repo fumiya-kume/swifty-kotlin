@@ -170,6 +170,40 @@ public func kk_native_byteArray_getULongAt(_ arrayRaw: Int, _ index: Int) -> Int
     return Int(bitPattern: UInt(truncatingIfNeeded: value))
 }
 
+@_cdecl("kk_native_byteArray_getCharAt")
+public func kk_native_byteArray_getCharAt(_ arrayRaw: Int, _ index: Int) -> Int {
+    let value = runtimeNativeByteArrayLoadUnsigned(
+        arrayRaw,
+        index,
+        byteCount: 2,
+        functionName: "kk_native_byteArray_getCharAt"
+    )
+    return Int(UInt16(truncatingIfNeeded: value))
+}
+
+@_cdecl("kk_native_byteArray_getFloatAt")
+public func kk_native_byteArray_getFloatAt(_ arrayRaw: Int, _ index: Int) -> Int {
+    let value = runtimeNativeByteArrayLoadUnsigned(
+        arrayRaw,
+        index,
+        byteCount: 4,
+        functionName: "kk_native_byteArray_getFloatAt"
+    )
+    let bits = UInt32(truncatingIfNeeded: value)
+    return kk_float_to_bits(Float(bitPattern: bits))
+}
+
+@_cdecl("kk_native_byteArray_getDoubleAt")
+public func kk_native_byteArray_getDoubleAt(_ arrayRaw: Int, _ index: Int) -> Int {
+    let value = runtimeNativeByteArrayLoadUnsigned(
+        arrayRaw,
+        index,
+        byteCount: 8,
+        functionName: "kk_native_byteArray_getDoubleAt"
+    )
+    return kk_double_to_bits(Double(bitPattern: value))
+}
+
 // MARK: - nativeHeap / nativeMemory allocation
 
 /// Tracks allocations made through `nativeHeap.alloc` / `nativeMemory`.

@@ -126,4 +126,43 @@ extension BuildKIRRegressionTests {
         XCTAssertTrue(callees.contains(interner.intern("kk_native_byteArray_getUIntAt")))
         XCTAssertTrue(callees.contains(interner.intern("kk_native_byteArray_getULongAt")))
     }
+
+    func testNativePrimitiveByteArrayAccessorsLowerToRuntimeCallees() throws {
+        let source = """
+        @file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)
+
+        import kotlin.native.getCharAt
+        import kotlin.native.getFloatAt
+        import kotlin.native.getDoubleAt
+
+        fun probe(bytes: ByteArray) {
+            bytes.getCharAt(0)
+            bytes.getFloatAt(2)
+            bytes.getDoubleAt(0)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "probe", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: body, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_native_byteArray_getCharAt"))
+            XCTAssertTrue(callees.contains("kk_native_byteArray_getFloatAt"))
+            XCTAssertTrue(callees.contains("kk_native_byteArray_getDoubleAt"))
+        }
+    }
+
+    func testABILoweringMarksNativePrimitiveByteArrayAccessorsAsNonThrowing() {
+        let pass = ABILoweringPass()
+        let interner = StringInterner()
+        let callees = pass.nonThrowingCallees(interner: interner)
+
+        XCTAssertTrue(callees.contains(interner.intern("kk_native_byteArray_getCharAt")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_native_byteArray_getFloatAt")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_native_byteArray_getDoubleAt")))
+    }
 }
