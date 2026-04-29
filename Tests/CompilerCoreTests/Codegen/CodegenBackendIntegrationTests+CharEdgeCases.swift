@@ -17,7 +17,9 @@ extension CodegenBackendIntegrationTests {
             }
 
             println('ß'.uppercase())
+            println('ß'.uppercaseChar())
             println('İ'.lowercase())
+            println('İ'.lowercaseChar())
         }
         """
 
@@ -41,7 +43,9 @@ extension CodegenBackendIntegrationTests {
                 null
                 invalid-char
                 SS
+                ß
                 i\u{0307}
+                i
                 """
                 + "\n"
             )
