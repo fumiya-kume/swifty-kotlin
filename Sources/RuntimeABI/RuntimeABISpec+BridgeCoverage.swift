@@ -346,6 +346,7 @@ public extension RuntimeABISpec {
             bridgeSpec("kk_instant_to_epoch_millis", section: "System", params: ["instantRaw"]),
             bridgeSpec("kk_instant_from_epoch_seconds", section: "System", params: ["epochSeconds", "nanoOfSecond"]),
             bridgeSpec("kk_platform_memoryModel", section: "System", params: ["platformRaw"]),
+            bridgeSpec("kk_native_identityHashCode", section: "Native", params: ["objectRaw"]),
             bridgeSpec("kk_native_byteArray_getByteAt", section: "Native", params: ["arrayRaw", "index"]),
             bridgeSpec("kk_native_byteArray_getShortAt", section: "Native", params: ["arrayRaw", "index"]),
             bridgeSpec("kk_native_byteArray_getIntAt", section: "Native", params: ["arrayRaw", "index"]),

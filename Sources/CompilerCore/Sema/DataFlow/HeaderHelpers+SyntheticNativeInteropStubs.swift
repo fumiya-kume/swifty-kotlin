@@ -30,6 +30,11 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerSyntheticNativeIdentityHashCodeStub(
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
         registerSyntheticNativeByteArrayAccessorStubs(
             symbols: symbols,
             types: types,
@@ -1004,6 +1009,29 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
         }
+    }
+
+    private func registerSyntheticNativeIdentityHashCodeStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let nativePkg = ensurePackage(
+            path: ["kotlin", "native"],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeTopLevelFunction(
+            named: "identityHashCode",
+            packageFQName: nativePkg,
+            receiverType: types.makeNullable(types.anyType),
+            parameters: [],
+            returnType: types.intType,
+            annotations: experimentalNativeApiAnnotations(),
+            externalLinkName: "kk_native_identityHashCode",
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func registerSyntheticCInteropStubs(

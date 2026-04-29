@@ -58,6 +58,30 @@ public func kk_copaque_pointer_address(_ handle: Int) -> Int {
     return Int(bitPattern: box.address)
 }
 
+@_cdecl("kk_native_identityHashCode")
+public func kk_native_identityHashCode(_ objectRaw: Int) -> Int {
+    guard objectRaw != 0, objectRaw != runtimeNullSentinelInt else {
+        return 0
+    }
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: objectRaw) else {
+        return objectRaw
+    }
+
+    let key = UInt(bitPattern: ptr)
+    let isKnownRuntimeObject = runtimeStorage.withLock { state in
+        state.objectPointers.contains(key) || state.heapObjects[key] != nil
+    }
+    guard isKnownRuntimeObject else {
+        return objectRaw
+    }
+
+    var mixed = UInt64(key)
+    mixed ^= mixed >> 33
+    mixed &*= 0xff51_afd7_ed55_8ccd
+    mixed ^= mixed >> 33
+    return Int(truncatingIfNeeded: mixed)
+}
+
 // MARK: - Native ByteArray accessors
 
 @inline(__always)
