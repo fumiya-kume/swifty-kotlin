@@ -194,7 +194,6 @@ final class ExperimentalTimeSourceSyntheticSurfaceTests: XCTestCase {
         )))
         XCTAssertEqual(markSignature.returnType, comparableTimeMarkType)
     }
-
     func testTestTimeSourceSurfaceIsRegistered() throws {
         let (sema, interner) = try makeSema()
         let kotlinTime = ["kotlin", "time"].map { interner.intern($0) }

@@ -436,6 +436,141 @@ extension DataFlowSemaPhase {
             isOperator: true
         )
 
+        let withComparableMarksFQName = ensureExperimentalTimeNestedInterface(
+            named: "WithComparableMarks",
+            ownerSymbol: timeSourceSymbol,
+            ownerFQName: kotlinTimePkg + [interner.intern("TimeSource")],
+            symbols: symbols,
+            interner: interner
+        )
+        guard let withComparableMarksSymbol = symbols.lookup(fqName: withComparableMarksFQName) else {
+            return
+        }
+        let withComparableMarksType = types.make(.classType(ClassType(
+            classSymbol: withComparableMarksSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setDirectSupertypes([timeSourceSymbol], for: withComparableMarksSymbol)
+        types.setNominalDirectSupertypes([timeSourceSymbol], for: withComparableMarksSymbol)
+        registerExperimentalTimeMemberFunction(
+            named: "markNow",
+            externalLinkName: "kk_time_source_mark_now",
+            ownerSymbol: withComparableMarksSymbol,
+            ownerType: withComparableMarksType,
+            parameters: [],
+            returnType: comparableTimeMarkType,
+            symbols: symbols,
+            interner: interner,
+            flags: [.synthetic, .abstractType, .overrideMember]
+        )
+
+        let abstractDoubleTimeSourceSymbol = ensureClassSymbol(
+            named: "AbstractDoubleTimeSource",
+            in: kotlinTimePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        symbols.insertFlags([.abstractType, .synthetic], for: abstractDoubleTimeSourceSymbol)
+        symbols.setDirectSupertypes([withComparableMarksSymbol], for: abstractDoubleTimeSourceSymbol)
+        types.setNominalDirectSupertypes([withComparableMarksSymbol], for: abstractDoubleTimeSourceSymbol)
+        let abstractDoubleTimeSourceType = types.make(.classType(ClassType(
+            classSymbol: abstractDoubleTimeSourceSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        registerExperimentalTimeConstructor(
+            ownerSymbol: abstractDoubleTimeSourceSymbol,
+            ownerType: abstractDoubleTimeSourceType,
+            parameters: [(name: "unit", type: durationUnitType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerExperimentalTimeMemberProperty(
+            named: "unit",
+            ownerSymbol: abstractDoubleTimeSourceSymbol,
+            returnType: durationUnitType,
+            visibility: .protected,
+            symbols: symbols,
+            interner: interner
+        )
+        registerExperimentalTimeMemberFunction(
+            named: "read",
+            externalLinkName: nil,
+            ownerSymbol: abstractDoubleTimeSourceSymbol,
+            ownerType: abstractDoubleTimeSourceType,
+            parameters: [],
+            returnType: types.doubleType,
+            symbols: symbols,
+            interner: interner,
+            visibility: .protected,
+            flags: [.synthetic, .abstractType]
+        )
+        registerExperimentalTimeMemberFunction(
+            named: "markNow",
+            externalLinkName: "kk_time_source_mark_now",
+            ownerSymbol: abstractDoubleTimeSourceSymbol,
+            ownerType: abstractDoubleTimeSourceType,
+            parameters: [],
+            returnType: comparableTimeMarkType,
+            symbols: symbols,
+            interner: interner,
+            flags: [.synthetic, .openType, .overrideMember]
+        )
+
+        let abstractLongTimeSourceSymbol = ensureClassSymbol(
+            named: "AbstractLongTimeSource",
+            in: kotlinTimePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        symbols.insertFlags([.abstractType, .synthetic], for: abstractLongTimeSourceSymbol)
+        symbols.setDirectSupertypes([withComparableMarksSymbol], for: abstractLongTimeSourceSymbol)
+        types.setNominalDirectSupertypes([withComparableMarksSymbol], for: abstractLongTimeSourceSymbol)
+        let abstractLongTimeSourceType = types.make(.classType(ClassType(
+            classSymbol: abstractLongTimeSourceSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        registerExperimentalTimeConstructor(
+            ownerSymbol: abstractLongTimeSourceSymbol,
+            ownerType: abstractLongTimeSourceType,
+            parameters: [(name: "unit", type: durationUnitType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerExperimentalTimeMemberProperty(
+            named: "unit",
+            ownerSymbol: abstractLongTimeSourceSymbol,
+            returnType: durationUnitType,
+            visibility: .protected,
+            symbols: symbols,
+            interner: interner
+        )
+        registerExperimentalTimeMemberFunction(
+            named: "read",
+            externalLinkName: nil,
+            ownerSymbol: abstractLongTimeSourceSymbol,
+            ownerType: abstractLongTimeSourceType,
+            parameters: [],
+            returnType: types.longType,
+            symbols: symbols,
+            interner: interner,
+            visibility: .protected,
+            flags: [.synthetic, .abstractType]
+        )
+        registerExperimentalTimeMemberFunction(
+            named: "markNow",
+            externalLinkName: "kk_time_source_mark_now",
+            ownerSymbol: abstractLongTimeSourceSymbol,
+            ownerType: abstractLongTimeSourceType,
+            parameters: [],
+            returnType: comparableTimeMarkType,
+            symbols: symbols,
+            interner: interner,
+            flags: [.synthetic, .openType, .overrideMember]
+        )
+
         let monotonicFQName = ensureExperimentalTimeNestedObject(
             named: "Monotonic",
             ownerSymbol: timeSourceSymbol,
