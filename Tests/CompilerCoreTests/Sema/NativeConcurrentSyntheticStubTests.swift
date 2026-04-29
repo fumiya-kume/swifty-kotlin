@@ -372,6 +372,70 @@ final class NativeConcurrentSyntheticStubTests: XCTestCase {
         )
     }
 
+    // MARK: - InvalidMutabilityException class
+
+    func testInvalidMutabilityExceptionClassIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let invalidMutabilityException = try symbol(
+            ["kotlin", "native", "concurrent", "InvalidMutabilityException"],
+            sema: sema,
+            interner: interner
+        )
+        let runtimeException = try symbol(["kotlin", "RuntimeException"], sema: sema, interner: interner)
+
+        XCTAssertEqual(sema.symbols.symbol(invalidMutabilityException)?.kind, .class)
+        XCTAssertTrue(sema.symbols.directSupertypes(for: invalidMutabilityException).contains(runtimeException))
+        XCTAssertTrue(
+            sema.symbols.annotations(for: invalidMutabilityException).contains {
+                $0.annotationFQName == "kotlin.experimental.ExperimentalNativeApi"
+            },
+            "InvalidMutabilityException must carry ExperimentalNativeApi metadata"
+        )
+    }
+
+    func testInvalidMutabilityExceptionConstructorIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let exceptionFQName = ["kotlin", "native", "concurrent", "InvalidMutabilityException"]
+            .map { interner.intern($0) }
+        let exception = try XCTUnwrap(sema.symbols.lookup(fqName: exceptionFQName))
+        let exceptionType = sema.types.make(.classType(ClassType(
+            classSymbol: exception,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        let constructors = sema.symbols.lookupAll(fqName: exceptionFQName + [interner.intern("<init>")])
+        let constructor = try XCTUnwrap(constructors.first { candidate in
+            guard let signature = sema.symbols.functionSignature(for: candidate) else {
+                return false
+            }
+            return signature.parameterTypes == [sema.types.stringType]
+                && signature.returnType == exceptionType
+        })
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: constructor))
+
+        XCTAssertEqual(sema.symbols.symbol(constructor)?.kind, .constructor)
+        XCTAssertNil(signature.receiverType)
+        XCTAssertEqual(signature.valueParameterHasDefaultValues, [false])
+        XCTAssertNil(sema.symbols.externalLinkName(for: constructor))
+    }
+
+    func testInvalidMutabilityExceptionResolvesInSourceWithOptIn() {
+        let source = """
+        @file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)
+        import kotlin.native.concurrent.InvalidMutabilityException
+
+        fun probe(message: String): RuntimeException =
+            InvalidMutabilityException(message)
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertFalse(
+            ctx.diagnostics.hasError,
+            "Expected InvalidMutabilityException constructor to resolve cleanly, got: \(ctx.diagnostics.diagnostics.map(\.message))"
+        )
+    }
+
     // MARK: - Worker class
 
     func testWorkerClassIsRegistered() throws {

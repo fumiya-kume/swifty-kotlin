@@ -5,6 +5,7 @@ import Foundation
 /// Registers:
 ///   - `DetachedObjectGraph<T>` class with constructors, `asCPointer`, and `attach`
 ///   - `FreezingException` class with native constructor surface
+///   - `InvalidMutabilityException` class with native constructor surface
 ///   - `Worker` class with `execute`, `requestTermination`, `isTerminated`, `name` members
 ///   - `Future<T>` class with `result`, `consume`, `getState` members and `FutureState` enum
 ///   - `AtomicReference<T>` (legacy alias in `kotlin.native.concurrent`)
@@ -76,6 +77,15 @@ extension DataFlowSemaPhase {
 
         // FreezingException class
         registerNativeConcurrentFreezingException(
+            packageFQName: nativeConcurrentPkg,
+            pkgSymbol: nativeConcurrentPkgSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        // InvalidMutabilityException class
+        registerNativeConcurrentInvalidMutabilityException(
             packageFQName: nativeConcurrentPkg,
             pkgSymbol: nativeConcurrentPkgSymbol,
             symbols: symbols,
@@ -389,6 +399,65 @@ extension DataFlowSemaPhase {
                 (name: "blocker", type: types.anyType),
             ],
             defaultValues: [false, false],
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    // MARK: - InvalidMutabilityException
+
+    private func registerNativeConcurrentInvalidMutabilityException(
+        packageFQName: [InternedString],
+        pkgSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let exceptionName = interner.intern("InvalidMutabilityException")
+        let exceptionFQName = packageFQName + [exceptionName]
+        let exceptionSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: exceptionFQName), symbols.symbol(existing)?.kind == .class {
+            exceptionSymbol = existing
+        } else {
+            exceptionSymbol = symbols.define(
+                kind: .class,
+                name: exceptionName,
+                fqName: exceptionFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        if let pkgSymbol {
+            symbols.setParentSymbol(pkgSymbol, for: exceptionSymbol)
+        }
+
+        let exceptionType = types.make(.classType(ClassType(
+            classSymbol: exceptionSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(exceptionType, for: exceptionSymbol)
+
+        let runtimeExceptionSymbol = nativeConcurrentClassSymbol(
+            packagePath: ["kotlin"],
+            name: "RuntimeException",
+            symbols: symbols,
+            interner: interner
+        )
+        symbols.setDirectSupertypes([runtimeExceptionSymbol], for: exceptionSymbol)
+        types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: exceptionSymbol)
+        appendNativeConcurrentMetadataAnnotations(
+            [MetadataAnnotationRecord(annotationFQName: "kotlin.experimental.ExperimentalNativeApi")],
+            to: exceptionSymbol,
+            symbols: symbols
+        )
+
+        registerNativeConcurrentConstructor(
+            ownerSymbol: exceptionSymbol,
+            ownerType: exceptionType,
+            parameters: [(name: "message", type: types.stringType)],
+            defaultValues: [false],
             symbols: symbols,
             interner: interner
         )

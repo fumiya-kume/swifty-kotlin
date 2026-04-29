@@ -408,7 +408,7 @@
 - [x] STDLIB-NATIVE-CONCURRENT-003: `kotlin.native.concurrent` の最小 runtime / ABI を実装
 - [x] STDLIB-NATIVE-CONCURRENT-004: `DetachedObjectGraph<T>` surface を追加する
 - [x] STDLIB-NATIVE-CONCURRENT-005: `FreezingException` class surface を追加する
-- [ ] STDLIB-NATIVE-CONCURRENT-006: `InvalidMutabilityException` class surface を追加する
+- [x] STDLIB-NATIVE-CONCURRENT-006: `InvalidMutabilityException` class surface を追加する
 - [ ] STDLIB-NATIVE-CONCURRENT-007: `WorkerBoundReference<T>` surface を追加する
 - [ ] STDLIB-NATIVE-CONCURRENT-008: `atomicLazy(initializer)` を追加する
 - [ ] STDLIB-NATIVE-CONCURRENT-009: `Any.ensureNeverFrozen()` を追加する
