@@ -24,6 +24,7 @@ enum KnownCompilerAnnotation {
     case parameterName
     case wasExperimental
     case sinceKotlin
+    case introducedAt
     case optIn
     case subclassOptInRequired
     case consistentCopyVisibility
@@ -80,6 +81,8 @@ enum KnownCompilerAnnotation {
             "WasExperimental"
         case .sinceKotlin:
             "SinceKotlin"
+        case .introducedAt:
+            "IntroducedAt"
         case .optIn:
             "OptIn"
         case .subclassOptInRequired:
@@ -145,6 +148,8 @@ enum KnownCompilerAnnotation {
             "kotlin.WasExperimental"
         case .sinceKotlin:
             "kotlin.SinceKotlin"
+        case .introducedAt:
+            "kotlin.IntroducedAt"
         case .optIn:
             "kotlin.OptIn"
         case .subclassOptInRequired:

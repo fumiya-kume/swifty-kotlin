@@ -956,6 +956,90 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
     }
 
+    func testIntroducedAtSurfaceHasVersionPropertyConstructorAndValueParameterTarget() throws {
+        let source = """
+        class Host
+        """
+
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        let sema = try XCTUnwrap(ctx.sema)
+        let introducedAtFQName = [
+            ctx.interner.intern("kotlin"),
+            ctx.interner.intern("IntroducedAt"),
+        ]
+        let symbolID = try XCTUnwrap(
+            sema.symbols.lookup(fqName: introducedAtFQName),
+            "kotlin.IntroducedAt must be registered"
+        )
+        let symbol = try XCTUnwrap(sema.symbols.symbol(symbolID))
+
+        XCTAssertEqual(symbol.visibility, .public)
+        XCTAssertTrue(symbol.flags.contains(.synthetic))
+        XCTAssertEqual(symbol.kind, .annotationClass)
+
+        let annotations = sema.symbols.annotations(for: symbolID)
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == KnownCompilerAnnotation.target.qualifiedName
+                    && $0.arguments == ["AnnotationTarget.VALUE_PARAMETER"]
+            },
+            "IntroducedAt should target value parameters, got: \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains { $0.annotationFQName == "kotlin.annotation.MustBeDocumented" },
+            "IntroducedAt should be documented in the public API, got: \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains {
+                KnownCompilerAnnotation.experimentalVersionOverloading.matches($0.annotationFQName)
+            },
+            "IntroducedAt should require ExperimentalVersionOverloading opt-in, got: \(annotations)"
+        )
+
+        let versionSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: introducedAtFQName + [ctx.interner.intern("version")]),
+            "IntroducedAt.version property must be registered"
+        )
+        XCTAssertEqual(sema.symbols.propertyType(for: versionSymbol), sema.types.stringType)
+
+        let constructors = sema.symbols.lookupAll(fqName: introducedAtFQName + [ctx.interner.intern("<init>")])
+        let constructorSignature = try XCTUnwrap(
+            constructors.lazy.compactMap { sema.symbols.functionSignature(for: $0) }.first { signature in
+                signature.parameterTypes == [sema.types.stringType]
+            },
+            "IntroducedAt(version: String) constructor must be registered"
+        )
+        XCTAssertEqual(constructorSignature.valueParameterSymbols.count, 1)
+        let parameter = try XCTUnwrap(sema.symbols.symbol(constructorSignature.valueParameterSymbols[0]))
+        XCTAssertEqual(ctx.interner.resolve(parameter.name), "version")
+    }
+
+    func testIntroducedAtAllowsValueParameterUse() {
+        let source = """
+        fun sample(@IntroducedAt("1.1") value: Int = 0): Int = value
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected IntroducedAt value-parameter target to be accepted, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testIntroducedAtRejectsClassTarget() {
+        let source = """
+        @IntroducedAt("1.1")
+        class Bad
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected IntroducedAt to reject class target, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+    }
+
     func testTargetAnnotationIsRejectedOnRegularClass() {
         let source = """
         @Target(AnnotationTarget.CLASS)
