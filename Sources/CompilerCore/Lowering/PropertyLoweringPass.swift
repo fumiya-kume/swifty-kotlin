@@ -74,7 +74,15 @@ final class PropertyLoweringPass: LoweringPass {
             loweredBody.reserveCapacity(function.body.count)
 
             for instruction in function.body {
-                guard case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall, qualifiedSuperType) = instruction else {
+                guard case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall, _) = instruction else {
+                    if case let .loadGlobal(lgResult, sym) = instruction,
+                       let sema,
+                       let constant = constValue(for: sym, sema: sema)
+                    {
+                        loweredBody.append(.constValue(result: lgResult, value: constant))
+                        continue
+                    }
+
                     // Rewrite loadGlobal for getter-only computed properties
                     // into a getter call.  ExprLowerer emits loadGlobal for
                     // top-level property references; without this rewrite the
@@ -117,6 +125,15 @@ final class PropertyLoweringPass: LoweringPass {
                     // computed properties into a getter call so that each
                     // access invokes the getter body rather than loading a
                     // non-existent global.
+                    if case let .constValue(cvResult, value) = instruction,
+                       case let .symbolRef(sym) = value,
+                       let sema,
+                       let constant = constValue(for: sym, sema: sema)
+                    {
+                        loweredBody.append(.constValue(result: cvResult, value: constant))
+                        continue
+                    }
+
                     if case let .constValue(cvResult, value) = instruction,
                        case let .symbolRef(sym) = value,
                        computedPropertySymbols.contains(sym)
@@ -298,6 +315,22 @@ final class PropertyLoweringPass: LoweringPass {
             return updated
         }
         module.recordLowering(Self.name)
+    }
+
+    private func constValue(for symbol: SymbolID, sema: SemaModule) -> KIRExprKind? {
+        if let symInfo = sema.symbols.symbol(symbol),
+           symInfo.flags.contains(.constValue),
+           let constant = sema.symbols.constValueExprKind(for: symbol)
+        {
+            return constant
+        }
+        guard let propertySymbol = propertySymbolForBackingField(symbol, sema: sema),
+              let propertyInfo = sema.symbols.symbol(propertySymbol),
+              propertyInfo.flags.contains(.constValue)
+        else {
+            return nil
+        }
+        return sema.symbols.constValueExprKind(for: propertySymbol)
     }
 
     /// Given a backing field symbol, find the property symbol it belongs to.

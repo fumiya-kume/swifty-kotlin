@@ -1,7 +1,7 @@
 import Foundation
 
 /// Synthetic stdlib stubs for kotlin.uuid.Uuid.
-/// Registers the Uuid class, companion factory methods/properties (random, parse, parseHexOrNull, LEXICAL_ORDER),
+/// Registers the Uuid class, companion factory methods/properties (random, parse, parseHexOrNull, LEXICAL_ORDER, SIZE_BITS, SIZE_BYTES),
 /// and instance methods (toString, toHexString, toLongs, toByteArray).
 extension DataFlowSemaPhase {
     func registerSyntheticUuidStubs(
@@ -93,6 +93,22 @@ extension DataFlowSemaPhase {
                 externalLinkName: "kk_uuid_lexicalOrder",
                 returnType: comparatorType,
                 ownerSymbol: companionSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+            registerUuidCompanionIntConstant(
+                named: "SIZE_BITS",
+                value: 128,
+                ownerSymbol: companionSymbol,
+                intType: types.intType,
+                symbols: symbols,
+                interner: interner
+            )
+            registerUuidCompanionIntConstant(
+                named: "SIZE_BYTES",
+                value: 16,
+                ownerSymbol: companionSymbol,
+                intType: types.intType,
                 symbols: symbols,
                 interner: interner
             )
@@ -418,6 +434,40 @@ extension DataFlowSemaPhase {
         symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
         symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
         symbols.setPropertyType(returnType, for: propertySymbol)
+    }
+
+    private func registerUuidCompanionIntConstant(
+        named name: String,
+        value: Int64,
+        ownerSymbol: SymbolID,
+        intType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else { return }
+        let propertyName = interner.intern(name)
+        let propertyFQName = ownerInfo.fqName + [propertyName]
+
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: {
+            symbols.symbol($0)?.kind == .property
+        }) {
+            symbols.setPropertyType(intType, for: existing)
+            symbols.setConstValueExprKind(.intLiteral(value), for: existing)
+            symbols.insertFlags([.synthetic, .static, .constValue], for: existing)
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .static, .constValue]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
+        symbols.setPropertyType(intType, for: propertySymbol)
+        symbols.setConstValueExprKind(.intLiteral(value), for: propertySymbol)
     }
 
     private func registerUuidInstanceMethod(

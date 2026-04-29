@@ -12,6 +12,7 @@ import XCTest
 //   • overload resolution between Uuid.parse and Uuid.parseHex (gap: see below)
 //   • Uuid.random() return type resolves to kotlin.uuid.Uuid
 //   • Uuid.LEXICAL_ORDER resolves to Comparator<Uuid>
+//   • Uuid.SIZE_BITS and Uuid.SIZE_BYTES resolve as const Int companion properties
 //   • toString vs toHexString dispatch is tracked as separate links
 //   • toByteArray() and toLongs() are present with their signatures
 //   • NIL constant (gap: see below)
@@ -505,6 +506,35 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
             return
         }
         XCTAssertEqual(uuidClassType.classSymbol, uuidSym)
+    }
+
+    func testUuidSizeConstantsAreRegisteredAsConstInts() throws {
+        let (sema, interner) = try makeSema()
+        let expectedConstants: [(name: String, value: Int64)] = [
+            ("SIZE_BITS", 128),
+            ("SIZE_BYTES", 16),
+        ]
+
+        for expected in expectedConstants {
+            let fq = ["kotlin", "uuid", "Uuid", "Companion", expected.name].map { interner.intern($0) }
+            let sym = try XCTUnwrap(
+                sema.symbols.lookupAll(fqName: fq).first(where: { sema.symbols.symbol($0)?.kind == .property }),
+                "Uuid.\(expected.name) must be registered as a companion property"
+            )
+            let info = try XCTUnwrap(sema.symbols.symbol(sym))
+            XCTAssertTrue(info.flags.contains(.static), "Uuid.\(expected.name) must be static")
+            XCTAssertTrue(info.flags.contains(.constValue), "Uuid.\(expected.name) must be const")
+            XCTAssertEqual(
+                sema.symbols.propertyType(for: sym),
+                sema.types.intType,
+                "Uuid.\(expected.name) must have Int type"
+            )
+            XCTAssertEqual(
+                sema.symbols.constValueExprKind(for: sym),
+                .intLiteral(expected.value),
+                "Uuid.\(expected.name) must expose the Kotlin stdlib constant value"
+            )
+        }
     }
 
     // MARK: - 9. @ExperimentalUuidApi opt-in annotation — now synthesised (STDLIB-EXPERIMENTAL-ABI-001)

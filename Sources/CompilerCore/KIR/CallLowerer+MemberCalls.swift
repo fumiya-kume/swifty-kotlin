@@ -5116,6 +5116,16 @@ extension CallLowerer {
               let parent = sema.symbols.parentSymbol(for: valueSym),
               sema.symbols.symbol(parent)?.kind == .object
         else { return nil }
+        if info.flags.contains(.constValue),
+           let constant = sema.symbols.constValueExprKind(for: valueSym)
+        {
+            let propType = sema.bindings.exprTypes[exprID]
+                ?? sema.symbols.propertyType(for: valueSym)
+                ?? sema.types.anyType
+            let id = arena.appendExpr(constant, type: propType)
+            instructions.append(.constValue(result: id, value: constant))
+            return id
+        }
         let knownNames = KnownCompilerNames(interner: interner)
         if let parentInfo = sema.symbols.symbol(parent),
            parentInfo.name == knownNames.dispatchers
@@ -5437,6 +5447,17 @@ extension CallLowerer {
         }
 
         switch valueSymbol.kind {
+        case .property where valueSymbol.flags.contains(.constValue):
+            guard let constant = sema.symbols.constValueExprKind(for: valueSymbolID) else {
+                return nil
+            }
+            let valueType = sema.bindings.exprTypes[exprID]
+                ?? sema.symbols.propertyType(for: valueSymbolID)
+                ?? sema.types.anyType
+            let valueID = arena.appendExpr(constant, type: valueType)
+            instructions.append(.constValue(result: valueID, value: constant))
+            return valueID
+
         case .field:
             guard isEnumEntryField(valueSymbolID, sema: sema) else {
                 return nil
@@ -5494,12 +5515,13 @@ extension CallLowerer {
         guard args.isEmpty else { return nil }
         let callBinding = sema.bindings.callBindings[exprID]
         guard let chosen = callBinding?.chosenCallee,
-              let constant = propertyConstantInitializers[chosen],
               let symInfo = sema.symbols.symbol(chosen),
               symInfo.flags.contains(.constValue)
         else {
             return nil
         }
+        let constant = propertyConstantInitializers[chosen] ?? sema.symbols.constValueExprKind(for: chosen)
+        guard let constant else { return nil }
         if requireNonNullableReceiver {
             guard let receiverType = sema.bindings.exprTypes[receiverExpr],
                   receiverType == sema.types.makeNonNullable(receiverType)

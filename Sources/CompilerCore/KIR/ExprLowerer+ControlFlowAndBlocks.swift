@@ -618,8 +618,8 @@ extension ExprLowerer {
                 }
                 // Inline constant initializers only for immutable (val) properties.
                 // Mutable (var) properties must always load from global store at runtime.
-                if let constant = propertyConstantInitializers[symbol],
-                   let symInfo = sema.symbols.symbol(symbol),
+                if let symInfo = sema.symbols.symbol(symbol),
+                   let constant = propertyConstantInitializers[symbol] ?? sema.symbols.constValueExprKind(for: symbol),
                    !symInfo.flags.contains(.mutable)
                 {
                     let id = arena.appendExpr(constant, type: boundType)
