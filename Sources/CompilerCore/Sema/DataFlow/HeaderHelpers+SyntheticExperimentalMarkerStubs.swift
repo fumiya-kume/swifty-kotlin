@@ -16,6 +16,7 @@ import Foundation
 /// | ExperimentalMultiplatform | kotlin               | ERROR    |
 /// | ExperimentalSubclassOptIn | kotlin               | WARNING  |
 /// | ExperimentalAssociatedObjects | kotlin.reflect    | ERROR    |
+/// | ExpectRefinement          | kotlin.experimental  | @ExperimentalMultiplatform |
 ///
 /// See: https://kotlinlang.org/api/latest/jvm/stdlib/
 extension DataFlowSemaPhase {
@@ -131,6 +132,20 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- kotlin.experimental.ExpectRefinement ---
+        let kotlinExperimentalPkg = ensurePackage(
+            path: ["kotlin", "experimental"],
+            symbols: symbols,
+            interner: interner
+        )
+        let kotlinExperimentalPkgSymbol = symbols.lookup(fqName: kotlinExperimentalPkg) ?? .invalid
+        registerSyntheticExpectRefinementAnnotation(
+            packageFQName: kotlinExperimentalPkg,
+            packageSymbol: kotlinExperimentalPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     /// Registers a single experimental opt-in marker annotation class and attaches
@@ -199,5 +214,50 @@ extension DataFlowSemaPhase {
             }
         }
         symbols.setAnnotations(annotations, for: classSymbol)
+    }
+
+    private func registerSyntheticExpectRefinementAnnotation(
+        packageFQName: [InternedString],
+        packageSymbol: SymbolID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let className = interner.intern("ExpectRefinement")
+        let classFQName = packageFQName + [className]
+
+        let classSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: classFQName) {
+            classSymbol = existing
+        } else {
+            classSymbol = symbols.define(
+                kind: .annotationClass,
+                name: className,
+                fqName: classFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        if packageSymbol != .invalid {
+            symbols.setParentSymbol(packageSymbol, for: classSymbol)
+        }
+
+        let metadata = [
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: ["AnnotationTarget.CLASS"]
+            ),
+            MetadataAnnotationRecord(annotationFQName: "kotlin.ExperimentalMultiplatform"),
+        ]
+
+        var annotations = symbols.annotations(for: classSymbol)
+        var didAppend = false
+        for record in metadata where !annotations.contains(record) {
+            annotations.append(record)
+            didAppend = true
+        }
+        if didAppend {
+            symbols.setAnnotations(annotations, for: classSymbol)
+        }
     }
 }
