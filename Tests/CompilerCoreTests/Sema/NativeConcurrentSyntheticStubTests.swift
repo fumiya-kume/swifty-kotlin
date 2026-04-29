@@ -1829,6 +1829,47 @@ final class NativeConcurrentSyntheticStubTests: XCTestCase {
         )
     }
 
+    // MARK: - @ObsoleteWorkersApi annotation
+
+    func testObsoleteWorkersApiAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let fqName = ["kotlin", "native", "concurrent", "ObsoleteWorkersApi"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "Expected kotlin.native.concurrent.ObsoleteWorkersApi annotation to be registered"
+        )
+        XCTAssertEqual(sema.symbols.symbol(symbol)?.kind, .annotationClass)
+
+        let annotations = sema.symbols.annotations(for: symbol)
+        let requiresOptIn = annotations.first { $0.annotationFQName == "kotlin.RequiresOptIn" }
+        XCTAssertEqual(
+            Set(requiresOptIn?.arguments ?? []),
+            [
+                "message = \"Workers API is obsolete and will be replaced with threads eventually\"",
+                "level = RequiresOptIn.Level.WARNING",
+            ]
+        )
+
+        let targetAnnotation = annotations.first { $0.annotationFQName == "kotlin.annotation.Target" }
+        XCTAssertEqual(
+            Set(targetAnnotation?.arguments ?? []),
+            [
+                "AnnotationTarget.CLASS",
+                "AnnotationTarget.ANNOTATION_CLASS",
+                "AnnotationTarget.PROPERTY",
+                "AnnotationTarget.FIELD",
+                "AnnotationTarget.LOCAL_VARIABLE",
+                "AnnotationTarget.VALUE_PARAMETER",
+                "AnnotationTarget.CONSTRUCTOR",
+                "AnnotationTarget.FUNCTION",
+                "AnnotationTarget.PROPERTY_GETTER",
+                "AnnotationTarget.PROPERTY_SETTER",
+                "AnnotationTarget.TYPEALIAS",
+            ]
+        )
+    }
+
     // MARK: - Package existence
 
     func testNativeConcurrentPackageIsRegistered() throws {
