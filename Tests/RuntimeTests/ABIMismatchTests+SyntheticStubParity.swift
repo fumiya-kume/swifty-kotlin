@@ -59,6 +59,8 @@ extension ABIMismatchTests {
             "kk_system_process_start_nanos",
             "kk_system_measureTimeMillis",
             "kk_system_measureNanoTime",
+            // UUID
+            "kk_uuid_parseHexOrNull",
             "kk_instant_now",
             "kk_instant_from_epoch_millis",
             "kk_instant_epoch_seconds",

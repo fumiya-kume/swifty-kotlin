@@ -224,6 +224,28 @@ public func kk_uuid_parse(_ stringRaw: Int, _ outThrown: UnsafeMutablePointer<In
     return registerRuntimeObject(box)
 }
 
+// MARK: - Uuid.parseHexOrNull(hexString)
+
+@_cdecl("kk_uuid_parseHexOrNull")
+public func kk_uuid_parseHexOrNull(_ stringRaw: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: stringRaw),
+          let stringBox = tryCast(ptr, to: RuntimeStringBox.self)
+    else {
+        return runtimeNullSentinelInt
+    }
+
+    let hexString = stringBox.value
+    guard hexString.count == 32,
+          hexString.allSatisfy({ $0.isHexDigit })
+    else {
+        return runtimeNullSentinelInt
+    }
+
+    var thrown = 0
+    let parsed = kk_uuid_parse(stringRaw, &thrown)
+    return thrown == 0 ? parsed : runtimeNullSentinelInt
+}
+
 // MARK: - Uuid.toString()
 
 @_cdecl("kk_uuid_toString")
