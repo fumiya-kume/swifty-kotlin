@@ -49,6 +49,9 @@ final class RuntimeUuidEdgeCaseTests: XCTestCase {
         return tryCast(ptr, to: RuntimeArrayBox.self)
     }
 
+    private func intFromBits(_ bits: UInt64) -> Int {
+        Int(bitPattern: UInt(truncatingIfNeeded: bits))
+    }
     private func compareWithUuidLexicalOrder(_ lhs: Int, _ rhs: Int) -> Int {
         let comparator = kk_uuid_lexicalOrder()
         let compareFnRaw = kk_itable_lookup(comparator, 0, 0)
@@ -163,7 +166,6 @@ final class RuntimeUuidEdgeCaseTests: XCTestCase {
         XCTAssertEqual(kk_uuid_version(uuidRaw), 0)
         XCTAssertEqual(kk_uuid_variant(uuidRaw), 0)
     }
-
     // MARK: - MAX UUID (all Fs)
 
     func testMaxUuidAllFs() {
