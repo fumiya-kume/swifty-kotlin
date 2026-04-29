@@ -270,6 +270,50 @@ public func kk_native_byteArray_setLongAt(_ arrayRaw: Int, _ index: Int, _ value
     )
 }
 
+@_cdecl("kk_native_byteArray_setUByteAt")
+public func kk_native_byteArray_setUByteAt(_ arrayRaw: Int, _ index: Int, _ value: Int) -> Int {
+    return runtimeNativeByteArrayStoreUnsigned(
+        arrayRaw,
+        index,
+        value: UInt64(UInt8(truncatingIfNeeded: value)),
+        byteCount: 1,
+        functionName: "kk_native_byteArray_setUByteAt"
+    )
+}
+
+@_cdecl("kk_native_byteArray_setUShortAt")
+public func kk_native_byteArray_setUShortAt(_ arrayRaw: Int, _ index: Int, _ value: Int) -> Int {
+    return runtimeNativeByteArrayStoreUnsigned(
+        arrayRaw,
+        index,
+        value: UInt64(UInt16(truncatingIfNeeded: value)),
+        byteCount: 2,
+        functionName: "kk_native_byteArray_setUShortAt"
+    )
+}
+
+@_cdecl("kk_native_byteArray_setUIntAt")
+public func kk_native_byteArray_setUIntAt(_ arrayRaw: Int, _ index: Int, _ value: Int) -> Int {
+    return runtimeNativeByteArrayStoreUnsigned(
+        arrayRaw,
+        index,
+        value: UInt64(UInt32(truncatingIfNeeded: value)),
+        byteCount: 4,
+        functionName: "kk_native_byteArray_setUIntAt"
+    )
+}
+
+@_cdecl("kk_native_byteArray_setULongAt")
+public func kk_native_byteArray_setULongAt(_ arrayRaw: Int, _ index: Int, _ value: Int) -> Int {
+    return runtimeNativeByteArrayStoreUnsigned(
+        arrayRaw,
+        index,
+        value: UInt64(bitPattern: Int64(value)),
+        byteCount: 8,
+        functionName: "kk_native_byteArray_setULongAt"
+    )
+}
+
 // MARK: - nativeHeap / nativeMemory allocation
 
 /// Tracks allocations made through `nativeHeap.alloc` / `nativeMemory`.

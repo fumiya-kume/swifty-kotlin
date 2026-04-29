@@ -975,11 +975,15 @@ extension DataFlowSemaPhase {
             )
         }
 
-        let setters: [(name: String, valueType: TypeID, externalLinkName: String)] = [
-            ("setByteAt", types.intType, "kk_native_byteArray_setByteAt"),
-            ("setShortAt", types.intType, "kk_native_byteArray_setShortAt"),
-            ("setIntAt", types.intType, "kk_native_byteArray_setIntAt"),
-            ("setLongAt", types.longType, "kk_native_byteArray_setLongAt"),
+        let setters: [(name: String, valueType: TypeID, externalLinkName: String, annotations: [MetadataAnnotationRecord])] = [
+            ("setByteAt", types.intType, "kk_native_byteArray_setByteAt", experimentalNativeApiAnnotations()),
+            ("setShortAt", types.intType, "kk_native_byteArray_setShortAt", experimentalNativeApiAnnotations()),
+            ("setIntAt", types.intType, "kk_native_byteArray_setIntAt", experimentalNativeApiAnnotations()),
+            ("setLongAt", types.longType, "kk_native_byteArray_setLongAt", experimentalNativeApiAnnotations()),
+            ("setUByteAt", types.ubyteType, "kk_native_byteArray_setUByteAt", experimentalNativeUnsignedApiAnnotations()),
+            ("setUShortAt", types.ushortType, "kk_native_byteArray_setUShortAt", experimentalNativeUnsignedApiAnnotations()),
+            ("setUIntAt", types.uintType, "kk_native_byteArray_setUIntAt", experimentalNativeUnsignedApiAnnotations()),
+            ("setULongAt", types.ulongType, "kk_native_byteArray_setULongAt", experimentalNativeUnsignedApiAnnotations()),
         ]
         for setter in setters {
             registerSyntheticNativeTopLevelFunction(
@@ -991,7 +995,7 @@ extension DataFlowSemaPhase {
                     (name: "value", type: setter.valueType),
                 ],
                 returnType: types.unitType,
-                annotations: experimentalNativeApiAnnotations(),
+                annotations: setter.annotations,
                 externalLinkName: setter.externalLinkName,
                 symbols: symbols,
                 interner: interner

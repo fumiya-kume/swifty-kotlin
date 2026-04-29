@@ -170,6 +170,50 @@ extension BuildKIRRegressionTests {
         XCTAssertTrue(callees.contains(interner.intern("kk_native_byteArray_getULongAt")))
     }
 
+    func testNativeUnsignedByteArraySettersLowerToRuntimeCallees() throws {
+        let source = """
+        @file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)
+        @file:OptIn(kotlin.ExperimentalUnsignedTypes::class)
+
+        import kotlin.native.setUByteAt
+        import kotlin.native.setUShortAt
+        import kotlin.native.setUIntAt
+        import kotlin.native.setULongAt
+
+        fun probe(bytes: ByteArray, ub: UByte, us: UShort, ui: UInt, ul: ULong) {
+            bytes.setUByteAt(0, ub)
+            bytes.setUShortAt(1, us)
+            bytes.setUIntAt(2, ui)
+            bytes.setULongAt(0, ul)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "probe", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: body, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_native_byteArray_setUByteAt"))
+            XCTAssertTrue(callees.contains("kk_native_byteArray_setUShortAt"))
+            XCTAssertTrue(callees.contains("kk_native_byteArray_setUIntAt"))
+            XCTAssertTrue(callees.contains("kk_native_byteArray_setULongAt"))
+        }
+    }
+
+    func testABILoweringMarksNativeUnsignedByteArraySettersAsNonThrowing() {
+        let pass = ABILoweringPass()
+        let interner = StringInterner()
+        let callees = pass.nonThrowingCallees(interner: interner)
+
+        XCTAssertTrue(callees.contains(interner.intern("kk_native_byteArray_setUByteAt")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_native_byteArray_setUShortAt")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_native_byteArray_setUIntAt")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_native_byteArray_setULongAt")))
+    }
+
     func testNativePrimitiveByteArrayAccessorsLowerToRuntimeCallees() throws {
         let source = """
         @file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)
