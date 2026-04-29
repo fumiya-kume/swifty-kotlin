@@ -310,6 +310,7 @@ extension ABIMismatchTests {
             "kk_kotlin_version_compareTo",
             "kk_kotlin_version_isAtLeast",
             "kk_kotlin_version_isAtLeast_patch",
+            "kk_auto_closeable_create",
         ]
 
         for linkName in syntheticLinkNames {
