@@ -1427,6 +1427,52 @@ public func kk_string_substringAfterLast(_ strRaw: Int, _ delimiterRaw: Int) -> 
     return runtimeMakeStringRaw(runtimeStringFromScalars(scalars[start...]))
 }
 
+@_cdecl("kk_string_replaceAfter")
+public func kk_string_replaceAfter(
+    _ strRaw: Int,
+    _ delimiterRaw: Int,
+    _ replacementRaw: Int,
+    _ missingDelimiterValueRaw: Int
+) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let delimiter = runtimeStringFromRawOrPanic(delimiterRaw, caller: #function)
+    let replacement = runtimeStringFromRawOrPanic(replacementRaw, caller: #function)
+    let missingDelimiterValue = missingDelimiterValueRaw == 0
+        ? source
+        : runtimeStringFromRawOrPanic(missingDelimiterValueRaw, caller: #function)
+    return runtimeMakeStringRaw(
+        runtimeStringReplaceAfter(
+            source: source,
+            delimiter: delimiter,
+            replacement: replacement,
+            missingDelimiterValue: missingDelimiterValue
+        )
+    )
+}
+
+@_cdecl("kk_string_replaceAfter_char")
+public func kk_string_replaceAfter_char(
+    _ strRaw: Int,
+    _ delimiterRaw: Int,
+    _ replacementRaw: Int,
+    _ missingDelimiterValueRaw: Int
+) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let delimiter = runtimeCharacterFromRaw(delimiterRaw)
+    let replacement = runtimeStringFromRawOrPanic(replacementRaw, caller: #function)
+    let missingDelimiterValue = missingDelimiterValueRaw == 0
+        ? source
+        : runtimeStringFromRawOrPanic(missingDelimiterValueRaw, caller: #function)
+    return runtimeMakeStringRaw(
+        runtimeStringReplaceAfter(
+            source: source,
+            delimiter: delimiter,
+            replacement: replacement,
+            missingDelimiterValue: missingDelimiterValue
+        )
+    )
+}
+
 @_cdecl("kk_string_lastIndexOf")
 public func kk_string_lastIndexOf(_ strRaw: Int, _ otherRaw: Int) -> Int {
     let source = runtimeStringScalars(strRaw)
@@ -2750,6 +2796,21 @@ private func runtimeCharacterFromRaw(_ raw: Int) -> String {
         return "?"
     }
     return String(scalar)
+}
+
+private func runtimeStringReplaceAfter(
+    source: String,
+    delimiter: String,
+    replacement: String,
+    missingDelimiterValue: String
+) -> String {
+    if delimiter.isEmpty {
+        return replacement
+    }
+    guard let range = source.range(of: delimiter) else {
+        return missingDelimiterValue
+    }
+    return String(source[..<range.upperBound]) + replacement
 }
 
 private func runtimeUnicodeScalarFromRaw(_ raw: Int) -> UnicodeScalar? {

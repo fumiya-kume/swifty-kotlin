@@ -1538,6 +1538,8 @@ struct CollectionLiteralLookupTables {
             interner.intern("kk_string_uppercase"),
             interner.intern("kk_string_replace"),
             interner.intern("kk_string_replaceFirst"),
+            interner.intern("kk_string_replaceAfter"),
+            interner.intern("kk_string_replaceAfter_char"),
             interner.intern("kk_string_substring"),
             interner.intern("kk_string_padStart_default"),
             interner.intern("kk_string_padEnd_default"),
