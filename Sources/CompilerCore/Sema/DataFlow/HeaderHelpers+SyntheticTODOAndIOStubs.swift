@@ -3290,6 +3290,34 @@ extension DataFlowSemaPhase {
             ],
             canThrow: true
         )
+        let sequenceElementToDoubleType = types.make(.functionType(FunctionType(
+            params: [typeParamType],
+            returnType: types.doubleType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        registerSequenceMemberStub(
+            named: "sumByDouble",
+            externalLinkName: "kk_sequence_sumByDouble",
+            receiverType: receiverType,
+            parameters: [("selector", sequenceElementToDoubleType)],
+            returnType: types.doubleType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner,
+            annotations: [
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.Deprecated",
+                    arguments: [
+                        "message = \"Use sumOf instead.\"",
+                        "replaceWith = ReplaceWith(\"sumOf(selector)\")",
+                    ]
+                ),
+            ],
+            canThrow: true
+        )
 
         // toList(): List<T>
         registerSequenceMemberStub(

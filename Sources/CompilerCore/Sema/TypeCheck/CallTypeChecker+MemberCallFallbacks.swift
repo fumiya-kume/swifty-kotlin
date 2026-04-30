@@ -1048,6 +1048,7 @@ extension CallTypeChecker {
             interner.intern("sum"),
             interner.intern("average"),
             interner.intern("sumBy"),
+            interner.intern("sumByDouble"),
         ]
         let setOnlyMembers: Set = [
             interner.intern("intersect"),
@@ -1210,7 +1211,7 @@ extension CallTypeChecker {
              interner.intern("map"), interner.intern("filter"), interner.intern("filterNot"), interner.intern("mapNotNull"), interner.intern("firstNotNullOf"), interner.intern("firstNotNullOfOrNull"), interner.intern("forEach"), interner.intern("flatMap"), interner.intern("flatMapIndexed"),
              interner.intern("any"), interner.intern("none"), interner.intern("all"),
              interner.intern("groupBy"), interner.intern("groupingBy"), interner.intern("sortedBy"), interner.intern("find"), interner.intern("associateBy"), interner.intern("associateWith"), interner.intern("associate"), interner.intern("reduce"), interner.intern("reduceOrNull"), interner.intern("reduceIndexedOrNull"), interner.intern("runningReduce"), interner.intern("runningReduceIndexed"), interner.intern("scanReduce"), interner.intern("take"), interner.intern("drop"), interner.intern("zip"),
-             interner.intern("forEachIndexed"), interner.intern("mapIndexed"), interner.intern("filterIndexed"), interner.intern("sumOf"), interner.intern("sumBy"), interner.intern("chunked"), interner.intern("onEach"), interner.intern("onEachIndexed"),
+             interner.intern("forEachIndexed"), interner.intern("mapIndexed"), interner.intern("filterIndexed"), interner.intern("sumOf"), interner.intern("sumBy"), interner.intern("sumByDouble"), interner.intern("chunked"), interner.intern("onEach"), interner.intern("onEachIndexed"),
              interner.intern("sortedByDescending"), interner.intern("sortedWith"), interner.intern("partition"),
              interner.intern("takeWhile"), interner.intern("dropWhile"),
              interner.intern("sortBy"), interner.intern("sortByDescending"), interner.intern("distinctBy"),
@@ -1975,6 +1976,7 @@ extension CallTypeChecker {
             interner.intern("firstNotNullOfOrNull"),
             interner.intern("sumOf"),
             interner.intern("sumBy"),
+            interner.intern("sumByDouble"),
             interner.intern("sortedByDescending"),
             interner.intern("partition"),
             interner.intern("takeWhile"),
@@ -2020,6 +2022,8 @@ extension CallTypeChecker {
                 ? sema.types.make(.primitive(.boolean, .nonNull))
                 : memberName == interner.intern("sumOf") || memberName == interner.intern("sumBy")
                 ? sema.types.intType
+                : memberName == interner.intern("sumByDouble")
+                ? sema.types.doubleType
                 : memberName == interner.intern("firstNotNullOf") || memberName == interner.intern("firstNotNullOfOrNull")
                 ? sema.types.nullableAnyType
                 : sema.types.anyType

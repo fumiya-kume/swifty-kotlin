@@ -168,6 +168,10 @@ private let sequenceSumByWeightedTwo: @convention(c) (Int, Int, UnsafeMutablePoi
     value == 2 ? 10 : value
 }
 
+private let sequenceSumByDoubleWeightedTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    kk_double_to_bits(value == 2 ? 1.5 : 0.25)
+}
+
 private func runtimeTestStringHandle(_ value: String) -> Int {
     let bytes = Array(value.utf8)
     return bytes.withUnsafeBufferPointer { buffer in
@@ -246,6 +250,19 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
 
         XCTAssertEqual(thrown, 0)
         XCTAssertEqual(result, 14)
+    }
+
+    func testSumByDoubleAccumulatesSelectorResults() {
+        var thrown = 0
+        let result = kk_sequence_sumByDouble(
+            makeSequence([1, 2, 3]),
+            unsafeBitCast(sequenceSumByDoubleWeightedTwo, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_bits_to_double(result), 2.0, accuracy: 0.0001)
     }
 
     func testSortedByUsesRuntimeValueComparisonForSelectorKeys() {

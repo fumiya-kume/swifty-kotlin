@@ -2917,6 +2917,42 @@ public func kk_sequence_sumBy(
     kk_sequence_sumOf(seqRaw, fnPtr, closureRaw, outThrown)
 }
 
+@_cdecl("kk_sequence_sumByDouble")
+public func kk_sequence_sumByDouble(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var total = 0.0
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        runtimeTraverseSequence(seq, outThrown: outThrown) { elem in
+            var thrown = 0
+            let result = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return false
+            }
+            total += kk_bits_to_double(result)
+            return true
+        }
+    } else {
+        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
+            var thrown = 0
+            let result = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return 0
+            }
+            total += kk_bits_to_double(result)
+        }
+    }
+    if let outThrown, outThrown.pointee != 0 { return kk_double_to_bits(0.0) }
+    return kk_double_to_bits(total)
+}
+
 @_cdecl("kk_sequence_firstNotNullOf")
 public func kk_sequence_firstNotNullOf(
     _ seqRaw: Int,

@@ -3806,6 +3806,7 @@ extension CallLowerer {
                 let sortedByName = interner.intern("sortedBy")
                 let sumOfName = interner.intern("sumOf")
                 let sumByName = interner.intern("sumBy")
+                let sumByDoubleName = interner.intern("sumByDouble")
                 let firstNotNullOfName = interner.intern("firstNotNullOf")
                 let firstNotNullOfOrNullName = interner.intern("firstNotNullOfOrNull")
                 let associateName = interner.intern("associate")
@@ -3851,6 +3852,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_sumOf"
                 } else if calleeName == sumByName {
                     runtimeCallee = "kk_sequence_sumBy"
+                } else if calleeName == sumByDoubleName {
+                    runtimeCallee = "kk_sequence_sumByDouble"
                 } else if calleeName == firstNotNullOfName {
                     runtimeCallee = "kk_sequence_firstNotNullOf"
                 } else if calleeName == firstNotNullOfOrNullName {
@@ -3943,6 +3946,7 @@ extension CallLowerer {
                     let canThrow = runtimeCallee == "kk_sequence_sortedBy"
                         || runtimeCallee == "kk_sequence_sumOf"
                         || runtimeCallee == "kk_sequence_sumBy"
+                        || runtimeCallee == "kk_sequence_sumByDouble"
                         || runtimeCallee == "kk_sequence_firstNotNullOf"
                         || runtimeCallee == "kk_sequence_firstNotNullOfOrNull"
                         || runtimeCallee == "kk_sequence_associate"
@@ -3973,7 +3977,8 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_ifEmpty"
                         || runtimeCallee == "kk_sequence_zipWithNextTransform"
                     var runtimeArguments = [loweredReceiverID] + normalizedArgIDs
-                    if runtimeCallee == "kk_sequence_sumBy",
+                    if (runtimeCallee == "kk_sequence_sumBy"
+                        || runtimeCallee == "kk_sequence_sumByDouble"),
                        normalizedArgIDs.count == 1
                     {
                         let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
@@ -6160,7 +6165,8 @@ extension CallLowerer {
             )
             finalArguments = [finalArguments[0], fnPtrExpr, envPtrExpr]
         }
-        if loweredCallee == interner.intern("kk_sequence_sumBy"),
+        if (loweredCallee == interner.intern("kk_sequence_sumBy")
+            || loweredCallee == interner.intern("kk_sequence_sumByDouble")),
            finalArguments.count == 2
         {
             let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
@@ -6495,6 +6501,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_sortedBy"),
             interner.intern("kk_sequence_sumOf"),
             interner.intern("kk_sequence_sumBy"),
+            interner.intern("kk_sequence_sumByDouble"),
             interner.intern("kk_sequence_firstNotNullOf"),
             interner.intern("kk_sequence_firstNotNullOfOrNull"),
             interner.intern("kk_sequence_associate"),
@@ -8318,6 +8325,7 @@ extension CallLowerer {
             let joinToStringName = interner.intern("joinToString")
             let sumOfName = interner.intern("sumOf")
             let sumByName = interner.intern("sumBy")
+            let sumByDoubleName = interner.intern("sumByDouble")
             let firstNotNullOfName = interner.intern("firstNotNullOf")
             let firstNotNullOfOrNullName = interner.intern("firstNotNullOfOrNull")
             let associateName = interner.intern("associate")
@@ -8374,6 +8382,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_sumOf")
             case sumByName:
                 return interner.intern("kk_sequence_sumBy")
+            case sumByDoubleName:
+                return interner.intern("kk_sequence_sumByDouble")
             case firstNotNullOfName:
                 return interner.intern("kk_sequence_firstNotNullOf")
             case firstNotNullOfOrNullName:

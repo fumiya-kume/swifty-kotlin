@@ -1400,7 +1400,7 @@ extension CallTypeChecker {
             "firstNotNullOf",
             "firstNotNullOfOrNull",
             "onEach", "onEachIndexed",
-            "sumOf", "sumBy", "maxOrNull", "minOrNull",
+            "sumOf", "sumBy", "sumByDouble", "maxOrNull", "minOrNull",
             "indexOfFirst", "indexOfLast", "binarySearch", "binarySearchBy",
             "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
             "maxOf", "minOf",
@@ -3301,6 +3301,21 @@ extension CallTypeChecker {
                 }
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                 resultType = sema.types.intType
+
+            case "sumByDouble":
+                guard args.count == 1 else {
+                    sema.bindings.bindExprType(id, type: sema.types.anyType)
+                    return sema.types.anyType
+                }
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [collectionElementType],
+                    returnType: sema.types.doubleType
+                )))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                resultType = sema.types.doubleType
 
             case "maxOrNull", "minOrNull":
                 guard args.isEmpty else {
