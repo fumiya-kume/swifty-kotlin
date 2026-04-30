@@ -19,6 +19,16 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let kotlinTextPkg = ensurePackage(path: ["kotlin", "text"], symbols: symbols, interner: interner)
+        let characterCodingSymbol = ensureClassSymbol(
+            named: "CharacterCodingException",
+            in: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinTextPkgSymbol = symbols.lookup(fqName: kotlinTextPkg) {
+            symbols.setParentSymbol(kotlinTextPkgSymbol, for: characterCodingSymbol)
+        }
         let runtimeExceptionSymbol = ensureClassSymbol(
             named: "RuntimeException",
             in: kotlinPkg,
@@ -157,6 +167,7 @@ extension DataFlowSemaPhase {
         )
 
         symbols.setDirectSupertypes([throwableSymbol], for: exceptionSymbol)
+        symbols.setDirectSupertypes([exceptionSymbol], for: characterCodingSymbol)
         symbols.setDirectSupertypes([throwableSymbol], for: errorSymbol)
         symbols.setDirectSupertypes([errorSymbol], for: assertionErrorSymbol)
         symbols.setDirectSupertypes([exceptionSymbol], for: runtimeExceptionSymbol)
@@ -175,6 +186,7 @@ extension DataFlowSemaPhase {
 
         // Register nominal supertypes in TypeSystem for subtype checking
         types.setNominalDirectSupertypes([throwableSymbol], for: exceptionSymbol)
+        types.setNominalDirectSupertypes([exceptionSymbol], for: characterCodingSymbol)
         types.setNominalDirectSupertypes([exceptionSymbol], for: runtimeExceptionSymbol)
         types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: uninitializedSymbol)
         types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: nullPointerSymbol)
@@ -194,6 +206,7 @@ extension DataFlowSemaPhase {
         for symbol in [
             throwableSymbol,
             exceptionSymbol,
+            characterCodingSymbol,
             runtimeExceptionSymbol,
             uninitializedSymbol,
             nullPointerSymbol,
@@ -222,6 +235,28 @@ extension DataFlowSemaPhase {
             interner: interner,
             includeMessageOverload: false,
             throwableSymbol: throwableSymbol
+        )
+        let characterCodingType = types.make(.classType(ClassType(
+            classSymbol: characterCodingSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let nullableStringType = types.makeNullable(types.stringType)
+        registerSyntheticExceptionConstructor(
+            ownerSymbol: characterCodingSymbol,
+            ownerType: characterCodingType,
+            parameters: [],
+            externalLinkName: "kk_throwable_new",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticExceptionConstructor(
+            ownerSymbol: characterCodingSymbol,
+            ownerType: characterCodingType,
+            parameters: [("message", nullableStringType)],
+            externalLinkName: "kk_throwable_new",
+            symbols: symbols,
+            interner: interner
         )
         registerSyntheticExceptionConstructors(
             ownerSymbol: runtimeExceptionSymbol,
