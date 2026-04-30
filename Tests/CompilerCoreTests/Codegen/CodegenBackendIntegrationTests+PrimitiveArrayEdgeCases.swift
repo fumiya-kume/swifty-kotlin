@@ -721,6 +721,37 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testListToDoubleArrayRoundTrip() throws {
+        let source = """
+        fun main() {
+            val list = listOf(1.5, -2.25, 0.5)
+            val arr = list.toDoubleArray()
+            println(arr.size)
+            println(arr[0])
+            println(arr[1])
+            println(arr[2])
+
+            arr[0] = 9.25
+            println(list[0])
+            println(arr[0])
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListToDoubleArrayRoundTrip",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(out, "3\n1.5\n-2.25\n0.5\n1.5\n9.25\n")
+        }
+    }
+
     // MARK: - contentHashCode stability for boxed int arrays
 
     func testBoxedIntArrayContentHashCode() throws {

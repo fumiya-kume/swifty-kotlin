@@ -53,6 +53,7 @@ extension ABIMismatchTests {
             "kk_list_sumByDouble",
             "kk_list_toBooleanArray",
             "kk_list_toShortArray",
+            "kk_list_toDoubleArray",
             "kk_mutable_list_removeFirstOrNull",
             "kk_mutable_list_removeLastOrNull",
             "kk_mutable_list_sortWith",

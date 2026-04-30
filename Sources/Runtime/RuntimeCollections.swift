@@ -1730,6 +1730,19 @@ public func kk_list_toShortArray(_ listRaw: Int) -> Int {
     return registerRuntimeObject(box)
 }
 
+/// Collection<Double>.toDoubleArray(): DoubleArray
+@_cdecl("kk_list_toDoubleArray")
+public func kk_list_toDoubleArray(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid list handle in kk_list_toDoubleArray")
+    }
+    let box = RuntimeArrayBox(length: list.elements.count)
+    for (i, elem) in list.elements.enumerated() {
+        box.elements[i] = kk_unbox_double(elem)
+    }
+    return registerRuntimeObject(box)
+}
+
 /// Collection<Int>.toIntArray(): IntArray
 @_cdecl("kk_list_toIntArray")
 public func kk_list_toIntArray(_ listRaw: Int) -> Int {

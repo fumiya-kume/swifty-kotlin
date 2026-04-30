@@ -1454,6 +1454,34 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testListToDoubleArrayUsesRuntimeExternalLink() throws {
+        let source = """
+        fun convert(values: List<Double>) {
+            values.toDoubleArray()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "toDoubleArray"
+            })
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_list_toDoubleArray")
+            let resultType = try XCTUnwrap(sema.bindings.exprTypes[callExpr])
+            guard case let .classType(classType) = sema.types.kind(of: resultType),
+                  let symbol = sema.symbols.symbol(classType.classSymbol)
+            else {
+                return XCTFail("Expected toDoubleArray to return DoubleArray")
+            }
+            XCTAssertEqual(ctx.interner.resolve(symbol.name), "DoubleArray")
+        }
+    }
+
     func testMutableListBulkMutationMembersUseInvariantReceiverTypes() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])
