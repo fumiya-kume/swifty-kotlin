@@ -1843,4 +1843,41 @@ extension CodegenBackendIntegrationTests {
             )
         }
     }
+
+    func testKotlinTextCaseInsensitiveOrderEdgeCases() throws {
+        let source = """
+        import kotlin.text.CASE_INSENSITIVE_ORDER
+
+        fun main() {
+            println(CASE_INSENSITIVE_ORDER.compare("alpha", "ALPHA"))
+            println(CASE_INSENSITIVE_ORDER.compare("apple", "banana") < 0)
+            println(CASE_INSENSITIVE_ORDER.compare("Zoo", "apple") > 0)
+            println(listOf("b", "A", "c", "a").sortedWith(CASE_INSENSITIVE_ORDER))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "KotlinTextCaseInsensitiveOrderEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                out,
+                """
+                0
+                true
+                true
+                [A, a, b, c]
+                """
+                + "\n"
+            )
+        }
+    }
 }

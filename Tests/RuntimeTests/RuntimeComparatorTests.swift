@@ -125,6 +125,14 @@ private func makeArray(_ elements: [Int]) -> Int {
     return array
 }
 
+private func makeRuntimeString(_ value: String) -> Int {
+    registerRuntimeObject(RuntimeStringBox(value))
+}
+
+private func runtimeStringValue(_ raw: Int) -> String {
+    extractString(from: UnsafeMutableRawPointer(bitPattern: raw)) ?? ""
+}
+
 private func listElements(_ listRaw: Int) -> [Int] {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: listRaw) else { return [] }
     guard let box = tryCast(ptr, to: RuntimeListBox.self) else { return [] }
@@ -426,6 +434,39 @@ final class RuntimeComparatorTests: XCTestCase {
         XCTAssertGreaterThan(kk_comparator_reverse_order_trampoline(0, 1, 5, nil), 0)
         XCTAssertLessThan(kk_comparator_reverse_order_trampoline(0, 5, 1, nil), 0)
         XCTAssertEqual(kk_comparator_reverse_order_trampoline(0, 3, 3, nil), 0)
+    }
+
+    func testCaseInsensitiveOrderComparatorObjectDispatchesThroughITable() {
+        let comparatorRaw = kk_string_case_insensitive_order()
+        let compareFnPtr = kk_itable_lookup(comparatorRaw, 0, 0)
+        XCTAssertNotEqual(compareFnPtr, 0)
+
+        let compareFn = unsafeBitCast(compareFnPtr, to: RuntimeCollectionLambda2.self)
+        XCTAssertEqual(
+            compareFn(comparatorRaw, makeRuntimeString("alpha"), makeRuntimeString("ALPHA"), nil),
+            0
+        )
+        XCTAssertLessThan(
+            compareFn(comparatorRaw, makeRuntimeString("apple"), makeRuntimeString("banana"), nil),
+            0
+        )
+        XCTAssertGreaterThan(
+            compareFn(comparatorRaw, makeRuntimeString("Zoo"), makeRuntimeString("apple"), nil),
+            0
+        )
+    }
+
+    func testSortedWithCaseInsensitiveOrderComparatorObject() {
+        let source = makeList([
+            makeRuntimeString("b"),
+            makeRuntimeString("A"),
+            makeRuntimeString("c"),
+            makeRuntimeString("a"),
+        ])
+        let comparatorRaw = kk_string_case_insensitive_order()
+
+        let sorted = kk_list_sortedWith(source, comparatorRaw, 0, nil)
+        XCTAssertEqual(listElements(sorted).map(runtimeStringValue), ["A", "a", "b", "c"])
     }
 
     // MARK: - sortedWith E2E

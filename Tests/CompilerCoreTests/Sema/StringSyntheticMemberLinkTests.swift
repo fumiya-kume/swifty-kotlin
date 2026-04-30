@@ -1232,6 +1232,51 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testCaseInsensitiveOrderSurfaceResolves() throws {
+        let source = """
+        import kotlin.text.CASE_INSENSITIVE_ORDER
+
+        fun caseInsensitiveComparator(): Comparator<String> {
+            return CASE_INSENSITIVE_ORDER
+        }
+
+        fun compareIgnoringCase(): Int {
+            return CASE_INSENSITIVE_ORDER.compare("alpha", "ALPHA")
+        }
+
+        fun sortIgnoringCase(values: List<String>): List<String> {
+            return values.sortedWith(CASE_INSENSITIVE_ORDER)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics.map { "\($0.code): \($0.message)" }.joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected CASE_INSENSITIVE_ORDER surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let propertyFQName = ["kotlin", "text", "CASE_INSENSITIVE_ORDER"].map { ctx.interner.intern($0) }
+            let propertySymbol = try XCTUnwrap(sema.symbols.lookup(fqName: propertyFQName))
+            XCTAssertEqual(
+                sema.symbols.externalLinkName(for: propertySymbol),
+                "kk_string_case_insensitive_order"
+            )
+
+            let comparatorFQName = ["kotlin", "Comparator"].map { ctx.interner.intern($0) }
+            let comparatorSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: comparatorFQName))
+            let expectedType = sema.types.make(.classType(ClassType(
+                classSymbol: comparatorSymbol,
+                args: [.invariant(sema.types.stringType)],
+                nullability: .nonNull
+            )))
+            XCTAssertEqual(sema.symbols.propertyType(for: propertySymbol), expectedType)
+        }
+    }
+
     func testCharSequenceZipWithNextMembersResolveInCallExpressions() throws {
         let source = """
         fun pairs(value: CharSequence): List<Pair<Char, Char>> {

@@ -51,6 +51,7 @@ extension ABIMismatchTests {
             "kk_array_of_nulls",
             // String radix conversion
             "kk_string_toIntOrNull_radix",
+            "kk_string_case_insensitive_order",
             "kk_system_exitProcess",
             "kk_system_currentTimeMillis",
             "kk_system_nanoTime",
