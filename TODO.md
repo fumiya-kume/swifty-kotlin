@@ -68,7 +68,7 @@
 - [x] STDLIB-TEXT-REPLACE-001: `String.replaceAfter(delimiter, replacement, missingDelimiterValue)` を追加する
 - [x] STDLIB-TEXT-REPLACE-002: `String.replaceAfterLast(delimiter, replacement, missingDelimiterValue)` を追加する
 - [x] STDLIB-TEXT-REPLACE-003: `String.replaceBefore(delimiter, replacement, missingDelimiterValue)` を追加する
-- [ ] STDLIB-TEXT-REPLACE-004: `String.replaceBeforeLast(delimiter, replacement, missingDelimiterValue)` を追加する
+- [x] STDLIB-TEXT-REPLACE-004: `String.replaceBeforeLast(delimiter, replacement, missingDelimiterValue)` を追加する
 - [ ] STDLIB-TEXT-REPLACE-005: `String.replaceIndentByMargin(newIndent, marginPrefix)` を追加する
 - [ ] STDLIB-TEXT-TYPE-001: `kotlin.text.Appendable` interface surface を追加する
 - [ ] STDLIB-TEXT-TYPE-002: `kotlin.text.CharacterCodingException` class surface を追加する
