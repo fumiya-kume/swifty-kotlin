@@ -180,7 +180,7 @@ extension CallLowerer {
         "maxOf", "minOf",
         "maxOfWith", "maxOfWithOrNull", "minOfWith", "minOfWithOrNull",
         "replaceFirstChar",
-        "sort", "sortBy", "sortByDescending",
+        "sort", "sortWith", "sortBy", "sortByDescending",
         "onEach", "onEachIndexed",
         "copyOf", "copyOfRange", "fill", "replaceAll", "removeIf",
         "firstOrNull", "lastOrNull", "singleOrNull",
@@ -4812,7 +4812,7 @@ extension CallLowerer {
             "takeWhile", "dropWhile", "filterNot", "findLast", "replaceAll", "removeIf",
             "replaceFirstChar",
             "trim", "trimStart", "trimEnd",
-            "sortBy", "sortByDescending",
+            "sortWith", "sortBy", "sortByDescending",
             "onEach", "onEachIndexed",
             "ifEmpty",
             "ifBlank",
@@ -5139,7 +5139,7 @@ extension CallLowerer {
         instructions: inout [KIRInstruction]
     ) -> [KIRExprID] {
         let comparatorOnlyHOFNames: Set<String> = [
-            "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",
+            "sortWith", "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",
         ]
         guard comparatorOnlyHOFNames.contains(interner.resolve(calleeName)),
               loweredArgIDs.count == 1,
@@ -8126,6 +8126,8 @@ extension CallLowerer {
                     return interner.intern("kk_mutable_list_sort_primitive")
                 }
                 return interner.intern("kk_mutable_list_sort")
+            case "sortWith":
+                return interner.intern("kk_mutable_list_sortWith")
             case "sortBy":
                 return interner.intern("kk_mutable_list_sortBy")
             case "sortByDescending":

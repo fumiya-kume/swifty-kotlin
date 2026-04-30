@@ -1361,6 +1361,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         let source = """
         fun mutate(values: MutableList<Int>) {
             values.sort()
+            values.sortWith { a, b -> b - a }
             values.sortBy { it }
             values.sortByDescending { it }
         }
@@ -1376,6 +1377,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             assertNoDiagnostic("KSWIFTK-SEMA-0022", in: ctx)
             let expectedExternalLinks = [
                 "sort": "kk_mutable_list_sort",
+                "sortWith": "kk_mutable_list_sortWith",
                 "sortBy": "kk_mutable_list_sortBy",
                 "sortByDescending": "kk_mutable_list_sortByDescending",
             ]

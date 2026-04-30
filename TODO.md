@@ -185,7 +185,7 @@
 - [x] STDLIB-COL-HOF-010: `Iterable.sumByDouble(selector)` deprecated surface を追加する
 - [x] STDLIB-COL-MUT-001: `MutableList.removeFirstOrNull()` を追加する
 - [x] STDLIB-COL-MUT-002: `MutableList.removeLastOrNull()` を追加する
-- [ ] STDLIB-COL-MUT-003: `MutableList.sortWith(comparator)` を追加する
+- [x] STDLIB-COL-MUT-003: `MutableList.sortWith(comparator)` を追加する
 - [ ] STDLIB-COL-CONV-001: `Collection<Boolean>.toBooleanArray()` を追加する
 - [ ] STDLIB-COL-CONV-002: `Collection<Short>.toShortArray()` を追加する
 - [ ] STDLIB-COL-CONV-003: `Collection<Double>.toDoubleArray()` を追加する
