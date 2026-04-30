@@ -288,6 +288,55 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testKotlinTextReplaceAfterLastEdgeCases() throws {
+        let source = """
+        fun main() {
+            println("a:b:c".replaceAfterLast(":", "X", "MISS"))
+            println("abc".replaceAfterLast(":", "X", "MISS"))
+            println("abc".replaceAfterLast(":", "X"))
+            println("abc".replaceAfterLast("", "X", "MISS"))
+            println("".replaceAfterLast("", "X", "MISS"))
+            println("abc".replaceAfterLast("abc", "X", "MISS"))
+            println("abc".replaceAfterLast("c", "X", "MISS"))
+            println("a:b:c".replaceAfterLast(':', "X", "MISS"))
+            println("abc".replaceAfterLast(':', "X", "MISS"))
+            println("abc".replaceAfterLast(':', "X"))
+            println("abc".replaceAfterLast('a', "X", "MISS"))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "KotlinTextReplaceAfterLastEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                out,
+                """
+                a:b:X
+                MISS
+                abc
+                abX
+                MISS
+                abcX
+                abcX
+                a:b:X
+                MISS
+                abc
+                aX
+                """
+                + "\n"
+            )
+        }
+    }
+
     // MARK: - substring / subSequence
 
     func testKotlinTextSubstringEdgeCases() throws {
