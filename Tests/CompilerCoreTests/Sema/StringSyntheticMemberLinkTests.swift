@@ -252,6 +252,11 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
             "kk_string_chunkedSequence",
             "CharSequence.chunkedSequence should link to kk_string_chunkedSequence"
         )
+        XCTAssertTrue(
+            externalLinks(for: "chunkedSequence", sema: sema, interner: interner)
+                .contains("kk_string_chunkedSequence_transform"),
+            "CharSequence.chunkedSequence(size, transform) should link to kk_string_chunkedSequence_transform"
+        )
     }
 
     func testIfBlankResolvesInCallExpressions() throws {
@@ -484,6 +489,41 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
                     sema.symbols.externalLinkName(for: chosenCallee),
                     "kk_string_chunkedSequence",
                     "Expected chunkedSequence to resolve to kk_string_chunkedSequence"
+                )
+            }
+        }
+    }
+
+    func testChunkedSequenceTransformResolvesInCallExpressions() throws {
+        let source = """
+        fun chunks(value: CharSequence): Sequence<String> {
+            return value.chunkedSequence(2) { chunk -> "" + chunk + "!" }
+        }
+
+        fun stringChunks(value: String): Sequence<String> {
+            return value.chunkedSequence(3) { "" + it }
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExprs = allExprIDs(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "chunkedSequence"
+            }
+            XCTAssertEqual(callExprs.count, 2)
+            for callExpr in callExprs {
+                let chosenCallee = try XCTUnwrap(
+                    sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                    "Expected call binding for chunkedSequence"
+                )
+                XCTAssertEqual(
+                    sema.symbols.externalLinkName(for: chosenCallee),
+                    "kk_string_chunkedSequence_transform",
+                    "Expected chunkedSequence transform to resolve to kk_string_chunkedSequence_transform"
                 )
             }
         }
