@@ -773,6 +773,11 @@ extension DataFlowSemaPhase {
                 to: parameterNameSymbol,
                 symbols: symbols
             )
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(annotationFQName: "kotlin.annotation.MustBeDocumented"),
+                to: parameterNameSymbol,
+                symbols: symbols
+            )
             registerSyntheticParameterNameMembers(
                 ownerSymbol: parameterNameSymbol,
                 ownerFQName: kotlinPkg + [interner.intern("ParameterName")],
