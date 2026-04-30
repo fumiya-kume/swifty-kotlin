@@ -6,7 +6,7 @@ import XCTest
 // This file documents what is implemented vs. what is missing in the KSwiftK
 // runtime with respect to the Kotlin/Native standard library API surface.
 //
-// IMPLEMENTED (tested here):
+// RUNTIME IMPLEMENTED (tested here and in RuntimeNativeRefRuntimeABITests):
 //   kotlin.native.runtime namespace (via java.lang / System shims):
 //     - System.gc()              -> kk_system_gc()     (calls kk_gc_collect internally)
 //     - Runtime.getRuntime()     -> kk_runtime_getRuntime()
@@ -27,7 +27,7 @@ import XCTest
 //     - GC.targetHeapUtilization   -> kk_gc_target_heap_utilization()
 //     - GC.maxHeapBytes            -> kk_gc_max_heap_bytes()
 //
-//   kotlin.native.runtime.Debugging (via kk_assertions_* entry points):
+//   kotlin.native.runtime.Debugging (via kk_assertions_* / kk_debugging_* entry points):
 //     - Debugging.areAssertionsEnabled    -> kk_assertions_enabled()
 //     - Debugging.setAssertionsEnabled()  -> kk_assertions_set_enabled()
 //     - Debugging.isThreadStateRunnable   -> kk_debugging_is_thread_state_runnable()
@@ -35,7 +35,16 @@ import XCTest
 //     - Debugging.threadCount             -> kk_debugging_thread_count()
 //     - Debugging.globalObjectCount       -> kk_debugging_global_object_count()
 //
-// MISSING (not implemented — no runtime entry point or compiler-side stub):
+// SEMA EXPOSED (compile-time stubs, covered by NativeRefRuntimeSemaTests):
+//   - kotlin.native.ref.WeakReference<T>
+//   - kotlin.native.ref.WeakReference.get()
+//   - kotlin.native.ref.createCleaner(value, block)
+//   - kotlin.native.runtime.GC.collect()
+//   - kotlin.native.runtime.GC.schedule()
+//   - kotlin.native.runtime.Debugging.isThreadStateRunnable
+//   - kotlin.native.runtime.Debugging.gcSuspendCount
+//
+// RUNTIME MISSING (tracked by STDLIB-NATIVE-REF-004 and later):
 //   - GCInfo / RootSetStatistics / SweepStatistics type surfaces
 //   - NativeRuntimeApi marker
 
