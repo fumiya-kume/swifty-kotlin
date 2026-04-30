@@ -57,7 +57,7 @@
 - [x] STDLIB-TEXT-EDGE-012: `Appendable.append(vararg CharSequence?)` と `StringBuilder.append(vararg String? / Any?)` を追加する
 - [x] STDLIB-TEXT-SEQ-001: `CharSequence.chunkedSequence(size)` を追加する
 - [x] STDLIB-TEXT-SEQ-002: `CharSequence.chunkedSequence(size, transform)` を追加する
-- [ ] STDLIB-TEXT-SEQ-003: `CharSequence.windowedSequence(size, step, partialWindows)` を追加する
+- [x] STDLIB-TEXT-SEQ-003: `CharSequence.windowedSequence(size, step, partialWindows)` を追加する
 - [ ] STDLIB-TEXT-SEQ-004: `CharSequence.windowedSequence(size, step, partialWindows, transform)` を追加する
 - [ ] STDLIB-TEXT-SEARCH-001: `CharSequence.indexOfAny(chars, startIndex, ignoreCase)` を追加する
 - [ ] STDLIB-TEXT-SEARCH-002: `CharSequence.indexOfAny(strings, startIndex, ignoreCase)` を追加する

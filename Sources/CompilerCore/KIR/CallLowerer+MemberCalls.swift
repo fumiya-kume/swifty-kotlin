@@ -3463,6 +3463,27 @@ extension CallLowerer {
                 ))
                 return result
             }
+            let isCharSequenceReceiver: Bool = {
+                guard let charSequenceSymbol = sema.types.charSequenceInterfaceSymbol,
+                      case let .classType(classType) = sema.types.kind(of: nonNullReceiverType)
+                else {
+                    return false
+                }
+                return classType.classSymbol == charSequenceSymbol
+            }()
+            if (sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) || isCharSequenceReceiver),
+               calleeStr == "windowedSequence"
+            {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_windowedSequence_partial"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1], loweredArgIDs[2]],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
         }
 
         // String stdlib: replaceFirst(oldValue, newValue) (STDLIB-188)
