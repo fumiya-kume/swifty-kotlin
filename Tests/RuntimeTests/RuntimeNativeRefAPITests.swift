@@ -27,7 +27,7 @@ import XCTest
 //     - GC.targetHeapUtilization   -> kk_gc_target_heap_utilization()
 //     - GC.maxHeapBytes            -> kk_gc_max_heap_bytes()
 //
-//   kotlin.native.runtime.Debugging (via kk_assertions_* entry points):
+//   kotlin.native.runtime.Debugging (via kk_assertions_* / kk_debugging_* entry points):
 //     - Debugging.areAssertionsEnabled    -> kk_assertions_enabled()
 //     - Debugging.setAssertionsEnabled()  -> kk_assertions_set_enabled()
 //     - Debugging.isThreadStateRunnable   -> kk_debugging_is_thread_state_runnable()

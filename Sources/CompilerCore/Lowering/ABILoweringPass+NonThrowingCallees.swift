@@ -70,6 +70,7 @@ extension ABILoweringPass {
             interner.intern("kk_locale_new"),
             interner.intern("kk_string_lowercase_locale"),
             interner.intern("kk_string_uppercase_locale"),
+            interner.intern("kk_char_lowercase_locale"),
             interner.intern("kk_string_compareTo_locale"),
             interner.intern("kk_normalization_form_nfc"),
             interner.intern("kk_normalization_form_nfd"),
@@ -699,6 +700,7 @@ extension ABILoweringPass {
             interner.intern("kk_uuid_lexicalOrder"),
             interner.intern("kk_uuid_parseHexOrNull"),
             interner.intern("kk_uuid_parseHexDashOrNull"),
+            interner.intern("kk_uuid_parseOrNull"),
             interner.intern("kk_time_source_mark_now"),
             interner.intern("kk_time_source_monotonic_mark_now"),
             interner.intern("kk_time_mark_elapsed_now"),
@@ -809,6 +811,7 @@ extension ABILoweringPass {
             interner.intern("kk_sequence_builder_yield"),
             interner.intern("kk_sequence_builder_build"),
             interner.intern("kk_iterator_builder_build"),
+            interner.intern("kk_auto_closeable_create"),
             // Sequence (STDLIB-095/096/097)
             interner.intern("kk_sequence_of"),
             interner.intern("kk_sequence_of_single"),

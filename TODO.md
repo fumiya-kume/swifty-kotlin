@@ -295,7 +295,7 @@
 - [x] STDLIB-KOTLIN-ROOT-ANNO-001: `BuilderInference` annotation surface を追加する
 - [x] STDLIB-KOTLIN-ROOT-ANNO-002: `DeprecatedSinceKotlin(warningSince, errorSince, hiddenSince)` annotation surface を追加する
 - [x] STDLIB-KOTLIN-ROOT-ANNO-003: `DslMarker` annotation surface を追加する
-- [ ] STDLIB-KOTLIN-ROOT-ANNO-004: `OptionalExpectation` annotation surface を追加する
+- [x] STDLIB-KOTLIN-ROOT-ANNO-004: `OptionalExpectation` annotation surface を追加する
 - [x] STDLIB-KOTLIN-ROOT-ANNO-005: `ParameterName(name: String)` annotation surface を追加する
 - [ ] STDLIB-KOTLIN-ROOT-ANNO-006: `PublishedApi` annotation surface を追加する
 - [x] STDLIB-KOTLIN-ROOT-ANNO-007: `SinceKotlin(version: String)` annotation surface を追加する
@@ -309,8 +309,8 @@
 - [x] STDLIB-KOTLIN-ROOT-EXC-001: `NoWhenBranchMatchedException` class surface を追加する
 - [x] STDLIB-KOTLIN-ROOT-EXC-002: `ConcurrentModificationException` class surface を追加する
 - [x] STDLIB-KOTLIN-ROOT-EXC-003: Native `ArrayIndexOutOfBoundsException` class surface を追加する
-- [ ] STDLIB-KOTLIN-ROOT-CLOSE-001: `AutoCloseable(closeAction: () -> Unit)` factory を追加する
-- [ ] STDLIB-KOTLIN-ROOT-CLOSE-002: `AutoCloseable?.use { ... }` common extension を追加する
+- [x] STDLIB-KOTLIN-ROOT-CLOSE-001: `AutoCloseable(closeAction: () -> Unit)` factory を追加する
+- [x] STDLIB-KOTLIN-ROOT-CLOSE-002: `AutoCloseable?.use { ... }` common extension を追加する
 - [x] STDLIB-KOTLIN-ROOT-ARRAY-001: `arrayOfNulls<T>(size: Int)` root array factory を追加する
 - [x] STDLIB-KOTLIN-ROOT-LAZY-001: `lazyOf(value)` root lazy factory を追加する
 - [x] STDLIB-KOTLIN-ROOT-CTX-001: experimental `context(with, block)` helper を追加する
@@ -325,7 +325,7 @@
 - [x] STDLIB-I18N-COMMON-002: `Char.category` を `CharCategory` enum で露出する（現状は `Int` placeholder）
 - [x] STDLIB-I18N-COMMON-003: `String.Companion.format(locale, format, vararg args)` を追加する
 - [ ] STDLIB-I18N-COMMON-004: `Char.uppercase(Locale)` を追加する
-- [ ] STDLIB-I18N-COMMON-005: `Char.lowercase(Locale)` を追加する
+- [x] STDLIB-I18N-COMMON-005: `Char.lowercase(Locale)` を追加する
 - [x] STDLIB-I18N-COMMON-006: `String.toIntOrNull(radix: Int)` を追加する
 - [x] STDLIB-I18N-COMMON-007: `Char.directionality` を `CharDirectionality` enum で露出する（現状は `Int` placeholder）
 - [x] STDLIB-I18N-COMMON-008: `Char.lowercaseChar()` を追加する
@@ -377,7 +377,7 @@
 - [ ] STDLIB-UUID-005: `Uuid.Companion.NIL` constant を追加する
 - [x] STDLIB-UUID-006: `@ExperimentalUuidApi` marker と opt-in diagnostics を追加する
 - [ ] STDLIB-UUID-007: `Uuid.Companion.parseHexDash(hexDashString: String)` を追加する
-- [ ] STDLIB-UUID-008: `Uuid.Companion.parseOrNull(uuidString: String)` を追加する
+- [x] STDLIB-UUID-008: `Uuid.Companion.parseOrNull(uuidString: String)` を追加する
 - [x] STDLIB-UUID-009: `Uuid.Companion.parseHexOrNull(hexString: String)` を追加する
 - [x] STDLIB-UUID-010: `Uuid.Companion.parseHexDashOrNull(hexDashString: String)` を追加する
 - [x] STDLIB-UUID-011: `Uuid.Companion.SIZE_BITS` / `SIZE_BYTES` constants を追加する
