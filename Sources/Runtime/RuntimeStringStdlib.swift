@@ -1565,6 +1565,52 @@ public func kk_string_replaceBefore_char(
     )
 }
 
+@_cdecl("kk_string_replaceBeforeLast")
+public func kk_string_replaceBeforeLast(
+    _ strRaw: Int,
+    _ delimiterRaw: Int,
+    _ replacementRaw: Int,
+    _ missingDelimiterValueRaw: Int
+) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let delimiter = runtimeStringFromRawOrPanic(delimiterRaw, caller: #function)
+    let replacement = runtimeStringFromRawOrPanic(replacementRaw, caller: #function)
+    let missingDelimiterValue = missingDelimiterValueRaw == 0
+        ? source
+        : runtimeStringFromRawOrPanic(missingDelimiterValueRaw, caller: #function)
+    return runtimeMakeStringRaw(
+        runtimeStringReplaceBeforeLast(
+            source: source,
+            delimiter: delimiter,
+            replacement: replacement,
+            missingDelimiterValue: missingDelimiterValue
+        )
+    )
+}
+
+@_cdecl("kk_string_replaceBeforeLast_char")
+public func kk_string_replaceBeforeLast_char(
+    _ strRaw: Int,
+    _ delimiterRaw: Int,
+    _ replacementRaw: Int,
+    _ missingDelimiterValueRaw: Int
+) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let delimiter = runtimeCharacterFromRaw(delimiterRaw)
+    let replacement = runtimeStringFromRawOrPanic(replacementRaw, caller: #function)
+    let missingDelimiterValue = missingDelimiterValueRaw == 0
+        ? source
+        : runtimeStringFromRawOrPanic(missingDelimiterValueRaw, caller: #function)
+    return runtimeMakeStringRaw(
+        runtimeStringReplaceBeforeLast(
+            source: source,
+            delimiter: delimiter,
+            replacement: replacement,
+            missingDelimiterValue: missingDelimiterValue
+        )
+    )
+}
+
 @_cdecl("kk_string_lastIndexOf")
 public func kk_string_lastIndexOf(_ strRaw: Int, _ otherRaw: Int) -> Int {
     let source = runtimeStringScalars(strRaw)
@@ -2933,6 +2979,24 @@ private func runtimeStringReplaceBefore(
         return replacement + source
     }
     guard let range = source.range(of: delimiter) else {
+        return missingDelimiterValue
+    }
+    return replacement + String(source[range.lowerBound...])
+}
+
+private func runtimeStringReplaceBeforeLast(
+    source: String,
+    delimiter: String,
+    replacement: String,
+    missingDelimiterValue: String
+) -> String {
+    if delimiter.isEmpty {
+        guard let lastScalar = source.unicodeScalars.last else {
+            return missingDelimiterValue
+        }
+        return replacement + String(lastScalar)
+    }
+    guard let range = source.range(of: delimiter, options: .backwards) else {
         return missingDelimiterValue
     }
     return replacement + String(source[range.lowerBound...])
