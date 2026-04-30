@@ -64,7 +64,7 @@
 - [x] STDLIB-TEXT-SEARCH-003: `CharSequence.lastIndexOfAny(chars, startIndex, ignoreCase)` を追加する
 - [x] STDLIB-TEXT-SEARCH-004: `CharSequence.lastIndexOfAny(strings, startIndex, ignoreCase)` を追加する
 - [x] STDLIB-TEXT-SEARCH-005: `CharSequence.findAnyOf(strings, startIndex, ignoreCase)` を追加する
-- [ ] STDLIB-TEXT-SEARCH-006: `CharSequence.findLastAnyOf(strings, startIndex, ignoreCase)` を追加する
+- [x] STDLIB-TEXT-SEARCH-006: `CharSequence.findLastAnyOf(strings, startIndex, ignoreCase)` を追加する
 - [ ] STDLIB-TEXT-REPLACE-001: `String.replaceAfter(delimiter, replacement, missingDelimiterValue)` を追加する
 - [ ] STDLIB-TEXT-REPLACE-002: `String.replaceAfterLast(delimiter, replacement, missingDelimiterValue)` を追加する
 - [ ] STDLIB-TEXT-REPLACE-003: `String.replaceBefore(delimiter, replacement, missingDelimiterValue)` を追加する
