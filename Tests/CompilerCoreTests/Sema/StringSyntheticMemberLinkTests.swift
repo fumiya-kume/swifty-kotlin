@@ -102,6 +102,16 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
                 .contains("kk_string_replaceAfter_char"),
             "String.replaceAfter(Char, replacement, missingDelimiterValue) should link to kk_string_replaceAfter_char"
         )
+        XCTAssertTrue(
+            externalLinks(for: "replaceAfterLast", sema: sema, interner: interner)
+                .contains("kk_string_replaceAfterLast"),
+            "String.replaceAfterLast(String, replacement, missingDelimiterValue) should link to kk_string_replaceAfterLast"
+        )
+        XCTAssertTrue(
+            externalLinks(for: "replaceAfterLast", sema: sema, interner: interner)
+                .contains("kk_string_replaceAfterLast_char"),
+            "String.replaceAfterLast(Char, replacement, missingDelimiterValue) should link to kk_string_replaceAfterLast_char"
+        )
     }
 
     func testNewCaseConversionStubsHaveCorrectExternalLinks() throws {
@@ -902,6 +912,47 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
             }
             XCTAssertEqual(links.filter { $0 == "kk_string_replaceAfter" }.count, 2)
             XCTAssertEqual(links.filter { $0 == "kk_string_replaceAfter_char" }.count, 2)
+        }
+    }
+
+    func testReplaceAfterLastResolvesInCallExpressions() throws {
+        let source = """
+        fun replaceAfterLastString(value: String): String {
+            return value.replaceAfterLast(":", "tail", "missing")
+        }
+
+        fun replaceAfterLastStringDefault(value: String): String {
+            return value.replaceAfterLast(":", "tail")
+        }
+
+        fun replaceAfterLastChar(value: String): String {
+            return value.replaceAfterLast(':', "tail", "missing")
+        }
+
+        fun replaceAfterLastCharDefault(value: String): String {
+            return value.replaceAfterLast(':', "tail")
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExprs = allExprIDs(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "replaceAfterLast"
+            }
+            XCTAssertEqual(callExprs.count, 4)
+            let links = try callExprs.map { callExpr -> String in
+                let chosenCallee = try XCTUnwrap(
+                    sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                    "Expected call binding for replaceAfterLast"
+                )
+                return sema.symbols.externalLinkName(for: chosenCallee) ?? ""
+            }
+            XCTAssertEqual(links.filter { $0 == "kk_string_replaceAfterLast" }.count, 2)
+            XCTAssertEqual(links.filter { $0 == "kk_string_replaceAfterLast_char" }.count, 2)
         }
     }
 
