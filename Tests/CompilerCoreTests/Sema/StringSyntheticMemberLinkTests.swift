@@ -87,6 +87,11 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
             "kk_string_findAnyOf",
             "CharSequence.findAnyOf(strings, startIndex, ignoreCase) should link to kk_string_findAnyOf"
         )
+        XCTAssertEqual(
+            externalLink(for: "findLastAnyOf", sema: sema, interner: interner),
+            "kk_string_findLastAnyOf",
+            "CharSequence.findLastAnyOf(strings, startIndex, ignoreCase) should link to kk_string_findLastAnyOf"
+        )
     }
 
     func testNewCaseConversionStubsHaveCorrectExternalLinks() throws {
@@ -809,6 +814,41 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
                     sema.symbols.externalLinkName(for: chosenCallee),
                     "kk_string_findAnyOf",
                     "Expected findAnyOf(strings, startIndex, ignoreCase) to resolve to kk_string_findAnyOf"
+                )
+            }
+        }
+    }
+
+    func testFindLastAnyOfStringsResolvesInCallExpressions() throws {
+        let source = """
+        fun findLastAny(value: CharSequence, strings: Collection<String>): Pair<Int, String>? {
+            return value.findLastAnyOf(strings, 3, true)
+        }
+
+        fun stringFindLastAny(value: String): Pair<Int, String>? {
+            return value.findLastAnyOf(listOf("x"), 2, false)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExprs = allExprIDs(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "findLastAnyOf"
+            }
+            XCTAssertEqual(callExprs.count, 2)
+            for callExpr in callExprs {
+                let chosenCallee = try XCTUnwrap(
+                    sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                    "Expected call binding for findLastAnyOf"
+                )
+                XCTAssertEqual(
+                    sema.symbols.externalLinkName(for: chosenCallee),
+                    "kk_string_findLastAnyOf",
+                    "Expected findLastAnyOf(strings, startIndex, ignoreCase) to resolve to kk_string_findLastAnyOf"
                 )
             }
         }
