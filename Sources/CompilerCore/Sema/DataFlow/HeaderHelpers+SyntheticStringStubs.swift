@@ -41,6 +41,12 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         let listStringType = makeListOfStringType(symbols: symbols, types: types, interner: interner)
+        let collectionStringType = makeCollectionType(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            elementType: stringType
+        )
         let listCharType = makeListType(
             symbols: symbols,
             types: types,
@@ -641,6 +647,23 @@ extension DataFlowSemaPhase {
             receiverType: charSequenceType,
             parameters: [
                 ("chars", charArrayType, false, false),
+                ("startIndex", intType, false, false),
+                ("ignoreCase", boolType, false, false),
+            ],
+            returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-TEXT-SEARCH-002: CharSequence.indexOfAny(strings, startIndex, ignoreCase) ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "indexOfAny",
+            externalLinkName: "kk_string_indexOfAny_strings",
+            receiverType: charSequenceType,
+            parameters: [
+                ("strings", collectionStringType, false, false),
                 ("startIndex", intType, false, false),
                 ("ignoreCase", boolType, false, false),
             ],
@@ -2841,6 +2864,75 @@ extension DataFlowSemaPhase {
             args: [.out(elementType)],
             nullability: .nonNull
         )))
+    }
+
+    private func makeCollectionType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        elementType: TypeID
+    ) -> TypeID {
+        let collectionSymbol = ensureCollectionSymbol(
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        return types.make(.classType(ClassType(
+            classSymbol: collectionSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+    }
+
+    private func ensureCollectionSymbol(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> SymbolID {
+        let collectionName = interner.intern("Collection")
+        let collectionFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            collectionName,
+        ]
+        if let existing = symbols.lookup(fqName: collectionFQName) {
+            return existing
+        }
+        let collectionsPkg: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+        ]
+        if symbols.lookup(fqName: collectionsPkg) == nil {
+            _ = symbols.define(
+                kind: .package,
+                name: interner.intern("collections"),
+                fqName: collectionsPkg,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        let sym = symbols.define(
+            kind: .interface,
+            name: collectionName,
+            fqName: collectionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = collectionFQName + [typeParamName]
+        let typeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: typeParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: sym)
+        types.setNominalTypeParameterVariances([.out], for: sym)
+        return sym
     }
 
     private func ensureIterableSymbol(
