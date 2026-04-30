@@ -267,6 +267,11 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
             "kk_string_windowedSequence_partial",
             "CharSequence.windowedSequence should link to kk_string_windowedSequence_partial"
         )
+        XCTAssertTrue(
+            externalLinks(for: "windowedSequence", sema: sema, interner: interner)
+                .contains("kk_string_windowedSequence_transform"),
+            "CharSequence.windowedSequence(size, step, partialWindows, transform) should link to kk_string_windowedSequence_transform"
+        )
     }
 
     func testIfBlankResolvesInCallExpressions() throws {
@@ -569,6 +574,41 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
                     sema.symbols.externalLinkName(for: chosenCallee),
                     "kk_string_windowedSequence_partial",
                     "Expected windowedSequence to resolve to kk_string_windowedSequence_partial"
+                )
+            }
+        }
+    }
+
+    func testWindowedSequenceTransformResolvesInCallExpressions() throws {
+        let source = """
+        fun windows(value: CharSequence): Sequence<Int> {
+            return value.windowedSequence(3, 2, true) { it.length }
+        }
+
+        fun stringWindows(value: String): Sequence<String> {
+            return value.windowedSequence(size = 2, step = 1, partialWindows = false) { window -> "" + window }
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExprs = allExprIDs(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "windowedSequence"
+            }
+            XCTAssertEqual(callExprs.count, 2)
+            for callExpr in callExprs {
+                let chosenCallee = try XCTUnwrap(
+                    sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                    "Expected call binding for windowedSequence"
+                )
+                XCTAssertEqual(
+                    sema.symbols.externalLinkName(for: chosenCallee),
+                    "kk_string_windowedSequence_transform",
+                    "Expected windowedSequence transform to resolve to kk_string_windowedSequence_transform"
                 )
             }
         }
