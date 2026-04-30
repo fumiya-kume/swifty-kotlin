@@ -96,7 +96,7 @@ final class ABIMismatchTests: XCTestCase {
 
     func testStringFunctionCount() {
         // Keep this in sync with RuntimeABISpec.stringFunctions entries.
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 177)
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 181)
     }
 
     func testRegexFunctionCount() {
@@ -109,12 +109,14 @@ final class ABIMismatchTests: XCTestCase {
         // kk_regex_containsMatchIn,
         // kk_match_result_groups, kk_match_group_collection_get,
         // kk_match_group_value, kk_match_group_range,
-        // kk_string_chunked, kk_string_windowed,
+        // kk_string_chunked, kk_string_chunkedSequence_transform,
+        // kk_string_windowed, kk_string_windowedSequence_partial,
+        // kk_string_windowedSequence_transform,
         // kk_string_commonPrefixWith, kk_string_commonSuffixWith,
         // kk_string_zipWithNext
         // STDLIB-REGEX-097: kk_regex_group_names
         // STDLIB-REGEX-094: kk_regex_matches, kk_regex_from_literal, kk_string_replaceFirst_regex
-        XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 35)
+        XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 38)
     }
 
     func testPrintAndPrintlnFunctionCount() {
