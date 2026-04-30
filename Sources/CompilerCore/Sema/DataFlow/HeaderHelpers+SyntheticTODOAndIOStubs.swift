@@ -3200,6 +3200,43 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // STDLIB-SEQ-027: firstNotNullOfOrNull(transform): R?
+        let firstNotNullOfOrNullName = interner.intern("firstNotNullOfOrNull")
+        let firstNotNullOfOrNullFQName = sequenceFQName + [firstNotNullOfOrNullName]
+        if symbols.lookup(fqName: firstNotNullOfOrNullFQName) == nil {
+            let rName = interner.intern("R")
+            let rSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: firstNotNullOfOrNullFQName + [rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let nullableRType = types.makeNullable(rType)
+            let transformType = types.make(.functionType(FunctionType(
+                params: [typeParamType],
+                returnType: nullableRType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            registerSequenceMemberStub(
+                named: "firstNotNullOfOrNull",
+                externalLinkName: "kk_sequence_firstNotNullOfOrNull",
+                receiverType: receiverType,
+                parameters: [("transform", transformType)],
+                returnType: nullableRType,
+                sequenceSymbol: sequenceSymbol,
+                sequenceFQName: sequenceFQName,
+                typeParamSymbol: typeParamSymbol,
+                symbols: symbols,
+                interner: interner,
+                canThrow: true,
+                additionalTypeParameterSymbols: [rSymbol]
+            )
+        }
+
         // sum()/average()
         registerSequenceMemberStub(
             named: "sum",

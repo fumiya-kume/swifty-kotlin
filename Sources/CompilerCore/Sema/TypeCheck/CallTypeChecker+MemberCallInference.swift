@@ -1398,6 +1398,7 @@ extension CallTypeChecker {
             "mapIndexedNotNullTo", "filterIndexedTo", "filterNotNullTo",
             "forEachIndexed", "mapIndexed",
             "firstNotNullOf",
+            "firstNotNullOfOrNull",
             "onEach", "onEachIndexed",
             "sumOf", "maxOrNull", "minOrNull",
             "indexOfFirst", "indexOfLast", "binarySearch", "binarySearchBy",
@@ -1450,6 +1451,7 @@ extension CallTypeChecker {
         if !isSequenceReceiver {
             activeCollectionHOFNames.remove("flatMapIndexed")
             activeCollectionHOFNames.remove("firstNotNullOf")
+            activeCollectionHOFNames.remove("firstNotNullOfOrNull")
         }
         if isMapReceiver {
             activeCollectionHOFNames.formUnion(mapOnlyCollectionHOFNames)
@@ -2064,7 +2066,7 @@ extension CallTypeChecker {
                 return finalType
             }
             switch calleeStr {
-            case "map", "filter", "filterNot", "filterKeys", "filterValues", "mapNotNull", "firstNotNullOf", "forEach", "flatMap", "flatMapIndexed", "any", "none", "all",
+            case "map", "filter", "filterNot", "filterKeys", "filterValues", "mapNotNull", "firstNotNullOf", "firstNotNullOfOrNull", "forEach", "flatMap", "flatMapIndexed", "any", "none", "all",
                  "count", "first", "last", "find", "associateBy", "associateWith", "associate",
                  "mapValues", "mapKeys", "takeWhile", "dropWhile", "onEach":
                 // any(), none(), count(), first(), last() can be called with no args
@@ -2080,7 +2082,7 @@ extension CallTypeChecker {
                     case "filter", "filterNot", "any", "none", "all", "takeWhile", "dropWhile": sema.types.booleanType
                     case "forEach", "onEach": sema.types.unitType
                     case "count": sema.types.booleanType
-                    case "mapNotNull", "firstNotNullOf": sema.types.nullableAnyType
+                    case "mapNotNull", "firstNotNullOf", "firstNotNullOfOrNull": sema.types.nullableAnyType
                     default: sema.types.anyType
                     }
                     let lambdaParameterTypes = calleeStr == "flatMapIndexed"
@@ -2334,7 +2336,7 @@ extension CallTypeChecker {
                         resultType = sema.types.makeNonNullable(receiverType)
                     case "filterValues" where isMapReceiver:
                         resultType = sema.types.makeNonNullable(receiverType)
-                    case "mapNotNull", "firstNotNullOf":
+                    case "mapNotNull", "firstNotNullOf", "firstNotNullOfOrNull":
                         let bodyType: TypeID = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
                             sema.types.makeNonNullable(sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType)
                         } else if case let .functionType(fnType) = sema.types.kind(of: sema.bindings.exprType(for: args[0].expr) ?? sema.types.anyType) {
@@ -2344,6 +2346,8 @@ extension CallTypeChecker {
                         }
                         if calleeStr == "firstNotNullOf" {
                             resultType = bodyType
+                        } else if calleeStr == "firstNotNullOfOrNull" {
+                            resultType = sema.types.makeNullable(bodyType)
                         } else if isSequenceReceiver {
                             resultType = makeSyntheticSequenceType(
                                 symbols: sema.symbols,

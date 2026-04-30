@@ -3806,6 +3806,7 @@ extension CallLowerer {
                 let sortedByName = interner.intern("sortedBy")
                 let sumOfName = interner.intern("sumOf")
                 let firstNotNullOfName = interner.intern("firstNotNullOf")
+                let firstNotNullOfOrNullName = interner.intern("firstNotNullOfOrNull")
                 let associateName = interner.intern("associate")
                 let associateByName = interner.intern("associateBy")
                 let associateWithName = interner.intern("associateWith")
@@ -3849,6 +3850,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_sumOf"
                 } else if calleeName == firstNotNullOfName {
                     runtimeCallee = "kk_sequence_firstNotNullOf"
+                } else if calleeName == firstNotNullOfOrNullName {
+                    runtimeCallee = "kk_sequence_firstNotNullOfOrNull"
                 } else if calleeName == associateName {
                     runtimeCallee = "kk_sequence_associate"
                 } else if calleeName == associateByName {
@@ -3935,6 +3938,7 @@ extension CallLowerer {
                     let canThrow = runtimeCallee == "kk_sequence_sortedBy"
                         || runtimeCallee == "kk_sequence_sumOf"
                         || runtimeCallee == "kk_sequence_firstNotNullOf"
+                        || runtimeCallee == "kk_sequence_firstNotNullOfOrNull"
                         || runtimeCallee == "kk_sequence_associate"
                         || runtimeCallee == "kk_sequence_associateBy"
                         || runtimeCallee == "kk_sequence_associateTo"
@@ -3963,7 +3967,8 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_ifEmpty"
                         || runtimeCallee == "kk_sequence_zipWithNextTransform"
                     var runtimeArguments = [loweredReceiverID] + normalizedArgIDs
-                    if runtimeCallee == "kk_sequence_firstNotNullOf",
+                    if (runtimeCallee == "kk_sequence_firstNotNullOf"
+                        || runtimeCallee == "kk_sequence_firstNotNullOfOrNull"),
                        normalizedArgIDs.count == 1
                     {
                         let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
@@ -6124,7 +6129,8 @@ extension CallLowerer {
             finalArguments[2] = fnPtrExpr
             finalArguments.append(envPtrExpr)
         }
-        if loweredCallee == interner.intern("kk_sequence_firstNotNullOf"),
+        if (loweredCallee == interner.intern("kk_sequence_firstNotNullOf")
+            || loweredCallee == interner.intern("kk_sequence_firstNotNullOfOrNull")),
            finalArguments.count == 2
         {
             let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
@@ -6459,6 +6465,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_sortedBy"),
             interner.intern("kk_sequence_sumOf"),
             interner.intern("kk_sequence_firstNotNullOf"),
+            interner.intern("kk_sequence_firstNotNullOfOrNull"),
             interner.intern("kk_sequence_associate"),
             interner.intern("kk_sequence_associateBy"),
             interner.intern("kk_sequence_associateTo"),
@@ -8280,6 +8287,7 @@ extension CallLowerer {
             let joinToStringName = interner.intern("joinToString")
             let sumOfName = interner.intern("sumOf")
             let firstNotNullOfName = interner.intern("firstNotNullOf")
+            let firstNotNullOfOrNullName = interner.intern("firstNotNullOfOrNull")
             let associateName = interner.intern("associate")
             let associateByName = interner.intern("associateBy")
             let firstName = interner.intern("first")
@@ -8334,6 +8342,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_sumOf")
             case firstNotNullOfName:
                 return interner.intern("kk_sequence_firstNotNullOf")
+            case firstNotNullOfOrNullName:
+                return interner.intern("kk_sequence_firstNotNullOfOrNull")
             case associateName:
                 return interner.intern("kk_sequence_associate")
             case associateByName:

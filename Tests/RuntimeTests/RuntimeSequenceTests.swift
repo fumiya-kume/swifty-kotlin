@@ -205,6 +205,32 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertNotEqual(thrown, 0)
     }
 
+    func testFirstNotNullOfOrNullReturnsFirstTransformedValue() {
+        var thrown = 0
+        let result = kk_sequence_firstNotNullOfOrNull(
+            makeSequence([1, 2, 3]),
+            unsafeBitCast(sequenceFirstNotNullOfStringForTwo, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(extractString(from: UnsafeMutableRawPointer(bitPattern: result)), "two")
+    }
+
+    func testFirstNotNullOfOrNullReturnsNullSentinelWhenNoElementTransformsToValue() {
+        var thrown = 0
+        let result = kk_sequence_firstNotNullOfOrNull(
+            makeSequence([1, 2, 3]),
+            unsafeBitCast(sequenceFirstNotNullOfAlwaysNull, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, runtimeNullSentinelInt)
+    }
+
     func testSortedByUsesRuntimeValueComparisonForSelectorKeys() {
         let source = makeSequence([1, 2, 3])
         let sorted = kk_sequence_sortedBy(

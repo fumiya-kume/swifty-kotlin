@@ -2960,6 +2960,53 @@ public func kk_sequence_firstNotNullOf(
     return 0
 }
 
+@_cdecl("kk_sequence_firstNotNullOfOrNull")
+public func kk_sequence_firstNotNullOfOrNull(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    var found: Int?
+
+    func visit(_ elem: Int) -> Bool {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: elem,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
+        }
+        if result != 0, let normalized = runtimeMapNotNullResultValue(result) {
+            found = normalized
+            return false
+        }
+        return true
+    }
+
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        runtimeTraverseSequence(seq, outThrown: outThrown) { elem in
+            visit(elem)
+        }
+    } else {
+        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
+            if !visit(elem) {
+                break
+            }
+        }
+    }
+
+    if let outThrown, outThrown.pointee != 0 {
+        return runtimeNullSentinelInt
+    }
+    return found ?? runtimeNullSentinelInt
+}
+
 @_cdecl("kk_sequence_associate")
 public func kk_sequence_associate(
     _ seqRaw: Int,

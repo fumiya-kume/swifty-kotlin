@@ -1118,7 +1118,9 @@ extension CallTypeChecker {
         if memberName == interner.intern("flatMapIndexed") {
             return isSequenceReceiver
         }
-        if memberName == interner.intern("firstNotNullOf") {
+        if memberName == interner.intern("firstNotNullOf")
+            || memberName == interner.intern("firstNotNullOfOrNull")
+        {
             return isSequenceReceiver
         }
         if memberName == interner.intern("requireNoNulls") {
@@ -1204,7 +1206,7 @@ extension CallTypeChecker {
             return argCount == 0
         case interner.intern("get"), interner.intern("getOrNull"), interner.intern("elementAtOrNull"),
              interner.intern("contains"), interner.intern("containsAll"), interner.intern("indexOf"), interner.intern("lastIndexOf"), interner.intern("indexOfFirst"), interner.intern("indexOfLast"), interner.intern("binarySearch"),
-             interner.intern("map"), interner.intern("filter"), interner.intern("filterNot"), interner.intern("mapNotNull"), interner.intern("firstNotNullOf"), interner.intern("forEach"), interner.intern("flatMap"), interner.intern("flatMapIndexed"),
+             interner.intern("map"), interner.intern("filter"), interner.intern("filterNot"), interner.intern("mapNotNull"), interner.intern("firstNotNullOf"), interner.intern("firstNotNullOfOrNull"), interner.intern("forEach"), interner.intern("flatMap"), interner.intern("flatMapIndexed"),
              interner.intern("any"), interner.intern("none"), interner.intern("all"),
              interner.intern("groupBy"), interner.intern("groupingBy"), interner.intern("sortedBy"), interner.intern("find"), interner.intern("associateBy"), interner.intern("associateWith"), interner.intern("associate"), interner.intern("reduce"), interner.intern("reduceOrNull"), interner.intern("reduceIndexedOrNull"), interner.intern("runningReduce"), interner.intern("runningReduceIndexed"), interner.intern("scanReduce"), interner.intern("take"), interner.intern("drop"), interner.intern("zip"),
              interner.intern("forEachIndexed"), interner.intern("mapIndexed"), interner.intern("filterIndexed"), interner.intern("sumOf"), interner.intern("chunked"), interner.intern("onEach"), interner.intern("onEachIndexed"),
@@ -1969,6 +1971,7 @@ extension CallTypeChecker {
             interner.intern("associateWith"),
             interner.intern("associate"),
             interner.intern("firstNotNullOf"),
+            interner.intern("firstNotNullOfOrNull"),
             interner.intern("sumOf"),
             interner.intern("sortedByDescending"),
             interner.intern("partition"),
@@ -2015,7 +2018,7 @@ extension CallTypeChecker {
                 ? sema.types.make(.primitive(.boolean, .nonNull))
                 : memberName == interner.intern("sumOf")
                 ? sema.types.intType
-                : memberName == interner.intern("firstNotNullOf")
+                : memberName == interner.intern("firstNotNullOf") || memberName == interner.intern("firstNotNullOfOrNull")
                 ? sema.types.nullableAnyType
                 : sema.types.anyType
             let expectedType = sema.types.make(.functionType(FunctionType(
