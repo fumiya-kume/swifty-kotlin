@@ -1400,7 +1400,7 @@ extension CallTypeChecker {
             "firstNotNullOf",
             "firstNotNullOfOrNull",
             "onEach", "onEachIndexed",
-            "sumOf", "maxOrNull", "minOrNull",
+            "sumOf", "sumBy", "maxOrNull", "minOrNull",
             "indexOfFirst", "indexOfLast", "binarySearch", "binarySearchBy",
             "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
             "maxOf", "minOf",
@@ -3287,7 +3287,7 @@ extension CallTypeChecker {
                     resultType = sema.types.anyType
                 }
 
-            case "sumOf":
+            case "sumOf", "sumBy":
                 guard args.count == 1 else {
                     sema.bindings.bindExprType(id, type: sema.types.anyType)
                     return sema.types.anyType

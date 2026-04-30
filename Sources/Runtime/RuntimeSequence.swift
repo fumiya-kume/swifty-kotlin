@@ -2907,6 +2907,16 @@ public func kk_sequence_sumOf(
     return total
 }
 
+@_cdecl("kk_sequence_sumBy")
+public func kk_sequence_sumBy(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    kk_sequence_sumOf(seqRaw, fnPtr, closureRaw, outThrown)
+}
+
 @_cdecl("kk_sequence_firstNotNullOf")
 public func kk_sequence_firstNotNullOf(
     _ seqRaw: Int,

@@ -164,6 +164,10 @@ private let sequenceFirstNotNullOfAlwaysNull: @convention(c) (Int, Int, UnsafeMu
     runtimeNullSentinelInt
 }
 
+private let sequenceSumByWeightedTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value == 2 ? 10 : value
+}
+
 private func runtimeTestStringHandle(_ value: String) -> Int {
     let bytes = Array(value.utf8)
     return bytes.withUnsafeBufferPointer { buffer in
@@ -229,6 +233,19 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
 
         XCTAssertEqual(thrown, 0)
         XCTAssertEqual(result, runtimeNullSentinelInt)
+    }
+
+    func testSumByAccumulatesSelectorResults() {
+        var thrown = 0
+        let result = kk_sequence_sumBy(
+            makeSequence([1, 2, 3]),
+            unsafeBitCast(sequenceSumByWeightedTwo, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 14)
     }
 
     func testSortedByUsesRuntimeValueComparisonForSelectorKeys() {

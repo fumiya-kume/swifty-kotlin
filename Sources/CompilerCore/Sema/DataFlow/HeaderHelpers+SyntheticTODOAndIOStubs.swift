@@ -3262,6 +3262,34 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let sequenceElementToIntType = types.make(.functionType(FunctionType(
+            params: [typeParamType],
+            returnType: types.intType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        registerSequenceMemberStub(
+            named: "sumBy",
+            externalLinkName: "kk_sequence_sumBy",
+            receiverType: receiverType,
+            parameters: [("selector", sequenceElementToIntType)],
+            returnType: types.intType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner,
+            annotations: [
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.Deprecated",
+                    arguments: [
+                        "message = \"Use sumOf instead.\"",
+                        "replaceWith = ReplaceWith(\"sumOf(selector)\")",
+                    ]
+                ),
+            ],
+            canThrow: true
+        )
 
         // toList(): List<T>
         registerSequenceMemberStub(
@@ -4708,6 +4736,7 @@ extension DataFlowSemaPhase {
         typeParamSymbol: SymbolID,
         symbols: SymbolTable,
         interner: StringInterner,
+        annotations: [MetadataAnnotationRecord] = [],
         canThrow: Bool = false,
         additionalTypeParameterSymbols: [SymbolID] = [],
         additionalTypeParameterUpperBoundsList: [[TypeID]] = []
@@ -4726,6 +4755,9 @@ extension DataFlowSemaPhase {
         )
         symbols.setParentSymbol(sequenceSymbol, for: memberSymbol)
         symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+        if !annotations.isEmpty {
+            symbols.setAnnotations(annotations, for: memberSymbol)
+        }
 
         var parameterTypes: [TypeID] = []
         var parameterSymbols: [SymbolID] = []
