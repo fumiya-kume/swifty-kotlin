@@ -82,6 +82,11 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
                 .contains("kk_string_lastIndexOfAny_strings"),
             "CharSequence.lastIndexOfAny(strings, startIndex, ignoreCase) should link to kk_string_lastIndexOfAny_strings"
         )
+        XCTAssertEqual(
+            externalLink(for: "findAnyOf", sema: sema, interner: interner),
+            "kk_string_findAnyOf",
+            "CharSequence.findAnyOf(strings, startIndex, ignoreCase) should link to kk_string_findAnyOf"
+        )
     }
 
     func testNewCaseConversionStubsHaveCorrectExternalLinks() throws {
@@ -769,6 +774,41 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
                     sema.symbols.externalLinkName(for: chosenCallee),
                     "kk_string_lastIndexOfAny_strings",
                     "Expected lastIndexOfAny(strings, startIndex, ignoreCase) to resolve to kk_string_lastIndexOfAny_strings"
+                )
+            }
+        }
+    }
+
+    func testFindAnyOfStringsResolvesInCallExpressions() throws {
+        let source = """
+        fun findAny(value: CharSequence, strings: Collection<String>): Pair<Int, String>? {
+            return value.findAnyOf(strings, 1, true)
+        }
+
+        fun stringFindAny(value: String): Pair<Int, String>? {
+            return value.findAnyOf(listOf("x"), 0, false)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExprs = allExprIDs(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "findAnyOf"
+            }
+            XCTAssertEqual(callExprs.count, 2)
+            for callExpr in callExprs {
+                let chosenCallee = try XCTUnwrap(
+                    sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                    "Expected call binding for findAnyOf"
+                )
+                XCTAssertEqual(
+                    sema.symbols.externalLinkName(for: chosenCallee),
+                    "kk_string_findAnyOf",
+                    "Expected findAnyOf(strings, startIndex, ignoreCase) to resolve to kk_string_findAnyOf"
                 )
             }
         }
