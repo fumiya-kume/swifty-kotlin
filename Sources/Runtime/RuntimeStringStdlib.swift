@@ -2296,6 +2296,16 @@ public func kk_string_replaceIndent(_ strRaw: Int, _ newIndentRaw: Int) -> Int {
     return runtimeMakeStringRaw(runtimeReplaceIndent(source, newIndent: newIndent))
 }
 
+@_cdecl("kk_string_replaceIndentByMargin")
+public func kk_string_replaceIndentByMargin(_ strRaw: Int, _ newIndentRaw: Int, _ marginPrefixRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let newIndent = runtimeStringFromRaw(newIndentRaw) ?? ""
+    let marginPrefix = runtimeStringFromRaw(marginPrefixRaw) ?? "|"
+    return runtimeMakeStringRaw(
+        runtimeReplaceIndentByMargin(source, newIndent: newIndent, marginPrefix: marginPrefix)
+    )
+}
+
 // MARK: - STDLIB-316: String.chunked / String.windowed
 
 @_cdecl("kk_string_chunked")
@@ -2904,6 +2914,27 @@ private func runtimeReplaceIndent(_ source: String, newIndent: String) -> String
             return ""
         }
         return newIndent + String(line.dropFirst(minimumIndent))
+    }.joined(separator: "\n")
+}
+
+private func runtimeReplaceIndentByMargin(
+    _ source: String,
+    newIndent: String,
+    marginPrefix: String
+) -> String {
+    if marginPrefix.trimmingCharacters(in: .whitespaces).isEmpty {
+        fatalError("IllegalArgumentException: marginPrefix must be non-blank string.")
+    }
+    let lines = Array(runtimeTrimBlankEdges(runtimeNormalizedMultilineString(source)))
+    guard !lines.isEmpty else {
+        return ""
+    }
+    return lines.map { line in
+        let trimmedLeading = line.drop { $0 == " " || $0 == "\t" }
+        guard trimmedLeading.hasPrefix(marginPrefix) else {
+            return line
+        }
+        return newIndent + String(trimmedLeading.dropFirst(marginPrefix.count))
     }.joined(separator: "\n")
 }
 

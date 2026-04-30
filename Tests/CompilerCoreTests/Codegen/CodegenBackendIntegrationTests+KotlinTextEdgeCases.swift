@@ -437,6 +437,49 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testKotlinTextReplaceIndentByMarginEdgeCases() throws {
+        let source = """
+        fun marker(value: String) {
+            println(value.replace("\\n", "/"))
+        }
+
+        fun main() {
+            marker("\\n    |alpha\\n    |  beta\\n    gamma\\n".replaceIndentByMargin("> ", "|"))
+            marker("\\n    |alpha\\n    |\\n    |beta\\n".replaceIndentByMargin("--", "|"))
+            marker("  >left\\n    >right".replaceIndentByMargin("--", ">"))
+            marker("|alpha\\n|beta".replaceIndentByMargin())
+            marker("|alpha\\n|beta".replaceIndentByMargin(">>"))
+            marker("plain\\n  |mark".replaceIndentByMargin("++", "|"))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "KotlinTextReplaceIndentByMarginEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                out,
+                """
+                > alpha/>   beta/    gamma
+                --alpha/--/--beta
+                --left/--right
+                alpha/beta
+                >>alpha/>>beta
+                plain/++mark
+                """
+                + "\n"
+            )
+        }
+    }
+
     // MARK: - substring / subSequence
 
     func testKotlinTextSubstringEdgeCases() throws {

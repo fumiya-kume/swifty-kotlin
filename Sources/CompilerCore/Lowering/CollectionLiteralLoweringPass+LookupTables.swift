@@ -1570,6 +1570,7 @@ struct CollectionLiteralLookupTables {
             interner.intern("kk_string_prependIndent"),
             interner.intern("kk_string_replaceIndent_default"),
             interner.intern("kk_string_replaceIndent"),
+            interner.intern("kk_string_replaceIndentByMargin"),
             kkStringFilterName,
             interner.intern("kk_build_string"),
             interner.intern("kk_build_string_with_capacity"),

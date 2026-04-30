@@ -707,6 +707,16 @@ public enum RuntimeABISpec {
             section: "String"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_string_replaceIndentByMargin",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "newIndentRaw", type: .intptr),
+                RuntimeABIParameter(name: "marginPrefixRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_string_format",
             parameters: [
                 RuntimeABIParameter(name: "formatRaw", type: .intptr),
