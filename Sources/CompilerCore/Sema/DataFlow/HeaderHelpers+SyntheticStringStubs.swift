@@ -1099,6 +1099,38 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-TEXT-REPLACE-001: String.replaceAfter(delimiter, replacement, missingDelimiterValue) ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "replaceAfter",
+            externalLinkName: "kk_string_replaceAfter",
+            receiverType: stringType,
+            parameters: [
+                ("delimiter", stringType, false, false),
+                ("replacement", stringType, false, false),
+                ("missingDelimiterValue", stringType, true, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "replaceAfter",
+            externalLinkName: "kk_string_replaceAfter_char",
+            receiverType: stringType,
+            parameters: [
+                ("delimiter", charType, false, false),
+                ("replacement", stringType, false, false),
+                ("missingDelimiterValue", stringType, true, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-100/102/103: Regex-related String extensions ---
 
         let regexSymbol = ensureClassSymbol(
