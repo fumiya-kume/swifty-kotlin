@@ -595,6 +595,7 @@ extension ABILoweringPass {
             interner.intern("kk_list_filterNotNull"),
             interner.intern("kk_list_toTypedArray"),
             interner.intern("kk_list_toBooleanArray"),
+            interner.intern("kk_list_toShortArray"),
             interner.intern("kk_list_toIntArray"),
             interner.intern("kk_list_toLongArray"),
             interner.intern("kk_list_toByteArray"),
