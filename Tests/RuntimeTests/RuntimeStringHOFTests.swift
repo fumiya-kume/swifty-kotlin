@@ -16,6 +16,16 @@ private let firstNotNullOfAlwaysZeroNull: @convention(c) (Int, Int, UnsafeMutabl
     0
 }
 
+private let reduceRightIndexedPickIndexOne: @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = {
+    _, index, charRaw, acc, _ in
+    index == 1 ? charRaw : acc
+}
+
+private let reduceRightIndexedIndexChecksum: @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = {
+    _, index, charRaw, acc, _ in
+    acc + charRaw + index
+}
+
 final class RuntimeStringHOFTests: XCTestCase {
     override func setUp() {
         super.setUp()
@@ -115,6 +125,51 @@ final class RuntimeStringHOFTests: XCTestCase {
 
         XCTAssertEqual(thrown, 0)
         XCTAssertEqual(result, runtimeNullSentinelInt)
+    }
+
+    func testReduceRightIndexedWalksRightToLeftWithIndexes() {
+        let source = registerRuntimeObject(RuntimeStringBox("abc"))
+        var thrown = 0
+
+        let result = kk_string_reduceRightIndexed(
+            source,
+            unsafeBitCast(reduceRightIndexedPickIndexOne, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, Int(Unicode.Scalar("b").value))
+    }
+
+    func testReduceRightIndexedUsesLastCharacterAsInitialAccumulator() {
+        let source = registerRuntimeObject(RuntimeStringBox("abc"))
+        var thrown = 0
+
+        let result = kk_string_reduceRightIndexed(
+            source,
+            unsafeBitCast(reduceRightIndexedIndexChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 295)
+    }
+
+    func testReduceRightIndexedSetsThrownForEmptyString() {
+        let source = registerRuntimeObject(RuntimeStringBox(""))
+        var thrown = 0
+
+        let result = kk_string_reduceRightIndexed(
+            source,
+            unsafeBitCast(reduceRightIndexedPickIndexOne, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
     }
 
     private func runtimeStringValue(_ raw: Int) -> String {

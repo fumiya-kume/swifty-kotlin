@@ -2333,11 +2333,13 @@ extension CallTypeChecker {
         if (memberName == interner.intern("runningReduce")
             || memberName == interner.intern("runningReduceIndexed")
             || memberName == interner.intern("scanReduce")
+            || memberName == interner.intern("reduceRightIndexed")
             || memberName == interner.intern("reduceIndexedOrNull")), argCount == 1
         {
-            // runningReduce/scanReduce/reduceIndexedOrNull variants use receiver element type.
+            // runningReduce/scanReduce/reduceIndexedOrNull/reduceRightIndexed variants use receiver element type.
             let params: [TypeID] = if memberName == interner.intern("runningReduceIndexed")
                 || memberName == interner.intern("reduceIndexedOrNull")
+                || memberName == interner.intern("reduceRightIndexed")
             {
                 [sema.types.intType, receiverElementType, receiverElementType]
             } else {

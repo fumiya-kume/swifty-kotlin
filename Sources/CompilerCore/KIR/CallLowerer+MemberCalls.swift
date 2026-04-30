@@ -2858,10 +2858,11 @@ extension CallLowerer {
                 || calleeStr == "chunkedSequence"
                 || calleeStr == "firstNotNullOf"
                 || calleeStr == "firstNotNullOfOrNull"
+                || calleeStr == "reduceRightIndexed"
             if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType)
                 || (isCharSequenceTextHelper && isCharSequenceReceiver)
             {
-                if calleeStr == "firstNotNullOf" || calleeStr == "firstNotNullOfOrNull" {
+                if calleeStr == "firstNotNullOf" || calleeStr == "firstNotNullOfOrNull" || calleeStr == "reduceRightIndexed" {
                     let originalCallBinding = sema.bindings.callBindings[exprID]
                     let originalChosen: SymbolID? = if let chosen = originalCallBinding?.chosenCallee, chosen != .invalid {
                         chosen
@@ -2888,13 +2889,14 @@ extension CallLowerer {
                         interner: interner,
                         instructions: &instructions
                     )
+                    let runtimeCallee = switch calleeStr {
+                    case "firstNotNullOf": "kk_string_firstNotNullOf"
+                    case "firstNotNullOfOrNull": "kk_string_firstNotNullOfOrNull"
+                    default: "kk_string_reduceRightIndexed"
+                    }
                     instructions.append(.call(
                         symbol: nil,
-                        callee: interner.intern(
-                            calleeStr == "firstNotNullOf"
-                                ? "kk_string_firstNotNullOf"
-                                : "kk_string_firstNotNullOfOrNull"
-                        ),
+                        callee: interner.intern(runtimeCallee),
                         arguments: [loweredReceiverID, fnPtrExpr, envPtrExpr],
                         result: result,
                         canThrow: true,
@@ -6438,6 +6440,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_count"),
             interner.intern("kk_string_firstNotNullOf"),
             interner.intern("kk_string_firstNotNullOfOrNull"),
+            interner.intern("kk_string_reduceRightIndexed"),
             interner.intern("kk_string_zipWithNextTransform"),
             interner.intern("kk_string_chunkedSequence_transform"),
             interner.intern("kk_string_windowedSequence_transform"),

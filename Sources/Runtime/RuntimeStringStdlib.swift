@@ -3574,6 +3574,44 @@ public func kk_string_firstNotNullOfOrNull(
     return runtimeNullSentinelInt
 }
 
+@_cdecl("kk_string_reduceRightIndexed")
+public func kk_string_reduceRightIndexed(
+    _ strRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard !scalars.isEmpty else {
+        return handleCollectionLambdaThrow(
+            runtimeAllocateThrowable(message: "Empty char sequence can't be reduced."),
+            outThrown
+        )
+    }
+
+    var acc = Int(scalars[scalars.count - 1].value)
+    guard scalars.count > 1 else {
+        return acc
+    }
+
+    for index in stride(from: scalars.count - 2, through: 0, by: -1) {
+        var thrown = 0
+        acc = maybeUnbox(runtimeInvokeCollectionLambda3(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            arg1: index,
+            arg2: Int(scalars[index].value),
+            arg3: acc,
+            outThrown: &thrown
+        ))
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+    }
+    return acc
+}
+
 @_cdecl("kk_string_filterIndexed")
 public func kk_string_filterIndexed(
     _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?

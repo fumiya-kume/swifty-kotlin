@@ -1799,6 +1799,12 @@ extension DataFlowSemaPhase {
             isSuspend: false,
             nullability: .nonNull
         )))
+        let intCharCharToCharType = types.make(.functionType(FunctionType(
+            params: [intType, charType, charType],
+            returnType: charType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
         let listAnyType = makeListType(
             symbols: symbols,
             types: types,
@@ -2020,6 +2026,19 @@ extension DataFlowSemaPhase {
                 for: memberSymbol
             )
         }
+
+        // --- STDLIB-TEXT-HOF-003: CharSequence.reduceRightIndexed(operation) ---
+        registerSyntheticStringExtensionFunction(
+            named: "reduceRightIndexed",
+            externalLinkName: "kk_string_reduceRightIndexed",
+            receiverType: charSequenceType,
+            parameters: [("operation", intCharCharToCharType, false, false)],
+            returnType: charType,
+            flags: [.synthetic, .inlineFunction],
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
 
         registerSyntheticStringExtensionFunction(
             named: "filterIndexed",

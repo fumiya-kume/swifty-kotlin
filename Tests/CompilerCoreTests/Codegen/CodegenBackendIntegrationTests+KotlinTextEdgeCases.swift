@@ -203,6 +203,47 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testKotlinTextReduceRightIndexedEdgeCases() throws {
+        let source = """
+        fun reduceFromSequence(value: CharSequence): Char {
+            return value.reduceRightIndexed { index, ch, acc -> if (index == 1) ch else acc }
+        }
+
+        fun main() {
+            println(reduceFromSequence("abc"))
+            println("abcd".reduceRightIndexed { index, ch, acc -> if (index == 0) ch else acc })
+            try {
+                println("".reduceRightIndexed { index, ch, acc -> if (index == 0) ch else acc })
+            } catch (e: Throwable) {
+                println("empty")
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "KotlinTextReduceRightIndexedEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                out,
+                """
+                b
+                a
+                empty
+                """
+                + "\n"
+            )
+        }
+    }
+
     // MARK: - replace / replaceFirst / replaceRange
 
     func testKotlinTextReplaceEdgeCases() throws {
