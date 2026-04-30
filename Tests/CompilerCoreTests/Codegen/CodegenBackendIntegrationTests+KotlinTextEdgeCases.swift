@@ -968,6 +968,60 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testKotlinTextFindLastAnyOfStringsEdgeCases() throws {
+        let source = """
+        fun findLastAny(value: CharSequence, strings: Collection<String>, start: Int, ignore: Boolean): Pair<Int, String>? {
+            return value.findLastAnyOf(strings, start, ignore)
+        }
+
+        fun render(match: Pair<Int, String>?): String {
+            if (match == null) return "null"
+            return match.first.toString() + ":" + match.second
+        }
+
+        fun main() {
+            println(render(findLastAny("Kotlin", listOf("ot", "li"), 5, false)))
+            println(render(findLastAny("Kotlin", listOf("KO"), 5, true)))
+            println(render("abc".findLastAnyOf(listOf("x", "bc"), 2, false)))
+            println(render("abc".findLastAnyOf(listOf(""), 5, false)))
+            println(render("abc".findLastAnyOf(listOf(""), 2, false)))
+            println(render("abc".findLastAnyOf(listOf("a"), -1, false)))
+            println(render("abc".findLastAnyOf(listOf("C"), 2, true)))
+            println(render("abc".findLastAnyOf(listOf("bc", "b"), 2, false)))
+            println(render("abc".findLastAnyOf(listOf("a"), 5, false)))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "KotlinTextFindLastAnyOfStringsEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                out,
+                """
+                3:li
+                0:KO
+                1:bc
+                3:
+                2:
+                null
+                2:C
+                1:bc
+                0:a
+                """
+                + "\n"
+            )
+        }
+    }
+
     // MARK: - lines
 
     func testKotlinTextLinesEdgeCases() throws {
