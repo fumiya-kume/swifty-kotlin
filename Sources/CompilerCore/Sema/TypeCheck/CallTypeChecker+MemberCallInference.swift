@@ -5343,6 +5343,7 @@ extension CallTypeChecker {
                 let isSupportedHexReceiver =
                     (calleeStr == "toHexString" && (receiverTypeForCheck == sema.types.intType || receiverTypeForCheck == sema.types.longType))
                     || (calleeStr == "hexToInt" && receiverTypeForCheck == sema.types.stringType)
+                    || (calleeStr == "hexToUInt" && receiverTypeForCheck == sema.types.stringType)
                 if isSupportedHexReceiver, args.count <= 1 {
                     let kotlinTextPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("text")]
                     let functionFQName = kotlinTextPkg + [calleeName]
