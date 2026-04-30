@@ -67,6 +67,11 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
                 .contains("kk_string_indexOfAny_chars"),
             "CharSequence.indexOfAny(chars, startIndex, ignoreCase) should link to kk_string_indexOfAny_chars"
         )
+        XCTAssertTrue(
+            externalLinks(for: "indexOfAny", sema: sema, interner: interner)
+                .contains("kk_string_indexOfAny_strings"),
+            "CharSequence.indexOfAny(strings, startIndex, ignoreCase) should link to kk_string_indexOfAny_strings"
+        )
     }
 
     func testNewCaseConversionStubsHaveCorrectExternalLinks() throws {
@@ -649,6 +654,41 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
                     sema.symbols.externalLinkName(for: chosenCallee),
                     "kk_string_indexOfAny_chars",
                     "Expected indexOfAny(chars, startIndex, ignoreCase) to resolve to kk_string_indexOfAny_chars"
+                )
+            }
+        }
+    }
+
+    func testIndexOfAnyStringsResolvesInCallExpressions() throws {
+        let source = """
+        fun firstAny(value: CharSequence, strings: Collection<String>): Int {
+            return value.indexOfAny(strings, 1, true)
+        }
+
+        fun stringFirstAny(value: String): Int {
+            return value.indexOfAny(listOf("x"), 0, false)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExprs = allExprIDs(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "indexOfAny"
+            }
+            XCTAssertEqual(callExprs.count, 2)
+            for callExpr in callExprs {
+                let chosenCallee = try XCTUnwrap(
+                    sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                    "Expected call binding for indexOfAny"
+                )
+                XCTAssertEqual(
+                    sema.symbols.externalLinkName(for: chosenCallee),
+                    "kk_string_indexOfAny_strings",
+                    "Expected indexOfAny(strings, startIndex, ignoreCase) to resolve to kk_string_indexOfAny_strings"
                 )
             }
         }
