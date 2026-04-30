@@ -2318,6 +2318,123 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-TEXT-SEQ-004: CharSequence.windowedSequence(size, step, partialWindows, transform) ---
+
+        let windowedSequenceTransformFQName = kotlinTextPkg + [interner.intern("windowedSequence")]
+        let windowedSequenceRName = interner.intern("R")
+        let windowedSequenceRFQName = windowedSequenceTransformFQName + [windowedSequenceRName]
+        let windowedSequenceRSymbol: SymbolID = if let existing = symbols.lookup(fqName: windowedSequenceRFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: windowedSequenceRName,
+                fqName: windowedSequenceRFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let windowedSequenceRType = types.make(.typeParam(TypeParamType(
+            symbol: windowedSequenceRSymbol,
+            nullability: .nonNull
+        )))
+        let windowedSequenceTransformType = types.make(.functionType(FunctionType(
+            params: [charSequenceType],
+            returnType: windowedSequenceRType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let windowedSequenceTransformReturnType = makeSequenceType(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            elementType: windowedSequenceRType
+        )
+        let hasWindowedSequenceTransform = symbols.lookupAll(fqName: windowedSequenceTransformFQName).contains { symID in
+            guard let sig = symbols.functionSignature(for: symID) else {
+                return false
+            }
+            return sig.receiverType == charSequenceType && sig.parameterTypes.count == 4
+        }
+        if !hasWindowedSequenceTransform {
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: interner.intern("windowedSequence"),
+                fqName: windowedSequenceTransformFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            if let packageSymbol = symbols.lookup(fqName: kotlinTextPkg) {
+                symbols.setParentSymbol(packageSymbol, for: memberSymbol)
+            }
+            symbols.setExternalLinkName("kk_string_windowedSequence_transform", for: memberSymbol)
+
+            let sizeParamName = interner.intern("size")
+            let sizeParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: sizeParamName,
+                fqName: windowedSequenceTransformFQName + [sizeParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: sizeParamSymbol)
+
+            let stepParamName = interner.intern("step")
+            let stepParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: stepParamName,
+                fqName: windowedSequenceTransformFQName + [stepParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: stepParamSymbol)
+
+            let partialWindowsParamName = interner.intern("partialWindows")
+            let partialWindowsParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: partialWindowsParamName,
+                fqName: windowedSequenceTransformFQName + [partialWindowsParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: partialWindowsParamSymbol)
+
+            let transformParamName = interner.intern("transform")
+            let transformParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: transformParamName,
+                fqName: windowedSequenceTransformFQName + [transformParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: transformParamSymbol)
+
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: charSequenceType,
+                    parameterTypes: [intType, intType, boolType, windowedSequenceTransformType],
+                    returnType: windowedSequenceTransformReturnType,
+                    valueParameterSymbols: [
+                        sizeParamSymbol,
+                        stepParamSymbol,
+                        partialWindowsParamSymbol,
+                        transformParamSymbol,
+                    ],
+                    valueParameterHasDefaultValues: [false, false, false, false],
+                    valueParameterIsVararg: [false, false, false, false],
+                    typeParameterSymbols: [windowedSequenceRSymbol],
+                    classTypeParameterCount: 0
+                ),
+                for: memberSymbol
+            )
+        }
+
         // --- STDLIB-318: String.commonPrefixWith / commonSuffixWith ---
 
         registerSyntheticStringExtensionFunction(
