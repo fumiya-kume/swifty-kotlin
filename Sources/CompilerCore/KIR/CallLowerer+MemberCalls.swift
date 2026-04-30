@@ -3486,6 +3486,98 @@ extension CallLowerer {
             }
         }
 
+        if args.count == 4 {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            let calleeStr = interner.resolve(calleeName)
+            let isCharSequenceReceiver: Bool = {
+                guard let charSequenceSymbol = sema.types.charSequenceInterfaceSymbol,
+                      case let .classType(classType) = sema.types.kind(of: nonNullReceiverType)
+                else {
+                    return false
+                }
+                return classType.classSymbol == charSequenceSymbol
+            }()
+            if (sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) || isCharSequenceReceiver),
+               calleeStr == "windowedSequence"
+            {
+                let lambdaArgIndex = args.indices.first { index in
+                    ast.arena.expr(args[index].expr)?.isLambdaOrCallableRef == true
+                        || sema.bindings.isCollectionHOFLambdaExpr(args[index].expr)
+                }
+                let originalCallBinding = sema.bindings.callBindings[exprID]
+                let originalChosen: SymbolID? = if let chosen = originalCallBinding?.chosenCallee, chosen != .invalid {
+                    chosen
+                } else {
+                    nil
+                }
+                let normalizedOriginalArgs = driver.callSupportLowerer.normalizedCallArguments(
+                    providedArguments: loweredArgIDs,
+                    callBinding: originalCallBinding,
+                    chosenCallee: originalChosen,
+                    spreadFlags: args.map(\.isSpread),
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                ).arguments
+                let callArguments: [KIRExprID]?
+                if normalizedOriginalArgs.count == 4 {
+                    let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                        normalizedOriginalArgs[3],
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        instructions: &instructions
+                    )
+                    callArguments = [
+                        loweredReceiverID,
+                        normalizedOriginalArgs[0],
+                        normalizedOriginalArgs[1],
+                        normalizedOriginalArgs[2],
+                        fnPtrExpr,
+                        envPtrExpr,
+                    ]
+                } else if let lambdaArgIndex,
+                          lambdaArgIndex < loweredArgIDs.count
+                {
+                    let scalarArgIDs = args.indices
+                        .filter { $0 != lambdaArgIndex }
+                        .compactMap { index -> KIRExprID? in
+                            guard index < loweredArgIDs.count else { return nil }
+                            return loweredArgIDs[index]
+                        }
+                    if scalarArgIDs.count == 3 {
+                        let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                            loweredArgIDs[lambdaArgIndex],
+                            sema: sema,
+                            arena: arena,
+                            interner: interner,
+                            instructions: &instructions
+                        )
+                        callArguments = [loweredReceiverID] + scalarArgIDs + [fnPtrExpr, envPtrExpr]
+                    } else {
+                        callArguments = nil
+                    }
+                } else {
+                    callArguments = nil
+                }
+                if let callArguments {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_windowedSequence_transform"),
+                        arguments: callArguments,
+                        result: result,
+                        canThrow: true,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
+        }
+
         // String stdlib: replaceFirst(oldValue, newValue) (STDLIB-188)
         // Skip when first arg is a Regex — handled by the STDLIB-REGEX-094 block below.
         if args.count == 2, interner.resolve(calleeName) == "replaceFirst" {
@@ -6372,6 +6464,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_count"),
             interner.intern("kk_string_zipWithNextTransform"),
             interner.intern("kk_string_chunkedSequence_transform"),
+            interner.intern("kk_string_windowedSequence_transform"),
             interner.intern("kk_sequence_to_list"),
             interner.intern("kk_list_windowed_transform"),
             interner.intern("kk_sequence_chunked_transform"),
