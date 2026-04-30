@@ -97,6 +97,17 @@ public func kk_char_lowercaseChar(_ value: Int) -> Int {
     return runtimeFirstUnicodeScalarValue(String(scalar).lowercased(), fallback: value)
 }
 
+@_cdecl("kk_char_lowercase_locale")
+public func kk_char_lowercase_locale(_ value: Int, _ localeRaw: Int) -> Int {
+    guard let scalar = runtimeUnicodeScalar(value) else {
+        return charRuntimeMakeStringRaw("\u{FFFD}")
+    }
+    guard let box = runtimeLocaleBox(from: localeRaw) else {
+        return charRuntimeMakeStringRaw(String(scalar).lowercased())
+    }
+    return charRuntimeMakeStringRaw(String(scalar).lowercased(with: box.locale))
+}
+
 @_cdecl("kk_char_titlecase")
 public func kk_char_titlecase(_ value: Int) -> Int {
     guard let scalar = runtimeUnicodeScalar(value) else {

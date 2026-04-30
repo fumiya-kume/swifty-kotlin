@@ -19,4 +19,6 @@ fun main() {
     println('\u05D0'.directionality == CharDirectionality.RIGHT_TO_LEFT)
     println('5'.directionality == CharDirectionality.EUROPEAN_NUMBER)
     println(' '.directionality == CharDirectionality.WHITESPACE)
+    val turkish = Locale("tr", "TR")
+    println('I'.lowercase(turkish))
 }

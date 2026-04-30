@@ -2933,6 +2933,16 @@ public extension RuntimeABISpec {
                     returnType: .intptr,
                     section: "Collection"
                 ),
+                // STDLIB-KOTLIN-ROOT-CLOSE-001: AutoCloseable { closeAction }
+                RuntimeABIFunctionSpec(
+                    name: "kk_auto_closeable_create",
+                    parameters: [
+                        RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                        RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
                 // STDLIB-533: List?.orEmpty()
                 RuntimeABIFunctionSpec(
                     name: "kk_list_orEmpty",

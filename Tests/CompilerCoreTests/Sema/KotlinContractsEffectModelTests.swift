@@ -360,7 +360,7 @@ final class KotlinContractsEffectModelTests: XCTestCase {
     // MARK: - ContractBuilder stubs resolve in symbol table
 
     /// The compiler must synthesize the full `kotlin.contracts` package with
-    /// ContractBuilder, Effect, SimpleEffect, ConditionalEffect, and
+    /// ContractBuilder, Effect, SimpleEffect, ConditionalEffect, HoldsIn, and
     /// InvocationKind so that user code importing `kotlin.contracts.*` can
     /// resolve these names.
     func testContractBuilderAndInvocationKindSymbolsExist() throws {
@@ -392,6 +392,94 @@ final class KotlinContractsEffectModelTests: XCTestCase {
         XCTAssertNotNil(
             sema.symbols.lookup(fqName: contractBuilderFQName),
             "ContractBuilder should be synthesized inside kotlin.contracts"
+        )
+
+        let holdsInFQName = contractsFQName + [ctx.interner.intern("HoldsIn")]
+        XCTAssertNotNil(
+            sema.symbols.lookup(fqName: holdsInFQName),
+            "HoldsIn should be synthesized inside kotlin.contracts"
+        )
+    }
+
+    func testHoldsInInterfaceAndBuilderSurfaceAreRegistered() throws {
+        let source = """
+        import kotlin.contracts.*
+
+        fun noop() {}
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+        let sema = try XCTUnwrap(ctx.sema)
+
+        let contractsFQName = [
+            ctx.interner.intern("kotlin"),
+            ctx.interner.intern("contracts"),
+        ]
+        let effectSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: contractsFQName + [ctx.interner.intern("Effect")])
+        )
+        let holdsInSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: contractsFQName + [ctx.interner.intern("HoldsIn")])
+        )
+        XCTAssertEqual(sema.symbols.symbol(holdsInSymbol)?.kind, .interface)
+        XCTAssertTrue(
+            sema.symbols.directSupertypes(for: holdsInSymbol).contains(effectSymbol),
+            "HoldsIn must extend Effect"
+        )
+        let holdsInAnnotations = sema.symbols.annotations(for: holdsInSymbol)
+        XCTAssertTrue(
+            holdsInAnnotations.contains { $0.annotationFQName == "kotlin.contracts.ExperimentalContracts" },
+            "HoldsIn should carry ExperimentalContracts"
+        )
+        XCTAssertTrue(
+            holdsInAnnotations.contains { $0.annotationFQName == "kotlin.contracts.ExperimentalExtendedContracts" },
+            "HoldsIn should carry ExperimentalExtendedContracts"
+        )
+
+        let builderFQName = contractsFQName + [ctx.interner.intern("ContractBuilder")]
+        let builderSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: builderFQName))
+        let builderType = sema.types.make(.classType(ClassType(
+            classSymbol: builderSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let holdsInType = sema.types.make(.classType(ClassType(
+            classSymbol: holdsInSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let holdsInFunction = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: builderFQName + [ctx.interner.intern("holdsIn")]).first { symbol in
+                guard let signature = sema.symbols.functionSignature(for: symbol) else { return false }
+                return signature.receiverType == builderType
+                    && signature.parameterTypes.first == sema.types.booleanType
+                    && signature.returnType == holdsInType
+            },
+            "ContractBuilder.holdsIn should be synthesized"
+        )
+        XCTAssertTrue(
+            sema.symbols.annotations(for: holdsInFunction).contains {
+                $0.annotationFQName == "kotlin.contracts.ExperimentalExtendedContracts"
+            },
+            "ContractBuilder.holdsIn should carry ExperimentalExtendedContracts"
+        )
+    }
+
+    func testHoldsInBuilderSurfaceResolvesInSourceWithOptIn() throws {
+        let source = """
+        import kotlin.OptIn
+        import kotlin.contracts.*
+
+        @OptIn(ExperimentalContracts::class, ExperimentalExtendedContracts::class)
+        inline fun guarded(flag: Boolean, block: () -> Unit) {
+            contract { holdsIn(flag, block) }
+        }
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+        XCTAssertFalse(
+            ctx.diagnostics.hasError,
+            "Expected holdsIn contract surface to resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
         )
     }
 }
