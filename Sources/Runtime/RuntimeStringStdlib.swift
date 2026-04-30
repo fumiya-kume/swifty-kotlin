@@ -3515,6 +3515,37 @@ public func kk_string_mapNotNull(
     return runtimeMakeListRaw(mappedElements)
 }
 
+@_cdecl("kk_string_firstNotNullOf")
+public func kk_string_firstNotNullOf(
+    _ strRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    for scalar in scalars {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: Int(scalar.value),
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return 0
+        }
+        if result != 0, let normalized = runtimeMapNotNullResultValue(result) {
+            return normalized
+        }
+    }
+    outThrown?.pointee = runtimeAllocateThrowable(
+        message: "NoSuchElementException: No element of the char sequence was transformed to a non-null value."
+    )
+    return 0
+}
+
 @_cdecl("kk_string_filterIndexed")
 public func kk_string_filterIndexed(
     _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?

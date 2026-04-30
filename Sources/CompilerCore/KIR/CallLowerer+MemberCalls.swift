@@ -2856,9 +2856,47 @@ extension CallLowerer {
             let isCharSequenceTextHelper = calleeStr == "ifBlank"
                 || calleeStr == "ifEmpty"
                 || calleeStr == "chunkedSequence"
+                || calleeStr == "firstNotNullOf"
             if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType)
                 || (isCharSequenceTextHelper && isCharSequenceReceiver)
             {
+                if calleeStr == "firstNotNullOf" {
+                    let originalCallBinding = sema.bindings.callBindings[exprID]
+                    let originalChosen: SymbolID? = if let chosen = originalCallBinding?.chosenCallee, chosen != .invalid {
+                        chosen
+                    } else {
+                        nil
+                    }
+                    let normalizedOriginalArgs = driver.callSupportLowerer.normalizedCallArguments(
+                        providedArguments: loweredArgIDs,
+                        callBinding: originalCallBinding,
+                        chosenCallee: originalChosen,
+                        spreadFlags: args.map(\.isSpread),
+                        ast: ast,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        propertyConstantInitializers: propertyConstantInitializers,
+                        instructions: &instructions
+                    ).arguments
+                    let transformArg = normalizedOriginalArgs.first ?? loweredArgIDs[0]
+                    let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                        transformArg,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        instructions: &instructions
+                    )
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_firstNotNullOf"),
+                        arguments: [loweredReceiverID, fnPtrExpr, envPtrExpr],
+                        result: result,
+                        canThrow: true,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
                 if calleeStr == "toInt" {
                     instructions.append(.call(
                         symbol: nil,
@@ -6393,6 +6431,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_last"),
             interner.intern("kk_sequence_firstOrNull"),
             interner.intern("kk_sequence_count"),
+            interner.intern("kk_string_firstNotNullOf"),
             interner.intern("kk_string_zipWithNextTransform"),
             interner.intern("kk_string_chunkedSequence_transform"),
             interner.intern("kk_string_windowedSequence_transform"),

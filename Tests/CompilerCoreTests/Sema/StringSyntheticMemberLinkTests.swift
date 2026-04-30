@@ -1448,6 +1448,34 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testCharSequenceFirstNotNullOfResolvesInCallExpressions() throws {
+        let source = """
+        fun firstLabel(value: CharSequence): String {
+            return value.firstNotNullOf<String> { ch -> if (ch == 'b') "bee" else null }
+        }
+
+        fun firstFromString(value: String): String {
+            return value.firstNotNullOf<String> { ch -> if (ch == 'c') "see" else null }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics.map { "\($0.code): \($0.message)" }.joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected CharSequence.firstNotNullOf surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let firstNotNullOfBindings = sema.bindings.callBindings.values.filter { binding in
+                sema.symbols.externalLinkName(for: binding.chosenCallee) == "kk_string_firstNotNullOf"
+            }
+            XCTAssertEqual(firstNotNullOfBindings.count, 2)
+        }
+    }
+
     func testByteArrayDecodeToStringRangeMembersResolveInCallExpressions() throws {
         let source = """
         fun decode(bytes: ByteArray): String {
