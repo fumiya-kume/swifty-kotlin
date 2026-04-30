@@ -1004,6 +1004,36 @@ extension DataFlowSemaPhase {
     }
 
     /// Registers a simple member function on `ownerSymbol`.
+    private func registerSimpleProperty(
+        named name: String,
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        propertyType: TypeID,
+        externalLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let propertyName = interner.intern(name)
+        let propertyFQName = ownerFQName + [propertyName]
+
+        guard symbols.lookup(fqName: propertyFQName) == nil else {
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
+        symbols.setPropertyType(propertyType, for: propertySymbol)
+        symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
+    }
+
+    /// Registers a simple member function on `ownerSymbol`.
     private func registerSimpleMember(
         named name: String,
         ownerSymbol: SymbolID,
