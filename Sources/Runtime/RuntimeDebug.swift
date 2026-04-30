@@ -57,3 +57,25 @@ public func kk_assertions_reset() -> Int {
     runtimeResetDebugState()
     return 0
 }
+
+@_cdecl("kk_debugging_is_thread_state_runnable")
+public func kk_debugging_is_thread_state_runnable() -> Int {
+    1
+}
+
+@_cdecl("kk_debugging_gc_suspend_count")
+public func kk_debugging_gc_suspend_count() -> Int {
+    0
+}
+
+@_cdecl("kk_debugging_thread_count")
+public func kk_debugging_thread_count() -> Int {
+    1
+}
+
+@_cdecl("kk_debugging_global_object_count")
+public func kk_debugging_global_object_count() -> Int {
+    runtimeStorage.withLock { state in
+        state.objectPointers.count + state.heapObjects.count
+    }
+}

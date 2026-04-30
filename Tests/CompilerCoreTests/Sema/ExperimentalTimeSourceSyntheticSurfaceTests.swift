@@ -108,10 +108,6 @@ final class ExperimentalTimeSourceSyntheticSurfaceTests: XCTestCase {
         )))
         XCTAssertEqual(markSignature.returnType, comparableTimeMarkType)
     }
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> d6254483a (Add AbstractLongTimeSource surface)
 
     func testAbstractLongTimeSourceSurfaceIsRegistered() throws {
         let (sema, interner) = try makeSema()
@@ -198,13 +194,6 @@ final class ExperimentalTimeSourceSyntheticSurfaceTests: XCTestCase {
         )))
         XCTAssertEqual(markSignature.returnType, comparableTimeMarkType)
     }
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> c7d1e8c0b (Add AbstractDoubleTimeSource surface)
-=======
->>>>>>> d6254483a (Add AbstractLongTimeSource surface)
-=======
 
     func testTestTimeSourceSurfaceIsRegistered() throws {
         let (sema, interner) = try makeSema()
@@ -294,9 +283,6 @@ final class ExperimentalTimeSourceSyntheticSurfaceTests: XCTestCase {
         )))
         XCTAssertEqual(markSignature.returnType, comparableTimeMarkType)
     }
-<<<<<<< HEAD
->>>>>>> f38230a7f (Add TestTimeSource surface)
-=======
 
     func testTimeSourceAsClockExtensionIsRegistered() throws {
         let (sema, interner) = try makeSema()
@@ -361,5 +347,4 @@ final class ExperimentalTimeSourceSyntheticSurfaceTests: XCTestCase {
         )))
         XCTAssertEqual(signature.returnType, clockType)
     }
->>>>>>> c13142303 (Add TimeSource asClock)
 }

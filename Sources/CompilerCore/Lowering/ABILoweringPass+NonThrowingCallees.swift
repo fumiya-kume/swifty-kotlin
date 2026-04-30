@@ -70,6 +70,7 @@ extension ABILoweringPass {
             interner.intern("kk_locale_new"),
             interner.intern("kk_string_lowercase_locale"),
             interner.intern("kk_string_uppercase_locale"),
+            interner.intern("kk_char_lowercase_locale"),
             interner.intern("kk_string_compareTo_locale"),
             interner.intern("kk_normalization_form_nfc"),
             interner.intern("kk_normalization_form_nfd"),
@@ -391,6 +392,7 @@ extension ABILoweringPass {
             interner.intern("kk_readlnOrNull"),
             interner.intern("kk_coroutine_suspended"),
             interner.intern("kk_coroutine_continuation_new"),
+            interner.intern("kk_create_coroutine_unintercepted"),
             interner.intern("kk_coroutine_state_enter"),
             interner.intern("kk_coroutine_state_set_label"),
             interner.intern("kk_coroutine_state_exit"),
@@ -692,19 +694,13 @@ extension ABILoweringPass {
             interner.intern("kk_instant_compare"),
             interner.intern("kk_instant_until"),
             interner.intern("kk_instant_elapsed"),
-<<<<<<< HEAD
+            interner.intern("kk_instant_is_distant_past"),
+            interner.intern("kk_instant_is_distant_future"),
+            interner.intern("kk_time_source_as_clock"),
             interner.intern("kk_uuid_lexicalOrder"),
             interner.intern("kk_uuid_parseHexOrNull"),
             interner.intern("kk_uuid_parseHexDashOrNull"),
             interner.intern("kk_uuid_parseOrNull"),
-=======
-            interner.intern("kk_instant_is_distant_past"),
-            interner.intern("kk_instant_is_distant_future"),
-<<<<<<< HEAD
->>>>>>> bc17f9d2c (Add Instant distant properties)
-=======
-            interner.intern("kk_time_source_as_clock"),
->>>>>>> c13142303 (Add TimeSource asClock)
             interner.intern("kk_time_source_mark_now"),
             interner.intern("kk_time_source_monotonic_mark_now"),
             interner.intern("kk_time_mark_elapsed_now"),
@@ -815,6 +811,7 @@ extension ABILoweringPass {
             interner.intern("kk_sequence_builder_yield"),
             interner.intern("kk_sequence_builder_build"),
             interner.intern("kk_iterator_builder_build"),
+            interner.intern("kk_auto_closeable_create"),
             // Sequence (STDLIB-095/096/097)
             interner.intern("kk_sequence_of"),
             interner.intern("kk_sequence_of_single"),
@@ -1120,6 +1117,21 @@ extension ABILoweringPass {
             interner.intern("kk_ivparameterspec_new"),
             interner.intern("kk_keypair_public"),
             interner.intern("kk_keypair_private"),
+            // Kotlin/Native reference helpers — no outThrown parameter
+            interner.intern("kk_weak_ref_create"),
+            interner.intern("kk_weak_ref_get"),
+            interner.intern("kk_weak_ref_clear"),
+            interner.intern("kk_cleaner_create"),
+            interner.intern("kk_cleaner_dispose"),
+            interner.intern("kk_gc_collect"),
+            interner.intern("kk_gc_schedule"),
+            interner.intern("kk_gc_target_heap_bytes"),
+            interner.intern("kk_gc_target_heap_utilization"),
+            interner.intern("kk_gc_max_heap_bytes"),
+            interner.intern("kk_debugging_is_thread_state_runnable"),
+            interner.intern("kk_debugging_gc_suspend_count"),
+            interner.intern("kk_debugging_thread_count"),
+            interner.intern("kk_debugging_global_object_count"),
         ]).union(Self.kPropertyStubCallees(interner))
     }
 }

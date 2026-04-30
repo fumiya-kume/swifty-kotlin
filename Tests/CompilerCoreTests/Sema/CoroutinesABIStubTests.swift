@@ -147,6 +147,100 @@ final class CoroutinesABIStubTests: XCTestCase {
         )
     }
 
+    func testCoroutineContextGetPolymorphicElementIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "coroutines", "getPolymorphicElement"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "Expected kotlin.coroutines.getPolymorphicElement to be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+        XCTAssertEqual(info.kind, .function)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+        XCTAssertEqual(sema.symbols.externalLinkName(for: symbol), "kk_context_get")
+
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbol))
+        let elementSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: ["kotlin", "coroutines", "CoroutineContext", "Element"].map { interner.intern($0) })
+        )
+        let keySymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: ["kotlin", "coroutines", "CoroutineContext", "Key"].map { interner.intern($0) })
+        )
+        let elementType = sema.types.make(.classType(ClassType(
+            classSymbol: elementSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let typeParam = try XCTUnwrap(signature.typeParameterSymbols.first)
+        let typeParamType = sema.types.make(.typeParam(TypeParamType(
+            symbol: typeParam,
+            nullability: .nonNull
+        )))
+        let keyType = sema.types.make(.classType(ClassType(
+            classSymbol: keySymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        XCTAssertEqual(signature.receiverType, elementType)
+        XCTAssertEqual(signature.parameterTypes, [keyType])
+        XCTAssertEqual(signature.returnType, sema.types.makeNullable(typeParamType))
+        XCTAssertEqual(signature.typeParameterUpperBoundsList, [[elementType]])
+        XCTAssertTrue(
+            sema.symbols.annotations(for: symbol).contains {
+                $0.annotationFQName == KnownCompilerAnnotation.experimentalStdlibApi.qualifiedName
+            },
+            "getPolymorphicElement should carry ExperimentalStdlibApi"
+        )
+    }
+
+    func testCoroutineContextMinusPolymorphicKeyIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "coroutines", "minusPolymorphicKey"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "Expected kotlin.coroutines.minusPolymorphicKey to be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+        XCTAssertEqual(info.kind, .function)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+        XCTAssertEqual(sema.symbols.externalLinkName(for: symbol), "kk_context_minusKey")
+
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbol))
+        let elementSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: ["kotlin", "coroutines", "CoroutineContext", "Element"].map { interner.intern($0) })
+        )
+        let keySymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: ["kotlin", "coroutines", "CoroutineContext", "Key"].map { interner.intern($0) })
+        )
+        let contextSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: ["kotlin", "coroutines", "CoroutineContext"].map { interner.intern($0) })
+        )
+        let elementType = sema.types.make(.classType(ClassType(
+            classSymbol: elementSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let keyType = sema.types.make(.classType(ClassType(
+            classSymbol: keySymbol,
+            args: [.star],
+            nullability: .nonNull
+        )))
+        let contextType = sema.types.make(.classType(ClassType(
+            classSymbol: contextSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        XCTAssertEqual(signature.receiverType, elementType)
+        XCTAssertEqual(signature.parameterTypes, [keyType])
+        XCTAssertEqual(signature.returnType, contextType)
+        XCTAssertTrue(
+            sema.symbols.annotations(for: symbol).contains {
+                $0.annotationFQName == KnownCompilerAnnotation.experimentalStdlibApi.qualifiedName
+            },
+            "minusPolymorphicKey should carry ExperimentalStdlibApi"
+        )
+    }
+
     // ── Integration / subclassing pattern tests ──────────────────────────────
 
     func testUserDefinedContextElementSubclassResolvesWithoutDiagnostics() throws {
@@ -185,6 +279,62 @@ final class CoroutinesABIStubTests: XCTestCase {
             XCTAssertFalse(
                 ctx.diagnostics.hasError,
                 "Expected CoroutineContext.plus to resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
+    func testGetPolymorphicElementResolvesInSourceWithOptIn() throws {
+        let source = """
+        import kotlin.ExperimentalStdlibApi
+        import kotlin.OptIn
+        import kotlin.coroutines.AbstractCoroutineContextElement
+        import kotlin.coroutines.CoroutineContext
+        import kotlin.coroutines.CoroutineContext.Key
+        import kotlin.coroutines.getPolymorphicElement
+
+        class MyElement : AbstractCoroutineContextElement(MyElement) {
+            companion object Key : CoroutineContext.Key<MyElement>
+        }
+
+        @OptIn(ExperimentalStdlibApi::class)
+        fun probe(element: MyElement, key: Key<MyElement>): MyElement? {
+            return element.getPolymorphicElement(key)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected getPolymorphicElement to resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
+    func testMinusPolymorphicKeyResolvesInSourceWithOptIn() throws {
+        let source = """
+        import kotlin.ExperimentalStdlibApi
+        import kotlin.OptIn
+        import kotlin.coroutines.AbstractCoroutineContextElement
+        import kotlin.coroutines.CoroutineContext
+        import kotlin.coroutines.CoroutineContext.Key
+        import kotlin.coroutines.minusPolymorphicKey
+
+        class MyElement : AbstractCoroutineContextElement(MyElement) {
+            companion object Key : CoroutineContext.Key<MyElement>
+        }
+
+        @OptIn(ExperimentalStdlibApi::class)
+        fun probe(element: MyElement, key: Key<MyElement>): CoroutineContext {
+            return element.minusPolymorphicKey(key)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected minusPolymorphicKey to resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
             )
         }
     }

@@ -5,19 +5,7 @@
 /// - `TimeSource` with nested `WithComparableMarks`, `Monotonic`, `markNow()`, and `asClock()`
 /// - `TimeMark` with elapsed/boolean checks and +/- Duration
 /// - `ComparableTimeMark` with TimeMark operations plus mark-to-mark diff/comparison
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-/// - `AbstractDoubleTimeSource` / `AbstractLongTimeSource` surfaces
-=======
-/// - `AbstractDoubleTimeSource` surface
->>>>>>> c7d1e8c0b (Add AbstractDoubleTimeSource surface)
-=======
-/// - `AbstractDoubleTimeSource` / `AbstractLongTimeSource` surfaces
->>>>>>> d6254483a (Add AbstractLongTimeSource surface)
-=======
 /// - `AbstractDoubleTimeSource` / `AbstractLongTimeSource` / `TestTimeSource` surfaces
->>>>>>> f38230a7f (Add TestTimeSource surface)
 extension DataFlowSemaPhase {
     func registerSyntheticExperimentalTimeStubs(
         symbols: SymbolTable,
@@ -350,10 +338,6 @@ extension DataFlowSemaPhase {
             flags: [.synthetic, .openType, .overrideMember]
         )
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> d6254483a (Add AbstractLongTimeSource surface)
         let abstractLongTimeSourceSymbol = ensureClassSymbol(
             named: "AbstractLongTimeSource",
             in: kotlinTimePkg,
@@ -407,13 +391,6 @@ extension DataFlowSemaPhase {
             flags: [.synthetic, .openType, .overrideMember]
         )
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> c7d1e8c0b (Add AbstractDoubleTimeSource surface)
-=======
->>>>>>> d6254483a (Add AbstractLongTimeSource surface)
-=======
         let testTimeSourceSymbol = ensureClassSymbol(
             named: "TestTimeSource",
             in: kotlinTimePkg,
@@ -459,7 +436,6 @@ extension DataFlowSemaPhase {
             isOperator: true
         )
 
->>>>>>> f38230a7f (Add TestTimeSource surface)
         let monotonicFQName = ensureExperimentalTimeNestedObject(
             named: "Monotonic",
             ownerSymbol: timeSourceSymbol,
