@@ -47,6 +47,17 @@ extension DataFlowSemaPhase {
             interner: interner,
             elementType: stringType
         )
+        let pairIntStringType: TypeID
+        if let pairSymbol = symbols.lookup(fqName: kotlinRootPkg + [interner.intern("Pair")]) {
+            pairIntStringType = types.make(.classType(ClassType(
+                classSymbol: pairSymbol,
+                args: [.out(intType), .out(stringType)],
+                nullability: .nonNull
+            )))
+        } else {
+            pairIntStringType = types.anyType
+        }
+        let nullablePairIntStringType = types.makeNullable(pairIntStringType)
         let listCharType = makeListType(
             symbols: symbols,
             types: types,
@@ -702,6 +713,23 @@ extension DataFlowSemaPhase {
                 ("ignoreCase", boolType, false, false),
             ],
             returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-TEXT-SEARCH-005: CharSequence.findAnyOf(strings, startIndex, ignoreCase) ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "findAnyOf",
+            externalLinkName: "kk_string_findAnyOf",
+            receiverType: charSequenceType,
+            parameters: [
+                ("strings", collectionStringType, false, false),
+                ("startIndex", intType, false, false),
+                ("ignoreCase", boolType, false, false),
+            ],
+            returnType: nullablePairIntStringType,
             packageFQName: kotlinTextPkg,
             symbols: symbols,
             interner: interner

@@ -1099,6 +1099,44 @@ public func kk_string_lastIndexOfAny_strings(_ strRaw: Int, _ stringsRaw: Int, _
     return -1
 }
 
+@_cdecl("kk_string_findAnyOf")
+public func kk_string_findAnyOf(_ strRaw: Int, _ stringsRaw: Int, _ startIndex: Int, _ ignoreCaseRaw: Int) -> Int {
+    let source = runtimeStringScalars(strRaw)
+    guard let elements = runtimeCollectionElements(from: stringsRaw) ?? runtimeArrayBox(from: stringsRaw)?.elements,
+          !elements.isEmpty
+    else {
+        return runtimeNullSentinelInt
+    }
+    let needles = elements.map { (raw: $0, scalars: runtimeStringScalars($0)) }
+    let clampedStart = max(0, min(startIndex, source.count))
+    if let emptyNeedle = needles.first(where: { $0.scalars.isEmpty }) {
+        return kk_pair_new(clampedStart, emptyNeedle.raw)
+    }
+    let start = max(0, startIndex)
+    guard start < source.count else {
+        return runtimeNullSentinelInt
+    }
+    let ignoreCase = ignoreCaseRaw != 0
+    func matches(_ needle: [UnicodeScalar], at offset: Int) -> Bool {
+        guard offset + needle.count <= source.count else {
+            return false
+        }
+        let haystackSlice = source[offset ..< offset + needle.count]
+        if !ignoreCase {
+            return haystackSlice.elementsEqual(needle)
+        }
+        return zip(haystackSlice, needle).allSatisfy { lhs, rhs in
+            String(lhs).caseInsensitiveCompare(String(rhs)) == .orderedSame
+        }
+    }
+    for offset in start..<source.count {
+        for needle in needles where matches(needle.scalars, at: offset) {
+            return kk_pair_new(offset, needle.raw)
+        }
+    }
+    return runtimeNullSentinelInt
+}
+
 @_cdecl("kk_string_indexOfFirst")
 public func kk_string_indexOfFirst(
     _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
