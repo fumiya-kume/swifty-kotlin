@@ -660,6 +660,36 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testListToBooleanArrayRoundTrip() throws {
+        let source = """
+        fun main() {
+            val list = listOf(true, false, true)
+            val arr = list.toBooleanArray()
+            println(arr.size)
+            println(if (arr[0]) "T" else "F")
+            println(if (arr[1]) "T" else "F")
+
+            arr[1] = true
+            println(if (list[1]) "T" else "F")
+            println(if (arr[1]) "T" else "F")
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListToBooleanArrayRoundTrip",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(out, "3\nT\nF\nF\nT\n")
+        }
+    }
+
     // MARK: - contentHashCode stability for boxed int arrays
 
     func testBoxedIntArrayContentHashCode() throws {

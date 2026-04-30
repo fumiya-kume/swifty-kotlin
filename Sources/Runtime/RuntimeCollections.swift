@@ -1704,6 +1704,19 @@ public func kk_list_toTypedArray(_ listRaw: Int) -> Int {
 
 // MARK: - List to primitive array conversions (STDLIB-LIST-PRIM-ARRAY)
 
+/// Collection<Boolean>.toBooleanArray(): BooleanArray
+@_cdecl("kk_list_toBooleanArray")
+public func kk_list_toBooleanArray(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid list handle in kk_list_toBooleanArray")
+    }
+    let box = RuntimeArrayBox(length: list.elements.count)
+    for (i, elem) in list.elements.enumerated() {
+        box.elements[i] = kk_unbox_bool(elem)
+    }
+    return registerRuntimeObject(box)
+}
+
 /// Collection<Int>.toIntArray(): IntArray
 @_cdecl("kk_list_toIntArray")
 public func kk_list_toIntArray(_ listRaw: Int) -> Int {

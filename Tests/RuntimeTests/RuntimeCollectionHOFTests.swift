@@ -1233,6 +1233,11 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(arrayElements(kk_list_toULongArray(makeList([1, -1]))), [1, -1])
     }
 
+    func testBooleanListToPrimitiveArrayConversionCopiesElements() {
+        let list = makeList([kk_box_bool(1), kk_box_bool(0), kk_box_bool(1)])
+        XCTAssertEqual(arrayElements(kk_list_toBooleanArray(list)), [1, 0, 1])
+    }
+
     private func makeArray(_ elements: [Int]) -> Int {
         let arrayRaw = kk_array_new(elements.count)
         var thrown = 0

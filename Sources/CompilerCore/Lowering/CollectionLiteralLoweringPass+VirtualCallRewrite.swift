@@ -201,6 +201,7 @@ extension CollectionLiteralLoweringPass {
         }
 
         let unsignedArrayCallee: InternedString? = switch callee {
+        case lookup.toBooleanArrayName: lookup.kkListToBooleanArrayName
         case lookup.toUByteArrayName: lookup.kkListToUByteArrayName
         case lookup.toUShortArrayName: lookup.kkListToUShortArrayName
         case lookup.toUIntArrayName: lookup.kkListToUIntArrayName

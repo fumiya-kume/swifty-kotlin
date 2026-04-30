@@ -173,7 +173,7 @@ extension CallLowerer {
         "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull", "maxOrNull", "minOrNull",
         "plus", "plusElement", "minus", "minusElement",
         "asSequence", "asIterable", "toList", "toSet", "toMap", "toCollection", "toMutableList", "toMutableSet", "toTypedArray",
-        "toIntArray", "toLongArray", "toByteArray", "toUByteArray", "toUShortArray", "toUIntArray", "toULongArray",
+        "toBooleanArray", "toIntArray", "toLongArray", "toByteArray", "toUByteArray", "toUShortArray", "toUIntArray", "toULongArray",
         "take", "drop", "reversed", "asReversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect", "subList",
         "sortedDescending", "sortedByDescending", "sortedWith", "partition",
         "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",
