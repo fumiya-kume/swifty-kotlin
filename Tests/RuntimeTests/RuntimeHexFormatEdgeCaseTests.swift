@@ -373,6 +373,23 @@ final class RuntimeHexFormatEdgeCaseTests: IsolatedRuntimeXCTestCase {
         XCTAssertNotEqual(thrown, 0)
     }
 
+    // MARK: - String.hexToUShort – basic
+
+    func testHexToUShortBasic() {
+        let fmt = makeFormat()
+        var thrown = 0
+        XCTAssertEqual(kk_string_hexToUShort(makeString("ffff"), fmt, &thrown), Int(UInt16.max))
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        XCTAssertEqual(kk_string_hexToUShort(makeString("0000"), fmt, &thrown), 0)
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        _ = kk_string_hexToUShort(makeString("10000"), fmt, &thrown)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
     // MARK: - String.hexToUInt – basic
 
     func testHexToUIntBasic() {
