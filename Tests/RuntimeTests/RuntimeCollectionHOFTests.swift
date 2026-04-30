@@ -91,6 +91,10 @@ private let foldOrder: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?
     acc * 10 + value
 }
 
+private let reduceRightIndexedChecksum: @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, value, acc, _ in
+    index * 100 + value * 10 + acc
+}
+
 private let groupingFoldToInitialValueSelector: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = {
     _, key, element, _ in
     gHOFState.addCall()
@@ -355,6 +359,48 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(unchanged), [1, 2, 2, 3])
         XCTAssertEqual(listElements(arrayRemoved), [1, 2, 3])
         XCTAssertEqual(listElements(source), [1, 2, 2, 3])
+    }
+
+    func testListReduceRightIndexedUsesIndexValueAndAccumulator() {
+        var thrown = 0
+        let result = kk_list_reduceRightIndexed(
+            makeList([1, 2, 3]),
+            unsafeBitCast(reduceRightIndexedChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 133)
+
+        thrown = 0
+        let arrayResult = kk_list_reduceRightIndexed(
+            makeArray([1, 2, 3]),
+            unsafeBitCast(reduceRightIndexedChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(arrayResult, 133)
+
+        thrown = 0
+        let singletonResult = kk_list_reduceRightIndexed(
+            makeList([7]),
+            unsafeBitCast(reduceRightIndexedChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(singletonResult, 7)
+
+        thrown = 0
+        let emptyResult = kk_list_reduceRightIndexed(
+            makeList([]),
+            unsafeBitCast(reduceRightIndexedChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(emptyResult, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
     }
 
     func testWindowedTransformReturnsExpectedWindows() {

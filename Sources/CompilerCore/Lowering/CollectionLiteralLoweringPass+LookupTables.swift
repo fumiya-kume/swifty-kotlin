@@ -115,6 +115,7 @@ struct CollectionLiteralLookupTables {
     let kkListFoldRightName: InternedString
     let kkListReduceName: InternedString
     let kkListReduceRightName: InternedString
+    let kkListReduceRightIndexedName: InternedString
     let kkListReduceOrNullName: InternedString
     let kkListScanName: InternedString
     let kkListRunningFoldName: InternedString
@@ -547,6 +548,7 @@ struct CollectionLiteralLookupTables {
     let mapIndexedName: InternedString
     let foldIndexedName: InternedString
     let foldRightIndexedName: InternedString
+    let reduceRightIndexedName: InternedString
     let reduceIndexedName: InternedString
     let filterIndexedName: InternedString
     let reduceIndexedOrNullName: InternedString
@@ -884,6 +886,7 @@ struct CollectionLiteralLookupTables {
         kkListFoldRightName = interner.intern("kk_list_foldRight")
         kkListReduceName = interner.intern("kk_list_reduce")
         kkListReduceRightName = interner.intern("kk_list_reduceRight")
+        kkListReduceRightIndexedName = interner.intern("kk_list_reduceRightIndexed")
         kkListReduceOrNullName = interner.intern("kk_list_reduceOrNull")
         kkListScanName = interner.intern("kk_list_scan")
         kkListRunningFoldName = interner.intern("kk_list_runningFold")
@@ -1303,6 +1306,7 @@ struct CollectionLiteralLookupTables {
         mapIndexedName = interner.intern("mapIndexed")
         foldIndexedName = interner.intern("foldIndexed")
         foldRightIndexedName = interner.intern("foldRightIndexed")
+        reduceRightIndexedName = interner.intern("reduceRightIndexed")
         reduceIndexedName = interner.intern("reduceIndexed")
         filterIndexedName = interner.intern("filterIndexed")
         reduceIndexedOrNullName = interner.intern("reduceIndexedOrNull")

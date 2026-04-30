@@ -4393,6 +4393,19 @@ extension CollectionLiteralLoweringPass {
                             continue
                         }
                     }
+                    // reduceRightIndexed: args = [receiver, lambda, closureRaw?]
+                    if (callee == lookup.reduceRightIndexedName || callee == lookup.kkListReduceRightIndexedName), (arguments.count == 2 || arguments.count == 3) {
+                        let receiverID = arguments[0]
+                        if listExprIDs.contains(receiverID.rawValue) {
+                            let lambdaID = arguments[1]
+                            let closureRawID: KIRExprID
+                            if arguments.count == 3 { closureRawID = arguments[2] }
+                            else { let z = module.arena.appendExpr(.intLiteral(0), type: nil); loweredBody.append(.constValue(result: z, value: .intLiteral(0))); closureRawID = z }
+                            let callResult = result ?? module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)), type: nil)
+                            loweredBody.append(.call(symbol: nil, callee: lookup.kkListReduceRightIndexedName, arguments: [receiverID, lambdaID, closureRawID], result: callResult, canThrow: canThrow, thrownResult: thrownResult))
+                            continue
+                        }
+                    }
                     // filterIndexed: args = [receiver, lambda, closureRaw?]
                     if (callee == lookup.filterIndexedName || callee == lookup.kkListFilterIndexedName),
                        (arguments.count == 2 || arguments.count == 3) {

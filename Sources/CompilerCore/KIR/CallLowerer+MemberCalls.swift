@@ -162,7 +162,7 @@ extension CallLowerer {
         "map", "filter", "filterNot", "mapNotNull", "filterNotNull", "requireNoNulls", "forEach", "flatMap",
         "any", "none", "all",
         "fold", "foldIndexed", "foldRight", "foldRightIndexed",
-        "reduce", "reduceRight", "reduceIndexed", "reduceIndexedOrNull",
+        "reduce", "reduceRight", "reduceRightIndexed", "reduceIndexed", "reduceIndexedOrNull",
         "scan", "scanIndexed", "runningFold", "runningFoldIndexed",
         "runningReduce", "runningReduceIndexed",
         "groupBy", "groupingBy", "sortedBy", "find", "findLast", "associateBy", "associateWith", "associate", "zip", "zipWithNext", "unzip",
@@ -4807,7 +4807,7 @@ extension CallLowerer {
             "maxOf", "minOf",
             "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",
             "maxOfWith", "maxOfWithOrNull", "minOfWith", "minOfWithOrNull",
-            "indexOfFirst", "indexOfLast", "binarySearch", "binarySearchBy", "reduceIndexed", "reduceIndexedOrNull", "foldIndexed", "foldRightIndexed",
+            "indexOfFirst", "indexOfLast", "binarySearch", "binarySearchBy", "reduceIndexed", "reduceIndexedOrNull", "reduceRightIndexed", "foldIndexed", "foldRightIndexed",
             "sortedByDescending", "sortedWith", "partition", "zipWithNext",
             "takeWhile", "dropWhile", "filterNot", "findLast", "replaceAll", "removeIf",
             "replaceFirstChar",
@@ -6504,6 +6504,7 @@ extension CallLowerer {
             interner.intern("kk_list_foldRight"),
             interner.intern("kk_list_reduce"),
             interner.intern("kk_list_reduceRight"),
+            interner.intern("kk_list_reduceRightIndexed"),
             interner.intern("kk_list_reduceOrNull"),
             interner.intern("kk_list_scan"),
             interner.intern("kk_list_runningFold"),
@@ -8081,6 +8082,8 @@ extension CallLowerer {
                 return interner.intern("kk_list_foldRightIndexed")
             case "reduceRight":
                 return interner.intern("kk_list_reduceRight")
+            case "reduceRightIndexed":
+                return interner.intern("kk_list_reduceRightIndexed")
             case "runningFoldIndexed":
                 return interner.intern("kk_list_runningFoldIndexed")
             case "runningReduceIndexed":
