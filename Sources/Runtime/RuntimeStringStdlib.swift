@@ -2035,6 +2035,45 @@ public func kk_string_windowedSequence_partial(_ strRaw: Int, _ size: Int, _ ste
     return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: windows)]))
 }
 
+@_cdecl("kk_string_windowedSequence_transform")
+public func kk_string_windowedSequence_transform(
+    _ strRaw: Int,
+    _ size: Int,
+    _ step: Int,
+    _ partialWindows: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let clampedSize = max(1, size)
+    let clampedStep = max(1, step)
+    let scalars = Array(source.unicodeScalars)
+    let partial = partialWindows != 0
+    var results: [Int] = []
+    var i = 0
+    while i < scalars.count {
+        let end = min(i + clampedSize, scalars.count)
+        if !partial && end - i < clampedSize { break }
+        let windowRaw = runtimeMakeStringRaw(runtimeStringFromScalars(scalars[i ..< end]))
+        var thrown = 0
+        let transformed = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: windowRaw,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return 0
+        }
+        results.append(maybeUnbox(transformed))
+        i += clampedStep
+    }
+    return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: results)]))
+}
+
 // MARK: - STDLIB-318: String.commonPrefixWith / commonSuffixWith
 
 @_cdecl("kk_string_commonPrefixWith")
