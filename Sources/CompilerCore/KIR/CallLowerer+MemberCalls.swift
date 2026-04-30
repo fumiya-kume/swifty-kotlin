@@ -3805,6 +3805,7 @@ extension CallLowerer {
                 let dropWhileName = interner.intern("dropWhile")
                 let sortedByName = interner.intern("sortedBy")
                 let sumOfName = interner.intern("sumOf")
+                let firstNotNullOfName = interner.intern("firstNotNullOf")
                 let associateName = interner.intern("associate")
                 let associateByName = interner.intern("associateBy")
                 let associateWithName = interner.intern("associateWith")
@@ -3846,6 +3847,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_sortedBy"
                 } else if calleeName == sumOfName {
                     runtimeCallee = "kk_sequence_sumOf"
+                } else if calleeName == firstNotNullOfName {
+                    runtimeCallee = "kk_sequence_firstNotNullOf"
                 } else if calleeName == associateName {
                     runtimeCallee = "kk_sequence_associate"
                 } else if calleeName == associateByName {
@@ -3931,6 +3934,7 @@ extension CallLowerer {
                 if let runtimeCallee {
                     let canThrow = runtimeCallee == "kk_sequence_sortedBy"
                         || runtimeCallee == "kk_sequence_sumOf"
+                        || runtimeCallee == "kk_sequence_firstNotNullOf"
                         || runtimeCallee == "kk_sequence_associate"
                         || runtimeCallee == "kk_sequence_associateBy"
                         || runtimeCallee == "kk_sequence_associateTo"
@@ -3958,10 +3962,23 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_runningReduceIndexed"
                         || runtimeCallee == "kk_sequence_ifEmpty"
                         || runtimeCallee == "kk_sequence_zipWithNextTransform"
+                    var runtimeArguments = [loweredReceiverID] + normalizedArgIDs
+                    if runtimeCallee == "kk_sequence_firstNotNullOf",
+                       normalizedArgIDs.count == 1
+                    {
+                        let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                            normalizedArgIDs[0],
+                            sema: sema,
+                            arena: arena,
+                            interner: interner,
+                            instructions: &instructions
+                        )
+                        runtimeArguments = [loweredReceiverID, fnPtrExpr, envPtrExpr]
+                    }
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern(runtimeCallee),
-                        arguments: [loweredReceiverID] + normalizedArgIDs,
+                        arguments: runtimeArguments,
                         result: result,
                         canThrow: canThrow,
                         thrownResult: nil
@@ -6107,6 +6124,18 @@ extension CallLowerer {
             finalArguments[2] = fnPtrExpr
             finalArguments.append(envPtrExpr)
         }
+        if loweredCallee == interner.intern("kk_sequence_firstNotNullOf"),
+           finalArguments.count == 2
+        {
+            let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                finalArguments[1],
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            finalArguments = [finalArguments[0], fnPtrExpr, envPtrExpr]
+        }
         if loweredCallee == interner.intern("kk_array_copyOf_newSize_init"),
            finalArguments.count == 3
         {
@@ -6429,6 +6458,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_runningReduceIndexed"),
             interner.intern("kk_sequence_sortedBy"),
             interner.intern("kk_sequence_sumOf"),
+            interner.intern("kk_sequence_firstNotNullOf"),
             interner.intern("kk_sequence_associate"),
             interner.intern("kk_sequence_associateBy"),
             interner.intern("kk_sequence_associateTo"),
@@ -8249,6 +8279,7 @@ extension CallLowerer {
             let sortedDescendingName = interner.intern("sortedDescending")
             let joinToStringName = interner.intern("joinToString")
             let sumOfName = interner.intern("sumOf")
+            let firstNotNullOfName = interner.intern("firstNotNullOf")
             let associateName = interner.intern("associate")
             let associateByName = interner.intern("associateBy")
             let firstName = interner.intern("first")
@@ -8301,6 +8332,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_joinToString")
             case sumOfName:
                 return interner.intern("kk_sequence_sumOf")
+            case firstNotNullOfName:
+                return interner.intern("kk_sequence_firstNotNullOf")
             case associateName:
                 return interner.intern("kk_sequence_associate")
             case associateByName:

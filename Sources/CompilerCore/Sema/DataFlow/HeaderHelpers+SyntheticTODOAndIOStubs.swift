@@ -3164,6 +3164,42 @@ extension DataFlowSemaPhase {
             canThrow: true
         )
 
+        // STDLIB-SEQ-026: firstNotNullOf(transform): R
+        let firstNotNullOfName = interner.intern("firstNotNullOf")
+        let firstNotNullOfFQName = sequenceFQName + [firstNotNullOfName]
+        if symbols.lookup(fqName: firstNotNullOfFQName) == nil {
+            let rName = interner.intern("R")
+            let rSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: firstNotNullOfFQName + [rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let transformType = types.make(.functionType(FunctionType(
+                params: [typeParamType],
+                returnType: types.makeNullable(rType),
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            registerSequenceMemberStub(
+                named: "firstNotNullOf",
+                externalLinkName: "kk_sequence_firstNotNullOf",
+                receiverType: receiverType,
+                parameters: [("transform", transformType)],
+                returnType: rType,
+                sequenceSymbol: sequenceSymbol,
+                sequenceFQName: sequenceFQName,
+                typeParamSymbol: typeParamSymbol,
+                symbols: symbols,
+                interner: interner,
+                canThrow: true,
+                additionalTypeParameterSymbols: [rSymbol]
+            )
+        }
+
         // sum()/average()
         registerSequenceMemberStub(
             named: "sum",

@@ -125,7 +125,7 @@
 - [x] STDLIB-SEQ-023: `Sequence.associateTo` / `associateByTo` / `associateWithTo` / `groupByTo` を追加する
 - [x] STDLIB-SEQ-024: `Sequence.toCollection(destination)` を追加する
 - [x] STDLIB-SEQ-025: `Sequence.toMutableList()` / `toMutableSet()` / `toHashSet()` を追加する
-- [ ] STDLIB-SEQ-026: `Sequence.firstNotNullOf(transform)` を追加する
+- [x] STDLIB-SEQ-026: `Sequence.firstNotNullOf(transform)` を追加する
 - [ ] STDLIB-SEQ-027: `Sequence.firstNotNullOfOrNull(transform)` を追加する
 - [ ] STDLIB-SEQ-028: `Sequence.minusElement(element)` を追加する
 - [ ] STDLIB-SEQ-029: `Sequence.sumBy(selector)` deprecated surface を追加する

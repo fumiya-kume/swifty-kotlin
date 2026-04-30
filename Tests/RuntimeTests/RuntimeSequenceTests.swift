@@ -156,6 +156,14 @@ private let throwingWindowTransform: @convention(c) (Int, Int, UnsafeMutablePoin
     return 0
 }
 
+private let sequenceFirstNotNullOfStringForTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value == 2 ? runtimeTestStringHandle("two") : runtimeNullSentinelInt
+}
+
+private let sequenceFirstNotNullOfAlwaysNull: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, _ in
+    runtimeNullSentinelInt
+}
+
 private func runtimeTestStringHandle(_ value: String) -> Int {
     let bytes = Array(value.utf8)
     return bytes.withUnsafeBufferPointer { buffer in
@@ -169,6 +177,32 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
     override func resetIsolatedRuntimeTestState() {
         _lazyTestYieldCounter = 0
         _lazySequenceOnEachIndexedTrace = []
+    }
+
+    func testFirstNotNullOfReturnsFirstTransformedValue() {
+        var thrown = 0
+        let result = kk_sequence_firstNotNullOf(
+            makeSequence([1, 2, 3]),
+            unsafeBitCast(sequenceFirstNotNullOfStringForTwo, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(extractString(from: UnsafeMutableRawPointer(bitPattern: result)), "two")
+    }
+
+    func testFirstNotNullOfThrowsWhenNoElementTransformsToValue() {
+        var thrown = 0
+        let result = kk_sequence_firstNotNullOf(
+            makeSequence([1, 2, 3]),
+            unsafeBitCast(sequenceFirstNotNullOfAlwaysNull, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(result, 0)
+        XCTAssertNotEqual(thrown, 0)
     }
 
     func testSortedByUsesRuntimeValueComparisonForSelectorKeys() {
