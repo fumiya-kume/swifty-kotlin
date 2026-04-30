@@ -61,6 +61,29 @@ final class RuntimeNativeRefGCStabilityTests: IsolatedRuntimeXCTestCase {
         }
     }
 
+    func testGCScheduleTriggersCollection() {
+        withDummyNativeRefTypeInfo { ti in
+            _ = kk_alloc(8, ti)
+            XCTAssertEqual(kk_runtime_heap_object_count(), 1)
+            XCTAssertEqual(kk_gc_schedule(), 0)
+            XCTAssertEqual(kk_runtime_heap_object_count(), 0)
+        }
+    }
+
+    func testGCTargetHeapBytesIsPositive() {
+        XCTAssertGreaterThan(kk_gc_target_heap_bytes(), 0)
+    }
+
+    func testGCTargetHeapUtilizationIsWithinValidRange() {
+        let utilization = kk_gc_target_heap_utilization()
+        XCTAssertGreaterThan(utilization, 0)
+        XCTAssertLessThanOrEqual(utilization, 1)
+    }
+
+    func testGCMaxHeapBytesIsAtLeastTargetHeapBytes() {
+        XCTAssertGreaterThanOrEqual(kk_gc_max_heap_bytes(), kk_gc_target_heap_bytes())
+    }
+
     func testHeapObjectCountPositiveAfterAlloc() {
         withDummyNativeRefTypeInfo { ti in
             let slot = UnsafeMutablePointer<UnsafeMutableRawPointer?>.allocate(capacity: 1)
@@ -111,6 +134,127 @@ final class RuntimeNativeRefMemoryTests: XCTestCase {
         let max2 = kk_runtime_maxMemory()
         XCTAssertEqual(max1, max2,
                        "Max memory must be stable across back-to-back queries")
+    }
+}
+
+// ---------------------------------------------------------------------------
+// MARK: - WeakReference<T> runtime tests
+// ---------------------------------------------------------------------------
+
+final class RuntimeNativeRefWeakReferenceTests: IsolatedRuntimeXCTestCase {
+
+    func testWeakReferenceCreateReturnsNonZeroHandle() {
+        let objectRaw = registerRuntimeObject(RuntimeStringBox("weak"))
+        let weakRaw = kk_weak_ref_create(objectRaw)
+        XCTAssertNotEqual(weakRaw, 0)
+    }
+
+    func testWeakReferenceGetReturnsLiveRuntimeObject() {
+        let objectRaw = registerRuntimeObject(RuntimeStringBox("weak"))
+        let weakRaw = kk_weak_ref_create(objectRaw)
+        XCTAssertEqual(kk_weak_ref_get(weakRaw), objectRaw)
+    }
+
+    func testWeakReferenceClearDropsReferent() {
+        let objectRaw = registerRuntimeObject(RuntimeStringBox("weak"))
+        let weakRaw = kk_weak_ref_create(objectRaw)
+        XCTAssertEqual(kk_weak_ref_get(weakRaw), objectRaw)
+        XCTAssertEqual(kk_weak_ref_clear(weakRaw), 0)
+        XCTAssertEqual(kk_weak_ref_get(weakRaw), 0)
+    }
+
+    func testWeakReferenceToCollectedHeapObjectReturnsNull() {
+        withDummyNativeRefTypeInfo { ti in
+            let object = kk_alloc(16, ti)
+            let objectRaw = Int(bitPattern: object)
+            let weakRaw = kk_weak_ref_create(objectRaw)
+            XCTAssertEqual(kk_weak_ref_get(weakRaw), objectRaw)
+
+            kk_gc_collect()
+
+            XCTAssertEqual(kk_weak_ref_get(weakRaw), 0)
+        }
+    }
+
+    func testWeakReferenceInvalidHandleIsNullSafe() {
+        XCTAssertEqual(kk_weak_ref_get(0), 0)
+        XCTAssertEqual(kk_weak_ref_clear(0), 0)
+        XCTAssertEqual(kk_weak_ref_get(12345), 0)
+        XCTAssertEqual(kk_weak_ref_clear(12345), 0)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// MARK: - createCleaner runtime tests
+// ---------------------------------------------------------------------------
+
+nonisolated(unsafe) private var nativeRefCleanerCallCount = 0
+nonisolated(unsafe) private var nativeRefCleanerLastValue = 0
+
+private let nativeRefCleanerBlock: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { value, outThrown in
+    outThrown?.pointee = 0
+    nativeRefCleanerCallCount += 1
+    nativeRefCleanerLastValue = value
+    return 0
+}
+
+private let nativeRefCleanerThrowingBlock: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { _, outThrown in
+    outThrown?.pointee = 0xC1EA
+    return 0
+}
+
+final class RuntimeNativeRefCleanerTests: IsolatedRuntimeXCTestCase {
+
+    override func resetIsolatedRuntimeTestState() {
+        nativeRefCleanerCallCount = 0
+        nativeRefCleanerLastValue = 0
+    }
+
+    func testCleanerCreateReturnsNonZeroHandle() {
+        let valueRaw = registerRuntimeObject(RuntimeStringBox("clean"))
+        let blockRaw = unsafeBitCast(nativeRefCleanerBlock, to: Int.self)
+        XCTAssertNotEqual(kk_cleaner_create(valueRaw, blockRaw), 0)
+    }
+
+    func testCleanerCleanInvokesBlockOnceWithValue() {
+        let valueRaw = registerRuntimeObject(RuntimeStringBox("clean"))
+        let blockRaw = unsafeBitCast(nativeRefCleanerBlock, to: Int.self)
+        let cleanerRaw = kk_cleaner_create(valueRaw, blockRaw)
+
+        XCTAssertEqual(kk_cleaner_clean(cleanerRaw, nil), 0)
+        XCTAssertEqual(nativeRefCleanerCallCount, 1)
+        XCTAssertEqual(nativeRefCleanerLastValue, valueRaw)
+
+        XCTAssertEqual(kk_cleaner_clean(cleanerRaw, nil), 0)
+        XCTAssertEqual(nativeRefCleanerCallCount, 1)
+    }
+
+    func testCleanerDisposeDropsWithoutInvokingBlock() {
+        let valueRaw = registerRuntimeObject(RuntimeStringBox("clean"))
+        let blockRaw = unsafeBitCast(nativeRefCleanerBlock, to: Int.self)
+        let cleanerRaw = kk_cleaner_create(valueRaw, blockRaw)
+
+        XCTAssertEqual(kk_cleaner_dispose(cleanerRaw), 0)
+        XCTAssertEqual(kk_cleaner_clean(cleanerRaw, nil), 0)
+        XCTAssertEqual(nativeRefCleanerCallCount, 0)
+    }
+
+    func testCleanerCleanPropagatesThrownHandle() {
+        let valueRaw = registerRuntimeObject(RuntimeStringBox("clean"))
+        let blockRaw = unsafeBitCast(nativeRefCleanerThrowingBlock, to: Int.self)
+        let cleanerRaw = kk_cleaner_create(valueRaw, blockRaw)
+        var thrown = 0
+
+        XCTAssertEqual(kk_cleaner_clean(cleanerRaw, &thrown), 0)
+        XCTAssertEqual(thrown, 0xC1EA)
+    }
+
+    func testCleanerInvalidHandleIsNullSafe() {
+        XCTAssertEqual(kk_cleaner_create(0, 0), 0)
+        XCTAssertEqual(kk_cleaner_clean(0, nil), 0)
+        XCTAssertEqual(kk_cleaner_dispose(0), 0)
+        XCTAssertEqual(kk_cleaner_clean(12345, nil), 0)
+        XCTAssertEqual(kk_cleaner_dispose(12345), 0)
     }
 }
 
@@ -334,7 +478,7 @@ final class RuntimeNativeRefFreezeTests: IsolatedRuntimeXCTestCase {
 // MARK: - Debugging / assertions ABI tests
 // ---------------------------------------------------------------------------
 
-final class RuntimeNativeRefDebuggingTests: XCTestCase {
+final class RuntimeNativeRefDebuggingTests: IsolatedRuntimeXCTestCase {
 
     func testAssertionsEnabledReturnsBooleanValue() {
         let result = kk_assertions_enabled()
@@ -382,6 +526,23 @@ final class RuntimeNativeRefDebuggingTests: XCTestCase {
         let second = kk_assertions_enabled()
         XCTAssertEqual(first, second,
                        "Repeated kk_assertions_reset must yield consistent state")
+    }
+
+    func testDebuggingIsThreadStateRunnableReturnsBoolean() {
+        let result = kk_debugging_is_thread_state_runnable()
+        XCTAssertTrue(result == 0 || result == 1)
+    }
+
+    func testDebuggingTrackingCountsAreNonNegative() {
+        XCTAssertGreaterThanOrEqual(kk_debugging_gc_suspend_count(), 0)
+        XCTAssertGreaterThanOrEqual(kk_debugging_thread_count(), 1)
+        XCTAssertGreaterThanOrEqual(kk_debugging_global_object_count(), 0)
+    }
+
+    func testDebuggingGlobalObjectCountTracksRuntimeObjects() {
+        let before = kk_debugging_global_object_count()
+        _ = registerRuntimeObject(RuntimeStringBox("debug"))
+        XCTAssertEqual(kk_debugging_global_object_count(), before + 1)
     }
 }
 

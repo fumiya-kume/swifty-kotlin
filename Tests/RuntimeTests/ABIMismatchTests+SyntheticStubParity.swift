@@ -53,6 +53,8 @@ extension ABIMismatchTests {
             "kk_array_of_nulls",
             // String radix conversion
             "kk_string_toIntOrNull_radix",
+            // Char locale case conversion
+            "kk_char_lowercase_locale",
             "kk_system_exitProcess",
             "kk_system_currentTimeMillis",
             "kk_system_nanoTime",
@@ -66,6 +68,7 @@ extension ABIMismatchTests {
             // UUID
             "kk_uuid_parseHexOrNull",
             "kk_uuid_parseHexDashOrNull",
+            "kk_uuid_parseOrNull",
             "kk_instant_now",
             "kk_instant_from_epoch_millis",
             "kk_instant_epoch_seconds",
@@ -75,6 +78,9 @@ extension ABIMismatchTests {
             "kk_instant_compare",
             "kk_instant_until",
             "kk_instant_elapsed",
+            "kk_instant_is_distant_past",
+            "kk_instant_is_distant_future",
+            "kk_time_source_as_clock",
             // Duration
             "kk_duration_zero",
             "kk_duration_infinite",
@@ -175,6 +181,20 @@ extension ABIMismatchTests {
             "kk_atomic_bool_compareAndExchange",
             "kk_atomic_bool_getAndUpdate",
             "kk_atomic_bool_updateAndGet",
+            // kotlin.native.ref
+            "kk_weak_ref_create",
+            "kk_weak_ref_get",
+            "kk_weak_ref_clear",
+            "kk_cleaner_create",
+            "kk_gc_collect",
+            "kk_gc_schedule",
+            "kk_gc_target_heap_bytes",
+            "kk_gc_target_heap_utilization",
+            "kk_gc_max_heap_bytes",
+            "kk_debugging_is_thread_state_runnable",
+            "kk_debugging_gc_suspend_count",
+            "kk_debugging_thread_count",
+            "kk_debugging_global_object_count",
             "kk_atomic_int_array_create",
             "kk_atomic_int_array_size",
             "kk_atomic_int_array_loadAt",
@@ -275,6 +295,7 @@ extension ABIMismatchTests {
             "kk_kotlin_version_compareTo",
             "kk_kotlin_version_isAtLeast",
             "kk_kotlin_version_isAtLeast_patch",
+            "kk_auto_closeable_create",
         ]
 
         for linkName in syntheticLinkNames {

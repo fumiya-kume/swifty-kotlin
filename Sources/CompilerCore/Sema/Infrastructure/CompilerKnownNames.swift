@@ -22,6 +22,7 @@ enum KnownCompilerAnnotation {
     case suppress
     case dslMarker
     case parameterName
+    case publishedApi
     case wasExperimental
     case sinceKotlin
     case introducedAt
@@ -29,6 +30,7 @@ enum KnownCompilerAnnotation {
     case subclassOptInRequired
     case consistentCopyVisibility
     case exposedCopyVisibility
+    case optionalExpectation
     case builderInference
     case experimentalTypeInference
     case overloadResolutionByLambdaReturnType
@@ -77,6 +79,8 @@ enum KnownCompilerAnnotation {
             "DslMarker"
         case .parameterName:
             "ParameterName"
+        case .publishedApi:
+            "PublishedApi"
         case .wasExperimental:
             "WasExperimental"
         case .sinceKotlin:
@@ -91,6 +95,8 @@ enum KnownCompilerAnnotation {
             "ConsistentCopyVisibility"
         case .exposedCopyVisibility:
             "ExposedCopyVisibility"
+        case .optionalExpectation:
+            "OptionalExpectation"
         case .builderInference:
             "BuilderInference"
         case .experimentalTypeInference:
@@ -144,6 +150,8 @@ enum KnownCompilerAnnotation {
             "kotlin.DslMarker"
         case .parameterName:
             "kotlin.ParameterName"
+        case .publishedApi:
+            "kotlin.PublishedApi"
         case .wasExperimental:
             "kotlin.WasExperimental"
         case .sinceKotlin:
@@ -158,6 +166,8 @@ enum KnownCompilerAnnotation {
             "kotlin.ConsistentCopyVisibility"
         case .exposedCopyVisibility:
             "kotlin.ExposedCopyVisibility"
+        case .optionalExpectation:
+            "kotlin.OptionalExpectation"
         case .builderInference:
             "kotlin.BuilderInference"
         case .experimentalTypeInference:
