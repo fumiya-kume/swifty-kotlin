@@ -60,7 +60,7 @@
 - [x] STDLIB-TEXT-SEQ-003: `CharSequence.windowedSequence(size, step, partialWindows)` を追加する
 - [x] STDLIB-TEXT-SEQ-004: `CharSequence.windowedSequence(size, step, partialWindows, transform)` を追加する
 - [x] STDLIB-TEXT-SEARCH-001: `CharSequence.indexOfAny(chars, startIndex, ignoreCase)` を追加する
-- [ ] STDLIB-TEXT-SEARCH-002: `CharSequence.indexOfAny(strings, startIndex, ignoreCase)` を追加する
+- [x] STDLIB-TEXT-SEARCH-002: `CharSequence.indexOfAny(strings, startIndex, ignoreCase)` を追加する
 - [ ] STDLIB-TEXT-SEARCH-003: `CharSequence.lastIndexOfAny(chars, startIndex, ignoreCase)` を追加する
 - [ ] STDLIB-TEXT-SEARCH-004: `CharSequence.lastIndexOfAny(strings, startIndex, ignoreCase)` を追加する
 - [ ] STDLIB-TEXT-SEARCH-005: `CharSequence.findAnyOf(strings, startIndex, ignoreCase)` を追加する
