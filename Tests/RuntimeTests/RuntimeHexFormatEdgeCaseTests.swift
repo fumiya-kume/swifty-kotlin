@@ -390,6 +390,25 @@ final class RuntimeHexFormatEdgeCaseTests: IsolatedRuntimeXCTestCase {
         XCTAssertNotEqual(thrown, 0)
     }
 
+    // MARK: - String.hexToULong – basic
+
+    func testHexToULongBasic() {
+        let fmt = makeFormat()
+        var thrown = 0
+        let max = kk_string_hexToULong(makeString("ffffffffffffffff"), fmt, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_unbox_long(max), -1)
+
+        thrown = 0
+        let zero = kk_string_hexToULong(makeString("0000000000000000"), fmt, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_unbox_long(zero), 0)
+
+        thrown = 0
+        _ = kk_string_hexToULong(makeString("10000000000000000"), fmt, &thrown)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
     // MARK: - String.hexToUByteArray – contiguous hex
 
     func testHexToUByteArrayContiguousHex() {

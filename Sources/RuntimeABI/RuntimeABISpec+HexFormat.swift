@@ -100,6 +100,16 @@ public extension RuntimeABISpec {
             section: "HexFormat"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_string_hexToULong",
+            parameters: [
+                RuntimeABIParameter(name: "receiverRaw", type: .intptr),
+                RuntimeABIParameter(name: "formatRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "HexFormat"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_string_hexToLong",
             parameters: [
                 RuntimeABIParameter(name: "receiverRaw", type: .intptr),

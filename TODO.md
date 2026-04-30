@@ -89,7 +89,7 @@
 - [x] STDLIB-TEXT-HEX-002: `String.hexToUByte()` を追加する
 - [x] STDLIB-TEXT-HEX-003: `String.hexToUByteArray()` を追加する
 - [x] STDLIB-TEXT-HEX-004: `String.hexToUInt()` を追加する
-- [ ] STDLIB-TEXT-HEX-005: `String.hexToULong()` を追加する
+- [x] STDLIB-TEXT-HEX-005: `String.hexToULong()` を追加する
 - [ ] STDLIB-TEXT-HEX-006: `String.hexToUShort()` を追加する
 - [ ] STDLIB-TEXT-NUM-001: `String.toUByteOrNull(radix)` を追加する
 - [ ] STDLIB-TEXT-NUM-002: `String.toUIntOrNull(radix)` を追加する

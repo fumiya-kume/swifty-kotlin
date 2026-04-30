@@ -5567,6 +5567,7 @@ extension CallTypeChecker {
                     || (calleeStr == "hexToUByte" && receiverTypeForCheck == sema.types.stringType)
                     || (calleeStr == "hexToUByteArray" && receiverTypeForCheck == sema.types.stringType)
                     || (calleeStr == "hexToUInt" && receiverTypeForCheck == sema.types.stringType)
+                    || (calleeStr == "hexToULong" && receiverTypeForCheck == sema.types.stringType)
                 if isSupportedHexReceiver, args.count <= 1 {
                     let kotlinTextPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("text")]
                     let functionFQName = kotlinTextPkg + [calleeName]
