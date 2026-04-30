@@ -3707,6 +3707,32 @@ public func kk_string_sumBy(
     return total
 }
 
+@_cdecl("kk_string_sumByDouble")
+public func kk_string_sumByDouble(
+    _ strRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    var total = 0.0
+    for scalar in scalars {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: Int(scalar.value),
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        total += kk_bits_to_double(result)
+    }
+    return kk_double_to_bits(total)
+}
+
 @_cdecl("kk_string_filterIndexed")
 public func kk_string_filterIndexed(
     _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?

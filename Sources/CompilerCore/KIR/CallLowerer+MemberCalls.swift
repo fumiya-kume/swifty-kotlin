@@ -2862,6 +2862,7 @@ extension CallLowerer {
                 || calleeStr == "reduceRightIndexedOrNull"
                 || calleeStr == "reduceRightOrNull"
                 || calleeStr == "sumBy"
+                || calleeStr == "sumByDouble"
             if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType)
                 || (isCharSequenceTextHelper && isCharSequenceReceiver)
             {
@@ -2871,6 +2872,7 @@ extension CallLowerer {
                     || calleeStr == "reduceRightIndexedOrNull"
                     || calleeStr == "reduceRightOrNull"
                     || calleeStr == "sumBy"
+                    || calleeStr == "sumByDouble"
                 {
                     let originalCallBinding = sema.bindings.callBindings[exprID]
                     let originalChosen: SymbolID? = if let chosen = originalCallBinding?.chosenCallee, chosen != .invalid {
@@ -2904,6 +2906,7 @@ extension CallLowerer {
                     case "reduceRightIndexed": "kk_string_reduceRightIndexed"
                     case "reduceRightIndexedOrNull": "kk_string_reduceRightIndexedOrNull"
                     case "sumBy": "kk_string_sumBy"
+                    case "sumByDouble": "kk_string_sumByDouble"
                     default: "kk_string_reduceRightOrNull"
                     }
                     instructions.append(.call(
@@ -6456,6 +6459,7 @@ extension CallLowerer {
             interner.intern("kk_string_reduceRightIndexedOrNull"),
             interner.intern("kk_string_reduceRightOrNull"),
             interner.intern("kk_string_sumBy"),
+            interner.intern("kk_string_sumByDouble"),
             interner.intern("kk_string_zipWithNextTransform"),
             interner.intern("kk_string_chunkedSequence_transform"),
             interner.intern("kk_string_windowedSequence_transform"),

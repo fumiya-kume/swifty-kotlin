@@ -1621,6 +1621,39 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testCharSequenceSumByDoubleResolvesInCallExpressions() throws {
+        let source = """
+        fun sumFromSequence(value: CharSequence): Double {
+            return value.sumByDouble { if (it == 'a') 1.5 else 0.25 }
+        }
+
+        fun sumFromString(value: String): Double {
+            return value.sumByDouble { ch -> if (ch == 'b') 2.0 else 0.5 }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics.map { "\($0.code): \($0.message)" }.joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected CharSequence.sumByDouble surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let bindings = sema.bindings.callBindings.values.filter { binding in
+                sema.symbols.externalLinkName(for: binding.chosenCallee) == "kk_string_sumByDouble"
+            }
+            XCTAssertEqual(bindings.count, 2)
+            let sumByDoubleSymbol = try XCTUnwrap(bindings.first?.chosenCallee)
+            XCTAssertTrue(
+                sema.symbols.annotations(for: sumByDoubleSymbol).contains { $0.annotationFQName == "kotlin.Deprecated" },
+                "CharSequence.sumByDouble should carry Deprecated metadata"
+            )
+        }
+    }
+
     func testByteArrayDecodeToStringRangeMembersResolveInCallExpressions() throws {
         let source = """
         fun decode(bytes: ByteArray): String {

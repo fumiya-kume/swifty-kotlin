@@ -490,7 +490,7 @@ extension CallTypeChecker {
         let knownNames = KnownCompilerNames(interner: interner)
         // swiftlint:enable cyclomatic_complexity function_body_length
 
-        if ["firstNotNullOf", "firstNotNullOfOrNull", "reduceRightIndexed", "reduceRightIndexedOrNull", "reduceRightOrNull", "sumBy"]
+        if ["firstNotNullOf", "firstNotNullOfOrNull", "reduceRightIndexed", "reduceRightIndexedOrNull", "reduceRightOrNull", "sumBy", "sumByDouble"]
             .contains(interner.resolve(calleeName)),
            args.count == 1,
            let lambdaExpr = ast.arena.expr(args[0].expr),
@@ -3701,7 +3701,7 @@ extension CallTypeChecker {
         if args.count == 1 {
             let stringHOFCalleeStr = interner.resolve(calleeName)
             let isStringHOFReceiver = sema.types.isSubtype(stringHOFReceiverType, sema.types.stringType)
-                || ((stringHOFCalleeStr == "ifBlank" || stringHOFCalleeStr == "ifEmpty" || stringHOFCalleeStr == "zipWithNext" || stringHOFCalleeStr == "sumBy")
+                || ((stringHOFCalleeStr == "ifBlank" || stringHOFCalleeStr == "ifEmpty" || stringHOFCalleeStr == "zipWithNext" || stringHOFCalleeStr == "sumBy" || stringHOFCalleeStr == "sumByDouble")
                     && isSyntheticStringLikeType(stringHOFReceiverType, sema: sema))
             if isStringHOFReceiver,
                [
@@ -3715,6 +3715,7 @@ extension CallTypeChecker {
                    "ifBlank",
                    "ifEmpty",
                    "sumBy",
+                   "sumByDouble",
                ].contains(stringHOFCalleeStr)
             {
                 let charType = sema.types.make(.primitive(.char, .nonNull))
@@ -3763,6 +3764,13 @@ extension CallTypeChecker {
                         sema.types.make(.functionType(FunctionType(
                             params: [charType],
                             returnType: sema.types.intType,
+                            isSuspend: false,
+                            nullability: .nonNull
+                        )))
+                    case "sumByDouble":
+                        sema.types.make(.functionType(FunctionType(
+                            params: [charType],
+                            returnType: sema.types.doubleType,
                             isSuspend: false,
                             nullability: .nonNull
                         )))
@@ -3910,6 +3918,7 @@ extension CallTypeChecker {
                 case "partition": pairStringStringTypeEarly
                 case "ifBlank", "ifEmpty": sema.types.stringType
                 case "sumBy": sema.types.intType
+                case "sumByDouble": sema.types.doubleType
                 default: sema.types.anyType
                 }
                 let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
@@ -6206,7 +6215,7 @@ extension CallTypeChecker {
                     : lookupReceiverType
                 let calleeStr = interner.resolve(calleeName)
                 let isStringHOFReceiver = sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType)
-                    || ((calleeStr == "ifBlank" || calleeStr == "ifEmpty" || calleeStr == "zipWithNext" || calleeStr == "sumBy")
+                    || ((calleeStr == "ifBlank" || calleeStr == "ifEmpty" || calleeStr == "zipWithNext" || calleeStr == "sumBy" || calleeStr == "sumByDouble")
                         && isSyntheticStringLikeType(receiverTypeForCheck, sema: sema))
                 if isStringHOFReceiver,
                    [
@@ -6225,6 +6234,7 @@ extension CallTypeChecker {
                        "reduceRightIndexedOrNull",
                        "reduceRightOrNull",
                        "sumBy",
+                       "sumByDouble",
                    ].contains(calleeStr)
                 {
                     let charType = sema.types.make(.primitive(.char, .nonNull))
@@ -6264,6 +6274,8 @@ extension CallTypeChecker {
                             lambdaReturnType = sema.types.stringType
                         case "sumBy":
                             lambdaReturnType = sema.types.intType
+                        case "sumByDouble":
+                            lambdaReturnType = sema.types.doubleType
                         default:
                             lambdaReturnType = sema.types.booleanType
                         }
@@ -6472,6 +6484,7 @@ extension CallTypeChecker {
                     case "reduceRightIndexedOrNull": sema.types.make(.primitive(.char, .nullable))
                     case "reduceRightOrNull": sema.types.make(.primitive(.char, .nullable))
                     case "sumBy": sema.types.intType
+                    case "sumByDouble": sema.types.doubleType
                     default: sema.types.anyType
                     }
                     // For "partition", skip the fallback resolver (which may fail due to
