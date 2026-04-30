@@ -957,6 +957,30 @@ public func kk_list_reduceRightIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRa
     return acc
 }
 
+@_cdecl("kk_list_reduceRightIndexedOrNull")
+public func kk_list_reduceRightIndexedOrNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let elements = runtimeCollectionElements(from: listRaw) ?? runtimeArrayBox(from: listRaw)?.elements else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard !elements.isEmpty else { return runtimeNullSentinelInt }
+    var acc = maybeUnbox(elements[elements.count - 1])
+    guard elements.count > 1 else { return acc }
+
+    for idx in stride(from: elements.count - 2, through: 0, by: -1) {
+        var thrown = 0
+        acc = maybeUnbox(runtimeInvokeCollectionLambda3(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            arg1: idx,
+            arg2: elements[idx],
+            arg3: acc,
+            outThrown: &thrown
+        ))
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+    }
+    return acc
+}
+
 // MARK: - List scan / runningFold / runningReduce (STDLIB-442)
 
 @_cdecl("kk_list_scan")

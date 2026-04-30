@@ -247,6 +247,57 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testIterableReduceRightIndexedOrNullResolvesToListRuntime() throws {
+        let source = """
+        fun checksum(values: Iterable<Int>): Int? {
+            return values.reduceRightIndexedOrNull { index, value, acc ->
+                index * 100 + value * 10 + acc
+            }
+        }
+
+        fun checksumFromList(values: List<Int>): Int? {
+            return values.reduceRightIndexedOrNull(operation = { index, value, acc ->
+                index + value + acc
+            })
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Iterable.reduceRightIndexedOrNull surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "collections", "Iterable", "reduceRightIndexedOrNull"]
+                .map { ctx.interner.intern($0) }
+            let memberSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: memberFQName))
+            XCTAssertEqual(sema.symbols.externalLinkName(for: memberSymbol), "kk_list_reduceRightIndexedOrNull")
+
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: memberSymbol))
+            XCTAssertEqual(signature.parameterTypes.count, 1)
+            guard case let .functionType(operationType) = sema.types.kind(of: signature.parameterTypes[0]) else {
+                return XCTFail("Expected Iterable.reduceRightIndexedOrNull operation parameter to be a function")
+            }
+            XCTAssertEqual(operationType.params.count, 3)
+            guard case let .primitive(indexPrimitive, indexNullability) = sema.types.kind(of: operationType.params[0]) else {
+                return XCTFail("Expected first reduceRightIndexedOrNull lambda parameter to be Int")
+            }
+            XCTAssertEqual(indexPrimitive, .int)
+            XCTAssertEqual(indexNullability, .nonNull)
+
+            let callLinks = sema.bindings.callBindings.values.compactMap { binding in
+                sema.symbols.externalLinkName(for: binding.chosenCallee)
+            }
+            XCTAssertEqual(callLinks.filter { $0 == "kk_list_reduceRightIndexedOrNull" }.count, 2)
+        }
+    }
+
     func testListFirstOrNullAndLastOrNullReturnNullableElementsWithoutCollectionMarking() throws {
         let source = """
         fun probe(values: List<Int>) {

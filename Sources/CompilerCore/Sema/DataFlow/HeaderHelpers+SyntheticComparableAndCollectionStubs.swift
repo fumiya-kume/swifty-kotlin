@@ -333,6 +333,10 @@ extension DataFlowSemaPhase {
             symbols: symbols, types: types, interner: interner,
             iterableInterfaceSymbol: iterableInterfaceSymbol
         )
+        registerIterableReduceRightIndexedOrNullMember(
+            symbols: symbols, types: types, interner: interner,
+            iterableInterfaceSymbol: iterableInterfaceSymbol
+        )
 
         // --- STDLIB-533: List?.orEmpty() ---
         let listTypeParamSymbols = types.nominalTypeParameterSymbols(for: listInterfaceSymbol)
@@ -2080,6 +2084,85 @@ extension DataFlowSemaPhase {
                 receiverType: receiverType,
                 parameterTypes: [operationType],
                 returnType: sType,
+                valueParameterSymbols: [operationParameterSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
+                typeParameterSymbols: [typeParamSymbol, sSymbol],
+                typeParameterUpperBoundsList: [[], []],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    /// Register `Iterable<E>.reduceRightIndexedOrNull(operation): S?` (STDLIB-COL-HOF-007).
+    private func registerIterableReduceRightIndexedOrNullMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        iterableInterfaceSymbol: SymbolID
+    ) {
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName else { return }
+        let memberName = interner.intern("reduceRightIndexedOrNull")
+        let memberFQName = iterableFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = iterableFQName + [typeParamName]
+        guard let typeParamSymbol = symbols.lookup(fqName: typeParamFQName) else { return }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+
+        let sName = interner.intern("S")
+        let sSymbol = symbols.define(
+            kind: .typeParameter,
+            name: sName,
+            fqName: memberFQName + [sName],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let sType = types.make(.typeParam(TypeParamType(symbol: sSymbol, nullability: .nonNull)))
+        let nullableSType = types.makeNullable(sType)
+        let operationType = types.make(.functionType(FunctionType(
+            params: [types.intType, typeParamType, sType],
+            returnType: sType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .inlineFunction]
+        )
+        symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_list_reduceRightIndexedOrNull", for: memberSymbol)
+        let operationParameterName = interner.intern("operation")
+        let operationParameterSymbol = symbols.define(
+            kind: .valueParameter,
+            name: operationParameterName,
+            fqName: memberFQName + [operationParameterName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(memberSymbol, for: operationParameterSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [operationType],
+                returnType: nullableSType,
                 valueParameterSymbols: [operationParameterSymbol],
                 valueParameterHasDefaultValues: [false],
                 valueParameterIsVararg: [false],

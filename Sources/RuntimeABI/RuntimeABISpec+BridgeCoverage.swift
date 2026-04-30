@@ -48,6 +48,7 @@ private let listClosureBridgeNames = [
     "kk_list_reduceIndexed",
     "kk_list_reduceIndexedOrNull",
     "kk_list_reduceRightIndexed",
+    "kk_list_reduceRightIndexedOrNull",
     "kk_list_runningReduceIndexed",
 ]
 

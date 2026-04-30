@@ -403,6 +403,48 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertNotEqual(thrown, 0)
     }
 
+    func testListReduceRightIndexedOrNullUsesIndexValueAndAccumulator() {
+        var thrown = 0
+        let result = kk_list_reduceRightIndexedOrNull(
+            makeList([1, 2, 3]),
+            unsafeBitCast(reduceRightIndexedChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 133)
+
+        thrown = 0
+        let arrayResult = kk_list_reduceRightIndexedOrNull(
+            makeArray([1, 2, 3]),
+            unsafeBitCast(reduceRightIndexedChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(arrayResult, 133)
+
+        thrown = 0
+        let singletonResult = kk_list_reduceRightIndexedOrNull(
+            makeList([7]),
+            unsafeBitCast(reduceRightIndexedChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(singletonResult, 7)
+
+        thrown = 0
+        let emptyResult = kk_list_reduceRightIndexedOrNull(
+            makeList([]),
+            unsafeBitCast(reduceRightIndexedChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
+    }
+
     func testWindowedTransformReturnsExpectedWindows() {
         let source = makeList([1, 2, 3, 4, 5])
 
