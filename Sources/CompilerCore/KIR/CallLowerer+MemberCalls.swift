@@ -6165,7 +6165,8 @@ extension CallLowerer {
             )
             finalArguments = [finalArguments[0], fnPtrExpr, envPtrExpr]
         }
-        if loweredCallee == interner.intern("kk_list_firstNotNullOf"),
+        if (loweredCallee == interner.intern("kk_list_firstNotNullOf")
+            || loweredCallee == interner.intern("kk_list_firstNotNullOfOrNull")),
            finalArguments.count == 2
         {
             let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
@@ -6485,6 +6486,7 @@ extension CallLowerer {
             interner.intern("kk_list_runningReduceIndexed"),
             interner.intern("kk_list_scanIndexed"),
             interner.intern("kk_list_firstNotNullOf"),
+            interner.intern("kk_list_firstNotNullOfOrNull"),
             interner.intern("kk_kclass_cast"),
             interner.intern("kk_range_first_predicate"),
             interner.intern("kk_range_last_predicate"),

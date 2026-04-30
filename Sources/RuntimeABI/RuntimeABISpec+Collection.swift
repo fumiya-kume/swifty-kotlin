@@ -1846,7 +1846,8 @@ public extension RuntimeABISpec {
         )
         let before = [
             "kk_list_map", "kk_list_filter", "kk_list_mapNotNull", "kk_list_forEach",
-            "kk_list_firstNotNullOf", "kk_list_flatMap", "kk_list_any", "kk_list_none", "kk_list_all",
+            "kk_list_firstNotNullOf", "kk_list_firstNotNullOfOrNull", "kk_list_flatMap",
+            "kk_list_any", "kk_list_none", "kk_list_all",
         ]
         let reduceOrNullSpec = hofSpec("kk_list_reduceOrNull")
         let scanSpec = RuntimeABIFunctionSpec(

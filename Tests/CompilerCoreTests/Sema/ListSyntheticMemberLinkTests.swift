@@ -116,6 +116,43 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testIterableFirstNotNullOfOrNullResolvesInCallExpressions() throws {
+        let source = """
+        fun pickLabel(values: Iterable<Int>): String? {
+            return values.firstNotNullOfOrNull<String> { value ->
+                if (value == 2) "two" else null
+            }
+        }
+
+        fun pickListLabel(values: List<Int>): String? {
+            return values.firstNotNullOfOrNull<String> { value ->
+                if (value == 3) "three" else null
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Iterable.firstNotNullOfOrNull surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "collections", "Iterable", "firstNotNullOfOrNull"]
+                .map { ctx.interner.intern($0) }
+            let links = Set(
+                sema.symbols.lookupAll(fqName: memberFQName)
+                    .compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
+            XCTAssertTrue(links.contains("kk_list_firstNotNullOfOrNull"))
+        }
+    }
+
     func testListFirstOrNullAndLastOrNullReturnNullableElementsWithoutCollectionMarking() throws {
         let source = """
         fun probe(values: List<Int>) {

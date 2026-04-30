@@ -310,6 +310,32 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertNotEqual(thrown, 0)
     }
 
+    func testFirstNotNullOfOrNullReturnsFirstTransformedValue() {
+        var thrown = 0
+        let result = kk_list_firstNotNullOfOrNull(
+            makeList([1, 2, 3]),
+            unsafeBitCast(firstNotNullOfStringForTwo, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(runtimeStringValue(result), "two")
+    }
+
+    func testFirstNotNullOfOrNullReturnsNullWhenNoElementTransformsToValue() {
+        var thrown = 0
+        let result = kk_list_firstNotNullOfOrNull(
+            makeList([1, 2, 3]),
+            unsafeBitCast(firstNotNullOfAlwaysNull, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, runtimeNullSentinelInt)
+    }
+
     func testWindowedTransformReturnsExpectedWindows() {
         let source = makeList([1, 2, 3, 4, 5])
 

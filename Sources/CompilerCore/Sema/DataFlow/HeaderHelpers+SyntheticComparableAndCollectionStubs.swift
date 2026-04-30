@@ -320,6 +320,10 @@ extension DataFlowSemaPhase {
             symbols: symbols, types: types, interner: interner,
             iterableInterfaceSymbol: iterableInterfaceSymbol
         )
+        registerIterableFirstNotNullOfOrNullMember(
+            symbols: symbols, types: types, interner: interner,
+            iterableInterfaceSymbol: iterableInterfaceSymbol
+        )
 
         // --- STDLIB-533: List?.orEmpty() ---
         let listTypeParamSymbols = types.nominalTypeParameterSymbols(for: listInterfaceSymbol)
@@ -1860,6 +1864,72 @@ extension DataFlowSemaPhase {
                 receiverType: receiverType,
                 parameterTypes: [transformType],
                 returnType: rType,
+                typeParameterSymbols: [typeParamSymbol, rSymbol],
+                typeParameterUpperBoundsList: [[], []],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    /// Register `Iterable<E>.firstNotNullOfOrNull(transform): R?` (STDLIB-COL-HOF-002).
+    private func registerIterableFirstNotNullOfOrNullMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        iterableInterfaceSymbol: SymbolID
+    ) {
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName else { return }
+        let memberName = interner.intern("firstNotNullOfOrNull")
+        let memberFQName = iterableFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = iterableFQName + [typeParamName]
+        guard let typeParamSymbol = symbols.lookup(fqName: typeParamFQName) else { return }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+
+        let rName = interner.intern("R")
+        let rSymbol = symbols.define(
+            kind: .typeParameter,
+            name: rName,
+            fqName: memberFQName + [rName],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+        let nullableRType = types.makeNullable(rType)
+        let transformType = types.make(.functionType(FunctionType(
+            params: [typeParamType],
+            returnType: nullableRType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .inlineFunction]
+        )
+        symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_list_firstNotNullOfOrNull", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [transformType],
+                returnType: nullableRType,
                 typeParameterSymbols: [typeParamSymbol, rSymbol],
                 typeParameterUpperBoundsList: [[], []],
                 classTypeParameterCount: 1

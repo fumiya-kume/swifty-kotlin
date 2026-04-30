@@ -1463,9 +1463,9 @@ extension CallTypeChecker {
         }
         if !isSequenceReceiver {
             activeCollectionHOFNames.remove("flatMapIndexed")
-            activeCollectionHOFNames.remove("firstNotNullOfOrNull")
             if !isCollectionReceiver && !isIterableReceiver {
                 activeCollectionHOFNames.remove("firstNotNullOf")
+                activeCollectionHOFNames.remove("firstNotNullOfOrNull")
             }
         }
         if isMapReceiver {

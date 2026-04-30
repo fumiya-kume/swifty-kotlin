@@ -174,7 +174,7 @@
 - [ ] STDLIB-COL-FACTORY-005: `linkedSetOf(vararg elements)` を追加する
 - [ ] STDLIB-COL-FACTORY-006: `setOfNotNull(element)` / `setOfNotNull(vararg elements)` を追加する
 - [x] STDLIB-COL-HOF-001: `Iterable.firstNotNullOf(transform)` を追加する
-- [ ] STDLIB-COL-HOF-002: `Iterable.firstNotNullOfOrNull(transform)` を追加する
+- [x] STDLIB-COL-HOF-002: `Iterable.firstNotNullOfOrNull(transform)` を追加する
 - [ ] STDLIB-COL-HOF-003: `Map.mapKeysTo(destination, transform)` を追加する
 - [ ] STDLIB-COL-HOF-004: `Map.mapValuesTo(destination, transform)` を追加する
 - [ ] STDLIB-COL-HOF-005: `Iterable.minusElement(element)` を追加する

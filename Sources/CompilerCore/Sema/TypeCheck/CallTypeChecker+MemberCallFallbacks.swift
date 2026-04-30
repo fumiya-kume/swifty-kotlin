@@ -488,7 +488,8 @@ extension CallTypeChecker {
             }
             return lastArgExprNode.isLambdaOrCallableRef
         }()
-        let isIterableFirstNotNullOfCall = memberName == "firstNotNullOf"
+        let isIterableFirstNotNullOfCall = (memberName == "firstNotNullOf"
+            || memberName == "firstNotNullOfOrNull")
             && args.count == 1
             && isIterableLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isCollectionReceiver = isCollectionLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
@@ -1137,6 +1138,10 @@ extension CallTypeChecker {
         }
         if memberName == interner.intern("firstNotNullOfOrNull") {
             return isSequenceReceiver
+                || isIterableReceiver
+                || (isCollectionReceiver && !isMapReceiver)
+                || isListReceiver
+                || isSetReceiver
         }
         if memberName == interner.intern("requireNoNulls") {
             return isSequenceReceiver
