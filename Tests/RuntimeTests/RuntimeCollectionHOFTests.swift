@@ -45,6 +45,14 @@ private let mapTimesTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -
     value * 2
 }
 
+private let firstNotNullOfStringForTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value == 2 ? runtimeStringRaw("two") : runtimeNullSentinelInt
+}
+
+private let firstNotNullOfAlwaysNull: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, _ in
+    runtimeNullSentinelInt
+}
+
 private let filterGreaterThanOne: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     value > 1 ? 1 : 0
 }
@@ -274,6 +282,32 @@ final class RuntimeCollectionHOFTests: XCTestCase {
 
         let sorted = kk_list_sortedBy(makeList([22, 12, 21, 11]), unsafeBitCast(sortedByTens, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
         XCTAssertEqual(listElements(sorted), [12, 11, 22, 21])
+    }
+
+    func testFirstNotNullOfReturnsFirstTransformedValue() {
+        var thrown = 0
+        let result = kk_list_firstNotNullOf(
+            makeList([1, 2, 3]),
+            unsafeBitCast(firstNotNullOfStringForTwo, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(runtimeStringValue(result), "two")
+    }
+
+    func testFirstNotNullOfThrowsWhenNoElementTransformsToValue() {
+        var thrown = 0
+        let result = kk_list_firstNotNullOf(
+            makeList([1, 2, 3]),
+            unsafeBitCast(firstNotNullOfAlwaysNull, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
     }
 
     func testWindowedTransformReturnsExpectedWindows() {

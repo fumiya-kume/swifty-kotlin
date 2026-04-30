@@ -203,6 +203,39 @@ public func kk_list_mapNotNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, 
     return registerRuntimeObject(RuntimeListBox(elements: mapped))
 }
 
+@_cdecl("kk_list_firstNotNullOf")
+public func kk_list_firstNotNullOf(
+    _ listRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let elements = runtimeCollectionElements(from: listRaw) ?? runtimeArrayBox(from: listRaw)?.elements else {
+        invalidContainerPanic(#function, "collection")
+    }
+    for elem in elements {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: elem,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        if result != 0, let normalized = runtimeMapNotNullResultValue(result) {
+            return normalized
+        }
+    }
+    return handleCollectionLambdaThrow(
+        runtimeAllocateThrowable(
+            message: "NoSuchElementException: No element of the collection was transformed to a non-null value."
+        ),
+        outThrown
+    )
+}
+
 @_cdecl("kk_list_filterTo")
 public func kk_list_filterTo(_ listRaw: Int, _ destRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let elements = runtimeCollectionElements(from: listRaw) else {

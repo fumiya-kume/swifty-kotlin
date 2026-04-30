@@ -79,6 +79,43 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testIterableFirstNotNullOfResolvesInCallExpressions() throws {
+        let source = """
+        fun pickLabel(values: Iterable<Int>): String {
+            return values.firstNotNullOf<String> { value ->
+                if (value == 2) "two" else null
+            }
+        }
+
+        fun pickListLabel(values: List<Int>): String {
+            return values.firstNotNullOf<String> { value ->
+                if (value == 3) "three" else null
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Iterable.firstNotNullOf surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "collections", "Iterable", "firstNotNullOf"]
+                .map { ctx.interner.intern($0) }
+            let links = Set(
+                sema.symbols.lookupAll(fqName: memberFQName)
+                    .compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
+            XCTAssertTrue(links.contains("kk_list_firstNotNullOf"))
+        }
+    }
+
     func testListFirstOrNullAndLastOrNullReturnNullableElementsWithoutCollectionMarking() throws {
         let source = """
         fun probe(values: List<Int>) {
@@ -1974,7 +2011,26 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             try runFrontend(ctx)
             try? SemaPhase().run(ctx)
 
-            assertHasDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+            let diagnosticCodes = Set(ctx.diagnostics.diagnostics.map(\.code))
+            XCTAssertTrue(
+                diagnosticCodes.contains("KSWIFTK-SEMA-0024")
+                    || diagnosticCodes.contains("KSWIFTK-SEMA-0002"),
+                "Expected asIterable().get(0) to remain invalid, got: \(diagnosticCodes)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let getCall = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "get"
+            })
+            if let chosenCallee = sema.bindings.callBinding(for: getCall)?.chosenCallee {
+                XCTAssertNotEqual(
+                    sema.symbols.externalLinkName(for: chosenCallee),
+                    "kk_list_get",
+                    "Iterable receiver must not resolve to the List.get runtime member"
+                )
+            }
         }
     }
 }

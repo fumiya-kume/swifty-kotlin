@@ -488,6 +488,9 @@ extension CallTypeChecker {
             }
             return lastArgExprNode.isLambdaOrCallableRef
         }()
+        let isIterableFirstNotNullOfCall = memberName == "firstNotNullOf"
+            && args.count == 1
+            && isIterableLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isCollectionReceiver = isCollectionLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isSequenceReceiver = isSequenceLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         // Allow arrays to fall through to collection fallback only when
@@ -498,6 +501,7 @@ extension CallTypeChecker {
                 || isSequenceReceiver
                 || isIterableWindowedTransformCall
                 || isIterableChunkedTransformCall
+                || isIterableFirstNotNullOfCall
         else {
             return nil
         }
@@ -511,6 +515,8 @@ extension CallTypeChecker {
         guard isSupportedCollectionFallbackMember(
             calleeName,
             isListReceiver: isListReceiver,
+            isIterableReceiver: isIterableLikeReceiver(receiverID: receiverID, sema: sema, interner: interner),
+            isCollectionReceiver: isCollectionReceiver,
             isSequenceReceiver: isSequenceReceiver,
             isMapReceiver: isMapReceiver,
             isSetReceiver: isSetReceiver,
@@ -926,6 +932,8 @@ extension CallTypeChecker {
     func isSupportedCollectionFallbackMember(
         _ memberName: InternedString,
         isListReceiver: Bool,
+        isIterableReceiver: Bool,
+        isCollectionReceiver: Bool,
         isSequenceReceiver: Bool,
         isMapReceiver: Bool,
         isSetReceiver: Bool,
@@ -1120,9 +1128,14 @@ extension CallTypeChecker {
         if memberName == interner.intern("flatMapIndexed") {
             return isSequenceReceiver
         }
-        if memberName == interner.intern("firstNotNullOf")
-            || memberName == interner.intern("firstNotNullOfOrNull")
-        {
+        if memberName == interner.intern("firstNotNullOf") {
+            return isSequenceReceiver
+                || isIterableReceiver
+                || (isCollectionReceiver && !isMapReceiver)
+                || isListReceiver
+                || isSetReceiver
+        }
+        if memberName == interner.intern("firstNotNullOfOrNull") {
             return isSequenceReceiver
         }
         if memberName == interner.intern("requireNoNulls") {

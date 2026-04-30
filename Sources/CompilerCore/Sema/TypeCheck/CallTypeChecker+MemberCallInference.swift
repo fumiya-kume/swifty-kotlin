@@ -1436,6 +1436,19 @@ extension CallTypeChecker {
         let isFlowHOF = isFlowReceiver && flowHOFNames.contains(interner.resolve(calleeName))
         let isCollectionReceiver = sema.bindings.isCollectionExpr(receiverID)
             || isCollectionLikeType(receiverType, sema: sema, interner: interner)
+        let isIterableReceiver: Bool = {
+            guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+                  let symbol = sema.symbols.symbol(classType.classSymbol)
+            else {
+                return false
+            }
+            return symbol.name == interner.intern("Iterable")
+                || symbol.fqName == [
+                    interner.intern("kotlin"),
+                    interner.intern("collections"),
+                    interner.intern("Iterable"),
+                ]
+        }()
         let isArrayReceiver = isArrayLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isMapReceiver = isMapLikeCollectionType(receiverType, sema: sema, interner: interner)
         let isMutableListReceiver = isMutableListType(receiverType, sema: sema, interner: interner)
@@ -1450,14 +1463,16 @@ extension CallTypeChecker {
         }
         if !isSequenceReceiver {
             activeCollectionHOFNames.remove("flatMapIndexed")
-            activeCollectionHOFNames.remove("firstNotNullOf")
             activeCollectionHOFNames.remove("firstNotNullOfOrNull")
+            if !isCollectionReceiver && !isIterableReceiver {
+                activeCollectionHOFNames.remove("firstNotNullOf")
+            }
         }
         if isMapReceiver {
             activeCollectionHOFNames.formUnion(mapOnlyCollectionHOFNames)
         }
         let isCollectionHOF = activeCollectionHOFNames.contains(interner.resolve(calleeName))
-            && (isCollectionReceiver || isSequenceReceiver)
+            && (isCollectionReceiver || isSequenceReceiver || isIterableReceiver)
             && !(interner.resolve(calleeName) == "binarySearch"
                  && isArrayLikeReceiver(receiverID: receiverID, sema: sema, interner: interner))
 

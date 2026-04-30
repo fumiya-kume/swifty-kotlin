@@ -6165,6 +6165,18 @@ extension CallLowerer {
             )
             finalArguments = [finalArguments[0], fnPtrExpr, envPtrExpr]
         }
+        if loweredCallee == interner.intern("kk_list_firstNotNullOf"),
+           finalArguments.count == 2
+        {
+            let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                finalArguments[1],
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            finalArguments = [finalArguments[0], fnPtrExpr, envPtrExpr]
+        }
         if (loweredCallee == interner.intern("kk_sequence_sumBy")
             || loweredCallee == interner.intern("kk_sequence_sumByDouble")),
            finalArguments.count == 2
@@ -6472,6 +6484,7 @@ extension CallLowerer {
             interner.intern("kk_list_runningFoldIndexed"),
             interner.intern("kk_list_runningReduceIndexed"),
             interner.intern("kk_list_scanIndexed"),
+            interner.intern("kk_list_firstNotNullOf"),
             interner.intern("kk_kclass_cast"),
             interner.intern("kk_range_first_predicate"),
             interner.intern("kk_range_last_predicate"),

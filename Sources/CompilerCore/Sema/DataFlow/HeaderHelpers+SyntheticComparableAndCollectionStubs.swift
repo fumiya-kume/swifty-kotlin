@@ -316,6 +316,10 @@ extension DataFlowSemaPhase {
             iterableInterfaceSymbol: iterableInterfaceSymbol,
             listInterfaceSymbol: listInterfaceSymbol
         )
+        registerIterableFirstNotNullOfMember(
+            symbols: symbols, types: types, interner: interner,
+            iterableInterfaceSymbol: iterableInterfaceSymbol
+        )
 
         // --- STDLIB-533: List?.orEmpty() ---
         let listTypeParamSymbols = types.nominalTypeParameterSymbols(for: listInterfaceSymbol)
@@ -1797,6 +1801,71 @@ extension DataFlowSemaPhase {
         registerWindowedTransformOverload([types.intType, transformType])
         registerWindowedTransformOverload([types.intType, types.intType, transformType])
         registerWindowedTransformOverload([types.intType, types.intType, types.booleanType, transformType])
+    }
+
+    /// Register `Iterable<E>.firstNotNullOf(transform): R` (STDLIB-COL-HOF-001).
+    private func registerIterableFirstNotNullOfMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        iterableInterfaceSymbol: SymbolID
+    ) {
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName else { return }
+        let memberName = interner.intern("firstNotNullOf")
+        let memberFQName = iterableFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = iterableFQName + [typeParamName]
+        guard let typeParamSymbol = symbols.lookup(fqName: typeParamFQName) else { return }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+
+        let rName = interner.intern("R")
+        let rSymbol = symbols.define(
+            kind: .typeParameter,
+            name: rName,
+            fqName: memberFQName + [rName],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+        let transformType = types.make(.functionType(FunctionType(
+            params: [typeParamType],
+            returnType: types.makeNullable(rType),
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .inlineFunction]
+        )
+        symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_list_firstNotNullOf", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [transformType],
+                returnType: rType,
+                typeParameterSymbols: [typeParamSymbol, rSymbol],
+                typeParameterUpperBoundsList: [[], []],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
     }
 
     func registerLateListIndexedMembers(
