@@ -12,6 +12,8 @@ import Foundation
 ///   with `@ExperimentalNativeApi`.
 /// - `kotlin.native.runtime.GC` — object providing GC controls, tagged with
 ///   `@ExperimentalNativeApi`.
+/// - `kotlin.native.runtime.RootSetStatistics` — GC root-set statistics DTO.
+/// - `kotlin.native.runtime.SweepStatistics` — GC sweep statistics DTO.
 /// - `kotlin.native.runtime.GCInfo` — GC statistics DTO surface.
 /// - `kotlin.native.runtime.Debugging` — object exposing debug helpers, tagged
 ///   with `@ExperimentalNativeApi`.
@@ -64,6 +66,22 @@ extension DataFlowSemaPhase {
         )
 
         registerGCObjectStub(
+            packageFQName: nativeRuntimePkg,
+            experimentalNativeApiSymbol: experimentalNativeApiSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        registerRootSetStatisticsStub(
+            packageFQName: nativeRuntimePkg,
+            experimentalNativeApiSymbol: experimentalNativeApiSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        registerSweepStatisticsStub(
             packageFQName: nativeRuntimePkg,
             experimentalNativeApiSymbol: experimentalNativeApiSymbol,
             symbols: symbols,
@@ -454,6 +472,112 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+    }
+
+    // MARK: - RootSetStatistics class
+
+    private func registerRootSetStatisticsStub(
+        packageFQName: [InternedString],
+        experimentalNativeApiSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let classSymbol = ensureNativeRuntimeClassStub(
+            named: "RootSetStatistics",
+            packageFQName: packageFQName,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        if let experimentalNativeApiSymbol {
+            attachExperimentalNativeApi(
+                to: classSymbol,
+                markerFQName: symbols.symbol(experimentalNativeApiSymbol)?
+                    .fqName.map { interner.resolve($0) }.joined(separator: ".") ?? "",
+                symbols: symbols
+            )
+        }
+
+        let classFQName = packageFQName + [interner.intern("RootSetStatistics")]
+        let classType = nominalType(classSymbol, types: types)
+        let properties: [(name: String, type: TypeID)] = [
+            ("threadLocalReferences", types.longType),
+            ("stackReferences", types.longType),
+            ("globalReferences", types.longType),
+            ("stableReferences", types.longType),
+        ]
+
+        registerSimpleConstructor(
+            ownerSymbol: classSymbol,
+            ownerFQName: classFQName,
+            ownerType: classType,
+            parameters: properties,
+            symbols: symbols,
+            interner: interner
+        )
+        for property in properties {
+            registerSimpleProperty(
+                named: property.name,
+                ownerSymbol: classSymbol,
+                ownerFQName: classFQName,
+                propertyType: property.type,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+    }
+
+    // MARK: - SweepStatistics class
+
+    private func registerSweepStatisticsStub(
+        packageFQName: [InternedString],
+        experimentalNativeApiSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let classSymbol = ensureNativeRuntimeClassStub(
+            named: "SweepStatistics",
+            packageFQName: packageFQName,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        if let experimentalNativeApiSymbol {
+            attachExperimentalNativeApi(
+                to: classSymbol,
+                markerFQName: symbols.symbol(experimentalNativeApiSymbol)?
+                    .fqName.map { interner.resolve($0) }.joined(separator: ".") ?? "",
+                symbols: symbols
+            )
+        }
+
+        let classFQName = packageFQName + [interner.intern("SweepStatistics")]
+        let classType = nominalType(classSymbol, types: types)
+        let properties: [(name: String, type: TypeID)] = [
+            ("sweptCount", types.longType),
+            ("keptCount", types.longType),
+        ]
+
+        registerSimpleConstructor(
+            ownerSymbol: classSymbol,
+            ownerFQName: classFQName,
+            ownerType: classType,
+            parameters: properties,
+            symbols: symbols,
+            interner: interner
+        )
+        for property in properties {
+            registerSimpleProperty(
+                named: property.name,
+                ownerSymbol: classSymbol,
+                ownerFQName: classFQName,
+                propertyType: property.type,
+                symbols: symbols,
+                interner: interner
+            )
+        }
     }
 
     // MARK: - GCInfo class

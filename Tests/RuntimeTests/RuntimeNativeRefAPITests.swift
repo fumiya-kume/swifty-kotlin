@@ -38,14 +38,27 @@ import XCTest
 // SEMA EXPOSED (compile-time stubs, covered by NativeRefRuntimeSemaTests):
 //   - kotlin.native.ref.WeakReference<T>
 //   - kotlin.native.ref.WeakReference.get()
+//   - kotlin.native.ref.WeakReference.clear()
 //   - kotlin.native.ref.createCleaner(value, block)
 //   - kotlin.native.runtime.GC.collect()
 //   - kotlin.native.runtime.GC.schedule()
+//   - kotlin.native.runtime.GC.targetHeapBytes
+//   - kotlin.native.runtime.GC.targetHeapUtilization
+//   - kotlin.native.runtime.GC.maxHeapBytes
+//   - kotlin.native.runtime.GCInfo
+//   - kotlin.native.runtime.GCInfo.* timing / summary properties
+//   - kotlin.native.runtime.MemoryUsage
+//   - kotlin.native.runtime.MemoryUsage.totalObjectsSizeBytes
+//   - kotlin.native.runtime.RootSetStatistics
+//   - kotlin.native.runtime.RootSetStatistics.* root count properties
+//   - kotlin.native.runtime.SweepStatistics
+//   - kotlin.native.runtime.SweepStatistics.sweptCount / keptCount
 //   - kotlin.native.runtime.Debugging.isThreadStateRunnable
 //   - kotlin.native.runtime.Debugging.gcSuspendCount
+//   - kotlin.native.runtime.Debugging.threadCount
+//   - kotlin.native.runtime.Debugging.globalObjectCount
 //
 // RUNTIME MISSING (tracked by STDLIB-NATIVE-REF-004 and later):
-//   - RootSetStatistics / SweepStatistics type surfaces
 //   - NativeRuntimeApi marker
 
 final class RuntimeNativeRefGCTests: IsolatedRuntimeXCTestCase {

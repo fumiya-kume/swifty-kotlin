@@ -302,6 +302,106 @@ final class NativeRefRuntimeSemaTests: XCTestCase {
         )
     }
 
+    // MARK: - RootSetStatistics class
+
+    func testRootSetStatisticsClassIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "native", "runtime", "RootSetStatistics"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "Expected kotlin.native.runtime.RootSetStatistics to be registered"
+        )
+        XCTAssertEqual(sema.symbols.symbol(symbol)?.kind, .class)
+    }
+
+    func testRootSetStatisticsHasConstructorAndProperties() throws {
+        let (sema, interner) = try makeSema()
+        let classFQName = ["kotlin", "native", "runtime", "RootSetStatistics"].map { interner.intern($0) }
+        let expectedProperties = [
+            "threadLocalReferences",
+            "stackReferences",
+            "globalReferences",
+            "stableReferences",
+        ]
+
+        for property in expectedProperties {
+            let symbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: classFQName + [interner.intern(property)]),
+                "RootSetStatistics should expose \(property)"
+            )
+            XCTAssertEqual(sema.symbols.propertyType(for: symbol), sema.types.longType)
+        }
+
+        let ctor = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: classFQName + [interner.intern("<init>")]).first,
+            "RootSetStatistics should expose its primary constructor"
+        )
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: ctor))
+        XCTAssertEqual(
+            signature.parameterTypes,
+            Array(repeating: sema.types.longType, count: expectedProperties.count)
+        )
+    }
+
+    func testRootSetStatisticsIsTaggedExperimentalNativeApi() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "native", "runtime", "RootSetStatistics"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        XCTAssertTrue(
+            hasOptInAnnotation(on: symbol, markerContaining: "ExperimentalNativeApi", sema: sema),
+            "RootSetStatistics should carry @ExperimentalNativeApi until NativeRuntimeApi is modeled"
+        )
+    }
+
+    // MARK: - SweepStatistics class
+
+    func testSweepStatisticsClassIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "native", "runtime", "SweepStatistics"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "Expected kotlin.native.runtime.SweepStatistics to be registered"
+        )
+        XCTAssertEqual(sema.symbols.symbol(symbol)?.kind, .class)
+    }
+
+    func testSweepStatisticsHasConstructorAndProperties() throws {
+        let (sema, interner) = try makeSema()
+        let classFQName = ["kotlin", "native", "runtime", "SweepStatistics"].map { interner.intern($0) }
+        let expectedProperties = [
+            "sweptCount",
+            "keptCount",
+        ]
+
+        for property in expectedProperties {
+            let symbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: classFQName + [interner.intern(property)]),
+                "SweepStatistics should expose \(property)"
+            )
+            XCTAssertEqual(sema.symbols.propertyType(for: symbol), sema.types.longType)
+        }
+
+        let ctor = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: classFQName + [interner.intern("<init>")]).first,
+            "SweepStatistics should expose its primary constructor"
+        )
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: ctor))
+        XCTAssertEqual(
+            signature.parameterTypes,
+            Array(repeating: sema.types.longType, count: expectedProperties.count)
+        )
+    }
+
+    func testSweepStatisticsIsTaggedExperimentalNativeApi() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "native", "runtime", "SweepStatistics"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        XCTAssertTrue(
+            hasOptInAnnotation(on: symbol, markerContaining: "ExperimentalNativeApi", sema: sema),
+            "SweepStatistics should carry @ExperimentalNativeApi until NativeRuntimeApi is modeled"
+        )
+    }
+
     // MARK: - GCInfo class
 
     func testGCInfoClassIsRegistered() throws {

@@ -65,6 +65,54 @@ public func kk_char_isWhitespace(_ value: Int) -> Int {
     return kk_box_bool(scalar.properties.isWhitespace ? 1 : 0)
 }
 
+@_cdecl("kk_char_isDefined")
+public func kk_char_isDefined(_ value: Int) -> Int {
+    if value >= 0xD800 && value <= 0xDFFF {
+        return kk_box_bool(1)
+    }
+    guard let scalar = runtimeUnicodeScalar(value) else {
+        return kk_box_bool(0)
+    }
+    return kk_box_bool(scalar.properties.generalCategory == .unassigned ? 0 : 1)
+}
+
+@_cdecl("kk_char_isSupplementaryCodePoint")
+public func kk_char_isSupplementaryCodePoint(_ codepoint: Int) -> Int {
+    kk_box_bool((codepoint >= 0x10000 && codepoint <= 0x10FFFF) ? 1 : 0)
+}
+
+@_cdecl("kk_char_isSurrogatePair")
+public func kk_char_isSurrogatePair(_ high: Int, _ low: Int) -> Int {
+    let highValue = kk_unbox_char(high)
+    let lowValue = kk_unbox_char(low)
+    let isHighSurrogate = highValue >= 0xD800 && highValue <= 0xDBFF
+    let isLowSurrogate = lowValue >= 0xDC00 && lowValue <= 0xDFFF
+    return kk_box_bool((isHighSurrogate && isLowSurrogate) ? 1 : 0)
+}
+
+@_cdecl("kk_char_toChars")
+public func kk_char_toChars(_ codePoint: Int) -> Int {
+    let elements: [Int]
+    if codePoint >= 0x10000 && codePoint <= 0x10FFFF {
+        let offset = codePoint - 0x10000
+        let high = 0xD800 + (offset >> 10)
+        let low = 0xDC00 + (offset & 0x3FF)
+        elements = [kk_box_char(high), kk_box_char(low)]
+    } else {
+        elements = [kk_box_char(codePoint)]
+    }
+    let array = RuntimeArrayBox(length: elements.count)
+    array.elements = elements
+    return registerRuntimeObject(array)
+}
+
+@_cdecl("kk_char_toCodePoint")
+public func kk_char_toCodePoint(_ high: Int, _ low: Int) -> Int {
+    let highValue = kk_unbox_char(high)
+    let lowValue = kk_unbox_char(low)
+    return ((highValue - 0xD800) << 10) + (lowValue - 0xDC00) + 0x10000
+}
+
 @_cdecl("kk_char_uppercase")
 public func kk_char_uppercase(_ value: Int) -> Int {
     guard let scalar = runtimeUnicodeScalar(value) else {
@@ -115,6 +163,14 @@ public func kk_char_titlecase(_ value: Int) -> Int {
     }
     let titlecased = scalar.properties.titlecaseMapping
     return charRuntimeMakeStringRaw(titlecased)
+}
+
+@_cdecl("kk_char_titlecaseChar")
+public func kk_char_titlecaseChar(_ value: Int) -> Int {
+    guard let scalar = runtimeUnicodeScalar(value) else {
+        return value
+    }
+    return runtimeSingleUnicodeScalarValue(scalar.properties.titlecaseMapping) ?? kk_char_uppercaseChar(value)
 }
 
 @_cdecl("kk_char_digitToInt")
