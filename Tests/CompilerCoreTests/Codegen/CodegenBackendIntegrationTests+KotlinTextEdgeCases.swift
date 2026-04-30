@@ -625,11 +625,17 @@ extension CodegenBackendIntegrationTests {
             return value.chunkedSequence(size).toList()
         }
 
+        fun renderTransform(value: CharSequence, size: Int): List<String> {
+            return value.chunkedSequence(size) { chunk -> "" + chunk + "!" }.toList()
+        }
+
         fun main() {
             println(render("abcdef", 2))
             println(render("abc", 10))
             println(render("", 3))
             println("abc".chunkedSequence(1).toList())
+            println(renderTransform("abcde", 2))
+            println("abcdef".chunkedSequence(3) { "" + it }.toList())
         }
         """
 
@@ -652,6 +658,8 @@ extension CodegenBackendIntegrationTests {
                 [abc]
                 []
                 [a, b, c]
+                [ab!, cd!, e!]
+                [abc, def]
                 """
                 + "\n"
             )
