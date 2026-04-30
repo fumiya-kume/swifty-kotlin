@@ -1091,6 +1091,7 @@ extension CallTypeChecker {
             interner.intern("containsKey"),
             interner.intern("containsValue"),
             interner.intern("mapValues"),
+            interner.intern("mapValuesTo"),
             interner.intern("mapKeys"),
             interner.intern("mapKeysTo"),
             interner.intern("filterKeys"),
@@ -1182,6 +1183,7 @@ extension CallTypeChecker {
             interner.intern("subtract"),
         ]
         if memberName == interner.intern("mapValues") ||
+            memberName == interner.intern("mapValuesTo") ||
             memberName == interner.intern("mapKeys") ||
             memberName == interner.intern("mapKeysTo") ||
             memberName == interner.intern("filterKeys") ||
@@ -1258,7 +1260,7 @@ extension CallTypeChecker {
         case interner.intern("containsKey"), interner.intern("mapValues"), interner.intern("mapKeys"),
              interner.intern("filterKeys"), interner.intern("filterValues"):
             return isMapReceiver && argCount == 1
-        case interner.intern("mapKeysTo"):
+        case interner.intern("mapKeysTo"), interner.intern("mapValuesTo"):
             return isMapReceiver && argCount == 2
         case knownNames.getValue:
             return isMapReceiver && argCount == 1
@@ -1409,6 +1411,7 @@ extension CallTypeChecker {
             interner.intern("associateWithTo"),
             interner.intern("groupByTo"),
             interner.intern("mapKeysTo"),
+            interner.intern("mapValuesTo"),
         ]
         if destinationCollectionReturningMembers.contains(memberName),
            let firstArg = args.first
@@ -1954,6 +1957,7 @@ extension CallTypeChecker {
         sema: SemaModule
     ) -> (argumentIndex: Int, expectedType: TypeID)? {
         let mapValues = interner.intern("mapValues")
+        let mapValuesTo = interner.intern("mapValuesTo")
         let mapKeys = interner.intern("mapKeys")
         let mapKeysTo = interner.intern("mapKeysTo")
         let boolOneParamMembers: Set = [
@@ -2019,6 +2023,7 @@ extension CallTypeChecker {
         let filterValues = interner.intern("filterValues")
         let mapOnlyMembers: Set = [
             mapValues,
+            mapValuesTo,
             mapKeys,
             mapKeysTo,
             filterKeys,
@@ -2036,6 +2041,7 @@ extension CallTypeChecker {
             interner.intern("flatMapIndexedTo"),
             interner.intern("associateTo"),
             mapKeysTo,
+            mapValuesTo,
             interner.intern("filterIndexedTo"),
         ]
         if mapOnlyMembers.contains(memberName) {
@@ -2121,6 +2127,8 @@ extension CallTypeChecker {
                 }
             case mapKeysTo:
                 destinationMapKeyType
+            case mapValuesTo:
+                destinationMapValueType
             default:
                 sema.types.anyType
             }

@@ -658,6 +658,31 @@ public func kk_map_mapKeysTo(
     return destRaw
 }
 
+@_cdecl("kk_map_mapValuesTo")
+public func kk_map_mapValuesTo(
+    _ mapRaw: Int,
+    _ destRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else { invalidContainerPanic(#function, "map") }
+    guard runtimeMapBox(from: destRaw) != nil else { invalidContainerPanic(#function, "mutable map") }
+    let entries = Array(zip(map.keys, map.values))
+    for (key, value) in entries {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: runtimeMapEntryNew(key: key, value: value),
+            outThrown: &thrown
+        )
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        _ = kk_mutable_map_put(destRaw, key, maybeUnbox(result))
+    }
+    return destRaw
+}
+
 @_cdecl("kk_map_toList")
 public func kk_map_toList(_ mapRaw: Int) -> Int {
     guard let map = runtimeMapBox(from: mapRaw) else { invalidContainerPanic(#function, "map") }

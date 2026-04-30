@@ -7697,6 +7697,44 @@ extension DataFlowSemaPhase {
             )
         }
 
+        let mapValuesToName = interner.intern("mapValuesTo")
+        let mapValuesToFQName = mapFQName + [mapValuesToName]
+        if symbols.lookup(fqName: mapValuesToFQName) == nil {
+            let rName = interner.intern("R")
+            let rSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: mapValuesToFQName + [rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let transformType = types.make(.functionType(FunctionType(
+                params: [entryType],
+                returnType: rType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let destinationType = if let mutableMapSymbol {
+                types.make(.classType(ClassType(
+                    classSymbol: mutableMapSymbol,
+                    args: [.in(keyType), .in(rType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                types.anyType
+            }
+            registerMember(
+                name: "mapValuesTo",
+                externalLinkName: "kk_map_mapValuesTo",
+                parameterTypes: [destinationType, transformType],
+                returnType: destinationType,
+                typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol, rSymbol],
+                flags: [.synthetic, .inlineFunction]
+            )
+        }
+
         let filterLambdaType = types.make(.functionType(FunctionType(
             params: [entryType],
             returnType: types.booleanType,

@@ -1729,6 +1729,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                 (mapFQ, "values", "kk_map_values"),
                 (mapFQ, "entries", "kk_map_entries"),
                 (mapFQ, "mapValues", "kk_map_mapValues"),
+                (mapFQ, "mapValuesTo", "kk_map_mapValuesTo"),
                 (mapFQ, "mapKeys", "kk_map_mapKeys"),
                 (mapFQ, "mapKeysTo", "kk_map_mapKeysTo"),
                 (mapFQ, "getValue", "kk_map_getValue"),
@@ -1790,7 +1791,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                 ctx.interner.intern("Map"),
             ]
 
-            for memberName in ["forEach", "map", "filter", "mapValues", "mapKeys", "mapKeysTo"] {
+            for memberName in ["forEach", "map", "filter", "mapValues", "mapValuesTo", "mapKeys", "mapKeysTo"] {
                 let symbolID = try XCTUnwrap(
                     sema.symbols.lookup(fqName: mapFQName + [ctx.interner.intern(memberName)]),
                     "Expected synthetic Map member \(memberName) to be registered"
@@ -1946,6 +1947,36 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                 .map { ctx.interner.intern($0) }
             let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: memberFQName))
             XCTAssertEqual(sema.symbols.externalLinkName(for: symbol), "kk_map_mapKeysTo")
+
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbol))
+            XCTAssertEqual(signature.parameterTypes.count, 2)
+            XCTAssertEqual(signature.returnType, signature.parameterTypes[0])
+        }
+    }
+
+    func testMapValuesToResolvesWithMutableMapDestination() throws {
+        let source = """
+        fun remap(values: Map<Int, String>, destination: MutableMap<Int, Int>): MutableMap<Int, Int> {
+            return values.mapValuesTo(destination) { entry -> entry.value.length }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Map.mapValuesTo surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "collections", "Map", "mapValuesTo"]
+                .map { ctx.interner.intern($0) }
+            let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: memberFQName))
+            XCTAssertEqual(sema.symbols.externalLinkName(for: symbol), "kk_map_mapValuesTo")
 
             let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbol))
             XCTAssertEqual(signature.parameterTypes.count, 2)

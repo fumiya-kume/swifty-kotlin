@@ -176,7 +176,7 @@
 - [x] STDLIB-COL-HOF-001: `Iterable.firstNotNullOf(transform)` を追加する
 - [x] STDLIB-COL-HOF-002: `Iterable.firstNotNullOfOrNull(transform)` を追加する
 - [x] STDLIB-COL-HOF-003: `Map.mapKeysTo(destination, transform)` を追加する
-- [ ] STDLIB-COL-HOF-004: `Map.mapValuesTo(destination, transform)` を追加する
+- [x] STDLIB-COL-HOF-004: `Map.mapValuesTo(destination, transform)` を追加する
 - [ ] STDLIB-COL-HOF-005: `Iterable.minusElement(element)` を追加する
 - [ ] STDLIB-COL-HOF-006: `Iterable.reduceRightIndexed(operation)` を追加する
 - [ ] STDLIB-COL-HOF-007: `Iterable.reduceRightIndexedOrNull(operation)` を追加する
