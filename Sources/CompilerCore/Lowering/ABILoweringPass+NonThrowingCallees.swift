@@ -89,6 +89,7 @@ extension ABILoweringPass {
             interner.intern("kk_string_windowed_default"),
             interner.intern("kk_string_windowed"),
             interner.intern("kk_string_windowed_partial"),
+            interner.intern("kk_string_windowedSequence_partial"),
             interner.intern("kk_string_commonPrefixWith"),
             interner.intern("kk_string_commonSuffixWith"),
             interner.intern("kk_string_commonPrefixWith_ignoreCase"),
