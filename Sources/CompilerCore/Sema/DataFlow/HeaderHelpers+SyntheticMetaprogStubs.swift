@@ -249,6 +249,21 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerSyntheticJvmAnnotationClass(
+            named: "PublishedApi",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticJvmAnnotationClass(
+            named: "PublishedApi",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
 
         registerSyntheticJvmAnnotationClass(
             named: "IgnorableReturnValue",
@@ -574,6 +589,22 @@ extension DataFlowSemaPhase {
             )
         }
 
+        if let publishedApiSymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern("PublishedApi")]) {
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.target.qualifiedName,
+                    arguments: [
+                        "AnnotationTarget.CLASS",
+                        "AnnotationTarget.CONSTRUCTOR",
+                        "AnnotationTarget.FUNCTION",
+                        "AnnotationTarget.PROPERTY",
+                    ]
+                ),
+                to: publishedApiSymbol,
+                symbols: symbols
+            )
+        }
+
         if let ignorableReturnValueSymbol = symbols.lookup(
             fqName: kotlinPkg + [interner.intern("IgnorableReturnValue")]
         ) {
@@ -742,12 +773,41 @@ extension DataFlowSemaPhase {
                 to: parameterNameSymbol,
                 symbols: symbols
             )
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(annotationFQName: "kotlin.annotation.MustBeDocumented"),
+                to: parameterNameSymbol,
+                symbols: symbols
+            )
             registerSyntheticParameterNameMembers(
                 ownerSymbol: parameterNameSymbol,
                 ownerFQName: kotlinPkg + [interner.intern("ParameterName")],
                 symbols: symbols,
                 types: types,
                 interner: interner
+            )
+        }
+
+        if let publishedApiSymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern("PublishedApi")]) {
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.target.qualifiedName,
+                    arguments: [
+                        "AnnotationTarget.CLASS",
+                        "AnnotationTarget.CONSTRUCTOR",
+                        "AnnotationTarget.FUNCTION",
+                        "AnnotationTarget.PROPERTY",
+                    ]
+                ),
+                to: publishedApiSymbol,
+                symbols: symbols
+            )
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.annotation.Retention",
+                    arguments: ["AnnotationRetention.BINARY"]
+                ),
+                to: publishedApiSymbol,
+                symbols: symbols
             )
         }
 

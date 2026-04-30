@@ -108,7 +108,6 @@ final class ExperimentalTimeSourceSyntheticSurfaceTests: XCTestCase {
         )))
         XCTAssertEqual(markSignature.returnType, comparableTimeMarkType)
     }
-
     func testAbstractLongTimeSourceSurfaceIsRegistered() throws {
         let (sema, interner) = try makeSema()
         let kotlinTime = ["kotlin", "time"].map { interner.intern($0) }
@@ -194,7 +193,6 @@ final class ExperimentalTimeSourceSyntheticSurfaceTests: XCTestCase {
         )))
         XCTAssertEqual(markSignature.returnType, comparableTimeMarkType)
     }
-
     func testTestTimeSourceSurfaceIsRegistered() throws {
         let (sema, interner) = try makeSema()
         let kotlinTime = ["kotlin", "time"].map { interner.intern($0) }
@@ -283,7 +281,6 @@ final class ExperimentalTimeSourceSyntheticSurfaceTests: XCTestCase {
         )))
         XCTAssertEqual(markSignature.returnType, comparableTimeMarkType)
     }
-
     func testTimeSourceAsClockExtensionIsRegistered() throws {
         let (sema, interner) = try makeSema()
         let kotlinTime = ["kotlin", "time"].map { interner.intern($0) }
