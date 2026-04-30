@@ -391,7 +391,6 @@ extension DataFlowSemaPhase {
             flags: [.synthetic, .openType, .overrideMember]
         )
 
-
         let testTimeSourceSymbol = ensureClassSymbol(
             named: "TestTimeSource",
             in: kotlinTimePkg,
