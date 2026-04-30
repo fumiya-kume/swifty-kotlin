@@ -40,10 +40,12 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
             "isLetter": "kk_char_isLetter",
             "isLetterOrDigit": "kk_char_isLetterOrDigit",
             "isWhitespace": "kk_char_isWhitespace",
+            "isDefined": "kk_char_isDefined",
             "digitToInt": "kk_char_digitToInt",
             "digitToIntOrNull": "kk_char_digitToIntOrNull",
             "uppercaseChar": "kk_char_uppercaseChar",
             "lowercaseChar": "kk_char_lowercaseChar",
+            "titlecaseChar": "kk_char_titlecaseChar",
             // New numeric conversion functions
             "toInt": "kk_char_toInt",
             "toDouble": "kk_char_toDouble",
@@ -179,6 +181,73 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testNativeCharCompanionHelpersAreRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let charSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("Char"),
+        ]))
+        let companionSymbol = try XCTUnwrap(sema.symbols.companionObjectSymbol(for: charSymbol))
+        let companionInfo = try XCTUnwrap(sema.symbols.symbol(companionSymbol))
+        let charArraySymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("CharArray"),
+        ]))
+        let charArrayType = sema.types.make(.classType(ClassType(
+            classSymbol: charArraySymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        let expected: [(name: String, link: String, params: [TypeID], returnType: TypeID)] = [
+            (
+                name: "isSupplementaryCodePoint",
+                link: "kk_char_isSupplementaryCodePoint",
+                params: [sema.types.intType],
+                returnType: sema.types.booleanType
+            ),
+            (
+                name: "isSurrogatePair",
+                link: "kk_char_isSurrogatePair",
+                params: [sema.types.charType, sema.types.charType],
+                returnType: sema.types.booleanType
+            ),
+            (
+                name: "toChars",
+                link: "kk_char_toChars",
+                params: [sema.types.intType],
+                returnType: charArrayType
+            ),
+            (
+                name: "toCodePoint",
+                link: "kk_char_toCodePoint",
+                params: [sema.types.charType, sema.types.charType],
+                returnType: sema.types.intType
+            ),
+        ]
+
+        for item in expected {
+            let functionSymbol = try XCTUnwrap(sema.symbols.lookupAll(fqName: companionInfo.fqName + [
+                interner.intern(item.name),
+            ]).first { symbolID in
+                guard let signature = sema.symbols.functionSignature(for: symbolID) else {
+                    return false
+                }
+                return signature.parameterTypes == item.params
+                    && signature.returnType == item.returnType
+            })
+            XCTAssertEqual(sema.symbols.parentSymbol(for: functionSymbol), companionSymbol)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: functionSymbol), item.link)
+            XCTAssertTrue(
+                sema.symbols.annotations(for: functionSymbol).contains {
+                    $0.annotationFQName == "kotlin.experimental.ExperimentalNativeApi"
+                },
+                "Char.Companion.\(item.name) should require ExperimentalNativeApi"
+            )
+        }
+    }
+
     func testCharLocaleCaseStubHasCorrectExternalLink() throws {
         let (sema, interner) = try makeSema()
 
@@ -195,6 +264,7 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
             ch.isLetter()
             ch.isLetterOrDigit()
             ch.isWhitespace()
+            ch.isDefined()
             ch.digitToInt()
             ch.digitToIntOrNull()
             ch.uppercase()
@@ -202,6 +272,7 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
             ch.lowercase()
             ch.lowercaseChar()
             ch.titlecase()
+            ch.titlecaseChar()
             // New numeric conversion functions
             ch.toInt()
             ch.toDouble()
@@ -226,6 +297,7 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
                 "isLetter": "kk_char_isLetter",
                 "isLetterOrDigit": "kk_char_isLetterOrDigit",
                 "isWhitespace": "kk_char_isWhitespace",
+                "isDefined": "kk_char_isDefined",
                 "digitToInt": "kk_char_digitToInt",
                 "digitToIntOrNull": "kk_char_digitToIntOrNull",
                 "uppercaseChar": "kk_char_uppercaseChar",
@@ -233,6 +305,7 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
                 "uppercase": "kk_char_uppercase",
                 "lowercase": "kk_char_lowercase",
                 "titlecase": "kk_char_titlecase",
+                "titlecaseChar": "kk_char_titlecaseChar",
                 "toInt": "kk_char_toInt",
                 "toDouble": "kk_char_toDouble",
                 "toIntOrNull": "kk_char_toIntOrNull",
@@ -274,6 +347,49 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
                         "Expected \(memberName) to resolve to \(externalLinkName)"
                     )
                 }
+            }
+        }
+    }
+
+    func testNativeCharCompanionHelpersResolveInCallExpressions() throws {
+        let source = #"""
+        @file:OptIn(kotlin.experimental.ExperimentalNativeApi::class)
+
+        fun probe() {
+            Char.isSupplementaryCodePoint(0x10000)
+            Char.isSurrogatePair('\uD800', '\uDC00')
+            Char.toChars(0x10000)
+            Char.toCodePoint('\uD800', '\uDC00')
+        }
+        """#
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let expectedFunctionLinks: [String: String] = [
+                "isSupplementaryCodePoint": "kk_char_isSupplementaryCodePoint",
+                "isSurrogatePair": "kk_char_isSurrogatePair",
+                "toChars": "kk_char_toChars",
+                "toCodePoint": "kk_char_toCodePoint",
+            ]
+
+            for (memberName, externalLinkName) in expectedFunctionLinks {
+                let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                    guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                    return ctx.interner.resolve(callee) == memberName
+                }, "Expected companion call to \(memberName) in AST")
+                XCTAssertNotEqual(sema.bindings.exprTypes[callExpr], sema.types.errorType)
+                XCTAssertEqual(
+                    sema.bindings.callBinding(for: callExpr).flatMap { binding in
+                        sema.symbols.externalLinkName(for: binding.chosenCallee)
+                    },
+                    externalLinkName,
+                    "Expected \(memberName) to resolve to \(externalLinkName)"
+                )
             }
         }
     }
