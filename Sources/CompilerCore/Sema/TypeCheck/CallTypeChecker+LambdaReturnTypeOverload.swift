@@ -461,6 +461,7 @@ extension CallTypeChecker {
             )
             if let externalLinkName = sema.symbols.externalLinkName(for: candidates[0]),
                externalLinkName == "kk_string_zipWithNextTransform"
+                   || externalLinkName == "kk_string_chunkedSequence_transform"
             {
                 return (substituted, true, false)
             }
