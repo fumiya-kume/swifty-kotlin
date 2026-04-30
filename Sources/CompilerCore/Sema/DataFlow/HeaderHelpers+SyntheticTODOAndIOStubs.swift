@@ -3237,6 +3237,7 @@ extension DataFlowSemaPhase {
             )
         }
 
+<<<<<<< HEAD
         // STDLIB-SEQ-027: firstNotNullOfOrNull(transform): R?
         let firstNotNullOfOrNullName = interner.intern("firstNotNullOfOrNull")
         let firstNotNullOfOrNullFQName = sequenceFQName + [firstNotNullOfOrNullName]
@@ -3274,6 +3275,8 @@ extension DataFlowSemaPhase {
             )
         }
 
+=======
+>>>>>>> 948968139 (Add Sequence firstNotNullOf)
         // sum()/average()
         registerSequenceMemberStub(
             named: "sum",

@@ -2999,6 +2999,7 @@ public func kk_sequence_firstNotNullOf(
     return 0
 }
 
+<<<<<<< HEAD
 @_cdecl("kk_sequence_firstNotNullOfOrNull")
 public func kk_sequence_firstNotNullOfOrNull(
     _ seqRaw: Int,
@@ -3046,6 +3047,8 @@ public func kk_sequence_firstNotNullOfOrNull(
     return found ?? runtimeNullSentinelInt
 }
 
+=======
+>>>>>>> 948968139 (Add Sequence firstNotNullOf)
 @_cdecl("kk_sequence_associate")
 public func kk_sequence_associate(
     _ seqRaw: Int,

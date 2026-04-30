@@ -146,6 +146,7 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+<<<<<<< HEAD
     func testCodegenSequenceFirstNotNullOfOrNullUsesCanonicalDiffCase() throws {
         let root = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent() // Codegen/
@@ -181,6 +182,8 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+=======
+>>>>>>> 948968139 (Add Sequence firstNotNullOf)
     func testSequenceRunningReduceIndexedAccumulatesWithIndex() throws {
         let source = """
         fun main() {

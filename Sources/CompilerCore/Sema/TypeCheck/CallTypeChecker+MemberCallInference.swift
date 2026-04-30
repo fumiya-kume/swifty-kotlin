@@ -1411,7 +1411,10 @@ extension CallTypeChecker {
             "mapIndexedNotNullTo", "filterIndexedTo", "filterNotNullTo",
             "forEachIndexed", "mapIndexed",
             "firstNotNullOf",
+<<<<<<< HEAD
             "firstNotNullOfOrNull",
+=======
+>>>>>>> 948968139 (Add Sequence firstNotNullOf)
             "onEach", "onEachIndexed",
             "sumOf", "maxOrNull", "minOrNull",
             "indexOfFirst", "indexOfLast", "binarySearch", "binarySearchBy",
@@ -2349,7 +2352,11 @@ extension CallTypeChecker {
                         resultType = sema.types.makeNonNullable(receiverType)
                     case "filterValues" where isMapReceiver:
                         resultType = sema.types.makeNonNullable(receiverType)
+<<<<<<< HEAD
                     case "mapNotNull", "firstNotNullOf", "firstNotNullOfOrNull":
+=======
+                    case "mapNotNull", "firstNotNullOf":
+>>>>>>> 948968139 (Add Sequence firstNotNullOf)
                         let bodyType: TypeID = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
                             sema.types.makeNonNullable(sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType)
                         } else if case let .functionType(fnType) = sema.types.kind(of: sema.bindings.exprType(for: args[0].expr) ?? sema.types.anyType) {
@@ -2359,8 +2366,11 @@ extension CallTypeChecker {
                         }
                         if calleeStr == "firstNotNullOf" {
                             resultType = bodyType
+<<<<<<< HEAD
                         } else if calleeStr == "firstNotNullOfOrNull" {
                             resultType = sema.types.makeNullable(bodyType)
+=======
+>>>>>>> 948968139 (Add Sequence firstNotNullOf)
                         } else if isSequenceReceiver {
                             resultType = makeSyntheticSequenceType(
                                 symbols: sema.symbols,

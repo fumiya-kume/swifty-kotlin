@@ -374,6 +374,7 @@ public extension RuntimeABISpec {
             section: "Sequence"
         ),
         RuntimeABIFunctionSpec(
+<<<<<<< HEAD
             name: "kk_sequence_firstNotNullOfOrNull",
             parameters: [
                 RuntimeABIParameter(name: "seqRaw", type: .intptr),
@@ -385,6 +386,8 @@ public extension RuntimeABISpec {
             section: "Sequence"
         ),
         RuntimeABIFunctionSpec(
+=======
+>>>>>>> 948968139 (Add Sequence firstNotNullOf)
             name: "kk_sequence_associate",
             parameters: [
                 RuntimeABIParameter(name: "seqRaw", type: .intptr),

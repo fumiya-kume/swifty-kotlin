@@ -1118,9 +1118,13 @@ extension CallTypeChecker {
         if memberName == interner.intern("flatMapIndexed") {
             return isSequenceReceiver
         }
+<<<<<<< HEAD
         if memberName == interner.intern("firstNotNullOf")
             || memberName == interner.intern("firstNotNullOfOrNull")
         {
+=======
+        if memberName == interner.intern("firstNotNullOf") || memberName == interner.intern("firstNotNullOfOrNull") {
+>>>>>>> 948968139 (Add Sequence firstNotNullOf)
             return isSequenceReceiver
         }
         if memberName == interner.intern("requireNoNulls") {
@@ -1971,7 +1975,10 @@ extension CallTypeChecker {
             interner.intern("associateWith"),
             interner.intern("associate"),
             interner.intern("firstNotNullOf"),
+<<<<<<< HEAD
             interner.intern("firstNotNullOfOrNull"),
+=======
+>>>>>>> 948968139 (Add Sequence firstNotNullOf)
             interner.intern("sumOf"),
             interner.intern("sortedByDescending"),
             interner.intern("partition"),

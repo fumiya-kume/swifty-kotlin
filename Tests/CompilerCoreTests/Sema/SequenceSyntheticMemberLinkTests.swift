@@ -34,6 +34,7 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
             XCTAssertTrue(links.contains("kk_sequence_firstNotNullOf"))
         }
     }
+<<<<<<< HEAD
 
     func testSequenceFirstNotNullOfOrNullResolvesInCallExpressions() throws {
         let source = """
@@ -66,4 +67,6 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
             XCTAssertTrue(links.contains("kk_sequence_firstNotNullOfOrNull"))
         }
     }
+=======
+>>>>>>> 948968139 (Add Sequence firstNotNullOf)
 }
