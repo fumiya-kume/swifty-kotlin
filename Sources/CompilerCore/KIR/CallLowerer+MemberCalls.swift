@@ -3191,6 +3191,81 @@ extension CallLowerer {
                 ))
                 return result
             }
+            let isCharSequenceReceiver: Bool = {
+                guard let charSequenceSymbol = sema.types.charSequenceInterfaceSymbol,
+                      case let .classType(classType) = sema.types.kind(of: nonNullReceiverType)
+                else {
+                    return false
+                }
+                return classType.classSymbol == charSequenceSymbol
+            }()
+            if (sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) || isCharSequenceReceiver),
+               calleeStr == "chunkedSequence"
+            {
+                let lambdaArgIndex = args.indices.first { index in
+                    ast.arena.expr(args[index].expr)?.isLambdaOrCallableRef == true
+                        || sema.bindings.isCollectionHOFLambdaExpr(args[index].expr)
+                }
+                let sizeArgIndex = args.indices.first { index in
+                    if let lambdaArgIndex {
+                        return index != lambdaArgIndex
+                    }
+                    return false
+                }
+                let callArguments: [KIRExprID]
+                let originalCallBinding = sema.bindings.callBindings[exprID]
+                let originalChosen: SymbolID? = if let chosen = originalCallBinding?.chosenCallee, chosen != .invalid {
+                    chosen
+                } else {
+                    nil
+                }
+                let normalizedOriginalArgs = driver.callSupportLowerer.normalizedCallArguments(
+                    providedArguments: loweredArgIDs,
+                    callBinding: originalCallBinding,
+                    chosenCallee: originalChosen,
+                    spreadFlags: args.map(\.isSpread),
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                ).arguments
+                if normalizedOriginalArgs.count == 2 {
+                    let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                        normalizedOriginalArgs[1],
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        instructions: &instructions
+                    )
+                    callArguments = [loweredReceiverID, normalizedOriginalArgs[0], fnPtrExpr, envPtrExpr]
+                } else if let lambdaArgIndex,
+                          let sizeArgIndex,
+                          lambdaArgIndex < loweredArgIDs.count,
+                          sizeArgIndex < loweredArgIDs.count
+                {
+                    let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                        loweredArgIDs[lambdaArgIndex],
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        instructions: &instructions
+                    )
+                    callArguments = [loweredReceiverID, loweredArgIDs[sizeArgIndex], fnPtrExpr, envPtrExpr]
+                } else {
+                    callArguments = [loweredReceiverID] + normalizedArgIDs
+                }
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_chunkedSequence_transform"),
+                    arguments: callArguments,
+                    result: result,
+                    canThrow: true,
+                    thrownResult: nil
+                ))
+                return result
+            }
             if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType),
                calleeStr == "compareTo"
             {
@@ -6175,6 +6250,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_firstOrNull"),
             interner.intern("kk_sequence_count"),
             interner.intern("kk_string_zipWithNextTransform"),
+            interner.intern("kk_string_chunkedSequence_transform"),
             interner.intern("kk_sequence_to_list"),
             interner.intern("kk_list_windowed_transform"),
             interner.intern("kk_sequence_chunked_transform"),

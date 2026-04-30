@@ -2155,6 +2155,96 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-TEXT-SEQ-002: CharSequence.chunkedSequence(size, transform) ---
+
+        let chunkedSequenceTransformFQName = kotlinTextPkg + [interner.intern("chunkedSequence")]
+        let chunkedSequenceRName = interner.intern("R")
+        let chunkedSequenceRFQName = chunkedSequenceTransformFQName + [chunkedSequenceRName]
+        let chunkedSequenceRSymbol: SymbolID = if let existing = symbols.lookup(fqName: chunkedSequenceRFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: chunkedSequenceRName,
+                fqName: chunkedSequenceRFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let chunkedSequenceRType = types.make(.typeParam(TypeParamType(
+            symbol: chunkedSequenceRSymbol,
+            nullability: .nonNull
+        )))
+        let chunkedSequenceTransformType = types.make(.functionType(FunctionType(
+            params: [charSequenceType],
+            returnType: chunkedSequenceRType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let chunkedSequenceTransformReturnType = makeSequenceType(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            elementType: chunkedSequenceRType
+        )
+        let hasChunkedSequenceTransform = symbols.lookupAll(fqName: chunkedSequenceTransformFQName).contains { symID in
+            guard let sig = symbols.functionSignature(for: symID) else {
+                return false
+            }
+            return sig.receiverType == charSequenceType && sig.parameterTypes.count == 2
+        }
+        if !hasChunkedSequenceTransform {
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: interner.intern("chunkedSequence"),
+                fqName: chunkedSequenceTransformFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            if let packageSymbol = symbols.lookup(fqName: kotlinTextPkg) {
+                symbols.setParentSymbol(packageSymbol, for: memberSymbol)
+            }
+            symbols.setExternalLinkName("kk_string_chunkedSequence_transform", for: memberSymbol)
+
+            let sizeParamName = interner.intern("size")
+            let sizeParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: sizeParamName,
+                fqName: chunkedSequenceTransformFQName + [sizeParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: sizeParamSymbol)
+
+            let transformParamName = interner.intern("transform")
+            let transformParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: transformParamName,
+                fqName: chunkedSequenceTransformFQName + [transformParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: transformParamSymbol)
+
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: charSequenceType,
+                    parameterTypes: [intType, chunkedSequenceTransformType],
+                    returnType: chunkedSequenceTransformReturnType,
+                    valueParameterSymbols: [sizeParamSymbol, transformParamSymbol],
+                    valueParameterHasDefaultValues: [false, false],
+                    valueParameterIsVararg: [false, false],
+                    typeParameterSymbols: [chunkedSequenceRSymbol],
+                    classTypeParameterCount: 0
+                ),
+                for: memberSymbol
+            )
+        }
+
         registerSyntheticStringExtensionFunction(
             named: "windowed",
             externalLinkName: "kk_string_windowed_default",

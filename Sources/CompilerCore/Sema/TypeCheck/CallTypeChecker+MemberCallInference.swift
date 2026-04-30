@@ -3655,14 +3655,28 @@ extension CallTypeChecker {
             }
         }
 
+        let stringHOFReceiverType = safeCall
+            ? sema.types.makeNonNullable(receiverType)
+            : receiverType
+        if let boundType = tryBindStringChunkedSequenceTransform(
+            id,
+            calleeName: calleeName,
+            receiverType: stringHOFReceiverType,
+            args: args,
+            safeCall: safeCall,
+            ast: ast,
+            ctx: ctx,
+            locals: &locals,
+            explicitTypeArgs: explicitTypeArgs
+        ) {
+            return boundType
+        }
+
         // Early String HOF fallback: String HOF members need lambda inference with
         // expected types so the implicit `it` parameter (Char) gets bound correctly.
         // lambda inference with expectedType so the implicit `it` parameter (Char)
         // gets bound correctly.  Must run before argument pre-inference below.
         if args.count == 1 {
-            let stringHOFReceiverType = safeCall
-                ? sema.types.makeNonNullable(receiverType)
-                : receiverType
             let stringHOFCalleeStr = interner.resolve(calleeName)
             let isStringHOFReceiver = sema.types.isSubtype(stringHOFReceiverType, sema.types.stringType)
                 || ((stringHOFCalleeStr == "ifBlank" || stringHOFCalleeStr == "ifEmpty" || stringHOFCalleeStr == "zipWithNext")
@@ -6094,6 +6108,22 @@ extension CallTypeChecker {
                     return finalType
                 }
             }
+            let stringHOFReceiverType = safeCall
+                ? sema.types.makeNonNullable(lookupReceiverType)
+                : lookupReceiverType
+            if let boundType = tryBindStringChunkedSequenceTransform(
+                id,
+                calleeName: calleeName,
+                receiverType: stringHOFReceiverType,
+                args: args,
+                safeCall: safeCall,
+                ast: ast,
+                ctx: ctx,
+                locals: &locals,
+                explicitTypeArgs: explicitTypeArgs
+            ) {
+                return boundType
+            }
             // String stdlib: HOF filter/map/count/any/all/none (STDLIB-189)
             if args.count == 1 {
                 let receiverTypeForCheck = safeCall
@@ -7749,6 +7779,87 @@ extension CallTypeChecker {
             args: [],
             nullability: .nonNull
         )))
+    }
+
+    private func tryBindStringChunkedSequenceTransform(
+        _ id: ExprID,
+        calleeName: InternedString,
+        receiverType: TypeID,
+        args: [CallArgument],
+        safeCall: Bool,
+        ast: ASTModule,
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings,
+        explicitTypeArgs: [TypeID]
+    ) -> TypeID? {
+        let sema = ctx.sema
+        let interner = ctx.interner
+        guard args.count == 2,
+              interner.resolve(calleeName) == "chunkedSequence",
+              isSyntheticStringLikeType(receiverType, sema: sema)
+        else {
+            return nil
+        }
+        guard let lambdaArgIndex = args.indices.first(where: { index in
+            ast.arena.expr(args[index].expr)?.isLambdaOrCallableRef == true
+        }) else {
+            return nil
+        }
+        guard let sizeArgIndex = args.indices.first(where: { index in
+            index != lambdaArgIndex
+        }) else {
+            return nil
+        }
+        guard explicitTypeArgs.count <= 1 else {
+            sema.bindings.bindExprType(id, type: sema.types.anyType)
+            return sema.types.anyType
+        }
+        let charSequenceType = syntheticCharSequenceType(sema: sema) ?? sema.types.stringType
+        let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+            params: [charSequenceType],
+            returnType: explicitTypeArgs.first ?? sema.types.anyType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        _ = driver.inferExpr(args[sizeArgIndex].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
+        sema.bindings.markCollectionHOFLambdaExpr(args[lambdaArgIndex].expr)
+        _ = driver.inferExpr(args[lambdaArgIndex].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+        let bodyType = explicitTypeArgs.first
+            ?? inferredLambdaReturnType(argExpr: args[lambdaArgIndex].expr, ast: ast, sema: sema)
+        guard let chosen = sema.symbols.lookupAll(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("text"),
+            calleeName,
+        ]).first(where: { candidate in
+            isSyntheticStringMemberCandidate(
+                candidate,
+                named: calleeName,
+                receiverType: receiverType,
+                sema: sema,
+                interner: interner
+            )
+                && sema.symbols.externalLinkName(for: candidate) == "kk_string_chunkedSequence_transform"
+        }) else {
+            return nil
+        }
+        sema.bindings.bindCall(
+            id,
+            binding: CallBinding(
+                chosenCallee: chosen,
+                substitutedTypeArguments: [bodyType],
+                parameterMapping: [sizeArgIndex: 0, lambdaArgIndex: 1]
+            )
+        )
+        sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+        let resultType = makeSyntheticSequenceType(
+            symbols: sema.symbols,
+            types: sema.types,
+            interner: interner,
+            elementType: bodyType
+        )
+        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+        sema.bindings.bindExprType(id, type: finalType)
+        return finalType
     }
 
     private func isSyntheticStringLikeType(_ type: TypeID, sema: SemaModule) -> Bool {
