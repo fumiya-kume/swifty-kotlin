@@ -352,7 +352,7 @@
 - [x] STDLIB-CORO-008: `CoroutineContext.Key.minusPolymorphicKey(key)` を追加する
 - [x] STDLIB-CONTRACTS-001: `ExperimentalExtendedContracts` marker を追加する
 - [x] STDLIB-CONTRACTS-002: `HoldsIn` effect surface を追加する
-- [ ] STDLIB-NATIVE-REF-001: `kotlin.native.ref` / `kotlin.native.runtime` の API 棚卸しを固定
+- [x] STDLIB-NATIVE-REF-001: `kotlin.native.ref` / `kotlin.native.runtime` の API 棚卸しを固定
 - [x] STDLIB-NATIVE-REF-002: `kotlin.native.ref` / `kotlin.native.runtime` の sema 露出を整える
 - [ ] STDLIB-NATIVE-REF-003: `kotlin.native.ref` / `kotlin.native.runtime` の runtime / ABI を最小必要実装へ整理
 - [x] STDLIB-NATIVE-REF-004: `kotlin.native.ref.WeakReference` API の runtime 実装を追加する（`kk_weak_ref_create / kk_weak_ref_get / kk_weak_ref_clear` 相当の入口追加）
