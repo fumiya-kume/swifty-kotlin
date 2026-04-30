@@ -216,6 +216,19 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
         )
     }
 
+    func testUuidParseOrNullCompanionMethodIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let links = allExternalLinks(
+            fqPath: ["kotlin", "uuid", "Uuid", "Companion", "parseOrNull"],
+            sema: sema,
+            interner: interner
+        )
+        XCTAssertTrue(
+            links.contains("kk_uuid_parseOrNull"),
+            "Uuid.parseOrNull(uuidString) must link to kk_uuid_parseOrNull; found: \(links)"
+        )
+    }
+
     func testUuidParseHexOrNullCompanionMethodIsRegistered() throws {
         let (sema, interner) = try makeSema()
         let links = allExternalLinks(
@@ -227,6 +240,27 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
             links.contains("kk_uuid_parseHexOrNull"),
             "Uuid.parseHexOrNull(hexString) must link to kk_uuid_parseHexOrNull; found: \(links)"
         )
+    }
+
+    func testUuidParseOrNullAcceptsStringParameterAndReturnsNullableUuid() throws {
+        let (sema, interner) = try makeSema()
+        let fq = ["kotlin", "uuid", "Uuid", "Companion", "parseOrNull"].map { interner.intern($0) }
+        let syms = sema.symbols.lookupAll(fqName: fq)
+        XCTAssertFalse(syms.isEmpty, "Uuid.parseOrNull must be registered")
+        let parseSym = try XCTUnwrap(syms.first)
+        guard let sig = sema.symbols.functionSignature(for: parseSym) else {
+            XCTFail("Uuid.parseOrNull has no signature"); return
+        }
+        XCTAssertEqual(sig.parameterTypes, [sema.types.stringType])
+
+        let uuidFQ = ["kotlin", "uuid", "Uuid"].map { interner.intern($0) }
+        let uuidSym = try XCTUnwrap(sema.symbols.lookup(fqName: uuidFQ))
+        guard case .classType(let classType) = sema.types.kind(of: sig.returnType) else {
+            XCTFail("Uuid.parseOrNull return type must be nullable Uuid")
+            return
+        }
+        XCTAssertEqual(classType.classSymbol, uuidSym)
+        XCTAssertEqual(classType.nullability, .nullable)
     }
 
     func testUuidParseHexOrNullAcceptsStringParameterAndReturnsNullableUuid() throws {
@@ -674,10 +708,11 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
             "kk_uuid_parseHexDashOrNull",
             "kk_uuid_parse",
             "kk_uuid_parseHexOrNull",
+            "kk_uuid_parseOrNull",
             "kk_uuid_nameUUIDFromBytes",
         ]
         var foundLinks: Set<String> = []
-        for memberName in ["random", "LEXICAL_ORDER", "parse", "parseHexOrNull", "parseHexDashOrNull", "nameUUIDFromBytes"] {
+        for memberName in ["random", "LEXICAL_ORDER", "parse", "parseOrNull", "parseHexOrNull", "parseHexDashOrNull", "nameUUIDFromBytes"] {
             let path = companionFQ + [memberName]
             let links = allExternalLinks(fqPath: path, sema: sema, interner: interner)
             foundLinks.formUnion(links)

@@ -136,6 +136,7 @@ extension DataFlowSemaPhase {
                 flags: []
             )
         }
+        symbols.setParentSymbol(classSymbol, for: typeParamSymbol)
 
         let tType = types.make(.typeParam(TypeParamType(
             symbol: typeParamSymbol,
@@ -150,6 +151,17 @@ extension DataFlowSemaPhase {
         types.setNominalTypeParameterSymbols([typeParamSymbol], for: classSymbol)
         types.setNominalTypeParameterVariances([.invariant], for: classSymbol)
 
+        // Register constructor: WeakReference<T>(value: T)
+        registerWeakReferenceConstructor(
+            ownerSymbol: classSymbol,
+            ownerFQName: classFQName,
+            ownerType: ownerType,
+            valueType: tType,
+            typeParameterSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // Register get() member: WeakReference<T>.get(): T?
         let nullableTType = types.makeNullable(tType)
         registerSimpleMember(
@@ -160,10 +172,86 @@ extension DataFlowSemaPhase {
             parameterTypes: [],
             parameterNames: [],
             returnType: nullableTType,
-            externalLinkName: "kk_weak_reference_get",
+            externalLinkName: "kk_weak_ref_get",
             symbols: symbols,
             types: types,
             interner: interner
+        )
+
+        // Register clear() member: WeakReference<T>.clear(): Unit
+        registerSimpleMember(
+            named: "clear",
+            ownerSymbol: classSymbol,
+            ownerFQName: classFQName,
+            ownerType: ownerType,
+            parameterTypes: [],
+            parameterNames: [],
+            returnType: types.unitType,
+            externalLinkName: "kk_weak_ref_clear",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+    }
+
+    private func registerWeakReferenceConstructor(
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        ownerType: TypeID,
+        valueType: TypeID,
+        typeParameterSymbol: SymbolID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let initName = interner.intern("<init>")
+        let ctorFQName = ownerFQName + [initName]
+        let hasMatch = symbols.lookupAll(fqName: ctorFQName).contains { symbolID in
+            guard let symbol = symbols.symbol(symbolID),
+                  symbol.kind == .constructor,
+                  let signature = symbols.functionSignature(for: symbolID)
+            else {
+                return false
+            }
+            return signature.parameterTypes == [valueType]
+                && signature.returnType == ownerType
+        }
+        guard !hasMatch else {
+            return
+        }
+
+        let ctorSymbol = symbols.define(
+            kind: .constructor,
+            name: initName,
+            fqName: ctorFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: ctorSymbol)
+        symbols.setExternalLinkName("kk_weak_ref_create", for: ctorSymbol)
+
+        let valueParamName = interner.intern("value")
+        let valueParamSymbol = symbols.define(
+            kind: .valueParameter,
+            name: valueParamName,
+            fqName: ctorFQName + [valueParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ctorSymbol, for: valueParamSymbol)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [valueType],
+                returnType: ownerType,
+                valueParameterSymbols: [valueParamSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
+                typeParameterSymbols: [typeParameterSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: ctorSymbol
         )
     }
 
@@ -196,7 +284,7 @@ extension DataFlowSemaPhase {
         if let pkgSymbol {
             symbols.setParentSymbol(pkgSymbol, for: functionSymbol)
         }
-        symbols.setExternalLinkName("kk_create_cleaner", for: functionSymbol)
+        symbols.setExternalLinkName("kk_cleaner_create", for: functionSymbol)
 
         // Tag with @ExperimentalNativeApi.
         if let experimentalNativeApiSymbol {
