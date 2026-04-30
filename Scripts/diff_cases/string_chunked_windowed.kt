@@ -41,6 +41,8 @@ fun main() {
     println(chars.chunkedSequence(2).toList())
     println(chars.chunkedSequence(4).toList())
     println("".chunkedSequence(3).toList())
+    println(chars.chunkedSequence(2) { "" + it + "!" }.toList())
+    println("abcdef".chunkedSequence(3) { "" + it }.toList())
 
     // Large chunk size
     println("x".chunked(1))
