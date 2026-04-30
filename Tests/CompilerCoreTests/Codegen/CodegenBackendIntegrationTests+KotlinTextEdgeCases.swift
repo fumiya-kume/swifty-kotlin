@@ -707,6 +707,47 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testKotlinTextWindowedSequenceTransformEdgeCases() throws {
+        let source = """
+        fun lengths(value: CharSequence): List<Int> {
+            return value.windowedSequence(3, 2, true) { it.length }.toList()
+        }
+
+        fun tagged(value: String): List<String> {
+            return value.windowedSequence(size = 2, step = 1, partialWindows = false) { window -> "" + window + "!" }.toList()
+        }
+
+        fun main() {
+            println(lengths("abcdef"))
+            println("ab".windowedSequence(5, 1, true) { it.length }.toList())
+            println(tagged("hello"))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "KotlinTextWindowedSequenceTransformEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                out,
+                """
+                [3, 3, 2]
+                [2, 1]
+                [he!, el!, ll!, lo!]
+                """
+                + "\n"
+            )
+        }
+    }
+
     // MARK: - lines
 
     func testKotlinTextLinesEdgeCases() throws {
