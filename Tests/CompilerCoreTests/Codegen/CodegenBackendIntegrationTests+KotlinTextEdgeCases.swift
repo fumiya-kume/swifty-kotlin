@@ -241,6 +241,53 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testKotlinTextReplaceAfterEdgeCases() throws {
+        let source = """
+        fun main() {
+            println("a:b:c".replaceAfter(":", "X", "MISS"))
+            println("abc".replaceAfter(":", "X", "MISS"))
+            println("abc".replaceAfter(":", "X"))
+            println("abc".replaceAfter("", "X", "MISS"))
+            println("abc".replaceAfter("abc", "X", "MISS"))
+            println("abc".replaceAfter("c", "X", "MISS"))
+            println("a:b:c".replaceAfter(':', "X", "MISS"))
+            println("abc".replaceAfter(':', "X", "MISS"))
+            println("abc".replaceAfter(':', "X"))
+            println("abc".replaceAfter('a', "X", "MISS"))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "KotlinTextReplaceAfterEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                out,
+                """
+                a:X
+                MISS
+                abc
+                X
+                abcX
+                abcX
+                a:X
+                MISS
+                abc
+                aX
+                """
+                + "\n"
+            )
+        }
+    }
+
     // MARK: - substring / subSequence
 
     func testKotlinTextSubstringEdgeCases() throws {
