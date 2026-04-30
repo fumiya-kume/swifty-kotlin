@@ -789,6 +789,47 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testKotlinTextIndexOfAnyStringsEdgeCases() throws {
+        let source = """
+        fun firstAny(value: CharSequence, strings: Collection<String>, start: Int, ignore: Boolean): Int {
+            return value.indexOfAny(strings, start, ignore)
+        }
+
+        fun main() {
+            println(firstAny("Kotlin", listOf("lin", "zz"), 0, false))
+            println(firstAny("Kotlin", listOf("ko"), 0, true))
+            println("abc".indexOfAny(listOf("x", "bc"), 0, false))
+            println("abc".indexOfAny(listOf(""), 2, false))
+            println("abc".indexOfAny(listOf("a"), 5, false))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "KotlinTextIndexOfAnyStringsEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                out,
+                """
+                3
+                0
+                1
+                2
+                -1
+                """
+                + "\n"
+            )
+        }
+    }
+
     // MARK: - lines
 
     func testKotlinTextLinesEdgeCases() throws {
