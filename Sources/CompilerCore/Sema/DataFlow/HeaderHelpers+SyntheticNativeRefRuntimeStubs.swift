@@ -12,6 +12,9 @@ import Foundation
 ///   with `@ExperimentalNativeApi`.
 /// - `kotlin.native.runtime.GC` — object providing GC controls, tagged with
 ///   `@ExperimentalNativeApi`.
+/// - `kotlin.native.runtime.RootSetStatistics` — GC root-set statistics DTO.
+/// - `kotlin.native.runtime.SweepStatistics` — GC sweep statistics DTO.
+/// - `kotlin.native.runtime.GCInfo` — GC statistics DTO surface.
 /// - `kotlin.native.runtime.Debugging` — object exposing debug helpers, tagged
 ///   with `@ExperimentalNativeApi`.
 ///
@@ -63,6 +66,30 @@ extension DataFlowSemaPhase {
         )
 
         registerGCObjectStub(
+            packageFQName: nativeRuntimePkg,
+            experimentalNativeApiSymbol: experimentalNativeApiSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        registerRootSetStatisticsStub(
+            packageFQName: nativeRuntimePkg,
+            experimentalNativeApiSymbol: experimentalNativeApiSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        registerSweepStatisticsStub(
+            packageFQName: nativeRuntimePkg,
+            experimentalNativeApiSymbol: experimentalNativeApiSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        registerGCInfoStub(
             packageFQName: nativeRuntimePkg,
             experimentalNativeApiSymbol: experimentalNativeApiSymbol,
             symbols: symbols,
@@ -412,6 +439,278 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+
+        // GC.targetHeapBytes: Long
+        registerSimpleProperty(
+            named: "targetHeapBytes",
+            ownerSymbol: objectSymbol,
+            ownerFQName: objectFQName,
+            propertyType: types.longType,
+            externalLinkName: "kk_gc_target_heap_bytes",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // GC.targetHeapUtilization: Double
+        registerSimpleProperty(
+            named: "targetHeapUtilization",
+            ownerSymbol: objectSymbol,
+            ownerFQName: objectFQName,
+            propertyType: types.doubleType,
+            externalLinkName: "kk_gc_target_heap_utilization",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // GC.maxHeapBytes: Long
+        registerSimpleProperty(
+            named: "maxHeapBytes",
+            ownerSymbol: objectSymbol,
+            ownerFQName: objectFQName,
+            propertyType: types.longType,
+            externalLinkName: "kk_gc_max_heap_bytes",
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    // MARK: - RootSetStatistics class
+
+    private func registerRootSetStatisticsStub(
+        packageFQName: [InternedString],
+        experimentalNativeApiSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let classSymbol = ensureNativeRuntimeClassStub(
+            named: "RootSetStatistics",
+            packageFQName: packageFQName,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        if let experimentalNativeApiSymbol {
+            attachExperimentalNativeApi(
+                to: classSymbol,
+                markerFQName: symbols.symbol(experimentalNativeApiSymbol)?
+                    .fqName.map { interner.resolve($0) }.joined(separator: ".") ?? "",
+                symbols: symbols
+            )
+        }
+
+        let classFQName = packageFQName + [interner.intern("RootSetStatistics")]
+        let classType = nominalType(classSymbol, types: types)
+        let properties: [(name: String, type: TypeID)] = [
+            ("threadLocalReferences", types.longType),
+            ("stackReferences", types.longType),
+            ("globalReferences", types.longType),
+            ("stableReferences", types.longType),
+        ]
+
+        registerSimpleConstructor(
+            ownerSymbol: classSymbol,
+            ownerFQName: classFQName,
+            ownerType: classType,
+            parameters: properties,
+            symbols: symbols,
+            interner: interner
+        )
+        for property in properties {
+            registerSimpleProperty(
+                named: property.name,
+                ownerSymbol: classSymbol,
+                ownerFQName: classFQName,
+                propertyType: property.type,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+    }
+
+    // MARK: - SweepStatistics class
+
+    private func registerSweepStatisticsStub(
+        packageFQName: [InternedString],
+        experimentalNativeApiSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let classSymbol = ensureNativeRuntimeClassStub(
+            named: "SweepStatistics",
+            packageFQName: packageFQName,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        if let experimentalNativeApiSymbol {
+            attachExperimentalNativeApi(
+                to: classSymbol,
+                markerFQName: symbols.symbol(experimentalNativeApiSymbol)?
+                    .fqName.map { interner.resolve($0) }.joined(separator: ".") ?? "",
+                symbols: symbols
+            )
+        }
+
+        let classFQName = packageFQName + [interner.intern("SweepStatistics")]
+        let classType = nominalType(classSymbol, types: types)
+        let properties: [(name: String, type: TypeID)] = [
+            ("sweptCount", types.longType),
+            ("keptCount", types.longType),
+        ]
+
+        registerSimpleConstructor(
+            ownerSymbol: classSymbol,
+            ownerFQName: classFQName,
+            ownerType: classType,
+            parameters: properties,
+            symbols: symbols,
+            interner: interner
+        )
+        for property in properties {
+            registerSimpleProperty(
+                named: property.name,
+                ownerSymbol: classSymbol,
+                ownerFQName: classFQName,
+                propertyType: property.type,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+    }
+
+    // MARK: - GCInfo class
+
+    private func registerGCInfoStub(
+        packageFQName: [InternedString],
+        experimentalNativeApiSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let gcInfoSymbol = ensureNativeRuntimeClassStub(
+            named: "GCInfo",
+            packageFQName: packageFQName,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let rootSetStatisticsSymbol = ensureNativeRuntimeClassStub(
+            named: "RootSetStatistics",
+            packageFQName: packageFQName,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let sweepStatisticsSymbol = ensureNativeRuntimeClassStub(
+            named: "SweepStatistics",
+            packageFQName: packageFQName,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let memoryUsageSymbol = ensureNativeRuntimeClassStub(
+            named: "MemoryUsage",
+            packageFQName: packageFQName,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        if let experimentalNativeApiSymbol {
+            attachExperimentalNativeApi(
+                to: gcInfoSymbol,
+                markerFQName: symbols.symbol(experimentalNativeApiSymbol)?
+                    .fqName.map { interner.resolve($0) }.joined(separator: ".") ?? "",
+                symbols: symbols
+            )
+            attachExperimentalNativeApi(
+                to: memoryUsageSymbol,
+                markerFQName: symbols.symbol(experimentalNativeApiSymbol)?
+                    .fqName.map { interner.resolve($0) }.joined(separator: ".") ?? "",
+                symbols: symbols
+            )
+        }
+
+        let gcInfoFQName = packageFQName + [interner.intern("GCInfo")]
+        let memoryUsageFQName = packageFQName + [interner.intern("MemoryUsage")]
+        let gcInfoType = nominalType(gcInfoSymbol, types: types)
+        let rootSetStatisticsType = nominalType(rootSetStatisticsSymbol, types: types)
+        let sweepStatisticsType = nominalType(sweepStatisticsSymbol, types: types)
+        let memoryUsageType = nominalType(memoryUsageSymbol, types: types)
+        let nullableLongType = types.makeNullable(types.longType)
+        let sweepStatisticsMapType = mapOfStringTo(
+            sweepStatisticsType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let memoryUsageMapType = mapOfStringTo(
+            memoryUsageType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        let gcInfoProperties: [(name: String, type: TypeID)] = [
+            ("epoch", types.longType),
+            ("startTimeNs", types.longType),
+            ("endTimeNs", types.longType),
+            ("firstPauseRequestTimeNs", types.longType),
+            ("firstPauseStartTimeNs", types.longType),
+            ("firstPauseEndTimeNs", types.longType),
+            ("secondPauseRequestTimeNs", nullableLongType),
+            ("secondPauseStartTimeNs", nullableLongType),
+            ("secondPauseEndTimeNs", nullableLongType),
+            ("postGcCleanupTimeNs", nullableLongType),
+            ("rootSet", rootSetStatisticsType),
+            ("markedCount", types.longType),
+            ("sweepStatistics", sweepStatisticsMapType),
+            ("memoryUsageBefore", memoryUsageMapType),
+            ("memoryUsageAfter", memoryUsageMapType),
+        ]
+
+        registerSimpleConstructor(
+            ownerSymbol: gcInfoSymbol,
+            ownerFQName: gcInfoFQName,
+            ownerType: gcInfoType,
+            parameters: gcInfoProperties,
+            symbols: symbols,
+            interner: interner
+        )
+        for property in gcInfoProperties {
+            registerSimpleProperty(
+                named: property.name,
+                ownerSymbol: gcInfoSymbol,
+                ownerFQName: gcInfoFQName,
+                propertyType: property.type,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
+        let memoryUsageProperties: [(name: String, type: TypeID)] = [
+            ("totalObjectsSizeBytes", types.longType),
+        ]
+        registerSimpleConstructor(
+            ownerSymbol: memoryUsageSymbol,
+            ownerFQName: memoryUsageFQName,
+            ownerType: memoryUsageType,
+            parameters: memoryUsageProperties,
+            symbols: symbols,
+            interner: interner
+        )
+        for property in memoryUsageProperties {
+            registerSimpleProperty(
+                named: property.name,
+                ownerSymbol: memoryUsageSymbol,
+                ownerFQName: memoryUsageFQName,
+                propertyType: property.type,
+                symbols: symbols,
+                interner: interner
+            )
+        }
     }
 
     // MARK: - Debugging object
@@ -462,36 +761,48 @@ extension DataFlowSemaPhase {
         }
 
         // Debugging.isThreadStateRunnable: Boolean
-        let isRunnableName = interner.intern("isThreadStateRunnable")
-        let isRunnableFQName = objectFQName + [isRunnableName]
-        if symbols.lookup(fqName: isRunnableFQName) == nil {
-            let propSymbol = symbols.define(
-                kind: .property,
-                name: isRunnableName,
-                fqName: isRunnableFQName,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic]
-            )
-            symbols.setParentSymbol(objectSymbol, for: propSymbol)
-            symbols.setPropertyType(types.booleanType, for: propSymbol)
-        }
+        registerSimpleProperty(
+            named: "isThreadStateRunnable",
+            ownerSymbol: objectSymbol,
+            ownerFQName: objectFQName,
+            propertyType: types.booleanType,
+            externalLinkName: "kk_debugging_is_thread_state_runnable",
+            symbols: symbols,
+            interner: interner
+        )
 
         // Debugging.gcSuspendCount: Int
-        let gcSuspendName = interner.intern("gcSuspendCount")
-        let gcSuspendFQName = objectFQName + [gcSuspendName]
-        if symbols.lookup(fqName: gcSuspendFQName) == nil {
-            let propSymbol = symbols.define(
-                kind: .property,
-                name: gcSuspendName,
-                fqName: gcSuspendFQName,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic]
-            )
-            symbols.setParentSymbol(objectSymbol, for: propSymbol)
-            symbols.setPropertyType(types.intType, for: propSymbol)
-        }
+        registerSimpleProperty(
+            named: "gcSuspendCount",
+            ownerSymbol: objectSymbol,
+            ownerFQName: objectFQName,
+            propertyType: types.intType,
+            externalLinkName: "kk_debugging_gc_suspend_count",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // Debugging.threadCount: Int
+        registerSimpleProperty(
+            named: "threadCount",
+            ownerSymbol: objectSymbol,
+            ownerFQName: objectFQName,
+            propertyType: types.intType,
+            externalLinkName: "kk_debugging_thread_count",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // Debugging.globalObjectCount: Int
+        registerSimpleProperty(
+            named: "globalObjectCount",
+            ownerSymbol: objectSymbol,
+            ownerFQName: objectFQName,
+            propertyType: types.intType,
+            externalLinkName: "kk_debugging_global_object_count",
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     // MARK: - Helpers
@@ -545,6 +856,151 @@ extension DataFlowSemaPhase {
         }
         annotations.append(record)
         symbols.setAnnotations(annotations, for: symbol)
+    }
+
+    private func ensureNativeRuntimeClassStub(
+        named name: String,
+        packageFQName: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> SymbolID {
+        let className = interner.intern(name)
+        let classFQName = packageFQName + [className]
+        let classSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: classFQName) {
+            classSymbol = existing
+        } else {
+            classSymbol = symbols.define(
+                kind: .class,
+                name: className,
+                fqName: classFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        if let pkgSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(pkgSymbol, for: classSymbol)
+        }
+        symbols.setPropertyType(nominalType(classSymbol, types: types), for: classSymbol)
+        return classSymbol
+    }
+
+    private func nominalType(_ symbol: SymbolID, types: TypeSystem) -> TypeID {
+        types.make(.classType(ClassType(
+            classSymbol: symbol,
+            args: [],
+            nullability: .nonNull
+        )))
+    }
+
+    private func mapOfStringTo(
+        _ valueType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID {
+        let mapFQName = ["kotlin", "collections", "Map"].map { interner.intern($0) }
+        guard let mapSymbol = symbols.lookup(fqName: mapFQName) else {
+            return types.anyType
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: mapSymbol,
+            args: [.out(types.stringType), .out(valueType)],
+            nullability: .nonNull
+        )))
+    }
+
+    private func registerSimpleConstructor(
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        ownerType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let initName = interner.intern("<init>")
+        let ctorFQName = ownerFQName + [initName]
+        let parameterTypes = parameters.map(\.type)
+        let existing = symbols.lookupAll(fqName: ctorFQName).contains { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return signature.parameterTypes == parameterTypes
+                && signature.returnType == ownerType
+        }
+        guard !existing else {
+            return
+        }
+
+        let ctorSymbol = symbols.define(
+            kind: .constructor,
+            name: initName,
+            fqName: ctorFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: ctorSymbol)
+
+        var valueParameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let paramName = interner.intern(parameter.name)
+            let paramSymbol = symbols.define(
+                kind: .valueParameter,
+                name: paramName,
+                fqName: ctorFQName + [paramName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(ctorSymbol, for: paramSymbol)
+            valueParameterSymbols.append(paramSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: parameterTypes,
+                returnType: ownerType,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: parameters.count),
+                valueParameterIsVararg: Array(repeating: false, count: parameters.count)
+            ),
+            for: ctorSymbol
+        )
+    }
+
+    /// Registers a simple property on `ownerSymbol`.
+    private func registerSimpleProperty(
+        named name: String,
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        propertyType: TypeID,
+        externalLinkName: String? = nil,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let propertyName = interner.intern(name)
+        let propertyFQName = ownerFQName + [propertyName]
+
+        guard symbols.lookup(fqName: propertyFQName) == nil else {
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
+        symbols.setPropertyType(propertyType, for: propertySymbol)
+        if let externalLinkName {
+            symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
+        }
     }
 
     /// Registers a simple member function on `ownerSymbol`.

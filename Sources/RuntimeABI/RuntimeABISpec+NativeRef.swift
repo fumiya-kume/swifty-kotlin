@@ -50,5 +50,53 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "NativeRef"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_gc_schedule",
+            parameters: [],
+            returnType: .intptr,
+            section: "NativeRef"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_gc_target_heap_bytes",
+            parameters: [],
+            returnType: .intptr,
+            section: "NativeRef"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_gc_target_heap_utilization",
+            parameters: [],
+            returnType: .double,
+            section: "NativeRef"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_gc_max_heap_bytes",
+            parameters: [],
+            returnType: .intptr,
+            section: "NativeRef"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_debugging_is_thread_state_runnable",
+            parameters: [],
+            returnType: .intptr,
+            section: "NativeRef"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_debugging_gc_suspend_count",
+            parameters: [],
+            returnType: .intptr,
+            section: "NativeRef"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_debugging_thread_count",
+            parameters: [],
+            returnType: .intptr,
+            section: "NativeRef"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_debugging_global_object_count",
+            parameters: [],
+            returnType: .intptr,
+            section: "NativeRef"
+        ),
     ]
 }
