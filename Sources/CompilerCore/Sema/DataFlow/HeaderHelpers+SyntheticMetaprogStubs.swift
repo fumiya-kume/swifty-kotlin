@@ -249,6 +249,13 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerSyntheticJvmAnnotationClass(
+            named: "PublishedApi",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
 
         registerSyntheticJvmAnnotationClass(
             named: "IgnorableReturnValue",
@@ -748,6 +755,30 @@ extension DataFlowSemaPhase {
                 symbols: symbols,
                 types: types,
                 interner: interner
+            )
+        }
+
+        if let publishedApiSymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern("PublishedApi")]) {
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.target.qualifiedName,
+                    arguments: [
+                        "AnnotationTarget.CLASS",
+                        "AnnotationTarget.CONSTRUCTOR",
+                        "AnnotationTarget.FUNCTION",
+                        "AnnotationTarget.PROPERTY",
+                    ]
+                ),
+                to: publishedApiSymbol,
+                symbols: symbols
+            )
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.annotation.Retention",
+                    arguments: ["AnnotationRetention.BINARY"]
+                ),
+                to: publishedApiSymbol,
+                symbols: symbols
             )
         }
 
