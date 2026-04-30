@@ -735,6 +735,23 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-TEXT-SEARCH-006: CharSequence.findLastAnyOf(strings, startIndex, ignoreCase) ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "findLastAnyOf",
+            externalLinkName: "kk_string_findLastAnyOf",
+            receiverType: charSequenceType,
+            parameters: [
+                ("strings", collectionStringType, false, false),
+                ("startIndex", intType, false, false),
+                ("ignoreCase", boolType, false, false),
+            ],
+            returnType: nullablePairIntStringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticStringExtensionFunction(
             named: "lastIndexOf",
             externalLinkName: "kk_string_lastIndexOf_ignoreCase",
