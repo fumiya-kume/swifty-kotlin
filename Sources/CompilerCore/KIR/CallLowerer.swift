@@ -1416,8 +1416,13 @@ final class CallLowerer {
             return finalArgs
         }
 
-        // STDLIB-590: runCatching { block } — expand lambda arg to (fnPtr, closureRaw)
-        if externalLinkName == "kk_runCatching", loweredArguments.count == 1 {
+        // STDLIB-590 / STDLIB-KOTLIN-ROOT-CLOSE-001: Function0 runtime entry
+        // points receive lambda arguments as (fnPtr, closureRaw).
+        let function0RuntimeNames: Set<String> = [
+            "kk_runCatching",
+            "kk_auto_closeable_create",
+        ]
+        if function0RuntimeNames.contains(externalLinkName), loweredArguments.count == 1 {
             var finalArgs: [KIRExprID] = []
             var lambdaID = loweredArguments[0]
             var resolvedCallableInfo = driver.ctx.callableValueInfo(for: lambdaID)

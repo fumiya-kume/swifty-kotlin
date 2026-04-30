@@ -17,6 +17,14 @@ final class RuntimeCharEdgeCaseTests: IsolatedRuntimeXCTestCase {
         extractString(from: UnsafeMutableRawPointer(bitPattern: raw)) ?? ""
     }
 
+    private func runtimeString(_ text: String) -> Int {
+        text.withCString { cstr in
+            cstr.withMemoryRebound(to: UInt8.self, capacity: text.utf8.count) { ptr in
+                Int(bitPattern: kk_string_from_utf8(ptr, Int32(text.utf8.count)))
+            }
+        }
+    }
+
     // MARK: - Char.MIN_VALUE / MAX_VALUE boundaries
     // Kotlin Char.MIN_VALUE = '\u0000', Char.MAX_VALUE = '\uFFFF'
 
@@ -202,6 +210,12 @@ final class RuntimeCharEdgeCaseTests: IsolatedRuntimeXCTestCase {
 
     func testLowercaseAscii() {
         XCTAssertEqual(runtimeStringValue(kk_char_lowercase(Int(("A" as UnicodeScalar).value))), "a")
+    }
+
+    func testLowercaseWithTurkishLocale() {
+        let locale = kk_locale_new_language_country(runtimeString("tr"), runtimeString("TR"))
+        let result = kk_char_lowercase_locale(Int(("I" as UnicodeScalar).value), locale)
+        XCTAssertEqual(runtimeStringValue(result), "\u{0131}")
     }
 
     // MARK: - titlecaseChar() edge cases

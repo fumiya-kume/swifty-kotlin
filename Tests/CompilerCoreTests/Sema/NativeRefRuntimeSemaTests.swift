@@ -107,6 +107,48 @@ final class NativeRefRuntimeSemaTests: XCTestCase {
         } else {
             XCTFail("Expected return type to be a nullable type param, got \(returnKind)")
         }
+        XCTAssertEqual(
+            sema.symbols.externalLinkName(for: getMember),
+            "kk_weak_ref_get",
+            "WeakReference.get() should lower to kk_weak_ref_get"
+        )
+    }
+
+    func testWeakReferenceHasConstructor() throws {
+        let (sema, interner) = try makeSema()
+        let classFQName = ["kotlin", "native", "ref", "WeakReference"].map { interner.intern($0) }
+        let ctorFQName = classFQName + [interner.intern("<init>")]
+        let ctor = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: ctorFQName).first,
+            "WeakReference should have a constructor"
+        )
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: ctor))
+        XCTAssertEqual(signature.parameterTypes.count, 1)
+        XCTAssertEqual(signature.typeParameterSymbols.count, 1)
+        XCTAssertEqual(signature.classTypeParameterCount, 1)
+        XCTAssertEqual(
+            sema.symbols.externalLinkName(for: ctor),
+            "kk_weak_ref_create",
+            "WeakReference constructor should lower to kk_weak_ref_create"
+        )
+    }
+
+    func testWeakReferenceHasClearMember() throws {
+        let (sema, interner) = try makeSema()
+        let classFQName = ["kotlin", "native", "ref", "WeakReference"].map { interner.intern($0) }
+        let clearMemberFQName = classFQName + [interner.intern("clear")]
+        let clearMember = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: clearMemberFQName).first,
+            "WeakReference should have a clear() member"
+        )
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: clearMember))
+        XCTAssertEqual(signature.parameterTypes.count, 0)
+        XCTAssertEqual(signature.returnType, sema.types.unitType)
+        XCTAssertEqual(
+            sema.symbols.externalLinkName(for: clearMember),
+            "kk_weak_ref_clear",
+            "WeakReference.clear() should lower to kk_weak_ref_clear"
+        )
     }
 
     func testWeakReferenceIsTaggedExperimentalNativeApi() throws {
@@ -136,6 +178,11 @@ final class NativeRefRuntimeSemaTests: XCTestCase {
         XCTAssertEqual(
             signature.parameterTypes.count, 2,
             "createCleaner should accept (value, block)"
+        )
+        XCTAssertEqual(
+            sema.symbols.externalLinkName(for: sym),
+            "kk_cleaner_create",
+            "createCleaner should lower to kk_cleaner_create"
         )
     }
 

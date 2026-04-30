@@ -333,6 +333,40 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
         }
+        let javaUtilPkg = ensurePackage(
+            path: ["java", "util"],
+            symbols: symbols,
+            interner: interner
+        )
+        let javaUtilPkgSymbol = symbols.lookup(fqName: javaUtilPkg)
+        let localeSymbol = ensureClassSymbol(
+            named: "Locale",
+            in: javaUtilPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaUtilPkgSymbol {
+            symbols.setParentSymbol(javaUtilPkgSymbol, for: localeSymbol)
+        }
+        let localeType = types.make(.classType(ClassType(
+            classSymbol: localeSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(localeType, for: localeSymbol)
+
+        registerSyntheticCharExtensionFunction(
+            named: "lowercase",
+            externalLinkName: "kk_char_lowercase_locale",
+            receiverType: types.charType,
+            parameters: [
+                ("locale", localeType, false, false),
+            ],
+            returnType: types.stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
         // STDLIB-003-ABI-001: Char.digitToInt(radix: Int)
         registerDigitToIntRadixStub(symbols: symbols, types: types, interner: interner)
         registerNativeCharCompanionHelpers(symbols: symbols, types: types, interner: interner)
@@ -445,6 +479,7 @@ extension DataFlowSemaPhase {
         named name: String,
         externalLinkName: String,
         receiverType: TypeID,
+        parameters: [(name: String, type: TypeID, hasDefault: Bool, isVararg: Bool)] = [],
         returnType: TypeID,
         packageFQName: [InternedString],
         symbols: SymbolTable,
@@ -452,13 +487,14 @@ extension DataFlowSemaPhase {
     ) {
         let functionName = interner.intern(name)
         let functionFQName = packageFQName + [functionName]
+        let parameterTypes = parameters.map(\.type)
 
         if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
             guard let signature = symbols.functionSignature(for: symbolID) else {
                 return false
             }
             return signature.receiverType == receiverType
-                && signature.parameterTypes.isEmpty
+                && signature.parameterTypes == parameterTypes
                 && signature.returnType == returnType
         }) {
             symbols.setExternalLinkName(externalLinkName, for: existing)
@@ -477,11 +513,28 @@ extension DataFlowSemaPhase {
             symbols.setParentSymbol(packageSymbol, for: functionSymbol)
         }
         symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+        var valueParameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: functionFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            valueParameterSymbols.append(parameterSymbol)
+        }
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: receiverType,
-                parameterTypes: [],
-                returnType: returnType
+                parameterTypes: parameterTypes,
+                returnType: returnType,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: parameters.map(\.hasDefault),
+                valueParameterIsVararg: parameters.map(\.isVararg)
             ),
             for: functionSymbol
         )

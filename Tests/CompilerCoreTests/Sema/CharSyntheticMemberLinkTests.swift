@@ -3,13 +3,19 @@ import Foundation
 import XCTest
 
 final class CharSyntheticMemberLinkTests: XCTestCase {
-    private func externalLink(for member: String, sema: SemaModule, interner: StringInterner) -> String? {
+    private func externalLink(
+        for member: String,
+        parameterCount: Int = 0,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> String? {
         let fq = ["kotlin", "text", member].map { interner.intern($0) }
         let sym = sema.symbols.lookupAll(fqName: fq).first { symbolID in
             guard let signature = sema.symbols.functionSignature(for: symbolID) else {
                 return false
             }
             return signature.receiverType == sema.types.charType
+                && signature.parameterTypes.count == parameterCount
         } ?? sema.symbols.lookup(fqName: fq)
         guard let sym else { return nil }
         return sema.symbols.externalLinkName(for: sym)
@@ -240,6 +246,15 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
                 "Char.Companion.\(item.name) should require ExperimentalNativeApi"
             )
         }
+    }
+
+    func testCharLocaleCaseStubHasCorrectExternalLink() throws {
+        let (sema, interner) = try makeSema()
+
+        XCTAssertEqual(
+            externalLink(for: "lowercase", parameterCount: 1, sema: sema, interner: interner),
+            "kk_char_lowercase_locale"
+        )
     }
 
     func testCharPredicateMembersResolveInCallExpressions() throws {

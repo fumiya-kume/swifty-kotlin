@@ -2,6 +2,43 @@ import Dispatch
 @testable import Runtime
 import XCTest
 
+private typealias RuntimeCoroutineIntrinsicEntry = @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int
+
+private let coroutineIntrinsicsDelayFunctionID = 8810
+private let coroutineIntrinsicsReceiverFunctionID = 8811
+
+@_cdecl("coro_intrinsics_return_123")
+private func coro_intrinsics_return_123(_ continuation: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    return kk_coroutine_state_exit(continuation, 123)
+}
+
+@_cdecl("coro_intrinsics_delay_then_return")
+private func coro_intrinsics_delay_then_return(_ continuation: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    let label = kk_coroutine_state_enter(continuation, coroutineIntrinsicsDelayFunctionID)
+    if label == 0 {
+        _ = kk_coroutine_state_set_label(continuation, 1)
+        return kk_kxmini_delay(1, continuation)
+    }
+    outThrown?.pointee = 0
+    return kk_coroutine_state_exit(continuation, 456)
+}
+
+@_cdecl("coro_intrinsics_receiver_plus_one")
+private func coro_intrinsics_receiver_plus_one(_ continuation: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    _ = kk_coroutine_state_enter(continuation, coroutineIntrinsicsReceiverFunctionID)
+    outThrown?.pointee = 0
+    let receiver = kk_coroutine_launcher_arg_get(continuation, 0)
+    return kk_coroutine_state_exit(continuation, Int(receiver) + 1)
+}
+
+@_cdecl("coro_intrinsics_throw_immediately")
+private func coro_intrinsics_throw_immediately(_ continuation: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = runtimeAllocateThrowable(message: "intrinsic boom")
+    _ = kk_coroutine_state_exit(continuation, 0)
+    return 0
+}
+
 // MARK: - RuntimeCoroutineIntrinsicsEdgeCaseTests
 //
 // Edge-case coverage for kotlin.coroutines.intrinsics and
@@ -15,10 +52,7 @@ import XCTest
 //   • RuntimeCancellationBox class hierarchy (extends RuntimeThrowableBox)
 //   • Result.failure with CancellationException treated as cancellation (not failure)
 //   • kk_runCatching + cancellation-exception propagation through Result
-//
-// Unimplemented (noted in PR body, NOT tested here):
-//   • startCoroutineUninterceptedOrReturn — no @_cdecl("kk_start_coroutine_unintercepted…") entry
-//   • createCoroutineUnintercepted       — no @_cdecl("kk_create_coroutine_unintercepted") entry
+//   • kk_create_coroutine_unintercepted / kk_start_coroutine_unintercepted_or_return
 // CancellationException inherits IllegalStateException → RuntimeException in Kotlin.
 // RuntimeCancellationBox reports this chain via exceptionHierarchyFQNames so catch clauses
 // targeting IllegalStateException / RuntimeException match CancellationException at runtime (PR #1261).
@@ -69,6 +103,104 @@ final class RuntimeCoroutineIntrinsicsEdgeCaseTests: XCTestCase {
         defer { _ = kk_coroutine_state_exit(cont, 0) }
         XCTAssertNotEqual(sentinel, cont,
             "COROUTINE_SUSPENDED must not alias a regular continuation handle")
+    }
+
+    // MARK: - start/create unintercepted runtime entry points
+
+    func testCreateCoroutineUninterceptedStartsWhenReturnedContinuationIsResumed() throws {
+        let completion = kk_coroutine_continuation_new(8812)
+        defer { _ = kk_coroutine_state_exit(completion, 0) }
+        let completionState = try XCTUnwrap(runtimeContinuationState(from: completion))
+        let entryRaw = unsafeBitCast(
+            coro_intrinsics_return_123 as RuntimeCoroutineIntrinsicEntry,
+            to: Int.self
+        )
+
+        let continuation = kk_create_coroutine_unintercepted(entryRaw, completion)
+        XCTAssertNotEqual(continuation, 0)
+
+        kk_coroutine_continuation_resume(continuation, 0)
+        XCTAssertEqual(Int(completionState.completion), 123)
+        XCTAssertEqual(completionState.thrownException, 0)
+    }
+
+    func testCreateCoroutineUninterceptedPreservesReceiverLauncherArg() throws {
+        let completion = kk_coroutine_continuation_new(8813)
+        defer { _ = kk_coroutine_state_exit(completion, 0) }
+        let completionState = try XCTUnwrap(runtimeContinuationState(from: completion))
+        let entryRaw = unsafeBitCast(
+            coro_intrinsics_receiver_plus_one as RuntimeCoroutineIntrinsicEntry,
+            to: Int.self
+        )
+
+        let continuation = kk_create_coroutine_unintercepted(entryRaw, completion)
+        _ = kk_coroutine_launcher_arg_set(continuation, 0, 41)
+        kk_coroutine_continuation_resume(continuation, 0)
+
+        XCTAssertEqual(Int(completionState.completion), 42)
+        XCTAssertEqual(completionState.thrownException, 0)
+    }
+
+    func testStartCoroutineUninterceptedOrReturnReturnsImmediateResult() throws {
+        let completion = kk_coroutine_continuation_new(8814)
+        defer { _ = kk_coroutine_state_exit(completion, 0) }
+        let completionState = try XCTUnwrap(runtimeContinuationState(from: completion))
+        let entryRaw = unsafeBitCast(
+            coro_intrinsics_return_123 as RuntimeCoroutineIntrinsicEntry,
+            to: Int.self
+        )
+        let continuation = kk_create_coroutine_unintercepted(entryRaw, completion)
+        var thrown = 0
+
+        let result = kk_start_coroutine_unintercepted_or_return(entryRaw, continuation, &thrown)
+
+        XCTAssertEqual(result, 123)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(Int(completionState.completion), 0)
+        XCTAssertEqual(completionState.thrownException, 0)
+    }
+
+    func testStartCoroutineUninterceptedOrReturnSuspendsAndResumesCompletion() throws {
+        let completion = kk_coroutine_continuation_new(8815)
+        defer { _ = kk_coroutine_state_exit(completion, 0) }
+        let completionState = try XCTUnwrap(runtimeContinuationState(from: completion))
+        let completed = DispatchSemaphore(value: 0)
+        completionState.installResumeContinuation {
+            completed.signal()
+        }
+        let entryRaw = unsafeBitCast(
+            coro_intrinsics_delay_then_return as RuntimeCoroutineIntrinsicEntry,
+            to: Int.self
+        )
+        let continuation = kk_create_coroutine_unintercepted(entryRaw, completion)
+        var thrown = 0
+
+        let result = kk_start_coroutine_unintercepted_or_return(entryRaw, continuation, &thrown)
+
+        XCTAssertEqual(result, Int(bitPattern: kk_coroutine_suspended()))
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(completed.wait(timeout: .now() + 3), .success)
+        XCTAssertEqual(Int(completionState.completion), 456)
+        XCTAssertEqual(completionState.thrownException, 0)
+    }
+
+    func testStartCoroutineUninterceptedOrReturnPropagatesImmediateThrow() throws {
+        let completion = kk_coroutine_continuation_new(8816)
+        defer { _ = kk_coroutine_state_exit(completion, 0) }
+        let completionState = try XCTUnwrap(runtimeContinuationState(from: completion))
+        let entryRaw = unsafeBitCast(
+            coro_intrinsics_throw_immediately as RuntimeCoroutineIntrinsicEntry,
+            to: Int.self
+        )
+        let continuation = kk_create_coroutine_unintercepted(entryRaw, completion)
+        var thrown = 0
+
+        let result = kk_start_coroutine_unintercepted_or_return(entryRaw, continuation, &thrown)
+
+        XCTAssertEqual(result, 0)
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(Int(completionState.completion), 0)
+        XCTAssertEqual(completionState.thrownException, 0)
     }
 
     // MARK: - intercepted() — bypass semantics
