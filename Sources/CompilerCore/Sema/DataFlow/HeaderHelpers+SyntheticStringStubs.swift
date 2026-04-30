@@ -116,6 +116,33 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-TEXT-TYPE-003: kotlin.text.Typography object surface ---
+        let typographySymbol = ensureSyntheticObjectSymbol(
+            named: "Typography",
+            in: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let typographyType = types.make(.classType(ClassType(
+            classSymbol: typographySymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(typographyType, for: typographySymbol)
+        if let kotlinTextPkgSymbol = symbols.lookup(fqName: kotlinTextPkg) {
+            symbols.setParentSymbol(kotlinTextPkgSymbol, for: typographySymbol)
+        }
+        for (name, scalar) in typographyCharConstants {
+            registerTypographyCharConstant(
+                ownerSymbol: typographySymbol,
+                name: name,
+                scalar: scalar,
+                charType: charType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
         registerSyntheticStringExtensionFunction(
             named: "length",
             externalLinkName: "kk_string_length",
@@ -3497,6 +3524,86 @@ extension DataFlowSemaPhase {
             ),
             for: functionSymbol
         )
+    }
+
+    private var typographyCharConstants: [(name: String, scalar: UInt32)] {
+        [
+            ("almostEqual", 0x2248),
+            ("amp", 0x0026),
+            ("bullet", 0x2022),
+            ("cent", 0x00A2),
+            ("copyright", 0x00A9),
+            ("dagger", 0x2020),
+            ("degree", 0x00B0),
+            ("dollar", 0x0024),
+            ("doubleDagger", 0x2021),
+            ("doublePrime", 0x2033),
+            ("ellipsis", 0x2026),
+            ("euro", 0x20AC),
+            ("greater", 0x003E),
+            ("greaterOrEqual", 0x2265),
+            ("half", 0x00BD),
+            ("leftDoubleQuote", 0x201C),
+            ("leftGuillemet", 0x00AB),
+            ("leftGuillemete", 0x00AB),
+            ("leftSingleQuote", 0x2018),
+            ("less", 0x003C),
+            ("lessOrEqual", 0x2264),
+            ("lowDoubleQuote", 0x201E),
+            ("lowSingleQuote", 0x201A),
+            ("mdash", 0x2014),
+            ("middleDot", 0x00B7),
+            ("nbsp", 0x00A0),
+            ("ndash", 0x2013),
+            ("notEqual", 0x2260),
+            ("paragraph", 0x00B6),
+            ("plusMinus", 0x00B1),
+            ("pound", 0x00A3),
+            ("prime", 0x2032),
+            ("quote", 0x0022),
+            ("registered", 0x00AE),
+            ("rightDoubleQuote", 0x201D),
+            ("rightGuillemet", 0x00BB),
+            ("rightGuillemete", 0x00BB),
+            ("rightSingleQuote", 0x2019),
+            ("section", 0x00A7),
+            ("times", 0x00D7),
+            ("tm", 0x2122),
+        ]
+    }
+
+    private func registerTypographyCharConstant(
+        ownerSymbol: SymbolID,
+        name: String,
+        scalar: UInt32,
+        charType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let propertyName = interner.intern(name)
+        let propertyFQName = ownerInfo.fqName + [propertyName]
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: {
+            symbols.symbol($0)?.kind == .property
+        }) {
+            symbols.setPropertyType(charType, for: existing)
+            symbols.setConstValueExprKind(.charLiteral(scalar), for: existing)
+            symbols.insertFlags([.synthetic, .constValue], for: existing)
+            return
+        }
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .constValue]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
+        symbols.setPropertyType(charType, for: propertySymbol)
+        symbols.setConstValueExprKind(.charLiteral(scalar), for: propertySymbol)
     }
 
     private func ensureSyntheticObjectSymbol(

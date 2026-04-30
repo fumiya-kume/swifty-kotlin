@@ -1147,6 +1147,91 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testTypographyObjectSurfaceResolves() throws {
+        let source = """
+        import kotlin.text.Typography
+
+        fun typographyMarks(): Char {
+            val nbsp: Char = Typography.nbsp
+            val ellipsis: Char = Typography.ellipsis
+            val guillemet: Char = Typography.leftGuillemet
+            val legacyGuillemet: Char = Typography.leftGuillemete
+            return Typography.greaterOrEqual
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics.map { "\($0.code): \($0.message)" }.joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Typography surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let typographyFQName = ["kotlin", "text", "Typography"].map { ctx.interner.intern($0) }
+            let typographySymbol = try XCTUnwrap(sema.symbols.lookup(fqName: typographyFQName))
+            XCTAssertEqual(sema.symbols.symbol(typographySymbol)?.kind, .object)
+
+            let expectedConstants: [String: UInt32] = [
+                "almostEqual": 0x2248,
+                "amp": 0x0026,
+                "bullet": 0x2022,
+                "cent": 0x00A2,
+                "copyright": 0x00A9,
+                "dagger": 0x2020,
+                "degree": 0x00B0,
+                "dollar": 0x0024,
+                "doubleDagger": 0x2021,
+                "doublePrime": 0x2033,
+                "ellipsis": 0x2026,
+                "euro": 0x20AC,
+                "greater": 0x003E,
+                "greaterOrEqual": 0x2265,
+                "half": 0x00BD,
+                "leftDoubleQuote": 0x201C,
+                "leftGuillemet": 0x00AB,
+                "leftGuillemete": 0x00AB,
+                "leftSingleQuote": 0x2018,
+                "less": 0x003C,
+                "lessOrEqual": 0x2264,
+                "lowDoubleQuote": 0x201E,
+                "lowSingleQuote": 0x201A,
+                "mdash": 0x2014,
+                "middleDot": 0x00B7,
+                "nbsp": 0x00A0,
+                "ndash": 0x2013,
+                "notEqual": 0x2260,
+                "paragraph": 0x00B6,
+                "plusMinus": 0x00B1,
+                "pound": 0x00A3,
+                "prime": 0x2032,
+                "quote": 0x0022,
+                "registered": 0x00AE,
+                "rightDoubleQuote": 0x201D,
+                "rightGuillemet": 0x00BB,
+                "rightGuillemete": 0x00BB,
+                "rightSingleQuote": 0x2019,
+                "section": 0x00A7,
+                "times": 0x00D7,
+                "tm": 0x2122,
+            ]
+
+            for (name, scalar) in expectedConstants {
+                let propertyFQName = typographyFQName + [ctx.interner.intern(name)]
+                let propertySymbol = try XCTUnwrap(sema.symbols.lookup(fqName: propertyFQName))
+                XCTAssertEqual(sema.symbols.propertyType(for: propertySymbol), sema.types.make(.primitive(.char, .nonNull)))
+                XCTAssertTrue(sema.symbols.symbol(propertySymbol)?.flags.contains(.constValue) ?? false)
+                guard case let .charLiteral(value) = sema.symbols.constValueExprKind(for: propertySymbol) else {
+                    XCTFail("Expected Typography.\(name) to carry a char literal constant")
+                    continue
+                }
+                XCTAssertEqual(value, scalar, "Unexpected Typography.\(name) scalar")
+            }
+        }
+    }
+
     func testCharSequenceZipWithNextMembersResolveInCallExpressions() throws {
         let source = """
         fun pairs(value: CharSequence): List<Pair<Char, Char>> {
