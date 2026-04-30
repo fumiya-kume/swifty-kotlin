@@ -2017,6 +2017,24 @@ public func kk_string_windowed_partial(_ strRaw: Int, _ size: Int, _ step: Int, 
     return runtimeMakeStringListRaw(windows)
 }
 
+@_cdecl("kk_string_windowedSequence_partial")
+public func kk_string_windowedSequence_partial(_ strRaw: Int, _ size: Int, _ step: Int, _ partialWindows: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let clampedSize = max(1, size)
+    let clampedStep = max(1, step)
+    let scalars = Array(source.unicodeScalars)
+    let partial = partialWindows != 0
+    var windows: [Int] = []
+    var i = 0
+    while i < scalars.count {
+        let end = min(i + clampedSize, scalars.count)
+        if !partial && end - i < clampedSize { break }
+        windows.append(runtimeMakeStringRaw(runtimeStringFromScalars(scalars[i ..< end])))
+        i += clampedStep
+    }
+    return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: windows)]))
+}
+
 // MARK: - STDLIB-318: String.commonPrefixWith / commonSuffixWith
 
 @_cdecl("kk_string_commonPrefixWith")
