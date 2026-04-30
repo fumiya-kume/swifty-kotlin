@@ -80,6 +80,8 @@ extension ABILoweringPass {
             interner.intern("kk_string_replaceFirst"),
             interner.intern("kk_string_replaceAfter"),
             interner.intern("kk_string_replaceAfter_char"),
+            interner.intern("kk_string_replaceAfterLast"),
+            interner.intern("kk_string_replaceAfterLast_char"),
             interner.intern("kk_string_startsWith"),
             interner.intern("kk_string_endsWith"),
             interner.intern("kk_string_contains_str"),
