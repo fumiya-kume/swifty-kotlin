@@ -53,6 +53,8 @@ extension ABIMismatchTests {
             "kk_array_of_nulls",
             // String radix conversion
             "kk_string_toIntOrNull_radix",
+            // Char locale case conversion
+            "kk_char_lowercase_locale",
             "kk_system_exitProcess",
             "kk_system_currentTimeMillis",
             "kk_system_nanoTime",
@@ -76,6 +78,9 @@ extension ABIMismatchTests {
             "kk_instant_compare",
             "kk_instant_until",
             "kk_instant_elapsed",
+            "kk_instant_is_distant_past",
+            "kk_instant_is_distant_future",
+            "kk_time_source_as_clock",
             // Duration
             "kk_duration_zero",
             "kk_duration_infinite",
@@ -176,6 +181,11 @@ extension ABIMismatchTests {
             "kk_atomic_bool_compareAndExchange",
             "kk_atomic_bool_getAndUpdate",
             "kk_atomic_bool_updateAndGet",
+            // kotlin.native.ref
+            "kk_weak_ref_create",
+            "kk_weak_ref_get",
+            "kk_weak_ref_clear",
+            "kk_cleaner_create",
             "kk_atomic_int_array_create",
             "kk_atomic_int_array_size",
             "kk_atomic_int_array_loadAt",
@@ -276,6 +286,7 @@ extension ABIMismatchTests {
             "kk_kotlin_version_compareTo",
             "kk_kotlin_version_isAtLeast",
             "kk_kotlin_version_isAtLeast_patch",
+            "kk_auto_closeable_create",
         ]
 
         for linkName in syntheticLinkNames {

@@ -1,7 +1,8 @@
 /// Synthetic stubs for kotlin.time.Instant class (STDLIB-TIME-083).
 /// Registers Instant.now(), Instant.fromEpochMilliseconds() companion factories,
-/// instance properties (epochSeconds, nanoOfSecond), arithmetic operators (+/-Duration),
-/// comparison (compareTo), until(), and elapsed().
+/// instance properties (epochSeconds, nanoOfSecond), top-level extension
+/// properties (isDistantPast, isDistantFuture), arithmetic operators
+/// (+/-Duration), comparison (compareTo), until(), and elapsed().
 extension DataFlowSemaPhase {
     func registerSyntheticInstantStubs(
         symbols: SymbolTable,
@@ -43,6 +44,7 @@ extension DataFlowSemaPhase {
 
         let longType = types.longType
         let intType = types.intType
+        let boolType = types.make(.primitive(.boolean, .nonNull))
 
         // --- Companion object for factory methods ---
         let companionFQName = ensureInstantCompanionSymbol(
@@ -89,6 +91,26 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_instant_nano_of_second",
             ownerSymbol: instantSymbol,
             returnType: intType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- top-level extension properties ---
+        registerInstantExtensionProperty(
+            named: "isDistantPast",
+            packageFQName: kotlinTimePkg,
+            receiverType: instantType,
+            returnType: boolType,
+            externalLinkName: "kk_instant_is_distant_past",
+            symbols: symbols,
+            interner: interner
+        )
+        registerInstantExtensionProperty(
+            named: "isDistantFuture",
+            packageFQName: kotlinTimePkg,
+            receiverType: instantType,
+            returnType: boolType,
+            externalLinkName: "kk_instant_is_distant_future",
             symbols: symbols,
             interner: interner
         )
@@ -283,6 +305,74 @@ extension DataFlowSemaPhase {
         symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
         symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
         symbols.setPropertyType(returnType, for: propertySymbol)
+    }
+
+    private func registerInstantExtensionProperty(
+        named name: String,
+        packageFQName: [InternedString],
+        receiverType: TypeID,
+        returnType: TypeID,
+        externalLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let propertyName = interner.intern(name)
+        let propertyFQName = packageFQName + [propertyName]
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
+            symbols.symbol(symbolID)?.kind == .property
+                && symbols.extensionPropertyReceiverType(for: symbolID) == receiverType
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            symbols.setPropertyType(returnType, for: existing)
+            if let getterSymbol = symbols.extensionPropertyGetterAccessor(for: existing) {
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [],
+                        returnType: returnType
+                    ),
+                    for: getterSymbol
+                )
+                symbols.setExternalLinkName(externalLinkName, for: getterSymbol)
+            }
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: propertySymbol)
+        }
+        symbols.setPropertyType(returnType, for: propertySymbol)
+        symbols.setExtensionPropertyReceiverType(receiverType, for: propertySymbol)
+        symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
+
+        let getterSymbol = symbols.define(
+            kind: .function,
+            name: interner.intern("get"),
+            fqName: propertyFQName + [interner.intern("$get")],
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(propertySymbol, for: getterSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: returnType
+            ),
+            for: getterSymbol
+        )
+        symbols.setExtensionPropertyGetterAccessor(getterSymbol, for: propertySymbol)
+        symbols.setAccessorOwnerProperty(propertySymbol, for: getterSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: getterSymbol)
     }
 
     private func registerInstantInstanceMethod(

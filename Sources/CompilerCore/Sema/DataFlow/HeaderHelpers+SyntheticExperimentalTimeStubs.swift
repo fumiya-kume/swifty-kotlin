@@ -2,22 +2,10 @@
 ///
 /// Registers:
 /// - `@ExperimentalTime`
-/// - `TimeSource` with nested `WithComparableMarks`, `Monotonic`, and `markNow()`
+/// - `TimeSource` with nested `WithComparableMarks`, `Monotonic`, `markNow()`, and `asClock()`
 /// - `TimeMark` with elapsed/boolean checks and +/- Duration
 /// - `ComparableTimeMark` with TimeMark operations plus mark-to-mark diff/comparison
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-/// - `AbstractDoubleTimeSource` / `AbstractLongTimeSource` surfaces
-=======
-/// - `AbstractDoubleTimeSource` surface
->>>>>>> c7d1e8c0b (Add AbstractDoubleTimeSource surface)
-=======
-/// - `AbstractDoubleTimeSource` / `AbstractLongTimeSource` surfaces
->>>>>>> d6254483a (Add AbstractLongTimeSource surface)
-=======
 /// - `AbstractDoubleTimeSource` / `AbstractLongTimeSource` / `TestTimeSource` surfaces
->>>>>>> f38230a7f (Add TestTimeSource surface)
 extension DataFlowSemaPhase {
     func registerSyntheticExperimentalTimeStubs(
         symbols: SymbolTable,
@@ -45,6 +33,28 @@ extension DataFlowSemaPhase {
         )
         let durationType = types.make(.classType(ClassType(
             classSymbol: durationSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let instantSymbol = ensureClassSymbol(
+            named: "Instant",
+            in: kotlinTimePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let instantType = types.make(.classType(ClassType(
+            classSymbol: instantSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let clockSymbol = ensureClassSymbol(
+            named: "Clock",
+            in: kotlinTimePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let clockType = types.make(.classType(ClassType(
+            classSymbol: clockSymbol,
             args: [],
             nullability: .nonNull
         )))
@@ -235,6 +245,16 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerExperimentalTimeExtensionFunction(
+            named: "asClock",
+            externalLinkName: "kk_time_source_as_clock",
+            packageFQName: kotlinTimePkg,
+            receiverType: timeSourceType,
+            parameters: [(name: "origin", type: instantType)],
+            returnType: clockType,
+            symbols: symbols,
+            interner: interner
+        )
 
         let withComparableMarksFQName = ensureExperimentalTimeNestedInterface(
             named: "WithComparableMarks",
@@ -318,10 +338,6 @@ extension DataFlowSemaPhase {
             flags: [.synthetic, .openType, .overrideMember]
         )
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> d6254483a (Add AbstractLongTimeSource surface)
         let abstractLongTimeSourceSymbol = ensureClassSymbol(
             named: "AbstractLongTimeSource",
             in: kotlinTimePkg,
@@ -375,13 +391,6 @@ extension DataFlowSemaPhase {
             flags: [.synthetic, .openType, .overrideMember]
         )
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> c7d1e8c0b (Add AbstractDoubleTimeSource surface)
-=======
->>>>>>> d6254483a (Add AbstractLongTimeSource surface)
-=======
         let testTimeSourceSymbol = ensureClassSymbol(
             named: "TestTimeSource",
             in: kotlinTimePkg,
@@ -427,7 +436,6 @@ extension DataFlowSemaPhase {
             isOperator: true
         )
 
->>>>>>> f38230a7f (Add TestTimeSource surface)
         let monotonicFQName = ensureExperimentalTimeNestedObject(
             named: "Monotonic",
             ownerSymbol: timeSourceSymbol,
@@ -507,6 +515,73 @@ extension DataFlowSemaPhase {
         )
         symbols.setParentSymbol(ownerSymbol, for: objectSymbol)
         return fqName
+    }
+
+    private func registerExperimentalTimeExtensionFunction(
+        named name: String,
+        externalLinkName: String,
+        packageFQName: [InternedString],
+        receiverType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        let desiredParameterTypes = parameters.map { $0.type }
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return signature.receiverType == receiverType &&
+                signature.parameterTypes == desiredParameterTypes &&
+                signature.returnType == returnType
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        var valueParameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: functionFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            valueParameterSymbols.append(parameterSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: desiredParameterTypes,
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+            ),
+            for: functionSymbol
+        )
     }
 
     private func registerExperimentalTimeMemberFunction(

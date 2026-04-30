@@ -295,7 +295,7 @@
 - [x] STDLIB-KOTLIN-ROOT-ANNO-001: `BuilderInference` annotation surface を追加する
 - [x] STDLIB-KOTLIN-ROOT-ANNO-002: `DeprecatedSinceKotlin(warningSince, errorSince, hiddenSince)` annotation surface を追加する
 - [x] STDLIB-KOTLIN-ROOT-ANNO-003: `DslMarker` annotation surface を追加する
-- [ ] STDLIB-KOTLIN-ROOT-ANNO-004: `OptionalExpectation` annotation surface を追加する
+- [x] STDLIB-KOTLIN-ROOT-ANNO-004: `OptionalExpectation` annotation surface を追加する
 - [x] STDLIB-KOTLIN-ROOT-ANNO-005: `ParameterName(name: String)` annotation surface を追加する
 - [ ] STDLIB-KOTLIN-ROOT-ANNO-006: `PublishedApi` annotation surface を追加する
 - [x] STDLIB-KOTLIN-ROOT-ANNO-007: `SinceKotlin(version: String)` annotation surface を追加する
@@ -309,8 +309,8 @@
 - [x] STDLIB-KOTLIN-ROOT-EXC-001: `NoWhenBranchMatchedException` class surface を追加する
 - [x] STDLIB-KOTLIN-ROOT-EXC-002: `ConcurrentModificationException` class surface を追加する
 - [x] STDLIB-KOTLIN-ROOT-EXC-003: Native `ArrayIndexOutOfBoundsException` class surface を追加する
-- [ ] STDLIB-KOTLIN-ROOT-CLOSE-001: `AutoCloseable(closeAction: () -> Unit)` factory を追加する
-- [ ] STDLIB-KOTLIN-ROOT-CLOSE-002: `AutoCloseable?.use { ... }` common extension を追加する
+- [x] STDLIB-KOTLIN-ROOT-CLOSE-001: `AutoCloseable(closeAction: () -> Unit)` factory を追加する
+- [x] STDLIB-KOTLIN-ROOT-CLOSE-002: `AutoCloseable?.use { ... }` common extension を追加する
 - [x] STDLIB-KOTLIN-ROOT-ARRAY-001: `arrayOfNulls<T>(size: Int)` root array factory を追加する
 - [x] STDLIB-KOTLIN-ROOT-LAZY-001: `lazyOf(value)` root lazy factory を追加する
 - [x] STDLIB-KOTLIN-ROOT-CTX-001: experimental `context(with, block)` helper を追加する
@@ -325,7 +325,7 @@
 - [x] STDLIB-I18N-COMMON-002: `Char.category` を `CharCategory` enum で露出する（現状は `Int` placeholder）
 - [x] STDLIB-I18N-COMMON-003: `String.Companion.format(locale, format, vararg args)` を追加する
 - [ ] STDLIB-I18N-COMMON-004: `Char.uppercase(Locale)` を追加する
-- [ ] STDLIB-I18N-COMMON-005: `Char.lowercase(Locale)` を追加する
+- [x] STDLIB-I18N-COMMON-005: `Char.lowercase(Locale)` を追加する
 - [x] STDLIB-I18N-COMMON-006: `String.toIntOrNull(radix: Int)` を追加する
 - [x] STDLIB-I18N-COMMON-007: `Char.directionality` を `CharDirectionality` enum で露出する（現状は `Int` placeholder）
 - [x] STDLIB-I18N-COMMON-008: `Char.lowercaseChar()` を追加する
@@ -338,37 +338,25 @@
 - [x] STDLIB-TIME-STABLE-008: `DurationUnit` enum surface を追加する
 - [x] STDLIB-TIME-STABLE-009: `Int.toDuration(unit)` / `Long.toDuration(unit)` / `Double.toDuration(unit)` を追加する
 - [x] STDLIB-TIME-EXP-002: `AbstractDoubleTimeSource` surface を追加する
-<<<<<<< HEAD
-<<<<<<< HEAD
 - [x] STDLIB-TIME-EXP-003: `AbstractLongTimeSource` surface を追加する
-<<<<<<< HEAD
-=======
-- [ ] STDLIB-TIME-EXP-003: `AbstractLongTimeSource` surface を追加する
->>>>>>> c7d1e8c0b (Add AbstractDoubleTimeSource surface)
-=======
-- [x] STDLIB-TIME-EXP-003: `AbstractLongTimeSource` surface を追加する
->>>>>>> d6254483a (Add AbstractLongTimeSource surface)
-- [ ] STDLIB-TIME-EXP-004: `TestTimeSource` surface を追加する
-=======
 - [x] STDLIB-TIME-EXP-004: `TestTimeSource` surface を追加する
->>>>>>> f38230a7f (Add TestTimeSource surface)
-- [ ] STDLIB-TIME-EXP-005: `Instant.isDistantPast` / `Instant.isDistantFuture` properties を追加する
-- [ ] STDLIB-TIME-EXP-006: `TimeSource.asClock()` を追加する
+- [x] STDLIB-TIME-EXP-005: `Instant.isDistantPast` / `Instant.isDistantFuture` properties を追加する
+- [x] STDLIB-TIME-EXP-006: `TimeSource.asClock()` を追加する
 - [~] STDLIB-CORO-001: `kotlin.coroutines.intrinsics` / cancellation — 主要部分実装済み（`suspendCoroutineUninterceptedOrReturn`, `intercepted`, `CancellationException`）。残課題は別チケットへ分割。
-- [ ] STDLIB-CORO-002: `kotlin.coroutines.intrinsics` の runtime entry point（`startCoroutineUninterceptedOrReturn`, `createCoroutineUnintercepted`）を追加する。対応 C ABI 名: `kk_start_coroutine_unintercepted_or_return`, `kk_create_coroutine_unintercepted`。
+- [x] STDLIB-CORO-002: `kotlin.coroutines.intrinsics` の runtime entry point（`startCoroutineUninterceptedOrReturn`, `createCoroutineUnintercepted`）を追加する。対応 C ABI 名: `kk_start_coroutine_unintercepted_or_return`, `kk_create_coroutine_unintercepted`。
 - [ ] STDLIB-CORO-003: `kotlin.coroutines` の一部ランタイム経路をセマフォ待機から脱却する。対象: `RuntimeAsyncTask.awaitResult`, `RuntimeJobHandle.join`, `kk_with_context`, Channel send/receive, Sequence builder( `sequence`, `iterator` ) の待機部。
-- [ ] STDLIB-CORO-004: `kotlin.coroutines.RestrictsSuspension` annotation を追加する
-- [ ] STDLIB-CORO-005: `suspend () -> T`.`startCoroutine(completion)` を追加する
-- [ ] STDLIB-CORO-006: `suspend R.() -> T`.`startCoroutine(receiver, completion)` を追加する
-- [ ] STDLIB-CORO-007: `CoroutineContext.Key.getPolymorphicElement(element)` を追加する
-- [ ] STDLIB-CORO-008: `CoroutineContext.Key.minusPolymorphicKey(key)` を追加する
-- [ ] STDLIB-CONTRACTS-001: `ExperimentalExtendedContracts` marker を追加する
-- [ ] STDLIB-CONTRACTS-002: `HoldsIn` effect surface を追加する
-- [ ] STDLIB-NATIVE-REF-001: `kotlin.native.ref` / `kotlin.native.runtime` の API 棚卸しを固定
-- [ ] STDLIB-NATIVE-REF-002: `kotlin.native.ref` / `kotlin.native.runtime` の sema 露出を整える
-- [ ] STDLIB-NATIVE-REF-003: `kotlin.native.ref` / `kotlin.native.runtime` の runtime / ABI を最小必要実装へ整理
-- [ ] STDLIB-NATIVE-REF-004: `kotlin.native.ref.WeakReference` API の runtime 実装を追加する（`kk_weak_ref_create / kk_weak_ref_get / kk_weak_ref_clear` 相当の入口追加）
-- [ ] STDLIB-NATIVE-REF-005: `kotlin.native.ref.createCleaner` API の runtime 実装を追加する（`kk_cleaner_*` API の追加）
+- [x] STDLIB-CORO-004: `kotlin.coroutines.RestrictsSuspension` annotation を追加する
+- [x] STDLIB-CORO-005: `suspend () -> T`.`startCoroutine(completion)` を追加する
+- [x] STDLIB-CORO-006: `suspend R.() -> T`.`startCoroutine(receiver, completion)` を追加する
+- [x] STDLIB-CORO-007: `CoroutineContext.Key.getPolymorphicElement(element)` を追加する
+- [x] STDLIB-CORO-008: `CoroutineContext.Key.minusPolymorphicKey(key)` を追加する
+- [x] STDLIB-CONTRACTS-001: `ExperimentalExtendedContracts` marker を追加する
+- [x] STDLIB-CONTRACTS-002: `HoldsIn` effect surface を追加する
+- [x] STDLIB-NATIVE-REF-001: `kotlin.native.ref` / `kotlin.native.runtime` の API 棚卸しを固定
+- [x] STDLIB-NATIVE-REF-002: `kotlin.native.ref` / `kotlin.native.runtime` の sema 露出を整える
+- [x] STDLIB-NATIVE-REF-003: `kotlin.native.ref` / `kotlin.native.runtime` の runtime / ABI を最小必要実装へ整理
+- [x] STDLIB-NATIVE-REF-004: `kotlin.native.ref.WeakReference` API の runtime 実装を追加する（`kk_weak_ref_create / kk_weak_ref_get / kk_weak_ref_clear` 相当の入口追加）
+- [x] STDLIB-NATIVE-REF-005: `kotlin.native.ref.createCleaner` API の runtime 実装を追加する（`kk_cleaner_*` API の追加）
 - [ ] STDLIB-NATIVE-REF-006: `kotlin.native.runtime.GC` の欠損プロパティと `schedule()` を runtime レベルで追加する（`targetHeapBytes`, `targetHeapUtilization`, `maxHeapBytes`, `schedule`）
 - [ ] STDLIB-NATIVE-REF-007: `kotlin.native.runtime.Debugging` の欠損トラッキング API を追加する（`gcSuspendCount`, `threadCount`, `globalObjectCount`）
 - [ ] STDLIB-NATIVE-REF-008: `kotlin.native.runtime.GCInfo` surface を追加する

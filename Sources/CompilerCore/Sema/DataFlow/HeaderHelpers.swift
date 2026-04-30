@@ -1158,12 +1158,19 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let holdsInSymbol = ensureInterfaceSymbol(
+            named: "HoldsIn",
+            in: contractsFQName,
+            symbols: symbols,
+            interner: interner
+        )
         if contractsPkg != .invalid {
             symbols.setParentSymbol(contractsPkg, for: builderSymbol)
             symbols.setParentSymbol(contractsPkg, for: contractEffectSymbol)
             symbols.setParentSymbol(contractsPkg, for: effectSymbol)
             symbols.setParentSymbol(contractsPkg, for: simpleEffectSymbol)
             symbols.setParentSymbol(contractsPkg, for: conditionalEffectSymbol)
+            symbols.setParentSymbol(contractsPkg, for: holdsInSymbol)
         }
 
         let experimentalContractsSymbol = ensureAnnotationClassSymbol(
@@ -1195,6 +1202,39 @@ extension DataFlowSemaPhase {
             existingAnnotations.append(annotation)
         }
         symbols.setAnnotations(existingAnnotations, for: experimentalContractsSymbol)
+
+        let experimentalExtendedContractsSymbol = ensureAnnotationClassSymbol(
+            named: "ExperimentalExtendedContracts",
+            in: contractsFQName,
+            symbols: symbols,
+            interner: interner
+        )
+        if contractsPkg != .invalid {
+            symbols.setParentSymbol(contractsPkg, for: experimentalExtendedContractsSymbol)
+        }
+        let experimentalExtendedContractsAnnotations = [
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.RequiresOptIn"
+            ),
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: [
+                    "AnnotationTarget.CLASS",
+                    "AnnotationTarget.FUNCTION",
+                    "AnnotationTarget.PROPERTY",
+                    "AnnotationTarget.TYPEALIAS",
+                ]
+            ),
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Retention",
+                arguments: ["AnnotationRetention.BINARY"]
+            ),
+        ]
+        var existingExtendedAnnotations = symbols.annotations(for: experimentalExtendedContractsSymbol)
+        for annotation in experimentalExtendedContractsAnnotations where !existingExtendedAnnotations.contains(annotation) {
+            existingExtendedAnnotations.append(annotation)
+        }
+        symbols.setAnnotations(existingExtendedAnnotations, for: experimentalExtendedContractsSymbol)
 
         let experimentalFQName = ensurePackage(
             path: ["kotlin", "experimental"],
@@ -1237,15 +1277,28 @@ extension DataFlowSemaPhase {
         let effectType = types.make(.classType(ClassType(classSymbol: effectSymbol, args: [], nullability: .nonNull)))
         let simpleEffectType = types.make(.classType(ClassType(classSymbol: simpleEffectSymbol, args: [], nullability: .nonNull)))
         let conditionalEffectType = types.make(.classType(ClassType(classSymbol: conditionalEffectSymbol, args: [], nullability: .nonNull)))
+        let holdsInType = types.make(.classType(ClassType(classSymbol: holdsInSymbol, args: [], nullability: .nonNull)))
 
         symbols.setPropertyType(contractEffectType, for: contractEffectSymbol)
         symbols.setPropertyType(effectType, for: effectSymbol)
         symbols.setPropertyType(simpleEffectType, for: simpleEffectSymbol)
         symbols.setPropertyType(conditionalEffectType, for: conditionalEffectSymbol)
+        symbols.setPropertyType(holdsInType, for: holdsInSymbol)
 
         symbols.setDirectSupertypes([contractEffectSymbol], for: effectSymbol)
         symbols.setDirectSupertypes([effectSymbol], for: simpleEffectSymbol)
         symbols.setDirectSupertypes([effectSymbol], for: conditionalEffectSymbol)
+        symbols.setDirectSupertypes([effectSymbol], for: holdsInSymbol)
+
+        let holdsInAnnotations = [
+            MetadataAnnotationRecord(annotationFQName: "kotlin.contracts.ExperimentalContracts"),
+            MetadataAnnotationRecord(annotationFQName: "kotlin.contracts.ExperimentalExtendedContracts"),
+        ]
+        var existingHoldsInAnnotations = symbols.annotations(for: holdsInSymbol)
+        for annotation in holdsInAnnotations where !existingHoldsInAnnotations.contains(annotation) {
+            existingHoldsInAnnotations.append(annotation)
+        }
+        symbols.setAnnotations(existingHoldsInAnnotations, for: holdsInSymbol)
 
         let contractName = interner.intern("contract")
         let contractFQName = contractsFQName + [contractName]
@@ -1344,6 +1397,58 @@ extension DataFlowSemaPhase {
             params: [],
             returnType: simpleEffectType
         )
+
+        let holdsInName = interner.intern("holdsIn")
+        let holdsInFQName = contractsFQName + [interner.intern("ContractBuilder"), holdsInName]
+        let holdsInAlreadyDefined = symbols.lookupAll(fqName: holdsInFQName).contains { symbolID in
+            guard let symbol = symbols.symbol(symbolID),
+                  symbol.kind == .function,
+                  let signature = symbols.functionSignature(for: symbolID)
+            else {
+                return false
+            }
+            return signature.receiverType == builderType
+                && signature.parameterTypes.count == 2
+                && signature.returnType == holdsInType
+        }
+        if !holdsInAlreadyDefined {
+            let typeParamName = interner.intern("R")
+            let typeParamSymbol = symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: holdsInFQName + [typeParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            let typeParamType = types.make(.typeParam(TypeParamType(
+                symbol: typeParamSymbol,
+                nullability: .nonNull
+            )))
+            let symbol = symbols.define(
+                kind: .function,
+                name: holdsInName,
+                fqName: holdsInFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(builderSymbol, for: symbol)
+            symbols.setParentSymbol(symbol, for: typeParamSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: builderType,
+                    parameterTypes: [types.booleanType, typeParamType],
+                    returnType: holdsInType,
+                    typeParameterSymbols: [typeParamSymbol]
+                ),
+                for: symbol
+            )
+            symbols.setAnnotations(
+                [MetadataAnnotationRecord(annotationFQName: "kotlin.contracts.ExperimentalExtendedContracts")],
+                for: symbol
+            )
+        }
 
         // STDLIB-592: InvocationKind enum class stub
         let invocationKindSymbol = ensureClassSymbol(
