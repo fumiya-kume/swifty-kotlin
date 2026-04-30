@@ -99,6 +99,10 @@ private let reduceRightChecksum: @convention(c) (Int, Int, Int, UnsafeMutablePoi
     value * 10 + acc
 }
 
+private let sumByWeightedTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value * value
+}
+
 private let groupingFoldToInitialValueSelector: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = {
     _, key, element, _ in
     gHOFState.addCall()
@@ -489,6 +493,38 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         )
         XCTAssertEqual(thrown, 0)
         XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
+    }
+
+    func testListSumByAccumulatesSelectorResults() {
+        var thrown = 0
+        let result = kk_list_sumBy(
+            makeList([1, 2, 3]),
+            unsafeBitCast(sumByWeightedTwo, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 14)
+
+        thrown = 0
+        let arrayResult = kk_list_sumBy(
+            makeArray([1, 2, 3]),
+            unsafeBitCast(sumByWeightedTwo, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(arrayResult, 14)
+
+        thrown = 0
+        let emptyResult = kk_list_sumBy(
+            makeList([]),
+            unsafeBitCast(sumByWeightedTwo, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(emptyResult, 0)
     }
 
     func testWindowedTransformReturnsExpectedWindows() {

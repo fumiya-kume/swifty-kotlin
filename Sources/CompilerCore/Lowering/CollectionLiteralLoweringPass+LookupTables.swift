@@ -157,6 +157,7 @@ struct CollectionLiteralLookupTables {
     let kkListRunningReduceIndexedName: InternedString
     let kkListScanIndexedName: InternedString
     let kkListSumOfName: InternedString
+    let kkListSumByName: InternedString
     let kkListMaxOrNullName: InternedString
     let kkListMinOrNullName: InternedString
     let kkListMaxByOrNullName: InternedString
@@ -560,6 +561,7 @@ struct CollectionLiteralLookupTables {
     let runningReduceIndexedName: InternedString
     let scanIndexedName: InternedString
     let sumOfName: InternedString
+    let sumByName: InternedString
     let maxOrNullName: InternedString
     let minOrNullName: InternedString
     let maxByOrNullName: InternedString
@@ -932,6 +934,7 @@ struct CollectionLiteralLookupTables {
         kkListRunningReduceIndexedName = interner.intern("kk_list_runningReduceIndexed")
         kkListScanIndexedName = interner.intern("kk_list_scanIndexed")
         kkListSumOfName = interner.intern("kk_list_sumOf")
+        kkListSumByName = interner.intern("kk_list_sumBy")
         kkListMaxOrNullName = interner.intern("kk_list_maxOrNull")
         kkListMinOrNullName = interner.intern("kk_list_minOrNull")
         kkListMaxByOrNullName = interner.intern("kk_list_maxByOrNull")
@@ -1322,6 +1325,7 @@ struct CollectionLiteralLookupTables {
         runningReduceIndexedName = interner.intern("runningReduceIndexed")
         scanIndexedName = interner.intern("scanIndexed")
         sumOfName = interner.intern("sumOf")
+        sumByName = interner.intern("sumBy")
         maxOrNullName = interner.intern("maxOrNull")
         minOrNullName = interner.intern("minOrNull")
         maxByOrNullName = interner.intern("maxByOrNull")

@@ -14,6 +14,7 @@ extension CallTypeChecker {
                  "kk_list_filterIndexed", "kk_list_reduceIndexedOrNull",
                  "kk_list_foldRight", "kk_list_foldRightIndexed", "kk_list_reduceRight", "kk_list_reduceRightIndexed", "kk_list_reduceRightIndexedOrNull", "kk_list_reduceRightOrNull",
                  "kk_list_runningFoldIndexed", "kk_list_runningReduceIndexed", "kk_list_scanIndexed",
+                 "kk_list_sumBy",
                  "kk_list_onEach", "kk_list_onEachIndexed",
                  "kk_list_maxByOrNull", "kk_list_minByOrNull",
                  "kk_list_maxOfOrNull", "kk_list_minOfOrNull",

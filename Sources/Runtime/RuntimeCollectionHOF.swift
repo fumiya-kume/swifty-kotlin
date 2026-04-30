@@ -1713,6 +1713,21 @@ public func kk_list_sumOf(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
     return total
 }
 
+@_cdecl("kk_list_sumBy")
+public func kk_list_sumBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let elements = runtimeCollectionElements(from: listRaw) ?? runtimeArrayBox(from: listRaw)?.elements else {
+        invalidContainerPanic(#function, "list")
+    }
+    var total = 0
+    for elem in elements {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        total += maybeUnbox(result)
+    }
+    return total
+}
+
 @_cdecl("kk_list_maxOrNull")
 public func kk_list_maxOrNull(_ listRaw: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {

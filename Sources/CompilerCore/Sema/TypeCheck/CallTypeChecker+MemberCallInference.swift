@@ -3436,6 +3436,24 @@ extension CallTypeChecker {
                 }
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                 resultType = sema.types.intType
+                if calleeStr == "sumBy" {
+                    let memberFQName = [
+                        interner.intern("kotlin"),
+                        interner.intern("collections"),
+                        interner.intern("Iterable"),
+                        calleeName,
+                    ]
+                    if let chosenCallee = sema.symbols.lookupAll(fqName: memberFQName).first(where: { candidate in
+                        sema.symbols.functionSignature(for: candidate)?.parameterTypes.count == args.count
+                    }) {
+                        sema.bindings.bindCall(id, binding: CallBinding(
+                            chosenCallee: chosenCallee,
+                            substitutedTypeArguments: [collectionElementType],
+                            parameterMapping: Dictionary(uniqueKeysWithValues: args.indices.map { ($0, $0) })
+                        ))
+                        sema.bindings.bindCallableTarget(id, target: .symbol(chosenCallee))
+                    }
+                }
 
             case "sumByDouble":
                 guard args.count == 1 else {

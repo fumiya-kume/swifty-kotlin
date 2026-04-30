@@ -181,7 +181,7 @@
 - [x] STDLIB-COL-HOF-006: `Iterable.reduceRightIndexed(operation)` を追加する
 - [x] STDLIB-COL-HOF-007: `Iterable.reduceRightIndexedOrNull(operation)` を追加する
 - [x] STDLIB-COL-HOF-008: `Iterable.reduceRightOrNull(operation)` を追加する
-- [ ] STDLIB-COL-HOF-009: `Iterable.sumBy(selector)` deprecated surface を追加する
+- [x] STDLIB-COL-HOF-009: `Iterable.sumBy(selector)` deprecated surface を追加する
 - [ ] STDLIB-COL-HOF-010: `Iterable.sumByDouble(selector)` deprecated surface を追加する
 - [ ] STDLIB-COL-MUT-001: `MutableList.removeFirstOrNull()` を追加する
 - [ ] STDLIB-COL-MUT-002: `MutableList.removeLastOrNull()` を追加する
