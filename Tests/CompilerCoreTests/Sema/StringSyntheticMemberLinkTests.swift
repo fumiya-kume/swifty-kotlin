@@ -53,6 +53,7 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
             "toInt": "kk_string_toInt",
             "toDouble": "kk_string_toDouble",
             "trimIndent": "kk_string_trimIndent",
+            "replaceIndentByMargin": "kk_string_replaceIndentByMargin",
         ]
 
         for (member, expectedLink) in expected {
@@ -1055,6 +1056,42 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
             }
             XCTAssertEqual(links.filter { $0 == "kk_string_replaceBeforeLast" }.count, 2)
             XCTAssertEqual(links.filter { $0 == "kk_string_replaceBeforeLast_char" }.count, 2)
+        }
+    }
+
+    func testReplaceIndentByMarginResolvesInCallExpressions() throws {
+        let source = """
+        fun replaceIndentByMarginDefault(value: String): String {
+            return value.replaceIndentByMargin()
+        }
+
+        fun replaceIndentByMarginNewIndent(value: String): String {
+            return value.replaceIndentByMargin(">")
+        }
+
+        fun replaceIndentByMarginFull(value: String): String {
+            return value.replaceIndentByMargin(">", "|")
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExprs = allExprIDs(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "replaceIndentByMargin"
+            }
+            XCTAssertEqual(callExprs.count, 3)
+            let links = try callExprs.map { callExpr -> String in
+                let chosenCallee = try XCTUnwrap(
+                    sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                    "Expected call binding for replaceIndentByMargin"
+                )
+                return sema.symbols.externalLinkName(for: chosenCallee) ?? ""
+            }
+            XCTAssertEqual(Set(links), ["kk_string_replaceIndentByMargin"])
         }
     }
 

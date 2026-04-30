@@ -594,6 +594,20 @@ extension DataFlowSemaPhase {
         )
 
         registerSyntheticStringExtensionFunction(
+            named: "replaceIndentByMargin",
+            externalLinkName: "kk_string_replaceIndentByMargin",
+            receiverType: stringType,
+            parameters: [
+                ("newIndent", stringType, true, false),
+                ("marginPrefix", stringType, true, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
             named: "indexOf",
             externalLinkName: "kk_string_indexOf",
             receiverType: stringType,
