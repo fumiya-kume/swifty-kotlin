@@ -123,6 +123,18 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // deleteRange(Int, Int): StringBuilder (STDLIB-TEXT-BUILDER-002)
+        registerStringBuilderMemberFunction(
+            named: "deleteRange",
+            externalLinkName: "kk_string_builder_deleteRange",
+            ownerSymbol: sbSymbol,
+            ownerType: sbType,
+            parameters: [("startIndex", intType, false, false), ("endIndex", intType, false, false)],
+            returnType: sbType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // clear(): StringBuilder
         registerStringBuilderMemberFunction(
             named: "clear",

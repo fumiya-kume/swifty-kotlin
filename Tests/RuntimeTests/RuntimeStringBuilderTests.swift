@@ -21,6 +21,15 @@ final class RuntimeStringBuilderTests: XCTestCase {
         XCTAssertEqual(runtimeStringValue(kk_string_builder_toString(builder)), "ac")
     }
 
+    func testDeleteRangeRemovesRangeAndReturnsReceiver() {
+        let builder = kk_string_builder_new_from_string(makeRuntimeString("abcdef"))
+
+        let returned = kk_string_builder_deleteRange(builder, 1, 4)
+
+        XCTAssertEqual(returned, builder)
+        XCTAssertEqual(runtimeStringValue(kk_string_builder_toString(builder)), "aef")
+    }
+
     private func makeRuntimeString(_ value: String) -> Int {
         registerRuntimeObject(RuntimeStringBox(value))
     }

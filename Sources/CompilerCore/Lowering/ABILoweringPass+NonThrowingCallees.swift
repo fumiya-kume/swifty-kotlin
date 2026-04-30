@@ -1069,6 +1069,7 @@ extension ABILoweringPass {
             interner.intern("kk_string_builder_append_line_noarg_obj"),
             interner.intern("kk_string_builder_insert_obj"),
             interner.intern("kk_string_builder_delete_obj"),
+            interner.intern("kk_string_builder_deleteRange"),
             interner.intern("kk_string_builder_clear"),
             interner.intern("kk_string_builder_reverse"),
             interner.intern("kk_string_builder_deleteCharAt"),

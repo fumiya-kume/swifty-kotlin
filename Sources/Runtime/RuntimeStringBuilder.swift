@@ -114,6 +114,11 @@ public func kk_string_builder_delete_obj(_ sbRaw: Int, _ start: Int, _ end: Int)
     return sbRaw
 }
 
+@_cdecl("kk_string_builder_deleteRange")
+public func kk_string_builder_deleteRange(_ sbRaw: Int, _ startIndex: Int, _ endIndex: Int) -> Int {
+    kk_string_builder_delete_obj(sbRaw, startIndex, endIndex)
+}
+
 @_cdecl("kk_string_builder_clear")
 public func kk_string_builder_clear(_ sbRaw: Int) -> Int {
     guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return sbRaw }

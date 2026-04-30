@@ -78,6 +78,16 @@ public extension RuntimeABISpec {
             section: "StringBuilder"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_string_builder_deleteRange",
+            parameters: [
+                RuntimeABIParameter(name: "sbRaw", type: .intptr),
+                RuntimeABIParameter(name: "startIndex", type: .intptr),
+                RuntimeABIParameter(name: "endIndex", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "StringBuilder"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_string_builder_clear",
             parameters: [
                 RuntimeABIParameter(name: "sbRaw", type: .intptr),

@@ -1088,6 +1088,8 @@ final class CallLowerer {
             "kk_string_builder_insert_obj"
         case ("delete", 2):
             "kk_string_builder_delete_obj"
+        case ("deleteRange", 2):
+            "kk_string_builder_deleteRange"
         default:
             nil
         }
