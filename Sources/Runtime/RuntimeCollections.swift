@@ -833,11 +833,7 @@ public func kk_list_plus_collection(_ listRaw: Int, _ otherRaw: Int) -> Int {
 
 @_cdecl("kk_list_minus_element")
 public func kk_list_minus_element(_ listRaw: Int, _ element: Int) -> Int {
-    let elements: [Int] = if let list = runtimeListBox(from: listRaw) {
-        list.elements
-    } else {
-        []
-    }
+    let elements = runtimeCollectionElements(from: listRaw) ?? runtimeArrayBox(from: listRaw)?.elements ?? []
     var result = elements
     if let index = result.firstIndex(where: { runtimeValuesEqual($0, element) }) {
         result.remove(at: index)

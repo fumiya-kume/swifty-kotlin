@@ -3717,6 +3717,38 @@ extension CallLowerer {
             }
         }
 
+        if args.count == 1, calleeName == interner.intern("minusElement") {
+            let chosenLinkName = chosenBase64Callee.flatMap { sema.symbols.externalLinkName(for: $0) }
+            let returnsList = boundType.map { resultType in
+                guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(resultType)),
+                      let resultSymbol = sema.symbols.symbol(classType.classSymbol)
+                else { return false }
+                return interner.resolve(resultSymbol.name) == "List"
+            } ?? false
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let receiverIsIterable = {
+                guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+                      let receiverSymbol = sema.symbols.symbol(classType.classSymbol)
+                else { return false }
+                return receiverSymbol.fqName == [
+                    interner.intern("kotlin"),
+                    interner.intern("collections"),
+                    interner.intern("Iterable"),
+                ]
+            }()
+            if chosenLinkName == "kk_list_minus_element" || returnsList || receiverIsIterable {
+                instructions.append(.call(
+                    symbol: chosenBase64Callee,
+                    callee: interner.intern("kk_list_minus_element"),
+                    arguments: [loweredReceiverID] + normalizedArgIDs,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
         if args.count == 1 {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)

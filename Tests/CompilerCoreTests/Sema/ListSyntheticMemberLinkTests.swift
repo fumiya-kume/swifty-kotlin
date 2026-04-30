@@ -153,6 +153,49 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testIterableMinusElementResolvesToListRuntime() throws {
+        let source = """
+        fun removeValue(values: Iterable<Int>): List<Int> {
+            return values.minusElement(2)
+        }
+
+        fun removeFromList(values: List<Int>): List<Int> {
+            return values.minusElement(element = 3)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Iterable.minusElement surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "collections", "Iterable", "minusElement"]
+                .map { ctx.interner.intern($0) }
+            let memberSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: memberFQName))
+            XCTAssertEqual(sema.symbols.externalLinkName(for: memberSymbol), "kk_list_minus_element")
+
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: memberSymbol))
+            guard case let .classType(returnClassType) = sema.types.kind(of: signature.returnType),
+                  let returnSymbol = sema.symbols.symbol(returnClassType.classSymbol)
+            else {
+                return XCTFail("Expected Iterable.minusElement to return List<E>")
+            }
+            XCTAssertEqual(ctx.interner.resolve(returnSymbol.name), "List")
+
+            let callLinks = sema.bindings.callBindings.values.compactMap { binding in
+                sema.symbols.externalLinkName(for: binding.chosenCallee)
+            }
+            XCTAssertEqual(callLinks.filter { $0 == "kk_list_minus_element" }.count, 2)
+        }
+    }
+
     func testListFirstOrNullAndLastOrNullReturnNullableElementsWithoutCollectionMarking() throws {
         let source = """
         fun probe(values: List<Int>) {

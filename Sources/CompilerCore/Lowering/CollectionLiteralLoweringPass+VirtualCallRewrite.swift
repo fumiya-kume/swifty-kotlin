@@ -1154,6 +1154,34 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        // Iterable.minusElement(element) returns a List, even when the receiver
+        // is tracked through the generic Iterable interface.
+        let minusElementReturnsList = result.flatMap { module.arena.exprType($0) }.map { resultType in
+            guard let sema = context.sema,
+                  case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(resultType)),
+                  let resultSymbol = sema.symbols.symbol(classType.classSymbol)
+            else { return false }
+            return context.interner.resolve(resultSymbol.name) == "List"
+        } ?? false
+        if callee == lookup.minusElementName,
+           arguments.count == 1,
+           minusElementReturnsList
+            || listExprIDs.contains(receiver.rawValue)
+            || setExprIDs.contains(receiver.rawValue)
+            || arrayExprIDs.contains(receiver.rawValue)
+        {
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListMinusElementName,
+                arguments: [receiver] + arguments,
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result { listExprIDs.insert(result.rawValue) }
+            return true
+        }
+
         // minus(element)/minusElement(element) on sequence → kk_sequence_minus
         // Only rewrite when the argument is a single element (not a collection).
         // Collection-removal is not yet supported at the ABI level.

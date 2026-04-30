@@ -23,6 +23,7 @@ extension CallTypeChecker {
                  "kk_list_maxOfWith", "kk_list_maxOfWithOrNull",
                  "kk_list_minOfWith", "kk_list_minOfWithOrNull",
                  "kk_list_chunked_transform",
+                 "kk_list_minus_element",
                  "kk_sequence_chunked_transform",
                  "kk_sequence_plus_element", "kk_sequence_minus",
                  "kk_array_binarySearch_compare", "kk_array_binarySearch",

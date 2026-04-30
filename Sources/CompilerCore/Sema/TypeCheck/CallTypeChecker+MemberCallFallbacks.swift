@@ -1058,6 +1058,7 @@ extension CallTypeChecker {
             interner.intern("average"),
             interner.intern("sumBy"),
             interner.intern("sumByDouble"),
+            interner.intern("minusElement"),
         ]
         let setOnlyMembers: Set = [
             interner.intern("intersect"),
@@ -1176,6 +1177,7 @@ extension CallTypeChecker {
             interner.intern("runningReduce"), interner.intern("runningReduceIndexed"),
             interner.intern("scanReduce"),
             interner.intern("toMutableList"),
+            interner.intern("minusElement"),
         ]
         let setReturningMembers: Set = [
             interner.intern("intersect"),
@@ -1243,7 +1245,8 @@ extension CallTypeChecker {
              interner.intern("maxOf"), interner.intern("minOf"),
              interner.intern("maxWith"), interner.intern("maxWithOrNull"),
              interner.intern("minWith"), interner.intern("minWithOrNull"),
-             interner.intern("elementAt"):
+             interner.intern("elementAt"),
+             interner.intern("minusElement"):
             if memberName == interner.intern("binarySearch") {
                 return (1...4).contains(argCount)
             }
@@ -1565,9 +1568,18 @@ extension CallTypeChecker {
 
         if (memberName == interner.intern("toList")
             || memberName == interner.intern("subList")
-            || memberName == interner.intern("slice")),
+            || memberName == interner.intern("slice")
+            || memberName == interner.intern("minusElement")),
            let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first
         {
+            if memberName == interner.intern("minusElement"), isSequenceReceiver {
+                return makeSyntheticSequenceType(
+                    symbols: sema.symbols,
+                    types: sema.types,
+                    interner: interner,
+                    elementType: receiverElementType
+                )
+            }
             return sema.types.make(.classType(ClassType(
                 classSymbol: listSymbol,
                 args: [.invariant(receiverElementType)],

@@ -2095,6 +2095,39 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
+                    // Iterable.minusElement(element) returns a List, even when
+                    // the receiver's static type is the Iterable interface.
+                    if callee == lookup.minusElementName, arguments.count == 2 {
+                        let receiverID = arguments[0]
+                        let isIterableMinusElementSymbol = symbol.flatMap { symbolID in
+                            ctx.sema?.symbols.externalLinkName(for: symbolID)
+                        } == "kk_list_minus_element"
+                        let returnsList = result.flatMap { module.arena.exprType($0) }.map { resultType in
+                            guard let sema = ctx.sema,
+                                  case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(resultType)),
+                                  let resultSymbol = sema.symbols.symbol(classType.classSymbol)
+                            else { return false }
+                            return ctx.interner.resolve(resultSymbol.name) == "List"
+                        } ?? false
+                        if isIterableMinusElementSymbol
+                            || returnsList
+                            || listExprIDs.contains(receiverID.rawValue)
+                            || setExprIDs.contains(receiverID.rawValue)
+                            || arrayExprIDs.contains(receiverID.rawValue)
+                        {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkListMinusElementName,
+                                arguments: arguments,
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result { listExprIDs.insert(result.rawValue) }
+                            continue
+                        }
+                    }
+
                     // minus(element)/minusElement(element) on sequence → kk_sequence_minus
                     // Only rewrite when the argument is a single element (not a
                     // collection).  Collection-removal is not yet supported at the
