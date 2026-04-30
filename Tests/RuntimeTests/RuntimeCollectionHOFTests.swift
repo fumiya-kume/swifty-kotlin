@@ -103,6 +103,10 @@ private let sumByWeightedTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int
     value * value
 }
 
+private let sumByDoubleWeightedTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    kk_double_to_bits(value == 2 ? 1.5 : 0.25)
+}
+
 private let groupingFoldToInitialValueSelector: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = {
     _, key, element, _ in
     gHOFState.addCall()
@@ -525,6 +529,38 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         )
         XCTAssertEqual(thrown, 0)
         XCTAssertEqual(emptyResult, 0)
+    }
+
+    func testListSumByDoubleAccumulatesSelectorResults() {
+        var thrown = 0
+        let result = kk_list_sumByDouble(
+            makeList([1, 2, 3]),
+            unsafeBitCast(sumByDoubleWeightedTwo, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_bits_to_double(result), 2.0, accuracy: 0.0001)
+
+        thrown = 0
+        let arrayResult = kk_list_sumByDouble(
+            makeArray([1, 2, 3]),
+            unsafeBitCast(sumByDoubleWeightedTwo, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_bits_to_double(arrayResult), 2.0, accuracy: 0.0001)
+
+        thrown = 0
+        let emptyResult = kk_list_sumByDouble(
+            makeList([]),
+            unsafeBitCast(sumByDoubleWeightedTwo, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_bits_to_double(emptyResult), 0.0, accuracy: 0.0001)
     }
 
     func testWindowedTransformReturnsExpectedWindows() {

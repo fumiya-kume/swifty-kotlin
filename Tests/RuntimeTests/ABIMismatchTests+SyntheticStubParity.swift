@@ -50,6 +50,7 @@ extension ABIMismatchTests {
             "kk_list_reduceRightIndexedOrNull",
             "kk_list_reduceRightOrNull",
             "kk_list_sumBy",
+            "kk_list_sumByDouble",
             "kk_sequence_of",
             "kk_sequence_generate",
             "kk_array_of_nulls",

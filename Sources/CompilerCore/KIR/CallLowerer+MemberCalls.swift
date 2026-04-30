@@ -189,7 +189,7 @@ extension CallLowerer {
         "toHashSet",
         "containsAll", "binarySearch", "average",
         "addFirst", "addLast",
-        "sum", "sumBy",
+        "sum", "sumBy", "sumByDouble",
         "to", // FUNC-002
     ]
 
@@ -4801,7 +4801,7 @@ extension CallLowerer {
             "aggregate", "aggregateTo",
             "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate",
-            "forEachIndexed", "mapIndexed", "filterIndexed", "sumOf", "sumBy", "mapValues", "mapValuesTo", "mapKeys", "mapKeysTo", "filterKeys", "filterValues",
+            "forEachIndexed", "mapIndexed", "filterIndexed", "sumOf", "sumBy", "sumByDouble", "mapValues", "mapValuesTo", "mapKeys", "mapKeysTo", "filterKeys", "filterValues",
             "getOrElse", "elementAtOrElse", "getOrPut",
             "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
             "maxOf", "minOf",
@@ -6212,6 +6212,7 @@ extension CallLowerer {
         }
         if (loweredCallee == interner.intern("kk_list_sumOf")
             || loweredCallee == interner.intern("kk_list_sumBy")
+            || loweredCallee == interner.intern("kk_list_sumByDouble")
             || loweredCallee == interner.intern("kk_sequence_sumBy")
             || loweredCallee == interner.intern("kk_sequence_sumByDouble")),
            finalArguments.count == 2
@@ -6523,6 +6524,7 @@ extension CallLowerer {
             interner.intern("kk_list_runningReduceIndexed"),
             interner.intern("kk_list_scanIndexed"),
             interner.intern("kk_list_sumBy"),
+            interner.intern("kk_list_sumByDouble"),
             interner.intern("kk_list_firstNotNullOf"),
             interner.intern("kk_list_firstNotNullOfOrNull"),
             interner.intern("kk_kclass_cast"),

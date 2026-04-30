@@ -130,6 +130,57 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testIterableSumByDoubleResolvesToListRuntime() throws {
+        let source = """
+        fun checksum(values: Iterable<Int>): Double {
+            return values.sumByDouble { value ->
+                if (value == 2) 1.5 else 0.25
+            }
+        }
+
+        fun checksumFromList(values: List<Int>): Double {
+            return values.sumByDouble(selector = { value ->
+                value.toDouble()
+            })
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Iterable.sumByDouble surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "collections", "Iterable", "sumByDouble"]
+                .map { ctx.interner.intern($0) }
+            let memberSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: memberFQName))
+            XCTAssertEqual(sema.symbols.externalLinkName(for: memberSymbol), "kk_list_sumByDouble")
+            XCTAssertTrue(
+                sema.symbols.annotations(for: memberSymbol).contains { $0.annotationFQName == "kotlin.Deprecated" },
+                "Iterable.sumByDouble should carry Deprecated metadata"
+            )
+
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: memberSymbol))
+            XCTAssertEqual(signature.parameterTypes.count, 1)
+            guard case let .functionType(selectorType) = sema.types.kind(of: signature.parameterTypes[0]) else {
+                return XCTFail("Expected Iterable.sumByDouble selector parameter to be a function")
+            }
+            XCTAssertEqual(selectorType.params.count, 1)
+            XCTAssertEqual(signature.returnType, sema.types.doubleType)
+
+            let callLinks = sema.bindings.callBindings.values.compactMap { binding in
+                sema.symbols.externalLinkName(for: binding.chosenCallee)
+            }
+            XCTAssertEqual(callLinks.filter { $0 == "kk_list_sumByDouble" }.count, 2)
+        }
+    }
+
     func testIterableFirstNotNullOfResolvesInCallExpressions() throws {
         let source = """
         fun pickLabel(values: Iterable<Int>): String {
