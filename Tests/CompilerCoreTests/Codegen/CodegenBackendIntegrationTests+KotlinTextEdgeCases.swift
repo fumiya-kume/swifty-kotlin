@@ -873,6 +873,51 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testKotlinTextLastIndexOfAnyStringsEdgeCases() throws {
+        let source = """
+        fun lastAny(value: CharSequence, strings: Collection<String>, start: Int, ignore: Boolean): Int {
+            return value.lastIndexOfAny(strings, start, ignore)
+        }
+
+        fun main() {
+            println(lastAny("Kotlin", listOf("ot", "li"), 5, false))
+            println(lastAny("Kotlin", listOf("KO"), 5, true))
+            println("abc".lastIndexOfAny(listOf("x", "bc"), 2, false))
+            println("abc".lastIndexOfAny(listOf(""), 5, false))
+            println("abc".lastIndexOfAny(listOf(""), 2, false))
+            println("abc".lastIndexOfAny(listOf("a"), -1, false))
+            println("abc".lastIndexOfAny(listOf("C"), 2, true))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "KotlinTextLastIndexOfAnyStringsEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                out,
+                """
+                3
+                0
+                1
+                3
+                2
+                -1
+                2
+                """
+                + "\n"
+            )
+        }
+    }
+
     // MARK: - lines
 
     func testKotlinTextLinesEdgeCases() throws {
