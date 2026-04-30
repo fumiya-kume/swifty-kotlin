@@ -10,13 +10,14 @@ import Foundation
 /// - `kotlin.native.ref.WeakReference<T>` — generic weak-reference wrapper.
 /// - `kotlin.native.ref.createCleaner` — top-level factory function tagged
 ///   with `@ExperimentalNativeApi`.
+/// - `kotlin.native.runtime.NativeRuntimeApi` — runtime opt-in marker.
 /// - `kotlin.native.runtime.GC` — object providing GC controls, tagged with
-///   `@ExperimentalNativeApi`.
+///   `@NativeRuntimeApi`.
 /// - `kotlin.native.runtime.RootSetStatistics` — GC root-set statistics DTO.
 /// - `kotlin.native.runtime.SweepStatistics` — GC sweep statistics DTO.
 /// - `kotlin.native.runtime.GCInfo` — GC statistics DTO surface.
 /// - `kotlin.native.runtime.Debugging` — object exposing debug helpers, tagged
-///   with `@ExperimentalNativeApi`.
+///   with `@NativeRuntimeApi`.
 ///
 /// All symbols are compile-time stubs only.  No runtime code is generated or
 /// modified by this registration.
@@ -38,6 +39,11 @@ extension DataFlowSemaPhase {
         )
 
         let experimentalNativeApiSymbol = lookupOrRegisterExperimentalNativeApiAnnotation(
+            symbols: symbols,
+            interner: interner
+        )
+        let nativeRuntimeApiSymbol = registerNativeRuntimeApiAnnotation(
+            packageFQName: nativeRuntimePkg,
             symbols: symbols,
             interner: interner
         )
@@ -67,7 +73,7 @@ extension DataFlowSemaPhase {
 
         registerGCObjectStub(
             packageFQName: nativeRuntimePkg,
-            experimentalNativeApiSymbol: experimentalNativeApiSymbol,
+            nativeRuntimeApiSymbol: nativeRuntimeApiSymbol,
             symbols: symbols,
             types: types,
             interner: interner
@@ -75,7 +81,7 @@ extension DataFlowSemaPhase {
 
         registerRootSetStatisticsStub(
             packageFQName: nativeRuntimePkg,
-            experimentalNativeApiSymbol: experimentalNativeApiSymbol,
+            nativeRuntimeApiSymbol: nativeRuntimeApiSymbol,
             symbols: symbols,
             types: types,
             interner: interner
@@ -83,7 +89,7 @@ extension DataFlowSemaPhase {
 
         registerSweepStatisticsStub(
             packageFQName: nativeRuntimePkg,
-            experimentalNativeApiSymbol: experimentalNativeApiSymbol,
+            nativeRuntimeApiSymbol: nativeRuntimeApiSymbol,
             symbols: symbols,
             types: types,
             interner: interner
@@ -91,7 +97,7 @@ extension DataFlowSemaPhase {
 
         registerGCInfoStub(
             packageFQName: nativeRuntimePkg,
-            experimentalNativeApiSymbol: experimentalNativeApiSymbol,
+            nativeRuntimeApiSymbol: nativeRuntimeApiSymbol,
             symbols: symbols,
             types: types,
             interner: interner
@@ -99,7 +105,7 @@ extension DataFlowSemaPhase {
 
         registerDebuggingObjectStub(
             packageFQName: nativeRuntimePkg,
-            experimentalNativeApiSymbol: experimentalNativeApiSymbol,
+            nativeRuntimeApiSymbol: nativeRuntimeApiSymbol,
             symbols: symbols,
             types: types,
             interner: interner
@@ -367,7 +373,7 @@ extension DataFlowSemaPhase {
 
     private func registerGCObjectStub(
         packageFQName: [InternedString],
-        experimentalNativeApiSymbol: SymbolID?,
+        nativeRuntimeApiSymbol: SymbolID?,
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner
@@ -400,11 +406,11 @@ extension DataFlowSemaPhase {
         )))
         symbols.setPropertyType(objectType, for: objectSymbol)
 
-        // Tag with @ExperimentalNativeApi.
-        if let experimentalNativeApiSymbol {
-            attachExperimentalNativeApi(
+        // Tag with @NativeRuntimeApi.
+        if let nativeRuntimeApiSymbol {
+            attachNativeRuntimeApi(
                 to: objectSymbol,
-                markerFQName: symbols.symbol(experimentalNativeApiSymbol)?
+                markerFQName: symbols.symbol(nativeRuntimeApiSymbol)?
                     .fqName.map { interner.resolve($0) }.joined(separator: ".") ?? "",
                 symbols: symbols
             )
@@ -478,7 +484,7 @@ extension DataFlowSemaPhase {
 
     private func registerRootSetStatisticsStub(
         packageFQName: [InternedString],
-        experimentalNativeApiSymbol: SymbolID?,
+        nativeRuntimeApiSymbol: SymbolID?,
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner
@@ -490,10 +496,10 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
-        if let experimentalNativeApiSymbol {
-            attachExperimentalNativeApi(
+        if let nativeRuntimeApiSymbol {
+            attachNativeRuntimeApi(
                 to: classSymbol,
-                markerFQName: symbols.symbol(experimentalNativeApiSymbol)?
+                markerFQName: symbols.symbol(nativeRuntimeApiSymbol)?
                     .fqName.map { interner.resolve($0) }.joined(separator: ".") ?? "",
                 symbols: symbols
             )
@@ -532,7 +538,7 @@ extension DataFlowSemaPhase {
 
     private func registerSweepStatisticsStub(
         packageFQName: [InternedString],
-        experimentalNativeApiSymbol: SymbolID?,
+        nativeRuntimeApiSymbol: SymbolID?,
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner
@@ -544,10 +550,10 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
-        if let experimentalNativeApiSymbol {
-            attachExperimentalNativeApi(
+        if let nativeRuntimeApiSymbol {
+            attachNativeRuntimeApi(
                 to: classSymbol,
-                markerFQName: symbols.symbol(experimentalNativeApiSymbol)?
+                markerFQName: symbols.symbol(nativeRuntimeApiSymbol)?
                     .fqName.map { interner.resolve($0) }.joined(separator: ".") ?? "",
                 symbols: symbols
             )
@@ -584,7 +590,7 @@ extension DataFlowSemaPhase {
 
     private func registerGCInfoStub(
         packageFQName: [InternedString],
-        experimentalNativeApiSymbol: SymbolID?,
+        nativeRuntimeApiSymbol: SymbolID?,
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner
@@ -618,16 +624,16 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        if let experimentalNativeApiSymbol {
-            attachExperimentalNativeApi(
+        if let nativeRuntimeApiSymbol {
+            attachNativeRuntimeApi(
                 to: gcInfoSymbol,
-                markerFQName: symbols.symbol(experimentalNativeApiSymbol)?
+                markerFQName: symbols.symbol(nativeRuntimeApiSymbol)?
                     .fqName.map { interner.resolve($0) }.joined(separator: ".") ?? "",
                 symbols: symbols
             )
-            attachExperimentalNativeApi(
+            attachNativeRuntimeApi(
                 to: memoryUsageSymbol,
-                markerFQName: symbols.symbol(experimentalNativeApiSymbol)?
+                markerFQName: symbols.symbol(nativeRuntimeApiSymbol)?
                     .fqName.map { interner.resolve($0) }.joined(separator: ".") ?? "",
                 symbols: symbols
             )
@@ -717,7 +723,7 @@ extension DataFlowSemaPhase {
 
     private func registerDebuggingObjectStub(
         packageFQName: [InternedString],
-        experimentalNativeApiSymbol: SymbolID?,
+        nativeRuntimeApiSymbol: SymbolID?,
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner
@@ -750,11 +756,11 @@ extension DataFlowSemaPhase {
         )))
         symbols.setPropertyType(objectType, for: objectSymbol)
 
-        // Tag with @ExperimentalNativeApi.
-        if let experimentalNativeApiSymbol {
-            attachExperimentalNativeApi(
+        // Tag with @NativeRuntimeApi.
+        if let nativeRuntimeApiSymbol {
+            attachNativeRuntimeApi(
                 to: objectSymbol,
-                markerFQName: symbols.symbol(experimentalNativeApiSymbol)?
+                markerFQName: symbols.symbol(nativeRuntimeApiSymbol)?
                     .fqName.map { interner.resolve($0) }.joined(separator: ".") ?? "",
                 symbols: symbols
             )
@@ -838,6 +844,61 @@ extension DataFlowSemaPhase {
         return symbols.lookup(fqName: fqName)
     }
 
+    private func registerNativeRuntimeApiAnnotation(
+        packageFQName: [InternedString],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> SymbolID {
+        let annotationSymbol = ensureAnnotationClassSymbol(
+            named: "NativeRuntimeApi",
+            in: packageFQName,
+            symbols: symbols,
+            interner: interner
+        )
+        if let pkgSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(pkgSymbol, for: annotationSymbol)
+        }
+
+        var annotations = symbols.annotations(for: annotationSymbol)
+        let requiresOptInRecord = MetadataAnnotationRecord(
+            annotationFQName: "kotlin.RequiresOptIn",
+            arguments: ["level=RequiresOptIn.Level.ERROR"]
+        )
+        if !annotations.contains(requiresOptInRecord) {
+            annotations.append(requiresOptInRecord)
+        }
+
+        let targetRecord = MetadataAnnotationRecord(
+            annotationFQName: "kotlin.annotation.Target",
+            arguments: [
+                "AnnotationTarget.CLASS",
+                "AnnotationTarget.ANNOTATION_CLASS",
+                "AnnotationTarget.PROPERTY",
+                "AnnotationTarget.FIELD",
+                "AnnotationTarget.LOCAL_VARIABLE",
+                "AnnotationTarget.VALUE_PARAMETER",
+                "AnnotationTarget.CONSTRUCTOR",
+                "AnnotationTarget.FUNCTION",
+                "AnnotationTarget.PROPERTY_GETTER",
+                "AnnotationTarget.PROPERTY_SETTER",
+                "AnnotationTarget.TYPEALIAS",
+            ]
+        )
+        if !annotations.contains(targetRecord) {
+            annotations.append(targetRecord)
+        }
+
+        let retentionRecord = MetadataAnnotationRecord(
+            annotationFQName: "kotlin.annotation.Retention",
+            arguments: ["AnnotationRetention.BINARY"]
+        )
+        if !annotations.contains(retentionRecord) {
+            annotations.append(retentionRecord)
+        }
+        symbols.setAnnotations(annotations, for: annotationSymbol)
+        return annotationSymbol
+    }
+
     /// Attaches a `@ExperimentalNativeApi` annotation record to the given
     /// symbol so that opt-in checks fire when the symbol is used.
     private func attachExperimentalNativeApi(
@@ -848,6 +909,25 @@ extension DataFlowSemaPhase {
         let record = MetadataAnnotationRecord(
             annotationFQName: markerFQName.isEmpty
                 ? "kotlin.experimental.ExperimentalNativeApi"
+                : markerFQName
+        )
+        var annotations = symbols.annotations(for: symbol)
+        guard !annotations.contains(record) else {
+            return
+        }
+        annotations.append(record)
+        symbols.setAnnotations(annotations, for: symbol)
+    }
+
+    /// Attaches a `@NativeRuntimeApi` annotation record to a runtime symbol.
+    private func attachNativeRuntimeApi(
+        to symbol: SymbolID,
+        markerFQName: String,
+        symbols: SymbolTable
+    ) {
+        let record = MetadataAnnotationRecord(
+            annotationFQName: markerFQName.isEmpty
+                ? "kotlin.native.runtime.NativeRuntimeApi"
                 : markerFQName
         )
         var annotations = symbols.annotations(for: symbol)
@@ -1001,36 +1081,6 @@ extension DataFlowSemaPhase {
         if let externalLinkName {
             symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
         }
-    }
-
-    /// Registers a simple member function on `ownerSymbol`.
-    private func registerSimpleProperty(
-        named name: String,
-        ownerSymbol: SymbolID,
-        ownerFQName: [InternedString],
-        propertyType: TypeID,
-        externalLinkName: String,
-        symbols: SymbolTable,
-        interner: StringInterner
-    ) {
-        let propertyName = interner.intern(name)
-        let propertyFQName = ownerFQName + [propertyName]
-
-        guard symbols.lookup(fqName: propertyFQName) == nil else {
-            return
-        }
-
-        let propertySymbol = symbols.define(
-            kind: .property,
-            name: propertyName,
-            fqName: propertyFQName,
-            declSite: nil,
-            visibility: .public,
-            flags: [.synthetic]
-        )
-        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
-        symbols.setPropertyType(propertyType, for: propertySymbol)
-        symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
     }
 
     /// Registers a simple member function on `ownerSymbol`.

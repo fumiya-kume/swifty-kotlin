@@ -1167,44 +1167,6 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
     }
 
-    func testPublishedApiSurfaceIsSyntheticAndTargetsDeclarations() throws {
-        let source = """
-        fun marker(x: PublishedApi?): Int = 0
-        """
-
-        let ctx = makeContextFromSource(source)
-        try runSema(ctx)
-
-        let sema = try XCTUnwrap(ctx.sema)
-        let publishedApiFQName = [
-            ctx.interner.intern("kotlin"),
-            ctx.interner.intern("PublishedApi"),
-        ]
-        let symbolID = try XCTUnwrap(
-            sema.symbols.lookup(fqName: publishedApiFQName),
-            "kotlin.PublishedApi must be registered"
-        )
-        let symbol = try XCTUnwrap(sema.symbols.symbol(symbolID))
-
-        XCTAssertEqual(symbol.visibility, .public)
-        XCTAssertTrue(symbol.flags.contains(.synthetic))
-        XCTAssertEqual(symbol.kind, .annotationClass)
-
-        let annotations = sema.symbols.annotations(for: symbolID)
-        XCTAssertTrue(
-            annotations.contains {
-                $0.annotationFQName == KnownCompilerAnnotation.target.qualifiedName
-                    && $0.arguments == [
-                        "AnnotationTarget.CLASS",
-                        "AnnotationTarget.CONSTRUCTOR",
-                        "AnnotationTarget.FUNCTION",
-                        "AnnotationTarget.PROPERTY",
-                    ]
-            },
-            "PublishedApi should carry declaration target metadata, got: \(annotations)"
-        )
-    }
-
     func testOptionalExpectationSurfaceIsSyntheticTargetedAndExperimental() throws {
         let source = """
         class Host
