@@ -918,6 +918,56 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testKotlinTextFindAnyOfStringsEdgeCases() throws {
+        let source = """
+        fun findAny(value: CharSequence, strings: Collection<String>, start: Int, ignore: Boolean): Pair<Int, String>? {
+            return value.findAnyOf(strings, start, ignore)
+        }
+
+        fun render(match: Pair<Int, String>?): String {
+            if (match == null) return "null"
+            return match.first.toString() + ":" + match.second
+        }
+
+        fun main() {
+            println(render(findAny("Kotlin", listOf("lin", "ot"), 0, false)))
+            println(render(findAny("Kotlin", listOf("KO"), 0, true)))
+            println(render("abc".findAnyOf(listOf("x", "bc"), 0, false)))
+            println(render("abc".findAnyOf(listOf(""), 5, false)))
+            println(render("abc".findAnyOf(listOf("a"), 5, false)))
+            println(render("abc".findAnyOf(listOf("bc", "b"), 0, false)))
+            println(render("abc".findAnyOf(listOf("a"), -1, false)))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "KotlinTextFindAnyOfStringsEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                out,
+                """
+                1:ot
+                0:KO
+                1:bc
+                3:
+                null
+                1:bc
+                0:a
+                """
+                + "\n"
+            )
+        }
+    }
+
     // MARK: - lines
 
     func testKotlinTextLinesEdgeCases() throws {
