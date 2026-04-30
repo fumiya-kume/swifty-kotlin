@@ -773,6 +773,7 @@ extension ABILoweringPass {
             interner.intern("kk_mutable_list_sort"),
             interner.intern("kk_mutable_list_add"),
             interner.intern("kk_mutable_list_removeAt"),
+            interner.intern("kk_mutable_list_removeFirstOrNull"),
             interner.intern("kk_mutable_list_clear"),
             interner.intern("kk_mutable_map_clear"),
             interner.intern("kk_list_zip"),

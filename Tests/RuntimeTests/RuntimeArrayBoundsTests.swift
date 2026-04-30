@@ -63,6 +63,17 @@ final class RuntimeArrayBoundsTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(runtimeListBox(from: list)?.elements, [10, 25, 30])
     }
 
+    func testMutableListRemoveFirstOrNullRemovesHeadOrReturnsNull() {
+        let list = makeMutableList([10, 20])
+
+        XCTAssertEqual(kk_mutable_list_removeFirstOrNull(list), 10)
+        XCTAssertEqual(runtimeListBox(from: list)?.elements, [20])
+        XCTAssertEqual(kk_mutable_list_removeFirstOrNull(list), 20)
+        XCTAssertEqual(runtimeListBox(from: list)?.elements, [])
+        XCTAssertEqual(kk_mutable_list_removeFirstOrNull(list), runtimeNullSentinelInt)
+        XCTAssertEqual(runtimeListBox(from: list)?.elements, [])
+    }
+
     func testSharedArrayRuntimePreservesUShortPayloads() {
         let array = kk_array_new(3)
         XCTAssertNotEqual(array, 0)

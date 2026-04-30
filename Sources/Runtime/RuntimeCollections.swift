@@ -599,6 +599,16 @@ public func kk_mutable_list_removeAt(_ listRaw: Int, _ index: Int) -> Int {
     return list.elements.remove(at: index)
 }
 
+@_cdecl("kk_mutable_list_removeFirstOrNull")
+public func kk_mutable_list_removeFirstOrNull(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw),
+          !list.elements.isEmpty
+    else {
+        return runtimeNullSentinelInt
+    }
+    return list.elements.removeFirst()
+}
+
 @_cdecl("kk_mutable_list_clear")
 public func kk_mutable_list_clear(_ listRaw: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
