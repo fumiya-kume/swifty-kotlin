@@ -1092,6 +1092,7 @@ extension CallTypeChecker {
             interner.intern("containsValue"),
             interner.intern("mapValues"),
             interner.intern("mapKeys"),
+            interner.intern("mapKeysTo"),
             interner.intern("filterKeys"),
             interner.intern("filterValues"),
             knownNames.getValue,
@@ -1182,6 +1183,7 @@ extension CallTypeChecker {
         ]
         if memberName == interner.intern("mapValues") ||
             memberName == interner.intern("mapKeys") ||
+            memberName == interner.intern("mapKeysTo") ||
             memberName == interner.intern("filterKeys") ||
             memberName == interner.intern("filterValues") ||
             memberName == interner.intern("plus") ||
@@ -1256,6 +1258,8 @@ extension CallTypeChecker {
         case interner.intern("containsKey"), interner.intern("mapValues"), interner.intern("mapKeys"),
              interner.intern("filterKeys"), interner.intern("filterValues"):
             return isMapReceiver && argCount == 1
+        case interner.intern("mapKeysTo"):
+            return isMapReceiver && argCount == 2
         case knownNames.getValue:
             return isMapReceiver && argCount == 1
         case knownNames.getOrDefault:
@@ -1404,6 +1408,7 @@ extension CallTypeChecker {
             interner.intern("associateByTo"),
             interner.intern("associateWithTo"),
             interner.intern("groupByTo"),
+            interner.intern("mapKeysTo"),
         ]
         if destinationCollectionReturningMembers.contains(memberName),
            let firstArg = args.first
@@ -1950,6 +1955,7 @@ extension CallTypeChecker {
     ) -> (argumentIndex: Int, expectedType: TypeID)? {
         let mapValues = interner.intern("mapValues")
         let mapKeys = interner.intern("mapKeys")
+        let mapKeysTo = interner.intern("mapKeysTo")
         let boolOneParamMembers: Set = [
             interner.intern("filter"),
             interner.intern("filterNot"),
@@ -2014,6 +2020,7 @@ extension CallTypeChecker {
         let mapOnlyMembers: Set = [
             mapValues,
             mapKeys,
+            mapKeysTo,
             filterKeys,
             filterValues,
             knownNames.getOrDefault,
@@ -2028,6 +2035,7 @@ extension CallTypeChecker {
             interner.intern("mapIndexedNotNullTo"),
             interner.intern("flatMapIndexedTo"),
             interner.intern("associateTo"),
+            mapKeysTo,
             interner.intern("filterIndexedTo"),
         ]
         if mapOnlyMembers.contains(memberName) {
@@ -2111,6 +2119,8 @@ extension CallTypeChecker {
                 } else {
                     sema.types.anyType
                 }
+            case mapKeysTo:
+                destinationMapKeyType
             default:
                 sema.types.anyType
             }

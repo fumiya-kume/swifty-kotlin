@@ -217,6 +217,10 @@ private let mapEntryKeyPlusHundred: @convention(c) (Int, Int, UnsafeMutablePoint
     kk_pair_first(pairRaw) + 100
 }
 
+private let mapEntryKeyTimesTen: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, pairRaw, _ in
+    kk_pair_first(pairRaw) * 10
+}
+
 private let returnSeven: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { _, _ in
     gHOFState.addCall()
     return 7
@@ -785,6 +789,29 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         let list = kk_map_toList(map)
         XCTAssertEqual(listElements(list).map { kk_pair_first($0) }, [1, 2])
         XCTAssertEqual(listElements(list).map { kk_pair_second($0) }, [32, 21])
+    }
+
+    func testMapKeysToMutatesDestinationAndReturnsIt() {
+        let keys = makeArray([1, 2])
+        let values = makeArray([10, 21])
+        let map = kk_map_of(keys, values, 2)
+        let dest = makeMutableMap(keys: [10, 0], values: [900, 1])
+
+        var thrown = 0
+        let result = kk_map_mapKeysTo(
+            map,
+            dest,
+            unsafeBitCast(mapEntryKeyTimesTen, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, dest)
+        XCTAssertEqual(mapKeys(dest), [10, 0, 20])
+        XCTAssertEqual(kk_map_get(dest, 10), 10)
+        XCTAssertEqual(kk_map_get(dest, 0), 1)
+        XCTAssertEqual(kk_map_get(dest, 20), 21)
     }
 
     func testMapKeysValuesEntriesProperties() {

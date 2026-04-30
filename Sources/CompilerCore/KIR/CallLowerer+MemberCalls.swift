@@ -167,7 +167,7 @@ extension CallLowerer {
         "runningReduce", "runningReduceIndexed",
         "groupBy", "groupingBy", "sortedBy", "find", "findLast", "associateBy", "associateWith", "associate", "zip", "zipWithNext", "unzip",
         "eachCount", "eachCountTo", "aggregate", "aggregateTo",
-        "withIndex", "forEachIndexed", "mapIndexed", "filterIndexed", "mapValues", "mapKeys", "filterKeys", "filterValues",
+        "withIndex", "forEachIndexed", "mapIndexed", "filterIndexed", "mapValues", "mapKeys", "mapKeysTo", "filterKeys", "filterValues",
         "getValue", "getOrDefault", "getOrElse", "getOrPut", "getOrNull", "elementAtOrNull", "elementAt", "elementAtOrElse",
         "putAll", "addAll",
         "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull", "maxOrNull", "minOrNull",
@@ -4769,7 +4769,7 @@ extension CallLowerer {
             "aggregate", "aggregateTo",
             "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate",
-            "forEachIndexed", "mapIndexed", "filterIndexed", "sumOf", "mapValues", "mapKeys", "filterKeys", "filterValues",
+            "forEachIndexed", "mapIndexed", "filterIndexed", "sumOf", "mapValues", "mapKeys", "mapKeysTo", "filterKeys", "filterValues",
             "getOrElse", "elementAtOrElse", "getOrPut",
             "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
             "maxOf", "minOf",
@@ -6524,6 +6524,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_associateTo"),
             interner.intern("kk_sequence_associateByTo"),
             interner.intern("kk_map_getValue"),
+            interner.intern("kk_map_mapKeysTo"),
             interner.intern("kk_sequence_mapNotNull"),
             interner.intern("kk_sequence_mapIndexed"),
             interner.intern("kk_sequence_findLast"),
@@ -8620,6 +8621,8 @@ extension CallLowerer {
             return interner.intern("kk_map_filterValues")
         case "mapNotNull":
             return interner.intern("kk_map_mapNotNull")
+        case "mapKeysTo":
+            return interner.intern("kk_map_mapKeysTo")
         case "getOrPut":
             guard knownNames.isMutableMapSymbol(symbol) else {
                 return nil

@@ -1396,6 +1396,7 @@ extension CallTypeChecker {
             "associateBy", "associateWith", "associate", "associateTo", "associateByTo", "associateWithTo", "groupByTo",
             "filterTo", "filterNotTo", "mapTo", "flatMapTo", "mapNotNullTo", "mapIndexedTo", "flatMapIndexedTo",
             "mapIndexedNotNullTo", "filterIndexedTo", "filterNotNullTo",
+            "mapKeysTo",
             "forEachIndexed", "mapIndexed",
             "firstNotNullOf",
             "firstNotNullOfOrNull",
@@ -1411,7 +1412,7 @@ extension CallTypeChecker {
             "sort", "sortBy", "sortByDescending",
         ]
         let flowHOFNames: Set = ["map", "filter", "collect"]
-        let mapOnlyCollectionHOFNames: Set = ["mapValues", "mapKeys", "filterKeys", "filterValues"]
+        let mapOnlyCollectionHOFNames: Set = ["mapValues", "mapKeys", "mapKeysTo", "filterKeys", "filterValues"]
         let mutableListOnlyCollectionHOFNames: Set = ["sort", "sortBy", "sortByDescending"]
         let isFlowReceiver = if sema.bindings.isFlowExpr(receiverID) {
             true
@@ -1924,7 +1925,7 @@ extension CallTypeChecker {
             let destinationCollectionHOFs: Set = [
                 "filterTo", "filterNotTo", "mapTo", "flatMapTo", "mapNotNullTo",
                 "mapIndexedTo", "mapIndexedNotNullTo", "flatMapIndexedTo", "associateTo",
-                "filterIndexedTo",
+                "filterIndexedTo", "mapKeysTo",
             ]
             if destinationCollectionHOFs.contains(calleeStr), args.count == 2 {
                 let destinationType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
@@ -2065,6 +2066,13 @@ extension CallTypeChecker {
                     sema.types.make(.functionType(FunctionType(
                         params: [collectionElementType],
                         returnType: pairReturnType,
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                case "mapKeysTo":
+                    sema.types.make(.functionType(FunctionType(
+                        params: [collectionElementType],
+                        returnType: destinationMapKeyType,
                         isSuspend: false,
                         nullability: .nonNull
                     )))

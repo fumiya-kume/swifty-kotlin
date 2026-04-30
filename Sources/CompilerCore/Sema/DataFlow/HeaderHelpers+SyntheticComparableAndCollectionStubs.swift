@@ -7436,6 +7436,8 @@ extension DataFlowSemaPhase {
             ?? symbols.lookupByShortName(interner.intern("List")).first
         let setSymbol = symbols.lookup(fqName: kotlinCollectionsPkg + [interner.intern("Set")])
             ?? symbols.lookupByShortName(interner.intern("Set")).first
+        let mutableMapSymbol = symbols.lookup(fqName: kotlinCollectionsPkg + [interner.intern("MutableMap")])
+            ?? symbols.lookupByShortName(interner.intern("MutableMap")).first
 
         func registerMember(
             name: String,
@@ -7652,6 +7654,44 @@ extension DataFlowSemaPhase {
                 externalLinkName: "kk_map_mapKeys",
                 parameterTypes: [transformType],
                 returnType: mapRType,
+                typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol, rSymbol],
+                flags: [.synthetic, .inlineFunction]
+            )
+        }
+
+        let mapKeysToName = interner.intern("mapKeysTo")
+        let mapKeysToFQName = mapFQName + [mapKeysToName]
+        if symbols.lookup(fqName: mapKeysToFQName) == nil {
+            let rName = interner.intern("R")
+            let rSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: mapKeysToFQName + [rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let transformType = types.make(.functionType(FunctionType(
+                params: [entryType],
+                returnType: rType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let destinationType = if let mutableMapSymbol {
+                types.make(.classType(ClassType(
+                    classSymbol: mutableMapSymbol,
+                    args: [.in(rType), .in(valueType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                types.anyType
+            }
+            registerMember(
+                name: "mapKeysTo",
+                externalLinkName: "kk_map_mapKeysTo",
+                parameterTypes: [destinationType, transformType],
+                returnType: destinationType,
                 typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol, rSymbol],
                 flags: [.synthetic, .inlineFunction]
             )
