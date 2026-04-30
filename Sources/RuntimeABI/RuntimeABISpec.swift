@@ -855,6 +855,28 @@ public enum RuntimeABISpec {
             section: "String"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_string_replaceBeforeLast",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "delimiterRaw", type: .intptr),
+                RuntimeABIParameter(name: "replacementRaw", type: .intptr),
+                RuntimeABIParameter(name: "missingDelimiterValueRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_replaceBeforeLast_char",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "delimiterRaw", type: .intptr),
+                RuntimeABIParameter(name: "replacementRaw", type: .intptr),
+                RuntimeABIParameter(name: "missingDelimiterValueRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_any_to_string",
             parameters: [
                 RuntimeABIParameter(name: "value", type: .intptr),
