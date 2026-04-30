@@ -2301,6 +2301,23 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-TEXT-SEQ-003: CharSequence.windowedSequence(size, step, partialWindows) ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "windowedSequence",
+            externalLinkName: "kk_string_windowedSequence_partial",
+            receiverType: charSequenceType,
+            parameters: [
+                ("size", intType, false, false),
+                ("step", intType, false, false),
+                ("partialWindows", boolType, false, false),
+            ],
+            returnType: sequenceStringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-318: String.commonPrefixWith / commonSuffixWith ---
 
         registerSyntheticStringExtensionFunction(
