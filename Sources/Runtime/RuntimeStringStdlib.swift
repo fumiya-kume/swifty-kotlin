@@ -1031,6 +1031,33 @@ public func kk_string_indexOfAny_strings(_ strRaw: Int, _ stringsRaw: Int, _ sta
     return -1
 }
 
+@_cdecl("kk_string_lastIndexOfAny_chars")
+public func kk_string_lastIndexOfAny_chars(_ strRaw: Int, _ charsRaw: Int, _ startIndex: Int, _ ignoreCaseRaw: Int) -> Int {
+    let source = runtimeStringScalars(strRaw)
+    guard let chars = runtimeArrayBox(from: charsRaw), !source.isEmpty, !chars.elements.isEmpty else {
+        return -1
+    }
+    let start = min(startIndex, source.count - 1)
+    guard start >= 0 else {
+        return -1
+    }
+    let ignoreCase = ignoreCaseRaw != 0
+    let needles = chars.elements.compactMap { UnicodeScalar(kk_unbox_char($0)) }
+    guard !needles.isEmpty else {
+        return -1
+    }
+    for offset in stride(from: start, through: 0, by: -1) {
+        let scalar = source[offset]
+        if needles.contains(where: { needle in
+            if !ignoreCase { return scalar == needle }
+            return String(scalar).caseInsensitiveCompare(String(needle)) == .orderedSame
+        }) {
+            return offset
+        }
+    }
+    return -1
+}
+
 @_cdecl("kk_string_indexOfFirst")
 public func kk_string_indexOfFirst(
     _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
