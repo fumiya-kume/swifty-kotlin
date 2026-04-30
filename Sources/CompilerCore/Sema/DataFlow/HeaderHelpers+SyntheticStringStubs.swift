@@ -22,6 +22,18 @@ extension DataFlowSemaPhase {
         if let kotlinRootPkgSymbol = symbols.lookup(fqName: kotlinRootPkg) {
             symbols.setParentSymbol(kotlinRootPkgSymbol, for: charSequenceSymbol)
         }
+        let appendableSymbol = ensureInterfaceSymbol(
+            named: "Appendable",
+            in: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let appendableType = types.make(.classType(ClassType(
+            classSymbol: appendableSymbol, args: [], nullability: .nonNull
+        )))
+        if let kotlinTextPkgSymbol = symbols.lookup(fqName: kotlinTextPkg) {
+            symbols.setParentSymbol(kotlinTextPkgSymbol, for: appendableSymbol)
+        }
         let boolType = types.make(.primitive(.boolean, .nonNull))
         let nullableBoolType = types.make(.primitive(.boolean, .nullable))
         let intType = types.intType
@@ -68,6 +80,40 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             types: types,
             fqName: [interner.intern("kotlin"), interner.intern("CharArray")]
+        )
+        let nullableCharSequenceType = types.makeNullable(charSequenceType)
+
+        // --- STDLIB-TEXT-TYPE-001: kotlin.text.Appendable interface surface ---
+        registerAppendableMemberFunction(
+            named: "append",
+            ownerSymbol: appendableSymbol,
+            ownerType: appendableType,
+            parameters: [("value", charType, false, false)],
+            returnType: appendableType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerAppendableMemberFunction(
+            named: "append",
+            ownerSymbol: appendableSymbol,
+            ownerType: appendableType,
+            parameters: [("value", nullableCharSequenceType, false, false)],
+            returnType: appendableType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerAppendableMemberFunction(
+            named: "append",
+            ownerSymbol: appendableSymbol,
+            ownerType: appendableType,
+            parameters: [
+                ("value", nullableCharSequenceType, false, false),
+                ("startIndex", intType, false, false),
+                ("endIndex", intType, false, false),
+            ],
+            returnType: appendableType,
+            symbols: symbols,
+            interner: interner
         )
 
         registerSyntheticStringExtensionFunction(
@@ -3384,6 +3430,77 @@ extension DataFlowSemaPhase {
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: receiverType,
+                parameterTypes: parameterTypes,
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: parameterSymbols,
+                valueParameterHasDefaultValues: parameterDefaults,
+                valueParameterIsVararg: parameterVarargs,
+                typeParameterSymbols: []
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerAppendableMemberFunction(
+        named name: String,
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        parameters: [(name: String, type: TypeID, hasDefault: Bool, isVararg: Bool)],
+        returnType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let functionName = interner.intern(name)
+        let functionFQName = ownerInfo.fqName + [functionName]
+        if symbols.lookupAll(fqName: functionFQName).contains(where: { symbolID in
+            guard let existingSignature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return existingSignature.receiverType == ownerType
+                && existingSignature.parameterTypes == parameters.map(\.type)
+        }) {
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
+
+        var parameterTypes: [TypeID] = []
+        var parameterSymbols: [SymbolID] = []
+        var parameterDefaults: [Bool] = []
+        var parameterVarargs: [Bool] = []
+
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: functionFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            parameterTypes.append(parameter.type)
+            parameterSymbols.append(parameterSymbol)
+            parameterDefaults.append(parameter.hasDefault)
+            parameterVarargs.append(parameter.isVararg)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: ownerType,
                 parameterTypes: parameterTypes,
                 returnType: returnType,
                 isSuspend: false,

@@ -1095,6 +1095,58 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testAppendableInterfaceSurfaceResolves() throws {
+        let source = """
+        import kotlin.text.Appendable
+        import kotlin.text.StringBuilder
+
+        fun appendPieces(target: Appendable): Appendable {
+            target.append('a')
+            target.append("bc")
+            return target.append("def", 1, 3)
+        }
+
+        fun builderAsAppendable(): Appendable {
+            return StringBuilder()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics.map { "\($0.code): \($0.message)" }.joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Appendable surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let appendableFQName = ["kotlin", "text", "Appendable"].map { ctx.interner.intern($0) }
+            let appendableSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: appendableFQName))
+            XCTAssertEqual(sema.symbols.symbol(appendableSymbol)?.kind, .interface)
+
+            let appendCalls = allExprIDs(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "append"
+            }
+            XCTAssertEqual(appendCalls.count, 3)
+            let appendableType = sema.types.make(.classType(ClassType(
+                classSymbol: appendableSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            for callExpr in appendCalls {
+                let chosenCallee = try XCTUnwrap(
+                    sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                    "Expected Appendable.append call binding"
+                )
+                let signature = try XCTUnwrap(sema.symbols.functionSignature(for: chosenCallee))
+                XCTAssertEqual(signature.receiverType, appendableType)
+            }
+        }
+    }
+
     func testCharSequenceZipWithNextMembersResolveInCallExpressions() throws {
         let source = """
         fun pairs(value: CharSequence): List<Pair<Char, Char>> {

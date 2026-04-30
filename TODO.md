@@ -70,7 +70,7 @@
 - [x] STDLIB-TEXT-REPLACE-003: `String.replaceBefore(delimiter, replacement, missingDelimiterValue)` を追加する
 - [x] STDLIB-TEXT-REPLACE-004: `String.replaceBeforeLast(delimiter, replacement, missingDelimiterValue)` を追加する
 - [x] STDLIB-TEXT-REPLACE-005: `String.replaceIndentByMargin(newIndent, marginPrefix)` を追加する
-- [ ] STDLIB-TEXT-TYPE-001: `kotlin.text.Appendable` interface surface を追加する
+- [x] STDLIB-TEXT-TYPE-001: `kotlin.text.Appendable` interface surface を追加する
 - [ ] STDLIB-TEXT-TYPE-002: `kotlin.text.CharacterCodingException` class surface を追加する
 - [ ] STDLIB-TEXT-TYPE-003: `kotlin.text.Typography` object surface を追加する
 - [ ] STDLIB-TEXT-TYPE-004: `kotlin.text.CASE_INSENSITIVE_ORDER` comparator を追加する

@@ -13,6 +13,17 @@ extension DataFlowSemaPhase {
             classSymbol: sbSymbol, args: [], nullability: .nonNull
         )))
         let stringType = types.stringType
+        let appendableSymbol = ensureInterfaceSymbol(
+            named: "Appendable",
+            in: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinTextPkgSymbol = symbols.lookup(fqName: kotlinTextPkg) {
+            symbols.setParentSymbol(kotlinTextPkgSymbol, for: appendableSymbol)
+        }
+        symbols.setDirectSupertypes([appendableSymbol], for: sbSymbol)
+        types.setNominalDirectSupertypes([appendableSymbol], for: sbSymbol)
         let kotlinPkg = ensurePackage(path: ["kotlin"], symbols: symbols, interner: interner)
         let charSequenceSymbol = ensureInterfaceSymbol(
             named: "CharSequence",
