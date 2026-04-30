@@ -7,7 +7,7 @@ extension CodegenBackendIntegrationTests {
         let source = """
         import kotlin.time.Duration.Companion.milliseconds
         import kotlin.time.ExperimentalTime
-        import kotlin.time.TimeSource
+        import kotlin.time.*
 
         @OptIn(ExperimentalTime::class)
         fun main() {
@@ -19,6 +19,8 @@ extension CodegenBackendIntegrationTests {
             println((future - past).inWholeMilliseconds)
             // hasNotPassedNow() is timing-sensitive; only check past.hasPassedNow()
             println(past.hasPassedNow())
+            val clock = TimeSource.Monotonic.asClock(Instant.fromEpochMilliseconds(0L))
+            println(clock.now().epochSeconds >= 0L)
         }
         """
 
@@ -39,6 +41,7 @@ extension CodegenBackendIntegrationTests {
                 """
                 5
                 10
+                true
                 true
                 """
                 + "\n"

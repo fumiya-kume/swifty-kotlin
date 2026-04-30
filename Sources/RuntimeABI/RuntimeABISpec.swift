@@ -1414,6 +1414,15 @@ public enum RuntimeABISpec {
             section: "String"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_char_lowercase_locale",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "localeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_char_titlecase",
             parameters: [
                 RuntimeABIParameter(name: "value", type: .intptr),
@@ -2378,6 +2387,25 @@ public enum RuntimeABISpec {
             name: "kk_coroutine_continuation_new",
             parameters: [
                 RuntimeABIParameter(name: "functionID", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_create_coroutine_unintercepted",
+            parameters: [
+                RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
+                RuntimeABIParameter(name: "completionContinuation", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_start_coroutine_unintercepted_or_return",
+            parameters: [
+                RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -8127,6 +8155,7 @@ public enum RuntimeABISpec {
             + durationFunctions
             + timeAndPathBridgeFunctions
             + atomicFunctions
+            + nativeRefFunctions
             + threadLocalFunctions
             + threadFunctions
             + securityFunctions
