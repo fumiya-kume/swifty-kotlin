@@ -539,6 +539,23 @@ final class CollectionLiteralLoweringTests: XCTestCase {
                       "setOf should be rewritten to kk_set_of, got: \(callees)")
     }
 
+    func testSetOfNotNullRewrittenToKkSetOfNotNull() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let callee = interner.intern("setOfNotNull")
+        let (module, declID) = makeModuleWithCall(callee: callee, interner: interner, arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("setOfNotNull"), "setOfNotNull should be rewritten")
+        XCTAssertTrue(
+            callees.contains("kk_set_of_not_null"),
+            "setOfNotNull should be rewritten to kk_set_of_not_null, got: \(callees)"
+        )
+    }
+
     // MARK: - buildList rewriting (STDLIB-070)
 
     func testBuildListRewrittenToKkBuildList() throws {

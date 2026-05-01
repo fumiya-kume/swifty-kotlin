@@ -877,6 +877,17 @@ public func kk_set_of(_ arrayRaw: Int, _ count: Int) -> Int {
     return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(elements)))
 }
 
+@_cdecl("kk_set_of_not_null")
+public func kk_set_of_not_null(_ arrayRaw: Int, _ count: Int) -> Int {
+    var elements: [Int] = []
+    if count > 0, let array = runtimeArrayBox(from: arrayRaw) {
+        for element in array.elements.prefix(count) where element != runtimeNullSentinelInt {
+            elements.append(element)
+        }
+    }
+    return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(elements)))
+}
+
 // STDLIB-410: emptySet<T>() - allocates a fresh empty set each call to avoid
 // aliasing with mutable collection operations.
 @_cdecl("kk_emptySet")

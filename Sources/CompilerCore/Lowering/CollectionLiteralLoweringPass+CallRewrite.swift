@@ -54,6 +54,7 @@ extension CollectionLiteralLoweringPass {
             || fqName == lookup.listOfNotNullFQName
             || fqName == lookup.emptySetFQName
             || fqName == lookup.setOfFQName
+            || fqName == lookup.setOfNotNullFQName
             || fqName == lookup.mutableSetOfFQName
             || fqName == lookup.emptyMapFQName
             || fqName == lookup.mapOfFQName
@@ -473,9 +474,12 @@ extension CollectionLiteralLoweringPass {
                                     thrownResult: nil
                                 ))
                             }
+                            let runtimeCallee = callee == lookup.setOfNotNullName
+                                ? lookup.kkSetOfNotNullName
+                                : lookup.kkSetOfName
                             loweredBody.append(.call(
                                 symbol: nil,
-                                callee: lookup.kkSetOfName,
+                                callee: runtimeCallee,
                                 arguments: [arrayExpr, countExpr],
                                 result: result,
                                 canThrow: false,
