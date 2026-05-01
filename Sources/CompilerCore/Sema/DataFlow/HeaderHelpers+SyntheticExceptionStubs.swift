@@ -419,6 +419,33 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // printStackTrace(): Unit
+        let printStackTraceName = interner.intern("printStackTrace")
+        let printStackTraceFQName = throwableFQName + [printStackTraceName]
+        if symbols.lookup(fqName: printStackTraceFQName) == nil {
+            let printStackTraceSymbol = symbols.define(
+                kind: .function,
+                name: printStackTraceName,
+                fqName: printStackTraceFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(throwableSymbol, for: printStackTraceSymbol)
+            symbols.setExternalLinkName("kk_throwable_printStackTrace", for: printStackTraceSymbol)
+            let throwableType = types.make(.classType(ClassType(
+                classSymbol: throwableSymbol, args: [], nullability: .nonNull
+            )))
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: throwableType,
+                    parameterTypes: [],
+                    returnType: types.unitType
+                ),
+                for: printStackTraceSymbol
+            )
+        }
+
         // MARK: - Advanced exception features (STDLIB-EXCEPT-105)
 
         let throwableType = types.make(.classType(ClassType(
