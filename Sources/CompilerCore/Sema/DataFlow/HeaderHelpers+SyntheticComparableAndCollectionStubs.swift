@@ -8164,6 +8164,17 @@ extension DataFlowSemaPhase {
             args: [.out(keyType), .out(valueType)],
             nullability: .nonNull
         )))
+        let pairType: TypeID? = if let pairSymbol = symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Pair")])
+            ?? symbols.lookupByShortName(interner.intern("Pair")).first
+        {
+            types.make(.classType(ClassType(
+                classSymbol: pairSymbol,
+                args: [.invariant(keyType), .invariant(valueType)],
+                nullability: .nonNull
+            )))
+        } else {
+            nil
+        }
 
         func registerMember(
             name: String,
@@ -8200,6 +8211,9 @@ extension DataFlowSemaPhase {
         registerMember(name: "component2", returnType: valueType, externalLinkName: "kk_pair_second", flags: [.synthetic, .operatorFunction])
         registerMember(name: "key", returnType: keyType, externalLinkName: "kk_pair_first")
         registerMember(name: "value", returnType: valueType, externalLinkName: "kk_pair_second")
+        if let pairType {
+            registerMember(name: "toPair", returnType: pairType, externalLinkName: "kk_map_entry_to_pair")
+        }
 
         return receiverType
     }

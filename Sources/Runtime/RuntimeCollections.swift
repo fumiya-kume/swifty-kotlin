@@ -1420,7 +1420,7 @@ public func kk_map_entries(_ mapRaw: Int) -> Int {
         return registerRuntimeObject(RuntimeSetBox(elements: []))
     }
     let entries = zip(map.keys, map.values).map { key, value in
-        kk_pair_new(key, value)
+        runtimeMapEntryNew(key: key, value: value)
     }
     return registerRuntimeObject(RuntimeSetBox(elements: entries))
 }
@@ -1614,6 +1614,19 @@ public func kk_pair_second(_ pairRaw: Int) -> Int {
 @_cdecl("component2")
 public func component2(_ pairRaw: Int) -> Int {
     kk_pair_second(pairRaw)
+}
+
+@_cdecl("kk_map_entry_to_pair")
+public func kk_map_entry_to_pair(_ entryRaw: Int) -> Int {
+    if entryRaw == runtimeNullSentinelInt {
+        return runtimeNullSentinelInt
+    }
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: entryRaw),
+          let pairBox = tryCast(pointer, to: RuntimePairBox.self)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Map.Entry handle in kk_map_entry_to_pair")
+    }
+    return kk_pair_new(pairBox.first, pairBox.second)
 }
 
 @_cdecl("kk_pair_to_string")
