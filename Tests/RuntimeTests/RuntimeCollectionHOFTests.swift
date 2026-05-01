@@ -45,6 +45,14 @@ private let mapTimesTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -
     value * 2
 }
 
+private let firstNonNullEvenTimesTen: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value % 2 == 0 ? value * 10 : runtimeNullSentinelInt
+}
+
+private let alwaysNullTransform: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, _ in
+    runtimeNullSentinelInt
+}
+
 private let filterGreaterThanOne: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     value > 1 ? 1 : 0
 }
@@ -357,6 +365,46 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         let arraySource = makeArray([1, runtimeNullSentinelInt, 3])
         let arrayMapped = kk_array_mapNotNull(arraySource, unsafeBitCast(mapSentinelToValue, to: Int.self), 0, nil)
         XCTAssertEqual(listElements(arrayMapped), [2, 99, 6])
+    }
+
+    func testIterableFirstNotNullOfReturnsFirstNonNullTransformResult() {
+        var thrown = 0
+        let listSource = makeList([1, 2, 4])
+        let listResult = kk_iterable_firstNotNullOf(
+            listSource,
+            unsafeBitCast(firstNonNullEvenTimesTen, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(listResult, 20)
+        XCTAssertEqual(thrown, 0)
+
+        let setSource = kk_set_of(makeArray([1, 3, 4]), 3)
+        let setResult = kk_iterable_firstNotNullOf(
+            setSource,
+            unsafeBitCast(firstNonNullEvenTimesTen, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(setResult, 40)
+        XCTAssertEqual(thrown, 0)
+    }
+
+    func testIterableFirstNotNullOfThrowsWhenEveryTransformResultIsNull() {
+        var thrown = 0
+        let source = makeList([1, 3, 5])
+
+        let result = kk_iterable_firstNotNullOf(
+            source,
+            unsafeBitCast(alwaysNullTransform, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
     }
 
     func testCollectionMapNotNullPreservesZeroResults() {
