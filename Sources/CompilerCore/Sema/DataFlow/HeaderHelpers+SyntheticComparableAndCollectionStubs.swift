@@ -9263,6 +9263,60 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // Array.sortedArrayWith(comparator)
+        // The comparator overload is patched to kotlin.Comparator<T> after the
+        // Comparator synthetic stubs are registered.
+        let sortedArrayWithName = interner.intern("sortedArrayWith")
+        let sortedArrayWithFQName = arrayFQName + [sortedArrayWithName]
+        if symbols.lookup(fqName: sortedArrayWithFQName) == nil {
+            let arrayElementType = types.make(.typeParam(TypeParamType(
+                symbol: tParamSymbol,
+                nullability: .nonNull
+            )))
+            let arrayReceiverType = types.make(.classType(ClassType(
+                classSymbol: arraySymbol,
+                args: [.out(arrayElementType)],
+                nullability: .nonNull
+            )))
+            let comparatorType = if let comparatorSymbol = symbols.lookupByShortName(interner.intern("Comparator")).first {
+                types.make(.classType(ClassType(
+                    classSymbol: comparatorSymbol,
+                    args: [.invariant(arrayElementType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                types.make(.functionType(FunctionType(
+                    params: [arrayElementType, arrayElementType],
+                    returnType: types.intType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+            }
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: sortedArrayWithName,
+                fqName: sortedArrayWithFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(arraySymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_array_sortedArrayWith", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: arrayReceiverType,
+                    parameterTypes: [comparatorType],
+                    returnType: arrayReceiverType,
+                    valueParameterSymbols: [],
+                    valueParameterHasDefaultValues: [false],
+                    valueParameterIsVararg: [false],
+                    typeParameterSymbols: [tParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
         if types.comparableInterfaceSymbol == nil {
             registerSyntheticComparableStub(symbols: symbols, types: types, interner: interner)
         }
@@ -10032,6 +10086,60 @@ extension DataFlowSemaPhase {
                 classTypeParameterCount: signature.classTypeParameterCount
             ),
             for: binarySearchSymbol
+        )
+    }
+
+    func patchArraySortedArrayWithComparatorStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let arrayFQName = [interner.intern("kotlin"), interner.intern("Array")]
+        let sortedArrayWithFQName = arrayFQName + [interner.intern("sortedArrayWith")]
+        let comparatorFQName = [interner.intern("kotlin"), interner.intern("Comparator")]
+        guard let sortedArrayWithSymbol = symbols.lookup(fqName: sortedArrayWithFQName),
+              let comparatorSymbol = symbols.lookup(fqName: comparatorFQName),
+              let signature = symbols.functionSignature(for: sortedArrayWithSymbol),
+              let receiverType = signature.receiverType
+        else {
+            return
+        }
+
+        let elementType: TypeID
+        if case let .classType(arrayType) = types.kind(of: receiverType),
+           let firstArg = arrayType.args.first {
+            switch firstArg {
+            case let .invariant(type), let .out(type), let .in(type):
+                elementType = type
+            case .star:
+                elementType = types.anyType
+            }
+        } else {
+            return
+        }
+
+        let comparatorType = types.make(.classType(ClassType(
+            classSymbol: comparatorSymbol,
+            args: [.invariant(elementType)],
+            nullability: .nonNull
+        )))
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: signature.receiverType,
+                parameterTypes: [comparatorType],
+                returnType: signature.returnType,
+                isSuspend: signature.isSuspend,
+                canThrow: signature.canThrow,
+                valueParameterSymbols: signature.valueParameterSymbols,
+                valueParameterHasDefaultValues: signature.valueParameterHasDefaultValues,
+                valueParameterIsVararg: signature.valueParameterIsVararg,
+                typeParameterSymbols: signature.typeParameterSymbols,
+                reifiedTypeParameterIndices: signature.reifiedTypeParameterIndices,
+                typeParameterUpperBounds: signature.typeParameterUpperBounds,
+                typeParameterUpperBoundsList: signature.typeParameterUpperBoundsList,
+                classTypeParameterCount: signature.classTypeParameterCount
+            ),
+            for: sortedArrayWithSymbol
         )
     }
 

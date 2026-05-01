@@ -1018,6 +1018,7 @@ extension DataFlowSemaPhase {
         registerSyntheticBuilderDSLStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticComparatorStubs(symbols: symbols, types: types, interner: interner)
         patchArrayBinarySearchComparatorStub(symbols: symbols, types: types, interner: interner)
+        patchArraySortedArrayWithComparatorStub(symbols: symbols, types: types, interner: interner)
         registerSyntheticComparisonStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticStringStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCharStubs(symbols: symbols, types: types, interner: interner)

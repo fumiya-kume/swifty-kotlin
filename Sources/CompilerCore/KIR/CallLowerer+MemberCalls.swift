@@ -176,6 +176,7 @@ extension CallLowerer {
         "toIntArray", "toLongArray", "toByteArray", "toUByteArray", "toUShortArray", "toUIntArray", "toULongArray",
         "take", "drop", "reversed", "asReversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect", "subList",
         "sortedDescending", "sortedByDescending", "sortedWith", "partition",
+        "sortedArrayWith",
         "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",
         "maxOf", "minOf",
         "maxOfWith", "maxOfWithOrNull", "minOfWith", "minOfWithOrNull",
@@ -1714,6 +1715,37 @@ extension CallLowerer {
                     symbol: nil,
                     callee: interner.intern("kk_list_sortedWith"),
                     arguments: sortedWithArguments,
+                    result: result,
+                    canThrow: true,
+                    thrownResult: arena.appendExpr(
+                        .temporary(Int32(arena.expressions.count)),
+                        type: sema.types.nullableAnyType
+                    )
+                ))
+                return result
+            }
+        }
+
+        if args.count == 1,
+           interner.resolve(calleeName) == "sortedArrayWith"
+        {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if isGenericArrayLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                let runtimeCallee = interner.intern("kk_array_sortedArrayWith")
+                let sortedArrayWithArguments = adaptComparatorBackedCollectionArguments(
+                    loweredCallee: runtimeCallee,
+                    finalArguments: [loweredReceiverID] + normalizedArgIDs,
+                    sourceArgExprs: args.map(\.expr),
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    instructions: &instructions
+                )
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: runtimeCallee,
+                    arguments: sortedArrayWithArguments,
                     result: result,
                     canThrow: true,
                     thrownResult: arena.appendExpr(
@@ -4511,6 +4543,7 @@ extension CallLowerer {
             "maxOfWith", "maxOfWithOrNull", "minOfWith", "minOfWithOrNull",
             "indexOfFirst", "indexOfLast", "binarySearch", "binarySearchBy", "reduceIndexed", "reduceIndexedOrNull", "foldIndexed", "foldRightIndexed",
             "sortedByDescending", "sortedWith", "partition", "zipWithNext",
+            "sortedArrayWith",
             "takeWhile", "dropWhile", "filterNot", "findLast", "replaceAll", "removeIf",
             "replaceFirstChar",
             "trim", "trimStart", "trimEnd",
@@ -4842,6 +4875,7 @@ extension CallLowerer {
     ) -> [KIRExprID] {
         let comparatorOnlyHOFNames: Set<String> = [
             "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",
+            "sortedArrayWith",
         ]
         guard comparatorOnlyHOFNames.contains(interner.resolve(calleeName)),
               loweredArgIDs.count == 1,
@@ -4875,6 +4909,7 @@ extension CallLowerer {
             interner.intern("kk_list_maxWithOrNull"),
             interner.intern("kk_list_minWith"),
             interner.intern("kk_list_minWithOrNull"),
+            interner.intern("kk_array_sortedArrayWith"),
         ]
         if comparatorOnlyCallees.contains(loweredCallee),
            finalArguments.count == 2,
@@ -5948,6 +5983,7 @@ extension CallLowerer {
             interner.intern("kk_list_minWith"),
             interner.intern("kk_list_minWithOrNull"),
             interner.intern("kk_list_sortedWith"),
+            interner.intern("kk_array_sortedArrayWith"),
         ]
         if comparatorOnlyCallees.contains(loweredCallee),
            finalArguments.count == 2,
@@ -6244,6 +6280,7 @@ extension CallLowerer {
             interner.intern("kk_list_binarySearch_compare"),
             interner.intern("kk_list_binarySearch_comparator"),
             interner.intern("kk_array_binarySearch_compare"),
+            interner.intern("kk_array_sortedArrayWith"),
             interner.intern("kk_list_binarySearchBy"),
             interner.intern("kk_list_binarySearchBy_fromIndex"),
             interner.intern("kk_list_binarySearchBy_range"),
@@ -7851,6 +7888,8 @@ extension CallLowerer {
                     sema: sema,
                     interner: interner
                 )
+            case "sortedArrayWith":
+                return interner.intern("kk_array_sortedArrayWith")
             default:
                 break
             }

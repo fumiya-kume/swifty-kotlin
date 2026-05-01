@@ -1408,7 +1408,7 @@ extension CallTypeChecker {
             "maxOf", "minOf",
             "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",
             "maxOfWith", "maxOfWithOrNull", "minOfWith", "minOfWithOrNull",
-            "sortedByDescending", "sortedWith", "partition", "takeWhile", "dropWhile", "distinctBy", "zipWithNext",
+            "sortedByDescending", "sortedWith", "sortedArrayWith", "partition", "takeWhile", "dropWhile", "distinctBy", "zipWithNext",
             "flatten",
             "sort", "sortBy", "sortByDescending",
         ]
@@ -3010,7 +3010,7 @@ extension CallTypeChecker {
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                 resultType = sema.types.unitType
 
-            case "sortedWith":
+            case "sortedWith", "sortedArrayWith":
                 guard args.count == 1 else {
                     sema.bindings.bindExprType(id, type: sema.types.anyType)
                     return sema.types.anyType
