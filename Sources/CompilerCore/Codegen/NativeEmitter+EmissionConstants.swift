@@ -40,6 +40,28 @@ extension NativeEmitter {
             bindings.buildICmpNotEqual(state.builder, lhs: value, rhs: state.zeroValue, name: name)
         }
 
+        func buildSignedFloorMod(name: String) -> LLVMCAPIBindings.LLVMValueRef? {
+            guard let quotient = bindings.buildSDiv(state.builder, lhs: lhs, rhs: rhs, name: "\(name)_q_\(instructionIndex)"),
+                  let product = bindings.buildMul(state.builder, lhs: quotient, rhs: rhs, name: "\(name)_p_\(instructionIndex)"),
+                  let remainder = bindings.buildSub(state.builder, lhs: lhs, rhs: product, name: "\(name)_rem_\(instructionIndex)"),
+                  let remainderIsNonZero = bindings.buildICmpNotEqual(state.builder, lhs: remainder, rhs: state.zeroValue, name: "\(name)_nonzero_\(instructionIndex)"),
+                  let lhsIsNegative = bindings.buildICmpSignedLessThan(state.builder, lhs: lhs, rhs: state.zeroValue, name: "\(name)_lhs_neg_\(instructionIndex)"),
+                  let rhsIsNegative = bindings.buildICmpSignedLessThan(state.builder, lhs: rhs, rhs: state.zeroValue, name: "\(name)_rhs_neg_\(instructionIndex)"),
+                  let signsDiffer = bindings.buildXor(state.builder, lhs: lhsIsNegative, rhs: rhsIsNegative, name: "\(name)_signs_\(instructionIndex)"),
+                  let shouldAdjust = bindings.buildAnd(state.builder, lhs: remainderIsNonZero, rhs: signsDiffer, name: "\(name)_adjust_\(instructionIndex)"),
+                  let adjusted = bindings.buildAdd(state.builder, lhs: remainder, rhs: rhs, name: "\(name)_adjusted_\(instructionIndex)")
+            else {
+                return nil
+            }
+            return bindings.buildSelect(
+                state.builder,
+                condition: shouldAdjust,
+                thenValue: adjusted,
+                elseValue: remainder,
+                name: "\(name)_\(instructionIndex)"
+            )
+        }
+
         let lowered: LLVMCAPIBindings.LLVMValueRef?
         switch calleeName {
         case "kk_op_add":
@@ -82,6 +104,10 @@ extension NativeEmitter {
             } else {
                 lowered = nil
             }
+        case "kk_op_floor_mod":
+            lowered = buildSignedFloorMod(name: "floor_mod")
+        case "kk_op_lfloor_mod":
+            lowered = buildSignedFloorMod(name: "lfloor_mod")
         case "kk_op_urem":
             lowered = bindings.buildURem(state.builder, lhs: lhs, rhs: rhs, name: "urem_\(instructionIndex)")
         case "kk_op_eq":
