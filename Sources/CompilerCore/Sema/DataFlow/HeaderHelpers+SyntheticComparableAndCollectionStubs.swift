@@ -9023,7 +9023,7 @@ extension DataFlowSemaPhase {
             )
         }
 
-        // --- Array extension functions: contentEquals, contentHashCode ---
+        // --- Array extension functions: contentEquals, contentHashCode, reversedArray ---
 
         // contentEquals(other: Array<T>): Boolean
         let contentEqualsName = interner.intern("contentEquals")
@@ -9092,6 +9092,43 @@ extension DataFlowSemaPhase {
                 for: contentHashCodeSymbol
             )
             symbols.setExternalLinkName("kk_array_contentHashCode", for: contentHashCodeSymbol)
+        }
+
+        // reversedArray(): Array<T>
+        let reversedArrayName = interner.intern("reversedArray")
+        let reversedArrayFQName = arrayFQName + [reversedArrayName]
+        if symbols.lookup(fqName: reversedArrayFQName) == nil {
+            let reversedArraySymbol = symbols.define(
+                kind: .function,
+                name: reversedArrayName,
+                fqName: reversedArrayFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(arraySymbol, for: reversedArraySymbol)
+            symbols.setExternalLinkName("kk_array_reversedArray", for: reversedArraySymbol)
+
+            let arrayTypeParam = types.make(.typeParam(TypeParamType(symbol: tParamSymbol, nullability: .nonNull)))
+            let arrayType = types.make(.classType(ClassType(
+                classSymbol: arraySymbol,
+                args: [.invariant(arrayTypeParam)],
+                nullability: .nonNull
+            )))
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: arrayType,
+                    parameterTypes: [],
+                    returnType: arrayType,
+                    isSuspend: false,
+                    valueParameterSymbols: [],
+                    valueParameterHasDefaultValues: [],
+                    valueParameterIsVararg: [],
+                    typeParameterSymbols: [tParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: reversedArraySymbol
+            )
         }
 
         // Array.binarySearch(element, comparator, fromIndex, toIndex)
@@ -9719,6 +9756,49 @@ extension DataFlowSemaPhase {
                         typeParameterSymbols: []
                     ),
                     for: copyOfRangeSym
+                )
+            }
+        }
+
+        // Register reversedArray() for primitive arrays.
+        for name in primitiveArrayNames {
+            let primName = interner.intern(name)
+            let fqName = kotlinPkg + [primName]
+            guard let arraySymbol = symbols.lookup(fqName: fqName) else {
+                continue
+            }
+
+            let reversedArrayName = interner.intern("reversedArray")
+            let reversedArrayFQName = fqName + [reversedArrayName]
+            if symbols.lookup(fqName: reversedArrayFQName) == nil {
+                let reversedArraySym = symbols.define(
+                    kind: .function,
+                    name: reversedArrayName,
+                    fqName: reversedArrayFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(arraySymbol, for: reversedArraySym)
+                symbols.setExternalLinkName("kk_array_reversedArray", for: reversedArraySym)
+
+                let arrayType = types.make(.classType(ClassType(
+                    classSymbol: arraySymbol,
+                    args: [],
+                    nullability: .nonNull
+                )))
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: arrayType,
+                        parameterTypes: [],
+                        returnType: arrayType,
+                        isSuspend: false,
+                        valueParameterSymbols: [],
+                        valueParameterHasDefaultValues: [],
+                        valueParameterIsVararg: [],
+                        typeParameterSymbols: []
+                    ),
+                    for: reversedArraySym
                 )
             }
         }

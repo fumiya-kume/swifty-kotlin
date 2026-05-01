@@ -83,4 +83,76 @@ final class ArraySyntheticMemberLinkTests: XCTestCase {
             XCTAssertEqual(comparatorType.args.count, 1)
         }
     }
+
+    func testArrayReversedArrayUsesRuntimeExternalLink() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbolID = try XCTUnwrap(
+                sema.symbols.lookup(
+                    fqName: [
+                        ctx.interner.intern("kotlin"),
+                        ctx.interner.intern("Array"),
+                        ctx.interner.intern("reversedArray"),
+                    ]
+                ),
+                "Expected synthetic Array.reversedArray to be registered"
+            )
+            XCTAssertEqual(sema.symbols.externalLinkName(for: symbolID), "kk_array_reversedArray")
+
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbolID))
+            XCTAssertTrue(signature.parameterTypes.isEmpty)
+            let receiverType = try XCTUnwrap(signature.receiverType)
+            XCTAssertEqual(signature.returnType, receiverType)
+            XCTAssertTrue(signature.valueParameterHasDefaultValues.isEmpty)
+            XCTAssertTrue(signature.valueParameterIsVararg.isEmpty)
+            XCTAssertEqual(signature.typeParameterSymbols.count, 1)
+        }
+    }
+
+    func testPrimitiveArrayReversedArrayOverloadsUseRuntimeExternalLink() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let arrayNames = [
+                "IntArray",
+                "LongArray",
+                "ByteArray",
+                "ShortArray",
+                "UIntArray",
+                "ULongArray",
+                "DoubleArray",
+                "FloatArray",
+                "BooleanArray",
+                "CharArray",
+                "UByteArray",
+                "UShortArray",
+            ]
+
+            for arrayName in arrayNames {
+                let symbolID = try XCTUnwrap(
+                    sema.symbols.lookup(
+                        fqName: [
+                            ctx.interner.intern("kotlin"),
+                            ctx.interner.intern(arrayName),
+                            ctx.interner.intern("reversedArray"),
+                        ]
+                    ),
+                    "Expected \(arrayName).reversedArray to be registered"
+                )
+                XCTAssertEqual(sema.symbols.externalLinkName(for: symbolID), "kk_array_reversedArray")
+
+                let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbolID))
+                XCTAssertTrue(signature.parameterTypes.isEmpty, "\(arrayName).reversedArray should take no parameters")
+                let receiverType = try XCTUnwrap(signature.receiverType)
+                XCTAssertEqual(signature.returnType, receiverType, "\(arrayName).reversedArray should return the same array type")
+                XCTAssertTrue(signature.valueParameterHasDefaultValues.isEmpty)
+                XCTAssertTrue(signature.valueParameterIsVararg.isEmpty)
+            }
+        }
+    }
 }
