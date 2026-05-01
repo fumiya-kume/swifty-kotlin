@@ -46,6 +46,46 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testArrayListOfFactoryInfersMutableListType() throws {
+        let source = """
+        fun probe() {
+            val values = arrayListOf(1, 2)
+            values.add(3)
+            val typed: ArrayList<Int> = arrayListOf<Int>()
+            typed.add(4)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected arrayListOf factory calls to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let arrayListCall = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .call(callee, _, _, _) = expr,
+                      case let .nameRef(name, _) = ast.arena.expr(callee)
+                else { return false }
+                return ctx.interner.resolve(name) == "arrayListOf"
+            })
+            let callType = try XCTUnwrap(sema.bindings.exprTypes[arrayListCall])
+            guard case let .classType(classType) = sema.types.kind(of: callType) else {
+                return XCTFail("Expected arrayListOf to produce a MutableList class type")
+            }
+            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(classType.classSymbol)?.name)), "MutableList")
+            XCTAssertEqual(classType.args, [.invariant(sema.types.intType)])
+            XCTAssertTrue(
+                sema.bindings.isCollectionExpr(arrayListCall),
+                "Expected arrayListOf to be tracked as a collection expression"
+            )
+        }
+    }
+
     func testListAggregateMembersUseRuntimeExternalLinks() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])
