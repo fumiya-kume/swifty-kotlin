@@ -697,6 +697,36 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenHashSetOfFactoryUsesMutableRuntimeSet() throws {
+        let source = """
+        fun main() {
+            val set = hashSetOf(1, 2, 2)
+            println(set)
+            println(set.add(3))
+            println(set)
+
+            val empty = hashSetOf<String>()
+            empty.add("x")
+            println(empty)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "HashSetOfFactoryRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[1, 2]\ntrue\n[1, 2, 3]\n[x]\n")
+        }
+    }
+
     func testCodegenMutableSetAddAllAcceptsSetAndListCollections() throws {
         let source = """
         fun main() {

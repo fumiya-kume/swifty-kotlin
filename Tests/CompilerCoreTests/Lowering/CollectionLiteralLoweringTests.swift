@@ -563,6 +563,20 @@ final class CollectionLiteralLoweringTests: XCTestCase {
         XCTAssertTrue(callees.contains("kk_set_of"), "linkedSetOf() should become kk_set_of (fresh mutable)")
     }
 
+    func testZeroArgHashSetOfRewrittenToKkSetOf() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let callee = interner.intern("hashSetOf")
+        let (module, declID) = makeModuleWithZeroArgCall(callee: callee, interner: interner, arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("hashSetOf"), "hashSetOf() should be rewritten")
+        XCTAssertTrue(callees.contains("kk_set_of"), "hashSetOf() should become kk_set_of (fresh mutable)")
+    }
+
     func testZeroArgMutableMapOfRewrittenToKkMapOf() throws {
         let interner = StringInterner()
         let arena = KIRArena()
@@ -666,6 +680,20 @@ final class CollectionLiteralLoweringTests: XCTestCase {
         let callees = calleesInDecl(declID, module: module, interner: interner)
         XCTAssertFalse(callees.contains("linkedSetOf"), "linkedSetOf should be rewritten")
         XCTAssertTrue(callees.contains("kk_set_of"), "linkedSetOf should become kk_set_of")
+    }
+
+    func testHashSetOfRewrittenToKkSetOf() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let callee = interner.intern("hashSetOf")
+        let (module, declID) = makeModuleWithCall(callee: callee, interner: interner, arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("hashSetOf"), "hashSetOf should be rewritten")
+        XCTAssertTrue(callees.contains("kk_set_of"), "hashSetOf should become kk_set_of")
     }
 
     // MARK: - buildList rewriting (STDLIB-070)
