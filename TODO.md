@@ -93,7 +93,7 @@
 - [x] STDLIB-TEXT-HEX-006: `String.hexToUShort()` を追加する
 - [x] STDLIB-TEXT-NUM-001: `String.toUByteOrNull(radix)` を追加する
 - [x] STDLIB-TEXT-NUM-002: `String.toUIntOrNull(radix)` を追加する
-- [ ] STDLIB-TEXT-NUM-003: `String.toULongOrNull(radix)` を追加する
+- [x] STDLIB-TEXT-NUM-003: `String.toULongOrNull(radix)` を追加する
 - [ ] STDLIB-TEXT-NUM-004: `String.toUShortOrNull(radix)` を追加する
 
 ### Phase 2: コレクション・Sequence・Range

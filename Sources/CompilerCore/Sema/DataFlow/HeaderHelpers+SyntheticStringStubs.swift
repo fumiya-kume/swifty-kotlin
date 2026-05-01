@@ -520,6 +520,19 @@ extension DataFlowSemaPhase {
         )
 
         registerSyntheticStringExtensionFunction(
+            named: "toULongOrNull",
+            externalLinkName: "kk_string_toULongOrNull_radix",
+            receiverType: stringType,
+            parameters: [
+                ("radix", intType, false, false),
+            ],
+            returnType: types.makeNullable(types.ulongType),
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
             named: "toDouble",
             externalLinkName: "kk_string_toDouble",
             receiverType: stringType,
