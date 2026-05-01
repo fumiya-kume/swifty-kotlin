@@ -121,4 +121,47 @@ final class ExceptionSyntheticStubTests: XCTestCase {
         fun cause(cause: Throwable?): RuntimeException = ConcurrentModificationException(cause)
         """)
     }
+
+    func testArrayIndexOutOfBoundsExceptionSurfaceIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let exceptionFQName = ["kotlin", "ArrayIndexOutOfBoundsException"].map { interner.intern($0) }
+        let exceptionSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: exceptionFQName))
+        XCTAssertEqual(sema.symbols.symbol(exceptionSymbol)?.kind, .class)
+
+        let indexOutOfBoundsFQName = ["kotlin", "IndexOutOfBoundsException"].map { interner.intern($0) }
+        let indexOutOfBoundsSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: indexOutOfBoundsFQName))
+        XCTAssertTrue(sema.symbols.directSupertypes(for: exceptionSymbol).contains(indexOutOfBoundsSymbol))
+
+        let exceptionType = sema.types.make(.classType(ClassType(
+            classSymbol: exceptionSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        XCTAssertEqual(sema.symbols.propertyType(for: exceptionSymbol), exceptionType)
+
+        let nullableStringType = sema.types.makeNullable(sema.types.stringType)
+        let constructorFQName = exceptionFQName + [interner.intern("<init>")]
+        let constructors = sema.symbols.lookupAll(fqName: constructorFQName).filter {
+            sema.symbols.symbol($0)?.kind == .constructor
+        }
+        let expected: [([TypeID], String)] = [
+            ([], "kk_array_index_out_of_bounds_exception_new"),
+            ([nullableStringType], "kk_array_index_out_of_bounds_exception_new_message"),
+        ]
+        for (parameterTypes, externalLinkName) in expected {
+            let constructor = try XCTUnwrap(constructors.first {
+                sema.symbols.functionSignature(for: $0)?.parameterTypes == parameterTypes
+            })
+            XCTAssertEqual(sema.symbols.functionSignature(for: constructor)?.returnType, exceptionType)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: constructor), externalLinkName)
+        }
+    }
+
+    func testArrayIndexOutOfBoundsExceptionResolvesInSource() throws {
+        _ = try makeSema(source: """
+        fun noArg(): IndexOutOfBoundsException = ArrayIndexOutOfBoundsException()
+        fun message(message: String?): IndexOutOfBoundsException = ArrayIndexOutOfBoundsException(message)
+        """)
+    }
 }

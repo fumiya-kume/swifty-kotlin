@@ -575,6 +575,23 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(runtimeStringValue(formatted), "1.23e+03")
     }
 
+    func testStringFormatLocaleUsesLocaleDecimalSeparator() {
+        let locale = kk_locale_new_language_country(rawFromRuntimeString("de"), rawFromRuntimeString("DE"))
+        let args = makeRuntimeArray([
+            kk_box_double(Int(bitPattern: UInt(truncatingIfNeeded: 3.5.bitPattern))),
+        ])
+        let formatted = kk_string_format_locale(locale, rawFromRuntimeString("%.1f"), args)
+        XCTAssertEqual(runtimeStringValue(formatted), "3,5")
+    }
+
+    func testStringFormatNullLocaleKeepsNonLocalizedFormatting() {
+        let args = makeRuntimeArray([
+            kk_box_double(Int(bitPattern: UInt(truncatingIfNeeded: 3.5.bitPattern))),
+        ])
+        let formatted = kk_string_format_locale(runtimeNullSentinelInt, rawFromRuntimeString("%.1f"), args)
+        XCTAssertEqual(runtimeStringValue(formatted), "3.5")
+    }
+
     // MARK: - kk_throwable_new
 
     func testThrowableNewCreatesThrowable() {
