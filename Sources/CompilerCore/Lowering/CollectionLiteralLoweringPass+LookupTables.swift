@@ -5,6 +5,7 @@ struct CollectionLiteralLookupTables {
     // Source-level callee names
     let listOfName: InternedString
     let mutableListOfName: InternedString
+    let arrayListOfName: InternedString
     let emptyListName: InternedString
     let listOfNotNullName: InternedString
     let arrayOfName: InternedString
@@ -636,6 +637,7 @@ struct CollectionLiteralLookupTables {
     let setOfFQName: [InternedString]
     let mapOfFQName: [InternedString]
     let mutableListOfFQName: [InternedString]
+    let arrayListOfFQName: [InternedString]
     let mutableSetOfFQName: [InternedString]
     let mutableMapOfFQName: [InternedString]
     let listOfNotNullFQName: [InternedString]
@@ -780,6 +782,7 @@ struct CollectionLiteralLookupTables {
     init(interner: StringInterner) {
         listOfName = interner.intern("listOf")
         mutableListOfName = interner.intern("mutableListOf")
+        arrayListOfName = interner.intern("arrayListOf")
         emptyListName = interner.intern("emptyList")
         listOfNotNullName = interner.intern("listOfNotNull")
         arrayOfName = interner.intern("arrayOf")
@@ -1388,6 +1391,7 @@ struct CollectionLiteralLookupTables {
         setOfFQName = kotlinCollectionsPkg + [interner.intern("setOf")]
         mapOfFQName = kotlinCollectionsPkg + [interner.intern("mapOf")]
         mutableListOfFQName = kotlinCollectionsPkg + [interner.intern("mutableListOf")]
+        arrayListOfFQName = kotlinCollectionsPkg + [interner.intern("arrayListOf")]
         mutableSetOfFQName = kotlinCollectionsPkg + [interner.intern("mutableSetOf")]
         mutableMapOfFQName = kotlinCollectionsPkg + [interner.intern("mutableMapOf")]
         listOfNotNullFQName = kotlinCollectionsPkg + [interner.intern("listOfNotNull")]
@@ -1512,7 +1516,7 @@ struct CollectionLiteralLookupTables {
         kkFileCanExecuteName = interner.intern("kk_file_canExecute")
         kkFileNewParentChildName = interner.intern("kk_file_new_parent_child")
 
-        listFactoryNames = [listOfName, mutableListOfName, emptyListName, listOfNotNullName]
+        listFactoryNames = [listOfName, mutableListOfName, arrayListOfName, emptyListName, listOfNotNullName]
         setFactoryNames = [setOfName, mutableSetOfName, emptySetName]
         mapFactoryNames = [mapOfName, mutableMapOfName, emptyMapName]
         mutableListConstructorNames = [arrayListName]

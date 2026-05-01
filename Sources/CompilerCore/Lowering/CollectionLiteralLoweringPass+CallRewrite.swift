@@ -50,6 +50,7 @@ extension CollectionLiteralLoweringPass {
             || fqName == lookup.emptyArrayFQName
             || fqName == lookup.listOfFQName
             || fqName == lookup.mutableListOfFQName
+            || fqName == lookup.arrayListOfFQName
             || fqName == lookup.listOfNotNullFQName
             || fqName == lookup.emptySetFQName
             || fqName == lookup.setOfFQName
@@ -160,7 +161,7 @@ extension CollectionLiteralLoweringPass {
                     if lookup.listFactoryNames.contains(callee),
                        isStdlibCollectionFactory(symbol: symbol, callee: callee, lookup: lookup, ctx: ctx) {
                         let count = arguments.count
-                        if count == 0 && callee != lookup.mutableListOfName {
+                        if count == 0 && callee != lookup.mutableListOfName && callee != lookup.arrayListOfName {
                             if callee == lookup.emptyListName {
                                 // emptyList() → kk_emptyList()
                                 loweredBody.append(.call(
@@ -193,7 +194,7 @@ extension CollectionLiteralLoweringPass {
                                 ))
                             }
                         } else if count == 0 {
-                            // mutableListOf() → fresh instance via kk_list_of(null, 0)
+                            // mutableListOf()/arrayListOf() → fresh instance via kk_list_of(null, 0)
                             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
                             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
                             let nullExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
