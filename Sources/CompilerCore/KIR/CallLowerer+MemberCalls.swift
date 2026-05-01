@@ -159,7 +159,7 @@ extension CallLowerer {
         "size", "get", "contains", "containsAll", "containsKey", "containsValue",
         "isEmpty", "first", "last", "indexOf", "lastIndexOf", "indexOfFirst", "indexOfLast",
         "count", "iterator",
-        "map", "filter", "filterNot", "mapNotNull", "firstNotNullOf", "filterNotNull", "requireNoNulls", "forEach", "flatMap",
+        "map", "filter", "filterNot", "mapNotNull", "firstNotNullOf", "firstNotNullOfOrNull", "filterNotNull", "requireNoNulls", "forEach", "flatMap",
         "any", "none", "all",
         "fold", "foldIndexed", "foldRight", "foldRightIndexed",
         "reduce", "reduceRight", "reduceIndexed", "reduceIndexedOrNull",
@@ -3699,6 +3699,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_none"
                 } else if calleeName == interner.intern("mapNotNull") {
                     runtimeCallee = "kk_sequence_mapNotNull"
+                } else if calleeName == interner.intern("firstNotNullOfOrNull") {
+                    runtimeCallee = "kk_sequence_firstNotNullOfOrNull"
                 } else if calleeName == interner.intern("requireNoNulls") {
                     runtimeCallee = "kk_sequence_requireNoNulls"
                 } else if calleeName == interner.intern("mapIndexed") {
@@ -3757,6 +3759,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_all"
                         || runtimeCallee == "kk_sequence_none"
                         || runtimeCallee == "kk_sequence_mapNotNull"
+                        || runtimeCallee == "kk_sequence_firstNotNullOfOrNull"
                         || runtimeCallee == "kk_sequence_mapIndexed"
                         || runtimeCallee == "kk_sequence_chunked_transform"
                         || runtimeCallee == "kk_sequence_windowed_transform"
@@ -4494,7 +4497,7 @@ extension CallLowerer {
         interner: StringInterner
     ) -> Bool {
         [
-            "map", "filter", "mapNotNull", "firstNotNullOf", "forEach", "flatMap",
+            "map", "filter", "mapNotNull", "firstNotNullOf", "firstNotNullOfOrNull", "forEach", "flatMap",
             "any", "none", "all", "fold", "foldRight", "reduce", "reduceRight", "scan", "scanIndexed",
             "runningFold", "runningFoldIndexed", "runningReduce", "runningReduceIndexed", "groupBy", "groupingBy",
             "aggregate", "aggregateTo",
@@ -6211,6 +6214,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_associateByTo"),
             interner.intern("kk_map_getValue"),
             interner.intern("kk_sequence_mapNotNull"),
+            interner.intern("kk_sequence_firstNotNullOfOrNull"),
             interner.intern("kk_sequence_mapIndexed"),
             interner.intern("kk_sequence_findLast"),
             interner.intern("kk_sequence_elementAt"),
@@ -8104,6 +8108,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_none")
             case interner.intern("mapNotNull"):
                 return interner.intern("kk_sequence_mapNotNull")
+            case interner.intern("firstNotNullOfOrNull"):
+                return interner.intern("kk_sequence_firstNotNullOfOrNull")
             case interner.intern("filterNot"):
                 return interner.intern("kk_sequence_filterNot")
             case interner.intern("filterNotNull"):

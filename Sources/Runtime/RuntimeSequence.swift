@@ -1540,6 +1540,45 @@ public func kk_sequence_mapNotNull(
     return registerRuntimeObject(newSeq)
 }
 
+@_cdecl("kk_sequence_firstNotNullOfOrNull")
+public func kk_sequence_firstNotNullOfOrNull(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var found = false
+    var result = runtimeNullSentinelInt
+    let visit: (Int) -> Bool = { elem in
+        var thrown = 0
+        let transformed = lambda(closureRaw, elem, &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
+        }
+        if let normalized = runtimeMapNotNullResultValue(transformed) {
+            result = normalized
+            found = true
+            return false
+        }
+        return true
+    }
+
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        runtimeTraverseSequence(seq, outThrown: outThrown, yield: visit)
+    } else {
+        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
+            if !visit(elem) { break }
+        }
+    }
+
+    if let outThrown, outThrown.pointee != 0 {
+        return handleCollectionLambdaThrow(outThrown.pointee, outThrown)
+    }
+    return found ? result : runtimeNullSentinelInt
+}
+
 @_cdecl("kk_sequence_filterNotNull")
 public func kk_sequence_filterNotNull(_ seqRaw: Int) -> Int {
     guard let seq = runtimeSequenceBox(from: seqRaw) else {
