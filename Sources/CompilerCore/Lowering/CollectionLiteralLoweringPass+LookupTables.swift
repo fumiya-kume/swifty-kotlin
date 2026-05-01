@@ -23,6 +23,7 @@ struct CollectionLiteralLookupTables {
     let mutableMapOfName: InternedString
     let emptyMapName: InternedString
     let setOfName: InternedString
+    let setOfNotNullName: InternedString
     let mutableSetOfName: InternedString
     let emptySetName: InternedString
 
@@ -54,6 +55,7 @@ struct CollectionLiteralLookupTables {
     let kkListIteratorPreviousName: InternedString
     let kkListToStringName: InternedString
     let kkSetOfName: InternedString
+    let kkSetOfNotNullName: InternedString
     let kkSetSizeName: InternedString
     let kkSetContainsName: InternedString
     let kkSetContainsAllName: InternedString
@@ -635,6 +637,7 @@ struct CollectionLiteralLookupTables {
     let emptyMapFQName: [InternedString]
     let listOfFQName: [InternedString]
     let setOfFQName: [InternedString]
+    let setOfNotNullFQName: [InternedString]
     let mapOfFQName: [InternedString]
     let mutableListOfFQName: [InternedString]
     let arrayListOfFQName: [InternedString]
@@ -800,6 +803,7 @@ struct CollectionLiteralLookupTables {
         mutableMapOfName = interner.intern("mutableMapOf")
         emptyMapName = interner.intern("emptyMap")
         setOfName = interner.intern("setOf")
+        setOfNotNullName = interner.intern("setOfNotNull")
         mutableSetOfName = interner.intern("mutableSetOf")
         emptySetName = interner.intern("emptySet")
 
@@ -829,6 +833,7 @@ struct CollectionLiteralLookupTables {
         kkListIteratorPreviousName = interner.intern("kk_list_iterator_previous")
         kkListToStringName = interner.intern("kk_list_to_string")
         kkSetOfName = interner.intern("kk_set_of")
+        kkSetOfNotNullName = interner.intern("kk_set_of_not_null")
         kkSetSizeName = interner.intern("kk_set_size")
         kkSetContainsName = interner.intern("kk_set_contains")
         kkSetContainsAllName = interner.intern("kk_set_containsAll")
@@ -1389,6 +1394,7 @@ struct CollectionLiteralLookupTables {
         emptyMapFQName = kotlinCollectionsPkg + [interner.intern("emptyMap")]
         listOfFQName = kotlinCollectionsPkg + [interner.intern("listOf")]
         setOfFQName = kotlinCollectionsPkg + [interner.intern("setOf")]
+        setOfNotNullFQName = kotlinCollectionsPkg + [interner.intern("setOfNotNull")]
         mapOfFQName = kotlinCollectionsPkg + [interner.intern("mapOf")]
         mutableListOfFQName = kotlinCollectionsPkg + [interner.intern("mutableListOf")]
         arrayListOfFQName = kotlinCollectionsPkg + [interner.intern("arrayListOf")]
@@ -1517,7 +1523,7 @@ struct CollectionLiteralLookupTables {
         kkFileNewParentChildName = interner.intern("kk_file_new_parent_child")
 
         listFactoryNames = [listOfName, mutableListOfName, arrayListOfName, emptyListName, listOfNotNullName]
-        setFactoryNames = [setOfName, mutableSetOfName, emptySetName]
+        setFactoryNames = [setOfName, setOfNotNullName, mutableSetOfName, emptySetName]
         mapFactoryNames = [mapOfName, mutableMapOfName, emptyMapName]
         mutableListConstructorNames = [arrayListName]
         mutableSetConstructorNames = [hashSetName, linkedHashSetName]

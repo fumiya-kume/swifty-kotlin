@@ -605,6 +605,7 @@ extension ABILoweringPass {
             // NOTE: kk_array_map/filter/forEach/any/none are NOT non-throwing
             // — the lambda argument can throw.
             interner.intern("kk_set_of"),
+            interner.intern("kk_set_of_not_null"),
             interner.intern("kk_set_size"),
             interner.intern("kk_set_contains"),
             interner.intern("kk_set_containsAll"),

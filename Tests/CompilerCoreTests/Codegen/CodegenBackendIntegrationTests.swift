@@ -638,6 +638,35 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenSetOfNotNullFiltersNullsAndDeduplicates() throws {
+        let source = """
+        fun main() {
+            val values = setOfNotNull("a", null, "b", null, "a")
+            println(values)
+            println(values.size)
+
+            val empty = setOfNotNull<String>(null)
+            println(empty)
+            println(empty.isEmpty())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SetOfNotNullRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[a, b]\n2\n[]\ntrue\n")
+        }
+    }
+
     func testCodegenMutableSetAddAllAcceptsSetAndListCollections() throws {
         let source = """
         fun main() {

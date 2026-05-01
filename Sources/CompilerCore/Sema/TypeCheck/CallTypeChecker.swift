@@ -2850,7 +2850,7 @@ final class CallTypeChecker {
                         elementType: elementType
                     )
                 } else if let explicitTypeArg = explicitTypeArgs.first,
-                          calleeName == knownNames.emptySetFn || name == "setOf"
+                          calleeName == knownNames.emptySetFn || name == "setOf" || name == "setOfNotNull"
                 {
                     collectionType = makeSyntheticSetType(
                         symbols: sema.symbols,
@@ -2875,9 +2875,21 @@ final class CallTypeChecker {
                         elementType: sema.types.nothingType
                     )
                 } else if !argTypes.isEmpty,
-                          name == "setOf" || calleeName == knownNames.emptySetFn || name == "mutableSetOf"
+                          name == "setOf" || name == "setOfNotNull" || calleeName == knownNames.emptySetFn || name == "mutableSetOf"
                 {
-                    let elementType = sema.types.lub(argTypes)
+                    let elementType: TypeID = if name == "setOfNotNull" {
+                        {
+                            let concreteTypes = argTypes.compactMap { inferredType -> TypeID? in
+                                if inferredType == sema.types.nullableNothingType {
+                                    return nil
+                                }
+                                return sema.types.makeNonNullable(inferredType)
+                            }
+                            return concreteTypes.isEmpty ? sema.types.nothingType : sema.types.lub(concreteTypes)
+                        }()
+                    } else {
+                        sema.types.lub(argTypes)
+                    }
                     collectionType = if name == "mutableSetOf" {
                         makeSyntheticMutableSetType(
                             symbols: sema.symbols,
