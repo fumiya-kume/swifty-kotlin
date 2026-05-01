@@ -363,6 +363,75 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testMutableIterableSurfaceIsRegistered() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let collectionsPkg = ["kotlin", "collections"].map { ctx.interner.intern($0) }
+            let iterableSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: collectionsPkg + [ctx.interner.intern("Iterable")])
+            )
+            let iteratorSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: collectionsPkg + [ctx.interner.intern("Iterator")])
+            )
+            let mutableIteratorSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: collectionsPkg + [ctx.interner.intern("MutableIterator")])
+            )
+            XCTAssertEqual(sema.types.nominalTypeParameterVariances(for: mutableIteratorSymbol), [.out])
+            XCTAssertTrue(sema.symbols.directSupertypes(for: mutableIteratorSymbol).contains(iteratorSymbol))
+            XCTAssertEqual(
+                sema.symbols.supertypeTypeArgs(for: mutableIteratorSymbol, supertype: iteratorSymbol).count,
+                1
+            )
+            let removeSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: collectionsPkg + [ctx.interner.intern("MutableIterator"), ctx.interner.intern("remove")])
+            )
+            let removeSignature = try XCTUnwrap(sema.symbols.functionSignature(for: removeSymbol))
+            XCTAssertTrue(removeSignature.parameterTypes.isEmpty)
+            XCTAssertEqual(removeSignature.returnType, sema.types.unitType)
+
+            let mutableIterableFQName = collectionsPkg + [ctx.interner.intern("MutableIterable")]
+            let mutableIterableSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: mutableIterableFQName),
+                "Expected kotlin.collections.MutableIterable to be registered"
+            )
+            let mutableIterableInfo = try XCTUnwrap(sema.symbols.symbol(mutableIterableSymbol))
+            XCTAssertEqual(mutableIterableInfo.kind, .interface)
+            XCTAssertTrue(mutableIterableInfo.flags.contains(.synthetic))
+            XCTAssertEqual(sema.types.nominalTypeParameterVariances(for: mutableIterableSymbol), [.out])
+            XCTAssertTrue(sema.symbols.directSupertypes(for: mutableIterableSymbol).contains(iterableSymbol))
+            XCTAssertTrue(sema.types.directNominalSupertypes(for: mutableIterableSymbol).contains(iterableSymbol))
+            XCTAssertEqual(sema.symbols.supertypeTypeArgs(for: mutableIterableSymbol, supertype: iterableSymbol).count, 1)
+
+            let iteratorMember = try XCTUnwrap(
+                sema.symbols.lookup(fqName: mutableIterableFQName + [ctx.interner.intern("iterator")]),
+                "Expected MutableIterable.iterator to be registered"
+            )
+            XCTAssertTrue(try XCTUnwrap(sema.symbols.symbol(iteratorMember)).flags.contains(.operatorFunction))
+            let iteratorSignature = try XCTUnwrap(sema.symbols.functionSignature(for: iteratorMember))
+            XCTAssertTrue(iteratorSignature.parameterTypes.isEmpty)
+            guard case let .classType(iteratorReturnType) = sema.types.kind(of: iteratorSignature.returnType) else {
+                XCTFail("MutableIterable.iterator should return MutableIterator<T>")
+                return
+            }
+            XCTAssertEqual(iteratorReturnType.classSymbol, mutableIteratorSymbol)
+
+            for collectionName in ["MutableList", "MutableSet"] {
+                let collectionSymbol = try XCTUnwrap(
+                    sema.symbols.lookup(fqName: collectionsPkg + [ctx.interner.intern(collectionName)])
+                )
+                XCTAssertTrue(sema.symbols.directSupertypes(for: collectionSymbol).contains(mutableIterableSymbol))
+                XCTAssertTrue(sema.types.directNominalSupertypes(for: collectionSymbol).contains(mutableIterableSymbol))
+                XCTAssertEqual(
+                    sema.symbols.supertypeTypeArgs(for: collectionSymbol, supertype: mutableIterableSymbol).count,
+                    1
+                )
+            }
+        }
+    }
+
     func testMutableListIteratorMembersResolveFromMutableList() throws {
         let source = """
         fun probe(values: MutableList<Int>) {
@@ -382,6 +451,44 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             XCTAssertFalse(
                 ctx.diagnostics.hasError,
                 "Expected MutableListIterator surface to resolve from MutableList: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
+    func testMutableIterableSubtypeResolution() throws {
+        let source = """
+        import kotlin.collections.Iterable
+        import kotlin.collections.MutableIterable
+        import kotlin.collections.MutableList
+        import kotlin.collections.MutableSet
+
+        abstract class ProbeMutableIterable : MutableIterable<Int>
+
+        fun acceptIterable(values: Iterable<Int>) {}
+        fun acceptMutableIterable(values: MutableIterable<Int>) {}
+
+        fun probeIterable(values: ProbeMutableIterable) {
+            acceptIterable(values)
+            acceptMutableIterable(values)
+            values.iterator().remove()
+        }
+
+        fun probeList(values: MutableList<Int>) {
+            acceptMutableIterable(values)
+        }
+
+        fun probeSet(values: MutableSet<Int>) {
+            acceptMutableIterable(values)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected MutableIterable subtype surface to resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
             )
         }
     }

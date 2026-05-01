@@ -170,6 +170,8 @@ public func kk_list_is_empty(_ listRaw: Int) -> Int {
 public func kk_list_iterator(_ listRaw: Int) -> Int {
     let elements: [Int] = if let list = runtimeListBox(from: listRaw) {
         list.elements
+    } else if let set = runtimeSetBox(from: listRaw) {
+        set.elements
     } else {
         []
     }

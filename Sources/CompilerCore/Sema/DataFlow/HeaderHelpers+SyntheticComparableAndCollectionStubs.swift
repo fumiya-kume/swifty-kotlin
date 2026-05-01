@@ -312,6 +312,12 @@ extension DataFlowSemaPhase {
             iterableInterfaceSymbol: iterableInterfaceSymbol
         )
 
+        let mutableIterableInterfaceSymbol = registerSyntheticMutableIterableStub(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            iterableInterfaceSymbol: iterableInterfaceSymbol
+        )
+
         let listInterfaceSymbol = registerSyntheticListStub(
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg,
@@ -366,7 +372,8 @@ extension DataFlowSemaPhase {
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg,
             listInterfaceSymbol: listInterfaceSymbol,
-            collectionInterfaceSymbol: collectionInterfaceSymbol
+            collectionInterfaceSymbol: collectionInterfaceSymbol,
+            mutableIterableInterfaceSymbol: mutableIterableInterfaceSymbol
         )
 
         let setInterfaceSymbol = registerSyntheticSetStub(
@@ -379,7 +386,8 @@ extension DataFlowSemaPhase {
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg,
             setInterfaceSymbol: setInterfaceSymbol,
-            collectionInterfaceSymbol: collectionInterfaceSymbol
+            collectionInterfaceSymbol: collectionInterfaceSymbol,
+            mutableIterableInterfaceSymbol: mutableIterableInterfaceSymbol
         )
         let mapSymbols = registerSyntheticMapStub(
             symbols: symbols, types: types, interner: interner,
@@ -1461,27 +1469,161 @@ extension DataFlowSemaPhase {
         // MutableIterator<T> : Iterator<T> (STDLIB-221)
         let mutableIteratorName = interner.intern("MutableIterator")
         let mutableIteratorFQName = kotlinCollectionsPkg + [mutableIteratorName]
-        if symbols.lookup(fqName: mutableIteratorFQName) == nil {
-            let mutIterSym = symbols.define(
+        let mutableIteratorSymbol: SymbolID = if let existing = symbols.lookup(fqName: mutableIteratorFQName) {
+            existing
+        } else {
+            symbols.define(
                 kind: .interface, name: mutableIteratorName, fqName: mutableIteratorFQName,
                 declSite: nil, visibility: .public, flags: [.synthetic]
             )
-            symbols.setDirectSupertypes([iteratorSymbol], for: mutIterSym)
-            types.setNominalDirectSupertypes([iteratorSymbol], for: mutIterSym)
+        }
+        let mutableIteratorTypeParamName = interner.intern("T")
+        let mutableIteratorTypeParamFQName = mutableIteratorFQName + [mutableIteratorTypeParamName]
+        let mutableIteratorTypeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: mutableIteratorTypeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: mutableIteratorTypeParamName,
+                fqName: mutableIteratorTypeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let mutableIteratorTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: mutableIteratorTypeParamSymbol,
+            nullability: .nonNull
+        )))
+        let mutableIteratorReceiverType = types.make(.classType(ClassType(
+            classSymbol: mutableIteratorSymbol,
+            args: [.out(mutableIteratorTypeParamType)],
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([mutableIteratorTypeParamSymbol], for: mutableIteratorSymbol)
+        types.setNominalTypeParameterVariances([.out], for: mutableIteratorSymbol)
+        symbols.setDirectSupertypes([iteratorSymbol], for: mutableIteratorSymbol)
+        types.setNominalDirectSupertypes([iteratorSymbol], for: mutableIteratorSymbol)
+        symbols.setSupertypeTypeArgs([.out(mutableIteratorTypeParamType)], for: mutableIteratorSymbol, supertype: iteratorSymbol)
+        types.setNominalSupertypeTypeArgs([.out(mutableIteratorTypeParamType)], for: mutableIteratorSymbol, supertype: iteratorSymbol)
 
-            // MutableIterator.remove(): Unit
-            let removeName = interner.intern("remove")
-            let removeFQName = mutableIteratorFQName + [removeName]
-            let removeSym = symbols.define(
+        // MutableIterator.remove(): Unit
+        let removeName = interner.intern("remove")
+        let removeFQName = mutableIteratorFQName + [removeName]
+        if symbols.lookup(fqName: removeFQName) == nil {
+            let removeSymbol = symbols.define(
                 kind: .function, name: removeName, fqName: removeFQName,
                 declSite: nil, visibility: .public, flags: [.synthetic]
             )
+            symbols.setParentSymbol(mutableIteratorSymbol, for: removeSymbol)
             symbols.setPropertyType(types.make(.functionType(FunctionType(
                 params: [], returnType: types.unitType, isSuspend: false, nullability: .nonNull
-            ))), for: removeSym)
+            ))), for: removeSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: mutableIteratorReceiverType,
+                    parameterTypes: [],
+                    returnType: types.unitType,
+                    typeParameterSymbols: [mutableIteratorTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: removeSymbol
+            )
         }
 
         return iterableInterfaceSymbol
+    }
+
+    /// Register `kotlin.collections.MutableIterable<T>` surface (STDLIB-COL-TYPE-005).
+    private func registerSyntheticMutableIterableStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        iterableInterfaceSymbol: SymbolID
+    ) -> SymbolID {
+        let mutableIterableName = interner.intern("MutableIterable")
+        let mutableIterableFQName = kotlinCollectionsPkg + [mutableIterableName]
+        let mutableIterableSymbol: SymbolID = if let existing = symbols.lookup(fqName: mutableIterableFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .interface,
+                name: mutableIterableName,
+                fqName: mutableIterableFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = mutableIterableFQName + [typeParamName]
+        let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: mutableIterableSymbol)
+        types.setNominalTypeParameterVariances([.out], for: mutableIterableSymbol)
+        symbols.setDirectSupertypes([iterableInterfaceSymbol], for: mutableIterableSymbol)
+        types.setNominalDirectSupertypes([iterableInterfaceSymbol], for: mutableIterableSymbol)
+        symbols.setSupertypeTypeArgs([.invariant(typeParamType)], for: mutableIterableSymbol, supertype: iterableInterfaceSymbol)
+        types.setNominalSupertypeTypeArgs([.invariant(typeParamType)], for: mutableIterableSymbol, supertype: iterableInterfaceSymbol)
+
+        let mutableIterableType = types.make(.classType(ClassType(
+            classSymbol: mutableIterableSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+
+        let mutableIteratorFQName = kotlinCollectionsPkg + [interner.intern("MutableIterator")]
+        guard let mutableIteratorSymbol = symbols.lookup(fqName: mutableIteratorFQName) else {
+            assertionFailure("MutableIterator must be registered before MutableIterable")
+            return mutableIterableSymbol
+        }
+        let mutableIteratorType = types.make(.classType(ClassType(
+            classSymbol: mutableIteratorSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+
+        let iteratorName = interner.intern("iterator")
+        let iteratorFQName = mutableIterableFQName + [iteratorName]
+        if symbols.lookup(fqName: iteratorFQName) == nil {
+            let iteratorSymbol = symbols.define(
+                kind: .function,
+                name: iteratorName,
+                fqName: iteratorFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .operatorFunction]
+            )
+            symbols.setParentSymbol(mutableIterableSymbol, for: iteratorSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: mutableIterableType,
+                    parameterTypes: [],
+                    returnType: mutableIteratorType,
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: iteratorSymbol
+            )
+        }
+
+        return mutableIterableSymbol
     }
 
     /// Ensure the synthetic `kotlin.sequences.Sequence<T>` interface stub exists,
@@ -2899,7 +3041,7 @@ extension DataFlowSemaPhase {
         )))
         let mutableSetType = types.make(.classType(ClassType(
             classSymbol: mutableSetInterfaceSymbol,
-            args: [.out(listTypeParamType)],
+            args: [.invariant(listTypeParamType)],
             nullability: .nonNull
         )))
         let memberSymbol = symbols.define(
@@ -2990,7 +3132,7 @@ extension DataFlowSemaPhase {
         )))
         let mutableSetType = types.make(.classType(ClassType(
             classSymbol: mutableSetInterfaceSymbol,
-            args: [.out(typeParamType)],
+            args: [.invariant(typeParamType)],
             nullability: .nonNull
         )))
         let memberSymbol = symbols.define(
@@ -5749,7 +5891,8 @@ extension DataFlowSemaPhase {
         interner: StringInterner,
         kotlinCollectionsPkg: [InternedString],
         listInterfaceSymbol: SymbolID,
-        collectionInterfaceSymbol: SymbolID
+        collectionInterfaceSymbol: SymbolID,
+        mutableIterableInterfaceSymbol: SymbolID
     ) {
         let listTypeParamName = interner.intern("E")
         let mutableListName = interner.intern("MutableList")
@@ -5766,10 +5909,6 @@ extension DataFlowSemaPhase {
                 flags: [.synthetic]
             )
         }
-        // MutableList extends List
-        symbols.setDirectSupertypes([listInterfaceSymbol], for: mutableListInterfaceSymbol)
-        types.setNominalDirectSupertypes([listInterfaceSymbol], for: mutableListInterfaceSymbol)
-
         // Define type parameter E for MutableList<E>
         let mlTypeParamFQName = mutableListFQName + [listTypeParamName]
         let mlTypeParamSymbol = symbols.define(
@@ -5785,8 +5924,12 @@ extension DataFlowSemaPhase {
         )))
         types.setNominalTypeParameterSymbols([mlTypeParamSymbol], for: mutableListInterfaceSymbol)
         types.setNominalTypeParameterVariances([.invariant], for: mutableListInterfaceSymbol)
+        symbols.setDirectSupertypes([listInterfaceSymbol, mutableIterableInterfaceSymbol], for: mutableListInterfaceSymbol)
+        types.setNominalDirectSupertypes([listInterfaceSymbol, mutableIterableInterfaceSymbol], for: mutableListInterfaceSymbol)
         symbols.setSupertypeTypeArgs([.out(mlTypeParamType)], for: mutableListInterfaceSymbol, supertype: listInterfaceSymbol)
         types.setNominalSupertypeTypeArgs([.out(mlTypeParamType)], for: mutableListInterfaceSymbol, supertype: listInterfaceSymbol)
+        symbols.setSupertypeTypeArgs([.invariant(mlTypeParamType)], for: mutableListInterfaceSymbol, supertype: mutableIterableInterfaceSymbol)
+        types.setNominalSupertypeTypeArgs([.invariant(mlTypeParamType)], for: mutableListInterfaceSymbol, supertype: mutableIterableInterfaceSymbol)
 
         registerMutableListIteratorMember(
             symbols: symbols, types: types, interner: interner,
@@ -7081,7 +7224,8 @@ extension DataFlowSemaPhase {
         interner: StringInterner,
         kotlinCollectionsPkg: [InternedString],
         setInterfaceSymbol: SymbolID,
-        collectionInterfaceSymbol: SymbolID
+        collectionInterfaceSymbol: SymbolID,
+        mutableIterableInterfaceSymbol: SymbolID
     ) {
         let typeParamName = interner.intern("E")
         let mutableSetName = interner.intern("MutableSet")
@@ -7098,8 +7242,6 @@ extension DataFlowSemaPhase {
                 flags: [.synthetic]
             )
         }
-        symbols.setDirectSupertypes([setInterfaceSymbol], for: mutableSetInterfaceSymbol)
-
         let typeParamFQName = mutableSetFQName + [typeParamName]
         let typeParamSymbol = symbols.define(
             kind: .typeParameter,
@@ -7112,6 +7254,14 @@ extension DataFlowSemaPhase {
         let typeParamType = types.make(.typeParam(TypeParamType(
             symbol: typeParamSymbol, nullability: .nonNull
         )))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: mutableSetInterfaceSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: mutableSetInterfaceSymbol)
+        symbols.setDirectSupertypes([setInterfaceSymbol, mutableIterableInterfaceSymbol], for: mutableSetInterfaceSymbol)
+        types.setNominalDirectSupertypes([setInterfaceSymbol, mutableIterableInterfaceSymbol], for: mutableSetInterfaceSymbol)
+        symbols.setSupertypeTypeArgs([.out(typeParamType)], for: mutableSetInterfaceSymbol, supertype: setInterfaceSymbol)
+        types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: mutableSetInterfaceSymbol, supertype: setInterfaceSymbol)
+        symbols.setSupertypeTypeArgs([.invariant(typeParamType)], for: mutableSetInterfaceSymbol, supertype: mutableIterableInterfaceSymbol)
+        types.setNominalSupertypeTypeArgs([.invariant(typeParamType)], for: mutableSetInterfaceSymbol, supertype: mutableIterableInterfaceSymbol)
 
         registerMutableSetAddMember(
             symbols: symbols, types: types, interner: interner,
