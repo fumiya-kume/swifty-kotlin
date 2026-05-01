@@ -501,6 +501,16 @@ extension CallTypeChecker {
                propertyInfo.flags.contains(.lateinitProperty)
             {
                 let boolType = sema.types.make(.primitive(.boolean, .nonNull))
+                if let isInitializedProperty = ctx.cachedScopeLookup(calleeName).first(where: { candidate in
+                    guard let symbol = ctx.cachedSymbol(candidate),
+                          symbol.kind == .property
+                    else {
+                        return false
+                    }
+                    return sema.symbols.extensionPropertyReceiverType(for: candidate) != nil
+                }) {
+                    sema.bindings.bindIdentifier(id, symbol: isInitializedProperty)
+                }
                 sema.bindings.bindExprType(id, type: boolType)
                 return boolType
             }
@@ -1097,6 +1107,9 @@ extension CallTypeChecker {
 
                 case .scopeWith:
                     break // with is handled in inferCallExpr (top-level function)
+
+                case .scopeContext:
+                    break // context is handled in inferCallExpr (top-level function)
 
                 case .scopeTopLevelRun:
                     break // top-level run is handled in inferCallExpr
@@ -4010,12 +4023,17 @@ extension CallTypeChecker {
             let isShiftReceiver = receiverForCheck == intType || receiverForCheck == longType || receiverForCheck == uintType || receiverForCheck == ulongType
             // Helper: whether a type is a small unsigned type (UByte/UShort).
             // In Kotlin stdlib, small unsigned types promote to UInt for most
-            // arithmetic (plus/minus/times/div/rem).  `mod` keeps the operand type.
+            // arithmetic (plus/minus/times/div/rem). `mod` returns the RHS type.
             let isSmallUnsigned = { (t: TypeID) -> Bool in t == ubyteType || t == ushortType }
             let isUnsignedInteger = { (t: TypeID) -> Bool in
-                t == uintType || t == ulongType || t == ubyteType || t == ushortType
+                t == uintType || t == ulongType || isSmallUnsigned(t)
             }
-            let isSignedInteger = { (t: TypeID) -> Bool in t == intType || t == longType }
+            let isSignedInteger = { (t: TypeID) -> Bool in
+                t == intType || t == longType
+            }
+            let isFloating = { (t: TypeID) -> Bool in
+                t == floatType || t == doubleType
+            }
             // Use non-nullable RHS for arithmetic promotion checks
             let rhsType = sema.types.makeNonNullable(rawRhsType)
             switch interner.resolve(calleeName) {
@@ -4108,25 +4126,15 @@ extension CallTypeChecker {
                     return finalType
                 }
             case "mod":
-                // mod: keeps the operand type for small unsigned (UByte.mod(UByte) -> UByte)
+                // mod overloads return the divisor type for integer overloads and
+                // use normal Float/Double widening for floating operands.
                 let resultType: TypeID?
-                if receiverForCheck == doubleType || rhsType == doubleType {
-                    resultType = doubleType
-                } else if receiverForCheck == floatType || rhsType == floatType {
-                    resultType = floatType
-                } else if receiverForCheck == longType || rhsType == longType {
-                    resultType = longType
-                } else if receiverForCheck == ulongType || rhsType == ulongType {
-                    resultType = ulongType
-                } else if receiverForCheck == uintType || rhsType == uintType {
-                    resultType = uintType
-                } else if isSmallUnsigned(receiverForCheck) && isSmallUnsigned(rhsType) {
-                    // mod keeps the receiver type for same-width small unsigned
-                    resultType = receiverForCheck
-                } else if isSmallUnsigned(receiverForCheck) || isSmallUnsigned(rhsType) {
-                    resultType = uintType
-                } else if receiverForCheck == intType {
-                    resultType = intType
+                if isFloating(receiverForCheck) && isFloating(rhsType) {
+                    resultType = receiverForCheck == doubleType || rhsType == doubleType ? doubleType : floatType
+                } else if isSignedInteger(receiverForCheck) && isSignedInteger(rhsType) {
+                    resultType = rhsType == longType ? longType : intType
+                } else if isUnsignedInteger(receiverForCheck) && isUnsignedInteger(rhsType) {
+                    resultType = rhsType
                 } else {
                     resultType = nil
                 }

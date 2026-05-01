@@ -316,6 +316,76 @@ extension CallLowerer {
             }
         }
 
+        // Float?.mod(other) / Double?.mod(other): keep safe-call argument
+        // evaluation behind the null check and use Kotlin floor-style modulo.
+        if args.count == 1,
+           interner.resolve(effectiveCalleeName) == "mod"
+        {
+            let floatType = sema.types.make(.primitive(.float, .nonNull))
+            let doubleType = sema.types.make(.primitive(.double, .nonNull))
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            let rhsType = sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
+            let nonNullRhsType = sema.types.makeNonNullable(rhsType)
+            let isFloatingReceiver = nonNullReceiverType == floatType || nonNullReceiverType == doubleType
+            let isFloatingRhs = nonNullRhsType == floatType || nonNullRhsType == doubleType
+            if isFloatingReceiver, isFloatingRhs {
+                let resultType = nonNullReceiverType == doubleType || nonNullRhsType == doubleType ? doubleType : floatType
+                let nonNullLabel = driver.ctx.makeLoopLabel()
+                let endLabel = driver.ctx.makeLoopLabel()
+                instructions.append(.jumpIfNotNull(value: loweredReceiverID, target: nonNullLabel))
+                let nullableResultType = sema.types.makeNullable(resultType)
+                let nullValue = arena.appendExpr(.unit, type: nullableResultType)
+                instructions.append(.constValue(result: nullValue, value: .null))
+                let nullableResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: nullableResultType)
+                instructions.append(.copy(from: nullValue, to: nullableResult))
+                instructions.append(.jump(endLabel))
+                instructions.append(.label(nonNullLabel))
+
+                var lhs = loweredReceiverID
+                var rhs = driver.lowerExpr(args[0].expr, shared: shared, emit: &instructions)
+                if resultType == doubleType {
+                    if nonNullReceiverType == floatType {
+                        let converted = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: doubleType)
+                        instructions.append(.call(
+                            symbol: nil,
+                            callee: interner.intern("kk_float_to_double_bits"),
+                            arguments: [lhs],
+                            result: converted,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        lhs = converted
+                    }
+                    if nonNullRhsType == floatType {
+                        let converted = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: doubleType)
+                        instructions.append(.call(
+                            symbol: nil,
+                            callee: interner.intern("kk_float_to_double_bits"),
+                            arguments: [rhs],
+                            result: converted,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        rhs = converted
+                    }
+                }
+
+                let nonNullResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern(resultType == doubleType ? "kk_op_dfloor_mod" : "kk_op_ffloor_mod"),
+                    arguments: [lhs, rhs],
+                    result: nonNullResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                instructions.append(.copy(from: nonNullResult, to: nullableResult))
+                instructions.append(.label(endLabel))
+                return nullableResult
+            }
+        }
+
         // Primitive arithmetic/infix member functions on numeric receivers.
         if args.count == 1 {
             let intType = sema.types.make(.primitive(.int, .nonNull))
@@ -328,6 +398,7 @@ extension CallLowerer {
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             if nonNullReceiverType == intType || nonNullReceiverType == longType || nonNullReceiverType == uintType || nonNullReceiverType == ulongType || nonNullReceiverType == ubyteType || nonNullReceiverType == ushortType {
                 let rawRhsType = sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
+                let nonNullRhsType = sema.types.makeNonNullable(rawRhsType)
                 let isShiftReceiver = nonNullReceiverType == intType || nonNullReceiverType == longType || nonNullReceiverType == uintType || nonNullReceiverType == ulongType
                 let isUnsignedReceiver = nonNullReceiverType == uintType || nonNullReceiverType == ulongType || nonNullReceiverType == ubyteType || nonNullReceiverType == ushortType
                 let primitiveCallee: InternedString? = switch interner.resolve(effectiveCalleeName) {
@@ -341,8 +412,12 @@ extension CallLowerer {
                     isUnsignedReceiver ? interner.intern("kk_op_udiv") : interner.intern("kk_op_div")
                 case "floorDiv":
                     isUnsignedReceiver ? interner.intern("kk_op_udiv") : interner.intern("kk_op_floor_div")
-                case "rem", "mod":
+                case "rem":
                     isUnsignedReceiver ? interner.intern("kk_op_urem") : interner.intern("kk_op_mod")
+                case "mod":
+                    isUnsignedReceiver
+                        ? interner.intern("kk_op_urem")
+                        : interner.intern(nonNullReceiverType == longType || nonNullRhsType == longType ? "kk_op_lfloor_mod" : "kk_op_floor_mod")
                 case "and":
                     rawRhsType == nonNullReceiverType ? interner.intern("kk_bitwise_and") : nil
                 case "or":

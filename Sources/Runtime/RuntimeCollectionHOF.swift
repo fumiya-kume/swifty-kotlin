@@ -71,12 +71,58 @@ private func runtimeSortedWithComparatorInvoke(
 
 // MARK: - Closeable.use {} (STDLIB-250)
 
-/// Calls `close()` on a Closeable resource via vtable dispatch (slot 0).
+private final class RuntimeAutoCloseableBox {
+    let fnPtr: Int
+    let closureRaw: Int
+
+    init(fnPtr: Int, closureRaw: Int) {
+        self.fnPtr = fnPtr
+        self.closureRaw = closureRaw
+    }
+}
+
+private let runtimeAutoCloseableCloseThunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { receiverRaw, outThrown in
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: receiverRaw),
+          let box = tryCast(pointer, to: RuntimeAutoCloseableBox.self)
+    else {
+        let thrown = runtimeAllocateThrowable(message: "AutoCloseable receiver is invalid.")
+        return handleCollectionLambdaThrow(thrown, outThrown)
+    }
+
+    var thrown = 0
+    _ = runtimeInvokeClosureThunk(fnPtr: box.fnPtr, closureRaw: box.closureRaw, outThrown: &thrown)
+    if thrown != 0 {
+        return handleCollectionLambdaThrow(thrown, outThrown)
+    }
+    return 0
+}
+
+/// `AutoCloseable { closeAction }` factory.
+@_cdecl("kk_auto_closeable_create")
+public func kk_auto_closeable_create(_ fnPtr: Int, _ closureRaw: Int) -> Int {
+    let resourceRaw = registerRuntimeObject(RuntimeAutoCloseableBox(fnPtr: fnPtr, closureRaw: closureRaw))
+    _ = kk_object_register_itable_method(
+        resourceRaw,
+        0,
+        0,
+        unsafeBitCast(runtimeAutoCloseableCloseThunk, to: Int.self)
+    )
+    return resourceRaw
+}
+
+/// Calls `close()` on a Closeable resource via interface/object dispatch,
+/// falling back to vtable slot 0 for compiler-allocated class instances.
 /// The vtable function pointer follows the standard compiler ABI:
 ///   (self, outThrown) -> Int
 /// Returns 0 on success, or the thrown exception handle if close() threw.
 private func runtimeCloseableClose(_ resourceRaw: Int) -> Int {
-    let closeFnPtr = kk_vtable_lookup(resourceRaw, 0)
+    guard resourceRaw != 0, resourceRaw != runtimeNullSentinelInt else {
+        return 0
+    }
+    var closeFnPtr = kk_itable_lookup(resourceRaw, 0, 0)
+    if closeFnPtr == 0, runtimeIsHeapObject(resourceRaw) {
+        closeFnPtr = kk_vtable_lookup(resourceRaw, 0)
+    }
     guard closeFnPtr != 0 else { return 0 }
     let closeFn = unsafeBitCast(closeFnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var closeThrown = 0
