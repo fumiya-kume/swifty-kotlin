@@ -449,6 +449,28 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         XCTAssertTrue(thrownOutput.contains("IllegalArgumentException"))
     }
 
+    func testStringToUByteOrNullRadixSuccessAndInvalidInput() {
+        var thrown = 0
+
+        XCTAssertEqual(kk_string_toUByteOrNull_radix(rawFromRuntimeString("ff"), 16, &thrown), 255)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_string_toUByteOrNull_radix(rawFromRuntimeString("100"), 16, &thrown), runtimeNullSentinelInt)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_string_toUByteOrNull_radix(rawFromRuntimeString("xz"), 16, &thrown), runtimeNullSentinelInt)
+        XCTAssertEqual(thrown, 0)
+    }
+
+    func testStringToUByteOrNullRadixThrowsOnInvalidRadix() {
+        var thrown = 0
+
+        let result = kk_string_toUByteOrNull_radix(rawFromRuntimeString("10"), 1, &thrown)
+
+        XCTAssertEqual(result, runtimeNullSentinelInt)
+        XCTAssertNotEqual(thrown, 0)
+        let thrownOutput = capturePrintln { kk_println_any(UnsafeMutableRawPointer(bitPattern: thrown)) }
+        XCTAssertTrue(thrownOutput.contains("IllegalArgumentException"))
+    }
+
     func testStringToDoubleParsesSpecialValuesAndThrowsOnInvalidInput() {
         var thrown = 0
         let parsed = kk_string_toDouble(rawFromRuntimeString("  -Infinity "), &thrown)

@@ -3325,6 +3325,7 @@ final class CallTypeChecker {
                     case "startsWith", "endsWith", "contains":
                         sema.types.make(.primitive(.boolean, .nonNull))
                     case "split": sema.types.anyType
+                    case "toUByteOrNull": sema.types.makeNullable(sema.types.ubyteType)
                     case "repeat", "drop", "take", "takeLast", "dropLast":
                         sema.types.stringType
                     default: nil
