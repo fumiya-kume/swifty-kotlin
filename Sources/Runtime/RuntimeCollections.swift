@@ -2562,6 +2562,61 @@ public func kk_array_contentHashCode(_ arrayRaw: Int) -> Int {
     return result
 }
 
+private func runtimePlainArrayBox(from rawValue: Int) -> RuntimeArrayBox? {
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: rawValue) else {
+        return nil
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: pointer))
+    }
+    guard isObjectPointer,
+          let box = tryCast(pointer, to: RuntimeArrayBox.self),
+          type(of: box) == RuntimeArrayBox.self
+    else {
+        return nil
+    }
+    return box
+}
+
+private func runtimeArrayBoxDeepToString(
+    raw: Int,
+    box: RuntimeArrayBox,
+    visited: inout Set<Int>
+) -> String {
+    guard visited.insert(raw).inserted else {
+        return "[...]"
+    }
+    defer { visited.remove(raw) }
+
+    let rendered = box.elements
+        .map { runtimeValueDeepToString($0, visited: &visited) }
+        .joined(separator: ", ")
+    return "[\(rendered)]"
+}
+
+private func runtimeValueDeepToString(_ raw: Int, visited: inout Set<Int>) -> String {
+    if let array = runtimePlainArrayBox(from: raw) {
+        return runtimeArrayBoxDeepToString(raw: raw, box: array, visited: &visited)
+    }
+    return runtimeElementToString(raw)
+}
+
+private func runtimeArrayStringPointer(_ value: String) -> UnsafeMutableRawPointer {
+    let utf8 = Array(value.utf8)
+    return utf8.withUnsafeBufferPointer { buffer in
+        kk_string_from_utf8(buffer.baseAddress!, Int32(buffer.count))
+    }
+}
+
+@_cdecl("kk_array_contentDeepToString")
+public func kk_array_contentDeepToString(_ arrayRaw: Int) -> UnsafeMutableRawPointer {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return runtimeArrayStringPointer("null")
+    }
+    var visited: Set<Int> = []
+    return runtimeArrayStringPointer(runtimeArrayBoxDeepToString(raw: arrayRaw, box: array, visited: &visited))
+}
+
 // MARK: - asSequence (STDLIB-471)
 
 @_cdecl("kk_list_asSequence")

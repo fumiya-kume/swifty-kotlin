@@ -823,6 +823,14 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_array_contentDeepToString",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+            ],
+            returnType: .opaquePointer,
+            section: "Collection"
+        ),
         // Array conversion (STDLIB-087)
         RuntimeABIFunctionSpec(
             name: "kk_array_toList",

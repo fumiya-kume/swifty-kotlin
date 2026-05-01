@@ -726,4 +726,31 @@ extension CodegenBackendIntegrationTests {
             XCTAssertEqual(out, "true\nfalse\n")
         }
     }
+
+    func testArrayContentDeepToString() throws {
+        let source = """
+        fun main() {
+            val nested = arrayOf(arrayOf(1, 2), arrayOf("x", "y"), intArrayOf(3, 4))
+            println(nested.contentDeepToString())
+
+            val self = arrayOfNulls<Any>(1)
+            self[0] = self
+            println(self.contentDeepToString())
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ArrayContentDeepToString",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(out, "[[1, 2], [x, y], [3, 4]]\n[[...]]\n")
+        }
+    }
 }
