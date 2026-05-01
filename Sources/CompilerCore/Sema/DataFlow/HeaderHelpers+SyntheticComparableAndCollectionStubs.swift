@@ -7729,6 +7729,20 @@ extension DataFlowSemaPhase {
             flags: [.synthetic, .inlineFunction]
         )
 
+        let withDefaultLambdaType = types.make(.functionType(FunctionType(
+            params: [keyType],
+            returnType: valueType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        registerMember(
+            name: "withDefault",
+            externalLinkName: "kk_map_withDefault",
+            parameterTypes: [withDefaultLambdaType],
+            returnType: receiverType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol]
+        )
+
         if let listSymbol {
             let toListType = types.make(.classType(ClassType(
                 classSymbol: listSymbol,
