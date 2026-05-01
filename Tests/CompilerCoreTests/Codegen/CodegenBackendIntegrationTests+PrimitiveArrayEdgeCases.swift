@@ -208,6 +208,43 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testArrayReversedArrayOverloads() throws {
+        let source = """
+        fun main() {
+            println(arrayOf("a", "b", "c").reversedArray().toList())
+            println(intArrayOf(1, 2, 3, 4).reversedArray().toList())
+            println(uintArrayOf(10u, 20u, 30u).reversedArray().toList())
+            println(booleanArrayOf(true, false, false).reversedArray().toList())
+            println(emptyArray<String>().reversedArray().toList())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ArrayReversedArrayOverloads",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                [c, b, a]
+                [4, 3, 2, 1]
+                [30, 20, 10]
+                [0, 0, 1]
+                []
+                """
+                + "\n"
+            )
+        }
+    }
+
     func testSignedArrayViewConversionsFromUnsignedArrays() throws {
         let source = """
         fun main() {

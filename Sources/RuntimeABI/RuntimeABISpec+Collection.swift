@@ -1270,6 +1270,14 @@ public extension RuntimeABISpec {
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_array_reversedArray",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_array_fill",
             parameters: [
                 RuntimeABIParameter(name: "arrayRaw", type: .intptr),

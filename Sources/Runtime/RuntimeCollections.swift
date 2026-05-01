@@ -2490,6 +2490,18 @@ public func kk_array_copyOfRange(_ arrayRaw: Int, _ fromIndex: Int, _ toIndex: I
     return registerRuntimeObject(box)
 }
 
+@_cdecl("kk_array_reversedArray")
+public func kk_array_reversedArray(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_array_reversedArray")
+    }
+    let box = RuntimeArrayBox(length: array.elements.count)
+    for (index, element) in array.elements.reversed().enumerated() {
+        box.elements[index] = element
+    }
+    return registerRuntimeObject(box)
+}
+
 @_cdecl("kk_array_fill")
 public func kk_array_fill(_ arrayRaw: Int, _ value: Int) -> Int {
     guard let array = runtimeArrayBox(from: arrayRaw) else {
