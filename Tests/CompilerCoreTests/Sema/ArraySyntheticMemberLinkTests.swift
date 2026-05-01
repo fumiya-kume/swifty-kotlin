@@ -495,6 +495,88 @@ final class ArraySyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testArraySliceArrayOverloadsUseRuntimeExternalLinks() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols.lookupAll(
+                fqName: [
+                    ctx.interner.intern("kotlin"),
+                    ctx.interner.intern("Array"),
+                    ctx.interner.intern("sliceArray"),
+                ]
+            )
+            let links = Set(symbols.compactMap { sema.symbols.externalLinkName(for: $0) })
+            XCTAssertTrue(links.contains("kk_array_sliceArray_range"))
+            XCTAssertTrue(links.contains("kk_array_sliceArray_iterable"))
+
+            for linkName in ["kk_array_sliceArray_range", "kk_array_sliceArray_iterable"] {
+                let symbolID = try XCTUnwrap(
+                    symbols.first(where: { sema.symbols.externalLinkName(for: $0) == linkName }),
+                    "Expected Array.sliceArray overload linked to \(linkName)"
+                )
+                let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbolID))
+                XCTAssertEqual(signature.parameterTypes.count, 1)
+                let receiverType = try XCTUnwrap(signature.receiverType)
+                XCTAssertEqual(signature.returnType, receiverType)
+                XCTAssertEqual(signature.valueParameterHasDefaultValues, [false])
+                XCTAssertEqual(signature.valueParameterIsVararg, [false])
+                XCTAssertEqual(signature.typeParameterSymbols.count, 1)
+            }
+        }
+    }
+
+    func testPrimitiveArraySliceArrayOverloadsUseRuntimeExternalLinks() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let arrayNames = [
+                "IntArray",
+                "LongArray",
+                "ByteArray",
+                "ShortArray",
+                "UIntArray",
+                "ULongArray",
+                "DoubleArray",
+                "FloatArray",
+                "BooleanArray",
+                "CharArray",
+                "UByteArray",
+                "UShortArray",
+            ]
+
+            for arrayName in arrayNames {
+                let symbols = sema.symbols.lookupAll(
+                    fqName: [
+                        ctx.interner.intern("kotlin"),
+                        ctx.interner.intern(arrayName),
+                        ctx.interner.intern("sliceArray"),
+                    ]
+                )
+                let links = Set(symbols.compactMap { sema.symbols.externalLinkName(for: $0) })
+                XCTAssertTrue(links.contains("kk_array_sliceArray_range"), "\(arrayName) missing range sliceArray")
+                XCTAssertTrue(links.contains("kk_array_sliceArray_iterable"), "\(arrayName) missing iterable sliceArray")
+
+                for linkName in ["kk_array_sliceArray_range", "kk_array_sliceArray_iterable"] {
+                    let symbolID = try XCTUnwrap(
+                        symbols.first(where: { sema.symbols.externalLinkName(for: $0) == linkName }),
+                        "Expected \(arrayName).sliceArray overload linked to \(linkName)"
+                    )
+                    let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbolID))
+                    XCTAssertEqual(signature.parameterTypes.count, 1, "\(arrayName).sliceArray should take one parameter")
+                    let receiverType = try XCTUnwrap(signature.receiverType)
+                    XCTAssertEqual(signature.returnType, receiverType, "\(arrayName).sliceArray should return the same array type")
+                    XCTAssertEqual(signature.valueParameterHasDefaultValues, [false])
+                    XCTAssertEqual(signature.valueParameterIsVararg, [false])
+                }
+            }
+        }
+    }
+
     func testPrimitiveArrayCopyIntoOverloadsUseRuntimeExternalLink() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])

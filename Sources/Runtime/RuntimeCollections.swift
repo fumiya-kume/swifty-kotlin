@@ -2639,6 +2639,63 @@ public func kk_array_copyInto(
     return destinationRaw
 }
 
+private func runtimeArrayFromElements(_ elements: [Int]) -> Int {
+    let box = RuntimeArrayBox(length: elements.count)
+    for (index, element) in elements.enumerated() {
+        box.elements[index] = element
+    }
+    return registerRuntimeObject(box)
+}
+
+@_cdecl("kk_array_sliceArray_range")
+public func kk_array_sliceArray_range(_ arrayRaw: Int, _ rangeRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw),
+          let range = runtimeRangeBox(from: rangeRaw)
+    else {
+        return registerRuntimeObject(RuntimeArrayBox(length: 0))
+    }
+    let size = array.elements.count
+    let first = range.first
+    let last = range.last
+    let step = range.step > 0 ? range.step : 1
+    guard first <= last, first >= 0, first < size else {
+        return registerRuntimeObject(RuntimeArrayBox(length: 0))
+    }
+
+    var selected: [Int] = []
+    var index = first
+    while index <= last && index < size {
+        selected.append(array.elements[index])
+        index += step
+    }
+    return runtimeArrayFromElements(selected)
+}
+
+@_cdecl("kk_array_sliceArray_iterable")
+public func kk_array_sliceArray_iterable(_ arrayRaw: Int, _ indicesRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return registerRuntimeObject(RuntimeArrayBox(length: 0))
+    }
+    let indexElements: [Int]
+    if let indexList = runtimeListBox(from: indicesRaw) {
+        indexElements = indexList.elements
+    } else if let indexSet = runtimeSetBox(from: indicesRaw) {
+        indexElements = indexSet.elements
+    } else {
+        return registerRuntimeObject(RuntimeArrayBox(length: 0))
+    }
+
+    let size = array.elements.count
+    var selected: [Int] = []
+    for rawIndex in indexElements {
+        let index = kk_unbox_int(rawIndex)
+        if index >= 0 && index < size {
+            selected.append(array.elements[index])
+        }
+    }
+    return runtimeArrayFromElements(selected)
+}
+
 @_cdecl("kk_array_fill")
 public func kk_array_fill(_ arrayRaw: Int, _ value: Int) -> Int {
     guard let array = runtimeArrayBox(from: arrayRaw) else {
