@@ -2966,6 +2966,43 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // firstNotNullOfOrNull(transform: (T) -> R?): R?
+        do {
+            let memberName = interner.intern("firstNotNullOfOrNull")
+            let rName = interner.intern("R")
+            let rSymbol = symbols.lookup(fqName: sequenceFQName + [memberName, rName]) ?? symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: sequenceFQName + [memberName, rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let nullableRType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nullable)))
+            let transformType = types.make(.functionType(FunctionType(
+                params: [typeParamType],
+                returnType: nullableRType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            registerSequenceMemberStub(
+                named: "firstNotNullOfOrNull",
+                externalLinkName: "kk_sequence_firstNotNullOfOrNull",
+                receiverType: receiverType,
+                parameters: [("transform", transformType)],
+                returnType: types.makeNullable(rType),
+                sequenceSymbol: sequenceSymbol,
+                sequenceFQName: sequenceFQName,
+                typeParamSymbol: typeParamSymbol,
+                symbols: symbols,
+                interner: interner,
+                canThrow: true,
+                additionalTypeParameterSymbols: [rSymbol],
+                additionalTypeParameterUpperBoundsList: [[]]
+            )
+        }
+
         // last(): T
         registerSequenceMemberStub(
             named: "last",
