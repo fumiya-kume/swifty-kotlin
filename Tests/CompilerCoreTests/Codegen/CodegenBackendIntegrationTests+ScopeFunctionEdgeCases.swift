@@ -84,4 +84,40 @@ extension CodegenBackendIntegrationTests {
             )
         }
     }
+
+    func testCodegenCompilesContextHelper() throws {
+        let source = """
+        import kotlin.ExperimentalContextParameters
+
+        @OptIn(ExperimentalContextParameters::class)
+        fun main() {
+            val result = context(1) { "context-ok" }
+            println(result)
+            println(context("a", "b") { "context-two" })
+            println(context(1, 2, 3, 4, 5, 6) { "context-six" })
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ContextHelper",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            XCTAssertEqual(
+                result.stdout.replacingOccurrences(of: "\r\n", with: "\n"),
+                """
+                context-ok
+                context-two
+                context-six
+                """
+                + "\n"
+            )
+        }
+    }
 }
