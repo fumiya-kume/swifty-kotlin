@@ -268,7 +268,7 @@ public func kk_native_byteArray_getULongAt(_ arrayRaw: Int, _ index: Int) -> Int
         byteCount: 8,
         functionName: "kk_native_byteArray_getULongAt"
     )
-    return Int(bitPattern: UInt(truncatingIfNeeded: value))
+    return Int(bitPattern: Int64(truncatingIfNeeded: value))
 }
 
 @_cdecl("kk_native_byteArray_getCharAt")
