@@ -9406,7 +9406,7 @@ extension DataFlowSemaPhase {
             )
         }
 
-        // --- Array extension functions: contentEquals, contentDeepToString, contentHashCode, reversedArray ---
+        // --- Array extension functions: contentEquals, contentDeepToString, contentDeepHashCode, contentHashCode, reversedArray ---
 
         // contentEquals(other: Array<T>): Boolean
         let contentEqualsName = interner.intern("contentEquals")
@@ -9507,6 +9507,38 @@ extension DataFlowSemaPhase {
                 for: contentDeepToStringSymbol
             )
             symbols.setExternalLinkName("kk_array_contentDeepToString", for: contentDeepToStringSymbol)
+        }
+
+        // contentDeepHashCode(): Int
+        let contentDeepHashCodeName = interner.intern("contentDeepHashCode")
+        let contentDeepHashCodeFQName = arrayFQName + [contentDeepHashCodeName]
+        if symbols.lookup(fqName: contentDeepHashCodeFQName) == nil {
+            let contentDeepHashCodeSymbol = symbols.define(
+                kind: .function,
+                name: contentDeepHashCodeName,
+                fqName: contentDeepHashCodeFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(arraySymbol, for: contentDeepHashCodeSymbol)
+            let arrayTypeParam = types.make(.typeParam(TypeParamType(symbol: tParamSymbol, nullability: .nonNull)))
+            let receiverType = types.make(.classType(ClassType(
+                classSymbol: arraySymbol,
+                args: [.invariant(arrayTypeParam)],
+                nullability: .nonNull
+            )))
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [],
+                    returnType: types.intType,
+                    typeParameterSymbols: [tParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: contentDeepHashCodeSymbol
+            )
+            symbols.setExternalLinkName("kk_array_contentDeepHashCode", for: contentDeepHashCodeSymbol)
         }
 
         // reversedArray(): Array<T>

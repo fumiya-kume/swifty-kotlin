@@ -753,4 +753,39 @@ extension CodegenBackendIntegrationTests {
             XCTAssertEqual(out, "[[1, 2], [x, y], [3, 4]]\n[[...]]\n")
         }
     }
+
+    func testArrayContentDeepHashCode() throws {
+        let source = """
+        fun main() {
+            val left = arrayOf(arrayOf(1, 2), arrayOf("x"))
+            val same = arrayOf(arrayOf(1, 2), arrayOf("x"))
+            val differentNested = arrayOf(arrayOf(1, 3), arrayOf("x"))
+            val shallowSameShape = arrayOf(arrayOf(1, 2), arrayOf("x"))
+
+            println(left.contentDeepHashCode() == same.contentDeepHashCode())
+            println(left.contentDeepHashCode() == differentNested.contentDeepHashCode())
+            println(left.contentHashCode() == shallowSameShape.contentHashCode())
+
+            val primitiveLeft = arrayOf(intArrayOf(1, 2), booleanArrayOf(true, false))
+            val primitiveSame = arrayOf(intArrayOf(1, 2), booleanArrayOf(true, false))
+            val primitiveDifferent = arrayOf(intArrayOf(1, 2), booleanArrayOf(false, true))
+            println(primitiveLeft.contentDeepHashCode() == primitiveSame.contentDeepHashCode())
+            println(primitiveLeft.contentDeepHashCode() == primitiveDifferent.contentDeepHashCode())
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ArrayContentDeepHashCode",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(out, "true\nfalse\nfalse\ntrue\nfalse\n")
+        }
+    }
 }
