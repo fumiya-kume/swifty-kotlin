@@ -318,6 +318,19 @@ extension DataFlowSemaPhase {
             iterableInterfaceSymbol: iterableInterfaceSymbol
         )
 
+        let mutableCollectionInterfaceSymbol = registerSyntheticMutableCollectionStub(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            collectionInterfaceSymbol: collectionInterfaceSymbol
+        )
+
+        registerSyntheticAbstractMutableCollectionStub(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            collectionInterfaceSymbol: collectionInterfaceSymbol,
+            mutableCollectionInterfaceSymbol: mutableCollectionInterfaceSymbol
+        )
+
         let listInterfaceSymbol = registerSyntheticListStub(
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg,
@@ -1005,6 +1018,242 @@ extension DataFlowSemaPhase {
         )
 
         return collectionInterfaceSymbol
+    }
+
+    /// Register a minimal `kotlin.collections.MutableCollection<E>` interface surface.
+    private func registerSyntheticMutableCollectionStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        collectionInterfaceSymbol: SymbolID
+    ) -> SymbolID {
+        let mutableCollectionName = interner.intern("MutableCollection")
+        let mutableCollectionFQName = kotlinCollectionsPkg + [mutableCollectionName]
+        let mutableCollectionSymbol: SymbolID = if let existing = symbols.lookup(fqName: mutableCollectionFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .interface,
+                name: mutableCollectionName,
+                fqName: mutableCollectionFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = mutableCollectionFQName + [typeParamName]
+        let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: mutableCollectionSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: mutableCollectionSymbol)
+        symbols.setDirectSupertypes([collectionInterfaceSymbol], for: mutableCollectionSymbol)
+        types.setNominalDirectSupertypes([collectionInterfaceSymbol], for: mutableCollectionSymbol)
+        symbols.setSupertypeTypeArgs([.out(typeParamType)], for: mutableCollectionSymbol, supertype: collectionInterfaceSymbol)
+        types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: mutableCollectionSymbol, supertype: collectionInterfaceSymbol)
+
+        let mutableCollectionType = types.make(.classType(ClassType(
+            classSymbol: mutableCollectionSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        let collectionType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+
+        func registerMutableCollectionFunction(
+            name: String,
+            parameterTypes: [TypeID],
+            returnType: TypeID,
+            valueParameterNames: [String] = []
+        ) {
+            let memberName = interner.intern(name)
+            let memberFQName = mutableCollectionFQName + [memberName]
+            guard symbols.lookup(fqName: memberFQName) == nil else { return }
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: memberName,
+                fqName: memberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(mutableCollectionSymbol, for: memberSymbol)
+
+            var valueParameterSymbols: [SymbolID] = []
+            for parameterName in valueParameterNames {
+                let interned = interner.intern(parameterName)
+                let parameterSymbol = symbols.define(
+                    kind: .valueParameter,
+                    name: interned,
+                    fqName: memberFQName + [interned],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(memberSymbol, for: parameterSymbol)
+                valueParameterSymbols.append(parameterSymbol)
+            }
+
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: mutableCollectionType,
+                    parameterTypes: parameterTypes,
+                    returnType: returnType,
+                    valueParameterSymbols: valueParameterSymbols,
+                    valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
+                    valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count),
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        registerMutableCollectionFunction(
+            name: "add",
+            parameterTypes: [typeParamType],
+            returnType: types.booleanType,
+            valueParameterNames: ["element"]
+        )
+        registerMutableCollectionFunction(
+            name: "addAll",
+            parameterTypes: [collectionType],
+            returnType: types.booleanType,
+            valueParameterNames: ["elements"]
+        )
+        registerMutableCollectionFunction(
+            name: "clear",
+            parameterTypes: [],
+            returnType: types.unitType
+        )
+        registerMutableCollectionFunction(
+            name: "remove",
+            parameterTypes: [typeParamType],
+            returnType: types.booleanType,
+            valueParameterNames: ["element"]
+        )
+        registerMutableCollectionFunction(
+            name: "removeAll",
+            parameterTypes: [collectionType],
+            returnType: types.booleanType,
+            valueParameterNames: ["elements"]
+        )
+        registerMutableCollectionFunction(
+            name: "retainAll",
+            parameterTypes: [collectionType],
+            returnType: types.booleanType,
+            valueParameterNames: ["elements"]
+        )
+
+        return mutableCollectionSymbol
+    }
+
+    /// Register `kotlin.collections.AbstractMutableCollection<E>` surface (STDLIB-COL-TYPE-003).
+    private func registerSyntheticAbstractMutableCollectionStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        collectionInterfaceSymbol: SymbolID,
+        mutableCollectionInterfaceSymbol: SymbolID
+    ) {
+        let abstractMutableCollectionName = interner.intern("AbstractMutableCollection")
+        let abstractMutableCollectionFQName = kotlinCollectionsPkg + [abstractMutableCollectionName]
+        let abstractMutableCollectionSymbol: SymbolID = if let existing = symbols.lookup(fqName: abstractMutableCollectionFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .class,
+                name: abstractMutableCollectionName,
+                fqName: abstractMutableCollectionFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .abstractType]
+            )
+        }
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = abstractMutableCollectionFQName + [typeParamName]
+        let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: abstractMutableCollectionSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: abstractMutableCollectionSymbol)
+
+        let abstractMutableCollectionType = types.make(.classType(ClassType(
+            classSymbol: abstractMutableCollectionSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(abstractMutableCollectionType, for: abstractMutableCollectionSymbol)
+
+        let abstractCollectionFQName = kotlinCollectionsPkg + [interner.intern("AbstractCollection")]
+        let readonlyCollectionSupertype = symbols.lookup(fqName: abstractCollectionFQName) ?? collectionInterfaceSymbol
+        symbols.setDirectSupertypes([readonlyCollectionSupertype, mutableCollectionInterfaceSymbol], for: abstractMutableCollectionSymbol)
+        types.setNominalDirectSupertypes([readonlyCollectionSupertype, mutableCollectionInterfaceSymbol], for: abstractMutableCollectionSymbol)
+        symbols.setSupertypeTypeArgs([.out(typeParamType)], for: abstractMutableCollectionSymbol, supertype: readonlyCollectionSupertype)
+        types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: abstractMutableCollectionSymbol, supertype: readonlyCollectionSupertype)
+        symbols.setSupertypeTypeArgs([.invariant(typeParamType)], for: abstractMutableCollectionSymbol, supertype: mutableCollectionInterfaceSymbol)
+        types.setNominalSupertypeTypeArgs([.invariant(typeParamType)], for: abstractMutableCollectionSymbol, supertype: mutableCollectionInterfaceSymbol)
+
+        let initName = interner.intern("<init>")
+        let initFQName = abstractMutableCollectionFQName + [initName]
+        if symbols.lookup(fqName: initFQName) == nil {
+            let initSymbol = symbols.define(
+                kind: .constructor,
+                name: initName,
+                fqName: initFQName,
+                declSite: nil,
+                visibility: .protected,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(abstractMutableCollectionSymbol, for: initSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: [],
+                    returnType: abstractMutableCollectionType,
+                    valueParameterSymbols: [],
+                    valueParameterHasDefaultValues: [],
+                    valueParameterIsVararg: [],
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: initSymbol
+            )
+        }
     }
 
     /// Register `Collection<E>.toList(): List<E>` so that `keys.toList()` / `values.toList()` resolve.
