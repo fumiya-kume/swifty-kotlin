@@ -2775,7 +2775,7 @@ final class CallTypeChecker {
                         elementType: explicitTypeArg
                     )
                 } else if let explicitTypeArg = explicitTypeArgs.first,
-                          name == "mutableListOf"
+                          name == "mutableListOf" || name == "arrayListOf"
                 {
                     collectionType = makeSyntheticMutableListType(
                         symbols: sema.symbols,
@@ -2821,12 +2821,12 @@ final class CallTypeChecker {
                         elementType: explicitTypeArg
                     )
                 } else if !argTypes.isEmpty,
-                          name == "listOf" || name == "listOfNotNull" || calleeName == knownNames.emptyListFn || name == "mutableListOf"
+                          name == "listOf" || name == "listOfNotNull" || calleeName == knownNames.emptyListFn || name == "mutableListOf" || name == "arrayListOf"
                 {
                     // Infer element type from arguments via LUB so that
                     // `listOf("a", null)` produces List<String?>.
                     let elementType = sema.types.lub(argTypes)
-                    collectionType = if name == "mutableListOf" {
+                    collectionType = if name == "mutableListOf" || name == "arrayListOf" {
                         makeSyntheticMutableListType(
                             symbols: sema.symbols,
                             types: sema.types,
@@ -2841,6 +2841,14 @@ final class CallTypeChecker {
                             elementType: elementType
                         )
                     }
+                } else if name == "arrayListOf" {
+                    let elementType = expectedCollectionArgs.first ?? sema.types.anyType
+                    collectionType = makeSyntheticMutableListType(
+                        symbols: sema.symbols,
+                        types: sema.types,
+                        interner: interner,
+                        elementType: elementType
+                    )
                 } else if let explicitTypeArg = explicitTypeArgs.first,
                           calleeName == knownNames.emptySetFn || name == "setOf"
                 {
