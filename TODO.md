@@ -154,7 +154,7 @@
 - [ ] STDLIB-COL-TYPE-001: `AbstractCollection<E>` surface を追加する
 - [ ] STDLIB-COL-TYPE-002: `AbstractIterator<T>` surface を追加する
 - [ ] STDLIB-COL-TYPE-003: `AbstractMutableCollection<E>` surface を追加する
-- [ ] STDLIB-COL-TYPE-004: primitive iterator classes（`BooleanIterator`, `ByteIterator`, `ShortIterator`, `IntIterator`, `LongIterator`, `FloatIterator`, `DoubleIterator`, `CharIterator`）を追加する
+- [x] STDLIB-COL-TYPE-004: primitive iterator classes（`BooleanIterator`, `ByteIterator`, `ShortIterator`, `IntIterator`, `LongIterator`, `FloatIterator`, `DoubleIterator`, `CharIterator`）を追加する
 - [x] STDLIB-COL-TYPE-005: `MutableIterable<T>` surface を追加する
 - [x] STDLIB-COL-TYPE-006: `MutableListIterator<T>` surface を追加する
 - [ ] STDLIB-COL-ARRAY-001: array `contentToString()` overload 群を追加する
