@@ -80,13 +80,14 @@ final class ABIMismatchTests: XCTestCase {
         // kk_throwable_new, kk_throwable_is_cancellation, kk_throwable_* properties/helpers,
         // kk_no_when_branch_matched_exception_new* constructors,
         // kk_concurrent_modification_exception_new* constructors,
+        // kk_array_index_out_of_bounds_exception_new* constructors,
         // kk_panic, kk_abort_unreachable,
         // kk_require, kk_check, kk_require_lazy, kk_check_lazy,
         // kk_precondition_assert, kk_precondition_assert_lazy,
         // kk_assertions_enabled, kk_assertions_set_enabled, kk_assertions_reset,
         // kk_reentrant_read_write_lock_read,
         // kk_error, kk_todo, kk_todo_noarg, kk_dispatch_error
-        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 35)
+        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 37)
     }
 
     func testTestFrameworkFunctionCount() {
@@ -95,7 +96,7 @@ final class ABIMismatchTests: XCTestCase {
 
     func testStringFunctionCount() {
         // Keep this in sync with RuntimeABISpec.stringFunctions entries.
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 167)
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 177)
     }
 
     func testRegexFunctionCount() {
@@ -161,7 +162,7 @@ final class ABIMismatchTests: XCTestCase {
 
     func testBitwiseFunctionCount() {
         // Includes integer and long bitwise helpers plus bit-counting utilities.
-        XCTAssertEqual(RuntimeABISpec.bitwiseFunctions.count, 34)
+        XCTAssertEqual(RuntimeABISpec.bitwiseFunctions.count, 36)
     }
 
     func testFloorDivABISignatures() throws {
@@ -351,6 +352,14 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(spec.parameters[0].type, .nullableOpaquePointer)
     }
 
+    func testKKFloorModSignatures() throws {
+        for name in ["kk_op_floor_mod", "kk_op_lfloor_mod"] {
+            let spec = try requireSpec(name)
+            XCTAssertEqual(spec.returnType, .intptr)
+            XCTAssertEqual(spec.parameters.map(\.type), [.intptr, .intptr])
+        }
+    }
+
     func testKKNoWhenBranchMatchedExceptionConstructorsSignature() throws {
         let noArg = try requireSpec("kk_no_when_branch_matched_exception_new")
         XCTAssertEqual(noArg.returnType, .intptr)
@@ -385,6 +394,16 @@ final class ABIMismatchTests: XCTestCase {
         let cause = try requireSpec("kk_concurrent_modification_exception_new_cause")
         XCTAssertEqual(cause.returnType, .intptr)
         XCTAssertEqual(cause.parameters.map(\.type), [.intptr])
+    }
+
+    func testKKArrayIndexOutOfBoundsExceptionConstructorsSignature() throws {
+        let noArg = try requireSpec("kk_array_index_out_of_bounds_exception_new")
+        XCTAssertEqual(noArg.returnType, .intptr)
+        XCTAssertEqual(noArg.parameters.count, 0)
+
+        let message = try requireSpec("kk_array_index_out_of_bounds_exception_new_message")
+        XCTAssertEqual(message.returnType, .intptr)
+        XCTAssertEqual(message.parameters.map(\.type), [.intptr])
     }
 
     func testKKThrowableIsCancellationSignature() throws {
