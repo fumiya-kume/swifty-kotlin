@@ -428,6 +428,54 @@ final class CallLowerer {
             return result
         }
 
+        // --- Context helper: context(with, block) (STDLIB-KOTLIN-ROOT-CTX-001) ---
+        if let scopeKind = sema.bindings.scopeFunctionKind(for: exprID),
+           scopeKind == .scopeContext,
+           args.count >= 2,
+           args.count <= 7
+        {
+            let boundType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+            for contextArgument in args.dropLast() {
+                _ = driver.lowerExpr(
+                    contextArgument.expr,
+                    ast: ast, sema: sema, arena: arena, interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+            }
+            let loweredLambdaID = driver.lowerExpr(
+                args[args.count - 1].expr,
+                ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+
+            let result = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: boundType
+            )
+            if let info = driver.ctx.callableValueInfo(for: loweredLambdaID) {
+                instructions.append(.call(
+                    symbol: info.symbol,
+                    callee: info.callee,
+                    arguments: info.captureArguments,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            } else {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("invoke"),
+                    arguments: [loweredLambdaID],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            }
+            return result
+        }
+
         // --- Scope function: top-level run(block) (STDLIB-401) ---
         if let scopeKind = sema.bindings.scopeFunctionKind(for: exprID),
            scopeKind == .scopeTopLevelRun,
@@ -1368,8 +1416,13 @@ final class CallLowerer {
             return finalArgs
         }
 
-        // STDLIB-590: runCatching { block } — expand lambda arg to (fnPtr, closureRaw)
-        if externalLinkName == "kk_runCatching", loweredArguments.count == 1 {
+        // STDLIB-590 / STDLIB-KOTLIN-ROOT-CLOSE-001: Function0 runtime entry
+        // points receive lambda arguments as (fnPtr, closureRaw).
+        let function0RuntimeNames: Set<String> = [
+            "kk_runCatching",
+            "kk_auto_closeable_create",
+        ]
+        if function0RuntimeNames.contains(externalLinkName), loweredArguments.count == 1 {
             var finalArgs: [KIRExprID] = []
             var lambdaID = loweredArguments[0]
             var resolvedCallableInfo = driver.ctx.callableValueInfo(for: lambdaID)
