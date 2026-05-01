@@ -1302,22 +1302,46 @@ public func kk_map_get(_ mapRaw: Int, _ key: Int) -> Int {
     return runtimeNullSentinelInt
 }
 
+@inline(__always)
+private func runtimeMapDefaultValue(_ map: RuntimeMapBox, key: Int, outThrown: UnsafeMutablePointer<Int>?) -> Int? {
+    guard map.defaultValueFnPtr != 0 else {
+        return nil
+    }
+    var thrown = 0
+    let result = runtimeInvokeCollectionLambda1(
+        fnPtr: map.defaultValueFnPtr,
+        closureRaw: map.defaultValueClosureRaw,
+        value: key,
+        outThrown: &thrown
+    )
+    if thrown != 0 {
+        return handleCollectionLambdaThrow(thrown, outThrown)
+    }
+    return result
+}
+
+@inline(__always)
+private func runtimeMapMissingKey(outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = runtimeAllocateThrowable(message: "NoSuchElementException: Key is not in the map.")
+    return 0
+}
+
 @_cdecl("kk_map_getValue")
 public func kk_map_getValue(_ mapRaw: Int, _ key: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
     guard let map = runtimeMapBox(from: mapRaw) else {
-        outThrown?.pointee = runtimeAllocateThrowable(message: "NoSuchElementException: Key is not in the map.")
-        return 0
+        return runtimeMapMissingKey(outThrown: outThrown)
     }
     for (idx, mapKey) in map.keys.enumerated() where runtimeValuesEqual(mapKey, key) {
         guard idx < map.values.count else {
-            outThrown?.pointee = runtimeAllocateThrowable(message: "NoSuchElementException: Key is not in the map.")
-            return 0
+            break
         }
         return map.values[idx]
     }
-    outThrown?.pointee = runtimeAllocateThrowable(message: "NoSuchElementException: Key is not in the map.")
-    return 0
+    if let defaultValue = runtimeMapDefaultValue(map, key: key, outThrown: outThrown) {
+        return defaultValue
+    }
+    return runtimeMapMissingKey(outThrown: outThrown)
 }
 
 @_cdecl("kk_map_getOrDefault")
@@ -1330,6 +1354,24 @@ public func kk_map_getOrDefault(_ mapRaw: Int, _ key: Int, _ defaultValue: Int) 
         return map.values[idx]
     }
     return defaultValue
+}
+
+@_cdecl("kk_map_withDefault")
+public func kk_map_withDefault(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        return registerRuntimeObject(RuntimeMapBox(
+            keys: [],
+            values: [],
+            defaultValueFnPtr: fnPtr,
+            defaultValueClosureRaw: closureRaw
+        ))
+    }
+    return registerRuntimeObject(RuntimeMapBox(
+        keys: map.keys,
+        values: map.values,
+        defaultValueFnPtr: fnPtr,
+        defaultValueClosureRaw: closureRaw
+    ))
 }
 
 @_cdecl("kk_map_contains_key")

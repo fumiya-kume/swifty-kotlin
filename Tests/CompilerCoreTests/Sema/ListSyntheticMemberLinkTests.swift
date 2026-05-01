@@ -1786,6 +1786,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                 (mapFQ, "mapValues", "kk_map_mapValues"),
                 (mapFQ, "mapKeys", "kk_map_mapKeys"),
                 (mapFQ, "getValue", "kk_map_getValue"),
+                (mapFQ, "withDefault", "kk_map_withDefault"),
                 (mapFQ, "toList", "kk_map_toList"),
                 (mapFQ, "toMutableMap", "kk_map_to_mutable_map"),
                 (mutableMapFQ, "put", "kk_mutable_map_put"),
@@ -1805,6 +1806,25 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                     "Expected \(memberName) to have external link \(expectedExternal)"
                 )
             }
+        }
+    }
+
+    func testMapWithDefaultSurfaceResolvesDefaultLambda() throws {
+        let source = """
+        fun probe(values: Map<Int, Int>): Int {
+            val defaults = values.withDefault { it * 10 }
+            return defaults.getValue(7)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Map.withDefault surface to resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
         }
     }
 

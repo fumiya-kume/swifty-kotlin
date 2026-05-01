@@ -649,6 +649,7 @@ extension ABILoweringPass {
             interner.intern("kk_map_toList"),
             interner.intern("kk_map_to_string"),
             interner.intern("kk_map_to_mutable_map"),
+            interner.intern("kk_map_withDefault"),
             interner.intern("kk_map_iterator"),
             interner.intern("kk_map_iterator_hasNext"),
             interner.intern("kk_map_iterator_next"),

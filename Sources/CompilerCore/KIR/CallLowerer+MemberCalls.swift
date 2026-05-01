@@ -1669,6 +1669,39 @@ extension CallLowerer {
             )
         }()
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
+        if args.count == 1,
+           interner.resolve(calleeName) == "withDefault"
+        {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            if isMapLikeType(receiverType, sema: sema, interner: interner) {
+                let runtimeArguments: [KIRExprID]
+                if normalizedArgIDs.count >= 2 {
+                    runtimeArguments = [loweredReceiverID, normalizedArgIDs[0], normalizedArgIDs[1]]
+                } else if let defaultValueArg = normalizedArgIDs.first {
+                    let split = splitCallableLambdaArgument(
+                        defaultValueArg,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        instructions: &instructions
+                    )
+                    runtimeArguments = [loweredReceiverID, split.fnPtrExpr, split.envPtrExpr]
+                } else {
+                    let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                    instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                    runtimeArguments = [loweredReceiverID, zeroExpr, zeroExpr]
+                }
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_map_withDefault"),
+                    arguments: runtimeArguments,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
         let chosenBase64Callee: SymbolID? = {
             guard let selected = sema.bindings.callBindings[exprID]?.chosenCallee, selected != .invalid else {
                 return nil
@@ -4536,7 +4569,7 @@ extension CallLowerer {
             "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate",
             "forEachIndexed", "mapIndexed", "filterIndexed", "sumOf", "mapValues", "mapKeys", "filterKeys", "filterValues",
-            "getOrElse", "elementAtOrElse", "getOrPut",
+            "getOrElse", "elementAtOrElse", "getOrPut", "withDefault",
             "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
             "maxOf", "minOf",
             "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",

@@ -815,6 +815,33 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenMapWithDefaultUsesRuntimeDefaultForGetValue() throws {
+        let source = """
+        fun main() {
+            val factor = 100
+            val values = mapOf(1 to 10).withDefault { it * factor }
+            println(values.getValue(1))
+            println(values.getValue(2))
+            println(values[2])
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "MapWithDefaultRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "10\n200\nnull\n")
+        }
+    }
+
     func testCodegenCollectionCopiesProduceIndependentMutableAndSetViews() throws {
         let source = """
         fun main() {
