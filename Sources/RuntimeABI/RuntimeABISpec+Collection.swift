@@ -1229,6 +1229,17 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_array_sortedArrayWith",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
         // Array utility functions (STDLIB-089)
         RuntimeABIFunctionSpec(
             name: "kk_array_copyOf",

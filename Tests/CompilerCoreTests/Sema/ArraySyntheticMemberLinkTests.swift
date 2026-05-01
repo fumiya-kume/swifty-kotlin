@@ -155,4 +155,48 @@ final class ArraySyntheticMemberLinkTests: XCTestCase {
             }
         }
     }
+
+    func testArraySortedArrayWithUsesRuntimeExternalLink() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbolID = try XCTUnwrap(
+                sema.symbols.lookup(
+                    fqName: [
+                        ctx.interner.intern("kotlin"),
+                        ctx.interner.intern("Array"),
+                        ctx.interner.intern("sortedArrayWith"),
+                    ]
+                ),
+                "Expected synthetic Array.sortedArrayWith to be registered"
+            )
+            XCTAssertEqual(sema.symbols.externalLinkName(for: symbolID), "kk_array_sortedArrayWith")
+
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbolID))
+            XCTAssertEqual(signature.parameterTypes.count, 1)
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [false])
+            XCTAssertEqual(signature.valueParameterIsVararg, [false])
+            XCTAssertEqual(signature.typeParameterSymbols.count, 1)
+
+            guard let receiverType = signature.receiverType,
+                  case let .classType(receiverClass) = sema.types.kind(of: receiverType),
+                  case let .classType(returnClass) = sema.types.kind(of: signature.returnType),
+                  let receiverSymbol = sema.symbols.symbol(receiverClass.classSymbol)
+            else {
+                return XCTFail("Expected Array.sortedArrayWith receiver and return class types")
+            }
+            XCTAssertEqual(ctx.interner.resolve(receiverSymbol.name), "Array")
+            XCTAssertEqual(receiverClass.classSymbol, returnClass.classSymbol)
+
+            guard case let .classType(comparatorType) = sema.types.kind(of: signature.parameterTypes[0]),
+                  let comparatorSymbol = sema.symbols.symbol(comparatorType.classSymbol)
+            else {
+                return XCTFail("Expected Comparator parameter type")
+            }
+            XCTAssertEqual(ctx.interner.resolve(comparatorSymbol.name), "Comparator")
+            XCTAssertEqual(comparatorType.args.count, 1)
+        }
+    }
 }

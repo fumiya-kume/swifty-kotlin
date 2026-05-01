@@ -166,7 +166,7 @@
 - [ ] STDLIB-COL-ARRAY-007: array `sliceArray(indices)` overload 群を追加する
 - [ ] STDLIB-COL-ARRAY-008: array `sortedArray()` overload 群を追加する
 - [ ] STDLIB-COL-ARRAY-009: array `sortedArrayDescending()` overload 群を追加する
-- [ ] STDLIB-COL-ARRAY-010: array `sortedArrayWith(comparator)` overload 群を追加する
+- [x] STDLIB-COL-ARRAY-010: array `sortedArrayWith(comparator)` overload 群を追加する
 - [x] STDLIB-COL-FACTORY-001: `arrayListOf(vararg elements)` を追加する
 - [ ] STDLIB-COL-FACTORY-002: `hashMapOf(vararg pairs)` を追加する
 - [ ] STDLIB-COL-FACTORY-003: `hashSetOf(vararg elements)` を追加する
