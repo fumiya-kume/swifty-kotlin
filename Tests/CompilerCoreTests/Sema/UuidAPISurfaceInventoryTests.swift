@@ -730,11 +730,7 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
             "kk_uuid_nameUUIDFromBytes",
         ]
         var foundLinks: Set<String> = []
-<<<<<<< HEAD
-        for memberName in ["random", "LEXICAL_ORDER", "parse", "parseOrNull", "parseHexOrNull", "parseHexDashOrNull", "nameUUIDFromBytes"] {
-=======
-        for memberName in ["random", "NIL", "LEXICAL_ORDER", "parse", "parseHexOrNull", "nameUUIDFromBytes"] {
->>>>>>> 2bb2983f1 (Add UUID NIL constant)
+        for memberName in ["random", "NIL", "LEXICAL_ORDER", "parse", "parseOrNull", "parseHexOrNull", "parseHexDashOrNull", "nameUUIDFromBytes"] {
             let path = companionFQ + [memberName]
             let links = allExternalLinks(fqPath: path, sema: sema, interner: interner)
             foundLinks.formUnion(links)

@@ -146,7 +146,6 @@ final class RuntimeUuidEdgeCaseTests: XCTestCase {
         )
     }
 
-<<<<<<< HEAD
     func testParseHexDashOrNullAcceptsHexDashInput() {
         let uuidRaw = kk_uuid_parseHexDashOrNull(makeRuntimeString("123e4567-e89b-12d3-a456-426614174000"))
 
@@ -155,7 +154,8 @@ final class RuntimeUuidEdgeCaseTests: XCTestCase {
             extractRuntimeString(kk_uuid_toString(uuidRaw)),
             "123e4567-e89b-12d3-a456-426614174000"
         )
-=======
+    }
+
     func testNilCompanionConstantAllZeros() {
         let uuidRaw = kk_uuid_nil()
 
@@ -172,7 +172,6 @@ final class RuntimeUuidEdgeCaseTests: XCTestCase {
         XCTAssertEqual(kk_uuid_leastSignificantBits(uuidRaw), 0)
         XCTAssertEqual(kk_uuid_version(uuidRaw), 0)
         XCTAssertEqual(kk_uuid_variant(uuidRaw), 0)
->>>>>>> 2bb2983f1 (Add UUID NIL constant)
     }
 
     // MARK: - MAX UUID (all Fs)

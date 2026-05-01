@@ -74,6 +74,27 @@ extension BuildKIRRegressionTests {
         XCTAssertTrue(callees.contains(interner.intern("kk_atomic_ref_exchange")))
     }
 
+    func testABILoweringMarksNativeRefRuntimeHelpersAsNonThrowing() {
+        let pass = ABILoweringPass()
+        let interner = StringInterner()
+        let callees = pass.nonThrowingCallees(interner: interner)
+
+        XCTAssertTrue(callees.contains(interner.intern("kk_weak_ref_create")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_weak_ref_get")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_weak_ref_clear")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_cleaner_create")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_cleaner_dispose")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_gc_collect")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_gc_schedule")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_gc_target_heap_bytes")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_gc_target_heap_utilization")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_gc_max_heap_bytes")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_debugging_is_thread_state_runnable")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_debugging_gc_suspend_count")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_debugging_thread_count")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_debugging_global_object_count")))
+    }
+
     func testThisBasedMemberCallCompilesAndUsesImplicitReceiverInLowering() throws {
         let source = """
         class Vec
