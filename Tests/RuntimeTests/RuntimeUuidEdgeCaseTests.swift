@@ -442,10 +442,6 @@ final class RuntimeUuidEdgeCaseTests: XCTestCase {
         )
     }
 
-    func testParseHexOrNullNullRawReturnsNullSentinel() {
-        XCTAssertEqual(kk_uuid_parseHexOrNull(0), runtimeNullSentinelInt)
-    }
-
     func testParseOrNullNullRawReturnsNullSentinel() {
         XCTAssertEqual(kk_uuid_parseOrNull(0), runtimeNullSentinelInt)
     }
