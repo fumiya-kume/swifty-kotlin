@@ -2207,6 +2207,145 @@ extension DataFlowSemaPhase {
         return listIteratorSymbol
     }
 
+    /// Register `MutableListIterator<T>` extending `ListIterator<T>` and `MutableIterator<T>` (STDLIB-COL-TYPE-006).
+    private func ensureSyntheticMutableListIteratorStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString]
+    ) -> SymbolID {
+        let mutableListIteratorName = interner.intern("MutableListIterator")
+        let mutableListIteratorFQName = kotlinCollectionsPkg + [mutableListIteratorName]
+        if let existing = symbols.lookup(fqName: mutableListIteratorFQName) {
+            return existing
+        }
+
+        let listIteratorSymbol = ensureSyntheticListIteratorStub(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg
+        )
+        let mutableIteratorSymbol = symbols.lookup(
+            fqName: kotlinCollectionsPkg + [interner.intern("MutableIterator")]
+        )
+
+        let mutableListIteratorSymbol = symbols.define(
+            kind: .interface,
+            name: mutableListIteratorName,
+            fqName: mutableListIteratorFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = mutableListIteratorFQName + [typeParamName]
+        let typeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: typeParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: mutableListIteratorSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: mutableListIteratorSymbol)
+
+        var directSupertypes = [listIteratorSymbol]
+        if let mutableIteratorSymbol {
+            directSupertypes.append(mutableIteratorSymbol)
+        }
+        symbols.setDirectSupertypes(directSupertypes, for: mutableListIteratorSymbol)
+        types.setNominalDirectSupertypes(directSupertypes, for: mutableListIteratorSymbol)
+        symbols.setSupertypeTypeArgs([.out(typeParamType)], for: mutableListIteratorSymbol, supertype: listIteratorSymbol)
+        types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: mutableListIteratorSymbol, supertype: listIteratorSymbol)
+        if let mutableIteratorSymbol {
+            symbols.setSupertypeTypeArgs([.out(typeParamType)], for: mutableListIteratorSymbol, supertype: mutableIteratorSymbol)
+            types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: mutableListIteratorSymbol, supertype: mutableIteratorSymbol)
+        }
+
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: mutableListIteratorSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+
+        func registerMutationMember(name: String) {
+            let memberName = interner.intern(name)
+            let memberFQName = mutableListIteratorFQName + [memberName]
+            guard symbols.lookup(fqName: memberFQName) == nil else { return }
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: memberName,
+                fqName: memberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(mutableListIteratorSymbol, for: memberSymbol)
+            let valueName = interner.intern("element")
+            let valueSymbol = symbols.define(
+                kind: .valueParameter,
+                name: valueName,
+                fqName: memberFQName + [valueName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: valueSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [typeParamType],
+                    returnType: types.unitType,
+                    valueParameterSymbols: [valueSymbol],
+                    valueParameterHasDefaultValues: [false],
+                    valueParameterIsVararg: [false],
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        func registerRemoveMember() {
+            let memberName = interner.intern("remove")
+            let memberFQName = mutableListIteratorFQName + [memberName]
+            guard symbols.lookup(fqName: memberFQName) == nil else { return }
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: memberName,
+                fqName: memberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(mutableListIteratorSymbol, for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [],
+                    returnType: types.unitType,
+                    valueParameterSymbols: [],
+                    valueParameterHasDefaultValues: [],
+                    valueParameterIsVararg: [],
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        registerMutationMember(name: "add")
+        registerMutationMember(name: "set")
+        registerRemoveMember()
+
+        return mutableListIteratorSymbol
+    }
+
     /// STDLIB-538: Register `List<E>.listIterator(): ListIterator<E>`.
     private func registerListIteratorMember(
         symbols: SymbolTable,
@@ -2257,6 +2396,62 @@ extension DataFlowSemaPhase {
                 parameterTypes: [],
                 returnType: returnType,
                 typeParameterSymbols: [listTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    /// Register `MutableList<E>.listIterator(): MutableListIterator<E>`.
+    private func registerMutableListIteratorMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        mutableListFQName: [InternedString],
+        mutableListInterfaceSymbol: SymbolID,
+        mlTypeParamSymbol: SymbolID,
+        mlTypeParamType: TypeID
+    ) {
+        let mutableListIteratorSymbol = ensureSyntheticMutableListIteratorStub(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg
+        )
+
+        let memberName = interner.intern("listIterator")
+        let memberFQName = mutableListFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: mutableListInterfaceSymbol,
+            args: [.invariant(mlTypeParamType)],
+            nullability: .nonNull
+        )))
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: mutableListIteratorSymbol,
+            args: [.invariant(mlTypeParamType)],
+            nullability: .nonNull
+        )))
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(mutableListInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_list_iterator", for: memberSymbol)
+        symbols.setPropertyType(types.make(.functionType(FunctionType(
+            params: [], returnType: returnType, isSuspend: false, nullability: .nonNull
+        ))), for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: returnType,
+                typeParameterSymbols: [mlTypeParamSymbol],
                 classTypeParameterCount: 1
             ),
             for: memberSymbol
@@ -5519,6 +5714,14 @@ extension DataFlowSemaPhase {
         symbols.setSupertypeTypeArgs([.out(mlTypeParamType)], for: mutableListInterfaceSymbol, supertype: listInterfaceSymbol)
         types.setNominalSupertypeTypeArgs([.out(mlTypeParamType)], for: mutableListInterfaceSymbol, supertype: listInterfaceSymbol)
 
+        registerMutableListIteratorMember(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            mutableListFQName: mutableListFQName,
+            mutableListInterfaceSymbol: mutableListInterfaceSymbol,
+            mlTypeParamSymbol: mlTypeParamSymbol,
+            mlTypeParamType: mlTypeParamType
+        )
         registerMutableListSetOperator(
             symbols: symbols, types: types, interner: interner,
             mutableListFQName: mutableListFQName,
