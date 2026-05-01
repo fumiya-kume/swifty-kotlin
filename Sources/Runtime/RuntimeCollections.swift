@@ -2568,6 +2568,25 @@ public func kk_array_reversedArray(_ arrayRaw: Int) -> Int {
     return registerRuntimeObject(box)
 }
 
+@_cdecl("kk_array_sortedArrayDescending")
+public func kk_array_sortedArrayDescending(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_array_sortedArrayDescending")
+    }
+    let sorted = array.elements.enumerated().sorted { lhs, rhs in
+        let comparison = runtimeCompareValues(lhs.element, rhs.element)
+        if comparison != 0 {
+            return comparison > 0
+        }
+        return lhs.offset < rhs.offset
+    }.map(\.element)
+    let box = RuntimeArrayBox(length: sorted.count)
+    for (index, element) in sorted.enumerated() {
+        box.elements[index] = element
+    }
+    return registerRuntimeObject(box)
+}
+
 @_cdecl("kk_array_fill")
 public func kk_array_fill(_ arrayRaw: Int, _ value: Int) -> Int {
     guard let array = runtimeArrayBox(from: arrayRaw) else {

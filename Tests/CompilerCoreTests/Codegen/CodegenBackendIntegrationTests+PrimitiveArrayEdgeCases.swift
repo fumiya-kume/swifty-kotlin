@@ -245,6 +245,41 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testArraySortedArrayDescendingOverloads() throws {
+        let source = """
+        fun main() {
+            println(arrayOf("c", "a", "b").sortedArrayDescending().toList())
+            println(intArrayOf(4, 1, 3, 2).sortedArrayDescending().toList())
+            println(uintArrayOf(30u, 10u, 20u).sortedArrayDescending().toList())
+            println(booleanArrayOf(true, false, false).sortedArrayDescending().toList())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ArraySortedArrayDescendingOverloads",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                [c, b, a]
+                [4, 3, 2, 1]
+                [30, 20, 10]
+                [1, 0, 0]
+                """
+                + "\n"
+            )
+        }
+    }
+
     func testSignedArrayViewConversionsFromUnsignedArrays() throws {
         let source = """
         fun main() {

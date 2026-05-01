@@ -9667,6 +9667,47 @@ extension DataFlowSemaPhase {
             []
         }
 
+        // sortedArrayDescending(): Array<T>
+        let sortedArrayDescendingName = interner.intern("sortedArrayDescending")
+        let sortedArrayDescendingFQName = arrayFQName + [sortedArrayDescendingName]
+        if symbols.lookup(fqName: sortedArrayDescendingFQName) == nil {
+            let sortedArrayDescendingSymbol = symbols.define(
+                kind: .function,
+                name: sortedArrayDescendingName,
+                fqName: sortedArrayDescendingFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(arraySymbol, for: sortedArrayDescendingSymbol)
+            symbols.setExternalLinkName("kk_array_sortedArrayDescending", for: sortedArrayDescendingSymbol)
+            let sortedArrayReceiverType = types.make(.classType(ClassType(
+                classSymbol: arraySymbol,
+                args: [.out(arrayTypeParamType)],
+                nullability: .nonNull
+            )))
+            let sortedArrayReturnType = types.make(.classType(ClassType(
+                classSymbol: arraySymbol,
+                args: [.invariant(arrayTypeParamType)],
+                nullability: .nonNull
+            )))
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: sortedArrayReceiverType,
+                    parameterTypes: [],
+                    returnType: sortedArrayReturnType,
+                    isSuspend: false,
+                    valueParameterSymbols: [],
+                    valueParameterHasDefaultValues: [],
+                    valueParameterIsVararg: [],
+                    typeParameterSymbols: [tParamSymbol],
+                    typeParameterUpperBoundsList: [comparableElementBounds],
+                    classTypeParameterCount: 1
+                ),
+                for: sortedArrayDescendingSymbol
+            )
+        }
+
         // binarySearch(element, fromIndex, toIndex)
         let elementBinarySearchName = interner.intern("binarySearch")
         let elementBinarySearchFQName = arrayFQName + [elementBinarySearchName]
@@ -10268,6 +10309,49 @@ extension DataFlowSemaPhase {
                         typeParameterSymbols: []
                     ),
                     for: reversedArraySym
+                )
+            }
+        }
+
+        // Register sortedArrayDescending() for primitive arrays.
+        for name in primitiveArrayNames {
+            let primName = interner.intern(name)
+            let fqName = kotlinPkg + [primName]
+            guard let arraySymbol = symbols.lookup(fqName: fqName) else {
+                continue
+            }
+
+            let sortedArrayDescendingName = interner.intern("sortedArrayDescending")
+            let sortedArrayDescendingFQName = fqName + [sortedArrayDescendingName]
+            if symbols.lookup(fqName: sortedArrayDescendingFQName) == nil {
+                let sortedArrayDescendingSym = symbols.define(
+                    kind: .function,
+                    name: sortedArrayDescendingName,
+                    fqName: sortedArrayDescendingFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(arraySymbol, for: sortedArrayDescendingSym)
+                symbols.setExternalLinkName("kk_array_sortedArrayDescending", for: sortedArrayDescendingSym)
+
+                let arrayType = types.make(.classType(ClassType(
+                    classSymbol: arraySymbol,
+                    args: [],
+                    nullability: .nonNull
+                )))
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: arrayType,
+                        parameterTypes: [],
+                        returnType: arrayType,
+                        isSuspend: false,
+                        valueParameterSymbols: [],
+                        valueParameterHasDefaultValues: [],
+                        valueParameterIsVararg: [],
+                        typeParameterSymbols: []
+                    ),
+                    for: sortedArrayDescendingSym
                 )
             }
         }
