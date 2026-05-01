@@ -56,6 +56,7 @@ extension CollectionLiteralLoweringPass {
             || fqName == lookup.setOfFQName
             || fqName == lookup.setOfNotNullFQName
             || fqName == lookup.mutableSetOfFQName
+            || fqName == lookup.linkedSetOfFQName
             || fqName == lookup.emptyMapFQName
             || fqName == lookup.mapOfFQName
             || fqName == lookup.mutableMapOfFQName
@@ -392,11 +393,11 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
-                    // --- Rewrite setOf/mutableSetOf/emptySet → kk_set_of / kk_emptySet ---
+                    // --- Rewrite setOf/mutableSetOf/linkedSetOf/emptySet → kk_set_of / kk_emptySet ---
                     if lookup.setFactoryNames.contains(callee),
                        isStdlibCollectionFactory(symbol: symbol, callee: callee, lookup: lookup, ctx: ctx) {
                         let count = arguments.count
-                        if count == 0 && callee != lookup.mutableSetOfName {
+                        if count == 0 && callee != lookup.mutableSetOfName && callee != lookup.linkedSetOfName {
                             // emptySet() / setOf() → kk_emptySet()
                             loweredBody.append(.call(
                                 symbol: nil,
@@ -407,7 +408,7 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                         } else if count == 0 {
-                            // mutableSetOf() → fresh instance via kk_set_of(null, 0)
+                            // mutableSetOf()/linkedSetOf() → fresh instance via kk_set_of(null, 0)
                             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
                             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
                             let nullExpr = module.arena.appendExpr(.intLiteral(0), type: nil)

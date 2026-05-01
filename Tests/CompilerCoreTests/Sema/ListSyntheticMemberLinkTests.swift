@@ -86,6 +86,46 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testLinkedSetOfFactoryInfersMutableSetType() throws {
+        let source = """
+        fun probe() {
+            val values = linkedSetOf(1, 2)
+            values.add(3)
+            val typed: LinkedHashSet<Int> = linkedSetOf<Int>()
+            typed.add(4)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected linkedSetOf factory calls to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let linkedSetCall = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .call(callee, _, _, _) = expr,
+                      case let .nameRef(name, _) = ast.arena.expr(callee)
+                else { return false }
+                return ctx.interner.resolve(name) == "linkedSetOf"
+            })
+            let callType = try XCTUnwrap(sema.bindings.exprTypes[linkedSetCall])
+            guard case let .classType(classType) = sema.types.kind(of: callType) else {
+                return XCTFail("Expected linkedSetOf to produce a MutableSet class type")
+            }
+            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(classType.classSymbol)?.name)), "MutableSet")
+            XCTAssertEqual(classType.args, [.invariant(sema.types.intType)])
+            XCTAssertTrue(
+                sema.bindings.isCollectionExpr(linkedSetCall),
+                "Expected linkedSetOf to be tracked as a collection expression"
+            )
+        }
+    }
+
     func testListAggregateMembersUseRuntimeExternalLinks() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])

@@ -25,6 +25,7 @@ struct CollectionLiteralLookupTables {
     let setOfName: InternedString
     let setOfNotNullName: InternedString
     let mutableSetOfName: InternedString
+    let linkedSetOfName: InternedString
     let emptySetName: InternedString
 
     // Type alias constructor names (STDLIB-245)
@@ -642,6 +643,7 @@ struct CollectionLiteralLookupTables {
     let mutableListOfFQName: [InternedString]
     let arrayListOfFQName: [InternedString]
     let mutableSetOfFQName: [InternedString]
+    let linkedSetOfFQName: [InternedString]
     let mutableMapOfFQName: [InternedString]
     let listOfNotNullFQName: [InternedString]
     let yieldName: InternedString
@@ -805,6 +807,7 @@ struct CollectionLiteralLookupTables {
         setOfName = interner.intern("setOf")
         setOfNotNullName = interner.intern("setOfNotNull")
         mutableSetOfName = interner.intern("mutableSetOf")
+        linkedSetOfName = interner.intern("linkedSetOf")
         emptySetName = interner.intern("emptySet")
 
         arrayListName = interner.intern("ArrayList")
@@ -1399,6 +1402,7 @@ struct CollectionLiteralLookupTables {
         mutableListOfFQName = kotlinCollectionsPkg + [interner.intern("mutableListOf")]
         arrayListOfFQName = kotlinCollectionsPkg + [interner.intern("arrayListOf")]
         mutableSetOfFQName = kotlinCollectionsPkg + [interner.intern("mutableSetOf")]
+        linkedSetOfFQName = kotlinCollectionsPkg + [interner.intern("linkedSetOf")]
         mutableMapOfFQName = kotlinCollectionsPkg + [interner.intern("mutableMapOf")]
         listOfNotNullFQName = kotlinCollectionsPkg + [interner.intern("listOfNotNull")]
         yieldName = interner.intern("yield")
@@ -1523,7 +1527,7 @@ struct CollectionLiteralLookupTables {
         kkFileNewParentChildName = interner.intern("kk_file_new_parent_child")
 
         listFactoryNames = [listOfName, mutableListOfName, arrayListOfName, emptyListName, listOfNotNullName]
-        setFactoryNames = [setOfName, setOfNotNullName, mutableSetOfName, emptySetName]
+        setFactoryNames = [setOfName, setOfNotNullName, mutableSetOfName, linkedSetOfName, emptySetName]
         mapFactoryNames = [mapOfName, mutableMapOfName, emptyMapName]
         mutableListConstructorNames = [arrayListName]
         mutableSetConstructorNames = [hashSetName, linkedHashSetName]
