@@ -1046,6 +1046,8 @@ extension DataFlowSemaPhase {
         registerSyntheticPlatformTimeConversionStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticStringBuilderStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticTODOAndIOStubs(symbols: symbols, types: types, interner: interner)
+        // Function interfaces are registered by TODO/IO stubs, so patch KProperty2's Function2 supertype here.
+        patchKProperty2FunctionSupertype(symbols: symbols, types: types, interner: interner)
         registerSyntheticCloseableStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticFileIOStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticFilesUtilityStubs(symbols: symbols, types: types, interner: interner)
@@ -1080,6 +1082,7 @@ extension DataFlowSemaPhase {
         registerSyntheticNativeConcurrentStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticExperimentalMarkerStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCoroutinesABIStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticKPropertyIsInitializedStub(symbols: symbols, types: types, interner: interner)
     }
 
     /// Register the synthetic `kotlin.Any` and `kotlin.Annotation` built-in stubs.
