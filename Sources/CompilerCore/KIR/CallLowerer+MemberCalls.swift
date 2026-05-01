@@ -8275,7 +8275,7 @@ extension CallLowerer {
         sema: SemaModule,
         interner: StringInterner
     ) -> InternedString? {
-        guard memberName == "size" || memberName == "isEmpty" || memberName == "firstNotNullOf",
+        guard memberName == "size" || memberName == "isEmpty" || memberName == "firstNotNullOf" || memberName == "firstNotNullOfOrNull",
               case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
               let symbol = sema.symbols.symbol(classType.classSymbol)
         else {
@@ -8314,6 +8314,13 @@ extension CallLowerer {
             switch knownNames.collectionKind(of: symbol) {
             case .list?, .set?, .collection?:
                 return interner.intern("kk_iterable_firstNotNullOf")
+            default:
+                break
+            }
+        case "firstNotNullOfOrNull":
+            switch knownNames.collectionKind(of: symbol) {
+            case .list?, .set?, .collection?:
+                return interner.intern("kk_iterable_firstNotNullOfOrNull")
             default:
                 break
             }

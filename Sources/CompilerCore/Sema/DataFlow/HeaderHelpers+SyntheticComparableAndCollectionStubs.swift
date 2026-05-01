@@ -298,6 +298,10 @@ extension DataFlowSemaPhase {
             symbols: symbols, types: types, interner: interner,
             iterableInterfaceSymbol: iterableInterfaceSymbol
         )
+        registerIterableFirstNotNullOfOrNullMember(
+            symbols: symbols, types: types, interner: interner,
+            iterableInterfaceSymbol: iterableInterfaceSymbol
+        )
 
         // STDLIB-021: Iterable mutable conversion members are registered later once
         // MutableList / MutableSet stubs exist — see calls below after those stubs.
@@ -1713,6 +1717,76 @@ extension DataFlowSemaPhase {
                 parameterTypes: [],
                 returnType: returnType,
                 typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    /// Register `Iterable<E>.firstNotNullOfOrNull(transform)` (STDLIB-COL-HOF-002).
+    private func registerIterableFirstNotNullOfOrNullMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        iterableInterfaceSymbol: SymbolID
+    ) {
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName,
+              let iterableTypeParamSymbol = types.nominalTypeParameterSymbols(for: iterableInterfaceSymbol).first
+        else { return }
+
+        let memberName = interner.intern("firstNotNullOfOrNull")
+        let memberFQName = iterableFQName + [memberName]
+        let resultTypeParamName = interner.intern("R")
+        let resultTypeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: resultTypeParamName,
+            fqName: memberFQName + [resultTypeParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let elementType = types.make(.typeParam(TypeParamType(
+            symbol: iterableTypeParamSymbol,
+            nullability: .nonNull
+        )))
+        let resultType = types.make(.typeParam(TypeParamType(
+            symbol: resultTypeParamSymbol,
+            nullability: .nullable
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+        let transformType = types.make(.functionType(FunctionType(
+            params: [elementType],
+            returnType: resultType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        let alreadyRegistered = symbols.lookupAll(fqName: memberFQName).contains { symbolID in
+            guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+            return sig.parameterTypes == [transformType]
+        }
+        guard !alreadyRegistered else { return }
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .inlineFunction]
+        )
+        symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_iterable_firstNotNullOfOrNull", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [transformType],
+                returnType: resultType,
+                typeParameterSymbols: [iterableTypeParamSymbol, resultTypeParamSymbol],
                 classTypeParameterCount: 1
             ),
             for: memberSymbol
