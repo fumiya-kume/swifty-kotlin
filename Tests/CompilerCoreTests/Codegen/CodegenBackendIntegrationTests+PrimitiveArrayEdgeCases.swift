@@ -823,4 +823,39 @@ extension CodegenBackendIntegrationTests {
             XCTAssertEqual(out, "true\nfalse\nfalse\ntrue\nfalse\n")
         }
     }
+
+    func testArrayContentDeepEquals() throws {
+        let source = """
+        fun main() {
+            val left = arrayOf(arrayOf(1, 2), arrayOf("x"))
+            val same = arrayOf(arrayOf(1, 2), arrayOf("x"))
+            val differentNested = arrayOf(arrayOf(1, 3), arrayOf("x"))
+            val shallowSameShape = arrayOf(arrayOf(1, 2), arrayOf("x"))
+
+            println(left.contentDeepEquals(same))
+            println(left.contentDeepEquals(differentNested))
+            println(left.contentEquals(shallowSameShape))
+
+            val primitiveLeft = arrayOf(intArrayOf(1, 2), booleanArrayOf(true, false))
+            val primitiveSame = arrayOf(intArrayOf(1, 2), booleanArrayOf(true, false))
+            val primitiveDifferent = arrayOf(intArrayOf(1, 2), booleanArrayOf(false, true))
+            println(primitiveLeft.contentDeepEquals(primitiveSame))
+            println(primitiveLeft.contentDeepEquals(primitiveDifferent))
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ArrayContentDeepEquals",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(out, "true\nfalse\nfalse\ntrue\nfalse\n")
+        }
+    }
 }

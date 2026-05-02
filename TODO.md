@@ -158,7 +158,7 @@
 - [x] STDLIB-COL-TYPE-005: `MutableIterable<T>` surface を追加する
 - [x] STDLIB-COL-TYPE-006: `MutableListIterator<T>` surface を追加する
 - [ ] STDLIB-COL-ARRAY-001: array `contentToString()` overload 群を追加する
-- [ ] STDLIB-COL-ARRAY-002: array `contentDeepEquals(other)` を追加する
+- [x] STDLIB-COL-ARRAY-002: array `contentDeepEquals(other)` を追加する
 - [x] STDLIB-COL-ARRAY-003: array `contentDeepHashCode()` を追加する
 - [x] STDLIB-COL-ARRAY-004: array `contentDeepToString()` を追加する
 - [ ] STDLIB-COL-ARRAY-005: array `copyInto(destination, destinationOffset, startIndex, endIndex)` overload 群を追加する

@@ -9556,7 +9556,7 @@ extension DataFlowSemaPhase {
             )
         }
 
-        // --- Array extension functions: contentEquals, contentDeepToString, contentDeepHashCode, contentHashCode, reversedArray ---
+        // --- Array extension functions: contentEquals, contentDeepEquals, contentDeepToString, contentDeepHashCode, contentHashCode, reversedArray ---
 
         // contentEquals(other: Array<T>): Boolean
         let contentEqualsName = interner.intern("contentEquals")
@@ -9593,6 +9593,43 @@ extension DataFlowSemaPhase {
                 for: contentEqualsSymbol
             )
             symbols.setExternalLinkName("kk_array_contentEquals", for: contentEqualsSymbol)
+        }
+
+        // contentDeepEquals(other: Array<T>): Boolean
+        let contentDeepEqualsName = interner.intern("contentDeepEquals")
+        let contentDeepEqualsFQName = arrayFQName + [contentDeepEqualsName]
+        if symbols.lookup(fqName: contentDeepEqualsFQName) == nil {
+            let contentDeepEqualsSymbol = symbols.define(
+                kind: .function,
+                name: contentDeepEqualsName,
+                fqName: contentDeepEqualsFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(arraySymbol, for: contentDeepEqualsSymbol)
+            let arrayTypeParam = types.make(.typeParam(TypeParamType(symbol: tParamSymbol, nullability: .nonNull)))
+            let receiverType = types.make(.classType(ClassType(
+                classSymbol: arraySymbol,
+                args: [.invariant(arrayTypeParam)],
+                nullability: .nonNull
+            )))
+            let otherArrayType = types.make(.classType(ClassType(
+                classSymbol: arraySymbol,
+                args: [.invariant(arrayTypeParam)],
+                nullability: .nonNull
+            )))
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [otherArrayType],
+                    returnType: types.booleanType,
+                    typeParameterSymbols: [tParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: contentDeepEqualsSymbol
+            )
+            symbols.setExternalLinkName("kk_array_contentDeepEquals", for: contentDeepEqualsSymbol)
         }
 
         // contentHashCode(): Int

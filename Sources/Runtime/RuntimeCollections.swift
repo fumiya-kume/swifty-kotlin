@@ -2624,18 +2624,9 @@ public func kk_array_contentEquals(_ arrayRaw: Int, _ otherRaw: Int) -> Int {
     return kk_box_bool(1)
 }
 
-@_cdecl("kk_array_contentHashCode")
-public func kk_array_contentHashCode(_ arrayRaw: Int) -> Int {
-    guard let array = runtimeArrayBox(from: arrayRaw) else {
-        return 0
-    }
-    
-    var result: Int = 1
-    for element in array.elements {
-        result = 31 * result + kk_any_hashCode(element, 0)
-    }
-    
-    return result
+private struct RuntimeArrayDeepEqualityPair: Hashable {
+    let lhs: Int
+    let rhs: Int
 }
 
 private func runtimePlainArrayBox(from rawValue: Int) -> RuntimeArrayBox? {
@@ -2652,6 +2643,84 @@ private func runtimePlainArrayBox(from rawValue: Int) -> RuntimeArrayBox? {
         return nil
     }
     return box
+}
+
+private func runtimeArrayBoxesDeepEqual(
+    lhsRaw: Int,
+    rhsRaw: Int,
+    lhs: RuntimeArrayBox,
+    rhs: RuntimeArrayBox,
+    visited: inout Set<RuntimeArrayDeepEqualityPair>
+) -> Bool {
+    guard lhs.elements.count == rhs.elements.count else {
+        return false
+    }
+    let pair = RuntimeArrayDeepEqualityPair(lhs: lhsRaw, rhs: rhsRaw)
+    guard visited.insert(pair).inserted else {
+        return true
+    }
+    defer { visited.remove(pair) }
+
+    for index in lhs.elements.indices {
+        if !runtimeValuesDeepEqual(lhs.elements[index], rhs.elements[index], visited: &visited) {
+            return false
+        }
+    }
+    return true
+}
+
+private func runtimeValuesDeepEqual(
+    _ lhsRaw: Int,
+    _ rhsRaw: Int,
+    visited: inout Set<RuntimeArrayDeepEqualityPair>
+) -> Bool {
+    if lhsRaw == rhsRaw {
+        return true
+    }
+    if let lhs = runtimePlainArrayBox(from: lhsRaw),
+       let rhs = runtimePlainArrayBox(from: rhsRaw)
+    {
+        return runtimeArrayBoxesDeepEqual(
+            lhsRaw: lhsRaw,
+            rhsRaw: rhsRaw,
+            lhs: lhs,
+            rhs: rhs,
+            visited: &visited
+        )
+    }
+    return runtimeValuesEqual(lhsRaw, rhsRaw)
+}
+
+@_cdecl("kk_array_contentDeepEquals")
+public func kk_array_contentDeepEquals(_ arrayRaw: Int, _ otherRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return kk_box_bool(runtimeArrayBox(from: otherRaw) == nil ? 1 : 0)
+    }
+    guard let other = runtimeArrayBox(from: otherRaw) else {
+        return kk_box_bool(0)
+    }
+    var visited: Set<RuntimeArrayDeepEqualityPair> = []
+    return kk_box_bool(runtimeArrayBoxesDeepEqual(
+        lhsRaw: arrayRaw,
+        rhsRaw: otherRaw,
+        lhs: array,
+        rhs: other,
+        visited: &visited
+    ) ? 1 : 0)
+}
+
+@_cdecl("kk_array_contentHashCode")
+public func kk_array_contentHashCode(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return 0
+    }
+
+    var result: Int = 1
+    for element in array.elements {
+        result = 31 * result + kk_any_hashCode(element, 0)
+    }
+
+    return result
 }
 
 private func runtimeArrayBoxDeepToString(

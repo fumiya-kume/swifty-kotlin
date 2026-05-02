@@ -180,6 +180,44 @@ final class ArraySyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testArrayContentDeepEqualsUsesRuntimeExternalLink() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbolID = try XCTUnwrap(
+                sema.symbols.lookup(
+                    fqName: [
+                        ctx.interner.intern("kotlin"),
+                        ctx.interner.intern("Array"),
+                        ctx.interner.intern("contentDeepEquals"),
+                    ]
+                ),
+                "Expected synthetic Array.contentDeepEquals to be registered"
+            )
+            XCTAssertEqual(sema.symbols.externalLinkName(for: symbolID), "kk_array_contentDeepEquals")
+
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbolID))
+            XCTAssertEqual(signature.parameterTypes.count, 1)
+            XCTAssertEqual(signature.returnType, sema.types.booleanType)
+            XCTAssertEqual(signature.typeParameterSymbols.count, 1)
+
+            guard let receiverType = signature.receiverType,
+                  case let .classType(receiverClass) = sema.types.kind(of: receiverType),
+                  case let .classType(parameterClass) = sema.types.kind(of: signature.parameterTypes[0]),
+                  let receiverSymbol = sema.symbols.symbol(receiverClass.classSymbol),
+                  let parameterSymbol = sema.symbols.symbol(parameterClass.classSymbol)
+            else {
+                return XCTFail("Expected Array receiver and parameter types")
+            }
+            XCTAssertEqual(ctx.interner.resolve(receiverSymbol.name), "Array")
+            XCTAssertEqual(ctx.interner.resolve(parameterSymbol.name), "Array")
+            XCTAssertEqual(receiverClass.args.count, 1)
+            XCTAssertEqual(parameterClass.args.count, 1)
+        }
+    }
+
     func testPrimitiveArrayReversedArrayOverloadsUseRuntimeExternalLink() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])
