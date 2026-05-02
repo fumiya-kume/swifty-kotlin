@@ -2859,7 +2859,7 @@ final class CallTypeChecker {
                         elementType: explicitTypeArg
                     )
                 } else if let explicitTypeArg = explicitTypeArgs.first,
-                          name == "mutableSetOf"
+                          name == "mutableSetOf" || name == "linkedSetOf"
                 {
                     collectionType = makeSyntheticMutableSetType(
                         symbols: sema.symbols,
@@ -2875,7 +2875,11 @@ final class CallTypeChecker {
                         elementType: sema.types.nothingType
                     )
                 } else if !argTypes.isEmpty,
-                          name == "setOf" || name == "setOfNotNull" || calleeName == knownNames.emptySetFn || name == "mutableSetOf"
+                          name == "setOf"
+                            || name == "setOfNotNull"
+                            || calleeName == knownNames.emptySetFn
+                            || name == "mutableSetOf"
+                            || name == "linkedSetOf"
                 {
                     let elementType: TypeID = if name == "setOfNotNull" {
                         {
@@ -2890,7 +2894,7 @@ final class CallTypeChecker {
                     } else {
                         sema.types.lub(argTypes)
                     }
-                    collectionType = if name == "mutableSetOf" {
+                    collectionType = if name == "mutableSetOf" || name == "linkedSetOf" {
                         makeSyntheticMutableSetType(
                             symbols: sema.symbols,
                             types: sema.types,
