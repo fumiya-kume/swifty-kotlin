@@ -2926,7 +2926,7 @@ final class CallTypeChecker {
                         valueType: explicitTypeArgs[1]
                     )
                 } else if explicitTypeArgs.count == 2,
-                          name == "mutableMapOf" || name == "linkedMapOf"
+                          name == "mutableMapOf" || name == "hashMapOf" || name == "linkedMapOf"
                 {
                     collectionType = makeSyntheticMutableMapType(
                         symbols: sema.symbols,
@@ -2940,9 +2940,9 @@ final class CallTypeChecker {
                     ctx: ctx,
                     locals: &locals
                 ),
-                    name == "mapOf" || name == "mutableMapOf" || name == "linkedMapOf"
+                    name == "mapOf" || name == "mutableMapOf" || name == "hashMapOf" || name == "linkedMapOf"
                 {
-                    collectionType = if name == "mutableMapOf" || name == "linkedMapOf" {
+                    collectionType = if name == "mutableMapOf" || name == "hashMapOf" || name == "linkedMapOf" {
                         makeSyntheticMutableMapType(
                             symbols: sema.symbols,
                             types: sema.types,
@@ -2967,8 +2967,12 @@ final class CallTypeChecker {
                         keyType: sema.types.nothingType,
                         valueType: sema.types.nothingType
                     )
-                } else if name == "mapOf" || calleeName == knownNames.emptyMapFn || name == "mutableMapOf" || name == "linkedMapOf" {
-                    collectionType = if name == "mutableMapOf" || name == "linkedMapOf" {
+                } else if name == "mapOf"
+                    || calleeName == knownNames.emptyMapFn
+                    || name == "mutableMapOf"
+                    || name == "hashMapOf"
+                    || name == "linkedMapOf" {
+                    collectionType = if name == "mutableMapOf" || name == "hashMapOf" || name == "linkedMapOf" {
                         makeSyntheticMutableMapType(
                             symbols: sema.symbols,
                             types: sema.types,

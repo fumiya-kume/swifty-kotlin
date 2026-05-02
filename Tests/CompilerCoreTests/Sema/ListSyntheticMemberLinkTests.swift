@@ -166,6 +166,46 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testHashMapOfFactoryInfersMutableMapType() throws {
+        let source = """
+        fun probe() {
+            val values = hashMapOf("a" to 1)
+            values.put("b", 2)
+            val typed: HashMap<String, Int> = hashMapOf<String, Int>()
+            typed.put("c", 3)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected hashMapOf factory calls to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let hashMapCall = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .call(callee, _, _, _) = expr,
+                      case let .nameRef(name, _) = ast.arena.expr(callee)
+                else { return false }
+                return ctx.interner.resolve(name) == "hashMapOf"
+            })
+            let callType = try XCTUnwrap(sema.bindings.exprTypes[hashMapCall])
+            guard case let .classType(classType) = sema.types.kind(of: callType) else {
+                return XCTFail("Expected hashMapOf to produce a MutableMap class type")
+            }
+            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(classType.classSymbol)?.name)), "MutableMap")
+            XCTAssertEqual(classType.args, [.invariant(sema.types.stringType), .invariant(sema.types.intType)])
+            XCTAssertTrue(
+                sema.bindings.isCollectionExpr(hashMapCall),
+                "Expected hashMapOf to be tracked as a collection expression"
+            )
+        }
+    }
+
     func testListAggregateMembersUseRuntimeExternalLinks() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])

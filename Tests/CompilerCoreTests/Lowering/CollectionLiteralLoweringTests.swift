@@ -202,6 +202,34 @@ final class CollectionLiteralLoweringTests: XCTestCase {
         XCTAssertTrue(callees.contains("kk_map_of"), "linkedMapOf should become kk_map_of")
     }
 
+    func testHashMapOfRewrittenToKkMapOf() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let pair = arena.appendExpr(.temporary(0))
+        let result = arena.appendExpr(.temporary(1))
+        let fn = KIRFunction(
+            symbol: SymbolID(rawValue: 1),
+            name: interner.intern("main"),
+            params: [],
+            returnType: TypeSystem().unitType,
+            body: [
+                .call(symbol: nil, callee: interner.intern("hashMapOf"), arguments: [pair], result: result, canThrow: false, thrownResult: nil),
+                .returnUnit,
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+        let declID = arena.appendDecl(.function(fn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [declID])], arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("hashMapOf"), "hashMapOf should be rewritten")
+        XCTAssertTrue(callees.contains("kk_map_of"), "hashMapOf should become kk_map_of")
+    }
+
     func testEmptyMapRewrittenToKkMapOf() throws {
         let interner = StringInterner()
         let arena = KIRArena()
@@ -561,6 +589,20 @@ final class CollectionLiteralLoweringTests: XCTestCase {
         let callees = calleesInDecl(declID, module: module, interner: interner)
         XCTAssertFalse(callees.contains("linkedMapOf"), "linkedMapOf() should be rewritten")
         XCTAssertTrue(callees.contains("kk_map_of"), "linkedMapOf() should become kk_map_of (fresh mutable)")
+    }
+
+    func testZeroArgHashMapOfRewrittenToKkMapOf() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let callee = interner.intern("hashMapOf")
+        let (module, declID) = makeModuleWithZeroArgCall(callee: callee, interner: interner, arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("hashMapOf"), "hashMapOf() should be rewritten")
+        XCTAssertTrue(callees.contains("kk_map_of"), "hashMapOf() should become kk_map_of (fresh mutable)")
     }
 
     // MARK: - setOf rewriting
