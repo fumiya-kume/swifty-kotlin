@@ -9886,6 +9886,47 @@ extension DataFlowSemaPhase {
             []
         }
 
+        // sortedArray(): Array<T>
+        let sortedArrayName = interner.intern("sortedArray")
+        let sortedArrayFQName = arrayFQName + [sortedArrayName]
+        if symbols.lookup(fqName: sortedArrayFQName) == nil {
+            let sortedArraySymbol = symbols.define(
+                kind: .function,
+                name: sortedArrayName,
+                fqName: sortedArrayFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(arraySymbol, for: sortedArraySymbol)
+            symbols.setExternalLinkName("kk_array_sortedArray", for: sortedArraySymbol)
+            let sortedArrayReceiverType = types.make(.classType(ClassType(
+                classSymbol: arraySymbol,
+                args: [.out(arrayTypeParamType)],
+                nullability: .nonNull
+            )))
+            let sortedArrayReturnType = types.make(.classType(ClassType(
+                classSymbol: arraySymbol,
+                args: [.invariant(arrayTypeParamType)],
+                nullability: .nonNull
+            )))
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: sortedArrayReceiverType,
+                    parameterTypes: [],
+                    returnType: sortedArrayReturnType,
+                    isSuspend: false,
+                    valueParameterSymbols: [],
+                    valueParameterHasDefaultValues: [],
+                    valueParameterIsVararg: [],
+                    typeParameterSymbols: [tParamSymbol],
+                    typeParameterUpperBoundsList: [comparableElementBounds],
+                    classTypeParameterCount: 1
+                ),
+                for: sortedArraySymbol
+            )
+        }
+
         // sortedArrayDescending(): Array<T>
         let sortedArrayDescendingName = interner.intern("sortedArrayDescending")
         let sortedArrayDescendingFQName = arrayFQName + [sortedArrayDescendingName]
@@ -10528,6 +10569,49 @@ extension DataFlowSemaPhase {
                         typeParameterSymbols: []
                     ),
                     for: reversedArraySym
+                )
+            }
+        }
+
+        // Register sortedArray() for primitive arrays.
+        for name in primitiveArrayNames {
+            let primName = interner.intern(name)
+            let fqName = kotlinPkg + [primName]
+            guard let arraySymbol = symbols.lookup(fqName: fqName) else {
+                continue
+            }
+
+            let sortedArrayName = interner.intern("sortedArray")
+            let sortedArrayFQName = fqName + [sortedArrayName]
+            if symbols.lookup(fqName: sortedArrayFQName) == nil {
+                let sortedArraySym = symbols.define(
+                    kind: .function,
+                    name: sortedArrayName,
+                    fqName: sortedArrayFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(arraySymbol, for: sortedArraySym)
+                symbols.setExternalLinkName("kk_array_sortedArray", for: sortedArraySym)
+
+                let arrayType = types.make(.classType(ClassType(
+                    classSymbol: arraySymbol,
+                    args: [],
+                    nullability: .nonNull
+                )))
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: arrayType,
+                        parameterTypes: [],
+                        returnType: arrayType,
+                        isSuspend: false,
+                        valueParameterSymbols: [],
+                        valueParameterHasDefaultValues: [],
+                        valueParameterIsVararg: [],
+                        typeParameterSymbols: []
+                    ),
+                    for: sortedArraySym
                 )
             }
         }
