@@ -702,7 +702,7 @@ struct KnownCompilerNames {
         "arrayOf", "emptyArray", "intArrayOf", "longArrayOf",
         "shortArrayOf", "byteArrayOf", "ubyteArrayOf", "ushortArrayOf", "uintArrayOf", "ulongArrayOf",
         "doubleArrayOf", "floatArrayOf", "booleanArrayOf", "charArrayOf",
-        "mapOf", "mutableMapOf", "emptyMap",
+        "mapOf", "mutableMapOf", "linkedMapOf", "emptyMap",
         "setOf", "setOfNotNull", "mutableSetOf", "linkedSetOf", "emptySet",
         "listOfNotNull",
         "sequenceOf", "generateSequence",

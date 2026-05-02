@@ -818,6 +818,37 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenLinkedMapOfFactoryUsesMutableRuntimeMap() throws {
+        let source = """
+        fun main() {
+            val map = linkedMapOf("a" to 1)
+            map["b"] = 2
+            println(map)
+            println(map.put("a", 3))
+            println(map)
+
+            val empty = linkedMapOf<String, Int>()
+            empty["z"] = 9
+            println(empty)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "LinkedMapOfFactoryRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "{a=1, b=2}\n1\n{a=3, b=2}\n{z=9}\n")
+        }
+    }
+
     func testCodegenBuildMapUseRuntimeBuilder() throws {
         let source = """
         fun main() {

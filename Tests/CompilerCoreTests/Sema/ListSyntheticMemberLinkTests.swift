@@ -126,6 +126,46 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testLinkedMapOfFactoryInfersMutableMapType() throws {
+        let source = """
+        fun probe() {
+            val values = linkedMapOf("a" to 1)
+            values.put("b", 2)
+            val typed: LinkedHashMap<String, Int> = linkedMapOf<String, Int>()
+            typed.put("c", 3)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected linkedMapOf factory calls to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let linkedMapCall = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .call(callee, _, _, _) = expr,
+                      case let .nameRef(name, _) = ast.arena.expr(callee)
+                else { return false }
+                return ctx.interner.resolve(name) == "linkedMapOf"
+            })
+            let callType = try XCTUnwrap(sema.bindings.exprTypes[linkedMapCall])
+            guard case let .classType(classType) = sema.types.kind(of: callType) else {
+                return XCTFail("Expected linkedMapOf to produce a MutableMap class type")
+            }
+            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(classType.classSymbol)?.name)), "MutableMap")
+            XCTAssertEqual(classType.args, [.invariant(sema.types.stringType), .invariant(sema.types.intType)])
+            XCTAssertTrue(
+                sema.bindings.isCollectionExpr(linkedMapCall),
+                "Expected linkedMapOf to be tracked as a collection expression"
+            )
+        }
+    }
+
     func testListAggregateMembersUseRuntimeExternalLinks() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])

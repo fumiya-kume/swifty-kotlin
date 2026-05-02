@@ -170,7 +170,7 @@
 - [x] STDLIB-COL-FACTORY-001: `arrayListOf(vararg elements)` を追加する
 - [ ] STDLIB-COL-FACTORY-002: `hashMapOf(vararg pairs)` を追加する
 - [ ] STDLIB-COL-FACTORY-003: `hashSetOf(vararg elements)` を追加する
-- [ ] STDLIB-COL-FACTORY-004: `linkedMapOf(vararg pairs)` を追加する
+- [x] STDLIB-COL-FACTORY-004: `linkedMapOf(vararg pairs)` を追加する
 - [x] STDLIB-COL-FACTORY-005: `linkedSetOf(vararg elements)` を追加する
 - [x] STDLIB-COL-FACTORY-006: `setOfNotNull(element)` / `setOfNotNull(vararg elements)` を追加する
 - [x] STDLIB-COL-HOF-001: `Iterable.firstNotNullOf(transform)` を追加する
