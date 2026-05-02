@@ -146,6 +146,40 @@ final class ArraySyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testArrayContentDeepHashCodeUsesRuntimeExternalLink() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbolID = try XCTUnwrap(
+                sema.symbols.lookup(
+                    fqName: [
+                        ctx.interner.intern("kotlin"),
+                        ctx.interner.intern("Array"),
+                        ctx.interner.intern("contentDeepHashCode"),
+                    ]
+                ),
+                "Expected synthetic Array.contentDeepHashCode to be registered"
+            )
+            XCTAssertEqual(sema.symbols.externalLinkName(for: symbolID), "kk_array_contentDeepHashCode")
+
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbolID))
+            XCTAssertEqual(signature.parameterTypes, [])
+            XCTAssertEqual(signature.returnType, sema.types.intType)
+            XCTAssertEqual(signature.typeParameterSymbols.count, 1)
+
+            guard let receiverType = signature.receiverType,
+                  case let .classType(receiverClass) = sema.types.kind(of: receiverType),
+                  let receiverSymbol = sema.symbols.symbol(receiverClass.classSymbol)
+            else {
+                return XCTFail("Expected Array receiver type")
+            }
+            XCTAssertEqual(ctx.interner.resolve(receiverSymbol.name), "Array")
+            XCTAssertEqual(receiverClass.args.count, 1)
+        }
+    }
+
     func testPrimitiveArrayReversedArrayOverloadsUseRuntimeExternalLink() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])

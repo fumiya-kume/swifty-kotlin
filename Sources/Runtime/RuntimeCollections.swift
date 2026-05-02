@@ -2693,6 +2693,39 @@ public func kk_array_contentDeepToString(_ arrayRaw: Int) -> UnsafeMutableRawPoi
     return runtimeArrayStringPointer(runtimeArrayBoxDeepToString(raw: arrayRaw, box: array, visited: &visited))
 }
 
+private func runtimeArrayBoxDeepHash(
+    raw: Int,
+    box: RuntimeArrayBox,
+    visited: inout Set<Int>
+) -> Int {
+    guard visited.insert(raw).inserted else {
+        return 0
+    }
+    defer { visited.remove(raw) }
+
+    var result = 1
+    for element in box.elements {
+        result = 31 &* result &+ runtimeValueDeepHash(element, visited: &visited)
+    }
+    return result
+}
+
+private func runtimeValueDeepHash(_ raw: Int, visited: inout Set<Int>) -> Int {
+    if let array = runtimePlainArrayBox(from: raw) {
+        return runtimeArrayBoxDeepHash(raw: raw, box: array, visited: &visited)
+    }
+    return kk_any_hashCode(raw, 0)
+}
+
+@_cdecl("kk_array_contentDeepHashCode")
+public func kk_array_contentDeepHashCode(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return 0
+    }
+    var visited: Set<Int> = []
+    return runtimeArrayBoxDeepHash(raw: arrayRaw, box: array, visited: &visited)
+}
+
 // MARK: - asSequence (STDLIB-471)
 
 @_cdecl("kk_list_asSequence")
