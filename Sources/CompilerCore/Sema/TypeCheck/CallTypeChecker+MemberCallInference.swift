@@ -1452,7 +1452,6 @@ extension CallTypeChecker {
         }
         if !isSequenceReceiver {
             activeCollectionHOFNames.remove("flatMapIndexed")
-            activeCollectionHOFNames.remove("firstNotNullOfOrNull")
         }
         if isMapReceiver {
             activeCollectionHOFNames.formUnion(mapOnlyCollectionHOFNames)
@@ -2370,7 +2369,9 @@ extension CallTypeChecker {
                             sema.types.anyType
                         }
                     case "firstNotNullOfOrNull":
-                        if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
+                        if let expectedType {
+                            resultType = sema.types.makeNullable(sema.types.makeNonNullable(expectedType))
+                        } else if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
                             resultType = sema.types.makeNullable(sema.types.makeNonNullable(sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType))
                         } else if case let .functionType(fnType) = sema.types.kind(of: sema.bindings.exprType(for: args[0].expr) ?? sema.types.anyType) {
                             resultType = sema.types.makeNullable(sema.types.makeNonNullable(fnType.returnType))
@@ -6642,6 +6643,7 @@ extension CallTypeChecker {
                 receiverID: receiverID,
                 args: args,
                 ctx: ctx,
+                expectedType: expectedType,
                 locals: &locals
             ) {
                 return fallbackType
