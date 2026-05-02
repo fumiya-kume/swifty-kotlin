@@ -1933,6 +1933,44 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testMapEntryToPairSurfaceIsRegistered() throws {
+        let source = """
+        fun probe(values: Map<String, Int>): List<Pair<String, Int>> {
+            return values.map { it.toPair() }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Map.Entry.toPair surface to resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let entryFQName: [InternedString] = [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("Map"),
+                ctx.interner.intern("Entry"),
+            ]
+            let toPairSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: entryFQName + [ctx.interner.intern("toPair")]),
+                "Expected Map.Entry.toPair to be registered"
+            )
+            XCTAssertEqual(sema.symbols.externalLinkName(for: toPairSymbol), "kk_map_entry_to_pair")
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: toPairSymbol))
+            guard case let .classType(pairType) = sema.types.kind(of: signature.returnType) else {
+                return XCTFail("Expected Map.Entry.toPair to return Pair<K, V>")
+            }
+            let pairName = try XCTUnwrap(sema.symbols.symbol(pairType.classSymbol)?.name)
+            XCTAssertEqual(ctx.interner.resolve(pairName), "Pair")
+            XCTAssertEqual(pairType.args.count, 2)
+        }
+    }
+
     func testBuildListInfersElementTypeFromBuilderCalls() throws {
         let source = """
         fun render(): List<Int> = buildList {
