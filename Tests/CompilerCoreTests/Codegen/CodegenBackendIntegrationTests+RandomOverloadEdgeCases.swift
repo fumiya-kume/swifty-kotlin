@@ -189,7 +189,6 @@ extension CodegenBackendIntegrationTests {
             }
         }
         """
-
         try withTemporaryFile(contents: source) { path in
             let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
             let ctx = try runCodegenPipeline(
@@ -205,6 +204,60 @@ extension CodegenBackendIntegrationTests {
             XCTAssertEqual(
                 normalizedStdout,
                 """
+                true
+                true
+                true
+                """ + "\n"
+            )
+        }
+    }
+
+    func testCodegenCompilesRandomNextUIntOverloads() throws {
+        let source = """
+        import kotlin.random.Random
+        import kotlin.ranges.UIntRange
+
+        fun main() {
+            val r = Random(7)
+            val full = r.nextUInt()
+            println(full >= 0u)
+
+            val until = r.nextUInt(10u)
+            println(until < 10u)
+
+            val ranged = r.nextUInt(10u, 20u)
+            println(ranged >= 10u && ranged < 20u)
+
+            val rangeObj = UIntRange(30u, 35u)
+            val inRange = r.nextUInt(rangeObj)
+            println(inRange >= 30u && inRange <= 35u)
+
+            try {
+                r.nextUInt(0u)
+                println(false)
+            } catch (e: IllegalArgumentException) {
+                println(true)
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "RandomNextUIntOverloads",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                true
+                true
                 true
                 true
                 true
@@ -282,7 +335,6 @@ extension CodegenBackendIntegrationTests {
             }
         }
         """
-
         try withTemporaryFile(contents: source) { path in
             let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
             let ctx = try runCodegenPipeline(
