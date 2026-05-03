@@ -155,48 +155,11 @@ extension CallTypeChecker {
             }
         }
 
-        // Numeric companion constants: Int.MAX_VALUE, Double.NaN, etc. (STDLIB-153)
-        if args.isEmpty,
-           case let .nameRef(receiverName, _) = ast.arena.expr(receiverID),
-           locals[receiverName] == nil
-        {
-            let receiverStr = interner.resolve(receiverName)
-            let memberStr = interner.resolve(calleeName)
-            if let (constantType, constantValue) = numericCompanionConstant(
-                typeName: receiverStr, memberName: memberStr, sema: sema
-            ) {
-                sema.bindings.bindConstExprValue(id, value: constantValue)
-                sema.bindings.bindExprType(id, type: constantType)
-                return constantType
-            }
-        }
-
-        // STDLIB-NUM-130: Numeric companion static functions: Double.fromBits(Long), Float.fromBits(Int)
-        if args.count == 1,
-           case let .nameRef(receiverName, _) = ast.arena.expr(receiverID),
-           locals[receiverName] == nil
-        {
-            let receiverStr = interner.resolve(receiverName)
-            let memberStr = interner.resolve(calleeName)
-            if let (returnType, externalName) = numericCompanionFunction(
-                typeName: receiverStr, memberName: memberStr, sema: sema
-            ) {
-                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
-                let fromBitsName = interner.intern(memberStr)
-                let kotlinPkgName: [InternedString] = [interner.intern("kotlin")]
-                let funcFQName = kotlinPkgName + [fromBitsName]
-                let allCandidates = sema.symbols.lookupAll(fqName: funcFQName)
-                if let funcSymbol = allCandidates.first(where: { sid in
-                    sema.symbols.symbol(sid)?.kind == .function
-                        && sema.symbols.externalLinkName(for: sid) == externalName
-                }) {
-                    sema.bindings.bindIdentifier(id, symbol: funcSymbol)
-                    sema.bindings.bindExprType(id, type: returnType)
-                    // Bind receiver as unit so lowering does not pass the class name as argument.
-                    sema.bindings.bindExprType(receiverID, type: sema.types.unitType)
-                    return returnType
-                }
-            }
+        if let result = tryInferNumericCompanionMemberCall(
+            id, receiverID: receiverID, calleeName: calleeName, args: args,
+            ctx: ctx, locals: &locals
+        ) {
+            return result
         }
 
         let receiverType = driver.inferExpr(receiverID, ctx: ctx, locals: &locals)
