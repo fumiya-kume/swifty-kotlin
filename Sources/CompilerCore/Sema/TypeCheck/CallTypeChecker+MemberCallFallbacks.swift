@@ -873,6 +873,20 @@ extension CallTypeChecker {
                     return sliceMatch
                 }
             }
+            if argCount == 1,
+               allCandidates.count > 1,
+               let firstArgExpr = argExprs.first,
+               allCandidates.contains(where: { sema.symbols.externalLinkName(for: $0) == "kk_array_sliceArray_range" }),
+               allCandidates.contains(where: { sema.symbols.externalLinkName(for: $0) == "kk_array_sliceArray_iterable" })
+            {
+                let isRangeArg = sema.bindings.isRangeExpr(firstArgExpr)
+                let targetLinkName = isRangeArg ? "kk_array_sliceArray_range" : "kk_array_sliceArray_iterable"
+                if let sliceArrayMatch = allCandidates.first(where: { candidate in
+                    sema.symbols.externalLinkName(for: candidate) == targetLinkName
+                }) {
+                    return sliceArrayMatch
+                }
+            }
             if memberName == interner.intern("binarySearch") {
                 let hasLambdaArg = argExprs.first.map { sema.bindings.isCollectionHOFLambdaExpr($0) } ?? false
                 if argCount == 1,

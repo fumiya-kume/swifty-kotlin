@@ -473,6 +473,77 @@ extension CallTypeChecker {
         }
     }
 
+    /// Handles numeric companion access on a type-name receiver:
+    ///
+    ///   - **Constants** (STDLIB-153): `Int.MAX_VALUE`, `Double.NaN`, `Float.POSITIVE_INFINITY`, etc.
+    ///     when `args.isEmpty` — looked up via `numericCompanionConstant`.
+    ///   - **Static functions** (STDLIB-NUM-130): `Double.fromBits(Long)`,
+    ///     `Float.fromBits(Int)` etc. when `args.count == 1` — looked up via
+    ///     `numericCompanionFunction`, with the receiver bound to `Unit` so
+    ///     lowering does not pass the class name as an argument.
+    ///
+    /// Returns the inferred type when handled, or `nil` to fall through. Both
+    /// branches require the receiver to be a `nameRef` (typed identifier) that
+    /// is not currently bound as a local — an Int *value* named `Int` shadows
+    /// the type and falls through.
+    func tryInferNumericCompanionMemberCall(
+        _ id: ExprID,
+        receiverID: ExprID,
+        calleeName: InternedString,
+        args: [CallArgument],
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
+    ) -> TypeID? {
+        let ast = ctx.ast
+        let sema = ctx.sema
+        let interner = ctx.interner
+
+        guard case let .nameRef(receiverName, _) = ast.arena.expr(receiverID),
+              locals[receiverName] == nil
+        else {
+            return nil
+        }
+
+        let receiverStr = interner.resolve(receiverName)
+        let memberStr = interner.resolve(calleeName)
+
+        // STDLIB-153: Numeric companion constants — Int.MAX_VALUE, Double.NaN, etc.
+        if args.isEmpty,
+           let (constantType, constantValue) = numericCompanionConstant(
+               typeName: receiverStr, memberName: memberStr, sema: sema
+           )
+        {
+            sema.bindings.bindConstExprValue(id, value: constantValue)
+            sema.bindings.bindExprType(id, type: constantType)
+            return constantType
+        }
+
+        // STDLIB-NUM-130: Numeric companion static functions — Double.fromBits(Long), Float.fromBits(Int).
+        if args.count == 1,
+           let (returnType, externalName) = numericCompanionFunction(
+               typeName: receiverStr, memberName: memberStr, sema: sema
+           )
+        {
+            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+            let fromBitsName = interner.intern(memberStr)
+            let kotlinPkgName: [InternedString] = [interner.intern("kotlin")]
+            let funcFQName = kotlinPkgName + [fromBitsName]
+            let allCandidates = sema.symbols.lookupAll(fqName: funcFQName)
+            if let funcSymbol = allCandidates.first(where: { sid in
+                sema.symbols.symbol(sid)?.kind == .function
+                    && sema.symbols.externalLinkName(for: sid) == externalName
+            }) {
+                sema.bindings.bindIdentifier(id, symbol: funcSymbol)
+                sema.bindings.bindExprType(id, type: returnType)
+                // Bind receiver as Unit so lowering does not pass the class name as argument.
+                sema.bindings.bindExprType(receiverID, type: sema.types.unitType)
+                return returnType
+            }
+        }
+
+        return nil
+    }
+
     // swiftlint:disable cyclomatic_complexity function_body_length
     /// This legacy inference path still owns many special cases while the split-out helpers
     /// are being migrated.
