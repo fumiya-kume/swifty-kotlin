@@ -1466,6 +1466,12 @@ extension DataFlowSemaPhase {
             )
         }
 
+        registerSyntheticPrimitiveIteratorStubs(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            iteratorSymbol: iteratorSymbol
+        )
+
         // MutableIterator<T> : Iterator<T> (STDLIB-221)
         let mutableIteratorName = interner.intern("MutableIterator")
         let mutableIteratorFQName = kotlinCollectionsPkg + [mutableIteratorName]
@@ -1532,6 +1538,139 @@ extension DataFlowSemaPhase {
         }
 
         return iterableInterfaceSymbol
+    }
+
+    /// Register primitive iterator class surfaces (STDLIB-COL-TYPE-004).
+    private func registerSyntheticPrimitiveIteratorStubs(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        iteratorSymbol: SymbolID
+    ) {
+        let specs: [(className: String, nextName: String, elementType: TypeID)] = [
+            ("BooleanIterator", "nextBoolean", types.booleanType),
+            ("ByteIterator", "nextByte", types.intType),
+            ("ShortIterator", "nextShort", types.intType),
+            ("IntIterator", "nextInt", types.intType),
+            ("LongIterator", "nextLong", types.longType),
+            ("FloatIterator", "nextFloat", types.floatType),
+            ("DoubleIterator", "nextDouble", types.doubleType),
+            ("CharIterator", "nextChar", types.charType),
+        ]
+
+        for spec in specs {
+            registerSyntheticPrimitiveIteratorStub(
+                named: spec.className,
+                nextMemberName: spec.nextName,
+                elementType: spec.elementType,
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                kotlinCollectionsPkg: kotlinCollectionsPkg,
+                iteratorSymbol: iteratorSymbol
+            )
+        }
+    }
+
+    private func registerSyntheticPrimitiveIteratorStub(
+        named className: String,
+        nextMemberName: String,
+        elementType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        iteratorSymbol: SymbolID
+    ) {
+        let classInternedName = interner.intern(className)
+        let classFQName = kotlinCollectionsPkg + [classInternedName]
+        let classSymbol: SymbolID = if let existing = symbols.lookup(fqName: classFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .class,
+                name: classInternedName,
+                fqName: classFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .abstractType]
+            )
+        }
+
+        let classType = types.make(.classType(ClassType(
+            classSymbol: classSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(classType, for: classSymbol)
+        symbols.setDirectSupertypes([iteratorSymbol], for: classSymbol)
+        types.setNominalDirectSupertypes([iteratorSymbol], for: classSymbol)
+        symbols.setSupertypeTypeArgs([.out(elementType)], for: classSymbol, supertype: iteratorSymbol)
+        types.setNominalSupertypeTypeArgs([.out(elementType)], for: classSymbol, supertype: iteratorSymbol)
+
+        let initName = interner.intern("<init>")
+        let initFQName = classFQName + [initName]
+        if symbols.lookup(fqName: initFQName) == nil {
+            let initSymbol = symbols.define(
+                kind: .constructor,
+                name: initName,
+                fqName: initFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(classSymbol, for: initSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: [],
+                    returnType: classType,
+                    valueParameterSymbols: [],
+                    valueParameterHasDefaultValues: [],
+                    valueParameterIsVararg: [],
+                    typeParameterSymbols: [],
+                    classTypeParameterCount: 0
+                ),
+                for: initSymbol
+            )
+        }
+
+        func registerFunction(name: String, flags: SymbolFlags, returnType: TypeID) {
+            let memberName = interner.intern(name)
+            let memberFQName = classFQName + [memberName]
+            guard symbols.lookup(fqName: memberFQName) == nil else { return }
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: memberName,
+                fqName: memberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: flags
+            )
+            symbols.setParentSymbol(classSymbol, for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: classType,
+                    parameterTypes: [],
+                    returnType: returnType,
+                    typeParameterSymbols: [],
+                    classTypeParameterCount: 0
+                ),
+                for: memberSymbol
+            )
+        }
+
+        registerFunction(
+            name: nextMemberName,
+            flags: [.synthetic, .abstractType],
+            returnType: elementType
+        )
+        registerFunction(
+            name: "next",
+            flags: [.synthetic, .openType, .overrideMember, .operatorFunction],
+            returnType: elementType
+        )
     }
 
     /// Register `kotlin.collections.MutableIterable<T>` surface (STDLIB-COL-TYPE-005).
