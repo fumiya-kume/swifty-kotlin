@@ -218,6 +218,39 @@ final class ArraySyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testArrayCopyIntoUsesRuntimeExternalLink() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbolID = try XCTUnwrap(
+                sema.symbols.lookup(
+                    fqName: [
+                        ctx.interner.intern("kotlin"),
+                        ctx.interner.intern("Array"),
+                        ctx.interner.intern("copyInto"),
+                    ]
+                ),
+                "Expected synthetic Array.copyInto to be registered"
+            )
+            XCTAssertEqual(sema.symbols.externalLinkName(for: symbolID), "kk_array_copyInto")
+
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbolID))
+            XCTAssertEqual(signature.parameterTypes.count, 4)
+            let receiverType = try XCTUnwrap(signature.receiverType)
+            XCTAssertEqual(signature.returnType, receiverType)
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [false, true, true, true])
+            XCTAssertEqual(signature.valueParameterIsVararg, [false, false, false, false])
+            XCTAssertEqual(signature.typeParameterSymbols.count, 1)
+
+            let parameterNames = signature.valueParameterSymbols.compactMap { symbolID in
+                sema.symbols.symbol(symbolID).map { ctx.interner.resolve($0.name) }
+            }
+            XCTAssertEqual(parameterNames, ["destination", "destinationOffset", "startIndex", "endIndex"])
+        }
+    }
+
     func testPrimitiveArrayReversedArrayOverloadsUseRuntimeExternalLink() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])
@@ -458,6 +491,50 @@ final class ArraySyntheticMemberLinkTests: XCTestCase {
                 XCTAssertEqual(signature.returnType, receiverType, "\(arrayName).sortedArrayDescending should return the same array type")
                 XCTAssertTrue(signature.valueParameterHasDefaultValues.isEmpty)
                 XCTAssertTrue(signature.valueParameterIsVararg.isEmpty)
+            }
+        }
+    }
+
+    func testPrimitiveArrayCopyIntoOverloadsUseRuntimeExternalLink() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let arrayNames = [
+                "IntArray",
+                "LongArray",
+                "ByteArray",
+                "ShortArray",
+                "UIntArray",
+                "ULongArray",
+                "DoubleArray",
+                "FloatArray",
+                "BooleanArray",
+                "CharArray",
+                "UByteArray",
+                "UShortArray",
+            ]
+
+            for arrayName in arrayNames {
+                let symbolID = try XCTUnwrap(
+                    sema.symbols.lookup(
+                        fqName: [
+                            ctx.interner.intern("kotlin"),
+                            ctx.interner.intern(arrayName),
+                            ctx.interner.intern("copyInto"),
+                        ]
+                    ),
+                    "Expected \(arrayName).copyInto to be registered"
+                )
+                XCTAssertEqual(sema.symbols.externalLinkName(for: symbolID), "kk_array_copyInto")
+
+                let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbolID))
+                XCTAssertEqual(signature.parameterTypes.count, 4, "\(arrayName).copyInto should take four parameters")
+                let receiverType = try XCTUnwrap(signature.receiverType)
+                XCTAssertEqual(signature.returnType, receiverType, "\(arrayName).copyInto should return destination array type")
+                XCTAssertEqual(signature.valueParameterHasDefaultValues, [false, true, true, true])
+                XCTAssertEqual(signature.valueParameterIsVararg, [false, false, false, false])
             }
         }
     }

@@ -1340,6 +1340,18 @@ public extension RuntimeABISpec {
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_array_copyInto",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+                RuntimeABIParameter(name: "destinationRaw", type: .intptr),
+                RuntimeABIParameter(name: "destinationOffset", type: .intptr),
+                RuntimeABIParameter(name: "startIndex", type: .intptr),
+                RuntimeABIParameter(name: "endIndex", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_array_fill",
             parameters: [
                 RuntimeABIParameter(name: "arrayRaw", type: .intptr),

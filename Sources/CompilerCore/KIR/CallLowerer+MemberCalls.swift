@@ -5891,6 +5891,18 @@ extension CallLowerer {
                 arguments: &finalArguments
             )
         }
+        if normalized.defaultMask != 0,
+           loweredCallee == interner.intern("kk_array_copyInto")
+        {
+            materializeArrayCopyIntoDefaultArguments(
+                normalized.defaultMask,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions,
+                arguments: &finalArguments
+            )
+        }
         if loweredCallee == interner.intern("kk_list_windowed_transform") {
             let originalArgumentCount = finalArguments.count
             if originalArgumentCount >= 3 {
@@ -6814,6 +6826,48 @@ extension CallLowerer {
                 thrownResult: nil
             ))
             arguments[5] = sizeExpr
+        }
+    }
+
+    private func materializeArrayCopyIntoDefaultArguments(
+        _ defaultMask: Int64,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction],
+        arguments: inout [KIRExprID]
+    ) {
+        guard arguments.count >= 5 else {
+            return
+        }
+
+        let intType = sema.types.intType
+        let destinationOffsetMaskBit = Int64(1) << 1
+        let startIndexMaskBit = Int64(1) << 2
+        let endIndexMaskBit = Int64(1) << 3
+        if (defaultMask & destinationOffsetMaskBit) != 0 {
+            let zeroExpr = arena.appendExpr(.intLiteral(0), type: intType)
+            instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            arguments[2] = zeroExpr
+        }
+
+        if (defaultMask & startIndexMaskBit) != 0 {
+            let zeroExpr = arena.appendExpr(.intLiteral(0), type: intType)
+            instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            arguments[3] = zeroExpr
+        }
+
+        if (defaultMask & endIndexMaskBit) != 0 {
+            let sizeExpr = arena.appendExpr(.temporary(Int32(clamping: arena.expressions.count)), type: intType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_array_size"),
+                arguments: [arguments[0]],
+                result: sizeExpr,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            arguments[4] = sizeExpr
         }
     }
 

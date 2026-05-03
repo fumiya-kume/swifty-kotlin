@@ -315,6 +315,53 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testArrayCopyIntoOverloads() throws {
+        let source = """
+        fun main() {
+            val words = arrayOf("a", "b", "c", "d")
+            val wordDestination = arrayOf("x", "y", "z", "w", "q")
+            words.copyInto(wordDestination, destinationOffset = 1, startIndex = 1, endIndex = 3)
+            println(wordDestination.toList())
+
+            val defaultDestination = arrayOf(0, 0, 0)
+            arrayOf(1, 2, 3).copyInto(defaultDestination)
+            println(defaultDestination.toList())
+
+            val intDestination = intArrayOf(9, 9, 9, 9, 9)
+            intArrayOf(1, 2, 3, 4).copyInto(intDestination, destinationOffset = 2, startIndex = 1, endIndex = 4)
+            println(intDestination.toList())
+
+            val uintDestination = uintArrayOf(0u, 0u, 0u)
+            uintArrayOf(10u, 20u, 30u).copyInto(uintDestination)
+            println(uintDestination.toList())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ArrayCopyIntoOverloads",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                [x, b, c, w, q]
+                [1, 2, 3]
+                [9, 9, 2, 3, 4]
+                [10, 20, 30]
+                """
+                + "\n"
+            )
+        }
+    }
+
     func testSignedArrayViewConversionsFromUnsignedArrays() throws {
         let source = """
         fun main() {

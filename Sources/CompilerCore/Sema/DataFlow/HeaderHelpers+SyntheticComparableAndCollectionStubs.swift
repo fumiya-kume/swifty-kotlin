@@ -9556,7 +9556,7 @@ extension DataFlowSemaPhase {
             )
         }
 
-        // --- Array extension functions: contentEquals, contentDeepEquals, contentDeepToString, contentDeepHashCode, contentHashCode, reversedArray ---
+        // --- Array extension functions: contentEquals, contentDeepEquals, contentDeepToString, contentDeepHashCode, contentHashCode, copyInto, reversedArray ---
 
         // contentEquals(other: Array<T>): Boolean
         let contentEqualsName = interner.intern("contentEquals")
@@ -9762,6 +9762,56 @@ extension DataFlowSemaPhase {
                     classTypeParameterCount: 1
                 ),
                 for: reversedArraySymbol
+            )
+        }
+
+        // copyInto(destination, destinationOffset, startIndex, endIndex): Array<T>
+        let copyIntoName = interner.intern("copyInto")
+        let copyIntoFQName = arrayFQName + [copyIntoName]
+        if symbols.lookup(fqName: copyIntoFQName) == nil {
+            let copyIntoSymbol = symbols.define(
+                kind: .function,
+                name: copyIntoName,
+                fqName: copyIntoFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(arraySymbol, for: copyIntoSymbol)
+            symbols.setExternalLinkName("kk_array_copyInto", for: copyIntoSymbol)
+
+            let arrayTypeParam = types.make(.typeParam(TypeParamType(symbol: tParamSymbol, nullability: .nonNull)))
+            let arrayType = types.make(.classType(ClassType(
+                classSymbol: arraySymbol,
+                args: [.invariant(arrayTypeParam)],
+                nullability: .nonNull
+            )))
+            let parameterSymbols = ["destination", "destinationOffset", "startIndex", "endIndex"].map { parameterName in
+                let internedParameterName = interner.intern(parameterName)
+                let parameterSymbol = symbols.define(
+                    kind: .valueParameter,
+                    name: internedParameterName,
+                    fqName: copyIntoFQName + [internedParameterName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(copyIntoSymbol, for: parameterSymbol)
+                return parameterSymbol
+            }
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: arrayType,
+                    parameterTypes: [arrayType, types.intType, types.intType, types.intType],
+                    returnType: arrayType,
+                    isSuspend: false,
+                    valueParameterSymbols: parameterSymbols,
+                    valueParameterHasDefaultValues: [false, true, true, true],
+                    valueParameterIsVararg: [false, false, false, false],
+                    typeParameterSymbols: [tParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: copyIntoSymbol
             )
         }
 
@@ -10530,7 +10580,7 @@ extension DataFlowSemaPhase {
             }
         }
 
-        // Register reversedArray() for primitive arrays.
+        // Register reversedArray() and copyInto(destination, destinationOffset, startIndex, endIndex) for primitive arrays.
         for name in primitiveArrayNames {
             let primName = interner.intern(name)
             let fqName = kotlinPkg + [primName]
@@ -10569,6 +10619,54 @@ extension DataFlowSemaPhase {
                         typeParameterSymbols: []
                     ),
                     for: reversedArraySym
+                )
+            }
+
+            let copyIntoName = interner.intern("copyInto")
+            let copyIntoFQName = fqName + [copyIntoName]
+            if symbols.lookup(fqName: copyIntoFQName) == nil {
+                let copyIntoSym = symbols.define(
+                    kind: .function,
+                    name: copyIntoName,
+                    fqName: copyIntoFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(arraySymbol, for: copyIntoSym)
+                symbols.setExternalLinkName("kk_array_copyInto", for: copyIntoSym)
+
+                let arrayType = types.make(.classType(ClassType(
+                    classSymbol: arraySymbol,
+                    args: [],
+                    nullability: .nonNull
+                )))
+                let parameterSymbols = ["destination", "destinationOffset", "startIndex", "endIndex"].map { parameterName in
+                    let internedParameterName = interner.intern(parameterName)
+                    let parameterSymbol = symbols.define(
+                        kind: .valueParameter,
+                        name: internedParameterName,
+                        fqName: copyIntoFQName + [internedParameterName],
+                        declSite: nil,
+                        visibility: .private,
+                        flags: [.synthetic]
+                    )
+                    symbols.setParentSymbol(copyIntoSym, for: parameterSymbol)
+                    return parameterSymbol
+                }
+
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: arrayType,
+                        parameterTypes: [arrayType, types.intType, types.intType, types.intType],
+                        returnType: arrayType,
+                        isSuspend: false,
+                        valueParameterSymbols: parameterSymbols,
+                        valueParameterHasDefaultValues: [false, true, true, true],
+                        valueParameterIsVararg: [false, false, false, false],
+                        typeParameterSymbols: []
+                    ),
+                    for: copyIntoSym
                 )
             }
         }

@@ -161,7 +161,7 @@
 - [x] STDLIB-COL-ARRAY-002: array `contentDeepEquals(other)` を追加する
 - [x] STDLIB-COL-ARRAY-003: array `contentDeepHashCode()` を追加する
 - [x] STDLIB-COL-ARRAY-004: array `contentDeepToString()` を追加する
-- [ ] STDLIB-COL-ARRAY-005: array `copyInto(destination, destinationOffset, startIndex, endIndex)` overload 群を追加する
+- [x] STDLIB-COL-ARRAY-005: array `copyInto(destination, destinationOffset, startIndex, endIndex)` overload 群を追加する
 - [x] STDLIB-COL-ARRAY-006: array `reversedArray()` overload 群を追加する
 - [ ] STDLIB-COL-ARRAY-007: array `sliceArray(indices)` overload 群を追加する
 - [x] STDLIB-COL-ARRAY-008: array `sortedArray()` overload 群を追加する

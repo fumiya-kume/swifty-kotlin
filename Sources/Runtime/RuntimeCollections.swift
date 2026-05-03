@@ -2608,6 +2608,37 @@ public func kk_array_sortedArrayDescending(_ arrayRaw: Int) -> Int {
     return registerRuntimeObject(box)
 }
 
+@_cdecl("kk_array_copyInto")
+public func kk_array_copyInto(
+    _ arrayRaw: Int,
+    _ destinationRaw: Int,
+    _ destinationOffset: Int,
+    _ startIndex: Int,
+    _ endIndex: Int
+) -> Int {
+    guard let source = runtimeArrayBox(from: arrayRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_array_copyInto")
+    }
+    guard let destination = runtimeArrayBox(from: destinationRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid destination handle in kk_array_copyInto")
+    }
+
+    let sourceSize = source.elements.count
+    let start = max(0, min(startIndex, sourceSize))
+    let end = max(start, min(endIndex, sourceSize))
+    let destinationStart = max(0, min(destinationOffset, destination.elements.count))
+    let count = min(end - start, destination.elements.count - destinationStart)
+    guard count > 0 else {
+        return destinationRaw
+    }
+
+    let copied = Array(source.elements[start ..< start + count])
+    for index in 0 ..< count {
+        destination.elements[destinationStart + index] = copied[index]
+    }
+    return destinationRaw
+}
+
 @_cdecl("kk_array_fill")
 public func kk_array_fill(_ arrayRaw: Int, _ value: Int) -> Int {
     guard let array = runtimeArrayBox(from: arrayRaw) else {
