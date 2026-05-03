@@ -415,6 +415,9 @@ public func kk_string_hexToLong(
     return kk_box_long(Int(Int64(bitPattern: value)))
 }
 
+// MARK: - String.hexToUInt(format)
+
+
 // MARK: - String.hexToByteArray(format)
 
 @_cdecl("kk_string_hexToByteArray")

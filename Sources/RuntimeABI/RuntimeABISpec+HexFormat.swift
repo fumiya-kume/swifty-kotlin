@@ -90,7 +90,7 @@ public extension RuntimeABISpec {
             section: "HexFormat"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_string_hexToUInt",
+            name: "kk_string_hexToLong",
             parameters: [
                 RuntimeABIParameter(name: "receiverRaw", type: .intptr),
                 RuntimeABIParameter(name: "formatRaw", type: .intptr),
