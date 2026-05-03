@@ -347,11 +347,14 @@ extension CompilerCoreTests {
             }
             return ctx.interner.resolve(calleeName) == "f"
         })
-        let fParamSymbol = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
-            symbol.kind == .valueParameter && ctx.interner.resolve(symbol.name) == "f"
-        })?.id)
         let callableCallBinding = try XCTUnwrap(sema.bindings.callableValueCalls[callExprID])
-        XCTAssertEqual(callableCallBinding.target, .localValue(fParamSymbol))
+        guard case let .localValue(fParamSymbol) = callableCallBinding.target else {
+            XCTFail("Callable value call should target the function-typed parameter f.")
+            return
+        }
+        let fParam = try XCTUnwrap(sema.symbols.symbol(fParamSymbol))
+        XCTAssertEqual(fParam.kind, .valueParameter)
+        XCTAssertEqual(ctx.interner.resolve(fParam.name), "f")
         XCTAssertEqual(callableCallBinding.parameterMapping, [0: 0])
 
         let intType = sema.types.make(.primitive(.int, .nonNull))

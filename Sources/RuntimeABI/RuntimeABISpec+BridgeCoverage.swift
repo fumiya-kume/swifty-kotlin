@@ -199,6 +199,7 @@ private let sequenceAndSetBridgeFunctions: [RuntimeABIFunctionSpec] = [
     bridgeSpec("kk_sequence_filterNot", section: "Sequence", params: ["seqRaw", "fnPtr", "closureRaw"]),
     bridgeSpec("kk_sequence_takeWhile", section: "Sequence", params: ["seqRaw", "fnPtr", "closureRaw"]),
     bridgeSpec("kk_set_containsAll", section: "Collection", params: ["setRaw", "collectionRaw"]),
+    bridgeSpec("kk_set_of_not_null", section: "Collection", params: ["arrayRaw", "count"]),
     bridgeSpec("kk_set_sorted", section: "Collection", params: ["setRaw"]),
     bridgeSpec("kk_set_sortedDescending", section: "Collection", params: ["setRaw"]),
 ]
@@ -254,6 +255,7 @@ public extension RuntimeABISpec {
             "kk_op_dgt",
             "kk_op_dle",
             "kk_op_dlt",
+            "kk_op_dfloor_mod",
             "kk_op_dmod",
             "kk_op_dne",
             "kk_op_dsub",
@@ -261,6 +263,7 @@ public extension RuntimeABISpec {
             "kk_op_fadd",
             "kk_op_fdiv",
             "kk_op_feq",
+            "kk_op_ffloor_mod",
             "kk_op_fge",
             "kk_op_fgt",
             "kk_op_fle",

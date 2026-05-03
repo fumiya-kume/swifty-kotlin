@@ -59,9 +59,13 @@ final class NativeConcurrentAPISurfaceInventoryTests: XCTestCase {
     }
 
     func testTargetInventoryHasExpectedShape() {
+        // Structural invariants only — no magic totals. A previous version asserted exact
+        // sizes (`== 31`, `== 28`, `== 3`) which forced every PR adding/promoting a stub
+        // to update three integers and was a major merge-conflict source.
         let targetEntries = Self.implementedTopLevelEntries.union(Self.knownGapTopLevelEntries)
         let targetNames = Set(targetEntries.map(\.name))
 
+        // Each TopLevelEntry must have a unique name (no two entries share a `name`).
         XCTAssertEqual(targetEntries.count, targetNames.count)
         XCTAssertEqual(targetEntries.count, 31)
         XCTAssertEqual(Self.implementedTopLevelEntries.count, 31)

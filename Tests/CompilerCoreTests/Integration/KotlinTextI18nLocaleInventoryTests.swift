@@ -16,14 +16,16 @@ import XCTest
 //   - String.toIntOrNull()                 → kk_string_toIntOrNull  (no-radix variant)
 //   - String.toIntOrNull(radix)            → kk_string_toIntOrNull_radix
 //   - String.format(format, vararg args)   → kk_string_format  (platform fmt, no locale overload)
+//   - String.Companion.format(locale, format, vararg args) → kk_string_format_locale
 //   - Char.uppercase()                     → kk_char_uppercase  (returns String per Kotlin spec)
+//   - Char.uppercase(Locale)               → kk_char_uppercase_locale
 //   - Char.lowercase()                     → kk_char_lowercase  (returns String per Kotlin spec)
+//   - Char.lowercase(Locale)               → kk_char_lowercase_locale
 //   - Char.titlecase()                     → kk_char_titlecase
+//   - Char.directionality                  → kk_char_directionality  (CharDirectionality enum)
 //
 // Gaps (absent in common scope):
-//   - String.format(locale, format, vararg args)  — locale-parameterised overload absent
-//   - Char.uppercase(Locale)  — locale-aware single-char conversion absent
-//   - Char.lowercase(Locale)  — locale-aware single-char conversion absent
+//   - String.format(locale, vararg args)  — locale-parameterised receiver overload absent
 //   - NumberFormat (java.text) is JVM/platform only, not common multiplatform
 
 final class KotlinTextI18nLocaleInventoryTests: XCTestCase {
@@ -222,6 +224,18 @@ final class KotlinTextI18nLocaleInventoryTests: XCTestCase {
         """)
     }
 
+    func testStringCompanionFormatLocaleSpecifier() throws {
+        try assertKotlinCompilesToKIR("""
+        import java.util.Locale
+
+        fun main() {
+            val locale = Locale("de", "DE")
+            val result = String.format(locale, "Pi is approximately %.1f", 3.5)
+            println(result)
+        }
+        """)
+    }
+
     // MARK: - Char.uppercase() / Char.lowercase() — no locale (common)
 
     func testCharUppercaseNoLocale() throws {
@@ -234,11 +248,35 @@ final class KotlinTextI18nLocaleInventoryTests: XCTestCase {
         """)
     }
 
+    func testCharUppercaseWithLocale_trTR() throws {
+        try assertKotlinCompilesToKIR("""
+        import java.util.Locale
+
+        fun main() {
+            val locale = Locale("tr", "TR")
+            val upper = 'i'.uppercase(locale)
+            println(upper)
+        }
+        """)
+    }
+
     func testCharLowercaseNoLocale() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
             val c = 'Z'
             val lower = c.lowercase()
+            println(lower)
+        }
+        """)
+    }
+
+    func testCharLowercaseWithLocale_trTR() throws {
+        try assertKotlinCompilesToKIR("""
+        import java.util.Locale
+
+        fun main() {
+            val locale = Locale("tr", "TR")
+            val lower = 'I'.lowercase(locale)
             println(lower)
         }
         """)
@@ -270,6 +308,17 @@ final class KotlinTextI18nLocaleInventoryTests: XCTestCase {
         fun main() {
             val result = 'a'.isLowerCase()
             println(result)
+        }
+        """)
+    }
+
+    func testCharDirectionalityEnumSurface() throws {
+        try assertKotlinCompilesToKIR("""
+        import kotlin.text.CharDirectionality
+
+        fun main() {
+            val direction: CharDirectionality = 'A'.directionality
+            println(direction == CharDirectionality.LEFT_TO_RIGHT)
         }
         """)
     }
