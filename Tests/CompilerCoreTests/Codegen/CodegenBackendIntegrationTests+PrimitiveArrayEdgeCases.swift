@@ -208,6 +208,160 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testArrayReversedArrayOverloads() throws {
+        let source = """
+        fun main() {
+            println(arrayOf("a", "b", "c").reversedArray().toList())
+            println(intArrayOf(1, 2, 3, 4).reversedArray().toList())
+            println(uintArrayOf(10u, 20u, 30u).reversedArray().toList())
+            println(booleanArrayOf(true, false, false).reversedArray().toList())
+            println(emptyArray<String>().reversedArray().toList())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ArrayReversedArrayOverloads",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                [c, b, a]
+                [4, 3, 2, 1]
+                [30, 20, 10]
+                [0, 0, 1]
+                []
+                """
+                + "\n"
+            )
+        }
+    }
+
+    func testArraySortedArrayOverloads() throws {
+        let source = """
+        fun main() {
+            println(arrayOf("c", "a", "b").sortedArray().toList())
+            println(intArrayOf(4, 1, 3, 2).sortedArray().toList())
+            println(uintArrayOf(30u, 10u, 20u).sortedArray().toList())
+            println(booleanArrayOf(true, false, false).sortedArray().toList())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ArraySortedArrayOverloads",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                [a, b, c]
+                [1, 2, 3, 4]
+                [10, 20, 30]
+                [0, 0, 1]
+                """
+                + "\n"
+            )
+        }
+    }
+
+    func testArraySortedArrayDescendingOverloads() throws {
+        let source = """
+        fun main() {
+            println(arrayOf("c", "a", "b").sortedArrayDescending().toList())
+            println(intArrayOf(4, 1, 3, 2).sortedArrayDescending().toList())
+            println(uintArrayOf(30u, 10u, 20u).sortedArrayDescending().toList())
+            println(booleanArrayOf(true, false, false).sortedArrayDescending().toList())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ArraySortedArrayDescendingOverloads",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                [c, b, a]
+                [4, 3, 2, 1]
+                [30, 20, 10]
+                [1, 0, 0]
+                """
+                + "\n"
+            )
+        }
+    }
+
+    func testArrayCopyIntoOverloads() throws {
+        let source = """
+        fun main() {
+            val words = arrayOf("a", "b", "c", "d")
+            val wordDestination = arrayOf("x", "y", "z", "w", "q")
+            words.copyInto(wordDestination, destinationOffset = 1, startIndex = 1, endIndex = 3)
+            println(wordDestination.toList())
+
+            val defaultDestination = arrayOf(0, 0, 0)
+            arrayOf(1, 2, 3).copyInto(defaultDestination)
+            println(defaultDestination.toList())
+
+            val intDestination = intArrayOf(9, 9, 9, 9, 9)
+            intArrayOf(1, 2, 3, 4).copyInto(intDestination, destinationOffset = 2, startIndex = 1, endIndex = 4)
+            println(intDestination.toList())
+
+            val uintDestination = uintArrayOf(0u, 0u, 0u)
+            uintArrayOf(10u, 20u, 30u).copyInto(uintDestination)
+            println(uintDestination.toList())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ArrayCopyIntoOverloads",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                [x, b, c, w, q]
+                [1, 2, 3]
+                [9, 9, 2, 3, 4]
+                [10, 20, 30]
+                """
+                + "\n"
+            )
+        }
+    }
+
     func testSignedArrayViewConversionsFromUnsignedArrays() throws {
         let source = """
         fun main() {
@@ -810,6 +964,159 @@ extension CodegenBackendIntegrationTests {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(out, "true\nfalse\n")
+        }
+    }
+
+    func testArrayContentDeepToString() throws {
+        let source = """
+        fun main() {
+            val nested = arrayOf(arrayOf(1, 2), arrayOf("x", "y"), intArrayOf(3, 4))
+            println(nested.contentDeepToString())
+
+            val self = arrayOfNulls<Any>(1)
+            self[0] = self
+            println(self.contentDeepToString())
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ArrayContentDeepToString",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(out, "[[1, 2], [x, y], [3, 4]]\n[[...]]\n")
+        }
+    }
+
+    // MARK: - contentToString for boxed and primitive arrays
+
+    func testArrayContentToStringOverloads() throws {
+        let source = """
+        @OptIn(ExperimentalUnsignedTypes::class)
+        fun main() {
+            val boxed = arrayOf<Any>(1, "two", 3)
+            println(boxed.contentToString())
+            println(intArrayOf(1, -2, 3).contentToString())
+            println(byteArrayOf(1, (-1).toByte()).contentToString())
+            println(shortArrayOf(2, (-3).toShort()).contentToString())
+            println(longArrayOf(1L, 4000000000L).contentToString())
+            println(floatArrayOf(1.5f, -2.0f).contentToString())
+            println(doubleArrayOf(2.25, -0.5).contentToString())
+            println(booleanArrayOf(true, false).contentToString())
+            println(charArrayOf('a', 'Z').contentToString())
+            println(ubyteArrayOf(1.toUByte(), 255.toUByte()).contentToString())
+            println(ushortArrayOf(1.toUShort(), 65535.toUShort()).contentToString())
+            println(uintArrayOf(1u, 4000000000u).contentToString())
+            println(ulongArrayOf(1uL, 4000000000uL).contentToString())
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ArrayContentToStringOverloads",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                out,
+                """
+                [1, two, 3]
+                [1, -2, 3]
+                [1, -1]
+                [2, -3]
+                [1, 4000000000]
+                [1.5, -2.0]
+                [2.25, -0.5]
+                [true, false]
+                [a, Z]
+                [1, 255]
+                [1, 65535]
+                [1, 4000000000]
+                [1, 4000000000]
+                """
+                + "\n"
+            )
+        }
+    }
+
+    func testArrayContentDeepHashCode() throws {
+        let source = """
+        fun main() {
+            val left = arrayOf(arrayOf(1, 2), arrayOf("x"))
+            val same = arrayOf(arrayOf(1, 2), arrayOf("x"))
+            val differentNested = arrayOf(arrayOf(1, 3), arrayOf("x"))
+            val shallowSameShape = arrayOf(arrayOf(1, 2), arrayOf("x"))
+
+            println(left.contentDeepHashCode() == same.contentDeepHashCode())
+            println(left.contentDeepHashCode() == differentNested.contentDeepHashCode())
+            println(left.contentHashCode() == shallowSameShape.contentHashCode())
+
+            val primitiveLeft = arrayOf(intArrayOf(1, 2), booleanArrayOf(true, false))
+            val primitiveSame = arrayOf(intArrayOf(1, 2), booleanArrayOf(true, false))
+            val primitiveDifferent = arrayOf(intArrayOf(1, 2), booleanArrayOf(false, true))
+            println(primitiveLeft.contentDeepHashCode() == primitiveSame.contentDeepHashCode())
+            println(primitiveLeft.contentDeepHashCode() == primitiveDifferent.contentDeepHashCode())
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ArrayContentDeepHashCode",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(out, "true\nfalse\nfalse\ntrue\nfalse\n")
+        }
+    }
+
+    func testArrayContentDeepEquals() throws {
+        let source = """
+        fun main() {
+            val left = arrayOf(arrayOf(1, 2), arrayOf("x"))
+            val same = arrayOf(arrayOf(1, 2), arrayOf("x"))
+            val differentNested = arrayOf(arrayOf(1, 3), arrayOf("x"))
+            val shallowSameShape = arrayOf(arrayOf(1, 2), arrayOf("x"))
+
+            println(left.contentDeepEquals(same))
+            println(left.contentDeepEquals(differentNested))
+            println(left.contentEquals(shallowSameShape))
+
+            val primitiveLeft = arrayOf(intArrayOf(1, 2), booleanArrayOf(true, false))
+            val primitiveSame = arrayOf(intArrayOf(1, 2), booleanArrayOf(true, false))
+            val primitiveDifferent = arrayOf(intArrayOf(1, 2), booleanArrayOf(false, true))
+            println(primitiveLeft.contentDeepEquals(primitiveSame))
+            println(primitiveLeft.contentDeepEquals(primitiveDifferent))
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ArrayContentDeepEquals",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(out, "true\nfalse\nfalse\ntrue\nfalse\n")
         }
     }
 }

@@ -419,6 +419,76 @@ final class CallTypeChecker {
             return returnType
         }
 
+        // --- Context helper: context(with, block) (STDLIB-KOTLIN-ROOT-CTX-001) ---
+        // The helper makes the first argument available as a context receiver
+        // for the block type, but does not make it an implicit receiver.
+        let contextHelperName = interner.intern("context")
+        if let calleeName, args.count >= 2, args.count <= 7,
+           calleeName == contextHelperName,
+           locals[calleeName] == nil,
+           !ctx.cachedScopeLookup(calleeName).contains(where: { candidate in
+               guard let sym = ctx.cachedSymbol(candidate) else { return false }
+               return !sym.flags.contains(.synthetic)
+           })
+        {
+            let contextValueArgs = Array(args.dropLast())
+            let blockArg = args[args.count - 1]
+            let contextValueTypes = contextValueArgs.map {
+                driver.inferExpr($0.expr, ctx: ctx, locals: &locals)
+            }
+            let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                contextReceivers: contextValueTypes,
+                params: [],
+                returnType: expectedType ?? sema.types.anyType
+            )))
+            let lambdaType = driver.inferExpr(
+                blockArg.expr,
+                ctx: ctx,
+                locals: &locals,
+                expectedType: lambdaExpectedType
+            )
+            let returnType: TypeID = if case let .functionType(fnType) = sema.types.kind(of: lambdaType) {
+                fnType.returnType
+            } else {
+                sema.bindings.exprTypes[blockArg.expr].flatMap { typeID in
+                    if case let .functionType(fnType) = sema.types.kind(of: typeID) {
+                        return fnType.returnType
+                    }
+                    return nil
+                } ?? sema.types.anyType
+            }
+            if let contextSymbol = ctx.cachedScopeLookup(calleeName).first(where: { candidate in
+                guard let sym = ctx.cachedSymbol(candidate),
+                      sym.flags.contains(.synthetic),
+                      sym.fqName.map({ interner.resolve($0) }) == ["kotlin", "context"],
+                      let signature = sema.symbols.functionSignature(for: candidate),
+                      signature.parameterTypes.count == args.count
+                else {
+                    return false
+                }
+                return true
+            }) {
+                driver.helpers.checkOptIn(
+                    for: contextSymbol,
+                    ctx: ctx,
+                    range: range,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: contextSymbol,
+                        substitutedTypeArguments: contextValueTypes + [returnType],
+                        parameterMapping: Dictionary(uniqueKeysWithValues: args.indices.map { ($0, $0) })
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(contextSymbol))
+            }
+            sema.bindings.markScopeFunctionExpr(id, kind: .scopeContext)
+            sema.bindings.bindExprType(id, type: returnType)
+            return returnType
+        }
+
         // --- produce { ... } builder (CORO-075) ---
         if let calleeName,
            calleeName == knownNames.produce,
@@ -2705,7 +2775,7 @@ final class CallTypeChecker {
                         elementType: explicitTypeArg
                     )
                 } else if let explicitTypeArg = explicitTypeArgs.first,
-                          name == "mutableListOf"
+                          name == "mutableListOf" || name == "arrayListOf"
                 {
                     collectionType = makeSyntheticMutableListType(
                         symbols: sema.symbols,
@@ -2751,12 +2821,12 @@ final class CallTypeChecker {
                         elementType: explicitTypeArg
                     )
                 } else if !argTypes.isEmpty,
-                          name == "listOf" || name == "listOfNotNull" || calleeName == knownNames.emptyListFn || name == "mutableListOf"
+                          name == "listOf" || name == "listOfNotNull" || calleeName == knownNames.emptyListFn || name == "mutableListOf" || name == "arrayListOf"
                 {
                     // Infer element type from arguments via LUB so that
                     // `listOf("a", null)` produces List<String?>.
                     let elementType = sema.types.lub(argTypes)
-                    collectionType = if name == "mutableListOf" {
+                    collectionType = if name == "mutableListOf" || name == "arrayListOf" {
                         makeSyntheticMutableListType(
                             symbols: sema.symbols,
                             types: sema.types,
@@ -2771,8 +2841,16 @@ final class CallTypeChecker {
                             elementType: elementType
                         )
                     }
+                } else if name == "arrayListOf" {
+                    let elementType = expectedCollectionArgs.first ?? sema.types.anyType
+                    collectionType = makeSyntheticMutableListType(
+                        symbols: sema.symbols,
+                        types: sema.types,
+                        interner: interner,
+                        elementType: elementType
+                    )
                 } else if let explicitTypeArg = explicitTypeArgs.first,
-                          calleeName == knownNames.emptySetFn || name == "setOf"
+                          calleeName == knownNames.emptySetFn || name == "setOf" || name == "setOfNotNull"
                 {
                     collectionType = makeSyntheticSetType(
                         symbols: sema.symbols,
@@ -2781,7 +2859,7 @@ final class CallTypeChecker {
                         elementType: explicitTypeArg
                     )
                 } else if let explicitTypeArg = explicitTypeArgs.first,
-                          name == "mutableSetOf"
+                          name == "mutableSetOf" || name == "hashSetOf" || name == "linkedSetOf"
                 {
                     collectionType = makeSyntheticMutableSetType(
                         symbols: sema.symbols,
@@ -2797,10 +2875,27 @@ final class CallTypeChecker {
                         elementType: sema.types.nothingType
                     )
                 } else if !argTypes.isEmpty,
-                          name == "setOf" || calleeName == knownNames.emptySetFn || name == "mutableSetOf"
+                          name == "setOf"
+                            || name == "setOfNotNull"
+                            || calleeName == knownNames.emptySetFn
+                            || name == "mutableSetOf"
+                            || name == "linkedSetOf"
+                            || name == "hashSetOf"
                 {
-                    let elementType = sema.types.lub(argTypes)
-                    collectionType = if name == "mutableSetOf" {
+                    let elementType: TypeID = if name == "setOfNotNull" {
+                        {
+                            let concreteTypes = argTypes.compactMap { inferredType -> TypeID? in
+                                if inferredType == sema.types.nullableNothingType {
+                                    return nil
+                                }
+                                return sema.types.makeNonNullable(inferredType)
+                            }
+                            return concreteTypes.isEmpty ? sema.types.nothingType : sema.types.lub(concreteTypes)
+                        }()
+                    } else {
+                        sema.types.lub(argTypes)
+                    }
+                    collectionType = if name == "mutableSetOf" || name == "hashSetOf" || name == "linkedSetOf" {
                         makeSyntheticMutableSetType(
                             symbols: sema.symbols,
                             types: sema.types,
@@ -2832,7 +2927,7 @@ final class CallTypeChecker {
                         valueType: explicitTypeArgs[1]
                     )
                 } else if explicitTypeArgs.count == 2,
-                          name == "mutableMapOf"
+                          name == "mutableMapOf" || name == "hashMapOf" || name == "linkedMapOf"
                 {
                     collectionType = makeSyntheticMutableMapType(
                         symbols: sema.symbols,
@@ -2846,9 +2941,9 @@ final class CallTypeChecker {
                     ctx: ctx,
                     locals: &locals
                 ),
-                    name == "mapOf" || name == "mutableMapOf"
+                    name == "mapOf" || name == "mutableMapOf" || name == "hashMapOf" || name == "linkedMapOf"
                 {
-                    collectionType = if name == "mutableMapOf" {
+                    collectionType = if name == "mutableMapOf" || name == "hashMapOf" || name == "linkedMapOf" {
                         makeSyntheticMutableMapType(
                             symbols: sema.symbols,
                             types: sema.types,
@@ -2873,8 +2968,12 @@ final class CallTypeChecker {
                         keyType: sema.types.nothingType,
                         valueType: sema.types.nothingType
                     )
-                } else if name == "mapOf" || calleeName == knownNames.emptyMapFn || name == "mutableMapOf" {
-                    collectionType = if name == "mutableMapOf" {
+                } else if name == "mapOf"
+                    || calleeName == knownNames.emptyMapFn
+                    || name == "mutableMapOf"
+                    || name == "hashMapOf"
+                    || name == "linkedMapOf" {
+                    collectionType = if name == "mutableMapOf" || name == "hashMapOf" || name == "linkedMapOf" {
                         makeSyntheticMutableMapType(
                             symbols: sema.symbols,
                             types: sema.types,
