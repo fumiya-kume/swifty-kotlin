@@ -180,6 +180,20 @@ public enum RuntimeABISpec {
             section: "Exception"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_array_index_out_of_bounds_exception_new",
+            parameters: [],
+            returnType: .intptr,
+            section: "Exception"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_array_index_out_of_bounds_exception_new_message",
+            parameters: [
+                RuntimeABIParameter(name: "messageRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Exception"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_throwable_is_cancellation",
             parameters: [
                 RuntimeABIParameter(name: "throwableRaw", type: .intptr),
@@ -355,6 +369,14 @@ public enum RuntimeABISpec {
         ),
         RuntimeABIFunctionSpec(
             name: "kk_throwable_stackTraceToString",
+            parameters: [
+                RuntimeABIParameter(name: "throwableRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Exception"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_throwable_printStackTrace",
             parameters: [
                 RuntimeABIParameter(name: "throwableRaw", type: .intptr),
             ],
@@ -697,6 +719,16 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_string_format",
             parameters: [
+                RuntimeABIParameter(name: "formatRaw", type: .intptr),
+                RuntimeABIParameter(name: "argsArrayRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_format_locale",
+            parameters: [
+                RuntimeABIParameter(name: "localeRaw", type: .intptr),
                 RuntimeABIParameter(name: "formatRaw", type: .intptr),
                 RuntimeABIParameter(name: "argsArrayRaw", type: .intptr),
             ],
@@ -1522,9 +1554,68 @@ public enum RuntimeABISpec {
             section: "String"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_char_isDefined",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_char_isSupplementaryCodePoint",
+            parameters: [
+                RuntimeABIParameter(name: "codepoint", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_char_isSurrogatePair",
+            parameters: [
+                RuntimeABIParameter(name: "high", type: .intptr),
+                RuntimeABIParameter(name: "low", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_char_toChars",
+            parameters: [
+                RuntimeABIParameter(name: "codePoint", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_char_toCodePoint",
+            parameters: [
+                RuntimeABIParameter(name: "high", type: .intptr),
+                RuntimeABIParameter(name: "low", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_char_uppercase",
             parameters: [
                 RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_char_uppercaseChar",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_char_uppercase_locale",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "localeRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "String"
@@ -1538,7 +1629,32 @@ public enum RuntimeABISpec {
             section: "String"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_char_lowercaseChar",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_char_lowercase_locale",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "localeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_char_titlecase",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_char_titlecaseChar",
             parameters: [
                 RuntimeABIParameter(name: "value", type: .intptr),
             ],
@@ -6451,6 +6567,24 @@ public enum RuntimeABISpec {
         ),
         RuntimeABIFunctionSpec(
             name: "kk_op_lmod",
+            parameters: [
+                RuntimeABIParameter(name: "lhs", type: .intptr),
+                RuntimeABIParameter(name: "rhs", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_op_floor_mod",
+            parameters: [
+                RuntimeABIParameter(name: "lhs", type: .intptr),
+                RuntimeABIParameter(name: "rhs", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_op_lfloor_mod",
             parameters: [
                 RuntimeABIParameter(name: "lhs", type: .intptr),
                 RuntimeABIParameter(name: "rhs", type: .intptr),

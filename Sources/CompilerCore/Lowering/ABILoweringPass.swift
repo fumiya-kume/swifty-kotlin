@@ -22,7 +22,7 @@ final class ABILoweringPass: LoweringPass {
     static let name = "ABILowering"
 
     func run(module: KIRModule, ctx: KIRContext) throws {
-        let nonThrowingCallees = nonThrowingCallees(interner: ctx.interner)
+        let nonThrowingCalleeSet = nonThrowingCallees(interner: ctx.interner)
 
         let boxCallees = BoxingCalleeNames(
             int: ctx.interner.intern("kk_box_int"),
@@ -52,6 +52,10 @@ final class ABILoweringPass: LoweringPass {
             ctx.interner.intern("kk_op_floor_div"),
             ctx.interner.intern("kk_op_lfloor_div"),
             ctx.interner.intern("kk_op_mod"),
+            ctx.interner.intern("kk_op_floor_mod"),
+            ctx.interner.intern("kk_op_lfloor_mod"),
+            ctx.interner.intern("kk_op_ffloor_mod"),
+            ctx.interner.intern("kk_op_dfloor_mod"),
             ctx.interner.intern("kk_op_udiv"),
             ctx.interner.intern("kk_op_urem"),
             ctx.interner.intern("kk_op_uadd"),
@@ -82,7 +86,7 @@ final class ABILoweringPass: LoweringPass {
                 if case let .virtualCall(vcSymbol, vcCallee, vcReceiver, vcArguments, vcResult, _, vcThrownResult, vcDispatch) = instruction {
                     let vcIsClosureRelated = module.nonThrowingClosureCallees.contains(vcCallee)
                     let vcCanThrow = !vcIsClosureRelated
-                        && !nonThrowingCallees.contains(vcCallee)
+                        && !nonThrowingCalleeSet.contains(vcCallee)
                     var vcSignature: FunctionSignature?
                     if let symbols, let vcSymbol {
                         vcSignature = symbols.functionSignature(for: vcSymbol)
@@ -268,7 +272,7 @@ final class ABILoweringPass: LoweringPass {
                 let canThrow = isExplicitlyThrowing
                     || (!isSyntheticAccessor
                         && !isClosureRelatedCallee
-                        && !nonThrowingCallees.contains(effectiveCallee))
+                        && !nonThrowingCalleeSet.contains(effectiveCallee))
 
                 var signature: FunctionSignature?
                 if let symbols, let effectiveCallSymbol {
