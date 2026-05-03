@@ -37,6 +37,20 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         return String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     }
 
+    private func captureStandardError(_ block: () -> Void) -> String {
+        let pipe = Pipe()
+        let savedFD = dup(STDERR_FILENO)
+        fflush(nil)
+        dup2(pipe.fileHandleForWriting.fileDescriptor, STDERR_FILENO)
+        block()
+        fflush(nil)
+        dup2(savedFD, STDERR_FILENO)
+        close(savedFD)
+        pipe.fileHandleForWriting.closeFile()
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        return String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    }
+
     // MARK: - kk_string_from_utf8
 
     func testStringFromUTF8CreatesBoxedString() {
@@ -575,6 +589,23 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(runtimeStringValue(formatted), "1.23e+03")
     }
 
+    func testStringFormatLocaleUsesLocaleDecimalSeparator() {
+        let locale = kk_locale_new_language_country(rawFromRuntimeString("de"), rawFromRuntimeString("DE"))
+        let args = makeRuntimeArray([
+            kk_box_double(Int(bitPattern: UInt(truncatingIfNeeded: 3.5.bitPattern))),
+        ])
+        let formatted = kk_string_format_locale(locale, rawFromRuntimeString("%.1f"), args)
+        XCTAssertEqual(runtimeStringValue(formatted), "3,5")
+    }
+
+    func testStringFormatNullLocaleKeepsNonLocalizedFormatting() {
+        let args = makeRuntimeArray([
+            kk_box_double(Int(bitPattern: UInt(truncatingIfNeeded: 3.5.bitPattern))),
+        ])
+        let formatted = kk_string_format_locale(runtimeNullSentinelInt, rawFromRuntimeString("%.1f"), args)
+        XCTAssertEqual(runtimeStringValue(formatted), "3.5")
+    }
+
     // MARK: - kk_throwable_new
 
     func testThrowableNewCreatesThrowable() {
@@ -654,6 +685,16 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_list_size(suppressed), 2)
         XCTAssertEqual(kk_list_get(suppressed, 0), suppressed1)
         XCTAssertEqual(kk_list_get(suppressed, 1), suppressed2)
+    }
+
+    func testThrowablePrintStackTraceWritesRenderedMessageToStandardError() {
+        let throwable = Int(bitPattern: kk_throwable_new(makeRuntimeString("print me")))
+
+        let output = captureStandardError {
+            XCTAssertEqual(kk_throwable_printStackTrace(throwable), 0)
+        }
+
+        XCTAssertEqual(output, "print me")
     }
 
     // MARK: - kk_array_new
