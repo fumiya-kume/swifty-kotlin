@@ -56,6 +56,7 @@ extension DataFlowSemaPhase {
         let ulongType = types.ulongType
         let floatType = types.floatType
         let doubleType = types.doubleType
+        let uintType = types.uintType
         let boolType = types.make(.primitive(.boolean, .nonNull))
         let ulongRangeType = makeRangeType(
             named: "ULongRange",
@@ -208,10 +209,33 @@ extension DataFlowSemaPhase {
         registerSyntheticRandomMember(
             ownerSymbol: randomSymbol,
             ownerType: randomType,
+            name: "nextUInt",
+            externalLinkName: "kk_random_nextUInt",
+            returnType: uintType,
+            parameters: [],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
             name: "nextULong",
             externalLinkName: "kk_random_nextULong_until",
             returnType: ulongType,
             parameters: [(name: "until", type: ulongType)],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextUInt",
+            externalLinkName: "kk_random_nextUInt_until",
+            returnType: uintType,
+            parameters: [(name: "until", type: uintType)],
             canThrow: true,
             symbols: symbols,
             interner: interner
@@ -235,10 +259,40 @@ extension DataFlowSemaPhase {
         registerSyntheticRandomMember(
             ownerSymbol: randomSymbol,
             ownerType: randomType,
+            name: "nextUInt",
+            externalLinkName: "kk_random_nextUInt_range",
+            returnType: uintType,
+            parameters: [
+                (name: "from", type: uintType),
+                (name: "until", type: uintType),
+            ],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
             name: "nextULong",
             externalLinkName: "kk_random_nextULong_ulongRange",
             returnType: ulongType,
             parameters: [(name: "range", type: ulongRangeType)],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextUInt",
+            externalLinkName: "kk_random_nextUInt_uintRange",
+            returnType: uintType,
+            parameters: [(
+                name: "range",
+                type: makeRangeType(named: "UIntRange", symbols: symbols, types: types, interner: interner)
+            )],
             canThrow: true,
             symbols: symbols,
             interner: interner
@@ -803,27 +857,6 @@ extension DataFlowSemaPhase {
         )))
     }
 
-    /// Build a `List<Int>` type, which is the internal representation of ByteArray.
-    private func makeListIntType(
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner
-    ) -> TypeID {
-        let listFQName: [InternedString] = [
-            interner.intern("kotlin"),
-            interner.intern("collections"),
-            interner.intern("List"),
-        ]
-        guard let listSymbol = symbols.lookup(fqName: listFQName) else {
-            return types.anyType
-        }
-        return types.make(.classType(ClassType(
-            classSymbol: listSymbol,
-            args: [.out(types.intType)],
-            nullability: .nonNull
-        )))
-    }
-
     private func makeRangeType(
         named name: String,
         symbols: SymbolTable,
@@ -846,4 +879,26 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
     }
+
+    /// Build a `List<Int>` type, which is the internal representation of ByteArray.
+    private func makeListIntType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID {
+        let listFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("List"),
+        ]
+        guard let listSymbol = symbols.lookup(fqName: listFQName) else {
+            return types.anyType
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: listSymbol,
+            args: [.out(types.intType)],
+            nullability: .nonNull
+        )))
+    }
+
 }
