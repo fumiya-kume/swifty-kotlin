@@ -362,6 +362,44 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testArraySliceArrayOverloads() throws {
+        let source = """
+        fun main() {
+            val words = arrayOf("a", "b", "c", "d")
+            println(words.sliceArray(1..2).toList())
+            println(words.sliceArray(listOf(3, 0)).toList())
+            println(intArrayOf(1, 2, 3, 4).sliceArray(1..3).toList())
+            println(uintArrayOf(10u, 20u, 30u).sliceArray(listOf(2, 0)).toList())
+            println(booleanArrayOf(true, false, false).sliceArray(0..1).toList())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ArraySliceArrayOverloads",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                [b, c]
+                [d, a]
+                [2, 3, 4]
+                [30, 10]
+                [1, 0]
+                """
+                + "\n"
+            )
+        }
+    }
+
     func testSignedArrayViewConversionsFromUnsignedArrays() throws {
         let source = """
         fun main() {
