@@ -213,6 +213,67 @@ extension RandomSyntheticLinkTests {
         XCTAssertTrue(sema.symbols.functionSignature(for: ulongRange)?.canThrow ?? false)
     }
 
+    // MARK: - nextUInt overload selection
+
+    /// nextUInt() / nextUInt(until) / nextUInt(from, until) / nextUInt(range) are registered.
+    func testNextUIntOverloadsAreRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let fq = ["kotlin", "random", "Random", "nextUInt"].map { interner.intern($0) }
+        let candidates = sema.symbols.lookupAll(fqName: fq)
+
+        func isUIntRange(_ type: TypeID) -> Bool {
+            guard case let .classType(classType) = sema.types.kind(of: type),
+                  let symbol = sema.symbols.symbol(classType.classSymbol)
+            else { return false }
+            return interner.resolve(symbol.name) == "UIntRange"
+        }
+
+        let zero = candidates.first { id in
+            sema.symbols.functionSignature(for: id)?.parameterTypes.isEmpty == true
+        }
+        let until = candidates.first { id in
+            guard let sig = sema.symbols.functionSignature(for: id) else { return false }
+            return sig.parameterTypes == [sema.types.uintType]
+        }
+        let fromUntil = candidates.first { id in
+            guard let sig = sema.symbols.functionSignature(for: id) else { return false }
+            return sig.parameterTypes == [sema.types.uintType, sema.types.uintType]
+        }
+        let range = candidates.first { id in
+            guard let sig = sema.symbols.functionSignature(for: id),
+                  sig.parameterTypes.count == 1
+            else { return false }
+            return isUIntRange(sig.parameterTypes[0])
+        }
+
+        XCTAssertNotNil(zero, "nextUInt() must be registered")
+        XCTAssertNotNil(until, "nextUInt(until: UInt) must be registered")
+        XCTAssertNotNil(fromUntil, "nextUInt(from: UInt, until: UInt) must be registered")
+        XCTAssertNotNil(range, "nextUInt(range: UIntRange) must be registered")
+        if let zero {
+            XCTAssertEqual(sema.symbols.externalLinkName(for: zero), "kk_random_nextUInt")
+        }
+        if let until,
+           let signature = sema.symbols.functionSignature(for: until)
+        {
+            XCTAssertEqual(sema.symbols.externalLinkName(for: until), "kk_random_nextUInt_until")
+            XCTAssertTrue(signature.canThrow)
+        }
+        if let fromUntil,
+           let signature = sema.symbols.functionSignature(for: fromUntil)
+        {
+            XCTAssertEqual(sema.symbols.externalLinkName(for: fromUntil), "kk_random_nextUInt_range")
+            XCTAssertTrue(signature.canThrow)
+        }
+        if let range,
+           let signature = sema.symbols.functionSignature(for: range)
+        {
+            XCTAssertEqual(sema.symbols.externalLinkName(for: range), "kk_random_nextUInt_uintRange")
+            XCTAssertTrue(signature.canThrow)
+        }
+    }
+
     // MARK: - nextBytes overloads
 
     /// nextBytes(array: ByteArray) is registered and linked to kk_random_nextBytes.

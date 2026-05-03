@@ -21,12 +21,16 @@ enum KnownCompilerAnnotation {
     case throws_
     case suppress
     case dslMarker
+    case parameterName
+    case publishedApi
     case wasExperimental
     case sinceKotlin
+    case introducedAt
     case optIn
     case subclassOptInRequired
     case consistentCopyVisibility
     case exposedCopyVisibility
+    case optionalExpectation
     case builderInference
     case experimentalTypeInference
     case overloadResolutionByLambdaReturnType
@@ -73,10 +77,16 @@ enum KnownCompilerAnnotation {
             "Suppress"
         case .dslMarker:
             "DslMarker"
+        case .parameterName:
+            "ParameterName"
+        case .publishedApi:
+            "PublishedApi"
         case .wasExperimental:
             "WasExperimental"
         case .sinceKotlin:
             "SinceKotlin"
+        case .introducedAt:
+            "IntroducedAt"
         case .optIn:
             "OptIn"
         case .subclassOptInRequired:
@@ -85,6 +95,8 @@ enum KnownCompilerAnnotation {
             "ConsistentCopyVisibility"
         case .exposedCopyVisibility:
             "ExposedCopyVisibility"
+        case .optionalExpectation:
+            "OptionalExpectation"
         case .builderInference:
             "BuilderInference"
         case .experimentalTypeInference:
@@ -136,10 +148,16 @@ enum KnownCompilerAnnotation {
             "kotlin.Suppress"
         case .dslMarker:
             "kotlin.DslMarker"
+        case .parameterName:
+            "kotlin.ParameterName"
+        case .publishedApi:
+            "kotlin.PublishedApi"
         case .wasExperimental:
             "kotlin.WasExperimental"
         case .sinceKotlin:
             "kotlin.SinceKotlin"
+        case .introducedAt:
+            "kotlin.IntroducedAt"
         case .optIn:
             "kotlin.OptIn"
         case .subclassOptInRequired:
@@ -148,6 +166,8 @@ enum KnownCompilerAnnotation {
             "kotlin.ConsistentCopyVisibility"
         case .exposedCopyVisibility:
             "kotlin.ExposedCopyVisibility"
+        case .optionalExpectation:
+            "kotlin.OptionalExpectation"
         case .builderInference:
             "kotlin.BuilderInference"
         case .experimentalTypeInference:
@@ -686,12 +706,12 @@ struct KnownCompilerNames {
     /// collection literal expressions. Shared across call type-checking sites
     /// to avoid duplication.
     static let stdlibCollectionFactoryNames: Set<String> = [
-        "listOf", "mutableListOf", "emptyList",
+        "listOf", "mutableListOf", "arrayListOf", "emptyList",
         "arrayOf", "emptyArray", "intArrayOf", "longArrayOf",
         "shortArrayOf", "byteArrayOf", "ubyteArrayOf", "ushortArrayOf", "uintArrayOf", "ulongArrayOf",
         "doubleArrayOf", "floatArrayOf", "booleanArrayOf", "charArrayOf",
-        "mapOf", "mutableMapOf", "emptyMap",
-        "setOf", "mutableSetOf", "emptySet",
+        "mapOf", "mutableMapOf", "hashMapOf", "linkedMapOf", "emptyMap",
+        "setOf", "setOfNotNull", "mutableSetOf", "hashSetOf", "linkedSetOf", "emptySet",
         "listOfNotNull",
         "sequenceOf", "generateSequence",
         "ArrayList",

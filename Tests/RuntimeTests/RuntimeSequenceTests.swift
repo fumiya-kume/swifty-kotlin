@@ -122,6 +122,14 @@ private let sequenceValueTimesTen: @convention(c) (Int, Int, UnsafeMutablePointe
     value * 10
 }
 
+private let sequenceFirstNullableEvenTimesTen: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value.isMultiple(of: 2) ? value * 10 : runtimeNullSentinelInt
+}
+
+private let sequenceAlwaysNullTransform: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, _ in
+    runtimeNullSentinelInt
+}
+
 private let sequenceAdjacentDifference: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, left, right, _ in
     right - left
 }
@@ -1782,6 +1790,82 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
             nil
         )
         XCTAssertEqual(sequenceElements(mapped), [0, 1, 2])
+    }
+
+    func testSequenceFirstNotNullOfOrNullReturnsFirstNonNullResult() {
+        let seq = makeSequence([1, 2, 4])
+        var thrown = 0
+        let result = kk_sequence_firstNotNullOfOrNull(
+            seq,
+            unsafeBitCast(sequenceFirstNullableEvenTimesTen, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(result, 20)
+        XCTAssertEqual(thrown, 0)
+    }
+
+    func testSequenceFirstNotNullOfOrNullReturnsNullSentinelWhenNoResultMatches() {
+        let seq = makeSequence([1, 3, 5])
+        var thrown = 0
+        let result = kk_sequence_firstNotNullOfOrNull(
+            seq,
+            unsafeBitCast(sequenceAlwaysNullTransform, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(result, runtimeNullSentinelInt)
+        XCTAssertEqual(thrown, 0)
+    }
+
+    func testSequenceFirstNotNullOfOrNullPropagatesThrownTransform() {
+        let seq = makeSequence([1, 2, 3])
+        var thrown = 0
+        let result = kk_sequence_firstNotNullOfOrNull(
+            seq,
+            unsafeBitCast(throwingSequenceDestinationLambda, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testSequenceFirstNotNullOfReturnsFirstNonNullTransformResult() {
+        let seq = makeSequence([1, 2, 4])
+        let result = kk_sequence_firstNotNullOf(
+            seq,
+            unsafeBitCast(sequenceFirstNullableEvenTimesTen, to: Int.self),
+            0,
+            nil
+        )
+        XCTAssertEqual(result, 20)
+    }
+
+    func testSequenceFirstNotNullOfThrowsWhenEveryTransformResultIsNull() {
+        let seq = makeSequence([1, 3, 5])
+        var thrown = 0
+        let result = kk_sequence_firstNotNullOf(
+            seq,
+            unsafeBitCast(sequenceAlwaysNullTransform, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testSequenceFirstNotNullOfPropagatesThrowingLambda() {
+        let seq = makeSequence([1, 2, 3])
+        var thrown = 0
+        let result = kk_sequence_firstNotNullOf(
+            seq,
+            unsafeBitCast(throwingSequenceDestinationLambda, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
     }
 
     func testSequenceFilterNotNullPreservesZeroAfterMapNotNull() {

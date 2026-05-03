@@ -283,7 +283,8 @@ extension CollectionLiteralLoweringPass {
         {
             listExprIDs.insert(result.rawValue)
         } else if lookup.setFactoryNames.contains(callee) || lookup.mutableSetConstructorNames.contains(callee)
-                    || callee == lookup.kkSetOfName {
+                    || callee == lookup.kkSetOfName
+                    || callee == lookup.kkSetOfNotNullName {
             setExprIDs.insert(result.rawValue)
         } else if lookup.mapFactoryNames.contains(callee) || lookup.mutableMapConstructorNames.contains(callee)
                     || callee == lookup.kkMapOfName {
