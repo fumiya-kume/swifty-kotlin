@@ -164,14 +164,6 @@ private let throwingWindowTransform: @convention(c) (Int, Int, UnsafeMutablePoin
     return 0
 }
 
-private let sequenceFirstNotNullOfStringForTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
-    value == 2 ? runtimeTestStringHandle("two") : runtimeNullSentinelInt
-}
-
-private let sequenceFirstNotNullOfAlwaysNull: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, _ in
-    runtimeNullSentinelInt
-}
-
 private func runtimeTestStringHandle(_ value: String) -> Int {
     let bytes = Array(value.utf8)
     return bytes.withUnsafeBufferPointer { buffer in
@@ -187,61 +179,6 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         _lazySequenceOnEachIndexedTrace = []
     }
 
-    func testFirstNotNullOfReturnsFirstTransformedValue() {
-        var thrown = 0
-        let result = kk_sequence_firstNotNullOf(
-            makeSequence([1, 2, 3]),
-            unsafeBitCast(sequenceFirstNotNullOfStringForTwo, to: Int.self),
-            0,
-            &thrown
-        )
-
-        XCTAssertEqual(thrown, 0)
-        XCTAssertEqual(extractString(from: UnsafeMutableRawPointer(bitPattern: result)), "two")
-    }
-
-    func testFirstNotNullOfThrowsWhenNoElementTransformsToValue() {
-        var thrown = 0
-        let result = kk_sequence_firstNotNullOf(
-            makeSequence([1, 2, 3]),
-            unsafeBitCast(sequenceFirstNotNullOfAlwaysNull, to: Int.self),
-            0,
-            &thrown
-        )
-
-        XCTAssertEqual(result, 0)
-        XCTAssertNotEqual(thrown, 0)
-    }
-
-<<<<<<< HEAD
-    func testFirstNotNullOfOrNullReturnsFirstTransformedValue() {
-        var thrown = 0
-        let result = kk_sequence_firstNotNullOfOrNull(
-            makeSequence([1, 2, 3]),
-            unsafeBitCast(sequenceFirstNotNullOfStringForTwo, to: Int.self),
-            0,
-            &thrown
-        )
-
-        XCTAssertEqual(thrown, 0)
-        XCTAssertEqual(extractString(from: UnsafeMutableRawPointer(bitPattern: result)), "two")
-    }
-
-    func testFirstNotNullOfOrNullReturnsNullSentinelWhenNoElementTransformsToValue() {
-        var thrown = 0
-        let result = kk_sequence_firstNotNullOfOrNull(
-            makeSequence([1, 2, 3]),
-            unsafeBitCast(sequenceFirstNotNullOfAlwaysNull, to: Int.self),
-            0,
-            &thrown
-        )
-
-        XCTAssertEqual(thrown, 0)
-        XCTAssertEqual(result, runtimeNullSentinelInt)
-    }
-
-=======
->>>>>>> 948968139 (Add Sequence firstNotNullOf)
     func testSortedByUsesRuntimeValueComparisonForSelectorKeys() {
         let source = makeSequence([1, 2, 3])
         let sorted = kk_sequence_sortedBy(
@@ -1791,6 +1728,43 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         let seq = makeSequence([1, 2, 3])
         var thrown = 0
         let result = kk_sequence_firstNotNullOfOrNull(
+            seq,
+            unsafeBitCast(throwingSequenceDestinationLambda, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testSequenceFirstNotNullOfReturnsFirstNonNullTransformResult() {
+        let seq = makeSequence([1, 2, 4])
+        let result = kk_sequence_firstNotNullOf(
+            seq,
+            unsafeBitCast(sequenceFirstNullableEvenTimesTen, to: Int.self),
+            0,
+            nil
+        )
+        XCTAssertEqual(result, 20)
+    }
+
+    func testSequenceFirstNotNullOfThrowsWhenEveryTransformResultIsNull() {
+        let seq = makeSequence([1, 3, 5])
+        var thrown = 0
+        let result = kk_sequence_firstNotNullOf(
+            seq,
+            unsafeBitCast(sequenceAlwaysNullTransform, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testSequenceFirstNotNullOfPropagatesThrowingLambda() {
+        let seq = makeSequence([1, 2, 3])
+        var thrown = 0
+        let result = kk_sequence_firstNotNullOf(
             seq,
             unsafeBitCast(throwingSequenceDestinationLambda, to: Int.self),
             0,

@@ -163,6 +163,7 @@ final class RuntimeUuidEdgeCaseTests: XCTestCase {
         XCTAssertEqual(kk_uuid_version(uuidRaw), 0)
         XCTAssertEqual(kk_uuid_variant(uuidRaw), 0)
     }
+
     // MARK: - MAX UUID (all Fs)
 
     func testMaxUuidAllFs() {

@@ -12,8 +12,6 @@ import XCTest
 //   • implemented companion factories are tracked in one inventory
 //   • known pending companion members are tracked as gaps
 //   • Uuid.random() return type resolves to kotlin.uuid.Uuid
-//   • Uuid.LEXICAL_ORDER resolves to Comparator<Uuid>
-//   • Uuid.SIZE_BITS and Uuid.SIZE_BYTES resolve as const Int companion properties
 //   • toString vs toHexString dispatch is tracked as separate links
 //   • toByteArray() and toLongs() are present with their signatures
 //   • @ExperimentalUuidApi opt-in marker: now synthesised (STDLIB-EXPERIMENTAL-ABI-001)
@@ -725,76 +723,6 @@ final class UuidAPISurfaceInventoryTests: XCTestCase {
             XCTAssertTrue(
                 syms.isEmpty,
                 "Uuid.\(memberName) is a tracked pending API and must remain absent until its TODO is implemented; found \(syms.count) symbols"
-            )
-        }
-    }
-
-    func testUuidLexicalOrderComparatorIsRegistered() throws {
-        let (sema, interner) = try makeSema()
-        let fq = ["kotlin", "uuid", "Uuid", "Companion", "LEXICAL_ORDER"].map { interner.intern($0) }
-        let lexicalOrderSym = try XCTUnwrap(
-            sema.symbols.lookupAll(fqName: fq).first(where: { sema.symbols.symbol($0)?.kind == .property }),
-            "Uuid.LEXICAL_ORDER must be registered as a companion property"
-        )
-
-        XCTAssertEqual(
-            sema.symbols.externalLinkName(for: lexicalOrderSym),
-            "kk_uuid_lexicalOrder",
-            "Uuid.LEXICAL_ORDER must link to the UUID lexical comparator runtime"
-        )
-
-        let propType = try XCTUnwrap(sema.symbols.propertyType(for: lexicalOrderSym))
-        guard case .classType(let comparatorType) = sema.types.kind(of: propType) else {
-            XCTFail("Uuid.LEXICAL_ORDER type must be kotlin.Comparator<Uuid>")
-            return
-        }
-
-        let comparatorSym = try XCTUnwrap(
-            sema.symbols.lookup(fqName: ["kotlin", "Comparator"].map { interner.intern($0) })
-        )
-        let uuidSym = try XCTUnwrap(
-            sema.symbols.lookup(fqName: ["kotlin", "uuid", "Uuid"].map { interner.intern($0) })
-        )
-
-        XCTAssertEqual(comparatorType.classSymbol, comparatorSym)
-        guard let firstArg = comparatorType.args.first,
-              case .invariant(let uuidType) = firstArg
-        else {
-            XCTFail("Uuid.LEXICAL_ORDER Comparator type must carry invariant Uuid argument")
-            return
-        }
-        guard case .classType(let uuidClassType) = sema.types.kind(of: uuidType) else {
-            XCTFail("Uuid.LEXICAL_ORDER Comparator argument must be Uuid")
-            return
-        }
-        XCTAssertEqual(uuidClassType.classSymbol, uuidSym)
-    }
-
-    func testUuidSizeConstantsAreRegisteredAsConstInts() throws {
-        let (sema, interner) = try makeSema()
-        let expectedConstants: [(name: String, value: Int64)] = [
-            ("SIZE_BITS", 128),
-            ("SIZE_BYTES", 16),
-        ]
-
-        for expected in expectedConstants {
-            let fq = ["kotlin", "uuid", "Uuid", "Companion", expected.name].map { interner.intern($0) }
-            let sym = try XCTUnwrap(
-                sema.symbols.lookupAll(fqName: fq).first(where: { sema.symbols.symbol($0)?.kind == .property }),
-                "Uuid.\(expected.name) must be registered as a companion property"
-            )
-            let info = try XCTUnwrap(sema.symbols.symbol(sym))
-            XCTAssertTrue(info.flags.contains(.static), "Uuid.\(expected.name) must be static")
-            XCTAssertTrue(info.flags.contains(.constValue), "Uuid.\(expected.name) must be const")
-            XCTAssertEqual(
-                sema.symbols.propertyType(for: sym),
-                sema.types.intType,
-                "Uuid.\(expected.name) must have Int type"
-            )
-            XCTAssertEqual(
-                sema.symbols.constValueExprKind(for: sym),
-                .intLiteral(expected.value),
-                "Uuid.\(expected.name) must expose the Kotlin stdlib constant value"
             )
         }
     }

@@ -326,18 +326,6 @@ extension DataFlowSemaPhase {
 
     // MARK: - Uuid Helpers
 
-    private func attachExperimentalUuidApiAnnotation(
-        to symbol: SymbolID,
-        symbols: SymbolTable
-    ) {
-        let record = MetadataAnnotationRecord(annotationFQName: "kotlin.uuid.ExperimentalUuidApi")
-        var annotations = symbols.annotations(for: symbol)
-        if !annotations.contains(record) {
-            annotations.append(record)
-            symbols.setAnnotations(annotations, for: symbol)
-        }
-    }
-
     private func ensureUuidPackageHierarchy(
         symbols: SymbolTable,
         interner: StringInterner
@@ -453,40 +441,6 @@ extension DataFlowSemaPhase {
             ),
             for: memberSymbol
         )
-    }
-
-    private func registerUuidCompanionProperty(
-        named name: String,
-        externalLinkName: String,
-        returnType: TypeID,
-        ownerSymbol: SymbolID,
-        symbols: SymbolTable,
-        interner: StringInterner
-    ) {
-        guard let ownerInfo = symbols.symbol(ownerSymbol) else { return }
-        let propertyName = interner.intern(name)
-        let propertyFQName = ownerInfo.fqName + [propertyName]
-
-        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: {
-            symbols.symbol($0)?.kind == .property
-        }) {
-            symbols.setExternalLinkName(externalLinkName, for: existing)
-            symbols.setPropertyType(returnType, for: existing)
-            symbols.insertFlags([.synthetic, .static], for: existing)
-            return
-        }
-
-        let propertySymbol = symbols.define(
-            kind: .property,
-            name: propertyName,
-            fqName: propertyFQName,
-            declSite: nil,
-            visibility: .public,
-            flags: [.synthetic, .static]
-        )
-        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
-        symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
-        symbols.setPropertyType(returnType, for: propertySymbol)
     }
 
     private func registerUuidInstanceMethod(

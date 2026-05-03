@@ -86,6 +86,166 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testLinkedSetOfFactoryInfersMutableSetType() throws {
+        let source = """
+        fun probe() {
+            val values = linkedSetOf(1, 2)
+            values.add(3)
+            val typed: LinkedHashSet<Int> = linkedSetOf<Int>()
+            typed.add(4)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected linkedSetOf factory calls to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let linkedSetCall = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .call(callee, _, _, _) = expr,
+                      case let .nameRef(name, _) = ast.arena.expr(callee)
+                else { return false }
+                return ctx.interner.resolve(name) == "linkedSetOf"
+            })
+            let callType = try XCTUnwrap(sema.bindings.exprTypes[linkedSetCall])
+            guard case let .classType(classType) = sema.types.kind(of: callType) else {
+                return XCTFail("Expected linkedSetOf to produce a MutableSet class type")
+            }
+            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(classType.classSymbol)?.name)), "MutableSet")
+            XCTAssertEqual(classType.args, [.invariant(sema.types.intType)])
+            XCTAssertTrue(
+                sema.bindings.isCollectionExpr(linkedSetCall),
+                "Expected linkedSetOf to be tracked as a collection expression"
+            )
+        }
+    }
+
+    func testLinkedMapOfFactoryInfersMutableMapType() throws {
+        let source = """
+        fun probe() {
+            val values = linkedMapOf("a" to 1)
+            values.put("b", 2)
+            val typed: LinkedHashMap<String, Int> = linkedMapOf<String, Int>()
+            typed.put("c", 3)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected linkedMapOf factory calls to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let linkedMapCall = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .call(callee, _, _, _) = expr,
+                      case let .nameRef(name, _) = ast.arena.expr(callee)
+                else { return false }
+                return ctx.interner.resolve(name) == "linkedMapOf"
+            })
+            let callType = try XCTUnwrap(sema.bindings.exprTypes[linkedMapCall])
+            guard case let .classType(classType) = sema.types.kind(of: callType) else {
+                return XCTFail("Expected linkedMapOf to produce a MutableMap class type")
+            }
+            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(classType.classSymbol)?.name)), "MutableMap")
+            XCTAssertEqual(classType.args, [.invariant(sema.types.stringType), .invariant(sema.types.intType)])
+            XCTAssertTrue(
+                sema.bindings.isCollectionExpr(linkedMapCall),
+                "Expected linkedMapOf to be tracked as a collection expression"
+            )
+        }
+    }
+
+    func testHashMapOfFactoryInfersMutableMapType() throws {
+        let source = """
+        fun probe() {
+            val values = hashMapOf("a" to 1)
+            values.put("b", 2)
+            val typed: HashMap<String, Int> = hashMapOf<String, Int>()
+            typed.put("c", 3)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected hashMapOf factory calls to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let hashMapCall = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .call(callee, _, _, _) = expr,
+                      case let .nameRef(name, _) = ast.arena.expr(callee)
+                else { return false }
+                return ctx.interner.resolve(name) == "hashMapOf"
+            })
+            let callType = try XCTUnwrap(sema.bindings.exprTypes[hashMapCall])
+            guard case let .classType(classType) = sema.types.kind(of: callType) else {
+                return XCTFail("Expected hashMapOf to produce a MutableMap class type")
+            }
+            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(classType.classSymbol)?.name)), "MutableMap")
+            XCTAssertEqual(classType.args, [.invariant(sema.types.stringType), .invariant(sema.types.intType)])
+            XCTAssertTrue(
+                sema.bindings.isCollectionExpr(hashMapCall),
+                "Expected hashMapOf to be tracked as a collection expression"
+            )
+        }
+    }
+
+    func testHashSetOfFactoryInfersMutableSetType() throws {
+        let source = """
+        fun probe() {
+            val values = hashSetOf(1, 2)
+            values.add(3)
+            val typed: HashSet<Int> = hashSetOf<Int>()
+            typed.add(4)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected hashSetOf factory calls to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let hashSetCall = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .call(callee, _, _, _) = expr,
+                      case let .nameRef(name, _) = ast.arena.expr(callee)
+                else { return false }
+                return ctx.interner.resolve(name) == "hashSetOf"
+            })
+            let callType = try XCTUnwrap(sema.bindings.exprTypes[hashSetCall])
+            guard case let .classType(classType) = sema.types.kind(of: callType) else {
+                return XCTFail("Expected hashSetOf to produce a MutableSet class type")
+            }
+            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(classType.classSymbol)?.name)), "MutableSet")
+            XCTAssertEqual(classType.args, [.invariant(sema.types.intType)])
+            XCTAssertTrue(
+                sema.bindings.isCollectionExpr(hashSetCall),
+                "Expected hashSetOf to be tracked as a collection expression"
+            )
+        }
+    }
+
     func testListAggregateMembersUseRuntimeExternalLinks() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])
@@ -257,6 +417,90 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testPrimitiveIteratorSurfacesAreRegistered() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let collectionsPkg = ["kotlin", "collections"].map { ctx.interner.intern($0) }
+            let iteratorSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: collectionsPkg + [ctx.interner.intern("Iterator")])
+            )
+            let specs: [(className: String, nextName: String, elementType: TypeID)] = [
+                ("BooleanIterator", "nextBoolean", sema.types.booleanType),
+                ("ByteIterator", "nextByte", sema.types.intType),
+                ("ShortIterator", "nextShort", sema.types.intType),
+                ("IntIterator", "nextInt", sema.types.intType),
+                ("LongIterator", "nextLong", sema.types.longType),
+                ("FloatIterator", "nextFloat", sema.types.floatType),
+                ("DoubleIterator", "nextDouble", sema.types.doubleType),
+                ("CharIterator", "nextChar", sema.types.charType),
+            ]
+
+            for spec in specs {
+                let classFQName = collectionsPkg + [ctx.interner.intern(spec.className)]
+                let classSymbol = try XCTUnwrap(
+                    sema.symbols.lookup(fqName: classFQName),
+                    "Expected \(spec.className) to be registered"
+                )
+                let classInfo = try XCTUnwrap(sema.symbols.symbol(classSymbol))
+                XCTAssertEqual(classInfo.kind, .class)
+                XCTAssertTrue(classInfo.flags.contains(.synthetic))
+                XCTAssertTrue(classInfo.flags.contains(.abstractType))
+                XCTAssertTrue(sema.symbols.directSupertypes(for: classSymbol).contains(iteratorSymbol))
+                XCTAssertEqual(sema.symbols.supertypeTypeArgs(for: classSymbol, supertype: iteratorSymbol), [.out(spec.elementType)])
+
+                let primitiveNextSymbol = try XCTUnwrap(
+                    sema.symbols.lookup(fqName: classFQName + [ctx.interner.intern(spec.nextName)]),
+                    "Expected \(spec.className).\(spec.nextName) to be registered"
+                )
+                let primitiveNextInfo = try XCTUnwrap(sema.symbols.symbol(primitiveNextSymbol))
+                XCTAssertTrue(primitiveNextInfo.flags.isSuperset(of: [.synthetic, .abstractType]))
+                let primitiveNextSignature = try XCTUnwrap(sema.symbols.functionSignature(for: primitiveNextSymbol))
+                XCTAssertTrue(primitiveNextSignature.parameterTypes.isEmpty)
+                XCTAssertEqual(primitiveNextSignature.returnType, spec.elementType)
+
+                let nextSymbol = try XCTUnwrap(
+                    sema.symbols.lookup(fqName: classFQName + [ctx.interner.intern("next")]),
+                    "Expected \(spec.className).next to be registered"
+                )
+                let nextInfo = try XCTUnwrap(sema.symbols.symbol(nextSymbol))
+                XCTAssertTrue(nextInfo.flags.isSuperset(of: [.synthetic, .openType, .overrideMember, .operatorFunction]))
+                XCTAssertEqual(try XCTUnwrap(sema.symbols.functionSignature(for: nextSymbol)).returnType, spec.elementType)
+            }
+        }
+    }
+
+    func testPrimitiveIteratorSubclassResolvesAsIterator() throws {
+        let source = """
+        import kotlin.collections.IntIterator
+        import kotlin.collections.Iterator
+
+        class ProbeIntIterator : IntIterator() {
+            override fun hasNext(): Boolean = false
+            override fun nextInt(): Int = 42
+        }
+
+        fun accept(iterator: Iterator<Int>) {}
+
+        fun probe(iterator: ProbeIntIterator): Int {
+            accept(iterator)
+            return iterator.nextInt() + iterator.next()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected primitive iterator subclass surface to resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     func testMutableListIteratorSurfaceIsRegistered() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])
@@ -323,6 +567,75 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testMutableIterableSurfaceIsRegistered() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let collectionsPkg = ["kotlin", "collections"].map { ctx.interner.intern($0) }
+            let iterableSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: collectionsPkg + [ctx.interner.intern("Iterable")])
+            )
+            let iteratorSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: collectionsPkg + [ctx.interner.intern("Iterator")])
+            )
+            let mutableIteratorSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: collectionsPkg + [ctx.interner.intern("MutableIterator")])
+            )
+            XCTAssertEqual(sema.types.nominalTypeParameterVariances(for: mutableIteratorSymbol), [.out])
+            XCTAssertTrue(sema.symbols.directSupertypes(for: mutableIteratorSymbol).contains(iteratorSymbol))
+            XCTAssertEqual(
+                sema.symbols.supertypeTypeArgs(for: mutableIteratorSymbol, supertype: iteratorSymbol).count,
+                1
+            )
+            let removeSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: collectionsPkg + [ctx.interner.intern("MutableIterator"), ctx.interner.intern("remove")])
+            )
+            let removeSignature = try XCTUnwrap(sema.symbols.functionSignature(for: removeSymbol))
+            XCTAssertTrue(removeSignature.parameterTypes.isEmpty)
+            XCTAssertEqual(removeSignature.returnType, sema.types.unitType)
+
+            let mutableIterableFQName = collectionsPkg + [ctx.interner.intern("MutableIterable")]
+            let mutableIterableSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: mutableIterableFQName),
+                "Expected kotlin.collections.MutableIterable to be registered"
+            )
+            let mutableIterableInfo = try XCTUnwrap(sema.symbols.symbol(mutableIterableSymbol))
+            XCTAssertEqual(mutableIterableInfo.kind, .interface)
+            XCTAssertTrue(mutableIterableInfo.flags.contains(.synthetic))
+            XCTAssertEqual(sema.types.nominalTypeParameterVariances(for: mutableIterableSymbol), [.out])
+            XCTAssertTrue(sema.symbols.directSupertypes(for: mutableIterableSymbol).contains(iterableSymbol))
+            XCTAssertTrue(sema.types.directNominalSupertypes(for: mutableIterableSymbol).contains(iterableSymbol))
+            XCTAssertEqual(sema.symbols.supertypeTypeArgs(for: mutableIterableSymbol, supertype: iterableSymbol).count, 1)
+
+            let iteratorMember = try XCTUnwrap(
+                sema.symbols.lookup(fqName: mutableIterableFQName + [ctx.interner.intern("iterator")]),
+                "Expected MutableIterable.iterator to be registered"
+            )
+            XCTAssertTrue(try XCTUnwrap(sema.symbols.symbol(iteratorMember)).flags.contains(.operatorFunction))
+            let iteratorSignature = try XCTUnwrap(sema.symbols.functionSignature(for: iteratorMember))
+            XCTAssertTrue(iteratorSignature.parameterTypes.isEmpty)
+            guard case let .classType(iteratorReturnType) = sema.types.kind(of: iteratorSignature.returnType) else {
+                XCTFail("MutableIterable.iterator should return MutableIterator<T>")
+                return
+            }
+            XCTAssertEqual(iteratorReturnType.classSymbol, mutableIteratorSymbol)
+
+            for collectionName in ["MutableList", "MutableSet"] {
+                let collectionSymbol = try XCTUnwrap(
+                    sema.symbols.lookup(fqName: collectionsPkg + [ctx.interner.intern(collectionName)])
+                )
+                XCTAssertTrue(sema.symbols.directSupertypes(for: collectionSymbol).contains(mutableIterableSymbol))
+                XCTAssertTrue(sema.types.directNominalSupertypes(for: collectionSymbol).contains(mutableIterableSymbol))
+                XCTAssertEqual(
+                    sema.symbols.supertypeTypeArgs(for: collectionSymbol, supertype: mutableIterableSymbol).count,
+                    1
+                )
+            }
+        }
+    }
+
     func testMutableListIteratorMembersResolveFromMutableList() throws {
         let source = """
         fun probe(values: MutableList<Int>) {
@@ -342,6 +655,44 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             XCTAssertFalse(
                 ctx.diagnostics.hasError,
                 "Expected MutableListIterator surface to resolve from MutableList: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
+    func testMutableIterableSubtypeResolution() throws {
+        let source = """
+        import kotlin.collections.Iterable
+        import kotlin.collections.MutableIterable
+        import kotlin.collections.MutableList
+        import kotlin.collections.MutableSet
+
+        abstract class ProbeMutableIterable : MutableIterable<Int>
+
+        fun acceptIterable(values: Iterable<Int>) {}
+        fun acceptMutableIterable(values: MutableIterable<Int>) {}
+
+        fun probeIterable(values: ProbeMutableIterable) {
+            acceptIterable(values)
+            acceptMutableIterable(values)
+            values.iterator().remove()
+        }
+
+        fun probeList(values: MutableList<Int>) {
+            acceptMutableIterable(values)
+        }
+
+        fun probeSet(values: MutableSet<Int>) {
+            acceptMutableIterable(values)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected MutableIterable subtype surface to resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
             )
         }
     }
@@ -1890,6 +2241,44 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             }
             let pairName = try XCTUnwrap(sema.symbols.symbol(pairType.classSymbol)?.name)
             XCTAssertEqual(ctx.interner.resolve(pairName), "Pair")
+        }
+    }
+
+    func testMapEntryToPairSurfaceIsRegistered() throws {
+        let source = """
+        fun probe(values: Map<String, Int>): List<Pair<String, Int>> {
+            return values.map { it.toPair() }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Map.Entry.toPair surface to resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let entryFQName: [InternedString] = [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("Map"),
+                ctx.interner.intern("Entry"),
+            ]
+            let toPairSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: entryFQName + [ctx.interner.intern("toPair")]),
+                "Expected Map.Entry.toPair to be registered"
+            )
+            XCTAssertEqual(sema.symbols.externalLinkName(for: toPairSymbol), "kk_map_entry_to_pair")
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: toPairSymbol))
+            guard case let .classType(pairType) = sema.types.kind(of: signature.returnType) else {
+                return XCTFail("Expected Map.Entry.toPair to return Pair<K, V>")
+            }
+            let pairName = try XCTUnwrap(sema.symbols.symbol(pairType.classSymbol)?.name)
+            XCTAssertEqual(ctx.interner.resolve(pairName), "Pair")
+            XCTAssertEqual(pairType.args.count, 2)
         }
     }
 

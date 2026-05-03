@@ -821,7 +821,7 @@ public enum RuntimeABISpec {
             section: "String"
         ),
         RuntimeABIFunctionSpec(
-        
+
             name: "kk_string_replaceAfterLast",
             parameters: [
                 RuntimeABIParameter(name: "strRaw", type: .intptr),
@@ -888,7 +888,7 @@ public enum RuntimeABISpec {
             section: "String"
         ),
         RuntimeABIFunctionSpec(
-        
+
             name: "kk_any_to_string",
             parameters: [
                 RuntimeABIParameter(name: "value", type: .intptr),

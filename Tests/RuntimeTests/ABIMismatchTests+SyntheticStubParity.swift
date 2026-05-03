@@ -40,8 +40,6 @@ extension ABIMismatchTests {
             "kk_concurrent_modification_exception_new_message",
             "kk_concurrent_modification_exception_new_message_cause",
             "kk_concurrent_modification_exception_new_cause",
-            "kk_array_index_out_of_bounds_exception_new",
-            "kk_array_index_out_of_bounds_exception_new_message",
             // Comparator (STDLIB-176)
             "kk_comparator_then_comparator",
             // Collection (binarySearch)
@@ -54,11 +52,6 @@ extension ABIMismatchTests {
             // String radix conversion
             "kk_string_toIntOrNull_radix",
             "kk_string_case_insensitive_order",
-            // Char locale case conversion
-            "kk_char_lowercase_locale",
-
-            "kk_char_uppercase_locale",
-            // Char locale case conversion
             "kk_system_exitProcess",
             "kk_system_currentTimeMillis",
             "kk_system_nanoTime",
@@ -315,7 +308,6 @@ extension ABIMismatchTests {
             "kk_kotlin_version_compareTo",
             "kk_kotlin_version_isAtLeast",
             "kk_kotlin_version_isAtLeast_patch",
-            "kk_auto_closeable_create",
         ]
 
         for linkName in syntheticLinkNames {

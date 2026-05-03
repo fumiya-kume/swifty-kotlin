@@ -1410,11 +1410,6 @@ extension CallTypeChecker {
             "filterTo", "filterNotTo", "mapTo", "flatMapTo", "mapNotNullTo", "mapIndexedTo", "flatMapIndexedTo",
             "mapIndexedNotNullTo", "filterIndexedTo", "filterNotNullTo",
             "forEachIndexed", "mapIndexed",
-            "firstNotNullOf",
-<<<<<<< HEAD
-            "firstNotNullOfOrNull",
-=======
->>>>>>> 948968139 (Add Sequence firstNotNullOf)
             "onEach", "onEachIndexed",
             "sumOf", "maxOrNull", "minOrNull",
             "indexOfFirst", "indexOfLast", "binarySearch", "binarySearchBy",
@@ -1466,8 +1461,6 @@ extension CallTypeChecker {
         }
         if !isSequenceReceiver {
             activeCollectionHOFNames.remove("flatMapIndexed")
-            activeCollectionHOFNames.remove("firstNotNullOf")
-            activeCollectionHOFNames.remove("firstNotNullOfOrNull")
         }
         if isMapReceiver {
             activeCollectionHOFNames.formUnion(mapOnlyCollectionHOFNames)
@@ -2352,11 +2345,7 @@ extension CallTypeChecker {
                         resultType = sema.types.makeNonNullable(receiverType)
                     case "filterValues" where isMapReceiver:
                         resultType = sema.types.makeNonNullable(receiverType)
-<<<<<<< HEAD
-                    case "mapNotNull", "firstNotNullOf", "firstNotNullOfOrNull":
-=======
-                    case "mapNotNull", "firstNotNullOf":
->>>>>>> 948968139 (Add Sequence firstNotNullOf)
+                    case "mapNotNull":
                         let bodyType: TypeID = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
                             sema.types.makeNonNullable(sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType)
                         } else if case let .functionType(fnType) = sema.types.kind(of: sema.bindings.exprType(for: args[0].expr) ?? sema.types.anyType) {
@@ -2364,14 +2353,7 @@ extension CallTypeChecker {
                         } else {
                             sema.types.anyType
                         }
-                        if calleeStr == "firstNotNullOf" {
-                            resultType = bodyType
-<<<<<<< HEAD
-                        } else if calleeStr == "firstNotNullOfOrNull" {
-                            resultType = sema.types.makeNullable(bodyType)
-=======
->>>>>>> 948968139 (Add Sequence firstNotNullOf)
-                        } else if isSequenceReceiver {
+                        if isSequenceReceiver {
                             resultType = makeSyntheticSequenceType(
                                 symbols: sema.symbols,
                                 types: sema.types,
@@ -2386,6 +2368,24 @@ extension CallTypeChecker {
                             )))
                         } else {
                             resultType = sema.types.anyType
+                        }
+                    case "firstNotNullOf":
+                        resultType = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
+                            sema.types.makeNonNullable(sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType)
+                        } else if case let .functionType(fnType) = sema.types.kind(of: sema.bindings.exprType(for: args[0].expr) ?? sema.types.anyType) {
+                            sema.types.makeNonNullable(fnType.returnType)
+                        } else {
+                            sema.types.anyType
+                        }
+                    case "firstNotNullOfOrNull":
+                        if let expectedType {
+                            resultType = sema.types.makeNullable(sema.types.makeNonNullable(expectedType))
+                        } else if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
+                            resultType = sema.types.makeNullable(sema.types.makeNonNullable(sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType))
+                        } else if case let .functionType(fnType) = sema.types.kind(of: sema.bindings.exprType(for: args[0].expr) ?? sema.types.anyType) {
+                            resultType = sema.types.makeNullable(sema.types.makeNonNullable(fnType.returnType))
+                        } else {
+                            resultType = sema.types.nullableAnyType
                         }
                     default: resultType = sema.types.anyType
                     }
@@ -4495,12 +4495,12 @@ extension CallTypeChecker {
                 isSuperCall = true
                 if let currentReceiverType = ctx.implicitReceiverType,
                    let classSymbol = driver.helpers.nominalSymbol(of: currentReceiverType, types: sema.types) {
-                    
+
                     // Handle qualified super: super<Interface>
                     if let qualifier = interfaceQualifier {
                         let qualifierStr = ctx.interner.resolve(qualifier)
                         let directSupertypes = sema.symbols.directSupertypes(for: classSymbol)
-                        
+
                         // Find the specified interface in direct supertypes
                         for superID in directSupertypes {
                             guard let superSym = sema.symbols.symbol(superID) else { continue }
@@ -4510,7 +4510,7 @@ extension CallTypeChecker {
                                 break
                             }
                         }
-                        
+
                         if qualifiedSuperType == nil {
                             ctx.semaCtx.diagnostics.error(
                                 "KSWIFTK-SEMA-0054",
@@ -4946,7 +4946,7 @@ extension CallTypeChecker {
         } else {
             // Normal instance receiver: use standard member lookup with
             // companion fallback via collectMemberFunctionCandidates.
-            let allowedOwnerSymbols = isSuperCall && !supertypeSymbols.isEmpty ? 
+            let allowedOwnerSymbols = isSuperCall && !supertypeSymbols.isEmpty ?
                 (qualifiedSuperType != nil ? [qualifiedSuperType!] : supertypeSymbols) : nil
             let memberCandidates = driver.helpers.collectMemberFunctionCandidates(
                 named: calleeName,
@@ -6876,6 +6876,7 @@ extension CallTypeChecker {
                 receiverID: receiverID,
                 args: args,
                 ctx: ctx,
+                expectedType: expectedType,
                 locals: &locals
             ) {
                 return fallbackType
@@ -7089,6 +7090,7 @@ extension CallTypeChecker {
                 receiverID: receiverID,
                 args: args,
                 ctx: ctx,
+                expectedType: expectedType,
                 locals: &locals
             ) {
                 return fallbackType
@@ -7236,6 +7238,7 @@ extension CallTypeChecker {
             receiverID: receiverID,
             args: args,
             ctx: ctx,
+            expectedType: expectedType,
             locals: &locals
         ) {
             return fallbackType
@@ -7511,6 +7514,7 @@ extension CallTypeChecker {
                 receiverID: receiverID,
                 args: args,
                 ctx: ctx,
+                expectedType: expectedType,
                 locals: &locals
             ) {
                 return fallbackType
