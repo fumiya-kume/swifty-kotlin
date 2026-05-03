@@ -48,7 +48,8 @@ final class JvmFieldIntegrationTests: XCTestCase {
         let interner = ctx.interner
 
         let countProperty = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
-            symbol.kind == .property && interner.resolve(symbol.name) == "count"
+            symbol.kind == .property
+                && Array(symbol.fqName.suffix(3).map { interner.resolve($0) }) == ["Counter", "Companion", "count"]
         })?.id)
 
         let globals = module.arena.declarations.compactMap { decl -> KIRGlobal? in
