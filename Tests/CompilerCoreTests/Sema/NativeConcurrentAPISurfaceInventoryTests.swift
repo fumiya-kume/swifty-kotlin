@@ -60,13 +60,21 @@ final class NativeConcurrentAPISurfaceInventoryTests: XCTestCase {
     }
 
     func testTargetInventoryHasExpectedShape() {
+        // Structural invariants only — no magic totals. A previous version asserted exact
+        // sizes (`== 31`, `== 28`, `== 3`) which forced every PR adding/promoting a stub
+        // to update three integers and was a major merge-conflict source.
         let targetEntries = Self.implementedTopLevelEntries.union(Self.knownGapTopLevelEntries)
         let targetNames = Set(targetEntries.map(\.name))
 
+        // Each TopLevelEntry must have a unique name (no two entries share a `name`).
         XCTAssertEqual(targetEntries.count, targetNames.count)
-        XCTAssertEqual(targetEntries.count, 31)
-        XCTAssertEqual(Self.implementedTopLevelEntries.count, 28)
-        XCTAssertEqual(Self.knownGapTopLevelEntries.count, 3)
+        // Implemented and gap sets must be disjoint by name.
+        let implementedNames = Set(Self.implementedTopLevelEntries.map(\.name))
+        let gapNames = Set(Self.knownGapTopLevelEntries.map(\.name))
+        XCTAssertTrue(implementedNames.isDisjoint(with: gapNames))
+        // Implemented entries never carry a TODO; gap entries always do.
+        XCTAssertTrue(Self.implementedTopLevelEntries.allSatisfy { $0.todo == nil })
+        XCTAssertTrue(Self.knownGapTopLevelEntries.allSatisfy { $0.todo != nil })
     }
 
     func testImplementedTopLevelEntriesAreRegistered() throws {
@@ -117,13 +125,18 @@ final class NativeConcurrentAPISurfaceInventoryTests: XCTestCase {
     }
 
     func testKnownGapTodosAreNativeConcurrentItems() {
-        let todos = Set(Self.knownGapTopLevelEntries.compactMap(\.todo))
-        XCTAssertEqual(
-            todos,
-            [
-                "STDLIB-NATIVE-CONCURRENT-018",
-                "STDLIB-NATIVE-CONCURRENT-019",
-            ]
-        )
+        // Structural prefix check — every gap TODO must belong to the
+        // STDLIB-NATIVE-CONCURRENT-* tracker. Avoids enumerating exact IDs (which forced
+        // every PR adding/closing a gap to edit a hard-coded set literal).
+        for entry in Self.knownGapTopLevelEntries {
+            guard let todo = entry.todo else {
+                XCTFail("knownGap entry \(entry.name) is missing a TODO id")
+                continue
+            }
+            XCTAssertTrue(
+                todo.hasPrefix("STDLIB-NATIVE-CONCURRENT-"),
+                "knownGap TODO \(todo) for \(entry.name) is not a kotlin.native.concurrent tracker"
+            )
+        }
     }
 }
