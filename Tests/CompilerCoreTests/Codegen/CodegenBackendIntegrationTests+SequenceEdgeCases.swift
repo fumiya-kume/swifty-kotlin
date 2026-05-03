@@ -534,6 +534,75 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenCompilesSequenceFirstNotNullOfOrNull() throws {
+        let source = """
+        fun main() {
+            val result: String? = sequenceOf(1, 2, 3)
+                .firstNotNullOfOrNull { if (it > 1) "hit" else null }
+            println(result)
+
+            val missing: String? = sequenceOf(1, 3, 5)
+                .firstNotNullOfOrNull { if (it % 2 == 0) "even" else null }
+            println(missing)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceFirstNotNullOfOrNullEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                hit
+                null
+                """
+                + "\n"
+            )
+        }
+    }
+
+    func testSequenceFirstNotNullOfReturnsFirstValueOrThrows() throws {
+        let source = """
+        fun main() {
+            val result: String = sequenceOf(1, 2, 3)
+                .firstNotNullOf { if (it > 1) "hit" else null }
+            println(result)
+
+            try {
+                sequenceOf(1, 3, 5)
+                    .firstNotNullOf { if (it % 2 == 0) "even" else null }
+                println("unexpected")
+            } catch (e: NoSuchElementException) {
+                println("missing")
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceFirstNotNullOf",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "hit\nmissing\n")
+        }
+    }
+
     func testSequenceZipWithNextTransformReturnsAdjacentResults() throws {
         let source = """
         fun main() {
