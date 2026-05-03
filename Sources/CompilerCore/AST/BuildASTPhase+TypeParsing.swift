@@ -373,7 +373,7 @@ extension BuildASTPhase {
         var index = colonIndex + 1
         while index < tokens.count {
             let token = tokens[index]
-            if depth.angle == 0 {
+            if depth.isAtTopLevel {
                 if token.kind == .symbol(.assign) || token.kind == .symbol(.lBrace) || token.kind == .symbol(.semicolon) {
                     break
                 }
