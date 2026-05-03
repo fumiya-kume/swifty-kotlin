@@ -2604,6 +2604,20 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerStringCompanionMethod(
+            named: "format",
+            externalLinkName: "kk_string_format_locale",
+            returnType: stringType,
+            parameters: [
+                (name: "locale", type: types.makeNullable(localeType)),
+                (name: "format", type: stringType),
+                (name: "args", type: types.nullableAnyType),
+            ],
+            isVararg: [false, false, true],
+            companionFQName: stringCompanionFQName,
+            symbols: symbols,
+            interner: interner
+        )
 
         // --- STDLIB-316: String.chunked / String.windowed ---
 
