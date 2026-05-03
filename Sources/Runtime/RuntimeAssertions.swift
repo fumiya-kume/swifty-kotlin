@@ -4,8 +4,9 @@ import Foundation
 //
 // Typed RuntimeThrowableBox subclasses for AssertionError, IllegalStateException,
 // IllegalArgumentException, NoWhenBranchMatchedException, and
-// ConcurrentModificationException. These enable proper type-discriminated catch
-// blocks in compiled Kotlin code (e.g., `catch (e: IllegalArgumentException)`).
+// ConcurrentModificationException, and ArrayIndexOutOfBoundsException. These enable
+// proper type-discriminated catch blocks in compiled Kotlin code (e.g.,
+// `catch (e: IllegalArgumentException)`).
 //
 // The message stored in each box is the *user-visible* message (without the
 // exception-type prefix). The `renderedMessage` property adds the type prefix
@@ -105,6 +106,26 @@ final class RuntimeConcurrentModificationExceptionBox: RuntimeThrowableBox {
     }
 }
 
+final class RuntimeArrayIndexOutOfBoundsExceptionBox: RuntimeThrowableBox {
+    override var exceptionFQName: String {
+        "kotlin.ArrayIndexOutOfBoundsException"
+    }
+
+    override var exceptionHierarchyFQNames: [String] {
+        [
+            "kotlin.ArrayIndexOutOfBoundsException",
+            "kotlin.IndexOutOfBoundsException",
+            "kotlin.RuntimeException",
+            "kotlin.Exception",
+            "kotlin.Throwable",
+        ]
+    }
+
+    override var renderedMessage: String {
+        "ArrayIndexOutOfBoundsException: \(message)"
+    }
+}
+
 // MARK: - Typed Allocators
 
 /// Allocates an `AssertionError` with the given message.
@@ -148,6 +169,15 @@ func runtimeAllocateNoWhenBranchMatchedException(message: String, cause: Int = 0
 
 func runtimeAllocateConcurrentModificationException(message: String, cause: Int = 0) -> Int {
     let throwable = RuntimeConcurrentModificationExceptionBox(message: message, cause: cause)
+    let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(throwable).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: ptr))
+    }
+    return Int(bitPattern: ptr)
+}
+
+func runtimeAllocateArrayIndexOutOfBoundsException(message: String) -> Int {
+    let throwable = RuntimeArrayIndexOutOfBoundsExceptionBox(message: message)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(throwable).toOpaque())
     runtimeStorage.withLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
@@ -215,5 +245,17 @@ public func kk_concurrent_modification_exception_new_cause(_ causeRaw: Int) -> I
     runtimeAllocateConcurrentModificationException(
         message: "",
         cause: (causeRaw == 0 || causeRaw == runtimeNullSentinelInt) ? 0 : causeRaw
+    )
+}
+
+@_cdecl("kk_array_index_out_of_bounds_exception_new")
+public func kk_array_index_out_of_bounds_exception_new() -> Int {
+    runtimeAllocateArrayIndexOutOfBoundsException(message: "")
+}
+
+@_cdecl("kk_array_index_out_of_bounds_exception_new_message")
+public func kk_array_index_out_of_bounds_exception_new_message(_ messageRaw: Int) -> Int {
+    runtimeAllocateArrayIndexOutOfBoundsException(
+        message: runtimeExceptionMessage(from: messageRaw, defaultMessage: "")
     )
 }

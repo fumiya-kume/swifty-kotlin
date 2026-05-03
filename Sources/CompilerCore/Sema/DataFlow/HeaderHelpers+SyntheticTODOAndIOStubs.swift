@@ -2966,6 +2966,80 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // firstNotNullOf(transform: (T) -> R?): R
+        do {
+            let memberName = interner.intern("firstNotNullOf")
+            let rName = interner.intern("R")
+            let rSymbol = symbols.lookup(fqName: sequenceFQName + [memberName, rName]) ?? symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: sequenceFQName + [memberName, rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let nullableRType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nullable)))
+            let transformType = types.make(.functionType(FunctionType(
+                params: [typeParamType],
+                returnType: nullableRType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            registerSequenceMemberStub(
+                named: "firstNotNullOf",
+                externalLinkName: "kk_sequence_firstNotNullOf",
+                receiverType: receiverType,
+                parameters: [("transform", transformType)],
+                returnType: rType,
+                sequenceSymbol: sequenceSymbol,
+                sequenceFQName: sequenceFQName,
+                typeParamSymbol: typeParamSymbol,
+                symbols: symbols,
+                interner: interner,
+                canThrow: true,
+                additionalTypeParameterSymbols: [rSymbol],
+                additionalTypeParameterUpperBoundsList: [[]]
+            )
+        }
+
+        // firstNotNullOfOrNull(transform: (T) -> R?): R?
+        do {
+            let memberName = interner.intern("firstNotNullOfOrNull")
+            let rName = interner.intern("R")
+            let rSymbol = symbols.lookup(fqName: sequenceFQName + [memberName, rName]) ?? symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: sequenceFQName + [memberName, rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let nullableRType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nullable)))
+            let transformType = types.make(.functionType(FunctionType(
+                params: [typeParamType],
+                returnType: nullableRType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            registerSequenceMemberStub(
+                named: "firstNotNullOfOrNull",
+                externalLinkName: "kk_sequence_firstNotNullOfOrNull",
+                receiverType: receiverType,
+                parameters: [("transform", transformType)],
+                returnType: types.makeNullable(rType),
+                sequenceSymbol: sequenceSymbol,
+                sequenceFQName: sequenceFQName,
+                typeParamSymbol: typeParamSymbol,
+                symbols: symbols,
+                interner: interner,
+                canThrow: true,
+                additionalTypeParameterSymbols: [rSymbol],
+                additionalTypeParameterUpperBoundsList: [[]]
+            )
+        }
+
         // last(): T
         registerSequenceMemberStub(
             named: "last",
@@ -3163,79 +3237,6 @@ extension DataFlowSemaPhase {
             interner: interner,
             canThrow: true
         )
-
-        // STDLIB-SEQ-026: firstNotNullOf(transform): R
-        let firstNotNullOfName = interner.intern("firstNotNullOf")
-        let firstNotNullOfFQName = sequenceFQName + [firstNotNullOfName]
-        if symbols.lookup(fqName: firstNotNullOfFQName) == nil {
-            let rName = interner.intern("R")
-            let rSymbol = symbols.define(
-                kind: .typeParameter,
-                name: rName,
-                fqName: firstNotNullOfFQName + [rName],
-                declSite: nil,
-                visibility: .private,
-                flags: []
-            )
-            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
-            let transformType = types.make(.functionType(FunctionType(
-                params: [typeParamType],
-                returnType: types.makeNullable(rType),
-                isSuspend: false,
-                nullability: .nonNull
-            )))
-            registerSequenceMemberStub(
-                named: "firstNotNullOf",
-                externalLinkName: "kk_sequence_firstNotNullOf",
-                receiverType: receiverType,
-                parameters: [("transform", transformType)],
-                returnType: rType,
-                sequenceSymbol: sequenceSymbol,
-                sequenceFQName: sequenceFQName,
-                typeParamSymbol: typeParamSymbol,
-                symbols: symbols,
-                interner: interner,
-                canThrow: true,
-                additionalTypeParameterSymbols: [rSymbol]
-            )
-        }
-
-        // STDLIB-SEQ-027: firstNotNullOfOrNull(transform): R?
-        let firstNotNullOfOrNullName = interner.intern("firstNotNullOfOrNull")
-        let firstNotNullOfOrNullFQName = sequenceFQName + [firstNotNullOfOrNullName]
-        if symbols.lookup(fqName: firstNotNullOfOrNullFQName) == nil {
-            let rName = interner.intern("R")
-            let rSymbol = symbols.define(
-                kind: .typeParameter,
-                name: rName,
-                fqName: firstNotNullOfOrNullFQName + [rName],
-                declSite: nil,
-                visibility: .private,
-                flags: []
-            )
-            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
-            let nullableRType = types.makeNullable(rType)
-            let transformType = types.make(.functionType(FunctionType(
-                params: [typeParamType],
-                returnType: nullableRType,
-                isSuspend: false,
-                nullability: .nonNull
-            )))
-            registerSequenceMemberStub(
-                named: "firstNotNullOfOrNull",
-                externalLinkName: "kk_sequence_firstNotNullOfOrNull",
-                receiverType: receiverType,
-                parameters: [("transform", transformType)],
-                returnType: nullableRType,
-                sequenceSymbol: sequenceSymbol,
-                sequenceFQName: sequenceFQName,
-                typeParamSymbol: typeParamSymbol,
-                symbols: symbols,
-                interner: interner,
-                canThrow: true,
-                additionalTypeParameterSymbols: [rSymbol]
-            )
-        }
 
         // sum()/average()
         registerSequenceMemberStub(
