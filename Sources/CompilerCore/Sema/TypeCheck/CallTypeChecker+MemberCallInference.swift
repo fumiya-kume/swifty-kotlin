@@ -510,6 +510,16 @@ extension CallTypeChecker {
                propertyInfo.flags.contains(.lateinitProperty)
             {
                 let boolType = sema.types.make(.primitive(.boolean, .nonNull))
+                if let isInitializedProperty = ctx.cachedScopeLookup(calleeName).first(where: { candidate in
+                    guard let symbol = ctx.cachedSymbol(candidate),
+                          symbol.kind == .property
+                    else {
+                        return false
+                    }
+                    return sema.symbols.extensionPropertyReceiverType(for: candidate) != nil
+                }) {
+                    sema.bindings.bindIdentifier(id, symbol: isInitializedProperty)
+                }
                 sema.bindings.bindExprType(id, type: boolType)
                 return boolType
             }
@@ -1107,6 +1117,9 @@ extension CallTypeChecker {
                 case .scopeWith:
                     break // with is handled in inferCallExpr (top-level function)
 
+                case .scopeContext:
+                    break // context is handled in inferCallExpr (top-level function)
+
                 case .scopeTopLevelRun:
                     break // top-level run is handled in inferCallExpr
                 }
@@ -1398,8 +1411,6 @@ extension CallTypeChecker {
             "mapIndexedNotNullTo", "filterIndexedTo", "filterNotNullTo",
             "mapKeysTo", "mapValuesTo",
             "forEachIndexed", "mapIndexed",
-            "firstNotNullOf",
-            "firstNotNullOfOrNull",
             "onEach", "onEachIndexed",
             "sumOf", "sumBy", "sumByDouble", "maxOrNull", "minOrNull",
             "indexOfFirst", "indexOfLast", "binarySearch", "binarySearchBy",
@@ -1407,7 +1418,7 @@ extension CallTypeChecker {
             "maxOf", "minOf",
             "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",
             "maxOfWith", "maxOfWithOrNull", "minOfWith", "minOfWithOrNull",
-            "sortedByDescending", "sortedWith", "partition", "takeWhile", "dropWhile", "distinctBy", "zipWithNext",
+            "sortedByDescending", "sortedWith", "sortedArrayWith", "partition", "takeWhile", "dropWhile", "distinctBy", "zipWithNext",
             "flatten",
             "sort", "sortBy", "sortByDescending",
         ]
@@ -1437,19 +1448,6 @@ extension CallTypeChecker {
         let isFlowHOF = isFlowReceiver && flowHOFNames.contains(interner.resolve(calleeName))
         let isCollectionReceiver = sema.bindings.isCollectionExpr(receiverID)
             || isCollectionLikeType(receiverType, sema: sema, interner: interner)
-        let isIterableReceiver: Bool = {
-            guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
-                  let symbol = sema.symbols.symbol(classType.classSymbol)
-            else {
-                return false
-            }
-            return symbol.name == interner.intern("Iterable")
-                || symbol.fqName == [
-                    interner.intern("kotlin"),
-                    interner.intern("collections"),
-                    interner.intern("Iterable"),
-                ]
-        }()
         let isArrayReceiver = isArrayLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isMapReceiver = isMapLikeCollectionType(receiverType, sema: sema, interner: interner)
         let isMutableListReceiver = isMutableListType(receiverType, sema: sema, interner: interner)
@@ -1464,16 +1462,12 @@ extension CallTypeChecker {
         }
         if !isSequenceReceiver {
             activeCollectionHOFNames.remove("flatMapIndexed")
-            if !isCollectionReceiver && !isIterableReceiver {
-                activeCollectionHOFNames.remove("firstNotNullOf")
-                activeCollectionHOFNames.remove("firstNotNullOfOrNull")
-            }
         }
         if isMapReceiver {
             activeCollectionHOFNames.formUnion(mapOnlyCollectionHOFNames)
         }
         let isCollectionHOF = activeCollectionHOFNames.contains(interner.resolve(calleeName))
-            && (isCollectionReceiver || isSequenceReceiver || isIterableReceiver)
+            && (isCollectionReceiver || isSequenceReceiver)
             && !(interner.resolve(calleeName) == "binarySearch"
                  && isArrayLikeReceiver(receiverID: receiverID, sema: sema, interner: interner))
 
@@ -2366,7 +2360,7 @@ extension CallTypeChecker {
                         resultType = sema.types.makeNonNullable(receiverType)
                     case "filterValues" where isMapReceiver:
                         resultType = sema.types.makeNonNullable(receiverType)
-                    case "mapNotNull", "firstNotNullOf", "firstNotNullOfOrNull":
+                    case "mapNotNull":
                         let bodyType: TypeID = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
                             sema.types.makeNonNullable(sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType)
                         } else if case let .functionType(fnType) = sema.types.kind(of: sema.bindings.exprType(for: args[0].expr) ?? sema.types.anyType) {
@@ -2374,11 +2368,7 @@ extension CallTypeChecker {
                         } else {
                             sema.types.anyType
                         }
-                        if calleeStr == "firstNotNullOf" {
-                            resultType = bodyType
-                        } else if calleeStr == "firstNotNullOfOrNull" {
-                            resultType = sema.types.makeNullable(bodyType)
-                        } else if isSequenceReceiver {
+                        if isSequenceReceiver {
                             resultType = makeSyntheticSequenceType(
                                 symbols: sema.symbols,
                                 types: sema.types,
@@ -2393,6 +2383,24 @@ extension CallTypeChecker {
                             )))
                         } else {
                             resultType = sema.types.anyType
+                        }
+                    case "firstNotNullOf":
+                        resultType = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
+                            sema.types.makeNonNullable(sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType)
+                        } else if case let .functionType(fnType) = sema.types.kind(of: sema.bindings.exprType(for: args[0].expr) ?? sema.types.anyType) {
+                            sema.types.makeNonNullable(fnType.returnType)
+                        } else {
+                            sema.types.anyType
+                        }
+                    case "firstNotNullOfOrNull":
+                        if let expectedType {
+                            resultType = sema.types.makeNullable(sema.types.makeNonNullable(expectedType))
+                        } else if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
+                            resultType = sema.types.makeNullable(sema.types.makeNonNullable(sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType))
+                        } else if case let .functionType(fnType) = sema.types.kind(of: sema.bindings.exprType(for: args[0].expr) ?? sema.types.anyType) {
+                            resultType = sema.types.makeNullable(sema.types.makeNonNullable(fnType.returnType))
+                        } else {
+                            resultType = sema.types.nullableAnyType
                         }
                     default: resultType = sema.types.anyType
                     }
@@ -3132,7 +3140,7 @@ extension CallTypeChecker {
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                 resultType = sema.types.unitType
 
-            case "sortedWith":
+            case "sortedWith", "sortedArrayWith":
                 guard args.count == 1 else {
                     sema.bindings.bindExprType(id, type: sema.types.anyType)
                     return sema.types.anyType
@@ -4256,12 +4264,17 @@ extension CallTypeChecker {
             let isShiftReceiver = receiverForCheck == intType || receiverForCheck == longType || receiverForCheck == uintType || receiverForCheck == ulongType
             // Helper: whether a type is a small unsigned type (UByte/UShort).
             // In Kotlin stdlib, small unsigned types promote to UInt for most
-            // arithmetic (plus/minus/times/div/rem).  `mod` keeps the operand type.
+            // arithmetic (plus/minus/times/div/rem). `mod` returns the RHS type.
             let isSmallUnsigned = { (t: TypeID) -> Bool in t == ubyteType || t == ushortType }
             let isUnsignedInteger = { (t: TypeID) -> Bool in
-                t == uintType || t == ulongType || t == ubyteType || t == ushortType
+                t == uintType || t == ulongType || isSmallUnsigned(t)
             }
-            let isSignedInteger = { (t: TypeID) -> Bool in t == intType || t == longType }
+            let isSignedInteger = { (t: TypeID) -> Bool in
+                t == intType || t == longType
+            }
+            let isFloating = { (t: TypeID) -> Bool in
+                t == floatType || t == doubleType
+            }
             // Use non-nullable RHS for arithmetic promotion checks
             let rhsType = sema.types.makeNonNullable(rawRhsType)
             switch interner.resolve(calleeName) {
@@ -4354,25 +4367,15 @@ extension CallTypeChecker {
                     return finalType
                 }
             case "mod":
-                // mod: keeps the operand type for small unsigned (UByte.mod(UByte) -> UByte)
+                // mod overloads return the divisor type for integer overloads and
+                // use normal Float/Double widening for floating operands.
                 let resultType: TypeID?
-                if receiverForCheck == doubleType || rhsType == doubleType {
-                    resultType = doubleType
-                } else if receiverForCheck == floatType || rhsType == floatType {
-                    resultType = floatType
-                } else if receiverForCheck == longType || rhsType == longType {
-                    resultType = longType
-                } else if receiverForCheck == ulongType || rhsType == ulongType {
-                    resultType = ulongType
-                } else if receiverForCheck == uintType || rhsType == uintType {
-                    resultType = uintType
-                } else if isSmallUnsigned(receiverForCheck) && isSmallUnsigned(rhsType) {
-                    // mod keeps the receiver type for same-width small unsigned
-                    resultType = receiverForCheck
-                } else if isSmallUnsigned(receiverForCheck) || isSmallUnsigned(rhsType) {
-                    resultType = uintType
-                } else if receiverForCheck == intType {
-                    resultType = intType
+                if isFloating(receiverForCheck) && isFloating(rhsType) {
+                    resultType = receiverForCheck == doubleType || rhsType == doubleType ? doubleType : floatType
+                } else if isSignedInteger(receiverForCheck) && isSignedInteger(rhsType) {
+                    resultType = rhsType == longType ? longType : intType
+                } else if isUnsignedInteger(receiverForCheck) && isUnsignedInteger(rhsType) {
+                    resultType = rhsType
                 } else {
                     resultType = nil
                 }
@@ -7047,6 +7050,7 @@ extension CallTypeChecker {
                 receiverID: receiverID,
                 args: args,
                 ctx: ctx,
+                expectedType: expectedType,
                 locals: &locals
             ) {
                 return fallbackType
@@ -7260,6 +7264,7 @@ extension CallTypeChecker {
                 receiverID: receiverID,
                 args: args,
                 ctx: ctx,
+                expectedType: expectedType,
                 locals: &locals
             ) {
                 return fallbackType
@@ -7276,6 +7281,17 @@ extension CallTypeChecker {
                 return fallbackType
             }
             if let fallbackType = tryBindMapGetOrElseFallback(
+                id,
+                calleeName: calleeName,
+                safeCall: safeCall,
+                receiverType: lookupReceiverType,
+                args: args,
+                ctx: ctx,
+                locals: &locals
+            ) {
+                return fallbackType
+            }
+            if let fallbackType = tryBindMapWithDefaultFallback(
                 id,
                 calleeName: calleeName,
                 safeCall: safeCall,
@@ -7396,6 +7412,7 @@ extension CallTypeChecker {
             receiverID: receiverID,
             args: args,
             ctx: ctx,
+            expectedType: expectedType,
             locals: &locals
         ) {
             return fallbackType
@@ -7412,6 +7429,17 @@ extension CallTypeChecker {
             return fallbackType
         }
         if let fallbackType = tryBindMapGetOrElseFallback(
+            id,
+            calleeName: calleeName,
+            safeCall: safeCall,
+            receiverType: lookupReceiverType,
+            args: args,
+            ctx: ctx,
+            locals: &locals
+        ) {
+            return fallbackType
+        }
+        if let fallbackType = tryBindMapWithDefaultFallback(
             id,
             calleeName: calleeName,
             safeCall: safeCall,
@@ -7660,6 +7688,7 @@ extension CallTypeChecker {
                 receiverID: receiverID,
                 args: args,
                 ctx: ctx,
+                expectedType: expectedType,
                 locals: &locals
             ) {
                 return fallbackType
@@ -9418,6 +9447,83 @@ extension CallTypeChecker {
         }
 
         let finalType = safeCall ? sema.types.makeNullable(valueType) : valueType
+        sema.bindings.bindExprType(id, type: finalType)
+        return finalType
+    }
+
+    private func tryBindMapWithDefaultFallback(
+        _ id: ExprID,
+        calleeName: InternedString,
+        safeCall: Bool,
+        receiverType: TypeID,
+        args: [CallArgument],
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
+    ) -> TypeID? {
+        let sema = ctx.sema
+        let interner = ctx.interner
+        let knownNames = KnownCompilerNames(interner: interner)
+        let withDefaultName = interner.intern("withDefault")
+
+        guard calleeName == withDefaultName,
+              args.count == 1,
+              case let .classType(receiverClassType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let receiverSymbol = sema.symbols.symbol(receiverClassType.classSymbol),
+              knownNames.isMapLikeSymbol(receiverSymbol),
+              receiverClassType.args.count >= 2
+        else {
+            return nil
+        }
+
+        let keyType: TypeID = switch receiverClassType.args[0] {
+        case let .invariant(inner), let .out(inner), let .in(inner):
+            inner
+        case .star:
+            sema.types.anyType
+        }
+        let valueType: TypeID = switch receiverClassType.args[1] {
+        case let .invariant(inner), let .out(inner), let .in(inner):
+            inner
+        case .star:
+            sema.types.anyType
+        }
+
+        let defaultLambdaType = sema.types.make(.functionType(FunctionType(
+            params: [keyType],
+            returnType: valueType,
+            nullability: .nonNull
+        )))
+        sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+        _ = driver.inferExpr(
+            args[0].expr,
+            ctx: ctx,
+            locals: &locals,
+            expectedType: defaultLambdaType
+        )
+
+        let fallbackCallee = sema.symbols.lookupAll(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("Map"),
+            withDefaultName,
+        ]).first(where: { candidate in
+            sema.symbols.externalLinkName(for: candidate) == "kk_map_withDefault"
+        })
+
+        if let fallbackCallee {
+            sema.bindings.bindCall(
+                id,
+                binding: CallBinding(
+                    chosenCallee: fallbackCallee,
+                    substitutedTypeArguments: [keyType, valueType],
+                    parameterMapping: [0: 0]
+                )
+            )
+            sema.bindings.bindCallableTarget(id, target: .symbol(fallbackCallee))
+        }
+
+        let resultType = sema.types.makeNonNullable(receiverType)
+        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
         sema.bindings.bindExprType(id, type: finalType)
         return finalType
     }
