@@ -621,7 +621,7 @@ final class RuntimeCollectionHOFTests: XCTestCase {
     func testMutableListSortByStringKeyMutatesInPlace() {
         // Use different string values to ensure different handles for proper sorting
         let strA = makeRuntimeStringRaw("a")
-        let strB = makeRuntimeStringRaw("b") 
+        let strB = makeRuntimeStringRaw("b")
         let strC = makeRuntimeStringRaw("c")
         let source = makeList([strB, strA, strC])
         _ = kk_mutable_list_sortBy(source, unsafeBitCast(sortBySelfStringValue, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
@@ -635,37 +635,37 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         // Test shuffle
         let source = makeList([1, 2, 3, 4, 5])
         let originalElements = listElements(source)
-        
+
         _ = kk_mutable_list_shuffle(source)
         let shuffledElements = listElements(source)
-        
+
         // Should have same elements but different order (most likely)
         XCTAssertEqual(shuffledElements.count, originalElements.count)
         XCTAssertEqual(Set(shuffledElements), Set(originalElements))
-        
+
         // Test reverse
         _ = kk_mutable_list_reverse(source)
         let reversedElements = listElements(source)
-        
+
         // Should be the reverse of shuffled
         XCTAssertEqual(reversedElements, shuffledElements.reversed())
-        
+
         // Test with empty list
         let emptyList = makeList([])
         _ = kk_mutable_list_shuffle(emptyList)
         XCTAssertEqual(listElements(emptyList), [])
-        
+
         _ = kk_mutable_list_reverse(emptyList)
         XCTAssertEqual(listElements(emptyList), [])
-        
+
         // Test with single element
         let singleList = makeList([42])
         _ = kk_mutable_list_shuffle(singleList)
         XCTAssertEqual(listElements(singleList), [42])
-        
+
         _ = kk_mutable_list_reverse(singleList)
         XCTAssertEqual(listElements(singleList), [42])
-        
+
         // Test with duplicate elements
         let duplicateList = makeList([5, 2, 5, 2, 5])
         _ = kk_mutable_list_reverse(duplicateList)

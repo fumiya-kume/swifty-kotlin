@@ -921,7 +921,7 @@ extension CollectionLiteralLoweringPass {
                     if arguments.count >= 1, fileExprIDs.contains(arguments[0].rawValue) {
                         let receiverID = arguments[0]
                         let kkCallee: InternedString?
-                        
+
                         switch callee {
                         case lookup.readTextName:
                             kkCallee = lookup.kkFileReadTextName
@@ -986,7 +986,7 @@ extension CollectionLiteralLoweringPass {
                         default:
                             kkCallee = nil
                         }
-                        
+
                         if let target = kkCallee {
                             let memberArgs = (
                                 callee == lookup.forEachLineName
