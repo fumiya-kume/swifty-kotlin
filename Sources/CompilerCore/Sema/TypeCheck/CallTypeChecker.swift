@@ -3543,7 +3543,12 @@ final class CallTypeChecker {
         return sema.types.errorType
     }
 
-    private func makeSyntheticListType(
+    /// Build `List<elementType>` for synthetic stdlib member-call inference.
+    /// Falls back to `Any` when `kotlin.collections.List` is not registered.
+    /// Promoted from `private` to module-`internal` so the
+    /// `+MemberCallInference*` extension files can share the single definition
+    /// instead of duplicating it.
+    func makeSyntheticListType(
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,
@@ -3631,7 +3636,12 @@ final class CallTypeChecker {
         )))
     }
 
-    private func makeSyntheticNominalType(
+    /// Build a nominal class type from a fully-qualified name (no type arguments).
+    /// Falls back to `Any` when the symbol is not registered.
+    /// Promoted from `private` to module-`internal` so the
+    /// `+MemberCallInference*` extension files can share the single definition
+    /// instead of duplicating it.
+    func makeSyntheticNominalType(
         symbols: SymbolTable,
         types: TypeSystem,
         interner _: StringInterner,
