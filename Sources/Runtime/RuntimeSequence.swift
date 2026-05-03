@@ -97,6 +97,7 @@ private let kSequenceGeneratorHardLimit = 100_000
 
 /// Error message for `first()` / `last()` on an empty sequence.
 private let kEmptySequenceNoSuchElement = "NoSuchElementException: Sequence is empty."
+private let kSequenceNoNonNullTransformResult = "NoSuchElementException: No element of the sequence was transformed to a non-null value."
 /// Error message for `reduce` on an empty sequence.
 private let kEmptySequenceCannotReduce = "UnsupportedOperationException: Empty sequence can't be reduced."
 /// Error message when a generator sequence exceeds the traversal hard limit.
@@ -1540,8 +1541,8 @@ public func kk_sequence_mapNotNull(
     return registerRuntimeObject(newSeq)
 }
 
-@_cdecl("kk_sequence_firstNotNullOfOrNull")
-public func kk_sequence_firstNotNullOfOrNull(
+@_cdecl("kk_sequence_firstNotNullOf")
+public func kk_sequence_firstNotNullOf(
     _ seqRaw: Int,
     _ fnPtr: Int,
     _ closureRaw: Int,
@@ -1576,7 +1577,47 @@ public func kk_sequence_firstNotNullOfOrNull(
     if let outThrown, outThrown.pointee != 0 {
         return handleCollectionLambdaThrow(outThrown.pointee, outThrown)
     }
-    return found ? result : runtimeNullSentinelInt
+    if !found {
+        return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: kSequenceNoNonNullTransformResult), outThrown)
+    }
+    return result
+}
+
+@_cdecl("kk_sequence_firstNotNullOfOrNull")
+public func kk_sequence_firstNotNullOfOrNull(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var result = runtimeNullSentinelInt
+    let visit: (Int) -> Bool = { elem in
+        var thrown = 0
+        let transformed = lambda(closureRaw, elem, &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
+        }
+        if let normalized = runtimeMapNotNullResultValue(transformed) {
+            result = normalized
+            return false
+        }
+        return true
+    }
+
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        runtimeTraverseSequence(seq, outThrown: outThrown, yield: visit)
+    } else {
+        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
+            if !visit(elem) { break }
+        }
+    }
+
+    if let outThrown, outThrown.pointee != 0 {
+        return handleCollectionLambdaThrow(outThrown.pointee, outThrown)
+    }
+    return result
 }
 
 @_cdecl("kk_sequence_filterNotNull")
