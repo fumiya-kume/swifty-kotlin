@@ -3340,13 +3340,13 @@ public func kk_string_dropWhile(
 public func kk_string_splitToSequence(_ strRaw: Int, _ delimRaw: Int) -> Int {
     let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     let delimiter = runtimeStringFromRawOrPanic(delimRaw, caller: #function)
-    
+
     if delimiter.isEmpty {
         let singleElement = runtimeMakeStringRaw(source)
         let seq = RuntimeSequenceBox(steps: [.source(elements: [singleElement])])
         return registerRuntimeObject(seq)
     }
-    
+
     let splitStrings = runtimeSplitString(source, delimiter: delimiter).map { runtimeMakeStringRaw($0) }
     let seq = RuntimeSequenceBox(steps: [.source(elements: splitStrings)])
     return registerRuntimeObject(seq)
@@ -3359,11 +3359,11 @@ public func kk_string_joinToString(
     guard let list = runtimeListBox(from: strListRaw) else {
         return runtimeMakeStringRaw("")
     }
-    
+
     let separator = extractString(from: UnsafeMutableRawPointer(bitPattern: separatorRaw)) ?? ", "
     let prefix = extractString(from: UnsafeMutableRawPointer(bitPattern: prefixRaw)) ?? ""
     let postfix = extractString(from: UnsafeMutableRawPointer(bitPattern: postfixRaw)) ?? ""
-    
+
     let strings = list.elements.compactMap { extractString(from: UnsafeMutableRawPointer(bitPattern: $0)) }
     let result = prefix + strings.joined(separator: separator) + postfix
     return runtimeMakeStringRaw(result)
