@@ -247,6 +247,18 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    static let kk_op_floor_mod = ExternDecl(
+        name: "kk_op_floor_mod",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_op_lfloor_mod = ExternDecl(
+        name: "kk_op_lfloor_mod",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     static let kk_logical_and = ExternDecl(
         name: "kk_logical_and",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -328,6 +340,8 @@ public extension RuntimeABIExterns {
         kk_op_lfloor_div,
         kk_op_mod,
         kk_op_lmod,
+        kk_op_floor_mod,
+        kk_op_lfloor_mod,
         kk_logical_and,
         kk_logical_or,
         kk_char_minus,
