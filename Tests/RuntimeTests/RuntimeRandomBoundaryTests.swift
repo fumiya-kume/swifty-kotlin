@@ -37,6 +37,10 @@ final class RuntimeRandomBoundaryTests: XCTestCase {
         runtimeArrayBox(from: raw)?.elements ?? []
     }
 
+    private func uintPayload(_ raw: Int) -> UInt64 {
+        UInt64(UInt(bitPattern: raw) & UInt(UInt32.max))
+    }
+
     // MARK: - Seed Reproducibility: nextInt
 
     func testSeedReproducibilityNextInt() {
@@ -279,6 +283,66 @@ final class RuntimeRandomBoundaryTests: XCTestCase {
         var thrown: Int = 0
         _ = kk_random_nextInt_range(r, 10, 5, &thrown)
         XCTAssertNotEqual(thrown, 0, "nextInt(10, 5) must throw (inverted range)")
+    }
+
+    // MARK: - nextUInt: boundary range values
+
+    func testNextUIntFullRange() {
+        let r = makeSeeded(42)
+        let value = uintPayload(kk_random_nextUInt(r))
+        XCTAssertLessThanOrEqual(value, UInt64(UInt32.max))
+    }
+
+    func testNextUIntUntil() {
+        let r = makeSeeded(42)
+        var thrown = 0
+        let value = uintPayload(kk_random_nextUInt_until(r, 10, &thrown))
+        XCTAssertEqual(thrown, 0)
+        XCTAssertLessThan(value, 10)
+    }
+
+    func testNextUIntRange() {
+        let r = makeSeeded(42)
+        var thrown = 0
+        let value = uintPayload(kk_random_nextUInt_range(r, 10, 20, &thrown))
+        XCTAssertEqual(thrown, 0)
+        XCTAssertGreaterThanOrEqual(value, 10)
+        XCTAssertLessThan(value, 20)
+    }
+
+    func testNextUIntUIntRange() {
+        let r = makeSeeded(42)
+        let rangeRaw = registerRuntimeObject(RuntimeRangeBox(first: 30, last: 35, step: 1))
+        var thrown = 0
+        let value = uintPayload(kk_random_nextUInt_uintRange(r, rangeRaw, &thrown))
+        XCTAssertEqual(thrown, 0)
+        XCTAssertGreaterThanOrEqual(value, 30)
+        XCTAssertLessThanOrEqual(value, 35)
+    }
+
+    func testNextUIntUntilThrowsOnZero() {
+        let r = makeSeeded(1)
+        var thrown = 0
+        _ = kk_random_nextUInt_until(r, 0, &thrown)
+        XCTAssertNotEqual(thrown, 0, "nextUInt(until=0u) must throw")
+    }
+
+    func testNextUIntRangeThrowsWhenFromEqualsUntil() {
+        let r = makeSeeded(1)
+        var thrown = 0
+        _ = kk_random_nextUInt_range(r, 7, 7, &thrown)
+        XCTAssertNotEqual(thrown, 0, "nextUInt(7u, 7u) must throw")
+    }
+
+    func testNextUIntRangeSupportsUIntMaxExclusiveUpper() {
+        let r = makeSeeded(42)
+        var thrown = 0
+        let from = Int(UInt32.max) - 3
+        let until = Int(UInt32.max)
+        let value = uintPayload(kk_random_nextUInt_range(r, from, until, &thrown))
+        XCTAssertEqual(thrown, 0)
+        XCTAssertGreaterThanOrEqual(value, UInt64(UInt32.max - 3))
+        XCTAssertLessThan(value, UInt64(UInt32.max))
     }
 
     // MARK: - nextDouble: boundary / special values

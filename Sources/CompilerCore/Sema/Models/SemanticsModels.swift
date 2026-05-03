@@ -561,13 +561,13 @@ public final class SymbolTable {
                 && !existingNonPackageKinds.contains(.property)
         }
         if isCallableLike(kind) {
-            // Allow functions/constructors to coexist with nominal types
-            // (class, enumClass, interface) — Kotlin supports factory
-            // functions with the same name as a class (e.g. Regex(pattern)).
+            // Allow functions/constructors to coexist with nominal types and
+            // type aliases; Kotlin supports factory functions with the same
+            // name as a type surface (e.g. AutoCloseable { ... }).
             // Kotlin also permits callable declarations to share a name with a
             // property, such as `var port` and `fun port(value: Int)`.
             return existingNonPackageKinds.allSatisfy {
-                isCallableLike($0) || isNominalType($0) || $0 == .property
+                isCallableLike($0) || isNominalType($0) || $0 == .typeAlias || $0 == .property
             }
         }
         guard isOverloadable(kind) else {

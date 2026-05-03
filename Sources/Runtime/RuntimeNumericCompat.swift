@@ -2093,6 +2093,22 @@ public func kk_op_dmod(_ lhs: Int, _ rhs: Int) -> Int {
     kk_double_to_bits(kk_bits_to_double(lhs).truncatingRemainder(dividingBy: kk_bits_to_double(rhs)))
 }
 
+private func runtimeDoubleFloorMod(_ lhs: Double, _ rhs: Double) -> Double {
+    let remainder = lhs.truncatingRemainder(dividingBy: rhs)
+    if remainder == 0.0 || remainder.isNaN {
+        return remainder
+    }
+    if (remainder < 0.0 && rhs > 0.0) || (remainder > 0.0 && rhs < 0.0) {
+        return remainder + rhs
+    }
+    return remainder
+}
+
+@_cdecl("kk_op_dfloor_mod")
+public func kk_op_dfloor_mod(_ lhs: Int, _ rhs: Int) -> Int {
+    kk_double_to_bits(runtimeDoubleFloorMod(kk_bits_to_double(lhs), kk_bits_to_double(rhs)))
+}
+
 @_cdecl("kk_op_deq")
 public func kk_op_deq(_ lhs: Int, _ rhs: Int) -> Int {
     kk_bits_to_double(lhs) == kk_bits_to_double(rhs) ? 1 : 0
@@ -2148,6 +2164,22 @@ public func kk_op_fdiv(_ lhs: Int, _ rhs: Int) -> Int {
 @_cdecl("kk_op_fmod")
 public func kk_op_fmod(_ lhs: Int, _ rhs: Int) -> Int {
     kk_float_to_bits(kk_bits_to_float(lhs).truncatingRemainder(dividingBy: kk_bits_to_float(rhs)))
+}
+
+private func runtimeFloatFloorMod(_ lhs: Float, _ rhs: Float) -> Float {
+    let remainder = lhs.truncatingRemainder(dividingBy: rhs)
+    if remainder == 0.0 || remainder.isNaN {
+        return remainder
+    }
+    if (remainder < 0.0 && rhs > 0.0) || (remainder > 0.0 && rhs < 0.0) {
+        return remainder + rhs
+    }
+    return remainder
+}
+
+@_cdecl("kk_op_ffloor_mod")
+public func kk_op_ffloor_mod(_ lhs: Int, _ rhs: Int) -> Int {
+    kk_float_to_bits(runtimeFloatFloorMod(kk_bits_to_float(lhs), kk_bits_to_float(rhs)))
 }
 
 @_cdecl("kk_op_feq")
@@ -2247,6 +2279,26 @@ public func kk_op_lmod(_ lhs: Int, _ rhs: Int) -> Int {
     // Long uses same Int representation on 64-bit platforms
     if rhs == 0 { return 0 } // Handle division by zero
     return lhs % rhs
+}
+
+private func runtimeFloorMod(_ lhs: Int, _ rhs: Int) -> Int {
+    if rhs == 0 { return 0 }
+    if lhs == Int.min && rhs == -1 { return 0 }
+    let remainder = lhs % rhs
+    if remainder != 0 && ((lhs < 0) != (rhs < 0)) {
+        return remainder + rhs
+    }
+    return remainder
+}
+
+@_cdecl("kk_op_floor_mod")
+public func kk_op_floor_mod(_ lhs: Int, _ rhs: Int) -> Int {
+    runtimeFloorMod(lhs, rhs)
+}
+
+@_cdecl("kk_op_lfloor_mod")
+public func kk_op_lfloor_mod(_ lhs: Int, _ rhs: Int) -> Int {
+    runtimeFloorMod(lhs, rhs)
 }
 
 // MARK: - Boolean logical ops
