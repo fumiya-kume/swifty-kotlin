@@ -6982,43 +6982,6 @@ extension CallTypeChecker {
         return finalType
     }
 
-    private func makeSyntheticListType(
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner,
-        elementType: TypeID
-    ) -> TypeID {
-        let listFQName: [InternedString] = [
-            interner.intern("kotlin"),
-            interner.intern("collections"),
-            interner.intern("List"),
-        ]
-        guard let listSymbol = symbols.lookup(fqName: listFQName) else {
-            return types.anyType
-        }
-        return types.make(.classType(ClassType(
-            classSymbol: listSymbol,
-            args: [.out(elementType)],
-            nullability: .nonNull
-        )))
-    }
-
-    private func makeSyntheticNominalType(
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner _: StringInterner,
-        fqName: [InternedString]
-    ) -> TypeID {
-        guard let symbol = symbols.lookup(fqName: fqName) else {
-            return types.anyType
-        }
-        return types.make(.classType(ClassType(
-            classSymbol: symbol,
-            args: [],
-            nullability: .nonNull
-        )))
-    }
-
     func tryGroupingMemberCall(
         _ id: ExprID,
         calleeName: InternedString,
