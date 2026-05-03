@@ -309,10 +309,14 @@ final class RuntimeSetBox {
 final class RuntimeMapBox {
     var keys: [Int]
     var values: [Int]
+    let defaultValueFnPtr: Int
+    let defaultValueClosureRaw: Int
 
-    init(keys: [Int], values: [Int]) {
+    init(keys: [Int], values: [Int], defaultValueFnPtr: Int = 0, defaultValueClosureRaw: Int = 0) {
         self.keys = keys
         self.values = values
+        self.defaultValueFnPtr = defaultValueFnPtr
+        self.defaultValueClosureRaw = defaultValueClosureRaw
     }
 }
 
