@@ -1669,6 +1669,39 @@ extension CallLowerer {
             )
         }()
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
+        if args.count == 1,
+           interner.resolve(calleeName) == "withDefault"
+        {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            if isMapLikeType(receiverType, sema: sema, interner: interner) {
+                let runtimeArguments: [KIRExprID]
+                if normalizedArgIDs.count >= 2 {
+                    runtimeArguments = [loweredReceiverID, normalizedArgIDs[0], normalizedArgIDs[1]]
+                } else if let defaultValueArg = normalizedArgIDs.first {
+                    let split = splitCallableLambdaArgument(
+                        defaultValueArg,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        instructions: &instructions
+                    )
+                    runtimeArguments = [loweredReceiverID, split.fnPtrExpr, split.envPtrExpr]
+                } else {
+                    let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                    instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                    runtimeArguments = [loweredReceiverID, zeroExpr, zeroExpr]
+                }
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_map_withDefault"),
+                    arguments: runtimeArguments,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
         let chosenBase64Callee: SymbolID? = {
             guard let selected = sema.bindings.callBindings[exprID]?.chosenCallee, selected != .invalid else {
                 return nil
@@ -3811,6 +3844,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_none"
                 } else if calleeName == interner.intern("mapNotNull") {
                     runtimeCallee = "kk_sequence_mapNotNull"
+                } else if calleeName == interner.intern("firstNotNullOf") {
+                    runtimeCallee = "kk_sequence_firstNotNullOf"
                 } else if calleeName == interner.intern("firstNotNullOfOrNull") {
                     runtimeCallee = "kk_sequence_firstNotNullOfOrNull"
                 } else if calleeName == interner.intern("requireNoNulls") {
@@ -3871,6 +3906,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_all"
                         || runtimeCallee == "kk_sequence_none"
                         || runtimeCallee == "kk_sequence_mapNotNull"
+                        || runtimeCallee == "kk_sequence_firstNotNullOf"
                         || runtimeCallee == "kk_sequence_firstNotNullOfOrNull"
                         || runtimeCallee == "kk_sequence_mapIndexed"
                         || runtimeCallee == "kk_sequence_chunked_transform"
@@ -4616,7 +4652,7 @@ extension CallLowerer {
             "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate",
             "forEachIndexed", "mapIndexed", "filterIndexed", "sumOf", "mapValues", "mapKeys", "filterKeys", "filterValues",
-            "getOrElse", "elementAtOrElse", "getOrPut",
+            "getOrElse", "elementAtOrElse", "getOrPut", "withDefault",
             "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
             "maxOf", "minOf",
             "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",
@@ -5935,6 +5971,18 @@ extension CallLowerer {
                 arguments: &finalArguments
             )
         }
+        if normalized.defaultMask != 0,
+           loweredCallee == interner.intern("kk_array_copyInto")
+        {
+            materializeArrayCopyIntoDefaultArguments(
+                normalized.defaultMask,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions,
+                arguments: &finalArguments
+            )
+        }
         if loweredCallee == interner.intern("kk_list_windowed_transform") {
             let originalArgumentCount = finalArguments.count
             if originalArgumentCount >= 3 {
@@ -6330,6 +6378,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_associateByTo"),
             interner.intern("kk_map_getValue"),
             interner.intern("kk_sequence_mapNotNull"),
+            interner.intern("kk_sequence_firstNotNullOf"),
             interner.intern("kk_sequence_firstNotNullOfOrNull"),
             interner.intern("kk_sequence_mapIndexed"),
             interner.intern("kk_sequence_findLast"),
@@ -6858,6 +6907,48 @@ extension CallLowerer {
                 thrownResult: nil
             ))
             arguments[5] = sizeExpr
+        }
+    }
+
+    private func materializeArrayCopyIntoDefaultArguments(
+        _ defaultMask: Int64,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction],
+        arguments: inout [KIRExprID]
+    ) {
+        guard arguments.count >= 5 else {
+            return
+        }
+
+        let intType = sema.types.intType
+        let destinationOffsetMaskBit = Int64(1) << 1
+        let startIndexMaskBit = Int64(1) << 2
+        let endIndexMaskBit = Int64(1) << 3
+        if (defaultMask & destinationOffsetMaskBit) != 0 {
+            let zeroExpr = arena.appendExpr(.intLiteral(0), type: intType)
+            instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            arguments[2] = zeroExpr
+        }
+
+        if (defaultMask & startIndexMaskBit) != 0 {
+            let zeroExpr = arena.appendExpr(.intLiteral(0), type: intType)
+            instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            arguments[3] = zeroExpr
+        }
+
+        if (defaultMask & endIndexMaskBit) != 0 {
+            let sizeExpr = arena.appendExpr(.temporary(Int32(clamping: arena.expressions.count)), type: intType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_array_size"),
+                arguments: [arguments[0]],
+                result: sizeExpr,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            arguments[4] = sizeExpr
         }
     }
 
@@ -8228,6 +8319,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_none")
             case interner.intern("mapNotNull"):
                 return interner.intern("kk_sequence_mapNotNull")
+            case interner.intern("firstNotNullOf"):
+                return interner.intern("kk_sequence_firstNotNullOf")
             case interner.intern("firstNotNullOfOrNull"):
                 return interner.intern("kk_sequence_firstNotNullOfOrNull")
             case interner.intern("filterNot"):
@@ -8323,7 +8416,7 @@ extension CallLowerer {
         sema: SemaModule,
         interner: StringInterner
     ) -> InternedString? {
-        guard memberName == "size" || memberName == "isEmpty" || memberName == "firstNotNullOf",
+        guard memberName == "size" || memberName == "isEmpty" || memberName == "firstNotNullOf" || memberName == "firstNotNullOfOrNull",
               case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
               let symbol = sema.symbols.symbol(classType.classSymbol)
         else {
@@ -8362,6 +8455,13 @@ extension CallLowerer {
             switch knownNames.collectionKind(of: symbol) {
             case .list?, .set?, .collection?:
                 return interner.intern("kk_iterable_firstNotNullOf")
+            default:
+                break
+            }
+        case "firstNotNullOfOrNull":
+            switch knownNames.collectionKind(of: symbol) {
+            case .list?, .set?, .collection?:
+                return interner.intern("kk_iterable_firstNotNullOfOrNull")
             default:
                 break
             }
