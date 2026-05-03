@@ -314,7 +314,7 @@
 - [x] STDLIB-KOTLIN-ROOT-ARRAY-001: `arrayOfNulls<T>(size: Int)` root array factory を追加する
 - [x] STDLIB-KOTLIN-ROOT-LAZY-001: `lazyOf(value)` root lazy factory を追加する
 - [ ] STDLIB-KOTLIN-ROOT-CTX-001: experimental `context(with, block)` helper を追加する
-- [ ] STDLIB-KOTLIN-ROOT-CTX-002: experimental `context(a, b, ..., block)` overload 群を追加する
+- [x] STDLIB-KOTLIN-ROOT-CTX-002: experimental `context(a, b, ..., block)` overload 群を追加する
 - [ ] STDLIB-KOTLIN-ROOT-CTX-003: experimental `contextOf<A>()` helper を追加する
 - [ ] STDLIB-KOTLIN-ROOT-REFLECT-001: `KProperty0<*>.isInitialized` root extension property を追加する
 - [x] STDLIB-KOTLIN-ROOT-THROW-001: `Throwable.suppressedExceptions` property を追加する
