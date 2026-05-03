@@ -367,6 +367,18 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerSyntheticCharExtensionFunction(
+            named: "uppercase",
+            externalLinkName: "kk_char_uppercase_locale",
+            receiverType: types.charType,
+            parameters: [
+                ("locale", localeType, false, false),
+            ],
+            returnType: types.stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
         // STDLIB-003-ABI-001: Char.digitToInt(radix: Int)
         registerDigitToIntRadixStub(symbols: symbols, types: types, interner: interner)
         registerNativeCharCompanionHelpers(symbols: symbols, types: types, interner: interner)
