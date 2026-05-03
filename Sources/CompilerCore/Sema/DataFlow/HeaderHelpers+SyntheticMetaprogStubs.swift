@@ -158,6 +158,13 @@ extension DataFlowSemaPhase {
             interner: interner
         )
         registerSyntheticJvmAnnotationClass(
+            named: "Throws",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticJvmAnnotationClass(
             named: "SinceKotlin",
             packageFQName: kotlinPkg,
             packageSymbol: kotlinPkgSymbol,
@@ -653,6 +660,30 @@ extension DataFlowSemaPhase {
                 MetadataAnnotationRecord(annotationFQName: "kotlin.ExperimentalMultiplatform"),
                 to: optionalExpectationSymbol,
                 symbols: symbols
+            )
+        }
+
+        if let throwsSymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern("Throws")]) {
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.target.qualifiedName,
+                    arguments: [
+                        "AnnotationTarget.FUNCTION",
+                        "AnnotationTarget.PROPERTY_GETTER",
+                        "AnnotationTarget.PROPERTY_SETTER",
+                        "AnnotationTarget.CONSTRUCTOR",
+                    ]
+                ),
+                to: throwsSymbol,
+                symbols: symbols
+            )
+            registerSyntheticThrowsExceptionClassesPropertyAndConstructor(
+                ownerSymbol: throwsSymbol,
+                ownerFQName: kotlinPkg + [interner.intern("Throws")],
+                kotlinPkg: kotlinPkg,
+                symbols: symbols,
+                types: types,
+                interner: interner
             )
         }
 
@@ -1501,6 +1532,135 @@ extension DataFlowSemaPhase {
             annotationType = types.anyType
         }
         symbols.setPropertyType(types.makeKClassType(argument: annotationType), for: valueSymbol)
+    }
+
+    private func registerSyntheticThrowsExceptionClassesPropertyAndConstructor(
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        kotlinPkg: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let exceptionClassesName = interner.intern("exceptionClasses")
+        let exceptionClassesFQName = ownerFQName + [exceptionClassesName]
+        let exceptionClassesSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: exceptionClassesFQName) {
+            exceptionClassesSymbol = existing
+        } else {
+            exceptionClassesSymbol = symbols.define(
+                kind: .property,
+                name: exceptionClassesName,
+                fqName: exceptionClassesFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        symbols.setParentSymbol(ownerSymbol, for: exceptionClassesSymbol)
+
+        let throwableType = makeSyntheticThrowsThrowableType(
+            kotlinPkg: kotlinPkg,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let exceptionKClassType = types.makeKClassType(argument: throwableType)
+        let exceptionClassesType = makeSyntheticThrowsExceptionClassesArrayType(
+            elementType: exceptionKClassType,
+            kotlinPkg: kotlinPkg,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        symbols.setPropertyType(exceptionClassesType, for: exceptionClassesSymbol)
+
+        let initName = interner.intern("<init>")
+        let constructorFQName = ownerFQName + [initName]
+        let hasMatchingConstructor = symbols.lookupAll(fqName: constructorFQName).contains { symbolID in
+            guard let symbol = symbols.symbol(symbolID),
+                  symbol.kind == .constructor,
+                  let signature = symbols.functionSignature(for: symbolID)
+            else {
+                return false
+            }
+            return signature.parameterTypes == [exceptionKClassType]
+                && signature.valueParameterIsVararg == [true]
+        }
+        guard !hasMatchingConstructor else {
+            return
+        }
+
+        let constructorSymbol = symbols.define(
+            kind: .constructor,
+            name: initName,
+            fqName: constructorFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: constructorSymbol)
+
+        let parameterSymbol = symbols.define(
+            kind: .valueParameter,
+            name: exceptionClassesName,
+            fqName: constructorFQName + [exceptionClassesName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(constructorSymbol, for: parameterSymbol)
+
+        let ownerType = types.make(.classType(ClassType(
+            classSymbol: ownerSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [exceptionKClassType],
+                returnType: ownerType,
+                valueParameterSymbols: [parameterSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [true]
+            ),
+            for: constructorSymbol
+        )
+    }
+
+    private func makeSyntheticThrowsThrowableType(
+        kotlinPkg: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID {
+        let throwableFQName = kotlinPkg + [interner.intern("Throwable")]
+        guard let throwableSymbol = symbols.lookup(fqName: throwableFQName) else {
+            return types.anyType
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: throwableSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+    }
+
+    private func makeSyntheticThrowsExceptionClassesArrayType(
+        elementType: TypeID,
+        kotlinPkg: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID {
+        let arrayFQName = kotlinPkg + [interner.intern("Array")]
+        guard let arraySymbol = symbols.lookup(fqName: arrayFQName) else {
+            return types.anyType
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: arraySymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
     }
 
     private func registerSyntheticStringAnnotationPropertyAndConstructor(
