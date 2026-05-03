@@ -1452,7 +1452,6 @@ extension CallTypeChecker {
         }
         if !isSequenceReceiver {
             activeCollectionHOFNames.remove("flatMapIndexed")
-            activeCollectionHOFNames.remove("firstNotNullOfOrNull")
         }
         if isMapReceiver {
             activeCollectionHOFNames.formUnion(mapOnlyCollectionHOFNames)
@@ -2370,7 +2369,9 @@ extension CallTypeChecker {
                             sema.types.anyType
                         }
                     case "firstNotNullOfOrNull":
-                        if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
+                        if let expectedType {
+                            resultType = sema.types.makeNullable(sema.types.makeNonNullable(expectedType))
+                        } else if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
                             resultType = sema.types.makeNullable(sema.types.makeNonNullable(sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType))
                         } else if case let .functionType(fnType) = sema.types.kind(of: sema.bindings.exprType(for: args[0].expr) ?? sema.types.anyType) {
                             resultType = sema.types.makeNullable(sema.types.makeNonNullable(fnType.returnType))
@@ -6651,6 +6652,7 @@ extension CallTypeChecker {
                 receiverID: receiverID,
                 args: args,
                 ctx: ctx,
+                expectedType: expectedType,
                 locals: &locals
             ) {
                 return fallbackType
@@ -6891,6 +6893,17 @@ extension CallTypeChecker {
             ) {
                 return fallbackType
             }
+            if let fallbackType = tryBindMapWithDefaultFallback(
+                id,
+                calleeName: calleeName,
+                safeCall: safeCall,
+                receiverType: lookupReceiverType,
+                args: args,
+                ctx: ctx,
+                locals: &locals
+            ) {
+                return fallbackType
+            }
             if let fallbackType = tryBindReadWriteLockReadFallback(
                 id,
                 calleeName: calleeName,
@@ -7018,6 +7031,17 @@ extension CallTypeChecker {
             return fallbackType
         }
         if let fallbackType = tryBindMapGetOrElseFallback(
+            id,
+            calleeName: calleeName,
+            safeCall: safeCall,
+            receiverType: lookupReceiverType,
+            args: args,
+            ctx: ctx,
+            locals: &locals
+        ) {
+            return fallbackType
+        }
+        if let fallbackType = tryBindMapWithDefaultFallback(
             id,
             calleeName: calleeName,
             safeCall: safeCall,
@@ -8839,6 +8863,83 @@ extension CallTypeChecker {
         }
 
         let finalType = safeCall ? sema.types.makeNullable(valueType) : valueType
+        sema.bindings.bindExprType(id, type: finalType)
+        return finalType
+    }
+
+    private func tryBindMapWithDefaultFallback(
+        _ id: ExprID,
+        calleeName: InternedString,
+        safeCall: Bool,
+        receiverType: TypeID,
+        args: [CallArgument],
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
+    ) -> TypeID? {
+        let sema = ctx.sema
+        let interner = ctx.interner
+        let knownNames = KnownCompilerNames(interner: interner)
+        let withDefaultName = interner.intern("withDefault")
+
+        guard calleeName == withDefaultName,
+              args.count == 1,
+              case let .classType(receiverClassType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let receiverSymbol = sema.symbols.symbol(receiverClassType.classSymbol),
+              knownNames.isMapLikeSymbol(receiverSymbol),
+              receiverClassType.args.count >= 2
+        else {
+            return nil
+        }
+
+        let keyType: TypeID = switch receiverClassType.args[0] {
+        case let .invariant(inner), let .out(inner), let .in(inner):
+            inner
+        case .star:
+            sema.types.anyType
+        }
+        let valueType: TypeID = switch receiverClassType.args[1] {
+        case let .invariant(inner), let .out(inner), let .in(inner):
+            inner
+        case .star:
+            sema.types.anyType
+        }
+
+        let defaultLambdaType = sema.types.make(.functionType(FunctionType(
+            params: [keyType],
+            returnType: valueType,
+            nullability: .nonNull
+        )))
+        sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+        _ = driver.inferExpr(
+            args[0].expr,
+            ctx: ctx,
+            locals: &locals,
+            expectedType: defaultLambdaType
+        )
+
+        let fallbackCallee = sema.symbols.lookupAll(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("Map"),
+            withDefaultName,
+        ]).first(where: { candidate in
+            sema.symbols.externalLinkName(for: candidate) == "kk_map_withDefault"
+        })
+
+        if let fallbackCallee {
+            sema.bindings.bindCall(
+                id,
+                binding: CallBinding(
+                    chosenCallee: fallbackCallee,
+                    substitutedTypeArguments: [keyType, valueType],
+                    parameterMapping: [0: 0]
+                )
+            )
+            sema.bindings.bindCallableTarget(id, target: .symbol(fallbackCallee))
+        }
+
+        let resultType = sema.types.makeNonNullable(receiverType)
+        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
         sema.bindings.bindExprType(id, type: finalType)
         return finalType
     }

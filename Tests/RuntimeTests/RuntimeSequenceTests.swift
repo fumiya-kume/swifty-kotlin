@@ -1737,6 +1737,43 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertNotEqual(thrown, 0)
     }
 
+    func testSequenceFirstNotNullOfReturnsFirstNonNullTransformResult() {
+        let seq = makeSequence([1, 2, 4])
+        let result = kk_sequence_firstNotNullOf(
+            seq,
+            unsafeBitCast(sequenceFirstNullableEvenTimesTen, to: Int.self),
+            0,
+            nil
+        )
+        XCTAssertEqual(result, 20)
+    }
+
+    func testSequenceFirstNotNullOfThrowsWhenEveryTransformResultIsNull() {
+        let seq = makeSequence([1, 3, 5])
+        var thrown = 0
+        let result = kk_sequence_firstNotNullOf(
+            seq,
+            unsafeBitCast(sequenceAlwaysNullTransform, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testSequenceFirstNotNullOfPropagatesThrowingLambda() {
+        let seq = makeSequence([1, 2, 3])
+        var thrown = 0
+        let result = kk_sequence_firstNotNullOf(
+            seq,
+            unsafeBitCast(throwingSequenceDestinationLambda, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
     func testSequenceFilterNotNullPreservesZeroAfterMapNotNull() {
         let seq = makeSequence([0, 1, 2])
         let mapFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
