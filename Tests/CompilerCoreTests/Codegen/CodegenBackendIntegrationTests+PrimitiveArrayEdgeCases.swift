@@ -909,6 +909,62 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    // MARK: - contentToString for boxed and primitive arrays
+
+    func testArrayContentToStringOverloads() throws {
+        let source = """
+        @OptIn(ExperimentalUnsignedTypes::class)
+        fun main() {
+            val boxed = arrayOf<Any>(1, "two", 3)
+            println(boxed.contentToString())
+            println(intArrayOf(1, -2, 3).contentToString())
+            println(byteArrayOf(1, (-1).toByte()).contentToString())
+            println(shortArrayOf(2, (-3).toShort()).contentToString())
+            println(longArrayOf(1L, 4000000000L).contentToString())
+            println(floatArrayOf(1.5f, -2.0f).contentToString())
+            println(doubleArrayOf(2.25, -0.5).contentToString())
+            println(booleanArrayOf(true, false).contentToString())
+            println(charArrayOf('a', 'Z').contentToString())
+            println(ubyteArrayOf(1.toUByte(), 255.toUByte()).contentToString())
+            println(ushortArrayOf(1.toUShort(), 65535.toUShort()).contentToString())
+            println(uintArrayOf(1u, 4000000000u).contentToString())
+            println(ulongArrayOf(1uL, 4000000000uL).contentToString())
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ArrayContentToStringOverloads",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                out,
+                """
+                [1, two, 3]
+                [1, -2, 3]
+                [1, -1]
+                [2, -3]
+                [1, 4000000000]
+                [1.5, -2.0]
+                [2.25, -0.5]
+                [true, false]
+                [a, Z]
+                [1, 255]
+                [1, 65535]
+                [1, 4000000000]
+                [1, 4000000000]
+                """
+                + "\n"
+            )
+        }
+    }
+
     func testArrayContentDeepHashCode() throws {
         let source = """
         fun main() {

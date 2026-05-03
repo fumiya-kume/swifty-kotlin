@@ -154,10 +154,10 @@
 - [ ] STDLIB-COL-TYPE-001: `AbstractCollection<E>` surface を追加する
 - [ ] STDLIB-COL-TYPE-002: `AbstractIterator<T>` surface を追加する
 - [ ] STDLIB-COL-TYPE-003: `AbstractMutableCollection<E>` surface を追加する
-- [ ] STDLIB-COL-TYPE-004: primitive iterator classes（`BooleanIterator`, `ByteIterator`, `ShortIterator`, `IntIterator`, `LongIterator`, `FloatIterator`, `DoubleIterator`, `CharIterator`）を追加する
+- [x] STDLIB-COL-TYPE-004: primitive iterator classes（`BooleanIterator`, `ByteIterator`, `ShortIterator`, `IntIterator`, `LongIterator`, `FloatIterator`, `DoubleIterator`, `CharIterator`）を追加する
 - [x] STDLIB-COL-TYPE-005: `MutableIterable<T>` surface を追加する
 - [x] STDLIB-COL-TYPE-006: `MutableListIterator<T>` surface を追加する
-- [ ] STDLIB-COL-ARRAY-001: array `contentToString()` overload 群を追加する
+- [x] STDLIB-COL-ARRAY-001: array `contentToString()` overload 群を追加する
 - [x] STDLIB-COL-ARRAY-002: array `contentDeepEquals(other)` を追加する
 - [x] STDLIB-COL-ARRAY-003: array `contentDeepHashCode()` を追加する
 - [x] STDLIB-COL-ARRAY-004: array `contentDeepToString()` を追加する
@@ -291,7 +291,7 @@
 - [x] STDLIB-KOTLIN-ROOT-002: `ConsistentCopyVisibility` annotation を追加し、data class `copy()` visibility migration の declaration-side diagnostics へ結び付ける
 - [x] STDLIB-KOTLIN-ROOT-003: `ExposedCopyVisibility` annotation を追加し、public `copy()` 維持モードの suppression semantics を実装する
 - [x] STDLIB-KOTLIN-ROOT-004: `ExperimentalVersionOverloading` marker を追加し、`@OptIn` / `-opt-in` diagnostics と結び付ける
-- [ ] STDLIB-KOTLIN-ROOT-005: `ContextFunctionTypeParams(count: Int)` type annotation を追加する
+- [x] STDLIB-KOTLIN-ROOT-005: `ContextFunctionTypeParams(count: Int)` type annotation を追加する
 - [x] STDLIB-KOTLIN-ROOT-ANNO-001: `BuilderInference` annotation surface を追加する
 - [x] STDLIB-KOTLIN-ROOT-ANNO-002: `DeprecatedSinceKotlin(warningSince, errorSince, hiddenSince)` annotation surface を追加する
 - [x] STDLIB-KOTLIN-ROOT-ANNO-003: `DslMarker` annotation surface を追加する
