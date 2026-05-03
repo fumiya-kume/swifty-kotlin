@@ -52,6 +52,7 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
             "endsWith": "kk_string_endsWith",
             "toInt": "kk_string_toInt",
             "toDouble": "kk_string_toDouble",
+            "hexToUInt": "kk_string_hexToUInt",
             "trimIndent": "kk_string_trimIndent",
         ]
 

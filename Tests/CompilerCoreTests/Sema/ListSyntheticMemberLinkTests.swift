@@ -567,6 +567,119 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testAbstractMutableCollectionSurfaceIsRegistered() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let collectionsPkg = ["kotlin", "collections"].map { ctx.interner.intern($0) }
+            let collectionSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: collectionsPkg + [ctx.interner.intern("Collection")])
+            )
+            let mutableCollectionFQName = collectionsPkg + [ctx.interner.intern("MutableCollection")]
+            let mutableCollectionSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: mutableCollectionFQName),
+                "Expected kotlin.collections.MutableCollection to be registered"
+            )
+            XCTAssertEqual(
+                sema.types.nominalTypeParameterVariances(for: mutableCollectionSymbol),
+                [.invariant]
+            )
+            XCTAssertTrue(sema.symbols.directSupertypes(for: mutableCollectionSymbol).contains(collectionSymbol))
+            XCTAssertTrue(sema.types.directNominalSupertypes(for: mutableCollectionSymbol).contains(collectionSymbol))
+
+            let expectedMutableMembers: [(name: String, parameterCount: Int)] = [
+                ("add", 1),
+                ("addAll", 1),
+                ("clear", 0),
+                ("remove", 1),
+                ("removeAll", 1),
+                ("retainAll", 1),
+            ]
+            for expected in expectedMutableMembers {
+                let memberSymbol = try XCTUnwrap(
+                    sema.symbols.lookup(fqName: mutableCollectionFQName + [ctx.interner.intern(expected.name)]),
+                    "Expected MutableCollection.\(expected.name) to be registered"
+                )
+                let signature = try XCTUnwrap(sema.symbols.functionSignature(for: memberSymbol))
+                XCTAssertEqual(signature.parameterTypes.count, expected.parameterCount)
+            }
+
+            let abstractMutableCollectionFQName = collectionsPkg + [ctx.interner.intern("AbstractMutableCollection")]
+            let abstractMutableCollectionSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: abstractMutableCollectionFQName),
+                "Expected kotlin.collections.AbstractMutableCollection to be registered"
+            )
+            let abstractMutableCollectionInfo = try XCTUnwrap(sema.symbols.symbol(abstractMutableCollectionSymbol))
+            XCTAssertEqual(abstractMutableCollectionInfo.kind, .class)
+            XCTAssertTrue(abstractMutableCollectionInfo.flags.contains(.synthetic))
+            XCTAssertTrue(abstractMutableCollectionInfo.flags.contains(.abstractType))
+            XCTAssertEqual(
+                sema.types.nominalTypeParameterVariances(for: abstractMutableCollectionSymbol),
+                [.invariant]
+            )
+
+            let abstractCollectionSymbol = sema.symbols.lookup(
+                fqName: collectionsPkg + [ctx.interner.intern("AbstractCollection")]
+            )
+            let readonlySupertype = abstractCollectionSymbol ?? collectionSymbol
+            let directSupertypes = sema.symbols.directSupertypes(for: abstractMutableCollectionSymbol)
+            XCTAssertTrue(directSupertypes.contains(readonlySupertype))
+            XCTAssertTrue(directSupertypes.contains(mutableCollectionSymbol))
+            XCTAssertEqual(
+                sema.symbols.supertypeTypeArgs(
+                    for: abstractMutableCollectionSymbol,
+                    supertype: readonlySupertype
+                ).count,
+                1
+            )
+            XCTAssertEqual(
+                sema.symbols.supertypeTypeArgs(
+                    for: abstractMutableCollectionSymbol,
+                    supertype: mutableCollectionSymbol
+                ).count,
+                1
+            )
+
+            let constructorSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: abstractMutableCollectionFQName + [ctx.interner.intern("<init>")]),
+                "Expected AbstractMutableCollection protected constructor to be registered"
+            )
+            let constructorInfo = try XCTUnwrap(sema.symbols.symbol(constructorSymbol))
+            XCTAssertEqual(constructorInfo.visibility, .protected)
+            XCTAssertTrue(try XCTUnwrap(sema.symbols.functionSignature(for: constructorSymbol)).parameterTypes.isEmpty)
+        }
+    }
+
+    func testAbstractMutableCollectionCanBeUsedAsMutableCollectionSupertype() throws {
+        let source = """
+        import kotlin.collections.AbstractMutableCollection
+        import kotlin.collections.Collection
+        import kotlin.collections.MutableCollection
+
+        abstract class ProbeMutableCollection : AbstractMutableCollection<Int>()
+
+        fun acceptReadonly(values: Collection<Int>) {}
+        fun acceptMutable(values: MutableCollection<Int>) {}
+
+        fun probe(values: ProbeMutableCollection) {
+            acceptReadonly(values)
+            acceptMutable(values)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected AbstractMutableCollection subtype surface to resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     func testMutableListIteratorSurfaceIsRegistered() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])

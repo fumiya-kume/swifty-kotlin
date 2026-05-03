@@ -25,6 +25,7 @@ final class NativeConcurrentAPISurfaceInventoryTests: XCTestCase {
         TopLevelEntry(name: "FutureState", kind: .enumClass, todo: nil),
         TopLevelEntry(name: "InvalidMutabilityException", kind: .class, todo: nil),
         TopLevelEntry(name: "MutableData", kind: .class, todo: nil),
+        TopLevelEntry(name: "ObsoleteWorkersApi", kind: .annotationClass, todo: nil),
         TopLevelEntry(name: "SharedImmutable", kind: .annotationClass, todo: nil),
         TopLevelEntry(name: "ThreadLocal", kind: .annotationClass, todo: nil),
         TopLevelEntry(name: "TransferMode", kind: .enumClass, todo: nil),
@@ -36,16 +37,14 @@ final class NativeConcurrentAPISurfaceInventoryTests: XCTestCase {
         TopLevelEntry(name: "callContinuation1", kind: .function, todo: nil),
         TopLevelEntry(name: "callContinuation2", kind: .function, todo: nil),
         TopLevelEntry(name: "ensureNeverFrozen", kind: .function, todo: nil),
+        TopLevelEntry(name: "freeze", kind: .function, todo: nil),
+        TopLevelEntry(name: "isFrozen", kind: .property, todo: nil),
         TopLevelEntry(name: "waitForMultipleFutures", kind: .function, todo: nil),
         TopLevelEntry(name: "waitWorkerTermination", kind: .function, todo: nil),
         TopLevelEntry(name: "withWorker", kind: .function, todo: nil),
     ]
 
-    private static let knownGapTopLevelEntries: Set<TopLevelEntry> = [
-        TopLevelEntry(name: "ObsoleteWorkersApi", kind: .annotationClass, todo: "STDLIB-NATIVE-CONCURRENT-018"),
-        TopLevelEntry(name: "freeze", kind: .function, todo: "STDLIB-NATIVE-CONCURRENT-019"),
-        TopLevelEntry(name: "isFrozen", kind: .property, todo: "STDLIB-NATIVE-CONCURRENT-019"),
-    ]
+    private static let knownGapTopLevelEntries: Set<TopLevelEntry> = []
 
     private static let packagePath = ["kotlin", "native", "concurrent"]
 
@@ -68,13 +67,9 @@ final class NativeConcurrentAPISurfaceInventoryTests: XCTestCase {
 
         // Each TopLevelEntry must have a unique name (no two entries share a `name`).
         XCTAssertEqual(targetEntries.count, targetNames.count)
-        // Implemented and gap sets must be disjoint by name.
-        let implementedNames = Set(Self.implementedTopLevelEntries.map(\.name))
-        let gapNames = Set(Self.knownGapTopLevelEntries.map(\.name))
-        XCTAssertTrue(implementedNames.isDisjoint(with: gapNames))
-        // Implemented entries never carry a TODO; gap entries always do.
-        XCTAssertTrue(Self.implementedTopLevelEntries.allSatisfy { $0.todo == nil })
-        XCTAssertTrue(Self.knownGapTopLevelEntries.allSatisfy { $0.todo != nil })
+        XCTAssertEqual(targetEntries.count, 31)
+        XCTAssertEqual(Self.implementedTopLevelEntries.count, 31)
+        XCTAssertEqual(Self.knownGapTopLevelEntries.count, 0)
     }
 
     func testImplementedTopLevelEntriesAreRegistered() throws {
@@ -125,18 +120,7 @@ final class NativeConcurrentAPISurfaceInventoryTests: XCTestCase {
     }
 
     func testKnownGapTodosAreNativeConcurrentItems() {
-        // Structural prefix check — every gap TODO must belong to the
-        // STDLIB-NATIVE-CONCURRENT-* tracker. Avoids enumerating exact IDs (which forced
-        // every PR adding/closing a gap to edit a hard-coded set literal).
-        for entry in Self.knownGapTopLevelEntries {
-            guard let todo = entry.todo else {
-                XCTFail("knownGap entry \(entry.name) is missing a TODO id")
-                continue
-            }
-            XCTAssertTrue(
-                todo.hasPrefix("STDLIB-NATIVE-CONCURRENT-"),
-                "knownGap TODO \(todo) for \(entry.name) is not a kotlin.native.concurrent tracker"
-            )
-        }
+        let todos = Set(Self.knownGapTopLevelEntries.compactMap(\.todo))
+        XCTAssertEqual(todos, [])
     }
 }
