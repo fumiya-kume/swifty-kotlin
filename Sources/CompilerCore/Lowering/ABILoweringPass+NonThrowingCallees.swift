@@ -620,6 +620,8 @@ extension ABILoweringPass {
             interner.intern("kk_array_copyOfRange"),
             interner.intern("kk_array_reversedArray"),
             interner.intern("kk_array_sortedArray"),
+            interner.intern("kk_array_sliceArray_range"),
+            interner.intern("kk_array_sliceArray_iterable"),
             interner.intern("kk_array_sortedArrayDescending"),
             interner.intern("kk_array_fill"),
             interner.intern("kk_list_asSequence"),
