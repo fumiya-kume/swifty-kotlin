@@ -3,6 +3,7 @@ fun main() {
     val ex = IllegalStateException("wrapper", cause)
     println(ex.message)
     println(ex.cause?.message)
+    ex.printStackTrace()
 
     try { throw NumberFormatException("bad number") } catch (e: NumberFormatException) { println(e.message) }
     try { throw ArithmeticException("div by zero") } catch (e: ArithmeticException) { println(e.message) }
