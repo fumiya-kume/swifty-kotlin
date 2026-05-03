@@ -433,10 +433,11 @@ extension DataFlowSemaPhase {
             symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
         }
 
+        let getterAccessorName = interner.intern("$get")
         let getterSymbol = symbols.define(
             kind: .function,
-            name: interner.intern("get"),
-            fqName: propertyFQName + [interner.intern("$get")],
+            name: getterAccessorName,
+            fqName: propertyFQName + [getterAccessorName],
             declSite: nil,
             visibility: .public,
             flags: [.synthetic]
@@ -455,5 +456,6 @@ extension DataFlowSemaPhase {
             symbols.setExternalLinkName(externalLinkName, for: getterSymbol)
         }
         symbols.setExtensionPropertyGetterAccessor(getterSymbol, for: propertySymbol)
+        symbols.setAccessorOwnerProperty(propertySymbol, for: getterSymbol)
     }
 }
