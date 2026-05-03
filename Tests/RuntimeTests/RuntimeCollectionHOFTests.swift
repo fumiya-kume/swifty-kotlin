@@ -45,11 +45,11 @@ private let mapTimesTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -
     value * 2
 }
 
-private let firstNotNullOfStringForTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
-    value == 2 ? runtimeStringRaw("two") : runtimeNullSentinelInt
+private let firstNonNullEvenTimesTen: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value % 2 == 0 ? value * 10 : runtimeNullSentinelInt
 }
 
-private let firstNotNullOfAlwaysNull: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, _ in
+private let alwaysNullTransform: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, _ in
     runtimeNullSentinelInt
 }
 
@@ -258,6 +258,10 @@ private let identityMapValue: @convention(c) (Int, Int, UnsafeMutablePointer<Int
     value
 }
 
+private let firstNullableEvenTimesTen: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value.isMultiple(of: 2) ? value * 10 : runtimeNullSentinelInt
+}
+
 final class RuntimeCollectionHOFTests: XCTestCase {
     override func setUp() {
         super.setUp()
@@ -298,58 +302,6 @@ final class RuntimeCollectionHOFTests: XCTestCase {
 
         let sorted = kk_list_sortedBy(makeList([22, 12, 21, 11]), unsafeBitCast(sortedByTens, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
         XCTAssertEqual(listElements(sorted), [12, 11, 22, 21])
-    }
-
-    func testFirstNotNullOfReturnsFirstTransformedValue() {
-        var thrown = 0
-        let result = kk_list_firstNotNullOf(
-            makeList([1, 2, 3]),
-            unsafeBitCast(firstNotNullOfStringForTwo, to: Int.self),
-            0,
-            &thrown
-        )
-
-        XCTAssertEqual(thrown, 0)
-        XCTAssertEqual(runtimeStringValue(result), "two")
-    }
-
-    func testFirstNotNullOfThrowsWhenNoElementTransformsToValue() {
-        var thrown = 0
-        let result = kk_list_firstNotNullOf(
-            makeList([1, 2, 3]),
-            unsafeBitCast(firstNotNullOfAlwaysNull, to: Int.self),
-            0,
-            &thrown
-        )
-
-        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
-        XCTAssertNotEqual(thrown, 0)
-    }
-
-    func testFirstNotNullOfOrNullReturnsFirstTransformedValue() {
-        var thrown = 0
-        let result = kk_list_firstNotNullOfOrNull(
-            makeList([1, 2, 3]),
-            unsafeBitCast(firstNotNullOfStringForTwo, to: Int.self),
-            0,
-            &thrown
-        )
-
-        XCTAssertEqual(thrown, 0)
-        XCTAssertEqual(runtimeStringValue(result), "two")
-    }
-
-    func testFirstNotNullOfOrNullReturnsNullWhenNoElementTransformsToValue() {
-        var thrown = 0
-        let result = kk_list_firstNotNullOfOrNull(
-            makeList([1, 2, 3]),
-            unsafeBitCast(firstNotNullOfAlwaysNull, to: Int.self),
-            0,
-            &thrown
-        )
-
-        XCTAssertEqual(thrown, 0)
-        XCTAssertEqual(result, runtimeNullSentinelInt)
     }
 
     func testListMinusElementRemovesFirstMatchingValue() {
@@ -574,6 +526,46 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(arrayMapped), [2, 99, 6])
     }
 
+    func testIterableFirstNotNullOfReturnsFirstNonNullTransformResult() {
+        var thrown = 0
+        let listSource = makeList([1, 2, 4])
+        let listResult = kk_iterable_firstNotNullOf(
+            listSource,
+            unsafeBitCast(firstNonNullEvenTimesTen, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(listResult, 20)
+        XCTAssertEqual(thrown, 0)
+
+        let setSource = kk_set_of(makeArray([1, 3, 4]), 3)
+        let setResult = kk_iterable_firstNotNullOf(
+            setSource,
+            unsafeBitCast(firstNonNullEvenTimesTen, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(setResult, 40)
+        XCTAssertEqual(thrown, 0)
+    }
+
+    func testIterableFirstNotNullOfThrowsWhenEveryTransformResultIsNull() {
+        var thrown = 0
+        let source = makeList([1, 3, 5])
+
+        let result = kk_iterable_firstNotNullOf(
+            source,
+            unsafeBitCast(alwaysNullTransform, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
     func testCollectionMapNotNullPreservesZeroResults() {
         let source = makeList([0, 1, 2])
 
@@ -604,6 +596,52 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         let arrayMapped = kk_array_mapNotNull(arraySource, unsafeBitCast(identityMapValue, to: Int.self), 0, nil)
         let arrayFiltered = kk_list_filterNotNull(arrayMapped)
         XCTAssertEqual(listElements(arrayFiltered), [0, 1, 2])
+    }
+
+    func testIterableFirstNotNullOfOrNullReturnsFirstNonNullTransformResult() {
+        let source = makeList([1, 2, 4])
+        let result = kk_iterable_firstNotNullOfOrNull(
+            source,
+            unsafeBitCast(firstNullableEvenTimesTen, to: Int.self),
+            0,
+            nil
+        )
+        XCTAssertEqual(result, 20)
+
+        let setSource = kk_set_of(makeArray([4]), 1)
+        let setResult = kk_iterable_firstNotNullOfOrNull(
+            setSource,
+            unsafeBitCast(firstNullableEvenTimesTen, to: Int.self),
+            0,
+            nil
+        )
+        XCTAssertEqual(setResult, 40)
+    }
+
+    func testIterableFirstNotNullOfOrNullReturnsNullWhenEveryTransformResultIsNull() {
+        let source = makeList([1, 3, 5])
+        let result = kk_iterable_firstNotNullOfOrNull(
+            source,
+            unsafeBitCast(alwaysNullTransform, to: Int.self),
+            0,
+            nil
+        )
+        XCTAssertEqual(result, runtimeNullSentinelInt)
+    }
+
+    func testIterableFirstNotNullOfOrNullPropagatesThrowingLambda() {
+        let source = makeList([1, 2, 3])
+        var thrown = 0
+
+        let result = kk_iterable_firstNotNullOfOrNull(
+            source,
+            unsafeBitCast(throwingHOFLambda, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
     }
 
     func testSortedByWithStringKeyHandlesNonIntegerComparison() {
