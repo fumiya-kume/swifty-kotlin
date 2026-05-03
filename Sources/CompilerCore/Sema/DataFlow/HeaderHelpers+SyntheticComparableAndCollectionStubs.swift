@@ -1715,6 +1715,12 @@ extension DataFlowSemaPhase {
             )
         }
 
+        registerSyntheticPrimitiveIteratorStubs(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            iteratorSymbol: iteratorSymbol
+        )
+
         // MutableIterator<T> : Iterator<T> (STDLIB-221)
         let mutableIteratorName = interner.intern("MutableIterator")
         let mutableIteratorFQName = kotlinCollectionsPkg + [mutableIteratorName]
@@ -1781,6 +1787,139 @@ extension DataFlowSemaPhase {
         }
 
         return iterableInterfaceSymbol
+    }
+
+    /// Register primitive iterator class surfaces (STDLIB-COL-TYPE-004).
+    private func registerSyntheticPrimitiveIteratorStubs(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        iteratorSymbol: SymbolID
+    ) {
+        let specs: [(className: String, nextName: String, elementType: TypeID)] = [
+            ("BooleanIterator", "nextBoolean", types.booleanType),
+            ("ByteIterator", "nextByte", types.intType),
+            ("ShortIterator", "nextShort", types.intType),
+            ("IntIterator", "nextInt", types.intType),
+            ("LongIterator", "nextLong", types.longType),
+            ("FloatIterator", "nextFloat", types.floatType),
+            ("DoubleIterator", "nextDouble", types.doubleType),
+            ("CharIterator", "nextChar", types.charType),
+        ]
+
+        for spec in specs {
+            registerSyntheticPrimitiveIteratorStub(
+                named: spec.className,
+                nextMemberName: spec.nextName,
+                elementType: spec.elementType,
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                kotlinCollectionsPkg: kotlinCollectionsPkg,
+                iteratorSymbol: iteratorSymbol
+            )
+        }
+    }
+
+    private func registerSyntheticPrimitiveIteratorStub(
+        named className: String,
+        nextMemberName: String,
+        elementType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        iteratorSymbol: SymbolID
+    ) {
+        let classInternedName = interner.intern(className)
+        let classFQName = kotlinCollectionsPkg + [classInternedName]
+        let classSymbol: SymbolID = if let existing = symbols.lookup(fqName: classFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .class,
+                name: classInternedName,
+                fqName: classFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .abstractType]
+            )
+        }
+
+        let classType = types.make(.classType(ClassType(
+            classSymbol: classSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(classType, for: classSymbol)
+        symbols.setDirectSupertypes([iteratorSymbol], for: classSymbol)
+        types.setNominalDirectSupertypes([iteratorSymbol], for: classSymbol)
+        symbols.setSupertypeTypeArgs([.out(elementType)], for: classSymbol, supertype: iteratorSymbol)
+        types.setNominalSupertypeTypeArgs([.out(elementType)], for: classSymbol, supertype: iteratorSymbol)
+
+        let initName = interner.intern("<init>")
+        let initFQName = classFQName + [initName]
+        if symbols.lookup(fqName: initFQName) == nil {
+            let initSymbol = symbols.define(
+                kind: .constructor,
+                name: initName,
+                fqName: initFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(classSymbol, for: initSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: [],
+                    returnType: classType,
+                    valueParameterSymbols: [],
+                    valueParameterHasDefaultValues: [],
+                    valueParameterIsVararg: [],
+                    typeParameterSymbols: [],
+                    classTypeParameterCount: 0
+                ),
+                for: initSymbol
+            )
+        }
+
+        func registerFunction(name: String, flags: SymbolFlags, returnType: TypeID) {
+            let memberName = interner.intern(name)
+            let memberFQName = classFQName + [memberName]
+            guard symbols.lookup(fqName: memberFQName) == nil else { return }
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: memberName,
+                fqName: memberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: flags
+            )
+            symbols.setParentSymbol(classSymbol, for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: classType,
+                    parameterTypes: [],
+                    returnType: returnType,
+                    typeParameterSymbols: [],
+                    classTypeParameterCount: 0
+                ),
+                for: memberSymbol
+            )
+        }
+
+        registerFunction(
+            name: nextMemberName,
+            flags: [.synthetic, .abstractType],
+            returnType: elementType
+        )
+        registerFunction(
+            name: "next",
+            flags: [.synthetic, .openType, .overrideMember, .operatorFunction],
+            returnType: elementType
+        )
     }
 
     /// Register `kotlin.collections.MutableIterable<T>` surface (STDLIB-COL-TYPE-005).
@@ -9844,6 +9983,38 @@ extension DataFlowSemaPhase {
             symbols.setExternalLinkName("kk_array_contentEquals", for: contentEqualsSymbol)
         }
 
+        // contentToString(): String
+        let contentToStringName = interner.intern("contentToString")
+        let contentToStringFQName = arrayFQName + [contentToStringName]
+        if symbols.lookup(fqName: contentToStringFQName) == nil {
+            let contentToStringSymbol = symbols.define(
+                kind: .function,
+                name: contentToStringName,
+                fqName: contentToStringFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(arraySymbol, for: contentToStringSymbol)
+            let arrayTypeParam = types.make(.typeParam(TypeParamType(symbol: tParamSymbol, nullability: .nonNull)))
+            let receiverType = types.make(.classType(ClassType(
+                classSymbol: arraySymbol,
+                args: [.invariant(arrayTypeParam)],
+                nullability: .nonNull
+            )))
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [],
+                    returnType: types.stringType,
+                    typeParameterSymbols: [tParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: contentToStringSymbol
+            )
+            symbols.setExternalLinkName("kk_array_contentToString", for: contentToStringSymbol)
+        }
+
         // contentDeepEquals(other: Array<T>): Boolean
         let contentDeepEqualsName = interner.intern("contentDeepEquals")
         let contentDeepEqualsFQName = arrayFQName + [contentDeepEqualsName]
@@ -10825,6 +10996,66 @@ extension DataFlowSemaPhase {
                         typeParameterSymbols: []
                     ),
                     for: copyOfRangeSym
+                )
+            }
+        }
+
+        // Register contentToString() methods for primitive arrays.
+        for name in primitiveArrayNames {
+            let primName = interner.intern(name)
+            let fqName = kotlinPkg + [primName]
+            guard let arraySymbol = symbols.lookup(fqName: fqName) else {
+                continue
+            }
+
+            let contentToStringName = interner.intern("contentToString")
+            let contentToStringFQName = fqName + [contentToStringName]
+            if symbols.lookup(fqName: contentToStringFQName) == nil {
+                let contentToStringSym = symbols.define(
+                    kind: .function,
+                    name: contentToStringName,
+                    fqName: contentToStringFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(arraySymbol, for: contentToStringSym)
+
+                let externalLinkName: String = switch name {
+                case "IntArray": "kk_intArray_contentToString"
+                case "LongArray": "kk_longArray_contentToString"
+                case "ByteArray": "kk_byteArray_contentToString"
+                case "ShortArray": "kk_shortArray_contentToString"
+                case "UIntArray": "kk_uIntArray_contentToString"
+                case "ULongArray": "kk_uLongArray_contentToString"
+                case "DoubleArray": "kk_doubleArray_contentToString"
+                case "FloatArray": "kk_floatArray_contentToString"
+                case "BooleanArray": "kk_booleanArray_contentToString"
+                case "CharArray": "kk_charArray_contentToString"
+                case "UByteArray": "kk_uByteArray_contentToString"
+                case "UShortArray": "kk_uShortArray_contentToString"
+                default: "kk_array_contentToString"
+                }
+                symbols.setExternalLinkName(externalLinkName, for: contentToStringSym)
+
+                let arrayReceiverType = types.make(.classType(ClassType(
+                    classSymbol: arraySymbol,
+                    args: [],
+                    nullability: .nonNull
+                )))
+
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: arrayReceiverType,
+                        parameterTypes: [],
+                        returnType: types.stringType,
+                        isSuspend: false,
+                        valueParameterSymbols: [],
+                        valueParameterHasDefaultValues: [],
+                        valueParameterIsVararg: [],
+                        typeParameterSymbols: []
+                    ),
+                    for: contentToStringSym
                 )
             }
         }
