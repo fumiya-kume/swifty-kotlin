@@ -4525,12 +4525,12 @@ extension CallTypeChecker {
                 isSuperCall = true
                 if let currentReceiverType = ctx.implicitReceiverType,
                    let classSymbol = driver.helpers.nominalSymbol(of: currentReceiverType, types: sema.types) {
-                    
+
                     // Handle qualified super: super<Interface>
                     if let qualifier = interfaceQualifier {
                         let qualifierStr = ctx.interner.resolve(qualifier)
                         let directSupertypes = sema.symbols.directSupertypes(for: classSymbol)
-                        
+
                         // Find the specified interface in direct supertypes
                         for superID in directSupertypes {
                             guard let superSym = sema.symbols.symbol(superID) else { continue }
@@ -4540,7 +4540,7 @@ extension CallTypeChecker {
                                 break
                             }
                         }
-                        
+
                         if qualifiedSuperType == nil {
                             ctx.semaCtx.diagnostics.error(
                                 "KSWIFTK-SEMA-0054",
@@ -4976,7 +4976,7 @@ extension CallTypeChecker {
         } else {
             // Normal instance receiver: use standard member lookup with
             // companion fallback via collectMemberFunctionCandidates.
-            let allowedOwnerSymbols = isSuperCall && !supertypeSymbols.isEmpty ? 
+            let allowedOwnerSymbols = isSuperCall && !supertypeSymbols.isEmpty ?
                 (qualifiedSuperType != nil ? [qualifiedSuperType!] : supertypeSymbols) : nil
             let memberCandidates = driver.helpers.collectMemberFunctionCandidates(
                 named: calleeName,
