@@ -208,6 +208,12 @@ final class RuntimeCharEdgeCaseTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(runtimeStringValue(kk_char_uppercase(Int(("a" as UnicodeScalar).value))), "A")
     }
 
+    func testUppercaseWithTurkishLocale() {
+        let locale = kk_locale_new_language_country(runtimeString("tr"), runtimeString("TR"))
+        let result = kk_char_uppercase_locale(Int(("i" as UnicodeScalar).value), locale)
+        XCTAssertEqual(runtimeStringValue(result), "\u{0130}")
+    }
+
     func testLowercaseAscii() {
         XCTAssertEqual(runtimeStringValue(kk_char_lowercase(Int(("A" as UnicodeScalar).value))), "a")
     }
