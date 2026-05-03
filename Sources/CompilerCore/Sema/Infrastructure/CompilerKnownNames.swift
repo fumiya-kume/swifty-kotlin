@@ -34,6 +34,7 @@ enum KnownCompilerAnnotation {
     case builderInference
     case experimentalTypeInference
     case overloadResolutionByLambdaReturnType
+    case contextFunctionTypeParams
 
     var simpleName: String {
         switch self {
@@ -103,6 +104,8 @@ enum KnownCompilerAnnotation {
             "ExperimentalTypeInference"
         case .overloadResolutionByLambdaReturnType:
             "OverloadResolutionByLambdaReturnType"
+        case .contextFunctionTypeParams:
+            "ContextFunctionTypeParams"
         }
     }
 
@@ -174,6 +177,8 @@ enum KnownCompilerAnnotation {
             "kotlin.experimental.ExperimentalTypeInference"
         case .overloadResolutionByLambdaReturnType:
             "kotlin.OverloadResolutionByLambdaReturnType"
+        case .contextFunctionTypeParams:
+            "kotlin.ContextFunctionTypeParams"
         }
     }
 
