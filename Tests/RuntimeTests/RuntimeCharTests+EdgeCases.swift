@@ -17,6 +17,14 @@ final class RuntimeCharEdgeCaseTests: IsolatedRuntimeXCTestCase {
         extractString(from: UnsafeMutableRawPointer(bitPattern: raw)) ?? ""
     }
 
+    private func runtimeString(_ text: String) -> Int {
+        text.withCString { cstr in
+            cstr.withMemoryRebound(to: UInt8.self, capacity: text.utf8.count) { ptr in
+                Int(bitPattern: kk_string_from_utf8(ptr, Int32(text.utf8.count)))
+            }
+        }
+    }
+
     // MARK: - Char.MIN_VALUE / MAX_VALUE boundaries
     // Kotlin Char.MIN_VALUE = '\u0000', Char.MAX_VALUE = '\uFFFF'
 
@@ -40,6 +48,66 @@ final class RuntimeCharEdgeCaseTests: IsolatedRuntimeXCTestCase {
 
     func testNulCharIsNotWhitespace() {
         XCTAssertFalse(boolValue(kk_char_isWhitespace(0)))
+    }
+
+    func testDefinedAsciiChar() {
+        XCTAssertTrue(boolValue(kk_char_isDefined(Int(("A" as UnicodeScalar).value))))
+    }
+
+    func testUnassignedCodePointIsNotDefined() {
+        XCTAssertFalse(boolValue(kk_char_isDefined(0x0378)))
+    }
+
+    func testSurrogateCodeUnitIsDefined() {
+        XCTAssertTrue(boolValue(kk_char_isDefined(0xD800)))
+    }
+
+    func testOutOfRangeCodePointIsNotDefined() {
+        XCTAssertFalse(boolValue(kk_char_isDefined(0x110000)))
+    }
+
+    func testSupplementaryCodePointBoundaries() {
+        XCTAssertFalse(boolValue(kk_char_isSupplementaryCodePoint(0xFFFF)))
+        XCTAssertTrue(boolValue(kk_char_isSupplementaryCodePoint(0x10000)))
+        XCTAssertTrue(boolValue(kk_char_isSupplementaryCodePoint(0x10FFFF)))
+        XCTAssertFalse(boolValue(kk_char_isSupplementaryCodePoint(0x110000)))
+    }
+
+    func testSurrogatePairBoundaries() {
+        XCTAssertTrue(boolValue(kk_char_isSurrogatePair(0xD800, 0xDC00)))
+        XCTAssertTrue(boolValue(kk_char_isSurrogatePair(0xDBFF, 0xDFFF)))
+        XCTAssertFalse(boolValue(kk_char_isSurrogatePair(0xD7FF, 0xDC00)))
+        XCTAssertFalse(boolValue(kk_char_isSurrogatePair(0xD800, 0xE000)))
+        XCTAssertFalse(boolValue(kk_char_isSurrogatePair(0xDC00, 0xD800)))
+    }
+
+    func testToCharsReturnsSingleCharArrayForBmpCodePoint() throws {
+        let arrayRaw = kk_char_toChars(0x0041)
+        let array = try XCTUnwrap(runtimeArrayBox(from: arrayRaw))
+        XCTAssertEqual(array.elements.count, 1)
+        XCTAssertEqual(kk_unbox_char(array.elements[0]), 0x0041)
+    }
+
+    func testToCharsReturnsSurrogatePairForSupplementaryCodePoint() throws {
+        let arrayRaw = kk_char_toChars(0x10000)
+        let array = try XCTUnwrap(runtimeArrayBox(from: arrayRaw))
+        XCTAssertEqual(array.elements.count, 2)
+        XCTAssertEqual(kk_unbox_char(array.elements[0]), 0xD800)
+        XCTAssertEqual(kk_unbox_char(array.elements[1]), 0xDC00)
+    }
+
+    func testToCharsReturnsUpperSurrogatePairBoundary() throws {
+        let arrayRaw = kk_char_toChars(0x10FFFF)
+        let array = try XCTUnwrap(runtimeArrayBox(from: arrayRaw))
+        XCTAssertEqual(array.elements.count, 2)
+        XCTAssertEqual(kk_unbox_char(array.elements[0]), 0xDBFF)
+        XCTAssertEqual(kk_unbox_char(array.elements[1]), 0xDFFF)
+    }
+
+    func testToCodePointDoesNotValidateSurrogatePair() {
+        XCTAssertEqual(kk_char_toCodePoint(0xD800, 0xDC00), 0x10000)
+        XCTAssertEqual(kk_char_toCodePoint(0xDBFF, 0xDFFF), 0x10FFFF)
+        XCTAssertEqual(kk_char_toCodePoint(0x0041, 0x0042), -56_547_262)
     }
 
     // MARK: - Surrogate boundaries
@@ -140,8 +208,20 @@ final class RuntimeCharEdgeCaseTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(runtimeStringValue(kk_char_uppercase(Int(("a" as UnicodeScalar).value))), "A")
     }
 
+    func testUppercaseWithTurkishLocale() {
+        let locale = kk_locale_new_language_country(runtimeString("tr"), runtimeString("TR"))
+        let result = kk_char_uppercase_locale(Int(("i" as UnicodeScalar).value), locale)
+        XCTAssertEqual(runtimeStringValue(result), "\u{0130}")
+    }
+
     func testLowercaseAscii() {
         XCTAssertEqual(runtimeStringValue(kk_char_lowercase(Int(("A" as UnicodeScalar).value))), "a")
+    }
+
+    func testLowercaseWithTurkishLocale() {
+        let locale = kk_locale_new_language_country(runtimeString("tr"), runtimeString("TR"))
+        let result = kk_char_lowercase_locale(Int(("I" as UnicodeScalar).value), locale)
+        XCTAssertEqual(runtimeStringValue(result), "\u{0131}")
     }
 
     // MARK: - titlecaseChar() edge cases
@@ -214,6 +294,16 @@ final class RuntimeCharEdgeCaseTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_char_code(Int(("a" as UnicodeScalar).value)), 97)
         XCTAssertEqual(kk_char_code(Int(("0" as UnicodeScalar).value)), 48)
         XCTAssertEqual(kk_char_code(Int((" " as UnicodeScalar).value)), 32)
+    }
+
+    // MARK: - directionality property
+
+    func testDirectionalityReturnsKotlinEnumOrdinals() {
+        XCTAssertEqual(kk_char_directionality(Int(("A" as UnicodeScalar).value)), 1)
+        XCTAssertEqual(kk_char_directionality(0x05D0), 2)
+        XCTAssertEqual(kk_char_directionality(0x0627), 3)
+        XCTAssertEqual(kk_char_directionality(Int(("5" as UnicodeScalar).value)), 4)
+        XCTAssertEqual(kk_char_directionality(Int((" " as UnicodeScalar).value)), 13)
     }
 
     // MARK: - isWhitespace edge cases

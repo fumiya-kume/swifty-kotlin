@@ -1873,252 +1873,43 @@ private func runtimeSetThrown(_ outThrown: UnsafeMutablePointer<Int>?, message: 
     outThrown?.pointee = runtimeAllocateThrowable(message: message)
 }
 
-@_cdecl("kk_secretkeyspec_new")
-public func kk_secretkeyspec_new(_ keyRaw: Int, _ algorithmRaw: Int) -> Int {
-    fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: UnsupportedOperationException: SecretKeySpec is not available on this platform")
-}
 
-@_cdecl("kk_ivparameterspec_new")
-public func kk_ivparameterspec_new(_ ivRaw: Int) -> Int {
-    fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: UnsupportedOperationException: IvParameterSpec is not available on this platform")
-}
 
-@_cdecl("kk_keypairgenerator_getInstance")
-public func kk_keypairgenerator_getInstance(_ companionRaw: Int, _ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    _ = companionRaw
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_keypairgenerator_initialize")
-public func kk_keypairgenerator_initialize(_ generatorRaw: Int, _ keySizeRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_keypairgenerator_generateKeyPair")
-public func kk_keypairgenerator_generateKeyPair(_ generatorRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_keypair_public")
-public func kk_keypair_public(_ keyPairRaw: Int) -> Int {
-    return runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform")
-}
 
-@_cdecl("kk_keypair_private")
-public func kk_keypair_private(_ keyPairRaw: Int) -> Int {
-    return runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform")
-}
 
-@_cdecl("kk_keypair_new")
-public func kk_keypair_new(_ publicKeyRaw: Int, _ privateKeyRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_keypair_publicKey")
-public func kk_keypair_publicKey(_ keyPairRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_keypair_privateKey")
-public func kk_keypair_privateKey(_ keyPairRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_signature_getInstance")
-public func kk_signature_getInstance(_ companionRaw: Int, _ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    _ = companionRaw
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_signature_initSign")
-public func kk_signature_initSign(_ signatureRaw: Int, _ privateKeyRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_signature_initVerify")
-public func kk_signature_initVerify(_ signatureRaw: Int, _ publicKeyRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_signature_update")
-public func kk_signature_update(_ signatureRaw: Int, _ dataRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_signature_sign")
-public func kk_signature_sign(_ signatureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_signature_verify")
-public func kk_signature_verify(_ signatureRaw: Int, _ sigBytesRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_cipher_getInstance")
-public func kk_cipher_getInstance(_ companionRaw: Int, _ transformationRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    _ = companionRaw
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_cipher_init")
-public func kk_cipher_init(
-    _ cipherRaw: Int,
-    _ opmodeRaw: Int,
-    _ keyRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_cipher_init_with_iv")
-public func kk_cipher_init_with_iv(
-    _ cipherRaw: Int,
-    _ opmodeRaw: Int,
-    _ keyRaw: Int,
-    _ ivRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_cipher_doFinal")
-public func kk_cipher_doFinal(
-    _ cipherRaw: Int,
-    _ dataRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_cipher_doFinal_noarg")
-public func kk_cipher_doFinal_noarg(
-    _ cipherRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_mac_getInstance")
-public func kk_mac_getInstance(_ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_mac_init")
-public func kk_mac_init(_ macRaw: Int, _ keyRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_mac_doFinal")
-public func kk_mac_doFinal(_ macRaw: Int, _ dataRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_certificatefactory_getInstance")
-public func kk_certificatefactory_getInstance(_ companionRaw: Int, _ typeRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    _ = companionRaw
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_certificatefactory_generateCertificate")
-public func kk_certificatefactory_generateCertificate(_ factoryRaw: Int, _ dataRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_certificatefactory_generateCertificate_inputStream")
-public func kk_certificatefactory_generateCertificate_inputStream(_ factoryRaw: Int, _ dataRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_x509certificate_getPublicKey")
-public func kk_x509certificate_getPublicKey(_ certificateRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_x509certificate_getEncoded")
-public func kk_x509certificate_getEncoded(_ certificateRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_certpath_new")
-public func kk_certpath_new(_ certificatesRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_certificatefactory_generateCertPath")
-public func kk_certificatefactory_generateCertPath(_ factoryRaw: Int, _ certificatesRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_certpathvalidator_getInstance")
-public func kk_certpathvalidator_getInstance(_ companionRaw: Int, _ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    _ = companionRaw
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_trustanchor_new_with_constraints")
-public func kk_trustanchor_new_with_constraints(_ certificateRaw: Int, _ nameConstraintsRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_trustanchor_new")
-public func kk_trustanchor_new(_ certificateRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_pkixparameters_new")
-public func kk_pkixparameters_new(_ trustAnchorsRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_pkixparameters_new_from_set")
-public func kk_pkixparameters_new_from_set(_ trustAnchorsRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_pkixparameters_setTrustAnchors")
-public func kk_pkixparameters_setTrustAnchors(_ parametersRaw: Int, _ trustAnchorsRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 
-@_cdecl("kk_certpathvalidator_validate")
-public func kk_certpathvalidator_validate(_ validatorRaw: Int, _ certPathRaw: Int, _ parametersRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "UnsupportedOperationException: crypto not available on this platform"))
-    return 0
-}
 #endif
 // MARK: - MessageDigest Runtime Support (STDLIB-SEC-143)
 
@@ -2188,15 +1979,5 @@ public func kk_message_digest_digest(_ digestRaw: Int, _ dataRaw: Int, _ outThro
 #else
 // MARK: - Platform stubs: CryptoKit not available on Linux
 
-@_cdecl("kk_message_digest_getInstance")
-public func kk_message_digest_getInstance(_ algorithmRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    outThrown?.pointee = runtimeAllocateThrowable(message: "UnsupportedOperationException: MessageDigest not available on this platform")
-    return 0
-}
 
-@_cdecl("kk_message_digest_digest")
-public func kk_message_digest_digest(_ digestRaw: Int, _ dataRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    outThrown?.pointee = runtimeAllocateThrowable(message: "UnsupportedOperationException: MessageDigest not available on this platform")
-    return 0
-}
 #endif
