@@ -153,8 +153,8 @@
 - [x] STDLIB-COL-WIN-001: `Iterable.windowed(size, step, partialWindows, transform)` overload を追加する
 - [ ] STDLIB-COL-TYPE-001: `AbstractCollection<E>` surface を追加する
 - [ ] STDLIB-COL-TYPE-002: `AbstractIterator<T>` surface を追加する
-- [ ] STDLIB-COL-TYPE-003: `AbstractMutableCollection<E>` surface を追加する
-- [x] STDLIB-COL-TYPE-004: primitive iterator classes（`BooleanIterator`, `ByteIterator`, `ShortIterator`, `IntIterator`, `LongIterator`, `FloatIterator`, `DoubleIterator`, `CharIterator`）を追加する
+- [x] STDLIB-COL-TYPE-003: `AbstractMutableCollection<E>` surface を追加する
+- [ ] STDLIB-COL-TYPE-004: primitive iterator classes（`BooleanIterator`, `ByteIterator`, `ShortIterator`, `IntIterator`, `LongIterator`, `FloatIterator`, `DoubleIterator`, `CharIterator`）を追加する
 - [x] STDLIB-COL-TYPE-005: `MutableIterable<T>` surface を追加する
 - [x] STDLIB-COL-TYPE-006: `MutableListIterator<T>` surface を追加する
 - [x] STDLIB-COL-ARRAY-001: array `contentToString()` overload 群を追加する
@@ -163,7 +163,7 @@
 - [x] STDLIB-COL-ARRAY-004: array `contentDeepToString()` を追加する
 - [x] STDLIB-COL-ARRAY-005: array `copyInto(destination, destinationOffset, startIndex, endIndex)` overload 群を追加する
 - [x] STDLIB-COL-ARRAY-006: array `reversedArray()` overload 群を追加する
-- [ ] STDLIB-COL-ARRAY-007: array `sliceArray(indices)` overload 群を追加する
+- [x] STDLIB-COL-ARRAY-007: array `sliceArray(indices)` overload 群を追加する
 - [x] STDLIB-COL-ARRAY-008: array `sortedArray()` overload 群を追加する
 - [x] STDLIB-COL-ARRAY-009: array `sortedArrayDescending()` overload 群を追加する
 - [x] STDLIB-COL-ARRAY-010: array `sortedArrayWith(comparator)` overload 群を追加する
@@ -299,7 +299,7 @@
 - [ ] STDLIB-KOTLIN-ROOT-ANNO-005: `ParameterName(name: String)` annotation surface を追加する
 - [ ] STDLIB-KOTLIN-ROOT-ANNO-006: `PublishedApi` annotation surface を追加する
 - [x] STDLIB-KOTLIN-ROOT-ANNO-007: `SinceKotlin(version: String)` annotation surface を追加する
-- [ ] STDLIB-KOTLIN-ROOT-ANNO-008: `Throws(vararg exceptionClasses: KClass<out Throwable>)` annotation surface を追加する
+- [x] STDLIB-KOTLIN-ROOT-ANNO-008: `Throws(vararg exceptionClasses: KClass<out Throwable>)` annotation surface を追加する
 - [x] STDLIB-KOTLIN-ROOT-ANNO-009: `ExperimentalContextParameters` opt-in marker を追加する
 - [x] STDLIB-KOTLIN-ROOT-ANNO-010: `IgnorableReturnValue` annotation surface を追加する
 - [ ] STDLIB-KOTLIN-ROOT-ANNO-011: `IntroducedAt(version: String)` annotation surface を追加する

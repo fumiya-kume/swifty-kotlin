@@ -150,6 +150,19 @@ extension DataFlowSemaPhase {
             iterableInterfaceSymbol: iterableInterfaceSymbol
         )
 
+        let mutableCollectionInterfaceSymbol = registerSyntheticMutableCollectionStub(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            collectionInterfaceSymbol: collectionInterfaceSymbol
+        )
+
+        registerSyntheticAbstractMutableCollectionStub(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            collectionInterfaceSymbol: collectionInterfaceSymbol,
+            mutableCollectionInterfaceSymbol: mutableCollectionInterfaceSymbol
+        )
+
         let listInterfaceSymbol = registerSyntheticListStub(
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg,
