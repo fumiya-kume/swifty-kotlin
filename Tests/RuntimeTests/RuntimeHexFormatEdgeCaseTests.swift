@@ -363,6 +363,23 @@ final class RuntimeHexFormatEdgeCaseTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_unbox_long(result), 0)
     }
 
+    // MARK: - String.hexToUInt - basic
+
+    func testHexToUIntBasic() {
+        let fmt = makeFormat()
+        var thrown = 0
+        XCTAssertEqual(kk_string_hexToUInt(makeString("ffffffff"), fmt, &thrown), Int(UInt32.max))
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        XCTAssertEqual(kk_string_hexToUInt(makeString("00000000"), fmt, &thrown), 0)
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        _ = kk_string_hexToUInt(makeString("100000000"), fmt, &thrown)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
     // MARK: - Uppercase/lowercase symmetry round-trip for bytes
 
     func testUppercaseAndLowercaseDecodeIdentically() {
