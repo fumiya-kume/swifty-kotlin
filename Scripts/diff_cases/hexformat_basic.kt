@@ -18,6 +18,10 @@ fun main() {
     val num2 = "1000".hexToInt()
     println(num2)  // 4096
 
+    // String.hexToUInt
+    val unsigned = "ffffffff".hexToUInt()
+    println(unsigned)  // 4294967295
+
     // HexFormat.Default
     val defaultFmt = HexFormat.Default
     val hex4 = 42.toHexString(defaultFmt)
