@@ -88,7 +88,7 @@
 - [ ] STDLIB-TEXT-HEX-001: `String.hexToShort()` を追加する
 - [ ] STDLIB-TEXT-HEX-002: `String.hexToUByte()` を追加する
 - [ ] STDLIB-TEXT-HEX-003: `String.hexToUByteArray()` を追加する
-- [ ] STDLIB-TEXT-HEX-004: `String.hexToUInt()` を追加する
+- [x] STDLIB-TEXT-HEX-004: `String.hexToUInt()` を追加する
 - [ ] STDLIB-TEXT-HEX-005: `String.hexToULong()` を追加する
 - [ ] STDLIB-TEXT-HEX-006: `String.hexToUShort()` を追加する
 - [ ] STDLIB-TEXT-NUM-001: `String.toUByteOrNull(radix)` を追加する
@@ -291,7 +291,7 @@
 - [x] STDLIB-KOTLIN-ROOT-002: `ConsistentCopyVisibility` annotation を追加し、data class `copy()` visibility migration の declaration-side diagnostics へ結び付ける
 - [x] STDLIB-KOTLIN-ROOT-003: `ExposedCopyVisibility` annotation を追加し、public `copy()` 維持モードの suppression semantics を実装する
 - [x] STDLIB-KOTLIN-ROOT-004: `ExperimentalVersionOverloading` marker を追加し、`@OptIn` / `-opt-in` diagnostics と結び付ける
-- [ ] STDLIB-KOTLIN-ROOT-005: `ContextFunctionTypeParams(count: Int)` type annotation を追加する
+- [x] STDLIB-KOTLIN-ROOT-005: `ContextFunctionTypeParams(count: Int)` type annotation を追加する
 - [x] STDLIB-KOTLIN-ROOT-ANNO-001: `BuilderInference` annotation surface を追加する
 - [x] STDLIB-KOTLIN-ROOT-ANNO-002: `DeprecatedSinceKotlin(warningSince, errorSince, hiddenSince)` annotation surface を追加する
 - [x] STDLIB-KOTLIN-ROOT-ANNO-003: `DslMarker` annotation surface を追加する
