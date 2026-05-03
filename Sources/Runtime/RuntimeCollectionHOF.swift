@@ -71,12 +71,58 @@ private func runtimeSortedWithComparatorInvoke(
 
 // MARK: - Closeable.use {} (STDLIB-250)
 
-/// Calls `close()` on a Closeable resource via vtable dispatch (slot 0).
+private final class RuntimeAutoCloseableBox {
+    let fnPtr: Int
+    let closureRaw: Int
+
+    init(fnPtr: Int, closureRaw: Int) {
+        self.fnPtr = fnPtr
+        self.closureRaw = closureRaw
+    }
+}
+
+private let runtimeAutoCloseableCloseThunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { receiverRaw, outThrown in
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: receiverRaw),
+          let box = tryCast(pointer, to: RuntimeAutoCloseableBox.self)
+    else {
+        let thrown = runtimeAllocateThrowable(message: "AutoCloseable receiver is invalid.")
+        return handleCollectionLambdaThrow(thrown, outThrown)
+    }
+
+    var thrown = 0
+    _ = runtimeInvokeClosureThunk(fnPtr: box.fnPtr, closureRaw: box.closureRaw, outThrown: &thrown)
+    if thrown != 0 {
+        return handleCollectionLambdaThrow(thrown, outThrown)
+    }
+    return 0
+}
+
+/// `AutoCloseable { closeAction }` factory.
+@_cdecl("kk_auto_closeable_create")
+public func kk_auto_closeable_create(_ fnPtr: Int, _ closureRaw: Int) -> Int {
+    let resourceRaw = registerRuntimeObject(RuntimeAutoCloseableBox(fnPtr: fnPtr, closureRaw: closureRaw))
+    _ = kk_object_register_itable_method(
+        resourceRaw,
+        0,
+        0,
+        unsafeBitCast(runtimeAutoCloseableCloseThunk, to: Int.self)
+    )
+    return resourceRaw
+}
+
+/// Calls `close()` on a Closeable resource via interface/object dispatch,
+/// falling back to vtable slot 0 for compiler-allocated class instances.
 /// The vtable function pointer follows the standard compiler ABI:
 ///   (self, outThrown) -> Int
 /// Returns 0 on success, or the thrown exception handle if close() threw.
 private func runtimeCloseableClose(_ resourceRaw: Int) -> Int {
-    let closeFnPtr = kk_vtable_lookup(resourceRaw, 0)
+    guard resourceRaw != 0, resourceRaw != runtimeNullSentinelInt else {
+        return 0
+    }
+    var closeFnPtr = kk_itable_lookup(resourceRaw, 0, 0)
+    if closeFnPtr == 0, runtimeIsHeapObject(resourceRaw) {
+        closeFnPtr = kk_vtable_lookup(resourceRaw, 0)
+    }
     guard closeFnPtr != 0 else { return 0 }
     let closeFn = unsafeBitCast(closeFnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var closeThrown = 0
@@ -203,61 +249,33 @@ public func kk_list_mapNotNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, 
     return registerRuntimeObject(RuntimeListBox(elements: mapped))
 }
 
-@_cdecl("kk_list_firstNotNullOf")
-public func kk_list_firstNotNullOf(
-    _ listRaw: Int,
-    _ fnPtr: Int,
-    _ closureRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    guard let elements = runtimeCollectionElements(from: listRaw) ?? runtimeArrayBox(from: listRaw)?.elements else {
-        invalidContainerPanic(#function, "collection")
+@_cdecl("kk_iterable_firstNotNullOf")
+public func kk_iterable_firstNotNullOf(_ iterableRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let elements = runtimeCollectionElements(from: iterableRaw) else {
+        invalidContainerPanic(#function, "iterable")
     }
     for elem in elements {
         var thrown = 0
-        let result = runtimeInvokeCollectionLambda1(
-            fnPtr: fnPtr,
-            closureRaw: closureRaw,
-            value: elem,
-            outThrown: &thrown
-        )
-        if thrown != 0 {
-            return handleCollectionLambdaThrow(thrown, outThrown)
-        }
-        if result != 0, let normalized = runtimeMapNotNullResultValue(result) {
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if let normalized = runtimeMapNotNullResultValue(result) {
             return normalized
         }
     }
-    return handleCollectionLambdaThrow(
-        runtimeAllocateThrowable(
-            message: "NoSuchElementException: No element of the collection was transformed to a non-null value."
-        ),
-        outThrown
-    )
+    let thrown = runtimeAllocateThrowable(message: "No element of the collection was transformed to a non-null value.")
+    return handleCollectionLambdaThrow(thrown, outThrown)
 }
 
-@_cdecl("kk_list_firstNotNullOfOrNull")
-public func kk_list_firstNotNullOfOrNull(
-    _ listRaw: Int,
-    _ fnPtr: Int,
-    _ closureRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    guard let elements = runtimeCollectionElements(from: listRaw) ?? runtimeArrayBox(from: listRaw)?.elements else {
-        invalidContainerPanic(#function, "collection")
+@_cdecl("kk_iterable_firstNotNullOfOrNull")
+public func kk_iterable_firstNotNullOfOrNull(_ iterableRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let elements = runtimeCollectionElements(from: iterableRaw) else {
+        invalidContainerPanic(#function, "iterable")
     }
     for elem in elements {
         var thrown = 0
-        let result = runtimeInvokeCollectionLambda1(
-            fnPtr: fnPtr,
-            closureRaw: closureRaw,
-            value: elem,
-            outThrown: &thrown
-        )
-        if thrown != 0 {
-            return handleCollectionLambdaThrow(thrown, outThrown)
-        }
-        if result != 0, let normalized = runtimeMapNotNullResultValue(result) {
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if let normalized = runtimeMapNotNullResultValue(result) {
             return normalized
         }
     }
@@ -3383,6 +3401,42 @@ public func kk_array_binarySearch_compare(
         }
     }
     return -(low + 1)
+}
+
+@_cdecl("kk_array_sortedArrayWith")
+public func kk_array_sortedArrayWith(
+    _ arrayRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        invalidContainerPanic(#function, "array")
+    }
+    let comparatorInvoke = runtimeSortedWithComparatorInvoke(fnPtr: fnPtr, closureRaw: closureRaw)
+    var hadThrow = false
+    var indexed = array.elements.enumerated().map { ($0.offset, $0.element) }
+    indexed.sort { lhs, rhs in
+        guard !hadThrow else { return false }
+        var thrown = 0
+        let result = comparatorInvoke(lhs.1, rhs.1, &thrown)
+        if thrown != 0 {
+            _ = handleCollectionLambdaThrow(thrown, outThrown)
+            hadThrow = true
+            return false
+        }
+        if result != 0 { return result < 0 }
+        return lhs.0 < rhs.0
+    }
+    if hadThrow {
+        return registerRuntimeObject(RuntimeArrayBox(length: 0))
+    }
+
+    let box = RuntimeArrayBox(length: indexed.count)
+    for (index, pair) in indexed.enumerated() {
+        box.elements[index] = pair.1
+    }
+    return registerRuntimeObject(box)
 }
 
 @_cdecl("kk_array_mapIndexed")
