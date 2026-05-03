@@ -151,6 +151,13 @@ extension DataFlowSemaPhase {
             interner: interner
         )
         registerSyntheticJvmAnnotationClass(
+            named: "OptionalExpectation",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticJvmAnnotationClass(
             named: "SinceKotlin",
             packageFQName: kotlinPkg,
             packageSymbol: kotlinPkgSymbol,
@@ -159,6 +166,13 @@ extension DataFlowSemaPhase {
         )
         registerSyntheticJvmAnnotationClass(
             named: "DslMarker",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticJvmAnnotationClass(
+            named: "IntroducedAt",
             packageFQName: kotlinPkg,
             packageSymbol: kotlinPkgSymbol,
             symbols: symbols,
@@ -223,6 +237,28 @@ extension DataFlowSemaPhase {
         )
         registerSyntheticJvmAnnotationClass(
             named: "ExposedCopyVisibility",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticJvmAnnotationClass(
+            named: "ParameterName",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticJvmAnnotationClass(
+            named: "PublishedApi",
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticJvmAnnotationClass(
+            named: "PublishedApi",
             packageFQName: kotlinPkg,
             packageSymbol: kotlinPkgSymbol,
             symbols: symbols,
@@ -553,6 +589,22 @@ extension DataFlowSemaPhase {
             )
         }
 
+        if let publishedApiSymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern("PublishedApi")]) {
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.target.qualifiedName,
+                    arguments: [
+                        "AnnotationTarget.CLASS",
+                        "AnnotationTarget.CONSTRUCTOR",
+                        "AnnotationTarget.FUNCTION",
+                        "AnnotationTarget.PROPERTY",
+                    ]
+                ),
+                to: publishedApiSymbol,
+                symbols: symbols
+            )
+        }
+
         if let ignorableReturnValueSymbol = symbols.lookup(
             fqName: kotlinPkg + [interner.intern("IgnorableReturnValue")]
         ) {
@@ -575,6 +627,24 @@ extension DataFlowSemaPhase {
                     arguments: ["AnnotationTarget.CLASS"]
                 ),
                 to: exposedCopyVisibilitySymbol,
+                symbols: symbols
+            )
+        }
+
+        if let optionalExpectationSymbol = symbols.lookup(
+            fqName: kotlinPkg + [interner.intern("OptionalExpectation")]
+        ) {
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.target.qualifiedName,
+                    arguments: ["AnnotationTarget.ANNOTATION_CLASS"]
+                ),
+                to: optionalExpectationSymbol,
+                symbols: symbols
+            )
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(annotationFQName: "kotlin.ExperimentalMultiplatform"),
+                to: optionalExpectationSymbol,
                 symbols: symbols
             )
         }
@@ -639,6 +709,37 @@ extension DataFlowSemaPhase {
             )
         }
 
+        if let introducedAtSymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern("IntroducedAt")]) {
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.target.qualifiedName,
+                    arguments: ["AnnotationTarget.VALUE_PARAMETER"]
+                ),
+                to: introducedAtSymbol,
+                symbols: symbols
+            )
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(annotationFQName: "kotlin.annotation.MustBeDocumented"),
+                to: introducedAtSymbol,
+                symbols: symbols
+            )
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.experimentalVersionOverloading.qualifiedName
+                ),
+                to: introducedAtSymbol,
+                symbols: symbols
+            )
+            registerSyntheticStringAnnotationPropertyAndConstructor(
+                ownerSymbol: introducedAtSymbol,
+                ownerFQName: kotlinPkg + [interner.intern("IntroducedAt")],
+                propertyName: "version",
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
+        }
+
         if let mustUseReturnValuesSymbol = symbols.lookup(
             fqName: kotlinPkg + [interner.intern("MustUseReturnValues")]
         ) {
@@ -651,6 +752,61 @@ extension DataFlowSemaPhase {
                     ]
                 ),
                 to: mustUseReturnValuesSymbol,
+                symbols: symbols
+            )
+        }
+
+        if let parameterNameSymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern("ParameterName")]) {
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.target.qualifiedName,
+                    arguments: ["AnnotationTarget.TYPE"]
+                ),
+                to: parameterNameSymbol,
+                symbols: symbols
+            )
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.annotation.Retention",
+                    arguments: ["AnnotationRetention.BINARY"]
+                ),
+                to: parameterNameSymbol,
+                symbols: symbols
+            )
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(annotationFQName: "kotlin.annotation.MustBeDocumented"),
+                to: parameterNameSymbol,
+                symbols: symbols
+            )
+            registerSyntheticParameterNameMembers(
+                ownerSymbol: parameterNameSymbol,
+                ownerFQName: kotlinPkg + [interner.intern("ParameterName")],
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
+        }
+
+        if let publishedApiSymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern("PublishedApi")]) {
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.target.qualifiedName,
+                    arguments: [
+                        "AnnotationTarget.CLASS",
+                        "AnnotationTarget.CONSTRUCTOR",
+                        "AnnotationTarget.FUNCTION",
+                        "AnnotationTarget.PROPERTY",
+                    ]
+                ),
+                to: publishedApiSymbol,
+                symbols: symbols
+            )
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.annotation.Retention",
+                    arguments: ["AnnotationRetention.BINARY"]
+                ),
+                to: publishedApiSymbol,
                 symbols: symbols
             )
         }
@@ -676,6 +832,87 @@ extension DataFlowSemaPhase {
                 symbols: symbols
             )
         }
+    }
+
+    private func registerSyntheticParameterNameMembers(
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let stringType = types.stringType
+        let ownerType = types.make(.classType(ClassType(
+            classSymbol: ownerSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        let name = interner.intern("name")
+        let propertyFQName = ownerFQName + [name]
+        let propertySymbol: SymbolID
+        if let existing = symbols.lookup(fqName: propertyFQName) {
+            propertySymbol = existing
+        } else {
+            propertySymbol = symbols.define(
+                kind: .property,
+                name: name,
+                fqName: propertyFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
+        symbols.setPropertyType(stringType, for: propertySymbol)
+
+        let initName = interner.intern("<init>")
+        let ctorFQName = ownerFQName + [initName]
+        let ctorSymbol: SymbolID
+        if let existing = symbols.lookupAll(fqName: ctorFQName).first(where: {
+            symbols.symbol($0)?.kind == .constructor
+        }) {
+            ctorSymbol = existing
+        } else {
+            ctorSymbol = symbols.define(
+                kind: .constructor,
+                name: initName,
+                fqName: ctorFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        symbols.setParentSymbol(ownerSymbol, for: ctorSymbol)
+
+        let parameterFQName = ctorFQName + [name]
+        let parameterSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: parameterFQName) {
+            parameterSymbol = existing
+        } else {
+            parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: name,
+                fqName: parameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+        }
+        symbols.setParentSymbol(ctorSymbol, for: parameterSymbol)
+        symbols.setPropertyType(stringType, for: parameterSymbol)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: ownerType,
+                parameterTypes: [stringType],
+                returnType: ownerType,
+                valueParameterSymbols: [parameterSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false]
+            ),
+            for: ctorSymbol
+        )
     }
 
     private func attachAnnotationIfNeeded(
