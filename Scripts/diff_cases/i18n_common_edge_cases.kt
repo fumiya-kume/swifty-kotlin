@@ -21,4 +21,5 @@ fun main() {
     println(' '.directionality == CharDirectionality.WHITESPACE)
     val turkish = Locale("tr", "TR")
     println('I'.lowercase(turkish))
+    println('i'.uppercase(turkish))
 }

@@ -249,6 +249,39 @@ public func kk_list_mapNotNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, 
     return registerRuntimeObject(RuntimeListBox(elements: mapped))
 }
 
+@_cdecl("kk_iterable_firstNotNullOf")
+public func kk_iterable_firstNotNullOf(_ iterableRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let elements = runtimeCollectionElements(from: iterableRaw) else {
+        invalidContainerPanic(#function, "iterable")
+    }
+    for elem in elements {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if let normalized = runtimeMapNotNullResultValue(result) {
+            return normalized
+        }
+    }
+    let thrown = runtimeAllocateThrowable(message: "No element of the collection was transformed to a non-null value.")
+    return handleCollectionLambdaThrow(thrown, outThrown)
+}
+
+@_cdecl("kk_iterable_firstNotNullOfOrNull")
+public func kk_iterable_firstNotNullOfOrNull(_ iterableRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let elements = runtimeCollectionElements(from: iterableRaw) else {
+        invalidContainerPanic(#function, "iterable")
+    }
+    for elem in elements {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if let normalized = runtimeMapNotNullResultValue(result) {
+            return normalized
+        }
+    }
+    return runtimeNullSentinelInt
+}
+
 @_cdecl("kk_list_filterTo")
 public func kk_list_filterTo(_ listRaw: Int, _ destRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let elements = runtimeCollectionElements(from: listRaw) else {
@@ -3292,6 +3325,42 @@ public func kk_array_binarySearch_compare(
         }
     }
     return -(low + 1)
+}
+
+@_cdecl("kk_array_sortedArrayWith")
+public func kk_array_sortedArrayWith(
+    _ arrayRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        invalidContainerPanic(#function, "array")
+    }
+    let comparatorInvoke = runtimeSortedWithComparatorInvoke(fnPtr: fnPtr, closureRaw: closureRaw)
+    var hadThrow = false
+    var indexed = array.elements.enumerated().map { ($0.offset, $0.element) }
+    indexed.sort { lhs, rhs in
+        guard !hadThrow else { return false }
+        var thrown = 0
+        let result = comparatorInvoke(lhs.1, rhs.1, &thrown)
+        if thrown != 0 {
+            _ = handleCollectionLambdaThrow(thrown, outThrown)
+            hadThrow = true
+            return false
+        }
+        if result != 0 { return result < 0 }
+        return lhs.0 < rhs.0
+    }
+    if hadThrow {
+        return registerRuntimeObject(RuntimeArrayBox(length: 0))
+    }
+
+    let box = RuntimeArrayBox(length: indexed.count)
+    for (index, pair) in indexed.enumerated() {
+        box.elements[index] = pair.1
+    }
+    return registerRuntimeObject(box)
 }
 
 @_cdecl("kk_array_mapIndexed")

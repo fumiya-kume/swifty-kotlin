@@ -698,12 +698,12 @@ struct KnownCompilerNames {
     /// collection literal expressions. Shared across call type-checking sites
     /// to avoid duplication.
     static let stdlibCollectionFactoryNames: Set<String> = [
-        "listOf", "mutableListOf", "emptyList",
+        "listOf", "mutableListOf", "arrayListOf", "emptyList",
         "arrayOf", "emptyArray", "intArrayOf", "longArrayOf",
         "shortArrayOf", "byteArrayOf", "ubyteArrayOf", "ushortArrayOf", "uintArrayOf", "ulongArrayOf",
         "doubleArrayOf", "floatArrayOf", "booleanArrayOf", "charArrayOf",
-        "mapOf", "mutableMapOf", "emptyMap",
-        "setOf", "mutableSetOf", "emptySet",
+        "mapOf", "mutableMapOf", "hashMapOf", "linkedMapOf", "emptyMap",
+        "setOf", "setOfNotNull", "mutableSetOf", "hashSetOf", "linkedSetOf", "emptySet",
         "listOfNotNull",
         "sequenceOf", "generateSequence",
         "ArrayList",
