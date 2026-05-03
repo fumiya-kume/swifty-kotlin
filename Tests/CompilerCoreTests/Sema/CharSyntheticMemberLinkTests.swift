@@ -255,6 +255,10 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
             externalLink(for: "lowercase", parameterCount: 1, sema: sema, interner: interner),
             "kk_char_lowercase_locale"
         )
+        XCTAssertEqual(
+            externalLink(for: "uppercase", parameterCount: 1, sema: sema, interner: interner),
+            "kk_char_uppercase_locale"
+        )
     }
 
     func testCharPredicateMembersResolveInCallExpressions() throws {

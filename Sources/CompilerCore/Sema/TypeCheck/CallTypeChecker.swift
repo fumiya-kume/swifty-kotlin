@@ -2859,7 +2859,7 @@ final class CallTypeChecker {
                         elementType: explicitTypeArg
                     )
                 } else if let explicitTypeArg = explicitTypeArgs.first,
-                          name == "mutableSetOf"
+                          name == "mutableSetOf" || name == "hashSetOf" || name == "linkedSetOf"
                 {
                     collectionType = makeSyntheticMutableSetType(
                         symbols: sema.symbols,
@@ -2875,7 +2875,12 @@ final class CallTypeChecker {
                         elementType: sema.types.nothingType
                     )
                 } else if !argTypes.isEmpty,
-                          name == "setOf" || name == "setOfNotNull" || calleeName == knownNames.emptySetFn || name == "mutableSetOf"
+                          name == "setOf"
+                            || name == "setOfNotNull"
+                            || calleeName == knownNames.emptySetFn
+                            || name == "mutableSetOf"
+                            || name == "linkedSetOf"
+                            || name == "hashSetOf"
                 {
                     let elementType: TypeID = if name == "setOfNotNull" {
                         {
@@ -2890,7 +2895,7 @@ final class CallTypeChecker {
                     } else {
                         sema.types.lub(argTypes)
                     }
-                    collectionType = if name == "mutableSetOf" {
+                    collectionType = if name == "mutableSetOf" || name == "hashSetOf" || name == "linkedSetOf" {
                         makeSyntheticMutableSetType(
                             symbols: sema.symbols,
                             types: sema.types,
@@ -2922,7 +2927,7 @@ final class CallTypeChecker {
                         valueType: explicitTypeArgs[1]
                     )
                 } else if explicitTypeArgs.count == 2,
-                          name == "mutableMapOf"
+                          name == "mutableMapOf" || name == "hashMapOf" || name == "linkedMapOf"
                 {
                     collectionType = makeSyntheticMutableMapType(
                         symbols: sema.symbols,
@@ -2936,9 +2941,9 @@ final class CallTypeChecker {
                     ctx: ctx,
                     locals: &locals
                 ),
-                    name == "mapOf" || name == "mutableMapOf"
+                    name == "mapOf" || name == "mutableMapOf" || name == "hashMapOf" || name == "linkedMapOf"
                 {
-                    collectionType = if name == "mutableMapOf" {
+                    collectionType = if name == "mutableMapOf" || name == "hashMapOf" || name == "linkedMapOf" {
                         makeSyntheticMutableMapType(
                             symbols: sema.symbols,
                             types: sema.types,
@@ -2963,8 +2968,12 @@ final class CallTypeChecker {
                         keyType: sema.types.nothingType,
                         valueType: sema.types.nothingType
                     )
-                } else if name == "mapOf" || calleeName == knownNames.emptyMapFn || name == "mutableMapOf" {
-                    collectionType = if name == "mutableMapOf" {
+                } else if name == "mapOf"
+                    || calleeName == knownNames.emptyMapFn
+                    || name == "mutableMapOf"
+                    || name == "hashMapOf"
+                    || name == "linkedMapOf" {
+                    collectionType = if name == "mutableMapOf" || name == "hashMapOf" || name == "linkedMapOf" {
                         makeSyntheticMutableMapType(
                             symbols: sema.symbols,
                             types: sema.types,

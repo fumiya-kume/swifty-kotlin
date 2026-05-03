@@ -129,6 +129,17 @@ public func kk_char_uppercaseChar(_ value: Int) -> Int {
     return runtimeSingleUnicodeScalarValue(scalar.properties.uppercaseMapping) ?? value
 }
 
+@_cdecl("kk_char_uppercase_locale")
+public func kk_char_uppercase_locale(_ value: Int, _ localeRaw: Int) -> Int {
+    guard let scalar = runtimeUnicodeScalar(value) else {
+        return charRuntimeMakeStringRaw("\u{FFFD}")
+    }
+    guard let box = runtimeLocaleBox(from: localeRaw) else {
+        return charRuntimeMakeStringRaw(String(scalar).uppercased())
+    }
+    return charRuntimeMakeStringRaw(String(scalar).uppercased(with: box.locale))
+}
+
 @_cdecl("kk_char_lowercase")
 public func kk_char_lowercase(_ value: Int) -> Int {
     guard let scalar = runtimeUnicodeScalar(value) else {
