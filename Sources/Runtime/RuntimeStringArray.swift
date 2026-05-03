@@ -16,6 +16,22 @@ private func runtimeThrowableBox(from raw: Int) -> RuntimeThrowableBox? {
     return tryCast(ptr, to: RuntimeThrowableBox.self)
 }
 
+private func runtimeThrowableStackTraceText(from throwableRaw: Int) -> String {
+    if throwableRaw == runtimeNullSentinelInt || throwableRaw == 0 {
+        return ""
+    }
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: throwableRaw) else {
+        return ""
+    }
+    if let throwable = tryCast(ptr, to: RuntimeThrowableBox.self) {
+        return throwable.renderedMessage
+    }
+    if let cancellation = tryCast(ptr, to: RuntimeCancellationBox.self) {
+        return cancellation.message
+    }
+    return ""
+}
+
 private func runtimeAllocateArrayBox(length: Int) -> Int {
     let arrayBox = RuntimeArrayBox(length: length)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(arrayBox).toOpaque())
@@ -91,35 +107,20 @@ public func kk_throwable_cause(_ throwableRaw: Int) -> Int {
 
 @_cdecl("kk_throwable_stackTraceToString")
 public func kk_throwable_stackTraceToString(_ throwableRaw: Int) -> Int {
-    if throwableRaw == runtimeNullSentinelInt || throwableRaw == 0 {
-        let box = RuntimeStringBox("")
-        let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-        runtimeStorage.withLock { state in
-            state.objectPointers.insert(UInt(bitPattern: opaque))
-        }
-        return Int(bitPattern: opaque)
-    }
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: throwableRaw) else {
-        let box = RuntimeStringBox("")
-        let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-        runtimeStorage.withLock { state in
-            state.objectPointers.insert(UInt(bitPattern: opaque))
-        }
-        return Int(bitPattern: opaque)
-    }
-    let message: String = if let throwable = tryCast(ptr, to: RuntimeThrowableBox.self) {
-        throwable.renderedMessage
-    } else if let cancellation = tryCast(ptr, to: RuntimeCancellationBox.self) {
-        cancellation.message
-    } else {
-        ""
-    }
+    let message = runtimeThrowableStackTraceText(from: throwableRaw)
     let box = RuntimeStringBox(message)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
     runtimeStorage.withLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return Int(bitPattern: opaque)
+}
+
+@_cdecl("kk_throwable_printStackTrace")
+public func kk_throwable_printStackTrace(_ throwableRaw: Int) -> Int {
+    let message = runtimeThrowableStackTraceText(from: throwableRaw)
+    FileHandle.standardError.write(Data((message + "\n").utf8))
+    return 0
 }
 
 // MARK: - Advanced exception features (STDLIB-EXCEPT-105)
