@@ -102,7 +102,7 @@ extension DataFlowSemaPhase {
             ownerType: classType,
             parameterTypes: [classType],
             returnType: types.intType,
-            flags: [.synthetic, .operatorFunction],
+            flags: [.synthetic, .operatorFunction, .overrideMember],
             symbols: symbols,
             interner: interner
         )
