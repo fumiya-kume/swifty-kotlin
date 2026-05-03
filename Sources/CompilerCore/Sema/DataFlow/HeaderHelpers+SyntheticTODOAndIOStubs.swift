@@ -4802,7 +4802,7 @@ extension DataFlowSemaPhase {
     ) {
         let interfaceName = interner.intern("Function\(arity)")
         let interfaceFQName = packageFQName + [interfaceName]
-        
+
         // 既に存在する場合はスキップ
         if symbols.lookup(fqName: interfaceFQName) != nil {
             return
@@ -4820,7 +4820,7 @@ extension DataFlowSemaPhase {
         // 型パラメータの定義
         var typeParamSymbols: [SymbolID] = []
         var typeParamTypes: [TypeID] = []
-        
+
         // 戻り値型パラメータ R (out変位)
         let returnParamName = interner.intern("R")
         let returnParamFQName = interfaceFQName + [returnParamName]
@@ -4892,7 +4892,7 @@ extension DataFlowSemaPhase {
     ) {
         let invokeName = interner.intern("invoke")
         let invokeFQName = interfaceFQName + [invokeName]
-        
+
         let invokeSymbol = symbols.define(
             kind: .function,
             name: invokeName,
@@ -4907,7 +4907,7 @@ extension DataFlowSemaPhase {
         // パラメータ型の構築
         var parameterTypes: [TypeID] = []
         var parameterSymbols: [SymbolID] = []
-        
+
         if arity > 0 {
             for i in 1...arity {
                 let paramType = types.make(.typeParam(TypeParamType(
@@ -5027,7 +5027,7 @@ extension DataFlowSemaPhase {
         let tParamName = interner.intern("T")
         let rParamName = interner.intern("R")
         let newRParamName = interner.intern("NewR")
-        
+
         let tParamSymbol = symbols.define(
             kind: .typeParameter,
             name: tParamName,
@@ -5123,7 +5123,7 @@ extension DataFlowSemaPhase {
         let newTParamName = interner.intern("NewT")
         let tParamName = interner.intern("T")
         let rParamName = interner.intern("R")
-        
+
         let newTParamSymbol = symbols.define(
             kind: .typeParameter,
             name: newTParamName,
@@ -5219,7 +5219,7 @@ extension DataFlowSemaPhase {
         let p1ParamName = interner.intern("P1")
         let p2ParamName = interner.intern("P2")
         let rParamName = interner.intern("R")
-        
+
         let p1ParamSymbol = symbols.define(
             kind: .typeParameter,
             name: p1ParamName,
