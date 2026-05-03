@@ -2674,6 +2674,89 @@ public func kk_array_contentEquals(_ arrayRaw: Int, _ otherRaw: Int) -> Int {
     return kk_box_bool(1)
 }
 
+private func runtimeCollectionStringPointer(_ value: String) -> UnsafeMutableRawPointer {
+    let utf8 = Array(value.utf8)
+    return utf8.withUnsafeBufferPointer { buffer in
+        kk_string_from_utf8(buffer.baseAddress!, Int32(buffer.count))
+    }
+}
+
+private func runtimeArrayContentToString(
+    _ arrayRaw: Int,
+    renderElement: (Int) -> String
+) -> UnsafeMutableRawPointer {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return runtimeCollectionStringPointer("[]")
+    }
+    let rendered = array.elements.map(renderElement).joined(separator: ", ")
+    return runtimeCollectionStringPointer("[\(rendered)]")
+}
+
+@_cdecl("kk_array_contentToString")
+public func kk_array_contentToString(_ arrayRaw: Int) -> UnsafeMutableRawPointer {
+    runtimeArrayContentToString(arrayRaw, renderElement: runtimeElementToString)
+}
+
+@_cdecl("kk_intArray_contentToString")
+public func kk_intArray_contentToString(_ arrayRaw: Int) -> UnsafeMutableRawPointer {
+    runtimeArrayContentToString(arrayRaw) { String(Int32(truncatingIfNeeded: $0)) }
+}
+
+@_cdecl("kk_longArray_contentToString")
+public func kk_longArray_contentToString(_ arrayRaw: Int) -> UnsafeMutableRawPointer {
+    runtimeArrayContentToString(arrayRaw) { String(Int64($0)) }
+}
+
+@_cdecl("kk_byteArray_contentToString")
+public func kk_byteArray_contentToString(_ arrayRaw: Int) -> UnsafeMutableRawPointer {
+    runtimeArrayContentToString(arrayRaw) { String(Int8(truncatingIfNeeded: $0)) }
+}
+
+@_cdecl("kk_shortArray_contentToString")
+public func kk_shortArray_contentToString(_ arrayRaw: Int) -> UnsafeMutableRawPointer {
+    runtimeArrayContentToString(arrayRaw) { String(Int16(truncatingIfNeeded: $0)) }
+}
+
+@_cdecl("kk_uIntArray_contentToString")
+public func kk_uIntArray_contentToString(_ arrayRaw: Int) -> UnsafeMutableRawPointer {
+    runtimeArrayContentToString(arrayRaw) { String(UInt32(bitPattern: Int32(truncatingIfNeeded: $0))) }
+}
+
+@_cdecl("kk_uLongArray_contentToString")
+public func kk_uLongArray_contentToString(_ arrayRaw: Int) -> UnsafeMutableRawPointer {
+    runtimeArrayContentToString(arrayRaw) { String(UInt64(bitPattern: Int64($0))) }
+}
+
+@_cdecl("kk_doubleArray_contentToString")
+public func kk_doubleArray_contentToString(_ arrayRaw: Int) -> UnsafeMutableRawPointer {
+    runtimeArrayContentToString(arrayRaw) { runtimeFormatFloatingPoint(kk_bits_to_double($0)) }
+}
+
+@_cdecl("kk_floatArray_contentToString")
+public func kk_floatArray_contentToString(_ arrayRaw: Int) -> UnsafeMutableRawPointer {
+    runtimeArrayContentToString(arrayRaw) { runtimeFormatFloatingPoint(kk_bits_to_float($0)) }
+}
+
+@_cdecl("kk_booleanArray_contentToString")
+public func kk_booleanArray_contentToString(_ arrayRaw: Int) -> UnsafeMutableRawPointer {
+    runtimeArrayContentToString(arrayRaw) { $0 != 0 ? "true" : "false" }
+}
+
+@_cdecl("kk_charArray_contentToString")
+public func kk_charArray_contentToString(_ arrayRaw: Int) -> UnsafeMutableRawPointer {
+    runtimeArrayContentToString(arrayRaw) { UnicodeScalar($0).map(String.init) ?? "?" }
+}
+
+@_cdecl("kk_uByteArray_contentToString")
+public func kk_uByteArray_contentToString(_ arrayRaw: Int) -> UnsafeMutableRawPointer {
+    runtimeArrayContentToString(arrayRaw) { String(UInt8(truncatingIfNeeded: $0)) }
+}
+
+@_cdecl("kk_uShortArray_contentToString")
+public func kk_uShortArray_contentToString(_ arrayRaw: Int) -> UnsafeMutableRawPointer {
+    runtimeArrayContentToString(arrayRaw) { String(UInt16(truncatingIfNeeded: $0)) }
+}
+
 private struct RuntimeArrayDeepEqualityPair: Hashable {
     let lhs: Int
     let rhs: Int

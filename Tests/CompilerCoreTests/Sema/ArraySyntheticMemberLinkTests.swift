@@ -180,6 +180,40 @@ final class ArraySyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testArrayContentToStringUsesRuntimeExternalLink() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbolID = try XCTUnwrap(
+                sema.symbols.lookup(
+                    fqName: [
+                        ctx.interner.intern("kotlin"),
+                        ctx.interner.intern("Array"),
+                        ctx.interner.intern("contentToString"),
+                    ]
+                ),
+                "Expected synthetic Array.contentToString to be registered"
+            )
+            XCTAssertEqual(sema.symbols.externalLinkName(for: symbolID), "kk_array_contentToString")
+
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbolID))
+            XCTAssertEqual(signature.parameterTypes, [])
+            XCTAssertEqual(signature.returnType, sema.types.stringType)
+            XCTAssertEqual(signature.typeParameterSymbols.count, 1)
+
+            guard let receiverType = signature.receiverType,
+                  case let .classType(receiverClass) = sema.types.kind(of: receiverType),
+                  let receiverSymbol = sema.symbols.symbol(receiverClass.classSymbol)
+            else {
+                return XCTFail("Expected Array receiver type")
+            }
+            XCTAssertEqual(ctx.interner.resolve(receiverSymbol.name), "Array")
+            XCTAssertEqual(receiverClass.args.count, 1)
+        }
+    }
+
     func testArrayContentDeepEqualsUsesRuntimeExternalLink() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])
@@ -248,6 +282,56 @@ final class ArraySyntheticMemberLinkTests: XCTestCase {
                 sema.symbols.symbol(symbolID).map { ctx.interner.resolve($0.name) }
             }
             XCTAssertEqual(parameterNames, ["destination", "destinationOffset", "startIndex", "endIndex"])
+        }
+    }
+
+    func testPrimitiveArrayContentToStringOverloadsUseRuntimeExternalLinks() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let expectedLinks = [
+                "IntArray": "kk_intArray_contentToString",
+                "LongArray": "kk_longArray_contentToString",
+                "ByteArray": "kk_byteArray_contentToString",
+                "ShortArray": "kk_shortArray_contentToString",
+                "UIntArray": "kk_uIntArray_contentToString",
+                "ULongArray": "kk_uLongArray_contentToString",
+                "DoubleArray": "kk_doubleArray_contentToString",
+                "FloatArray": "kk_floatArray_contentToString",
+                "BooleanArray": "kk_booleanArray_contentToString",
+                "CharArray": "kk_charArray_contentToString",
+                "UByteArray": "kk_uByteArray_contentToString",
+                "UShortArray": "kk_uShortArray_contentToString",
+            ]
+
+            for (arrayName, externalLink) in expectedLinks {
+                let symbolID = try XCTUnwrap(
+                    sema.symbols.lookup(
+                        fqName: [
+                            ctx.interner.intern("kotlin"),
+                            ctx.interner.intern(arrayName),
+                            ctx.interner.intern("contentToString"),
+                        ]
+                    ),
+                    "Expected \(arrayName).contentToString to be registered"
+                )
+                XCTAssertEqual(sema.symbols.externalLinkName(for: symbolID), externalLink)
+
+                let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbolID))
+                XCTAssertEqual(signature.parameterTypes, [], "\(arrayName).contentToString should not take parameters")
+                XCTAssertEqual(signature.returnType, sema.types.stringType)
+
+                guard let receiverType = signature.receiverType,
+                      case let .classType(receiverClass) = sema.types.kind(of: receiverType),
+                      let receiverSymbol = sema.symbols.symbol(receiverClass.classSymbol)
+                else {
+                    return XCTFail("Expected \(arrayName) receiver type")
+                }
+                XCTAssertEqual(ctx.interner.resolve(receiverSymbol.name), arrayName)
+                XCTAssertEqual(receiverClass.args.count, 0)
+            }
         }
     }
 

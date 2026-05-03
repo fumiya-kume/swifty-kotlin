@@ -9772,6 +9772,38 @@ extension DataFlowSemaPhase {
             symbols.setExternalLinkName("kk_array_contentEquals", for: contentEqualsSymbol)
         }
 
+        // contentToString(): String
+        let contentToStringName = interner.intern("contentToString")
+        let contentToStringFQName = arrayFQName + [contentToStringName]
+        if symbols.lookup(fqName: contentToStringFQName) == nil {
+            let contentToStringSymbol = symbols.define(
+                kind: .function,
+                name: contentToStringName,
+                fqName: contentToStringFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(arraySymbol, for: contentToStringSymbol)
+            let arrayTypeParam = types.make(.typeParam(TypeParamType(symbol: tParamSymbol, nullability: .nonNull)))
+            let receiverType = types.make(.classType(ClassType(
+                classSymbol: arraySymbol,
+                args: [.invariant(arrayTypeParam)],
+                nullability: .nonNull
+            )))
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [],
+                    returnType: types.stringType,
+                    typeParameterSymbols: [tParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: contentToStringSymbol
+            )
+            symbols.setExternalLinkName("kk_array_contentToString", for: contentToStringSymbol)
+        }
+
         // contentDeepEquals(other: Array<T>): Boolean
         let contentDeepEqualsName = interner.intern("contentDeepEquals")
         let contentDeepEqualsFQName = arrayFQName + [contentDeepEqualsName]
@@ -10753,6 +10785,66 @@ extension DataFlowSemaPhase {
                         typeParameterSymbols: []
                     ),
                     for: copyOfRangeSym
+                )
+            }
+        }
+
+        // Register contentToString() methods for primitive arrays.
+        for name in primitiveArrayNames {
+            let primName = interner.intern(name)
+            let fqName = kotlinPkg + [primName]
+            guard let arraySymbol = symbols.lookup(fqName: fqName) else {
+                continue
+            }
+
+            let contentToStringName = interner.intern("contentToString")
+            let contentToStringFQName = fqName + [contentToStringName]
+            if symbols.lookup(fqName: contentToStringFQName) == nil {
+                let contentToStringSym = symbols.define(
+                    kind: .function,
+                    name: contentToStringName,
+                    fqName: contentToStringFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(arraySymbol, for: contentToStringSym)
+
+                let externalLinkName: String = switch name {
+                case "IntArray": "kk_intArray_contentToString"
+                case "LongArray": "kk_longArray_contentToString"
+                case "ByteArray": "kk_byteArray_contentToString"
+                case "ShortArray": "kk_shortArray_contentToString"
+                case "UIntArray": "kk_uIntArray_contentToString"
+                case "ULongArray": "kk_uLongArray_contentToString"
+                case "DoubleArray": "kk_doubleArray_contentToString"
+                case "FloatArray": "kk_floatArray_contentToString"
+                case "BooleanArray": "kk_booleanArray_contentToString"
+                case "CharArray": "kk_charArray_contentToString"
+                case "UByteArray": "kk_uByteArray_contentToString"
+                case "UShortArray": "kk_uShortArray_contentToString"
+                default: "kk_array_contentToString"
+                }
+                symbols.setExternalLinkName(externalLinkName, for: contentToStringSym)
+
+                let arrayReceiverType = types.make(.classType(ClassType(
+                    classSymbol: arraySymbol,
+                    args: [],
+                    nullability: .nonNull
+                )))
+
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: arrayReceiverType,
+                        parameterTypes: [],
+                        returnType: types.stringType,
+                        isSuspend: false,
+                        valueParameterSymbols: [],
+                        valueParameterHasDefaultValues: [],
+                        valueParameterIsVararg: [],
+                        typeParameterSymbols: []
+                    ),
+                    for: contentToStringSym
                 )
             }
         }
