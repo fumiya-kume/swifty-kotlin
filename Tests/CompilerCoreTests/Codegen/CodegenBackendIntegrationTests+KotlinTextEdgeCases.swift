@@ -619,6 +619,46 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testKotlinTextChunkedSequenceTransformEdgeCases() throws {
+        let source = """
+        fun main() {
+            val lengths: kotlin.sequences.Sequence<Int> =
+                "abcdef".chunkedSequence(2) { _: CharSequence -> 2 }
+            println(lengths.toList())
+
+            val text: CharSequence = "abcde"
+            println(text.chunkedSequence(2) { _: CharSequence -> "chunk" }.toList())
+
+            println("".chunkedSequence(3) { _: CharSequence -> 1 }.toList())
+            println("abc".chunkedSequence(10) { _: CharSequence -> "single" }.toList())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "KotlinTextChunkedSequenceTransformEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                out,
+                """
+                [2, 2, 2]
+                [chunk, chunk, chunk]
+                []
+                [single]
+                """
+                + "\n"
+            )
+        }
+    }
+
     // MARK: - lines
 
     func testKotlinTextLinesEdgeCases() throws {

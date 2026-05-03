@@ -3281,9 +3281,31 @@ extension CallLowerer {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             let calleeStr = interner.resolve(calleeName)
+            let isCharSequenceReceiver: Bool = {
+                guard let charSequenceSymbol = sema.types.charSequenceInterfaceSymbol,
+                      case let .classType(classType) = sema.types.kind(of: nonNullReceiverType)
+                else {
+                    return false
+                }
+                return classType.classSymbol == charSequenceSymbol
+            }()
             let firstArgType = sema.types.makeNonNullable(
                 sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
             )
+            if (sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) || isCharSequenceReceiver),
+               calleeStr == "chunkedSequence",
+               normalizedArgIDs.count >= 3
+            {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_chunked_sequence_transform"),
+                    arguments: [loweredReceiverID] + normalizedArgIDs,
+                    result: result,
+                    canThrow: true,
+                    thrownResult: nil
+                ))
+                return result
+            }
             if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType),
                calleeStr == "indexOf",
                sema.types.isSubtype(firstArgType, sema.types.stringType)
@@ -4587,7 +4609,7 @@ extension CallLowerer {
             "onEach", "onEachIndexed",
             "ifEmpty",
             "ifBlank",
-            "chunked", "windowed", "copyOf",
+            "chunked", "chunkedSequence", "windowed", "copyOf",
             "toComponents",
             "onSuccess", "onFailure", "recover",
         ].contains(interner.resolve(calleeName))
@@ -6314,6 +6336,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_ifEmpty"),
             interner.intern("kk_string_ifBlank"),
             interner.intern("kk_string_ifEmpty"),
+            interner.intern("kk_string_chunked_sequence_transform"),
             interner.intern("kk_sequence_first"),
             interner.intern("kk_sequence_last"),
             interner.intern("kk_sequence_firstOrNull"),
