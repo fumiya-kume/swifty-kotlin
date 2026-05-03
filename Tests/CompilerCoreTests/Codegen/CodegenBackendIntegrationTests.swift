@@ -717,6 +717,95 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenSetOfNotNullFiltersNullsAndDeduplicates() throws {
+        let source = """
+        fun main() {
+            val values = setOfNotNull("a", null, "b", null, "a")
+            println(values)
+            println(values.size)
+
+            val empty = setOfNotNull<String>(null)
+            println(empty)
+            println(empty.isEmpty())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SetOfNotNullRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[a, b]\n2\n[]\ntrue\n")
+        }
+    }
+
+    func testCodegenLinkedSetOfFactoryUsesMutableRuntimeSet() throws {
+        let source = """
+        fun main() {
+            val set = linkedSetOf(1, 2, 2)
+            println(set)
+            println(set.add(3))
+            println(set)
+
+            val empty = linkedSetOf<String>()
+            empty.add("x")
+            println(empty)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "LinkedSetOfFactoryRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[1, 2]\ntrue\n[1, 2, 3]\n[x]\n")
+        }
+    }
+
+    func testCodegenHashSetOfFactoryUsesMutableRuntimeSet() throws {
+        let source = """
+        fun main() {
+            val set = hashSetOf(1, 2, 2)
+            println(set)
+            println(set.add(3))
+            println(set)
+
+            val empty = hashSetOf<String>()
+            empty.add("x")
+            println(empty)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "HashSetOfFactoryRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[1, 2]\ntrue\n[1, 2, 3]\n[x]\n")
+        }
+    }
+
     func testCodegenMutableSetAddAllAcceptsSetAndListCollections() throws {
         let source = """
         fun main() {
@@ -743,6 +832,42 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(normalizedStdout, "true\n[1, 2, 3, 4]\ntrue\n[1, 2, 3, 4, 5]\n[]\n")
+        }
+    }
+
+    func testCodegenIterableFirstNotNullOfReturnsFirstValueAndThrowsWhenMissing() throws {
+        let source = """
+        fun main() {
+            val result: String = listOf(1, 2, 3).firstNotNullOf { if (it > 1) "hit" else null }
+            println(result)
+            try {
+                listOf(1, 3, 5).firstNotNullOf { if (it % 2 == 0) it else null }
+                println("missing")
+            } catch (e: NoSuchElementException) {
+                println("empty")
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "IterableFirstNotNullOfRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            do {
+                try LinkPhase().run(ctx)
+            } catch {
+                let diagnostics = ctx.diagnostics.diagnostics.map { "\($0.code): \($0.message)" }
+                XCTFail("Link failed for firstNotNullOf: \(diagnostics)")
+                throw error
+            }
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "hit\nempty\n")
         }
     }
 
@@ -802,6 +927,68 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenLinkedMapOfFactoryUsesMutableRuntimeMap() throws {
+        let source = """
+        fun main() {
+            val map = linkedMapOf("a" to 1)
+            map["b"] = 2
+            println(map)
+            println(map.put("a", 3))
+            println(map)
+
+            val empty = linkedMapOf<String, Int>()
+            empty["z"] = 9
+            println(empty)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "LinkedMapOfFactoryRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "{a=1, b=2}\n1\n{a=3, b=2}\n{z=9}\n")
+        }
+    }
+
+    func testCodegenHashMapOfFactoryUsesMutableRuntimeMap() throws {
+        let source = """
+        fun main() {
+            val map = hashMapOf("a" to 1)
+            map["b"] = 2
+            println(map)
+            println(map.put("a", 3))
+            println(map)
+
+            val empty = hashMapOf<String, Int>()
+            empty["z"] = 9
+            println(empty)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "HashMapOfFactoryRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "{a=1, b=2}\n1\n{a=3, b=2}\n{z=9}\n")
+        }
+    }
+
     func testCodegenBuildMapUseRuntimeBuilder() throws {
         let source = """
         fun main() {
@@ -826,6 +1013,33 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(normalizedStdout, "{a=1, b=2}\n")
+        }
+    }
+
+    func testCodegenMapWithDefaultUsesRuntimeDefaultForGetValue() throws {
+        let source = """
+        fun main() {
+            val factor = 100
+            val values = mapOf(1 to 10).withDefault { it * factor }
+            println(values.getValue(1))
+            println(values.getValue(2))
+            println(values[2])
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "MapWithDefaultRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "10\n200\nnull\n")
         }
     }
 
@@ -947,6 +1161,38 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenIterableFirstNotNullOfOrNullReturnsFirstValueOrNull() throws {
+        let source = """
+        fun main() {
+            val result: String? = listOf(1, 2, 3).firstNotNullOfOrNull { if (it > 1) "hit" else null }
+            println(result)
+            val missing: String? = listOf(1, 3, 5).firstNotNullOfOrNull { if (it % 2 == 0) "even" else null }
+            println(missing)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "IterableFirstNotNullOfOrNullRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            do {
+                try LinkPhase().run(ctx)
+            } catch {
+                let diagnostics = ctx.diagnostics.diagnostics.map { "\($0.code): \($0.message)" }
+                XCTFail("Link failed for firstNotNullOfOrNull: \(diagnostics)")
+                throw error
+            }
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "hit\nnull\n")
+        }
+    }
+
     func testCodegenListZipAndUnzipUseRuntimeHOFs() throws {
         let source = """
         fun main() {
@@ -1037,6 +1283,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             println(values.mapValues { it.value * 10 })
             println(values.mapKeys { it.key + "!" })
             println(values.toList())
+            println(values.map { it.toPair().first + ":" + (it.toPair().second + 1) })
         }
         """
 
@@ -1052,7 +1299,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "a=1\nb=2\n[a:10, b:20]\n{b=2}\n{a=10, b=20}\n{a!=1, b!=2}\n[(a, 1), (b, 2)]\n")
+            XCTAssertEqual(normalizedStdout, "a=1\nb=2\n[a:10, b:20]\n{b=2}\n{a=10, b=20}\n{a!=1, b!=2}\n[(a, 1), (b, 2)]\n[a:2, b:3]\n")
         }
     }
 
@@ -1078,7 +1325,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "[a, b]\n[1, 2]\n[(a, 1), (b, 2)]\n")
+            XCTAssertEqual(normalizedStdout, "[a, b]\n[1, 2]\n[a=1, b=2]\n")
         }
     }
 

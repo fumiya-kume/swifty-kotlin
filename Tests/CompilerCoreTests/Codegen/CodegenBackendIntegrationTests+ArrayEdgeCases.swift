@@ -132,6 +132,43 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenCompilesArraySortedArrayWith() throws {
+        let source = """
+        fun main() {
+            val numbers = arrayOf(3, 1, 2)
+            println(numbers.sortedArrayWith(naturalOrder()).toList())
+            println(numbers.sortedArrayWith(reverseOrder()).toList())
+            println(numbers.sortedArrayWith { a, b -> b - a }.toList())
+
+            val words = arrayOf("bbb", "a", "cc")
+            println(words.sortedArrayWith(compareBy<String> { it.length }).toList())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ArraySortedArrayWith",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                [1, 2, 3]
+                [3, 2, 1]
+                [3, 2, 1]
+                [a, cc, bbb]
+                """ + "\n"
+            )
+        }
+    }
+
     func testCodegenCompilesArrayOfNulls() throws {
         let source = """
         fun main() {

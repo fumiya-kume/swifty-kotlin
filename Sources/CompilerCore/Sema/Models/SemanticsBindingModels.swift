@@ -62,6 +62,7 @@ public enum ScopeFunctionKind: Equatable {
     case scopeLet
     case scopeRun
     case scopeWith
+    case scopeContext
     case scopeApply
     case scopeAlso
     case scopeTopLevelRun
