@@ -500,6 +500,17 @@ extension CallTypeChecker {
             }
             return firstArgNode.isLambdaOrCallableRef
         }()
+        let isIterableFirstNotNullOfOrNullCall: Bool = {
+            guard memberName == "firstNotNullOfOrNull",
+                  args.count == 1,
+                  isIterableLikeReceiver(receiverID: receiverID, sema: sema, interner: interner),
+                  let firstArgExpr = args.first?.expr,
+                  let firstArgNode = ctx.ast.arena.expr(firstArgExpr)
+            else {
+                return false
+            }
+            return firstArgNode.isLambdaOrCallableRef
+        }()
         let isCollectionReceiver = isCollectionLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isSequenceReceiver = isSequenceLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         // Allow arrays to fall through to collection fallback only when
@@ -511,6 +522,7 @@ extension CallTypeChecker {
                 || isIterableWindowedTransformCall
                 || isIterableChunkedTransformCall
                 || isIterableFirstNotNullOfCall
+                || isIterableFirstNotNullOfOrNullCall
         else {
             return nil
         }
@@ -968,6 +980,7 @@ extension CallTypeChecker {
             interner.intern("filterNot"),
             interner.intern("mapNotNull"),
             interner.intern("firstNotNullOf"),
+            interner.intern("firstNotNullOfOrNull"),
             interner.intern("filterNotNull"),
             interner.intern("filterTo"),
             interner.intern("filterNotTo"),
@@ -1131,9 +1144,6 @@ extension CallTypeChecker {
             return isMutableMapReceiver
         }
         if memberName == interner.intern("flatMapIndexed") {
-            return isSequenceReceiver
-        }
-        if memberName == interner.intern("firstNotNullOfOrNull") {
             return isSequenceReceiver
         }
         if memberName == interner.intern("requireNoNulls") {
@@ -1353,14 +1363,6 @@ extension CallTypeChecker {
             )
         }
 
-        if memberName == interner.intern("firstNotNullOfOrNull") {
-            guard let firstArg = args.first else { return sema.types.nullableAnyType }
-            if case let .functionType(fnType) = sema.types.kind(of: sema.bindings.exprTypes[firstArg.expr] ?? sema.types.anyType) {
-                return sema.types.makeNullable(sema.types.makeNonNullable(fnType.returnType))
-            }
-            return sema.types.nullableAnyType
-        }
-
         let boolReturningMembers: Set = [
             knownNames.isEmpty, interner.intern("contains"), interner.intern("containsAll"),
             interner.intern("containsKey"),
@@ -1475,6 +1477,17 @@ extension CallTypeChecker {
                 return sema.types.makeNonNullable(fnType.returnType)
             }
             return sema.types.anyType
+        }
+
+        if memberName == interner.intern("firstNotNullOfOrNull") {
+            if let expectedType {
+                return sema.types.makeNullable(sema.types.makeNonNullable(expectedType))
+            }
+            guard let firstArg = args.first else { return sema.types.nullableAnyType }
+            if case let .functionType(fnType) = sema.types.kind(of: sema.bindings.exprTypes[firstArg.expr] ?? sema.types.anyType) {
+                return sema.types.makeNullable(sema.types.makeNonNullable(fnType.returnType))
+            }
+            return sema.types.nullableAnyType
         }
 
         if memberName == interner.intern("asIterable") {

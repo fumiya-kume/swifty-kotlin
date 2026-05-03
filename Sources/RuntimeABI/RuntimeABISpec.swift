@@ -375,6 +375,14 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Exception"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_throwable_printStackTrace",
+            parameters: [
+                RuntimeABIParameter(name: "throwableRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Exception"
+        ),
         // STDLIB-EXCEPT-105: Advanced exception handling
         RuntimeABIFunctionSpec(
             name: "kk_throwable_initCause",
@@ -1435,6 +1443,15 @@ public enum RuntimeABISpec {
             name: "kk_char_uppercaseChar",
             parameters: [
                 RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_char_uppercase_locale",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "localeRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "String"

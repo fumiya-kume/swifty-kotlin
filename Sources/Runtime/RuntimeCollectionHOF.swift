@@ -266,6 +266,22 @@ public func kk_iterable_firstNotNullOf(_ iterableRaw: Int, _ fnPtr: Int, _ closu
     return handleCollectionLambdaThrow(thrown, outThrown)
 }
 
+@_cdecl("kk_iterable_firstNotNullOfOrNull")
+public func kk_iterable_firstNotNullOfOrNull(_ iterableRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let elements = runtimeCollectionElements(from: iterableRaw) else {
+        invalidContainerPanic(#function, "iterable")
+    }
+    for elem in elements {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if let normalized = runtimeMapNotNullResultValue(result) {
+            return normalized
+        }
+    }
+    return runtimeNullSentinelInt
+}
+
 @_cdecl("kk_list_filterTo")
 public func kk_list_filterTo(_ listRaw: Int, _ destRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let elements = runtimeCollectionElements(from: listRaw) else {
