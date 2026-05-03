@@ -197,6 +197,13 @@ extension DataFlowSemaPhase {
             }
             symbols.setAnnotations(annotations, for: extFunctionTypeSymbol)
         }
+        registerSyntheticContextFunctionTypeParamsAnnotation(
+            packageFQName: kotlinPkg,
+            packageSymbol: kotlinPkgSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
 
         registerSyntheticJvmAnnotationClass(
             named: "Metadata",
@@ -986,6 +993,143 @@ extension DataFlowSemaPhase {
         if packageSymbol != .invalid {
             symbols.setParentSymbol(packageSymbol, for: classSymbol)
         }
+    }
+
+    private func registerSyntheticContextFunctionTypeParamsAnnotation(
+        packageFQName: [InternedString],
+        packageSymbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let className = interner.intern(KnownCompilerAnnotation.contextFunctionTypeParams.simpleName)
+        let classFQName = packageFQName + [className]
+        let classSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: classFQName) {
+            classSymbol = existing
+        } else {
+            classSymbol = symbols.define(
+                kind: .annotationClass,
+                name: className,
+                fqName: classFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        if packageSymbol != .invalid {
+            symbols.setParentSymbol(packageSymbol, for: classSymbol)
+        }
+
+        appendSyntheticAnnotation(
+            MetadataAnnotationRecord(
+                annotationFQName: KnownCompilerAnnotation.target.qualifiedName,
+                arguments: ["AnnotationTarget.TYPE"]
+            ),
+            to: classSymbol,
+            symbols: symbols
+        )
+
+        let classType = types.make(.classType(ClassType(
+            classSymbol: classSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        registerSyntheticAnnotationIntProperty(
+            named: "count",
+            ownerSymbol: classSymbol,
+            ownerFQName: classFQName,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerSyntheticAnnotationIntConstructor(
+            ownerSymbol: classSymbol,
+            ownerFQName: classFQName,
+            ownerType: classType,
+            parameterName: "count",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+    }
+
+    private func registerSyntheticAnnotationIntProperty(
+        named name: String,
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let valueName = interner.intern(name)
+        let valueFQName = ownerFQName + [valueName]
+        let valueSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: valueFQName) {
+            valueSymbol = existing
+        } else {
+            valueSymbol = symbols.define(
+                kind: .property,
+                name: valueName,
+                fqName: valueFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+
+        symbols.setParentSymbol(ownerSymbol, for: valueSymbol)
+        symbols.setPropertyType(types.intType, for: valueSymbol)
+    }
+
+    private func registerSyntheticAnnotationIntConstructor(
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        ownerType: TypeID,
+        parameterName: String,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let initName = interner.intern("<init>")
+        let initFQName = ownerFQName + [initName]
+        let parameterTypes = [types.intType]
+        if symbols.lookupAll(fqName: initFQName).contains(where: {
+            symbols.functionSignature(for: $0)?.parameterTypes == parameterTypes
+        }) {
+            return
+        }
+
+        let initSymbol = symbols.define(
+            kind: .constructor,
+            name: initName,
+            fqName: initFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: initSymbol)
+
+        let paramName = interner.intern(parameterName)
+        let paramSymbol = symbols.define(
+            kind: .valueParameter,
+            name: paramName,
+            fqName: initFQName + [paramName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(initSymbol, for: paramSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: parameterTypes,
+                returnType: ownerType,
+                valueParameterSymbols: [paramSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false]
+            ),
+            for: initSymbol
+        )
     }
 
     private func registerSyntheticAnnotationTargetEnum(
