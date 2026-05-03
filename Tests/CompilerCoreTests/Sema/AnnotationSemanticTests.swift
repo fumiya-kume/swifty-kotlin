@@ -1342,6 +1342,96 @@ final class AnnotationSemanticTests: XCTestCase {
         XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
     }
 
+    func testRootThrowsSurfaceHasVarargKClassPropertyConstructorAndTargets() throws {
+        let source = """
+        class Host
+        """
+
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        let sema = try XCTUnwrap(ctx.sema)
+        let throwsFQName = [
+            ctx.interner.intern("kotlin"),
+            ctx.interner.intern("Throws"),
+        ]
+        let symbolID = try XCTUnwrap(
+            sema.symbols.lookup(fqName: throwsFQName),
+            "kotlin.Throws must be registered"
+        )
+        let symbol = try XCTUnwrap(sema.symbols.symbol(symbolID))
+
+        XCTAssertEqual(symbol.visibility, .public)
+        XCTAssertTrue(symbol.flags.contains(.synthetic))
+        XCTAssertEqual(symbol.kind, .annotationClass)
+
+        let annotations = sema.symbols.annotations(for: symbolID)
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == KnownCompilerAnnotation.target.qualifiedName
+                    && $0.arguments == [
+                        "AnnotationTarget.FUNCTION",
+                        "AnnotationTarget.PROPERTY_GETTER",
+                        "AnnotationTarget.PROPERTY_SETTER",
+                        "AnnotationTarget.CONSTRUCTOR",
+                    ]
+            },
+            "Throws should carry function/getter/setter/constructor target metadata, got: \(annotations)"
+        )
+
+        let exceptionClassesSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: throwsFQName + [ctx.interner.intern("exceptionClasses")]),
+            "Throws.exceptionClasses property must be registered"
+        )
+        let exceptionClassesType = try XCTUnwrap(sema.symbols.propertyType(for: exceptionClassesSymbol))
+        try assertArrayOfOutThrowableKClass(exceptionClassesType, in: sema, interner: ctx.interner)
+
+        let constructors = sema.symbols.lookupAll(fqName: throwsFQName + [ctx.interner.intern("<init>")])
+        let constructorSignature = try XCTUnwrap(
+            constructors.lazy.compactMap { sema.symbols.functionSignature(for: $0) }.first { signature in
+                signature.valueParameterIsVararg == [true]
+                    && signature.valueParameterSymbols.count == 1
+            },
+            "Throws(vararg exceptionClasses: KClass<out Throwable>) constructor must be registered"
+        )
+        try assertThrowableKClass(constructorSignature.parameterTypes[0], in: sema, interner: ctx.interner)
+        let parameter = try XCTUnwrap(sema.symbols.symbol(constructorSignature.valueParameterSymbols[0]))
+        XCTAssertEqual(ctx.interner.resolve(parameter.name), "exceptionClasses")
+    }
+
+    func testRootThrowsAcceptsDocumentedDeclarationTargets() {
+        let source = """
+        class Host @Throws(Throwable::class) constructor() {
+            @get:Throws(Throwable::class)
+            val readonly: Int = 1
+
+            @set:Throws(Throwable::class)
+            var value: Int = 0
+
+            @Throws(Throwable::class)
+            fun expose(): Int = value
+        }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected Throws declaration targets to be accepted, got: \(ctx.diagnostics.diagnostics)")
+    }
+
+    func testRootThrowsRejectsClassTarget() {
+        let source = """
+        @Throws(Throwable::class)
+        class Bad
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertEqual(diagnostics.count, 1, "Expected Throws to reject class target, got: \(ctx.diagnostics.diagnostics)")
+        XCTAssertTrue(diagnostics.allSatisfy(isError), "Annotation-target diagnostics should be errors")
+    }
+
     func testTargetAnnotationIsRejectedOnRegularClass() {
         let source = """
         @Target(AnnotationTarget.CLASS)
@@ -2188,5 +2278,49 @@ final class AnnotationSemanticTests: XCTestCase {
         let symbolID = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
         let symbol = try XCTUnwrap(sema.symbols.symbol(symbolID))
         return symbol.visibility
+    }
+
+    private func assertArrayOfOutThrowableKClass(
+        _ type: TypeID,
+        in sema: SemaModule,
+        interner: StringInterner,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) throws {
+        guard case let .classType(arrayType) = sema.types.kind(of: type) else {
+            return XCTFail("Expected Array<out KClass<Throwable>>, got \(sema.types.renderType(type))", file: file, line: line)
+        }
+        let arraySymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Array")]),
+            file: file,
+            line: line
+        )
+        XCTAssertEqual(arrayType.classSymbol, arraySymbol, file: file, line: line)
+        XCTAssertEqual(arrayType.args.count, 1, file: file, line: line)
+        guard case let .out(elementType) = arrayType.args[0] else {
+            return XCTFail("Expected covariant Array element, got \(arrayType.args[0])", file: file, line: line)
+        }
+        try assertThrowableKClass(elementType, in: sema, interner: interner, file: file, line: line)
+    }
+
+    private func assertThrowableKClass(
+        _ type: TypeID,
+        in sema: SemaModule,
+        interner: StringInterner,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) throws {
+        guard case let .kClassType(kClassType) = sema.types.kind(of: type) else {
+            return XCTFail("Expected KClass<Throwable>, got \(sema.types.renderType(type))", file: file, line: line)
+        }
+        guard case let .classType(argumentType) = sema.types.kind(of: kClassType.argument) else {
+            return XCTFail("Expected KClass argument to be Throwable, got \(sema.types.renderType(kClassType.argument))", file: file, line: line)
+        }
+        let throwableSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Throwable")]),
+            file: file,
+            line: line
+        )
+        XCTAssertEqual(argumentType.classSymbol, throwableSymbol, file: file, line: line)
     }
 }
