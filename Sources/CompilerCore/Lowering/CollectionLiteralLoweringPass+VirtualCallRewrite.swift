@@ -84,6 +84,23 @@ extension CollectionLiteralLoweringPass {
             loweredBody: &loweredBody
         ) { return true }
 
+        // Runtime collection boxes do not carry generated itables, so route
+        // stdlib list/set iterator calls directly to the shared iterator helper.
+        if callee == lookup.iteratorName,
+           arguments.isEmpty,
+           listExprIDs.contains(receiver.rawValue) || setExprIDs.contains(receiver.rawValue)
+        {
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListIteratorName,
+                arguments: [receiver],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return true
+        }
+
         if rewriteRangeVirtualCall(
             callee: callee, receiver: receiver, arguments: arguments,
             result: result, origCanThrow: origCanThrow,
