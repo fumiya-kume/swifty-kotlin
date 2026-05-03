@@ -477,6 +477,7 @@ extension DataFlowSemaPhase {
         defaultValues: [Bool]? = nil,
         typeParameterSymbols: [SymbolID],
         annotations: [MetadataAnnotationRecord] = [],
+        externalLinkName: String? = nil,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -521,6 +522,9 @@ extension DataFlowSemaPhase {
         }
         for typeParameterSymbol in typeParameterSymbols {
             symbols.setParentSymbol(functionSymbol, for: typeParameterSymbol)
+        }
+        if let externalLinkName {
+            symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
         }
         appendNativeConcurrentMetadataAnnotations(annotations, to: functionSymbol, symbols: symbols)
         symbols.setFunctionSignature(

@@ -1120,6 +1120,84 @@ final class NativeConcurrentSyntheticStubTests: XCTestCase {
         )
     }
 
+    // MARK: - freeze / isFrozen
+
+    func testFreezeFunctionIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let functionFQName = ["kotlin", "native", "concurrent", "freeze"].map { interner.intern($0) }
+        let function = try XCTUnwrap(sema.symbols.lookupAll(fqName: functionFQName).first { candidate in
+            guard let signature = sema.symbols.functionSignature(for: candidate),
+                  signature.parameterTypes.isEmpty,
+                  signature.typeParameterSymbols.count == 1
+            else {
+                return false
+            }
+            let typeParameterType = sema.types.make(.typeParam(TypeParamType(
+                symbol: signature.typeParameterSymbols[0],
+                nullability: .nonNull
+            )))
+            return signature.receiverType == typeParameterType
+                && signature.returnType == typeParameterType
+        })
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: function))
+
+        XCTAssertEqual(sema.symbols.symbol(function)?.kind, .function)
+        XCTAssertEqual(signature.valueParameterSymbols, [])
+        XCTAssertEqual(signature.classTypeParameterCount, 0)
+        XCTAssertEqual(sema.symbols.externalLinkName(for: function), "kk_freeze_object")
+        XCTAssertTrue(
+            sema.symbols.annotations(for: function).contains {
+                $0.annotationFQName == "kotlin.Deprecated"
+                    && $0.arguments.contains("level = DeprecationLevel.ERROR")
+                    && $0.arguments.contains("replaceWith = ReplaceWith(\"this\")")
+            },
+            "freeze must carry Deprecated(ERROR) metadata with a drop-in replacement"
+        )
+    }
+
+    func testIsFrozenPropertyIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let propertyFQName = ["kotlin", "native", "concurrent", "isFrozen"].map { interner.intern($0) }
+        let property = try XCTUnwrap(sema.symbols.lookupAll(fqName: propertyFQName).first { candidate in
+            sema.symbols.symbol(candidate)?.kind == .property
+                && sema.symbols.extensionPropertyReceiverType(for: candidate) == sema.types.nullableAnyType
+        })
+        let getter = try XCTUnwrap(sema.symbols.extensionPropertyGetterAccessor(for: property))
+
+        XCTAssertEqual(sema.symbols.propertyType(for: property), sema.types.booleanType)
+        XCTAssertEqual(sema.symbols.externalLinkName(for: property), "kk_is_frozen")
+        XCTAssertEqual(sema.symbols.externalLinkName(for: getter), "kk_is_frozen")
+        XCTAssertEqual(sema.symbols.functionSignature(for: getter)?.receiverType, sema.types.nullableAnyType)
+        XCTAssertEqual(sema.symbols.functionSignature(for: getter)?.returnType, sema.types.booleanType)
+        XCTAssertTrue(
+            sema.symbols.annotations(for: property).contains {
+                $0.annotationFQName == "kotlin.Deprecated"
+                    && $0.arguments.contains("level = DeprecationLevel.ERROR")
+                    && $0.arguments.contains("replaceWith = ReplaceWith(\"false\")")
+            },
+            "isFrozen must carry Deprecated(ERROR) metadata with false replacement"
+        )
+    }
+
+    func testFreezeAndIsFrozenResolveInSourceWhenDeprecationErrorIsSuppressed() {
+        let source = """
+        import kotlin.native.concurrent.freeze
+        import kotlin.native.concurrent.isFrozen
+
+        @Suppress("DEPRECATION_ERROR")
+        fun probe(value: Any): Boolean {
+            val frozen = value.freeze()
+            return frozen.isFrozen
+        }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertFalse(
+            ctx.diagnostics.hasError,
+            "Expected freeze/isFrozen to resolve with deprecation error suppressed, got: \(ctx.diagnostics.diagnostics.map(\.message))"
+        )
+    }
+
     // MARK: - Future<T> class
 
     func testFutureClassIsRegistered() throws {
@@ -1826,6 +1904,47 @@ final class NativeConcurrentSyntheticStubTests: XCTestCase {
         XCTAssertEqual(
             diagnostics.count, 1,
             "Expected one annotation-target diagnostic for @field:ThreadLocal, got: \(ctx.diagnostics.diagnostics)"
+        )
+    }
+
+    // MARK: - @ObsoleteWorkersApi annotation
+
+    func testObsoleteWorkersApiAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let fqName = ["kotlin", "native", "concurrent", "ObsoleteWorkersApi"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "Expected kotlin.native.concurrent.ObsoleteWorkersApi annotation to be registered"
+        )
+        XCTAssertEqual(sema.symbols.symbol(symbol)?.kind, .annotationClass)
+
+        let annotations = sema.symbols.annotations(for: symbol)
+        let requiresOptIn = annotations.first { $0.annotationFQName == "kotlin.RequiresOptIn" }
+        XCTAssertEqual(
+            Set(requiresOptIn?.arguments ?? []),
+            [
+                "message = \"Workers API is obsolete and will be replaced with threads eventually\"",
+                "level = RequiresOptIn.Level.WARNING",
+            ]
+        )
+
+        let targetAnnotation = annotations.first { $0.annotationFQName == "kotlin.annotation.Target" }
+        XCTAssertEqual(
+            Set(targetAnnotation?.arguments ?? []),
+            [
+                "AnnotationTarget.CLASS",
+                "AnnotationTarget.ANNOTATION_CLASS",
+                "AnnotationTarget.PROPERTY",
+                "AnnotationTarget.FIELD",
+                "AnnotationTarget.LOCAL_VARIABLE",
+                "AnnotationTarget.VALUE_PARAMETER",
+                "AnnotationTarget.CONSTRUCTOR",
+                "AnnotationTarget.FUNCTION",
+                "AnnotationTarget.PROPERTY_GETTER",
+                "AnnotationTarget.PROPERTY_SETTER",
+                "AnnotationTarget.TYPEALIAS",
+            ]
         )
     }
 
