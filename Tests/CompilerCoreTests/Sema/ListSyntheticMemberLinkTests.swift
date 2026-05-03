@@ -417,6 +417,90 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testPrimitiveIteratorSurfacesAreRegistered() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let collectionsPkg = ["kotlin", "collections"].map { ctx.interner.intern($0) }
+            let iteratorSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: collectionsPkg + [ctx.interner.intern("Iterator")])
+            )
+            let specs: [(className: String, nextName: String, elementType: TypeID)] = [
+                ("BooleanIterator", "nextBoolean", sema.types.booleanType),
+                ("ByteIterator", "nextByte", sema.types.intType),
+                ("ShortIterator", "nextShort", sema.types.intType),
+                ("IntIterator", "nextInt", sema.types.intType),
+                ("LongIterator", "nextLong", sema.types.longType),
+                ("FloatIterator", "nextFloat", sema.types.floatType),
+                ("DoubleIterator", "nextDouble", sema.types.doubleType),
+                ("CharIterator", "nextChar", sema.types.charType),
+            ]
+
+            for spec in specs {
+                let classFQName = collectionsPkg + [ctx.interner.intern(spec.className)]
+                let classSymbol = try XCTUnwrap(
+                    sema.symbols.lookup(fqName: classFQName),
+                    "Expected \(spec.className) to be registered"
+                )
+                let classInfo = try XCTUnwrap(sema.symbols.symbol(classSymbol))
+                XCTAssertEqual(classInfo.kind, .class)
+                XCTAssertTrue(classInfo.flags.contains(.synthetic))
+                XCTAssertTrue(classInfo.flags.contains(.abstractType))
+                XCTAssertTrue(sema.symbols.directSupertypes(for: classSymbol).contains(iteratorSymbol))
+                XCTAssertEqual(sema.symbols.supertypeTypeArgs(for: classSymbol, supertype: iteratorSymbol), [.out(spec.elementType)])
+
+                let primitiveNextSymbol = try XCTUnwrap(
+                    sema.symbols.lookup(fqName: classFQName + [ctx.interner.intern(spec.nextName)]),
+                    "Expected \(spec.className).\(spec.nextName) to be registered"
+                )
+                let primitiveNextInfo = try XCTUnwrap(sema.symbols.symbol(primitiveNextSymbol))
+                XCTAssertTrue(primitiveNextInfo.flags.isSuperset(of: [.synthetic, .abstractType]))
+                let primitiveNextSignature = try XCTUnwrap(sema.symbols.functionSignature(for: primitiveNextSymbol))
+                XCTAssertTrue(primitiveNextSignature.parameterTypes.isEmpty)
+                XCTAssertEqual(primitiveNextSignature.returnType, spec.elementType)
+
+                let nextSymbol = try XCTUnwrap(
+                    sema.symbols.lookup(fqName: classFQName + [ctx.interner.intern("next")]),
+                    "Expected \(spec.className).next to be registered"
+                )
+                let nextInfo = try XCTUnwrap(sema.symbols.symbol(nextSymbol))
+                XCTAssertTrue(nextInfo.flags.isSuperset(of: [.synthetic, .openType, .overrideMember, .operatorFunction]))
+                XCTAssertEqual(try XCTUnwrap(sema.symbols.functionSignature(for: nextSymbol)).returnType, spec.elementType)
+            }
+        }
+    }
+
+    func testPrimitiveIteratorSubclassResolvesAsIterator() throws {
+        let source = """
+        import kotlin.collections.IntIterator
+        import kotlin.collections.Iterator
+
+        class ProbeIntIterator : IntIterator() {
+            override fun hasNext(): Boolean = false
+            override fun nextInt(): Int = 42
+        }
+
+        fun accept(iterator: Iterator<Int>) {}
+
+        fun probe(iterator: ProbeIntIterator): Int {
+            accept(iterator)
+            return iterator.nextInt() + iterator.next()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected primitive iterator subclass surface to resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     func testAbstractCollectionSurfaceIsRegistered() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])
