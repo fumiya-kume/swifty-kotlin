@@ -56,9 +56,13 @@ extension CollectionLiteralLoweringPass {
             || fqName == lookup.setOfFQName
             || fqName == lookup.setOfNotNullFQName
             || fqName == lookup.mutableSetOfFQName
+            || fqName == lookup.linkedSetOfFQName
+            || fqName == lookup.hashSetOfFQName
             || fqName == lookup.emptyMapFQName
             || fqName == lookup.mapOfFQName
             || fqName == lookup.mutableMapOfFQName
+            || fqName == lookup.hashMapOfFQName
+            || fqName == lookup.linkedMapOfFQName
     }
 
     private func isStdlibArrayFactoryCall(
@@ -392,11 +396,14 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
-                    // --- Rewrite setOf/mutableSetOf/emptySet → kk_set_of / kk_emptySet ---
+                    // --- Rewrite setOf/mutableSetOf/hashSetOf/linkedSetOf/emptySet -> kk_set_of / kk_emptySet ---
                     if lookup.setFactoryNames.contains(callee),
                        isStdlibCollectionFactory(symbol: symbol, callee: callee, lookup: lookup, ctx: ctx) {
                         let count = arguments.count
-                        if count == 0 && callee != lookup.mutableSetOfName {
+                        if count == 0
+                            && callee != lookup.mutableSetOfName
+                            && callee != lookup.hashSetOfName
+                            && callee != lookup.linkedSetOfName {
                             // emptySet() / setOf() → kk_emptySet()
                             loweredBody.append(.call(
                                 symbol: nil,
@@ -407,7 +414,7 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                         } else if count == 0 {
-                            // mutableSetOf() → fresh instance via kk_set_of(null, 0)
+                            // Mutable set factories produce a fresh instance via kk_set_of(null, 0).
                             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
                             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
                             let nullExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
@@ -489,11 +496,14 @@ extension CollectionLiteralLoweringPass {
                         continue
                     }
 
-                    // --- Rewrite mapOf/mutableMapOf/emptyMap → kk_map_of / kk_emptyMap ---
+                    // --- Rewrite mapOf/mutableMapOf/hashMapOf/linkedMapOf/emptyMap → kk_map_of / kk_emptyMap ---
                     if lookup.mapFactoryNames.contains(callee),
                        isStdlibCollectionFactory(symbol: symbol, callee: callee, lookup: lookup, ctx: ctx) {
                         let count = arguments.count
-                        if count == 0 && callee != lookup.mutableMapOfName {
+                        if count == 0
+                            && callee != lookup.mutableMapOfName
+                            && callee != lookup.hashMapOfName
+                            && callee != lookup.linkedMapOfName {
                             // emptyMap() / mapOf() → kk_emptyMap()
                             loweredBody.append(.call(
                                 symbol: nil,
@@ -504,7 +514,7 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                         } else if count == 0 {
-                            // mutableMapOf() → fresh instance via kk_map_of(null, null, 0)
+                            // mutableMapOf()/hashMapOf()/linkedMapOf() → fresh instance via kk_map_of(null, null, 0)
                             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
                             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
                             let nullKeysExpr = module.arena.appendExpr(.intLiteral(0), type: nil)

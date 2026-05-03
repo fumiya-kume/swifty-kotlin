@@ -125,7 +125,7 @@
 - [x] STDLIB-SEQ-023: `Sequence.associateTo` / `associateByTo` / `associateWithTo` / `groupByTo` を追加する
 - [x] STDLIB-SEQ-024: `Sequence.toCollection(destination)` を追加する
 - [x] STDLIB-SEQ-025: `Sequence.toMutableList()` / `toMutableSet()` / `toHashSet()` を追加する
-- [ ] STDLIB-SEQ-026: `Sequence.firstNotNullOf(transform)` を追加する
+- [x] STDLIB-SEQ-026: `Sequence.firstNotNullOf(transform)` を追加する
 - [x] STDLIB-SEQ-027: `Sequence.firstNotNullOfOrNull(transform)` を追加する
 - [ ] STDLIB-SEQ-028: `Sequence.minusElement(element)` を追加する
 - [ ] STDLIB-SEQ-029: `Sequence.sumBy(selector)` deprecated surface を追加する
@@ -154,27 +154,27 @@
 - [ ] STDLIB-COL-TYPE-001: `AbstractCollection<E>` surface を追加する
 - [ ] STDLIB-COL-TYPE-002: `AbstractIterator<T>` surface を追加する
 - [ ] STDLIB-COL-TYPE-003: `AbstractMutableCollection<E>` surface を追加する
-- [ ] STDLIB-COL-TYPE-004: primitive iterator classes（`BooleanIterator`, `ByteIterator`, `ShortIterator`, `IntIterator`, `LongIterator`, `FloatIterator`, `DoubleIterator`, `CharIterator`）を追加する
-- [ ] STDLIB-COL-TYPE-005: `MutableIterable<T>` surface を追加する
-- [ ] STDLIB-COL-TYPE-006: `MutableListIterator<T>` surface を追加する
-- [ ] STDLIB-COL-ARRAY-001: array `contentToString()` overload 群を追加する
-- [ ] STDLIB-COL-ARRAY-002: array `contentDeepEquals(other)` を追加する
-- [ ] STDLIB-COL-ARRAY-003: array `contentDeepHashCode()` を追加する
+- [x] STDLIB-COL-TYPE-004: primitive iterator classes（`BooleanIterator`, `ByteIterator`, `ShortIterator`, `IntIterator`, `LongIterator`, `FloatIterator`, `DoubleIterator`, `CharIterator`）を追加する
+- [x] STDLIB-COL-TYPE-005: `MutableIterable<T>` surface を追加する
+- [x] STDLIB-COL-TYPE-006: `MutableListIterator<T>` surface を追加する
+- [x] STDLIB-COL-ARRAY-001: array `contentToString()` overload 群を追加する
+- [x] STDLIB-COL-ARRAY-002: array `contentDeepEquals(other)` を追加する
+- [x] STDLIB-COL-ARRAY-003: array `contentDeepHashCode()` を追加する
 - [x] STDLIB-COL-ARRAY-004: array `contentDeepToString()` を追加する
-- [ ] STDLIB-COL-ARRAY-005: array `copyInto(destination, destinationOffset, startIndex, endIndex)` overload 群を追加する
+- [x] STDLIB-COL-ARRAY-005: array `copyInto(destination, destinationOffset, startIndex, endIndex)` overload 群を追加する
 - [x] STDLIB-COL-ARRAY-006: array `reversedArray()` overload 群を追加する
 - [ ] STDLIB-COL-ARRAY-007: array `sliceArray(indices)` overload 群を追加する
-- [ ] STDLIB-COL-ARRAY-008: array `sortedArray()` overload 群を追加する
-- [ ] STDLIB-COL-ARRAY-009: array `sortedArrayDescending()` overload 群を追加する
+- [x] STDLIB-COL-ARRAY-008: array `sortedArray()` overload 群を追加する
+- [x] STDLIB-COL-ARRAY-009: array `sortedArrayDescending()` overload 群を追加する
 - [x] STDLIB-COL-ARRAY-010: array `sortedArrayWith(comparator)` overload 群を追加する
 - [x] STDLIB-COL-FACTORY-001: `arrayListOf(vararg elements)` を追加する
-- [ ] STDLIB-COL-FACTORY-002: `hashMapOf(vararg pairs)` を追加する
-- [ ] STDLIB-COL-FACTORY-003: `hashSetOf(vararg elements)` を追加する
-- [ ] STDLIB-COL-FACTORY-004: `linkedMapOf(vararg pairs)` を追加する
-- [ ] STDLIB-COL-FACTORY-005: `linkedSetOf(vararg elements)` を追加する
+- [x] STDLIB-COL-FACTORY-002: `hashMapOf(vararg pairs)` を追加する
+- [x] STDLIB-COL-FACTORY-003: `hashSetOf(vararg elements)` を追加する
+- [x] STDLIB-COL-FACTORY-004: `linkedMapOf(vararg pairs)` を追加する
+- [x] STDLIB-COL-FACTORY-005: `linkedSetOf(vararg elements)` を追加する
 - [x] STDLIB-COL-FACTORY-006: `setOfNotNull(element)` / `setOfNotNull(vararg elements)` を追加する
 - [x] STDLIB-COL-HOF-001: `Iterable.firstNotNullOf(transform)` を追加する
-- [ ] STDLIB-COL-HOF-002: `Iterable.firstNotNullOfOrNull(transform)` を追加する
+- [x] STDLIB-COL-HOF-002: `Iterable.firstNotNullOfOrNull(transform)` を追加する
 - [ ] STDLIB-COL-HOF-003: `Map.mapKeysTo(destination, transform)` を追加する
 - [ ] STDLIB-COL-HOF-004: `Map.mapValuesTo(destination, transform)` を追加する
 - [ ] STDLIB-COL-HOF-005: `Iterable.minusElement(element)` を追加する
@@ -190,8 +190,8 @@
 - [ ] STDLIB-COL-CONV-002: `Collection<Short>.toShortArray()` を追加する
 - [ ] STDLIB-COL-CONV-003: `Collection<Double>.toDoubleArray()` を追加する
 - [ ] STDLIB-COL-CONV-004: `Collection<Float>.toFloatArray()` を追加する
-- [ ] STDLIB-COL-MAP-001: `Map.Entry<K, V>.toPair()` を追加する
-- [ ] STDLIB-COL-MAP-002: `Map.withDefault(defaultValue)` を追加する
+- [x] STDLIB-COL-MAP-001: `Map.Entry<K, V>.toPair()` を追加する
+- [x] STDLIB-COL-MAP-002: `Map.withDefault(defaultValue)` を追加する
 - [ ] STDLIB-022: range / progression / unsigned range の網羅性を上げる
 - [x] STDLIB-RANGE-IFACE-001: `kotlin.ranges.ClosedRange<T>` interface surface を追加する
 - [x] STDLIB-RANGE-IFACE-002: `kotlin.ranges.ClosedFloatingPointRange<T>` interface surface を追加する
@@ -324,7 +324,7 @@
 - [ ] STDLIB-I18N-COMMON-001: `kotlin.text` / common のフォーマット・ロケール
 - [x] STDLIB-I18N-COMMON-002: `Char.category` を `CharCategory` enum で露出する（現状は `Int` placeholder）
 - [ ] STDLIB-I18N-COMMON-003: `String.Companion.format(locale, format, vararg args)` を追加する
-- [ ] STDLIB-I18N-COMMON-004: `Char.uppercase(Locale)` を追加する
+- [x] STDLIB-I18N-COMMON-004: `Char.uppercase(Locale)` を追加する
 - [ ] STDLIB-I18N-COMMON-005: `Char.lowercase(Locale)` を追加する
 - [x] STDLIB-I18N-COMMON-006: `String.toIntOrNull(radix: Int)` を追加する
 - [ ] STDLIB-I18N-COMMON-007: `Char.directionality` を `CharDirectionality` enum で露出する（現状は `Int` placeholder）
