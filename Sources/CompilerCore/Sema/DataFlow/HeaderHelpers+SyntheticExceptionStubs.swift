@@ -117,6 +117,12 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let arrayIndexOutOfBoundsSymbol = ensureClassSymbol(
+            named: "ArrayIndexOutOfBoundsException",
+            in: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
         let unsupportedOperationSymbol = ensureClassSymbol(
             named: "UnsupportedOperationException",
             in: kotlinPkg,
@@ -177,6 +183,7 @@ extension DataFlowSemaPhase {
         symbols.setDirectSupertypes([runtimeExceptionSymbol], for: illegalArgumentSymbol)
         symbols.setDirectSupertypes([runtimeExceptionSymbol], for: illegalStateSymbol)
         symbols.setDirectSupertypes([runtimeExceptionSymbol], for: indexOutOfBoundsSymbol)
+        symbols.setDirectSupertypes([indexOutOfBoundsSymbol], for: arrayIndexOutOfBoundsSymbol)
         symbols.setDirectSupertypes([runtimeExceptionSymbol], for: unsupportedOperationSymbol)
         symbols.setDirectSupertypes([runtimeExceptionSymbol], for: noSuchElementSymbol)
         symbols.setDirectSupertypes([runtimeExceptionSymbol], for: arithmeticSymbol)
@@ -194,6 +201,7 @@ extension DataFlowSemaPhase {
         types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: illegalArgumentSymbol)
         types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: illegalStateSymbol)
         types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: indexOutOfBoundsSymbol)
+        types.setNominalDirectSupertypes([indexOutOfBoundsSymbol], for: arrayIndexOutOfBoundsSymbol)
         types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: unsupportedOperationSymbol)
         types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: noSuchElementSymbol)
         types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: arithmeticSymbol)
@@ -214,6 +222,7 @@ extension DataFlowSemaPhase {
             illegalArgumentSymbol,
             illegalStateSymbol,
             indexOutOfBoundsSymbol,
+            arrayIndexOutOfBoundsSymbol,
             unsupportedOperationSymbol,
             noSuchElementSymbol,
             arithmeticSymbol,
@@ -333,6 +342,13 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerSyntheticArrayIndexOutOfBoundsExceptionConstructors(
+            ownerSymbol: arrayIndexOutOfBoundsSymbol,
+            ownerType: types.make(.classType(ClassType(classSymbol: arrayIndexOutOfBoundsSymbol, args: [], nullability: .nonNull))),
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
 
         // MARK: - Throwable member properties (STDLIB-127)
 
@@ -400,6 +416,33 @@ extension DataFlowSemaPhase {
                     returnType: types.stringType
                 ),
                 for: stackTraceSymbol
+            )
+        }
+
+        // printStackTrace(): Unit
+        let printStackTraceName = interner.intern("printStackTrace")
+        let printStackTraceFQName = throwableFQName + [printStackTraceName]
+        if symbols.lookup(fqName: printStackTraceFQName) == nil {
+            let printStackTraceSymbol = symbols.define(
+                kind: .function,
+                name: printStackTraceName,
+                fqName: printStackTraceFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(throwableSymbol, for: printStackTraceSymbol)
+            symbols.setExternalLinkName("kk_throwable_printStackTrace", for: printStackTraceSymbol)
+            let throwableType = types.make(.classType(ClassType(
+                classSymbol: throwableSymbol, args: [], nullability: .nonNull
+            )))
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: throwableType,
+                    parameterTypes: [],
+                    returnType: types.unitType
+                ),
+                for: printStackTraceSymbol
             )
         }
 
@@ -756,6 +799,30 @@ extension DataFlowSemaPhase {
                 "\(externalLinkPrefix)_new_message_cause"
             ),
             ([("cause", nullableThrowableType)], "\(externalLinkPrefix)_new_cause"),
+        ]
+        for overload in overloads {
+            registerSyntheticExceptionConstructor(
+                ownerSymbol: ownerSymbol,
+                ownerType: ownerType,
+                parameters: overload.parameters,
+                externalLinkName: overload.link,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+    }
+
+    private func registerSyntheticArrayIndexOutOfBoundsExceptionConstructors(
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let nullableStringType = types.makeNullable(types.stringType)
+        let overloads: [(parameters: [(name: String, type: TypeID)], link: String)] = [
+            ([], "kk_array_index_out_of_bounds_exception_new"),
+            ([("message", nullableStringType)], "kk_array_index_out_of_bounds_exception_new_message"),
         ]
         for overload in overloads {
             registerSyntheticExceptionConstructor(
