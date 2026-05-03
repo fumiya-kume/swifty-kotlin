@@ -3,7 +3,9 @@
 /// Kotlin defines:
 ///   interface Closeable { fun close(): Unit }
 ///   typealias AutoCloseable = Closeable          // on Kotlin/JVM they are identical
-///   inline fun <T : Closeable, R> T.use(block: (T) -> R): R
+///   fun AutoCloseable(closeAction: () -> Unit): AutoCloseable
+///   inline fun <T : AutoCloseable?, R> T.use(block: (T) -> R): R
+///   inline fun <T : Closeable?, R> T.use(block: (T) -> R): R
 ///
 /// The .use extension is inline-expanded by CallLowerer: no runtime call is needed.
 extension DataFlowSemaPhase {
@@ -97,6 +99,49 @@ extension DataFlowSemaPhase {
             )
             symbols.setTypeAliasUnderlyingType(closeableType, for: aliasSymbol)
         }
+        if symbols.lookupAll(fqName: autoCloseableFQName).allSatisfy({ symbols.symbol($0)?.kind != .function }) {
+            let closeActionType = types.make(.functionType(FunctionType(
+                params: [],
+                returnType: types.unitType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let closeActionParamName = interner.intern("closeAction")
+            let closeActionParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: closeActionParamName,
+                fqName: autoCloseableFQName + [closeActionParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            let factorySymbol = symbols.define(
+                kind: .function,
+                name: autoCloseableName,
+                fqName: autoCloseableFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            if let packageSymbol = symbols.lookup(fqName: kotlinPkg) {
+                symbols.setParentSymbol(packageSymbol, for: factorySymbol)
+            }
+            symbols.setParentSymbol(factorySymbol, for: closeActionParamSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: [closeActionType],
+                    returnType: closeableType,
+                    isSuspend: false,
+                    valueParameterSymbols: [closeActionParamSymbol],
+                    valueParameterHasDefaultValues: [false],
+                    valueParameterIsVararg: [false],
+                    typeParameterSymbols: []
+                ),
+                for: factorySymbol
+            )
+            symbols.setExternalLinkName("kk_auto_closeable_create", for: factorySymbol)
+        }
 
         // --- java.io.Closeable interface (mirrors kotlin.io.Closeable) ---
         // On Kotlin/JVM java.io.Closeable is the canonical type; kswiftc maps it
@@ -140,87 +185,95 @@ extension DataFlowSemaPhase {
             types.setNominalDirectSupertypes([closeableSymbol], for: javaCloseableSymbol)
         }
 
-        // --- T.use(block: (T) -> R): R  where T : Closeable ---
-        // Registered as a top-level extension function in kotlin.io.
+        // --- T.use(block: (T) -> R): R ---
+        // Kotlin 2.0 common exposes `kotlin.use` for AutoCloseable?, while
+        // kotlin.io.use remains available for java.io.Closeable compatibility.
         let useName = interner.intern("use")
-        let useFQName = kotlinIOPkg + [useName]
-        if symbols.lookup(fqName: useFQName) != nil {
-            return
-        }
+        let nullableCloseableType = types.makeNullable(closeableType)
 
-        let tName = interner.intern("T")
-        let rName = interner.intern("R")
-        let tFQName = useFQName + [tName]
-        let rFQName = useFQName + [rName]
+        func registerUseFunction(in packageFQName: [InternedString]) {
+            let useFQName = packageFQName + [useName]
+            if symbols.lookup(fqName: useFQName) != nil {
+                return
+            }
 
-        let tSymbol = symbols.define(
-            kind: .typeParameter,
-            name: tName,
-            fqName: tFQName,
-            declSite: nil,
-            visibility: .private,
-            flags: []
-        )
-        let rSymbol = symbols.define(
-            kind: .typeParameter,
-            name: rName,
-            fqName: rFQName,
-            declSite: nil,
-            visibility: .private,
-            flags: []
-        )
+            let tName = interner.intern("T")
+            let rName = interner.intern("R")
+            let tFQName = useFQName + [tName]
+            let rFQName = useFQName + [rName]
 
-        // T has upper bound Closeable.
-        symbols.setTypeParameterUpperBounds([closeableType], for: tSymbol)
+            let tSymbol = symbols.define(
+                kind: .typeParameter,
+                name: tName,
+                fqName: tFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: rFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
 
-        let tType = types.make(.typeParam(TypeParamType(symbol: tSymbol, nullability: .nonNull)))
-        let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            symbols.setTypeParameterUpperBounds([nullableCloseableType], for: tSymbol)
 
-        let blockType = types.make(.functionType(FunctionType(
-            params: [tType],
-            returnType: rType,
-            isSuspend: false,
-            nullability: .nonNull
-        )))
+            let tType = types.make(.typeParam(TypeParamType(symbol: tSymbol, nullability: .nonNull)))
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
 
-        let blockParamName = interner.intern("block")
-        let blockParamSymbol = symbols.define(
-            kind: .valueParameter,
-            name: blockParamName,
-            fqName: useFQName + [blockParamName],
-            declSite: nil,
-            visibility: .private,
-            flags: [.synthetic]
-        )
-
-        let useSymbol = symbols.define(
-            kind: .function,
-            name: useName,
-            fqName: useFQName,
-            declSite: nil,
-            visibility: .public,
-            flags: [.synthetic, .inlineFunction]
-        )
-        if let packageSymbol = symbols.lookup(fqName: kotlinIOPkg) {
-            symbols.setParentSymbol(packageSymbol, for: useSymbol)
-        }
-        symbols.setParentSymbol(useSymbol, for: tSymbol)
-        symbols.setParentSymbol(useSymbol, for: rSymbol)
-        symbols.setParentSymbol(useSymbol, for: blockParamSymbol)
-
-        symbols.setFunctionSignature(
-            FunctionSignature(
-                receiverType: tType,
-                parameterTypes: [blockType],
+            let blockType = types.make(.functionType(FunctionType(
+                params: [tType],
                 returnType: rType,
                 isSuspend: false,
-                valueParameterSymbols: [blockParamSymbol],
-                valueParameterHasDefaultValues: [false],
-                valueParameterIsVararg: [false],
-                typeParameterSymbols: [tSymbol, rSymbol],
-                classTypeParameterCount: 0
-            ),
-            for: useSymbol
-        )
+                nullability: .nonNull
+            )))
+
+            let blockParamName = interner.intern("block")
+            let blockParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: blockParamName,
+                fqName: useFQName + [blockParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+
+            let useSymbol = symbols.define(
+                kind: .function,
+                name: useName,
+                fqName: useFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+                symbols.setParentSymbol(packageSymbol, for: useSymbol)
+            }
+            symbols.setParentSymbol(useSymbol, for: tSymbol)
+            symbols.setParentSymbol(useSymbol, for: rSymbol)
+            symbols.setParentSymbol(useSymbol, for: blockParamSymbol)
+
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: tType,
+                    parameterTypes: [blockType],
+                    returnType: rType,
+                    isSuspend: false,
+                    valueParameterSymbols: [blockParamSymbol],
+                    valueParameterHasDefaultValues: [false],
+                    valueParameterIsVararg: [false],
+                    typeParameterSymbols: [tSymbol, rSymbol],
+                    typeParameterUpperBoundsList: [[nullableCloseableType], []],
+                    classTypeParameterCount: 0
+                ),
+                for: useSymbol
+            )
+        }
+
+        registerUseFunction(in: kotlinPkg)
+        registerUseFunction(in: kotlinIOPkg)
     }
 }

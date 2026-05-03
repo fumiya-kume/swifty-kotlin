@@ -456,6 +456,7 @@ extension CallTypeChecker {
         receiverID: ExprID,
         args: [CallArgument],
         ctx: TypeInferenceContext,
+        expectedType: TypeID? = nil,
         locals: inout LocalBindings
     ) -> TypeID? {
         let sema = ctx.sema
@@ -488,6 +489,28 @@ extension CallTypeChecker {
             }
             return lastArgExprNode.isLambdaOrCallableRef
         }()
+        let isIterableFirstNotNullOfCall: Bool = {
+            guard memberName == "firstNotNullOf",
+                  args.count == 1,
+                  isIterableLikeReceiver(receiverID: receiverID, sema: sema, interner: interner),
+                  let firstArgExpr = args.first?.expr,
+                  let firstArgNode = ctx.ast.arena.expr(firstArgExpr)
+            else {
+                return false
+            }
+            return firstArgNode.isLambdaOrCallableRef
+        }()
+        let isIterableFirstNotNullOfOrNullCall: Bool = {
+            guard memberName == "firstNotNullOfOrNull",
+                  args.count == 1,
+                  isIterableLikeReceiver(receiverID: receiverID, sema: sema, interner: interner),
+                  let firstArgExpr = args.first?.expr,
+                  let firstArgNode = ctx.ast.arena.expr(firstArgExpr)
+            else {
+                return false
+            }
+            return firstArgNode.isLambdaOrCallableRef
+        }()
         let isCollectionReceiver = isCollectionLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isSequenceReceiver = isSequenceLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         // Allow arrays to fall through to collection fallback only when
@@ -498,6 +521,8 @@ extension CallTypeChecker {
                 || isSequenceReceiver
                 || isIterableWindowedTransformCall
                 || isIterableChunkedTransformCall
+                || isIterableFirstNotNullOfCall
+                || isIterableFirstNotNullOfOrNullCall
         else {
             return nil
         }
@@ -616,6 +641,7 @@ extension CallTypeChecker {
             args: args,
             ctx: ctx,
             sema: sema,
+            expectedType: expectedType,
             interner: interner
         )
         // When the receiver is Sequence, sequence-returning operations (map,
@@ -953,6 +979,8 @@ extension CallTypeChecker {
             interner.intern("filter"),
             interner.intern("filterNot"),
             interner.intern("mapNotNull"),
+            interner.intern("firstNotNullOf"),
+            interner.intern("firstNotNullOfOrNull"),
             interner.intern("filterNotNull"),
             interner.intern("filterTo"),
             interner.intern("filterNotTo"),
@@ -1201,7 +1229,7 @@ extension CallTypeChecker {
             return argCount == 0
         case interner.intern("get"), interner.intern("getOrNull"), interner.intern("elementAtOrNull"),
              interner.intern("contains"), interner.intern("containsAll"), interner.intern("indexOf"), interner.intern("lastIndexOf"), interner.intern("indexOfFirst"), interner.intern("indexOfLast"), interner.intern("binarySearch"),
-             interner.intern("map"), interner.intern("filter"), interner.intern("filterNot"), interner.intern("mapNotNull"), interner.intern("forEach"), interner.intern("flatMap"), interner.intern("flatMapIndexed"),
+             interner.intern("map"), interner.intern("filter"), interner.intern("filterNot"), interner.intern("mapNotNull"), interner.intern("firstNotNullOf"), interner.intern("firstNotNullOfOrNull"), interner.intern("forEach"), interner.intern("flatMap"), interner.intern("flatMapIndexed"),
              interner.intern("any"), interner.intern("none"), interner.intern("all"),
              interner.intern("groupBy"), interner.intern("groupingBy"), interner.intern("sortedBy"), interner.intern("find"), interner.intern("associateBy"), interner.intern("associateWith"), interner.intern("associate"), interner.intern("reduce"), interner.intern("reduceOrNull"), interner.intern("reduceIndexedOrNull"), interner.intern("runningReduce"), interner.intern("runningReduceIndexed"), interner.intern("scanReduce"), interner.intern("take"), interner.intern("drop"), interner.intern("zip"),
              interner.intern("forEachIndexed"), interner.intern("mapIndexed"), interner.intern("filterIndexed"), interner.intern("sumOf"), interner.intern("chunked"), interner.intern("onEach"), interner.intern("onEachIndexed"),
@@ -1274,6 +1302,7 @@ extension CallTypeChecker {
         args: [CallArgument],
         ctx: TypeInferenceContext,
         sema: SemaModule,
+        expectedType: TypeID? = nil,
         interner: StringInterner
     ) -> TypeID {
         let knownNames = KnownCompilerNames(interner: interner)
@@ -1437,6 +1466,28 @@ extension CallTypeChecker {
 
         if memberName == interner.intern("find") {
             return sema.types.makeNullable(receiverElementType)
+        }
+
+        if memberName == interner.intern("firstNotNullOf") {
+            if let expectedType {
+                return sema.types.makeNonNullable(expectedType)
+            }
+            guard let firstArg = args.first else { return sema.types.anyType }
+            if case let .functionType(fnType) = sema.types.kind(of: sema.bindings.exprTypes[firstArg.expr] ?? sema.types.anyType) {
+                return sema.types.makeNonNullable(fnType.returnType)
+            }
+            return sema.types.anyType
+        }
+
+        if memberName == interner.intern("firstNotNullOfOrNull") {
+            if let expectedType {
+                return sema.types.makeNullable(sema.types.makeNonNullable(expectedType))
+            }
+            guard let firstArg = args.first else { return sema.types.nullableAnyType }
+            if case let .functionType(fnType) = sema.types.kind(of: sema.bindings.exprTypes[firstArg.expr] ?? sema.types.anyType) {
+                return sema.types.makeNullable(sema.types.makeNonNullable(fnType.returnType))
+            }
+            return sema.types.nullableAnyType
         }
 
         if memberName == interner.intern("asIterable") {
@@ -1948,6 +1999,8 @@ extension CallTypeChecker {
             interner.intern("filter"),
             interner.intern("filterNot"),
             interner.intern("mapNotNull"),
+            interner.intern("firstNotNullOf"),
+            interner.intern("firstNotNullOfOrNull"),
             interner.intern("forEach"),
             interner.intern("flatMap"),
             interner.intern("flatMapIndexed"),
@@ -2011,6 +2064,8 @@ extension CallTypeChecker {
                 ? sema.types.make(.primitive(.boolean, .nonNull))
                 : memberName == interner.intern("sumOf")
                 ? sema.types.intType
+                : memberName == interner.intern("firstNotNullOf") || memberName == interner.intern("firstNotNullOfOrNull")
+                ? sema.types.nullableAnyType
                 : sema.types.anyType
             let expectedType = sema.types.make(.functionType(FunctionType(
                 params: [receiverElementType],

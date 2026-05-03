@@ -2230,6 +2230,25 @@ public func kk_string_format(_ formatRaw: Int, _ argsArrayRaw: Int) -> Int {
     return runtimeMakeStringRaw(runtimeFormatString(template, arguments: arguments))
 }
 
+@_cdecl("kk_string_format_locale")
+public func kk_string_format_locale(_ localeRaw: Int, _ formatRaw: Int, _ argsArrayRaw: Int) -> Int {
+    let locale: Locale?
+    if localeRaw == runtimeNullSentinelInt {
+        locale = nil
+    } else {
+        guard let box = runtimeLocaleBox(from: localeRaw) else {
+            fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_string_format_locale received invalid Locale handle")
+        }
+        locale = box.locale
+    }
+
+    let template = runtimeStringFromRawOrPanic(formatRaw, caller: #function)
+    let arguments = runtimeArrayBox(from: argsArrayRaw)?.elements
+        ?? runtimeListBox(from: argsArrayRaw)?.elements
+        ?? []
+    return runtimeMakeStringRaw(runtimeFormatString(template, arguments: arguments, locale: locale))
+}
+
 @_cdecl("kk_string_trimIndent")
 public func kk_string_trimIndent(_ strRaw: Int) -> Int {
     let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
@@ -3118,7 +3137,7 @@ private let runtimeSupportedFormatConversions: Set<Character> = [
     "s", "S", "b", "B", "d", "i", "x", "X", "o", "f", "e", "E", "g", "G", "c", "C",
 ]
 
-private func runtimeFormatString(_ template: String, arguments: [Int]) -> String {
+private func runtimeFormatString(_ template: String, arguments: [Int], locale: Locale? = nil) -> String {
     let characters = Array(template)
     var cursor = 0
     var implicitArgumentIndex = 0
@@ -3146,7 +3165,7 @@ private func runtimeFormatString(_ template: String, arguments: [Int]) -> String
             let argument = arguments.indices.contains(argumentIndex)
                 ? arguments[argumentIndex]
                 : runtimeNullSentinelInt
-            result += runtimeRenderFormattedArgument(argument, specifier: specifier)
+            result += runtimeRenderFormattedArgument(argument, specifier: specifier, locale: locale)
             cursor = next
         case .invalid:
             result.append("%")
@@ -3228,40 +3247,73 @@ private func runtimeParseFormatToken(_ characters: [Character], start: Int) -> R
     )
 }
 
-private func runtimeRenderFormattedArgument(_ argument: Int, specifier: RuntimeFormatSpecifier) -> String {
+private func runtimeRenderFormattedArgument(
+    _ argument: Int,
+    specifier: RuntimeFormatSpecifier,
+    locale: Locale?
+) -> String {
     switch specifier.normalizedConversion {
     case "s":
-        let value = runtimeFormatStringValue(argument, specifier: specifier)
+        let value = runtimeFormatStringValue(argument, specifier: specifier, locale: locale)
         return runtimeApplyStringWidth(value, specifier: specifier)
     case "b":
         let value = runtimeFormatBooleanValue(argument)
-        let normalized = specifier.conversion.isUppercase ? value.uppercased() : value
+        let normalized = specifier.conversion.isUppercase
+            ? runtimeFormatUppercase(value, locale: locale)
+            : value
         return runtimeApplyStringWidth(normalized, specifier: specifier)
     case "d", "i":
         let value = Int64(runtimeFormatIntegerValue(argument))
-        return String(format: specifier.cStyleToken, value)
+        if let locale {
+            return String(format: specifier.cStyleToken, locale: locale, arguments: [value])
+        }
+        return String(format: specifier.cStyleToken, arguments: [value])
     case "x", "o":
         let value = UInt64(bitPattern: Int64(runtimeFormatIntegerValue(argument)))
-        return String(format: specifier.cStyleToken, value)
+        if let locale {
+            return String(format: specifier.cStyleToken, locale: locale, arguments: [value])
+        }
+        return String(format: specifier.cStyleToken, arguments: [value])
     case "f", "e", "g":
-        return String(format: specifier.cStyleToken, runtimeFormatDoubleValue(argument))
+        let value = runtimeFormatDoubleValue(argument)
+        if let locale {
+            return String(format: specifier.cStyleToken, locale: locale, arguments: [value])
+        }
+        return String(format: specifier.cStyleToken, arguments: [value])
     case "c":
         let value = runtimeFormatCharacterValue(argument)
-        return runtimeApplyStringWidth(value, specifier: specifier)
+        let normalized = specifier.conversion.isUppercase
+            ? runtimeFormatUppercase(value, locale: locale)
+            : value
+        return runtimeApplyStringWidth(normalized, specifier: specifier)
     default:
-        return runtimeApplyStringWidth(runtimeFormatStringValue(argument, specifier: specifier), specifier: specifier)
+        return runtimeApplyStringWidth(
+            runtimeFormatStringValue(argument, specifier: specifier, locale: locale),
+            specifier: specifier
+        )
     }
 }
 
-private func runtimeFormatStringValue(_ argument: Int, specifier: RuntimeFormatSpecifier) -> String {
+private func runtimeFormatStringValue(
+    _ argument: Int,
+    specifier: RuntimeFormatSpecifier,
+    locale: Locale?
+) -> String {
     var value = runtimeElementToString(argument)
     if let precision = specifier.precision, value.count > precision {
         value = String(value.prefix(precision))
     }
     if specifier.conversion.isUppercase {
-        value = value.uppercased()
+        value = runtimeFormatUppercase(value, locale: locale)
     }
     return value
+}
+
+private func runtimeFormatUppercase(_ value: String, locale: Locale?) -> String {
+    if let locale {
+        return value.uppercased(with: locale)
+    }
+    return value.uppercased()
 }
 
 private func runtimeFormatBooleanValue(_ argument: Int) -> String {
