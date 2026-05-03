@@ -2713,19 +2713,19 @@ public func kk_array_contentEquals(_ arrayRaw: Int, _ otherRaw: Int) -> Int {
     guard let other = runtimeArrayBox(from: otherRaw) else {
         return kk_box_bool(0)
     }
-    
+
     // Quick size check
     if array.elements.count != other.elements.count {
         return kk_box_bool(0)
     }
-    
+
     // Element-by-element comparison
     for i in 0 ..< array.elements.count {
         if !runtimeValuesEqual(array.elements[i], other.elements[i]) {
             return kk_box_bool(0)
         }
     }
-    
+
     return kk_box_bool(1)
 }
 
