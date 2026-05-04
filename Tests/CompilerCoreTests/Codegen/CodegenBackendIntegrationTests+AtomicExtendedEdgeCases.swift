@@ -734,7 +734,7 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
-    // MARK: - BUG-01: AtomicReference getAndUpdate / updateAndGet type inference
+    // MARK: - BUG-01: AtomicReference getAndUpdate / fetchAndUpdate / updateAndGet type inference
 
     func testCodegenAtomicReferenceGetAndUpdate() throws {
         let source = """
@@ -746,6 +746,9 @@ extension CodegenBackendIntegrationTests {
             val old = a.getAndUpdate { it + "!" }
             println(old)
             println(a.value)
+            val fetched = a.fetchAndUpdate { it + "?" }
+            println(fetched)
+            println(a.value)
             val updated = a.updateAndGet { it.uppercase() }
             println(updated)
         }
@@ -755,7 +758,7 @@ extension CodegenBackendIntegrationTests {
             let ctx = try runCodegenPipeline(inputPath: path, moduleName: "AtomicRefGetAndUpdateBUG01", emit: .executable, outputPath: outputBase)
             try LinkPhase().run(ctx)
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "hello\nhello!\nHELLO!\n")
+            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "hello\nhello!\nhello!\nhello!?\nHELLO!?\n")
         }
     }
 

@@ -1165,6 +1165,7 @@ extension DataFlowSemaPhase {
         prefix: String,
         typeParameterSymbols: [SymbolID] = [],
         classTypeParameterCount: Int = 0,
+        includeFetchAndUpdateAlias: Bool = false,
         symbols: SymbolTable,
         interner: StringInterner,
         types: TypeSystem
@@ -1184,6 +1185,17 @@ extension DataFlowSemaPhase {
             classTypeParameterCount: classTypeParameterCount,
             symbols: symbols, interner: interner
         )
+        if includeFetchAndUpdateAlias {
+            // fetchAndUpdate has the same old-value return contract as getAndUpdate.
+            registerAtomicMember(
+                ownerSymbol: ownerSymbol, ownerType: ownerType,
+                name: "fetchAndUpdate", externalLinkName: "\(prefix)_getAndUpdate",
+                returnType: valueType, parameters: [(name: "transform", type: transformType)],
+                typeParameterSymbols: typeParameterSymbols,
+                classTypeParameterCount: classTypeParameterCount,
+                symbols: symbols, interner: interner
+            )
+        }
         // updateAndGet(transform: (T) -> T) -> T
         registerAtomicMember(
             ownerSymbol: ownerSymbol, ownerType: ownerType,
@@ -1280,6 +1292,7 @@ extension DataFlowSemaPhase {
             prefix: externalLinkPrefix,
             typeParameterSymbols: [typeParamSymbol],
             classTypeParameterCount: 1,
+            includeFetchAndUpdateAlias: true,
             symbols: symbols,
             interner: interner,
             types: types
