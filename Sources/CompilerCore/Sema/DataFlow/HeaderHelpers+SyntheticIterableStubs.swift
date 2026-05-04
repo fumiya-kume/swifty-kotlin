@@ -128,6 +128,91 @@ extension DataFlowSemaPhase {
         return collectionInterfaceSymbol
     }
 
+    /// Register `kotlin.collections.AbstractCollection<E>` surface (STDLIB-COL-TYPE-001).
+    func registerSyntheticAbstractCollectionStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        collectionInterfaceSymbol: SymbolID
+    ) -> SymbolID {
+        let abstractCollectionName = interner.intern("AbstractCollection")
+        let abstractCollectionFQName = kotlinCollectionsPkg + [abstractCollectionName]
+        let abstractCollectionSymbol: SymbolID = if let existing = symbols.lookup(fqName: abstractCollectionFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .class,
+                name: abstractCollectionName,
+                fqName: abstractCollectionFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .abstractType]
+            )
+        }
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = abstractCollectionFQName + [typeParamName]
+        let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: abstractCollectionSymbol)
+        types.setNominalTypeParameterVariances([.out], for: abstractCollectionSymbol)
+
+        let abstractCollectionType = types.make(.classType(ClassType(
+            classSymbol: abstractCollectionSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(abstractCollectionType, for: abstractCollectionSymbol)
+        symbols.setDirectSupertypes([collectionInterfaceSymbol], for: abstractCollectionSymbol)
+        types.setNominalDirectSupertypes([collectionInterfaceSymbol], for: abstractCollectionSymbol)
+        symbols.setSupertypeTypeArgs([.out(typeParamType)], for: abstractCollectionSymbol, supertype: collectionInterfaceSymbol)
+        types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: abstractCollectionSymbol, supertype: collectionInterfaceSymbol)
+
+        let initName = interner.intern("<init>")
+        let initFQName = abstractCollectionFQName + [initName]
+        if symbols.lookup(fqName: initFQName) == nil {
+            let initSymbol = symbols.define(
+                kind: .constructor,
+                name: initName,
+                fqName: initFQName,
+                declSite: nil,
+                visibility: .protected,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(abstractCollectionSymbol, for: initSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: [],
+                    returnType: abstractCollectionType,
+                    valueParameterSymbols: [],
+                    valueParameterHasDefaultValues: [],
+                    valueParameterIsVararg: [],
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: initSymbol
+            )
+        }
+
+        return abstractCollectionSymbol
+    }
+
     /// Register a minimal `kotlin.collections.MutableCollection<E>` interface surface.
     func registerSyntheticMutableCollectionStub(
         symbols: SymbolTable,
@@ -823,6 +908,12 @@ extension DataFlowSemaPhase {
             )
         }
 
+        registerSyntheticAbstractIteratorStub(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            iteratorSymbol: iteratorSymbol
+        )
+
         registerSyntheticPrimitiveIteratorStubs(
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg,
@@ -895,6 +986,177 @@ extension DataFlowSemaPhase {
         }
 
         return iterableInterfaceSymbol
+    }
+
+    /// Register `kotlin.collections.AbstractIterator<T>` surface (STDLIB-COL-TYPE-002).
+    private func registerSyntheticAbstractIteratorStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        iteratorSymbol: SymbolID
+    ) {
+        let abstractIteratorName = interner.intern("AbstractIterator")
+        let abstractIteratorFQName = kotlinCollectionsPkg + [abstractIteratorName]
+        let abstractIteratorSymbol: SymbolID = if let existing = symbols.lookup(fqName: abstractIteratorFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .class,
+                name: abstractIteratorName,
+                fqName: abstractIteratorFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .abstractType]
+            )
+        }
+
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = abstractIteratorFQName + [typeParamName]
+        let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: abstractIteratorSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: abstractIteratorSymbol)
+
+        let abstractIteratorType = types.make(.classType(ClassType(
+            classSymbol: abstractIteratorSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(abstractIteratorType, for: abstractIteratorSymbol)
+        symbols.setDirectSupertypes([iteratorSymbol], for: abstractIteratorSymbol)
+        types.setNominalDirectSupertypes([iteratorSymbol], for: abstractIteratorSymbol)
+        symbols.setSupertypeTypeArgs([.out(typeParamType)], for: abstractIteratorSymbol, supertype: iteratorSymbol)
+        types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: abstractIteratorSymbol, supertype: iteratorSymbol)
+
+        let initName = interner.intern("<init>")
+        let initFQName = abstractIteratorFQName + [initName]
+        if symbols.lookup(fqName: initFQName) == nil {
+            let initSymbol = symbols.define(
+                kind: .constructor,
+                name: initName,
+                fqName: initFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(abstractIteratorSymbol, for: initSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: [],
+                    returnType: abstractIteratorType,
+                    valueParameterSymbols: [],
+                    valueParameterHasDefaultValues: [],
+                    valueParameterIsVararg: [],
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: initSymbol
+            )
+        }
+
+        func registerAbstractIteratorFunction(
+            name: String,
+            visibility: Visibility,
+            flags: SymbolFlags,
+            parameterTypes: [TypeID],
+            returnType: TypeID,
+            valueParameterNames: [String] = []
+        ) {
+            let memberName = interner.intern(name)
+            let memberFQName = abstractIteratorFQName + [memberName]
+            guard symbols.lookup(fqName: memberFQName) == nil else { return }
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: memberName,
+                fqName: memberFQName,
+                declSite: nil,
+                visibility: visibility,
+                flags: flags
+            )
+            symbols.setParentSymbol(abstractIteratorSymbol, for: memberSymbol)
+
+            var valueParameterSymbols: [SymbolID] = []
+            for parameterName in valueParameterNames {
+                let interned = interner.intern(parameterName)
+                let parameterSymbol = symbols.define(
+                    kind: .valueParameter,
+                    name: interned,
+                    fqName: memberFQName + [interned],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(memberSymbol, for: parameterSymbol)
+                valueParameterSymbols.append(parameterSymbol)
+            }
+
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: abstractIteratorType,
+                    parameterTypes: parameterTypes,
+                    returnType: returnType,
+                    valueParameterSymbols: valueParameterSymbols,
+                    valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
+                    valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count),
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        registerAbstractIteratorFunction(
+            name: "computeNext",
+            visibility: .protected,
+            flags: [.synthetic, .abstractType],
+            parameterTypes: [],
+            returnType: types.unitType
+        )
+        registerAbstractIteratorFunction(
+            name: "done",
+            visibility: .protected,
+            flags: [.synthetic],
+            parameterTypes: [],
+            returnType: types.unitType
+        )
+        registerAbstractIteratorFunction(
+            name: "setNext",
+            visibility: .protected,
+            flags: [.synthetic],
+            parameterTypes: [typeParamType],
+            returnType: types.unitType,
+            valueParameterNames: ["value"]
+        )
+        registerAbstractIteratorFunction(
+            name: "hasNext",
+            visibility: .public,
+            flags: [.synthetic, .openType, .overrideMember, .operatorFunction],
+            parameterTypes: [],
+            returnType: types.booleanType
+        )
+        registerAbstractIteratorFunction(
+            name: "next",
+            visibility: .public,
+            flags: [.synthetic, .openType, .overrideMember, .operatorFunction],
+            parameterTypes: [],
+            returnType: typeParamType
+        )
     }
 
     /// Register primitive iterator class surfaces (STDLIB-COL-TYPE-004).
