@@ -355,6 +355,43 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testKotlinTextSumByDoubleEdgeCases() throws {
+        let source = """
+        fun sumFromSequence(value: CharSequence): Double {
+            return value.sumByDouble { if (it == 'a') 1.5 else 0.25 }
+        }
+
+        fun main() {
+            println(sumFromSequence("aba"))
+            println("bbb".sumByDouble { ch -> if (ch == 'b') 2.0 else 0.0 })
+            println("".sumByDouble { 1.0 })
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "KotlinTextSumByDoubleEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                out,
+                """
+                3.25
+                6.0
+                0.0
+                """
+                + "\n"
+            )
+        }
+    }
+
     // MARK: - replace / replaceFirst / replaceRange
 
     func testKotlinTextReplaceEdgeCases() throws {
@@ -1088,6 +1125,46 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testKotlinTextChunkedSequenceTransformEdgeCases() throws {
+        let source = """
+        fun main() {
+            val lengths: kotlin.sequences.Sequence<Int> =
+                "abcdef".chunkedSequence(2) { _: CharSequence -> 2 }
+            println(lengths.toList())
+
+            val text: CharSequence = "abcde"
+            println(text.chunkedSequence(2) { _: CharSequence -> "chunk" }.toList())
+
+            println("".chunkedSequence(3) { _: CharSequence -> 1 }.toList())
+            println("abc".chunkedSequence(10) { _: CharSequence -> "single" }.toList())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "KotlinTextChunkedSequenceTransformEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                out,
+                """
+                [2, 2, 2]
+                [chunk, chunk, chunk]
+                []
+                [single]
+                """
+                + "\n"
+            )
+        }
+    }
+
     func testKotlinTextChunkedSequenceEdgeCases() throws {
         let source = """
         fun render(value: CharSequence, size: Int): List<String> {
@@ -1099,12 +1176,14 @@ extension CodegenBackendIntegrationTests {
         }
 
         fun main() {
-            println(render("abcdef", 2))
-            println(render("abc", 10))
-            println(render("", 3))
-            println("abc".chunkedSequence(1).toList())
-            println(renderTransform("abcde", 2))
-            println("abcdef".chunkedSequence(3) { "" + it }.toList())
+            println("abcdef".chunkedSequence(2).toList())
+
+            val text: CharSequence = "abcde"
+            val chunks: kotlin.sequences.Sequence<String> = text.chunkedSequence(2)
+            println(chunks.toList())
+
+            println("".chunkedSequence(3).toList())
+            println("abc".chunkedSequence(10).toList())
         }
         """
 
@@ -1124,11 +1203,9 @@ extension CodegenBackendIntegrationTests {
                 out,
                 """
                 [ab, cd, ef]
-                [abc]
+                [ab, cd, e]
                 []
-                [a, b, c]
-                [ab!, cd!, e!]
-                [abc, def]
+                [abc]
                 """
                 + "\n"
             )

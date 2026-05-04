@@ -52,7 +52,12 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
             "endsWith": "kk_string_endsWith",
             "toInt": "kk_string_toInt",
             "toDouble": "kk_string_toDouble",
+            "hexToShort": "kk_string_hexToShort",
+            "hexToUByte": "kk_string_hexToUByte",
+            "hexToUByteArray": "kk_string_hexToUByteArray",
             "hexToUInt": "kk_string_hexToUInt",
+            "hexToULong": "kk_string_hexToULong",
+            "hexToUShort": "kk_string_hexToUShort",
             "trimIndent": "kk_string_trimIndent",
             "replaceIndentByMargin": "kk_string_replaceIndentByMargin",
         ]
@@ -180,6 +185,20 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
         )
     }
 
+    func testChunkedSequenceStubsHaveCorrectExternalLinks() throws {
+        let (sema, interner) = try makeSema()
+
+        let links = externalLinks(for: "chunkedSequence", sema: sema, interner: interner)
+        XCTAssertTrue(
+            links.contains("kk_string_chunked_sequence_transform"),
+            "CharSequence.chunkedSequence(size, transform) should link to kk_string_chunked_sequence_transform"
+        )
+        XCTAssertTrue(
+            links.contains("kk_string_chunked_sequence"),
+            "CharSequence.chunkedSequence should link to kk_string_chunked_sequence"
+        )
+    }
+
     func testNewNullableConversionStubsHaveCorrectExternalLinks() throws {
         let (sema, interner) = try makeSema()
 
@@ -192,6 +211,26 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
             externalLinks(for: "toIntOrNull", sema: sema, interner: interner)
                 .contains("kk_string_toIntOrNull_radix"),
             "String.toIntOrNull(radix) should link to kk_string_toIntOrNull_radix"
+        )
+        XCTAssertEqual(
+            externalLink(for: "toUByteOrNull", sema: sema, interner: interner),
+            "kk_string_toUByteOrNull_radix",
+            "String.toUByteOrNull(radix) should link to kk_string_toUByteOrNull_radix"
+        )
+        XCTAssertEqual(
+            externalLink(for: "toUShortOrNull", sema: sema, interner: interner),
+            "kk_string_toUShortOrNull_radix",
+            "String.toUShortOrNull(radix) should link to kk_string_toUShortOrNull_radix"
+        )
+        XCTAssertEqual(
+            externalLink(for: "toUIntOrNull", sema: sema, interner: interner),
+            "kk_string_toUIntOrNull_radix",
+            "String.toUIntOrNull(radix) should link to kk_string_toUIntOrNull_radix"
+        )
+        XCTAssertEqual(
+            externalLink(for: "toULongOrNull", sema: sema, interner: interner),
+            "kk_string_toULongOrNull_radix",
+            "String.toULongOrNull(radix) should link to kk_string_toULongOrNull_radix"
         )
         XCTAssertEqual(
             externalLink(for: "toDoubleOrNull", sema: sema, interner: interner),
@@ -321,13 +360,13 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
 
         XCTAssertEqual(
             externalLink(for: "chunkedSequence", sema: sema, interner: interner),
-            "kk_string_chunkedSequence",
-            "CharSequence.chunkedSequence should link to kk_string_chunkedSequence"
+            "kk_string_chunked_sequence",
+            "CharSequence.chunkedSequence should link to kk_string_chunked_sequence"
         )
         XCTAssertTrue(
             externalLinks(for: "chunkedSequence", sema: sema, interner: interner)
-                .contains("kk_string_chunkedSequence_transform"),
-            "CharSequence.chunkedSequence(size, transform) should link to kk_string_chunkedSequence_transform"
+                .contains("kk_string_chunked_sequence_transform"),
+            "CharSequence.chunkedSequence(size, transform) should link to kk_string_chunked_sequence_transform"
         )
     }
 
@@ -574,8 +613,8 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
                 )
                 XCTAssertEqual(
                     sema.symbols.externalLinkName(for: chosenCallee),
-                    "kk_string_chunkedSequence",
-                    "Expected chunkedSequence to resolve to kk_string_chunkedSequence"
+                    "kk_string_chunked_sequence",
+                    "Expected chunkedSequence to resolve to kk_string_chunked_sequence"
                 )
             }
         }
@@ -609,8 +648,8 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
                 )
                 XCTAssertEqual(
                     sema.symbols.externalLinkName(for: chosenCallee),
-                    "kk_string_chunkedSequence_transform",
-                    "Expected chunkedSequence transform to resolve to kk_string_chunkedSequence_transform"
+                    "kk_string_chunked_sequence_transform",
+                    "Expected chunkedSequence transform to resolve to kk_string_chunked_sequence_transform"
                 )
             }
         }
@@ -1618,6 +1657,39 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
             XCTAssertTrue(
                 sema.symbols.annotations(for: sumBySymbol).contains { $0.annotationFQName == "kotlin.Deprecated" },
                 "CharSequence.sumBy should carry Deprecated metadata"
+            )
+        }
+    }
+
+    func testCharSequenceSumByDoubleResolvesInCallExpressions() throws {
+        let source = """
+        fun sumFromSequence(value: CharSequence): Double {
+            return value.sumByDouble { if (it == 'a') 1.5 else 0.25 }
+        }
+
+        fun sumFromString(value: String): Double {
+            return value.sumByDouble { ch -> if (ch == 'b') 2.0 else 0.5 }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics.map { "\($0.code): \($0.message)" }.joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected CharSequence.sumByDouble surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let bindings = sema.bindings.callBindings.values.filter { binding in
+                sema.symbols.externalLinkName(for: binding.chosenCallee) == "kk_string_sumByDouble"
+            }
+            XCTAssertEqual(bindings.count, 2)
+            let sumByDoubleSymbol = try XCTUnwrap(bindings.first?.chosenCallee)
+            XCTAssertTrue(
+                sema.symbols.annotations(for: sumByDoubleSymbol).contains { $0.annotationFQName == "kotlin.Deprecated" },
+                "CharSequence.sumByDouble should carry Deprecated metadata"
             )
         }
     }

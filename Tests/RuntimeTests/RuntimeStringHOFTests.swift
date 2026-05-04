@@ -40,6 +40,10 @@ private let sumByWeightedA: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?
     charRaw == Int(Unicode.Scalar("a").value) ? 10 : 1
 }
 
+private let sumByDoubleWeightedA: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, charRaw, _ in
+    kk_double_to_bits(charRaw == Int(Unicode.Scalar("a").value) ? 1.5 : 0.25)
+}
+
 final class RuntimeStringHOFTests: XCTestCase {
     override func setUp() {
         super.setUp()
@@ -304,6 +308,36 @@ final class RuntimeStringHOFTests: XCTestCase {
 
         XCTAssertEqual(thrown, 0)
         XCTAssertEqual(result, 0)
+    }
+
+    func testSumByDoubleAppliesSelectorToEveryCharacter() {
+        let source = registerRuntimeObject(RuntimeStringBox("aba"))
+        var thrown = 0
+
+        let result = kk_string_sumByDouble(
+            source,
+            unsafeBitCast(sumByDoubleWeightedA, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_bits_to_double(result), 3.25, accuracy: 0.000001)
+    }
+
+    func testSumByDoubleReturnsZeroForEmptyString() {
+        let source = registerRuntimeObject(RuntimeStringBox(""))
+        var thrown = 0
+
+        let result = kk_string_sumByDouble(
+            source,
+            unsafeBitCast(sumByDoubleWeightedA, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_bits_to_double(result), 0.0, accuracy: 0.000001)
     }
 
     private func runtimeStringValue(_ raw: Int) -> String {
