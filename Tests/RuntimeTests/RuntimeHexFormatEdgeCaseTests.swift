@@ -10,6 +10,7 @@ import XCTest
 // - Long.toHexString(format) – lowercase/uppercase, negative (two's-complement 16 hex digits)
 // - ByteArray.toHexString(format) – empty, single, multi, separator, uppercase
 // - String.hexToByteArray(format) – empty, separator, round-trip
+// - String.hexToUByteArray(format) – contiguous and separated input
 // - String.hexToInt(format) – basic parse
 // - String.hexToLong(format) – basic parse
 
@@ -37,6 +38,10 @@ final class RuntimeHexFormatEdgeCaseTests: IsolatedRuntimeXCTestCase {
 
     private func extractListElements(_ raw: Int) -> [Int]? {
         runtimeListBox(from: raw)?.elements
+    }
+
+    private func extractArrayElements(_ raw: Int) -> [Int]? {
+        runtimeArrayBox(from: raw)?.elements
     }
 
     /// Build a HexFormat by mutating a RuntimeHexFormatBox directly (no DSL closure overhead).
@@ -332,6 +337,92 @@ final class RuntimeHexFormatEdgeCaseTests: IsolatedRuntimeXCTestCase {
         let result = kk_string_hexToInt(strRaw, fmt, &thrown)
         XCTAssertEqual(thrown, 0)
         XCTAssertEqual(result, 0)
+    }
+
+    // MARK: - String.hexToShort – basic
+
+    func testHexToShortBasic() {
+        let fmt = makeFormat()
+        var thrown = 0
+        XCTAssertEqual(kk_string_hexToShort(makeString("00ff"), fmt, &thrown), 255)
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        XCTAssertEqual(kk_string_hexToShort(makeString("ffff"), fmt, &thrown), -1)
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        _ = kk_string_hexToShort(makeString("10000"), fmt, &thrown)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    // MARK: - String.hexToUByte – basic
+
+    func testHexToUByteBasic() {
+        let fmt = makeFormat()
+        var thrown = 0
+        XCTAssertEqual(kk_string_hexToUByte(makeString("ff"), fmt, &thrown), 255)
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        XCTAssertEqual(kk_string_hexToUByte(makeString("00"), fmt, &thrown), 0)
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        _ = kk_string_hexToUByte(makeString("100"), fmt, &thrown)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    // MARK: - String.hexToUShort – basic
+
+    func testHexToUShortBasic() {
+        let fmt = makeFormat()
+        var thrown = 0
+        XCTAssertEqual(kk_string_hexToUShort(makeString("ffff"), fmt, &thrown), Int(UInt16.max))
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        XCTAssertEqual(kk_string_hexToUShort(makeString("0000"), fmt, &thrown), 0)
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        _ = kk_string_hexToUShort(makeString("10000"), fmt, &thrown)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    // MARK: - String.hexToULong – basic
+
+    func testHexToULongBasic() {
+        let fmt = makeFormat()
+        var thrown = 0
+        let max = kk_string_hexToULong(makeString("ffffffffffffffff"), fmt, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_unbox_long(max), -1)
+
+        thrown = 0
+        let zero = kk_string_hexToULong(makeString("0000000000000000"), fmt, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_unbox_long(zero), 0)
+
+        thrown = 0
+        _ = kk_string_hexToULong(makeString("10000000000000000"), fmt, &thrown)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    // MARK: - String.hexToUByteArray – contiguous hex
+
+    func testHexToUByteArrayContiguousHex() {
+        let fmt = makeFormat()
+        let result = kk_string_hexToUByteArray(makeString("00ff"), fmt)
+        XCTAssertEqual(extractArrayElements(result), [0, 255])
+    }
+
+    // MARK: - String.hexToUByteArray – with separator
+
+    func testHexToUByteArrayWithSeparator() {
+        let fmt = makeFormat(byteSeparator: ":")
+        let result = kk_string_hexToUByteArray(makeString("00:ff"), fmt)
+        XCTAssertEqual(extractArrayElements(result), [0, 255])
     }
 
     // MARK: - String.hexToLong – basic

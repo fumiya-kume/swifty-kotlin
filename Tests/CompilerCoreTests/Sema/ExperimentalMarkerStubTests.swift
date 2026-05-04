@@ -23,6 +23,28 @@ import XCTest
 //   4. The @RequiresOptIn argument encodes the correct severity level.
 
 final class ExperimentalMarkerStubTests: XCTestCase {
+    private struct ExperimentalPackageMarker: Hashable {
+        let name: String
+        let todo: String?
+    }
+
+    private static let implementedExperimentalPackageMarkers: Set<ExperimentalPackageMarker> = [
+        ExperimentalPackageMarker(name: "ExperimentalNativeApi", todo: nil),
+        ExperimentalPackageMarker(name: "ExperimentalObjCEnum", todo: nil),
+        ExperimentalPackageMarker(name: "ExperimentalObjCName", todo: nil),
+        ExperimentalPackageMarker(name: "ExperimentalObjCRefinement", todo: nil),
+        ExperimentalPackageMarker(name: "ExperimentalTypeInference", todo: nil),
+        ExperimentalPackageMarker(name: "ExpectRefinement", todo: nil),
+    ]
+
+    private static let knownGapExperimentalPackageMarkers: Set<ExperimentalPackageMarker> = []
+
+    private static let optInExperimentalPackageMarkerNames: [String] = [
+        "ExperimentalNativeApi",
+        "ExperimentalObjCEnum",
+        "ExperimentalObjCName",
+        "ExperimentalObjCRefinement",
+    ]
 
     // MARK: - Shared fixture
 
@@ -35,6 +57,26 @@ final class ExperimentalMarkerStubTests: XCTestCase {
             result = (sema, ctx.interner)
         }
         return try XCTUnwrap(result)
+    }
+
+    private func runSemaCollectingDiagnostics(_ source: String) -> CompilationContext {
+        let ctx = makeContextFromSource(source)
+        do {
+            try runSema(ctx)
+        } catch {
+            // Diagnostics are inspected per-test.
+        }
+        return ctx
+    }
+
+    private func runSemaCollectingDiagnostics(_ sources: [String]) -> CompilationContext {
+        let ctx = makeContextFromSources(sources)
+        do {
+            try runSema(ctx)
+        } catch {
+            // Diagnostics are inspected per-test.
+        }
+        return ctx
     }
 
     // MARK: - Helpers
@@ -52,7 +94,7 @@ final class ExperimentalMarkerStubTests: XCTestCase {
         fqPath: [String],
         sema: SemaModule,
         interner: StringInterner,
-        file: StaticString = #file,
+        file: StaticString = #filePath,
         line: UInt = #line
     ) {
         guard let sym = lookupSymbol(fqPath: fqPath, sema: sema, interner: interner),
@@ -69,7 +111,7 @@ final class ExperimentalMarkerStubTests: XCTestCase {
         expectedSeverity: String,
         sema: SemaModule,
         interner: StringInterner,
-        file: StaticString = #file,
+        file: StaticString = #filePath,
         line: UInt = #line
     ) {
         guard let sym = lookupSymbol(fqPath: fqPath, sema: sema, interner: interner) else {
@@ -353,5 +395,261 @@ final class ExperimentalMarkerStubTests: XCTestCase {
         XCTAssertEqual(severity(fqPath: ["kotlin", "reflect", "ExperimentalAssociatedObjects"]), "ERROR")
         XCTAssertEqual(severity(fqPath: ["kotlin", "ExperimentalMultiplatform"]), "ERROR")
         XCTAssertEqual(severity(fqPath: ["kotlin", "ExperimentalSubclassOptIn"]), "WARNING")
+    }
+
+    // MARK: - kotlin.experimental marker inventory
+
+    func testKotlinExperimentalMarkerInventoryHasExpectedShape() {
+        let targetMarkers = Self.implementedExperimentalPackageMarkers.union(Self.knownGapExperimentalPackageMarkers)
+        let targetNames = Set(targetMarkers.map(\.name))
+
+        XCTAssertEqual(targetMarkers.count, targetNames.count)
+        XCTAssertEqual(targetMarkers.count, 6)
+        XCTAssertEqual(Self.implementedExperimentalPackageMarkers.count, 6)
+        XCTAssertEqual(Self.knownGapExperimentalPackageMarkers.count, 0)
+    }
+
+    func testImplementedKotlinExperimentalMarkersAreRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        for marker in Self.implementedExperimentalPackageMarkers {
+            let symbol = try XCTUnwrap(
+                lookupSymbol(fqPath: ["kotlin", "experimental", marker.name], sema: sema, interner: interner),
+                "kotlin.experimental.\(marker.name) should be registered"
+            )
+            XCTAssertEqual(
+                sema.symbols.symbol(symbol)?.kind,
+                .annotationClass,
+                "kotlin.experimental.\(marker.name) should be an annotation class"
+            )
+        }
+    }
+
+    func testKnownGapKotlinExperimentalMarkersRemainAbsentUntilTheirTodoIsImplemented() throws {
+        let (sema, interner) = try makeSema()
+
+        for marker in Self.knownGapExperimentalPackageMarkers {
+            let symbol = lookupSymbol(fqPath: ["kotlin", "experimental", marker.name], sema: sema, interner: interner)
+            XCTAssertNil(
+                symbol,
+                "kotlin.experimental.\(marker.name) is tracked by \(marker.todo ?? "unknown TODO") and should update this inventory when implemented"
+            )
+        }
+    }
+
+    func testKnownGapKotlinExperimentalMarkerTodosAreScoped() {
+        let todos = Set(Self.knownGapExperimentalPackageMarkers.compactMap(\.todo))
+        XCTAssertEqual(todos, Set<String>())
+    }
+
+    func testExpectRefinementCarriesClassTargetAndExperimentalMultiplatformMetadata() throws {
+        let (sema, interner) = try makeSema()
+        let symbol = try XCTUnwrap(
+            lookupSymbol(fqPath: ["kotlin", "experimental", "ExpectRefinement"], sema: sema, interner: interner),
+            "kotlin.experimental.ExpectRefinement should be registered"
+        )
+        let annotations = sema.symbols.annotations(for: symbol)
+
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.annotation.Target"
+                    && $0.arguments == ["AnnotationTarget.CLASS"]
+            },
+            "ExpectRefinement should carry @Target(AnnotationTarget.CLASS), got \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains { $0.annotationFQName == "kotlin.ExperimentalMultiplatform" },
+            "ExpectRefinement should carry @ExperimentalMultiplatform, got \(annotations)"
+        )
+    }
+
+    func testExpectRefinementMetadataIsExposedOnExpectDeclaration() throws {
+        let sources = [
+            """
+            @file:OptIn(kotlin.ExperimentalMultiplatform::class)
+
+            package sample.exp
+
+            import kotlin.experimental.ExpectRefinement
+
+            @ExpectRefinement
+            expect class Refined
+            """,
+            """
+            package sample.exp
+
+            actual class Refined
+            """,
+        ]
+
+        let ctx = runSemaCollectingDiagnostics(sources)
+        let errors = ctx.diagnostics.diagnostics.filter { $0.severity == .error }
+        XCTAssertTrue(errors.isEmpty, "Expected expect/actual refined class to compile cleanly, got \(ctx.diagnostics.diagnostics)")
+
+        let sema = try XCTUnwrap(ctx.sema)
+        let fqName = ["sample", "exp", "Refined"].map { ctx.interner.intern($0) }
+        let refinedSymbol = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: fqName).first { symbolID in
+                sema.symbols.symbol(symbolID)?.flags.contains(.expectDeclaration) == true
+            },
+            "Expected expect Refined symbol to be registered"
+        )
+        let annotations = sema.symbols.annotations(for: refinedSymbol)
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.experimental.ExpectRefinement"
+                    || $0.annotationFQName == "ExpectRefinement"
+            },
+            "Expected @ExpectRefinement metadata on expect declaration, got \(annotations)"
+        )
+    }
+
+    func testExpectRefinementUseRequiresExperimentalMultiplatformOptIn() {
+        let sources = [
+            """
+            package sample.exp
+
+            import kotlin.experimental.ExpectRefinement
+
+            @ExpectRefinement
+            expect class NeedsOptIn
+
+            fun echo(value: NeedsOptIn): NeedsOptIn = value
+            """,
+            """
+            package sample.exp
+
+            actual class NeedsOptIn
+            """,
+        ]
+
+        let ctx = runSemaCollectingDiagnostics(sources)
+        let diagnostics = ctx.diagnostics.diagnostics.filter { $0.code == "KSWIFTK-SEMA-OPT-IN" }
+        XCTAssertTrue(
+            diagnostics.contains {
+                $0.severity == .error && $0.message.contains("kotlin.ExperimentalMultiplatform")
+            },
+            "Expected ExpectRefinement usage to require ExperimentalMultiplatform opt-in, got \(ctx.diagnostics.diagnostics)"
+        )
+    }
+
+    func testExpectRefinementAcceptsExperimentalMultiplatformOptIn() {
+        let sources = [
+            """
+            @file:OptIn(kotlin.ExperimentalMultiplatform::class)
+
+            package sample.exp
+
+            import kotlin.experimental.ExpectRefinement
+
+            @ExpectRefinement
+            expect class RefinedWithOptIn
+
+            fun echo(value: RefinedWithOptIn): RefinedWithOptIn = value
+            """,
+            """
+            package sample.exp
+
+            actual class RefinedWithOptIn
+            """,
+        ]
+
+        let ctx = runSemaCollectingDiagnostics(sources)
+        let diagnostics = ctx.diagnostics.diagnostics.filter { $0.code == "KSWIFTK-SEMA-OPT-IN" }
+        XCTAssertTrue(
+            diagnostics.isEmpty,
+            "Expected @OptIn(kotlin.ExperimentalMultiplatform::class) to suppress ExpectRefinement diagnostics, got \(ctx.diagnostics.diagnostics)"
+        )
+    }
+
+    func testExpectRefinementRejectsFunctionTarget() {
+        let source = """
+        @file:OptIn(kotlin.ExperimentalMultiplatform::class)
+
+        import kotlin.experimental.ExpectRefinement
+
+        @ExpectRefinement
+        fun invalidRefinementTarget() {}
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = ctx.diagnostics.diagnostics.filter { $0.code == "KSWIFTK-SEMA-ANNOTATION-TARGET" }
+        XCTAssertEqual(
+            diagnostics.count,
+            1,
+            "Expected ExpectRefinement to reject function target, got \(ctx.diagnostics.diagnostics)"
+        )
+        XCTAssertTrue(
+            diagnostics.allSatisfy { $0.severity == .error },
+            "ExpectRefinement target diagnostics should be errors"
+        )
+    }
+
+    func testKotlinExperimentalOptInMarkersCarryRequiresOptInError() throws {
+        let (sema, interner) = try makeSema()
+
+        for marker in Self.optInExperimentalPackageMarkerNames {
+            let symbol = try XCTUnwrap(
+                lookupSymbol(fqPath: ["kotlin", "experimental", marker], sema: sema, interner: interner),
+                "kotlin.experimental.\(marker) should be registered"
+            )
+            let annotations = sema.symbols.annotations(for: symbol)
+            XCTAssertTrue(
+                annotations.contains {
+                    $0.annotationFQName == "kotlin.RequiresOptIn"
+                        && $0.arguments.contains("level=RequiresOptIn.Level.ERROR")
+                },
+                "kotlin.experimental.\(marker) should carry @RequiresOptIn(ERROR), got \(annotations)"
+            )
+        }
+    }
+
+    func testKotlinExperimentalOptInMarkersEmitDiagnosticsOnUse() {
+        for marker in Self.optInExperimentalPackageMarkerNames {
+            let source = """
+            import kotlin.experimental.\(marker)
+
+            @\(marker)
+            @Target(AnnotationTarget.FUNCTION)
+            annotation class Uses\(marker)
+
+            @Uses\(marker)
+            fun experimental\(marker)(): Int = 1
+
+            fun use\(marker)(): Int = experimental\(marker)()
+            """
+
+            let ctx = runSemaCollectingDiagnostics(source)
+            let diagnostics = ctx.diagnostics.diagnostics.filter { $0.code == "KSWIFTK-SEMA-OPT-IN" }
+            XCTAssertTrue(
+                diagnostics.contains { $0.severity == .error },
+                "Expected \(marker) use to emit an opt-in error, got \(ctx.diagnostics.diagnostics)"
+            )
+        }
+    }
+
+    func testKotlinExperimentalOptInMarkersAcceptExplicitOptIn() {
+        for marker in Self.optInExperimentalPackageMarkerNames {
+            let source = """
+            @file:OptIn(kotlin.experimental.\(marker)::class)
+            import kotlin.experimental.\(marker)
+
+            @\(marker)
+            @Target(AnnotationTarget.FUNCTION)
+            annotation class Uses\(marker)
+
+            @Uses\(marker)
+            fun experimental\(marker)(): Int = 1
+
+            fun use\(marker)(): Int = experimental\(marker)()
+            """
+
+            let ctx = runSemaCollectingDiagnostics(source)
+            let diagnostics = ctx.diagnostics.diagnostics.filter { $0.code == "KSWIFTK-SEMA-OPT-IN" }
+            XCTAssertTrue(
+                diagnostics.isEmpty,
+                "Expected @OptIn(\(marker)::class) to suppress opt-in diagnostics, got \(ctx.diagnostics.diagnostics)"
+            )
+        }
     }
 }

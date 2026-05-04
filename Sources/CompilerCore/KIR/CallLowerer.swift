@@ -1160,10 +1160,18 @@ final class CallLowerer {
             "kk_string_builder_length_prop"
         case ("deleteCharAt", 1):
             "kk_string_builder_deleteCharAt"
+        case ("deleteAt", 1):
+            "kk_string_builder_deleteAt"
         case ("insert", 2):
             "kk_string_builder_insert_obj"
         case ("delete", 2):
             "kk_string_builder_delete_obj"
+        case ("deleteRange", 2):
+            "kk_string_builder_deleteRange"
+        case ("insertRange", 4):
+            "kk_string_builder_insertRange_obj"
+        case ("setRange", 3):
+            "kk_string_builder_setRange"
         default:
             nil
         }

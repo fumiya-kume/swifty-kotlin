@@ -57,44 +57,44 @@
 - [x] STDLIB-TEXT-EDGE-012: `Appendable.append(vararg CharSequence?)` と `StringBuilder.append(vararg String? / Any?)` を追加する
 - [x] STDLIB-TEXT-SEQ-001: `CharSequence.chunkedSequence(size)` を追加する
 - [x] STDLIB-TEXT-SEQ-002: `CharSequence.chunkedSequence(size, transform)` を追加する
-- [ ] STDLIB-TEXT-SEQ-003: `CharSequence.windowedSequence(size, step, partialWindows)` を追加する
-- [ ] STDLIB-TEXT-SEQ-004: `CharSequence.windowedSequence(size, step, partialWindows, transform)` を追加する
-- [ ] STDLIB-TEXT-SEARCH-001: `CharSequence.indexOfAny(chars, startIndex, ignoreCase)` を追加する
-- [ ] STDLIB-TEXT-SEARCH-002: `CharSequence.indexOfAny(strings, startIndex, ignoreCase)` を追加する
-- [ ] STDLIB-TEXT-SEARCH-003: `CharSequence.lastIndexOfAny(chars, startIndex, ignoreCase)` を追加する
-- [ ] STDLIB-TEXT-SEARCH-004: `CharSequence.lastIndexOfAny(strings, startIndex, ignoreCase)` を追加する
-- [ ] STDLIB-TEXT-SEARCH-005: `CharSequence.findAnyOf(strings, startIndex, ignoreCase)` を追加する
-- [ ] STDLIB-TEXT-SEARCH-006: `CharSequence.findLastAnyOf(strings, startIndex, ignoreCase)` を追加する
-- [ ] STDLIB-TEXT-REPLACE-001: `String.replaceAfter(delimiter, replacement, missingDelimiterValue)` を追加する
-- [ ] STDLIB-TEXT-REPLACE-002: `String.replaceAfterLast(delimiter, replacement, missingDelimiterValue)` を追加する
-- [ ] STDLIB-TEXT-REPLACE-003: `String.replaceBefore(delimiter, replacement, missingDelimiterValue)` を追加する
-- [ ] STDLIB-TEXT-REPLACE-004: `String.replaceBeforeLast(delimiter, replacement, missingDelimiterValue)` を追加する
-- [ ] STDLIB-TEXT-REPLACE-005: `String.replaceIndentByMargin(newIndent, marginPrefix)` を追加する
-- [ ] STDLIB-TEXT-TYPE-001: `kotlin.text.Appendable` interface surface を追加する
-- [ ] STDLIB-TEXT-TYPE-002: `kotlin.text.CharacterCodingException` class surface を追加する
-- [ ] STDLIB-TEXT-TYPE-003: `kotlin.text.Typography` object surface を追加する
-- [ ] STDLIB-TEXT-TYPE-004: `kotlin.text.CASE_INSENSITIVE_ORDER` comparator を追加する
-- [ ] STDLIB-TEXT-BUILDER-001: `StringBuilder.deleteAt(index)` を追加する
-- [ ] STDLIB-TEXT-BUILDER-002: `StringBuilder.deleteRange(startIndex, endIndex)` を追加する
-- [ ] STDLIB-TEXT-BUILDER-003: `StringBuilder.insertRange(index, value, startIndex, endIndex)` を追加する
-- [ ] STDLIB-TEXT-BUILDER-004: `StringBuilder.setRange(startIndex, endIndex, value)` を追加する
-- [ ] STDLIB-TEXT-HOF-001: `CharSequence.firstNotNullOf(transform)` を追加する
-- [ ] STDLIB-TEXT-HOF-002: `CharSequence.firstNotNullOfOrNull(transform)` を追加する
-- [ ] STDLIB-TEXT-HOF-003: `CharSequence.reduceRightIndexed(operation)` を追加する
-- [ ] STDLIB-TEXT-HOF-004: `CharSequence.reduceRightIndexedOrNull(operation)` を追加する
-- [ ] STDLIB-TEXT-HOF-005: `CharSequence.reduceRightOrNull(operation)` を追加する
-- [ ] STDLIB-TEXT-HOF-006: `CharSequence.sumBy(selector)` deprecated surface を追加する
-- [ ] STDLIB-TEXT-HOF-007: `CharSequence.sumByDouble(selector)` deprecated surface を追加する
-- [ ] STDLIB-TEXT-HEX-001: `String.hexToShort()` を追加する
-- [ ] STDLIB-TEXT-HEX-002: `String.hexToUByte()` を追加する
-- [ ] STDLIB-TEXT-HEX-003: `String.hexToUByteArray()` を追加する
+- [x] STDLIB-TEXT-SEQ-003: `CharSequence.windowedSequence(size, step, partialWindows)` を追加する
+- [x] STDLIB-TEXT-SEQ-004: `CharSequence.windowedSequence(size, step, partialWindows, transform)` を追加する
+- [x] STDLIB-TEXT-SEARCH-001: `CharSequence.indexOfAny(chars, startIndex, ignoreCase)` を追加する
+- [x] STDLIB-TEXT-SEARCH-002: `CharSequence.indexOfAny(strings, startIndex, ignoreCase)` を追加する
+- [x] STDLIB-TEXT-SEARCH-003: `CharSequence.lastIndexOfAny(chars, startIndex, ignoreCase)` を追加する
+- [x] STDLIB-TEXT-SEARCH-004: `CharSequence.lastIndexOfAny(strings, startIndex, ignoreCase)` を追加する
+- [x] STDLIB-TEXT-SEARCH-005: `CharSequence.findAnyOf(strings, startIndex, ignoreCase)` を追加する
+- [x] STDLIB-TEXT-SEARCH-006: `CharSequence.findLastAnyOf(strings, startIndex, ignoreCase)` を追加する
+- [x] STDLIB-TEXT-REPLACE-001: `String.replaceAfter(delimiter, replacement, missingDelimiterValue)` を追加する
+- [x] STDLIB-TEXT-REPLACE-002: `String.replaceAfterLast(delimiter, replacement, missingDelimiterValue)` を追加する
+- [x] STDLIB-TEXT-REPLACE-003: `String.replaceBefore(delimiter, replacement, missingDelimiterValue)` を追加する
+- [x] STDLIB-TEXT-REPLACE-004: `String.replaceBeforeLast(delimiter, replacement, missingDelimiterValue)` を追加する
+- [x] STDLIB-TEXT-REPLACE-005: `String.replaceIndentByMargin(newIndent, marginPrefix)` を追加する
+- [x] STDLIB-TEXT-TYPE-001: `kotlin.text.Appendable` interface surface を追加する
+- [x] STDLIB-TEXT-TYPE-002: `kotlin.text.CharacterCodingException` class surface を追加する
+- [x] STDLIB-TEXT-TYPE-003: `kotlin.text.Typography` object surface を追加する
+- [x] STDLIB-TEXT-TYPE-004: `kotlin.text.CASE_INSENSITIVE_ORDER` comparator を追加する
+- [x] STDLIB-TEXT-BUILDER-001: `StringBuilder.deleteAt(index)` を追加する
+- [x] STDLIB-TEXT-BUILDER-002: `StringBuilder.deleteRange(startIndex, endIndex)` を追加する
+- [x] STDLIB-TEXT-BUILDER-003: `StringBuilder.insertRange(index, value, startIndex, endIndex)` を追加する
+- [x] STDLIB-TEXT-BUILDER-004: `StringBuilder.setRange(startIndex, endIndex, value)` を追加する
+- [x] STDLIB-TEXT-HOF-001: `CharSequence.firstNotNullOf(transform)` を追加する
+- [x] STDLIB-TEXT-HOF-002: `CharSequence.firstNotNullOfOrNull(transform)` を追加する
+- [x] STDLIB-TEXT-HOF-003: `CharSequence.reduceRightIndexed(operation)` を追加する
+- [x] STDLIB-TEXT-HOF-004: `CharSequence.reduceRightIndexedOrNull(operation)` を追加する
+- [x] STDLIB-TEXT-HOF-005: `CharSequence.reduceRightOrNull(operation)` を追加する
+- [x] STDLIB-TEXT-HOF-006: `CharSequence.sumBy(selector)` deprecated surface を追加する
+- [x] STDLIB-TEXT-HOF-007: `CharSequence.sumByDouble(selector)` deprecated surface を追加する
+- [x] STDLIB-TEXT-HEX-001: `String.hexToShort()` を追加する
+- [x] STDLIB-TEXT-HEX-002: `String.hexToUByte()` を追加する
+- [x] STDLIB-TEXT-HEX-003: `String.hexToUByteArray()` を追加する
 - [x] STDLIB-TEXT-HEX-004: `String.hexToUInt()` を追加する
-- [ ] STDLIB-TEXT-HEX-005: `String.hexToULong()` を追加する
-- [ ] STDLIB-TEXT-HEX-006: `String.hexToUShort()` を追加する
-- [ ] STDLIB-TEXT-NUM-001: `String.toUByteOrNull(radix)` を追加する
-- [ ] STDLIB-TEXT-NUM-002: `String.toUIntOrNull(radix)` を追加する
-- [ ] STDLIB-TEXT-NUM-003: `String.toULongOrNull(radix)` を追加する
-- [ ] STDLIB-TEXT-NUM-004: `String.toUShortOrNull(radix)` を追加する
+- [x] STDLIB-TEXT-HEX-005: `String.hexToULong()` を追加する
+- [x] STDLIB-TEXT-HEX-006: `String.hexToUShort()` を追加する
+- [x] STDLIB-TEXT-NUM-001: `String.toUByteOrNull(radix)` を追加する
+- [x] STDLIB-TEXT-NUM-002: `String.toUIntOrNull(radix)` を追加する
+- [x] STDLIB-TEXT-NUM-003: `String.toULongOrNull(radix)` を追加する
+- [x] STDLIB-TEXT-NUM-004: `String.toUShortOrNull(radix)` を追加する
 
 ### Phase 2: コレクション・Sequence・Range
 - [ ] STDLIB-GAP-PH2: `kotlin.collections` / `kotlin.sequences` / `kotlin.ranges` の未対応を潰す
@@ -127,9 +127,9 @@
 - [x] STDLIB-SEQ-025: `Sequence.toMutableList()` / `toMutableSet()` / `toHashSet()` を追加する
 - [x] STDLIB-SEQ-026: `Sequence.firstNotNullOf(transform)` を追加する
 - [x] STDLIB-SEQ-027: `Sequence.firstNotNullOfOrNull(transform)` を追加する
-- [ ] STDLIB-SEQ-028: `Sequence.minusElement(element)` を追加する
-- [ ] STDLIB-SEQ-029: `Sequence.sumBy(selector)` deprecated surface を追加する
-- [ ] STDLIB-SEQ-030: `Sequence.sumByDouble(selector)` deprecated surface を追加する
+- [x] STDLIB-SEQ-028: `Sequence.minusElement(element)` を追加する
+- [x] STDLIB-SEQ-029: `Sequence.sumBy(selector)` deprecated surface を追加する
+- [x] STDLIB-SEQ-030: `Sequence.sumByDouble(selector)` deprecated surface を追加する
 - [x] STDLIB-COL-DEST-001: `filterTo` / `filterNotTo` / `filterIsInstanceTo` を追加する
 - [x] STDLIB-COL-DEST-002: `mapTo` / `mapIndexedTo` / `mapNotNullTo` を追加する
 - [x] STDLIB-COL-DEST-003: `flatMapTo` / `flatMapIndexedTo` を追加する
@@ -175,23 +175,23 @@
 - [x] STDLIB-COL-FACTORY-006: `setOfNotNull(element)` / `setOfNotNull(vararg elements)` を追加する
 - [x] STDLIB-COL-HOF-001: `Iterable.firstNotNullOf(transform)` を追加する
 - [x] STDLIB-COL-HOF-002: `Iterable.firstNotNullOfOrNull(transform)` を追加する
-- [ ] STDLIB-COL-HOF-003: `Map.mapKeysTo(destination, transform)` を追加する
-- [ ] STDLIB-COL-HOF-004: `Map.mapValuesTo(destination, transform)` を追加する
-- [ ] STDLIB-COL-HOF-005: `Iterable.minusElement(element)` を追加する
-- [ ] STDLIB-COL-HOF-006: `Iterable.reduceRightIndexed(operation)` を追加する
-- [ ] STDLIB-COL-HOF-007: `Iterable.reduceRightIndexedOrNull(operation)` を追加する
-- [ ] STDLIB-COL-HOF-008: `Iterable.reduceRightOrNull(operation)` を追加する
-- [ ] STDLIB-COL-HOF-009: `Iterable.sumBy(selector)` deprecated surface を追加する
-- [ ] STDLIB-COL-HOF-010: `Iterable.sumByDouble(selector)` deprecated surface を追加する
-- [ ] STDLIB-COL-MUT-001: `MutableList.removeFirstOrNull()` を追加する
-- [ ] STDLIB-COL-MUT-002: `MutableList.removeLastOrNull()` を追加する
-- [ ] STDLIB-COL-MUT-003: `MutableList.sortWith(comparator)` を追加する
-- [ ] STDLIB-COL-CONV-001: `Collection<Boolean>.toBooleanArray()` を追加する
-- [ ] STDLIB-COL-CONV-002: `Collection<Short>.toShortArray()` を追加する
-- [ ] STDLIB-COL-CONV-003: `Collection<Double>.toDoubleArray()` を追加する
-- [ ] STDLIB-COL-CONV-004: `Collection<Float>.toFloatArray()` を追加する
-- [x] STDLIB-COL-MAP-001: `Map.Entry<K, V>.toPair()` を追加する
-- [x] STDLIB-COL-MAP-002: `Map.withDefault(defaultValue)` を追加する
+- [x] STDLIB-COL-HOF-003: `Map.mapKeysTo(destination, transform)` を追加する
+- [x] STDLIB-COL-HOF-004: `Map.mapValuesTo(destination, transform)` を追加する
+- [x] STDLIB-COL-HOF-005: `Iterable.minusElement(element)` を追加する
+- [x] STDLIB-COL-HOF-006: `Iterable.reduceRightIndexed(operation)` を追加する
+- [x] STDLIB-COL-HOF-007: `Iterable.reduceRightIndexedOrNull(operation)` を追加する
+- [x] STDLIB-COL-HOF-008: `Iterable.reduceRightOrNull(operation)` を追加する
+- [x] STDLIB-COL-HOF-009: `Iterable.sumBy(selector)` deprecated surface を追加する
+- [x] STDLIB-COL-HOF-010: `Iterable.sumByDouble(selector)` deprecated surface を追加する
+- [x] STDLIB-COL-MUT-001: `MutableList.removeFirstOrNull()` を追加する
+- [x] STDLIB-COL-MUT-002: `MutableList.removeLastOrNull()` を追加する
+- [x] STDLIB-COL-MUT-003: `MutableList.sortWith(comparator)` を追加する
+- [x] STDLIB-COL-CONV-001: `Collection<Boolean>.toBooleanArray()` を追加する
+- [x] STDLIB-COL-CONV-002: `Collection<Short>.toShortArray()` を追加する
+- [x] STDLIB-COL-CONV-003: `Collection<Double>.toDoubleArray()` を追加する
+- [x] STDLIB-COL-CONV-004: `Collection<Float>.toFloatArray()` を追加する
+- [ ] STDLIB-COL-MAP-001: `Map.Entry<K, V>.toPair()` を追加する
+- [ ] STDLIB-COL-MAP-002: `Map.withDefault(defaultValue)` を追加する
 - [ ] STDLIB-022: range / progression / unsigned range の網羅性を上げる
 - [x] STDLIB-RANGE-IFACE-001: `kotlin.ranges.ClosedRange<T>` interface surface を追加する
 - [x] STDLIB-RANGE-IFACE-002: `kotlin.ranges.ClosedFloatingPointRange<T>` interface surface を追加する
@@ -422,9 +422,9 @@
 - [x] STDLIB-NATIVE-CONCURRENT-017: `MutableData` surface を追加する
 - [x] STDLIB-NATIVE-CONCURRENT-018: `ObsoleteWorkersApi` marker を追加する
 - [x] STDLIB-NATIVE-CONCURRENT-019: `Any?.isFrozen` / `<T>.freeze()` surface を追加する
-- [ ] STDLIB-EXPERIMENTAL-001: `kotlin.experimental` の marker 一覧を固定
-- [ ] STDLIB-EXPERIMENTAL-002: `kotlin.experimental` の opt-in / diagnostics を整える
-- [ ] STDLIB-EXPERIMENTAL-003: `kotlin.experimental.ExpectRefinement` annotation を追加し、expect declaration metadata へ露出する
+- [x] STDLIB-EXPERIMENTAL-001: `kotlin.experimental` の marker 一覧を固定
+- [x] STDLIB-EXPERIMENTAL-002: `kotlin.experimental` の opt-in / diagnostics を整える
+- [x] STDLIB-EXPERIMENTAL-003: `kotlin.experimental.ExpectRefinement` annotation を追加し、expect declaration metadata へ露出する
 
 ### Phase 5: 非スコープ/高度領域
 - [ ] STDLIB-JVM-166: Java プレビュー機能の実装

@@ -3263,6 +3263,62 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let sequenceElementToIntType = types.make(.functionType(FunctionType(
+            params: [typeParamType],
+            returnType: types.intType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        registerSequenceMemberStub(
+            named: "sumBy",
+            externalLinkName: "kk_sequence_sumBy",
+            receiverType: receiverType,
+            parameters: [("selector", sequenceElementToIntType)],
+            returnType: types.intType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner,
+            annotations: [
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.Deprecated",
+                    arguments: [
+                        "message = \"Use sumOf instead.\"",
+                        "replaceWith = ReplaceWith(\"sumOf(selector)\")",
+                    ]
+                ),
+            ],
+            canThrow: true
+        )
+        let sequenceElementToDoubleType = types.make(.functionType(FunctionType(
+            params: [typeParamType],
+            returnType: types.doubleType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        registerSequenceMemberStub(
+            named: "sumByDouble",
+            externalLinkName: "kk_sequence_sumByDouble",
+            receiverType: receiverType,
+            parameters: [("selector", sequenceElementToDoubleType)],
+            returnType: types.doubleType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner,
+            annotations: [
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.Deprecated",
+                    arguments: [
+                        "message = \"Use sumOf instead.\"",
+                        "replaceWith = ReplaceWith(\"sumOf(selector)\")",
+                    ]
+                ),
+            ],
+            canThrow: true
+        )
 
         // toList(): List<T>
         registerSequenceMemberStub(
@@ -3582,6 +3638,20 @@ extension DataFlowSemaPhase {
         registerSequenceMemberStub(
             named: "plusElement",
             externalLinkName: "kk_sequence_plus_element",
+            receiverType: receiverType,
+            parameters: [("element", typeParamType)],
+            returnType: receiverType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // minusElement(element: T): Sequence<T> (STDLIB-SEQ-028)
+        registerSequenceMemberStub(
+            named: "minusElement",
+            externalLinkName: "kk_sequence_minus",
             receiverType: receiverType,
             parameters: [("element", typeParamType)],
             returnType: receiverType,
@@ -4695,6 +4765,7 @@ extension DataFlowSemaPhase {
         typeParamSymbol: SymbolID,
         symbols: SymbolTable,
         interner: StringInterner,
+        annotations: [MetadataAnnotationRecord] = [],
         canThrow: Bool = false,
         additionalTypeParameterSymbols: [SymbolID] = [],
         additionalTypeParameterUpperBoundsList: [[TypeID]] = []
@@ -4713,6 +4784,9 @@ extension DataFlowSemaPhase {
         )
         symbols.setParentSymbol(sequenceSymbol, for: memberSymbol)
         symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+        if !annotations.isEmpty {
+            symbols.setAnnotations(annotations, for: memberSymbol)
+        }
 
         var parameterTypes: [TypeID] = []
         var parameterSymbols: [SymbolID] = []
@@ -4788,7 +4862,7 @@ extension DataFlowSemaPhase {
     ) {
         let interfaceName = interner.intern("Function\(arity)")
         let interfaceFQName = packageFQName + [interfaceName]
-        
+
         // 既に存在する場合はスキップ
         if symbols.lookup(fqName: interfaceFQName) != nil {
             return
@@ -4806,7 +4880,7 @@ extension DataFlowSemaPhase {
         // 型パラメータの定義
         var typeParamSymbols: [SymbolID] = []
         var typeParamTypes: [TypeID] = []
-        
+
         // 戻り値型パラメータ R (out変位)
         let returnParamName = interner.intern("R")
         let returnParamFQName = interfaceFQName + [returnParamName]
@@ -4878,7 +4952,7 @@ extension DataFlowSemaPhase {
     ) {
         let invokeName = interner.intern("invoke")
         let invokeFQName = interfaceFQName + [invokeName]
-        
+
         let invokeSymbol = symbols.define(
             kind: .function,
             name: invokeName,
@@ -4893,7 +4967,7 @@ extension DataFlowSemaPhase {
         // パラメータ型の構築
         var parameterTypes: [TypeID] = []
         var parameterSymbols: [SymbolID] = []
-        
+
         if arity > 0 {
             for i in 1...arity {
                 let paramType = types.make(.typeParam(TypeParamType(
@@ -5013,7 +5087,7 @@ extension DataFlowSemaPhase {
         let tParamName = interner.intern("T")
         let rParamName = interner.intern("R")
         let newRParamName = interner.intern("NewR")
-        
+
         let tParamSymbol = symbols.define(
             kind: .typeParameter,
             name: tParamName,
@@ -5109,7 +5183,7 @@ extension DataFlowSemaPhase {
         let newTParamName = interner.intern("NewT")
         let tParamName = interner.intern("T")
         let rParamName = interner.intern("R")
-        
+
         let newTParamSymbol = symbols.define(
             kind: .typeParameter,
             name: newTParamName,
@@ -5205,7 +5279,7 @@ extension DataFlowSemaPhase {
         let p1ParamName = interner.intern("P1")
         let p2ParamName = interner.intern("P2")
         let rParamName = interner.intern("R")
-        
+
         let p1ParamSymbol = symbols.define(
             kind: .typeParameter,
             name: p1ParamName,
