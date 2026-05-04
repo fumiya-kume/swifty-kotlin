@@ -569,7 +569,7 @@
 - [ ] STDLIB-IO-PATH-PROP-006: `pathString` 拡張プロパティの実装
 
 #### kotlin.io.path 関数の実装
-- [ ] STDLIB-IO-PATH-FN-001: `absolute` 関数の実装
+- [x] STDLIB-IO-PATH-FN-001: `absolute` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-002: `absolutePathString` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-003: `appendBytes` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-004: `appendLines` 関数の実装（Iterable版）
@@ -1208,7 +1208,7 @@
 - [x] STDLIB-IO-PATH-PROP-004: `Path.name` extension property を既存 `Path` member stub と整合させる
 - [ ] STDLIB-IO-PATH-PROP-005: `Path.nameWithoutExtension` extension property を追加する
 - [ ] STDLIB-IO-PATH-PROP-006: `Path.pathString` extension property を追加する
-- [ ] STDLIB-IO-PATH-FN-001: `Path.absolute()` を追加する
+- [x] STDLIB-IO-PATH-FN-001: `Path.absolute()` を追加する
 - [ ] STDLIB-IO-PATH-FN-002: `Path.absolutePathString()` を追加する
 - [ ] STDLIB-IO-PATH-FN-003: `Path.appendBytes(array)` を追加する
 - [ ] STDLIB-IO-PATH-FN-004: `Path.appendLines(lines: Iterable<CharSequence>, charset)` を追加する

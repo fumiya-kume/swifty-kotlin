@@ -403,6 +403,52 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathAbsoluteExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import kotlin.io.path.Path
+        import kotlin.io.path.absolute
+
+        fun pathAbsolute(path: Path) {
+            path.absolute()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let sema = try XCTUnwrap(ctx.sema)
+            let pathFQName = ["kotlin", "io", "path", "Path"].map { ctx.interner.intern($0) }
+            let pathSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: pathFQName))
+            let pathType = sema.types.make(.classType(ClassType(
+                classSymbol: pathSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            let absoluteFQName = ["kotlin", "io", "path", "absolute"].map { ctx.interner.intern($0) }
+            let absoluteSymbol = try XCTUnwrap(
+                sema.symbols.lookupAll(fqName: absoluteFQName).first(where: { symbolID in
+                    sema.symbols.functionSignature(for: symbolID)?.receiverType == pathType
+                })
+            )
+            let absoluteSignature = try XCTUnwrap(sema.symbols.functionSignature(for: absoluteSymbol))
+            XCTAssertEqual(absoluteSignature.parameterTypes, [])
+            XCTAssertEqual(absoluteSignature.returnType, pathType)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.absolute extension function in kotlin.io.path should resolve as Path: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+            let ast = try XCTUnwrap(ctx.ast)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, calleeName, _, _, _) = expr else {
+                    return false
+                }
+                return ctx.interner.resolve(calleeName) == "absolute"
+            })
+            XCTAssertEqual(sema.bindings.callBinding(for: callExpr)?.chosenCallee, absoluteSymbol)
+            XCTAssertEqual(sema.bindings.exprTypes[callExpr], pathType)
+        }
+    }
+
     func testMemoryOrderInAtomicsPackageIsResolved() throws {
         let source = """
         import kotlin.concurrent.atomics.MemoryOrder
