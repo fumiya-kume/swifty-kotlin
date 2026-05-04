@@ -2989,6 +2989,24 @@ extension CallTypeChecker {
         // expected types so the implicit `it` parameter (Char) gets bound correctly.
         // lambda inference with expectedType so the implicit `it` parameter (Char)
         // gets bound correctly.  Must run before argument pre-inference below.
+        if args.count == 2, interner.resolve(calleeName) == "chunkedSequence" {
+            let stringHOFReceiverType = safeCall
+                ? sema.types.makeNonNullable(receiverType)
+                : receiverType
+            if let result = tryInferStringChunkedSequenceTransform(
+                id,
+                calleeName: calleeName,
+                receiverType: stringHOFReceiverType,
+                args: args,
+                ctx: ctx,
+                locals: &locals,
+                expectedType: expectedType,
+                explicitTypeArgs: explicitTypeArgs,
+                safeCall: safeCall
+            ) {
+                return result
+            }
+        }
         if args.count == 1 {
             let stringHOFReceiverType = safeCall
                 ? sema.types.makeNonNullable(receiverType)
@@ -5421,6 +5439,24 @@ extension CallTypeChecker {
                 }
             }
             // String stdlib: HOF filter/map/count/any/all/none (STDLIB-189)
+            if args.count == 2, interner.resolve(calleeName) == "chunkedSequence" {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                if let result = tryInferStringChunkedSequenceTransform(
+                    id,
+                    calleeName: calleeName,
+                    receiverType: receiverTypeForCheck,
+                    args: args,
+                    ctx: ctx,
+                    locals: &locals,
+                    expectedType: expectedType,
+                    explicitTypeArgs: explicitTypeArgs,
+                    safeCall: safeCall
+                ) {
+                    return result
+                }
+            }
             if args.count == 1 {
                 let receiverTypeForCheck = safeCall
                     ? sema.types.makeNonNullable(lookupReceiverType)
@@ -6747,6 +6783,94 @@ extension CallTypeChecker {
         let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
         if isSuperCall { sema.bindings.markSuperCall(id) }
         let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
+        sema.bindings.bindExprType(id, type: finalType)
+        return finalType
+    }
+
+    private func tryInferStringChunkedSequenceTransform(
+        _ id: ExprID,
+        calleeName: InternedString,
+        receiverType: TypeID,
+        args: [CallArgument],
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings,
+        expectedType: TypeID?,
+        explicitTypeArgs: [TypeID],
+        safeCall: Bool
+    ) -> TypeID? {
+        let ast = ctx.ast
+        let sema = ctx.sema
+        let interner = ctx.interner
+        guard args.count == 2,
+              interner.resolve(calleeName) == "chunkedSequence",
+              isSyntheticStringLikeType(receiverType, sema: sema)
+        else {
+            return nil
+        }
+        guard explicitTypeArgs.count <= 1 else {
+            sema.bindings.bindExprType(id, type: sema.types.anyType)
+            return sema.types.anyType
+        }
+
+        _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
+        if let lambdaExpr = ast.arena.expr(args[1].expr), lambdaExpr.isLambdaOrCallableRef {
+            sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+        }
+
+        let expectedElementType: TypeID = {
+            if let explicitType = explicitTypeArgs.first {
+                return explicitType
+            }
+            guard let expectedType else {
+                return sema.types.anyType
+            }
+            let elementType = extractIterableOrSequenceElementType(expectedType, sema: sema, interner: interner)
+            return elementType == sema.types.anyType ? sema.types.anyType : elementType
+        }()
+        let charSequenceType = syntheticCharSequenceType(sema: sema) ?? sema.types.stringType
+        let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+            params: [charSequenceType],
+            returnType: expectedElementType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+
+        let inferredBodyType = inferredLambdaReturnType(argExpr: args[1].expr, ast: ast, sema: sema)
+        let bodyType = explicitTypeArgs.first
+            ?? (expectedElementType == sema.types.anyType ? inferredBodyType : expectedElementType)
+        if let chosen = sema.symbols.lookupAll(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("text"),
+            calleeName,
+        ]).first(where: { candidate in
+            isSyntheticStringMemberCandidate(
+                candidate,
+                named: calleeName,
+                receiverType: receiverType,
+                sema: sema,
+                interner: interner
+            )
+                && (sema.symbols.functionSignature(for: candidate)?.parameterTypes.count ?? Int.max) == args.count
+        }) {
+            sema.bindings.bindCall(
+                id,
+                binding: CallBinding(
+                    chosenCallee: chosen,
+                    substitutedTypeArguments: [bodyType],
+                    parameterMapping: [0: 0, 1: 1]
+                )
+            )
+            sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+        }
+
+        let resultType = makeSyntheticSequenceType(
+            symbols: sema.symbols,
+            types: sema.types,
+            interner: interner,
+            elementType: bodyType
+        )
+        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
         sema.bindings.bindExprType(id, type: finalType)
         return finalType
     }

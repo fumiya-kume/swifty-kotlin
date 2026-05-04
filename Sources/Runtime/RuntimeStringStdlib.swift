@@ -1925,6 +1925,40 @@ public func kk_string_chunked_sequence(_ strRaw: Int, _ size: Int) -> Int {
     return kk_list_asSequence(chunksRaw)
 }
 
+@_cdecl("kk_string_chunked_sequence_transform")
+public func kk_string_chunked_sequence_transform(
+    _ strRaw: Int,
+    _ size: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let chunkSize = max(1, size)
+    let scalars = Array(source.unicodeScalars)
+    let estimatedChunks = scalars.isEmpty ? 0 : (scalars.count + chunkSize - 1) / chunkSize
+    var results: [Int] = []
+    results.reserveCapacity(estimatedChunks)
+    var index = 0
+    while index < scalars.count {
+        let end = Swift.min(index + chunkSize, scalars.count)
+        let chunkRaw = runtimeMakeStringRaw(runtimeStringFromScalars(scalars[index ..< end]))
+        var thrown = 0
+        let transformed = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: chunkRaw,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        results.append(maybeUnbox(transformed))
+        index = end
+    }
+    return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: results)]))
+}
+
 @_cdecl("kk_string_windowed_default")
 public func kk_string_windowed_default(_ strRaw: Int, _ size: Int) -> Int {
     return kk_string_windowed(strRaw, size, 1)
