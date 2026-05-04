@@ -3077,6 +3077,30 @@ public func kk_mutable_list_sort_primitive(_ listRaw: Int, _ kindRaw: Int32) -> 
     return 0
 }
 
+@_cdecl("kk_mutable_list_sortWith")
+public func kk_mutable_list_sortWith(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    let comparatorInvoke = runtimeSortedWithComparatorInvoke(fnPtr: fnPtr, closureRaw: closureRaw)
+    var hadThrow = false
+    let sorted = list.elements.enumerated().sorted { lhs, rhs in
+        guard !hadThrow else { return false }
+        var thrown = 0
+        let result = comparatorInvoke(lhs.element, rhs.element, &thrown)
+        if thrown != 0 {
+            _ = handleCollectionLambdaThrow(thrown, outThrown)
+            hadThrow = true
+            return false
+        }
+        if result != 0 { return result < 0 }
+        return lhs.offset < rhs.offset
+    }.map(\.element)
+    if hadThrow { return 0 }
+    for i in 0 ..< sorted.count {
+        list.elements[i] = sorted[i]
+    }
+    return 0
+}
+
 @_cdecl("kk_mutable_list_sortBy")
 public func kk_mutable_list_sortBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }

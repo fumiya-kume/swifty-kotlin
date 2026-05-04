@@ -128,6 +128,91 @@ extension DataFlowSemaPhase {
         return collectionInterfaceSymbol
     }
 
+    /// Register `kotlin.collections.AbstractCollection<E>` surface (STDLIB-COL-TYPE-001).
+    func registerSyntheticAbstractCollectionStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        collectionInterfaceSymbol: SymbolID
+    ) -> SymbolID {
+        let abstractCollectionName = interner.intern("AbstractCollection")
+        let abstractCollectionFQName = kotlinCollectionsPkg + [abstractCollectionName]
+        let abstractCollectionSymbol: SymbolID = if let existing = symbols.lookup(fqName: abstractCollectionFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .class,
+                name: abstractCollectionName,
+                fqName: abstractCollectionFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .abstractType]
+            )
+        }
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = abstractCollectionFQName + [typeParamName]
+        let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: abstractCollectionSymbol)
+        types.setNominalTypeParameterVariances([.out], for: abstractCollectionSymbol)
+
+        let abstractCollectionType = types.make(.classType(ClassType(
+            classSymbol: abstractCollectionSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(abstractCollectionType, for: abstractCollectionSymbol)
+        symbols.setDirectSupertypes([collectionInterfaceSymbol], for: abstractCollectionSymbol)
+        types.setNominalDirectSupertypes([collectionInterfaceSymbol], for: abstractCollectionSymbol)
+        symbols.setSupertypeTypeArgs([.out(typeParamType)], for: abstractCollectionSymbol, supertype: collectionInterfaceSymbol)
+        types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: abstractCollectionSymbol, supertype: collectionInterfaceSymbol)
+
+        let initName = interner.intern("<init>")
+        let initFQName = abstractCollectionFQName + [initName]
+        if symbols.lookup(fqName: initFQName) == nil {
+            let initSymbol = symbols.define(
+                kind: .constructor,
+                name: initName,
+                fqName: initFQName,
+                declSite: nil,
+                visibility: .protected,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(abstractCollectionSymbol, for: initSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: [],
+                    returnType: abstractCollectionType,
+                    valueParameterSymbols: [],
+                    valueParameterHasDefaultValues: [],
+                    valueParameterIsVararg: [],
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: initSymbol
+            )
+        }
+
+        return abstractCollectionSymbol
+    }
+
     /// Register a minimal `kotlin.collections.MutableCollection<E>` interface surface.
     func registerSyntheticMutableCollectionStub(
         symbols: SymbolTable,
@@ -1766,417 +1851,317 @@ extension DataFlowSemaPhase {
         )
     }
 
-    func registerIterableCollectionHOFMembers(
+    /// Register `Iterable<E>.minusElement(element): List<E>` (STDLIB-COL-HOF-005).
+    func registerIterableMinusElementMember(
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,
         iterableInterfaceSymbol: SymbolID,
         listInterfaceSymbol: SymbolID
     ) {
-        registerIterableMinusElementMember(
-            symbols: symbols, types: types, interner: interner,
-            iterableInterfaceSymbol: iterableInterfaceSymbol,
-            listInterfaceSymbol: listInterfaceSymbol
-        )
-        registerIterableReduceRightIndexedMember(
-            symbols: symbols, types: types, interner: interner,
-            iterableInterfaceSymbol: iterableInterfaceSymbol
-        )
-        registerIterableReduceRightIndexedOrNullMember(
-            symbols: symbols, types: types, interner: interner,
-            iterableInterfaceSymbol: iterableInterfaceSymbol
-        )
-        registerIterableReduceRightOrNullMember(
-            symbols: symbols, types: types, interner: interner,
-            iterableInterfaceSymbol: iterableInterfaceSymbol
-        )
-        registerIterableSumByMember(
-            symbols: symbols, types: types, interner: interner,
-            iterableInterfaceSymbol: iterableInterfaceSymbol
-        )
-        registerIterableSumByDoubleMember(
-            symbols: symbols, types: types, interner: interner,
-            iterableInterfaceSymbol: iterableInterfaceSymbol
-        )
-    }
-
-    private func registerIterableMinusElementMember(
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner,
-        iterableInterfaceSymbol: SymbolID,
-        listInterfaceSymbol: SymbolID
-    ) {
-        guard let context = makeIterableMemberContext(
-            symbols: symbols,
-            types: types,
-            iterableInterfaceSymbol: iterableInterfaceSymbol
-        ) else { return }
-
-        let returnType = types.make(.classType(ClassType(
-            classSymbol: listInterfaceSymbol,
-            args: [.out(context.elementType)],
-            nullability: .nonNull
-        )))
-        defineIterableCollectionMember(
-            named: "minusElement",
-            externalLinkName: "kk_list_minus_element",
-            symbols: symbols,
-            types: types,
-            interner: interner,
-            context: context,
-            parameterNames: ["element"],
-            parameterTypes: [context.elementType],
-            returnType: returnType,
-            flags: [.synthetic]
-        )
-    }
-
-    private func registerIterableReduceRightIndexedMember(
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner,
-        iterableInterfaceSymbol: SymbolID
-    ) {
-        guard let context = makeIterableMemberContext(
-            symbols: symbols,
-            types: types,
-            iterableInterfaceSymbol: iterableInterfaceSymbol
-        ) else { return }
-
-        let memberName = interner.intern("reduceRightIndexed")
-        let memberFQName = context.iterableFQName + [memberName]
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName else { return }
+        let memberName = interner.intern("minusElement")
+        let memberFQName = iterableFQName + [memberName]
         guard symbols.lookup(fqName: memberFQName) == nil else { return }
-        let sSymbol = defineSyntheticTypeParameter(
-            named: "S",
-            memberFQName: memberFQName,
-            symbols: symbols,
-            interner: interner
-        )
-        let sType = types.make(.typeParam(TypeParamType(symbol: sSymbol, nullability: .nonNull)))
-        let operationType = types.make(.functionType(FunctionType(
-            params: [types.intType, context.elementType, sType],
-            returnType: sType,
-            isSuspend: false,
-            nullability: .nonNull
-        )))
-        defineIterableCollectionMember(
-            named: memberName,
-            memberFQName: memberFQName,
-            externalLinkName: "kk_list_reduceRightIndexed",
-            symbols: symbols,
-            types: types,
-            interner: interner,
-            context: context,
-            parameterNames: ["operation"],
-            parameterTypes: [operationType],
-            returnType: sType,
-            functionTypeParameterSymbols: [sSymbol]
-        )
-    }
 
-    private func registerIterableReduceRightIndexedOrNullMember(
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner,
-        iterableInterfaceSymbol: SymbolID
-    ) {
-        guard let context = makeIterableMemberContext(
-            symbols: symbols,
-            types: types,
-            iterableInterfaceSymbol: iterableInterfaceSymbol
-        ) else { return }
-
-        let memberName = interner.intern("reduceRightIndexedOrNull")
-        let memberFQName = context.iterableFQName + [memberName]
-        guard symbols.lookup(fqName: memberFQName) == nil else { return }
-        let sSymbol = defineSyntheticTypeParameter(
-            named: "S",
-            memberFQName: memberFQName,
-            symbols: symbols,
-            interner: interner
-        )
-        let sType = types.make(.typeParam(TypeParamType(symbol: sSymbol, nullability: .nonNull)))
-        let nullableSType = types.makeNullable(sType)
-        let operationType = types.make(.functionType(FunctionType(
-            params: [types.intType, context.elementType, sType],
-            returnType: sType,
-            isSuspend: false,
-            nullability: .nonNull
-        )))
-        defineIterableCollectionMember(
-            named: memberName,
-            memberFQName: memberFQName,
-            externalLinkName: "kk_list_reduceRightIndexedOrNull",
-            symbols: symbols,
-            types: types,
-            interner: interner,
-            context: context,
-            parameterNames: ["operation"],
-            parameterTypes: [operationType],
-            returnType: nullableSType,
-            functionTypeParameterSymbols: [sSymbol]
-        )
-    }
-
-    private func registerIterableReduceRightOrNullMember(
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner,
-        iterableInterfaceSymbol: SymbolID
-    ) {
-        guard let context = makeIterableMemberContext(
-            symbols: symbols,
-            types: types,
-            iterableInterfaceSymbol: iterableInterfaceSymbol
-        ) else { return }
-
-        let memberName = interner.intern("reduceRightOrNull")
-        let memberFQName = context.iterableFQName + [memberName]
-        guard symbols.lookup(fqName: memberFQName) == nil else { return }
-        let sSymbol = defineSyntheticTypeParameter(
-            named: "S",
-            memberFQName: memberFQName,
-            symbols: symbols,
-            interner: interner
-        )
-        let sType = types.make(.typeParam(TypeParamType(symbol: sSymbol, nullability: .nonNull)))
-        let nullableSType = types.makeNullable(sType)
-        let operationType = types.make(.functionType(FunctionType(
-            params: [context.elementType, sType],
-            returnType: sType,
-            isSuspend: false,
-            nullability: .nonNull
-        )))
-        defineIterableCollectionMember(
-            named: memberName,
-            memberFQName: memberFQName,
-            externalLinkName: "kk_list_reduceRightOrNull",
-            symbols: symbols,
-            types: types,
-            interner: interner,
-            context: context,
-            parameterNames: ["operation"],
-            parameterTypes: [operationType],
-            returnType: nullableSType,
-            functionTypeParameterSymbols: [sSymbol]
-        )
-    }
-
-    private func registerIterableSumByMember(
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner,
-        iterableInterfaceSymbol: SymbolID
-    ) {
-        guard let context = makeIterableMemberContext(
-            symbols: symbols,
-            types: types,
-            iterableInterfaceSymbol: iterableInterfaceSymbol
-        ) else { return }
-
-        let selectorType = types.make(.functionType(FunctionType(
-            params: [context.elementType],
-            returnType: types.intType,
-            isSuspend: false,
-            nullability: .nonNull
-        )))
-        defineIterableCollectionMember(
-            named: "sumBy",
-            externalLinkName: "kk_list_sumBy",
-            symbols: symbols,
-            types: types,
-            interner: interner,
-            context: context,
-            parameterNames: ["selector"],
-            parameterTypes: [selectorType],
-            returnType: types.intType,
-            annotations: iterableSumByDeprecatedAnnotations()
-        )
-    }
-
-    private func registerIterableSumByDoubleMember(
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner,
-        iterableInterfaceSymbol: SymbolID
-    ) {
-        guard let context = makeIterableMemberContext(
-            symbols: symbols,
-            types: types,
-            iterableInterfaceSymbol: iterableInterfaceSymbol
-        ) else { return }
-
-        let selectorType = types.make(.functionType(FunctionType(
-            params: [context.elementType],
-            returnType: types.doubleType,
-            isSuspend: false,
-            nullability: .nonNull
-        )))
-        defineIterableCollectionMember(
-            named: "sumByDouble",
-            externalLinkName: "kk_list_sumByDouble",
-            symbols: symbols,
-            types: types,
-            interner: interner,
-            context: context,
-            parameterNames: ["selector"],
-            parameterTypes: [selectorType],
-            returnType: types.doubleType,
-            annotations: iterableSumByDeprecatedAnnotations()
-        )
-    }
-
-    private func makeIterableMemberContext(
-        symbols: SymbolTable,
-        types: TypeSystem,
-        iterableInterfaceSymbol: SymbolID
-    ) -> (
-        iterableInterfaceSymbol: SymbolID,
-        iterableFQName: [InternedString],
-        elementTypeParamSymbol: SymbolID,
-        elementType: TypeID,
-        receiverType: TypeID
-    )? {
-        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName else { return nil }
-        let typeParamSymbols = types.nominalTypeParameterSymbols(for: iterableInterfaceSymbol)
-        guard let elementTypeParamSymbol = typeParamSymbols.first else { return nil }
-        let elementType = types.make(.typeParam(TypeParamType(
-            symbol: elementTypeParamSymbol,
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = iterableFQName + [typeParamName]
+        guard let typeParamSymbol = symbols.lookup(fqName: typeParamFQName) else { return }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
             nullability: .nonNull
         )))
         let receiverType = types.make(.classType(ClassType(
             classSymbol: iterableInterfaceSymbol,
-            args: [.out(elementType)],
+            args: [.out(typeParamType)],
             nullability: .nonNull
         )))
-        return (iterableInterfaceSymbol, iterableFQName, elementTypeParamSymbol, elementType, receiverType)
-    }
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
 
-    private func defineSyntheticTypeParameter(
-        named name: String,
-        memberFQName: [InternedString],
-        symbols: SymbolTable,
-        interner: StringInterner
-    ) -> SymbolID {
-        let typeParameterName = interner.intern(name)
-        return symbols.define(
-            kind: .typeParameter,
-            name: typeParameterName,
-            fqName: memberFQName + [typeParameterName],
-            declSite: nil,
-            visibility: .private,
-            flags: []
-        )
-    }
-
-    private func defineIterableCollectionMember(
-        named memberNameString: String,
-        externalLinkName: String,
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner,
-        context: (
-            iterableInterfaceSymbol: SymbolID,
-            iterableFQName: [InternedString],
-            elementTypeParamSymbol: SymbolID,
-            elementType: TypeID,
-            receiverType: TypeID
-        ),
-        parameterNames: [String],
-        parameterTypes: [TypeID],
-        returnType: TypeID,
-        flags: SymbolFlags = [.synthetic, .inlineFunction],
-        functionTypeParameterSymbols: [SymbolID] = [],
-        annotations: [MetadataAnnotationRecord] = []
-    ) {
-        let memberName = interner.intern(memberNameString)
-        let memberFQName = context.iterableFQName + [memberName]
-        defineIterableCollectionMember(
-            named: memberName,
-            memberFQName: memberFQName,
-            externalLinkName: externalLinkName,
-            symbols: symbols,
-            types: types,
-            interner: interner,
-            context: context,
-            parameterNames: parameterNames,
-            parameterTypes: parameterTypes,
-            returnType: returnType,
-            flags: flags,
-            functionTypeParameterSymbols: functionTypeParameterSymbols,
-            annotations: annotations
-        )
-    }
-
-    private func defineIterableCollectionMember(
-        named memberName: InternedString,
-        memberFQName: [InternedString],
-        externalLinkName: String,
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner,
-        context: (
-            iterableInterfaceSymbol: SymbolID,
-            iterableFQName: [InternedString],
-            elementTypeParamSymbol: SymbolID,
-            elementType: TypeID,
-            receiverType: TypeID
-        ),
-        parameterNames: [String],
-        parameterTypes: [TypeID],
-        returnType: TypeID,
-        flags: SymbolFlags = [.synthetic, .inlineFunction],
-        functionTypeParameterSymbols: [SymbolID] = [],
-        annotations: [MetadataAnnotationRecord] = []
-    ) {
-        guard symbols.lookup(fqName: memberFQName) == nil else { return }
         let memberSymbol = symbols.define(
             kind: .function,
             name: memberName,
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: flags
+            flags: [.synthetic]
         )
-        symbols.setParentSymbol(context.iterableInterfaceSymbol, for: memberSymbol)
-        symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
-        if !annotations.isEmpty {
-            symbols.setAnnotations(annotations, for: memberSymbol)
-        }
-
-        let valueParameterSymbols = parameterNames.map { parameterNameString in
-            let parameterName = interner.intern(parameterNameString)
-            let parameterSymbol = symbols.define(
-                kind: .valueParameter,
-                name: parameterName,
-                fqName: memberFQName + [parameterName],
-                declSite: nil,
-                visibility: .private,
-                flags: [.synthetic]
-            )
-            symbols.setParentSymbol(memberSymbol, for: parameterSymbol)
-            return parameterSymbol
-        }
-        let typeParameterSymbols = [context.elementTypeParamSymbol] + functionTypeParameterSymbols
+        symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_list_minus_element", for: memberSymbol)
+        let elementParameterName = interner.intern("element")
+        let elementParameterSymbol = symbols.define(
+            kind: .valueParameter,
+            name: elementParameterName,
+            fqName: memberFQName + [elementParameterName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(memberSymbol, for: elementParameterSymbol)
         symbols.setFunctionSignature(
             FunctionSignature(
-                receiverType: context.receiverType,
-                parameterTypes: parameterTypes,
+                receiverType: receiverType,
+                parameterTypes: [typeParamType],
                 returnType: returnType,
-                valueParameterSymbols: valueParameterSymbols,
-                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
-                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count),
-                typeParameterSymbols: typeParameterSymbols,
-                typeParameterUpperBoundsList: Array(repeating: [], count: typeParameterSymbols.count),
+                valueParameterSymbols: [elementParameterSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
+                typeParameterSymbols: [typeParamSymbol],
                 classTypeParameterCount: 1
             ),
             for: memberSymbol
         )
     }
 
-    private func iterableSumByDeprecatedAnnotations() -> [MetadataAnnotationRecord] {
-        [
+    /// Register `Iterable<E>.reduceRightIndexed(operation): S` (STDLIB-COL-HOF-006).
+    func registerIterableReduceRightIndexedMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        iterableInterfaceSymbol: SymbolID
+    ) {
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName else { return }
+        let memberName = interner.intern("reduceRightIndexed")
+        let memberFQName = iterableFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = iterableFQName + [typeParamName]
+        guard let typeParamSymbol = symbols.lookup(fqName: typeParamFQName) else { return }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+
+        let operationType = types.make(.functionType(FunctionType(
+            params: [types.intType, typeParamType, typeParamType],
+            returnType: typeParamType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .inlineFunction]
+        )
+        symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_list_reduceRightIndexed", for: memberSymbol)
+        let operationParameterName = interner.intern("operation")
+        let operationParameterSymbol = symbols.define(
+            kind: .valueParameter,
+            name: operationParameterName,
+            fqName: memberFQName + [operationParameterName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(memberSymbol, for: operationParameterSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [operationType],
+                returnType: typeParamType,
+                valueParameterSymbols: [operationParameterSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    /// Register `Iterable<E>.reduceRightIndexedOrNull(operation): S?` (STDLIB-COL-HOF-007).
+    func registerIterableReduceRightIndexedOrNullMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        iterableInterfaceSymbol: SymbolID
+    ) {
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName else { return }
+        let memberName = interner.intern("reduceRightIndexedOrNull")
+        let memberFQName = iterableFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = iterableFQName + [typeParamName]
+        guard let typeParamSymbol = symbols.lookup(fqName: typeParamFQName) else { return }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+
+        let nullableElementType = types.makeNullable(typeParamType)
+        let operationType = types.make(.functionType(FunctionType(
+            params: [types.intType, typeParamType, typeParamType],
+            returnType: typeParamType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .inlineFunction]
+        )
+        symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_list_reduceRightIndexedOrNull", for: memberSymbol)
+        let operationParameterName = interner.intern("operation")
+        let operationParameterSymbol = symbols.define(
+            kind: .valueParameter,
+            name: operationParameterName,
+            fqName: memberFQName + [operationParameterName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(memberSymbol, for: operationParameterSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [operationType],
+                returnType: nullableElementType,
+                valueParameterSymbols: [operationParameterSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    /// Register `Iterable<E>.reduceRightOrNull(operation): S?` (STDLIB-COL-HOF-008).
+    func registerIterableReduceRightOrNullMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        iterableInterfaceSymbol: SymbolID
+    ) {
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName else { return }
+        let memberName = interner.intern("reduceRightOrNull")
+        let memberFQName = iterableFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = iterableFQName + [typeParamName]
+        guard let typeParamSymbol = symbols.lookup(fqName: typeParamFQName) else { return }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+
+        let nullableElementType = types.makeNullable(typeParamType)
+        let operationType = types.make(.functionType(FunctionType(
+            params: [typeParamType, typeParamType],
+            returnType: typeParamType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .inlineFunction]
+        )
+        symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_list_reduceRightOrNull", for: memberSymbol)
+        let operationParameterName = interner.intern("operation")
+        let operationParameterSymbol = symbols.define(
+            kind: .valueParameter,
+            name: operationParameterName,
+            fqName: memberFQName + [operationParameterName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(memberSymbol, for: operationParameterSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [operationType],
+                returnType: nullableElementType,
+                valueParameterSymbols: [operationParameterSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    /// Register `Iterable<E>.sumBy(selector): Int` (STDLIB-COL-HOF-009).
+    func registerIterableSumByMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        iterableInterfaceSymbol: SymbolID
+    ) {
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName else { return }
+        let memberName = interner.intern("sumBy")
+        let memberFQName = iterableFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = iterableFQName + [typeParamName]
+        guard let typeParamSymbol = symbols.lookup(fqName: typeParamFQName) else { return }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let selectorType = types.make(.functionType(FunctionType(
+            params: [typeParamType],
+            returnType: types.intType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .inlineFunction]
+        )
+        symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_list_sumBy", for: memberSymbol)
+        symbols.setAnnotations([
             MetadataAnnotationRecord(
                 annotationFQName: "kotlin.Deprecated",
                 arguments: [
@@ -2184,6 +2169,104 @@ extension DataFlowSemaPhase {
                     "replaceWith = ReplaceWith(\"sumOf(selector)\")",
                 ]
             ),
-        ]
+        ], for: memberSymbol)
+        let selectorParameterName = interner.intern("selector")
+        let selectorParameterSymbol = symbols.define(
+            kind: .valueParameter,
+            name: selectorParameterName,
+            fqName: memberFQName + [selectorParameterName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(memberSymbol, for: selectorParameterSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [selectorType],
+                returnType: types.intType,
+                valueParameterSymbols: [selectorParameterSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    /// Register `Iterable<E>.sumByDouble(selector): Double` (STDLIB-COL-HOF-010).
+    func registerIterableSumByDoubleMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        iterableInterfaceSymbol: SymbolID
+    ) {
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName else { return }
+        let memberName = interner.intern("sumByDouble")
+        let memberFQName = iterableFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = iterableFQName + [typeParamName]
+        guard let typeParamSymbol = symbols.lookup(fqName: typeParamFQName) else { return }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let selectorType = types.make(.functionType(FunctionType(
+            params: [typeParamType],
+            returnType: types.doubleType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .inlineFunction]
+        )
+        symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_list_sumByDouble", for: memberSymbol)
+        symbols.setAnnotations([
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.Deprecated",
+                arguments: [
+                    "message = \"Use sumOf instead.\"",
+                    "replaceWith = ReplaceWith(\"sumOf(selector)\")",
+                ]
+            ),
+        ], for: memberSymbol)
+        let selectorParameterName = interner.intern("selector")
+        let selectorParameterSymbol = symbols.define(
+            kind: .valueParameter,
+            name: selectorParameterName,
+            fqName: memberFQName + [selectorParameterName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(memberSymbol, for: selectorParameterSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [selectorType],
+                returnType: types.doubleType,
+                valueParameterSymbols: [selectorParameterSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
     }
 }
