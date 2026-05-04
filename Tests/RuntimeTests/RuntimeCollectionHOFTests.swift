@@ -95,6 +95,18 @@ private let reduceRightIndexedChecksum: @convention(c) (Int, Int, Int, Int, Unsa
     index * 100 + value * 10 + acc
 }
 
+private let reduceRightChecksum: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, acc, _ in
+    value * 10 + acc
+}
+
+private let sumByWeightedTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value * value
+}
+
+private let sumByDoubleWeightedTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    kk_double_to_bits(value == 2 ? 1.5 : 0.25)
+}
+
 private let groupingFoldToInitialValueSelector: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = {
     _, key, element, _ in
     gHOFState.addCall()
@@ -395,6 +407,112 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         )
         XCTAssertEqual(thrown, 0)
         XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
+    }
+
+    func testListReduceRightOrNullUsesValueAndAccumulator() {
+        var thrown = 0
+        let result = kk_list_reduceRightOrNull(
+            makeList([1, 2, 3]),
+            unsafeBitCast(reduceRightChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 33)
+
+        thrown = 0
+        let arrayResult = kk_list_reduceRightOrNull(
+            makeArray([1, 2, 3]),
+            unsafeBitCast(reduceRightChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(arrayResult, 33)
+
+        thrown = 0
+        let singletonResult = kk_list_reduceRightOrNull(
+            makeList([7]),
+            unsafeBitCast(reduceRightChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(singletonResult, 7)
+
+        thrown = 0
+        let emptyResult = kk_list_reduceRightOrNull(
+            makeList([]),
+            unsafeBitCast(reduceRightChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
+    }
+
+    func testListSumByAccumulatesSelectorResults() {
+        var thrown = 0
+        let result = kk_list_sumBy(
+            makeList([1, 2, 3]),
+            unsafeBitCast(sumByWeightedTwo, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 14)
+
+        thrown = 0
+        let arrayResult = kk_list_sumBy(
+            makeArray([1, 2, 3]),
+            unsafeBitCast(sumByWeightedTwo, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(arrayResult, 14)
+
+        thrown = 0
+        let emptyResult = kk_list_sumBy(
+            makeList([]),
+            unsafeBitCast(sumByWeightedTwo, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(emptyResult, 0)
+    }
+
+    func testListSumByDoubleAccumulatesSelectorResults() {
+        var thrown = 0
+        let result = kk_list_sumByDouble(
+            makeList([1, 2, 3]),
+            unsafeBitCast(sumByDoubleWeightedTwo, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_bits_to_double(result), 2.0, accuracy: 0.0001)
+
+        thrown = 0
+        let arrayResult = kk_list_sumByDouble(
+            makeArray([1, 2, 3]),
+            unsafeBitCast(sumByDoubleWeightedTwo, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_bits_to_double(arrayResult), 2.0, accuracy: 0.0001)
+
+        thrown = 0
+        let emptyResult = kk_list_sumByDouble(
+            makeList([]),
+            unsafeBitCast(sumByDoubleWeightedTwo, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_bits_to_double(emptyResult), 0.0, accuracy: 0.0001)
     }
 
     func testWindowedTransformReturnsExpectedWindows() {
@@ -1151,6 +1269,29 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(arrayElements(kk_list_toUShortArray(makeList([1, 65_535]))), [1, 65_535])
         XCTAssertEqual(arrayElements(kk_list_toUIntArray(makeList([1, 4_000_000_000]))), [1, 4_000_000_000])
         XCTAssertEqual(arrayElements(kk_list_toULongArray(makeList([1, -1]))), [1, -1])
+    }
+
+    func testBooleanListToPrimitiveArrayConversionCopiesElements() {
+        let list = makeList([kk_box_bool(1), kk_box_bool(0), kk_box_bool(1)])
+        XCTAssertEqual(arrayElements(kk_list_toBooleanArray(list)), [1, 0, 1])
+    }
+
+    func testShortListToPrimitiveArrayConversionCopiesElements() {
+        XCTAssertEqual(arrayElements(kk_list_toShortArray(makeList([1, -2, 32767]))), [1, -2, 32767])
+    }
+
+    func testDoubleListToPrimitiveArrayConversionCopiesElements() {
+        let first = kk_double_to_bits(1.5)
+        let second = kk_double_to_bits(-2.25)
+        let list = makeList([kk_box_double(first), kk_box_double(second)])
+        XCTAssertEqual(arrayElements(kk_list_toDoubleArray(list)), [first, second])
+    }
+
+    func testFloatListToPrimitiveArrayConversionCopiesElements() {
+        let first = kk_float_to_bits(1.5)
+        let second = kk_float_to_bits(-2.25)
+        let list = makeList([kk_box_float(first), kk_box_float(second)])
+        XCTAssertEqual(arrayElements(kk_list_toFloatArray(list)), [first, second])
     }
 
     private func makeArray(_ elements: [Int]) -> Int {

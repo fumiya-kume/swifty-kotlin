@@ -49,6 +49,7 @@ private let listClosureBridgeNames = [
     "kk_list_reduceIndexedOrNull",
     "kk_list_reduceRightIndexed",
     "kk_list_reduceRightIndexedOrNull",
+    "kk_list_reduceRightOrNull",
     "kk_list_runningReduceIndexed",
 ]
 
@@ -151,6 +152,7 @@ private let mutableListBridgeFunctions: [RuntimeABIFunctionSpec] =
     [bridgeSpec("kk_mutable_list_sort", section: "Collection", params: ["listRaw"])]
     + [
         "kk_mutable_list_sort_primitive",
+        "kk_mutable_list_sortWith",
         "kk_mutable_list_sortBy",
         "kk_mutable_list_sortBy_primitive",
         "kk_mutable_list_sortByDescending",

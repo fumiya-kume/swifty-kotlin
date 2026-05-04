@@ -148,6 +148,12 @@ extension DataFlowSemaPhase {
             iterableInterfaceSymbol: iterableInterfaceSymbol
         )
 
+        _ = registerSyntheticAbstractCollectionStub(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            collectionInterfaceSymbol: collectionInterfaceSymbol
+        )
+
         let mutableIterableInterfaceSymbol = registerSyntheticMutableIterableStub(
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg,
@@ -184,7 +190,19 @@ extension DataFlowSemaPhase {
             iterableInterfaceSymbol: iterableInterfaceSymbol,
             listInterfaceSymbol: listInterfaceSymbol
         )
-        registerIterableReduceRightMembers(
+        registerIterableReduceRightIndexedMember(
+            symbols: symbols, types: types, interner: interner,
+            iterableInterfaceSymbol: iterableInterfaceSymbol
+        )
+        registerIterableReduceRightOrNullMember(
+            symbols: symbols, types: types, interner: interner,
+            iterableInterfaceSymbol: iterableInterfaceSymbol
+        )
+        registerIterableSumByMember(
+            symbols: symbols, types: types, interner: interner,
+            iterableInterfaceSymbol: iterableInterfaceSymbol
+        )
+        registerIterableSumByDoubleMember(
             symbols: symbols, types: types, interner: interner,
             iterableInterfaceSymbol: iterableInterfaceSymbol
         )

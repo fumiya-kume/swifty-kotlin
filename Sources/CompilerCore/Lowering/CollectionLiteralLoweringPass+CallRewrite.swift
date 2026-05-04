@@ -2673,6 +2673,10 @@ extension CollectionLiteralLoweringPass {
                     }
 
                     let unsignedArrayCallee: InternedString? = switch callee {
+                    case lookup.toBooleanArrayName: lookup.kkListToBooleanArrayName
+                    case lookup.toShortArrayName: lookup.kkListToShortArrayName
+                    case lookup.toDoubleArrayName: lookup.kkListToDoubleArrayName
+                    case lookup.toFloatArrayName: lookup.kkListToFloatArrayName
                     case lookup.toUByteArrayName: lookup.kkListToUByteArrayName
                     case lookup.toUShortArrayName: lookup.kkListToUShortArrayName
                     case lookup.toUIntArrayName: lookup.kkListToUIntArrayName
@@ -3647,11 +3651,19 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
-                    if callee == lookup.sumOfName {
+                    if callee == lookup.sumOfName || callee == lookup.sumByName || callee == lookup.sumByDoubleName {
                         if arguments.count == 2 || arguments.count == 3 {
                             let receiverID = arguments[0]
                             let lambdaID = arguments[1]
                             if listExprIDs.contains(receiverID.rawValue) {
+                                let kkName: InternedString
+                                if callee == lookup.sumByName {
+                                    kkName = lookup.kkListSumByName
+                                } else if callee == lookup.sumByDoubleName {
+                                    kkName = lookup.kkListSumByDoubleName
+                                } else {
+                                    kkName = lookup.kkListSumOfName
+                                }
                                 let closureRawID: KIRExprID
                                 if arguments.count == 3 {
                                     closureRawID = arguments[2]
@@ -3665,7 +3677,7 @@ extension CollectionLiteralLoweringPass {
                                 )
                                 loweredBody.append(.call(
                                     symbol: nil,
-                                    callee: lookup.kkListSumOfName,
+                                    callee: kkName,
                                     arguments: [receiverID, lambdaID, closureRawID],
                                     result: hofResult,
                                     canThrow: canThrow,
@@ -4431,6 +4443,19 @@ extension CollectionLiteralLoweringPass {
                             else { let z = module.arena.appendExpr(.intLiteral(0), type: nil); loweredBody.append(.constValue(result: z, value: .intLiteral(0))); closureRawID = z }
                             let callResult = result ?? module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)), type: nil)
                             loweredBody.append(.call(symbol: nil, callee: lookup.kkListReduceRightIndexedOrNullName, arguments: [receiverID, lambdaID, closureRawID], result: callResult, canThrow: canThrow, thrownResult: thrownResult))
+                            continue
+                        }
+                    }
+                    // reduceRightOrNull: args = [receiver, lambda, closureRaw?]
+                    if (callee == lookup.reduceRightOrNullName || callee == lookup.kkListReduceRightOrNullName), (arguments.count == 2 || arguments.count == 3) {
+                        let receiverID = arguments[0]
+                        if listExprIDs.contains(receiverID.rawValue) {
+                            let lambdaID = arguments[1]
+                            let closureRawID: KIRExprID
+                            if arguments.count == 3 { closureRawID = arguments[2] }
+                            else { let z = module.arena.appendExpr(.intLiteral(0), type: nil); loweredBody.append(.constValue(result: z, value: .intLiteral(0))); closureRawID = z }
+                            let callResult = result ?? module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)), type: nil)
+                            loweredBody.append(.call(symbol: nil, callee: lookup.kkListReduceRightOrNullName, arguments: [receiverID, lambdaID, closureRawID], result: callResult, canThrow: canThrow, thrownResult: thrownResult))
                             continue
                         }
                     }
