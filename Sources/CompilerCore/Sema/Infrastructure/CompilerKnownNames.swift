@@ -19,6 +19,7 @@ enum KnownCompilerAnnotation {
     case experimentalJsReflectionCreateInstance
     case experimentalJsCollectionsApi
     case throws_
+    case rootThrows
     case suppress
     case dslMarker
     case parameterName
@@ -34,6 +35,7 @@ enum KnownCompilerAnnotation {
     case builderInference
     case experimentalTypeInference
     case overloadResolutionByLambdaReturnType
+    case contextFunctionTypeParams
 
     var simpleName: String {
         switch self {
@@ -73,6 +75,8 @@ enum KnownCompilerAnnotation {
             "ExperimentalJsCollectionsApi"
         case .throws_:
             "Throws"
+        case .rootThrows:
+            "Throws"
         case .suppress:
             "Suppress"
         case .dslMarker:
@@ -103,6 +107,8 @@ enum KnownCompilerAnnotation {
             "ExperimentalTypeInference"
         case .overloadResolutionByLambdaReturnType:
             "OverloadResolutionByLambdaReturnType"
+        case .contextFunctionTypeParams:
+            "ContextFunctionTypeParams"
         }
     }
 
@@ -144,6 +150,8 @@ enum KnownCompilerAnnotation {
             "kotlin.js.collections.ExperimentalJsCollectionsApi"
         case .throws_:
             "kotlin.jvm.Throws"
+        case .rootThrows:
+            "kotlin.Throws"
         case .suppress:
             "kotlin.Suppress"
         case .dslMarker:
@@ -174,6 +182,8 @@ enum KnownCompilerAnnotation {
             "kotlin.experimental.ExperimentalTypeInference"
         case .overloadResolutionByLambdaReturnType:
             "kotlin.OverloadResolutionByLambdaReturnType"
+        case .contextFunctionTypeParams:
+            "kotlin.ContextFunctionTypeParams"
         }
     }
 

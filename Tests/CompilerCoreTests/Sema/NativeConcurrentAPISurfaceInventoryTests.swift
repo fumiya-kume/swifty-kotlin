@@ -37,15 +37,14 @@ final class NativeConcurrentAPISurfaceInventoryTests: XCTestCase {
         TopLevelEntry(name: "callContinuation1", kind: .function, todo: nil),
         TopLevelEntry(name: "callContinuation2", kind: .function, todo: nil),
         TopLevelEntry(name: "ensureNeverFrozen", kind: .function, todo: nil),
+        TopLevelEntry(name: "freeze", kind: .function, todo: nil),
+        TopLevelEntry(name: "isFrozen", kind: .property, todo: nil),
         TopLevelEntry(name: "waitForMultipleFutures", kind: .function, todo: nil),
         TopLevelEntry(name: "waitWorkerTermination", kind: .function, todo: nil),
         TopLevelEntry(name: "withWorker", kind: .function, todo: nil),
     ]
 
-    private static let knownGapTopLevelEntries: Set<TopLevelEntry> = [
-        TopLevelEntry(name: "freeze", kind: .function, todo: "STDLIB-NATIVE-CONCURRENT-019"),
-        TopLevelEntry(name: "isFrozen", kind: .property, todo: "STDLIB-NATIVE-CONCURRENT-019"),
-    ]
+    private static let knownGapTopLevelEntries: Set<TopLevelEntry> = []
 
     private static let packagePath = ["kotlin", "native", "concurrent"]
 
@@ -69,8 +68,8 @@ final class NativeConcurrentAPISurfaceInventoryTests: XCTestCase {
         // Each TopLevelEntry must have a unique name (no two entries share a `name`).
         XCTAssertEqual(targetEntries.count, targetNames.count)
         XCTAssertEqual(targetEntries.count, 31)
-        XCTAssertEqual(Self.implementedTopLevelEntries.count, 29)
-        XCTAssertEqual(Self.knownGapTopLevelEntries.count, 2)
+        XCTAssertEqual(Self.implementedTopLevelEntries.count, 31)
+        XCTAssertEqual(Self.knownGapTopLevelEntries.count, 0)
     }
 
     func testImplementedTopLevelEntriesAreRegistered() throws {
@@ -122,11 +121,6 @@ final class NativeConcurrentAPISurfaceInventoryTests: XCTestCase {
 
     func testKnownGapTodosAreNativeConcurrentItems() {
         let todos = Set(Self.knownGapTopLevelEntries.compactMap(\.todo))
-        XCTAssertEqual(
-            todos,
-            [
-                "STDLIB-NATIVE-CONCURRENT-019",
-            ]
-        )
+        XCTAssertEqual(todos, [])
     }
 }

@@ -11,6 +11,7 @@ import Foundation
 ///   - `WorkerBoundReference<T>` class with constructor and read-only properties
 ///   - `atomicLazy` top-level function
 ///   - `ensureNeverFrozen` top-level extension
+///   - `freeze` top-level extension and `isFrozen` extension property
 ///   - `waitForMultipleFutures` top-level and collection-extension functions
 ///   - `waitWorkerTermination(worker)` top-level function
 ///   - `withWorker(name, errorReporting, block)` top-level function
@@ -151,6 +152,14 @@ extension DataFlowSemaPhase {
 
         // Any.ensureNeverFrozen(): Unit
         registerNativeConcurrentEnsureNeverFrozen(
+            packageFQName: nativeConcurrentPkg,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        // T.freeze(): T and Any?.isFrozen
+        registerNativeConcurrentFreezeAndIsFrozen(
             packageFQName: nativeConcurrentPkg,
             symbols: symbols,
             types: types,

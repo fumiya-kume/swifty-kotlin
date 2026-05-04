@@ -52,6 +52,7 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
             "endsWith": "kk_string_endsWith",
             "toInt": "kk_string_toInt",
             "toDouble": "kk_string_toDouble",
+            "hexToUInt": "kk_string_hexToUInt",
             "trimIndent": "kk_string_trimIndent",
         ]
 
@@ -105,6 +106,20 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
             externalLink(for: "isNormalized", sema: sema, interner: interner),
             "kk_string_isNormalized",
             "String.isNormalized should link to kk_string_isNormalized"
+        )
+    }
+
+    func testChunkedSequenceStubsHaveCorrectExternalLinks() throws {
+        let (sema, interner) = try makeSema()
+
+        let links = externalLinks(for: "chunkedSequence", sema: sema, interner: interner)
+        XCTAssertTrue(
+            links.contains("kk_string_chunked_sequence_transform"),
+            "CharSequence.chunkedSequence(size, transform) should link to kk_string_chunked_sequence_transform"
+        )
+        XCTAssertTrue(
+            links.contains("kk_string_chunked_sequence"),
+            "CharSequence.chunkedSequence should link to kk_string_chunked_sequence"
         )
     }
 
