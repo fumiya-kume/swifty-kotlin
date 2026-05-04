@@ -40,6 +40,11 @@ final class RuntimeBoxingTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(unboxed, 0)
     }
 
+    func testBoxedZeroMatchesRawZeroAsMapKey() {
+        let map = registerRuntimeObject(RuntimeMapBox(keys: [kk_box_int(0)], values: [123]))
+        XCTAssertEqual(kk_map_get(map, 0), 123)
+    }
+
     // MARK: - kk_box_bool / kk_unbox_bool
 
     func testBoxAndUnboxBoolTrueRoundTrip() {
