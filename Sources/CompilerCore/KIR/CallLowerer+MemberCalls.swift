@@ -2979,7 +2979,7 @@ extension CallLowerer {
                 return classType.classSymbol == charSequenceSymbol
             }()
             if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType)
-                || ((calleeStr == "ifBlank" || calleeStr == "ifEmpty") && isCharSequenceReceiver)
+                || (["ifBlank", "ifEmpty", "chunkedSequence"].contains(calleeStr) && isCharSequenceReceiver)
             {
                 if calleeStr == "toInt" {
                     instructions.append(.call(
@@ -3105,6 +3105,8 @@ extension CallLowerer {
                     ("kk_string_dropLast", [loweredReceiverID, loweredArgIDs[0]])
                 case "chunked":
                     ("kk_string_chunked", [loweredReceiverID, loweredArgIDs[0]])
+                case "chunkedSequence":
+                    ("kk_string_chunked_sequence", [loweredReceiverID, loweredArgIDs[0]])
                 case "encodeToByteArray", "toByteArray":
                     if loweredArgIDs.count == 1 {
                         ("kk_string_encodeToByteArray_charset", [loweredReceiverID, loweredArgIDs[0]])

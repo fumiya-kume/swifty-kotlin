@@ -2154,6 +2154,21 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        for receiverType in [charSequenceType, stringType] {
+            registerSyntheticStringExtensionFunction(
+                named: "chunkedSequence",
+                externalLinkName: "kk_string_chunked_sequence",
+                receiverType: receiverType,
+                parameters: [
+                    ("size", intType, false, false),
+                ],
+                returnType: sequenceStringType,
+                packageFQName: kotlinTextPkg,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
         do {
             let functionName = interner.intern("chunkedSequence")
             let functionFQName = kotlinTextPkg + [functionName]

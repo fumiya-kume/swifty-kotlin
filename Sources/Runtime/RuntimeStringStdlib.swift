@@ -1919,6 +1919,12 @@ public func kk_string_chunked(_ strRaw: Int, _ size: Int) -> Int {
     return runtimeMakeStringListRaw(chunks)
 }
 
+@_cdecl("kk_string_chunked_sequence")
+public func kk_string_chunked_sequence(_ strRaw: Int, _ size: Int) -> Int {
+    let chunksRaw = kk_string_chunked(strRaw, size)
+    return kk_list_asSequence(chunksRaw)
+}
+
 @_cdecl("kk_string_chunked_sequence_transform")
 public func kk_string_chunked_sequence_transform(
     _ strRaw: Int,
