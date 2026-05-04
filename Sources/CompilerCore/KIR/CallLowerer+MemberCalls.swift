@@ -4201,7 +4201,7 @@ extension CallLowerer {
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern(runtimeCallee),
-                        arguments: [loweredReceiverID] + normalizedArgIDs,
+                        arguments: runtimeArguments,
                         result: result,
                         canThrow: canThrow,
                         thrownResult: nil

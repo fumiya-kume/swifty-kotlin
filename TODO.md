@@ -190,8 +190,8 @@
 - [x] STDLIB-COL-CONV-002: `Collection<Short>.toShortArray()` を追加する
 - [x] STDLIB-COL-CONV-003: `Collection<Double>.toDoubleArray()` を追加する
 - [x] STDLIB-COL-CONV-004: `Collection<Float>.toFloatArray()` を追加する
-- [ ] STDLIB-COL-MAP-001: `Map.Entry<K, V>.toPair()` を追加する
-- [ ] STDLIB-COL-MAP-002: `Map.withDefault(defaultValue)` を追加する
+- [x] STDLIB-COL-MAP-001: `Map.Entry<K, V>.toPair()` を追加する
+- [x] STDLIB-COL-MAP-002: `Map.withDefault(defaultValue)` を追加する
 - [ ] STDLIB-022: range / progression / unsigned range の網羅性を上げる
 - [x] STDLIB-RANGE-IFACE-001: `kotlin.ranges.ClosedRange<T>` interface surface を追加する
 - [x] STDLIB-RANGE-IFACE-002: `kotlin.ranges.ClosedFloatingPointRange<T>` interface surface を追加する

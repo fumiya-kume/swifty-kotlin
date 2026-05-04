@@ -2966,9 +2966,27 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // firstNotNullOf(transform: (T) -> R?): R
+        // firstNotNullOf<T, R>(transform: (T) -> R?): R
+        // Use a method-local T parameter (independent of Sequence's `out T`)
+        // so the projection on the receiver does not block referencing T in
+        // the transform's `in` position.
         do {
             let memberName = interner.intern("firstNotNullOf")
+            let methodTName = interner.intern("T")
+            let methodTSymbol = symbols.lookup(fqName: sequenceFQName + [memberName, methodTName]) ?? symbols.define(
+                kind: .typeParameter,
+                name: methodTName,
+                fqName: sequenceFQName + [memberName, methodTName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let methodTType = types.make(.typeParam(TypeParamType(symbol: methodTSymbol, nullability: .nonNull)))
+            let methodReceiverType = types.make(.classType(ClassType(
+                classSymbol: sequenceSymbol,
+                args: [.out(methodTType)],
+                nullability: .nonNull
+            )))
             let rName = interner.intern("R")
             let rSymbol = symbols.lookup(fqName: sequenceFQName + [memberName, rName]) ?? symbols.define(
                 kind: .typeParameter,
@@ -2981,7 +2999,7 @@ extension DataFlowSemaPhase {
             let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
             let nullableRType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nullable)))
             let transformType = types.make(.functionType(FunctionType(
-                params: [typeParamType],
+                params: [methodTType],
                 returnType: nullableRType,
                 isSuspend: false,
                 nullability: .nonNull
@@ -2989,23 +3007,39 @@ extension DataFlowSemaPhase {
             registerSequenceMemberStub(
                 named: "firstNotNullOf",
                 externalLinkName: "kk_sequence_firstNotNullOf",
-                receiverType: receiverType,
+                receiverType: methodReceiverType,
                 parameters: [("transform", transformType)],
                 returnType: rType,
                 sequenceSymbol: sequenceSymbol,
                 sequenceFQName: sequenceFQName,
-                typeParamSymbol: typeParamSymbol,
+                typeParamSymbol: methodTSymbol,
                 symbols: symbols,
                 interner: interner,
                 canThrow: true,
                 additionalTypeParameterSymbols: [rSymbol],
-                additionalTypeParameterUpperBoundsList: [[]]
+                additionalTypeParameterUpperBoundsList: [[]],
+                flags: [.synthetic, .inlineFunction]
             )
         }
 
-        // firstNotNullOfOrNull(transform: (T) -> R?): R?
+        // firstNotNullOfOrNull<T, R>(transform: (T) -> R?): R?
         do {
             let memberName = interner.intern("firstNotNullOfOrNull")
+            let methodTName = interner.intern("T")
+            let methodTSymbol = symbols.lookup(fqName: sequenceFQName + [memberName, methodTName]) ?? symbols.define(
+                kind: .typeParameter,
+                name: methodTName,
+                fqName: sequenceFQName + [memberName, methodTName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let methodTType = types.make(.typeParam(TypeParamType(symbol: methodTSymbol, nullability: .nonNull)))
+            let methodReceiverType = types.make(.classType(ClassType(
+                classSymbol: sequenceSymbol,
+                args: [.out(methodTType)],
+                nullability: .nonNull
+            )))
             let rName = interner.intern("R")
             let rSymbol = symbols.lookup(fqName: sequenceFQName + [memberName, rName]) ?? symbols.define(
                 kind: .typeParameter,
@@ -3018,7 +3052,7 @@ extension DataFlowSemaPhase {
             let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
             let nullableRType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nullable)))
             let transformType = types.make(.functionType(FunctionType(
-                params: [typeParamType],
+                params: [methodTType],
                 returnType: nullableRType,
                 isSuspend: false,
                 nullability: .nonNull
@@ -3026,17 +3060,18 @@ extension DataFlowSemaPhase {
             registerSequenceMemberStub(
                 named: "firstNotNullOfOrNull",
                 externalLinkName: "kk_sequence_firstNotNullOfOrNull",
-                receiverType: receiverType,
+                receiverType: methodReceiverType,
                 parameters: [("transform", transformType)],
                 returnType: types.makeNullable(rType),
                 sequenceSymbol: sequenceSymbol,
                 sequenceFQName: sequenceFQName,
-                typeParamSymbol: typeParamSymbol,
+                typeParamSymbol: methodTSymbol,
                 symbols: symbols,
                 interner: interner,
                 canThrow: true,
                 additionalTypeParameterSymbols: [rSymbol],
-                additionalTypeParameterUpperBoundsList: [[]]
+                additionalTypeParameterUpperBoundsList: [[]],
+                flags: [.synthetic, .inlineFunction]
             )
         }
 
@@ -4768,7 +4803,8 @@ extension DataFlowSemaPhase {
         annotations: [MetadataAnnotationRecord] = [],
         canThrow: Bool = false,
         additionalTypeParameterSymbols: [SymbolID] = [],
-        additionalTypeParameterUpperBoundsList: [[TypeID]] = []
+        additionalTypeParameterUpperBoundsList: [[TypeID]] = [],
+        flags: SymbolFlags = [.synthetic, .operatorFunction]
     ) {
         let memberName = interner.intern(name)
         let memberFQName = sequenceFQName + [memberName]
@@ -4780,7 +4816,7 @@ extension DataFlowSemaPhase {
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic, .operatorFunction]
+            flags: flags
         )
         symbols.setParentSymbol(sequenceSymbol, for: memberSymbol)
         symbols.setExternalLinkName(externalLinkName, for: memberSymbol)

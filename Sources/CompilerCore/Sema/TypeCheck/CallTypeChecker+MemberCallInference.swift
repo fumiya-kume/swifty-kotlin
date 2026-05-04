@@ -1922,7 +1922,7 @@ extension CallTypeChecker {
                 }) {
                     sema.bindings.bindCall(id, binding: CallBinding(
                         chosenCallee: chosenCallee,
-                        substitutedTypeArguments: [collectionElementType, collectionElementType],
+                        substitutedTypeArguments: [collectionElementType],
                         parameterMapping: Dictionary(uniqueKeysWithValues: args.indices.map { ($0, $0) })
                     ))
                     sema.bindings.bindCallableTarget(id, target: .symbol(chosenCallee))

@@ -1167,6 +1167,14 @@ extension CodegenBackendIntegrationTests {
 
     func testKotlinTextChunkedSequenceEdgeCases() throws {
         let source = """
+        fun render(value: CharSequence, size: Int): List<String> {
+            return value.chunkedSequence(size).toList()
+        }
+
+        fun renderTransform(value: CharSequence, size: Int): List<String> {
+            return value.chunkedSequence(size) { chunk -> "" + chunk + "!" }.toList()
+        }
+
         fun main() {
             println("abcdef".chunkedSequence(2).toList())
 
