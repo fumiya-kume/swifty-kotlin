@@ -67,6 +67,54 @@ final class ExceptionSyntheticStubTests: XCTestCase {
         """)
     }
 
+    func testCharacterCodingExceptionSurfaceIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let exceptionFQName = ["kotlin", "text", "CharacterCodingException"].map { interner.intern($0) }
+        let exceptionSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: exceptionFQName))
+        XCTAssertEqual(sema.symbols.symbol(exceptionSymbol)?.kind, .class)
+
+        let rootExceptionFQName = ["kotlin", "Exception"].map { interner.intern($0) }
+        let rootExceptionSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: rootExceptionFQName))
+        XCTAssertTrue(sema.symbols.directSupertypes(for: exceptionSymbol).contains(rootExceptionSymbol))
+
+        let exceptionType = sema.types.make(.classType(ClassType(
+            classSymbol: exceptionSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        XCTAssertEqual(sema.symbols.propertyType(for: exceptionSymbol), exceptionType)
+
+        let nullableStringType = sema.types.makeNullable(sema.types.stringType)
+        let constructorFQName = exceptionFQName + [interner.intern("<init>")]
+        let constructors = sema.symbols.lookupAll(fqName: constructorFQName).filter {
+            sema.symbols.symbol($0)?.kind == .constructor
+        }
+        let expected: [([TypeID], String)] = [
+            ([], "kk_throwable_new"),
+            ([nullableStringType], "kk_throwable_new"),
+        ]
+        for (parameterTypes, externalLinkName) in expected {
+            let constructor = try XCTUnwrap(constructors.first {
+                sema.symbols.functionSignature(for: $0)?.parameterTypes == parameterTypes
+            })
+            XCTAssertEqual(sema.symbols.functionSignature(for: constructor)?.returnType, exceptionType)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: constructor), externalLinkName)
+        }
+    }
+
+    func testCharacterCodingExceptionResolvesInSource() throws {
+        _ = try makeSema(source: """
+        import kotlin.text.CharacterCodingException
+
+        fun noArg(): Exception = CharacterCodingException()
+        fun message(message: String?): Exception = CharacterCodingException(message)
+        fun catchCharacterCoding(): String =
+            try { throw CharacterCodingException("bad input") }
+            catch (e: CharacterCodingException) { e.message ?: "caught" }
+        """)
+    }
+
     func testConcurrentModificationExceptionSurfaceIsRegistered() throws {
         let (sema, interner) = try makeSema()
 
