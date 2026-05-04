@@ -375,6 +375,20 @@ final class CallLowerer {
             return loweredComparison
         }
 
+        if args.isEmpty,
+           let callee = ast.arena.expr(calleeExpr),
+           case let .nameRef(calleeName, _) = callee,
+           calleeName == interner.intern("contextOf")
+        {
+            let boundType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+            if let contextValue = driver.ctx.contextReceiverValue(matching: boundType, sema: sema) {
+                return contextValue
+            }
+            let fallback = arena.appendExpr(.unit, type: boundType)
+            instructions.append(.constValue(result: fallback, value: .unit))
+            return fallback
+        }
+
         // --- Scope function: with(receiver, block) (STDLIB-004) ---
         if let scopeKind = sema.bindings.scopeFunctionKind(for: exprID),
            scopeKind == .scopeWith,
@@ -435,13 +449,29 @@ final class CallLowerer {
            args.count <= 7
         {
             let boundType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            for contextArgument in args.dropLast() {
-                _ = driver.lowerExpr(
+            let loweredContextArguments = args.dropLast().map { contextArgument in
+                driver.lowerExpr(
                     contextArgument.expr,
                     ast: ast, sema: sema, arena: arena, interner: interner,
                     propertyConstantInitializers: propertyConstantInitializers,
                     instructions: &instructions
                 )
+            }
+            if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[args.count - 1].expr) {
+                let contextReceiverValues = zip(args.dropLast(), loweredContextArguments).map { argument, loweredExpr in
+                    KIRLoweringContext.ContextReceiverValue(
+                        type: sema.bindings.exprTypes[argument.expr] ?? sema.types.anyType,
+                        exprID: loweredExpr
+                    )
+                }
+                return driver.ctx.withContextReceiverValues(contextReceiverValues) {
+                    driver.lowerExpr(
+                        bodyExpr,
+                        ast: ast, sema: sema, arena: arena, interner: interner,
+                        propertyConstantInitializers: propertyConstantInitializers,
+                        instructions: &instructions
+                    )
+                }
             }
             let loweredLambdaID = driver.lowerExpr(
                 args[args.count - 1].expr,
@@ -1130,10 +1160,18 @@ final class CallLowerer {
             "kk_string_builder_length_prop"
         case ("deleteCharAt", 1):
             "kk_string_builder_deleteCharAt"
+        case ("deleteAt", 1):
+            "kk_string_builder_deleteAt"
         case ("insert", 2):
             "kk_string_builder_insert_obj"
         case ("delete", 2):
             "kk_string_builder_delete_obj"
+        case ("deleteRange", 2):
+            "kk_string_builder_deleteRange"
+        case ("insertRange", 4):
+            "kk_string_builder_insertRange_obj"
+        case ("setRange", 3):
+            "kk_string_builder_setRange"
         default:
             nil
         }
