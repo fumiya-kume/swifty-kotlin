@@ -787,6 +787,90 @@ public func kk_string_toIntOrNull_radix(
     return Int(value)
 }
 
+@_cdecl("kk_string_toUByteOrNull_radix")
+public func kk_string_toUByteOrNull_radix(
+    _ strRaw: Int,
+    _ radix: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    guard (2 ... 36).contains(radix) else {
+        runtimeSetThrown(
+            outThrown,
+            message: "IllegalArgumentException: radix \(radix) was not in valid range 2..36"
+        )
+        return runtimeNullSentinelInt
+    }
+    guard let value = UInt8(source, radix: radix) else {
+        return runtimeNullSentinelInt
+    }
+    return Int(value)
+}
+
+@_cdecl("kk_string_toUShortOrNull_radix")
+public func kk_string_toUShortOrNull_radix(
+    _ strRaw: Int,
+    _ radix: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    guard (2 ... 36).contains(radix) else {
+        runtimeSetThrown(
+            outThrown,
+            message: "IllegalArgumentException: radix \(radix) was not in valid range 2..36"
+        )
+        return runtimeNullSentinelInt
+    }
+    guard let value = UInt16(source, radix: radix) else {
+        return runtimeNullSentinelInt
+    }
+    return Int(value)
+}
+
+@_cdecl("kk_string_toUIntOrNull_radix")
+public func kk_string_toUIntOrNull_radix(
+    _ strRaw: Int,
+    _ radix: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    guard (2 ... 36).contains(radix) else {
+        runtimeSetThrown(
+            outThrown,
+            message: "IllegalArgumentException: radix \(radix) was not in valid range 2..36"
+        )
+        return runtimeNullSentinelInt
+    }
+    guard let value = UInt32(source, radix: radix) else {
+        return runtimeNullSentinelInt
+    }
+    return Int(value)
+}
+
+@_cdecl("kk_string_toULongOrNull_radix")
+public func kk_string_toULongOrNull_radix(
+    _ strRaw: Int,
+    _ radix: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    guard (2 ... 36).contains(radix) else {
+        runtimeSetThrown(
+            outThrown,
+            message: "IllegalArgumentException: radix \(radix) was not in valid range 2..36"
+        )
+        return runtimeNullSentinelInt
+    }
+    guard let value = UInt64(source, radix: radix) else {
+        return runtimeNullSentinelInt
+    }
+    return Int(bitPattern: UInt(truncatingIfNeeded: value))
+}
+
 @_cdecl("kk_string_toDouble")
 public func kk_string_toDouble(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
@@ -1425,6 +1509,190 @@ public func kk_string_substringAfterLast(_ strRaw: Int, _ delimiterRaw: Int) -> 
     let delimScalars = runtimeStringScalars(delimiterRaw)
     let start = idx + delimScalars.count
     return runtimeMakeStringRaw(runtimeStringFromScalars(scalars[start...]))
+}
+
+@_cdecl("kk_string_replaceAfter")
+public func kk_string_replaceAfter(
+    _ strRaw: Int,
+    _ delimiterRaw: Int,
+    _ replacementRaw: Int,
+    _ missingDelimiterValueRaw: Int
+) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let delimiter = runtimeStringFromRawOrPanic(delimiterRaw, caller: #function)
+    let replacement = runtimeStringFromRawOrPanic(replacementRaw, caller: #function)
+    let missingDelimiterValue = missingDelimiterValueRaw == 0
+        ? source
+        : runtimeStringFromRawOrPanic(missingDelimiterValueRaw, caller: #function)
+    return runtimeMakeStringRaw(
+        runtimeStringReplaceAfter(
+            source: source,
+            delimiter: delimiter,
+            replacement: replacement,
+            missingDelimiterValue: missingDelimiterValue
+        )
+    )
+}
+
+@_cdecl("kk_string_replaceAfter_char")
+public func kk_string_replaceAfter_char(
+    _ strRaw: Int,
+    _ delimiterRaw: Int,
+    _ replacementRaw: Int,
+    _ missingDelimiterValueRaw: Int
+) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let delimiter = runtimeCharacterFromRaw(delimiterRaw)
+    let replacement = runtimeStringFromRawOrPanic(replacementRaw, caller: #function)
+    let missingDelimiterValue = missingDelimiterValueRaw == 0
+        ? source
+        : runtimeStringFromRawOrPanic(missingDelimiterValueRaw, caller: #function)
+    return runtimeMakeStringRaw(
+        runtimeStringReplaceAfter(
+            source: source,
+            delimiter: delimiter,
+            replacement: replacement,
+            missingDelimiterValue: missingDelimiterValue
+        )
+    )
+}
+
+@_cdecl("kk_string_replaceAfterLast")
+public func kk_string_replaceAfterLast(
+    _ strRaw: Int,
+    _ delimiterRaw: Int,
+    _ replacementRaw: Int,
+    _ missingDelimiterValueRaw: Int
+) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let delimiter = runtimeStringFromRawOrPanic(delimiterRaw, caller: #function)
+    let replacement = runtimeStringFromRawOrPanic(replacementRaw, caller: #function)
+    let missingDelimiterValue = missingDelimiterValueRaw == 0
+        ? source
+        : runtimeStringFromRawOrPanic(missingDelimiterValueRaw, caller: #function)
+    return runtimeMakeStringRaw(
+        runtimeStringReplaceAfterLast(
+            source: source,
+            delimiter: delimiter,
+            replacement: replacement,
+            missingDelimiterValue: missingDelimiterValue
+        )
+    )
+}
+
+@_cdecl("kk_string_replaceAfterLast_char")
+public func kk_string_replaceAfterLast_char(
+    _ strRaw: Int,
+    _ delimiterRaw: Int,
+    _ replacementRaw: Int,
+    _ missingDelimiterValueRaw: Int
+) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let delimiter = runtimeCharacterFromRaw(delimiterRaw)
+    let replacement = runtimeStringFromRawOrPanic(replacementRaw, caller: #function)
+    let missingDelimiterValue = missingDelimiterValueRaw == 0
+        ? source
+        : runtimeStringFromRawOrPanic(missingDelimiterValueRaw, caller: #function)
+    return runtimeMakeStringRaw(
+        runtimeStringReplaceAfterLast(
+            source: source,
+            delimiter: delimiter,
+            replacement: replacement,
+            missingDelimiterValue: missingDelimiterValue
+        )
+    )
+}
+
+@_cdecl("kk_string_replaceBefore")
+public func kk_string_replaceBefore(
+    _ strRaw: Int,
+    _ delimiterRaw: Int,
+    _ replacementRaw: Int,
+    _ missingDelimiterValueRaw: Int
+) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let delimiter = runtimeStringFromRawOrPanic(delimiterRaw, caller: #function)
+    let replacement = runtimeStringFromRawOrPanic(replacementRaw, caller: #function)
+    let missingDelimiterValue = missingDelimiterValueRaw == 0
+        ? source
+        : runtimeStringFromRawOrPanic(missingDelimiterValueRaw, caller: #function)
+    return runtimeMakeStringRaw(
+        runtimeStringReplaceBefore(
+            source: source,
+            delimiter: delimiter,
+            replacement: replacement,
+            missingDelimiterValue: missingDelimiterValue
+        )
+    )
+}
+
+@_cdecl("kk_string_replaceBefore_char")
+public func kk_string_replaceBefore_char(
+    _ strRaw: Int,
+    _ delimiterRaw: Int,
+    _ replacementRaw: Int,
+    _ missingDelimiterValueRaw: Int
+) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let delimiter = runtimeCharacterFromRaw(delimiterRaw)
+    let replacement = runtimeStringFromRawOrPanic(replacementRaw, caller: #function)
+    let missingDelimiterValue = missingDelimiterValueRaw == 0
+        ? source
+        : runtimeStringFromRawOrPanic(missingDelimiterValueRaw, caller: #function)
+    return runtimeMakeStringRaw(
+        runtimeStringReplaceBefore(
+            source: source,
+            delimiter: delimiter,
+            replacement: replacement,
+            missingDelimiterValue: missingDelimiterValue
+        )
+    )
+}
+
+@_cdecl("kk_string_replaceBeforeLast")
+public func kk_string_replaceBeforeLast(
+    _ strRaw: Int,
+    _ delimiterRaw: Int,
+    _ replacementRaw: Int,
+    _ missingDelimiterValueRaw: Int
+) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let delimiter = runtimeStringFromRawOrPanic(delimiterRaw, caller: #function)
+    let replacement = runtimeStringFromRawOrPanic(replacementRaw, caller: #function)
+    let missingDelimiterValue = missingDelimiterValueRaw == 0
+        ? source
+        : runtimeStringFromRawOrPanic(missingDelimiterValueRaw, caller: #function)
+    return runtimeMakeStringRaw(
+        runtimeStringReplaceBeforeLast(
+            source: source,
+            delimiter: delimiter,
+            replacement: replacement,
+            missingDelimiterValue: missingDelimiterValue
+        )
+    )
+}
+
+@_cdecl("kk_string_replaceBeforeLast_char")
+public func kk_string_replaceBeforeLast_char(
+    _ strRaw: Int,
+    _ delimiterRaw: Int,
+    _ replacementRaw: Int,
+    _ missingDelimiterValueRaw: Int
+) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let delimiter = runtimeCharacterFromRaw(delimiterRaw)
+    let replacement = runtimeStringFromRawOrPanic(replacementRaw, caller: #function)
+    let missingDelimiterValue = missingDelimiterValueRaw == 0
+        ? source
+        : runtimeStringFromRawOrPanic(missingDelimiterValueRaw, caller: #function)
+    return runtimeMakeStringRaw(
+        runtimeStringReplaceBeforeLast(
+            source: source,
+            delimiter: delimiter,
+            replacement: replacement,
+            missingDelimiterValue: missingDelimiterValue
+        )
+    )
 }
 
 @_cdecl("kk_string_lastIndexOf")
@@ -2112,6 +2380,16 @@ public func kk_string_replaceIndent(_ strRaw: Int, _ newIndentRaw: Int) -> Int {
     return runtimeMakeStringRaw(runtimeReplaceIndent(source, newIndent: newIndent))
 }
 
+@_cdecl("kk_string_replaceIndentByMargin")
+public func kk_string_replaceIndentByMargin(_ strRaw: Int, _ newIndentRaw: Int, _ marginPrefixRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let newIndent = runtimeStringFromRaw(newIndentRaw) ?? ""
+    let marginPrefix = runtimeStringFromRaw(marginPrefixRaw) ?? "|"
+    return runtimeMakeStringRaw(
+        runtimeReplaceIndentByMargin(source, newIndent: newIndent, marginPrefix: marginPrefix)
+    )
+}
+
 // MARK: - STDLIB-316: String.chunked / String.windowed
 
 @_cdecl("kk_string_chunked")
@@ -2131,42 +2409,30 @@ public func kk_string_chunked(_ strRaw: Int, _ size: Int) -> Int {
     return runtimeMakeStringListRaw(chunks)
 }
 
-@_cdecl("kk_string_chunkedSequence")
-public func kk_string_chunkedSequence(_ strRaw: Int, _ size: Int) -> Int {
-    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
-    guard size > 0 else {
-        return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: [])]))
-    }
-    let scalars = Array(source.unicodeScalars)
-    var chunks: [Int] = []
-    var i = 0
-    while i < scalars.count {
-        let end = Swift.min(i + size, scalars.count)
-        chunks.append(runtimeMakeStringRaw(runtimeStringFromScalars(scalars[i ..< end])))
-        i = end
-    }
-    return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: chunks)]))
+@_cdecl("kk_string_chunked_sequence")
+public func kk_string_chunked_sequence(_ strRaw: Int, _ size: Int) -> Int {
+    let chunksRaw = kk_string_chunked(strRaw, size)
+    return kk_list_asSequence(chunksRaw)
 }
 
-@_cdecl("kk_string_chunkedSequence_transform")
-public func kk_string_chunkedSequence_transform(
+@_cdecl("kk_string_chunked_sequence_transform")
+public func kk_string_chunked_sequence_transform(
     _ strRaw: Int,
     _ size: Int,
     _ fnPtr: Int,
     _ closureRaw: Int,
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
-    outThrown?.pointee = 0
     let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
-    guard size > 0 else {
-        return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: [])]))
-    }
+    let chunkSize = max(1, size)
     let scalars = Array(source.unicodeScalars)
+    let estimatedChunks = scalars.isEmpty ? 0 : (scalars.count + chunkSize - 1) / chunkSize
     var results: [Int] = []
-    var i = 0
-    while i < scalars.count {
-        let end = Swift.min(i + size, scalars.count)
-        let chunkRaw = runtimeMakeStringRaw(runtimeStringFromScalars(scalars[i ..< end]))
+    results.reserveCapacity(estimatedChunks)
+    var index = 0
+    while index < scalars.count {
+        let end = Swift.min(index + chunkSize, scalars.count)
+        let chunkRaw = runtimeMakeStringRaw(runtimeStringFromScalars(scalars[index ..< end]))
         var thrown = 0
         let transformed = runtimeInvokeCollectionLambda1(
             fnPtr: fnPtr,
@@ -2175,11 +2441,10 @@ public func kk_string_chunkedSequence_transform(
             outThrown: &thrown
         )
         if thrown != 0 {
-            outThrown?.pointee = thrown
-            return 0
+            return handleCollectionLambdaThrow(thrown, outThrown)
         }
         results.append(maybeUnbox(transformed))
-        i = end
+        index = end
     }
     return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: results)]))
 }
@@ -2723,6 +2988,27 @@ private func runtimeReplaceIndent(_ source: String, newIndent: String) -> String
     }.joined(separator: "\n")
 }
 
+private func runtimeReplaceIndentByMargin(
+    _ source: String,
+    newIndent: String,
+    marginPrefix: String
+) -> String {
+    if marginPrefix.trimmingCharacters(in: .whitespaces).isEmpty {
+        fatalError("IllegalArgumentException: marginPrefix must be non-blank string.")
+    }
+    let lines = Array(runtimeTrimBlankEdges(runtimeNormalizedMultilineString(source)))
+    guard !lines.isEmpty else {
+        return ""
+    }
+    return lines.map { line in
+        let trimmedLeading = line.drop { $0 == " " || $0 == "\t" }
+        guard trimmedLeading.hasPrefix(marginPrefix) else {
+            return line
+        }
+        return newIndent + String(trimmedLeading.dropFirst(marginPrefix.count))
+    }.joined(separator: "\n")
+}
+
 private func runtimeStringFromRaw(_ raw: Int) -> String? {
     if raw == runtimeNullSentinelInt {
         return nil
@@ -2750,6 +3036,72 @@ private func runtimeCharacterFromRaw(_ raw: Int) -> String {
         return "?"
     }
     return String(scalar)
+}
+
+private func runtimeStringReplaceAfter(
+    source: String,
+    delimiter: String,
+    replacement: String,
+    missingDelimiterValue: String
+) -> String {
+    if delimiter.isEmpty {
+        return replacement
+    }
+    guard let range = source.range(of: delimiter) else {
+        return missingDelimiterValue
+    }
+    return String(source[..<range.upperBound]) + replacement
+}
+
+private func runtimeStringReplaceAfterLast(
+    source: String,
+    delimiter: String,
+    replacement: String,
+    missingDelimiterValue: String
+) -> String {
+    if delimiter.isEmpty {
+        guard !source.isEmpty else {
+            return missingDelimiterValue
+        }
+        return runtimeStringFromScalars(source.unicodeScalars.dropLast()) + replacement
+    }
+    guard let range = source.range(of: delimiter, options: .backwards) else {
+        return missingDelimiterValue
+    }
+    return String(source[..<range.upperBound]) + replacement
+}
+
+private func runtimeStringReplaceBefore(
+    source: String,
+    delimiter: String,
+    replacement: String,
+    missingDelimiterValue: String
+) -> String {
+    if delimiter.isEmpty {
+        return replacement + source
+    }
+    guard let range = source.range(of: delimiter) else {
+        return missingDelimiterValue
+    }
+    return replacement + String(source[range.lowerBound...])
+}
+
+private func runtimeStringReplaceBeforeLast(
+    source: String,
+    delimiter: String,
+    replacement: String,
+    missingDelimiterValue: String
+) -> String {
+    if delimiter.isEmpty {
+        guard let lastScalar = source.unicodeScalars.last else {
+            return missingDelimiterValue
+        }
+        return replacement + String(lastScalar)
+    }
+    guard let range = source.range(of: delimiter, options: .backwards) else {
+        return missingDelimiterValue
+    }
+    return replacement + String(source[range.lowerBound...])
 }
 
 private func runtimeUnicodeScalarFromRaw(_ raw: Int) -> UnicodeScalar? {
@@ -3284,6 +3636,224 @@ public func kk_string_mapNotNull(
         }
     }
     return runtimeMakeListRaw(mappedElements)
+}
+
+@_cdecl("kk_string_firstNotNullOf")
+public func kk_string_firstNotNullOf(
+    _ strRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    for scalar in scalars {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: Int(scalar.value),
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return 0
+        }
+        if result != 0, let normalized = runtimeMapNotNullResultValue(result) {
+            return normalized
+        }
+    }
+    outThrown?.pointee = runtimeAllocateThrowable(
+        message: "NoSuchElementException: No element of the char sequence was transformed to a non-null value."
+    )
+    return 0
+}
+
+@_cdecl("kk_string_firstNotNullOfOrNull")
+public func kk_string_firstNotNullOfOrNull(
+    _ strRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    for scalar in scalars {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: Int(scalar.value),
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return runtimeNullSentinelInt
+        }
+        if result != 0, let normalized = runtimeMapNotNullResultValue(result) {
+            return normalized
+        }
+    }
+    return runtimeNullSentinelInt
+}
+
+@_cdecl("kk_string_reduceRightIndexed")
+public func kk_string_reduceRightIndexed(
+    _ strRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard !scalars.isEmpty else {
+        return handleCollectionLambdaThrow(
+            runtimeAllocateThrowable(message: "Empty char sequence can't be reduced."),
+            outThrown
+        )
+    }
+
+    var acc = Int(scalars[scalars.count - 1].value)
+    guard scalars.count > 1 else {
+        return acc
+    }
+
+    for index in stride(from: scalars.count - 2, through: 0, by: -1) {
+        var thrown = 0
+        acc = maybeUnbox(runtimeInvokeCollectionLambda3(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            arg1: index,
+            arg2: Int(scalars[index].value),
+            arg3: acc,
+            outThrown: &thrown
+        ))
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+    }
+    return acc
+}
+
+@_cdecl("kk_string_reduceRightIndexedOrNull")
+public func kk_string_reduceRightIndexedOrNull(
+    _ strRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard !scalars.isEmpty else {
+        return runtimeNullSentinelInt
+    }
+
+    var acc = Int(scalars[scalars.count - 1].value)
+    guard scalars.count > 1 else {
+        return acc
+    }
+
+    for index in stride(from: scalars.count - 2, through: 0, by: -1) {
+        var thrown = 0
+        acc = maybeUnbox(runtimeInvokeCollectionLambda3(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            arg1: index,
+            arg2: Int(scalars[index].value),
+            arg3: acc,
+            outThrown: &thrown
+        ))
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+    }
+    return acc
+}
+
+@_cdecl("kk_string_reduceRightOrNull")
+public func kk_string_reduceRightOrNull(
+    _ strRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard !scalars.isEmpty else {
+        return runtimeNullSentinelInt
+    }
+
+    var acc = Int(scalars[scalars.count - 1].value)
+    guard scalars.count > 1 else {
+        return acc
+    }
+
+    for index in stride(from: scalars.count - 2, through: 0, by: -1) {
+        var thrown = 0
+        acc = maybeUnbox(runtimeInvokeCollectionLambda2(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            lhs: Int(scalars[index].value),
+            rhs: acc,
+            outThrown: &thrown
+        ))
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+    }
+    return acc
+}
+
+@_cdecl("kk_string_sumBy")
+public func kk_string_sumBy(
+    _ strRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    var total = 0
+    for scalar in scalars {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: Int(scalar.value),
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        total += maybeUnbox(result)
+    }
+    return total
+}
+
+@_cdecl("kk_string_sumByDouble")
+public func kk_string_sumByDouble(
+    _ strRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    var total = 0.0
+    for scalar in scalars {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: Int(scalar.value),
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        total += kk_bits_to_double(result)
+    }
+    return kk_double_to_bits(total)
 }
 
 @_cdecl("kk_string_filterIndexed")
