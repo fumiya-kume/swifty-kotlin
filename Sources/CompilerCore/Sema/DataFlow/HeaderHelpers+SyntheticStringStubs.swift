@@ -22,6 +22,18 @@ extension DataFlowSemaPhase {
         if let kotlinRootPkgSymbol = symbols.lookup(fqName: kotlinRootPkg) {
             symbols.setParentSymbol(kotlinRootPkgSymbol, for: charSequenceSymbol)
         }
+        let appendableSymbol = ensureInterfaceSymbol(
+            named: "Appendable",
+            in: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let appendableType = types.make(.classType(ClassType(
+            classSymbol: appendableSymbol, args: [], nullability: .nonNull
+        )))
+        if let kotlinTextPkgSymbol = symbols.lookup(fqName: kotlinTextPkg) {
+            symbols.setParentSymbol(kotlinTextPkgSymbol, for: appendableSymbol)
+        }
         let boolType = types.make(.primitive(.boolean, .nonNull))
         let nullableBoolType = types.make(.primitive(.boolean, .nullable))
         let intType = types.intType
@@ -41,6 +53,23 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         let listStringType = makeListOfStringType(symbols: symbols, types: types, interner: interner)
+        let collectionStringType = makeCollectionType(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            elementType: stringType
+        )
+        let pairIntStringType: TypeID
+        if let pairSymbol = symbols.lookup(fqName: kotlinRootPkg + [interner.intern("Pair")]) {
+            pairIntStringType = types.make(.classType(ClassType(
+                classSymbol: pairSymbol,
+                args: [.out(intType), .out(stringType)],
+                nullability: .nonNull
+            )))
+        } else {
+            pairIntStringType = types.anyType
+        }
+        let nullablePairIntStringType = types.makeNullable(pairIntStringType)
         let listCharType = makeListType(
             symbols: symbols,
             types: types,
@@ -52,6 +81,85 @@ extension DataFlowSemaPhase {
             types: types,
             fqName: [interner.intern("kotlin"), interner.intern("CharArray")]
         )
+        let nullableCharSequenceType = types.makeNullable(charSequenceType)
+
+        // --- STDLIB-TEXT-TYPE-001: kotlin.text.Appendable interface surface ---
+        registerAppendableMemberFunction(
+            named: "append",
+            ownerSymbol: appendableSymbol,
+            ownerType: appendableType,
+            parameters: [("value", charType, false, false)],
+            returnType: appendableType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerAppendableMemberFunction(
+            named: "append",
+            ownerSymbol: appendableSymbol,
+            ownerType: appendableType,
+            parameters: [("value", nullableCharSequenceType, false, false)],
+            returnType: appendableType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerAppendableMemberFunction(
+            named: "append",
+            ownerSymbol: appendableSymbol,
+            ownerType: appendableType,
+            parameters: [
+                ("value", nullableCharSequenceType, false, false),
+                ("startIndex", intType, false, false),
+                ("endIndex", intType, false, false),
+            ],
+            returnType: appendableType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-TEXT-TYPE-003: kotlin.text.Typography object surface ---
+        let typographySymbol = ensureSyntheticObjectSymbol(
+            named: "Typography",
+            in: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let typographyType = types.make(.classType(ClassType(
+            classSymbol: typographySymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(typographyType, for: typographySymbol)
+        if let kotlinTextPkgSymbol = symbols.lookup(fqName: kotlinTextPkg) {
+            symbols.setParentSymbol(kotlinTextPkgSymbol, for: typographySymbol)
+        }
+        for (name, scalar) in typographyCharConstants {
+            registerTypographyCharConstant(
+                ownerSymbol: typographySymbol,
+                name: name,
+                scalar: scalar,
+                charType: charType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
+        // --- STDLIB-TEXT-TYPE-004: kotlin.text.CASE_INSENSITIVE_ORDER comparator ---
+        let comparatorFQName = kotlinRootPkg + [interner.intern("Comparator")]
+        if let comparatorSymbol = symbols.lookup(fqName: comparatorFQName) {
+            let caseInsensitiveOrderType = types.make(.classType(ClassType(
+                classSymbol: comparatorSymbol,
+                args: [.invariant(stringType)],
+                nullability: .nonNull
+            )))
+            registerSyntheticStringTopLevelProperty(
+                named: "CASE_INSENSITIVE_ORDER",
+                packageFQName: kotlinTextPkg,
+                returnType: caseInsensitiveOrderType,
+                externalLinkName: "kk_string_case_insensitive_order",
+                symbols: symbols,
+                interner: interner
+            )
+        }
 
         registerSyntheticStringExtensionFunction(
             named: "length",
@@ -386,6 +494,58 @@ extension DataFlowSemaPhase {
         )
 
         registerSyntheticStringExtensionFunction(
+            named: "toUByteOrNull",
+            externalLinkName: "kk_string_toUByteOrNull_radix",
+            receiverType: stringType,
+            parameters: [
+                ("radix", intType, false, false),
+            ],
+            returnType: types.makeNullable(types.ubyteType),
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "toUShortOrNull",
+            externalLinkName: "kk_string_toUShortOrNull_radix",
+            receiverType: stringType,
+            parameters: [
+                ("radix", intType, false, false),
+            ],
+            returnType: types.makeNullable(types.ushortType),
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "toUIntOrNull",
+            externalLinkName: "kk_string_toUIntOrNull_radix",
+            receiverType: stringType,
+            parameters: [
+                ("radix", intType, false, false),
+            ],
+            returnType: types.makeNullable(types.uintType),
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "toULongOrNull",
+            externalLinkName: "kk_string_toULongOrNull_radix",
+            receiverType: stringType,
+            parameters: [
+                ("radix", intType, false, false),
+            ],
+            returnType: types.makeNullable(types.ulongType),
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
             named: "toDouble",
             externalLinkName: "kk_string_toDouble",
             receiverType: stringType,
@@ -577,6 +737,20 @@ extension DataFlowSemaPhase {
         )
 
         registerSyntheticStringExtensionFunction(
+            named: "replaceIndentByMargin",
+            externalLinkName: "kk_string_replaceIndentByMargin",
+            receiverType: stringType,
+            parameters: [
+                ("newIndent", stringType, true, false),
+                ("marginPrefix", stringType, true, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
             named: "indexOf",
             externalLinkName: "kk_string_indexOf",
             receiverType: stringType,
@@ -628,6 +802,108 @@ extension DataFlowSemaPhase {
                 ("ignoreCase", boolType, false, false),
             ],
             returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-TEXT-SEARCH-001: CharSequence.indexOfAny(chars, startIndex, ignoreCase) ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "indexOfAny",
+            externalLinkName: "kk_string_indexOfAny_chars",
+            receiverType: charSequenceType,
+            parameters: [
+                ("chars", charArrayType, false, false),
+                ("startIndex", intType, false, false),
+                ("ignoreCase", boolType, false, false),
+            ],
+            returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-TEXT-SEARCH-002: CharSequence.indexOfAny(strings, startIndex, ignoreCase) ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "indexOfAny",
+            externalLinkName: "kk_string_indexOfAny_strings",
+            receiverType: charSequenceType,
+            parameters: [
+                ("strings", collectionStringType, false, false),
+                ("startIndex", intType, false, false),
+                ("ignoreCase", boolType, false, false),
+            ],
+            returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-TEXT-SEARCH-003: CharSequence.lastIndexOfAny(chars, startIndex, ignoreCase) ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "lastIndexOfAny",
+            externalLinkName: "kk_string_lastIndexOfAny_chars",
+            receiverType: charSequenceType,
+            parameters: [
+                ("chars", charArrayType, false, false),
+                ("startIndex", intType, false, false),
+                ("ignoreCase", boolType, false, false),
+            ],
+            returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-TEXT-SEARCH-004: CharSequence.lastIndexOfAny(strings, startIndex, ignoreCase) ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "lastIndexOfAny",
+            externalLinkName: "kk_string_lastIndexOfAny_strings",
+            receiverType: charSequenceType,
+            parameters: [
+                ("strings", collectionStringType, false, false),
+                ("startIndex", intType, false, false),
+                ("ignoreCase", boolType, false, false),
+            ],
+            returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-TEXT-SEARCH-005: CharSequence.findAnyOf(strings, startIndex, ignoreCase) ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "findAnyOf",
+            externalLinkName: "kk_string_findAnyOf",
+            receiverType: charSequenceType,
+            parameters: [
+                ("strings", collectionStringType, false, false),
+                ("startIndex", intType, false, false),
+                ("ignoreCase", boolType, false, false),
+            ],
+            returnType: nullablePairIntStringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-TEXT-SEARCH-006: CharSequence.findLastAnyOf(strings, startIndex, ignoreCase) ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "findLastAnyOf",
+            externalLinkName: "kk_string_findLastAnyOf",
+            receiverType: charSequenceType,
+            parameters: [
+                ("strings", collectionStringType, false, false),
+                ("startIndex", intType, false, false),
+                ("ignoreCase", boolType, false, false),
+            ],
+            returnType: nullablePairIntStringType,
             packageFQName: kotlinTextPkg,
             symbols: symbols,
             interner: interner
@@ -973,6 +1249,134 @@ extension DataFlowSemaPhase {
             receiverType: stringType,
             parameters: [
                 ("delimiter", stringType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-TEXT-REPLACE-001: String.replaceAfter(delimiter, replacement, missingDelimiterValue) ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "replaceAfter",
+            externalLinkName: "kk_string_replaceAfter",
+            receiverType: stringType,
+            parameters: [
+                ("delimiter", stringType, false, false),
+                ("replacement", stringType, false, false),
+                ("missingDelimiterValue", stringType, true, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "replaceAfter",
+            externalLinkName: "kk_string_replaceAfter_char",
+            receiverType: stringType,
+            parameters: [
+                ("delimiter", charType, false, false),
+                ("replacement", stringType, false, false),
+                ("missingDelimiterValue", stringType, true, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-TEXT-REPLACE-002: String.replaceAfterLast(delimiter, replacement, missingDelimiterValue) ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "replaceAfterLast",
+            externalLinkName: "kk_string_replaceAfterLast",
+            receiverType: stringType,
+            parameters: [
+                ("delimiter", stringType, false, false),
+                ("replacement", stringType, false, false),
+                ("missingDelimiterValue", stringType, true, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "replaceAfterLast",
+            externalLinkName: "kk_string_replaceAfterLast_char",
+            receiverType: stringType,
+            parameters: [
+                ("delimiter", charType, false, false),
+                ("replacement", stringType, false, false),
+                ("missingDelimiterValue", stringType, true, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-TEXT-REPLACE-003: String.replaceBefore(delimiter, replacement, missingDelimiterValue) ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "replaceBefore",
+            externalLinkName: "kk_string_replaceBefore",
+            receiverType: stringType,
+            parameters: [
+                ("delimiter", stringType, false, false),
+                ("replacement", stringType, false, false),
+                ("missingDelimiterValue", stringType, true, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "replaceBefore",
+            externalLinkName: "kk_string_replaceBefore_char",
+            receiverType: stringType,
+            parameters: [
+                ("delimiter", charType, false, false),
+                ("replacement", stringType, false, false),
+                ("missingDelimiterValue", stringType, true, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-TEXT-REPLACE-004: String.replaceBeforeLast(delimiter, replacement, missingDelimiterValue) ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "replaceBeforeLast",
+            externalLinkName: "kk_string_replaceBeforeLast",
+            receiverType: stringType,
+            parameters: [
+                ("delimiter", stringType, false, false),
+                ("replacement", stringType, false, false),
+                ("missingDelimiterValue", stringType, true, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "replaceBeforeLast",
+            externalLinkName: "kk_string_replaceBeforeLast_char",
+            receiverType: stringType,
+            parameters: [
+                ("delimiter", charType, false, false),
+                ("replacement", stringType, false, false),
+                ("missingDelimiterValue", stringType, true, false),
             ],
             returnType: stringType,
             packageFQName: kotlinTextPkg,
@@ -1429,9 +1833,27 @@ extension DataFlowSemaPhase {
             isSuspend: false,
             nullability: .nonNull
         )))
+        let charToIntType = types.make(.functionType(FunctionType(
+            params: [charType],
+            returnType: intType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let charToDoubleType = types.make(.functionType(FunctionType(
+            params: [charType],
+            returnType: doubleType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
         let charToNullableAnyType = types.make(.functionType(FunctionType(
             params: [charType],
             returnType: types.nullableAnyType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let charCharToCharType = types.make(.functionType(FunctionType(
+            params: [charType, charType],
+            returnType: charType,
             isSuspend: false,
             nullability: .nonNull
         )))
@@ -1444,6 +1866,12 @@ extension DataFlowSemaPhase {
         let intCharToBoolType = types.make(.functionType(FunctionType(
             params: [intType, charType],
             returnType: boolType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let intCharCharToCharType = types.make(.functionType(FunctionType(
+            params: [intType, charType, charType],
+            returnType: charType,
             isSuspend: false,
             nullability: .nonNull
         )))
@@ -1541,6 +1969,217 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- STDLIB-TEXT-HOF-001: CharSequence.firstNotNullOf(transform) ---
+        let firstNotNullOfFQName = kotlinTextPkg + [interner.intern("firstNotNullOf")]
+        if !symbols.lookupAll(fqName: firstNotNullOfFQName).contains(where: { symID in
+            guard let sig = symbols.functionSignature(for: symID) else {
+                return false
+            }
+            return sig.receiverType == charSequenceType && sig.parameterTypes.count == 1
+        }) {
+            let rName = interner.intern("R")
+            let rSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: firstNotNullOfFQName + [rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let transformType = types.make(.functionType(FunctionType(
+                params: [charType],
+                returnType: types.makeNullable(rType),
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: interner.intern("firstNotNullOf"),
+                fqName: firstNotNullOfFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            if let packageSymbol = symbols.lookup(fqName: kotlinTextPkg) {
+                symbols.setParentSymbol(packageSymbol, for: memberSymbol)
+            }
+            symbols.setExternalLinkName("kk_string_firstNotNullOf", for: memberSymbol)
+
+            let transformParamName = interner.intern("transform")
+            let transformParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: transformParamName,
+                fqName: firstNotNullOfFQName + [transformParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: transformParamSymbol)
+
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: charSequenceType,
+                    parameterTypes: [transformType],
+                    returnType: rType,
+                    valueParameterSymbols: [transformParamSymbol],
+                    valueParameterHasDefaultValues: [false],
+                    valueParameterIsVararg: [false],
+                    typeParameterSymbols: [rSymbol],
+                    classTypeParameterCount: 0
+                ),
+                for: memberSymbol
+            )
+        }
+
+        // --- STDLIB-TEXT-HOF-002: CharSequence.firstNotNullOfOrNull(transform) ---
+        let firstNotNullOfOrNullFQName = kotlinTextPkg + [interner.intern("firstNotNullOfOrNull")]
+        if !symbols.lookupAll(fqName: firstNotNullOfOrNullFQName).contains(where: { symID in
+            guard let sig = symbols.functionSignature(for: symID) else {
+                return false
+            }
+            return sig.receiverType == charSequenceType && sig.parameterTypes.count == 1
+        }) {
+            let rName = interner.intern("R")
+            let rSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: firstNotNullOfOrNullFQName + [rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let nullableRType = types.makeNullable(rType)
+            let transformType = types.make(.functionType(FunctionType(
+                params: [charType],
+                returnType: nullableRType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: interner.intern("firstNotNullOfOrNull"),
+                fqName: firstNotNullOfOrNullFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            if let packageSymbol = symbols.lookup(fqName: kotlinTextPkg) {
+                symbols.setParentSymbol(packageSymbol, for: memberSymbol)
+            }
+            symbols.setExternalLinkName("kk_string_firstNotNullOfOrNull", for: memberSymbol)
+
+            let transformParamName = interner.intern("transform")
+            let transformParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: transformParamName,
+                fqName: firstNotNullOfOrNullFQName + [transformParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: transformParamSymbol)
+
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: charSequenceType,
+                    parameterTypes: [transformType],
+                    returnType: nullableRType,
+                    valueParameterSymbols: [transformParamSymbol],
+                    valueParameterHasDefaultValues: [false],
+                    valueParameterIsVararg: [false],
+                    typeParameterSymbols: [rSymbol],
+                    classTypeParameterCount: 0
+                ),
+                for: memberSymbol
+            )
+        }
+
+        // --- STDLIB-TEXT-HOF-003: CharSequence.reduceRightIndexed(operation) ---
+        registerSyntheticStringExtensionFunction(
+            named: "reduceRightIndexed",
+            externalLinkName: "kk_string_reduceRightIndexed",
+            receiverType: charSequenceType,
+            parameters: [("operation", intCharCharToCharType, false, false)],
+            returnType: charType,
+            flags: [.synthetic, .inlineFunction],
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-TEXT-HOF-004: CharSequence.reduceRightIndexedOrNull(operation) ---
+        registerSyntheticStringExtensionFunction(
+            named: "reduceRightIndexedOrNull",
+            externalLinkName: "kk_string_reduceRightIndexedOrNull",
+            receiverType: charSequenceType,
+            parameters: [("operation", intCharCharToCharType, false, false)],
+            returnType: nullableCharType,
+            flags: [.synthetic, .inlineFunction],
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-TEXT-HOF-005: CharSequence.reduceRightOrNull(operation) ---
+        registerSyntheticStringExtensionFunction(
+            named: "reduceRightOrNull",
+            externalLinkName: "kk_string_reduceRightOrNull",
+            receiverType: charSequenceType,
+            parameters: [("operation", charCharToCharType, false, false)],
+            returnType: nullableCharType,
+            flags: [.synthetic, .inlineFunction],
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-TEXT-HOF-006: CharSequence.sumBy(selector) deprecated surface ---
+        registerSyntheticStringExtensionFunction(
+            named: "sumBy",
+            externalLinkName: "kk_string_sumBy",
+            receiverType: charSequenceType,
+            parameters: [("selector", charToIntType, false, false)],
+            returnType: intType,
+            annotations: [
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.Deprecated",
+                    arguments: [
+                        "message = \"Use sumOf instead.\"",
+                        "replaceWith = ReplaceWith(\"sumOf(selector)\")",
+                    ]
+                ),
+            ],
+            flags: [.synthetic, .inlineFunction],
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-TEXT-HOF-007: CharSequence.sumByDouble(selector) deprecated surface ---
+        registerSyntheticStringExtensionFunction(
+            named: "sumByDouble",
+            externalLinkName: "kk_string_sumByDouble",
+            receiverType: charSequenceType,
+            parameters: [("selector", charToDoubleType, false, false)],
+            returnType: doubleType,
+            annotations: [
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.Deprecated",
+                    arguments: [
+                        "message = \"Use sumOf instead.\"",
+                        "replaceWith = ReplaceWith(\"sumOf(selector)\")",
+                    ]
+                ),
+            ],
+            flags: [.synthetic, .inlineFunction],
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticStringExtensionFunction(
             named: "filterIndexed",
             externalLinkName: "kk_string_filterIndexed",
@@ -2154,109 +2793,108 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // --- STDLIB-TEXT-SEQ-001: CharSequence.chunkedSequence(size) ---
-
-        registerSyntheticStringExtensionFunction(
-            named: "chunkedSequence",
-            externalLinkName: "kk_string_chunkedSequence",
-            receiverType: charSequenceType,
-            parameters: [
-                ("size", intType, false, false),
-            ],
-            returnType: sequenceStringType,
-            packageFQName: kotlinTextPkg,
-            symbols: symbols,
-            interner: interner
-        )
-
-        // --- STDLIB-TEXT-SEQ-002: CharSequence.chunkedSequence(size, transform) ---
-
-        let chunkedSequenceTransformFQName = kotlinTextPkg + [interner.intern("chunkedSequence")]
-        let chunkedSequenceRName = interner.intern("R")
-        let chunkedSequenceRFQName = chunkedSequenceTransformFQName + [chunkedSequenceRName]
-        let chunkedSequenceRSymbol: SymbolID = if let existing = symbols.lookup(fqName: chunkedSequenceRFQName) {
-            existing
-        } else {
-            symbols.define(
-                kind: .typeParameter,
-                name: chunkedSequenceRName,
-                fqName: chunkedSequenceRFQName,
-                declSite: nil,
-                visibility: .private,
-                flags: []
+        for receiverType in [charSequenceType, stringType] {
+            registerSyntheticStringExtensionFunction(
+                named: "chunkedSequence",
+                externalLinkName: "kk_string_chunked_sequence",
+                receiverType: receiverType,
+                parameters: [
+                    ("size", intType, false, false),
+                ],
+                returnType: sequenceStringType,
+                packageFQName: kotlinTextPkg,
+                symbols: symbols,
+                interner: interner
             )
         }
-        let chunkedSequenceRType = types.make(.typeParam(TypeParamType(
-            symbol: chunkedSequenceRSymbol,
-            nullability: .nonNull
-        )))
-        let chunkedSequenceTransformType = types.make(.functionType(FunctionType(
-            params: [charSequenceType],
-            returnType: chunkedSequenceRType,
-            isSuspend: false,
-            nullability: .nonNull
-        )))
-        let chunkedSequenceTransformReturnType = makeSequenceType(
-            symbols: symbols,
-            types: types,
-            interner: interner,
-            elementType: chunkedSequenceRType
-        )
-        let hasChunkedSequenceTransform = symbols.lookupAll(fqName: chunkedSequenceTransformFQName).contains { symID in
-            guard let sig = symbols.functionSignature(for: symID) else {
-                return false
+
+        do {
+            let functionName = interner.intern("chunkedSequence")
+            let functionFQName = kotlinTextPkg + [functionName]
+            let rName = interner.intern("R")
+            let rFQName = functionFQName + [rName]
+            let rSymbol: SymbolID = if let existing = symbols.lookup(fqName: rFQName) {
+                existing
+            } else {
+                symbols.define(
+                    kind: .typeParameter,
+                    name: rName,
+                    fqName: rFQName,
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
             }
-            return sig.receiverType == charSequenceType && sig.parameterTypes.count == 2
-        }
-        if !hasChunkedSequenceTransform {
-            let memberSymbol = symbols.define(
-                kind: .function,
-                name: interner.intern("chunkedSequence"),
-                fqName: chunkedSequenceTransformFQName,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic, .inlineFunction]
+            let rType = types.make(.typeParam(TypeParamType(
+                symbol: rSymbol,
+                nullability: .nonNull
+            )))
+            let transformType = types.make(.functionType(FunctionType(
+                params: [charSequenceType],
+                returnType: rType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let sequenceRType = makeSequenceType(
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                elementType: rType
             )
-            if let packageSymbol = symbols.lookup(fqName: kotlinTextPkg) {
-                symbols.setParentSymbol(packageSymbol, for: memberSymbol)
+            for receiverType in [charSequenceType, stringType] {
+                guard !symbols.lookupAll(fqName: functionFQName).contains(where: { symbolID in
+                    guard let signature = symbols.functionSignature(for: symbolID) else {
+                        return false
+                    }
+                    return signature.receiverType == receiverType
+                        && signature.parameterTypes == [intType, transformType]
+                }) else {
+                    continue
+                }
+                let functionSymbol = symbols.define(
+                    kind: .function,
+                    name: functionName,
+                    fqName: functionFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic, .inlineFunction]
+                )
+                if let packageSymbol = symbols.lookup(fqName: kotlinTextPkg) {
+                    symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+                }
+                symbols.setExternalLinkName("kk_string_chunked_sequence_transform", for: functionSymbol)
+                let sizeParameter = symbols.define(
+                    kind: .valueParameter,
+                    name: interner.intern("size"),
+                    fqName: functionFQName + [interner.intern("size")],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                let transformParameter = symbols.define(
+                    kind: .valueParameter,
+                    name: interner.intern("transform"),
+                    fqName: functionFQName + [interner.intern("transform")],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(functionSymbol, for: sizeParameter)
+                symbols.setParentSymbol(functionSymbol, for: transformParameter)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [intType, transformType],
+                        returnType: sequenceRType,
+                        isSuspend: false,
+                        valueParameterSymbols: [sizeParameter, transformParameter],
+                        valueParameterHasDefaultValues: [false, false],
+                        valueParameterIsVararg: [false, false],
+                        typeParameterSymbols: [rSymbol]
+                    ),
+                    for: functionSymbol
+                )
             }
-            symbols.setExternalLinkName("kk_string_chunkedSequence_transform", for: memberSymbol)
-
-            let sizeParamName = interner.intern("size")
-            let sizeParamSymbol = symbols.define(
-                kind: .valueParameter,
-                name: sizeParamName,
-                fqName: chunkedSequenceTransformFQName + [sizeParamName],
-                declSite: nil,
-                visibility: .private,
-                flags: [.synthetic]
-            )
-            symbols.setParentSymbol(memberSymbol, for: sizeParamSymbol)
-
-            let transformParamName = interner.intern("transform")
-            let transformParamSymbol = symbols.define(
-                kind: .valueParameter,
-                name: transformParamName,
-                fqName: chunkedSequenceTransformFQName + [transformParamName],
-                declSite: nil,
-                visibility: .private,
-                flags: [.synthetic]
-            )
-            symbols.setParentSymbol(memberSymbol, for: transformParamSymbol)
-
-            symbols.setFunctionSignature(
-                FunctionSignature(
-                    receiverType: charSequenceType,
-                    parameterTypes: [intType, chunkedSequenceTransformType],
-                    returnType: chunkedSequenceTransformReturnType,
-                    valueParameterSymbols: [sizeParamSymbol, transformParamSymbol],
-                    valueParameterHasDefaultValues: [false, false],
-                    valueParameterIsVararg: [false, false],
-                    typeParameterSymbols: [chunkedSequenceRSymbol],
-                    classTypeParameterCount: 0
-                ),
-                for: memberSymbol
-            )
         }
 
         registerSyntheticStringExtensionFunction(
@@ -2300,6 +2938,140 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- STDLIB-TEXT-SEQ-003: CharSequence.windowedSequence(size, step, partialWindows) ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "windowedSequence",
+            externalLinkName: "kk_string_windowedSequence_partial",
+            receiverType: charSequenceType,
+            parameters: [
+                ("size", intType, false, false),
+                ("step", intType, false, false),
+                ("partialWindows", boolType, false, false),
+            ],
+            returnType: sequenceStringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-TEXT-SEQ-004: CharSequence.windowedSequence(size, step, partialWindows, transform) ---
+
+        let windowedSequenceTransformFQName = kotlinTextPkg + [interner.intern("windowedSequence")]
+        let windowedSequenceRName = interner.intern("R")
+        let windowedSequenceRFQName = windowedSequenceTransformFQName + [windowedSequenceRName]
+        let windowedSequenceRSymbol: SymbolID = if let existing = symbols.lookup(fqName: windowedSequenceRFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: windowedSequenceRName,
+                fqName: windowedSequenceRFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let windowedSequenceRType = types.make(.typeParam(TypeParamType(
+            symbol: windowedSequenceRSymbol,
+            nullability: .nonNull
+        )))
+        let windowedSequenceTransformType = types.make(.functionType(FunctionType(
+            params: [charSequenceType],
+            returnType: windowedSequenceRType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let windowedSequenceTransformReturnType = makeSequenceType(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            elementType: windowedSequenceRType
+        )
+        let hasWindowedSequenceTransform = symbols.lookupAll(fqName: windowedSequenceTransformFQName).contains { symID in
+            guard let sig = symbols.functionSignature(for: symID) else {
+                return false
+            }
+            return sig.receiverType == charSequenceType && sig.parameterTypes.count == 4
+        }
+        if !hasWindowedSequenceTransform {
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: interner.intern("windowedSequence"),
+                fqName: windowedSequenceTransformFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            if let packageSymbol = symbols.lookup(fqName: kotlinTextPkg) {
+                symbols.setParentSymbol(packageSymbol, for: memberSymbol)
+            }
+            symbols.setExternalLinkName("kk_string_windowedSequence_transform", for: memberSymbol)
+
+            let sizeParamName = interner.intern("size")
+            let sizeParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: sizeParamName,
+                fqName: windowedSequenceTransformFQName + [sizeParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: sizeParamSymbol)
+
+            let stepParamName = interner.intern("step")
+            let stepParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: stepParamName,
+                fqName: windowedSequenceTransformFQName + [stepParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: stepParamSymbol)
+
+            let partialWindowsParamName = interner.intern("partialWindows")
+            let partialWindowsParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: partialWindowsParamName,
+                fqName: windowedSequenceTransformFQName + [partialWindowsParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: partialWindowsParamSymbol)
+
+            let transformParamName = interner.intern("transform")
+            let transformParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: transformParamName,
+                fqName: windowedSequenceTransformFQName + [transformParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: transformParamSymbol)
+
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: charSequenceType,
+                    parameterTypes: [intType, intType, boolType, windowedSequenceTransformType],
+                    returnType: windowedSequenceTransformReturnType,
+                    valueParameterSymbols: [
+                        sizeParamSymbol,
+                        stepParamSymbol,
+                        partialWindowsParamSymbol,
+                        transformParamSymbol,
+                    ],
+                    valueParameterHasDefaultValues: [false, false, false, false],
+                    valueParameterIsVararg: [false, false, false, false],
+                    typeParameterSymbols: [windowedSequenceRSymbol],
+                    classTypeParameterCount: 0
+                ),
+                for: memberSymbol
+            )
+        }
 
         // --- STDLIB-318: String.commonPrefixWith / commonSuffixWith ---
 
@@ -2692,6 +3464,75 @@ extension DataFlowSemaPhase {
         )))
     }
 
+    private func makeCollectionType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        elementType: TypeID
+    ) -> TypeID {
+        let collectionSymbol = ensureCollectionSymbol(
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        return types.make(.classType(ClassType(
+            classSymbol: collectionSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+    }
+
+    private func ensureCollectionSymbol(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> SymbolID {
+        let collectionName = interner.intern("Collection")
+        let collectionFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            collectionName,
+        ]
+        if let existing = symbols.lookup(fqName: collectionFQName) {
+            return existing
+        }
+        let collectionsPkg: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+        ]
+        if symbols.lookup(fqName: collectionsPkg) == nil {
+            _ = symbols.define(
+                kind: .package,
+                name: interner.intern("collections"),
+                fqName: collectionsPkg,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        let sym = symbols.define(
+            kind: .interface,
+            name: collectionName,
+            fqName: collectionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = collectionFQName + [typeParamName]
+        let typeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: typeParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: sym)
+        types.setNominalTypeParameterVariances([.out], for: sym)
+        return sym
+    }
+
     private func ensureIterableSymbol(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -2932,6 +3773,157 @@ extension DataFlowSemaPhase {
         )
     }
 
+    private func registerAppendableMemberFunction(
+        named name: String,
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        parameters: [(name: String, type: TypeID, hasDefault: Bool, isVararg: Bool)],
+        returnType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let functionName = interner.intern(name)
+        let functionFQName = ownerInfo.fqName + [functionName]
+        if symbols.lookupAll(fqName: functionFQName).contains(where: { symbolID in
+            guard let existingSignature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return existingSignature.receiverType == ownerType
+                && existingSignature.parameterTypes == parameters.map(\.type)
+        }) {
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
+
+        var parameterTypes: [TypeID] = []
+        var parameterSymbols: [SymbolID] = []
+        var parameterDefaults: [Bool] = []
+        var parameterVarargs: [Bool] = []
+
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: functionFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            parameterTypes.append(parameter.type)
+            parameterSymbols.append(parameterSymbol)
+            parameterDefaults.append(parameter.hasDefault)
+            parameterVarargs.append(parameter.isVararg)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: ownerType,
+                parameterTypes: parameterTypes,
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: parameterSymbols,
+                valueParameterHasDefaultValues: parameterDefaults,
+                valueParameterIsVararg: parameterVarargs,
+                typeParameterSymbols: []
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private var typographyCharConstants: [(name: String, scalar: UInt32)] {
+        [
+            ("almostEqual", 0x2248),
+            ("amp", 0x0026),
+            ("bullet", 0x2022),
+            ("cent", 0x00A2),
+            ("copyright", 0x00A9),
+            ("dagger", 0x2020),
+            ("degree", 0x00B0),
+            ("dollar", 0x0024),
+            ("doubleDagger", 0x2021),
+            ("doublePrime", 0x2033),
+            ("ellipsis", 0x2026),
+            ("euro", 0x20AC),
+            ("greater", 0x003E),
+            ("greaterOrEqual", 0x2265),
+            ("half", 0x00BD),
+            ("leftDoubleQuote", 0x201C),
+            ("leftGuillemet", 0x00AB),
+            ("leftGuillemete", 0x00AB),
+            ("leftSingleQuote", 0x2018),
+            ("less", 0x003C),
+            ("lessOrEqual", 0x2264),
+            ("lowDoubleQuote", 0x201E),
+            ("lowSingleQuote", 0x201A),
+            ("mdash", 0x2014),
+            ("middleDot", 0x00B7),
+            ("nbsp", 0x00A0),
+            ("ndash", 0x2013),
+            ("notEqual", 0x2260),
+            ("paragraph", 0x00B6),
+            ("plusMinus", 0x00B1),
+            ("pound", 0x00A3),
+            ("prime", 0x2032),
+            ("quote", 0x0022),
+            ("registered", 0x00AE),
+            ("rightDoubleQuote", 0x201D),
+            ("rightGuillemet", 0x00BB),
+            ("rightGuillemete", 0x00BB),
+            ("rightSingleQuote", 0x2019),
+            ("section", 0x00A7),
+            ("times", 0x00D7),
+            ("tm", 0x2122),
+        ]
+    }
+
+    private func registerTypographyCharConstant(
+        ownerSymbol: SymbolID,
+        name: String,
+        scalar: UInt32,
+        charType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let propertyName = interner.intern(name)
+        let propertyFQName = ownerInfo.fqName + [propertyName]
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: {
+            symbols.symbol($0)?.kind == .property
+        }) {
+            symbols.setPropertyType(charType, for: existing)
+            symbols.setConstValueExprKind(.charLiteral(scalar), for: existing)
+            symbols.insertFlags([.synthetic, .constValue], for: existing)
+            return
+        }
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .constValue]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
+        symbols.setPropertyType(charType, for: propertySymbol)
+        symbols.setConstValueExprKind(.charLiteral(scalar), for: propertySymbol)
+    }
+
     private func ensureSyntheticObjectSymbol(
         named name: String,
         in pkg: [InternedString],
@@ -2979,6 +3971,39 @@ extension DataFlowSemaPhase {
         )
         symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
         symbols.setPropertyType(propertyType, for: propertySymbol)
+    }
+
+    private func registerSyntheticStringTopLevelProperty(
+        named name: String,
+        packageFQName: [InternedString],
+        returnType: TypeID,
+        externalLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let propertyName = interner.intern(name)
+        let propertyFQName = packageFQName + [propertyName]
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
+            symbols.symbol(symbolID)?.kind == .property
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            symbols.setPropertyType(returnType, for: existing)
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: propertySymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
+        symbols.setPropertyType(returnType, for: propertySymbol)
     }
 
     private func registerSyntheticBigNumberMemberFunction(

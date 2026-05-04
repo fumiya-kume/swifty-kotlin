@@ -114,6 +114,11 @@ public func kk_string_builder_delete_obj(_ sbRaw: Int, _ start: Int, _ end: Int)
     return sbRaw
 }
 
+@_cdecl("kk_string_builder_deleteRange")
+public func kk_string_builder_deleteRange(_ sbRaw: Int, _ startIndex: Int, _ endIndex: Int) -> Int {
+    kk_string_builder_delete_obj(sbRaw, startIndex, endIndex)
+}
+
 @_cdecl("kk_string_builder_clear")
 public func kk_string_builder_clear(_ sbRaw: Int) -> Int {
     guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return sbRaw }
@@ -143,12 +148,47 @@ public func kk_string_builder_deleteCharAt(_ sbRaw: Int, _ index: Int) -> Int {
     return sbRaw
 }
 
+@_cdecl("kk_string_builder_deleteAt")
+public func kk_string_builder_deleteAt(_ sbRaw: Int, _ index: Int) -> Int {
+    kk_string_builder_deleteCharAt(sbRaw, index)
+}
+
 @_cdecl("kk_string_builder_appendRange_obj")
 public func kk_string_builder_appendRange_obj(_ sbRaw: Int, _ csqRaw: Int, _ startIndex: Int, _ endIndex: Int) -> Int {
     guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return sbRaw }
     let csq = runtimeElementToString(csqRaw)
     // Use UTF-16 code unit indexing to match Kotlin CharSequence semantics.
     sb.value.append(runtimeUTF16Substring(csq, startIndex: startIndex, endIndex: endIndex))
+    return sbRaw
+}
+
+@_cdecl("kk_string_builder_insertRange_obj")
+public func kk_string_builder_insertRange_obj(_ sbRaw: Int, _ index: Int, _ csqRaw: Int, _ startIndex: Int, _ endIndex: Int) -> Int {
+    guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return sbRaw }
+    let utf8Count = sb.value.utf8.count
+    guard index >= 0, index <= utf8Count else {
+        fatalError("StringIndexOutOfBoundsException: index=\(index), length=\(utf8Count)")
+    }
+    let csq = runtimeElementToString(csqRaw)
+    let slice = runtimeUTF16Substring(csq, startIndex: startIndex, endIndex: endIndex)
+    let utf8Index = sb.value.utf8.index(sb.value.utf8.startIndex, offsetBy: index)
+    let insertionPoint = String.Index(utf8Index, within: sb.value) ?? sb.value.endIndex
+    sb.value.insert(contentsOf: slice, at: insertionPoint)
+    return sbRaw
+}
+
+@_cdecl("kk_string_builder_setRange")
+public func kk_string_builder_setRange(_ sbRaw: Int, _ startIndex: Int, _ endIndex: Int, _ valueRaw: Int) -> Int {
+    guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return sbRaw }
+    let len = sb.value.utf8.count
+    guard startIndex >= 0, startIndex <= len, endIndex >= startIndex, endIndex <= len else {
+        fatalError("StringIndexOutOfBoundsException: startIndex=\(startIndex), endIndex=\(endIndex), length=\(len)")
+    }
+    let startIdx = sb.value.utf8.index(sb.value.utf8.startIndex, offsetBy: startIndex)
+    let endIdx = sb.value.utf8.index(sb.value.utf8.startIndex, offsetBy: endIndex)
+    let sIdx = String.Index(startIdx, within: sb.value) ?? sb.value.endIndex
+    let eIdx = String.Index(endIdx, within: sb.value) ?? sb.value.endIndex
+    sb.value.replaceSubrange(sIdx..<eIdx, with: runtimeElementToString(valueRaw))
     return sbRaw
 }
 
