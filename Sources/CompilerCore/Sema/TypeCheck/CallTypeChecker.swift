@@ -3471,6 +3471,7 @@ final class CallTypeChecker {
                         sema.types.make(.primitive(.boolean, .nonNull))
                     case "split": sema.types.anyType
                     case "toUByteOrNull": sema.types.makeNullable(sema.types.ubyteType)
+                    case "toUShortOrNull": sema.types.makeNullable(sema.types.ushortType)
                     case "toUIntOrNull": sema.types.makeNullable(sema.types.uintType)
                     case "toULongOrNull": sema.types.makeNullable(sema.types.ulongType)
                     case "repeat", "drop", "take", "takeLast", "dropLast":

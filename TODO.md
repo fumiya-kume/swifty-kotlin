@@ -94,7 +94,7 @@
 - [x] STDLIB-TEXT-NUM-001: `String.toUByteOrNull(radix)` を追加する
 - [x] STDLIB-TEXT-NUM-002: `String.toUIntOrNull(radix)` を追加する
 - [x] STDLIB-TEXT-NUM-003: `String.toULongOrNull(radix)` を追加する
-- [ ] STDLIB-TEXT-NUM-004: `String.toUShortOrNull(radix)` を追加する
+- [x] STDLIB-TEXT-NUM-004: `String.toUShortOrNull(radix)` を追加する
 
 ### Phase 2: コレクション・Sequence・Range
 - [ ] STDLIB-GAP-PH2: `kotlin.collections` / `kotlin.sequences` / `kotlin.ranges` の未対応を潰す
@@ -327,13 +327,13 @@
 - [x] STDLIB-I18N-COMMON-004: `Char.uppercase(Locale)` を追加する
 - [x] STDLIB-I18N-COMMON-005: `Char.lowercase(Locale)` を追加する
 - [x] STDLIB-I18N-COMMON-006: `String.toIntOrNull(radix: Int)` を追加する
-- [ ] STDLIB-I18N-COMMON-007: `Char.directionality` を `CharDirectionality` enum で露出する（現状は `Int` placeholder）
+- [x] STDLIB-I18N-COMMON-007: `Char.directionality` を `CharDirectionality` enum で露出する（現状は `Int` placeholder）
 - [x] STDLIB-I18N-COMMON-008: `Char.lowercaseChar()` を追加する
-- [ ] STDLIB-I18N-COMMON-009: `Char.uppercaseChar()` を追加する
+- [x] STDLIB-I18N-COMMON-009: `Char.uppercaseChar()` を追加する
 - [x] STDLIB-I18N-COMMON-010: `Char.titlecaseChar()` を追加する
 - [x] STDLIB-I18N-COMMON-011: `Char.isDefined()` を追加する
 - [x] STDLIB-I18N-COMMON-012: Native `Char.isSupplementaryCodePoint()` / `Char.isSurrogatePair()` を追加する
-- [ ] STDLIB-I18N-COMMON-013: Native `Char.toChars()` / `Char.toCodePoint()` を追加する
+- [x] STDLIB-I18N-COMMON-013: Native `Char.toChars()` / `Char.toCodePoint()` を追加する
 - [x] STDLIB-TIME-EXP-001: `@ExperimentalTime` 系 API の整理（`Clock` / `TimeMark`）
 - [x] STDLIB-TIME-STABLE-008: `DurationUnit` enum surface を追加する
 - [x] STDLIB-TIME-STABLE-009: `Int.toDuration(unit)` / `Long.toDuration(unit)` / `Double.toDuration(unit)` を追加する

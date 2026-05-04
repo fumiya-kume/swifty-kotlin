@@ -4495,6 +4495,15 @@ extension CallTypeChecker {
                                   let signature = sema.symbols.functionSignature(for: candidate),
                                   let recvType = signature.receiverType
                             else { return false }
+                            // Exclude property accessor functions (getter/setter)
+                            // whose parent is a property symbol.  Their short name
+                            // is "get"/"set" and must not pollute member lookup.
+                            if let parentID = sema.symbols.parentSymbol(for: candidate),
+                               let parentSym = sema.symbols.symbol(parentID),
+                               parentSym.kind == .property
+                            {
+                                return false
+                            }
                             return extensionSyntheticFallbackReceiverMatches(
                                 callSiteReceiver: nonNullReceiver,
                                 declaredReceiver: recvType,
@@ -5420,6 +5429,8 @@ extension CallTypeChecker {
                         sema.types.intType
                     case "toUByteOrNull":
                         sema.types.makeNullable(sema.types.ubyteType)
+                    case "toUShortOrNull":
+                        sema.types.makeNullable(sema.types.ushortType)
                     case "toUIntOrNull":
                         sema.types.makeNullable(sema.types.uintType)
                     case "toULongOrNull":
