@@ -1,5 +1,5 @@
 fun main() {
-    val values: Iterable<Int> = listOf(1, 2, 3)
+    val values: List<Int> = listOf(1, 2, 3)
 
     println(values.reduceRightIndexed { index, value, acc ->
         index * 100 + value * 10 + acc

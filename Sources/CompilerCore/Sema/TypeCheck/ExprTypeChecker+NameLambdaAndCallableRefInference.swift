@@ -725,6 +725,11 @@ extension ExprTypeChecker {
         if let receiverType = expectedFunctionType?.receiver {
             bodyCtx = bodyCtx.with(implicitReceiverType: receiverType)
         }
+        if let expectedFunctionType, !expectedFunctionType.contextReceivers.isEmpty {
+            bodyCtx = bodyCtx.with(
+                contextReceiverTypes: ctx.contextReceiverTypes + expectedFunctionType.contextReceivers
+            )
+        }
         let inferredBodyType = driver.inferExpr(
             body,
             ctx: bodyCtx,
