@@ -91,10 +91,10 @@ extension CodegenBackendIntegrationTests {
 
         @OptIn(ExperimentalContextParameters::class)
         fun main() {
-            val result = context(1) { "context-ok" }
+            val result = context("context-ok") { contextOf<String>() }
             println(result)
-            println(context("a", "b") { "context-two" })
-            println(context(1, 2, 3, 4, 5, 6) { "context-six" })
+            println(context("context-two", 2) { contextOf<String>() })
+            println(context(1, 2, "context-six", 4, 5, 6) { contextOf<String>() })
         }
         """
 
