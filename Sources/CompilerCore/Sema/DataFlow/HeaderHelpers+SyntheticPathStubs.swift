@@ -22,6 +22,7 @@
 /// - `CopyActionContext` type surface
 /// - `CopyActionResult` enum surface
 /// - `ExperimentalPathApi` marker annotation surface
+/// - `OnErrorResult` enum surface
 ///
 /// Each stub registers the kotlin.io.path.Path class, its constructor, member
 /// properties, and member functions in the symbol table so that name resolution
@@ -99,6 +100,22 @@ extension DataFlowSemaPhase {
             packageSymbol: kotlinIOPathPkgSymbol,
             symbols: symbols,
             interner: interner
+        )
+        let onErrorResultSymbol = ensurePathOnErrorResultEnum(
+            in: kotlinIOPathPkg,
+            packageSymbol: kotlinIOPathPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        let onErrorResultType = types.make(.classType(ClassType(
+            classSymbol: onErrorResultSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        setPathEnumEntryTypes(
+            enumSymbol: onErrorResultSymbol,
+            enumType: onErrorResultType,
+            symbols: symbols
         )
 
         let copyActionResultSymbol = ensurePathCopyActionResultEnum(
@@ -677,6 +694,50 @@ extension DataFlowSemaPhase {
         }
 
         for entry in ["CONTINUE", "SKIP_SUBTREE", "TERMINATE"] {
+            let entryName = interner.intern(entry)
+            let entryFQName = fqName + [entryName]
+            if symbols.lookup(fqName: entryFQName) != nil {
+                continue
+            }
+            let entrySymbol = symbols.define(
+                kind: .field,
+                name: entryName,
+                fqName: entryFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(enumSymbol, for: entrySymbol)
+        }
+
+        return enumSymbol
+    }
+
+    private func ensurePathOnErrorResultEnum(
+        in packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> SymbolID {
+        let name = interner.intern("OnErrorResult")
+        let fqName = packageFQName + [name]
+        if let existing = symbols.lookup(fqName: fqName) {
+            return existing
+        }
+
+        let enumSymbol = symbols.define(
+            kind: .enumClass,
+            name: name,
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol {
+            symbols.setParentSymbol(packageSymbol, for: enumSymbol)
+        }
+
+        for entry in ["SKIP_SUBTREE", "TERMINATE"] {
             let entryName = interner.intern(entry)
             let entryFQName = fqName + [entryName]
             if symbols.lookup(fqName: entryFQName) != nil {
