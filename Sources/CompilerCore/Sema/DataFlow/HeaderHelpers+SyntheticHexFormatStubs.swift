@@ -31,6 +31,11 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        let uByteArrayType = makeHexFormatUByteArrayType(
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
         let listIntType = makeHexFormatListIntType(
             symbols: symbols,
             types: types,
@@ -134,6 +139,66 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- String.hexToShort(format: HexFormat) ---
+        registerHexFormatExtensionFunction(
+            named: "hexToShort",
+            externalLinkName: "kk_string_hexToShort",
+            receiverType: stringType,
+            parameters: [("format", hexFormatType, true, false)],
+            returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- String.hexToUByte(format: HexFormat) ---
+        registerHexFormatExtensionFunction(
+            named: "hexToUByte",
+            externalLinkName: "kk_string_hexToUByte",
+            receiverType: stringType,
+            parameters: [("format", hexFormatType, true, false)],
+            returnType: types.ubyteType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- String.hexToUShort(format: HexFormat) ---
+        registerHexFormatExtensionFunction(
+            named: "hexToUShort",
+            externalLinkName: "kk_string_hexToUShort",
+            receiverType: stringType,
+            parameters: [("format", hexFormatType, true, false)],
+            returnType: types.ushortType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- String.hexToUInt(format: HexFormat) ---
+        registerHexFormatExtensionFunction(
+            named: "hexToUInt",
+            externalLinkName: "kk_string_hexToUInt",
+            receiverType: stringType,
+            parameters: [("format", hexFormatType, true, false)],
+            returnType: types.uintType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- String.hexToULong(format: HexFormat) ---
+        registerHexFormatExtensionFunction(
+            named: "hexToULong",
+            externalLinkName: "kk_string_hexToULong",
+            receiverType: stringType,
+            parameters: [("format", hexFormatType, true, false)],
+            returnType: types.ulongType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- String.hexToLong(format: HexFormat) ---
         registerHexFormatExtensionFunction(
             named: "hexToLong",
@@ -146,6 +211,18 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- String.hexToUInt(format: HexFormat) ---
+        registerHexFormatExtensionFunction(
+            named: "hexToUInt",
+            externalLinkName: "kk_string_hexToUInt",
+            receiverType: stringType,
+            parameters: [("format", hexFormatType, true, false)],
+            returnType: types.uintType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- String.hexToByteArray(format: HexFormat) ---
         registerHexFormatExtensionFunction(
             named: "hexToByteArray",
@@ -153,6 +230,18 @@ extension DataFlowSemaPhase {
             receiverType: stringType,
             parameters: [("format", hexFormatType, true, false)],
             returnType: listIntType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- String.hexToUByteArray(format: HexFormat) ---
+        registerHexFormatExtensionFunction(
+            named: "hexToUByteArray",
+            externalLinkName: "kk_string_hexToUByteArray",
+            receiverType: stringType,
+            parameters: [("format", hexFormatType, true, false)],
+            returnType: uByteArrayType,
             packageFQName: kotlinTextPkg,
             symbols: symbols,
             interner: interner
@@ -265,6 +354,20 @@ extension DataFlowSemaPhase {
         interner: StringInterner
     ) -> TypeID {
         let fqName: [InternedString] = [interner.intern("kotlin"), interner.intern("ByteArray")]
+        if let symbol = symbols.lookup(fqName: fqName) {
+            return types.make(.classType(ClassType(
+                classSymbol: symbol, args: [], nullability: .nonNull
+            )))
+        }
+        return types.anyType
+    }
+
+    private func makeHexFormatUByteArrayType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID {
+        let fqName: [InternedString] = [interner.intern("kotlin"), interner.intern("UByteArray")]
         if let symbol = symbols.lookup(fqName: fqName) {
             return types.make(.classType(ClassType(
                 classSymbol: symbol, args: [], nullability: .nonNull
