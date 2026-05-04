@@ -146,6 +146,12 @@ public func kk_atomic_int_fetchAndIncrement(_ receiver: Int) -> Int {
     return box.fetchAndAdd(1)
 }
 
+@_cdecl("kk_atomic_int_fetchAndDecrement")
+public func kk_atomic_int_fetchAndDecrement(_ receiver: Int) -> Int {
+    guard let box = atomicIntBox(from: receiver) else { return 0 }
+    return box.fetchAndAdd(-1)
+}
+
 @_cdecl("kk_atomic_int_incrementAndFetch")
 public func kk_atomic_int_incrementAndFetch(_ receiver: Int) -> Int {
     guard let box = atomicIntBox(from: receiver) else { return 0 }
@@ -328,6 +334,12 @@ public func kk_atomic_long_addAndFetch(_ receiver: Int, _ delta: Int) -> Int {
 public func kk_atomic_long_fetchAndIncrement(_ receiver: Int) -> Int {
     guard let box = atomicLongBox(from: receiver) else { return 0 }
     return box.fetchAndAdd(1)
+}
+
+@_cdecl("kk_atomic_long_fetchAndDecrement")
+public func kk_atomic_long_fetchAndDecrement(_ receiver: Int) -> Int {
+    guard let box = atomicLongBox(from: receiver) else { return 0 }
+    return box.fetchAndAdd(-1)
 }
 
 @_cdecl("kk_atomic_long_incrementAndFetch")

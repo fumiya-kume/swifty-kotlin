@@ -252,8 +252,11 @@ final class RuntimeAtomicIntNativeConcurrentTests: XCTestCase {
         _ = kk_atomic_int_incrementAndFetch(handle)
         let afterInc = kk_atomic_int_load(handle)
         XCTAssertEqual(afterInc, 2)
-        _ = kk_atomic_int_decrementAndFetch(handle)
+        let oldBeforeDec = kk_atomic_int_fetchAndDecrement(handle)
+        XCTAssertEqual(oldBeforeDec, 2)
         XCTAssertEqual(kk_atomic_int_load(handle), 1)
+        _ = kk_atomic_int_decrementAndFetch(handle)
+        XCTAssertEqual(kk_atomic_int_load(handle), 0)
     }
 }
 
@@ -282,6 +285,13 @@ final class RuntimeAtomicLongNativeConcurrentTests: XCTestCase {
         let old = kk_atomic_long_compareAndExchange(handle, 50, 150)
         XCTAssertEqual(old, 50)
         XCTAssertEqual(kk_atomic_long_load(handle), 150)
+    }
+
+    func testFetchAndDecrementReturnsOldValue() {
+        let handle = kk_atomic_long_create(10)
+        let old = kk_atomic_long_fetchAndDecrement(handle)
+        XCTAssertEqual(old, 10)
+        XCTAssertEqual(kk_atomic_long_load(handle), 9)
     }
 }
 

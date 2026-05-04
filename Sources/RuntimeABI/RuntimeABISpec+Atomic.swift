@@ -84,6 +84,14 @@ public extension RuntimeABISpec {
             section: "Atomic"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_atomic_int_fetchAndDecrement",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Atomic"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_atomic_int_incrementAndFetch",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
@@ -195,6 +203,14 @@ public extension RuntimeABISpec {
         ),
         RuntimeABIFunctionSpec(
             name: "kk_atomic_long_fetchAndIncrement",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Atomic"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_atomic_long_fetchAndDecrement",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
             ],
