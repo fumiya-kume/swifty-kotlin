@@ -1197,6 +1197,7 @@ extension DataFlowSemaPhase {
         typeParameterSymbols: [SymbolID] = [],
         classTypeParameterCount: Int = 0,
         includeFetchAndUpdateAlias: Bool = false,
+        includeUpdateAndFetchAlias: Bool = false,
         symbols: SymbolTable,
         interner: StringInterner,
         types: TypeSystem
@@ -1236,6 +1237,17 @@ extension DataFlowSemaPhase {
             classTypeParameterCount: classTypeParameterCount,
             symbols: symbols, interner: interner
         )
+        if includeUpdateAndFetchAlias {
+            // updateAndFetch has the same new-value return contract as updateAndGet.
+            registerAtomicMember(
+                ownerSymbol: ownerSymbol, ownerType: ownerType,
+                name: "updateAndFetch", externalLinkName: "\(prefix)_updateAndGet",
+                returnType: valueType, parameters: [(name: "transform", type: transformType)],
+                typeParameterSymbols: typeParameterSymbols,
+                classTypeParameterCount: classTypeParameterCount,
+                symbols: symbols, interner: interner
+            )
+        }
     }
 
     private func registerAtomicReferenceStubs(
@@ -1324,6 +1336,7 @@ extension DataFlowSemaPhase {
             typeParameterSymbols: [typeParamSymbol],
             classTypeParameterCount: 1,
             includeFetchAndUpdateAlias: true,
+            includeUpdateAndFetchAlias: true,
             symbols: symbols,
             interner: interner,
             types: types

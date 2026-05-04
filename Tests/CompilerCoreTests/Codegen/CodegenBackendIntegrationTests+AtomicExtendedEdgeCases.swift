@@ -794,6 +794,9 @@ extension CodegenBackendIntegrationTests {
             println(a.value)
             val updated = a.updateAndGet { it.uppercase() }
             println(updated)
+            val fetchedNew = a.updateAndFetch { it + "~" }
+            println(fetchedNew)
+            println(a.value)
         }
         """
         try withTemporaryFile(contents: source) { path in
@@ -801,7 +804,7 @@ extension CodegenBackendIntegrationTests {
             let ctx = try runCodegenPipeline(inputPath: path, moduleName: "AtomicRefGetAndUpdateBUG01", emit: .executable, outputPath: outputBase)
             try LinkPhase().run(ctx)
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "hello\nhello!\nhello!\nhello!?\nHELLO!?\n")
+            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "hello\nhello!\nhello!\nhello!?\nHELLO!?\nHELLO!?~\nHELLO!?~\n")
         }
     }
 
