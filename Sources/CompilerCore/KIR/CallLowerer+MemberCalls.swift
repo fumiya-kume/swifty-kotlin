@@ -4201,7 +4201,7 @@ extension CallLowerer {
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern(runtimeCallee),
-                        arguments: [loweredReceiverID] + normalizedArgIDs,
+                        arguments: runtimeArguments,
                         result: result,
                         canThrow: canThrow,
                         thrownResult: nil
@@ -6793,8 +6793,6 @@ extension CallLowerer {
             interner.intern("kk_list_binarySearchBy_range"),
             interner.intern("kk_result_getOrThrow"),
             interner.intern("kk_reentrant_read_write_lock_read"),
-            interner.intern("kk_iterable_firstNotNullOf"),
-            interner.intern("kk_iterable_firstNotNullOfOrNull"),
         ])
     }
 
