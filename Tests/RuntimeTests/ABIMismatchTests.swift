@@ -103,7 +103,7 @@ final class ABIMismatchTests: XCTestCase {
 
     func testStringFunctionCount() {
         // Keep this in sync with RuntimeABISpec.stringFunctions entries.
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 200)
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 204)
     }
 
     func testRegexFunctionCount() {
@@ -116,7 +116,9 @@ final class ABIMismatchTests: XCTestCase {
         // kk_regex_containsMatchIn,
         // kk_match_result_groups, kk_match_group_collection_get,
         // kk_match_group_value, kk_match_group_range,
-        // kk_string_chunked, kk_string_windowed,
+        // kk_string_chunked, kk_string_chunkedSequence_transform,
+        // kk_string_windowed, kk_string_windowedSequence_partial,
+        // kk_string_windowedSequence_transform,
         // kk_string_commonPrefixWith, kk_string_commonSuffixWith,
         // kk_string_zipWithNext
         // STDLIB-REGEX-097: kk_regex_group_names
@@ -602,6 +604,16 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(spec.parameters.count, 2)
         XCTAssertEqual(spec.parameters[0].type, .intptr)
         XCTAssertEqual(spec.parameters[1].type, .int32)
+    }
+
+    func testKKMutableListSortWithSignature() throws {
+        let spec = try requireSpec("kk_mutable_list_sortWith")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 4)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
+        XCTAssertEqual(spec.parameters[3].type, .nullableIntptrPointer)
     }
 
     func testKKMutableListSortByPrimitiveSignature() throws {
