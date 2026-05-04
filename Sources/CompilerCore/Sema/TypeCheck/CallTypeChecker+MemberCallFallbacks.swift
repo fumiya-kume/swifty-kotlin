@@ -1059,6 +1059,9 @@ extension CallTypeChecker {
             interner.intern("toCollection"),
             interner.intern("toTypedArray"),
             interner.intern("toBooleanArray"),
+            interner.intern("toShortArray"),
+            interner.intern("toDoubleArray"),
+            interner.intern("toFloatArray"),
             interner.intern("toIntArray"),
             interner.intern("toLongArray"),
             interner.intern("toByteArray"),
@@ -1654,6 +1657,45 @@ extension CallTypeChecker {
         {
             return sema.types.make(.classType(ClassType(
                 classSymbol: booleanArraySymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+        }
+
+        if memberName == interner.intern("toShortArray"),
+           let shortArraySymbol = sema.symbols.lookup(fqName: [
+               interner.intern("kotlin"),
+               interner.intern("ShortArray"),
+           ])
+        {
+            return sema.types.make(.classType(ClassType(
+                classSymbol: shortArraySymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+        }
+
+        if memberName == interner.intern("toDoubleArray"),
+           let doubleArraySymbol = sema.symbols.lookup(fqName: [
+               interner.intern("kotlin"),
+               interner.intern("DoubleArray"),
+           ])
+        {
+            return sema.types.make(.classType(ClassType(
+                classSymbol: doubleArraySymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+        }
+
+        if memberName == interner.intern("toFloatArray"),
+           let floatArraySymbol = sema.symbols.lookup(fqName: [
+               interner.intern("kotlin"),
+               interner.intern("FloatArray"),
+           ])
+        {
+            return sema.types.make(.classType(ClassType(
+                classSymbol: floatArraySymbol,
                 args: [],
                 nullability: .nonNull
             )))

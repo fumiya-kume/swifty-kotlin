@@ -2,16 +2,6 @@
 import Foundation
 import XCTest
 
-private func normalizedThrowablePrintStackTraceStderr(_ stderr: String) -> String {
-    stderr.replacingOccurrences(of: "\r\n", with: "\n")
-        .split(separator: "\n", omittingEmptySubsequences: false)
-        .filter { line in
-            !(line.contains("warning: direct reference to protected function")
-                && line.contains("may break pointer equality"))
-        }
-        .joined(separator: "\n")
-}
-
 extension CodegenBackendIntegrationTests {
     func testCodegenThrowablePrintStackTraceWritesToStandardError() throws {
         let source = """
@@ -31,9 +21,20 @@ extension CodegenBackendIntegrationTests {
             try LinkPhase().run(ctx)
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            let normalizedStderr = normalizedThrowablePrintStackTraceStderr(result.stderr)
+            let normalizedStderr = normalizeThrowableStderr(result.stderr)
             XCTAssertEqual(result.stdout, "")
             XCTAssertEqual(normalizedStderr, "stack message\n")
         }
+    }
+
+    private func normalizeThrowableStderr(_ stderr: String) -> String {
+        stderr
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .components(separatedBy: "\n")
+            .filter { line in
+                !(line.hasPrefix("warning: direct reference to protected function ")
+                    && line.contains(" may break pointer equality"))
+            }
+            .joined(separator: "\n")
     }
 }
