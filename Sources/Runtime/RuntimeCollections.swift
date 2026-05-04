@@ -611,6 +611,16 @@ public func kk_mutable_list_removeFirstOrNull(_ listRaw: Int) -> Int {
     return list.elements.removeFirst()
 }
 
+@_cdecl("kk_mutable_list_removeLastOrNull")
+public func kk_mutable_list_removeLastOrNull(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw),
+          !list.elements.isEmpty
+    else {
+        return runtimeNullSentinelInt
+    }
+    return list.elements.removeLast()
+}
+
 @_cdecl("kk_mutable_list_clear")
 public func kk_mutable_list_clear(_ listRaw: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
@@ -1761,6 +1771,58 @@ public func kk_list_toTypedArray(_ listRaw: Int) -> Int {
 }
 
 // MARK: - List to primitive array conversions (STDLIB-LIST-PRIM-ARRAY)
+
+/// Collection<Boolean>.toBooleanArray(): BooleanArray
+@_cdecl("kk_list_toBooleanArray")
+public func kk_list_toBooleanArray(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid list handle in kk_list_toBooleanArray")
+    }
+    let box = RuntimeArrayBox(length: list.elements.count)
+    for (i, elem) in list.elements.enumerated() {
+        box.elements[i] = kk_unbox_bool(elem)
+    }
+    return registerRuntimeObject(box)
+}
+
+/// Collection<Short>.toShortArray(): ShortArray
+@_cdecl("kk_list_toShortArray")
+public func kk_list_toShortArray(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid list handle in kk_list_toShortArray")
+    }
+    let box = RuntimeArrayBox(length: list.elements.count)
+    for (i, elem) in list.elements.enumerated() {
+        box.elements[i] = kk_unbox_int(elem)
+    }
+    return registerRuntimeObject(box)
+}
+
+/// Collection<Double>.toDoubleArray(): DoubleArray
+@_cdecl("kk_list_toDoubleArray")
+public func kk_list_toDoubleArray(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid list handle in kk_list_toDoubleArray")
+    }
+    let box = RuntimeArrayBox(length: list.elements.count)
+    for (i, elem) in list.elements.enumerated() {
+        box.elements[i] = kk_unbox_double(elem)
+    }
+    return registerRuntimeObject(box)
+}
+
+/// Collection<Float>.toFloatArray(): FloatArray
+@_cdecl("kk_list_toFloatArray")
+public func kk_list_toFloatArray(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid list handle in kk_list_toFloatArray")
+    }
+    let box = RuntimeArrayBox(length: list.elements.count)
+    for (i, elem) in list.elements.enumerated() {
+        box.elements[i] = kk_unbox_float(elem)
+    }
+    return registerRuntimeObject(box)
+}
 
 /// Collection<Int>.toIntArray(): IntArray
 @_cdecl("kk_list_toIntArray")
