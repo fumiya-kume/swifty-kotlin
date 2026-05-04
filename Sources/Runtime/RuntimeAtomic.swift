@@ -1291,6 +1291,20 @@ final class AtomicRefArrayBox {
         }
         return old
     }
+
+    func fetchAndUpdate(at index: Int, transform: (Int) -> Int, outThrown: UnsafeMutablePointer<Int>?) -> (old: Int, new: Int) {
+        guard index >= 0 && index < size() else { return (0, 0) }
+        while true {
+            let old = load(at: index)
+            let new = transform(old)
+            if let thrown = outThrown, thrown.pointee != 0 {
+                return (old, old)
+            }
+            if compareAndSet(at: index, expect: old, update: new) {
+                return (old, new)
+            }
+        }
+    }
 }
 
 private func atomicRefArrayBox(from raw: Int) -> AtomicRefArrayBox? {
@@ -1346,4 +1360,18 @@ public func kk_atomic_ref_array_compareAndSetAt(_ receiver: Int, _ index: Int, _
 public func kk_atomic_ref_array_compareAndExchangeAt(_ receiver: Int, _ index: Int, _ expect: Int, _ update: Int) -> Int {
     guard let box = atomicRefArrayBox(from: receiver) else { return 0 }
     return box.compareAndExchange(at: index, expect: expect, update: update)
+}
+
+@_cdecl("kk_atomic_ref_array_fetchAndUpdateAt")
+public func kk_atomic_ref_array_fetchAndUpdateAt(
+    _ receiver: Int,
+    _ index: Int,
+    _ updateFn: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let box = atomicRefArrayBox(from: receiver) else { return 0 }
+    let result = box.fetchAndUpdate(at: index, transform: { old in
+        kk_function_invoke(updateFn, old, outThrown)
+    }, outThrown: outThrown)
+    return result.old
 }

@@ -8,6 +8,9 @@ import XCTest
 // kotlin.concurrent.atomics.AtomicArray<T> class.
 // CAS uses identity semantics (pointer equality), not structural equality.
 
+private let refArrayThunkReturn42: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { _, _ in 42 }
+private let refArrayThunkReturn42Ptr = unsafeBitCast(refArrayThunkReturn42, to: Int.self)
+
 final class RuntimeAtomicRefArrayTests: XCTestCase {
 
     // MARK: - new / size
@@ -152,6 +155,27 @@ final class RuntimeAtomicRefArrayTests: XCTestCase {
         let ref = kk_atomic_int_create(1)
         let old = kk_atomic_ref_array_compareAndExchangeAt(handle, 99, 0, ref)
         XCTAssertEqual(old, 0)
+    }
+
+    // MARK: - fetchAndUpdateAt
+
+    func testFetchAndUpdateAtReturnsOldValueAndStoresTransformedValue() {
+        let handle = kk_atomic_ref_array_new(1)
+        kk_atomic_ref_array_storeAt(handle, 0, 10)
+
+        let old = kk_atomic_ref_array_fetchAndUpdateAt(handle, 0, refArrayThunkReturn42Ptr, nil)
+
+        XCTAssertEqual(old, 10)
+        XCTAssertEqual(kk_atomic_ref_array_loadAt(handle, 0), 42)
+    }
+
+    func testFetchAndUpdateAtOutOfBoundsReturnsZero() {
+        let handle = kk_atomic_ref_array_new(1)
+
+        let old = kk_atomic_ref_array_fetchAndUpdateAt(handle, 2, refArrayThunkReturn42Ptr, nil)
+
+        XCTAssertEqual(old, 0)
+        XCTAssertEqual(kk_atomic_ref_array_loadAt(handle, 0), 0)
     }
 
     // MARK: - Multiple independent arrays
