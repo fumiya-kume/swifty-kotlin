@@ -109,6 +109,16 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
         )
     }
 
+    func testChunkedSequenceStubHasCorrectExternalLink() throws {
+        let (sema, interner) = try makeSema()
+
+        XCTAssertTrue(
+            externalLinks(for: "chunkedSequence", sema: sema, interner: interner)
+                .contains("kk_string_chunked_sequence"),
+            "CharSequence.chunkedSequence should link to kk_string_chunked_sequence"
+        )
+    }
+
     func testNewNullableConversionStubsHaveCorrectExternalLinks() throws {
         let (sema, interner) = try makeSema()
 
