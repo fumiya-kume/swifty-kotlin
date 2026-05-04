@@ -1664,4 +1664,148 @@ extension DataFlowSemaPhase {
             for: memberSymbol
         )
     }
+
+    /// Register `Iterable<E>.minusElement(element): List<E>`.
+    func registerIterableMinusElementMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        iterableInterfaceSymbol: SymbolID,
+        listInterfaceSymbol: SymbolID
+    ) {
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName,
+              let typeParamSymbol = types.nominalTypeParameterSymbols(for: iterableInterfaceSymbol).first
+        else { return }
+
+        let memberName = interner.intern("minusElement")
+        let memberFQName = iterableFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let elementType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+        let listReturnType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_list_minus_element", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [elementType],
+                returnType: listReturnType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    /// Register `Iterable<E>.reduceRight*` members backed by list runtime ABIs.
+    func registerIterableReduceRightMembers(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        iterableInterfaceSymbol: SymbolID
+    ) {
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName,
+              let typeParamSymbol = types.nominalTypeParameterSymbols(for: iterableInterfaceSymbol).first
+        else { return }
+
+        let elementType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let nullableElementType = types.makeNullable(elementType)
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+        let indexedOperationType = types.make(.functionType(FunctionType(
+            params: [types.intType, elementType, elementType],
+            returnType: elementType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let operationType = types.make(.functionType(FunctionType(
+            params: [elementType, elementType],
+            returnType: elementType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        func registerMember(
+            named name: String,
+            externalLinkName: String,
+            parameterType: TypeID,
+            returnType: TypeID,
+            canThrow: Bool
+        ) {
+            let memberName = interner.intern(name)
+            let memberFQName = iterableFQName + [memberName]
+            guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: memberName,
+                fqName: memberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [parameterType],
+                    returnType: returnType,
+                    canThrow: canThrow,
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        registerMember(
+            named: "reduceRightIndexed",
+            externalLinkName: "kk_list_reduceRightIndexed",
+            parameterType: indexedOperationType,
+            returnType: elementType,
+            canThrow: true
+        )
+        registerMember(
+            named: "reduceRightIndexedOrNull",
+            externalLinkName: "kk_list_reduceRightIndexedOrNull",
+            parameterType: indexedOperationType,
+            returnType: nullableElementType,
+            canThrow: false
+        )
+        registerMember(
+            named: "reduceRightOrNull",
+            externalLinkName: "kk_list_reduceRightOrNull",
+            parameterType: operationType,
+            returnType: nullableElementType,
+            canThrow: false
+        )
+    }
 }

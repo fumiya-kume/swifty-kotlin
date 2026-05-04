@@ -227,6 +227,8 @@ extension DataFlowSemaPhase {
             ?? symbols.lookupByShortName(interner.intern("List")).first
         let setSymbol = symbols.lookup(fqName: kotlinCollectionsPkg + [interner.intern("Set")])
             ?? symbols.lookupByShortName(interner.intern("Set")).first
+        let mutableMapSymbol = symbols.lookup(fqName: kotlinCollectionsPkg + [interner.intern("MutableMap")])
+            ?? symbols.lookupByShortName(interner.intern("MutableMap")).first
 
         func registerMember(
             name: String,
@@ -258,6 +260,23 @@ extension DataFlowSemaPhase {
                     classTypeParameterCount: 2
                 ),
                 for: memberSymbol
+            )
+        }
+
+        func registerMapToMember(
+            name: String,
+            externalLinkName: String,
+            destinationType: TypeID,
+            transformType: TypeID,
+            extraTypeParameterSymbols: [SymbolID]
+        ) {
+            registerMember(
+                name: name,
+                externalLinkName: externalLinkName,
+                parameterTypes: [destinationType, transformType],
+                returnType: destinationType,
+                typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol] + extraTypeParameterSymbols,
+                flags: [.synthetic, .inlineFunction]
             )
         }
 
@@ -412,6 +431,21 @@ extension DataFlowSemaPhase {
                 typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol, rSymbol],
                 flags: [.synthetic, .inlineFunction]
             )
+
+            if let mutableMapSymbol {
+                let destinationType = types.make(.classType(ClassType(
+                    classSymbol: mutableMapSymbol,
+                    args: [.invariant(keyType), .invariant(rType)],
+                    nullability: .nonNull
+                )))
+                registerMapToMember(
+                    name: "mapValuesTo",
+                    externalLinkName: "kk_map_mapValuesTo",
+                    destinationType: destinationType,
+                    transformType: transformType,
+                    extraTypeParameterSymbols: [rSymbol]
+                )
+            }
         }
 
         let mapKeysName = interner.intern("mapKeys")
@@ -446,6 +480,21 @@ extension DataFlowSemaPhase {
                 typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol, rSymbol],
                 flags: [.synthetic, .inlineFunction]
             )
+
+            if let mutableMapSymbol {
+                let destinationType = types.make(.classType(ClassType(
+                    classSymbol: mutableMapSymbol,
+                    args: [.invariant(rType), .invariant(valueType)],
+                    nullability: .nonNull
+                )))
+                registerMapToMember(
+                    name: "mapKeysTo",
+                    externalLinkName: "kk_map_mapKeysTo",
+                    destinationType: destinationType,
+                    transformType: transformType,
+                    extraTypeParameterSymbols: [rSymbol]
+                )
+            }
         }
 
         let filterLambdaType = types.make(.functionType(FunctionType(

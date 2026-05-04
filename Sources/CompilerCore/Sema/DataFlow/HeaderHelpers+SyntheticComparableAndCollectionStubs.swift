@@ -179,6 +179,15 @@ extension DataFlowSemaPhase {
             symbols: symbols, types: types, interner: interner,
             iterableInterfaceSymbol: iterableInterfaceSymbol
         )
+        registerIterableMinusElementMember(
+            symbols: symbols, types: types, interner: interner,
+            iterableInterfaceSymbol: iterableInterfaceSymbol,
+            listInterfaceSymbol: listInterfaceSymbol
+        )
+        registerIterableReduceRightMembers(
+            symbols: symbols, types: types, interner: interner,
+            iterableInterfaceSymbol: iterableInterfaceSymbol
+        )
 
         // --- STDLIB-533: List?.orEmpty() ---
         let listTypeParamSymbols = types.nominalTypeParameterSymbols(for: listInterfaceSymbol)
