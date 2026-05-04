@@ -111,6 +111,182 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenSequenceFirstNotNullOfUsesCanonicalDiffCase() throws {
+        let root = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent() // Codegen/
+            .deletingLastPathComponent() // CompilerCoreTests/
+            .deletingLastPathComponent() // Tests/
+            .deletingLastPathComponent() // repo root
+        let caseURL = root.appendingPathComponent(
+            "Scripts/diff_cases/sequence_firstnotnullof.kt",
+            isDirectory: false
+        )
+        let source = try String(contentsOf: caseURL, encoding: .utf8)
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceFirstNotNullOf",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                three
+                missing
+                """
+                + "\n"
+            )
+        }
+    }
+
+    func testCodegenSequenceFirstNotNullOfOrNullUsesCanonicalDiffCase() throws {
+        let root = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent() // Codegen/
+            .deletingLastPathComponent() // CompilerCoreTests/
+            .deletingLastPathComponent() // Tests/
+            .deletingLastPathComponent() // repo root
+        let caseURL = root.appendingPathComponent(
+            "Scripts/diff_cases/sequence_firstnotnullofornull.kt",
+            isDirectory: false
+        )
+        let source = try String(contentsOf: caseURL, encoding: .utf8)
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceFirstNotNullOfOrNull",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                three
+                missing
+                """
+                + "\n"
+            )
+        }
+    }
+
+    func testCodegenSequenceMinusElementUsesCanonicalDiffCase() throws {
+        let root = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent() // Codegen/
+            .deletingLastPathComponent() // CompilerCoreTests/
+            .deletingLastPathComponent() // Tests/
+            .deletingLastPathComponent() // repo root
+        let caseURL = root.appendingPathComponent(
+            "Scripts/diff_cases/sequence_minuselement.kt",
+            isDirectory: false
+        )
+        let source = try String(contentsOf: caseURL, encoding: .utf8)
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceMinusElement",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                [1, 3, 2]
+                [1, 2, 3, 2]
+                []
+                """
+                + "\n"
+            )
+        }
+    }
+
+    func testCodegenSequenceSumByUsesCanonicalDiffCase() throws {
+        let root = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent() // Codegen/
+            .deletingLastPathComponent() // CompilerCoreTests/
+            .deletingLastPathComponent() // Tests/
+            .deletingLastPathComponent() // repo root
+        let caseURL = root.appendingPathComponent(
+            "Scripts/diff_cases/sequence_sumby.kt",
+            isDirectory: false
+        )
+        let source = try String(contentsOf: caseURL, encoding: .utf8)
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceSumBy",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                14
+                0
+                """
+                + "\n"
+            )
+        }
+    }
+
+    func testCodegenSequenceSumByDoubleUsesCanonicalDiffCase() throws {
+        let root = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent() // Codegen/
+            .deletingLastPathComponent() // CompilerCoreTests/
+            .deletingLastPathComponent() // Tests/
+            .deletingLastPathComponent() // repo root
+        let caseURL = root.appendingPathComponent(
+            "Scripts/diff_cases/sequence_sumbydouble.kt",
+            isDirectory: false
+        )
+        let source = try String(contentsOf: caseURL, encoding: .utf8)
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceSumByDouble",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                2.0
+                0.0
+                """
+                + "\n"
+            )
+        }
+    }
+
     func testSequenceRunningReduceIndexedAccumulatesWithIndex() throws {
         let source = """
         fun main() {
