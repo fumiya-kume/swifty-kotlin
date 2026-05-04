@@ -21,17 +21,20 @@ extension CodegenBackendIntegrationTests {
             try LinkPhase().run(ctx)
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            // Some Linux dynamic linkers emit benign warnings about protected
-            // Swift runtime symbols at process startup (e.g. "warning: direct
-            // reference to protected function `$sSl...` in libswiftCore.so may
-            // break pointer equality"). Drop those lines before comparing.
-            let normalizedStderr = result.stderr
-                .replacingOccurrences(of: "\r\n", with: "\n")
-                .split(separator: "\n", omittingEmptySubsequences: false)
-                .filter { !$0.hasPrefix("warning:") }
-                .joined(separator: "\n")
+            let normalizedStderr = normalizeThrowableStderr(result.stderr)
             XCTAssertEqual(result.stdout, "")
             XCTAssertEqual(normalizedStderr, "stack message\n")
         }
+    }
+
+    private func normalizeThrowableStderr(_ stderr: String) -> String {
+        stderr
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .components(separatedBy: "\n")
+            .filter { line in
+                !(line.hasPrefix("warning: direct reference to protected function ")
+                    && line.contains(" may break pointer equality"))
+            }
+            .joined(separator: "\n")
     }
 }

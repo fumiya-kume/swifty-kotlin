@@ -78,6 +78,16 @@ public extension RuntimeABISpec {
             section: "StringBuilder"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_string_builder_deleteRange",
+            parameters: [
+                RuntimeABIParameter(name: "sbRaw", type: .intptr),
+                RuntimeABIParameter(name: "startIndex", type: .intptr),
+                RuntimeABIParameter(name: "endIndex", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "StringBuilder"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_string_builder_clear",
             parameters: [
                 RuntimeABIParameter(name: "sbRaw", type: .intptr),
@@ -103,6 +113,15 @@ public extension RuntimeABISpec {
             section: "StringBuilder"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_string_builder_deleteAt",
+            parameters: [
+                RuntimeABIParameter(name: "sbRaw", type: .intptr),
+                RuntimeABIParameter(name: "index", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "StringBuilder"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_string_builder_get",
             parameters: [
                 RuntimeABIParameter(name: "sbRaw", type: .intptr),
@@ -118,6 +137,29 @@ public extension RuntimeABISpec {
                 RuntimeABIParameter(name: "csqRaw", type: .intptr),
                 RuntimeABIParameter(name: "startIndex", type: .intptr),
                 RuntimeABIParameter(name: "endIndex", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "StringBuilder"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_builder_insertRange_obj",
+            parameters: [
+                RuntimeABIParameter(name: "sbRaw", type: .intptr),
+                RuntimeABIParameter(name: "index", type: .intptr),
+                RuntimeABIParameter(name: "csqRaw", type: .intptr),
+                RuntimeABIParameter(name: "startIndex", type: .intptr),
+                RuntimeABIParameter(name: "endIndex", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "StringBuilder"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_builder_setRange",
+            parameters: [
+                RuntimeABIParameter(name: "sbRaw", type: .intptr),
+                RuntimeABIParameter(name: "startIndex", type: .intptr),
+                RuntimeABIParameter(name: "endIndex", type: .intptr),
+                RuntimeABIParameter(name: "valueRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "StringBuilder"

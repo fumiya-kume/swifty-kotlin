@@ -4,6 +4,7 @@ import Foundation
 /// - with<T, R>(receiver: T, block: T.() -> R): R
 /// - context<T, R>(with: T, block: context(T) () -> R): R
 /// - context<A..F, R>(a: A, ..., f: F, block: context(A..F) () -> R): R
+/// - contextOf<A>(): A
 /// - fun <T, R> T.let(block: (T) -> R): R
 /// - fun <T> T.also(block: (T) -> Unit): T
 /// - T.takeIf(predicate: (T) -> Boolean): T?
@@ -29,6 +30,7 @@ extension DataFlowSemaPhase {
 
         registerWithStub(symbols: symbols, types: types, interner: interner, kotlinPkg: kotlinPkg)
         registerContextHelperStub(symbols: symbols, types: types, interner: interner, kotlinPkg: kotlinPkg)
+        registerContextOfHelperStub(symbols: symbols, types: types, interner: interner, kotlinPkg: kotlinPkg)
         registerLetStub(symbols: symbols, types: types, interner: interner, kotlinPkg: kotlinPkg)
         registerAlsoStub(symbols: symbols, types: types, interner: interner, kotlinPkg: kotlinPkg)
     }
@@ -559,6 +561,62 @@ extension DataFlowSemaPhase {
                 classTypeParameterCount: 0
             ),
             for: contextSymbol
+        )
+    }
+
+    /// `contextOf<A>(): A` (STDLIB-KOTLIN-ROOT-CTX-003)
+    private func registerContextOfHelperStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinPkg: [InternedString]
+    ) {
+        let contextOfName = interner.intern("contextOf")
+        let contextOfFQName = kotlinPkg + [contextOfName]
+
+        if symbols.lookup(fqName: contextOfFQName) != nil {
+            return
+        }
+
+        let aName = interner.intern("A")
+        let aSymbol = symbols.define(
+            kind: .typeParameter,
+            name: aName,
+            fqName: contextOfFQName + [aName],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let aType = types.make(.typeParam(TypeParamType(symbol: aSymbol, nullability: .nonNull)))
+
+        let contextOfSymbol = symbols.define(
+            kind: .function,
+            name: contextOfName,
+            fqName: contextOfFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .inlineFunction]
+        )
+        if let packageSymbol = symbols.lookup(fqName: kotlinPkg) {
+            symbols.setParentSymbol(packageSymbol, for: contextOfSymbol)
+        }
+        symbols.setParentSymbol(contextOfSymbol, for: aSymbol)
+        symbols.setAnnotations(
+            [MetadataAnnotationRecord(annotationFQName: "kotlin.ExperimentalContextParameters")],
+            for: contextOfSymbol
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [],
+                returnType: aType,
+                isSuspend: false,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: [],
+                valueParameterIsVararg: [],
+                typeParameterSymbols: [aSymbol],
+                classTypeParameterCount: 0
+            ),
+            for: contextOfSymbol
         )
     }
 

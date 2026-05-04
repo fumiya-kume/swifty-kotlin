@@ -162,18 +162,18 @@ extension CallLowerer {
         "map", "filter", "filterNot", "mapNotNull", "firstNotNullOf", "firstNotNullOfOrNull", "filterNotNull", "requireNoNulls", "forEach", "flatMap",
         "any", "none", "all",
         "fold", "foldIndexed", "foldRight", "foldRightIndexed",
-        "reduce", "reduceRight", "reduceIndexed", "reduceIndexedOrNull",
+        "reduce", "reduceRight", "reduceRightOrNull", "reduceRightIndexed", "reduceRightIndexedOrNull", "reduceIndexed", "reduceIndexedOrNull",
         "scan", "scanIndexed", "runningFold", "runningFoldIndexed",
         "runningReduce", "runningReduceIndexed",
         "groupBy", "groupingBy", "sortedBy", "find", "findLast", "associateBy", "associateWith", "associate", "zip", "zipWithNext", "unzip",
         "eachCount", "eachCountTo", "aggregate", "aggregateTo",
-        "withIndex", "forEachIndexed", "mapIndexed", "filterIndexed", "mapValues", "mapKeys", "filterKeys", "filterValues",
+        "withIndex", "forEachIndexed", "mapIndexed", "filterIndexed", "mapValues", "mapValuesTo", "mapKeys", "mapKeysTo", "filterKeys", "filterValues",
         "getValue", "getOrDefault", "getOrElse", "getOrPut", "getOrNull", "elementAtOrNull", "elementAt", "elementAtOrElse",
         "putAll", "addAll",
         "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull", "maxOrNull", "minOrNull",
-        "plus", "plusElement", "minus",
+        "plus", "plusElement", "minus", "minusElement",
         "asSequence", "asIterable", "toList", "toSet", "toMap", "toCollection", "toMutableList", "toMutableSet", "toTypedArray",
-        "toIntArray", "toLongArray", "toByteArray", "toUByteArray", "toUShortArray", "toUIntArray", "toULongArray",
+        "toBooleanArray", "toShortArray", "toDoubleArray", "toFloatArray", "toIntArray", "toLongArray", "toByteArray", "toUByteArray", "toUShortArray", "toUIntArray", "toULongArray",
         "take", "drop", "reversed", "asReversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect", "subList",
         "sortedDescending", "sortedByDescending", "sortedWith", "partition",
         "sortedArrayWith",
@@ -181,7 +181,7 @@ extension CallLowerer {
         "maxOf", "minOf",
         "maxOfWith", "maxOfWithOrNull", "minOfWith", "minOfWithOrNull",
         "replaceFirstChar",
-        "sort", "sortBy", "sortByDescending",
+        "sort", "sortWith", "sortBy", "sortByDescending",
         "onEach", "onEachIndexed",
         "copyOf", "copyOfRange", "fill", "replaceAll", "removeIf",
         "firstOrNull", "lastOrNull", "singleOrNull",
@@ -190,7 +190,7 @@ extension CallLowerer {
         "toHashSet",
         "containsAll", "binarySearch", "average",
         "addFirst", "addLast",
-        "sum",
+        "sum", "sumBy", "sumByDouble",
         "to", // FUNC-002
     ]
 
@@ -2461,6 +2461,7 @@ extension CallLowerer {
             let ulongType = sema.types.make(.primitive(.ulong, .nonNull))
             let ubyteType = sema.types.make(.primitive(.ubyte, .nonNull))
             let ushortType = sema.types.make(.primitive(.ushort, .nonNull))
+            let charType = sema.types.charType
             let floatType = sema.types.make(.primitive(.float, .nonNull))
             let doubleType = sema.types.make(.primitive(.double, .nonNull))
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
@@ -2471,23 +2472,34 @@ extension CallLowerer {
             let conversionCallee: InternedString? = switch (calleeStr, nonNullReceiverType, nonNullResultType) {
             case ("toInt", uintType, intType): interner.intern("kk_uint_to_int")
             case ("toInt", ulongType, intType): interner.intern("kk_ulong_to_int")
+            case ("toInt", ubyteType, intType): interner.intern("kk_ubyte_to_int")
+            case ("toInt", ushortType, intType): interner.intern("kk_ushort_to_int")
             case ("toInt", doubleType, intType): interner.intern("kk_double_to_int")
             case ("toInt", floatType, intType): interner.intern("kk_float_to_int")
             case ("toInt", longType, intType): interner.intern("kk_long_to_int")
-            case ("toInt", sema.types.charType, intType): nil // identity (Char is stored as Int)
+            case ("toInt", charType, intType): nil // identity (Char is stored as Int)
             case ("toInt", intType, intType): nil // identity
-            case ("toChar", intType, sema.types.charType): nil // identity (Char is stored as Int)
+            case ("toChar", intType, charType): nil // identity (Char is stored as Int)
             case ("toUInt", intType, uintType): interner.intern("kk_int_to_uint")
             case ("toUInt", longType, uintType): interner.intern("kk_long_to_uint")
+            case ("toUInt", ubyteType, uintType): interner.intern("kk_ubyte_to_uint")
+            case ("toUInt", ushortType, uintType): interner.intern("kk_ushort_to_uint")
+            case ("toUInt", charType, uintType): interner.intern("kk_char_to_uint")
             case ("toUInt", uintType, uintType), ("toUInt", ulongType, uintType): nil // identity
             case ("toLong", intType, longType): interner.intern("kk_int_to_long")
             case ("toLong", uintType, longType): interner.intern("kk_uint_to_long")
+            case ("toLong", ubyteType, longType): interner.intern("kk_ubyte_to_long")
+            case ("toLong", ushortType, longType): interner.intern("kk_ushort_to_long")
             case ("toLong", doubleType, longType): interner.intern("kk_double_to_long")
             case ("toLong", floatType, longType): interner.intern("kk_float_to_long")
+            case ("toLong", charType, longType): interner.intern("kk_char_to_long")
             case ("toLong", longType, longType), ("toLong", ulongType, longType): nil // identity
             case ("toULong", intType, ulongType): interner.intern("kk_int_to_ulong")
             case ("toULong", longType, ulongType): interner.intern("kk_long_to_ulong")
             case ("toULong", uintType, ulongType): interner.intern("kk_uint_to_ulong")
+            case ("toULong", ubyteType, ulongType): interner.intern("kk_ubyte_to_ulong")
+            case ("toULong", ushortType, ulongType): interner.intern("kk_ushort_to_ulong")
+            case ("toULong", charType, ulongType): interner.intern("kk_char_to_ulong")
             case ("toULong", ulongType, ulongType): nil // identity
             case ("toFloat", intType, floatType): interner.intern("kk_int_to_float")
             case ("toFloat", longType, floatType): interner.intern("kk_long_to_float")
@@ -2509,6 +2521,12 @@ extension CallLowerer {
             case ("toUShort", longType, ushortType): interner.intern("kk_long_to_ushort")
             case ("toUShort", uintType, ushortType): interner.intern("kk_uint_to_ushort")
             case ("toUShort", ulongType, ushortType): interner.intern("kk_ulong_to_ushort")
+            case ("toChar", longType, charType): interner.intern("kk_long_to_char")
+            case ("toChar", uintType, charType): interner.intern("kk_uint_to_char")
+            case ("toChar", ulongType, charType): interner.intern("kk_ulong_to_char")
+            case ("toChar", ubyteType, charType): interner.intern("kk_ubyte_to_char")
+            case ("toChar", ushortType, charType): interner.intern("kk_ushort_to_char")
+            case ("toChar", charType, charType): nil // identity
             default: nil
             }
             if let callee = conversionCallee {
@@ -2526,15 +2544,15 @@ extension CallLowerer {
                 (calleeStr == "toLong" && nonNullReceiverType == ulongType && nonNullResultType == longType)
                     || (calleeStr == "toUInt" && nonNullReceiverType == ulongType && nonNullResultType == uintType)
                     || (calleeStr == "toULong" && nonNullReceiverType == longType && nonNullResultType == ulongType)
-                    || (calleeStr == "toInt" && nonNullReceiverType == sema.types.charType && nonNullResultType == intType)
-                    || (calleeStr == "toChar" && nonNullReceiverType == intType && nonNullResultType == sema.types.charType)
+                    || (calleeStr == "toInt" && nonNullReceiverType == charType && nonNullResultType == intType)
+                    || (calleeStr == "toChar" && nonNullReceiverType == intType && nonNullResultType == charType)
             if ["toInt", "toUInt", "toLong", "toULong", "toFloat", "toDouble", "toUByte", "toUShort", "toChar"].contains(calleeStr),
                nonNullReceiverType == nonNullResultType || isRepresentationPreservingConversion,
                nonNullReceiverType == intType || nonNullReceiverType == longType
                || nonNullReceiverType == uintType || nonNullReceiverType == ulongType
                || nonNullReceiverType == ubyteType || nonNullReceiverType == ushortType
                || nonNullReceiverType == floatType || nonNullReceiverType == doubleType
-               || nonNullReceiverType == sema.types.charType
+               || nonNullReceiverType == charType
             {
                 instructions.append(.copy(from: loweredReceiverID, to: result))
                 return result
@@ -2981,9 +2999,69 @@ extension CallLowerer {
             let isCharSequenceTextHelper = calleeStr == "ifBlank"
                 || calleeStr == "ifEmpty"
                 || calleeStr == "chunkedSequence"
+                || calleeStr == "firstNotNullOf"
+                || calleeStr == "firstNotNullOfOrNull"
+                || calleeStr == "reduceRightIndexed"
+                || calleeStr == "reduceRightIndexedOrNull"
+                || calleeStr == "reduceRightOrNull"
+                || calleeStr == "sumBy"
+                || calleeStr == "sumByDouble"
             if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType)
                 || (isCharSequenceTextHelper && isCharSequenceReceiver)
             {
+                if calleeStr == "firstNotNullOf"
+                    || calleeStr == "firstNotNullOfOrNull"
+                    || calleeStr == "reduceRightIndexed"
+                    || calleeStr == "reduceRightIndexedOrNull"
+                    || calleeStr == "reduceRightOrNull"
+                    || calleeStr == "sumBy"
+                    || calleeStr == "sumByDouble"
+                {
+                    let originalCallBinding = sema.bindings.callBindings[exprID]
+                    let originalChosen: SymbolID? = if let chosen = originalCallBinding?.chosenCallee, chosen != .invalid {
+                        chosen
+                    } else {
+                        nil
+                    }
+                    let normalizedOriginalArgs = driver.callSupportLowerer.normalizedCallArguments(
+                        providedArguments: loweredArgIDs,
+                        callBinding: originalCallBinding,
+                        chosenCallee: originalChosen,
+                        spreadFlags: args.map(\.isSpread),
+                        ast: ast,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        propertyConstantInitializers: propertyConstantInitializers,
+                        instructions: &instructions
+                    ).arguments
+                    let transformArg = normalizedOriginalArgs.first ?? loweredArgIDs[0]
+                    let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                        transformArg,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        instructions: &instructions
+                    )
+                    let runtimeCallee = switch calleeStr {
+                    case "firstNotNullOf": "kk_string_firstNotNullOf"
+                    case "firstNotNullOfOrNull": "kk_string_firstNotNullOfOrNull"
+                    case "reduceRightIndexed": "kk_string_reduceRightIndexed"
+                    case "reduceRightIndexedOrNull": "kk_string_reduceRightIndexedOrNull"
+                    case "sumBy": "kk_string_sumBy"
+                    case "sumByDouble": "kk_string_sumByDouble"
+                    default: "kk_string_reduceRightOrNull"
+                    }
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(runtimeCallee),
+                        arguments: [loweredReceiverID, fnPtrExpr, envPtrExpr],
+                        result: result,
+                        canThrow: true,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
                 if calleeStr == "toInt" {
                     instructions.append(.call(
                         symbol: nil,
@@ -3109,7 +3187,7 @@ extension CallLowerer {
                 case "chunked":
                     ("kk_string_chunked", [loweredReceiverID, loweredArgIDs[0]])
                 case "chunkedSequence":
-                    ("kk_string_chunkedSequence", [loweredReceiverID, loweredArgIDs[0]])
+                    ("kk_string_chunked_sequence", [loweredReceiverID, loweredArgIDs[0]])
                 case "encodeToByteArray", "toByteArray":
                     if loweredArgIDs.count == 1 {
                         ("kk_string_encodeToByteArray_charset", [loweredReceiverID, loweredArgIDs[0]])
@@ -3286,9 +3364,31 @@ extension CallLowerer {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             let calleeStr = interner.resolve(calleeName)
+            let isCharSequenceReceiver: Bool = {
+                guard let charSequenceSymbol = sema.types.charSequenceInterfaceSymbol,
+                      case let .classType(classType) = sema.types.kind(of: nonNullReceiverType)
+                else {
+                    return false
+                }
+                return classType.classSymbol == charSequenceSymbol
+            }()
             let firstArgType = sema.types.makeNonNullable(
                 sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
             )
+            if (sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) || isCharSequenceReceiver),
+               calleeStr == "chunkedSequence",
+               normalizedArgIDs.count >= 3
+            {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_chunked_sequence_transform"),
+                    arguments: [loweredReceiverID] + normalizedArgIDs,
+                    result: result,
+                    canThrow: true,
+                    thrownResult: nil
+                ))
+                return result
+            }
             if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType),
                calleeStr == "indexOf",
                sema.types.isSubtype(firstArgType, sema.types.stringType)
@@ -3316,14 +3416,6 @@ extension CallLowerer {
                 ))
                 return result
             }
-            let isCharSequenceReceiver: Bool = {
-                guard let charSequenceSymbol = sema.types.charSequenceInterfaceSymbol,
-                      case let .classType(classType) = sema.types.kind(of: nonNullReceiverType)
-                else {
-                    return false
-                }
-                return classType.classSymbol == charSequenceSymbol
-            }()
             if (sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) || isCharSequenceReceiver),
                calleeStr == "chunkedSequence"
             {
@@ -3383,7 +3475,7 @@ extension CallLowerer {
                 }
                 instructions.append(.call(
                     symbol: nil,
-                    callee: interner.intern("kk_string_chunkedSequence_transform"),
+                    callee: interner.intern("kk_string_chunked_sequence_transform"),
                     arguments: callArguments,
                     result: result,
                     canThrow: true,
@@ -3782,6 +3874,38 @@ extension CallLowerer {
             }
         }
 
+        if args.count == 1, calleeName == interner.intern("minusElement") {
+            let chosenLinkName = chosenBase64Callee.flatMap { sema.symbols.externalLinkName(for: $0) }
+            let returnsList = boundType.map { resultType in
+                guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(resultType)),
+                      let resultSymbol = sema.symbols.symbol(classType.classSymbol)
+                else { return false }
+                return interner.resolve(resultSymbol.name) == "List"
+            } ?? false
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let receiverIsIterable = {
+                guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+                      let receiverSymbol = sema.symbols.symbol(classType.classSymbol)
+                else { return false }
+                return receiverSymbol.fqName == [
+                    interner.intern("kotlin"),
+                    interner.intern("collections"),
+                    interner.intern("Iterable"),
+                ]
+            }()
+            if chosenLinkName == "kk_list_minus_element" || returnsList || receiverIsIterable {
+                instructions.append(.call(
+                    symbol: chosenBase64Callee,
+                    callee: interner.intern("kk_list_minus_element"),
+                    arguments: [loweredReceiverID] + normalizedArgIDs,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
         if args.count == 1 {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
@@ -3870,6 +3994,10 @@ extension CallLowerer {
                 let dropWhileName = interner.intern("dropWhile")
                 let sortedByName = interner.intern("sortedBy")
                 let sumOfName = interner.intern("sumOf")
+                let sumByName = interner.intern("sumBy")
+                let sumByDoubleName = interner.intern("sumByDouble")
+                let firstNotNullOfName = interner.intern("firstNotNullOf")
+                let firstNotNullOfOrNullName = interner.intern("firstNotNullOfOrNull")
                 let associateName = interner.intern("associate")
                 let associateByName = interner.intern("associateBy")
                 let associateWithName = interner.intern("associateWith")
@@ -3911,6 +4039,14 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_sortedBy"
                 } else if calleeName == sumOfName {
                     runtimeCallee = "kk_sequence_sumOf"
+                } else if calleeName == sumByName {
+                    runtimeCallee = "kk_sequence_sumBy"
+                } else if calleeName == sumByDoubleName {
+                    runtimeCallee = "kk_sequence_sumByDouble"
+                } else if calleeName == firstNotNullOfName {
+                    runtimeCallee = "kk_sequence_firstNotNullOf"
+                } else if calleeName == firstNotNullOfOrNullName {
+                    runtimeCallee = "kk_sequence_firstNotNullOfOrNull"
                 } else if calleeName == associateName {
                     runtimeCallee = "kk_sequence_associate"
                 } else if calleeName == associateByName {
@@ -3979,6 +4115,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_onEachIndexed"
                 } else if calleeName == interner.intern("plus") || calleeName == interner.intern("plusElement") {
                     runtimeCallee = "kk_sequence_plus_element"
+                } else if calleeName == interner.intern("minus") || calleeName == interner.intern("minusElement") {
+                    runtimeCallee = "kk_sequence_minus"
                 } else if calleeName == interner.intern("runningReduceIndexed") {
                     runtimeCallee = "kk_sequence_runningReduceIndexed"
                 } else if calleeName == interner.intern("shuffled") {
@@ -4000,6 +4138,10 @@ extension CallLowerer {
                 if let runtimeCallee {
                     let canThrow = runtimeCallee == "kk_sequence_sortedBy"
                         || runtimeCallee == "kk_sequence_sumOf"
+                        || runtimeCallee == "kk_sequence_sumBy"
+                        || runtimeCallee == "kk_sequence_sumByDouble"
+                        || runtimeCallee == "kk_sequence_firstNotNullOf"
+                        || runtimeCallee == "kk_sequence_firstNotNullOfOrNull"
                         || runtimeCallee == "kk_sequence_associate"
                         || runtimeCallee == "kk_sequence_associateBy"
                         || runtimeCallee == "kk_sequence_associateTo"
@@ -4029,6 +4171,33 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_runningReduceIndexed"
                         || runtimeCallee == "kk_sequence_ifEmpty"
                         || runtimeCallee == "kk_sequence_zipWithNextTransform"
+                    var runtimeArguments = [loweredReceiverID] + normalizedArgIDs
+                    if (runtimeCallee == "kk_sequence_sumBy"
+                        || runtimeCallee == "kk_sequence_sumByDouble"),
+                       normalizedArgIDs.count == 1
+                    {
+                        let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                            normalizedArgIDs[0],
+                            sema: sema,
+                            arena: arena,
+                            interner: interner,
+                            instructions: &instructions
+                        )
+                        runtimeArguments = [loweredReceiverID, fnPtrExpr, envPtrExpr]
+                    }
+                    if (runtimeCallee == "kk_sequence_firstNotNullOf"
+                        || runtimeCallee == "kk_sequence_firstNotNullOfOrNull"),
+                       normalizedArgIDs.count == 1
+                    {
+                        let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                            normalizedArgIDs[0],
+                            sema: sema,
+                            arena: arena,
+                            interner: interner,
+                            instructions: &instructions
+                        )
+                        runtimeArguments = [loweredReceiverID, fnPtrExpr, envPtrExpr]
+                    }
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern(runtimeCallee),
@@ -4141,6 +4310,8 @@ extension CallLowerer {
                     "kk_string_builder_append_line_obj"
                 } else if calleeName == sbNames.deleteCharAt {
                     "kk_string_builder_deleteCharAt"
+                } else if calleeName == sbNames.deleteAt {
+                    "kk_string_builder_deleteAt"
                 } else if calleeName == sbNames.get {
                     "kk_string_builder_get"
                 } else if calleeName == sbNames.ensureCapacity {
@@ -4244,6 +4415,8 @@ extension CallLowerer {
                     "kk_string_builder_insert_obj"
                 } else if calleeName == sbNames.delete {
                     "kk_string_builder_delete_obj"
+                } else if calleeName == sbNames.deleteRange {
+                    "kk_string_builder_deleteRange"
                 } else if calleeName == sbNames.setCharAt {
                     "kk_string_builder_setCharAt"
                 } else {
@@ -4273,6 +4446,33 @@ extension CallLowerer {
                     "kk_string_builder_appendRange_obj"
                 } else if calleeName == sbNames.replace {
                     "kk_string_builder_replace_obj"
+                } else if calleeName == sbNames.setRange {
+                    "kk_string_builder_setRange"
+                } else {
+                    nil
+                }
+                if let runtimeCallee {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(runtimeCallee),
+                        arguments: [loweredReceiverID] + normalizedArgIDs,
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
+        }
+
+        // StringBuilder 4-arg member calls (STDLIB-TEXT-BUILDER-003)
+        if args.count == 4 {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if isStringBuilderLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                let sbNames = KnownCompilerNames(interner: interner)
+                let runtimeCallee: String? = if calleeName == sbNames.insertRange {
+                    "kk_string_builder_insertRange_obj"
                 } else {
                     nil
                 }
@@ -4764,23 +4964,23 @@ extension CallLowerer {
             "aggregate", "aggregateTo",
             "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate",
-            "forEachIndexed", "mapIndexed", "filterIndexed", "sumOf", "mapValues", "mapKeys", "filterKeys", "filterValues",
-            "getOrElse", "elementAtOrElse", "getOrPut", "withDefault",
+            "forEachIndexed", "mapIndexed", "filterIndexed", "sumOf", "sumBy", "sumByDouble", "mapValues", "mapValuesTo", "mapKeys", "mapKeysTo", "filterKeys", "filterValues",
+            "getOrElse", "elementAtOrElse", "getOrPut",
             "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
             "maxOf", "minOf",
             "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",
             "maxOfWith", "maxOfWithOrNull", "minOfWith", "minOfWithOrNull",
-            "indexOfFirst", "indexOfLast", "binarySearch", "binarySearchBy", "reduceIndexed", "reduceIndexedOrNull", "foldIndexed", "foldRightIndexed",
+            "indexOfFirst", "indexOfLast", "binarySearch", "binarySearchBy", "reduceIndexed", "reduceIndexedOrNull", "reduceRightOrNull", "reduceRightIndexed", "reduceRightIndexedOrNull", "foldIndexed", "foldRightIndexed",
             "sortedByDescending", "sortedWith", "partition", "zipWithNext",
             "sortedArrayWith",
             "takeWhile", "dropWhile", "filterNot", "findLast", "replaceAll", "removeIf",
             "replaceFirstChar",
             "trim", "trimStart", "trimEnd",
-            "sortBy", "sortByDescending",
+            "sortWith", "sortBy", "sortByDescending",
             "onEach", "onEachIndexed",
             "ifEmpty",
             "ifBlank",
-            "chunked", "windowed", "copyOf",
+            "chunked", "chunkedSequence", "windowed", "copyOf",
             "toComponents",
             "onSuccess", "onFailure", "recover",
         ].contains(interner.resolve(calleeName))
@@ -5103,8 +5303,7 @@ extension CallLowerer {
         instructions: inout [KIRInstruction]
     ) -> [KIRExprID] {
         let comparatorOnlyHOFNames: Set<String> = [
-            "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",
-            "sortedArrayWith",
+            "sortWith", "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",
         ]
         guard comparatorOnlyHOFNames.contains(interner.resolve(calleeName)),
               loweredArgIDs.count == 1,
@@ -5139,6 +5338,7 @@ extension CallLowerer {
             interner.intern("kk_list_minWith"),
             interner.intern("kk_list_minWithOrNull"),
             interner.intern("kk_array_sortedArrayWith"),
+            interner.intern("kk_mutable_list_sortWith"),
         ]
         if comparatorOnlyCallees.contains(loweredCallee),
            finalArguments.count == 2,
@@ -6162,6 +6362,48 @@ extension CallLowerer {
             finalArguments[2] = fnPtrExpr
             finalArguments.append(envPtrExpr)
         }
+        if (loweredCallee == interner.intern("kk_sequence_firstNotNullOf")
+            || loweredCallee == interner.intern("kk_sequence_firstNotNullOfOrNull")),
+           finalArguments.count == 2
+        {
+            let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                finalArguments[1],
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            finalArguments = [finalArguments[0], fnPtrExpr, envPtrExpr]
+        }
+        if (loweredCallee == interner.intern("kk_iterable_firstNotNullOf")
+            || loweredCallee == interner.intern("kk_iterable_firstNotNullOfOrNull")),
+           finalArguments.count == 2
+        {
+            let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                finalArguments[1],
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            finalArguments = [finalArguments[0], fnPtrExpr, envPtrExpr]
+        }
+        if (loweredCallee == interner.intern("kk_list_sumOf")
+            || loweredCallee == interner.intern("kk_list_sumBy")
+            || loweredCallee == interner.intern("kk_list_sumByDouble")
+            || loweredCallee == interner.intern("kk_sequence_sumBy")
+            || loweredCallee == interner.intern("kk_sequence_sumByDouble")),
+           finalArguments.count == 2
+        {
+            let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                finalArguments[1],
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            finalArguments = [finalArguments[0], fnPtrExpr, envPtrExpr]
+        }
         if loweredCallee == interner.intern("kk_array_copyOf_newSize_init"),
            finalArguments.count == 3
         {
@@ -6444,6 +6686,9 @@ extension CallLowerer {
             interner.intern("kk_list_foldRight"),
             interner.intern("kk_list_reduce"),
             interner.intern("kk_list_reduceRight"),
+            interner.intern("kk_list_reduceRightIndexed"),
+            interner.intern("kk_list_reduceRightIndexedOrNull"),
+            interner.intern("kk_list_reduceRightOrNull"),
             interner.intern("kk_list_reduceOrNull"),
             interner.intern("kk_list_scan"),
             interner.intern("kk_list_runningFold"),
@@ -6457,6 +6702,10 @@ extension CallLowerer {
             interner.intern("kk_list_runningFoldIndexed"),
             interner.intern("kk_list_runningReduceIndexed"),
             interner.intern("kk_list_scanIndexed"),
+            interner.intern("kk_list_sumBy"),
+            interner.intern("kk_list_sumByDouble"),
+            interner.intern("kk_iterable_firstNotNullOf"),
+            interner.intern("kk_iterable_firstNotNullOfOrNull"),
             interner.intern("kk_kclass_cast"),
             interner.intern("kk_range_first_predicate"),
             interner.intern("kk_range_last_predicate"),
@@ -6485,11 +6734,17 @@ extension CallLowerer {
             interner.intern("kk_sequence_runningReduceIndexed"),
             interner.intern("kk_sequence_sortedBy"),
             interner.intern("kk_sequence_sumOf"),
+            interner.intern("kk_sequence_sumBy"),
+            interner.intern("kk_sequence_sumByDouble"),
+            interner.intern("kk_sequence_firstNotNullOf"),
+            interner.intern("kk_sequence_firstNotNullOfOrNull"),
             interner.intern("kk_sequence_associate"),
             interner.intern("kk_sequence_associateBy"),
             interner.intern("kk_sequence_associateTo"),
             interner.intern("kk_sequence_associateByTo"),
             interner.intern("kk_map_getValue"),
+            interner.intern("kk_map_mapKeysTo"),
+            interner.intern("kk_map_mapValuesTo"),
             interner.intern("kk_sequence_mapNotNull"),
             interner.intern("kk_sequence_firstNotNullOf"),
             interner.intern("kk_sequence_firstNotNullOfOrNull"),
@@ -6507,12 +6762,20 @@ extension CallLowerer {
             interner.intern("kk_sequence_ifEmpty"),
             interner.intern("kk_string_ifBlank"),
             interner.intern("kk_string_ifEmpty"),
+            interner.intern("kk_string_chunked_sequence_transform"),
             interner.intern("kk_sequence_first"),
             interner.intern("kk_sequence_last"),
             interner.intern("kk_sequence_firstOrNull"),
             interner.intern("kk_sequence_count"),
+            interner.intern("kk_string_firstNotNullOf"),
+            interner.intern("kk_string_firstNotNullOfOrNull"),
+            interner.intern("kk_string_reduceRightIndexed"),
+            interner.intern("kk_string_reduceRightIndexedOrNull"),
+            interner.intern("kk_string_reduceRightOrNull"),
+            interner.intern("kk_string_sumBy"),
+            interner.intern("kk_string_sumByDouble"),
             interner.intern("kk_string_zipWithNextTransform"),
-            interner.intern("kk_string_chunkedSequence_transform"),
+            interner.intern("kk_string_chunked_sequence_transform"),
             interner.intern("kk_string_windowedSequence_transform"),
             interner.intern("kk_sequence_to_list"),
             interner.intern("kk_list_windowed_transform"),
@@ -8051,6 +8314,12 @@ extension CallLowerer {
                 return interner.intern("kk_list_foldRightIndexed")
             case "reduceRight":
                 return interner.intern("kk_list_reduceRight")
+            case "reduceRightIndexed":
+                return interner.intern("kk_list_reduceRightIndexed")
+            case "reduceRightIndexedOrNull":
+                return interner.intern("kk_list_reduceRightIndexedOrNull")
+            case "reduceRightOrNull":
+                return interner.intern("kk_list_reduceRightOrNull")
             case "runningFoldIndexed":
                 return interner.intern("kk_list_runningFoldIndexed")
             case "runningReduceIndexed":
@@ -8082,6 +8351,8 @@ extension CallLowerer {
                     return interner.intern("kk_mutable_list_sort_primitive")
                 }
                 return interner.intern("kk_mutable_list_sort")
+            case "sortWith":
+                return interner.intern("kk_mutable_list_sortWith")
             case "sortBy":
                 return interner.intern("kk_mutable_list_sortBy")
             case "sortByDescending":
@@ -8105,6 +8376,10 @@ extension CallLowerer {
                 return interner.intern("kk_mutable_list_replaceAll")
             case "removeIf":
                 return interner.intern("kk_mutable_list_removeIf")
+            case "removeFirstOrNull":
+                return interner.intern("kk_mutable_list_removeFirstOrNull")
+            case "removeLastOrNull":
+                return interner.intern("kk_mutable_list_removeLastOrNull")
             default:
                 break
             }
@@ -8345,6 +8620,10 @@ extension CallLowerer {
             let sortedDescendingName = interner.intern("sortedDescending")
             let joinToStringName = interner.intern("joinToString")
             let sumOfName = interner.intern("sumOf")
+            let sumByName = interner.intern("sumBy")
+            let sumByDoubleName = interner.intern("sumByDouble")
+            let firstNotNullOfName = interner.intern("firstNotNullOf")
+            let firstNotNullOfOrNullName = interner.intern("firstNotNullOfOrNull")
             let associateName = interner.intern("associate")
             let associateByName = interner.intern("associateBy")
             let firstName = interner.intern("first")
@@ -8397,6 +8676,14 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_joinToString")
             case sumOfName:
                 return interner.intern("kk_sequence_sumOf")
+            case sumByName:
+                return interner.intern("kk_sequence_sumBy")
+            case sumByDoubleName:
+                return interner.intern("kk_sequence_sumByDouble")
+            case firstNotNullOfName:
+                return interner.intern("kk_sequence_firstNotNullOf")
+            case firstNotNullOfOrNullName:
+                return interner.intern("kk_sequence_firstNotNullOfOrNull")
             case associateName:
                 return interner.intern("kk_sequence_associate")
             case associateByName:
@@ -8463,6 +8750,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_onEachIndexed")
             case interner.intern("plus"), interner.intern("plusElement"):
                 return interner.intern("kk_sequence_plus_element")
+            case interner.intern("minus"), interner.intern("minusElement"):
+                return interner.intern("kk_sequence_minus")
             case interner.intern("ifEmpty"):
                 return interner.intern("kk_sequence_ifEmpty")
             case firstName:
@@ -8630,6 +8919,10 @@ extension CallLowerer {
             return interner.intern("kk_map_filterValues")
         case "mapNotNull":
             return interner.intern("kk_map_mapNotNull")
+        case "mapKeysTo":
+            return interner.intern("kk_map_mapKeysTo")
+        case "mapValuesTo":
+            return interner.intern("kk_map_mapValuesTo")
         case "getOrPut":
             guard knownNames.isMutableMapSymbol(symbol) else {
                 return nil
