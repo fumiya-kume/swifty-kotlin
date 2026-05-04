@@ -599,6 +599,18 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerAtomicMember(
+            ownerSymbol: symbol,
+            ownerType: ownerType,
+            name: "updateAndFetchAt",
+            externalLinkName: "kk_atomic_ref_array_updateAndFetchAt",
+            returnType: typeParamType,
+            parameters: [(name: "index", type: types.intType), (name: "transform", type: transformType)],
+            typeParameterSymbols: [typeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
 
         // get operator alias (index: Int): T
         registerAtomicMember(

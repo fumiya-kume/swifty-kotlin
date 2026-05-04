@@ -188,6 +188,25 @@ final class RuntimeAtomicRefArrayTests: XCTestCase {
         XCTAssertEqual(kk_atomic_ref_array_loadAt(handle, 0), 42)
     }
 
+    func testUpdateAndFetchAtReturnsNewValueAndStoresTransformedValue() {
+        let handle = kk_atomic_ref_array_new(1)
+        kk_atomic_ref_array_storeAt(handle, 0, 10)
+
+        let new = kk_atomic_ref_array_updateAndFetchAt(handle, 0, refArrayThunkReturn42Ptr, nil)
+
+        XCTAssertEqual(new, 42)
+        XCTAssertEqual(kk_atomic_ref_array_loadAt(handle, 0), 42)
+    }
+
+    func testUpdateAndFetchAtOutOfBoundsReturnsZero() {
+        let handle = kk_atomic_ref_array_new(1)
+
+        let new = kk_atomic_ref_array_updateAndFetchAt(handle, 2, refArrayThunkReturn42Ptr, nil)
+
+        XCTAssertEqual(new, 0)
+        XCTAssertEqual(kk_atomic_ref_array_loadAt(handle, 0), 0)
+    }
+
     // MARK: - Multiple independent arrays
 
     func testTwoArraysDoNotInterfere() {

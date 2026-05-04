@@ -340,7 +340,7 @@
 - [x] STDLIB-ATOMIC-007: `AtomicArray.fetchAndUpdateAt(index, function)` を追加する
 - [x] STDLIB-ATOMIC-008: `AtomicArray.updateAt(index, function)` を追加する
 - [x] STDLIB-ATOMIC-009: `AtomicReference.updateAndFetch(function)` を追加する
-- [ ] STDLIB-ATOMIC-010: `AtomicArray.updateAndFetchAt(index, function)` を追加する
+- [x] STDLIB-ATOMIC-010: `AtomicArray.updateAndFetchAt(index, function)` を追加する
 
 #### kotlin.concurrent 型の実装
 - [ ] STDLIB-CONC-TYPE-001: `AtomicArray<T>` クラスの実装

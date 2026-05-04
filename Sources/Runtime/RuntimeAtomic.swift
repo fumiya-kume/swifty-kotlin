@@ -1389,3 +1389,17 @@ public func kk_atomic_ref_array_updateAt(
     }, outThrown: outThrown)
     return 0
 }
+
+@_cdecl("kk_atomic_ref_array_updateAndFetchAt")
+public func kk_atomic_ref_array_updateAndFetchAt(
+    _ receiver: Int,
+    _ index: Int,
+    _ updateFn: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let box = atomicRefArrayBox(from: receiver) else { return 0 }
+    let result = box.fetchAndUpdate(at: index, transform: { old in
+        kk_function_invoke(updateFn, old, outThrown)
+    }, outThrown: outThrown)
+    return result.new
+}
