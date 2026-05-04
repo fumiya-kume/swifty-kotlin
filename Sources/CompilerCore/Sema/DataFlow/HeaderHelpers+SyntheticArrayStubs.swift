@@ -276,7 +276,7 @@ extension DataFlowSemaPhase {
             )
         }
 
-        // --- Array extension functions: contentEquals, contentDeepEquals, contentDeepToString, contentDeepHashCode, contentHashCode, copyInto, reversedArray ---
+        // --- Array extension functions: contentEquals, contentDeepEquals, contentDeepToString, contentDeepHashCode, contentHashCode, copyInto, sliceArray, reversedArray ---
 
         // contentEquals(other: Array<T>): Boolean
         let contentEqualsName = interner.intern("contentEquals")
@@ -564,6 +564,90 @@ extension DataFlowSemaPhase {
                     classTypeParameterCount: 1
                 ),
                 for: copyIntoSymbol
+            )
+        }
+
+        // sliceArray(indices: IntRange) and sliceArray(indices: Iterable<Int>)
+        let sliceArrayName = interner.intern("sliceArray")
+        let sliceArrayFQName = arrayFQName + [sliceArrayName]
+        let arrayElementType = types.make(.typeParam(TypeParamType(
+            symbol: tParamSymbol,
+            nullability: .nonNull
+        )))
+        let arrayReceiverType = types.make(.classType(ClassType(
+            classSymbol: arraySymbol,
+            args: [.invariant(arrayElementType)],
+            nullability: .nonNull
+        )))
+        let listOfIntType = symbols.lookup(
+            fqName: [interner.intern("kotlin"), interner.intern("collections"), interner.intern("List")]
+        ).map { listSymbol in
+            types.make(.classType(ClassType(
+                classSymbol: listSymbol,
+                args: [.out(types.intType)],
+                nullability: .nonNull
+            )))
+        }
+        let existingSliceArray = symbols.lookupAll(fqName: sliceArrayFQName)
+
+        func registerGenericSliceArrayOverload(
+            parameterType: TypeID,
+            externalLinkName: String
+        ) {
+            let alreadyRegistered = existingSliceArray.contains { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == arrayReceiverType
+                    && signature.parameterTypes == [parameterType]
+                    && symbols.externalLinkName(for: symbolID) == externalLinkName
+            }
+            guard !alreadyRegistered else { return }
+
+            let sliceArraySymbol = symbols.define(
+                kind: .function,
+                name: sliceArrayName,
+                fqName: sliceArrayFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(arraySymbol, for: sliceArraySymbol)
+            symbols.setExternalLinkName(externalLinkName, for: sliceArraySymbol)
+
+            let indicesName = interner.intern("indices")
+            let indicesSymbol = symbols.define(
+                kind: .valueParameter,
+                name: indicesName,
+                fqName: sliceArrayFQName + [interner.intern("indices$\(externalLinkName)")],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(sliceArraySymbol, for: indicesSymbol)
+
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: arrayReceiverType,
+                    parameterTypes: [parameterType],
+                    returnType: arrayReceiverType,
+                    isSuspend: false,
+                    valueParameterSymbols: [indicesSymbol],
+                    valueParameterHasDefaultValues: [false],
+                    valueParameterIsVararg: [false],
+                    typeParameterSymbols: [tParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: sliceArraySymbol
+            )
+        }
+
+        registerGenericSliceArrayOverload(
+            parameterType: types.intType,
+            externalLinkName: "kk_array_sliceArray_range"
+        )
+        if let listOfIntType {
+            registerGenericSliceArrayOverload(
+                parameterType: listOfIntType,
+                externalLinkName: "kk_array_sliceArray_iterable"
             )
         }
 
@@ -1328,6 +1412,93 @@ extension DataFlowSemaPhase {
                         typeParameterSymbols: []
                     ),
                     for: copyOfRangeSym
+                )
+            }
+        }
+
+        // Register sliceArray(indices: IntRange) and sliceArray(indices: Iterable<Int>) for primitive arrays.
+        for name in primitiveArrayNames {
+            let primName = interner.intern(name)
+            let fqName = kotlinPkg + [primName]
+            guard let arraySymbol = symbols.lookup(fqName: fqName) else {
+                continue
+            }
+
+            let sliceArrayName = interner.intern("sliceArray")
+            let sliceArrayFQName = fqName + [sliceArrayName]
+            let arrayType = types.make(.classType(ClassType(
+                classSymbol: arraySymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            let listOfIntType = symbols.lookup(
+                fqName: [interner.intern("kotlin"), interner.intern("collections"), interner.intern("List")]
+            ).map { listSymbol in
+                types.make(.classType(ClassType(
+                    classSymbol: listSymbol,
+                    args: [.out(types.intType)],
+                    nullability: .nonNull
+                )))
+            }
+            let existingSliceArray = symbols.lookupAll(fqName: sliceArrayFQName)
+
+            func registerPrimitiveSliceArrayOverload(
+                parameterType: TypeID,
+                externalLinkName: String
+            ) {
+                let alreadyRegistered = existingSliceArray.contains { symbolID in
+                    guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                    return signature.receiverType == arrayType
+                        && signature.parameterTypes == [parameterType]
+                        && symbols.externalLinkName(for: symbolID) == externalLinkName
+                }
+                guard !alreadyRegistered else { return }
+
+                let sliceArraySym = symbols.define(
+                    kind: .function,
+                    name: sliceArrayName,
+                    fqName: sliceArrayFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(arraySymbol, for: sliceArraySym)
+                symbols.setExternalLinkName(externalLinkName, for: sliceArraySym)
+
+                let indicesName = interner.intern("indices")
+                let indicesSymbol = symbols.define(
+                    kind: .valueParameter,
+                    name: indicesName,
+                    fqName: sliceArrayFQName + [interner.intern("indices$\(externalLinkName)")],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(sliceArraySym, for: indicesSymbol)
+
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: arrayType,
+                        parameterTypes: [parameterType],
+                        returnType: arrayType,
+                        isSuspend: false,
+                        valueParameterSymbols: [indicesSymbol],
+                        valueParameterHasDefaultValues: [false],
+                        valueParameterIsVararg: [false],
+                        typeParameterSymbols: []
+                    ),
+                    for: sliceArraySym
+                )
+            }
+
+            registerPrimitiveSliceArrayOverload(
+                parameterType: types.intType,
+                externalLinkName: "kk_array_sliceArray_range"
+            )
+            if let listOfIntType {
+                registerPrimitiveSliceArrayOverload(
+                    parameterType: listOfIntType,
+                    externalLinkName: "kk_array_sliceArray_iterable"
                 )
             }
         }

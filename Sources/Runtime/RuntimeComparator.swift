@@ -944,6 +944,38 @@ public func kk_comparator_reverse_order() -> Int {
     0
 }
 
+// MARK: - kotlin.text.CASE_INSENSITIVE_ORDER (STDLIB-TEXT-TYPE-004)
+
+private final class RuntimeCaseInsensitiveStringComparatorBox {}
+
+@_cdecl("kk_string_case_insensitive_order_trampoline")
+public func kk_string_case_insensitive_order_trampoline(
+    _ closureRaw: Int,
+    _ a: Int,
+    _ b: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    _ = closureRaw
+    _ = outThrown
+    let lhs = runtimeStringFromRawOrPanic(a, caller: #function)
+    let rhs = runtimeStringFromRawOrPanic(b, caller: #function)
+    switch lhs.caseInsensitiveCompare(rhs) {
+    case .orderedAscending:
+        return -1
+    case .orderedDescending:
+        return 1
+    case .orderedSame:
+        return 0
+    }
+}
+
+@_cdecl("kk_string_case_insensitive_order")
+public func kk_string_case_insensitive_order() -> Int {
+    let raw = registerRuntimeObject(RuntimeCaseInsensitiveStringComparatorBox())
+    runtimeRegisterComparatorCompareMethod(raw, kk_string_case_insensitive_order_trampoline)
+    return raw
+}
+
 // MARK: - compareValues / compareValuesBy
 
 /// Internal helper for nullable value comparison. Nulls are less than non-nulls.
