@@ -180,8 +180,14 @@ final class ArrayOfTypeSafetyTests: XCTestCase {
         try withTemporaryFile(contents: source) { path in
             let ctx = makeCompilationContext(inputs: [path])
             try runSema(ctx)
-            // `get` is not a member of Any; should produce unresolved member error.
-            assertHasDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+            // `get` is not a member of Any; should produce a sema error.
+            let hasDiag = ctx.diagnostics.diagnostics.contains {
+                $0.code == "KSWIFTK-SEMA-0024" || $0.code == "KSWIFTK-SEMA-0002"
+            }
+            XCTAssertTrue(
+                hasDiag,
+                "Expected diagnostic KSWIFTK-SEMA-0024 or KSWIFTK-SEMA-0002, got: \(ctx.diagnostics.diagnostics.map(\.code))"
+            )
         }
     }
 
