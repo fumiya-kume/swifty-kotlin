@@ -217,7 +217,7 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
             &thrown
         )
 
-        XCTAssertEqual(result, 0)
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
         XCTAssertNotEqual(thrown, 0)
     }
 
