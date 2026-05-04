@@ -245,6 +245,27 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testCopyActionContextInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import kotlin.io.path.CopyActionContext
+
+        class CopyContextHolder(val context: CopyActionContext?)
+
+        fun keepCopyContext(context: CopyActionContext): CopyActionContext {
+            return context
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "CopyActionContext in kotlin.io.path should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     func testMemoryOrderInAtomicsPackageIsResolved() throws {
         let source = """
         import kotlin.concurrent.atomics.MemoryOrder

@@ -1196,7 +1196,7 @@
 
 ### Phase 5: 非スコープ/高度領域
 - [x] STDLIB-OUT-001: Kotlin 2.3 stdlib API index の JVM/JS/Wasm/Native 専用 package 棚卸しを固定する（`kotlin.io.path`, `kotlin.jvm`, `kotlin.jvm.optionals`, `kotlin.js`, `kotlin.js.collections`, `kotlin.streams`, `kotlin.wasm`, `kotlin.wasm.unsafe`, `kotlinx.cinterop`, `kotlinx.cinterop.internal`, `org.w3c.dom`）
-- [ ] STDLIB-IO-PATH-TYPE-001: `kotlin.io.path.CopyActionContext` type surface を追加する
+- [x] STDLIB-IO-PATH-TYPE-001: `kotlin.io.path.CopyActionContext` type surface を追加する
 - [ ] STDLIB-IO-PATH-TYPE-002: `kotlin.io.path.CopyActionResult` enum surface を追加する
 - [ ] STDLIB-IO-PATH-TYPE-003: `kotlin.io.path.ExperimentalPathApi` marker annotation を追加する
 - [ ] STDLIB-IO-PATH-TYPE-004: `kotlin.io.path.FileVisitorBuilder` type surface を追加する

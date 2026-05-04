@@ -17,6 +17,7 @@
 /// - `listDirectoryEntries(): List<Path>`
 /// - Top-level `Path(pathString: String)` factory (kotlin.io.path.Path)
 /// - `Paths.get(pathString: String)` factory (java.nio.file.Paths)
+/// - `CopyActionContext` type surface
 ///
 /// Each stub registers the kotlin.io.path.Path class, its constructor, member
 /// properties, and member functions in the symbol table so that name resolution
@@ -45,6 +46,14 @@ extension DataFlowSemaPhase {
         symbols.setPropertyType(pathType, for: pathSymbol)
 
         let nullablePathType = types.makeNullable(pathType)
+
+        registerPathCopyActionContextSurface(
+            packageFQName: kotlinIOPathPkg,
+            packageSymbol: kotlinIOPathPkgSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
 
         // List<Path> type for listDirectoryEntries return
         let listSymbol = resolvePathListSymbol(symbols: symbols, interner: interner)
@@ -476,6 +485,30 @@ extension DataFlowSemaPhase {
     }
 
     // MARK: - Private Helpers
+
+    private func registerPathCopyActionContextSurface(
+        packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let contextSymbol = ensureInterfaceSymbol(
+            named: "CopyActionContext",
+            in: packageFQName,
+            symbols: symbols,
+            interner: interner
+        )
+        if let packageSymbol {
+            symbols.setParentSymbol(packageSymbol, for: contextSymbol)
+        }
+        let contextType = types.make(.classType(ClassType(
+            classSymbol: contextSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(contextType, for: contextSymbol)
+    }
 
     private func resolvePathListSymbol(
         symbols: SymbolTable,
