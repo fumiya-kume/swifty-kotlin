@@ -507,6 +507,19 @@ extension DataFlowSemaPhase {
         )
 
         registerSyntheticStringExtensionFunction(
+            named: "toUShortOrNull",
+            externalLinkName: "kk_string_toUShortOrNull_radix",
+            receiverType: stringType,
+            parameters: [
+                ("radix", intType, false, false),
+            ],
+            returnType: types.makeNullable(types.ushortType),
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
             named: "toUIntOrNull",
             externalLinkName: "kk_string_toUIntOrNull_radix",
             receiverType: stringType,
@@ -514,6 +527,19 @@ extension DataFlowSemaPhase {
                 ("radix", intType, false, false),
             ],
             returnType: types.makeNullable(types.uintType),
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "toULongOrNull",
+            externalLinkName: "kk_string_toULongOrNull_radix",
+            receiverType: stringType,
+            parameters: [
+                ("radix", intType, false, false),
+            ],
+            returnType: types.makeNullable(types.ulongType),
             packageFQName: kotlinTextPkg,
             symbols: symbols,
             interner: interner
@@ -2767,109 +2793,108 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // --- STDLIB-TEXT-SEQ-001: CharSequence.chunkedSequence(size) ---
-
-        registerSyntheticStringExtensionFunction(
-            named: "chunkedSequence",
-            externalLinkName: "kk_string_chunkedSequence",
-            receiverType: charSequenceType,
-            parameters: [
-                ("size", intType, false, false),
-            ],
-            returnType: sequenceStringType,
-            packageFQName: kotlinTextPkg,
-            symbols: symbols,
-            interner: interner
-        )
-
-        // --- STDLIB-TEXT-SEQ-002: CharSequence.chunkedSequence(size, transform) ---
-
-        let chunkedSequenceTransformFQName = kotlinTextPkg + [interner.intern("chunkedSequence")]
-        let chunkedSequenceRName = interner.intern("R")
-        let chunkedSequenceRFQName = chunkedSequenceTransformFQName + [chunkedSequenceRName]
-        let chunkedSequenceRSymbol: SymbolID = if let existing = symbols.lookup(fqName: chunkedSequenceRFQName) {
-            existing
-        } else {
-            symbols.define(
-                kind: .typeParameter,
-                name: chunkedSequenceRName,
-                fqName: chunkedSequenceRFQName,
-                declSite: nil,
-                visibility: .private,
-                flags: []
+        for receiverType in [charSequenceType, stringType] {
+            registerSyntheticStringExtensionFunction(
+                named: "chunkedSequence",
+                externalLinkName: "kk_string_chunked_sequence",
+                receiverType: receiverType,
+                parameters: [
+                    ("size", intType, false, false),
+                ],
+                returnType: sequenceStringType,
+                packageFQName: kotlinTextPkg,
+                symbols: symbols,
+                interner: interner
             )
         }
-        let chunkedSequenceRType = types.make(.typeParam(TypeParamType(
-            symbol: chunkedSequenceRSymbol,
-            nullability: .nonNull
-        )))
-        let chunkedSequenceTransformType = types.make(.functionType(FunctionType(
-            params: [charSequenceType],
-            returnType: chunkedSequenceRType,
-            isSuspend: false,
-            nullability: .nonNull
-        )))
-        let chunkedSequenceTransformReturnType = makeSequenceType(
-            symbols: symbols,
-            types: types,
-            interner: interner,
-            elementType: chunkedSequenceRType
-        )
-        let hasChunkedSequenceTransform = symbols.lookupAll(fqName: chunkedSequenceTransformFQName).contains { symID in
-            guard let sig = symbols.functionSignature(for: symID) else {
-                return false
+
+        do {
+            let functionName = interner.intern("chunkedSequence")
+            let functionFQName = kotlinTextPkg + [functionName]
+            let rName = interner.intern("R")
+            let rFQName = functionFQName + [rName]
+            let rSymbol: SymbolID = if let existing = symbols.lookup(fqName: rFQName) {
+                existing
+            } else {
+                symbols.define(
+                    kind: .typeParameter,
+                    name: rName,
+                    fqName: rFQName,
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
             }
-            return sig.receiverType == charSequenceType && sig.parameterTypes.count == 2
-        }
-        if !hasChunkedSequenceTransform {
-            let memberSymbol = symbols.define(
-                kind: .function,
-                name: interner.intern("chunkedSequence"),
-                fqName: chunkedSequenceTransformFQName,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic, .inlineFunction]
+            let rType = types.make(.typeParam(TypeParamType(
+                symbol: rSymbol,
+                nullability: .nonNull
+            )))
+            let transformType = types.make(.functionType(FunctionType(
+                params: [charSequenceType],
+                returnType: rType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let sequenceRType = makeSequenceType(
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                elementType: rType
             )
-            if let packageSymbol = symbols.lookup(fqName: kotlinTextPkg) {
-                symbols.setParentSymbol(packageSymbol, for: memberSymbol)
+            for receiverType in [charSequenceType, stringType] {
+                guard !symbols.lookupAll(fqName: functionFQName).contains(where: { symbolID in
+                    guard let signature = symbols.functionSignature(for: symbolID) else {
+                        return false
+                    }
+                    return signature.receiverType == receiverType
+                        && signature.parameterTypes == [intType, transformType]
+                }) else {
+                    continue
+                }
+                let functionSymbol = symbols.define(
+                    kind: .function,
+                    name: functionName,
+                    fqName: functionFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic, .inlineFunction]
+                )
+                if let packageSymbol = symbols.lookup(fqName: kotlinTextPkg) {
+                    symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+                }
+                symbols.setExternalLinkName("kk_string_chunked_sequence_transform", for: functionSymbol)
+                let sizeParameter = symbols.define(
+                    kind: .valueParameter,
+                    name: interner.intern("size"),
+                    fqName: functionFQName + [interner.intern("size")],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                let transformParameter = symbols.define(
+                    kind: .valueParameter,
+                    name: interner.intern("transform"),
+                    fqName: functionFQName + [interner.intern("transform")],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(functionSymbol, for: sizeParameter)
+                symbols.setParentSymbol(functionSymbol, for: transformParameter)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [intType, transformType],
+                        returnType: sequenceRType,
+                        isSuspend: false,
+                        valueParameterSymbols: [sizeParameter, transformParameter],
+                        valueParameterHasDefaultValues: [false, false],
+                        valueParameterIsVararg: [false, false],
+                        typeParameterSymbols: [rSymbol]
+                    ),
+                    for: functionSymbol
+                )
             }
-            symbols.setExternalLinkName("kk_string_chunkedSequence_transform", for: memberSymbol)
-
-            let sizeParamName = interner.intern("size")
-            let sizeParamSymbol = symbols.define(
-                kind: .valueParameter,
-                name: sizeParamName,
-                fqName: chunkedSequenceTransformFQName + [sizeParamName],
-                declSite: nil,
-                visibility: .private,
-                flags: [.synthetic]
-            )
-            symbols.setParentSymbol(memberSymbol, for: sizeParamSymbol)
-
-            let transformParamName = interner.intern("transform")
-            let transformParamSymbol = symbols.define(
-                kind: .valueParameter,
-                name: transformParamName,
-                fqName: chunkedSequenceTransformFQName + [transformParamName],
-                declSite: nil,
-                visibility: .private,
-                flags: [.synthetic]
-            )
-            symbols.setParentSymbol(memberSymbol, for: transformParamSymbol)
-
-            symbols.setFunctionSignature(
-                FunctionSignature(
-                    receiverType: charSequenceType,
-                    parameterTypes: [intType, chunkedSequenceTransformType],
-                    returnType: chunkedSequenceTransformReturnType,
-                    valueParameterSymbols: [sizeParamSymbol, transformParamSymbol],
-                    valueParameterHasDefaultValues: [false, false],
-                    valueParameterIsVararg: [false, false],
-                    typeParameterSymbols: [chunkedSequenceRSymbol],
-                    classTypeParameterCount: 0
-                ),
-                for: memberSymbol
-            )
         }
 
         registerSyntheticStringExtensionFunction(
