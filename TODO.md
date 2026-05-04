@@ -334,7 +334,7 @@
 - [ ] STDLIB-ATOMIC-001: `kotlin.concurrent.atomics.AtomicNativePtr` surface を追加する
 - [ ] STDLIB-ATOMIC-002: `atomicArrayOfNulls<T>(size)` を追加する
 - [x] STDLIB-ATOMIC-003: `AtomicInt.fetchAndDecrement()` / `AtomicLong.fetchAndDecrement()` を追加する
-- [ ] STDLIB-ATOMIC-004: `AtomicIntArray.fetchAndDecrementAt(index)` / `AtomicLongArray.fetchAndDecrementAt(index)` を追加する
+- [x] STDLIB-ATOMIC-004: `AtomicIntArray.fetchAndDecrementAt(index)` / `AtomicLongArray.fetchAndDecrementAt(index)` を追加する
 - [ ] STDLIB-ATOMIC-005: `AtomicIntArray.fetchAndIncrementAt(index)` / `AtomicLongArray.fetchAndIncrementAt(index)` を追加する
 - [ ] STDLIB-ATOMIC-006: `AtomicReference.fetchAndUpdate(function)` を追加する
 - [ ] STDLIB-ATOMIC-007: `AtomicArray.fetchAndUpdateAt(index, function)` を追加する
