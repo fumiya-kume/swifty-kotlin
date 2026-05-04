@@ -32,6 +32,7 @@ extension ABIMismatchTests {
             "kk_readln",
             "kk_readlnOrNull",
             "kk_string_hexToUInt",
+            "kk_string_chunked_sequence_transform",
             // Exception constructors
             "kk_no_when_branch_matched_exception_new",
             "kk_no_when_branch_matched_exception_new_message",
@@ -61,6 +62,7 @@ extension ABIMismatchTests {
             "kk_string_hexToUByteArray",
             "kk_string_hexToUInt",
             "kk_string_hexToULong",
+            "kk_string_hexToUShort",
             "kk_mutable_list_removeFirstOrNull",
             "kk_mutable_list_removeLastOrNull",
             "kk_mutable_list_sortWith",
@@ -69,6 +71,10 @@ extension ABIMismatchTests {
             "kk_array_of_nulls",
             // String radix conversion
             "kk_string_toIntOrNull_radix",
+            "kk_string_toUByteOrNull_radix",
+            "kk_string_toUShortOrNull_radix",
+            "kk_string_toUIntOrNull_radix",
+            "kk_string_toULongOrNull_radix",
             "kk_string_case_insensitive_order",
             "kk_system_exitProcess",
             "kk_system_currentTimeMillis",

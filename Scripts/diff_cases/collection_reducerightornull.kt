@@ -1,5 +1,5 @@
 fun main() {
-    val values: Iterable<Int> = listOf(1, 2, 3)
+    val values: List<Int> = listOf(1, 2, 3)
 
     println(values.reduceRightOrNull { value, acc ->
         value * 10 + acc

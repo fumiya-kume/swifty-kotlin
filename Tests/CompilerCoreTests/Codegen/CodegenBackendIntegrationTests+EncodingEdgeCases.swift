@@ -19,6 +19,15 @@ extension CodegenBackendIntegrationTests {
             println(hex.hexToInt())
             println("ffff".hexToShort())
             println("ff".hexToUByte().toInt())
+            println("ffff".hexToUShort().toInt())
+            println("ff".toUByteOrNull(16)?.toInt() ?: -1)
+            println("100".toUByteOrNull(16)?.toInt() ?: -1)
+            println("ffff".toUShortOrNull(16)?.toInt() ?: -1)
+            println("10000".toUShortOrNull(16)?.toInt() ?: -1)
+            println("ffffffff".toUIntOrNull(16)?.toLong() ?: -1L)
+            println("100000000".toUIntOrNull(16)?.toLong() ?: -1L)
+            println("ffffffffffffffff".toULongOrNull(16) ?: 0uL)
+            println("10000000000000000".toULongOrNull(16) ?: 1uL)
             println("ffffffff".hexToUInt())
             println("ffffffffffffffff".hexToULong())
             val ubytes = "00ff".hexToUByteArray()
@@ -53,6 +62,15 @@ extension CodegenBackendIntegrationTests {
                 255
                 -1
                 255
+                65535
+                255
+                -1
+                65535
+                -1
+                4294967295
+                -1
+                18446744073709551615
+                1
                 4294967295
                 18446744073709551615
                 2

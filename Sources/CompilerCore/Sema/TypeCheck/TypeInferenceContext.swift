@@ -23,6 +23,8 @@ struct TypeInferenceContext {
     var enclosingClassSymbol: SymbolID?
     let visibilityChecker: VisibilityChecker
     var outerReceiverTypes: [(label: InternedString, type: TypeID)]
+    /// Context receiver types available to `contextOf<A>()` in the current lambda body.
+    var contextReceiverTypes: [TypeID] = []
     /// When true, the current scope is a builder DSL lambda body (STDLIB-002).
     /// Used to scope `append`/`add`/`put` fallback resolution.
     var isBuilderLambdaScope: Bool = false
@@ -94,7 +96,8 @@ struct TypeInferenceContext {
         flowState: DataFlowState? = nil,
         currentDeclSymbol: SymbolID?? = nil,
         enclosingClassSymbol: SymbolID?? = nil,
-        outerReceiverTypes: [(label: InternedString, type: TypeID)]? = nil
+        outerReceiverTypes: [(label: InternedString, type: TypeID)]? = nil,
+        contextReceiverTypes: [TypeID]? = nil
     ) -> TypeInferenceContext {
         var copy = self
         if let scope { copy.scope = scope }
@@ -115,6 +118,13 @@ struct TypeInferenceContext {
         if let currentDeclSymbol { copy.currentDeclSymbol = currentDeclSymbol }
         if let enclosingClassSymbol { copy.enclosingClassSymbol = enclosingClassSymbol }
         if let outerReceiverTypes { copy.outerReceiverTypes = outerReceiverTypes }
+        if let contextReceiverTypes { copy.contextReceiverTypes = contextReceiverTypes }
+        return copy
+    }
+
+    func with(contextReceiverTypes newTypes: [TypeID]) -> TypeInferenceContext {
+        var copy = self
+        copy.contextReceiverTypes = newTypes
         return copy
     }
 
