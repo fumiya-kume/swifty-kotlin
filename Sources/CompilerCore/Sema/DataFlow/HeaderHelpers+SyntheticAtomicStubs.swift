@@ -137,6 +137,13 @@ extension DataFlowSemaPhase {
             types: types,
             typeParameterNames: ["T"]
         )
+        registerAtomicNativePtrSurface(
+            packageFQName: atomicsPkg,
+            packageSymbol: symbols.lookup(fqName: atomicsPkg),
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
 
         registerAtomicArrayFamily(
             packageFQName: atomicsPkg,
@@ -1032,6 +1039,109 @@ extension DataFlowSemaPhase {
                 classTypeParameterCount: 0
             ),
             for: functionSymbol
+        )
+    }
+
+    private func registerAtomicNativePtrSurface(
+        packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let nativePtrType = nativeConcurrentClassType(
+            packagePath: ["kotlinx", "cinterop"],
+            name: "NativePtr",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let classSymbol = ensureClassSymbol(
+            named: "AtomicNativePtr",
+            in: packageFQName,
+            symbols: symbols,
+            interner: interner
+        )
+        if let packageSymbol {
+            symbols.setParentSymbol(packageSymbol, for: classSymbol)
+        }
+        let ownerType = types.make(.classType(ClassType(
+            classSymbol: classSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(ownerType, for: classSymbol)
+
+        registerNativeConcurrentConstructor(
+            ownerSymbol: classSymbol,
+            ownerType: ownerType,
+            parameters: [(name: "value", type: nativePtrType)],
+            defaultValues: [false],
+            symbols: symbols,
+            interner: interner
+        )
+        registerNativeConcurrentMutableProperty(
+            ownerSymbol: classSymbol,
+            name: "value",
+            propertyType: nativePtrType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerNativeConcurrentMemberFunction(
+            ownerSymbol: classSymbol,
+            ownerType: ownerType,
+            name: "load",
+            returnType: nativePtrType,
+            parameters: [],
+            defaultValues: [],
+            symbols: symbols,
+            interner: interner
+        )
+        registerNativeConcurrentMemberFunction(
+            ownerSymbol: classSymbol,
+            ownerType: ownerType,
+            name: "store",
+            returnType: types.unitType,
+            parameters: [(name: "value", type: nativePtrType)],
+            defaultValues: [],
+            symbols: symbols,
+            interner: interner
+        )
+        registerNativeConcurrentMemberFunction(
+            ownerSymbol: classSymbol,
+            ownerType: ownerType,
+            name: "exchange",
+            returnType: nativePtrType,
+            parameters: [(name: "new", type: nativePtrType)],
+            defaultValues: [],
+            symbols: symbols,
+            interner: interner
+        )
+        registerNativeConcurrentMemberFunction(
+            ownerSymbol: classSymbol,
+            ownerType: ownerType,
+            name: "compareAndSet",
+            returnType: types.booleanType,
+            parameters: [
+                (name: "expect", type: nativePtrType),
+                (name: "update", type: nativePtrType),
+            ],
+            defaultValues: [],
+            symbols: symbols,
+            interner: interner
+        )
+        registerNativeConcurrentMemberFunction(
+            ownerSymbol: classSymbol,
+            ownerType: ownerType,
+            name: "compareAndExchange",
+            returnType: nativePtrType,
+            parameters: [
+                (name: "expect", type: nativePtrType),
+                (name: "update", type: nativePtrType),
+            ],
+            defaultValues: [],
+            symbols: symbols,
+            interner: interner
         )
     }
 

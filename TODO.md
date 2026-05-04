@@ -331,7 +331,7 @@
 - [x] STDLIB-IO-ENC-004: `Base64.withPadding(PaddingOption)` と MIME / URL-safe variant の挙動を追加する
 - [ ] STDLIB-032: `kotlin.time` の stable / experimental 境界を明文化
 - [ ] STDLIB-033: `kotlin.concurrent` / `kotlin.concurrent.atomics` / Native concurrent の parity を上げる
-- [ ] STDLIB-ATOMIC-001: `kotlin.concurrent.atomics.AtomicNativePtr` surface を追加する
+- [x] STDLIB-ATOMIC-001: `kotlin.concurrent.atomics.AtomicNativePtr` surface を追加する
 - [x] STDLIB-ATOMIC-002: `atomicArrayOfNulls<T>(size)` を追加する
 - [x] STDLIB-ATOMIC-003: `AtomicInt.fetchAndDecrement()` / `AtomicLong.fetchAndDecrement()` を追加する
 - [x] STDLIB-ATOMIC-004: `AtomicIntArray.fetchAndDecrementAt(index)` / `AtomicLongArray.fetchAndDecrementAt(index)` を追加する

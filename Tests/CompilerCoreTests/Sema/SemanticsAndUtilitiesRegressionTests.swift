@@ -266,6 +266,34 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testAtomicNativePtrInAtomicsPackageSurfaceIsResolved() throws {
+        let source = """
+        @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
+
+        import kotlin.concurrent.atomics.AtomicNativePtr
+        import kotlinx.cinterop.NativePtr
+
+        fun touchAtomicNativePtr(initial: NativePtr, next: NativePtr): NativePtr {
+            val atomic = AtomicNativePtr(initial)
+            atomic.value = next
+            atomic.store(initial)
+            val loaded = atomic.load()
+            val exchanged = atomic.exchange(next)
+            atomic.compareAndSet(exchanged, loaded)
+            return atomic.compareAndExchange(loaded, next)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "AtomicNativePtr in kotlin.concurrent.atomics should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     func testPathNameExtensionPropertyInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import kotlin.io.path.Path
@@ -286,6 +314,7 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
             )
         }
     }
+
     func testMemoryOrderInAtomicsPackageIsResolved() throws {
         let source = """
         import kotlin.concurrent.atomics.MemoryOrder
