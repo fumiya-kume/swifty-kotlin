@@ -43,14 +43,14 @@ fun main() {
     println(c.toShort())
     println(c.toInt())
     println(c.toLong())
-    println(c.toUInt())
-    println(c.toULong())
-    
+    println(c.code.toUInt())
+    println(c.code.toULong())
+
     // Test toChar from various types
     println(i.toChar())
-    println(l.toChar())
-    println(f.toChar())
-    println(d.toChar())
+    println(l.toInt().toChar())
+    println(f.toInt().toChar())
+    println(d.toInt().toChar())
     
     // Test edge cases
     println("--- Edge Cases ---")
