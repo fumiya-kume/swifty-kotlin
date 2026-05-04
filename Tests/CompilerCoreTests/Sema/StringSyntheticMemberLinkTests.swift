@@ -52,7 +52,12 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
             "endsWith": "kk_string_endsWith",
             "toInt": "kk_string_toInt",
             "toDouble": "kk_string_toDouble",
+            "hexToShort": "kk_string_hexToShort",
+            "hexToUByte": "kk_string_hexToUByte",
+            "hexToUByteArray": "kk_string_hexToUByteArray",
             "hexToUInt": "kk_string_hexToUInt",
+            "hexToULong": "kk_string_hexToULong",
+            "hexToUShort": "kk_string_hexToUShort",
             "trimIndent": "kk_string_trimIndent",
             "replaceIndentByMargin": "kk_string_replaceIndentByMargin",
         ]
@@ -180,6 +185,20 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
         )
     }
 
+    func testChunkedSequenceStubsHaveCorrectExternalLinks() throws {
+        let (sema, interner) = try makeSema()
+
+        let links = externalLinks(for: "chunkedSequence", sema: sema, interner: interner)
+        XCTAssertTrue(
+            links.contains("kk_string_chunked_sequence_transform"),
+            "CharSequence.chunkedSequence(size, transform) should link to kk_string_chunked_sequence_transform"
+        )
+        XCTAssertTrue(
+            links.contains("kk_string_chunked_sequence"),
+            "CharSequence.chunkedSequence should link to kk_string_chunked_sequence"
+        )
+    }
+
     func testNewNullableConversionStubsHaveCorrectExternalLinks() throws {
         let (sema, interner) = try makeSema()
 
@@ -192,6 +211,26 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
             externalLinks(for: "toIntOrNull", sema: sema, interner: interner)
                 .contains("kk_string_toIntOrNull_radix"),
             "String.toIntOrNull(radix) should link to kk_string_toIntOrNull_radix"
+        )
+        XCTAssertEqual(
+            externalLink(for: "toUByteOrNull", sema: sema, interner: interner),
+            "kk_string_toUByteOrNull_radix",
+            "String.toUByteOrNull(radix) should link to kk_string_toUByteOrNull_radix"
+        )
+        XCTAssertEqual(
+            externalLink(for: "toUShortOrNull", sema: sema, interner: interner),
+            "kk_string_toUShortOrNull_radix",
+            "String.toUShortOrNull(radix) should link to kk_string_toUShortOrNull_radix"
+        )
+        XCTAssertEqual(
+            externalLink(for: "toUIntOrNull", sema: sema, interner: interner),
+            "kk_string_toUIntOrNull_radix",
+            "String.toUIntOrNull(radix) should link to kk_string_toUIntOrNull_radix"
+        )
+        XCTAssertEqual(
+            externalLink(for: "toULongOrNull", sema: sema, interner: interner),
+            "kk_string_toULongOrNull_radix",
+            "String.toULongOrNull(radix) should link to kk_string_toULongOrNull_radix"
         )
         XCTAssertEqual(
             externalLink(for: "toDoubleOrNull", sema: sema, interner: interner),
@@ -321,13 +360,13 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
 
         XCTAssertEqual(
             externalLink(for: "chunkedSequence", sema: sema, interner: interner),
-            "kk_string_chunkedSequence",
-            "CharSequence.chunkedSequence should link to kk_string_chunkedSequence"
+            "kk_string_chunked_sequence",
+            "CharSequence.chunkedSequence should link to kk_string_chunked_sequence"
         )
         XCTAssertTrue(
             externalLinks(for: "chunkedSequence", sema: sema, interner: interner)
-                .contains("kk_string_chunkedSequence_transform"),
-            "CharSequence.chunkedSequence(size, transform) should link to kk_string_chunkedSequence_transform"
+                .contains("kk_string_chunked_sequence_transform"),
+            "CharSequence.chunkedSequence(size, transform) should link to kk_string_chunked_sequence_transform"
         )
     }
 
@@ -574,8 +613,8 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
                 )
                 XCTAssertEqual(
                     sema.symbols.externalLinkName(for: chosenCallee),
-                    "kk_string_chunkedSequence",
-                    "Expected chunkedSequence to resolve to kk_string_chunkedSequence"
+                    "kk_string_chunked_sequence",
+                    "Expected chunkedSequence to resolve to kk_string_chunked_sequence"
                 )
             }
         }
@@ -609,8 +648,8 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
                 )
                 XCTAssertEqual(
                     sema.symbols.externalLinkName(for: chosenCallee),
-                    "kk_string_chunkedSequence_transform",
-                    "Expected chunkedSequence transform to resolve to kk_string_chunkedSequence_transform"
+                    "kk_string_chunked_sequence_transform",
+                    "Expected chunkedSequence transform to resolve to kk_string_chunked_sequence_transform"
                 )
             }
         }
@@ -1344,6 +1383,72 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testStringBuilderInsertRangeResolvesInCallExpressions() throws {
+        let source = """
+        import kotlin.text.StringBuilder
+
+        fun insertMiddle(): StringBuilder {
+            return StringBuilder("ab").insertRange(1, "WXYZ", 1, 3)
+        }
+
+        fun insertWithReceiver(): String {
+            return with(StringBuilder("ab")) {
+                insertRange(2, "WXYZ", 0, 2)
+                toString()
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics.map { "\($0.code): \($0.message)" }.joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected StringBuilder.insertRange surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let insertRangeBindings = sema.bindings.callBindings.values.filter { binding in
+                sema.symbols.externalLinkName(for: binding.chosenCallee) == "kk_string_builder_insertRange_obj"
+            }
+            XCTAssertEqual(insertRangeBindings.count, 2)
+        }
+    }
+
+    func testStringBuilderSetRangeResolvesInCallExpressions() throws {
+        let source = """
+        import kotlin.text.StringBuilder
+
+        fun setMiddle(): StringBuilder {
+            return StringBuilder("abcd").setRange(1, 3, "XYZ")
+        }
+
+        fun setWithReceiver(): String {
+            return with(StringBuilder("abcd")) {
+                setRange(0, 2, "XY")
+                toString()
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics.map { "\($0.code): \($0.message)" }.joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected StringBuilder.setRange surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let setRangeBindings = sema.bindings.callBindings.values.filter { binding in
+                sema.symbols.externalLinkName(for: binding.chosenCallee) == "kk_string_builder_setRange"
+            }
+            XCTAssertEqual(setRangeBindings.count, 2)
+        }
+    }
+
     func testCharSequenceZipWithNextMembersResolveInCallExpressions() throws {
         let source = """
         fun pairs(value: CharSequence): List<Pair<Char, Char>> {
@@ -1379,6 +1484,212 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
             XCTAssertEqual(
                 externalLinks,
                 ["kk_string_zipWithNext", "kk_string_zipWithNextTransform"]
+            )
+        }
+    }
+
+    func testCharSequenceFirstNotNullOfResolvesInCallExpressions() throws {
+        let source = """
+        fun firstLabel(value: CharSequence): String {
+            return value.firstNotNullOf<String> { ch -> if (ch == 'b') "bee" else null }
+        }
+
+        fun firstFromString(value: String): String {
+            return value.firstNotNullOf<String> { ch -> if (ch == 'c') "see" else null }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics.map { "\($0.code): \($0.message)" }.joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected CharSequence.firstNotNullOf surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let firstNotNullOfBindings = sema.bindings.callBindings.values.filter { binding in
+                sema.symbols.externalLinkName(for: binding.chosenCallee) == "kk_string_firstNotNullOf"
+            }
+            XCTAssertEqual(firstNotNullOfBindings.count, 2)
+        }
+    }
+
+    func testCharSequenceFirstNotNullOfOrNullResolvesInCallExpressions() throws {
+        let source = """
+        fun firstLabel(value: CharSequence): String? {
+            return value.firstNotNullOfOrNull<String> { ch -> if (ch == 'b') "bee" else null }
+        }
+
+        fun firstFromString(value: String): String? {
+            return value.firstNotNullOfOrNull<String> { ch -> if (ch == 'c') "see" else null }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics.map { "\($0.code): \($0.message)" }.joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected CharSequence.firstNotNullOfOrNull surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let bindings = sema.bindings.callBindings.values.filter { binding in
+                sema.symbols.externalLinkName(for: binding.chosenCallee) == "kk_string_firstNotNullOfOrNull"
+            }
+            XCTAssertEqual(bindings.count, 2)
+        }
+    }
+
+    func testCharSequenceReduceRightIndexedResolvesInCallExpressions() throws {
+        let source = """
+        fun reduceFromSequence(value: CharSequence): Char {
+            return value.reduceRightIndexed { index, ch, acc -> if (index == 1) ch else acc }
+        }
+
+        fun reduceFromString(value: String): Char {
+            return value.reduceRightIndexed { index, ch, acc -> if (index == 0) ch else acc }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics.map { "\($0.code): \($0.message)" }.joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected CharSequence.reduceRightIndexed surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let bindings = sema.bindings.callBindings.values.filter { binding in
+                sema.symbols.externalLinkName(for: binding.chosenCallee) == "kk_string_reduceRightIndexed"
+            }
+            XCTAssertEqual(bindings.count, 2)
+        }
+    }
+
+    func testCharSequenceReduceRightIndexedOrNullResolvesInCallExpressions() throws {
+        let source = """
+        fun reduceFromSequence(value: CharSequence): Char? {
+            return value.reduceRightIndexedOrNull { index, ch, acc -> if (index == 1) ch else acc }
+        }
+
+        fun reduceFromString(value: String): Char? {
+            return value.reduceRightIndexedOrNull { index, ch, acc -> if (index == 0) ch else acc }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics.map { "\($0.code): \($0.message)" }.joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected CharSequence.reduceRightIndexedOrNull surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let bindings = sema.bindings.callBindings.values.filter { binding in
+                sema.symbols.externalLinkName(for: binding.chosenCallee) == "kk_string_reduceRightIndexedOrNull"
+            }
+            XCTAssertEqual(bindings.count, 2)
+        }
+    }
+
+    func testCharSequenceReduceRightOrNullResolvesInCallExpressions() throws {
+        let source = """
+        fun reduceFromSequence(value: CharSequence): Char? {
+            return value.reduceRightOrNull { ch, acc -> if (ch == 'b') ch else acc }
+        }
+
+        fun reduceFromString(value: String): Char? {
+            return value.reduceRightOrNull { ch, acc -> if (ch == 'a') ch else acc }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics.map { "\($0.code): \($0.message)" }.joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected CharSequence.reduceRightOrNull surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let bindings = sema.bindings.callBindings.values.filter { binding in
+                sema.symbols.externalLinkName(for: binding.chosenCallee) == "kk_string_reduceRightOrNull"
+            }
+            XCTAssertEqual(bindings.count, 2)
+        }
+    }
+
+    func testCharSequenceSumByResolvesInCallExpressions() throws {
+        let source = """
+        fun sumFromSequence(value: CharSequence): Int {
+            return value.sumBy { if (it == 'a') 10 else 1 }
+        }
+
+        fun sumFromString(value: String): Int {
+            return value.sumBy { ch -> if (ch == 'b') 20 else 2 }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics.map { "\($0.code): \($0.message)" }.joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected CharSequence.sumBy surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let bindings = sema.bindings.callBindings.values.filter { binding in
+                sema.symbols.externalLinkName(for: binding.chosenCallee) == "kk_string_sumBy"
+            }
+            XCTAssertEqual(bindings.count, 2)
+            let sumBySymbol = try XCTUnwrap(bindings.first?.chosenCallee)
+            XCTAssertTrue(
+                sema.symbols.annotations(for: sumBySymbol).contains { $0.annotationFQName == "kotlin.Deprecated" },
+                "CharSequence.sumBy should carry Deprecated metadata"
+            )
+        }
+    }
+
+    func testCharSequenceSumByDoubleResolvesInCallExpressions() throws {
+        let source = """
+        fun sumFromSequence(value: CharSequence): Double {
+            return value.sumByDouble { if (it == 'a') 1.5 else 0.25 }
+        }
+
+        fun sumFromString(value: String): Double {
+            return value.sumByDouble { ch -> if (ch == 'b') 2.0 else 0.5 }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics.map { "\($0.code): \($0.message)" }.joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected CharSequence.sumByDouble surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let bindings = sema.bindings.callBindings.values.filter { binding in
+                sema.symbols.externalLinkName(for: binding.chosenCallee) == "kk_string_sumByDouble"
+            }
+            XCTAssertEqual(bindings.count, 2)
+            let sumByDoubleSymbol = try XCTUnwrap(bindings.first?.chosenCallee)
+            XCTAssertTrue(
+                sema.symbols.annotations(for: sumByDoubleSymbol).contains { $0.annotationFQName == "kotlin.Deprecated" },
+                "CharSequence.sumByDouble should carry Deprecated metadata"
             )
         }
     }

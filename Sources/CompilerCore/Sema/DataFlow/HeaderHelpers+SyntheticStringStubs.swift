@@ -494,6 +494,58 @@ extension DataFlowSemaPhase {
         )
 
         registerSyntheticStringExtensionFunction(
+            named: "toUByteOrNull",
+            externalLinkName: "kk_string_toUByteOrNull_radix",
+            receiverType: stringType,
+            parameters: [
+                ("radix", intType, false, false),
+            ],
+            returnType: types.makeNullable(types.ubyteType),
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "toUShortOrNull",
+            externalLinkName: "kk_string_toUShortOrNull_radix",
+            receiverType: stringType,
+            parameters: [
+                ("radix", intType, false, false),
+            ],
+            returnType: types.makeNullable(types.ushortType),
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "toUIntOrNull",
+            externalLinkName: "kk_string_toUIntOrNull_radix",
+            receiverType: stringType,
+            parameters: [
+                ("radix", intType, false, false),
+            ],
+            returnType: types.makeNullable(types.uintType),
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "toULongOrNull",
+            externalLinkName: "kk_string_toULongOrNull_radix",
+            receiverType: stringType,
+            parameters: [
+                ("radix", intType, false, false),
+            ],
+            returnType: types.makeNullable(types.ulongType),
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
             named: "toDouble",
             externalLinkName: "kk_string_toDouble",
             receiverType: stringType,
@@ -1781,9 +1833,27 @@ extension DataFlowSemaPhase {
             isSuspend: false,
             nullability: .nonNull
         )))
+        let charToIntType = types.make(.functionType(FunctionType(
+            params: [charType],
+            returnType: intType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let charToDoubleType = types.make(.functionType(FunctionType(
+            params: [charType],
+            returnType: doubleType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
         let charToNullableAnyType = types.make(.functionType(FunctionType(
             params: [charType],
             returnType: types.nullableAnyType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let charCharToCharType = types.make(.functionType(FunctionType(
+            params: [charType, charType],
+            returnType: charType,
             isSuspend: false,
             nullability: .nonNull
         )))
@@ -1796,6 +1866,12 @@ extension DataFlowSemaPhase {
         let intCharToBoolType = types.make(.functionType(FunctionType(
             params: [intType, charType],
             returnType: boolType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let intCharCharToCharType = types.make(.functionType(FunctionType(
+            params: [intType, charType, charType],
+            returnType: charType,
             isSuspend: false,
             nullability: .nonNull
         )))
@@ -1893,6 +1969,217 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- STDLIB-TEXT-HOF-001: CharSequence.firstNotNullOf(transform) ---
+        let firstNotNullOfFQName = kotlinTextPkg + [interner.intern("firstNotNullOf")]
+        if !symbols.lookupAll(fqName: firstNotNullOfFQName).contains(where: { symID in
+            guard let sig = symbols.functionSignature(for: symID) else {
+                return false
+            }
+            return sig.receiverType == charSequenceType && sig.parameterTypes.count == 1
+        }) {
+            let rName = interner.intern("R")
+            let rSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: firstNotNullOfFQName + [rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let transformType = types.make(.functionType(FunctionType(
+                params: [charType],
+                returnType: types.makeNullable(rType),
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: interner.intern("firstNotNullOf"),
+                fqName: firstNotNullOfFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            if let packageSymbol = symbols.lookup(fqName: kotlinTextPkg) {
+                symbols.setParentSymbol(packageSymbol, for: memberSymbol)
+            }
+            symbols.setExternalLinkName("kk_string_firstNotNullOf", for: memberSymbol)
+
+            let transformParamName = interner.intern("transform")
+            let transformParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: transformParamName,
+                fqName: firstNotNullOfFQName + [transformParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: transformParamSymbol)
+
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: charSequenceType,
+                    parameterTypes: [transformType],
+                    returnType: rType,
+                    valueParameterSymbols: [transformParamSymbol],
+                    valueParameterHasDefaultValues: [false],
+                    valueParameterIsVararg: [false],
+                    typeParameterSymbols: [rSymbol],
+                    classTypeParameterCount: 0
+                ),
+                for: memberSymbol
+            )
+        }
+
+        // --- STDLIB-TEXT-HOF-002: CharSequence.firstNotNullOfOrNull(transform) ---
+        let firstNotNullOfOrNullFQName = kotlinTextPkg + [interner.intern("firstNotNullOfOrNull")]
+        if !symbols.lookupAll(fqName: firstNotNullOfOrNullFQName).contains(where: { symID in
+            guard let sig = symbols.functionSignature(for: symID) else {
+                return false
+            }
+            return sig.receiverType == charSequenceType && sig.parameterTypes.count == 1
+        }) {
+            let rName = interner.intern("R")
+            let rSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: firstNotNullOfOrNullFQName + [rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let nullableRType = types.makeNullable(rType)
+            let transformType = types.make(.functionType(FunctionType(
+                params: [charType],
+                returnType: nullableRType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: interner.intern("firstNotNullOfOrNull"),
+                fqName: firstNotNullOfOrNullFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            if let packageSymbol = symbols.lookup(fqName: kotlinTextPkg) {
+                symbols.setParentSymbol(packageSymbol, for: memberSymbol)
+            }
+            symbols.setExternalLinkName("kk_string_firstNotNullOfOrNull", for: memberSymbol)
+
+            let transformParamName = interner.intern("transform")
+            let transformParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: transformParamName,
+                fqName: firstNotNullOfOrNullFQName + [transformParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: transformParamSymbol)
+
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: charSequenceType,
+                    parameterTypes: [transformType],
+                    returnType: nullableRType,
+                    valueParameterSymbols: [transformParamSymbol],
+                    valueParameterHasDefaultValues: [false],
+                    valueParameterIsVararg: [false],
+                    typeParameterSymbols: [rSymbol],
+                    classTypeParameterCount: 0
+                ),
+                for: memberSymbol
+            )
+        }
+
+        // --- STDLIB-TEXT-HOF-003: CharSequence.reduceRightIndexed(operation) ---
+        registerSyntheticStringExtensionFunction(
+            named: "reduceRightIndexed",
+            externalLinkName: "kk_string_reduceRightIndexed",
+            receiverType: charSequenceType,
+            parameters: [("operation", intCharCharToCharType, false, false)],
+            returnType: charType,
+            flags: [.synthetic, .inlineFunction],
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-TEXT-HOF-004: CharSequence.reduceRightIndexedOrNull(operation) ---
+        registerSyntheticStringExtensionFunction(
+            named: "reduceRightIndexedOrNull",
+            externalLinkName: "kk_string_reduceRightIndexedOrNull",
+            receiverType: charSequenceType,
+            parameters: [("operation", intCharCharToCharType, false, false)],
+            returnType: nullableCharType,
+            flags: [.synthetic, .inlineFunction],
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-TEXT-HOF-005: CharSequence.reduceRightOrNull(operation) ---
+        registerSyntheticStringExtensionFunction(
+            named: "reduceRightOrNull",
+            externalLinkName: "kk_string_reduceRightOrNull",
+            receiverType: charSequenceType,
+            parameters: [("operation", charCharToCharType, false, false)],
+            returnType: nullableCharType,
+            flags: [.synthetic, .inlineFunction],
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-TEXT-HOF-006: CharSequence.sumBy(selector) deprecated surface ---
+        registerSyntheticStringExtensionFunction(
+            named: "sumBy",
+            externalLinkName: "kk_string_sumBy",
+            receiverType: charSequenceType,
+            parameters: [("selector", charToIntType, false, false)],
+            returnType: intType,
+            annotations: [
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.Deprecated",
+                    arguments: [
+                        "message = \"Use sumOf instead.\"",
+                        "replaceWith = ReplaceWith(\"sumOf(selector)\")",
+                    ]
+                ),
+            ],
+            flags: [.synthetic, .inlineFunction],
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-TEXT-HOF-007: CharSequence.sumByDouble(selector) deprecated surface ---
+        registerSyntheticStringExtensionFunction(
+            named: "sumByDouble",
+            externalLinkName: "kk_string_sumByDouble",
+            receiverType: charSequenceType,
+            parameters: [("selector", charToDoubleType, false, false)],
+            returnType: doubleType,
+            annotations: [
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.Deprecated",
+                    arguments: [
+                        "message = \"Use sumOf instead.\"",
+                        "replaceWith = ReplaceWith(\"sumOf(selector)\")",
+                    ]
+                ),
+            ],
+            flags: [.synthetic, .inlineFunction],
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticStringExtensionFunction(
             named: "filterIndexed",
             externalLinkName: "kk_string_filterIndexed",
@@ -2506,109 +2793,108 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // --- STDLIB-TEXT-SEQ-001: CharSequence.chunkedSequence(size) ---
-
-        registerSyntheticStringExtensionFunction(
-            named: "chunkedSequence",
-            externalLinkName: "kk_string_chunkedSequence",
-            receiverType: charSequenceType,
-            parameters: [
-                ("size", intType, false, false),
-            ],
-            returnType: sequenceStringType,
-            packageFQName: kotlinTextPkg,
-            symbols: symbols,
-            interner: interner
-        )
-
-        // --- STDLIB-TEXT-SEQ-002: CharSequence.chunkedSequence(size, transform) ---
-
-        let chunkedSequenceTransformFQName = kotlinTextPkg + [interner.intern("chunkedSequence")]
-        let chunkedSequenceRName = interner.intern("R")
-        let chunkedSequenceRFQName = chunkedSequenceTransformFQName + [chunkedSequenceRName]
-        let chunkedSequenceRSymbol: SymbolID = if let existing = symbols.lookup(fqName: chunkedSequenceRFQName) {
-            existing
-        } else {
-            symbols.define(
-                kind: .typeParameter,
-                name: chunkedSequenceRName,
-                fqName: chunkedSequenceRFQName,
-                declSite: nil,
-                visibility: .private,
-                flags: []
+        for receiverType in [charSequenceType, stringType] {
+            registerSyntheticStringExtensionFunction(
+                named: "chunkedSequence",
+                externalLinkName: "kk_string_chunked_sequence",
+                receiverType: receiverType,
+                parameters: [
+                    ("size", intType, false, false),
+                ],
+                returnType: sequenceStringType,
+                packageFQName: kotlinTextPkg,
+                symbols: symbols,
+                interner: interner
             )
         }
-        let chunkedSequenceRType = types.make(.typeParam(TypeParamType(
-            symbol: chunkedSequenceRSymbol,
-            nullability: .nonNull
-        )))
-        let chunkedSequenceTransformType = types.make(.functionType(FunctionType(
-            params: [charSequenceType],
-            returnType: chunkedSequenceRType,
-            isSuspend: false,
-            nullability: .nonNull
-        )))
-        let chunkedSequenceTransformReturnType = makeSequenceType(
-            symbols: symbols,
-            types: types,
-            interner: interner,
-            elementType: chunkedSequenceRType
-        )
-        let hasChunkedSequenceTransform = symbols.lookupAll(fqName: chunkedSequenceTransformFQName).contains { symID in
-            guard let sig = symbols.functionSignature(for: symID) else {
-                return false
+
+        do {
+            let functionName = interner.intern("chunkedSequence")
+            let functionFQName = kotlinTextPkg + [functionName]
+            let rName = interner.intern("R")
+            let rFQName = functionFQName + [rName]
+            let rSymbol: SymbolID = if let existing = symbols.lookup(fqName: rFQName) {
+                existing
+            } else {
+                symbols.define(
+                    kind: .typeParameter,
+                    name: rName,
+                    fqName: rFQName,
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
             }
-            return sig.receiverType == charSequenceType && sig.parameterTypes.count == 2
-        }
-        if !hasChunkedSequenceTransform {
-            let memberSymbol = symbols.define(
-                kind: .function,
-                name: interner.intern("chunkedSequence"),
-                fqName: chunkedSequenceTransformFQName,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic, .inlineFunction]
+            let rType = types.make(.typeParam(TypeParamType(
+                symbol: rSymbol,
+                nullability: .nonNull
+            )))
+            let transformType = types.make(.functionType(FunctionType(
+                params: [charSequenceType],
+                returnType: rType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let sequenceRType = makeSequenceType(
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                elementType: rType
             )
-            if let packageSymbol = symbols.lookup(fqName: kotlinTextPkg) {
-                symbols.setParentSymbol(packageSymbol, for: memberSymbol)
+            for receiverType in [charSequenceType, stringType] {
+                guard !symbols.lookupAll(fqName: functionFQName).contains(where: { symbolID in
+                    guard let signature = symbols.functionSignature(for: symbolID) else {
+                        return false
+                    }
+                    return signature.receiverType == receiverType
+                        && signature.parameterTypes == [intType, transformType]
+                }) else {
+                    continue
+                }
+                let functionSymbol = symbols.define(
+                    kind: .function,
+                    name: functionName,
+                    fqName: functionFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic, .inlineFunction]
+                )
+                if let packageSymbol = symbols.lookup(fqName: kotlinTextPkg) {
+                    symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+                }
+                symbols.setExternalLinkName("kk_string_chunked_sequence_transform", for: functionSymbol)
+                let sizeParameter = symbols.define(
+                    kind: .valueParameter,
+                    name: interner.intern("size"),
+                    fqName: functionFQName + [interner.intern("size")],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                let transformParameter = symbols.define(
+                    kind: .valueParameter,
+                    name: interner.intern("transform"),
+                    fqName: functionFQName + [interner.intern("transform")],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(functionSymbol, for: sizeParameter)
+                symbols.setParentSymbol(functionSymbol, for: transformParameter)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [intType, transformType],
+                        returnType: sequenceRType,
+                        isSuspend: false,
+                        valueParameterSymbols: [sizeParameter, transformParameter],
+                        valueParameterHasDefaultValues: [false, false],
+                        valueParameterIsVararg: [false, false],
+                        typeParameterSymbols: [rSymbol]
+                    ),
+                    for: functionSymbol
+                )
             }
-            symbols.setExternalLinkName("kk_string_chunkedSequence_transform", for: memberSymbol)
-
-            let sizeParamName = interner.intern("size")
-            let sizeParamSymbol = symbols.define(
-                kind: .valueParameter,
-                name: sizeParamName,
-                fqName: chunkedSequenceTransformFQName + [sizeParamName],
-                declSite: nil,
-                visibility: .private,
-                flags: [.synthetic]
-            )
-            symbols.setParentSymbol(memberSymbol, for: sizeParamSymbol)
-
-            let transformParamName = interner.intern("transform")
-            let transformParamSymbol = symbols.define(
-                kind: .valueParameter,
-                name: transformParamName,
-                fqName: chunkedSequenceTransformFQName + [transformParamName],
-                declSite: nil,
-                visibility: .private,
-                flags: [.synthetic]
-            )
-            symbols.setParentSymbol(memberSymbol, for: transformParamSymbol)
-
-            symbols.setFunctionSignature(
-                FunctionSignature(
-                    receiverType: charSequenceType,
-                    parameterTypes: [intType, chunkedSequenceTransformType],
-                    returnType: chunkedSequenceTransformReturnType,
-                    valueParameterSymbols: [sizeParamSymbol, transformParamSymbol],
-                    valueParameterHasDefaultValues: [false, false],
-                    valueParameterIsVararg: [false, false],
-                    typeParameterSymbols: [chunkedSequenceRSymbol],
-                    classTypeParameterCount: 0
-                ),
-                for: memberSymbol
-            )
         }
 
         registerSyntheticStringExtensionFunction(

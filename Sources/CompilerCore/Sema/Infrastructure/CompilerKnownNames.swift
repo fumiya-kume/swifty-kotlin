@@ -19,6 +19,7 @@ enum KnownCompilerAnnotation {
     case experimentalJsReflectionCreateInstance
     case experimentalJsCollectionsApi
     case throws_
+    case rootThrows
     case suppress
     case dslMarker
     case parameterName
@@ -73,6 +74,8 @@ enum KnownCompilerAnnotation {
         case .experimentalJsCollectionsApi:
             "ExperimentalJsCollectionsApi"
         case .throws_:
+            "Throws"
+        case .rootThrows:
             "Throws"
         case .suppress:
             "Suppress"
@@ -147,6 +150,8 @@ enum KnownCompilerAnnotation {
             "kotlin.js.collections.ExperimentalJsCollectionsApi"
         case .throws_:
             "kotlin.jvm.Throws"
+        case .rootThrows:
+            "kotlin.Throws"
         case .suppress:
             "kotlin.Suppress"
         case .dslMarker:
@@ -342,7 +347,9 @@ struct KnownCompilerNames {
     let deleteRange: InternedString
     let get: InternedString
     let insert: InternedString
+    let insertRange: InternedString
     let delete: InternedString
+    let setRange: InternedString
     let toString: InternedString
     let clear: InternedString
     let reverse: InternedString
@@ -532,7 +539,9 @@ struct KnownCompilerNames {
         deleteRange = interner.intern("deleteRange")
         get = interner.intern("get")
         insert = interner.intern("insert")
+        insertRange = interner.intern("insertRange")
         delete = interner.intern("delete")
+        setRange = interner.intern("setRange")
         toString = interner.intern("toString")
         clear = interner.intern("clear")
         reverse = interner.intern("reverse")
