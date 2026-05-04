@@ -719,11 +719,11 @@ extension CallTypeChecker {
             "maxOfWith", "maxOfWithOrNull", "minOfWith", "minOfWithOrNull",
             "sortedByDescending", "sortedWith", "sortedArrayWith", "partition", "takeWhile", "dropWhile", "distinctBy", "zipWithNext",
             "flatten",
-            "sort", "sortBy", "sortByDescending",
+            "sort", "sortBy", "sortByDescending", "sortWith",
         ]
         let flowHOFNames: Set = ["map", "filter", "collect"]
         let mapOnlyCollectionHOFNames: Set = ["mapValues", "mapValuesTo", "mapKeys", "mapKeysTo", "filterKeys", "filterValues"]
-        let mutableListOnlyCollectionHOFNames: Set = ["sort", "sortBy", "sortByDescending"]
+        let mutableListOnlyCollectionHOFNames: Set = ["sort", "sortBy", "sortByDescending", "sortWith"]
         let isFlowReceiver = if sema.bindings.isFlowExpr(receiverID) {
             true
         } else if case .nameRef = ast.arena.expr(receiverID),
@@ -2439,10 +2439,12 @@ extension CallTypeChecker {
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                 resultType = sema.types.unitType
 
-            case "sortedWith", "sortedArrayWith":
+            case "sortedWith", "sortedArrayWith", "sortWith":
+                let isInPlaceMutation = calleeStr == "sortWith"
                 guard args.count == 1 else {
-                    sema.bindings.bindExprType(id, type: sema.types.anyType)
-                    return sema.types.anyType
+                    let failedType = isInPlaceMutation ? sema.types.unitType : sema.types.anyType
+                    sema.bindings.bindExprType(id, type: failedType)
+                    return failedType
                 }
                 if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
                     // Lambda argument: infer as (T, T) -> Int comparator function
@@ -2467,7 +2469,7 @@ extension CallTypeChecker {
                     }
                     _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: comparatorExpectedType)
                 }
-                resultType = receiverType
+                resultType = isInPlaceMutation ? sema.types.unitType : receiverType
 
             case "maxWith", "minWith", "maxWithOrNull", "minWithOrNull":
                 guard args.count == 1 else {

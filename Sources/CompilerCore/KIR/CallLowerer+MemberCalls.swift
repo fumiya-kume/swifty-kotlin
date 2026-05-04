@@ -5338,6 +5338,7 @@ extension CallLowerer {
             interner.intern("kk_list_minWith"),
             interner.intern("kk_list_minWithOrNull"),
             interner.intern("kk_array_sortedArrayWith"),
+            interner.intern("kk_mutable_list_sortWith"),
         ]
         if comparatorOnlyCallees.contains(loweredCallee),
            finalArguments.count == 2,
