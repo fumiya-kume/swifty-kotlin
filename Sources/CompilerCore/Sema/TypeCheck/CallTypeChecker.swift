@@ -32,6 +32,52 @@ final class CallTypeChecker {
             nil
         }
         let calleePath = qualifiedCalleePath(for: calleeID, ast: ast)
+        if let calleeName,
+           calleeName == interner.intern("contextOf"),
+           args.isEmpty,
+           locals[calleeName] == nil,
+           !ctx.cachedScopeLookup(calleeName).contains(where: { candidate in
+               guard let sym = ctx.cachedSymbol(candidate) else { return false }
+               return !sym.flags.contains(.synthetic)
+           })
+        {
+            let contextOfFQName = [interner.intern("kotlin"), calleeName]
+            if let contextOfSymbol = sema.symbols.lookup(fqName: contextOfFQName) {
+                let inferredType = explicitTypeArgs.first
+                    ?? expectedType
+                    ?? (ctx.contextReceiverTypes.count == 1 ? ctx.contextReceiverTypes[0] : sema.types.anyType)
+                driver.helpers.checkOptIn(
+                    for: contextOfSymbol,
+                    ctx: ctx,
+                    range: range,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
+                let nonNullInferredType = sema.types.makeNonNullable(inferredType)
+                let hasMatchingContextReceiver = ctx.contextReceiverTypes.contains { receiverType in
+                    let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+                    return sema.types.isSubtype(nonNullReceiverType, nonNullInferredType)
+                        || sema.types.isSubtype(nonNullInferredType, nonNullReceiverType)
+                }
+                if !hasMatchingContextReceiver {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-CTX-001",
+                        "No context receiver is available for contextOf<\(sema.types.renderType(inferredType))>().",
+                        range: range
+                    )
+                }
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: contextOfSymbol,
+                        substitutedTypeArguments: [inferredType],
+                        parameterMapping: [:]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(contextOfSymbol))
+                sema.bindings.bindExprType(id, type: inferredType)
+                return inferredType
+            }
+        }
         if let customBuilderType = inferExperimentalBuilderCallExpr(
             id,
             calleeName: calleeName,
@@ -3424,6 +3470,10 @@ final class CallTypeChecker {
                     case "startsWith", "endsWith", "contains":
                         sema.types.make(.primitive(.boolean, .nonNull))
                     case "split": sema.types.anyType
+                    case "toUByteOrNull": sema.types.makeNullable(sema.types.ubyteType)
+                    case "toUShortOrNull": sema.types.makeNullable(sema.types.ushortType)
+                    case "toUIntOrNull": sema.types.makeNullable(sema.types.uintType)
+                    case "toULongOrNull": sema.types.makeNullable(sema.types.ulongType)
                     case "repeat", "drop", "take", "takeLast", "dropLast":
                         sema.types.stringType
                     default: nil
@@ -3541,7 +3591,12 @@ final class CallTypeChecker {
         return sema.types.errorType
     }
 
-    private func makeSyntheticListType(
+    /// Build `List<elementType>` for synthetic stdlib member-call inference.
+    /// Falls back to `Any` when `kotlin.collections.List` is not registered.
+    /// Promoted from `private` to module-`internal` so the
+    /// `+MemberCallInference*` extension files can share the single definition
+    /// instead of duplicating it.
+    func makeSyntheticListType(
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,
@@ -3629,7 +3684,12 @@ final class CallTypeChecker {
         )))
     }
 
-    private func makeSyntheticNominalType(
+    /// Build a nominal class type from a fully-qualified name (no type arguments).
+    /// Falls back to `Any` when the symbol is not registered.
+    /// Promoted from `private` to module-`internal` so the
+    /// `+MemberCallInference*` extension files can share the single definition
+    /// instead of duplicating it.
+    func makeSyntheticNominalType(
         symbols: SymbolTable,
         types: TypeSystem,
         interner _: StringInterner,

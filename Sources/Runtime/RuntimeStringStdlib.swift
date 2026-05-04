@@ -787,6 +787,90 @@ public func kk_string_toIntOrNull_radix(
     return Int(value)
 }
 
+@_cdecl("kk_string_toUByteOrNull_radix")
+public func kk_string_toUByteOrNull_radix(
+    _ strRaw: Int,
+    _ radix: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    guard (2 ... 36).contains(radix) else {
+        runtimeSetThrown(
+            outThrown,
+            message: "IllegalArgumentException: radix \(radix) was not in valid range 2..36"
+        )
+        return runtimeNullSentinelInt
+    }
+    guard let value = UInt8(source, radix: radix) else {
+        return runtimeNullSentinelInt
+    }
+    return Int(value)
+}
+
+@_cdecl("kk_string_toUShortOrNull_radix")
+public func kk_string_toUShortOrNull_radix(
+    _ strRaw: Int,
+    _ radix: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    guard (2 ... 36).contains(radix) else {
+        runtimeSetThrown(
+            outThrown,
+            message: "IllegalArgumentException: radix \(radix) was not in valid range 2..36"
+        )
+        return runtimeNullSentinelInt
+    }
+    guard let value = UInt16(source, radix: radix) else {
+        return runtimeNullSentinelInt
+    }
+    return Int(value)
+}
+
+@_cdecl("kk_string_toUIntOrNull_radix")
+public func kk_string_toUIntOrNull_radix(
+    _ strRaw: Int,
+    _ radix: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    guard (2 ... 36).contains(radix) else {
+        runtimeSetThrown(
+            outThrown,
+            message: "IllegalArgumentException: radix \(radix) was not in valid range 2..36"
+        )
+        return runtimeNullSentinelInt
+    }
+    guard let value = UInt32(source, radix: radix) else {
+        return runtimeNullSentinelInt
+    }
+    return Int(value)
+}
+
+@_cdecl("kk_string_toULongOrNull_radix")
+public func kk_string_toULongOrNull_radix(
+    _ strRaw: Int,
+    _ radix: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    guard (2 ... 36).contains(radix) else {
+        runtimeSetThrown(
+            outThrown,
+            message: "IllegalArgumentException: radix \(radix) was not in valid range 2..36"
+        )
+        return runtimeNullSentinelInt
+    }
+    guard let value = UInt64(source, radix: radix) else {
+        return runtimeNullSentinelInt
+    }
+    return Int(bitPattern: UInt(truncatingIfNeeded: value))
+}
+
 @_cdecl("kk_string_toDouble")
 public func kk_string_toDouble(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
@@ -2325,42 +2409,30 @@ public func kk_string_chunked(_ strRaw: Int, _ size: Int) -> Int {
     return runtimeMakeStringListRaw(chunks)
 }
 
-@_cdecl("kk_string_chunkedSequence")
-public func kk_string_chunkedSequence(_ strRaw: Int, _ size: Int) -> Int {
-    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
-    guard size > 0 else {
-        return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: [])]))
-    }
-    let scalars = Array(source.unicodeScalars)
-    var chunks: [Int] = []
-    var i = 0
-    while i < scalars.count {
-        let end = Swift.min(i + size, scalars.count)
-        chunks.append(runtimeMakeStringRaw(runtimeStringFromScalars(scalars[i ..< end])))
-        i = end
-    }
-    return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: chunks)]))
+@_cdecl("kk_string_chunked_sequence")
+public func kk_string_chunked_sequence(_ strRaw: Int, _ size: Int) -> Int {
+    let chunksRaw = kk_string_chunked(strRaw, size)
+    return kk_list_asSequence(chunksRaw)
 }
 
-@_cdecl("kk_string_chunkedSequence_transform")
-public func kk_string_chunkedSequence_transform(
+@_cdecl("kk_string_chunked_sequence_transform")
+public func kk_string_chunked_sequence_transform(
     _ strRaw: Int,
     _ size: Int,
     _ fnPtr: Int,
     _ closureRaw: Int,
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
-    outThrown?.pointee = 0
     let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
-    guard size > 0 else {
-        return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: [])]))
-    }
+    let chunkSize = max(1, size)
     let scalars = Array(source.unicodeScalars)
+    let estimatedChunks = scalars.isEmpty ? 0 : (scalars.count + chunkSize - 1) / chunkSize
     var results: [Int] = []
-    var i = 0
-    while i < scalars.count {
-        let end = Swift.min(i + size, scalars.count)
-        let chunkRaw = runtimeMakeStringRaw(runtimeStringFromScalars(scalars[i ..< end]))
+    results.reserveCapacity(estimatedChunks)
+    var index = 0
+    while index < scalars.count {
+        let end = Swift.min(index + chunkSize, scalars.count)
+        let chunkRaw = runtimeMakeStringRaw(runtimeStringFromScalars(scalars[index ..< end]))
         var thrown = 0
         let transformed = runtimeInvokeCollectionLambda1(
             fnPtr: fnPtr,
@@ -2369,11 +2441,10 @@ public func kk_string_chunkedSequence_transform(
             outThrown: &thrown
         )
         if thrown != 0 {
-            outThrown?.pointee = thrown
-            return 0
+            return handleCollectionLambdaThrow(thrown, outThrown)
         }
         results.append(maybeUnbox(transformed))
-        i = end
+        index = end
     }
     return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: results)]))
 }
