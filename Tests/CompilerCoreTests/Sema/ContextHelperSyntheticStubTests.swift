@@ -42,6 +42,22 @@ final class ContextHelperSyntheticStubTests: XCTestCase {
         XCTAssertEqual(arities, Set(1...6))
     }
 
+    func testContextOfHelperIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let contextOfSymbol = try XCTUnwrap(lookupSymbol(["kotlin", "contextOf"], sema: sema, interner: interner))
+        let symbol = try XCTUnwrap(sema.symbols.symbol(contextOfSymbol))
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: contextOfSymbol))
+
+        XCTAssertTrue(symbol.flags.contains(.synthetic))
+        XCTAssertTrue(symbol.flags.contains(.inlineFunction))
+        XCTAssertEqual(signature.parameterTypes, [])
+        XCTAssertEqual(signature.typeParameterSymbols.count, 1)
+        XCTAssertEqual(signature.returnType, typeParamType(signature.typeParameterSymbols[0], sema: sema))
+        XCTAssertTrue(sema.symbols.annotations(for: contextOfSymbol).contains { annotation in
+            annotation.annotationFQName == "kotlin.ExperimentalContextParameters"
+        })
+    }
+
     func testContextHelperRequiresExperimentalContextParametersOptIn() {
         let source = """
         fun caller(): Int = context(1) { 2 }
@@ -72,6 +88,43 @@ final class ContextHelperSyntheticStubTests: XCTestCase {
         let callerSymbol = try XCTUnwrap(lookupSymbol(["caller"], sema: sema, interner: interner))
         let signature = try XCTUnwrap(sema.symbols.functionSignature(for: callerSymbol))
         XCTAssertEqual(signature.returnType, sema.types.stringType)
+    }
+
+    func testContextOfResolvesInsideContextHelperBlock() throws {
+        let source = """
+        import kotlin.ExperimentalContextParameters
+
+        @OptIn(ExperimentalContextParameters::class)
+        fun caller(): String = context("ok") { contextOf<String>() }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertTrue(
+            diagnostics(withCode: "KSWIFTK-SEMA-OPT-IN", in: ctx).isEmpty,
+            "Expected @OptIn to suppress contextOf diagnostic, got: \(ctx.diagnostics.diagnostics)"
+        )
+        XCTAssertTrue(
+            diagnostics(withCode: "KSWIFTK-SEMA-CTX-001", in: ctx).isEmpty,
+            "Expected contextOf<String>() to find the String context receiver, got: \(ctx.diagnostics.diagnostics)"
+        )
+        let sema = try XCTUnwrap(ctx.sema)
+        let interner = ctx.interner
+        let callerSymbol = try XCTUnwrap(lookupSymbol(["caller"], sema: sema, interner: interner))
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: callerSymbol))
+        XCTAssertEqual(signature.returnType, sema.types.stringType)
+    }
+
+    func testContextOfReportsMissingContextReceiver() {
+        let source = """
+        import kotlin.ExperimentalContextParameters
+
+        @OptIn(ExperimentalContextParameters::class)
+        fun caller(): Int = context("ok") { contextOf<Int>() }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-CTX-001", in: ctx)
+        XCTAssertEqual(diagnostics.count, 1, "Expected missing context receiver diagnostic, got: \(ctx.diagnostics.diagnostics)")
     }
 
     func testContextHelperSixValueOverloadInfersBlockReturnType() throws {
