@@ -478,6 +478,8 @@ extension CodegenBackendIntegrationTests {
             println(arr.addAndFetchAt(0, 5))
             println(arr.fetchAndAddAt(0, 3))
             println(arr.loadAt(0))
+            println(arr.fetchAndIncrementAt(0))
+            println(arr.loadAt(0))
             println(arr.incrementAndFetchAt(0))
             println(arr.loadAt(0))
             println(arr.fetchAndDecrementAt(0))
@@ -491,7 +493,7 @@ extension CodegenBackendIntegrationTests {
             let ctx = try runCodegenPipeline(inputPath: path, moduleName: "AtomicIntArrayArithmetic", emit: .executable, outputPath: outputBase)
             try LinkPhase().run(ctx)
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "5\n5\n8\n9\n9\n9\n8\n7\n7\n")
+            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "5\n5\n8\n8\n9\n10\n10\n10\n9\n8\n8\n")
         }
     }
 
@@ -578,6 +580,8 @@ extension CodegenBackendIntegrationTests {
             println(arr.addAndFetchAt(0, 5L))
             println(arr.fetchAndAddAt(0, 3L))
             println(arr.loadAt(0))
+            println(arr.fetchAndIncrementAt(0))
+            println(arr.loadAt(0))
             println(arr.incrementAndFetchAt(0))
             println(arr.fetchAndDecrementAt(0))
             println(arr.loadAt(0))
@@ -590,7 +594,7 @@ extension CodegenBackendIntegrationTests {
             let ctx = try runCodegenPipeline(inputPath: path, moduleName: "AtomicLongArrayArithmetic", emit: .executable, outputPath: outputBase)
             try LinkPhase().run(ctx)
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "5\n5\n8\n9\n9\n8\n7\n7\n")
+            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "5\n5\n8\n8\n9\n10\n10\n9\n8\n8\n")
         }
     }
 

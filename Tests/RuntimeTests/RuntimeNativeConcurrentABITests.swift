@@ -15,8 +15,9 @@ import XCTest
 //                    compareAndSet / compareAndExchange / getAndUpdate / updateAndGet
 //   AtomicIntArray : kk_atomic_int_array_create / size / loadAt / storeAt /
 //                    exchangeAt / compareAndSetAt / compareAndExchangeAt /
-//                    fetchAndAddAt / addAndFetchAt / incrementAndFetchAt /
-//                    fetchAndDecrementAt / decrementAndFetchAt
+//                    fetchAndAddAt / addAndFetchAt / fetchAndIncrementAt /
+//                    incrementAndFetchAt / fetchAndDecrementAt /
+//                    decrementAndFetchAt
 //   AtomicLongArray: kk_atomic_long_array_* (same shape as AtomicIntArray)
 //   AtomicInt      : getAndUpdate / updateAndGet (higher-order variants)
 //   AtomicLong     : getAndUpdate / updateAndGet (higher-order variants)
@@ -268,12 +269,14 @@ final class RuntimeAtomicIntArrayTests: XCTestCase {
     func testIncrementAndDecrementAt() {
         let handle = kk_atomic_int_array_create(1)
         _ = kk_atomic_int_array_storeAt(handle, 0, 0, nil)
+        let oldBeforeInc = kk_atomic_int_array_fetchAndIncrementAt(handle, 0, nil)
+        XCTAssertEqual(oldBeforeInc, 0)
+        XCTAssertEqual(kk_atomic_int_array_loadAt(handle, 0, nil), 1)
         let afterInc = kk_atomic_int_array_incrementAndFetchAt(handle, 0, nil)
-        XCTAssertEqual(afterInc, 1)
+        XCTAssertEqual(afterInc, 2)
         let oldBeforeDec = kk_atomic_int_array_fetchAndDecrementAt(handle, 0, nil)
-        XCTAssertEqual(oldBeforeDec, 1)
-        XCTAssertEqual(kk_atomic_int_array_loadAt(handle, 0, nil), 0)
-        _ = kk_atomic_int_array_incrementAndFetchAt(handle, 0, nil)
+        XCTAssertEqual(oldBeforeDec, 2)
+        XCTAssertEqual(kk_atomic_int_array_loadAt(handle, 0, nil), 1)
         let afterDec = kk_atomic_int_array_decrementAndFetchAt(handle, 0, nil)
         XCTAssertEqual(afterDec, 0)
     }
@@ -347,7 +350,9 @@ final class RuntimeAtomicLongArrayTests: XCTestCase {
     func testIncrementAndDecrementAt() {
         let handle = kk_atomic_long_array_create(1)
         _ = kk_atomic_long_array_storeAt(handle, 0, 0, nil)
-        _ = kk_atomic_long_array_incrementAndFetchAt(handle, 0, nil)
+        let oldBeforeInc = kk_atomic_long_array_fetchAndIncrementAt(handle, 0, nil)
+        XCTAssertEqual(oldBeforeInc, 0)
+        XCTAssertEqual(kk_atomic_long_array_loadAt(handle, 0, nil), 1)
         _ = kk_atomic_long_array_incrementAndFetchAt(handle, 0, nil)
         XCTAssertEqual(kk_atomic_long_array_loadAt(handle, 0, nil), 2)
         let oldBeforeDec = kk_atomic_long_array_fetchAndDecrementAt(handle, 0, nil)
