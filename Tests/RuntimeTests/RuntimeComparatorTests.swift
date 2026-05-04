@@ -125,6 +125,14 @@ private func makeArray(_ elements: [Int]) -> Int {
     return array
 }
 
+private func makeRuntimeString(_ value: String) -> Int {
+    registerRuntimeObject(RuntimeStringBox(value))
+}
+
+private func runtimeStringValue(_ raw: Int) -> String {
+    extractString(from: UnsafeMutableRawPointer(bitPattern: raw)) ?? ""
+}
+
 private func listElements(_ listRaw: Int) -> [Int] {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: listRaw) else { return [] }
     guard let box = tryCast(ptr, to: RuntimeListBox.self) else { return [] }
@@ -428,6 +436,39 @@ final class RuntimeComparatorTests: XCTestCase {
         XCTAssertEqual(kk_comparator_reverse_order_trampoline(0, 3, 3, nil), 0)
     }
 
+    func testCaseInsensitiveOrderComparatorObjectDispatchesThroughITable() {
+        let comparatorRaw = kk_string_case_insensitive_order()
+        let compareFnPtr = kk_itable_lookup(comparatorRaw, 0, 0)
+        XCTAssertNotEqual(compareFnPtr, 0)
+
+        let compareFn = unsafeBitCast(compareFnPtr, to: RuntimeCollectionLambda2.self)
+        XCTAssertEqual(
+            compareFn(comparatorRaw, makeRuntimeString("alpha"), makeRuntimeString("ALPHA"), nil),
+            0
+        )
+        XCTAssertLessThan(
+            compareFn(comparatorRaw, makeRuntimeString("apple"), makeRuntimeString("banana"), nil),
+            0
+        )
+        XCTAssertGreaterThan(
+            compareFn(comparatorRaw, makeRuntimeString("Zoo"), makeRuntimeString("apple"), nil),
+            0
+        )
+    }
+
+    func testSortedWithCaseInsensitiveOrderComparatorObject() {
+        let source = makeList([
+            makeRuntimeString("b"),
+            makeRuntimeString("A"),
+            makeRuntimeString("c"),
+            makeRuntimeString("a"),
+        ])
+        let comparatorRaw = kk_string_case_insensitive_order()
+
+        let sorted = kk_list_sortedWith(source, comparatorRaw, 0, nil)
+        XCTAssertEqual(listElements(sorted).map(runtimeStringValue), ["A", "a", "b", "c"])
+    }
+
     // MARK: - sortedWith E2E
 
     func testSortedWithComparator() {
@@ -657,6 +698,12 @@ final class RuntimeComparatorTests: XCTestCase {
         let source = makeList([5, 3, 8, 1, 4])
         XCTAssertEqual(kk_mutable_list_sortDescending_primitive(source, 0), 0)
         XCTAssertEqual(listElements(source), [8, 5, 4, 3, 1])
+    }
+
+    func testMutableListSortWithComparatorMutatesInPlace() {
+        let source = makeList([14, 3, 23, 5, 13, 24])
+        XCTAssertEqual(kk_mutable_list_sortWith(source, comparatorPtr(comparatorByModTen), 0, nil), 0)
+        XCTAssertEqual(listElements(source), [3, 23, 13, 14, 24, 5])
     }
 
     func testMutableListPrimitiveSortByAscending() {
