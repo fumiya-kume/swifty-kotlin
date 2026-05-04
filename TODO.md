@@ -427,6 +427,324 @@
 - [x] STDLIB-EXPERIMENTAL-003: `kotlin.experimental.ExpectRefinement` annotation を追加し、expect declaration metadata へ露出する
 
 ### Phase 5: 非スコープ/高度領域
+- [x] STDLIB-OUT-001: Kotlin 2.3 stdlib API index の JVM/JS/Wasm/Native 専用 package 棚卸しを固定する（`kotlin.io.path`, `kotlin.jvm`, `kotlin.jvm.optionals`, `kotlin.js`, `kotlin.js.collections`, `kotlin.streams`, `kotlin.wasm`, `kotlin.wasm.unsafe`, `kotlinx.cinterop`, `kotlinx.cinterop.internal`, `org.w3c.dom`）
+- [ ] STDLIB-IO-PATH-TYPE-001: `kotlin.io.path.CopyActionContext` type surface を追加する
+- [ ] STDLIB-IO-PATH-TYPE-002: `kotlin.io.path.CopyActionResult` enum surface を追加する
+- [ ] STDLIB-IO-PATH-TYPE-003: `kotlin.io.path.ExperimentalPathApi` marker annotation を追加する
+- [ ] STDLIB-IO-PATH-TYPE-004: `kotlin.io.path.FileVisitorBuilder` type surface を追加する
+- [ ] STDLIB-IO-PATH-TYPE-005: `kotlin.io.path.OnErrorResult` enum surface を追加する
+- [ ] STDLIB-IO-PATH-TYPE-006: `kotlin.io.path.PathWalkOption` enum surface を追加する
+- [ ] STDLIB-IO-PATH-PROP-001: `Path.extension` extension property を追加する
+- [ ] STDLIB-IO-PATH-PROP-002: `Path.invariantSeparatorsPath` extension property を追加する
+- [ ] STDLIB-IO-PATH-PROP-003: `Path.invariantSeparatorsPathString` extension property を追加する
+- [ ] STDLIB-IO-PATH-PROP-004: `Path.name` extension property を既存 `Path` member stub と整合させる
+- [ ] STDLIB-IO-PATH-PROP-005: `Path.nameWithoutExtension` extension property を追加する
+- [ ] STDLIB-IO-PATH-PROP-006: `Path.pathString` extension property を追加する
+- [ ] STDLIB-IO-PATH-FN-001: `Path.absolute()` を追加する
+- [ ] STDLIB-IO-PATH-FN-002: `Path.absolutePathString()` を追加する
+- [ ] STDLIB-IO-PATH-FN-003: `Path.appendBytes(array)` を追加する
+- [ ] STDLIB-IO-PATH-FN-004: `Path.appendLines(lines: Iterable<CharSequence>, charset)` を追加する
+- [ ] STDLIB-IO-PATH-FN-005: `Path.appendLines(lines: Sequence<CharSequence>, charset)` を追加する
+- [ ] STDLIB-IO-PATH-FN-006: `Path.appendText(text, charset)` を追加する
+- [ ] STDLIB-IO-PATH-FN-007: `Path.bufferedReader(charset, bufferSize, options)` を追加する
+- [ ] STDLIB-IO-PATH-FN-008: `Path.bufferedWriter(charset, bufferSize, options)` を追加する
+- [ ] STDLIB-IO-PATH-FN-009: `Path.copyTo(target, options)` を追加する
+- [ ] STDLIB-IO-PATH-FN-010: `Path.copyTo(target, overwrite)` を追加する
+- [ ] STDLIB-IO-PATH-FN-011: `Path.copyToRecursively(target, onError, followLinks, overwrite)` を追加する
+- [ ] STDLIB-IO-PATH-FN-012: `Path.copyToRecursively(target, onError, followLinks, copyAction)` を追加する
+- [ ] STDLIB-IO-PATH-FN-013: `Path.createDirectories(attributes)` を追加する
+- [ ] STDLIB-IO-PATH-FN-014: `Path.createDirectory(attributes)` を追加する
+- [ ] STDLIB-IO-PATH-FN-015: `Path.createFile(attributes)` を追加する
+- [ ] STDLIB-IO-PATH-FN-016: `Path.createLinkPointingTo(target)` を追加する
+- [ ] STDLIB-IO-PATH-FN-017: `Path.createParentDirectories(attributes)` を追加する
+- [ ] STDLIB-IO-PATH-FN-018: `Path.createSymbolicLinkPointingTo(target, attributes)` を追加する
+- [ ] STDLIB-IO-PATH-FN-019: `createTempDirectory(prefix, attributes)` を追加する
+- [ ] STDLIB-IO-PATH-FN-020: `createTempDirectory(directory, prefix, attributes)` を追加する
+- [ ] STDLIB-IO-PATH-FN-021: `createTempFile(prefix, suffix, attributes)` を追加する
+- [ ] STDLIB-IO-PATH-FN-022: `createTempFile(directory, prefix, suffix, attributes)` を追加する
+- [ ] STDLIB-IO-PATH-FN-023: `Path.deleteExisting()` を追加する
+- [ ] STDLIB-IO-PATH-FN-024: `Path.deleteIfExists()` の公式 return/annotation shape を既存 stub と整合させる
+- [ ] STDLIB-IO-PATH-FN-025: `Path.deleteRecursively()` を追加する
+- [ ] STDLIB-IO-PATH-FN-026: `Path.div(other: Path)` を追加する
+- [ ] STDLIB-IO-PATH-FN-027: `Path.div(other: String)` を追加する
+- [ ] STDLIB-IO-PATH-FN-028: `Path.exists(options)` を既存 no-arg stub から公式 vararg shape へ広げる
+- [ ] STDLIB-IO-PATH-FN-029: `Path.fileAttributesView<V>(options)` を追加する
+- [ ] STDLIB-IO-PATH-FN-030: `Path.fileAttributesViewOrNull<V>(options)` を追加する
+- [ ] STDLIB-IO-PATH-FN-031: `Path.fileSize()` を追加する
+- [ ] STDLIB-IO-PATH-FN-032: `Path.fileStore()` を追加する
+- [ ] STDLIB-IO-PATH-FN-033: `fileVisitor(builderAction)` を追加する
+- [ ] STDLIB-IO-PATH-FN-034: `Path.forEachDirectoryEntry(glob, action)` を追加する
+- [ ] STDLIB-IO-PATH-FN-035: `Path.forEachLine(charset, action)` を追加する
+- [ ] STDLIB-IO-PATH-FN-036: `Path.getAttribute(attribute, options)` を追加する
+- [ ] STDLIB-IO-PATH-FN-037: `Path.getLastModifiedTime(options)` を追加する
+- [ ] STDLIB-IO-PATH-FN-038: `Path.getOwner(options)` を追加する
+- [ ] STDLIB-IO-PATH-FN-039: `Path.getPosixFilePermissions(options)` を追加する
+- [ ] STDLIB-IO-PATH-FN-040: `Path.inputStream(options)` を追加する
+- [ ] STDLIB-IO-PATH-FN-041: `Path.isDirectory(options)` を既存 no-arg stub から公式 vararg shape へ広げる
+- [ ] STDLIB-IO-PATH-FN-042: `Path.isExecutable()` を追加する
+- [ ] STDLIB-IO-PATH-FN-043: `Path.isHidden()` を追加する
+- [ ] STDLIB-IO-PATH-FN-044: `Path.isReadable()` を追加する
+- [ ] STDLIB-IO-PATH-FN-045: `Path.isRegularFile(options)` を既存 no-arg stub から公式 vararg shape へ広げる
+- [ ] STDLIB-IO-PATH-FN-046: `Path.isSameFileAs(other)` を追加する
+- [ ] STDLIB-IO-PATH-FN-047: `Path.isSymbolicLink()` を追加する
+- [ ] STDLIB-IO-PATH-FN-048: `Path.isWritable()` を追加する
+- [ ] STDLIB-IO-PATH-FN-049: `Path.listDirectoryEntries(glob)` を既存 no-arg stub から公式 glob shape へ広げる
+- [ ] STDLIB-IO-PATH-FN-050: `Path.moveTo(target, options)` を追加する
+- [ ] STDLIB-IO-PATH-FN-051: `Path.moveTo(target, overwrite)` を追加する
+- [ ] STDLIB-IO-PATH-FN-052: `Path.notExists(options)` を追加する
+- [ ] STDLIB-IO-PATH-FN-053: `Path.outputStream(options)` を追加する
+- [ ] STDLIB-IO-PATH-FN-054: `Path(pathString)` の公式 top-level factory shape を既存 stub と整合させる
+- [ ] STDLIB-IO-PATH-FN-055: `Path(base, subpaths)` top-level factory overload を追加する
+- [ ] STDLIB-IO-PATH-FN-056: `Path.readAttributes<A>(options)` を追加する
+- [ ] STDLIB-IO-PATH-FN-057: `Path.readAttributes(attributes, options)` を追加する
+- [ ] STDLIB-IO-PATH-FN-058: `Path.readBytes()` を追加する
+- [ ] STDLIB-IO-PATH-FN-059: `Path.reader(charset, options)` を追加する
+- [ ] STDLIB-IO-PATH-FN-060: `Path.readLines(charset)` を既存 no-arg stub から公式 charset shape へ広げる
+- [ ] STDLIB-IO-PATH-FN-061: `Path.readSymbolicLink()` を追加する
+- [ ] STDLIB-IO-PATH-FN-062: `Path.readText(charset)` を既存 no-arg stub から公式 charset shape へ広げる
+- [ ] STDLIB-IO-PATH-FN-063: `Path.relativeTo(base)` を追加する
+- [ ] STDLIB-IO-PATH-FN-064: `Path.relativeToOrNull(base)` を追加する
+- [ ] STDLIB-IO-PATH-FN-065: `Path.relativeToOrSelf(base)` を追加する
+- [ ] STDLIB-IO-PATH-FN-066: `Path.setAttribute(attribute, value, options)` を追加する
+- [ ] STDLIB-IO-PATH-FN-067: `Path.setLastModifiedTime(value)` を追加する
+- [ ] STDLIB-IO-PATH-FN-068: `Path.setOwner(value)` を追加する
+- [ ] STDLIB-IO-PATH-FN-069: `Path.setPosixFilePermissions(value)` を追加する
+- [ ] STDLIB-IO-PATH-FN-070: `URI.toPath()` を追加する
+- [ ] STDLIB-IO-PATH-FN-071: `Path.useDirectoryEntries(glob, block)` を追加する
+- [ ] STDLIB-IO-PATH-FN-072: `Path.useLines(charset, block)` を追加する
+- [ ] STDLIB-IO-PATH-FN-073: `Path.visitFileTree(visitor, maxDepth, followLinks)` を追加する
+- [ ] STDLIB-IO-PATH-FN-074: `Path.visitFileTree(maxDepth, followLinks, builderAction)` を追加する
+- [ ] STDLIB-IO-PATH-FN-075: `Path.walk(options)` を追加する
+- [ ] STDLIB-IO-PATH-FN-076: `Path.writeBytes(array, options)` を追加する
+- [ ] STDLIB-IO-PATH-FN-077: `Path.writeLines(lines: Iterable<CharSequence>, charset, options)` を追加する
+- [ ] STDLIB-IO-PATH-FN-078: `Path.writeLines(lines: Sequence<CharSequence>, charset, options)` を追加する
+- [ ] STDLIB-IO-PATH-FN-079: `Path.writer(charset, options)` を追加する
+- [ ] STDLIB-IO-PATH-FN-080: `Path.writeText(text, charset, options)` を既存 `writeText(text)` stub から公式 shape へ広げる
+- [ ] STDLIB-JVM-TYPE-001: `kotlin.jvm.ImplicitlyActualizedByJvmDeclaration` annotation を追加する
+- [ ] STDLIB-JVM-TYPE-002: `kotlin.jvm.JvmDefaultWithCompatibility` annotation を追加する
+- [ ] STDLIB-JVM-TYPE-003: `kotlin.jvm.JvmDefaultWithoutCompatibility` annotation を追加する
+- [ ] STDLIB-JVM-TYPE-004: `kotlin.jvm.JvmExposeBoxed` annotation を追加する
+- [ ] STDLIB-JVM-TYPE-005: `kotlin.jvm.JvmInline` annotation surface を追加する
+- [ ] STDLIB-JVM-TYPE-006: `kotlin.jvm.JvmMultifileClass` annotation を追加する
+- [ ] STDLIB-JVM-TYPE-007: `kotlin.jvm.JvmPackageName` annotation を追加する
+- [ ] STDLIB-JVM-TYPE-008: `kotlin.jvm.JvmRecord` annotation を追加する
+- [ ] STDLIB-JVM-TYPE-009: `kotlin.jvm.JvmSerializableLambda` annotation を追加する
+- [ ] STDLIB-JVM-TYPE-010: `kotlin.jvm.JvmSuppressWildcards` annotation を追加する
+- [ ] STDLIB-JVM-TYPE-011: `kotlin.jvm.JvmSynthetic` annotation を追加する
+- [ ] STDLIB-JVM-TYPE-012: `kotlin.jvm.JvmWildcard` annotation を追加する
+- [ ] STDLIB-JVM-TYPE-013: `kotlin.jvm.Strictfp` annotation を追加する
+- [ ] STDLIB-JVM-TYPE-014: `kotlin.jvm.Synchronized` annotation を追加する
+- [ ] STDLIB-JVM-TYPE-015: `kotlin.jvm.Throws` annotation を追加する
+- [ ] STDLIB-JVM-TYPE-016: `kotlin.jvm.Transient` annotation を追加する
+- [ ] STDLIB-JVM-TYPE-017: `kotlin.jvm.Volatile` annotation を追加する
+- [ ] STDLIB-JVM-PROP-001: `Annotation.annotationClass` extension property を追加する
+- [ ] STDLIB-JVM-PROP-002: `Enum.declaringJavaClass` extension property を追加する
+- [ ] STDLIB-JVM-PROP-003: `KClass<T>.java` extension property を追加する
+- [ ] STDLIB-JVM-PROP-004: `T.javaClass` extension property を追加する
+- [ ] STDLIB-JVM-PROP-005: `KClass<T>.javaClass` extension property を追加する
+- [ ] STDLIB-JVM-PROP-006: `KClass<T>.javaObjectType` extension property を追加する
+- [ ] STDLIB-JVM-PROP-007: `KClass<T>.javaPrimitiveType` extension property を追加する
+- [ ] STDLIB-JVM-PROP-008: `Class<T>.kotlin` extension property を追加する
+- [ ] STDLIB-JVM-FN-001: `Array<*>.isArrayOf<T>()` を追加する
+- [ ] STDLIB-JVM-OPTIONALS-FN-001: `Optional<T>.asSequence()` を追加する
+- [ ] STDLIB-JVM-OPTIONALS-FN-002: `Optional<T>.getOrDefault(defaultValue)` を追加する
+- [ ] STDLIB-JVM-OPTIONALS-FN-003: `Optional<T>.getOrElse(defaultValue)` を追加する
+- [ ] STDLIB-JVM-OPTIONALS-FN-004: `Optional<T>.getOrNull()` を追加する
+- [ ] STDLIB-JVM-OPTIONALS-FN-005: `Optional<T>.toCollection(destination)` を追加する
+- [ ] STDLIB-JVM-OPTIONALS-FN-006: `Optional<T>.toList()` を追加する
+- [ ] STDLIB-JVM-OPTIONALS-FN-007: `Optional<T>.toSet()` を追加する
+- [ ] STDLIB-JS-TYPE-001: `kotlin.js.Console` external interface を追加する
+- [ ] STDLIB-JS-TYPE-002: `kotlin.js.Date` external class を追加する
+- [ ] STDLIB-JS-TYPE-003: `kotlin.js.Dynamic` external interface を追加する
+- [ ] STDLIB-JS-TYPE-004: `kotlin.js.EagerInitialization` annotation を追加する
+- [ ] STDLIB-JS-TYPE-005: `kotlin.js.ExperimentalJsCollectionsApi` marker を追加する
+- [ ] STDLIB-JS-TYPE-006: `kotlin.js.ExperimentalJsExport` marker を追加する
+- [ ] STDLIB-JS-TYPE-007: `kotlin.js.ExperimentalJsFileName` marker を追加する
+- [ ] STDLIB-JS-TYPE-008: `kotlin.js.ExperimentalJsReflectionCreateInstance` marker を追加する
+- [ ] STDLIB-JS-TYPE-009: `kotlin.js.ExperimentalJsStatic` marker を追加する
+- [ ] STDLIB-JS-TYPE-010: `kotlin.js.ExperimentalWasmJsInterop` marker を追加する
+- [ ] STDLIB-JS-TYPE-011: `kotlin.js.JsAny` external interface を追加する
+- [ ] STDLIB-JS-TYPE-012: `kotlin.js.JsArray` external class を追加する
+- [ ] STDLIB-JS-TYPE-013: `kotlin.js.JsBigInt` external class を追加する
+- [ ] STDLIB-JS-TYPE-014: `kotlin.js.JsBoolean` external class を追加する
+- [ ] STDLIB-JS-TYPE-015: `kotlin.js.JsClass` external interface を追加する
+- [ ] STDLIB-JS-TYPE-016: `kotlin.js.JsException` class を追加する
+- [ ] STDLIB-JS-TYPE-017: `kotlin.js.JsExport` annotation を追加する
+- [ ] STDLIB-JS-TYPE-018: `kotlin.js.JsExternalArgument` annotation を追加する
+- [ ] STDLIB-JS-TYPE-019: `kotlin.js.JsExternalInheritorsOnly` annotation を追加する
+- [ ] STDLIB-JS-TYPE-020: `kotlin.js.JsFileName` annotation を追加する
+- [ ] STDLIB-JS-TYPE-021: `kotlin.js.JsFun` annotation を追加する
+- [ ] STDLIB-JS-TYPE-022: `kotlin.js.JsModule` annotation を追加する
+- [ ] STDLIB-JS-TYPE-023: `kotlin.js.JsName` annotation を追加する
+- [ ] STDLIB-JS-TYPE-024: `kotlin.js.JsNonModule` annotation を追加する
+- [ ] STDLIB-JS-TYPE-025: `kotlin.js.JsNumber` external class を追加する
+- [ ] STDLIB-JS-TYPE-026: `kotlin.js.JsQualifier` annotation を追加する
+- [ ] STDLIB-JS-TYPE-027: `kotlin.js.JsReference` external interface を追加する
+- [ ] STDLIB-JS-TYPE-028: `kotlin.js.JsStatic` annotation を追加する
+- [ ] STDLIB-JS-TYPE-029: `kotlin.js.JsString` external class を追加する
+- [ ] STDLIB-JS-TYPE-030: `kotlin.js.JsSymbol` annotation を追加する
+- [ ] STDLIB-JS-TYPE-031: `kotlin.js.nativeGetter` annotation を追加する
+- [ ] STDLIB-JS-TYPE-032: `kotlin.js.nativeInvoke` annotation を追加する
+- [ ] STDLIB-JS-TYPE-033: `kotlin.js.nativeSetter` annotation を追加する
+- [ ] STDLIB-JS-TYPE-034: `kotlin.js.Promise<T>` external class を追加する
+- [ ] STDLIB-JS-TYPE-035: `kotlin.js.RegExp` external class を追加する
+- [ ] STDLIB-JS-TYPE-036: `kotlin.js.RegExpMatch` external interface を追加する
+- [ ] STDLIB-JS-PROP-001: `kotlin.js.console` external property を追加する
+- [ ] STDLIB-JS-PROP-002: `kotlin.js.definedExternally` external property を追加する
+- [ ] STDLIB-JS-PROP-003: `KClass<T>.js` extension property を追加する
+- [ ] STDLIB-JS-PROP-004: `JsClass<T>.kotlin` extension property を追加する
+- [ ] STDLIB-JS-FN-001: `Date.Companion.now()` を追加する
+- [ ] STDLIB-JS-FN-002: `dateLocaleOptions(init)` を追加する
+- [ ] STDLIB-JS-FN-003: `eval(expr)` を追加する
+- [ ] STDLIB-JS-FN-004: `JsReference<T>.get()` を追加する
+- [ ] STDLIB-JS-FN-005: `JsArray<T>.get(index)` を追加する
+- [ ] STDLIB-JS-FN-006: `RegExpMatch.get(index)` を追加する
+- [ ] STDLIB-JS-FN-007: `dynamic.iterator()` を追加する
+- [ ] STDLIB-JS-FN-008: `js(code)` を追加する
+- [ ] STDLIB-JS-FN-009: `JsArray<T>()` factory を追加する
+- [ ] STDLIB-JS-FN-010: `json(vararg pairs)` を追加する
+- [ ] STDLIB-JS-FN-011: `jsTypeOf(a)` を追加する
+- [ ] STDLIB-JS-FN-012: `parseFloat(s, radix)` を追加する
+- [ ] STDLIB-JS-FN-013: `parseInt(s)` を追加する
+- [ ] STDLIB-JS-FN-014: `parseInt(s, radix)` を追加する
+- [ ] STDLIB-JS-FN-015: `RegExp.reset()` を追加する
+- [ ] STDLIB-JS-FN-016: `JsArray<T>.set(index, value)` を追加する
+- [ ] STDLIB-JS-FN-017: `Promise<T>.then(onFulfilled)` を追加する
+- [ ] STDLIB-JS-FN-018: `Promise<T>.then(onFulfilled, onRejected)` を追加する
+- [ ] STDLIB-JS-FN-019: `JsArray<T>.toArray()` を追加する
+- [ ] STDLIB-JS-FN-020: `JsBoolean.toBoolean()` を追加する
+- [ ] STDLIB-JS-FN-021: `JsNumber.toDouble()` を追加する
+- [ ] STDLIB-JS-FN-022: `JsNumber.toInt()` を追加する
+- [ ] STDLIB-JS-FN-023: `Array<T>.toJsArray()` を追加する
+- [ ] STDLIB-JS-FN-024: `List<T>.toJsArray()` を追加する
+- [ ] STDLIB-JS-FN-025: `Long.toJsBigInt()` を追加する
+- [ ] STDLIB-JS-FN-026: `Boolean.toJsBoolean()` を追加する
+- [ ] STDLIB-JS-FN-027: `Double.toJsNumber()` を追加する
+- [ ] STDLIB-JS-FN-028: `Int.toJsNumber()` を追加する
+- [ ] STDLIB-JS-FN-029: `T.toJsReference()` を追加する
+- [ ] STDLIB-JS-FN-030: `String.toJsString()` を追加する
+- [ ] STDLIB-JS-FN-031: `JsArray<T>.toList()` を追加する
+- [ ] STDLIB-JS-FN-032: `JsBigInt.toLong()` を追加する
+- [ ] STDLIB-JS-FN-033: `JsAny.toThrowableOrNull()` を追加する
+- [ ] STDLIB-JS-COLLECTIONS-TYPE-001: `kotlin.js.collections.JsArray<E>` external class を追加する
+- [ ] STDLIB-JS-COLLECTIONS-TYPE-002: `kotlin.js.collections.JsMap<K, V>` external class を追加する
+- [ ] STDLIB-JS-COLLECTIONS-TYPE-003: `kotlin.js.collections.JsReadonlyArray<E>` external interface を追加する
+- [ ] STDLIB-JS-COLLECTIONS-TYPE-004: `kotlin.js.collections.JsReadonlyMap<K, V>` external interface を追加する
+- [ ] STDLIB-JS-COLLECTIONS-TYPE-005: `kotlin.js.collections.JsReadonlySet<E>` external interface を追加する
+- [ ] STDLIB-JS-COLLECTIONS-TYPE-006: `kotlin.js.collections.JsSet<E>` external class を追加する
+- [ ] STDLIB-JS-COLLECTIONS-FN-001: `JsReadonlyArray<E>.toList()` を追加する
+- [ ] STDLIB-JS-COLLECTIONS-FN-002: `JsReadonlyMap<K,V>.toMap()` を追加する
+- [ ] STDLIB-JS-COLLECTIONS-FN-003: `JsReadonlyArray<E>.toMutableList()` を追加する
+- [ ] STDLIB-JS-COLLECTIONS-FN-004: `JsReadonlyMap<K,V>.toMutableMap()` を追加する
+- [ ] STDLIB-JS-COLLECTIONS-FN-005: `JsReadonlySet<E>.toMutableSet()` を追加する
+- [ ] STDLIB-JS-COLLECTIONS-FN-006: `JsReadonlySet<E>.toSet()` を追加する
+- [ ] STDLIB-STREAMS-FN-001: `DoubleStream.asSequence()` を追加する
+- [ ] STDLIB-STREAMS-FN-002: `IntStream.asSequence()` を追加する
+- [ ] STDLIB-STREAMS-FN-003: `LongStream.asSequence()` を追加する
+- [ ] STDLIB-STREAMS-FN-004: `Stream<T>.asSequence()` を追加する
+- [ ] STDLIB-STREAMS-FN-005: `Sequence<T>.asStream()` を追加する
+- [ ] STDLIB-STREAMS-FN-006: `DoubleStream.toList()` を追加する
+- [ ] STDLIB-STREAMS-FN-007: `IntStream.toList()` を追加する
+- [ ] STDLIB-STREAMS-FN-008: `LongStream.toList()` を追加する
+- [ ] STDLIB-STREAMS-FN-009: `Stream<T>.toList()` を追加する
+- [ ] STDLIB-WASM-TYPE-001: `kotlin.wasm.ExperimentalWasmInterop` marker annotation を追加する
+- [ ] STDLIB-WASM-TYPE-002: `kotlin.wasm.WasmExport` annotation を追加する
+- [ ] STDLIB-WASM-TYPE-003: `kotlin.wasm.WasmImport` annotation を追加する
+- [ ] STDLIB-WASM-UNSAFE-TYPE-001: `kotlin.wasm.unsafe.MemoryAllocator` abstract class を追加する
+- [ ] STDLIB-WASM-UNSAFE-TYPE-002: `kotlin.wasm.unsafe.Pointer` value class を追加する
+- [ ] STDLIB-WASM-UNSAFE-TYPE-003: `kotlin.wasm.unsafe.UnsafeWasmMemoryApi` marker annotation を追加する
+- [ ] STDLIB-WASM-UNSAFE-FN-001: `withScopedMemoryAllocator(block)` を追加する
+- [ ] STDLIB-CINTEROP-TYPE-001: `kotlinx.cinterop.Arena` class surface を追加する
+- [ ] STDLIB-CINTEROP-TYPE-002: `kotlinx.cinterop.ArenaBase` class surface を追加する
+- [ ] STDLIB-CINTEROP-TYPE-003: `kotlinx.cinterop.AutofreeScope` class surface を追加する
+- [ ] STDLIB-CINTEROP-TYPE-004: `kotlinx.cinterop.BetaInteropApi` annotation shape を公式 surface と整合させる
+- [ ] STDLIB-CINTEROP-TYPE-005: `kotlinx.cinterop.BooleanVar` typealias を追加する
+- [ ] STDLIB-CINTEROP-TYPE-006: `kotlinx.cinterop.BooleanVarOf<T>` class surface を追加する
+- [ ] STDLIB-CINTEROP-TYPE-007: `kotlinx.cinterop.ByteVar` typealias を追加する
+- [ ] STDLIB-CINTEROP-TYPE-008: `kotlinx.cinterop.ByteVarOf<T>` class surface を追加する
+- [ ] STDLIB-CINTEROP-TYPE-009: `kotlinx.cinterop.CArrayPointer<T>` typealias を追加する
+- [ ] STDLIB-CINTEROP-TYPE-010: `kotlinx.cinterop.CArrayPointerVar<T>` typealias を追加する
+- [ ] STDLIB-CINTEROP-TYPE-011: `kotlinx.cinterop.CEnum` interface surface を追加する
+- [ ] STDLIB-CINTEROP-TYPE-012: `kotlinx.cinterop.CEnumVar` class surface を追加する
+- [ ] STDLIB-CINTEROP-TYPE-013: `kotlinx.cinterop.CFunction<T>` class surface を追加する
+- [ ] STDLIB-CINTEROP-TYPE-014: `kotlinx.cinterop.COpaque` class surface を追加する
+- [ ] STDLIB-CINTEROP-TYPE-015: `kotlinx.cinterop.COpaquePointer` typealias shape を既存 class stub と整合させる
+- [ ] STDLIB-CINTEROP-TYPE-016: `kotlinx.cinterop.COpaquePointerVar` typealias を追加する
+- [ ] STDLIB-CINTEROP-TYPE-017: `kotlinx.cinterop.CPointed` class shape を公式 surface と整合させる
+- [ ] STDLIB-CINTEROP-TYPE-018: `kotlinx.cinterop.CPointer<T>` class shape を公式 surface と整合させる
+- [ ] STDLIB-CINTEROP-TYPE-019: `kotlinx.cinterop.CPointerVar<T>` typealias shape を公式 surface と整合させる
+- [ ] STDLIB-CINTEROP-TYPE-020: `kotlinx.cinterop.CPointerVarOf<T>` class surface を追加する
+- [ ] STDLIB-CINTEROP-TYPE-021: `kotlinx.cinterop.CPrimitiveVar` sealed class surface を追加する
+- [ ] STDLIB-CINTEROP-TYPE-022: `kotlinx.cinterop.CStructVar` class surface を追加する
+- [ ] STDLIB-CINTEROP-TYPE-023: `kotlinx.cinterop.CValue<T>` class surface を追加する
+- [ ] STDLIB-CINTEROP-TYPE-024: `kotlinx.cinterop.CValues<T>` class surface を追加する
+- [ ] STDLIB-CINTEROP-TYPE-025: `kotlinx.cinterop.CValuesRef<T>` class shape を公式 surface と整合させる
+- [ ] STDLIB-CINTEROP-TYPE-026: `kotlinx.cinterop.CVariable` class surface を追加する
+- [ ] STDLIB-CINTEROP-TYPE-027: `kotlinx.cinterop.DeferScope` class surface を追加する
+- [ ] STDLIB-CINTEROP-TYPE-028: `kotlinx.cinterop.NativeFreeablePlacement` class surface を追加する
+- [ ] STDLIB-CINTEROP-TYPE-029: `kotlinx.cinterop.NativePlacement` class shape を公式 surface と整合させる
+- [ ] STDLIB-CINTEROP-TYPE-030: `kotlinx.cinterop.StableRef<T>` class surface を追加する
+- [ ] STDLIB-CINTEROP-PROP-001: `CPointer<T>.pointed` property を追加する
+- [ ] STDLIB-CINTEROP-PROP-002: `CPointer<T>.rawValue` property を追加する
+- [ ] STDLIB-CINTEROP-PROP-003: `nativeHeap` property を追加する
+- [ ] STDLIB-CINTEROP-FN-001: `alloc<T>()` を追加する
+- [ ] STDLIB-CINTEROP-FN-002: `allocArray<T>(length)` を追加する
+- [ ] STDLIB-CINTEROP-FN-003: `asStableRef<T>()` を追加する
+- [ ] STDLIB-CINTEROP-FN-004: `cstr` helper を追加する
+- [ ] STDLIB-CINTEROP-FN-005: `wcstr` helper を追加する
+- [ ] STDLIB-CINTEROP-FN-006: `defer(block)` を追加する
+- [ ] STDLIB-CINTEROP-FN-007: `free(pointed)` を追加する
+- [ ] STDLIB-CINTEROP-FN-008: `memScoped(block)` を追加する
+- [ ] STDLIB-CINTEROP-FN-009: `pin()` を追加する
+- [ ] STDLIB-CINTEROP-FN-010: `place(value)` を追加する
+- [ ] STDLIB-CINTEROP-FN-011: `CPointer<T>.plus(index)` を追加する
+- [ ] STDLIB-CINTEROP-FN-012: `readValue()` を追加する
+- [ ] STDLIB-CINTEROP-FN-013: `refTo(index)` を追加する
+- [ ] STDLIB-CINTEROP-FN-014: `reinterpret<T>()` を追加する
+- [ ] STDLIB-CINTEROP-FN-015: `CPointer<T>.get(index)` を追加する
+- [ ] STDLIB-CINTEROP-FN-016: `CPointer<T>.set(index, value)` を追加する
+- [ ] STDLIB-CINTEROP-FN-017: `Array<CPointer<T>?>.toCValues()` を追加する
+- [ ] STDLIB-CINTEROP-FN-018: `ByteArray.toCValues()` を追加する
+- [ ] STDLIB-CINTEROP-FN-019: `DoubleArray.toCValues()` を追加する
+- [ ] STDLIB-CINTEROP-FN-020: `FloatArray.toCValues()` を追加する
+- [ ] STDLIB-CINTEROP-FN-021: `IntArray.toCValues()` を追加する
+- [ ] STDLIB-CINTEROP-FN-022: `LongArray.toCValues()` を追加する
+- [ ] STDLIB-CINTEROP-FN-023: `ShortArray.toCValues()` を追加する
+- [ ] STDLIB-CINTEROP-FN-024: `UByteArray.toCValues()` を追加する
+- [ ] STDLIB-CINTEROP-FN-025: `UIntArray.toCValues()` を追加する
+- [ ] STDLIB-CINTEROP-FN-026: `ULongArray.toCValues()` を追加する
+- [ ] STDLIB-CINTEROP-FN-027: `UShortArray.toCValues()` を追加する
+- [ ] STDLIB-CINTEROP-FN-028: `List<CPointer<T>?>.toCValues()` を追加する
+- [ ] STDLIB-CINTEROP-FN-029: `ByteArray.toKString()` を追加する
+- [ ] STDLIB-CINTEROP-FN-030: `CPointer<ByteVar>.toKString()` を追加する
+- [ ] STDLIB-CINTEROP-FN-031: `CPointer<ShortVar>.toKString()` を追加する
+- [ ] STDLIB-CINTEROP-FN-032: `CPointer<UShortVar>.toKString()` を追加する
+- [ ] STDLIB-CINTEROP-FN-033: `ByteArray.toKString(startIndex, endIndex, throwOnInvalidSequence)` を追加する
+- [ ] STDLIB-CINTEROP-FN-034: `CPointer<ShortVar>.toKStringFromUtf16()` を追加する
+- [ ] STDLIB-CINTEROP-FN-035: `CPointer<UShortVar>.toKStringFromUtf16()` を追加する
+- [ ] STDLIB-CINTEROP-FN-036: `CPointer<IntVar>.toKStringFromUtf32()` を追加する
+- [ ] STDLIB-CINTEROP-FN-037: `CPointer<ByteVar>.toKStringFromUtf8()` を追加する
+- [ ] STDLIB-CINTEROP-FN-038: `CPointer<T>?.toLong()` を追加する
+- [ ] STDLIB-CINTEROP-FN-039: `typeOf<T>()` を追加する
+- [ ] STDLIB-CINTEROP-FN-040: `unwrapKotlinObjectHolder(holder)` を追加する
+- [ ] STDLIB-CINTEROP-FN-041: `CValue<T>.useContents(block)` を追加する
+- [ ] STDLIB-CINTEROP-FN-042: `T.usePinned(block)` を追加する
+- [ ] STDLIB-CINTEROP-FN-043: `vectorOf(Float, Float, Float, Float)` の公式 annotation/signature を既存 stub と整合させる
+- [ ] STDLIB-CINTEROP-FN-044: `vectorOf(Int, Int, Int, Int)` の公式 annotation/signature を既存 stub と整合させる
+- [ ] STDLIB-CINTEROP-FN-045: `CValue<T>.write(location)` を追加する
+- [ ] STDLIB-CINTEROP-FN-046: `writeBits(ptr, offset, size, value)` を追加する
+- [ ] STDLIB-CINTEROP-FN-047: `zeroValue<T>()` を追加する
+- [ ] STDLIB-CINTEROP-FN-048: `zeroValue<T>(size, align)` を追加する
+- [ ] STDLIB-CINTEROP-INTERNAL-TYPE-001: `kotlinx.cinterop.internal.CCall` annotation を追加する
+- [ ] STDLIB-CINTEROP-INTERNAL-TYPE-002: `kotlinx.cinterop.internal.CEnumEntryAlias` annotation を追加する
+- [ ] STDLIB-CINTEROP-INTERNAL-TYPE-003: `kotlinx.cinterop.internal.CEnumVarTypeSize` annotation を追加する
+- [ ] STDLIB-CINTEROP-INTERNAL-TYPE-004: `kotlinx.cinterop.internal.CGlobalAccess` annotation を追加する
+- [ ] STDLIB-CINTEROP-INTERNAL-TYPE-005: `kotlinx.cinterop.internal.ConstantValue` object を追加する
+- [ ] STDLIB-CINTEROP-INTERNAL-TYPE-006: `kotlinx.cinterop.internal.CStruct` annotation を追加する
+- [ ] STDLIB-CINTEROP-INTERNAL-FN-001: `convertBlockPtrToKotlinFunction(blockPtr)` を追加する
+- [ ] STDLIB-CINTEROP-INTERNAL-FN-002: `detachObjCObject(obj)` を追加する
+- [ ] STDLIB-DOM-TYPE-001: `org.w3c.dom.ItemArrayLike<T>` external interface を追加する
+- [ ] STDLIB-DOM-FN-001: `ItemArrayLike<T>.asList()` を追加する
 - [ ] STDLIB-JVM-166: Java プレビュー機能の実装
 - [ ] STDLIB-JS-167: JavaScript 固有 API の実装
 - [ ] STDLIB-NATIVE-168: Native 固有 API の実装
