@@ -102,8 +102,10 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testStringFunctionCount() {
-        // Keep this in sync with RuntimeABISpec.stringFunctions entries.
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 189)
+        // Lower bound — bump only when intentionally tightening (see header
+        // comment on testMemoryFunctionCount). Avoid strict equality so parallel
+        // stdlib PRs adding new string entries don't all conflict here.
+        XCTAssertGreaterThanOrEqual(RuntimeABISpec.stringFunctions.count, 189)
     }
 
     func testRegexFunctionCount() {

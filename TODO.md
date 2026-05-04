@@ -295,7 +295,7 @@
 - [x] STDLIB-KOTLIN-ROOT-ANNO-001: `BuilderInference` annotation surface を追加する
 - [x] STDLIB-KOTLIN-ROOT-ANNO-002: `DeprecatedSinceKotlin(warningSince, errorSince, hiddenSince)` annotation surface を追加する
 - [x] STDLIB-KOTLIN-ROOT-ANNO-003: `DslMarker` annotation surface を追加する
-- [ ] STDLIB-KOTLIN-ROOT-ANNO-004: `OptionalExpectation` annotation surface を追加する
+- [x] STDLIB-KOTLIN-ROOT-ANNO-004: `OptionalExpectation` annotation surface を追加する
 - [x] STDLIB-KOTLIN-ROOT-ANNO-005: `ParameterName(name: String)` annotation surface を追加する
 - [x] STDLIB-KOTLIN-ROOT-ANNO-006: `PublishedApi` annotation surface を追加する
 - [x] STDLIB-KOTLIN-ROOT-ANNO-007: `SinceKotlin(version: String)` annotation surface を追加する
@@ -309,7 +309,7 @@
 - [x] STDLIB-KOTLIN-ROOT-EXC-001: `NoWhenBranchMatchedException` class surface を追加する
 - [x] STDLIB-KOTLIN-ROOT-EXC-002: `ConcurrentModificationException` class surface を追加する
 - [x] STDLIB-KOTLIN-ROOT-EXC-003: Native `ArrayIndexOutOfBoundsException` class surface を追加する
-- [ ] STDLIB-KOTLIN-ROOT-CLOSE-001: `AutoCloseable(closeAction: () -> Unit)` factory を追加する
+- [x] STDLIB-KOTLIN-ROOT-CLOSE-001: `AutoCloseable(closeAction: () -> Unit)` factory を追加する
 - [x] STDLIB-KOTLIN-ROOT-CLOSE-002: `AutoCloseable?.use { ... }` common extension を追加する
 - [x] STDLIB-KOTLIN-ROOT-ARRAY-001: `arrayOfNulls<T>(size: Int)` root array factory を追加する
 - [x] STDLIB-KOTLIN-ROOT-LAZY-001: `lazyOf(value)` root lazy factory を追加する
@@ -332,9 +332,9 @@
 - [ ] STDLIB-I18N-COMMON-009: `Char.uppercaseChar()` を追加する
 - [x] STDLIB-I18N-COMMON-010: `Char.titlecaseChar()` を追加する
 - [ ] STDLIB-I18N-COMMON-011: `Char.isDefined()` を追加する
-- [ ] STDLIB-I18N-COMMON-012: Native `Char.isSupplementaryCodePoint()` / `Char.isSurrogatePair()` を追加する
+- [x] STDLIB-I18N-COMMON-012: Native `Char.isSupplementaryCodePoint()` / `Char.isSurrogatePair()` を追加する
 - [ ] STDLIB-I18N-COMMON-013: Native `Char.toChars()` / `Char.toCodePoint()` を追加する
-- [ ] STDLIB-TIME-EXP-001: `@ExperimentalTime` 系 API の整理（`Clock` / `TimeMark`）
+- [x] STDLIB-TIME-EXP-001: `@ExperimentalTime` 系 API の整理（`Clock` / `TimeMark`）
 - [x] STDLIB-TIME-STABLE-008: `DurationUnit` enum surface を追加する
 - [x] STDLIB-TIME-STABLE-009: `Int.toDuration(unit)` / `Long.toDuration(unit)` / `Double.toDuration(unit)` を追加する
 - [x] STDLIB-TIME-EXP-002: `AbstractDoubleTimeSource` surface を追加する
