@@ -233,21 +233,21 @@ func runtimeValuesEqual(_ lhs: Int, _ rhs: Int) -> Bool {
     if lhs == runtimeNullSentinelInt || rhs == runtimeNullSentinelInt {
         return lhs == rhs
     }
-    guard let lhsPtr = UnsafeMutableRawPointer(bitPattern: lhs),
-          let rhsPtr = UnsafeMutableRawPointer(bitPattern: rhs)
-    else {
-        return lhs == rhs
-    }
+    let lhsPtr = UnsafeMutableRawPointer(bitPattern: lhs)
+    let rhsPtr = UnsafeMutableRawPointer(bitPattern: rhs)
     let lhsIsObjectPointer = runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: lhsPtr))
+        lhsPtr.map { state.objectPointers.contains(UInt(bitPattern: $0)) } ?? false
     }
     let rhsIsObjectPointer = runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: rhsPtr))
+        rhsPtr.map { state.objectPointers.contains(UInt(bitPattern: $0)) } ?? false
     }
     if lhsIsObjectPointer != rhsIsObjectPointer {
         return maybeUnbox(lhs) == maybeUnbox(rhs)
     }
-    if !lhsIsObjectPointer {
+    if !lhsIsObjectPointer, !rhsIsObjectPointer {
+        return lhs == rhs
+    }
+    guard let lhsPtr, let rhsPtr else {
         return lhs == rhs
     }
     if let lhsString = tryCast(lhsPtr, to: RuntimeStringBox.self),
