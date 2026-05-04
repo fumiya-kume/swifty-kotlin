@@ -1287,6 +1287,13 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(arrayElements(kk_list_toDoubleArray(list)), [first, second])
     }
 
+    func testFloatListToPrimitiveArrayConversionCopiesElements() {
+        let first = kk_float_to_bits(1.5)
+        let second = kk_float_to_bits(-2.25)
+        let list = makeList([kk_box_float(first), kk_box_float(second)])
+        XCTAssertEqual(arrayElements(kk_list_toFloatArray(list)), [first, second])
+    }
+
     private func makeArray(_ elements: [Int]) -> Int {
         let arrayRaw = kk_array_new(elements.count)
         var thrown = 0

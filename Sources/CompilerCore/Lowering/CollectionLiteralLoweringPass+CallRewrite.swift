@@ -2676,6 +2676,7 @@ extension CollectionLiteralLoweringPass {
                     case lookup.toBooleanArrayName: lookup.kkListToBooleanArrayName
                     case lookup.toShortArrayName: lookup.kkListToShortArrayName
                     case lookup.toDoubleArrayName: lookup.kkListToDoubleArrayName
+                    case lookup.toFloatArrayName: lookup.kkListToFloatArrayName
                     case lookup.toUByteArrayName: lookup.kkListToUByteArrayName
                     case lookup.toUShortArrayName: lookup.kkListToUShortArrayName
                     case lookup.toUIntArrayName: lookup.kkListToUIntArrayName
