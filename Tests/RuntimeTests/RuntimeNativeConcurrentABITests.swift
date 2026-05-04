@@ -16,7 +16,7 @@ import XCTest
 //   AtomicIntArray : kk_atomic_int_array_create / size / loadAt / storeAt /
 //                    exchangeAt / compareAndSetAt / compareAndExchangeAt /
 //                    fetchAndAddAt / addAndFetchAt / incrementAndFetchAt /
-//                    decrementAndFetchAt
+//                    fetchAndDecrementAt / decrementAndFetchAt
 //   AtomicLongArray: kk_atomic_long_array_* (same shape as AtomicIntArray)
 //   AtomicInt      : getAndUpdate / updateAndGet (higher-order variants)
 //   AtomicLong     : getAndUpdate / updateAndGet (higher-order variants)
@@ -270,6 +270,10 @@ final class RuntimeAtomicIntArrayTests: XCTestCase {
         _ = kk_atomic_int_array_storeAt(handle, 0, 0, nil)
         let afterInc = kk_atomic_int_array_incrementAndFetchAt(handle, 0, nil)
         XCTAssertEqual(afterInc, 1)
+        let oldBeforeDec = kk_atomic_int_array_fetchAndDecrementAt(handle, 0, nil)
+        XCTAssertEqual(oldBeforeDec, 1)
+        XCTAssertEqual(kk_atomic_int_array_loadAt(handle, 0, nil), 0)
+        _ = kk_atomic_int_array_incrementAndFetchAt(handle, 0, nil)
         let afterDec = kk_atomic_int_array_decrementAndFetchAt(handle, 0, nil)
         XCTAssertEqual(afterDec, 0)
     }
@@ -346,8 +350,11 @@ final class RuntimeAtomicLongArrayTests: XCTestCase {
         _ = kk_atomic_long_array_incrementAndFetchAt(handle, 0, nil)
         _ = kk_atomic_long_array_incrementAndFetchAt(handle, 0, nil)
         XCTAssertEqual(kk_atomic_long_array_loadAt(handle, 0, nil), 2)
-        _ = kk_atomic_long_array_decrementAndFetchAt(handle, 0, nil)
+        let oldBeforeDec = kk_atomic_long_array_fetchAndDecrementAt(handle, 0, nil)
+        XCTAssertEqual(oldBeforeDec, 2)
         XCTAssertEqual(kk_atomic_long_array_loadAt(handle, 0, nil), 1)
+        _ = kk_atomic_long_array_decrementAndFetchAt(handle, 0, nil)
+        XCTAssertEqual(kk_atomic_long_array_loadAt(handle, 0, nil), 0)
     }
 
     func testOutOfBoundsIndexReturnsZero() {
