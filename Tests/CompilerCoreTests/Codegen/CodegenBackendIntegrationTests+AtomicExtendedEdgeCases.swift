@@ -460,6 +460,29 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenAtomicArrayOfNullsFactory() throws {
+        let source = """
+        @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
+        import kotlin.concurrent.atomics.atomicArrayOfNulls
+
+        fun main() {
+            val arr = atomicArrayOfNulls<String>(2)
+            println(arr.size)
+            arr.storeAt(0, "first")
+            arr.storeAt(1, "value")
+            println(arr.loadAt(0))
+            println(arr.loadAt(1))
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(inputPath: path, moduleName: "AtomicArrayOfNullsFactory", emit: .executable, outputPath: outputBase)
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "2\nfirst\nvalue\n")
+        }
+    }
+
     // MARK: - AtomicIntArray edge cases
 
     func testCodegenAtomicIntArrayBasicOperations() throws {
