@@ -1013,7 +1013,8 @@ final class CallLowerer {
                 finalArgIDs.append(nullCauseExpr)
             }
             let callCanThrow = needsThrownChannel(calleeName: loweredCalleeName, interner: interner)
-            let thrownResult = callCanThrow
+                || (chosen.flatMap { sema.symbols.functionSignature(for: $0)?.canThrow } ?? false)
+            let thrownResult = needsThrownChannel(calleeName: loweredCalleeName, interner: interner)
                 ? arena.appendExpr(
                     .temporary(Int32(arena.expressions.count)),
                     type: sema.types.nullableAnyType
