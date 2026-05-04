@@ -164,6 +164,7 @@ struct NativeEmitter {
             }
             let slotName = "kk_global_root_slot_\(max(0, Int(global.symbol.rawValue)))"
             if let llvmGlobal = bindings.addGlobal(module: llvmModule, type: int64Type, name: slotName) {
+                bindings.setInternalLinkage(llvmGlobal)
                 if let zero = bindings.constInt(int64Type, value: 0) {
                     bindings.setInitializer(llvmGlobal, value: zero)
                 }
