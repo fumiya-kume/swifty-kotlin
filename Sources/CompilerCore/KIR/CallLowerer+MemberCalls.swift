@@ -6253,6 +6253,19 @@ extension CallLowerer {
             finalArguments[2] = fnPtrExpr
             finalArguments.append(envPtrExpr)
         }
+        if (loweredCallee == interner.intern("kk_iterable_firstNotNullOf")
+            || loweredCallee == interner.intern("kk_iterable_firstNotNullOfOrNull")),
+           finalArguments.count == 2
+        {
+            let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                finalArguments[1],
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            finalArguments = [finalArguments[0], fnPtrExpr, envPtrExpr]
+        }
         if loweredCallee == interner.intern("kk_array_copyOf_newSize_init"),
            finalArguments.count == 3
         {
@@ -6548,6 +6561,8 @@ extension CallLowerer {
             interner.intern("kk_list_runningFoldIndexed"),
             interner.intern("kk_list_runningReduceIndexed"),
             interner.intern("kk_list_scanIndexed"),
+            interner.intern("kk_iterable_firstNotNullOf"),
+            interner.intern("kk_iterable_firstNotNullOfOrNull"),
             interner.intern("kk_kclass_cast"),
             interner.intern("kk_range_first_predicate"),
             interner.intern("kk_range_last_predicate"),
