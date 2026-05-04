@@ -279,6 +279,373 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testIterableSumByResolvesToListRuntime() throws {
+        let source = """
+        fun checksum(values: Iterable<Int>): Int {
+            return values.sumBy { value ->
+                value * value
+            }
+        }
+
+        fun checksumFromList(values: List<Int>): Int {
+            return values.sumBy(selector = { value ->
+                value * 2
+            })
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Iterable.sumBy surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "collections", "Iterable", "sumBy"]
+                .map { ctx.interner.intern($0) }
+            let memberSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: memberFQName))
+            XCTAssertEqual(sema.symbols.externalLinkName(for: memberSymbol), "kk_list_sumBy")
+            XCTAssertTrue(
+                sema.symbols.annotations(for: memberSymbol).contains { $0.annotationFQName == "kotlin.Deprecated" },
+                "Iterable.sumBy should carry Deprecated metadata"
+            )
+
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: memberSymbol))
+            XCTAssertEqual(signature.parameterTypes.count, 1)
+            guard case let .functionType(selectorType) = sema.types.kind(of: signature.parameterTypes[0]) else {
+                return XCTFail("Expected Iterable.sumBy selector parameter to be a function")
+            }
+            XCTAssertEqual(selectorType.params.count, 1)
+            XCTAssertEqual(signature.returnType, sema.types.intType)
+
+            let callLinks = sema.bindings.callBindings.values.compactMap { binding in
+                sema.symbols.externalLinkName(for: binding.chosenCallee)
+            }
+            XCTAssertEqual(callLinks.filter { $0 == "kk_list_sumBy" }.count, 2)
+        }
+    }
+
+    func testIterableSumByDoubleResolvesToListRuntime() throws {
+        let source = """
+        fun checksum(values: Iterable<Int>): Double {
+            return values.sumByDouble { value ->
+                if (value == 2) 1.5 else 0.25
+            }
+        }
+
+        fun checksumFromList(values: List<Int>): Double {
+            return values.sumByDouble(selector = { value ->
+                value.toDouble()
+            })
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Iterable.sumByDouble surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "collections", "Iterable", "sumByDouble"]
+                .map { ctx.interner.intern($0) }
+            let memberSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: memberFQName))
+            XCTAssertEqual(sema.symbols.externalLinkName(for: memberSymbol), "kk_list_sumByDouble")
+            XCTAssertTrue(
+                sema.symbols.annotations(for: memberSymbol).contains { $0.annotationFQName == "kotlin.Deprecated" },
+                "Iterable.sumByDouble should carry Deprecated metadata"
+            )
+
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: memberSymbol))
+            XCTAssertEqual(signature.parameterTypes.count, 1)
+            guard case let .functionType(selectorType) = sema.types.kind(of: signature.parameterTypes[0]) else {
+                return XCTFail("Expected Iterable.sumByDouble selector parameter to be a function")
+            }
+            XCTAssertEqual(selectorType.params.count, 1)
+            XCTAssertEqual(signature.returnType, sema.types.doubleType)
+
+            let callLinks = sema.bindings.callBindings.values.compactMap { binding in
+                sema.symbols.externalLinkName(for: binding.chosenCallee)
+            }
+            XCTAssertEqual(callLinks.filter { $0 == "kk_list_sumByDouble" }.count, 2)
+        }
+    }
+
+    func testIterableFirstNotNullOfResolvesInCallExpressions() throws {
+        let source = """
+        fun pickLabel(values: Iterable<Int>): String {
+            return values.firstNotNullOf<String> { value ->
+                if (value == 2) "two" else null
+            }
+        }
+
+        fun pickListLabel(values: List<Int>): String {
+            return values.firstNotNullOf<String> { value ->
+                if (value == 3) "three" else null
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Iterable.firstNotNullOf surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "collections", "Iterable", "firstNotNullOf"]
+                .map { ctx.interner.intern($0) }
+            let links = Set(
+                sema.symbols.lookupAll(fqName: memberFQName)
+                    .compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
+            XCTAssertTrue(links.contains("kk_iterable_firstNotNullOf"))
+        }
+    }
+
+    func testIterableFirstNotNullOfOrNullResolvesInCallExpressions() throws {
+        let source = """
+        fun pickLabel(values: Iterable<Int>): String? {
+            return values.firstNotNullOfOrNull<String> { value ->
+                if (value == 2) "two" else null
+            }
+        }
+
+        fun pickListLabel(values: List<Int>): String? {
+            return values.firstNotNullOfOrNull<String> { value ->
+                if (value == 3) "three" else null
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Iterable.firstNotNullOfOrNull surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "collections", "Iterable", "firstNotNullOfOrNull"]
+                .map { ctx.interner.intern($0) }
+            let links = Set(
+                sema.symbols.lookupAll(fqName: memberFQName)
+                    .compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
+            XCTAssertTrue(links.contains("kk_iterable_firstNotNullOfOrNull"))
+        }
+    }
+
+    func testIterableMinusElementResolvesToListRuntime() throws {
+        let source = """
+        fun removeValue(values: Iterable<Int>): List<Int> {
+            return values.minusElement(2)
+        }
+
+        fun removeFromList(values: List<Int>): List<Int> {
+            return values.minusElement(element = 3)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Iterable.minusElement surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "collections", "Iterable", "minusElement"]
+                .map { ctx.interner.intern($0) }
+            let memberSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: memberFQName))
+            XCTAssertEqual(sema.symbols.externalLinkName(for: memberSymbol), "kk_list_minus_element")
+
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: memberSymbol))
+            guard case let .classType(returnClassType) = sema.types.kind(of: signature.returnType),
+                  let returnSymbol = sema.symbols.symbol(returnClassType.classSymbol)
+            else {
+                return XCTFail("Expected Iterable.minusElement to return List<E>")
+            }
+            XCTAssertEqual(ctx.interner.resolve(returnSymbol.name), "List")
+
+            let callLinks = sema.bindings.callBindings.values.compactMap { binding in
+                sema.symbols.externalLinkName(for: binding.chosenCallee)
+            }
+            XCTAssertEqual(callLinks.filter { $0 == "kk_list_minus_element" }.count, 2)
+        }
+    }
+
+    func testIterableReduceRightIndexedResolvesToListRuntime() throws {
+        let source = """
+        fun checksum(values: Iterable<Int>): Int {
+            return values.reduceRightIndexed { index, value, acc ->
+                index * 100 + value * 10 + acc
+            }
+        }
+
+        fun checksumFromList(values: List<Int>): Int {
+            return values.reduceRightIndexed(operation = { index, value, acc ->
+                index + value + acc
+            })
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Iterable.reduceRightIndexed surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "collections", "Iterable", "reduceRightIndexed"]
+                .map { ctx.interner.intern($0) }
+            let memberSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: memberFQName))
+            XCTAssertEqual(sema.symbols.externalLinkName(for: memberSymbol), "kk_list_reduceRightIndexed")
+
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: memberSymbol))
+            XCTAssertEqual(signature.parameterTypes.count, 1)
+            guard case let .functionType(operationType) = sema.types.kind(of: signature.parameterTypes[0]) else {
+                return XCTFail("Expected Iterable.reduceRightIndexed operation parameter to be a function")
+            }
+            XCTAssertEqual(operationType.params.count, 3)
+            guard case let .primitive(indexPrimitive, indexNullability) = sema.types.kind(of: operationType.params[0]) else {
+                return XCTFail("Expected first reduceRightIndexed lambda parameter to be Int")
+            }
+            XCTAssertEqual(indexPrimitive, .int)
+            XCTAssertEqual(indexNullability, .nonNull)
+
+            let callLinks = sema.bindings.callBindings.values.compactMap { binding in
+                sema.symbols.externalLinkName(for: binding.chosenCallee)
+            }
+            XCTAssertEqual(callLinks.filter { $0 == "kk_list_reduceRightIndexed" }.count, 2)
+        }
+    }
+
+    func testIterableReduceRightIndexedOrNullResolvesToListRuntime() throws {
+        let source = """
+        fun checksum(values: Iterable<Int>): Int? {
+            return values.reduceRightIndexedOrNull { index, value, acc ->
+                index * 100 + value * 10 + acc
+            }
+        }
+
+        fun checksumFromList(values: List<Int>): Int? {
+            return values.reduceRightIndexedOrNull(operation = { index, value, acc ->
+                index + value + acc
+            })
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Iterable.reduceRightIndexedOrNull surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "collections", "Iterable", "reduceRightIndexedOrNull"]
+                .map { ctx.interner.intern($0) }
+            let memberSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: memberFQName))
+            XCTAssertEqual(sema.symbols.externalLinkName(for: memberSymbol), "kk_list_reduceRightIndexedOrNull")
+
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: memberSymbol))
+            XCTAssertEqual(signature.parameterTypes.count, 1)
+            guard case let .functionType(operationType) = sema.types.kind(of: signature.parameterTypes[0]) else {
+                return XCTFail("Expected Iterable.reduceRightIndexedOrNull operation parameter to be a function")
+            }
+            XCTAssertEqual(operationType.params.count, 3)
+            guard case let .primitive(indexPrimitive, indexNullability) = sema.types.kind(of: operationType.params[0]) else {
+                return XCTFail("Expected first reduceRightIndexedOrNull lambda parameter to be Int")
+            }
+            XCTAssertEqual(indexPrimitive, .int)
+            XCTAssertEqual(indexNullability, .nonNull)
+
+            let callLinks = sema.bindings.callBindings.values.compactMap { binding in
+                sema.symbols.externalLinkName(for: binding.chosenCallee)
+            }
+            XCTAssertEqual(callLinks.filter { $0 == "kk_list_reduceRightIndexedOrNull" }.count, 2)
+        }
+    }
+
+    func testIterableReduceRightOrNullResolvesToListRuntime() throws {
+        let source = """
+        fun checksum(values: Iterable<Int>): Int? {
+            return values.reduceRightOrNull { value, acc ->
+                value * 10 + acc
+            }
+        }
+
+        fun checksumFromList(values: List<Int>): Int? {
+            return values.reduceRightOrNull(operation = { value, acc ->
+                value + acc
+            })
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Iterable.reduceRightOrNull surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "collections", "Iterable", "reduceRightOrNull"]
+                .map { ctx.interner.intern($0) }
+            let memberSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: memberFQName))
+            XCTAssertEqual(sema.symbols.externalLinkName(for: memberSymbol), "kk_list_reduceRightOrNull")
+
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: memberSymbol))
+            XCTAssertEqual(signature.parameterTypes.count, 1)
+            guard case let .functionType(operationType) = sema.types.kind(of: signature.parameterTypes[0]) else {
+                return XCTFail("Expected Iterable.reduceRightOrNull operation parameter to be a function")
+            }
+            XCTAssertEqual(operationType.params.count, 2)
+
+            let callLinks = sema.bindings.callBindings.values.compactMap { binding in
+                sema.symbols.externalLinkName(for: binding.chosenCallee)
+            }
+            XCTAssertEqual(callLinks.filter { $0 == "kk_list_reduceRightOrNull" }.count, 2)
+        }
+    }
+
     func testListFirstOrNullAndLastOrNullReturnNullableElementsWithoutCollectionMarking() throws {
         let source = """
         fun probe(values: List<Int>) {
@@ -577,6 +944,72 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             XCTAssertFalse(
                 ctx.diagnostics.hasError,
                 "Expected AbstractIterator subclass surface to resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
+    func testAbstractCollectionSurfaceIsRegistered() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let abstractCollectionFQName = ["kotlin", "collections", "AbstractCollection"]
+                .map { ctx.interner.intern($0) }
+            let abstractCollectionSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: abstractCollectionFQName),
+                "Expected kotlin.collections.AbstractCollection to be registered"
+            )
+            let abstractCollectionInfo = try XCTUnwrap(sema.symbols.symbol(abstractCollectionSymbol))
+            XCTAssertEqual(abstractCollectionInfo.kind, .class)
+            XCTAssertTrue(abstractCollectionInfo.flags.contains(.synthetic))
+            XCTAssertTrue(abstractCollectionInfo.flags.contains(.abstractType))
+            XCTAssertEqual(
+                sema.types.nominalTypeParameterVariances(for: abstractCollectionSymbol),
+                [.out]
+            )
+
+            let collectionSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: ["kotlin", "collections", "Collection"].map { ctx.interner.intern($0) })
+            )
+            XCTAssertTrue(sema.symbols.directSupertypes(for: abstractCollectionSymbol).contains(collectionSymbol))
+            XCTAssertTrue(sema.types.directNominalSupertypes(for: abstractCollectionSymbol).contains(collectionSymbol))
+            XCTAssertEqual(sema.symbols.supertypeTypeArgs(for: abstractCollectionSymbol, supertype: collectionSymbol).count, 1)
+            XCTAssertEqual(sema.types.nominalSupertypeTypeArgs(for: abstractCollectionSymbol, supertype: collectionSymbol).count, 1)
+
+            let constructorSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: abstractCollectionFQName + [ctx.interner.intern("<init>")]),
+                "Expected AbstractCollection protected constructor to be registered"
+            )
+            let constructorInfo = try XCTUnwrap(sema.symbols.symbol(constructorSymbol))
+            XCTAssertEqual(constructorInfo.kind, .constructor)
+            XCTAssertEqual(constructorInfo.visibility, .protected)
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: constructorSymbol))
+            XCTAssertTrue(signature.parameterTypes.isEmpty)
+        }
+    }
+
+    func testAbstractCollectionCanBeUsedAsCollectionSupertype() throws {
+        let source = """
+        import kotlin.collections.AbstractCollection
+        import kotlin.collections.Collection
+
+        abstract class ProbeCollection : AbstractCollection<Int>()
+
+        fun accept(values: Collection<Int>) {}
+
+        fun probe(values: ProbeCollection) {
+            accept(values)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected AbstractCollection subclass surface to resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
             )
         }
     }
@@ -1571,6 +2004,8 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             values.removeAll(listOf(4))
             values.retainAll(listOf(5))
             values.removeAt(0)
+            values.removeFirstOrNull()
+            values.removeLastOrNull()
             values.clear()
         }
         """
@@ -1589,6 +2024,8 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                 ("removeAll", 1, "kk_mutable_list_removeAll"),
                 ("retainAll", 1, "kk_mutable_list_retainAll"),
                 ("removeAt", 1, "kk_mutable_list_removeAt"),
+                ("removeFirstOrNull", 0, "kk_mutable_list_removeFirstOrNull"),
+                ("removeLastOrNull", 0, "kk_mutable_list_removeLastOrNull"),
                 ("clear", 0, "kk_mutable_list_clear"),
             ]
 
@@ -1663,6 +2100,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         let source = """
         fun mutate(values: MutableList<Int>) {
             values.sort()
+            values.sortWith { a, b -> b - a }
             values.sortBy { it }
             values.sortByDescending { it }
         }
@@ -1678,6 +2116,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             assertNoDiagnostic("KSWIFTK-SEMA-0022", in: ctx)
             let expectedExternalLinks = [
                 "sort": "kk_mutable_list_sort",
+                "sortWith": "kk_mutable_list_sortWith",
                 "sortBy": "kk_mutable_list_sortBy",
                 "sortByDescending": "kk_mutable_list_sortByDescending",
             ]
@@ -1695,6 +2134,118 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                     )
                 }
             }
+        }
+    }
+
+    func testListToBooleanArrayUsesRuntimeExternalLink() throws {
+        let source = """
+        fun convert(values: List<Boolean>) {
+            values.toBooleanArray()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "toBooleanArray"
+            })
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_list_toBooleanArray")
+            let resultType = try XCTUnwrap(sema.bindings.exprTypes[callExpr])
+            guard case let .classType(classType) = sema.types.kind(of: resultType),
+                  let symbol = sema.symbols.symbol(classType.classSymbol)
+            else {
+                return XCTFail("Expected toBooleanArray to return BooleanArray")
+            }
+            XCTAssertEqual(ctx.interner.resolve(symbol.name), "BooleanArray")
+        }
+    }
+
+    func testListToShortArrayUsesRuntimeExternalLink() throws {
+        let source = """
+        fun convert(values: List<Short>) {
+            values.toShortArray()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "toShortArray"
+            })
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_list_toShortArray")
+            let resultType = try XCTUnwrap(sema.bindings.exprTypes[callExpr])
+            guard case let .classType(classType) = sema.types.kind(of: resultType),
+                  let symbol = sema.symbols.symbol(classType.classSymbol)
+            else {
+                return XCTFail("Expected toShortArray to return ShortArray")
+            }
+            XCTAssertEqual(ctx.interner.resolve(symbol.name), "ShortArray")
+        }
+    }
+
+    func testListToDoubleArrayUsesRuntimeExternalLink() throws {
+        let source = """
+        fun convert(values: List<Double>) {
+            values.toDoubleArray()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "toDoubleArray"
+            })
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_list_toDoubleArray")
+            let resultType = try XCTUnwrap(sema.bindings.exprTypes[callExpr])
+            guard case let .classType(classType) = sema.types.kind(of: resultType),
+                  let symbol = sema.symbols.symbol(classType.classSymbol)
+            else {
+                return XCTFail("Expected toDoubleArray to return DoubleArray")
+            }
+            XCTAssertEqual(ctx.interner.resolve(symbol.name), "DoubleArray")
+        }
+    }
+
+    func testListToFloatArrayUsesRuntimeExternalLink() throws {
+        let source = """
+        fun convert(values: List<Float>) {
+            values.toFloatArray()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "toFloatArray"
+            })
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_list_toFloatArray")
+            let resultType = try XCTUnwrap(sema.bindings.exprTypes[callExpr])
+            guard case let .classType(classType) = sema.types.kind(of: resultType),
+                  let symbol = sema.symbols.symbol(classType.classSymbol)
+            else {
+                return XCTFail("Expected toFloatArray to return FloatArray")
+            }
+            XCTAssertEqual(ctx.interner.resolve(symbol.name), "FloatArray")
         }
     }
 
