@@ -153,6 +153,17 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "StringBuilder"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_builder_setRange",
+            parameters: [
+                RuntimeABIParameter(name: "sbRaw", type: .intptr),
+                RuntimeABIParameter(name: "startIndex", type: .intptr),
+                RuntimeABIParameter(name: "endIndex", type: .intptr),
+                RuntimeABIParameter(name: "valueRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "StringBuilder"
+        ),
         // STDLIB-STR-123
         RuntimeABIFunctionSpec(
             name: "kk_string_builder_replace_obj",

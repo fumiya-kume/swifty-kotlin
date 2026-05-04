@@ -221,6 +221,18 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // setRange(Int, Int, String): StringBuilder (STDLIB-TEXT-BUILDER-004)
+        registerStringBuilderMemberFunction(
+            named: "setRange",
+            externalLinkName: "kk_string_builder_setRange",
+            ownerSymbol: sbSymbol,
+            ownerType: sbType,
+            parameters: [("startIndex", intType, false, false), ("endIndex", intType, false, false), ("value", stringType, false, false)],
+            returnType: sbType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // STDLIB-STR-123: Additional StringBuilder methods
 
         // replace(Int, Int, String): StringBuilder

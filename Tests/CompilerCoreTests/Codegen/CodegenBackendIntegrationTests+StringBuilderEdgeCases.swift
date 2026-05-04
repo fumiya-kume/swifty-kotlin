@@ -125,4 +125,45 @@ extension CodegenBackendIntegrationTests {
             )
         }
     }
+
+    func testCodegenCompilesStringBuilderSetRangeEdgeCases() throws {
+        let source = """
+        fun main() {
+            println(StringBuilder("abcd").setRange(1, 3, "XYZ").toString())
+
+            val sb = StringBuilder("012345")
+            sb.setRange(2, 5, "AB")
+            println(sb.toString())
+
+            val implicit = with(StringBuilder("rust")) {
+                setRange(0, 2, "SW")
+                toString()
+            }
+            println(implicit)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "StringBuilderSetRangeEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                aXYZd
+                01AB5
+                SWst
+                """
+                + "\n"
+            )
+        }
+    }
 }

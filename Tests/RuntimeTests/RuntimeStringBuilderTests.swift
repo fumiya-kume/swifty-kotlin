@@ -40,6 +40,16 @@ final class RuntimeStringBuilderTests: XCTestCase {
         XCTAssertEqual(runtimeStringValue(kk_string_builder_toString(builder)), "aXYb")
     }
 
+    func testSetRangeReplacesRangeAndReturnsReceiver() {
+        let builder = kk_string_builder_new_from_string(makeRuntimeString("abcd"))
+        let value = makeRuntimeString("XYZ")
+
+        let returned = kk_string_builder_setRange(builder, 1, 3, value)
+
+        XCTAssertEqual(returned, builder)
+        XCTAssertEqual(runtimeStringValue(kk_string_builder_toString(builder)), "aXYZd")
+    }
+
     private func makeRuntimeString(_ value: String) -> Int {
         registerRuntimeObject(RuntimeStringBox(value))
     }

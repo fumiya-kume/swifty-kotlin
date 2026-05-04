@@ -177,6 +177,21 @@ public func kk_string_builder_insertRange_obj(_ sbRaw: Int, _ index: Int, _ csqR
     return sbRaw
 }
 
+@_cdecl("kk_string_builder_setRange")
+public func kk_string_builder_setRange(_ sbRaw: Int, _ startIndex: Int, _ endIndex: Int, _ valueRaw: Int) -> Int {
+    guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return sbRaw }
+    let len = sb.value.utf8.count
+    guard startIndex >= 0, startIndex <= len, endIndex >= startIndex, endIndex <= len else {
+        fatalError("StringIndexOutOfBoundsException: startIndex=\(startIndex), endIndex=\(endIndex), length=\(len)")
+    }
+    let startIdx = sb.value.utf8.index(sb.value.utf8.startIndex, offsetBy: startIndex)
+    let endIdx = sb.value.utf8.index(sb.value.utf8.startIndex, offsetBy: endIndex)
+    let sIdx = String.Index(startIdx, within: sb.value) ?? sb.value.endIndex
+    let eIdx = String.Index(endIdx, within: sb.value) ?? sb.value.endIndex
+    sb.value.replaceSubrange(sIdx..<eIdx, with: runtimeElementToString(valueRaw))
+    return sbRaw
+}
+
 // MARK: - STDLIB-STR-123: Additional StringBuilder methods
 
 @_cdecl("kk_string_builder_replace_obj")
