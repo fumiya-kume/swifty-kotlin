@@ -123,6 +123,18 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // deleteRange(Int, Int): StringBuilder (STDLIB-TEXT-BUILDER-002)
+        registerStringBuilderMemberFunction(
+            named: "deleteRange",
+            externalLinkName: "kk_string_builder_deleteRange",
+            ownerSymbol: sbSymbol,
+            ownerType: sbType,
+            parameters: [("startIndex", intType, false, false), ("endIndex", intType, false, false)],
+            returnType: sbType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // clear(): StringBuilder
         registerStringBuilderMemberFunction(
             named: "clear",
@@ -159,6 +171,18 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // deleteAt(Int): StringBuilder (STDLIB-TEXT-BUILDER-001)
+        registerStringBuilderMemberFunction(
+            named: "deleteAt",
+            externalLinkName: "kk_string_builder_deleteAt",
+            ownerSymbol: sbSymbol,
+            ownerType: sbType,
+            parameters: [("index", intType, false, false)],
+            returnType: sbType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // get(Int): Char (operator)
         registerStringBuilderMemberFunction(
             named: "get",
@@ -180,6 +204,30 @@ extension DataFlowSemaPhase {
             ownerSymbol: sbSymbol,
             ownerType: sbType,
             parameters: [("value", charSequenceType, false, false), ("startIndex", intType, false, false), ("endIndex", intType, false, false)],
+            returnType: sbType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // insertRange(Int, CharSequence, Int, Int): StringBuilder (STDLIB-TEXT-BUILDER-003)
+        registerStringBuilderMemberFunction(
+            named: "insertRange",
+            externalLinkName: "kk_string_builder_insertRange_obj",
+            ownerSymbol: sbSymbol,
+            ownerType: sbType,
+            parameters: [("index", intType, false, false), ("value", charSequenceType, false, false), ("startIndex", intType, false, false), ("endIndex", intType, false, false)],
+            returnType: sbType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // setRange(Int, Int, String): StringBuilder (STDLIB-TEXT-BUILDER-004)
+        registerStringBuilderMemberFunction(
+            named: "setRange",
+            externalLinkName: "kk_string_builder_setRange",
+            ownerSymbol: sbSymbol,
+            ownerType: sbType,
+            parameters: [("startIndex", intType, false, false), ("endIndex", intType, false, false), ("value", stringType, false, false)],
             returnType: sbType,
             symbols: symbols,
             interner: interner

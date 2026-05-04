@@ -218,6 +218,10 @@ extension CollectionLiteralLoweringPass {
         }
 
         let unsignedArrayCallee: InternedString? = switch callee {
+        case lookup.toBooleanArrayName: lookup.kkListToBooleanArrayName
+        case lookup.toShortArrayName: lookup.kkListToShortArrayName
+        case lookup.toDoubleArrayName: lookup.kkListToDoubleArrayName
+        case lookup.toFloatArrayName: lookup.kkListToFloatArrayName
         case lookup.toUByteArrayName: lookup.kkListToUByteArrayName
         case lookup.toUShortArrayName: lookup.kkListToUShortArrayName
         case lookup.toUIntArrayName: lookup.kkListToUIntArrayName
@@ -1171,10 +1175,41 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
-        // minus(element) on sequence → kk_sequence_minus (STDLIB-562)
+        // Iterable.minusElement(element) returns a List, even when the receiver
+        // is tracked through the generic Iterable interface.
+        let minusElementReturnsList = result.flatMap { module.arena.exprType($0) }.map { resultType in
+            guard let sema = context.sema,
+                  case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(resultType)),
+                  let resultSymbol = sema.symbols.symbol(classType.classSymbol)
+            else { return false }
+            return context.interner.resolve(resultSymbol.name) == "List"
+        } ?? false
+        if callee == lookup.minusElementName,
+           arguments.count == 1,
+           minusElementReturnsList
+            || listExprIDs.contains(receiver.rawValue)
+            || setExprIDs.contains(receiver.rawValue)
+            || arrayExprIDs.contains(receiver.rawValue)
+        {
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListMinusElementName,
+                arguments: [receiver] + arguments,
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result { listExprIDs.insert(result.rawValue) }
+            return true
+        }
+
+        // minus(element)/minusElement(element) on sequence → kk_sequence_minus
         // Only rewrite when the argument is a single element (not a collection).
         // Collection-removal is not yet supported at the ABI level.
-        if callee == lookup.minusMemberName, arguments.count == 1, sequenceExprIDs.contains(receiver.rawValue) {
+        if (callee == lookup.minusMemberName || callee == lookup.minusElementName),
+           arguments.count == 1,
+           sequenceExprIDs.contains(receiver.rawValue)
+        {
             let argID = arguments[0]
             // Only sequence/list/array are supported by the ABI (not
             // Set/Map) -- consistent with plus path.
@@ -2825,6 +2860,27 @@ extension CollectionLiteralLoweringPass {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             _ = emitHOFCall(kkName: lookup.kkListReduceRightName, receiver: receiver, arguments: arguments + [zeroExpr], result: result, origCanThrow: origCanThrow, origThrownResult: origThrownResult, module: module, loweredBody: &loweredBody)
+            return true
+        }
+        // reduceRightIndexed: args = [lambda]
+        if callee == lookup.reduceRightIndexedName || callee == lookup.kkListReduceRightIndexedName, arguments.count == 1 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            _ = emitHOFCall(kkName: lookup.kkListReduceRightIndexedName, receiver: receiver, arguments: arguments + [zeroExpr], result: result, origCanThrow: origCanThrow, origThrownResult: origThrownResult, module: module, loweredBody: &loweredBody)
+            return true
+        }
+        // reduceRightIndexedOrNull: args = [lambda]
+        if callee == lookup.reduceRightIndexedOrNullName || callee == lookup.kkListReduceRightIndexedOrNullName, arguments.count == 1 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            _ = emitHOFCall(kkName: lookup.kkListReduceRightIndexedOrNullName, receiver: receiver, arguments: arguments + [zeroExpr], result: result, origCanThrow: origCanThrow, origThrownResult: origThrownResult, module: module, loweredBody: &loweredBody)
+            return true
+        }
+        // reduceRightOrNull: args = [lambda]
+        if callee == lookup.reduceRightOrNullName || callee == lookup.kkListReduceRightOrNullName, arguments.count == 1 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            _ = emitHOFCall(kkName: lookup.kkListReduceRightOrNullName, receiver: receiver, arguments: arguments + [zeroExpr], result: result, origCanThrow: origCanThrow, origThrownResult: origThrownResult, module: module, loweredBody: &loweredBody)
             return true
         }
 
