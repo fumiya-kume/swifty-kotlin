@@ -868,6 +868,152 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testAbstractIteratorSurfaceIsRegistered() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let abstractIteratorFQName = ["kotlin", "collections", "AbstractIterator"]
+                .map { ctx.interner.intern($0) }
+            let abstractIteratorSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: abstractIteratorFQName),
+                "Expected kotlin.collections.AbstractIterator to be registered"
+            )
+            let abstractIteratorInfo = try XCTUnwrap(sema.symbols.symbol(abstractIteratorSymbol))
+            XCTAssertEqual(abstractIteratorInfo.kind, .class)
+            XCTAssertTrue(abstractIteratorInfo.flags.contains(.synthetic))
+            XCTAssertTrue(abstractIteratorInfo.flags.contains(.abstractType))
+            XCTAssertEqual(
+                sema.types.nominalTypeParameterVariances(for: abstractIteratorSymbol),
+                [.invariant]
+            )
+
+            let iteratorSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: ["kotlin", "collections", "Iterator"].map { ctx.interner.intern($0) })
+            )
+            XCTAssertTrue(sema.symbols.directSupertypes(for: abstractIteratorSymbol).contains(iteratorSymbol))
+            XCTAssertTrue(sema.types.directNominalSupertypes(for: abstractIteratorSymbol).contains(iteratorSymbol))
+            XCTAssertEqual(sema.symbols.supertypeTypeArgs(for: abstractIteratorSymbol, supertype: iteratorSymbol).count, 1)
+            XCTAssertEqual(sema.types.nominalSupertypeTypeArgs(for: abstractIteratorSymbol, supertype: iteratorSymbol).count, 1)
+
+            let expectedMembers: [(name: String, visibility: Visibility, requiredFlags: SymbolFlags, parameterCount: Int)] = [
+                ("computeNext", .protected, [.synthetic, .abstractType], 0),
+                ("done", .protected, [.synthetic], 0),
+                ("setNext", .protected, [.synthetic], 1),
+                ("hasNext", .public, [.synthetic, .openType, .overrideMember, .operatorFunction], 0),
+                ("next", .public, [.synthetic, .openType, .overrideMember, .operatorFunction], 0),
+            ]
+            for expected in expectedMembers {
+                let memberSymbol = try XCTUnwrap(
+                    sema.symbols.lookup(fqName: abstractIteratorFQName + [ctx.interner.intern(expected.name)]),
+                    "Expected AbstractIterator.\(expected.name) to be registered"
+                )
+                let memberInfo = try XCTUnwrap(sema.symbols.symbol(memberSymbol))
+                XCTAssertEqual(memberInfo.visibility, expected.visibility)
+                XCTAssertTrue(memberInfo.flags.isSuperset(of: expected.requiredFlags))
+                let signature = try XCTUnwrap(sema.symbols.functionSignature(for: memberSymbol))
+                XCTAssertEqual(signature.parameterTypes.count, expected.parameterCount)
+            }
+        }
+    }
+
+    func testAbstractIteratorSubclassProtectedMembersResolve() throws {
+        let source = """
+        import kotlin.collections.AbstractIterator
+        import kotlin.collections.Iterator
+
+        class OneShotIterator(private val value: Int) : AbstractIterator<Int>() {
+            override fun computeNext() {
+                setNext(value)
+                done()
+            }
+        }
+
+        fun accept(iterator: Iterator<Int>) {}
+
+        fun probe(iterator: OneShotIterator) {
+            accept(iterator)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected AbstractIterator subclass surface to resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
+    func testAbstractCollectionSurfaceIsRegistered() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let abstractCollectionFQName = ["kotlin", "collections", "AbstractCollection"]
+                .map { ctx.interner.intern($0) }
+            let abstractCollectionSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: abstractCollectionFQName),
+                "Expected kotlin.collections.AbstractCollection to be registered"
+            )
+            let abstractCollectionInfo = try XCTUnwrap(sema.symbols.symbol(abstractCollectionSymbol))
+            XCTAssertEqual(abstractCollectionInfo.kind, .class)
+            XCTAssertTrue(abstractCollectionInfo.flags.contains(.synthetic))
+            XCTAssertTrue(abstractCollectionInfo.flags.contains(.abstractType))
+            XCTAssertEqual(
+                sema.types.nominalTypeParameterVariances(for: abstractCollectionSymbol),
+                [.out]
+            )
+
+            let collectionSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: ["kotlin", "collections", "Collection"].map { ctx.interner.intern($0) })
+            )
+            XCTAssertTrue(sema.symbols.directSupertypes(for: abstractCollectionSymbol).contains(collectionSymbol))
+            XCTAssertTrue(sema.types.directNominalSupertypes(for: abstractCollectionSymbol).contains(collectionSymbol))
+            XCTAssertEqual(sema.symbols.supertypeTypeArgs(for: abstractCollectionSymbol, supertype: collectionSymbol).count, 1)
+            XCTAssertEqual(sema.types.nominalSupertypeTypeArgs(for: abstractCollectionSymbol, supertype: collectionSymbol).count, 1)
+
+            let constructorSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: abstractCollectionFQName + [ctx.interner.intern("<init>")]),
+                "Expected AbstractCollection protected constructor to be registered"
+            )
+            let constructorInfo = try XCTUnwrap(sema.symbols.symbol(constructorSymbol))
+            XCTAssertEqual(constructorInfo.kind, .constructor)
+            XCTAssertEqual(constructorInfo.visibility, .protected)
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: constructorSymbol))
+            XCTAssertTrue(signature.parameterTypes.isEmpty)
+        }
+    }
+
+    func testAbstractCollectionCanBeUsedAsCollectionSupertype() throws {
+        let source = """
+        import kotlin.collections.AbstractCollection
+        import kotlin.collections.Collection
+
+        abstract class ProbeCollection : AbstractCollection<Int>()
+
+        fun accept(values: Collection<Int>) {}
+
+        fun probe(values: ProbeCollection) {
+            accept(values)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected AbstractCollection subclass surface to resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     func testAbstractMutableCollectionSurfaceIsRegistered() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])

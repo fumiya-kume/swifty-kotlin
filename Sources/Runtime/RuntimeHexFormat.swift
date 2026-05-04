@@ -255,6 +255,134 @@ public func kk_string_hexToInt(
     return Int(Int32(bitPattern: value))
 }
 
+// MARK: - String.hexToUByte(format)
+
+@_cdecl("kk_string_hexToUByte")
+public func kk_string_hexToUByte(
+    _ receiverRaw: Int,
+    _ formatRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let str = hexFormatStringFromRaw(receiverRaw) ?? ""
+    let format = hexFormatBoxFromRaw(formatRaw)
+    guard let cleaned = hexFormatStripPrefixSuffix(str, format: format) else {
+        let prefix = format?.numberPrefix ?? ""
+        let suffix = format?.numberSuffix ?? ""
+        let msg: String
+        if !prefix.isEmpty && !str.hasPrefix(prefix) {
+            msg = "NumberFormatException: For hex string \"\(str)\": missing required prefix \"\(prefix)\""
+        } else {
+            msg = "NumberFormatException: For hex string \"\(str)\": missing required suffix \"\(suffix)\""
+        }
+        outThrown?.pointee = runtimeAllocateThrowable(message: msg)
+        return 0
+    }
+    guard let value = UInt8(cleaned, radix: 16) else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "NumberFormatException: For hex string \"\(cleaned)\": not valid hexadecimal"
+        )
+        return 0
+    }
+    return Int(value)
+}
+
+// MARK: - String.hexToUShort(format)
+
+@_cdecl("kk_string_hexToUShort")
+public func kk_string_hexToUShort(
+    _ receiverRaw: Int,
+    _ formatRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let str = hexFormatStringFromRaw(receiverRaw) ?? ""
+    let format = hexFormatBoxFromRaw(formatRaw)
+    guard let cleaned = hexFormatStripPrefixSuffix(str, format: format) else {
+        let prefix = format?.numberPrefix ?? ""
+        let suffix = format?.numberSuffix ?? ""
+        let msg: String
+        if !prefix.isEmpty && !str.hasPrefix(prefix) {
+            msg = "NumberFormatException: For hex string \"\(str)\": missing required prefix \"\(prefix)\""
+        } else {
+            msg = "NumberFormatException: For hex string \"\(str)\": missing required suffix \"\(suffix)\""
+        }
+        outThrown?.pointee = runtimeAllocateThrowable(message: msg)
+        return 0
+    }
+    guard let value = UInt16(cleaned, radix: 16) else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "NumberFormatException: For hex string \"\(cleaned)\": not valid hexadecimal"
+        )
+        return 0
+    }
+    return Int(value)
+}
+
+// MARK: - String.hexToUInt(format)
+
+@_cdecl("kk_string_hexToUInt")
+public func kk_string_hexToUInt(
+    _ receiverRaw: Int,
+    _ formatRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let str = hexFormatStringFromRaw(receiverRaw) ?? ""
+    let format = hexFormatBoxFromRaw(formatRaw)
+    guard let cleaned = hexFormatStripPrefixSuffix(str, format: format) else {
+        let prefix = format?.numberPrefix ?? ""
+        let suffix = format?.numberSuffix ?? ""
+        let msg: String
+        if !prefix.isEmpty && !str.hasPrefix(prefix) {
+            msg = "NumberFormatException: For hex string \"\(str)\": missing required prefix \"\(prefix)\""
+        } else {
+            msg = "NumberFormatException: For hex string \"\(str)\": missing required suffix \"\(suffix)\""
+        }
+        outThrown?.pointee = runtimeAllocateThrowable(message: msg)
+        return 0
+    }
+    guard let value = UInt32(cleaned, radix: 16) else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "NumberFormatException: For hex string \"\(cleaned)\": not valid hexadecimal"
+        )
+        return 0
+    }
+    return Int(value)
+}
+
+// MARK: - String.hexToULong(format)
+
+@_cdecl("kk_string_hexToULong")
+public func kk_string_hexToULong(
+    _ receiverRaw: Int,
+    _ formatRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let str = hexFormatStringFromRaw(receiverRaw) ?? ""
+    let format = hexFormatBoxFromRaw(formatRaw)
+    guard let cleaned = hexFormatStripPrefixSuffix(str, format: format) else {
+        let prefix = format?.numberPrefix ?? ""
+        let suffix = format?.numberSuffix ?? ""
+        let msg: String
+        if !prefix.isEmpty && !str.hasPrefix(prefix) {
+            msg = "NumberFormatException: For hex string \"\(str)\": missing required prefix \"\(prefix)\""
+        } else {
+            msg = "NumberFormatException: For hex string \"\(str)\": missing required suffix \"\(suffix)\""
+        }
+        outThrown?.pointee = runtimeAllocateThrowable(message: msg)
+        return kk_box_long(0)
+    }
+    guard let value = UInt64(cleaned, radix: 16) else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "NumberFormatException: For hex string \"\(cleaned)\": not valid hexadecimal"
+        )
+        return kk_box_long(0)
+    }
+    return kk_box_long(Int(bitPattern: UInt(truncatingIfNeeded: value)))
+}
+
 // MARK: - String.hexToShort(format)
 
 @_cdecl("kk_string_hexToShort")
@@ -321,35 +449,6 @@ public func kk_string_hexToLong(
 
 // MARK: - String.hexToUInt(format)
 
-@_cdecl("kk_string_hexToUInt")
-public func kk_string_hexToUInt(
-    _ receiverRaw: Int,
-    _ formatRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    outThrown?.pointee = 0
-    let str = hexFormatStringFromRaw(receiverRaw) ?? ""
-    let format = hexFormatBoxFromRaw(formatRaw)
-    guard let cleaned = hexFormatStripPrefixSuffix(str, format: format) else {
-        let prefix = format?.numberPrefix ?? ""
-        let suffix = format?.numberSuffix ?? ""
-        let msg: String
-        if !prefix.isEmpty && !str.hasPrefix(prefix) {
-            msg = "NumberFormatException: For hex string \"\(str)\": missing required prefix \"\(prefix)\""
-        } else {
-            msg = "NumberFormatException: For hex string \"\(str)\": missing required suffix \"\(suffix)\""
-        }
-        outThrown?.pointee = runtimeAllocateThrowable(message: msg)
-        return 0
-    }
-    guard let value = UInt32(cleaned, radix: 16) else {
-        outThrown?.pointee = runtimeAllocateThrowable(
-            message: "NumberFormatException: For hex string \"\(cleaned)\": not valid hexadecimal"
-        )
-        return 0
-    }
-    return Int(value)
-}
 
 // MARK: - String.hexToByteArray(format)
 
@@ -379,6 +478,40 @@ public func kk_string_hexToByteArray(_ receiverRaw: Int, _ formatRaw: Int) -> In
         index = nextIndex
     }
     return hexFormatMakeListRaw(bytes)
+}
+
+// MARK: - String.hexToUByteArray(format)
+
+@_cdecl("kk_string_hexToUByteArray")
+public func kk_string_hexToUByteArray(_ receiverRaw: Int, _ formatRaw: Int) -> Int {
+    let str = hexFormatStringFromRaw(receiverRaw) ?? ""
+    let format = hexFormatBoxFromRaw(formatRaw)
+    let separator = format?.byteSeparator ?? ""
+
+    // If there's a separator, split by it; otherwise parse as contiguous hex.
+    let hexString: String
+    if !separator.isEmpty {
+        hexString = str.components(separatedBy: separator).joined()
+    } else {
+        hexString = str
+    }
+
+    var bytes: [Int] = []
+    var index = hexString.startIndex
+    while index < hexString.endIndex {
+        let nextIndex = hexString.index(index, offsetBy: 2, limitedBy: hexString.endIndex) ?? hexString.endIndex
+        let hexPair = String(hexString[index ..< nextIndex])
+        if let byte = UInt8(hexPair, radix: 16) {
+            bytes.append(Int(byte))
+        }
+        index = nextIndex
+    }
+
+    let box = RuntimeArrayBox(length: bytes.count)
+    for (i, byte) in bytes.enumerated() {
+        box.elements[i] = byte
+    }
+    return registerRuntimeObject(box)
 }
 
 // MARK: - Runtime List Element Extraction Helper
