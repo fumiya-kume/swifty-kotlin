@@ -2743,18 +2743,20 @@ extension DataFlowSemaPhase {
 
         // --- STDLIB-TEXT-SEQ-001: CharSequence.chunkedSequence(size) ---
 
-        registerSyntheticStringExtensionFunction(
-            named: "chunkedSequence",
-            externalLinkName: "kk_string_chunkedSequence",
-            receiverType: charSequenceType,
-            parameters: [
-                ("size", intType, false, false),
-            ],
-            returnType: sequenceStringType,
-            packageFQName: kotlinTextPkg,
-            symbols: symbols,
-            interner: interner
-        )
+        for receiverType in [charSequenceType, stringType] {
+            registerSyntheticStringExtensionFunction(
+                named: "chunkedSequence",
+                externalLinkName: "kk_string_chunked_sequence",
+                receiverType: receiverType,
+                parameters: [
+                    ("size", intType, false, false),
+                ],
+                returnType: sequenceStringType,
+                packageFQName: kotlinTextPkg,
+                symbols: symbols,
+                interner: interner
+            )
+        }
 
         // --- STDLIB-TEXT-SEQ-002: CharSequence.chunkedSequence(size, transform) ---
 
