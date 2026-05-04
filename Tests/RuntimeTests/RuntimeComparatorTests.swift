@@ -700,6 +700,12 @@ final class RuntimeComparatorTests: XCTestCase {
         XCTAssertEqual(listElements(source), [8, 5, 4, 3, 1])
     }
 
+    func testMutableListSortWithComparatorMutatesInPlace() {
+        let source = makeList([14, 3, 23, 5, 13, 24])
+        XCTAssertEqual(kk_mutable_list_sortWith(source, comparatorPtr(comparatorByModTen), 0, nil), 0)
+        XCTAssertEqual(listElements(source), [3, 23, 13, 14, 24, 5])
+    }
+
     func testMutableListPrimitiveSortByAscending() {
         let source = makeList([22, 12, 21, 11])
         XCTAssertEqual(kk_mutable_list_sortBy_primitive(source, selectorPtr(selectModTen), 0, 0, nil), 0)

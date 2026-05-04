@@ -164,6 +164,8 @@ struct CollectionLiteralLookupTables {
     let kkListRunningReduceIndexedName: InternedString
     let kkListScanIndexedName: InternedString
     let kkListSumOfName: InternedString
+    let kkListSumByName: InternedString
+    let kkListSumByDoubleName: InternedString
     let kkListMaxOrNullName: InternedString
     let kkListMinOrNullName: InternedString
     let kkListMaxByOrNullName: InternedString
@@ -382,6 +384,10 @@ struct CollectionLiteralLookupTables {
     let kkArrayToListName: InternedString
     let kkArrayToMutableListName: InternedString
     let kkListToTypedArrayName: InternedString
+    let kkListToBooleanArrayName: InternedString
+    let kkListToShortArrayName: InternedString
+    let kkListToDoubleArrayName: InternedString
+    let kkListToFloatArrayName: InternedString
     let kkListToIntArrayName: InternedString
     let kkListToLongArrayName: InternedString
     let kkListToByteArrayName: InternedString
@@ -567,6 +573,8 @@ struct CollectionLiteralLookupTables {
     let runningReduceIndexedName: InternedString
     let scanIndexedName: InternedString
     let sumOfName: InternedString
+    let sumByName: InternedString
+    let sumByDoubleName: InternedString
     let maxOrNullName: InternedString
     let minOrNullName: InternedString
     let maxByOrNullName: InternedString
@@ -631,6 +639,10 @@ struct CollectionLiteralLookupTables {
     let toUShortArrayName: InternedString
     let toUIntArrayName: InternedString
     let toULongArrayName: InternedString
+    let toBooleanArrayName: InternedString
+    let toShortArrayName: InternedString
+    let toDoubleArrayName: InternedString
+    let toFloatArrayName: InternedString
     let toIntArrayName: InternedString
     let toLongArrayName: InternedString
     let toByteArrayName: InternedString
@@ -952,6 +964,8 @@ struct CollectionLiteralLookupTables {
         kkListRunningReduceIndexedName = interner.intern("kk_list_runningReduceIndexed")
         kkListScanIndexedName = interner.intern("kk_list_scanIndexed")
         kkListSumOfName = interner.intern("kk_list_sumOf")
+        kkListSumByName = interner.intern("kk_list_sumBy")
+        kkListSumByDoubleName = interner.intern("kk_list_sumByDouble")
         kkListMaxOrNullName = interner.intern("kk_list_maxOrNull")
         kkListMinOrNullName = interner.intern("kk_list_minOrNull")
         kkListMaxByOrNullName = interner.intern("kk_list_maxByOrNull")
@@ -1162,6 +1176,10 @@ struct CollectionLiteralLookupTables {
         kkArrayToListName = interner.intern("kk_array_toList")
         kkArrayToMutableListName = interner.intern("kk_array_toMutableList")
         kkListToTypedArrayName = interner.intern("kk_list_toTypedArray")
+        kkListToBooleanArrayName = interner.intern("kk_list_toBooleanArray")
+        kkListToShortArrayName = interner.intern("kk_list_toShortArray")
+        kkListToDoubleArrayName = interner.intern("kk_list_toDoubleArray")
+        kkListToFloatArrayName = interner.intern("kk_list_toFloatArray")
         kkListToIntArrayName = interner.intern("kk_list_toIntArray")
         kkListToLongArrayName = interner.intern("kk_list_toLongArray")
         kkListToByteArrayName = interner.intern("kk_list_toByteArray")
@@ -1342,6 +1360,8 @@ struct CollectionLiteralLookupTables {
         runningReduceIndexedName = interner.intern("runningReduceIndexed")
         scanIndexedName = interner.intern("scanIndexed")
         sumOfName = interner.intern("sumOf")
+        sumByName = interner.intern("sumBy")
+        sumByDoubleName = interner.intern("sumByDouble")
         maxOrNullName = interner.intern("maxOrNull")
         minOrNullName = interner.intern("minOrNull")
         maxByOrNullName = interner.intern("maxByOrNull")
@@ -1403,6 +1423,10 @@ struct CollectionLiteralLookupTables {
         toUShortArrayName = interner.intern("toUShortArray")
         toUIntArrayName = interner.intern("toUIntArray")
         toULongArrayName = interner.intern("toULongArray")
+        toBooleanArrayName = interner.intern("toBooleanArray")
+        toShortArrayName = interner.intern("toShortArray")
+        toDoubleArrayName = interner.intern("toDoubleArray")
+        toFloatArrayName = interner.intern("toFloatArray")
         toIntArrayName = interner.intern("toIntArray")
         toLongArrayName = interner.intern("toLongArray")
         toByteArrayName = interner.intern("toByteArray")

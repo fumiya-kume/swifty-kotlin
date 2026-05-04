@@ -1746,6 +1746,36 @@ public func kk_list_sumOf(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
     return total
 }
 
+@_cdecl("kk_list_sumBy")
+public func kk_list_sumBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let elements = runtimeCollectionElements(from: listRaw) ?? runtimeArrayBox(from: listRaw)?.elements else {
+        invalidContainerPanic(#function, "list")
+    }
+    var total = 0
+    for elem in elements {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        total += maybeUnbox(result)
+    }
+    return total
+}
+
+@_cdecl("kk_list_sumByDouble")
+public func kk_list_sumByDouble(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let elements = runtimeCollectionElements(from: listRaw) ?? runtimeArrayBox(from: listRaw)?.elements else {
+        invalidContainerPanic(#function, "list")
+    }
+    var total = 0.0
+    for elem in elements {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        total += kk_bits_to_double(result)
+    }
+    return kk_double_to_bits(total)
+}
+
 @_cdecl("kk_list_maxOrNull")
 public func kk_list_maxOrNull(_ listRaw: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
@@ -3056,6 +3086,30 @@ public func kk_mutable_list_sort(_ listRaw: Int) -> Int {
 public func kk_mutable_list_sort_primitive(_ listRaw: Int, _ kindRaw: Int32) -> Int {
     guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
     let sorted = runtimeSortElements(list.elements, descending: false, primitiveKind: runtimePrimitiveCompareKindFromRaw(kindRaw))
+    for i in 0 ..< sorted.count {
+        list.elements[i] = sorted[i]
+    }
+    return 0
+}
+
+@_cdecl("kk_mutable_list_sortWith")
+public func kk_mutable_list_sortWith(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    let comparatorInvoke = runtimeSortedWithComparatorInvoke(fnPtr: fnPtr, closureRaw: closureRaw)
+    var hadThrow = false
+    let sorted = list.elements.enumerated().sorted { lhs, rhs in
+        guard !hadThrow else { return false }
+        var thrown = 0
+        let result = comparatorInvoke(lhs.element, rhs.element, &thrown)
+        if thrown != 0 {
+            _ = handleCollectionLambdaThrow(thrown, outThrown)
+            hadThrow = true
+            return false
+        }
+        if result != 0 { return result < 0 }
+        return lhs.offset < rhs.offset
+    }.map(\.element)
+    if hadThrow { return 0 }
     for i in 0 ..< sorted.count {
         list.elements[i] = sorted[i]
     }

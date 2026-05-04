@@ -21,16 +21,20 @@ extension CodegenBackendIntegrationTests {
             try LinkPhase().run(ctx)
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            let normalizedStderr = result.stderr.replacingOccurrences(of: "\r\n", with: "\n")
-            // Linux libswiftCore.so may emit "warning: direct reference to protected
-            // function ... may break pointer equality" lines unrelated to the test.
-            // Strip those so the assertion focuses on the program's actual output.
-            let filteredStderr = normalizedStderr
-                .split(separator: "\n", omittingEmptySubsequences: false)
-                .filter { !$0.hasPrefix("warning: direct reference to protected function") }
-                .joined(separator: "\n")
+            let normalizedStderr = normalizeThrowableStderr(result.stderr)
             XCTAssertEqual(result.stdout, "")
-            XCTAssertEqual(filteredStderr, "stack message\n")
+            XCTAssertEqual(normalizedStderr, "stack message\n")
         }
+    }
+
+    private func normalizeThrowableStderr(_ stderr: String) -> String {
+        stderr
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .components(separatedBy: "\n")
+            .filter { line in
+                !(line.hasPrefix("warning: direct reference to protected function ")
+                    && line.contains(" may break pointer equality"))
+            }
+            .joined(separator: "\n")
     }
 }
