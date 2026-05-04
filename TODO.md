@@ -151,7 +151,7 @@
 - [x] STDLIB-COL-BSEARCH-003: `Array` / primitive array / unsigned array の `binarySearch(element, fromIndex, toIndex)` overload 群を追加する
 - [x] STDLIB-COL-BSEARCH-004: `Array.binarySearch(element, comparator, fromIndex, toIndex)` を追加する
 - [x] STDLIB-COL-WIN-001: `Iterable.windowed(size, step, partialWindows, transform)` overload を追加する
-- [ ] STDLIB-COL-TYPE-001: `AbstractCollection<E>` surface を追加する
+- [x] STDLIB-COL-TYPE-001: `AbstractCollection<E>` surface を追加する
 - [x] STDLIB-COL-TYPE-002: `AbstractIterator<T>` surface を追加する
 - [x] STDLIB-COL-TYPE-003: `AbstractMutableCollection<E>` surface を追加する
 - [x] STDLIB-COL-TYPE-004: primitive iterator classes（`BooleanIterator`, `ByteIterator`, `ShortIterator`, `IntIterator`, `LongIterator`, `FloatIterator`, `DoubleIterator`, `CharIterator`）を追加する

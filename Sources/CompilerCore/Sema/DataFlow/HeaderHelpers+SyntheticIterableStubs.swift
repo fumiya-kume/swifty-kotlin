@@ -128,6 +128,91 @@ extension DataFlowSemaPhase {
         return collectionInterfaceSymbol
     }
 
+    /// Register `kotlin.collections.AbstractCollection<E>` surface (STDLIB-COL-TYPE-001).
+    func registerSyntheticAbstractCollectionStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        collectionInterfaceSymbol: SymbolID
+    ) -> SymbolID {
+        let abstractCollectionName = interner.intern("AbstractCollection")
+        let abstractCollectionFQName = kotlinCollectionsPkg + [abstractCollectionName]
+        let abstractCollectionSymbol: SymbolID = if let existing = symbols.lookup(fqName: abstractCollectionFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .class,
+                name: abstractCollectionName,
+                fqName: abstractCollectionFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .abstractType]
+            )
+        }
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = abstractCollectionFQName + [typeParamName]
+        let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: abstractCollectionSymbol)
+        types.setNominalTypeParameterVariances([.out], for: abstractCollectionSymbol)
+
+        let abstractCollectionType = types.make(.classType(ClassType(
+            classSymbol: abstractCollectionSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(abstractCollectionType, for: abstractCollectionSymbol)
+        symbols.setDirectSupertypes([collectionInterfaceSymbol], for: abstractCollectionSymbol)
+        types.setNominalDirectSupertypes([collectionInterfaceSymbol], for: abstractCollectionSymbol)
+        symbols.setSupertypeTypeArgs([.out(typeParamType)], for: abstractCollectionSymbol, supertype: collectionInterfaceSymbol)
+        types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: abstractCollectionSymbol, supertype: collectionInterfaceSymbol)
+
+        let initName = interner.intern("<init>")
+        let initFQName = abstractCollectionFQName + [initName]
+        if symbols.lookup(fqName: initFQName) == nil {
+            let initSymbol = symbols.define(
+                kind: .constructor,
+                name: initName,
+                fqName: initFQName,
+                declSite: nil,
+                visibility: .protected,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(abstractCollectionSymbol, for: initSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: [],
+                    returnType: abstractCollectionType,
+                    valueParameterSymbols: [],
+                    valueParameterHasDefaultValues: [],
+                    valueParameterIsVararg: [],
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: initSymbol
+            )
+        }
+
+        return abstractCollectionSymbol
+    }
+
     /// Register a minimal `kotlin.collections.MutableCollection<E>` interface surface.
     func registerSyntheticMutableCollectionStub(
         symbols: SymbolTable,
