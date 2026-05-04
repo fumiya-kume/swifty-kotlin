@@ -1109,6 +1109,15 @@ extension DataFlowSemaPhase {
             classTypeParameterCount: classTypeParameterCount,
             symbols: symbols, interner: interner
         )
+        // fetchAndDecrement() -> T
+        registerAtomicMember(
+            ownerSymbol: ownerSymbol, ownerType: ownerType,
+            name: "fetchAndDecrement", externalLinkName: "\(prefix)_fetchAndDecrement",
+            returnType: valueType, parameters: [],
+            typeParameterSymbols: typeParameterSymbols,
+            classTypeParameterCount: classTypeParameterCount,
+            symbols: symbols, interner: interner
+        )
         // incrementAndFetch() -> T
         registerAtomicMember(
             ownerSymbol: ownerSymbol, ownerType: ownerType,

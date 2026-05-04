@@ -82,6 +82,8 @@ extension CodegenBackendIntegrationTests {
             val a = AtomicInt(7)
             println(a.fetchAndIncrement())
             println(a.load())
+            println(a.fetchAndDecrement())
+            println(a.load())
             println(a.incrementAndFetch())
             println(a.load())
         }
@@ -91,7 +93,7 @@ extension CodegenBackendIntegrationTests {
             let ctx = try runCodegenPipeline(inputPath: path, moduleName: "AtomicIntIncrement", emit: .executable, outputPath: outputBase)
             try LinkPhase().run(ctx)
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "7\n8\n9\n9\n")
+            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "7\n8\n8\n7\n8\n8\n")
         }
     }
 
@@ -223,6 +225,8 @@ extension CodegenBackendIntegrationTests {
             println(a.load())
             println(a.fetchAndIncrement())
             println(a.load())
+            println(a.fetchAndDecrement())
+            println(a.load())
             println(a.incrementAndFetch())
             println(a.load())
         }
@@ -232,7 +236,7 @@ extension CodegenBackendIntegrationTests {
             let ctx = try runCodegenPipeline(inputPath: path, moduleName: "AtomicLongArithmetic", emit: .executable, outputPath: outputBase)
             try LinkPhase().run(ctx)
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "5\n5\n8\n8\n9\n10\n10\n")
+            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "5\n5\n8\n8\n9\n9\n8\n9\n9\n")
         }
     }
 

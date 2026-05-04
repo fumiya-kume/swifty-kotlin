@@ -73,18 +73,23 @@ extension CodegenRuntimeSupport {
         let cacheKey = runtimeBuildCacheKey(target: target)
         return try runtimeObjectCache.getOrLoad(cacheKey: cacheKey) {
             try withRuntimeBuildLock(cacheKey: cacheKey) {
-                let discovered = discoverRuntimeObjectPaths(target: target)
+                let discovered = discoverScratchRuntimeObjectPaths(target: target)
                 if !discovered.isEmpty {
                     return discovered
                 }
 
                 try buildRuntimeObjects(target: target)
 
-                let built = discoverRuntimeObjectPaths(target: target)
-                guard !built.isEmpty else {
+                let built = discoverScratchRuntimeObjectPaths(target: target)
+                if !built.isEmpty {
+                    return built
+                }
+
+                let fallback = discoverPackageBuildRuntimeObjectPaths(target: target)
+                guard !fallback.isEmpty else {
                     throw CodegenRuntimeSupportError.runtimeObjectsUnavailable(runtimeBuildDirectory(target: target).path)
                 }
-                return built
+                return fallback
             }
         }
     }
@@ -119,14 +124,24 @@ extension CodegenRuntimeSupport {
         }
     }
 
-    private static func discoverRuntimeObjectPaths(target: TargetTriple) -> [String] {
+    private static func discoverScratchRuntimeObjectPaths(target: TargetTriple) -> [String] {
         let searchRoots = [
             runtimeBuildDirectory(target: target),
+            runtimeBuildRootDirectory(target: target),
+        ]
+        return discoverRuntimeObjectPaths(in: searchRoots)
+    }
+
+    private static func discoverPackageBuildRuntimeObjectPaths(target: TargetTriple) -> [String] {
+        let searchRoots = [
             packageRootURL()
                 .appendingPathComponent(".build", isDirectory: true)
                 .appendingPathComponent(runtimeBuildCacheDirectoryComponent(target: target), isDirectory: true),
-            runtimeBuildRootDirectory(target: target),
         ]
+        return discoverRuntimeObjectPaths(in: searchRoots)
+    }
+
+    private static func discoverRuntimeObjectPaths(in searchRoots: [URL]) -> [String] {
         for searchRoot in searchRoots {
             if let candidates = discoverRuntimeObjectPaths(in: searchRoot), !candidates.isEmpty {
                 return candidates
@@ -178,6 +193,7 @@ extension CodegenRuntimeSupport {
 
     private static func runtimeBuildDirectory(target: TargetTriple) -> URL {
         runtimeBuildScratchDirectory(target: target)
+            .appendingPathComponent(runtimeBuildCacheDirectoryComponent(target: target), isDirectory: true)
             .appendingPathComponent("debug", isDirectory: true)
             .appendingPathComponent("Runtime.build", isDirectory: true)
     }
