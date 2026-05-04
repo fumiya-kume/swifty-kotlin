@@ -20,6 +20,15 @@ extension CallTypeChecker {
         let knownNames = KnownCompilerNames(interner: interner)
         // swiftlint:enable cyclomatic_complexity function_body_length
 
+        if ["firstNotNullOf", "firstNotNullOfOrNull", "reduceRightIndexed", "reduceRightIndexedOrNull", "reduceRightOrNull", "sumBy", "sumByDouble"]
+            .contains(interner.resolve(calleeName)),
+           args.count == 1,
+           let lambdaExpr = ast.arena.expr(args[0].expr),
+           lambdaExpr.isLambdaOrCallableRef
+        {
+            sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+        }
+
         if let result = tryInferLateinitIsInitializedCall(
             id, receiverID: receiverID, calleeName: calleeName, args: args,
             range: range, ctx: ctx, locals: &locals
@@ -692,16 +701,17 @@ extension CallTypeChecker {
         // Defer inference of lambda arguments for collection HOFs so that the
         // contextual function type (and thus implicit `it`) is available.
         let collectionHOFNames: Set = [
-            "map", "filter", "filterNot", "mapNotNull", "firstNotNullOf", "firstNotNullOfOrNull", "forEach", "flatMap", "flatMapIndexed", "any", "none", "all",
-            "fold", "foldRight", "reduce", "reduceOrNull", "reduceRight", "foldIndexed", "foldRightIndexed", "reduceIndexed", "reduceIndexedOrNull",
+            "map", "filter", "filterNot", "mapNotNull", "forEach", "flatMap", "flatMapIndexed", "any", "none", "all",
+            "fold", "foldRight", "reduce", "reduceOrNull", "reduceRight", "reduceRightOrNull", "reduceRightIndexed", "reduceRightIndexedOrNull", "foldIndexed", "foldRightIndexed", "reduceIndexed", "reduceIndexedOrNull",
             "scan", "scanIndexed", "runningFold", "runningFoldIndexed", "runningReduce", "runningReduceIndexed", "scanReduce",
             "groupBy", "groupingBy", "reduceTo", "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate", "associateTo", "associateByTo", "associateWithTo", "groupByTo",
             "filterTo", "filterNotTo", "mapTo", "flatMapTo", "mapNotNullTo", "mapIndexedTo", "flatMapIndexedTo",
             "mapIndexedNotNullTo", "filterIndexedTo", "filterNotNullTo",
+            "mapKeysTo", "mapValuesTo",
             "forEachIndexed", "mapIndexed",
             "onEach", "onEachIndexed",
-            "sumOf", "maxOrNull", "minOrNull",
+            "sumOf", "sumBy", "sumByDouble", "maxOrNull", "minOrNull",
             "indexOfFirst", "indexOfLast", "binarySearch", "binarySearchBy",
             "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
             "maxOf", "minOf",
@@ -709,11 +719,11 @@ extension CallTypeChecker {
             "maxOfWith", "maxOfWithOrNull", "minOfWith", "minOfWithOrNull",
             "sortedByDescending", "sortedWith", "sortedArrayWith", "partition", "takeWhile", "dropWhile", "distinctBy", "zipWithNext",
             "flatten",
-            "sort", "sortBy", "sortByDescending",
+            "sort", "sortBy", "sortByDescending", "sortWith",
         ]
         let flowHOFNames: Set = ["map", "filter", "collect"]
-        let mapOnlyCollectionHOFNames: Set = ["mapValues", "mapKeys", "filterKeys", "filterValues"]
-        let mutableListOnlyCollectionHOFNames: Set = ["sort", "sortBy", "sortByDescending"]
+        let mapOnlyCollectionHOFNames: Set = ["mapValues", "mapValuesTo", "mapKeys", "mapKeysTo", "filterKeys", "filterValues"]
+        let mutableListOnlyCollectionHOFNames: Set = ["sort", "sortBy", "sortByDescending", "sortWith"]
         let isFlowReceiver = if sema.bindings.isFlowExpr(receiverID) {
             true
         } else if case .nameRef = ast.arena.expr(receiverID),
@@ -1208,7 +1218,7 @@ extension CallTypeChecker {
             let destinationCollectionHOFs: Set = [
                 "filterTo", "filterNotTo", "mapTo", "flatMapTo", "mapNotNullTo",
                 "mapIndexedTo", "mapIndexedNotNullTo", "flatMapIndexedTo", "associateTo",
-                "filterIndexedTo",
+                "filterIndexedTo", "mapKeysTo", "mapValuesTo",
             ]
             if destinationCollectionHOFs.contains(calleeStr), args.count == 2 {
                 let destinationType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
@@ -1349,6 +1359,20 @@ extension CallTypeChecker {
                     sema.types.make(.functionType(FunctionType(
                         params: [collectionElementType],
                         returnType: pairReturnType,
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                case "mapKeysTo":
+                    sema.types.make(.functionType(FunctionType(
+                        params: [collectionElementType],
+                        returnType: destinationMapKeyType,
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                case "mapValuesTo":
+                    sema.types.make(.functionType(FunctionType(
+                        params: [collectionElementType],
+                        returnType: destinationMapValueType,
                         isSuspend: false,
                         nullability: .nonNull
                     )))
@@ -1870,6 +1894,111 @@ extension CallTypeChecker {
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                 resultType = collectionElementType
 
+            case "reduceRightIndexed":
+                guard args.count == 1 else {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0024",
+                        "No viable overload found for call.",
+                        range: ast.arena.exprRange(id)
+                    )
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [sema.types.intType, collectionElementType, collectionElementType],
+                    returnType: collectionElementType
+                )))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                let memberFQName = [
+                    interner.intern("kotlin"),
+                    interner.intern("collections"),
+                    interner.intern("Iterable"),
+                    calleeName,
+                ]
+                if let chosenCallee = sema.symbols.lookupAll(fqName: memberFQName).first(where: { candidate in
+                    sema.symbols.functionSignature(for: candidate)?.parameterTypes.count == args.count
+                }) {
+                    sema.bindings.bindCall(id, binding: CallBinding(
+                        chosenCallee: chosenCallee,
+                        substitutedTypeArguments: [collectionElementType],
+                        parameterMapping: Dictionary(uniqueKeysWithValues: args.indices.map { ($0, $0) })
+                    ))
+                    sema.bindings.bindCallableTarget(id, target: .symbol(chosenCallee))
+                }
+                resultType = collectionElementType
+
+            case "reduceRightIndexedOrNull":
+                guard args.count == 1 else {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0024",
+                        "No viable overload found for call.",
+                        range: ast.arena.exprRange(id)
+                    )
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [sema.types.intType, collectionElementType, collectionElementType],
+                    returnType: collectionElementType
+                )))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                let memberFQName = [
+                    interner.intern("kotlin"),
+                    interner.intern("collections"),
+                    interner.intern("Iterable"),
+                    calleeName,
+                ]
+                if let chosenCallee = sema.symbols.lookupAll(fqName: memberFQName).first(where: { candidate in
+                    sema.symbols.functionSignature(for: candidate)?.parameterTypes.count == args.count
+                }) {
+                    sema.bindings.bindCall(id, binding: CallBinding(
+                        chosenCallee: chosenCallee,
+                        substitutedTypeArguments: [collectionElementType, collectionElementType],
+                        parameterMapping: Dictionary(uniqueKeysWithValues: args.indices.map { ($0, $0) })
+                    ))
+                    sema.bindings.bindCallableTarget(id, target: .symbol(chosenCallee))
+                }
+                resultType = sema.types.makeNullable(collectionElementType)
+
+            case "reduceRightOrNull":
+                guard args.count == 1 else {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0024",
+                        "No viable overload found for call.",
+                        range: ast.arena.exprRange(id)
+                    )
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [collectionElementType, collectionElementType],
+                    returnType: collectionElementType
+                )))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                let memberFQName = [
+                    interner.intern("kotlin"),
+                    interner.intern("collections"),
+                    interner.intern("Iterable"),
+                    calleeName,
+                ]
+                if let chosenCallee = sema.symbols.lookupAll(fqName: memberFQName).first(where: { candidate in
+                    sema.symbols.functionSignature(for: candidate)?.parameterTypes.count == args.count
+                }) {
+                    sema.bindings.bindCall(id, binding: CallBinding(
+                        chosenCallee: chosenCallee,
+                        substitutedTypeArguments: [collectionElementType, collectionElementType],
+                        parameterMapping: Dictionary(uniqueKeysWithValues: args.indices.map { ($0, $0) })
+                    ))
+                    sema.bindings.bindCallableTarget(id, target: .symbol(chosenCallee))
+                }
+                resultType = sema.types.makeNullable(collectionElementType)
+
             case "reduce":
                 if let groupingKeyType = resolvedGroupingKeyType(of: receiverType, sema: sema, interner: interner) {
                     guard args.count == 1 else {
@@ -2310,10 +2439,12 @@ extension CallTypeChecker {
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                 resultType = sema.types.unitType
 
-            case "sortedWith", "sortedArrayWith":
+            case "sortedWith", "sortedArrayWith", "sortWith":
+                let isInPlaceMutation = calleeStr == "sortWith"
                 guard args.count == 1 else {
-                    sema.bindings.bindExprType(id, type: sema.types.anyType)
-                    return sema.types.anyType
+                    let failedType = isInPlaceMutation ? sema.types.unitType : sema.types.anyType
+                    sema.bindings.bindExprType(id, type: failedType)
+                    return failedType
                 }
                 if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
                     // Lambda argument: infer as (T, T) -> Int comparator function
@@ -2338,7 +2469,7 @@ extension CallTypeChecker {
                     }
                     _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: comparatorExpectedType)
                 }
-                resultType = receiverType
+                resultType = isInPlaceMutation ? sema.types.unitType : receiverType
 
             case "maxWith", "minWith", "maxWithOrNull", "minWithOrNull":
                 guard args.count == 1 else {
@@ -2600,7 +2731,7 @@ extension CallTypeChecker {
                     resultType = sema.types.anyType
                 }
 
-            case "sumOf":
+            case "sumOf", "sumBy":
                 guard args.count == 1 else {
                     sema.bindings.bindExprType(id, type: sema.types.anyType)
                     return sema.types.anyType
@@ -2614,6 +2745,55 @@ extension CallTypeChecker {
                 }
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                 resultType = sema.types.intType
+                if calleeStr == "sumBy" {
+                    let memberFQName = [
+                        interner.intern("kotlin"),
+                        interner.intern("collections"),
+                        interner.intern("Iterable"),
+                        calleeName,
+                    ]
+                    if let chosenCallee = sema.symbols.lookupAll(fqName: memberFQName).first(where: { candidate in
+                        sema.symbols.functionSignature(for: candidate)?.parameterTypes.count == args.count
+                    }) {
+                        sema.bindings.bindCall(id, binding: CallBinding(
+                            chosenCallee: chosenCallee,
+                            substitutedTypeArguments: [collectionElementType],
+                            parameterMapping: Dictionary(uniqueKeysWithValues: args.indices.map { ($0, $0) })
+                        ))
+                        sema.bindings.bindCallableTarget(id, target: .symbol(chosenCallee))
+                    }
+                }
+
+            case "sumByDouble":
+                guard args.count == 1 else {
+                    sema.bindings.bindExprType(id, type: sema.types.anyType)
+                    return sema.types.anyType
+                }
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [collectionElementType],
+                    returnType: sema.types.doubleType
+                )))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                resultType = sema.types.doubleType
+                let memberFQName = [
+                    interner.intern("kotlin"),
+                    interner.intern("collections"),
+                    interner.intern("Iterable"),
+                    calleeName,
+                ]
+                if let chosenCallee = sema.symbols.lookupAll(fqName: memberFQName).first(where: { candidate in
+                    sema.symbols.functionSignature(for: candidate)?.parameterTypes.count == args.count
+                }) {
+                    sema.bindings.bindCall(id, binding: CallBinding(
+                        chosenCallee: chosenCallee,
+                        substitutedTypeArguments: [collectionElementType],
+                        parameterMapping: Dictionary(uniqueKeysWithValues: args.indices.map { ($0, $0) })
+                    ))
+                    sema.bindings.bindCallableTarget(id, target: .symbol(chosenCallee))
+                }
 
             case "maxOrNull", "minOrNull":
                 guard args.isEmpty else {
@@ -3040,7 +3220,7 @@ extension CallTypeChecker {
         if args.count == 1 {
             let stringHOFCalleeStr = interner.resolve(calleeName)
             let isStringHOFReceiver = sema.types.isSubtype(stringHOFReceiverType, sema.types.stringType)
-                || ((stringHOFCalleeStr == "ifBlank" || stringHOFCalleeStr == "ifEmpty" || stringHOFCalleeStr == "zipWithNext")
+                || ((stringHOFCalleeStr == "ifBlank" || stringHOFCalleeStr == "ifEmpty" || stringHOFCalleeStr == "zipWithNext" || stringHOFCalleeStr == "sumBy" || stringHOFCalleeStr == "sumByDouble")
                     && isSyntheticStringLikeType(stringHOFReceiverType, sema: sema))
             if isStringHOFReceiver,
                [
@@ -3053,6 +3233,8 @@ extension CallTypeChecker {
                    "partition",
                    "ifBlank",
                    "ifEmpty",
+                   "sumBy",
+                   "sumByDouble",
                ].contains(stringHOFCalleeStr)
             {
                 let charType = sema.types.make(.primitive(.char, .nonNull))
@@ -3094,6 +3276,20 @@ extension CallTypeChecker {
                         sema.types.make(.functionType(FunctionType(
                             params: [],
                             returnType: sema.types.stringType,
+                            isSuspend: false,
+                            nullability: .nonNull
+                        )))
+                    case "sumBy":
+                        sema.types.make(.functionType(FunctionType(
+                            params: [charType],
+                            returnType: sema.types.intType,
+                            isSuspend: false,
+                            nullability: .nonNull
+                        )))
+                    case "sumByDouble":
+                        sema.types.make(.functionType(FunctionType(
+                            params: [charType],
+                            returnType: sema.types.doubleType,
                             isSuspend: false,
                             nullability: .nonNull
                         )))
@@ -3240,6 +3436,8 @@ extension CallTypeChecker {
                 case "splitToSequence": sequenceStringType
                 case "partition": pairStringStringTypeEarly
                 case "ifBlank", "ifEmpty": sema.types.stringType
+                case "sumBy": sema.types.intType
+                case "sumByDouble": sema.types.doubleType
                 default: sema.types.anyType
                 }
                 let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
@@ -4297,6 +4495,15 @@ extension CallTypeChecker {
                                   let signature = sema.symbols.functionSignature(for: candidate),
                                   let recvType = signature.receiverType
                             else { return false }
+                            // Exclude property accessor functions (getter/setter)
+                            // whose parent is a property symbol.  Their short name
+                            // is "get"/"set" and must not pollute member lookup.
+                            if let parentID = sema.symbols.parentSymbol(for: candidate),
+                               let parentSym = sema.symbols.symbol(parentID),
+                               parentSym.kind == .property
+                            {
+                                return false
+                            }
                             return extensionSyntheticFallbackReceiverMatches(
                                 callSiteReceiver: nonNullReceiver,
                                 declaredReceiver: recvType,
@@ -4687,7 +4894,12 @@ extension CallTypeChecker {
                 let isSupportedHexReceiver =
                     (calleeStr == "toHexString" && (receiverTypeForCheck == sema.types.intType || receiverTypeForCheck == sema.types.longType))
                     || (calleeStr == "hexToInt" && receiverTypeForCheck == sema.types.stringType)
+                    || (calleeStr == "hexToShort" && receiverTypeForCheck == sema.types.stringType)
+                    || (calleeStr == "hexToUByte" && receiverTypeForCheck == sema.types.stringType)
+                    || (calleeStr == "hexToUShort" && receiverTypeForCheck == sema.types.stringType)
+                    || (calleeStr == "hexToUByteArray" && receiverTypeForCheck == sema.types.stringType)
                     || (calleeStr == "hexToUInt" && receiverTypeForCheck == sema.types.stringType)
+                    || (calleeStr == "hexToULong" && receiverTypeForCheck == sema.types.stringType)
                 if isSupportedHexReceiver, args.count <= 1 {
                     let kotlinTextPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("text")]
                     let functionFQName = kotlinTextPkg + [calleeName]
@@ -5215,6 +5427,14 @@ extension CallTypeChecker {
                         sema.types.stringType
                     case "toInt":
                         sema.types.intType
+                    case "toUByteOrNull":
+                        sema.types.makeNullable(sema.types.ubyteType)
+                    case "toUShortOrNull":
+                        sema.types.makeNullable(sema.types.ushortType)
+                    case "toUIntOrNull":
+                        sema.types.makeNullable(sema.types.uintType)
+                    case "toULongOrNull":
+                        sema.types.makeNullable(sema.types.ulongType)
                     case "get":
                         sema.types.make(.primitive(.char, .nonNull))
                     case "encodeToByteArray", "toByteArray":
@@ -5550,7 +5770,7 @@ extension CallTypeChecker {
                     : lookupReceiverType
                 let calleeStr = interner.resolve(calleeName)
                 let isStringHOFReceiver = sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType)
-                    || ((calleeStr == "ifBlank" || calleeStr == "ifEmpty" || calleeStr == "zipWithNext")
+                    || ((calleeStr == "ifBlank" || calleeStr == "ifEmpty" || calleeStr == "zipWithNext" || calleeStr == "sumBy" || calleeStr == "sumByDouble")
                         && isSyntheticStringLikeType(receiverTypeForCheck, sema: sema))
                 if isStringHOFReceiver,
                    [
@@ -5563,6 +5783,13 @@ extension CallTypeChecker {
                        "partition",
                        "ifBlank",
                        "ifEmpty",
+                       "firstNotNullOf",
+                       "firstNotNullOfOrNull",
+                       "reduceRightIndexed",
+                       "reduceRightIndexedOrNull",
+                       "reduceRightOrNull",
+                       "sumBy",
+                       "sumByDouble",
                    ].contains(calleeStr)
                 {
                     let charType = sema.types.make(.primitive(.char, .nonNull))
@@ -5575,6 +5802,10 @@ extension CallTypeChecker {
                         switch calleeStr {
                         case "mapIndexed", "filterIndexed":
                             lambdaParamTypes = [intType, charType]
+                        case "reduceRightIndexed", "reduceRightIndexedOrNull":
+                            lambdaParamTypes = [intType, charType, charType]
+                        case "reduceRightOrNull":
+                            lambdaParamTypes = [charType, charType]
                         case "zipWithNext":
                             lambdaParamTypes = [charType, charType]
                         case "ifBlank", "ifEmpty":
@@ -5586,12 +5817,20 @@ extension CallTypeChecker {
                         switch calleeStr {
                         case "map", "mapIndexed":
                             lambdaReturnType = sema.types.anyType
-                        case "mapNotNull":
+                        case "mapNotNull", "firstNotNullOf", "firstNotNullOfOrNull":
                             lambdaReturnType = sema.types.nullableAnyType
+                        case "reduceRightIndexed", "reduceRightIndexedOrNull":
+                            lambdaReturnType = charType
+                        case "reduceRightOrNull":
+                            lambdaReturnType = charType
                         case "zipWithNext":
                             lambdaReturnType = sema.types.anyType
                         case "ifBlank", "ifEmpty":
                             lambdaReturnType = sema.types.stringType
+                        case "sumBy":
+                            lambdaReturnType = sema.types.intType
+                        case "sumByDouble":
+                            lambdaReturnType = sema.types.doubleType
                         default:
                             lambdaReturnType = sema.types.booleanType
                         }
@@ -5656,6 +5895,101 @@ extension CallTypeChecker {
                         sema.bindings.bindExprType(id, type: finalType)
                         return finalType
                     }
+                    if calleeStr == "firstNotNullOf" {
+                        guard explicitTypeArgs.count <= 1 else {
+                            sema.bindings.bindExprType(id, type: sema.types.anyType)
+                            return sema.types.anyType
+                        }
+                        let lambdaExpectedReturn = explicitTypeArgs.first.map { sema.types.makeNullable($0) }
+                            ?? sema.types.nullableAnyType
+                        let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                            params: [charType],
+                            returnType: lambdaExpectedReturn,
+                            isSuspend: false,
+                            nullability: .nonNull
+                        )))
+                        if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
+                            sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                        }
+                        _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                        let bodyType = explicitTypeArgs.first
+                            ?? sema.types.makeNonNullable(inferredLambdaReturnType(argExpr: args[0].expr, ast: ast, sema: sema))
+                        if let chosen = sema.symbols.lookupAll(fqName: [
+                            interner.intern("kotlin"),
+                            interner.intern("text"),
+                            calleeName,
+                        ]).first(where: { candidate in
+                            isSyntheticStringMemberCandidate(
+                                candidate,
+                                named: calleeName,
+                                receiverType: receiverTypeForCheck,
+                                sema: sema,
+                                interner: interner
+                            )
+                                && (sema.symbols.functionSignature(for: candidate)?.parameterTypes.count ?? Int.max) == args.count
+                        }) {
+                            sema.bindings.bindCall(
+                                id,
+                                binding: CallBinding(
+                                    chosenCallee: chosen,
+                                    substitutedTypeArguments: [bodyType],
+                                    parameterMapping: [0: 0]
+                                )
+                            )
+                            sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+                        }
+                        let finalType = safeCall ? sema.types.makeNullable(bodyType) : bodyType
+                        sema.bindings.bindExprType(id, type: finalType)
+                        return finalType
+                    }
+                    if calleeStr == "firstNotNullOfOrNull" {
+                        guard explicitTypeArgs.count <= 1 else {
+                            sema.bindings.bindExprType(id, type: sema.types.nullableAnyType)
+                            return sema.types.nullableAnyType
+                        }
+                        let lambdaExpectedReturn = explicitTypeArgs.first.map { sema.types.makeNullable($0) }
+                            ?? sema.types.nullableAnyType
+                        let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                            params: [charType],
+                            returnType: lambdaExpectedReturn,
+                            isSuspend: false,
+                            nullability: .nonNull
+                        )))
+                        if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
+                            sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                        }
+                        _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                        let bodyType = explicitTypeArgs.first
+                            ?? sema.types.makeNonNullable(inferredLambdaReturnType(argExpr: args[0].expr, ast: ast, sema: sema))
+                        if let chosen = sema.symbols.lookupAll(fqName: [
+                            interner.intern("kotlin"),
+                            interner.intern("text"),
+                            calleeName,
+                        ]).first(where: { candidate in
+                            isSyntheticStringMemberCandidate(
+                                candidate,
+                                named: calleeName,
+                                receiverType: receiverTypeForCheck,
+                                sema: sema,
+                                interner: interner
+                            )
+                                && (sema.symbols.functionSignature(for: candidate)?.parameterTypes.count ?? Int.max) == args.count
+                        }) {
+                            sema.bindings.bindCall(
+                                id,
+                                binding: CallBinding(
+                                    chosenCallee: chosen,
+                                    substitutedTypeArguments: [bodyType],
+                                    parameterMapping: [0: 0]
+                                )
+                            )
+                            sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+                        }
+                        let resultType = sema.types.makeNullable(bodyType)
+                        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                        sema.bindings.bindExprType(id, type: finalType)
+                        return finalType
+                    }
                     let sequenceStringType: TypeID = {
                         let knownNames = KnownCompilerNames(interner: interner)
                         guard let sequenceSymbol = sema.symbols.lookupAll(fqName: knownNames.kotlinSequenceFQName).first else {
@@ -5701,6 +6035,11 @@ extension CallTypeChecker {
                     case "splitToSequence": sequenceStringType
                     case "partition": pairStringStringType
                     case "ifBlank", "ifEmpty": sema.types.stringType
+                    case "reduceRightIndexed": charType
+                    case "reduceRightIndexedOrNull": sema.types.make(.primitive(.char, .nullable))
+                    case "reduceRightOrNull": sema.types.make(.primitive(.char, .nullable))
+                    case "sumBy": sema.types.intType
+                    case "sumByDouble": sema.types.doubleType
                     default: sema.types.anyType
                     }
                     // For "partition", skip the fallback resolver (which may fail due to
@@ -7309,7 +7648,7 @@ extension CallTypeChecker {
                 sema: sema,
                 interner: interner
             )
-                && sema.symbols.externalLinkName(for: candidate) == "kk_string_chunkedSequence_transform"
+                && sema.symbols.externalLinkName(for: candidate) == "kk_string_chunked_sequence_transform"
         }) else {
             return nil
         }

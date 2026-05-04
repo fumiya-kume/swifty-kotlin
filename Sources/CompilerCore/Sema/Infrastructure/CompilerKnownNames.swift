@@ -343,9 +343,13 @@ struct KnownCompilerNames {
     let appendLine: InternedString
     let appendRange: InternedString
     let deleteCharAt: InternedString
+    let deleteAt: InternedString
+    let deleteRange: InternedString
     let get: InternedString
     let insert: InternedString
+    let insertRange: InternedString
     let delete: InternedString
+    let setRange: InternedString
     let toString: InternedString
     let clear: InternedString
     let reverse: InternedString
@@ -531,9 +535,13 @@ struct KnownCompilerNames {
         appendLine = interner.intern("appendLine")
         appendRange = interner.intern("appendRange")
         deleteCharAt = interner.intern("deleteCharAt")
+        deleteAt = interner.intern("deleteAt")
+        deleteRange = interner.intern("deleteRange")
         get = interner.intern("get")
         insert = interner.intern("insert")
+        insertRange = interner.intern("insertRange")
         delete = interner.intern("delete")
+        setRange = interner.intern("setRange")
         toString = interner.intern("toString")
         clear = interner.intern("clear")
         reverse = interner.intern("reverse")

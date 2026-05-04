@@ -852,6 +852,129 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testListToBooleanArrayRoundTrip() throws {
+        let source = """
+        fun main() {
+            val list = listOf(true, false, true)
+            val arr = list.toBooleanArray()
+            println(arr.size)
+            println(if (arr[0]) "T" else "F")
+            println(if (arr[1]) "T" else "F")
+
+            arr[1] = true
+            println(if (list[1]) "T" else "F")
+            println(if (arr[1]) "T" else "F")
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListToBooleanArrayRoundTrip",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(out, "3\nT\nF\nF\nT\n")
+        }
+    }
+
+    func testListToShortArrayRoundTrip() throws {
+        let source = """
+        fun main() {
+            val list = listOf(1.toShort(), (-2).toShort(), 32767.toShort())
+            val arr = list.toShortArray()
+            println(arr.size)
+            println(arr[0])
+            println(arr[1])
+            println(arr[2])
+
+            arr[0] = 7.toShort()
+            println(list[0])
+            println(arr[0])
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListToShortArrayRoundTrip",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(out, "3\n1\n-2\n32767\n1\n7\n")
+        }
+    }
+
+    func testListToDoubleArrayRoundTrip() throws {
+        let source = """
+        fun main() {
+            val list = listOf(1.5, -2.25, 0.5)
+            val arr = list.toDoubleArray()
+            println(arr.size)
+            println(arr[0])
+            println(arr[1])
+            println(arr[2])
+
+            arr[0] = 9.25
+            println(list[0])
+            println(arr[0])
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListToDoubleArrayRoundTrip",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(out, "3\n1.5\n-2.25\n0.5\n1.5\n9.25\n")
+        }
+    }
+
+    func testListToFloatArrayRoundTrip() throws {
+        let source = """
+        fun main() {
+            val list = listOf(1.5f, -2.25f, 0.5f)
+            val arr = list.toFloatArray()
+            println(arr.size)
+            println(arr[0])
+            println(arr[1])
+            println(arr[2])
+
+            arr[0] = 9.25f
+            println(list[0])
+            println(arr[0])
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListToFloatArrayRoundTrip",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(out, "3\n1.5\n-2.25\n0.5\n1.5\n9.25\n")
+        }
+    }
+
     // MARK: - contentHashCode stability for boxed int arrays
 
     func testBoxedIntArrayContentHashCode() throws {

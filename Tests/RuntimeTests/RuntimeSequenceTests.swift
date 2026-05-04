@@ -164,6 +164,22 @@ private let throwingWindowTransform: @convention(c) (Int, Int, UnsafeMutablePoin
     return 0
 }
 
+private let sequenceFirstNotNullOfStringForTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value == 2 ? runtimeTestStringHandle("two") : runtimeNullSentinelInt
+}
+
+private let sequenceFirstNotNullOfAlwaysNull: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, _ in
+    runtimeNullSentinelInt
+}
+
+private let sequenceSumByWeightedTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value == 2 ? 10 : value
+}
+
+private let sequenceSumByDoubleWeightedTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    kk_double_to_bits(value == 2 ? 1.5 : 0.25)
+}
+
 private func runtimeTestStringHandle(_ value: String) -> Int {
     let bytes = Array(value.utf8)
     return bytes.withUnsafeBufferPointer { buffer in
@@ -177,6 +193,84 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
     override func resetIsolatedRuntimeTestState() {
         _lazyTestYieldCounter = 0
         _lazySequenceOnEachIndexedTrace = []
+    }
+
+    func testFirstNotNullOfReturnsFirstTransformedValue() {
+        var thrown = 0
+        let result = kk_sequence_firstNotNullOf(
+            makeSequence([1, 2, 3]),
+            unsafeBitCast(sequenceFirstNotNullOfStringForTwo, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(extractString(from: UnsafeMutableRawPointer(bitPattern: result)), "two")
+    }
+
+    func testFirstNotNullOfThrowsWhenNoElementTransformsToValue() {
+        var thrown = 0
+        let result = kk_sequence_firstNotNullOf(
+            makeSequence([1, 2, 3]),
+            unsafeBitCast(sequenceFirstNotNullOfAlwaysNull, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testFirstNotNullOfOrNullReturnsFirstTransformedValue() {
+        var thrown = 0
+        let result = kk_sequence_firstNotNullOfOrNull(
+            makeSequence([1, 2, 3]),
+            unsafeBitCast(sequenceFirstNotNullOfStringForTwo, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(extractString(from: UnsafeMutableRawPointer(bitPattern: result)), "two")
+    }
+
+    func testFirstNotNullOfOrNullReturnsNullSentinelWhenNoElementTransformsToValue() {
+        var thrown = 0
+        let result = kk_sequence_firstNotNullOfOrNull(
+            makeSequence([1, 2, 3]),
+            unsafeBitCast(sequenceFirstNotNullOfAlwaysNull, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, runtimeNullSentinelInt)
+    }
+
+    func testSumByAccumulatesSelectorResults() {
+        var thrown = 0
+        let result = kk_sequence_sumBy(
+            makeSequence([1, 2, 3]),
+            unsafeBitCast(sequenceSumByWeightedTwo, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 14)
+    }
+
+    func testSumByDoubleAccumulatesSelectorResults() {
+        var thrown = 0
+        let result = kk_sequence_sumByDouble(
+            makeSequence([1, 2, 3]),
+            unsafeBitCast(sequenceSumByDoubleWeightedTwo, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_bits_to_double(result), 2.0, accuracy: 0.0001)
     }
 
     func testSortedByUsesRuntimeValueComparisonForSelectorKeys() {
@@ -533,7 +627,7 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 1)
         XCTAssertEqual(kk_iterator_builder_next(iterHandle), 30)
         XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 0)
-        
+
         // STDLIB-538: Test backward iteration with hasPrevious()/previous()
         XCTAssertEqual(kk_list_iterator_hasPrevious(iterHandle), 1)
         XCTAssertEqual(kk_list_iterator_previous(iterHandle), 30)
@@ -541,7 +635,7 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_list_iterator_previous(iterHandle), 20)
         XCTAssertEqual(kk_list_iterator_hasPrevious(iterHandle), 1)
         XCTAssertEqual(kk_list_iterator_previous(iterHandle), 10)
-        
+
         // After going back to beginning, no more previous
         XCTAssertEqual(kk_list_iterator_hasPrevious(iterHandle), 0)
         XCTAssertEqual(kk_list_iterator_previous(iterHandle), 0)
@@ -1420,22 +1514,22 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         }
         let fnPtr = unsafeBitCast(thunk, to: Int.self)
         let seqHandle = kk_sequence_builder_build(fnPtr)
-        
+
         let filterFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
             value == 2 ? 1 : 0  // true only for value 2
         }
-        
+
         let filtered = kk_sequence_filterNot(
             seqHandle,
             unsafeBitCast(filterFn, to: Int.self),
             0
         )
-        
+
         // Take only first element to verify laziness
         let taken = kk_sequence_take(filtered, 1)
         let result = sequenceElements(taken)
         XCTAssertEqual(result, [1]) // Should be [1, 3] but take(1) gives [1]
-        
+
         // Should not have evaluated all elements due to laziness
         XCTAssertLessThanOrEqual(_lazyTestYieldCounter, 3,
             "filterNot should be lazy; got \(_lazyTestYieldCounter) yields")
@@ -1457,23 +1551,23 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         }
         let fnPtr = unsafeBitCast(thunk, to: Int.self)
         let seqHandle = kk_sequence_builder_build(fnPtr)
-        
+
         let mapFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
             value == runtimeNullSentinelInt ? runtimeNullSentinelInt : value * 2
         }
-        
+
         let mapped = kk_sequence_mapNotNull(
             seqHandle,
             unsafeBitCast(mapFn, to: Int.self),
             0,
             nil
         )
-        
+
         // Take only first element to verify laziness
         let taken = kk_sequence_take(mapped, 1)
         let result = sequenceElements(taken)
         XCTAssertEqual(result, [2]) // 1 * 2 = 2, null is filtered out
-        
+
         // Should not have evaluated all elements due to laziness
         XCTAssertLessThanOrEqual(_lazyTestYieldCounter, 3,
             "mapNotNull should be lazy; got \(_lazyTestYieldCounter) yields")
@@ -1493,14 +1587,14 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         }
         let fnPtr = unsafeBitCast(thunk, to: Int.self)
         let seqHandle = kk_sequence_builder_build(fnPtr)
-        
+
         let filtered = kk_sequence_filterNotNull(seqHandle)
-        
+
         // Take only first element to verify laziness
         let taken = kk_sequence_take(filtered, 1)
         let result = sequenceElements(taken)
         XCTAssertEqual(result, [1]) // null is filtered out
-        
+
         // Should not have evaluated all elements due to laziness
         XCTAssertLessThanOrEqual(_lazyTestYieldCounter, 3,
             "filterNotNull should be lazy; got \(_lazyTestYieldCounter) yields")
@@ -1518,23 +1612,23 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         }
         let fnPtr = unsafeBitCast(thunk, to: Int.self)
         let seqHandle = kk_sequence_builder_build(fnPtr)
-        
+
         let mapFn: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, value, _ in
             index + value
         }
-        
+
         let mapped = kk_sequence_mapIndexed(
             seqHandle,
             unsafeBitCast(mapFn, to: Int.self),
             0,
             nil
         )
-        
+
         // Take only first element to verify laziness
         let taken = kk_sequence_take(mapped, 1)
         let result = sequenceElements(taken)
         XCTAssertEqual(result, [10]) // index 0 + value 10 = 10
-        
+
         // Should not have evaluated all elements due to laziness
         XCTAssertLessThanOrEqual(_lazyTestYieldCounter, 2,
             "mapIndexed should be lazy; got \(_lazyTestYieldCounter) yields")
@@ -1597,9 +1691,9 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         }
         let fnPtr = unsafeBitCast(thunk, to: Int.self)
         let seqHandle = kk_sequence_builder_build(fnPtr)
-        
+
         let withIndex = kk_sequence_withIndex(seqHandle)
-        
+
         // Take only first element to verify laziness
         let taken = kk_sequence_take(withIndex, 1)
         let result = sequenceElements(taken)
@@ -1610,7 +1704,7 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         let second = kk_pair_second(pair)
         XCTAssertEqual(first, 0) // index
         XCTAssertEqual(second, 10) // value
-        
+
         // Should not have evaluated all elements due to laziness
         XCTAssertLessThanOrEqual(_lazyTestYieldCounter, 2,
             "withIndex should be lazy; got \(_lazyTestYieldCounter) yields")
@@ -1628,7 +1722,7 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         }
         let fnPtr = unsafeBitCast(thunk, to: Int.self)
         let seqHandle = kk_sequence_builder_build(fnPtr)
-        
+
         let flatMapFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
             // Create a list [value, value * 10]
             let arr = kk_array_new(2)
@@ -1637,18 +1731,18 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
             _ = _ = kk_array_set(arr, 1, value * 10, &thrown)
             return kk_list_of(arr, 2)
         }
-        
+
         let flatMapped = kk_sequence_flatMap(
             seqHandle,
             unsafeBitCast(flatMapFn, to: Int.self),
             0
         )
-        
+
         // Take only first element to verify laziness
         let taken = kk_sequence_take(flatMapped, 1)
         let result = sequenceElements(taken)
         XCTAssertEqual(result, [1]) // First element of [1, 10] from first input value 1
-        
+
         // Should not have evaluated all elements due to laziness
         XCTAssertLessThanOrEqual(_lazyTestYieldCounter, 2,
             "flatMap should be lazy; got \(_lazyTestYieldCounter) yields")

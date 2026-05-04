@@ -134,6 +134,10 @@ extension DataFlowSemaPhase {
             symbols: symbols, types: types, interner: interner,
             iterableInterfaceSymbol: iterableInterfaceSymbol
         )
+        registerIterableReduceRightIndexedMember(
+            symbols: symbols, types: types, interner: interner,
+            iterableInterfaceSymbol: iterableInterfaceSymbol
+        )
 
         // STDLIB-021: Iterable mutable conversion members are registered later once
         // MutableList / MutableSet stubs exist — see calls below after those stubs.
@@ -180,6 +184,27 @@ extension DataFlowSemaPhase {
             kotlinCollectionsPkg: kotlinCollectionsPkg,
             iterableInterfaceSymbol: iterableInterfaceSymbol,
             listInterfaceSymbol: listInterfaceSymbol
+        )
+        registerIterableMinusElementMember(
+            symbols: symbols, types: types, interner: interner,
+            iterableInterfaceSymbol: iterableInterfaceSymbol,
+            listInterfaceSymbol: listInterfaceSymbol
+        )
+        registerIterableReduceRightIndexedOrNullMember(
+            symbols: symbols, types: types, interner: interner,
+            iterableInterfaceSymbol: iterableInterfaceSymbol
+        )
+        registerIterableReduceRightOrNullMember(
+            symbols: symbols, types: types, interner: interner,
+            iterableInterfaceSymbol: iterableInterfaceSymbol
+        )
+        registerIterableSumByMember(
+            symbols: symbols, types: types, interner: interner,
+            iterableInterfaceSymbol: iterableInterfaceSymbol
+        )
+        registerIterableSumByDoubleMember(
+            symbols: symbols, types: types, interner: interner,
+            iterableInterfaceSymbol: iterableInterfaceSymbol
         )
 
         // --- STDLIB-533: List?.orEmpty() ---
