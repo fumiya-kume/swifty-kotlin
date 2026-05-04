@@ -321,13 +321,13 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
 
         XCTAssertEqual(
             externalLink(for: "chunkedSequence", sema: sema, interner: interner),
-            "kk_string_chunkedSequence",
-            "CharSequence.chunkedSequence should link to kk_string_chunkedSequence"
+            "kk_string_chunked_sequence",
+            "CharSequence.chunkedSequence should link to kk_string_chunked_sequence"
         )
         XCTAssertTrue(
             externalLinks(for: "chunkedSequence", sema: sema, interner: interner)
-                .contains("kk_string_chunkedSequence_transform"),
-            "CharSequence.chunkedSequence(size, transform) should link to kk_string_chunkedSequence_transform"
+                .contains("kk_string_chunked_sequence_transform"),
+            "CharSequence.chunkedSequence(size, transform) should link to kk_string_chunked_sequence_transform"
         )
     }
 
@@ -574,8 +574,8 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
                 )
                 XCTAssertEqual(
                     sema.symbols.externalLinkName(for: chosenCallee),
-                    "kk_string_chunkedSequence",
-                    "Expected chunkedSequence to resolve to kk_string_chunkedSequence"
+                    "kk_string_chunked_sequence",
+                    "Expected chunkedSequence to resolve to kk_string_chunked_sequence"
                 )
             }
         }
@@ -609,8 +609,8 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
                 )
                 XCTAssertEqual(
                     sema.symbols.externalLinkName(for: chosenCallee),
-                    "kk_string_chunkedSequence_transform",
-                    "Expected chunkedSequence transform to resolve to kk_string_chunkedSequence_transform"
+                    "kk_string_chunked_sequence_transform",
+                    "Expected chunkedSequence transform to resolve to kk_string_chunked_sequence_transform"
                 )
             }
         }

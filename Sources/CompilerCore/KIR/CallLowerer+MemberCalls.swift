@@ -3169,7 +3169,7 @@ extension CallLowerer {
                 case "chunked":
                     ("kk_string_chunked", [loweredReceiverID, loweredArgIDs[0]])
                 case "chunkedSequence":
-                    ("kk_string_chunkedSequence", [loweredReceiverID, loweredArgIDs[0]])
+                    ("kk_string_chunked_sequence", [loweredReceiverID, loweredArgIDs[0]])
                 case "encodeToByteArray", "toByteArray":
                     if loweredArgIDs.count == 1 {
                         ("kk_string_encodeToByteArray_charset", [loweredReceiverID, loweredArgIDs[0]])
@@ -3443,7 +3443,7 @@ extension CallLowerer {
                 }
                 instructions.append(.call(
                     symbol: nil,
-                    callee: interner.intern("kk_string_chunkedSequence_transform"),
+                    callee: interner.intern("kk_string_chunked_sequence_transform"),
                     arguments: callArguments,
                     result: result,
                     canThrow: true,
@@ -6720,7 +6720,7 @@ extension CallLowerer {
             interner.intern("kk_string_sumBy"),
             interner.intern("kk_string_sumByDouble"),
             interner.intern("kk_string_zipWithNextTransform"),
-            interner.intern("kk_string_chunkedSequence_transform"),
+            interner.intern("kk_string_chunked_sequence_transform"),
             interner.intern("kk_string_windowedSequence_transform"),
             interner.intern("kk_sequence_to_list"),
             interner.intern("kk_list_windowed_transform"),

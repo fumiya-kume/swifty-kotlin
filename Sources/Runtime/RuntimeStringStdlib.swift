@@ -2325,25 +2325,14 @@ public func kk_string_chunked(_ strRaw: Int, _ size: Int) -> Int {
     return runtimeMakeStringListRaw(chunks)
 }
 
-@_cdecl("kk_string_chunkedSequence")
-public func kk_string_chunkedSequence(_ strRaw: Int, _ size: Int) -> Int {
-    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
-    guard size > 0 else {
-        return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: [])]))
-    }
-    let scalars = Array(source.unicodeScalars)
-    var chunks: [Int] = []
-    var i = 0
-    while i < scalars.count {
-        let end = Swift.min(i + size, scalars.count)
-        chunks.append(runtimeMakeStringRaw(runtimeStringFromScalars(scalars[i ..< end])))
-        i = end
-    }
-    return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: chunks)]))
+@_cdecl("kk_string_chunked_sequence")
+public func kk_string_chunked_sequence(_ strRaw: Int, _ size: Int) -> Int {
+    let chunksRaw = kk_string_chunked(strRaw, size)
+    return kk_list_asSequence(chunksRaw)
 }
 
-@_cdecl("kk_string_chunkedSequence_transform")
-public func kk_string_chunkedSequence_transform(
+@_cdecl("kk_string_chunked_sequence_transform")
+public func kk_string_chunked_sequence_transform(
     _ strRaw: Int,
     _ size: Int,
     _ fnPtr: Int,
