@@ -744,6 +744,16 @@ extension DataFlowSemaPhase {
             registerAtomicMember(
                 ownerSymbol: symbol,
                 ownerType: ownerType,
+                name: "fetchAndIncrementAt",
+                externalLinkName: "\(prefix)_fetchAndIncrementAt",
+                returnType: valueType,
+                parameters: [(name: "index", type: types.intType)],
+                symbols: symbols,
+                interner: interner
+            )
+            registerAtomicMember(
+                ownerSymbol: symbol,
+                ownerType: ownerType,
                 name: "fetchAndDecrementAt",
                 externalLinkName: "\(prefix)_fetchAndDecrementAt",
                 returnType: valueType,
