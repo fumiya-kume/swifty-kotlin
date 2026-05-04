@@ -1205,7 +1205,7 @@
 - [ ] STDLIB-IO-PATH-PROP-001: `Path.extension` extension property を追加する
 - [ ] STDLIB-IO-PATH-PROP-002: `Path.invariantSeparatorsPath` extension property を追加する
 - [ ] STDLIB-IO-PATH-PROP-003: `Path.invariantSeparatorsPathString` extension property を追加する
-- [ ] STDLIB-IO-PATH-PROP-004: `Path.name` extension property を既存 `Path` member stub と整合させる
+- [x] STDLIB-IO-PATH-PROP-004: `Path.name` extension property を既存 `Path` member stub と整合させる
 - [ ] STDLIB-IO-PATH-PROP-005: `Path.nameWithoutExtension` extension property を追加する
 - [ ] STDLIB-IO-PATH-PROP-006: `Path.pathString` extension property を追加する
 - [ ] STDLIB-IO-PATH-FN-001: `Path.absolute()` を追加する
