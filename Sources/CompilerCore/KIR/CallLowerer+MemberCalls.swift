@@ -6584,6 +6584,8 @@ extension CallLowerer {
             interner.intern("kk_sequence_mapNotNull"),
             interner.intern("kk_sequence_firstNotNullOf"),
             interner.intern("kk_sequence_firstNotNullOfOrNull"),
+            interner.intern("kk_iterable_firstNotNullOf"),
+            interner.intern("kk_iterable_firstNotNullOfOrNull"),
             interner.intern("kk_sequence_mapIndexed"),
             interner.intern("kk_sequence_findLast"),
             interner.intern("kk_sequence_elementAt"),
