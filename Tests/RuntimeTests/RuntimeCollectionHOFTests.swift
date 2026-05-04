@@ -1271,6 +1271,29 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(arrayElements(kk_list_toULongArray(makeList([1, -1]))), [1, -1])
     }
 
+    func testBooleanListToPrimitiveArrayConversionCopiesElements() {
+        let list = makeList([kk_box_bool(1), kk_box_bool(0), kk_box_bool(1)])
+        XCTAssertEqual(arrayElements(kk_list_toBooleanArray(list)), [1, 0, 1])
+    }
+
+    func testShortListToPrimitiveArrayConversionCopiesElements() {
+        XCTAssertEqual(arrayElements(kk_list_toShortArray(makeList([1, -2, 32767]))), [1, -2, 32767])
+    }
+
+    func testDoubleListToPrimitiveArrayConversionCopiesElements() {
+        let first = kk_double_to_bits(1.5)
+        let second = kk_double_to_bits(-2.25)
+        let list = makeList([kk_box_double(first), kk_box_double(second)])
+        XCTAssertEqual(arrayElements(kk_list_toDoubleArray(list)), [first, second])
+    }
+
+    func testFloatListToPrimitiveArrayConversionCopiesElements() {
+        let first = kk_float_to_bits(1.5)
+        let second = kk_float_to_bits(-2.25)
+        let list = makeList([kk_box_float(first), kk_box_float(second)])
+        XCTAssertEqual(arrayElements(kk_list_toFloatArray(list)), [first, second])
+    }
+
     private func makeArray(_ elements: [Int]) -> Int {
         let arrayRaw = kk_array_new(elements.count)
         var thrown = 0
