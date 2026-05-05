@@ -403,6 +403,28 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathWalkOptionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import kotlin.io.path.PathWalkOption
+
+        fun nextPathWalkOption(option: PathWalkOption): PathWalkOption {
+            return when (option) {
+                PathWalkOption.BREADTH_FIRST -> PathWalkOption.FOLLOW_LINKS
+                PathWalkOption.FOLLOW_LINKS -> PathWalkOption.BREADTH_FIRST
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "PathWalkOption entries in kotlin.io.path should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     func testPathInvariantSeparatorsPathStringPropertyInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import kotlin.io.path.Path

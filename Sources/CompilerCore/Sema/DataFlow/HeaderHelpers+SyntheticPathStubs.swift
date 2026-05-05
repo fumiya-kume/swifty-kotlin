@@ -24,6 +24,7 @@
 /// - `CopyActionContext` type surface
 /// - `CopyActionResult` enum surface
 /// - `ExperimentalPathApi` marker annotation surface
+/// - `PathWalkOption` enum surface
 ///
 /// Each stub registers the kotlin.io.path.Path class, its constructor, member
 /// properties, and member functions in the symbol table so that name resolution
@@ -101,6 +102,22 @@ extension DataFlowSemaPhase {
             packageSymbol: kotlinIOPathPkgSymbol,
             symbols: symbols,
             interner: interner
+        )
+        let pathWalkOptionSymbol = ensurePathWalkOptionEnum(
+            in: kotlinIOPathPkg,
+            packageSymbol: kotlinIOPathPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        let pathWalkOptionType = types.make(.classType(ClassType(
+            classSymbol: pathWalkOptionSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        setPathEnumEntryTypes(
+            enumSymbol: pathWalkOptionSymbol,
+            enumType: pathWalkOptionType,
+            symbols: symbols
         )
 
         let copyActionResultSymbol = ensurePathCopyActionResultEnum(
@@ -700,6 +717,50 @@ extension DataFlowSemaPhase {
         }
 
         for entry in ["CONTINUE", "SKIP_SUBTREE", "TERMINATE"] {
+            let entryName = interner.intern(entry)
+            let entryFQName = fqName + [entryName]
+            if symbols.lookup(fqName: entryFQName) != nil {
+                continue
+            }
+            let entrySymbol = symbols.define(
+                kind: .field,
+                name: entryName,
+                fqName: entryFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(enumSymbol, for: entrySymbol)
+        }
+
+        return enumSymbol
+    }
+
+    private func ensurePathWalkOptionEnum(
+        in packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> SymbolID {
+        let name = interner.intern("PathWalkOption")
+        let fqName = packageFQName + [name]
+        if let existing = symbols.lookup(fqName: fqName) {
+            return existing
+        }
+
+        let enumSymbol = symbols.define(
+            kind: .enumClass,
+            name: name,
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol {
+            symbols.setParentSymbol(packageSymbol, for: enumSymbol)
+        }
+
+        for entry in ["BREADTH_FIRST", "FOLLOW_LINKS"] {
             let entryName = interner.intern(entry)
             let entryFQName = fqName + [entryName]
             if symbols.lookup(fqName: entryFQName) != nil {
