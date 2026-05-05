@@ -2678,13 +2678,18 @@ extension DataFlowSemaPhase {
 
         func registerSimpleMember(
             name: String,
+            parameterTypes: [TypeID] = [],
             returnType: TypeID,
             externalLinkName: String,
             canThrow: Bool = false
         ) {
             let memberName = interner.intern(name)
             let memberFQName = listFQName + [memberName]
-            guard symbols.lookup(fqName: memberFQName) == nil else { return }
+            let alreadySameSignature = symbols.lookupAll(fqName: memberFQName).contains { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.parameterTypes == parameterTypes
+            }
+            guard !alreadySameSignature else { return }
             let memberSymbol = symbols.define(
                 kind: .function,
                 name: memberName,
@@ -2698,7 +2703,7 @@ extension DataFlowSemaPhase {
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: receiverType,
-                    parameterTypes: [],
+                    parameterTypes: parameterTypes,
                     returnType: returnType,
                     canThrow: canThrow,
                     typeParameterSymbols: [listTypeParamSymbol],
@@ -3142,6 +3147,25 @@ extension DataFlowSemaPhase {
                 )
             }
         }
+
+        let firstPredicateType = types.make(.functionType(FunctionType(
+            params: [listTypeParamType],
+            returnType: types.booleanType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        registerSimpleMember(
+            name: "first",
+            parameterTypes: [],
+            returnType: listTypeParamType,
+            externalLinkName: "kk_list_first"
+        )
+        registerSimpleMember(
+            name: "first",
+            parameterTypes: [firstPredicateType],
+            returnType: listTypeParamType,
+            externalLinkName: "kk_list_first"
+        )
 
         // firstOrNull / lastOrNull no-predicate (STDLIB-210)
         registerSimpleMember(name: "firstOrNull", returnType: nullableElementType, externalLinkName: "kk_list_firstOrNull")

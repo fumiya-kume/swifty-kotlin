@@ -974,9 +974,11 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
-    func testListFirstOrNullAndLastOrNullReturnNullableElementsWithoutCollectionMarking() throws {
+    func testListFirstAndFirstOrNullAndLastOrNullReturnElementTypesWithoutCollectionMarking() throws {
         let source = """
         fun probe(values: List<Int>) {
+            values.first()
+            values.first { it > 1 }
             values.firstOrNull()
             values.lastOrNull()
         }
@@ -988,6 +990,43 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
 
             let ast = try XCTUnwrap(ctx.ast)
             let sema = try XCTUnwrap(ctx.sema)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(ctx.diagnostics.hasError, "Unexpected diagnostics: \(diagnosticSummary)")
+            let listFirstFQName = ["kotlin", "collections", "List", "first"].map { ctx.interner.intern($0) }
+            let listFirstSymbols = sema.symbols.lookupAll(fqName: listFirstFQName)
+            XCTAssertEqual(listFirstSymbols.count, 2, "Expected List.first() and List.first(predicate) symbols")
+            let firstArities = listFirstSymbols.compactMap { symbolID in
+                sema.symbols.functionSignature(for: symbolID)?.parameterTypes.count
+            }.sorted()
+            XCTAssertEqual(firstArities, [0, 1], "Expected List.first overload arities")
+            for symbolID in listFirstSymbols {
+                XCTAssertEqual(sema.symbols.externalLinkName(for: symbolID), "kk_list_first")
+            }
+            let firstCalls = ast.arena.exprs.indices.compactMap { index -> ExprID? in
+                let exprID = ExprID(rawValue: Int32(index))
+                guard let expr = ast.arena.expr(exprID),
+                      case let .memberCall(_, callee, _, _, _) = expr,
+                      ctx.interner.resolve(callee) == "first"
+                else {
+                    return nil
+                }
+                return exprID
+            }
+            XCTAssertEqual(firstCalls.count, 2, "Expected first() and first(predicate) calls")
+            for (index, callExpr) in firstCalls.enumerated() {
+                XCTAssertEqual(
+                    sema.bindings.exprTypes[callExpr],
+                    sema.types.intType,
+                    "Expected first overload \(index) to return a non-null element type"
+                )
+                XCTAssertFalse(
+                    sema.bindings.isCollectionExpr(callExpr),
+                    "Expected first overload \(index) result to avoid collection-expression marking"
+                )
+            }
+
             let expectedMembers = [
                 "firstOrNull": "kk_list_firstOrNull",
                 "lastOrNull": "kk_list_lastOrNull",

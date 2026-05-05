@@ -143,7 +143,7 @@
 - [ ] STDLIB-COL-FN-068: `filterValues` 関数の実装
 - [ ] STDLIB-COL-FN-069: `find` 関数の実装
 - [ ] STDLIB-COL-FN-070: `findLast` 関数の実装
-- [ ] STDLIB-COL-FN-071: `first` 関数の実装
+- [x] STDLIB-COL-FN-071: `first` 関数の実装
 - [x] STDLIB-COL-FN-072: `firstNotNullOf` 関数の実装
 - [x] STDLIB-COL-FN-073: `firstNotNullOfOrNull` 関数の実装
 - [x] STDLIB-COL-FN-074: `firstOrNull` 関数の実装

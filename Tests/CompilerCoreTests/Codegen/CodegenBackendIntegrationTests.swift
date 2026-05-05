@@ -1702,6 +1702,8 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         fun main() {
             val list = listOf(3, 1, 2)
             println(list.flatMap { listOf(it, it * 10) })
+            println(list.first())
+            println(list.first { it > 1 })
             println(list.sumOf { it * 2 })
             println(list.minBy { it % 3 })
             println(list.maxOrNull())
@@ -1721,6 +1723,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let callees = extractCallees(from: body, interner: ctx.interner)
             XCTAssertTrue(callees.contains("kk_list_flatMap"))
+            XCTAssertGreaterThanOrEqual(callees.filter { $0 == "kk_list_first" }.count, 2)
             XCTAssertTrue(callees.contains("kk_list_sumOf") || callees.contains("sumOf"))
             XCTAssertTrue(callees.contains("kk_list_minBy"))
             XCTAssertTrue(callees.contains("kk_list_maxOrNull"))
