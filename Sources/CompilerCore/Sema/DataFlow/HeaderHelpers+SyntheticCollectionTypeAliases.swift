@@ -1,7 +1,8 @@
 import Foundation
 
 /// Synthetic stdlib stubs split from `HeaderHelpers+SyntheticComparableAndCollectionStubs.swift`:
-/// Type aliases ArrayList, HashMap, HashSet, LinkedHashMap, LinkedHashSet (STDLIB-560).
+/// Type aliases ArrayList, HashMap, HashSet, LinkedHashMap (STDLIB-560)
+/// plus concrete LinkedHashSet class surface.
 ///
 /// Split out to isolate merge conflicts between parallel stdlib PRs adding new
 /// entries to this package.
@@ -9,8 +10,7 @@ extension DataFlowSemaPhase {
 
     // MARK: - Collection Type Aliases (STDLIB-560)
 
-    /// Register `ArrayList<E>`, `LinkedList<E>`, `HashMap<K,V>`, `HashSet<E>`, `LinkedHashMap<K,V>`, `LinkedHashSet<E>`
-    /// as type aliases pointing to their corresponding mutable collection types.
+    /// Register the synthetic collection aliases and concrete collection classes.
     func registerSyntheticCollectionTypeAliases(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -39,10 +39,8 @@ extension DataFlowSemaPhase {
             kotlinCollectionsPkg: kotlinCollectionsPkg
         )
 
-        // LinkedHashSet<E> → MutableSet<E>
-        registerSingleTypeParamCollectionAlias(
-            aliasName: "LinkedHashSet",
-            targetName: "MutableSet",
+        // LinkedHashSet<E> concrete class implementing MutableSet<E>
+        registerSyntheticLinkedHashSetClass(
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg
         )
@@ -270,5 +268,78 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setTypeAliasUnderlyingType(underlyingType, for: aliasSymbol)
+    }
+
+    /// Register `LinkedHashSet<E>` as a concrete synthetic class implementing `MutableSet<E>`.
+    private func registerSyntheticLinkedHashSetClass(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString]
+    ) {
+        let linkedHashSetName = interner.intern("LinkedHashSet")
+        let linkedHashSetFQName = kotlinCollectionsPkg + [linkedHashSetName]
+        guard symbols.lookup(fqName: linkedHashSetFQName) == nil else { return }
+
+        let mutableSetName = interner.intern("MutableSet")
+        let mutableSetFQName = kotlinCollectionsPkg + [mutableSetName]
+        guard let mutableSetSymbol = symbols.lookup(fqName: mutableSetFQName) else {
+            assertionFailure("Synthetic LinkedHashSet: target MutableSet not found in symbol table")
+            return
+        }
+
+        let linkedHashSetSymbol = symbols.define(
+            kind: .class,
+            name: linkedHashSetName,
+            fqName: linkedHashSetFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .openType]
+        )
+
+        let typeParamName = interner.intern("E")
+        let typeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: linkedHashSetFQName + [typeParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let typeParamType = types.make(.typeParam(TypeParamType(symbol: typeParamSymbol, nullability: .nonNull)))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: linkedHashSetSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: linkedHashSetSymbol)
+        symbols.setDirectSupertypes([mutableSetSymbol], for: linkedHashSetSymbol)
+        types.setNominalDirectSupertypes([mutableSetSymbol], for: linkedHashSetSymbol)
+        let mutableSetArgs: [TypeArg] = [.invariant(typeParamType)]
+        symbols.setSupertypeTypeArgs(mutableSetArgs, for: linkedHashSetSymbol, supertype: mutableSetSymbol)
+        types.setNominalSupertypeTypeArgs(mutableSetArgs, for: linkedHashSetSymbol, supertype: mutableSetSymbol)
+
+        let initName = interner.intern("<init>")
+        let constructorSymbol = symbols.define(
+            kind: .constructor,
+            name: initName,
+            fqName: linkedHashSetFQName + [initName],
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(linkedHashSetSymbol, for: constructorSymbol)
+        symbols.setExternalLinkName("kk_emptySet", for: constructorSymbol)
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: linkedHashSetSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: nil,
+                parameterTypes: [],
+                returnType: returnType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: constructorSymbol
+        )
     }
 }

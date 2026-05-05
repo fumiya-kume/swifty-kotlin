@@ -2448,6 +2448,44 @@ final class CallTypeChecker {
             locals: &locals
         )
         let argTypes = preparedArgs.argTypes
+        if let calleeName,
+           interner.resolve(calleeName) == "LinkedHashSet",
+           args.isEmpty,
+           explicitTypeArgs.isEmpty,
+           let expectedType,
+           expectedType != sema.types.errorType,
+           case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
+           expectedClassType.args.count == 1,
+           let expectedSymbol = ctx.cachedSymbol(expectedClassType.classSymbol),
+           knownNames.isMutableSetSymbol(expectedSymbol),
+           let chosen = candidates.first(where: { candidate in
+               guard let symbol = ctx.cachedSymbol(candidate),
+                     symbol.kind == .constructor,
+                     sema.symbols.externalLinkName(for: candidate) == "kk_emptySet",
+                     let parent = sema.symbols.parentSymbol(for: candidate),
+                     let parentSymbol = ctx.cachedSymbol(parent)
+               else {
+                   return false
+               }
+               return parentSymbol.name == interner.intern("LinkedHashSet")
+           })
+        {
+            let elementType = driver.helpers.typeArgInnerTypeForCheck(expectedClassType.args[0])
+            if elementType != TypeID.invalid {
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: chosen,
+                        substitutedTypeArguments: [elementType],
+                        parameterMapping: [:]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+                sema.bindings.markCollectionExpr(id)
+                sema.bindings.bindExprType(id, type: expectedType)
+                return expectedType
+            }
+        }
         if !candidates.isEmpty {
             let resolved = resolveCallRespectingLambdaReturnType(
                 candidates: candidates,
@@ -2933,7 +2971,16 @@ final class CallTypeChecker {
                         elementType: explicitTypeArg
                     )
                 } else if let explicitTypeArg = explicitTypeArgs.first,
-                          name == "mutableSetOf" || name == "hashSetOf" || name == "linkedSetOf"
+                          name == "linkedSetOf"
+                {
+                    collectionType = makeSyntheticLinkedHashSetType(
+                        symbols: sema.symbols,
+                        types: sema.types,
+                        interner: interner,
+                        elementType: explicitTypeArg
+                    )
+                } else if let explicitTypeArg = explicitTypeArgs.first,
+                          name == "mutableSetOf" || name == "hashSetOf"
                 {
                     collectionType = makeSyntheticMutableSetType(
                         symbols: sema.symbols,
@@ -2969,7 +3016,14 @@ final class CallTypeChecker {
                     } else {
                         sema.types.lub(argTypes)
                     }
-                    collectionType = if name == "mutableSetOf" || name == "hashSetOf" || name == "linkedSetOf" {
+                    collectionType = if name == "linkedSetOf" {
+                        makeSyntheticLinkedHashSetType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            elementType: elementType
+                        )
+                    } else if name == "mutableSetOf" || name == "hashSetOf" {
                         makeSyntheticMutableSetType(
                             symbols: sema.symbols,
                             types: sema.types,
@@ -3094,26 +3148,27 @@ final class CallTypeChecker {
                         )
                     }
                 } else if name == "HashSet" || name == "LinkedHashSet" {
+                    let elementType: TypeID
                     if let explicitTypeArg = explicitTypeArgs.first {
-                        collectionType = makeSyntheticMutableSetType(
-                            symbols: sema.symbols,
-                            types: sema.types,
-                            interner: interner,
-                            elementType: explicitTypeArg
-                        )
+                        elementType = explicitTypeArg
                     } else if !expectedCollectionArgs.isEmpty {
-                        collectionType = makeSyntheticMutableSetType(
+                        elementType = expectedCollectionArgs[0]
+                    } else {
+                        elementType = sema.types.anyType
+                    }
+                    collectionType = if name == "LinkedHashSet" {
+                        makeSyntheticLinkedHashSetType(
                             symbols: sema.symbols,
                             types: sema.types,
                             interner: interner,
-                            elementType: expectedCollectionArgs[0]
+                            elementType: elementType
                         )
                     } else {
-                        collectionType = makeSyntheticMutableSetType(
+                        makeSyntheticMutableSetType(
                             symbols: sema.symbols,
                             types: sema.types,
                             interner: interner,
-                            elementType: sema.types.anyType
+                            elementType: elementType
                         )
                     }
                 } else if name == "HashMap" || name == "LinkedHashMap" {
@@ -3887,6 +3942,27 @@ final class CallTypeChecker {
         }
         return types.make(.classType(ClassType(
             classSymbol: mutableSetSymbol,
+            args: [.invariant(elementType)],
+            nullability: .nonNull
+        )))
+    }
+
+    private func makeSyntheticLinkedHashSetType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        elementType: TypeID
+    ) -> TypeID {
+        let linkedHashSetFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("LinkedHashSet"),
+        ]
+        guard let linkedHashSetSymbol = symbols.lookup(fqName: linkedHashSetFQName) else {
+            return types.anyType
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: linkedHashSetSymbol,
             args: [.invariant(elementType)],
             nullability: .nonNull
         )))
