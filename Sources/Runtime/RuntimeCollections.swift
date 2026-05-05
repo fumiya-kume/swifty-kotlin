@@ -1373,6 +1373,17 @@ public func kk_mutable_map_putAll(_ mapRaw: Int, _ otherMapRaw: Int) -> Int {
     return 0
 }
 
+@_cdecl("kk_mutable_map_plusAssign_pair")
+public func kk_mutable_map_plusAssign_pair(_ mapRaw: Int, _ pairRaw: Int) -> Int {
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
+          let pairBox = tryCast(pointer, to: RuntimePairBox.self)
+    else {
+        return 0
+    }
+    _ = kk_mutable_map_put(mapRaw, pairBox.first, pairBox.second)
+    return 0
+}
+
 @_cdecl("kk_map_size")
 public func kk_map_size(_ mapRaw: Int) -> Int {
     guard let map = runtimeMapBox(from: mapRaw) else {
