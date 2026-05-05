@@ -1421,6 +1421,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             println(list.sumOf { it * 2 })
             println(list.maxOrNull())
             println(list.minOrNull())
+            println(list.minOfWithOrNull(reverseOrder<Int>()) { it * 10 })
             println(list.foldRight(0) { value, acc -> value * 10 + acc })
         }
         """
@@ -1436,6 +1437,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             XCTAssertTrue(callees.contains("kk_list_sumOf") || callees.contains("sumOf"))
             XCTAssertTrue(callees.contains("kk_list_maxOrNull"))
             XCTAssertTrue(callees.contains("kk_list_minOrNull"))
+            XCTAssertTrue(callees.contains("kk_list_minOfWithOrNull"))
             XCTAssertTrue(callees.contains("kk_list_foldRight"))
         }
     }
@@ -1461,6 +1463,30 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(normalizedStdout, "4.0\n")
+        }
+    }
+
+    func testCodegenListMinOfWithOrNullReturnsComparatorSelectedValueAndNullOnEmpty() throws {
+        let source = """
+        fun main() {
+            println(listOf(5, 2, 3).minOfWithOrNull(reverseOrder<Int>()) { it * 10 })
+            println(emptyList<Int>().minOfWithOrNull(reverseOrder<Int>()) { it * 10 } == null)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListMinOfWithOrNullRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "50\ntrue\n")
         }
     }
 
