@@ -14,6 +14,7 @@
 /// - `getName(index: Int): Path`
 /// - `Path.name: String` extension property
 /// - `Path.appendText(text: CharSequence, charset)` extension function
+/// - `Path.absolute(): Path` extension function
 /// - `Path.invariantSeparatorsPathString: String` extension property
 /// - `readText(): String`, `writeText(text: String)`, `readLines(): List<String>`
 /// - `createDirectories(): Path`, `deleteIfExists(): Boolean`
@@ -23,6 +24,7 @@
 /// - `CopyActionContext` type surface
 /// - `CopyActionResult` enum surface
 /// - `ExperimentalPathApi` marker annotation surface
+/// - `PathWalkOption` enum surface
 ///
 /// Each stub registers the kotlin.io.path.Path class, its constructor, member
 /// properties, and member functions in the symbol table so that name resolution
@@ -100,6 +102,22 @@ extension DataFlowSemaPhase {
             packageSymbol: kotlinIOPathPkgSymbol,
             symbols: symbols,
             interner: interner
+        )
+        let pathWalkOptionSymbol = ensurePathWalkOptionEnum(
+            in: kotlinIOPathPkg,
+            packageSymbol: kotlinIOPathPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        let pathWalkOptionType = types.make(.classType(ClassType(
+            classSymbol: pathWalkOptionSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        setPathEnumEntryTypes(
+            enumSymbol: pathWalkOptionSymbol,
+            enumType: pathWalkOptionType,
+            symbols: symbols
         )
 
         let copyActionResultSymbol = ensurePathCopyActionResultEnum(
@@ -246,6 +264,17 @@ extension DataFlowSemaPhase {
             receiverType: pathType,
             returnType: types.stringType,
             externalLinkName: "kk_path_name",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "absolute",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [],
+            returnType: pathType,
+            externalLinkName: "kk_path_toAbsolutePath",
             symbols: symbols,
             interner: interner
         )
@@ -707,6 +736,50 @@ extension DataFlowSemaPhase {
         return enumSymbol
     }
 
+    private func ensurePathWalkOptionEnum(
+        in packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> SymbolID {
+        let name = interner.intern("PathWalkOption")
+        let fqName = packageFQName + [name]
+        if let existing = symbols.lookup(fqName: fqName) {
+            return existing
+        }
+
+        let enumSymbol = symbols.define(
+            kind: .enumClass,
+            name: name,
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol {
+            symbols.setParentSymbol(packageSymbol, for: enumSymbol)
+        }
+
+        for entry in ["BREADTH_FIRST", "FOLLOW_LINKS"] {
+            let entryName = interner.intern(entry)
+            let entryFQName = fqName + [entryName]
+            if symbols.lookup(fqName: entryFQName) != nil {
+                continue
+            }
+            let entrySymbol = symbols.define(
+                kind: .field,
+                name: entryName,
+                fqName: entryFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(enumSymbol, for: entrySymbol)
+        }
+
+        return enumSymbol
+    }
+
     private func setPathEnumEntryTypes(
         enumSymbol: SymbolID,
         enumType: TypeID,
@@ -1054,9 +1127,23 @@ extension DataFlowSemaPhase {
             }
             return existingSignature.receiverType == receiverType
                 && existingSignature.parameterTypes == parameters.map(\.type)
-                && existingSignature.returnType == returnType
         }) {
             symbols.setExternalLinkName(externalLinkName, for: existing)
+            if let existingSignature = symbols.functionSignature(for: existing),
+               existingSignature.returnType != returnType {
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: existingSignature.receiverType,
+                        parameterTypes: existingSignature.parameterTypes,
+                        returnType: returnType,
+                        isSuspend: existingSignature.isSuspend,
+                        valueParameterSymbols: existingSignature.valueParameterSymbols,
+                        valueParameterHasDefaultValues: existingSignature.valueParameterHasDefaultValues,
+                        valueParameterIsVararg: existingSignature.valueParameterIsVararg
+                    ),
+                    for: existing
+                )
+            }
             return
         }
 
@@ -1075,17 +1162,17 @@ extension DataFlowSemaPhase {
 
         var valueParameterSymbols: [SymbolID] = []
         for parameter in parameters {
-            let paramNameID = interner.intern(parameter.name)
-            let paramSymbol = symbols.define(
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
                 kind: .valueParameter,
-                name: paramNameID,
-                fqName: functionFQName + [paramNameID],
+                name: parameterName,
+                fqName: functionFQName + [parameterName],
                 declSite: nil,
                 visibility: .private,
                 flags: [.synthetic]
             )
-            symbols.setParentSymbol(functionSymbol, for: paramSymbol)
-            valueParameterSymbols.append(paramSymbol)
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            valueParameterSymbols.append(parameterSymbol)
         }
 
         symbols.setFunctionSignature(

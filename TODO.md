@@ -83,9 +83,9 @@
 - [ ] STDLIB-COL-OTHER-001: `IndexedValue<T>` データクラスの実装
 - [ ] STDLIB-COL-OTHER-002: `Grouping<T,K>` インターフェースの実装
 - [ ] STDLIB-COL-OTHER-003: `RandomAccess` マーカーインターフェースの実装
-- [ ] STDLIB-COL-OTHER-004: `MutableIterable<T>` インターフェースの実装
+- [x] STDLIB-COL-OTHER-004: `MutableIterable<T>` インターフェースの実装
 - [x] STDLIB-COL-OTHER-005: `MutableIterator<T>` インターフェースの実装
-- [ ] STDLIB-COL-OTHER-006: `MutableListIterator<T>` インターフェースの実装
+- [x] STDLIB-COL-OTHER-006: `MutableListIterator<T>` インターフェースの実装
 
 #### kotlin.collections プロパティの実装
 - [ ] STDLIB-COL-PROP-001: `indices` 拡張プロパティの実装
@@ -569,7 +569,7 @@
 - [ ] STDLIB-IO-PATH-PROP-006: `pathString` 拡張プロパティの実装
 
 #### kotlin.io.path 関数の実装
-- [ ] STDLIB-IO-PATH-FN-001: `absolute` 関数の実装
+- [x] STDLIB-IO-PATH-FN-001: `absolute` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-002: `absolutePathString` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-003: `appendBytes` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-004: `appendLines` 関数の実装（Iterable版）
@@ -1201,14 +1201,14 @@
 - [x] STDLIB-IO-PATH-TYPE-003: `kotlin.io.path.ExperimentalPathApi` marker annotation を追加する
 - [ ] STDLIB-IO-PATH-TYPE-004: `kotlin.io.path.FileVisitorBuilder` type surface を追加する
 - [ ] STDLIB-IO-PATH-TYPE-005: `kotlin.io.path.OnErrorResult` enum surface を追加する
-- [ ] STDLIB-IO-PATH-TYPE-006: `kotlin.io.path.PathWalkOption` enum surface を追加する
+- [x] STDLIB-IO-PATH-TYPE-006: `kotlin.io.path.PathWalkOption` enum surface を追加する
 - [ ] STDLIB-IO-PATH-PROP-001: `Path.extension` extension property を追加する
 - [ ] STDLIB-IO-PATH-PROP-002: `Path.invariantSeparatorsPath` extension property を追加する
 - [x] STDLIB-IO-PATH-PROP-003: `Path.invariantSeparatorsPathString` extension property を追加する
 - [x] STDLIB-IO-PATH-PROP-004: `Path.name` extension property を既存 `Path` member stub と整合させる
 - [ ] STDLIB-IO-PATH-PROP-005: `Path.nameWithoutExtension` extension property を追加する
 - [ ] STDLIB-IO-PATH-PROP-006: `Path.pathString` extension property を追加する
-- [ ] STDLIB-IO-PATH-FN-001: `Path.absolute()` を追加する
+- [x] STDLIB-IO-PATH-FN-001: `Path.absolute()` を追加する
 - [ ] STDLIB-IO-PATH-FN-002: `Path.absolutePathString()` を追加する
 - [ ] STDLIB-IO-PATH-FN-003: `Path.appendBytes(array)` を追加する
 - [ ] STDLIB-IO-PATH-FN-004: `Path.appendLines(lines: Iterable<CharSequence>, charset)` を追加する
