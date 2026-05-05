@@ -413,6 +413,14 @@ extension DataFlowSemaPhase {
             typeParamSymbol: typeParamSymbol,
             typeParamType: typeParamType
         )
+        _ = registerSyntheticAbstractMutableSetStub(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            setInterfaceSymbol: setInterfaceSymbol,
+            mutableSetInterfaceSymbol: mutableSetInterfaceSymbol
+        )
 
         // STDLIB-651: Set.toMutableSet() → kk_set_to_mutable_set
         // Register on Set (not MutableSet) since Set.toMutableSet() returns MutableSet
@@ -433,6 +441,103 @@ extension DataFlowSemaPhase {
                 )
             }
         }
+    }
+
+    /// Register `kotlin.collections.AbstractMutableSet<E>` surface (STDLIB-COL-ABSTRACT-008).
+    func registerSyntheticAbstractMutableSetStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        setInterfaceSymbol: SymbolID,
+        mutableSetInterfaceSymbol: SymbolID
+    ) -> SymbolID {
+        let abstractMutableSetName = interner.intern("AbstractMutableSet")
+        let abstractMutableSetFQName = kotlinCollectionsPkg + [abstractMutableSetName]
+        let abstractMutableSetSymbol: SymbolID = if let existing = symbols.lookup(fqName: abstractMutableSetFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .class,
+                name: abstractMutableSetName,
+                fqName: abstractMutableSetFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .abstractType]
+            )
+        }
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = abstractMutableSetFQName + [typeParamName]
+        let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: abstractMutableSetSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: abstractMutableSetSymbol)
+
+        let abstractMutableSetType = types.make(.classType(ClassType(
+            classSymbol: abstractMutableSetSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(abstractMutableSetType, for: abstractMutableSetSymbol)
+
+        let abstractSetSymbol = symbols.lookup(
+            fqName: kotlinCollectionsPkg + [interner.intern("AbstractSet")]
+        )
+        let readonlySupertype = abstractSetSymbol ?? setInterfaceSymbol
+        symbols.setDirectSupertypes([readonlySupertype, mutableSetInterfaceSymbol], for: abstractMutableSetSymbol)
+        types.setNominalDirectSupertypes([readonlySupertype, mutableSetInterfaceSymbol], for: abstractMutableSetSymbol)
+        symbols.setSupertypeTypeArgs([.out(typeParamType)], for: abstractMutableSetSymbol, supertype: readonlySupertype)
+        types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: abstractMutableSetSymbol, supertype: readonlySupertype)
+        symbols.setSupertypeTypeArgs([.invariant(typeParamType)], for: abstractMutableSetSymbol, supertype: mutableSetInterfaceSymbol)
+        types.setNominalSupertypeTypeArgs(
+            [.invariant(typeParamType)],
+            for: abstractMutableSetSymbol,
+            supertype: mutableSetInterfaceSymbol
+        )
+
+        let initName = interner.intern("<init>")
+        let initFQName = abstractMutableSetFQName + [initName]
+        if symbols.lookup(fqName: initFQName) == nil {
+            let initSymbol = symbols.define(
+                kind: .constructor,
+                name: initName,
+                fqName: initFQName,
+                declSite: nil,
+                visibility: .protected,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(abstractMutableSetSymbol, for: initSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: [],
+                    returnType: abstractMutableSetType,
+                    valueParameterSymbols: [],
+                    valueParameterHasDefaultValues: [],
+                    valueParameterIsVararg: [],
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: initSymbol
+            )
+        }
+
+        return abstractMutableSetSymbol
     }
 
     private func registerMutableSetAddMember(
