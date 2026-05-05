@@ -103,7 +103,7 @@
 - [ ] STDLIB-COL-FN-009: `any` 関数の実装（各オーバーロード）
 - [ ] STDLIB-COL-FN-010: `arrayListOf` 関数の実装
 - [ ] STDLIB-COL-FN-011: `asByteArray` 関数の実装
-- [ ] STDLIB-COL-FN-012: `asIntArray` 関数の実装
+- [x] STDLIB-COL-FN-012: `asIntArray` 関数の実装
 - [ ] STDLIB-COL-FN-013: `asIterable` 関数の実装
 - [ ] STDLIB-COL-FN-014: `asList` 関数の実装
 - [ ] STDLIB-COL-FN-015: `asLongArray` 関数の実装
