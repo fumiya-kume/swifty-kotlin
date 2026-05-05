@@ -88,7 +88,7 @@
 - [x] STDLIB-COL-OTHER-006: `MutableListIterator<T>` インターフェースの実装
 
 #### kotlin.collections プロパティの実装
-- [ ] STDLIB-COL-PROP-001: `indices` 拡張プロパティの実装
+- [x] STDLIB-COL-PROP-001: `indices` 拡張プロパティの実装
 - [ ] STDLIB-COL-PROP-002: `lastIndex` 拡張プロパティの実装
 
 #### kotlin.collections 関数の実装（A-C）

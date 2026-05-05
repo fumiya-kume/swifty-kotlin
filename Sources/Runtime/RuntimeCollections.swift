@@ -113,6 +113,14 @@ public func kk_list_size(_ listRaw: Int) -> Int {
     return list.elements.count
 }
 
+@_cdecl("kk_list_indices")
+public func kk_list_indices(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return kk_op_rangeTo(0, -1)
+    }
+    return kk_op_rangeTo(0, list.elements.count - 1)
+}
+
 @_cdecl("kk_list_get")
 public func kk_list_get(_ listRaw: Int, _ index: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
