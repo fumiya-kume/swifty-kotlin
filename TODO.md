@@ -51,10 +51,10 @@
 
 #### kotlin.collections 抽象基底クラスの実装
 - [ ] STDLIB-COL-ABSTRACT-001: `AbstractCollection<E>` 抽象クラスの実装
-- [ ] STDLIB-COL-ABSTRACT-002: `AbstractIterator<T>` 抽象クラスの実装
+- [x] STDLIB-COL-ABSTRACT-002: `AbstractIterator<T>` 抽象クラスの実装
 - [ ] STDLIB-COL-ABSTRACT-003: `AbstractList<E>` 抽象クラスの実装
 - [ ] STDLIB-COL-ABSTRACT-004: `AbstractMap<K,V>` 抽象クラスの実装
-- [ ] STDLIB-COL-ABSTRACT-005: `AbstractMutableCollection<E>` 抽象クラスの実装
+- [x] STDLIB-COL-ABSTRACT-005: `AbstractMutableCollection<E>` 抽象クラスの実装
 - [ ] STDLIB-COL-ABSTRACT-006: `AbstractMutableList<E>` 抽象クラスの実装
 - [ ] STDLIB-COL-ABSTRACT-007: `AbstractMutableMap<K,V>` 抽象クラスの実装
 - [ ] STDLIB-COL-ABSTRACT-008: `AbstractMutableSet<E>` 抽象クラスの実装
@@ -70,17 +70,17 @@
 - [ ] STDLIB-COL-CONCRETE-007: `ArrayDeque<E>` 具象クラスの実装
 
 #### kotlin.collections プリミティブイテレータの実装
-- [ ] STDLIB-COL-ITERATOR-001: `BooleanIterator` クラスの実装
+- [x] STDLIB-COL-ITERATOR-001: `BooleanIterator` クラスの実装
 - [ ] STDLIB-COL-ITERATOR-002: `ByteIterator` クラスの実装
-- [ ] STDLIB-COL-ITERATOR-003: `CharIterator` クラスの実装
+- [x] STDLIB-COL-ITERATOR-003: `CharIterator` クラスの実装
 - [ ] STDLIB-COL-ITERATOR-004: `DoubleIterator` クラスの実装
 - [ ] STDLIB-COL-ITERATOR-005: `FloatIterator` クラスの実装
-- [ ] STDLIB-COL-ITERATOR-006: `IntIterator` クラスの実装
+- [x] STDLIB-COL-ITERATOR-006: `IntIterator` クラスの実装
 - [ ] STDLIB-COL-ITERATOR-007: `LongIterator` クラスの実装
-- [ ] STDLIB-COL-ITERATOR-008: `ShortIterator` クラスの実装
+- [x] STDLIB-COL-ITERATOR-008: `ShortIterator` クラスの実装
 
 #### kotlin.collections その他の型の実装
-- [ ] STDLIB-COL-OTHER-001: `IndexedValue<T>` データクラスの実装
+- [x] STDLIB-COL-OTHER-001: `IndexedValue<T>` データクラスの実装
 - [ ] STDLIB-COL-OTHER-002: `Grouping<T,K>` インターフェースの実装
 - [ ] STDLIB-COL-OTHER-003: `RandomAccess` マーカーインターフェースの実装
 - [x] STDLIB-COL-OTHER-004: `MutableIterable<T>` インターフェースの実装
@@ -88,7 +88,7 @@
 - [x] STDLIB-COL-OTHER-006: `MutableListIterator<T>` インターフェースの実装
 
 #### kotlin.collections プロパティの実装
-- [ ] STDLIB-COL-PROP-001: `indices` 拡張プロパティの実装
+- [x] STDLIB-COL-PROP-001: `indices` 拡張プロパティの実装
 - [ ] STDLIB-COL-PROP-002: `lastIndex` 拡張プロパティの実装
 
 #### kotlin.collections 関数の実装（A-C）
@@ -1200,9 +1200,11 @@
 - [x] STDLIB-IO-PATH-TYPE-002: `kotlin.io.path.CopyActionResult` enum surface を追加する
 - [x] STDLIB-IO-PATH-TYPE-003: `kotlin.io.path.ExperimentalPathApi` marker annotation を追加する
 - [x] STDLIB-IO-PATH-TYPE-004: `kotlin.io.path.FileVisitorBuilder` type surface を追加する
-- [ ] STDLIB-IO-PATH-TYPE-005: `kotlin.io.path.OnErrorResult` enum surface を追加する
+- [x] STDLIB-IO-PATH-TYPE-005: `kotlin.io.path.OnErrorResult` enum surface を追加する
 - [x] STDLIB-IO-PATH-TYPE-006: `kotlin.io.path.PathWalkOption` enum surface を追加する
 - [ ] STDLIB-IO-PATH-PROP-001: `Path.extension` extension property を追加する
+- [x] STDLIB-IO-PATH-PROP-002: `Path.invariantSeparatorsPath` extension property を追加する
+- [ ] STDLIB-IO-PATH-PROP-003: `Path.invariantSeparatorsPathString` extension property を追加する
 - [ ] STDLIB-IO-PATH-PROP-002: `Path.invariantSeparatorsPath` extension property を追加する
 - [x] STDLIB-IO-PATH-PROP-003: `Path.invariantSeparatorsPathString` extension property を追加する
 - [x] STDLIB-IO-PATH-PROP-004: `Path.name` extension property を既存 `Path` member stub と整合させる

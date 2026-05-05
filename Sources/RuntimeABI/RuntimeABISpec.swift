@@ -7924,6 +7924,7 @@ public enum RuntimeABISpec {
     public static let pathFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(name: "kk_path_new", parameters: [RuntimeABIParameter(name: "pathStringRaw", type: .intptr)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_name", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_invariantSeparatorsPath", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_invariantSeparatorsPathString", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_fileName", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_parent", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr)], returnType: .intptr, section: "Path"),

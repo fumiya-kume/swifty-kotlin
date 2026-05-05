@@ -18,6 +18,17 @@ final class RuntimePathTests: XCTestCase {
         kk_path_new(makeStringRaw(value))
     }
 
+    func testPathInvariantSeparatorsPathRewritesBackslashes() {
+        XCTAssertEqual(
+            extractStringRaw(kk_path_invariantSeparatorsPath(makePathRaw(#"C:\tmp\archive.tar.gz"#))),
+            "C:/tmp/archive.tar.gz"
+        )
+        XCTAssertEqual(
+            extractStringRaw(kk_path_invariantSeparatorsPath(makePathRaw("/tmp/archive.tar.gz"))),
+            "/tmp/archive.tar.gz"
+        )
+    }
+
     func testPathInvariantSeparatorsPathStringRewritesBackslashes() {
         XCTAssertEqual(
             extractStringRaw(kk_path_invariantSeparatorsPathString(makePathRaw(#"C:\tmp\archive.tar.gz"#))),
