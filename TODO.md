@@ -247,7 +247,7 @@
 - [ ] STDLIB-COL-FN-151: `onEach` 関数の実装
 - [ ] STDLIB-COL-FN-152: `onEachIndexed` 関数の実装
 - [ ] STDLIB-COL-FN-153: `orEmpty` 関数の実装
-- [ ] STDLIB-COL-FN-154: `partition` 関数の実装
+- [x] STDLIB-COL-FN-154: `partition` 関数の実装
 - [ ] STDLIB-COL-FN-155: `plus` 関数の実装
 - [ ] STDLIB-COL-FN-156: `plusAssign` 関数の実装
 - [ ] STDLIB-COL-FN-157: `plusElement` 関数の実装
