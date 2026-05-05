@@ -119,6 +119,11 @@ private let maxByNegativeValue: @convention(c) (Int, Int, UnsafeMutablePointer<I
     -value
 }
 
+private let reverseIntComparator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, lhs, rhs, _ in
+    if lhs == rhs { return 0 }
+    return lhs > rhs ? -1 : 1
+}
+
 private let groupingFoldToInitialValueSelector: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = {
     _, key, element, _ in
     gHOFState.addCall()
@@ -930,6 +935,25 @@ final class RuntimeCollectionHOFTests: XCTestCase {
 
         thrown = 0
         XCTAssertEqual(kk_list_last(makeList([]), 0, 0, &thrown), runtimeExceptionCaughtSentinel)
+    }
+
+    func testMinWithOrNullReturnsComparatorMinimumAndNullOnEmpty() {
+        var thrown = 0
+        let result = kk_list_minWithOrNull(
+            makeList([5, 2, 3]),
+            unsafeBitCast(reverseIntComparator, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(result, 5)
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        XCTAssertEqual(
+            kk_list_minWithOrNull(makeList([]), unsafeBitCast(reverseIntComparator, to: Int.self), 0, &thrown),
+            runtimeNullSentinelInt
+        )
+        XCTAssertEqual(thrown, 0)
     }
 
     func testListSliceRangeAndIterableReturnSelectedElements() {
