@@ -70,7 +70,7 @@
 - [ ] STDLIB-COL-CONCRETE-007: `ArrayDeque<E>` 具象クラスの実装
 
 #### kotlin.collections プリミティブイテレータの実装
-- [ ] STDLIB-COL-ITERATOR-001: `BooleanIterator` クラスの実装
+- [x] STDLIB-COL-ITERATOR-001: `BooleanIterator` クラスの実装
 - [ ] STDLIB-COL-ITERATOR-002: `ByteIterator` クラスの実装
 - [x] STDLIB-COL-ITERATOR-003: `CharIterator` クラスの実装
 - [ ] STDLIB-COL-ITERATOR-004: `DoubleIterator` クラスの実装
