@@ -1266,7 +1266,7 @@ extension CallTypeChecker {
              interner.intern("takeWhile"), interner.intern("dropWhile"),
              interner.intern("sortBy"), interner.intern("sortByDescending"), interner.intern("distinctBy"),
              interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"),
-             interner.intern("maxByOrNull"), interner.intern("minByOrNull"),
+             interner.intern("maxBy"), interner.intern("maxByOrNull"), interner.intern("minByOrNull"),
              interner.intern("maxOfOrNull"), interner.intern("minOfOrNull"),
              interner.intern("maxOf"), interner.intern("minOf"),
              interner.intern("maxWith"), interner.intern("maxWithOrNull"),
@@ -1353,8 +1353,8 @@ extension CallTypeChecker {
             return sema.types.make(.primitive(.int, .nonNull))
         }
 
-        // sum() returns the element type (Int for List<Int>, Long for List<Long>, etc.)
-        if memberName == interner.intern("sum") {
+        // sum()/maxBy() use the receiver element type as the result.
+        if memberName == interner.intern("sum") || memberName == interner.intern("maxBy") {
             return receiverElementType
         }
 

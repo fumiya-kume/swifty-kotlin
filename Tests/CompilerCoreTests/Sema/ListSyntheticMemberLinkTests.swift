@@ -472,6 +472,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                 "sumOf": "kk_list_sumOf",
                 "maxOrNull": "kk_list_maxOrNull",
                 "minOrNull": "kk_list_minOrNull",
+                "maxBy": "kk_list_maxBy",
                 "filterNotTo": "kk_list_filterNotTo",
             ]
 
