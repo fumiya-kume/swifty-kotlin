@@ -46,6 +46,47 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testListIndicesExtensionPropertyResolvesToRuntimeGetter() throws {
+        let source = """
+        import kotlin.collections.indices
+        import kotlin.ranges.IntRange
+
+        fun range(values: List<String>): IntRange {
+            return values.indices
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected List.indices to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let propertyExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, args, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "indices" && args.isEmpty
+            }, "Expected values.indices property access in AST")
+            let propertyType = try XCTUnwrap(sema.bindings.exprType(for: propertyExpr))
+            guard case let .classType(rangeType) = sema.types.kind(of: propertyType) else {
+                return XCTFail("Expected List.indices to have IntRange type")
+            }
+            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(rangeType.classSymbol)?.name)), "IntRange")
+
+            let getter = try XCTUnwrap(sema.bindings.callBinding(for: propertyExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: getter), "kk_list_indices")
+
+            let property = try XCTUnwrap(sema.bindings.identifierSymbol(for: propertyExpr))
+            XCTAssertEqual(sema.symbols.externalLinkName(for: property), "kk_list_indices")
+            XCTAssertEqual(sema.symbols.propertyType(for: property), propertyType)
+        }
+    }
+
     func testArrayListOfFactoryInfersMutableListType() throws {
         let source = """
         fun probe() {

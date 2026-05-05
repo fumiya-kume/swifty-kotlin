@@ -57,6 +57,14 @@ public func kk_path_name(_ pathRaw: Int) -> Int {
     return pathMakeStringRaw((path.pathString as NSString).lastPathComponent)
 }
 
+@_cdecl("kk_path_invariantSeparatorsPath")
+public func kk_path_invariantSeparatorsPath(_ pathRaw: Int) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_invariantSeparatorsPath received invalid Path handle")
+    }
+    return pathMakeStringRaw(path.pathString.replacingOccurrences(of: "\\", with: "/"))
+}
+
 @_cdecl("kk_path_invariantSeparatorsPathString")
 public func kk_path_invariantSeparatorsPathString(_ pathRaw: Int) -> Int {
     guard let path = runtimePathBox(from: pathRaw) else {
