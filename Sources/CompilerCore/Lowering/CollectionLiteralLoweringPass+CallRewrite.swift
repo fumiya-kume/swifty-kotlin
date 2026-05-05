@@ -3135,7 +3135,7 @@ extension CollectionLiteralLoweringPass {
 
                     // --- Rewrite additional HOF collection member calls (STDLIB-005) ---
                     // 1-param lambda HOFs with [receiver, lambda, closureRaw?]
-                    if callee == lookup.groupByName || callee == lookup.sortedByName || callee == lookup.findName
+                    if callee == lookup.groupByName || callee == lookup.sortedByName || callee == lookup.findName || callee == lookup.findLastName
                         || callee == lookup.associateByName || callee == lookup.associateWithName || callee == lookup.associateName
                         || callee == lookup.distinctByName
                     {
@@ -3155,6 +3155,7 @@ extension CollectionLiteralLoweringPass {
                                 case lookup.groupByName: lookup.kkListGroupByName
                                 case lookup.sortedByName: lookup.kkListSortedByName
                                 case lookup.findName: lookup.kkListFindName
+                                case lookup.findLastName: lookup.kkListFindLastName
                                 case lookup.associateByName: lookup.kkListAssociateByName
                                 case lookup.associateWithName: lookup.kkListAssociateWithName
                                 case lookup.associateName: lookup.kkListAssociateName

@@ -156,6 +156,12 @@ extension DataFlowSemaPhase {
             isSuspend: false,
             nullability: .nonNull
         )))
+        registerMember(
+            name: "findLast",
+            parameterTypes: [listPredicateType],
+            externalLinkName: "kk_list_findLast",
+            returnTypeOverride: types.makeNullable(listTypeParamType)
+        )
         registerMemberOverload(
             memberName: interner.intern("filterNot"),
             memberFQName: listFQName + [interner.intern("filterNot")],

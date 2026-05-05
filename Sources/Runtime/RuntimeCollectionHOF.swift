@@ -1315,6 +1315,21 @@ public func kk_list_find(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outT
     return runtimeNullSentinelInt
 }
 
+@_cdecl("kk_list_findLast")
+public func kk_list_findLast(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    if fnPtr == 0 {
+        return list.elements.last ?? runtimeNullSentinelInt
+    }
+    for elem in list.elements.reversed() {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if maybeUnbox(result) != 0 { return elem }
+    }
+    return runtimeNullSentinelInt
+}
+
 @_cdecl("kk_list_associateBy")
 public func kk_list_associateBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {

@@ -63,7 +63,7 @@ public extension RuntimeABISpec {
         let scanReduceSpec = hofSpec("kk_list_scanReduce")
         let genericAfter = [
             "kk_list_reduce", "kk_list_groupBy", "kk_list_sortedBy",
-            "kk_list_count", "kk_list_first", "kk_list_last", "kk_list_find",
+            "kk_list_count", "kk_list_first", "kk_list_last", "kk_list_find", "kk_list_findLast",
         ]
         let destinationLambdaParams = [
             RuntimeABIParameter(name: "listRaw", type: .intptr),

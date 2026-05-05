@@ -145,6 +145,7 @@ struct CollectionLiteralLookupTables {
     let kkListFirstName: InternedString
     let kkListLastName: InternedString
     let kkListFindName: InternedString
+    let kkListFindLastName: InternedString
     let kkListZipName: InternedString
     let kkListZipWithNextName: InternedString
     let kkListZipWithNextTransformName: InternedString
@@ -956,6 +957,7 @@ struct CollectionLiteralLookupTables {
         kkListFirstName = interner.intern("kk_list_first")
         kkListLastName = interner.intern("kk_list_last")
         kkListFindName = interner.intern("kk_list_find")
+        kkListFindLastName = interner.intern("kk_list_findLast")
         kkListZipName = interner.intern("kk_list_zip")
         kkListZipWithNextName = interner.intern("kk_list_zipWithNext")
         kkListZipWithNextTransformName = interner.intern("kk_list_zipWithNextTransform")
