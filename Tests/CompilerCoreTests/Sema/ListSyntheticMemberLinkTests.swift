@@ -1127,6 +1127,88 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testAbstractMutableMapSurfaceIsRegistered() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let collectionsPkg = ["kotlin", "collections"].map { ctx.interner.intern($0) }
+            let mapSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: collectionsPkg + [ctx.interner.intern("Map")])
+            )
+            let mutableMapSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: collectionsPkg + [ctx.interner.intern("MutableMap")])
+            )
+            let abstractMutableMapFQName = collectionsPkg + [ctx.interner.intern("AbstractMutableMap")]
+            let abstractMutableMapSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: abstractMutableMapFQName),
+                "Expected kotlin.collections.AbstractMutableMap to be registered"
+            )
+            let abstractMutableMapInfo = try XCTUnwrap(sema.symbols.symbol(abstractMutableMapSymbol))
+            XCTAssertEqual(abstractMutableMapInfo.kind, .class)
+            XCTAssertTrue(abstractMutableMapInfo.flags.contains(.synthetic))
+            XCTAssertTrue(abstractMutableMapInfo.flags.contains(.abstractType))
+            XCTAssertEqual(
+                sema.types.nominalTypeParameterVariances(for: abstractMutableMapSymbol),
+                [.invariant, .invariant]
+            )
+
+            let abstractMapSymbol = sema.symbols.lookup(
+                fqName: collectionsPkg + [ctx.interner.intern("AbstractMap")]
+            )
+            let readonlySupertype = abstractMapSymbol ?? mapSymbol
+            let directSupertypes = sema.symbols.directSupertypes(for: abstractMutableMapSymbol)
+            XCTAssertTrue(directSupertypes.contains(readonlySupertype))
+            XCTAssertTrue(directSupertypes.contains(mutableMapSymbol))
+            XCTAssertEqual(
+                sema.symbols.supertypeTypeArgs(for: abstractMutableMapSymbol, supertype: readonlySupertype).count,
+                2
+            )
+            XCTAssertEqual(
+                sema.symbols.supertypeTypeArgs(for: abstractMutableMapSymbol, supertype: mutableMapSymbol).count,
+                2
+            )
+
+            let constructorSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: abstractMutableMapFQName + [ctx.interner.intern("<init>")]),
+                "Expected AbstractMutableMap protected constructor to be registered"
+            )
+            let constructorInfo = try XCTUnwrap(sema.symbols.symbol(constructorSymbol))
+            XCTAssertEqual(constructorInfo.kind, .constructor)
+            XCTAssertEqual(constructorInfo.visibility, .protected)
+            XCTAssertTrue(try XCTUnwrap(sema.symbols.functionSignature(for: constructorSymbol)).parameterTypes.isEmpty)
+        }
+    }
+
+    func testAbstractMutableMapCanBeUsedAsMapAndMutableMapSupertype() throws {
+        let source = """
+        import kotlin.collections.AbstractMutableMap
+        import kotlin.collections.Map
+        import kotlin.collections.MutableMap
+
+        class ProbeMutableMap : AbstractMutableMap<String, Int>()
+
+        fun acceptReadonly(values: Map<String, Int>) {}
+        fun acceptMutable(values: MutableMap<String, Int>) {}
+
+        fun probe(values: ProbeMutableMap) {
+            acceptReadonly(values)
+            acceptMutable(values)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected AbstractMutableMap subtype surface to resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     func testMutableListIteratorSurfaceIsRegistered() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])
