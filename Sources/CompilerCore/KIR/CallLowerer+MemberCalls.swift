@@ -4342,6 +4342,8 @@ extension CallLowerer {
                     "kk_list_elementAt"
                 case "containsAll":
                     "kk_list_containsAll"
+                case "intersect":
+                    "kk_list_intersect"
                 default:
                     nil
                 }
