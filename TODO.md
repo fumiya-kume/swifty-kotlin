@@ -213,7 +213,7 @@
 - [ ] STDLIB-COL-FN-117: `mapKeysTo` 関数の実装
 - [ ] STDLIB-COL-FN-118: `mapNotNull` 関数の実装
 - [ ] STDLIB-COL-FN-119: `mapNotNullTo` 関数の実装
-- [ ] STDLIB-COL-FN-120: `mapOf` 関数の実装
+- [x] STDLIB-COL-FN-120: `mapOf` 関数の実装
 - [ ] STDLIB-COL-FN-121: `mapTo` 関数の実装
 - [ ] STDLIB-COL-FN-122: `mapValues` 関数の実装
 - [ ] STDLIB-COL-FN-123: `mapValuesTo` 関数の実装
