@@ -2696,6 +2696,23 @@ extension CallLowerer {
                calleeStr == "isNullOrEmpty" || calleeStr == "isNullOrBlank"
             {
                 let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+                if calleeStr == "isNullOrEmpty",
+                   let runtimeCallee = collectionIsNullOrEmptyRuntimeCallee(
+                    receiverType: receiverType,
+                    sema: sema,
+                    interner: interner
+                   )
+                {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: runtimeCallee,
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
                 let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
                 if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
                     let runtimeCallee = calleeStr == "isNullOrEmpty"
@@ -8940,6 +8957,32 @@ extension CallLowerer {
             }
             return interner.intern("kk_mutable_map_putAll")
         default:
+            return nil
+        }
+    }
+
+    private func collectionIsNullOrEmptyRuntimeCallee(
+        receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> InternedString? {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return nil
+        }
+
+        let knownNames = KnownCompilerNames(interner: interner)
+        switch knownNames.collectionKind(of: symbol) {
+        case .map?:
+            return interner.intern("kk_map_is_empty")
+        case .set?:
+            return interner.intern("kk_set_is_empty")
+        case .array?:
+            return interner.intern("kk_array_is_empty")
+        case .list?, .collection?:
+            return interner.intern("kk_list_is_empty")
+        case .sequence?, nil:
             return nil
         }
     }

@@ -4962,6 +4962,14 @@ extension CallTypeChecker {
             if args.isEmpty {
                 let calleeStr = interner.resolve(calleeName)
                 if !isNullLiteralReceiver,
+                   calleeStr == "isNullOrEmpty",
+                   isNullableCollectionIsNullOrEmptyReceiver(lookupReceiverType, sema: sema, interner: interner)
+                {
+                    let resultType = sema.types.booleanType
+                    sema.bindings.bindExprType(id, type: resultType)
+                    return resultType
+                }
+                if !isNullLiteralReceiver,
                    calleeStr == "isNullOrEmpty" || calleeStr == "isNullOrBlank"
                 {
                     // Strip nullability so that String? and String both match.
@@ -8056,6 +8064,24 @@ extension CallTypeChecker {
 
         default:
             return nil
+        }
+    }
+
+    private func isNullableCollectionIsNullOrEmptyReceiver(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        switch KnownCompilerNames(interner: interner).collectionKind(of: symbol) {
+        case .map?, .set?, .array?, .list?, .collection?:
+            return true
+        case .sequence?, nil:
+            return false
         }
     }
 
