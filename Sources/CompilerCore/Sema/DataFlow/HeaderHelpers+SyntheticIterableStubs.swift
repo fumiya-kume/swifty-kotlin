@@ -1851,6 +1851,72 @@ extension DataFlowSemaPhase {
         )
     }
 
+    /// Register `Iterable<E>.plusElement(element): List<E>`.
+    func registerIterablePlusElementMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        iterableInterfaceSymbol: SymbolID,
+        listInterfaceSymbol: SymbolID
+    ) {
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName else { return }
+        let memberName = interner.intern("plusElement")
+        let memberFQName = iterableFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = iterableFQName + [typeParamName]
+        guard let typeParamSymbol = symbols.lookup(fqName: typeParamFQName) else { return }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_list_plus_element", for: memberSymbol)
+        let elementParameterName = interner.intern("element")
+        let elementParameterSymbol = symbols.define(
+            kind: .valueParameter,
+            name: elementParameterName,
+            fqName: memberFQName + [elementParameterName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(memberSymbol, for: elementParameterSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [typeParamType],
+                returnType: returnType,
+                valueParameterSymbols: [elementParameterSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
     /// Register `Iterable<E>.minusElement(element): List<E>` (STDLIB-COL-HOF-005).
     func registerIterableMinusElementMember(
         symbols: SymbolTable,

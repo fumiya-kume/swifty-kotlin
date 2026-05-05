@@ -843,11 +843,7 @@ public func kk_list_binarySearch(_ listRaw: Int, _ element: Int) -> Int {
 
 @_cdecl("kk_list_plus_element")
 public func kk_list_plus_element(_ listRaw: Int, _ element: Int) -> Int {
-    let elements: [Int] = if let list = runtimeListBox(from: listRaw) {
-        list.elements
-    } else {
-        []
-    }
+    let elements = runtimeCollectionElements(from: listRaw) ?? runtimeArrayBox(from: listRaw)?.elements ?? []
     return registerRuntimeObject(RuntimeListBox(elements: elements + [element]))
 }
 
