@@ -1014,6 +1014,44 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testRandomAccessMarkerInterfaceSurfaceIsRegistered() throws {
+        let source = """
+        import kotlin.collections.RandomAccess
+
+        class IndexedBag : RandomAccess
+
+        fun keepRandomAccess(marker: RandomAccess): RandomAccess {
+            return marker
+        }
+
+        fun probe(value: IndexedBag): RandomAccess {
+            return keepRandomAccess(value)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected RandomAccess marker interface surface to resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let randomAccessFQName = ["kotlin", "collections", "RandomAccess"]
+                .map { ctx.interner.intern($0) }
+            let randomAccessSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: randomAccessFQName),
+                "Expected kotlin.collections.RandomAccess to be registered"
+            )
+            let randomAccessInfo = try XCTUnwrap(sema.symbols.symbol(randomAccessSymbol))
+            XCTAssertEqual(randomAccessInfo.kind, .interface)
+            XCTAssertTrue(randomAccessInfo.flags.contains(.synthetic))
+            XCTAssertTrue(sema.types.nominalTypeParameterSymbols(for: randomAccessSymbol).isEmpty)
+        }
+    }
+
     func testAbstractMutableCollectionSurfaceIsRegistered() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])

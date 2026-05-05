@@ -82,7 +82,7 @@
 #### kotlin.collections その他の型の実装
 - [ ] STDLIB-COL-OTHER-001: `IndexedValue<T>` データクラスの実装
 - [ ] STDLIB-COL-OTHER-002: `Grouping<T,K>` インターフェースの実装
-- [ ] STDLIB-COL-OTHER-003: `RandomAccess` マーカーインターフェースの実装
+- [x] STDLIB-COL-OTHER-003: `RandomAccess` マーカーインターフェースの実装
 - [ ] STDLIB-COL-OTHER-004: `MutableIterable<T>` インターフェースの実装
 - [ ] STDLIB-COL-OTHER-005: `MutableIterator<T>` インターフェースの実装
 - [ ] STDLIB-COL-OTHER-006: `MutableListIterator<T>` インターフェースの実装
