@@ -1489,6 +1489,14 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(kk_map_get(result, 1)), [1])
     }
 
+    func testListIndexOfFindsFirstMatchAndMissingElement() {
+        let source = makeList([10, 20, 10])
+
+        XCTAssertEqual(kk_list_indexOf(source, 10), 0)
+        XCTAssertEqual(kk_list_indexOf(source, 20), 1)
+        XCTAssertEqual(kk_list_indexOf(source, 30), -1)
+    }
+
     // MARK: - Throwing lambda tests for *To functions
 
     func testAssociateByToThrowingLambdaReturnsSentinelAndSetsOutThrown() {
