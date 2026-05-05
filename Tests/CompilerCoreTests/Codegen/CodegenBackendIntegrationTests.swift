@@ -2039,6 +2039,36 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenListMaxOfWithReturnsLargestTransformedValueAndThrowsOnEmpty() throws {
+        let source = """
+        fun main() {
+            val values = listOf(-3, 1, 2)
+            println(values.maxOfWith(naturalOrder<Int>()) { it * it })
+            try {
+                emptyList<Int>().maxOfWith(naturalOrder<Int>()) { it * it }
+                println("missing")
+            } catch (e: NoSuchElementException) {
+                println("empty")
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListMaxOfWithRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "9\nempty\n")
+        }
+    }
+
     func testCodegenMapHigherOrderHelpersUseRuntimeHelpers() throws {
         let source = """
         fun main() {
