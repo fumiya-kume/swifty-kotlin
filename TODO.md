@@ -188,7 +188,7 @@
 - [ ] STDLIB-COL-FN-092: `groupingBy` 関数の実装
 - [x] STDLIB-COL-FN-093: `hashMapOf` 関数の実装
 - [ ] STDLIB-COL-FN-094: `hashSetOf` 関数の実装
-- [ ] STDLIB-COL-FN-095: `indexOf` 関数の実装
+- [x] STDLIB-COL-FN-095: `indexOf` 関数の実装
 - [ ] STDLIB-COL-FN-096: `indexOfFirst` 関数の実装
 - [ ] STDLIB-COL-FN-097: `indexOfLast` 関数の実装
 - [ ] STDLIB-COL-FN-098: `intersect` 関数の実装
