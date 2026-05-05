@@ -117,7 +117,7 @@
 - [ ] STDLIB-COL-FN-023: `average` 関数の実装
 - [ ] STDLIB-COL-FN-024: `binarySearch` 関数の実装（各オーバーロード）
 - [ ] STDLIB-COL-FN-025: `buildList` 関数の実装
-- [ ] STDLIB-COL-FN-026: `buildMap` 関数の実装
+- [x] STDLIB-COL-FN-026: `buildMap` 関数の実装
 - [ ] STDLIB-COL-FN-027: `buildSet` 関数の実装
 - [ ] STDLIB-COL-FN-028: `chunked` 関数の実装
 - [ ] STDLIB-COL-FN-029: `component1` 関数の実装
