@@ -206,7 +206,7 @@
 - [ ] STDLIB-COL-FN-132: `maxWith` 関数の実装
 - [ ] STDLIB-COL-FN-133: `maxWithOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-134: `min` 関数の実装
-- [ ] STDLIB-COL-FN-135: `minBy` 関数の実装
+- [x] STDLIB-COL-FN-135: `minBy` 関数の実装
 - [ ] STDLIB-COL-FN-136: `minByOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-137: `minOf` 関数の実装
 - [ ] STDLIB-COL-FN-138: `minOfOrNull` 関数の実装

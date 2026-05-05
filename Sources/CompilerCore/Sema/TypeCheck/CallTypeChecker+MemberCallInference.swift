@@ -713,7 +713,7 @@ extension CallTypeChecker {
             "onEach", "onEachIndexed",
             "sumOf", "sumBy", "sumByDouble", "maxOrNull", "minOrNull",
             "indexOfFirst", "indexOfLast", "binarySearch", "binarySearchBy",
-            "maxBy", "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
+            "maxBy", "minBy", "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
             "maxOf", "minOf",
             "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",
             "maxOfWith", "maxOfWithOrNull", "minOfWith", "minOfWithOrNull",
@@ -2843,7 +2843,7 @@ extension CallTypeChecker {
                 }
                 resultType = sema.types.makeNullable(collectionElementType)
 
-            case "maxBy", "maxByOrNull", "minByOrNull":
+            case "maxBy", "minBy", "maxByOrNull", "minByOrNull":
                 guard args.count == 1 else {
                     let failedType = safeCall ? sema.types.makeNullable(sema.types.errorType) : sema.types.errorType
                     ctx.semaCtx.diagnostics.error(
@@ -2905,7 +2905,9 @@ extension CallTypeChecker {
                         return failedType
                     }
                 }
-                resultType = calleeStr == "maxBy" ? collectionElementType : sema.types.makeNullable(collectionElementType)
+                resultType = (calleeStr == "maxBy" || calleeStr == "minBy")
+                    ? collectionElementType
+                    : sema.types.makeNullable(collectionElementType)
 
             case "maxOf", "minOf":
                 guard args.count == 1 else {

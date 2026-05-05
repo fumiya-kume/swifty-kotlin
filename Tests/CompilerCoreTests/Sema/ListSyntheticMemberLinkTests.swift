@@ -508,6 +508,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             let expectedExternalLinks = [
                 "filterNot": "kk_list_filterNot",
                 "sumOf": "kk_list_sumOf",
+                "minBy": "kk_list_minBy",
                 "maxOrNull": "kk_list_maxOrNull",
                 "minOrNull": "kk_list_minOrNull",
                 "maxBy": "kk_list_maxBy",

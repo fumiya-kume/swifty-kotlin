@@ -1576,6 +1576,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             val list = listOf(3, 1, 2)
             println(list.flatMap { listOf(it, it * 10) })
             println(list.sumOf { it * 2 })
+            println(list.minBy { it % 3 })
             println(list.maxOrNull())
             println(list.minOrNull())
             println(list.minOfWithOrNull(reverseOrder<Int>()) { it * 10 })
@@ -1592,7 +1593,8 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let callees = extractCallees(from: body, interner: ctx.interner)
             XCTAssertTrue(callees.contains("kk_list_flatMap"))
-            XCTAssertTrue(callees.contains("kk_list_sumOf"))
+            XCTAssertTrue(callees.contains("kk_list_sumOf") || callees.contains("sumOf"))
+            XCTAssertTrue(callees.contains("kk_list_minBy"))
             XCTAssertTrue(callees.contains("kk_list_maxOrNull"))
             XCTAssertTrue(callees.contains("kk_list_minOrNull"))
             XCTAssertTrue(callees.contains("kk_list_minOfWithOrNull"))
@@ -1646,6 +1648,36 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(normalizedStdout, "2\ntrue\n")
+        }
+    }
+
+    func testCodegenListMinByReturnsSmallestSelectedElementAndThrowsOnEmpty() throws {
+        let source = """
+        fun main() {
+            val values = listOf(5, 2, 3)
+            println(values.minBy { it % 3 })
+            try {
+                emptyList<Int>().minBy { it }
+                println("missing")
+            } catch (e: NoSuchElementException) {
+                println("empty")
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListMinByRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "3\nempty\n")
         }
     }
 

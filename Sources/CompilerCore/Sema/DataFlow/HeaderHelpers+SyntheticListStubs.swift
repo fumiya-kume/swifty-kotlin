@@ -2796,6 +2796,11 @@ extension DataFlowSemaPhase {
                 returnTypeBuilder: { _ in nullableElementType }
             )
             registerByOrNull(
+                name: "minBy",
+                externalLinkName: "kk_list_minBy",
+                returnTypeBuilder: { _ in listTypeParamType }
+            )
+            registerByOrNull(
                 name: "maxOfOrNull",
                 externalLinkName: "kk_list_maxOfOrNull",
                 returnTypeBuilder: { selectorResultType in types.makeNullable(selectorResultType) }
