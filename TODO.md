@@ -1216,7 +1216,7 @@
 - [x] STDLIB-IO-PATH-FN-006: `Path.appendText(text, charset)` を追加する
 - [ ] STDLIB-IO-PATH-FN-007: `Path.bufferedReader(charset, bufferSize, options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-008: `Path.bufferedWriter(charset, bufferSize, options)` を追加する
-- [ ] STDLIB-IO-PATH-FN-009: `Path.copyTo(target, options)` を追加する
+- [x] STDLIB-IO-PATH-FN-009: `Path.copyTo(target, options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-010: `Path.copyTo(target, overwrite)` を追加する
 - [ ] STDLIB-IO-PATH-FN-011: `Path.copyToRecursively(target, onError, followLinks, overwrite)` を追加する
 - [ ] STDLIB-IO-PATH-FN-012: `Path.copyToRecursively(target, onError, followLinks, copyAction)` を追加する

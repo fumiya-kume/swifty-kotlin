@@ -14,6 +14,7 @@
 /// - `getName(index: Int): Path`
 /// - `Path.name: String` extension property
 /// - `Path.appendText(text: CharSequence, charset)` extension function
+/// - `Path.copyTo(target: Path, options)` extension function
 /// - `readText(): String`, `writeText(text: String)`, `readLines(): List<String>`
 /// - `createDirectories(): Path`, `deleteIfExists(): Boolean`
 /// - `listDirectoryEntries(): List<Path>`
@@ -86,6 +87,24 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(charsetType, for: charsetSymbol)
+
+        let copyOptionPkg = ensurePackage(path: ["java", "nio", "file"], symbols: symbols, interner: interner)
+        let copyOptionPkgSymbol = symbols.lookup(fqName: copyOptionPkg)
+        let copyOptionSymbol = ensureInterfaceSymbol(
+            named: "CopyOption",
+            in: copyOptionPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let copyOptionPkgSymbol {
+            symbols.setParentSymbol(copyOptionPkgSymbol, for: copyOptionSymbol)
+        }
+        let copyOptionType = types.make(.classType(ClassType(
+            classSymbol: copyOptionSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(copyOptionType, for: copyOptionSymbol)
 
         registerPathCopyActionContextSurface(
             packageFQName: kotlinIOPathPkg,
@@ -492,6 +511,18 @@ extension DataFlowSemaPhase {
             parameters: [("text", charSequenceType), ("charset", charsetType)],
             returnType: pathType,
             externalLinkName: "kk_path_appendText",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "copyTo",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("target", pathType), ("options", copyOptionType)],
+            returnType: pathType,
+            externalLinkName: "kk_path_copyTo_options",
+            valueParameterIsVararg: [false, true],
             symbols: symbols,
             interner: interner
         )
@@ -1032,20 +1063,42 @@ extension DataFlowSemaPhase {
         parameters: [(name: String, type: TypeID)],
         returnType: TypeID,
         externalLinkName: String,
+        valueParameterHasDefaultValues: [Bool]? = nil,
+        valueParameterIsVararg: [Bool]? = nil,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
         let functionName = interner.intern(name)
         let functionFQName = packageFQName + [functionName]
+        let parameterTypes = parameters.map(\.type)
+        let defaults = valueParameterHasDefaultValues
+            ?? Array(repeating: false, count: parameters.count)
+        let varargs = valueParameterIsVararg
+            ?? Array(repeating: false, count: parameters.count)
+
         if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
             guard let existingSignature = symbols.functionSignature(for: symbolID) else {
                 return false
             }
             return existingSignature.receiverType == receiverType
-                && existingSignature.parameterTypes == parameters.map(\.type)
+                && existingSignature.parameterTypes == parameterTypes
                 && existingSignature.returnType == returnType
         }) {
             symbols.setExternalLinkName(externalLinkName, for: existing)
+            if let existingSignature = symbols.functionSignature(for: existing) {
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: existingSignature.receiverType,
+                        parameterTypes: existingSignature.parameterTypes,
+                        returnType: existingSignature.returnType,
+                        isSuspend: existingSignature.isSuspend,
+                        valueParameterSymbols: existingSignature.valueParameterSymbols,
+                        valueParameterHasDefaultValues: defaults,
+                        valueParameterIsVararg: varargs
+                    ),
+                    for: existing
+                )
+            }
             return
         }
 
@@ -1080,12 +1133,12 @@ extension DataFlowSemaPhase {
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: receiverType,
-                parameterTypes: parameters.map(\.type),
+                parameterTypes: parameterTypes,
                 returnType: returnType,
                 isSuspend: false,
                 valueParameterSymbols: valueParameterSymbols,
-                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
-                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+                valueParameterHasDefaultValues: defaults,
+                valueParameterIsVararg: varargs
             ),
             for: functionSymbol
         )

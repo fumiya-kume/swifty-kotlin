@@ -403,6 +403,58 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathCopyToOptionsExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import java.nio.file.CopyOption
+        import kotlin.io.path.Path
+        import kotlin.io.path.copyTo
+
+        fun copyPath(source: Path, target: Path, option: CopyOption): Path {
+            val first = source.copyTo(target)
+            val second = source.copyTo(target, option)
+            return second
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.copyTo(target, options) extension function in kotlin.io.path should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let copyOptionSymbol = try XCTUnwrap(symbols.lookup(fqName: ["java", "nio", "file", "CopyOption"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let copyOptionType = types.make(.classType(ClassType(classSymbol: copyOptionSymbol, args: [], nullability: .nonNull)))
+            let copyToSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "copyTo"].map(interner.intern))
+            let copyTo = try XCTUnwrap(copyToSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [pathType, copyOptionType]
+                    && signature.returnType == pathType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: copyTo), "kk_path_copyTo_options")
+
+            let signature = try XCTUnwrap(symbols.functionSignature(for: copyTo))
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [false, false])
+            XCTAssertEqual(signature.valueParameterIsVararg, [false, true])
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let callExprs = memberCallExprIDs(named: "copyTo", in: ast, interner: interner)
+            XCTAssertEqual(callExprs.count, 2)
+            for callExpr in callExprs {
+                XCTAssertEqual(sema.bindings.callBinding(for: callExpr)?.chosenCallee, copyTo)
+                XCTAssertEqual(sema.bindings.exprTypes[callExpr], pathType)
+            }
+        }
+    }
+
     func testMemoryOrderInAtomicsPackageIsResolved() throws {
         let source = """
         import kotlin.concurrent.atomics.MemoryOrder
