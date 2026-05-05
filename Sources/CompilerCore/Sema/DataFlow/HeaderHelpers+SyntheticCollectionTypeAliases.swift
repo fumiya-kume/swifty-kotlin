@@ -25,10 +25,8 @@ extension DataFlowSemaPhase {
             kotlinCollectionsPkg: kotlinCollectionsPkg
         )
 
-        // LinkedList<E> → MutableList<E>
-        registerSingleTypeParamCollectionAlias(
-            aliasName: "LinkedList",
-            targetName: "MutableList",
+        // LinkedList<E> : MutableList<E>
+        registerSyntheticLinkedListClass(
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg
         )
@@ -61,6 +59,91 @@ extension DataFlowSemaPhase {
             targetName: "MutableMap",
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg
+        )
+    }
+
+    /// Register concrete `LinkedList<E>` backed by the same runtime list box as MutableList.
+    private func registerSyntheticLinkedListClass(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString]
+    ) {
+        let linkedListName = interner.intern("LinkedList")
+        let linkedListFQName = kotlinCollectionsPkg + [linkedListName]
+        guard symbols.lookup(fqName: linkedListFQName) == nil else { return }
+
+        let mutableListFQName = kotlinCollectionsPkg + [interner.intern("MutableList")]
+        guard let mutableListSymbol = symbols.lookup(fqName: mutableListFQName) else {
+            assertionFailure("Synthetic LinkedList: target 'MutableList' not found in symbol table")
+            return
+        }
+
+        let linkedListSymbol = symbols.define(
+            kind: .class,
+            name: linkedListName,
+            fqName: linkedListFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .openType]
+        )
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = linkedListFQName + [typeParamName]
+        let typeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: typeParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: linkedListSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: linkedListSymbol)
+
+        let linkedListType = types.make(.classType(ClassType(
+            classSymbol: linkedListSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(linkedListType, for: linkedListSymbol)
+
+        let abstractMutableListSymbol = symbols.lookup(
+            fqName: kotlinCollectionsPkg + [interner.intern("AbstractMutableList")]
+        )
+        let directSupertypes = [abstractMutableListSymbol, mutableListSymbol].compactMap { $0 }
+        symbols.setDirectSupertypes(directSupertypes, for: linkedListSymbol)
+        types.setNominalDirectSupertypes(directSupertypes, for: linkedListSymbol)
+        for supertype in directSupertypes {
+            symbols.setSupertypeTypeArgs([.invariant(typeParamType)], for: linkedListSymbol, supertype: supertype)
+            types.setNominalSupertypeTypeArgs([.invariant(typeParamType)], for: linkedListSymbol, supertype: supertype)
+        }
+
+        let initName = interner.intern("<init>")
+        let initFQName = linkedListFQName + [initName]
+        let initSymbol = symbols.define(
+            kind: .constructor,
+            name: initName,
+            fqName: initFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(linkedListSymbol, for: initSymbol)
+        symbols.setExternalLinkName("kk_emptyList", for: initSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: nil,
+                parameterTypes: [],
+                returnType: linkedListType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: initSymbol
         )
     }
 

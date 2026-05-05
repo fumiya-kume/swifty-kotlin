@@ -45,6 +45,7 @@ extension ABIMismatchTests {
             // Comparator (STDLIB-176)
             "kk_comparator_then_comparator",
             // Collection (binarySearch)
+            "kk_list_lastIndex",
             "kk_list_binarySearch",
             "kk_list_binarySearch_compare",
             "kk_list_binarySearch_comparator",
