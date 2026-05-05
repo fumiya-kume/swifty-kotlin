@@ -240,7 +240,16 @@ extension DataFlowSemaPhase {
         ) {
             let memberName = interner.intern(name)
             let memberFQName = mapFQName + [memberName]
-            guard symbols.lookup(fqName: memberFQName) == nil else { return }
+            if let existing = symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else {
+                    return false
+                }
+                return signature.receiverType == receiverType
+                    && signature.parameterTypes == parameterTypes
+            }) {
+                symbols.setExternalLinkName(externalLinkName, for: existing)
+                return
+            }
             let memberSymbol = symbols.define(
                 kind: .function,
                 name: memberName,
@@ -577,6 +586,14 @@ extension DataFlowSemaPhase {
             flags: [.synthetic, .inlineFunction]
         )
 
+        registerMember(
+            name: "count",
+            externalLinkName: "kk_map_size",
+            parameterTypes: [],
+            returnType: types.intType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
+            flags: [.synthetic]
+        )
         registerMember(
             name: "count",
             externalLinkName: "kk_map_count",

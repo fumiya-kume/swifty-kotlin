@@ -2533,10 +2533,15 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
-        // any/none on array → kk_array_any/kk_array_none
-        if callee == lookup.anyName || callee == lookup.noneName, arguments.count == 1 {
-            let kkName = callee == lookup.anyName
-                ? lookup.kkArrayAnyName : lookup.kkArrayNoneName
+        // any/none/count on array → kk_array_any/kk_array_none/kk_array_count
+        if callee == lookup.anyName || callee == lookup.noneName || callee == lookup.countName, arguments.count == 1 {
+            let kkName: InternedString = if callee == lookup.anyName {
+                lookup.kkArrayAnyName
+            } else if callee == lookup.noneName {
+                lookup.kkArrayNoneName
+            } else {
+                lookup.kkArrayCountName
+            }
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             _ = emitHOFCall(

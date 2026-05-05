@@ -3953,6 +3953,8 @@ extension CallLowerer {
                     "kk_array_any"
                 case "none":
                     "kk_array_none"
+                case "count":
+                    "kk_array_count"
                 case "fill":
                     "kk_array_fill"
                 default:
@@ -7629,6 +7631,7 @@ extension CallLowerer {
         if let mapMember = unresolvedMapMemberCallee(
             memberName: fallbackName,
             receiverType: receiverType,
+            argumentCount: argumentCount,
             sema: sema,
             interner: interner
         ) {
@@ -8430,6 +8433,8 @@ extension CallLowerer {
                 return interner.intern("kk_array_any")
             case "none":
                 return interner.intern("kk_array_none")
+            case "count":
+                return interner.intern("kk_array_count")
             case "copyOf":
                 switch argumentCount {
                 case 0:
@@ -8878,6 +8883,7 @@ extension CallLowerer {
     private func unresolvedMapMemberCallee(
         memberName: String,
         receiverType: TypeID,
+        argumentCount: Int,
         sema: SemaModule,
         interner: StringInterner
     ) -> InternedString? {
@@ -8890,7 +8896,7 @@ extension CallLowerer {
         }
         switch memberName {
         case "count":
-            return interner.intern("kk_map_count")
+            return interner.intern(argumentCount == 0 ? "kk_map_size" : "kk_map_count")
         case "any":
             return interner.intern("kk_map_any")
         case "all":
