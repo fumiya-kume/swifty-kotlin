@@ -57,7 +57,7 @@
 - [ ] STDLIB-COL-ABSTRACT-005: `AbstractMutableCollection<E>` 抽象クラスの実装
 - [ ] STDLIB-COL-ABSTRACT-006: `AbstractMutableList<E>` 抽象クラスの実装
 - [ ] STDLIB-COL-ABSTRACT-007: `AbstractMutableMap<K,V>` 抽象クラスの実装
-- [ ] STDLIB-COL-ABSTRACT-008: `AbstractMutableSet<E>` 抽象クラスの実装
+- [x] STDLIB-COL-ABSTRACT-008: `AbstractMutableSet<E>` 抽象クラスの実装
 - [ ] STDLIB-COL-ABSTRACT-009: `AbstractSet<E>` 抽象クラスの実装
 
 #### kotlin.collections 具象実装クラスの実装

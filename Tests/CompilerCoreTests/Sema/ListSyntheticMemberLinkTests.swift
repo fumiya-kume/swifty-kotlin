@@ -1168,6 +1168,88 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testAbstractMutableSetSurfaceIsRegistered() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let collectionsPkg = ["kotlin", "collections"].map { ctx.interner.intern($0) }
+            let setSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: collectionsPkg + [ctx.interner.intern("Set")])
+            )
+            let mutableSetSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: collectionsPkg + [ctx.interner.intern("MutableSet")])
+            )
+            let abstractMutableSetFQName = collectionsPkg + [ctx.interner.intern("AbstractMutableSet")]
+            let abstractMutableSetSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: abstractMutableSetFQName),
+                "Expected kotlin.collections.AbstractMutableSet to be registered"
+            )
+            let abstractMutableSetInfo = try XCTUnwrap(sema.symbols.symbol(abstractMutableSetSymbol))
+            XCTAssertEqual(abstractMutableSetInfo.kind, .class)
+            XCTAssertTrue(abstractMutableSetInfo.flags.contains(.synthetic))
+            XCTAssertTrue(abstractMutableSetInfo.flags.contains(.abstractType))
+            XCTAssertEqual(
+                sema.types.nominalTypeParameterVariances(for: abstractMutableSetSymbol),
+                [.invariant]
+            )
+
+            let abstractSetSymbol = sema.symbols.lookup(
+                fqName: collectionsPkg + [ctx.interner.intern("AbstractSet")]
+            )
+            let readonlySupertype = abstractSetSymbol ?? setSymbol
+            let directSupertypes = sema.symbols.directSupertypes(for: abstractMutableSetSymbol)
+            XCTAssertTrue(directSupertypes.contains(readonlySupertype))
+            XCTAssertTrue(directSupertypes.contains(mutableSetSymbol))
+            XCTAssertEqual(
+                sema.symbols.supertypeTypeArgs(for: abstractMutableSetSymbol, supertype: readonlySupertype).count,
+                1
+            )
+            XCTAssertEqual(
+                sema.symbols.supertypeTypeArgs(for: abstractMutableSetSymbol, supertype: mutableSetSymbol).count,
+                1
+            )
+
+            let constructorSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: abstractMutableSetFQName + [ctx.interner.intern("<init>")]),
+                "Expected AbstractMutableSet protected constructor to be registered"
+            )
+            let constructorInfo = try XCTUnwrap(sema.symbols.symbol(constructorSymbol))
+            XCTAssertEqual(constructorInfo.kind, .constructor)
+            XCTAssertEqual(constructorInfo.visibility, .protected)
+            XCTAssertTrue(try XCTUnwrap(sema.symbols.functionSignature(for: constructorSymbol)).parameterTypes.isEmpty)
+        }
+    }
+
+    func testAbstractMutableSetCanBeUsedAsSetAndMutableSetSupertype() throws {
+        let source = """
+        import kotlin.collections.AbstractMutableSet
+        import kotlin.collections.Set
+        import kotlin.collections.MutableSet
+
+        class ProbeMutableSet : AbstractMutableSet<Int>()
+
+        fun acceptReadonly(values: Set<Int>) {}
+        fun acceptMutable(values: MutableSet<Int>) {}
+
+        fun probe(values: ProbeMutableSet) {
+            acceptReadonly(values)
+            acceptMutable(values)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected AbstractMutableSet subtype surface to resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     func testMutableListIteratorSurfaceIsRegistered() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])
