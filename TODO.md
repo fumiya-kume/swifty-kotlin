@@ -127,11 +127,11 @@
 - [ ] STDLIB-COL-FN-033: `component5` 関数の実装
 - [ ] STDLIB-COL-FN-034: `contains` 関数の実装
 - [ ] STDLIB-COL-FN-035: `containsAll` 関数の実装
-- [ ] STDLIB-COL-FN-036: `contentDeepEquals` 関数の実装
-- [ ] STDLIB-COL-FN-037: `contentDeepToString` 関数の実装
-- [ ] STDLIB-COL-FN-038: `contentEquals` 関数の実装
-- [ ] STDLIB-COL-FN-039: `contentHashCode` 関数の実装
-- [ ] STDLIB-COL-FN-040: `contentToString` 関数の実装
+- [x] STDLIB-COL-FN-036: `contentDeepEquals` 関数の実装
+- [x] STDLIB-COL-FN-037: `contentDeepToString` 関数の実装
+- [x] STDLIB-COL-FN-038: `contentEquals` 関数の実装
+- [x] STDLIB-COL-FN-039: `contentHashCode` 関数の実装
+- [x] STDLIB-COL-FN-040: `contentToString` 関数の実装
 - [ ] STDLIB-COL-FN-041: `copyOf` 関数の実装
 - [ ] STDLIB-COL-FN-042: `copyOfRange` 関数の実装
 - [ ] STDLIB-COL-FN-043: `count` 関数の実装
