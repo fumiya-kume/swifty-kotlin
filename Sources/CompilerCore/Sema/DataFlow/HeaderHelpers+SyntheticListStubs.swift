@@ -105,6 +105,96 @@ extension DataFlowSemaPhase {
         return listInterfaceSymbol
     }
 
+    /// Register `kotlin.collections.AbstractList<E>` surface (STDLIB-COL-ABSTRACT-003).
+    func registerSyntheticAbstractListStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        abstractCollectionSymbol: SymbolID,
+        listInterfaceSymbol: SymbolID
+    ) -> SymbolID {
+        let abstractListName = interner.intern("AbstractList")
+        let abstractListFQName = kotlinCollectionsPkg + [abstractListName]
+        let abstractListSymbol: SymbolID = if let existing = symbols.lookup(fqName: abstractListFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .class,
+                name: abstractListName,
+                fqName: abstractListFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .abstractType]
+            )
+        }
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = abstractListFQName + [typeParamName]
+        let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: abstractListSymbol)
+        types.setNominalTypeParameterVariances([.out], for: abstractListSymbol)
+
+        let abstractListType = types.make(.classType(ClassType(
+            classSymbol: abstractListSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(abstractListType, for: abstractListSymbol)
+
+        let directSupertypes = [abstractCollectionSymbol, listInterfaceSymbol]
+        symbols.setDirectSupertypes(directSupertypes, for: abstractListSymbol)
+        types.setNominalDirectSupertypes(directSupertypes, for: abstractListSymbol)
+        symbols.setSupertypeTypeArgs([.out(typeParamType)], for: abstractListSymbol, supertype: abstractCollectionSymbol)
+        types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: abstractListSymbol, supertype: abstractCollectionSymbol)
+        symbols.setSupertypeTypeArgs([.out(typeParamType)], for: abstractListSymbol, supertype: listInterfaceSymbol)
+        types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: abstractListSymbol, supertype: listInterfaceSymbol)
+
+        let initName = interner.intern("<init>")
+        let initFQName = abstractListFQName + [initName]
+        if symbols.lookup(fqName: initFQName) == nil {
+            let initSymbol = symbols.define(
+                kind: .constructor,
+                name: initName,
+                fqName: initFQName,
+                declSite: nil,
+                visibility: .protected,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(abstractListSymbol, for: initSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: [],
+                    returnType: abstractListType,
+                    valueParameterSymbols: [],
+                    valueParameterHasDefaultValues: [],
+                    valueParameterIsVararg: [],
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: initSymbol
+            )
+        }
+
+        return abstractListSymbol
+    }
+
     /// Register `operator fun get(index: Int): E` on the List interface.
     private func registerListGetOperator(
         symbols: SymbolTable,
