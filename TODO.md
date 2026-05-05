@@ -111,7 +111,7 @@
 - [ ] STDLIB-COL-FN-017: `asShortArray` 関数の実装
 - [ ] STDLIB-COL-FN-018: `associate` 関数の実装
 - [ ] STDLIB-COL-FN-019: `associateBy` 関数の実装
-- [ ] STDLIB-COL-FN-020: `associateByTo` 関数の実装
+- [x] STDLIB-COL-FN-020: `associateByTo` 関数の実装
 - [ ] STDLIB-COL-FN-021: `associateWith` 関数の実装
 - [ ] STDLIB-COL-FN-022: `associateWithTo` 関数の実装
 - [ ] STDLIB-COL-FN-023: `average` 関数の実装
