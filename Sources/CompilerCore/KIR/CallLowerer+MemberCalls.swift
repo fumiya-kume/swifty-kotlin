@@ -6227,7 +6227,9 @@ extension CallLowerer {
         if normalized.defaultMask != 0,
            let chosenCallee,
            let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
-           externalLinkName == "kk_list_joinToString" || externalLinkName == "kk_iterable_joinTo"
+           externalLinkName == "kk_list_joinToString"
+            || externalLinkName == "kk_iterable_joinTo"
+            || externalLinkName == "kk_iterable_joinToString"
         {
             materializeJoinToStringDefaultArguments(
                 normalized.defaultMask,

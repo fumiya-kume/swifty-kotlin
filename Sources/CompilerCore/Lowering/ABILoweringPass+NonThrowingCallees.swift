@@ -596,6 +596,7 @@ extension ABILoweringPass {
             interner.intern("kk_list_to_mutable_list"),
             interner.intern("kk_list_joinToString"),
             interner.intern("kk_iterable_joinTo"),
+            interner.intern("kk_iterable_joinToString"),
             interner.intern("kk_list_to_set"),
             interner.intern("kk_set_to_set"),
             interner.intern("kk_list_to_mutable_set"),
