@@ -148,7 +148,7 @@
 - [ ] STDLIB-COL-FN-052: `elementAtOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-053: `emptyList` 関数の実装
 - [ ] STDLIB-COL-FN-054: `emptyMap` 関数の実装
-- [ ] STDLIB-COL-FN-055: `emptySet` 関数の実装
+- [x] STDLIB-COL-FN-055: `emptySet` 関数の実装
 - [ ] STDLIB-COL-FN-056: `fill` 関数の実装
 - [ ] STDLIB-COL-FN-057: `filter` 関数の実装
 - [ ] STDLIB-COL-FN-058: `filterIndexed` 関数の実装
