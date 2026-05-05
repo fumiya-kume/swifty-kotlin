@@ -405,6 +405,13 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertNotEqual(thrown, 0)
     }
 
+    func testListElementAtOrNullReturnsElementOrNullSentinel() {
+        let source = makeList([10, 20, 30])
+
+        XCTAssertEqual(kk_list_elementAtOrNull(source, 1), 20)
+        XCTAssertEqual(kk_list_elementAtOrNull(source, 5), runtimeNullSentinelInt)
+    }
+
     func testListMinusElementRemovesFirstMatchingValue() {
         let source = makeList([1, 2, 2, 3])
 
