@@ -2125,6 +2125,44 @@ extension DataFlowSemaPhase {
             typeParameterSymbols: [listTypeParamSymbol, mapToTypeParamSymbol]
         )
 
+        let flatMapTypeParamName = interner.intern("R")
+        let flatMapTypeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: flatMapTypeParamName,
+            fqName: listFQName + [interner.intern("flatMap"), flatMapTypeParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let flatMapTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: flatMapTypeParamSymbol, nullability: .nonNull
+        )))
+        let flatMapReturnType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(flatMapTypeParamType)],
+            nullability: .nonNull
+        )))
+        let flatMapLambdaReturnType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(flatMapTypeParamType)],
+            nullability: .nonNull
+        )))
+        registerMemberOverload(
+            memberName: interner.intern("flatMap"),
+            memberFQName: listFQName + [interner.intern("flatMap")],
+            parameterTypes: [
+                types.make(.functionType(FunctionType(
+                    params: [listTypeParamType],
+                    returnType: flatMapLambdaReturnType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+            ],
+            externalLinkName: "kk_list_flatMap",
+            returnTypeOverride: flatMapReturnType,
+            typeParameterSymbols: [listTypeParamSymbol, flatMapTypeParamSymbol]
+        )
+
         let flatMapToTypeParamName = interner.intern("R")
         let flatMapToTypeParamSymbol = symbols.define(
             kind: .typeParameter,

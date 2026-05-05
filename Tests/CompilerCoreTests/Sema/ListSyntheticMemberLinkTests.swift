@@ -2388,6 +2388,53 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testListFlatMapRegistersRuntimeExternalLink() throws {
+        let source = """
+        fun render(values: List<String>) {
+            val result: List<Int> = values.flatMap { listOf(it.length) }
+            println(result)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("List"),
+                ctx.interner.intern("flatMap"),
+            ]
+            let symbols = sema.symbols.lookupAll(fqName: memberFQName)
+            XCTAssertEqual(symbols.count, 1, "Expected one synthetic List.flatMap overload")
+
+            let symbol = try XCTUnwrap(symbols.first)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: symbol), "kk_list_flatMap")
+
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbol))
+            guard case let .classType(returnClassType) = sema.types.kind(of: signature.returnType),
+                  let returnSymbol = sema.symbols.symbol(returnClassType.classSymbol)
+            else {
+                return XCTFail("Expected List.flatMap to return List<R>")
+            }
+            XCTAssertEqual(ctx.interner.resolve(returnSymbol.name), "List")
+
+            let transformType = try XCTUnwrap(signature.parameterTypes.first)
+            guard case let .functionType(functionType) = sema.types.kind(of: transformType),
+                  case let .classType(transformReturnClassType) = sema.types.kind(of: sema.types.makeNonNullable(functionType.returnType)),
+                  let transformReturnSymbol = sema.symbols.symbol(transformReturnClassType.classSymbol)
+            else {
+                return XCTFail("Expected List.flatMap transform to return Collection<R>")
+            }
+            XCTAssertEqual(ctx.interner.resolve(transformReturnSymbol.name), "Collection")
+        }
+    }
+
     func testSequenceFlatMapIndexedRegistersIterableAndSequenceOverloads() throws {
         let source = """
         fun render(values: Sequence<Int>) {
