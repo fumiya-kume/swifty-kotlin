@@ -119,6 +119,7 @@ struct CollectionLiteralLookupTables {
     let kkListFilterIsInstanceToName: InternedString
     let kkListForEachName: InternedString
     let kkListFlatMapName: InternedString
+    let kkListFlatMapIndexedName: InternedString
     let kkListAnyName: InternedString
     let kkListNoneName: InternedString
     let kkListAllName: InternedString
@@ -943,6 +944,7 @@ struct CollectionLiteralLookupTables {
         kkListFilterIsInstanceToName = interner.intern("kk_list_filterIsInstanceTo")
         kkListForEachName = interner.intern("kk_list_forEach")
         kkListFlatMapName = interner.intern("kk_list_flatMap")
+        kkListFlatMapIndexedName = interner.intern("kk_list_flatMapIndexed")
         kkListAnyName = interner.intern("kk_list_any")
         kkListNoneName = interner.intern("kk_list_none")
         kkListAllName = interner.intern("kk_list_all")
