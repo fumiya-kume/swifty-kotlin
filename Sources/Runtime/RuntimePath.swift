@@ -313,6 +313,32 @@ public func kk_path_copyTo_options(
     return targetRaw
 }
 
+@_cdecl("kk_path_appendBytes")
+public func kk_path_appendBytes(_ pathRaw: Int, _ arrayRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_appendBytes received invalid Path handle")
+    }
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_appendBytes received invalid ByteArray handle")
+    }
+    do {
+        let url = URL(fileURLWithPath: path.pathString)
+        let data = Data(array.elements.map { UInt8(truncatingIfNeeded: $0) })
+        if FileManager.default.fileExists(atPath: path.pathString) {
+            let handle = try FileHandle(forWritingTo: url)
+            defer { try? handle.close() }
+            try handle.seekToEnd()
+            try handle.write(contentsOf: data)
+        } else {
+            try data.write(to: url)
+        }
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return 0
+}
+
 @_cdecl("kk_path_readLines")
 public func kk_path_readLines(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0

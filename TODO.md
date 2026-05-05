@@ -488,7 +488,7 @@
 #### kotlin.io.path 関数の実装
 - [x] STDLIB-IO-PATH-FN-001: `absolute` 関数の実装
 - [x] STDLIB-IO-PATH-FN-002: `absolutePathString` 関数の実装
-- [ ] STDLIB-IO-PATH-FN-003: `appendBytes` 関数の実装
+- [x] STDLIB-IO-PATH-FN-003: `appendBytes` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-004: `appendLines` 関数の実装（Iterable版）
 - [ ] STDLIB-IO-PATH-FN-005: `appendLines` 関数の実装（Sequence版）
 - [x] STDLIB-IO-PATH-FN-006: `appendText` 関数の実装
@@ -1104,7 +1104,7 @@
 - [ ] STDLIB-IO-PATH-PROP-006: `Path.pathString` extension property を追加する
 - [x] STDLIB-IO-PATH-FN-001: `Path.absolute()` を追加する
 - [x] STDLIB-IO-PATH-FN-002: `Path.absolutePathString()` を追加する
-- [ ] STDLIB-IO-PATH-FN-003: `Path.appendBytes(array)` を追加する
+- [x] STDLIB-IO-PATH-FN-003: `Path.appendBytes(array)` を追加する
 - [ ] STDLIB-IO-PATH-FN-004: `Path.appendLines(lines: Iterable<CharSequence>, charset)` を追加する
 - [ ] STDLIB-IO-PATH-FN-005: `Path.appendLines(lines: Sequence<CharSequence>, charset)` を追加する
 - [x] STDLIB-IO-PATH-FN-006: `Path.appendText(text, charset)` を追加する
