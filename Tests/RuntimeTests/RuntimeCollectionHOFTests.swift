@@ -393,6 +393,11 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
     }
 
+    func testMinOrNullReturnsSmallestElementAndNullOnEmpty() {
+        XCTAssertEqual(kk_list_minOrNull(makeList([5, 2, 3])), 2)
+        XCTAssertEqual(kk_list_minOrNull(makeList([])), runtimeNullSentinelInt)
+    }
+
     func testListElementAtReturnsElementAndThrowsWhenOutOfBounds() {
         let source = makeList([10, 20, 30])
 
