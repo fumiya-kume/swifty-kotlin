@@ -24,6 +24,7 @@
 /// - `Path.readSymbolicLink(): Path` extension function
 /// - `Path.invariantSeparatorsPathString: String` extension property
 /// - `Path.writeBytes(array: ByteArray, vararg options: OpenOption)` extension function
+/// - `Path.bufferedReader(charset, bufferSize, options): BufferedReader` extension function
 /// - `readBytes(): ByteArray`, `readText(): String`, `writeText(text: String)`, `readLines(): List<String>`
 /// - `createDirectories(): Path`, `createLinkPointingTo(target): Path`, `deleteIfExists(): Boolean`
 /// - `deleteExisting()`, `deleteRecursively()`
@@ -259,10 +260,8 @@ extension DataFlowSemaPhase {
             types.anyType
         }
         // Resolve java.io.File type for toFile() return
-        let javaIOPkg: [InternedString] = [
-            interner.intern("java"),
-            interner.intern("io"),
-        ]
+        let javaIOPkg = ensurePackage(path: ["java", "io"], symbols: symbols, interner: interner)
+        let javaIOPkgSymbol = symbols.lookup(fqName: javaIOPkg)
         let fileSymbol = symbols.lookup(fqName: javaIOPkg + [interner.intern("File")])
         let fileType: TypeID = if let fileSym = fileSymbol {
             types.make(.classType(ClassType(
@@ -271,6 +270,22 @@ extension DataFlowSemaPhase {
         } else {
             types.anyType
         }
+
+        let bufferedReaderSymbol = ensureClassSymbol(
+            named: "BufferedReader",
+            in: javaIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaIOPkgSymbol {
+            symbols.setParentSymbol(javaIOPkgSymbol, for: bufferedReaderSymbol)
+        }
+        let bufferedReaderType = types.make(.classType(ClassType(
+            classSymbol: bufferedReaderSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(bufferedReaderType, for: bufferedReaderSymbol)
 
         let javaNetPkg = ensurePackage(
             path: ["java", "net"],
@@ -877,6 +892,23 @@ extension DataFlowSemaPhase {
             returnType: types.unitType,
             externalLinkName: "kk_path_writeBytes",
             valueParameterIsVararg: [false, true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "bufferedReader",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [
+                ("charset", charsetType),
+                ("bufferSize", types.intType),
+                ("options", openOptionType),
+            ],
+            returnType: bufferedReaderType,
+            externalLinkName: "kk_path_bufferedReader",
+            valueParameterHasDefaultValues: [true, true, false],
+            valueParameterIsVararg: [false, false, true],
             symbols: symbols,
             interner: interner
         )
