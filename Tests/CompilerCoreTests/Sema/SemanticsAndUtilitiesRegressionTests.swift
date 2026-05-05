@@ -403,6 +403,27 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathInvariantSeparatorsPathStringPropertyInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import kotlin.io.path.Path
+        import kotlin.io.path.invariantSeparatorsPathString
+
+        fun invariantSeparators(path: Path): String {
+            val normalized: String = path.invariantSeparatorsPathString
+            return normalized
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.invariantSeparatorsPathString in kotlin.io.path should resolve as String: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     func testPathInvariantSeparatorsPathPropertyInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import kotlin.io.path.Path
