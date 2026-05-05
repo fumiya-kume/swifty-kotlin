@@ -644,6 +644,17 @@ public func kk_mutable_list_add(_ listRaw: Int, _ elem: Int) -> Int {
     return kk_box_bool(1)
 }
 
+@_cdecl("kk_mutable_list_remove")
+public func kk_mutable_list_remove(_ listRaw: Int, _ elem: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw),
+          let index = list.elements.firstIndex(where: { runtimeValuesEqual($0, elem) })
+    else {
+        return kk_box_bool(0)
+    }
+    list.elements.remove(at: index)
+    return kk_box_bool(1)
+}
+
 @_cdecl("kk_mutable_list_removeAt")
 public func kk_mutable_list_removeAt(_ listRaw: Int, _ index: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw),

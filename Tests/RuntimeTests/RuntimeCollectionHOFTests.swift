@@ -393,6 +393,15 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(source), [1, 2, 2, 3])
     }
 
+    func testMutableListRemoveRemovesFirstMatchingValue() {
+        let source = makeList([1, 2, 2, 3])
+
+        XCTAssertEqual(kk_unbox_bool(kk_mutable_list_remove(source, 2)), 1)
+        XCTAssertEqual(listElements(source), [1, 2, 3])
+        XCTAssertEqual(kk_unbox_bool(kk_mutable_list_remove(source, 9)), 0)
+        XCTAssertEqual(listElements(source), [1, 2, 3])
+    }
+
     func testListTakeNegativeCountSetsIllegalArgumentException() {
         var thrown = 0
         let result = kk_list_take(makeList([1, 2, 3]), -1, &thrown)
