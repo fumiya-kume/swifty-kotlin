@@ -403,6 +403,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                 "sumOf": "kk_list_sumOf",
                 "maxOrNull": "kk_list_maxOrNull",
                 "minOrNull": "kk_list_minOrNull",
+                "filterNotTo": "kk_list_filterNotTo",
             ]
 
             for (memberName, externalLinkName) in expectedExternalLinks {

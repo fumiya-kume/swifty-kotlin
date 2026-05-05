@@ -159,7 +159,7 @@
 - [ ] STDLIB-COL-FN-063: `filterNot` 関数の実装
 - [ ] STDLIB-COL-FN-064: `filterNotNull` 関数の実装
 - [ ] STDLIB-COL-FN-065: `filterNotNullTo` 関数の実装
-- [ ] STDLIB-COL-FN-066: `filterNotTo` 関数の実装
+- [x] STDLIB-COL-FN-066: `filterNotTo` 関数の実装
 - [ ] STDLIB-COL-FN-067: `filterTo` 関数の実装
 - [ ] STDLIB-COL-FN-068: `filterValues` 関数の実装
 - [ ] STDLIB-COL-FN-069: `find` 関数の実装
