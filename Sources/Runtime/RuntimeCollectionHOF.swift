@@ -1580,6 +1580,23 @@ public func kk_list_mapIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, 
     return registerRuntimeObject(RuntimeListBox(elements: mapped))
 }
 
+@_cdecl("kk_list_mapIndexedNotNull")
+public func kk_list_mapIndexedNotNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    var mapped: [Int] = []
+    for (idx, elem) in list.elements.enumerated() {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: idx, rhs: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if let normalized = runtimeMapNotNullResultValue(result) {
+            mapped.append(normalized)
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: mapped))
+}
+
 @_cdecl("kk_list_mapIndexedTo")
 public func kk_list_mapIndexedTo(_ listRaw: Int, _ destRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let elements = runtimeCollectionElements(from: listRaw) else {

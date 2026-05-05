@@ -151,6 +151,57 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // mapIndexedNotNull(transform: (Int, E) -> R?): List<R>
+        let mapIndexedNotNullName = interner.intern("mapIndexedNotNull")
+        let mapIndexedNotNullFQName = listFQName + [mapIndexedNotNullName]
+        if symbols.lookup(fqName: mapIndexedNotNullFQName) == nil {
+            let rName = interner.intern("R")
+            let rFQName = mapIndexedNotNullFQName + [rName]
+            let rSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: rFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let nullableRType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nullable)))
+
+            let transformType = types.make(.functionType(FunctionType(
+                params: [types.intType, listTypeParamType],
+                returnType: nullableRType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let listRType = types.make(.classType(ClassType(
+                classSymbol: listSymbol,
+                args: [.out(rType)],
+                nullability: .nonNull
+            )))
+
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: mapIndexedNotNullName,
+                fqName: mapIndexedNotNullFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_mapIndexedNotNull", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [transformType],
+                    returnType: listRType,
+                    typeParameterSymbols: [listTypeParamSymbol, rSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
         // filterIndexed(predicate: (Int, T) -> Boolean): List<T>
         let filterIndexedName = interner.intern("filterIndexed")
         let filterIndexedFQName = listFQName + [filterIndexedName]

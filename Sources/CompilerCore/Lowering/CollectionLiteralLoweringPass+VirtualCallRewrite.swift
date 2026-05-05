@@ -2390,12 +2390,14 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
-        if callee == lookup.forEachIndexedName || callee == lookup.mapIndexedName || callee == lookup.onEachIndexedName, arguments.count == 1 {
+        if callee == lookup.forEachIndexedName || callee == lookup.mapIndexedName || callee == lookup.mapIndexedNotNullName || callee == lookup.onEachIndexedName, arguments.count == 1 {
             let kkName: InternedString
             if callee == lookup.forEachIndexedName {
                 kkName = lookup.kkListForEachIndexedName
             } else if callee == lookup.onEachIndexedName {
                 kkName = lookup.kkListOnEachIndexedName
+            } else if callee == lookup.mapIndexedNotNullName {
+                kkName = lookup.kkListMapIndexedNotNullName
             } else {
                 kkName = lookup.kkListMapIndexedName
             }
@@ -2411,7 +2413,7 @@ extension CollectionLiteralLoweringPass {
                 module: module,
                 loweredBody: &loweredBody
             )
-            if callee == lookup.mapIndexedName || callee == lookup.onEachIndexedName, let result {
+            if callee == lookup.mapIndexedName || callee == lookup.mapIndexedNotNullName || callee == lookup.onEachIndexedName, let result {
                 listExprIDs.insert(result.rawValue)
                 listExprIDs.insert(hofResult.rawValue)
             }

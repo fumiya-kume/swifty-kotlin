@@ -709,7 +709,7 @@ extension CallTypeChecker {
             "filterTo", "filterNotTo", "mapTo", "flatMapTo", "mapNotNullTo", "mapIndexedTo", "flatMapIndexedTo",
             "mapIndexedNotNullTo", "filterIndexedTo", "filterNotNullTo",
             "mapKeysTo", "mapValuesTo",
-            "forEachIndexed", "mapIndexed",
+            "forEachIndexed", "mapIndexed", "mapIndexedNotNull",
             "onEach", "onEachIndexed",
             "sumOf", "sumBy", "sumByDouble", "maxOrNull", "minOrNull",
             "indexOfFirst", "indexOfLast", "binarySearch", "binarySearchBy",
@@ -761,6 +761,8 @@ extension CallTypeChecker {
         }
         if !isSequenceReceiver {
             activeCollectionHOFNames.remove("flatMapIndexed")
+        } else {
+            activeCollectionHOFNames.remove("mapIndexedNotNull")
         }
         if isMapReceiver {
             activeCollectionHOFNames.formUnion(mapOnlyCollectionHOFNames)
@@ -2679,7 +2681,7 @@ extension CallTypeChecker {
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                 resultType = sema.types.intType
 
-            case "forEachIndexed", "mapIndexed", "filterIndexed", "onEachIndexed":
+            case "forEachIndexed", "mapIndexed", "mapIndexedNotNull", "filterIndexed", "onEachIndexed":
                 guard args.count == 1 else {
                     sema.bindings.bindExprType(id, type: sema.types.anyType)
                     return sema.types.anyType
@@ -2689,6 +2691,8 @@ extension CallTypeChecker {
                     sema.types.unitType
                 case "filterIndexed":
                     sema.types.booleanType
+                case "mapIndexedNotNull":
+                    sema.types.nullableAnyType
                 default:
                     sema.types.anyType
                 }
@@ -2735,9 +2739,12 @@ extension CallTypeChecker {
                         elementType: bodyType
                     )
                 } else if let listSymbol = lookupStdlibSymbol("List", symbols: sema.symbols, interner: interner) {
-                    let bodyType = inferredLambdaReturnType(
+                    let inferredBodyType = inferredLambdaReturnType(
                         argExpr: args[0].expr, ast: ast, sema: sema
                     )
+                    let bodyType = calleeStr == "mapIndexedNotNull"
+                        ? sema.types.makeNonNullable(inferredBodyType)
+                        : inferredBodyType
                     resultType = sema.types.make(.classType(ClassType(
                         classSymbol: listSymbol,
                         args: [.invariant(bodyType)],

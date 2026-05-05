@@ -3607,7 +3607,7 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
-                    if callee == lookup.forEachIndexedName || callee == lookup.mapIndexedName || callee == lookup.onEachIndexedName {
+                    if callee == lookup.forEachIndexedName || callee == lookup.mapIndexedName || callee == lookup.mapIndexedNotNullName || callee == lookup.onEachIndexedName {
                         if arguments.count == 2 || arguments.count == 3 {
                             let receiverID = arguments[0]
                             let lambdaID = arguments[1]
@@ -3617,6 +3617,8 @@ extension CollectionLiteralLoweringPass {
                                     kkName = lookup.kkListForEachIndexedName
                                 } else if callee == lookup.onEachIndexedName {
                                     kkName = lookup.kkListOnEachIndexedName
+                                } else if callee == lookup.mapIndexedNotNullName {
+                                    kkName = lookup.kkListMapIndexedNotNullName
                                 } else {
                                     kkName = lookup.kkListMapIndexedName
                                 }
@@ -3639,7 +3641,7 @@ extension CollectionLiteralLoweringPass {
                                     canThrow: canThrow,
                                     thrownResult: thrownResult
                                 ))
-                                if callee == lookup.mapIndexedName || callee == lookup.onEachIndexedName, let result {
+                                if callee == lookup.mapIndexedName || callee == lookup.mapIndexedNotNullName || callee == lookup.onEachIndexedName, let result {
                                     listExprIDs.insert(result.rawValue)
                                     listExprIDs.insert(hofResult.rawValue)
                                 }

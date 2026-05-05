@@ -61,6 +61,10 @@ private let filterEvenIndex: @convention(c) (Int, Int, Int, UnsafeMutablePointer
     index.isMultiple(of: 2) ? 1 : 0
 }
 
+private let mapIndexedEvenIndexToValuePlusIndex: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, value, _ in
+    index.isMultiple(of: 2) ? value + index : runtimeNullSentinelInt
+}
+
 // Helper function to extract string value from runtime handle
 private func runtimeStringValue(_ raw: Int) -> String {
     extractString(from: UnsafeMutableRawPointer(bitPattern: raw)) ?? ""
@@ -297,6 +301,17 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         let source = makeList([10, 20, 30, 40])
         let filtered = kk_list_filterIndexed(source, unsafeBitCast(filterEvenIndex, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
         XCTAssertEqual(listElements(filtered), [10, 30])
+    }
+
+    func testMapIndexedNotNullFiltersNullResults() {
+        let source = makeList([10, 20, 30, 40])
+        let mapped = kk_list_mapIndexedNotNull(
+            source,
+            unsafeBitCast(mapIndexedEvenIndexToValuePlusIndex, to: Int.self),
+            0,
+            nil as UnsafeMutablePointer<Int>?
+        )
+        XCTAssertEqual(listElements(mapped), [10, 32])
     }
 
     func testCaptureLambdaForMapAndForEach() {
