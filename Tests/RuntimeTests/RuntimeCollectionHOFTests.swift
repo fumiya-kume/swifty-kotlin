@@ -360,6 +360,13 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(sorted), [12, 11, 22, 21])
     }
 
+    func testMutableListFillReplacesEveryElement() {
+        let source = makeList([1, 2, 3])
+
+        XCTAssertEqual(kk_mutable_list_fill(source, 9), 0)
+        XCTAssertEqual(listElements(source), [9, 9, 9])
+    }
+
     func testMaxByReturnsElementWithLargestSelectorAndThrowsOnEmpty() {
         var thrown = 0
         let source = makeList([3, 1, 4, 2])

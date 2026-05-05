@@ -1545,6 +1545,30 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenMutableListFillUsesRuntimeHelper() throws {
+        let source = """
+        fun main() {
+            val list = mutableListOf(1, 2, 3)
+            list.fill(9)
+            println(list)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "MutableListFillRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[9, 9, 9]\n")
+        }
+    }
     func testCodegenListElementAtOrNullUsesRuntimeHelper() throws {
         let source = """
         fun main() {
