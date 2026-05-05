@@ -163,6 +163,76 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testLinkedListConcreteClassAndConstructorSurfaceIsRegistered() throws {
+        let source = """
+        fun probe() {
+            val constructed: LinkedList<Int> = LinkedList<Int>()
+            val asMutable: MutableList<Int> = constructed
+            val asList: List<Int> = constructed
+            val inferred = LinkedList<Int>()
+            inferred.add(1)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected LinkedList constructor calls to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let constructorCall = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .call(callee, _, _, _) = expr,
+                      case let .nameRef(name, _) = ast.arena.expr(callee)
+                else { return false }
+                return ctx.interner.resolve(name) == "LinkedList"
+            })
+            let callType = try XCTUnwrap(sema.bindings.exprTypes[constructorCall])
+            guard case let .classType(classType) = sema.types.kind(of: callType) else {
+                return XCTFail("Expected LinkedList constructor to produce a LinkedList class type")
+            }
+            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(classType.classSymbol)?.name)), "LinkedList")
+            XCTAssertEqual(classType.args, [.invariant(sema.types.intType)])
+            XCTAssertTrue(
+                sema.bindings.isCollectionExpr(constructorCall),
+                "Expected LinkedList constructor to be tracked as a collection expression"
+            )
+
+            let collectionsPkg = ["kotlin", "collections"].map { ctx.interner.intern($0) }
+            let linkedListFQName = collectionsPkg + [ctx.interner.intern("LinkedList")]
+            let linkedListSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: linkedListFQName),
+                "Expected kotlin.collections.LinkedList to be registered"
+            )
+            let linkedListInfo = try XCTUnwrap(sema.symbols.symbol(linkedListSymbol))
+            XCTAssertEqual(linkedListInfo.kind, .class)
+            XCTAssertTrue(linkedListInfo.flags.contains(.synthetic))
+            XCTAssertTrue(linkedListInfo.flags.contains(.openType))
+
+            let mutableListSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: collectionsPkg + [ctx.interner.intern("MutableList")])
+            )
+            XCTAssertTrue(sema.symbols.directSupertypes(for: linkedListSymbol).contains(mutableListSymbol))
+            XCTAssertEqual(
+                sema.types.nominalTypeParameterVariances(for: linkedListSymbol),
+                [.invariant]
+            )
+
+            let constructorSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: linkedListFQName + [ctx.interner.intern("<init>")]),
+                "Expected LinkedList public constructor to be registered"
+            )
+            let constructorInfo = try XCTUnwrap(sema.symbols.symbol(constructorSymbol))
+            XCTAssertEqual(constructorInfo.kind, .constructor)
+            XCTAssertEqual(constructorInfo.visibility, .public)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: constructorSymbol), "kk_emptyList")
+        }
+    }
+
     func testLinkedSetOfFactoryInfersMutableSetType() throws {
         let source = """
         fun probe() {
