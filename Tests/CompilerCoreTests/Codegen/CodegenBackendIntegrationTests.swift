@@ -1608,6 +1608,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             println(list.minOfWithOrNull(reverseOrder<Int>()) { it * 10 })
             println(list.foldRight(0) { value, acc -> value * 10 + acc })
             println(list.foldIndexed(0) { index, acc, value -> acc + index * value })
+            println(list.foldRightIndexed(0) { index, value, acc -> index + value + acc })
         }
         """
 
@@ -1625,6 +1626,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             XCTAssertTrue(callees.contains("kk_list_minOfWithOrNull"))
             XCTAssertTrue(callees.contains("kk_list_foldRight"))
             XCTAssertTrue(callees.contains("kk_list_foldIndexed"))
+            XCTAssertTrue(callees.contains("kk_list_foldRightIndexed"))
         }
     }
 
