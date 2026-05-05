@@ -312,6 +312,18 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(sorted), [12, 11, 22, 21])
     }
 
+    func testListElementAtReturnsElementAndThrowsWhenOutOfBounds() {
+        let source = makeList([10, 20, 30])
+
+        var thrown = -1
+        XCTAssertEqual(kk_list_elementAt(source, 1, &thrown), 20)
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        XCTAssertEqual(kk_list_elementAt(source, 5, &thrown), 0)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
     func testListMinusElementRemovesFirstMatchingValue() {
         let source = makeList([1, 2, 2, 3])
 

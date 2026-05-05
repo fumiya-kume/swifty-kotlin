@@ -1248,6 +1248,30 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenListElementAtUsesRuntimeHelper() throws {
+        let source = """
+        fun main() {
+            val list = listOf(10, 20, 30)
+            println(list.elementAt(1))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListElementAtRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "20\n")
+        }
+    }
+
     func testCodegenListAggregateHelpersUseRuntimeHelpers() throws {
         let source = """
         fun main() {

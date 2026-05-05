@@ -143,7 +143,7 @@
 - [ ] STDLIB-COL-FN-047: `dropLast` 関数の実装
 - [ ] STDLIB-COL-FN-048: `dropLastWhile` 関数の実装
 - [ ] STDLIB-COL-FN-049: `dropWhile` 関数の実装
-- [ ] STDLIB-COL-FN-050: `elementAt` 関数の実装
+- [x] STDLIB-COL-FN-050: `elementAt` 関数の実装
 - [ ] STDLIB-COL-FN-051: `elementAtOrElse` 関数の実装
 - [ ] STDLIB-COL-FN-052: `elementAtOrNull` 関数の実装
 - [x] STDLIB-COL-FN-053: `emptyList` 関数の実装
