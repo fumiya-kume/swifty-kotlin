@@ -50,6 +50,11 @@ extension DataFlowSemaPhase {
         symbols.setSupertypeTypeArgs([.out(listTypeParamType)], for: listInterfaceSymbol, supertype: collectionInterfaceSymbol)
         types.setNominalSupertypeTypeArgs([.out(listTypeParamType)], for: listInterfaceSymbol, supertype: collectionInterfaceSymbol)
 
+        registerListLastIndexExtensionProperty(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            listInterfaceSymbol: listInterfaceSymbol
+        )
         registerListGetOperator(
             symbols: symbols, types: types, interner: interner,
             listFQName: listFQName,
@@ -148,6 +153,110 @@ extension DataFlowSemaPhase {
             ),
             for: listGetSymbol
         )
+    }
+
+    /// Register `val <T> List<T>.lastIndex: Int`.
+    private func registerListLastIndexExtensionProperty(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        listInterfaceSymbol: SymbolID
+    ) {
+        let propertyName = interner.intern("lastIndex")
+        let propertyFQName = kotlinCollectionsPkg + [propertyName]
+        let existing = symbols.lookupAll(fqName: propertyFQName).first { symbolID in
+            guard symbols.symbol(symbolID)?.kind == .property,
+                  let receiverType = symbols.extensionPropertyReceiverType(for: symbolID),
+                  case let .classType(receiverClass) = types.kind(of: types.makeNonNullable(receiverType))
+            else {
+                return false
+            }
+            return receiverClass.classSymbol == listInterfaceSymbol
+        }
+
+        let propertySymbol: SymbolID
+        let receiverType: TypeID
+        let typeParameterSymbol: SymbolID
+        if let existing {
+            propertySymbol = existing
+            guard let existingReceiver = symbols.extensionPropertyReceiverType(for: existing),
+                  case let .classType(existingReceiverClass) = types.kind(of: types.makeNonNullable(existingReceiver)),
+                  case let .out(existingElementType)? = existingReceiverClass.args.first,
+                  case let .typeParam(existingElementParam) = types.kind(of: existingElementType)
+            else {
+                symbols.setPropertyType(types.intType, for: existing)
+                symbols.setExternalLinkName("kk_list_lastIndex", for: existing)
+                return
+            }
+            receiverType = existingReceiver
+            typeParameterSymbol = existingElementParam.symbol
+        } else {
+            let typeParameterName = interner.intern("T")
+            let typeParameterFQName = propertyFQName + [typeParameterName]
+            typeParameterSymbol = symbols.define(
+                kind: .typeParameter,
+                name: typeParameterName,
+                fqName: typeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let typeParameterType = types.make(.typeParam(TypeParamType(
+                symbol: typeParameterSymbol,
+                nullability: .nonNull
+            )))
+            receiverType = types.make(.classType(ClassType(
+                classSymbol: listInterfaceSymbol,
+                args: [.out(typeParameterType)],
+                nullability: .nonNull
+            )))
+            propertySymbol = symbols.define(
+                kind: .property,
+                name: propertyName,
+                fqName: propertyFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            if let packageSymbol = symbols.lookup(fqName: kotlinCollectionsPkg) {
+                symbols.setParentSymbol(packageSymbol, for: propertySymbol)
+            }
+            symbols.setParentSymbol(propertySymbol, for: typeParameterSymbol)
+            symbols.setExtensionPropertyReceiverType(receiverType, for: propertySymbol)
+        }
+
+        symbols.setPropertyType(types.intType, for: propertySymbol)
+        symbols.setExternalLinkName("kk_list_lastIndex", for: propertySymbol)
+
+        let getterFQName = propertyFQName + [interner.intern("$get")]
+        let getterSymbol: SymbolID
+        if let existingGetter = symbols.extensionPropertyGetterAccessor(for: propertySymbol) {
+            getterSymbol = existingGetter
+        } else {
+            getterSymbol = symbols.define(
+                kind: .function,
+                name: interner.intern("get"),
+                fqName: getterFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(propertySymbol, for: getterSymbol)
+            symbols.setExtensionPropertyGetterAccessor(getterSymbol, for: propertySymbol)
+            symbols.setAccessorOwnerProperty(propertySymbol, for: getterSymbol)
+        }
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: types.intType,
+                typeParameterSymbols: [typeParameterSymbol],
+                typeParameterUpperBoundsList: [[]]
+            ),
+            for: getterSymbol
+        )
+        symbols.setExternalLinkName("kk_list_lastIndex", for: getterSymbol)
     }
 
     /// Register `val <T> List<T>.indices: IntRange`.

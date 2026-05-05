@@ -14,6 +14,7 @@
 /// - `getName(index: Int): Path`
 /// - `Path.name: String` extension property
 /// - `Path.appendText(text: CharSequence, charset)` extension function
+/// - `Path.invariantSeparatorsPath: String` extension property
 /// - `Path.absolute(): Path` extension function
 /// - `Path.invariantSeparatorsPathString: String` extension property
 /// - `readText(): String`, `writeText(text: String)`, `readLines(): List<String>`
@@ -24,6 +25,7 @@
 /// - `CopyActionContext` type surface
 /// - `CopyActionResult` enum surface
 /// - `ExperimentalPathApi` marker annotation surface
+/// - `OnErrorResult` enum surface
 /// - `PathWalkOption` enum surface
 ///
 /// Each stub registers the kotlin.io.path.Path class, its constructor, member
@@ -103,6 +105,23 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let onErrorResultSymbol = ensurePathOnErrorResultEnum(
+            in: kotlinIOPathPkg,
+            packageSymbol: kotlinIOPathPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        let onErrorResultType = types.make(.classType(ClassType(
+            classSymbol: onErrorResultSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        setPathEnumEntryTypes(
+            enumSymbol: onErrorResultSymbol,
+            enumType: onErrorResultType,
+            symbols: symbols
+        )
+
         let pathWalkOptionSymbol = ensurePathWalkOptionEnum(
             in: kotlinIOPathPkg,
             packageSymbol: kotlinIOPathPkgSymbol,
@@ -275,6 +294,16 @@ extension DataFlowSemaPhase {
             parameters: [],
             returnType: pathType,
             externalLinkName: "kk_path_toAbsolutePath",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionProperty(
+            named: "invariantSeparatorsPath",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            returnType: types.stringType,
+            externalLinkName: "kk_path_invariantSeparatorsPath",
             symbols: symbols,
             interner: interner
         )
@@ -717,6 +746,50 @@ extension DataFlowSemaPhase {
         }
 
         for entry in ["CONTINUE", "SKIP_SUBTREE", "TERMINATE"] {
+            let entryName = interner.intern(entry)
+            let entryFQName = fqName + [entryName]
+            if symbols.lookup(fqName: entryFQName) != nil {
+                continue
+            }
+            let entrySymbol = symbols.define(
+                kind: .field,
+                name: entryName,
+                fqName: entryFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(enumSymbol, for: entrySymbol)
+        }
+
+        return enumSymbol
+    }
+
+    private func ensurePathOnErrorResultEnum(
+        in packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> SymbolID {
+        let name = interner.intern("OnErrorResult")
+        let fqName = packageFQName + [name]
+        if let existing = symbols.lookup(fqName: fqName) {
+            return existing
+        }
+
+        let enumSymbol = symbols.define(
+            kind: .enumClass,
+            name: name,
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol {
+            symbols.setParentSymbol(packageSymbol, for: enumSymbol)
+        }
+
+        for entry in ["SKIP_SUBTREE", "TERMINATE"] {
             let entryName = interner.intern(entry)
             let entryFQName = fqName + [entryName]
             if symbols.lookup(fqName: entryFQName) != nil {

@@ -403,6 +403,28 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testOnErrorResultInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import kotlin.io.path.OnErrorResult
+
+        fun nextOnErrorResult(result: OnErrorResult): OnErrorResult {
+            return when (result) {
+                OnErrorResult.SKIP_SUBTREE -> OnErrorResult.TERMINATE
+                OnErrorResult.TERMINATE -> OnErrorResult.SKIP_SUBTREE
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "OnErrorResult entries in kotlin.io.path should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     func testPathWalkOptionInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import kotlin.io.path.PathWalkOption
@@ -442,6 +464,27 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
             XCTAssertFalse(
                 ctx.diagnostics.hasError,
                 "Path.invariantSeparatorsPathString in kotlin.io.path should resolve as String: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
+    func testPathInvariantSeparatorsPathPropertyInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import kotlin.io.path.Path
+        import kotlin.io.path.invariantSeparatorsPath
+
+        fun invariantSeparators(path: Path): String {
+            val normalized: String = path.invariantSeparatorsPath
+            return normalized
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.invariantSeparatorsPath in kotlin.io.path should resolve as String: \(ctx.diagnostics.diagnostics.map(\.message))"
             )
         }
     }
