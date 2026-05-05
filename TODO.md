@@ -54,7 +54,7 @@
 - [x] STDLIB-COL-ABSTRACT-002: `AbstractIterator<T>` 抽象クラスの実装
 - [ ] STDLIB-COL-ABSTRACT-003: `AbstractList<E>` 抽象クラスの実装
 - [ ] STDLIB-COL-ABSTRACT-004: `AbstractMap<K,V>` 抽象クラスの実装
-- [ ] STDLIB-COL-ABSTRACT-005: `AbstractMutableCollection<E>` 抽象クラスの実装
+- [x] STDLIB-COL-ABSTRACT-005: `AbstractMutableCollection<E>` 抽象クラスの実装
 - [ ] STDLIB-COL-ABSTRACT-006: `AbstractMutableList<E>` 抽象クラスの実装
 - [ ] STDLIB-COL-ABSTRACT-007: `AbstractMutableMap<K,V>` 抽象クラスの実装
 - [ ] STDLIB-COL-ABSTRACT-008: `AbstractMutableSet<E>` 抽象クラスの実装
