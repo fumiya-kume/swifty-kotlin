@@ -56,7 +56,7 @@
 - [x] STDLIB-COL-ABSTRACT-004: `AbstractMap<K,V>` 抽象クラスの実装
 - [x] STDLIB-COL-ABSTRACT-005: `AbstractMutableCollection<E>` 抽象クラスの実装
 - [ ] STDLIB-COL-ABSTRACT-006: `AbstractMutableList<E>` 抽象クラスの実装
-- [ ] STDLIB-COL-ABSTRACT-007: `AbstractMutableMap<K,V>` 抽象クラスの実装
+- [x] STDLIB-COL-ABSTRACT-007: `AbstractMutableMap<K,V>` 抽象クラスの実装
 - [ ] STDLIB-COL-ABSTRACT-008: `AbstractMutableSet<E>` 抽象クラスの実装
 - [ ] STDLIB-COL-ABSTRACT-009: `AbstractSet<E>` 抽象クラスの実装
 
@@ -1200,7 +1200,7 @@
 - [x] STDLIB-IO-PATH-TYPE-002: `kotlin.io.path.CopyActionResult` enum surface を追加する
 - [x] STDLIB-IO-PATH-TYPE-003: `kotlin.io.path.ExperimentalPathApi` marker annotation を追加する
 - [ ] STDLIB-IO-PATH-TYPE-004: `kotlin.io.path.FileVisitorBuilder` type surface を追加する
-- [ ] STDLIB-IO-PATH-TYPE-005: `kotlin.io.path.OnErrorResult` enum surface を追加する
+- [x] STDLIB-IO-PATH-TYPE-005: `kotlin.io.path.OnErrorResult` enum surface を追加する
 - [x] STDLIB-IO-PATH-TYPE-006: `kotlin.io.path.PathWalkOption` enum surface を追加する
 - [ ] STDLIB-IO-PATH-PROP-001: `Path.extension` extension property を追加する
 - [x] STDLIB-IO-PATH-PROP-002: `Path.invariantSeparatorsPath` extension property を追加する
