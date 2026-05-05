@@ -132,6 +132,14 @@ public func kk_list_get(_ listRaw: Int, _ index: Int) -> Int {
     return list.elements[index]
 }
 
+@_cdecl("kk_list_lastIndex")
+public func kk_list_lastIndex(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return -1
+    }
+    return list.elements.count - 1
+}
+
 // STDLIB-183: List destructuring component1() ~ component5()
 @_cdecl("kk_list_component1")
 public func kk_list_component1(_ listRaw: Int) -> Int {

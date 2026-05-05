@@ -974,5 +974,134 @@ extension DataFlowSemaPhase {
                 for: memberSymbol
             )
         }
+
+        _ = registerSyntheticAbstractMutableMapStub(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            mapInterfaceSymbol: mapInterfaceSymbol,
+            mutableMapSymbol: mutableMapSymbol
+        )
+    }
+
+    /// Register `kotlin.collections.AbstractMutableMap<K, V>` surface (STDLIB-COL-ABSTRACT-007).
+    func registerSyntheticAbstractMutableMapStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        mapInterfaceSymbol: SymbolID,
+        mutableMapSymbol: SymbolID
+    ) -> SymbolID {
+        let abstractMutableMapName = interner.intern("AbstractMutableMap")
+        let abstractMutableMapFQName = kotlinCollectionsPkg + [abstractMutableMapName]
+        let abstractMutableMapSymbol: SymbolID = if let existing = symbols.lookup(fqName: abstractMutableMapFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .class,
+                name: abstractMutableMapName,
+                fqName: abstractMutableMapFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .abstractType]
+            )
+        }
+
+        let keyName = interner.intern("K")
+        let valueName = interner.intern("V")
+        let keyParamFQName = abstractMutableMapFQName + [keyName]
+        let valueParamFQName = abstractMutableMapFQName + [valueName]
+        let keyParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: keyParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: keyName,
+                fqName: keyParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let valueParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: valueParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: valueName,
+                fqName: valueParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let keyType = types.make(.typeParam(TypeParamType(symbol: keyParamSymbol, nullability: .nonNull)))
+        let valueType = types.make(.typeParam(TypeParamType(symbol: valueParamSymbol, nullability: .nonNull)))
+
+        types.setNominalTypeParameterSymbols([keyParamSymbol, valueParamSymbol], for: abstractMutableMapSymbol)
+        types.setNominalTypeParameterVariances([.invariant, .invariant], for: abstractMutableMapSymbol)
+
+        let abstractMutableMapType = types.make(.classType(ClassType(
+            classSymbol: abstractMutableMapSymbol,
+            args: [.invariant(keyType), .invariant(valueType)],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(abstractMutableMapType, for: abstractMutableMapSymbol)
+
+        let abstractMapSymbol = symbols.lookup(fqName: kotlinCollectionsPkg + [interner.intern("AbstractMap")])
+        let readonlySupertype = abstractMapSymbol ?? mapInterfaceSymbol
+        symbols.setDirectSupertypes([readonlySupertype, mutableMapSymbol], for: abstractMutableMapSymbol)
+        types.setNominalDirectSupertypes([readonlySupertype, mutableMapSymbol], for: abstractMutableMapSymbol)
+        symbols.setSupertypeTypeArgs(
+            [.invariant(keyType), .out(valueType)],
+            for: abstractMutableMapSymbol,
+            supertype: readonlySupertype
+        )
+        types.setNominalSupertypeTypeArgs(
+            [.invariant(keyType), .out(valueType)],
+            for: abstractMutableMapSymbol,
+            supertype: readonlySupertype
+        )
+        symbols.setSupertypeTypeArgs(
+            [.invariant(keyType), .invariant(valueType)],
+            for: abstractMutableMapSymbol,
+            supertype: mutableMapSymbol
+        )
+        types.setNominalSupertypeTypeArgs(
+            [.invariant(keyType), .invariant(valueType)],
+            for: abstractMutableMapSymbol,
+            supertype: mutableMapSymbol
+        )
+
+        let initName = interner.intern("<init>")
+        let initFQName = abstractMutableMapFQName + [initName]
+        if symbols.lookup(fqName: initFQName) == nil {
+            let initSymbol = symbols.define(
+                kind: .constructor,
+                name: initName,
+                fqName: initFQName,
+                declSite: nil,
+                visibility: .protected,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(abstractMutableMapSymbol, for: initSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: [],
+                    returnType: abstractMutableMapType,
+                    valueParameterSymbols: [],
+                    valueParameterHasDefaultValues: [],
+                    valueParameterIsVararg: [],
+                    typeParameterSymbols: [keyParamSymbol, valueParamSymbol],
+                    classTypeParameterCount: 2
+                ),
+                for: initSymbol
+            )
+        }
+
+        return abstractMutableMapSymbol
     }
 }
