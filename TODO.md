@@ -80,7 +80,7 @@
 - [ ] STDLIB-COL-ITERATOR-008: `ShortIterator` クラスの実装
 
 #### kotlin.collections その他の型の実装
-- [ ] STDLIB-COL-OTHER-001: `IndexedValue<T>` データクラスの実装
+- [x] STDLIB-COL-OTHER-001: `IndexedValue<T>` データクラスの実装
 - [ ] STDLIB-COL-OTHER-002: `Grouping<T,K>` インターフェースの実装
 - [ ] STDLIB-COL-OTHER-003: `RandomAccess` マーカーインターフェースの実装
 - [ ] STDLIB-COL-OTHER-004: `MutableIterable<T>` インターフェースの実装
