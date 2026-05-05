@@ -1000,6 +1000,29 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testCollectionLastInfersElementType() throws {
+        let source = """
+        fun lastValue(values: Collection<Int>): Int = values.last()
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "last"
+            })
+            let type = try XCTUnwrap(sema.bindings.exprType(for: callExpr))
+            XCTAssertEqual(sema.types.kind(of: type), .primitive(.int, .nonNull))
+        }
+    }
+
     func testPrimitiveIteratorSurfacesAreRegistered() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])

@@ -125,6 +125,34 @@ extension DataFlowSemaPhase {
             flags: [.synthetic, .operatorFunction]
         )
 
+        // last(): E — modeled directly here because Collection member lookup does
+        // not currently inherit synthetic Iterable extension members.
+        let lastName = interner.intern("last")
+        let lastFQName = collectionFQName + [lastName]
+        if symbols.lookup(fqName: lastFQName) == nil {
+            let lastSymbol = symbols.define(
+                kind: .function,
+                name: lastName,
+                fqName: lastFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .operatorFunction]
+            )
+            symbols.setParentSymbol(collectionInterfaceSymbol, for: lastSymbol)
+            symbols.setExternalLinkName("kk_iterable_last", for: lastSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: collectionReceiverType,
+                    parameterTypes: [],
+                    returnType: typeParamType,
+                    canThrow: true,
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: lastSymbol
+            )
+        }
+
         return collectionInterfaceSymbol
     }
 
@@ -1687,6 +1715,53 @@ extension DataFlowSemaPhase {
                 parameterTypes: [transformType],
                 returnType: resultType,
                 typeParameterSymbols: [iterableTypeParamSymbol, resultTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    /// Register `Iterable<E>.last()` (STDLIB-COL-FN-104).
+    func registerIterableLastMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        iterableInterfaceSymbol: SymbolID
+    ) {
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName,
+              let iterableTypeParamSymbol = types.nominalTypeParameterSymbols(for: iterableInterfaceSymbol).first
+        else { return }
+
+        let memberName = interner.intern("last")
+        let memberFQName = iterableFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let elementType = types.make(.typeParam(TypeParamType(
+            symbol: iterableTypeParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_iterable_last", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: elementType,
+                canThrow: true,
+                typeParameterSymbols: [iterableTypeParamSymbol],
                 classTypeParameterCount: 1
             ),
             for: memberSymbol

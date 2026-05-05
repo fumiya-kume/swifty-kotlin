@@ -3162,6 +3162,18 @@ public func kk_iterable_toHashSet(_ iterableRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeSetBox(elements: []))
 }
 
+/// Generic `Iterable<T>.last()` that accepts any collection handle (List, Set, etc.).
+@_cdecl("kk_iterable_last")
+public func kk_iterable_last(_ iterableRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let elements = runtimeCollectionElements(from: iterableRaw) ?? runtimeArrayBox(from: iterableRaw)?.elements ?? []
+    guard let last = elements.last else {
+        runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "Collection is empty."))
+        return 0
+    }
+    return last
+}
+
 /// Generic `Collection<T>.toMutableList()` that accepts any collection handle (List, Set, etc.).
 @_cdecl("kk_collection_toMutableList")
 public func kk_collection_toMutableList(_ collRaw: Int) -> Int {

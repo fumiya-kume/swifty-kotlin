@@ -1397,7 +1397,8 @@ extension CallTypeChecker {
                     switch calleeStr {
                     case "any", "none": resultType = sema.types.booleanType
                     case "count": resultType = sema.types.intType
-                    case "first", "last": resultType = sema.types.makeNullable(collectionElementType)
+                    case "last": resultType = collectionElementType
+                    case "first": resultType = sema.types.makeNullable(collectionElementType)
                     default: resultType = sema.types.anyType
                     }
                 } else {

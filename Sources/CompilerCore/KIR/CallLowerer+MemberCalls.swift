@@ -1272,6 +1272,20 @@ extension CallLowerer {
         return knownNames.isSequenceSymbol(symbol)
     }
 
+    private func isIterableOrCollectionInterfaceType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        let symbolName = interner.resolve(symbol.name)
+        return symbolName == "Iterable" || symbolName == "Collection"
+    }
+
     private func isGroupingLikeType(
         _ receiverType: TypeID,
         sema: SemaModule,
@@ -3980,9 +3994,11 @@ extension CallLowerer {
                     return result
                 }
             }
-            if isSequenceLikeType(nonNullReceiverType, sema: sema, interner: interner)
-                || sema.bindings.isCollectionExpr(receiverExpr) && !isConcreteCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner)
-            {
+            let useSequenceRuntimeForCollectionFallback = isSequenceLikeType(nonNullReceiverType, sema: sema, interner: interner)
+            let useIterableRuntimeForCollectionFallback = (sema.bindings.isCollectionExpr(receiverExpr)
+                || isIterableOrCollectionInterfaceType(nonNullReceiverType, sema: sema, interner: interner))
+                && !isConcreteCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner)
+            if useSequenceRuntimeForCollectionFallback || useIterableRuntimeForCollectionFallback {
                 let runtimeCallee: String?
                 let mapName = interner.intern("map")
                 let filterName = interner.intern("filter")
@@ -4012,6 +4028,7 @@ extension CallLowerer {
                 let elementAtName = interner.intern("elementAt")
                 let elementAtOrNullName = interner.intern("elementAtOrNull")
                 let findLastName = interner.intern("findLast")
+                let lastName = interner.intern("last")
                 let partitionName = interner.intern("partition")
                 let minByOrNullName = interner.intern("minByOrNull")
                 let maxByOrNullName = interner.intern("maxByOrNull")
@@ -4071,6 +4088,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_elementAt"
                 } else if calleeName == elementAtOrNullName {
                     runtimeCallee = "kk_sequence_elementAtOrNull"
+                } else if calleeName == lastName {
+                    runtimeCallee = useIterableRuntimeForCollectionFallback ? "kk_iterable_last" : "kk_sequence_last"
                 } else if calleeName == findLastName {
                     runtimeCallee = "kk_sequence_findLast"
                 } else if calleeName == partitionName {
@@ -4154,6 +4173,8 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_find"
                         || runtimeCallee == "kk_sequence_findLast"
                         || runtimeCallee == "kk_sequence_elementAt"
+                        || runtimeCallee == "kk_sequence_last"
+                        || runtimeCallee == "kk_iterable_last"
                         || runtimeCallee == "kk_sequence_minByOrNull"
                         || runtimeCallee == "kk_sequence_maxByOrNull"
                         || runtimeCallee == "kk_sequence_minOf"
@@ -4585,9 +4606,15 @@ extension CallLowerer {
                     return result
                 }
             }
-            if isSequenceLikeType(nonNullReceiverType, sema: sema, interner: interner)
-                || sema.bindings.isCollectionExpr(receiverExpr) && !isConcreteCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner)
-            {
+            let useSequenceRuntimeForTerminalFallback = isSequenceLikeType(
+                nonNullReceiverType,
+                sema: sema,
+                interner: interner
+            )
+            let useIterableRuntimeForTerminalFallback = (sema.bindings.isCollectionExpr(receiverExpr)
+                || isIterableOrCollectionInterfaceType(nonNullReceiverType, sema: sema, interner: interner))
+                && !isConcreteCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner)
+            if useSequenceRuntimeForTerminalFallback || useIterableRuntimeForTerminalFallback {
                 let toListID = interner.intern("toList")
                 let constrainOnceID = interner.intern("constrainOnce")
                 let distinctID = interner.intern("distinct")
@@ -4614,6 +4641,7 @@ extension CallLowerer {
                 let seqFirstCallee = interner.intern("kk_sequence_first")
                 let seqFirstOrNullCallee = interner.intern("kk_sequence_firstOrNull")
                 let seqLastCallee = interner.intern("kk_sequence_last")
+                let iterableLastCallee = interner.intern("kk_iterable_last")
                 let seqLastOrNullCallee = interner.intern("kk_sequence_lastOrNull")
                 let seqCountCallee = interner.intern("kk_sequence_count")
                 let seqAnyCallee = interner.intern("kk_sequence_any")
@@ -4646,7 +4674,7 @@ extension CallLowerer {
                 case firstOrNullID:
                     seqFirstOrNullCallee
                 case lastID:
-                    seqLastCallee
+                    useIterableRuntimeForTerminalFallback ? iterableLastCallee : seqLastCallee
                 case lastOrNullID:
                     seqLastOrNullCallee
                 case countID:
@@ -4688,6 +4716,7 @@ extension CallLowerer {
                     let canThrow = runtimeCallee == seqFirstCallee
                         || runtimeCallee == seqFirstOrNullCallee
                         || runtimeCallee == seqLastCallee
+                        || runtimeCallee == iterableLastCallee
                         || runtimeCallee == seqLastOrNullCallee
                         || runtimeCallee == seqCountCallee
                         || runtimeCallee == seqToListCallee
@@ -8605,9 +8634,11 @@ extension CallLowerer {
             }
         }
 
-        if isSequenceLikeType(nonNullReceiverType, sema: sema, interner: interner)
-            || sema.bindings.isCollectionExpr(receiverExpr) && !isConcreteCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner)
-        {
+        let useSequenceRuntimeForCollectionFallback = isSequenceLikeType(nonNullReceiverType, sema: sema, interner: interner)
+        let useIterableRuntimeForCollectionFallback = (sema.bindings.isCollectionExpr(receiverExpr)
+            || isIterableOrCollectionInterfaceType(nonNullReceiverType, sema: sema, interner: interner))
+            && !isConcreteCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner)
+        if useSequenceRuntimeForCollectionFallback || useIterableRuntimeForCollectionFallback {
             let internedMemberName = interner.intern(memberName)
             let mapName = interner.intern("map")
             let filterName = interner.intern("filter")
@@ -8765,7 +8796,7 @@ extension CallLowerer {
             case firstOrNullName:
                 return interner.intern("kk_sequence_firstOrNull")
             case lastName:
-                return interner.intern("kk_sequence_last")
+                return interner.intern(useIterableRuntimeForCollectionFallback ? "kk_iterable_last" : "kk_sequence_last")
             case interner.intern("lastOrNull"):
                 return interner.intern("kk_sequence_lastOrNull")
             case countName:

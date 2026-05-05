@@ -2248,6 +2248,15 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         )
+        let iterableLastSpec = RuntimeABIFunctionSpec(
+            name: "kk_iterable_last",
+            parameters: [
+                RuntimeABIParameter(name: "iterableRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
         let mapIndexedToSpec = RuntimeABIFunctionSpec(
             name: "kk_list_mapIndexedTo",
             parameters: destinationLambdaParams,
@@ -2540,7 +2549,8 @@ public extension RuntimeABISpec {
             + [
                 filterIsInstanceToSpec,
                 filterToSpec, filterNotToSpec, mapToSpec, flatMapToSpec,
-                mapNotNullToSpec, firstNotNullOfSpec, firstNotNullOfOrNullSpec, mapIndexedToSpec, flatMapIndexedToSpec,
+                mapNotNullToSpec, firstNotNullOfSpec, firstNotNullOfOrNullSpec, iterableLastSpec,
+                mapIndexedToSpec, flatMapIndexedToSpec,
             ]
             + genericAfter.flatMap { name in
                 if name == "kk_list_sortedBy" {
