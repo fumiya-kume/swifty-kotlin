@@ -96,7 +96,7 @@
 - [ ] STDLIB-COL-FN-002: `addAll` 関数の実装（Iterable版）
 - [ ] STDLIB-COL-FN-003: `addAll` 関数の実装（Sequence版）
 - [x] STDLIB-COL-FN-004: `aggregate` 関数の実装
-- [ ] STDLIB-COL-FN-005: `aggregateTo` 関数の実装
+- [x] STDLIB-COL-FN-005: `aggregateTo` 関数の実装
 - [ ] STDLIB-COL-FN-006: `all` 関数の実装（Array版）
 - [ ] STDLIB-COL-FN-007: `all` 関数の実装（Iterable版）
 - [x] STDLIB-COL-FN-008: `all` 関数の実装（Map版）
