@@ -1023,6 +1023,14 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         _ = kk_map_forEach(map, unsafeBitCast(accumulateEntryScore, to: Int.self), 0, nil)
         XCTAssertEqual(gHOFState.sumSnapshot(), 123)
 
+        var thrown = 0
+        XCTAssertEqual(kk_map_getValue(map, 2, &thrown), 21)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_map_getValue(kk_map_withDefault(map, unsafeBitCast(mapTimesTwo, to: Int.self), 0), 9, &thrown), 18)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_map_getValue(map, 9, &thrown), 0)
+        XCTAssertNotEqual(thrown, 0)
+
         let mapped = kk_map_map(map, unsafeBitCast(mapEntrySum, to: Int.self), 0, nil)
         XCTAssertEqual(listElements(mapped), [11, 23, 35])
 
