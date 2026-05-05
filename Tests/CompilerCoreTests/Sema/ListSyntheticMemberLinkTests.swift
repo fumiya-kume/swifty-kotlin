@@ -127,7 +127,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
-    func testLinkedSetOfFactoryInfersMutableSetType() throws {
+    func testLinkedSetOfFactoryInfersLinkedHashSetType() throws {
         let source = """
         fun probe() {
             val values = linkedSetOf(1, 2)
@@ -156,13 +156,82 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             })
             let callType = try XCTUnwrap(sema.bindings.exprTypes[linkedSetCall])
             guard case let .classType(classType) = sema.types.kind(of: callType) else {
-                return XCTFail("Expected linkedSetOf to produce a MutableSet class type")
+                return XCTFail("Expected linkedSetOf to produce a LinkedHashSet class type")
             }
-            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(classType.classSymbol)?.name)), "MutableSet")
+            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(classType.classSymbol)?.name)), "LinkedHashSet")
             XCTAssertEqual(classType.args, [.invariant(sema.types.intType)])
             XCTAssertTrue(
                 sema.bindings.isCollectionExpr(linkedSetCall),
                 "Expected linkedSetOf to be tracked as a collection expression"
+            )
+        }
+    }
+
+    func testLinkedHashSetConcreteClassAndConstructorSurfaceIsRegistered() throws {
+        let source = """
+        fun probe() {
+            val constructed: LinkedHashSet<Int> = LinkedHashSet<Int>()
+            val asMutable: MutableSet<Int> = constructed
+            val fromExpectedMutable: MutableSet<Int> = LinkedHashSet()
+            constructed.add(1)
+            asMutable.add(2)
+            fromExpectedMutable.add(3)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected LinkedHashSet concrete class calls to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let interner = ctx.interner
+            let kotlinCollections = [interner.intern("kotlin"), interner.intern("collections")]
+            let linkedHashSetFQ = kotlinCollections + [interner.intern("LinkedHashSet")]
+            let mutableSetFQ = kotlinCollections + [interner.intern("MutableSet")]
+            let linkedHashSetSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: linkedHashSetFQ))
+            let mutableSetSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: mutableSetFQ))
+
+            let linkedHashSetInfo = try XCTUnwrap(sema.symbols.symbol(linkedHashSetSymbol))
+            XCTAssertEqual(linkedHashSetInfo.kind, .class)
+            XCTAssertTrue(linkedHashSetInfo.flags.contains(.synthetic))
+            XCTAssertTrue(linkedHashSetInfo.flags.contains(.openType))
+            XCTAssertTrue(sema.symbols.directSupertypes(for: linkedHashSetSymbol).contains(mutableSetSymbol))
+            XCTAssertEqual(sema.types.nominalTypeParameterVariances(for: linkedHashSetSymbol), [.invariant])
+
+            let constructorSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: linkedHashSetFQ + [interner.intern("<init>")]),
+                "Expected LinkedHashSet public constructor to be registered"
+            )
+            let constructorInfo = try XCTUnwrap(sema.symbols.symbol(constructorSymbol))
+            XCTAssertEqual(constructorInfo.kind, .constructor)
+            XCTAssertEqual(constructorInfo.visibility, .public)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: constructorSymbol), "kk_emptySet")
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: constructorSymbol))
+            XCTAssertTrue(signature.parameterTypes.isEmpty)
+            XCTAssertEqual(signature.typeParameterSymbols.count, 1)
+            XCTAssertEqual(signature.classTypeParameterCount, 1)
+
+            let constructorCall = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .call(callee, _, _, _) = expr,
+                      case let .nameRef(name, _) = ast.arena.expr(callee)
+                else { return false }
+                return interner.resolve(name) == "LinkedHashSet"
+            })
+            let callType = try XCTUnwrap(sema.bindings.exprTypes[constructorCall])
+            guard case let .classType(classType) = sema.types.kind(of: callType) else {
+                return XCTFail("Expected LinkedHashSet constructor to produce a class type")
+            }
+            XCTAssertEqual(try interner.resolve(XCTUnwrap(sema.symbols.symbol(classType.classSymbol)?.name)), "LinkedHashSet")
+            XCTAssertEqual(classType.args, [.invariant(sema.types.intType)])
+            XCTAssertTrue(
+                sema.bindings.isCollectionExpr(constructorCall),
+                "Expected LinkedHashSet constructor to be tracked as a collection expression"
             )
         }
     }

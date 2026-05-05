@@ -66,7 +66,7 @@
 - [ ] STDLIB-COL-CONCRETE-003: `HashMap<K,V>` 具象クラスの実装（現在は型エイリアスのみ）
 - [ ] STDLIB-COL-CONCRETE-004: `HashSet<E>` 具象クラスの実装（現在は型エイリアスのみ）
 - [ ] STDLIB-COL-CONCRETE-005: `LinkedHashMap<K,V>` 具象クラスの実装（現在は型エイリアスのみ）
-- [ ] STDLIB-COL-CONCRETE-006: `LinkedHashSet<E>` 具象クラスの実装（現在は型エイリアスのみ）
+- [x] STDLIB-COL-CONCRETE-006: `LinkedHashSet<E>` 具象クラスの実装（現在は型エイリアスのみ）
 - [ ] STDLIB-COL-CONCRETE-007: `ArrayDeque<E>` 具象クラスの実装
 
 #### kotlin.collections プリミティブイテレータの実装
