@@ -89,7 +89,7 @@
 
 #### kotlin.collections プロパティの実装
 - [x] STDLIB-COL-PROP-001: `indices` 拡張プロパティの実装
-- [ ] STDLIB-COL-PROP-002: `lastIndex` 拡張プロパティの実装
+- [x] STDLIB-COL-PROP-002: `lastIndex` 拡張プロパティの実装
 
 #### kotlin.collections 関数の実装（A-C）
 - [ ] STDLIB-COL-FN-001: `addAll` 関数の実装（Array版）

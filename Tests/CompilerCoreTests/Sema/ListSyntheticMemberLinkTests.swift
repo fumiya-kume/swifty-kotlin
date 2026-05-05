@@ -3,6 +3,42 @@ import Foundation
 import XCTest
 
 final class ListSyntheticMemberLinkTests: XCTestCase {
+    func testListLastIndexExtensionPropertyResolvesToRuntimeGetter() throws {
+        let source = """
+        import kotlin.collections.lastIndex
+
+        fun last(values: List<String>): Int {
+            return values.lastIndex
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected List.lastIndex to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let propertyExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, args, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "lastIndex" && args.isEmpty
+            }, "Expected values.lastIndex property access in AST")
+            XCTAssertEqual(sema.bindings.exprType(for: propertyExpr), sema.types.intType)
+
+            let getter = try XCTUnwrap(sema.bindings.callBinding(for: propertyExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: getter), "kk_list_lastIndex")
+
+            let property = try XCTUnwrap(sema.bindings.identifierSymbol(for: propertyExpr))
+            XCTAssertEqual(sema.symbols.externalLinkName(for: property), "kk_list_lastIndex")
+            XCTAssertEqual(sema.symbols.propertyType(for: property), sema.types.intType)
+        }
+    }
+
     func testListTransformMembersUseRuntimeExternalLinksForParameterReceivers() throws {
         let source = """
         fun render(values: List<Int>) {
