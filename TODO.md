@@ -72,7 +72,7 @@
 #### kotlin.collections プリミティブイテレータの実装
 - [ ] STDLIB-COL-ITERATOR-001: `BooleanIterator` クラスの実装
 - [ ] STDLIB-COL-ITERATOR-002: `ByteIterator` クラスの実装
-- [ ] STDLIB-COL-ITERATOR-003: `CharIterator` クラスの実装
+- [x] STDLIB-COL-ITERATOR-003: `CharIterator` クラスの実装
 - [ ] STDLIB-COL-ITERATOR-004: `DoubleIterator` クラスの実装
 - [ ] STDLIB-COL-ITERATOR-005: `FloatIterator` クラスの実装
 - [ ] STDLIB-COL-ITERATOR-006: `IntIterator` クラスの実装
