@@ -1255,6 +1255,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             println(list.sumOf { it * 2 })
             println(list.maxOrNull())
             println(list.minOrNull())
+            println(list.foldRight(0) { value, acc -> value * 10 + acc })
         }
         """
 
@@ -1268,6 +1269,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             XCTAssertTrue(callees.contains("kk_list_sumOf") || callees.contains("sumOf"))
             XCTAssertTrue(callees.contains("kk_list_maxOrNull"))
             XCTAssertTrue(callees.contains("kk_list_minOrNull"))
+            XCTAssertTrue(callees.contains("kk_list_foldRight"))
         }
     }
 
