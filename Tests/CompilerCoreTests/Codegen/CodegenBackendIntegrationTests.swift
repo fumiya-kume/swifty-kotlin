@@ -935,6 +935,9 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             println(map)
             println(map.remove("b"))
             println(map)
+            println(map.getOrPut("a") { 7 })
+            println(map.getOrPut("c") { 7 })
+            println(map)
             println(emptyMap<String, Int>().isEmpty())
         }
         """
@@ -951,7 +954,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "{a=1, b=2}\ntrue\n1\n{a=3, b=2}\n2\n{a=3}\ntrue\n")
+            XCTAssertEqual(normalizedStdout, "{a=1, b=2}\ntrue\n1\n{a=3, b=2}\n2\n{a=3}\n3\n7\n{a=3, c=7}\ntrue\n")
         }
     }
 

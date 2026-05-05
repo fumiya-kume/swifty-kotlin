@@ -1291,6 +1291,17 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(kk_map_get(map, 1), boxedLongMin)
     }
 
+    func testMutableMapGetOrPutInsertsValueForMissingKey() {
+        let map = registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+
+        gHOFState.reset()
+        let result = kk_mutable_map_getOrPut(map, 1, unsafeBitCast(returnSeven, to: Int.self), 0, nil)
+
+        XCTAssertEqual(gHOFState.callsSnapshot(), 1)
+        XCTAssertEqual(result, 7)
+        XCTAssertEqual(kk_map_get(map, 1), 7)
+    }
+
     func testMutableMapGetOrPutReturnsZeroWhenLambdaThrowsForExistingNullEntry() {
         let map = registerRuntimeObject(RuntimeMapBox(keys: [1], values: [runtimeNullSentinelInt]))
 
