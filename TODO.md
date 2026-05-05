@@ -76,7 +76,7 @@
 - [ ] STDLIB-COL-ITERATOR-004: `DoubleIterator` クラスの実装
 - [ ] STDLIB-COL-ITERATOR-005: `FloatIterator` クラスの実装
 - [ ] STDLIB-COL-ITERATOR-006: `IntIterator` クラスの実装
-- [ ] STDLIB-COL-ITERATOR-007: `LongIterator` クラスの実装
+- [x] STDLIB-COL-ITERATOR-007: `LongIterator` クラスの実装
 - [ ] STDLIB-COL-ITERATOR-008: `ShortIterator` クラスの実装
 
 #### kotlin.collections その他の型の実装
