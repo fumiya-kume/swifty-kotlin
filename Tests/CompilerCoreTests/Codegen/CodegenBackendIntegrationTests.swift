@@ -1422,6 +1422,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
                 println(index * 10 + value.length)
             }
             println(values.mapIndexed { index, value -> index + value.length })
+            println(listOf(10, 20, 30, 40).filterIndexed { index, value -> index + value > 21 })
         }
         """
 
@@ -1437,7 +1438,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "1\n12\n[1, 3]\n")
+            XCTAssertEqual(normalizedStdout, "1\n12\n[1, 3]\n[30, 40]\n")
         }
     }
 

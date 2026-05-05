@@ -2679,14 +2679,19 @@ extension CallTypeChecker {
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                 resultType = sema.types.intType
 
-            case "forEachIndexed", "mapIndexed", "onEachIndexed":
+            case "forEachIndexed", "mapIndexed", "filterIndexed", "onEachIndexed":
                 guard args.count == 1 else {
                     sema.bindings.bindExprType(id, type: sema.types.anyType)
                     return sema.types.anyType
                 }
-                let lambdaReturnType = calleeStr == "forEachIndexed" || calleeStr == "onEachIndexed"
-                    ? sema.types.unitType
-                    : sema.types.anyType
+                let lambdaReturnType: TypeID = switch calleeStr {
+                case "forEachIndexed", "onEachIndexed":
+                    sema.types.unitType
+                case "filterIndexed":
+                    sema.types.booleanType
+                default:
+                    sema.types.anyType
+                }
                 let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
                     params: [sema.types.intType, collectionElementType],
                     returnType: lambdaReturnType
@@ -2698,6 +2703,17 @@ extension CallTypeChecker {
                 if calleeStr == "forEachIndexed" {
                     resultType = sema.types.unitType
                 } else if calleeStr == "onEachIndexed" {
+                    if isSequenceReceiver {
+                        resultType = makeSyntheticSequenceType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            elementType: collectionElementType
+                        )
+                    } else {
+                        resultType = receiverType
+                    }
+                } else if calleeStr == "filterIndexed" {
                     if isSequenceReceiver {
                         resultType = makeSyntheticSequenceType(
                             symbols: sema.symbols,
@@ -3108,6 +3124,21 @@ extension CallTypeChecker {
 
             default:
                 resultType = sema.types.anyType
+            }
+
+            if calleeStr == "filterIndexed", isCollectionReceiver {
+                let knownNames = KnownCompilerNames(interner: interner)
+                let memberFQName = knownNames.kotlinCollectionsListFQName + [calleeName]
+                if let chosenCallee = sema.symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+                    sema.symbols.functionSignature(for: symbolID)?.parameterTypes.count == args.count
+                }) {
+                    sema.bindings.bindCall(id, binding: CallBinding(
+                        chosenCallee: chosenCallee,
+                        substitutedTypeArguments: [collectionElementType],
+                        parameterMapping: [0: 0]
+                    ))
+                    sema.bindings.bindCallableTarget(id, target: .symbol(chosenCallee))
+                }
             }
 
             let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType

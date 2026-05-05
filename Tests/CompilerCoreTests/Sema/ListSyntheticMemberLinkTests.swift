@@ -3460,7 +3460,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                 ctx.interner.intern("List"),
             ]
 
-            for memberName in ["sumOf", "forEachIndexed", "mapIndexed"] {
+            for memberName in ["sumOf", "forEachIndexed", "mapIndexed", "filterIndexed"] {
                 let symbolID = try XCTUnwrap(
                     sema.symbols.lookup(fqName: listFQName + [ctx.interner.intern(memberName)]),
                     "Expected synthetic List member \(memberName) to be registered"
@@ -3469,6 +3469,35 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                 XCTAssertTrue(flags.contains(.inlineFunction), "Expected \(memberName) to be inline")
                 XCTAssertTrue(flags.contains(.synthetic), "Expected \(memberName) to be synthetic")
             }
+        }
+    }
+
+    func testListFilterIndexedUsesRuntimeExternalLink() throws {
+        let source = """
+        fun main() {
+            val list = listOf(10, 20, 30)
+            list.filterIndexed { index, value -> index + value > 20 }
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-VAR-OUT", in: ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let ast = try XCTUnwrap(ctx.ast)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "filterIndexed"
+            })
+            let chosenCallee = try XCTUnwrap(
+                sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                "filterIndexed should resolve"
+            )
+            XCTAssertEqual(
+                sema.symbols.externalLinkName(for: chosenCallee),
+                "kk_list_filterIndexed"
+            )
         }
     }
 
