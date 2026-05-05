@@ -108,7 +108,7 @@
 - [ ] STDLIB-COL-FN-014: `asList` 関数の実装
 - [ ] STDLIB-COL-FN-015: `asLongArray` 関数の実装
 - [ ] STDLIB-COL-FN-016: `asSequence` 関数の実装
-- [ ] STDLIB-COL-FN-017: `asShortArray` 関数の実装
+- [x] STDLIB-COL-FN-017: `asShortArray` 関数の実装
 - [ ] STDLIB-COL-FN-018: `associate` 関数の実装
 - [ ] STDLIB-COL-FN-019: `associateBy` 関数の実装
 - [ ] STDLIB-COL-FN-020: `associateByTo` 関数の実装
