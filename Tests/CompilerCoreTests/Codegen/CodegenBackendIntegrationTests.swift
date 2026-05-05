@@ -600,6 +600,33 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenListFilterIsInstanceToUsesRuntimeHelper() throws {
+        let source = """
+        fun main() {
+            val values: List<Any> = listOf(1, "two", 3, "four")
+            val dest = mutableListOf<Int>(99)
+            val result = values.filterIsInstanceTo(dest)
+            println(result)
+            println(dest)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListFilterIsInstanceToRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[99, 1, 3]\n[99, 1, 3]\n")
+        }
+    }
+
     func testCodegenMutableListRemoveFirstOrNullUsesCanonicalDiffCase() throws {
         let root = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent() // Codegen/

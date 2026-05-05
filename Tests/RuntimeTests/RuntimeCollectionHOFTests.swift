@@ -754,6 +754,16 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(arrayMapped), [2, 99, 6])
     }
 
+    func testFilterIsInstanceToAppendsMatchingElementsToDestination() {
+        let source = makeList([runtimeStringRaw("skip"), 1, 2, runtimeStringRaw("skip-again"), 3])
+        let destination = makeList([99])
+
+        let result = kk_list_filterIsInstanceTo(source, destination, 3)
+
+        XCTAssertEqual(result, destination)
+        XCTAssertEqual(listElements(destination), [99, 1, 2, 3])
+    }
+
     func testIterableFirstNotNullOfReturnsFirstNonNullTransformResult() {
         var thrown = 0
         let listSource = makeList([1, 2, 4])

@@ -536,6 +536,40 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testListFilterIsInstanceToUsesRuntimeExternalLink() throws {
+        let source = """
+        fun collect(values: List<Any>, dest: MutableList<String>) {
+            values.filterIsInstanceTo(dest)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected List.filterIsInstanceTo to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "filterIsInstanceTo"
+            })
+            let chosenCallee = try XCTUnwrap(
+                sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                "Expected filterIsInstanceTo to bind to its synthetic runtime callee"
+            )
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_list_filterIsInstanceTo")
+            XCTAssertTrue(
+                sema.bindings.isCollectionExpr(callExpr),
+                "Expected filterIsInstanceTo result to be tracked as a collection expression"
+            )
+        }
+    }
+
     func testIterableSumByResolvesToListRuntime() throws {
         let source = """
         fun checksum(values: Iterable<Int>): Int {

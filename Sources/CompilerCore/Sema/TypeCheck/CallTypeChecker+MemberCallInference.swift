@@ -835,6 +835,41 @@ extension CallTypeChecker {
            isCollectionReceiver
         {
             let destinationType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+            let nonNullableDestinationType = sema.types.makeNonNullable(destinationType)
+            let destinationElementType: TypeID = if case let .classType(destinationClassType) = sema.types.kind(of: nonNullableDestinationType),
+                                                    let firstArg = destinationClassType.args.first
+            {
+                switch firstArg {
+                case let .invariant(id), let .out(id), let .in(id): id
+                case .star: sema.types.anyType
+                }
+            } else {
+                sema.types.anyType
+            }
+            let receiverElementType = resolvedCollectionElementType(
+                receiverID: receiverID,
+                receiverType: receiverType,
+                sema: sema,
+                interner: interner,
+                ctx: ctx,
+                locals: &locals
+            )
+            let memberFQName = [
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("List"),
+                calleeName,
+            ]
+            if let chosenCallee = sema.symbols.lookupAll(fqName: memberFQName).first(where: { candidate in
+                sema.symbols.externalLinkName(for: candidate) == "kk_list_filterIsInstanceTo"
+            }) {
+                sema.bindings.bindCall(id, binding: CallBinding(
+                    chosenCallee: chosenCallee,
+                    substitutedTypeArguments: [receiverElementType, destinationElementType],
+                    parameterMapping: [0: 0]
+                ))
+                sema.bindings.bindCallableTarget(id, target: .symbol(chosenCallee))
+            }
             sema.bindings.markCollectionExpr(id)
             let finalType = safeCall ? sema.types.makeNullable(destinationType) : destinationType
             sema.bindings.bindExprType(id, type: finalType)
