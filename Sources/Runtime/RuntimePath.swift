@@ -746,3 +746,34 @@ public func kk_path_bufferedWriter(
         return 0
     }
 }
+
+@_cdecl("kk_path_appendLines_sequence_default")
+public func kk_path_appendLines_sequence_default(_ pathRaw: Int, _ linesRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    kk_path_appendLines_sequence(pathRaw, linesRaw, 0, outThrown)
+}
+
+@_cdecl("kk_path_appendLines_sequence")
+public func kk_path_appendLines_sequence(_ pathRaw: Int, _ linesRaw: Int, _ charsetRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_appendLines_sequence received invalid Path handle")
+    }
+    guard let elements = runtimeSequenceSourceElements(from: linesRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_appendLines_sequence received invalid lines sequence")
+    }
+    let text = elements.map { pathStringValue(from: $0) ?? "null" }.map { $0 + "\n" }.joined()
+    let encoding = pathStringEncoding(for: charsetRaw)
+    do {
+        if FileManager.default.fileExists(atPath: path.pathString) {
+            let handle = try FileHandle(forWritingTo: URL(fileURLWithPath: path.pathString))
+            defer { try? handle.close() }
+            try handle.seekToEnd()
+            try handle.write(contentsOf: text.data(using: encoding) ?? Data(text.utf8))
+        } else {
+            try text.write(toFile: path.pathString, atomically: true, encoding: encoding)
+        }
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return pathRaw
+}

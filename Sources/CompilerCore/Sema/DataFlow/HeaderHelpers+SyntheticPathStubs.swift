@@ -601,6 +601,45 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        let kotlinSequencesPkg = ensurePackage(path: ["kotlin", "sequences"], symbols: symbols, interner: interner)
+        let kotlinSequencesPkgSymbol = symbols.lookup(fqName: kotlinSequencesPkg)
+        let sequenceSymbol = ensureInterfaceSymbol(
+            named: "Sequence",
+            in: kotlinSequencesPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinSequencesPkgSymbol {
+            symbols.setParentSymbol(kotlinSequencesPkgSymbol, for: sequenceSymbol)
+        }
+        let sequenceOfCharSequenceType = types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
+            args: [.out(charSequenceType)],
+            nullability: .nonNull
+        )))
+
+        registerPathExtensionFunction(
+            named: "appendLines",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("lines", sequenceOfCharSequenceType)],
+            returnType: pathType,
+            externalLinkName: "kk_path_appendLines_sequence_default",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "appendLines",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("lines", sequenceOfCharSequenceType), ("charset", charsetType)],
+            returnType: pathType,
+            externalLinkName: "kk_path_appendLines_sequence",
+            symbols: symbols,
+            interner: interner
+        )
+
         registerPathExtensionFunction(
             named: "absolutePathString",
             packageFQName: kotlinIOPathPkg,
