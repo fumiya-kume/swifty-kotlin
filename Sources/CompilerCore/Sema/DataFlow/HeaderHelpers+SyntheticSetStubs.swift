@@ -96,6 +96,14 @@ extension DataFlowSemaPhase {
             typeParamSymbol: typeParamSymbol,
             typeParamType: typeParamType
         )
+        _ = registerSyntheticAbstractSetStub(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            collectionInterfaceSymbol: collectionInterfaceSymbol,
+            setInterfaceSymbol: setInterfaceSymbol
+        )
 
         // Set.minOrNull / Set.maxOrNull with T : Comparable<T> bound
         do {
@@ -148,6 +156,99 @@ extension DataFlowSemaPhase {
         }
 
         return setInterfaceSymbol
+    }
+
+    /// Register `kotlin.collections.AbstractSet<E>` surface (STDLIB-COL-ABSTRACT-009).
+    func registerSyntheticAbstractSetStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        collectionInterfaceSymbol: SymbolID,
+        setInterfaceSymbol: SymbolID
+    ) -> SymbolID {
+        let abstractSetName = interner.intern("AbstractSet")
+        let abstractSetFQName = kotlinCollectionsPkg + [abstractSetName]
+        let abstractSetSymbol: SymbolID = if let existing = symbols.lookup(fqName: abstractSetFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .class,
+                name: abstractSetName,
+                fqName: abstractSetFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .abstractType]
+            )
+        }
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = abstractSetFQName + [typeParamName]
+        let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: abstractSetSymbol)
+        types.setNominalTypeParameterVariances([.out], for: abstractSetSymbol)
+
+        let abstractSetType = types.make(.classType(ClassType(
+            classSymbol: abstractSetSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(abstractSetType, for: abstractSetSymbol)
+
+        let abstractCollectionSymbol = symbols.lookup(
+            fqName: kotlinCollectionsPkg + [interner.intern("AbstractCollection")]
+        )
+        let collectionSupertype = abstractCollectionSymbol ?? collectionInterfaceSymbol
+        symbols.setDirectSupertypes([collectionSupertype, setInterfaceSymbol], for: abstractSetSymbol)
+        types.setNominalDirectSupertypes([collectionSupertype, setInterfaceSymbol], for: abstractSetSymbol)
+        symbols.setSupertypeTypeArgs([.out(typeParamType)], for: abstractSetSymbol, supertype: collectionSupertype)
+        types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: abstractSetSymbol, supertype: collectionSupertype)
+        symbols.setSupertypeTypeArgs([.out(typeParamType)], for: abstractSetSymbol, supertype: setInterfaceSymbol)
+        types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: abstractSetSymbol, supertype: setInterfaceSymbol)
+
+        let initName = interner.intern("<init>")
+        let initFQName = abstractSetFQName + [initName]
+        if symbols.lookup(fqName: initFQName) == nil {
+            let initSymbol = symbols.define(
+                kind: .constructor,
+                name: initName,
+                fqName: initFQName,
+                declSite: nil,
+                visibility: .protected,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(abstractSetSymbol, for: initSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: [],
+                    returnType: abstractSetType,
+                    valueParameterSymbols: [],
+                    valueParameterHasDefaultValues: [],
+                    valueParameterIsVararg: [],
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: initSymbol
+            )
+        }
+
+        return abstractSetSymbol
     }
 
     private func registerSetContainsMember(
