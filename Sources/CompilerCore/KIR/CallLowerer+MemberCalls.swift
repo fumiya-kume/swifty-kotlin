@@ -6335,6 +6335,16 @@ extension CallLowerer {
                 ) {
                     return closedRangeRuntimeName
                 }
+                if fallbackName == "iterator",
+                   let collectionIterator = unresolvedCollectionMemberCallee(
+                       memberName: fallbackName,
+                       receiverType: receiverType,
+                       sema: sema,
+                       interner: interner
+                   )
+                {
+                    return collectionIterator
+                }
                 if callArgumentCount == 1,
                    (externalLinkName == "kk_op_step"
                     || externalLinkName == "kk_uint_step"
@@ -7296,7 +7306,7 @@ extension CallLowerer {
 
     // swiftlint:enable cyclomatic_complexity
 
-    /// Resolves collection-level accessor members (`size`, `isEmpty`) to
+    /// Resolves collection-level members (`size`, `isEmpty`, `iterator`) to
     /// their concrete runtime callee by mapping receiver kind to the
     /// corresponding runtime symbol (e.g. `.list` -> `kk_list_size`).
     private func unresolvedCollectionMemberCallee(
@@ -7308,6 +7318,7 @@ extension CallLowerer {
         guard memberName == "size"
               || memberName == "isEmpty"
               || memberName == "isNotEmpty"
+              || memberName == "iterator"
               || memberName == "firstNotNullOf"
               || memberName == "firstNotNullOfOrNull"
               || memberName == "requireNoNulls"
@@ -7352,6 +7363,13 @@ extension CallLowerer {
             switch knownNames.collectionKind(of: symbol) {
             case .list?, .collection?:
                 return interner.intern("kk_list_is_not_empty")
+            default:
+                break
+            }
+        case "iterator":
+            switch knownNames.collectionKind(of: symbol) {
+            case .list?, .set?, .collection?:
+                return interner.intern("kk_list_iterator")
             default:
                 break
             }
