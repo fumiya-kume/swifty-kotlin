@@ -178,6 +178,11 @@ private let maxByNegativeValue: @convention(c) (Int, Int, UnsafeMutablePointer<I
     -value
 }
 
+private let reverseIntComparator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, lhs, rhs, _ in
+    if lhs == rhs { return 0 }
+    return lhs > rhs ? -1 : 1
+}
+
 private let groupingFoldToInitialValueSelector: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = {
     _, key, element, _ in
     gHOFState.addCall()
@@ -681,6 +686,32 @@ final class RuntimeCollectionHOFTests: XCTestCase {
             kk_list_maxWith(makeList([]), unsafeBitCast(maxWithNaturalComparator, to: Int.self), 0, &thrown),
             runtimeExceptionCaughtSentinel
         )
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testMinOfWithReturnsComparatorSelectedValueAndThrowsOnEmpty() {
+        var thrown = 0
+        let result = kk_list_minOfWith(
+            makeList([5, 2, 3]),
+            unsafeBitCast(reverseIntComparator, to: Int.self),
+            0,
+            unsafeBitCast(valueTimesTen, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 50)
+
+        thrown = 0
+        let emptyResult = kk_list_minOfWith(
+            makeList([]),
+            unsafeBitCast(reverseIntComparator, to: Int.self),
+            0,
+            unsafeBitCast(valueTimesTen, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(emptyResult, runtimeExceptionCaughtSentinel)
         XCTAssertNotEqual(thrown, 0)
     }
 
