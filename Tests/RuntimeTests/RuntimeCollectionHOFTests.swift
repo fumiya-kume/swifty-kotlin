@@ -115,6 +115,16 @@ private let sumByWeightedTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int
     value * value
 }
 
+private let maxWithOrNullNaturalComparator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, lhs, rhs, _ in
+    if lhs < rhs {
+        return -1
+    }
+    if lhs > rhs {
+        return 1
+    }
+    return 0
+}
+
 private let sumByDoubleWeightedTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     kk_double_to_bits(value == 2 ? 1.5 : 0.25)
 }
@@ -428,6 +438,22 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         thrown = 0
         XCTAssertEqual(
             kk_list_maxByOrNull(makeList([]), unsafeBitCast(maxByNegativeValue, to: Int.self), 0, &thrown),
+            runtimeNullSentinelInt
+        )
+        XCTAssertEqual(thrown, 0)
+    }
+
+    func testMaxWithOrNullReturnsLargestElementAndNullForEmpty() {
+        var thrown = 0
+        XCTAssertEqual(
+            kk_list_maxWithOrNull(makeList([3, 1, 4, 2]), unsafeBitCast(maxWithOrNullNaturalComparator, to: Int.self), 0, &thrown),
+            4
+        )
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        XCTAssertEqual(
+            kk_list_maxWithOrNull(makeList([]), unsafeBitCast(maxWithOrNullNaturalComparator, to: Int.self), 0, &thrown),
             runtimeNullSentinelInt
         )
         XCTAssertEqual(thrown, 0)
