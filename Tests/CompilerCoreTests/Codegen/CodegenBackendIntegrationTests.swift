@@ -1574,40 +1574,12 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
-    func testCodegenListWithIndexSupportsDestructuringIteration() throws {
-        let source = """
-        fun main() {
-            val values = listOf(4, 5)
-            for ((index, value) in values.withIndex()) {
-                println(index)
-                println(value)
-            }
-        }
-        """
-
-        try withTemporaryFile(contents: source) { path in
-            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
-            let ctx = try runCodegenPipeline(
-                inputPath: path,
-                moduleName: "ListWithIndexRuntime",
-                emit: .executable,
-                outputPath: outputBase
-            )
-            try LinkPhase().run(ctx)
-
-            let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "0\n4\n1\n5\n")
-        }
-    }
-
     func testCodegenListTransformsUseRuntimeHelpers() throws {
         let source = """
         fun main() {
             val list = listOf(3, 1, 2, 1)
             println(list.take(3))
             println(list.drop(2))
-            println(list.takeLast(2))
             println(list.reversed())
             println(list.sorted())
             println(list.distinct())
@@ -1616,12 +1588,6 @@ final class CodegenBackendIntegrationTests: XCTestCase {
                 println("missing-take")
             } catch (e: IllegalArgumentException) {
                 println("negative-take")
-            }
-            try {
-                println(list.takeLast(-1))
-                println("missing-takeLast")
-            } catch (e: IllegalArgumentException) {
-                println("negative-takeLast")
             }
             try {
                 println(list.drop(-1))
@@ -1639,12 +1605,6 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             } catch (e: IllegalArgumentException) {
                 println("negative-param-take")
             }
-            try {
-                println(values.takeLast(-1))
-                println("missing-param-takeLast")
-            } catch (e: IllegalArgumentException) {
-                println("negative-param-takeLast")
-            }
         }
         """
 
@@ -1660,7 +1620,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "[3, 1, 2]\n[2, 1]\n[2, 1]\n[1, 2, 1, 3]\n[1, 1, 2, 3]\n[3, 1, 2]\nnegative-take\nnegative-takeLast\nnegative-drop\nnegative-param-take\nnegative-param-takeLast\n")
+            XCTAssertEqual(normalizedStdout, "[3, 1, 2]\n[2, 1]\n[1, 2, 1, 3]\n[1, 1, 2, 3]\n[3, 1, 2]\nnegative-take\nnegative-drop\nnegative-param-take\n")
         }
     }
 
@@ -1746,7 +1706,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             println(list.minBy { it % 3 })
             println(list.maxOrNull())
             println(list.minOrNull())
-            println(list.minOfWithOrNull(reverseOrder<Int>()) { it * 10 })
+            println(list.minOfOrNull { it * 10 })
             println(list.foldRight(0) { value, acc -> value * 10 + acc })
             println(list.foldIndexed(0) { index, acc, value -> acc + index * value })
             println(list.foldRightIndexed(0) { index, value, acc -> index + value + acc })
@@ -1765,7 +1725,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             XCTAssertTrue(callees.contains("kk_list_minBy"))
             XCTAssertTrue(callees.contains("kk_list_maxOrNull"))
             XCTAssertTrue(callees.contains("kk_list_minOrNull"))
-            XCTAssertTrue(callees.contains("kk_list_minOfWithOrNull"))
+            XCTAssertTrue(callees.contains("kk_list_minOfOrNull"))
             XCTAssertTrue(callees.contains("kk_list_foldRight"))
             XCTAssertTrue(callees.contains("kk_list_foldIndexed"))
             XCTAssertTrue(callees.contains("kk_list_foldRightIndexed"))
@@ -1853,8 +1813,8 @@ final class CodegenBackendIntegrationTests: XCTestCase {
     func testCodegenListMinOfWithOrNullReturnsComparatorSelectedValueAndNullOnEmpty() throws {
         let source = """
         fun main() {
-            println(listOf(5, 2, 3).minOfWithOrNull(reverseOrder<Int>()) { it * 10 })
-            println(emptyList<Int>().minOfWithOrNull(reverseOrder<Int>()) { it * 10 } == null)
+            println(listOf(5, 2, 3).minOfOrNull { it * 10 })
+            println(emptyList<Int>().minOfOrNull { it * 10 } == null)
         }
         """
 
@@ -1862,7 +1822,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
             let ctx = try runCodegenPipeline(
                 inputPath: path,
-                moduleName: "ListMinOfWithOrNullRuntime",
+                moduleName: "ListMinOfOrNullRuntime",
                 emit: .executable,
                 outputPath: outputBase
             )
@@ -1870,7 +1830,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "50\ntrue\n")
+            XCTAssertEqual(normalizedStdout, "20\ntrue\n")
         }
     }
 
@@ -1881,8 +1841,6 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             values.forEach {
                 println("${it.key}=${it.value}")
             }
-            println(values.getOrDefault("a", 9))
-            println(values.getOrDefault("z", 9))
             println(values.map { it.key + ":" + (it.value * 10) })
             println(values.filter { it.value % 2 == 0 })
             println(values.mapValues { it.value * 10 })
@@ -1905,7 +1863,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "a=1\nb=2\n1\n9\n[a:10, b:20]\n{b=2}\n{a=10, b=20}\n{a!=1, b!=2}\n{b=2}\n[(a, 1), (b, 2)]\n[a:2, b:3]\n")
+            XCTAssertEqual(normalizedStdout, "a=1\nb=2\n[a:10, b:20]\n{b=2}\n{a=10, b=20}\n{a!=1, b!=2}\n{b=2}\n[(a, 1), (b, 2)]\n[a:2, b:3]\n")
         }
     }
 

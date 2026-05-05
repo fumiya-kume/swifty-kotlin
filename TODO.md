@@ -210,7 +210,7 @@
 - [x] STDLIB-COL-FN-135: `minBy` 関数の実装
 - [ ] STDLIB-COL-FN-136: `minByOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-137: `minOf` 関数の実装
-- [ ] STDLIB-COL-FN-138: `minOfOrNull` 関数の実装
+- [x] STDLIB-COL-FN-138: `minOfOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-139: `minOfWith` 関数の実装
 - [x] STDLIB-COL-FN-140: `minOfWithOrNull` 関数の実装
 - [x] STDLIB-COL-FN-141: `minOrNull` 関数の実装
