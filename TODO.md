@@ -137,7 +137,7 @@
 - [ ] STDLIB-COL-FN-043: `count` 関数の実装
 
 #### kotlin.collections 関数の実装（D-Z）
-- [ ] STDLIB-COL-FN-044: `distinct` 関数の実装
+- [x] STDLIB-COL-FN-044: `distinct` 関数の実装
 - [ ] STDLIB-COL-FN-045: `distinctBy` 関数の実装
 - [ ] STDLIB-COL-FN-046: `drop` 関数の実装
 - [ ] STDLIB-COL-FN-047: `dropLast` 関数の実装
