@@ -19,6 +19,7 @@
 /// - Top-level `Path(pathString: String)` factory (kotlin.io.path.Path)
 /// - `Paths.get(pathString: String)` factory (java.nio.file.Paths)
 /// - `CopyActionContext` type surface
+/// - `CopyActionResult` enum surface
 /// - `ExperimentalPathApi` marker annotation surface
 ///
 /// Each stub registers the kotlin.io.path.Path class, its constructor, member
@@ -61,6 +62,23 @@ extension DataFlowSemaPhase {
             packageSymbol: kotlinIOPathPkgSymbol,
             symbols: symbols,
             interner: interner
+        )
+
+        let copyActionResultSymbol = ensurePathCopyActionResultEnum(
+            in: kotlinIOPathPkg,
+            packageSymbol: kotlinIOPathPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        let copyActionResultType = types.make(.classType(ClassType(
+            classSymbol: copyActionResultSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        setPathEnumEntryTypes(
+            enumSymbol: copyActionResultSymbol,
+            enumType: copyActionResultType,
+            symbols: symbols
         )
 
         // List<Path> type for listDirectoryEntries return
@@ -573,6 +591,69 @@ extension DataFlowSemaPhase {
             annotations.append(target)
         }
         symbols.setAnnotations(annotations, for: annotationSymbol)
+    }
+
+    private func ensurePathCopyActionResultEnum(
+        in packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> SymbolID {
+        let name = interner.intern("CopyActionResult")
+        let fqName = packageFQName + [name]
+        if let existing = symbols.lookup(fqName: fqName) {
+            return existing
+        }
+
+        let enumSymbol = symbols.define(
+            kind: .enumClass,
+            name: name,
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol {
+            symbols.setParentSymbol(packageSymbol, for: enumSymbol)
+        }
+
+        for entry in ["CONTINUE", "SKIP_SUBTREE", "TERMINATE"] {
+            let entryName = interner.intern(entry)
+            let entryFQName = fqName + [entryName]
+            if symbols.lookup(fqName: entryFQName) != nil {
+                continue
+            }
+            let entrySymbol = symbols.define(
+                kind: .field,
+                name: entryName,
+                fqName: entryFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(enumSymbol, for: entrySymbol)
+        }
+
+        return enumSymbol
+    }
+
+    private func setPathEnumEntryTypes(
+        enumSymbol: SymbolID,
+        enumType: TypeID,
+        symbols: SymbolTable
+    ) {
+        guard let enumInfo = symbols.symbol(enumSymbol) else { return }
+        let children = symbols.children(ofFQName: enumInfo.fqName)
+        for child in children {
+            guard let childSym = symbols.symbol(child),
+                  childSym.kind == .field
+            else {
+                continue
+            }
+            if symbols.propertyType(for: child) == nil {
+                symbols.setPropertyType(enumType, for: child)
+            }
+        }
     }
 
     private func resolvePathListSymbol(

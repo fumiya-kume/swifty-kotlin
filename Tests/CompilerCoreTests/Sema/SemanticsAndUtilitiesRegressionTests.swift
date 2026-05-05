@@ -315,6 +315,29 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testCopyActionResultInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import kotlin.io.path.CopyActionResult
+
+        fun nextCopyActionResult(result: CopyActionResult): CopyActionResult {
+            return when (result) {
+                CopyActionResult.CONTINUE -> CopyActionResult.SKIP_SUBTREE
+                CopyActionResult.SKIP_SUBTREE -> CopyActionResult.TERMINATE
+                CopyActionResult.TERMINATE -> CopyActionResult.CONTINUE
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "CopyActionResult entries in kotlin.io.path should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     func testMemoryOrderInAtomicsPackageIsResolved() throws {
         let source = """
         import kotlin.concurrent.atomics.MemoryOrder
