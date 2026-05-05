@@ -1282,6 +1282,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             println(values.filter { it.value % 2 == 0 })
             println(values.mapValues { it.value * 10 })
             println(values.mapKeys { it.key + "!" })
+            println(values.filterKeys { it == "b" })
             println(values.toList())
             println(values.map { it.toPair().first + ":" + (it.toPair().second + 1) })
         }
@@ -1299,7 +1300,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "a=1\nb=2\n[a:10, b:20]\n{b=2}\n{a=10, b=20}\n{a!=1, b!=2}\n[(a, 1), (b, 2)]\n[a:2, b:3]\n")
+            XCTAssertEqual(normalizedStdout, "a=1\nb=2\n[a:10, b:20]\n{b=2}\n{a=10, b=20}\n{a!=1, b!=2}\n{b=2}\n[(a, 1), (b, 2)]\n[a:2, b:3]\n")
         }
     }
 

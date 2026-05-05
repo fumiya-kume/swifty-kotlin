@@ -220,6 +220,10 @@ private let keepEvenValueEntries: @convention(c) (Int, Int, UnsafeMutablePointer
     kk_pair_second(pairRaw) % 2 == 0 ? 1 : 0
 }
 
+private let keepOddMapKeys: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, key, _ in
+    key % 2 != 0 ? 1 : 0
+}
+
 private let accumulateEntryScore: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, pairRaw, _ in
     gHOFState.addSum(kk_pair_first(pairRaw) * 10 + kk_pair_second(pairRaw))
     return 0
@@ -1027,6 +1031,18 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(mapped), [11, 23, 35])
 
         let filtered = kk_map_filter(map, unsafeBitCast(keepEvenValueEntries, to: Int.self), 0, nil)
+        XCTAssertEqual(mapKeys(filtered), [1, 3])
+        XCTAssertEqual(kk_map_get(filtered, 1), 10)
+        XCTAssertEqual(kk_map_get(filtered, 3), 32)
+    }
+
+    func testMapFilterKeysPassesOnlyKeysToPredicate() {
+        let keys = makeArray([1, 2, 3])
+        let values = makeArray([10, 21, 32])
+        let map = kk_map_of(keys, values, 3)
+
+        let filtered = kk_map_filterKeys(map, unsafeBitCast(keepOddMapKeys, to: Int.self), 0, nil)
+
         XCTAssertEqual(mapKeys(filtered), [1, 3])
         XCTAssertEqual(kk_map_get(filtered, 1), 10)
         XCTAssertEqual(kk_map_get(filtered, 3), 32)
