@@ -1213,7 +1213,7 @@
 - [ ] STDLIB-IO-PATH-FN-003: `Path.appendBytes(array)` を追加する
 - [ ] STDLIB-IO-PATH-FN-004: `Path.appendLines(lines: Iterable<CharSequence>, charset)` を追加する
 - [ ] STDLIB-IO-PATH-FN-005: `Path.appendLines(lines: Sequence<CharSequence>, charset)` を追加する
-- [ ] STDLIB-IO-PATH-FN-006: `Path.appendText(text, charset)` を追加する
+- [x] STDLIB-IO-PATH-FN-006: `Path.appendText(text, charset)` を追加する
 - [ ] STDLIB-IO-PATH-FN-007: `Path.bufferedReader(charset, bufferSize, options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-008: `Path.bufferedWriter(charset, bufferSize, options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-009: `Path.copyTo(target, options)` を追加する

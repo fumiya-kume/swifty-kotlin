@@ -206,6 +206,74 @@ public func kk_path_writeText(_ pathRaw: Int, _ textRaw: Int, _ outThrown: Unsaf
     return 0
 }
 
+private func pathStringValue(from raw: Int) -> String? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
+        return nil
+    }
+    return extractString(from: ptr)
+}
+
+private func pathStringEncoding(for charsetRaw: Int) -> String.Encoding {
+    switch charsetRaw {
+    case 1:
+        return .isoLatin1
+    case 2:
+        return .ascii
+    case 3:
+        return .utf16
+    case 4:
+        return .utf16BigEndian
+    case 5:
+        return .utf16LittleEndian
+    case 6:
+        return .utf32
+    case 7:
+        return .utf32BigEndian
+    case 8:
+        return .utf32LittleEndian
+    default:
+        return .utf8
+    }
+}
+
+@_cdecl("kk_path_appendText_default")
+public func kk_path_appendText_default(_ pathRaw: Int, _ textRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    kk_path_appendText(pathRaw, textRaw, 0, outThrown)
+}
+
+@_cdecl("kk_path_appendText")
+public func kk_path_appendText(
+    _ pathRaw: Int,
+    _ textRaw: Int,
+    _ charsetRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_appendText received invalid Path handle")
+    }
+    guard let text = pathStringValue(from: textRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_appendText received invalid text")
+    }
+
+    let encoding = pathStringEncoding(for: charsetRaw)
+    do {
+        if FileManager.default.fileExists(atPath: path.pathString) {
+            let handle = try FileHandle(forWritingTo: URL(fileURLWithPath: path.pathString))
+            defer {
+                try? handle.close()
+            }
+            try handle.seekToEnd()
+            try handle.write(contentsOf: text.data(using: encoding) ?? Data(text.utf8))
+        } else {
+            try text.write(toFile: path.pathString, atomically: true, encoding: encoding)
+        }
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return pathRaw
+}
+
 @_cdecl("kk_path_readLines")
 public func kk_path_readLines(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0

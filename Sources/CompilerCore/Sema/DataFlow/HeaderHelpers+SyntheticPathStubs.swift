@@ -13,6 +13,7 @@
 /// - `toFile(): File`, `toUri(): URI`, `toAbsolutePath(): Path`
 /// - `getName(index: Int): Path`
 /// - `Path.name: String` extension property
+/// - `Path.appendText(text: CharSequence, charset)` extension function
 /// - `readText(): String`, `writeText(text: String)`, `readLines(): List<String>`
 /// - `createDirectories(): Path`, `deleteIfExists(): Boolean`
 /// - `listDirectoryEntries(): List<Path>`
@@ -49,6 +50,42 @@ extension DataFlowSemaPhase {
         symbols.setPropertyType(pathType, for: pathSymbol)
 
         let nullablePathType = types.makeNullable(pathType)
+        let kotlinPkg = ensurePackage(path: ["kotlin"], symbols: symbols, interner: interner)
+        let kotlinTextPkg = ensurePackage(path: ["kotlin", "text"], symbols: symbols, interner: interner)
+        let kotlinPkgSymbol = symbols.lookup(fqName: kotlinPkg)
+        let kotlinTextPkgSymbol = symbols.lookup(fqName: kotlinTextPkg)
+
+        let charSequenceSymbol = ensureInterfaceSymbol(
+            named: "CharSequence",
+            in: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinPkgSymbol {
+            symbols.setParentSymbol(kotlinPkgSymbol, for: charSequenceSymbol)
+        }
+        let charSequenceType = types.make(.classType(ClassType(
+            classSymbol: charSequenceSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(charSequenceType, for: charSequenceSymbol)
+
+        let charsetSymbol = ensureClassSymbol(
+            named: "Charset",
+            in: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinTextPkgSymbol {
+            symbols.setParentSymbol(kotlinTextPkgSymbol, for: charsetSymbol)
+        }
+        let charsetType = types.make(.classType(ClassType(
+            classSymbol: charsetSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(charsetType, for: charsetSymbol)
 
         registerPathCopyActionContextSurface(
             packageFQName: kotlinIOPathPkg,
@@ -433,6 +470,28 @@ extension DataFlowSemaPhase {
             ownerType: pathType,
             parameters: [],
             returnType: listOfStringType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "appendText",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("text", charSequenceType)],
+            returnType: pathType,
+            externalLinkName: "kk_path_appendText_default",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "appendText",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("text", charSequenceType), ("charset", charsetType)],
+            returnType: pathType,
+            externalLinkName: "kk_path_appendText",
             symbols: symbols,
             interner: interner
         )
@@ -964,6 +1023,72 @@ extension DataFlowSemaPhase {
         symbols.setExtensionPropertyGetterAccessor(getterSymbol, for: propertySymbol)
         symbols.setAccessorOwnerProperty(propertySymbol, for: getterSymbol)
         symbols.setExternalLinkName(externalLinkName, for: getterSymbol)
+    }
+
+    private func registerPathExtensionFunction(
+        named name: String,
+        packageFQName: [InternedString],
+        receiverType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        externalLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let existingSignature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return existingSignature.receiverType == receiverType
+                && existingSignature.parameterTypes == parameters.map(\.type)
+                && existingSignature.returnType == returnType
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        var valueParameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let paramNameID = interner.intern(parameter.name)
+            let paramSymbol = symbols.define(
+                kind: .valueParameter,
+                name: paramNameID,
+                fqName: functionFQName + [paramNameID],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: paramSymbol)
+            valueParameterSymbols.append(paramSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameters.map(\.type),
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+            ),
+            for: functionSymbol
+        )
     }
 
     private func registerPathTopLevelFunction(
