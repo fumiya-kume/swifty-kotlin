@@ -157,6 +157,7 @@
 - [x] STDLIB-COL-FN-082: `foldRight` 関数の実装
 - [x] STDLIB-COL-FN-083: `foldRightIndexed` 関数の実装
 - [ ] STDLIB-COL-FN-084: `forEach` 関数の実装
+- [x] STDLIB-COL-FN-084: `forEach` 関数の実装
 - [ ] STDLIB-COL-FN-085: `forEachIndexed` 関数の実装
 - [ ] STDLIB-COL-FN-086: `get` 関数の実装
 - [x] STDLIB-COL-FN-087: `getOrDefault` 関数の実装
