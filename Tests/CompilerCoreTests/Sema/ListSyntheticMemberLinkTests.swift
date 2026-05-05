@@ -1127,6 +1127,71 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testAbstractMapSurfaceIsRegistered() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let collectionsPkg = ["kotlin", "collections"].map { ctx.interner.intern($0) }
+            let mapSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: collectionsPkg + [ctx.interner.intern("Map")])
+            )
+            let abstractMapFQName = collectionsPkg + [ctx.interner.intern("AbstractMap")]
+            let abstractMapSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: abstractMapFQName),
+                "Expected kotlin.collections.AbstractMap to be registered"
+            )
+            let abstractMapInfo = try XCTUnwrap(sema.symbols.symbol(abstractMapSymbol))
+            XCTAssertEqual(abstractMapInfo.kind, .class)
+            XCTAssertTrue(abstractMapInfo.flags.contains(.synthetic))
+            XCTAssertTrue(abstractMapInfo.flags.contains(.abstractType))
+            XCTAssertEqual(
+                sema.types.nominalTypeParameterVariances(for: abstractMapSymbol),
+                [.invariant, .out]
+            )
+
+            XCTAssertTrue(sema.symbols.directSupertypes(for: abstractMapSymbol).contains(mapSymbol))
+            XCTAssertTrue(sema.types.directNominalSupertypes(for: abstractMapSymbol).contains(mapSymbol))
+            XCTAssertEqual(sema.symbols.supertypeTypeArgs(for: abstractMapSymbol, supertype: mapSymbol).count, 2)
+            XCTAssertEqual(sema.types.nominalSupertypeTypeArgs(for: abstractMapSymbol, supertype: mapSymbol).count, 2)
+
+            let constructorSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: abstractMapFQName + [ctx.interner.intern("<init>")]),
+                "Expected AbstractMap protected constructor to be registered"
+            )
+            let constructorInfo = try XCTUnwrap(sema.symbols.symbol(constructorSymbol))
+            XCTAssertEqual(constructorInfo.kind, .constructor)
+            XCTAssertEqual(constructorInfo.visibility, .protected)
+            XCTAssertTrue(try XCTUnwrap(sema.symbols.functionSignature(for: constructorSymbol)).parameterTypes.isEmpty)
+        }
+    }
+
+    func testAbstractMapCanBeUsedAsMapSupertype() throws {
+        let source = """
+        import kotlin.collections.AbstractMap
+        import kotlin.collections.Map
+
+        class ProbeMap : AbstractMap<String, Int>()
+
+        fun accept(values: Map<String, Int>) {}
+
+        fun probe(values: ProbeMap) {
+            accept(values)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected AbstractMap subtype surface to resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     func testMutableListIteratorSurfaceIsRegistered() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])
