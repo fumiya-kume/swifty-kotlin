@@ -134,7 +134,7 @@
 - [x] STDLIB-COL-FN-040: `contentToString` 関数の実装
 - [ ] STDLIB-COL-FN-041: `copyOf` 関数の実装
 - [ ] STDLIB-COL-FN-042: `copyOfRange` 関数の実装
-- [ ] STDLIB-COL-FN-043: `count` 関数の実装
+- [x] STDLIB-COL-FN-043: `count` 関数の実装
 
 #### kotlin.collections 関数の実装（D-Z）
 - [x] STDLIB-COL-FN-044: `distinct` 関数の実装
