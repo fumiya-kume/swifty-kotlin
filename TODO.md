@@ -244,7 +244,7 @@
 - [x] STDLIB-COL-FN-170: `removeFirstOrNull` 関数の実装
 - [x] STDLIB-COL-FN-171: `removeLast` 関数の実装
 - [x] STDLIB-COL-FN-172: `removeLastOrNull` 関数の実装
-- [ ] STDLIB-COL-FN-173: `requireNoNulls` 関数の実装
+- [x] STDLIB-COL-FN-173: `requireNoNulls` 関数の実装
 - [x] STDLIB-COL-FN-174: `reversed` 関数の実装
 - [ ] STDLIB-COL-FN-175: `runningFold` 関数の実装
 - [x] STDLIB-COL-FN-176: `runningFoldIndexed` 関数の実装

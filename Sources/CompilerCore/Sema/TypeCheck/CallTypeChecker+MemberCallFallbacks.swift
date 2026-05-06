@@ -592,6 +592,10 @@ extension CallTypeChecker {
             }
             return firstArgNode.isLambdaOrCallableRef
         }()
+        let isIterableRequireNoNullsCall =
+            memberName == "requireNoNulls"
+            && args.isEmpty
+            && isIterableLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isCollectionReceiver = isCollectionLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isSequenceReceiver = isSequenceLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         // Allow arrays to fall through to collection fallback only when
@@ -604,10 +608,12 @@ extension CallTypeChecker {
                 || isIterableChunkedTransformCall
                 || isIterableFirstNotNullOfCall
                 || isIterableFirstNotNullOfOrNullCall
+                || isIterableRequireNoNullsCall
         else {
             return nil
         }
 
+        let isIterableReceiver = isIterableLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isMapReceiver = isMapLikeCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isSetReceiver = isSetLikeCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isMutableListReceiver = isMutableListCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
@@ -616,6 +622,7 @@ extension CallTypeChecker {
         let isListReceiver = isConcreteListLikeCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         guard isSupportedCollectionFallbackMember(
             calleeName,
+            isIterableReceiver: isIterableReceiver,
             isListReceiver: isListReceiver,
             isSequenceReceiver: isSequenceReceiver,
             isMapReceiver: isMapReceiver,
@@ -1048,6 +1055,7 @@ extension CallTypeChecker {
 
     func isSupportedCollectionFallbackMember(
         _ memberName: InternedString,
+        isIterableReceiver: Bool,
         isListReceiver: Bool,
         isSequenceReceiver: Bool,
         isMapReceiver: Bool,
@@ -1079,6 +1087,7 @@ extension CallTypeChecker {
             interner.intern("firstNotNullOf"),
             interner.intern("firstNotNullOfOrNull"),
             interner.intern("filterNotNull"),
+            interner.intern("requireNoNulls"),
             interner.intern("filterTo"),
             interner.intern("filterNotTo"),
             interner.intern("mapTo"),
@@ -1256,7 +1265,7 @@ extension CallTypeChecker {
             return isSequenceReceiver
         }
         if memberName == interner.intern("requireNoNulls") {
-            return isSequenceReceiver
+            return isIterableReceiver || isListReceiver || isSetReceiver || isSequenceReceiver
         }
         return collectionMembers.contains(memberName)
     }
@@ -1475,13 +1484,27 @@ extension CallTypeChecker {
             return sema.types.anyType
         }
 
-        if memberName == interner.intern("requireNoNulls"), isSequenceReceiver {
-            return makeSyntheticSequenceType(
-                symbols: sema.symbols,
-                types: sema.types,
-                interner: interner,
-                elementType: sema.types.makeNonNullable(receiverElementType)
-            )
+        if memberName == interner.intern("requireNoNulls") {
+            let elementType = sema.types.makeNonNullable(receiverElementType)
+            if isSequenceReceiver {
+                return makeSyntheticSequenceType(
+                    symbols: sema.symbols,
+                    types: sema.types,
+                    interner: interner,
+                    elementType: elementType
+                )
+            }
+            if let iterableSymbol = sema.symbols.lookup(fqName: [
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("Iterable"),
+            ]) {
+                return sema.types.make(.classType(ClassType(
+                    classSymbol: iterableSymbol,
+                    args: [.out(elementType)],
+                    nullability: .nonNull
+                )))
+            }
         }
 
         let boolReturningMembers: Set = [

@@ -397,6 +397,18 @@ public func kk_list_filterNotNull(_ listRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: filtered))
 }
 
+@_cdecl("kk_iterable_requireNoNulls")
+public func kk_iterable_requireNoNulls(_ iterableRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let elements = runtimeCollectionElements(from: iterableRaw) else {
+        invalidContainerPanic(#function, "iterable")
+    }
+    for elem in elements where runtimeNormalizeNullableCollectionValue(elem) == nil {
+        let thrown = runtimeAllocateThrowable(message: "null element found in collection.")
+        return handleCollectionLambdaThrow(thrown, outThrown)
+    }
+    return iterableRaw
+}
+
 @_cdecl("kk_list_forEach")
 public func kk_list_forEach(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }

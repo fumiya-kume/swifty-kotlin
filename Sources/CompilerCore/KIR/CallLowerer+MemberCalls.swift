@@ -6812,6 +6812,7 @@ extension CallLowerer {
             interner.intern("kk_list_distinctBy"),
             interner.intern("kk_iterable_firstNotNullOf"),
             interner.intern("kk_iterable_firstNotNullOfOrNull"),
+            interner.intern("kk_iterable_requireNoNulls"),
             interner.intern("kk_kclass_cast"),
             interner.intern("kk_range_first_predicate"),
             interner.intern("kk_range_last_predicate"),
@@ -8968,7 +8969,7 @@ extension CallLowerer {
         sema: SemaModule,
         interner: StringInterner
     ) -> InternedString? {
-        guard memberName == "size" || memberName == "isEmpty" || memberName == "firstNotNullOf" || memberName == "firstNotNullOfOrNull",
+        guard memberName == "size" || memberName == "isEmpty" || memberName == "firstNotNullOf" || memberName == "firstNotNullOfOrNull" || memberName == "requireNoNulls",
               case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
               let symbol = sema.symbols.symbol(classType.classSymbol)
         else {
@@ -9014,6 +9015,13 @@ extension CallLowerer {
             switch knownNames.collectionKind(of: symbol) {
             case .list?, .set?, .collection?:
                 return interner.intern("kk_iterable_firstNotNullOfOrNull")
+            default:
+                break
+            }
+        case "requireNoNulls":
+            switch knownNames.collectionKind(of: symbol) {
+            case .list?, .set?, .collection?:
+                return interner.intern("kk_iterable_requireNoNulls")
             default:
                 break
             }

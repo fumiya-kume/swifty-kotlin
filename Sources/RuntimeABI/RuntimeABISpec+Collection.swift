@@ -2224,6 +2224,15 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         )
+        let requireNoNullsSpec = RuntimeABIFunctionSpec(
+            name: "kk_iterable_requireNoNulls",
+            parameters: [
+                RuntimeABIParameter(name: "iterableRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
         let filterIsInstanceToSpec = RuntimeABIFunctionSpec(
             name: "kk_list_filterIsInstanceTo",
             parameters: [
@@ -2595,7 +2604,7 @@ public extension RuntimeABISpec {
             section: "Collection"
         )
         return before.map { hofSpec($0) }
-            + [filterNotNullSpec, foldSpec]
+            + [filterNotNullSpec, requireNoNullsSpec, foldSpec]
             + [
                 filterIsInstanceToSpec,
                 filterToSpec, filterNotToSpec, mapToSpec, flatMapToSpec,
