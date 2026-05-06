@@ -555,7 +555,7 @@
 #### kotlin.io.path 型の実装
 - [ ] STDLIB-IO-PATH-TYPE-001: `CopyActionContext` クラスの実装
 - [ ] STDLIB-IO-PATH-TYPE-002: `CopyActionResult` enum の実装
-- [ ] STDLIB-IO-PATH-TYPE-003: `ExperimentalPathApi` アノテーションの実装
+- [x] STDLIB-IO-PATH-TYPE-003: `ExperimentalPathApi` アノテーションの実装
 - [ ] STDLIB-IO-PATH-TYPE-004: `FileVisitorBuilder` クラスの実装
 - [ ] STDLIB-IO-PATH-TYPE-005: `OnErrorResult` enum の実装
 - [ ] STDLIB-IO-PATH-TYPE-006: `PathWalkOption` enum の実装
