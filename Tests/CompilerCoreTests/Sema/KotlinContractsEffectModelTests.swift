@@ -382,23 +382,23 @@ final class KotlinContractsEffectModelTests: XCTestCase {
             "kotlin.contracts package should be synthesized"
         )
 
-        let invocationKindFQName = contractsFQName + [ctx.interner.intern("InvocationKind")]
-        XCTAssertNotNil(
-            sema.symbols.lookup(fqName: invocationKindFQName),
-            "InvocationKind enum should be synthesized inside kotlin.contracts"
-        )
+        let expectedSymbols: [(name: String, kind: SymbolKind)] = [
+            ("ContractBuilder", .class),
+            ("Effect", .interface),
+            ("SimpleEffect", .interface),
+            ("ConditionalEffect", .interface),
+            ("HoldsIn", .interface),
+            ("InvocationKind", .enumClass),
+        ]
 
-        let contractBuilderFQName = contractsFQName + [ctx.interner.intern("ContractBuilder")]
-        XCTAssertNotNil(
-            sema.symbols.lookup(fqName: contractBuilderFQName),
-            "ContractBuilder should be synthesized inside kotlin.contracts"
-        )
-
-        let holdsInFQName = contractsFQName + [ctx.interner.intern("HoldsIn")]
-        XCTAssertNotNil(
-            sema.symbols.lookup(fqName: holdsInFQName),
-            "HoldsIn should be synthesized inside kotlin.contracts"
-        )
+        for expected in expectedSymbols {
+            let fqName = contractsFQName + [ctx.interner.intern(expected.name)]
+            let symbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: fqName),
+                "\(expected.name) should be synthesized inside kotlin.contracts"
+            )
+            XCTAssertEqual(sema.symbols.symbol(symbol)?.kind, expected.kind)
+        }
     }
 
     func testHoldsInInterfaceAndBuilderSurfaceAreRegistered() throws {

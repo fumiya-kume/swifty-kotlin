@@ -408,19 +408,19 @@
 
 #### kotlin.contracts 型の実装
 - [ ] STDLIB-CONTRACT-TYPE-001: `CallsInPlace` クラスの実装
-- [ ] STDLIB-CONTRACT-TYPE-002: `ConditionalEffect` クラスの実装
-- [ ] STDLIB-CONTRACT-TYPE-003: `ContractBuilder` クラスの実装
-- [ ] STDLIB-CONTRACT-TYPE-004: `Effect` クラスの実装
-- [ ] STDLIB-CONTRACT-TYPE-005: `ExperimentalContracts` アノテーションの実装
-- [ ] STDLIB-CONTRACT-TYPE-006: `ExperimentalExtendedContracts` アノテーションの実装
-- [ ] STDLIB-CONTRACT-TYPE-007: `HoldsIn` クラスの実装
-- [ ] STDLIB-CONTRACT-TYPE-008: `InvocationKind` enum の実装
+- [x] STDLIB-CONTRACT-TYPE-002: `ConditionalEffect` クラスの実装
+- [x] STDLIB-CONTRACT-TYPE-003: `ContractBuilder` クラスの実装
+- [x] STDLIB-CONTRACT-TYPE-004: `Effect` クラスの実装
+- [x] STDLIB-CONTRACT-TYPE-005: `ExperimentalContracts` アノテーションの実装
+- [x] STDLIB-CONTRACT-TYPE-006: `ExperimentalExtendedContracts` アノテーションの実装
+- [x] STDLIB-CONTRACT-TYPE-007: `HoldsIn` クラスの実装
+- [x] STDLIB-CONTRACT-TYPE-008: `InvocationKind` enum の実装
 - [ ] STDLIB-CONTRACT-TYPE-009: `Returns` クラスの実装
 - [ ] STDLIB-CONTRACT-TYPE-010: `ReturnsNotNull` クラスの実装
-- [ ] STDLIB-CONTRACT-TYPE-011: `SimpleEffect` クラスの実装
+- [x] STDLIB-CONTRACT-TYPE-011: `SimpleEffect` クラスの実装
 
 #### kotlin.contracts 関数の実装
-- [ ] STDLIB-CONTRACT-FN-001: `contract` 関数の実装
+- [x] STDLIB-CONTRACT-FN-001: `contract` 関数の実装
 
 #### kotlin.coroutines 型の実装
 - [ ] STDLIB-COROUTINE-TYPE-001: `AbstractCoroutineContextElement` クラスの実装
