@@ -918,6 +918,15 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(kk_list_last(makeList([]), 0, 0, &thrown), runtimeExceptionCaughtSentinel)
     }
 
+    func testListSliceRangeAndIterableReturnSelectedElements() {
+        let source = makeList([10, 20, 30, 40, 50])
+        let range = kk_op_rangeTo(1, 3)
+        XCTAssertEqual(listElements(kk_list_slice(source, range)), [20, 30, 40])
+
+        let indices = makeList([3, 1, 3])
+        XCTAssertEqual(listElements(kk_list_slice_iterable(source, indices)), [40, 20, 40])
+    }
+
     func testGroupByPreservesKeyAndBucketOrder() {
         let source = makeList([3, 1, 4, 2, 5])
         let grouped = kk_list_groupBy(source, unsafeBitCast(groupByParity, to: Int.self), 0, nil)
