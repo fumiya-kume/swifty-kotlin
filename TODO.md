@@ -1302,7 +1302,7 @@
 - [x] STDLIB-JS-TYPE-032: `kotlin.js.nativeInvoke` annotation を追加する
 - [x] STDLIB-JS-TYPE-033: `kotlin.js.nativeSetter` annotation を追加する
 - [ ] STDLIB-JS-TYPE-034: `kotlin.js.Promise<T>` external class を追加する
-- [ ] STDLIB-JS-TYPE-035: `kotlin.js.RegExp` external class を追加する
+- [x] STDLIB-JS-TYPE-035: `kotlin.js.RegExp` external class を追加する
 - [ ] STDLIB-JS-TYPE-036: `kotlin.js.RegExpMatch` external interface を追加する
 - [ ] STDLIB-JS-PROP-001: `kotlin.js.console` external property を追加する
 - [x] STDLIB-JS-PROP-002: `kotlin.js.definedExternally` external property を追加する
