@@ -1228,7 +1228,7 @@
 - [x] STDLIB-JS-TYPE-005: `kotlin.js.ExperimentalJsCollectionsApi` marker を追加する
 - [x] STDLIB-JS-TYPE-006: `kotlin.js.ExperimentalJsExport` marker を追加する
 - [x] STDLIB-JS-TYPE-007: `kotlin.js.ExperimentalJsFileName` marker を追加する
-- [ ] STDLIB-JS-TYPE-008: `kotlin.js.ExperimentalJsReflectionCreateInstance` marker を追加する
+- [x] STDLIB-JS-TYPE-008: `kotlin.js.ExperimentalJsReflectionCreateInstance` marker を追加する
 - [x] STDLIB-JS-TYPE-009: `kotlin.js.ExperimentalJsStatic` marker を追加する
 - [x] STDLIB-JS-TYPE-010: `kotlin.js.ExperimentalWasmJsInterop` marker を追加する
 - [ ] STDLIB-JS-TYPE-011: `kotlin.js.JsAny` external interface を追加する

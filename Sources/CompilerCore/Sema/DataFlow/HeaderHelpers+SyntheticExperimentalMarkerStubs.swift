@@ -20,6 +20,7 @@ import Foundation
 /// | ExperimentalJsCollectionsApi | kotlin.js         | WARNING  |
 /// | ExperimentalJsExport      | kotlin.js            | WARNING  |
 /// | ExperimentalJsFileName    | kotlin.js            | WARNING  |
+/// | ExperimentalJsReflectionCreateInstance | kotlin.js | WARNING |
 /// | ExperimentalJsStatic      | kotlin.js            | WARNING  |
 /// | ExperimentalWasmJsInterop | kotlin.js            | WARNING  |
 /// | ExpectRefinement          | kotlin.experimental  | @ExperimentalMultiplatform |
@@ -161,6 +162,29 @@ extension DataFlowSemaPhase {
             packageSymbol: kotlinJsPkgSymbol,
             severity: "WARNING",
             targetArguments: nil,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- kotlin.js.ExperimentalJsReflectionCreateInstance (WARNING) ---
+        registerSyntheticExperimentalMarker(
+            named: "ExperimentalJsReflectionCreateInstance",
+            packageFQName: kotlinJsPkg,
+            packageSymbol: kotlinJsPkgSymbol,
+            severity: "WARNING",
+            targetArguments: [
+                "AnnotationTarget.CLASS",
+                "AnnotationTarget.ANNOTATION_CLASS",
+                "AnnotationTarget.PROPERTY",
+                "AnnotationTarget.FIELD",
+                "AnnotationTarget.LOCAL_VARIABLE",
+                "AnnotationTarget.VALUE_PARAMETER",
+                "AnnotationTarget.CONSTRUCTOR",
+                "AnnotationTarget.FUNCTION",
+                "AnnotationTarget.PROPERTY_GETTER",
+                "AnnotationTarget.PROPERTY_SETTER",
+                "AnnotationTarget.TYPEALIAS",
+            ],
             symbols: symbols,
             interner: interner
         )
