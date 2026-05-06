@@ -2897,6 +2897,34 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testListToLongArrayUsesRuntimeExternalLink() throws {
+        let source = """
+        fun convert(values: List<Long>) {
+            values.toLongArray()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "toLongArray"
+            })
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_list_toLongArray")
+            let resultType = try XCTUnwrap(sema.bindings.exprTypes[callExpr])
+            guard case let .classType(classType) = sema.types.kind(of: resultType),
+                  let symbol = sema.symbols.symbol(classType.classSymbol)
+            else {
+                return XCTFail("Expected toLongArray to return LongArray")
+            }
+            XCTAssertEqual(ctx.interner.resolve(symbol.name), "LongArray")
+        }
+    }
+
     func testListToDoubleArrayUsesRuntimeExternalLink() throws {
         let source = """
         fun convert(values: List<Double>) {

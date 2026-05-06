@@ -59,6 +59,7 @@ extension ABIMismatchTests {
             "kk_list_toBooleanArray",
             "kk_list_toShortArray",
             "kk_list_toIntArray",
+            "kk_list_toLongArray",
             "kk_list_toDoubleArray",
             "kk_list_toFloatArray",
             "kk_list_unzip",
