@@ -239,7 +239,7 @@
 - [ ] STDLIB-COL-FN-143: `minWithOrNull` 関数の実装
 - [x] STDLIB-COL-FN-144: `minus` 関数の実装
 - [ ] STDLIB-COL-FN-145: `minusAssign` 関数の実装
-- [ ] STDLIB-COL-FN-146: `minusElement` 関数の実装
+- [x] STDLIB-COL-FN-146: `minusElement` 関数の実装
 - [x] STDLIB-COL-FN-147: `mutableListOf` 関数の実装
 - [ ] STDLIB-COL-FN-148: `mutableMapOf` 関数の実装
 - [x] STDLIB-COL-FN-149: `mutableSetOf` 関数の実装
