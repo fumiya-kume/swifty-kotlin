@@ -258,6 +258,28 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testAtomicArrayInConcurrentPackageIsResolved() throws {
+        let source = """
+        import kotlin.concurrent.AtomicArray
+
+        fun main() {
+            val values = AtomicArray<String?>(2)
+            values.storeAt(0, "hello")
+            println(values.loadAt(0))
+            println(values.size)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "AtomicArray in kotlin.concurrent should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     func testExperimentalAtomicArraysInAtomicsPackageAreResolved() throws {
         let source = """
         @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)

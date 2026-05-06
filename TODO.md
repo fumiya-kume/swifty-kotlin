@@ -311,7 +311,7 @@
 - [ ] STDLIB-033: `kotlin.concurrent` / `kotlin.concurrent.atomics` / Native concurrent の parity を上げる
 
 #### kotlin.concurrent 型の実装
-- [ ] STDLIB-CONC-TYPE-001: `AtomicArray<T>` クラスの実装
+- [x] STDLIB-CONC-TYPE-001: `AtomicArray<T>` クラスの実装
 - [x] STDLIB-CONC-TYPE-002: `AtomicInt` クラスの実装
 - [ ] STDLIB-CONC-TYPE-003: `AtomicIntArray` クラスの実装
 - [x] STDLIB-CONC-TYPE-004: `AtomicLong` クラスの実装
