@@ -1080,6 +1080,7 @@ extension DataFlowSemaPhase {
         registerSyntheticReadWriteLockStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticNativeRefRuntimeStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticBase64Stubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsModuleStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticNativeConcurrentStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticExperimentalMarkerStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCoroutinesABIStubs(symbols: symbols, types: types, interner: interner)
