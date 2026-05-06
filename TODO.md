@@ -259,7 +259,7 @@
 - [ ] STDLIB-COL-FN-163: `reduceOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-164: `reduceRight` 関数の実装
 - [ ] STDLIB-COL-FN-165: `reduceRightIndexed` 関数の実装
-- [ ] STDLIB-COL-FN-166: `reduceRightIndexedOrNull` 関数の実装
+- [x] STDLIB-COL-FN-166: `reduceRightIndexedOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-167: `reduceRightOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-168: `removeAll` 関数の実装
 - [ ] STDLIB-COL-FN-169: `removeFirst` 関数の実装
