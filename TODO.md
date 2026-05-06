@@ -1317,7 +1317,7 @@
 - [ ] STDLIB-JS-FN-007: `dynamic.iterator()` を追加する
 - [x] STDLIB-JS-FN-008: `js(code)` を追加する
 - [ ] STDLIB-JS-FN-009: `JsArray<T>()` factory を追加する
-- [ ] STDLIB-JS-FN-010: `json(vararg pairs)` を追加する
+- [x] STDLIB-JS-FN-010: `json(vararg pairs)` を追加する
 - [ ] STDLIB-JS-FN-011: `jsTypeOf(a)` を追加する
 - [x] STDLIB-JS-FN-012: `parseFloat(s, radix)` を追加する
 - [x] STDLIB-JS-FN-013: `parseInt(s)` を追加する
