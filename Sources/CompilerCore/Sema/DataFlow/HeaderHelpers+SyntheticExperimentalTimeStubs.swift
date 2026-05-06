@@ -18,11 +18,15 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        _ = ensureAnnotationClassSymbol(
+        let experimentalTimeSymbol = ensureAnnotationClassSymbol(
             named: "ExperimentalTime",
             in: kotlinTimePkg,
             symbols: symbols,
             interner: interner
+        )
+        ensureExperimentalTimeRequiresOptInMarker(
+            experimentalTimeSymbol,
+            symbols: symbols
         )
 
         let durationSymbol = ensureClassSymbol(
@@ -489,6 +493,35 @@ extension DataFlowSemaPhase {
         )
         symbols.setParentSymbol(ownerSymbol, for: interfaceSymbol)
         return fqName
+    }
+
+    private func ensureExperimentalTimeRequiresOptInMarker(
+        _ annotationSymbol: SymbolID,
+        symbols: SymbolTable
+    ) {
+        var annotations = symbols.annotations(for: annotationSymbol)
+        let requiresOptIn = MetadataAnnotationRecord(
+            annotationFQName: "kotlin.RequiresOptIn",
+            arguments: ["level=RequiresOptIn.Level.ERROR"]
+        )
+        if !annotations.contains(requiresOptIn) {
+            annotations.append(requiresOptIn)
+        }
+        let target = MetadataAnnotationRecord(
+            annotationFQName: "kotlin.annotation.Target",
+            arguments: ["AnnotationTarget.ANNOTATION_CLASS"]
+        )
+        if !annotations.contains(target) {
+            annotations.append(target)
+        }
+        let retention = MetadataAnnotationRecord(
+            annotationFQName: "kotlin.annotation.Retention",
+            arguments: ["AnnotationRetention.BINARY"]
+        )
+        if !annotations.contains(retention) {
+            annotations.append(retention)
+        }
+        symbols.setAnnotations(annotations, for: annotationSymbol)
     }
 
     private func ensureExperimentalTimeNestedObject(

@@ -329,7 +329,7 @@
 - [x] STDLIB-IO-ENC-002: `Base64.encode(ByteArray)` / `decode(String)` を追加する
 - [x] STDLIB-IO-ENC-003: `Base64.encodeToByteArray(ByteArray)` / `decodeFromByteArray(ByteArray)` を追加する
 - [x] STDLIB-IO-ENC-004: `Base64.withPadding(PaddingOption)` と MIME / URL-safe variant の挙動を追加する
-- [ ] STDLIB-032: `kotlin.time` の stable / experimental 境界を明文化
+- [x] STDLIB-032: `kotlin.time` の stable / experimental 境界を明文化
 - [ ] STDLIB-033: `kotlin.concurrent` / `kotlin.concurrent.atomics` / Native concurrent の parity を上げる
 - [x] STDLIB-ATOMIC-001: `kotlin.concurrent.atomics.AtomicNativePtr` surface を追加する
 - [x] STDLIB-ATOMIC-002: `atomicArrayOfNulls<T>(size)` を追加する
