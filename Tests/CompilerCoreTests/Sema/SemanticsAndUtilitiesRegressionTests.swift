@@ -522,6 +522,54 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
             XCTAssertEqual(sema.bindings.exprTypes[callExprs[0]], types.longType)
         }
     }
+
+    func testPathRelativeToOrNullExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import kotlin.io.path.Path
+        import kotlin.io.path.relativeToOrNull
+
+        fun relativePathOrNull(path: Path, base: Path): Path? {
+            return path.relativeToOrNull(base)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.relativeToOrNull extension function in kotlin.io.path should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let nullablePathType = types.makeNullable(pathType)
+            let relativeToOrNullSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "relativeToOrNull"].map(interner.intern))
+            let relativeToOrNull = try XCTUnwrap(relativeToOrNullSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [pathType]
+                    && signature.returnType == nullablePathType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: relativeToOrNull), "kk_path_relativeToOrNull")
+
+            let signature = try XCTUnwrap(symbols.functionSignature(for: relativeToOrNull))
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [false])
+            XCTAssertEqual(signature.valueParameterIsVararg, [false])
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let callExprs = memberCallExprIDs(named: "relativeToOrNull", in: ast, interner: interner)
+
+            XCTAssertEqual(callExprs.count, 1)
+            XCTAssertEqual(sema.bindings.callBinding(for: callExprs[0])?.chosenCallee, relativeToOrNull)
+            XCTAssertEqual(sema.bindings.exprTypes[callExprs[0]], nullablePathType)
+        }
+    }
+
     func testOnErrorResultInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import kotlin.io.path.OnErrorResult
