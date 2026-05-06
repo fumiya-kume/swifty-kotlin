@@ -252,6 +252,23 @@ extension DataFlowSemaPhase {
             symbols: symbols
         )
 
+        // @Volatile - marks the JVM backing field as volatile.
+        registerSyntheticJvmAnnotationClass(
+            named: "Volatile",
+            packageFQName: kotlinJvmPkg,
+            packageSymbol: kotlinJvmPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        attachAnnotationIfNeeded(
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: ["AnnotationTarget.FIELD"]
+            ),
+            to: kotlinJvmPkg + [interner.intern("Volatile")],
+            symbols: symbols
+        )
+
         // @ImplicitlyActualizedByJvmDeclaration - marks expect declarations
         // that are implicitly actualized by Java/JVM declarations.
         registerSyntheticJvmAnnotationClass(

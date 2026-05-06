@@ -563,6 +563,45 @@ final class JvmAnnotationSyntheticSurfaceTests: XCTestCase {
         _ = try makeSema(source: source)
     }
 
+    func testVolatileAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "Volatile"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.jvm.Volatile must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(info.kind, .annotationClass)
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+    }
+
+    func testVolatileCarriesFieldTarget() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "Volatile"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let target = try XCTUnwrap(
+            sema.symbols.annotations(for: symbol).first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "Volatile must carry @Target metadata"
+        )
+
+        XCTAssertEqual(target.arguments, ["AnnotationTarget.FIELD"])
+    }
+
+    func testVolatileResolvesOnFieldTargetedProperty() throws {
+        let source = """
+        import kotlin.jvm.Volatile
+
+        class SharedState {
+            @field:Volatile
+            var ready: Boolean = false
+        }
+        """
+
+        _ = try makeSema(source: source)
+    }
+
     func testImplicitlyActualizedByJvmDeclarationAnnotationIsRegistered() throws {
         let (sema, interner) = try makeSema()
         let fqName = ["kotlin", "jvm", "ImplicitlyActualizedByJvmDeclaration"].map { interner.intern($0) }
