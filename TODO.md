@@ -362,7 +362,7 @@
 - [ ] STDLIB-CONC-FN-008: `timer` 関数の実装（各オーバーロード）
 
 #### kotlin.concurrent.atomics 型の実装
-- [ ] STDLIB-ATOMIC-NEW-001: `AtomicArray<T>` クラスの実装（kotlin.concurrent.atomics パッケージ版）
+- [x] STDLIB-ATOMIC-NEW-001: `AtomicArray<T>` クラスの実装（kotlin.concurrent.atomics パッケージ版）
 - [ ] STDLIB-ATOMIC-NEW-002: `AtomicBoolean` クラスの実装
 - [ ] STDLIB-ATOMIC-NEW-003: `AtomicIntArray` クラスの実装（kotlin.concurrent.atomics パッケージ版）
 - [ ] STDLIB-ATOMIC-NEW-004: `AtomicInt` クラスの実装
