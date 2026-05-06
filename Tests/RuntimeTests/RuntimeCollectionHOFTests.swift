@@ -756,6 +756,19 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertNotEqual(thrown, 0)
     }
 
+    func testWindowedNonTransformOverloadsReturnListWindows() {
+        let source = makeList([1, 2, 3, 4, 5])
+
+        let defaultStep = kk_list_windowed_default(source, 3)
+        XCTAssertEqual(listElements(defaultStep).map(listElements), [[1, 2, 3], [2, 3, 4], [3, 4, 5]])
+
+        let explicitStep = kk_list_windowed(source, 3, 2)
+        XCTAssertEqual(listElements(explicitStep).map(listElements), [[1, 2, 3], [3, 4, 5]])
+
+        let partialWindows = kk_list_windowed_partial(source, 3, 2, 1)
+        XCTAssertEqual(listElements(partialWindows).map(listElements), [[1, 2, 3], [3, 4, 5], [5]])
+    }
+
     func testCollectionMapNotNullPassesSentinelInputsToTransform() {
         let source = makeList([1, runtimeNullSentinelInt, 3])
 
