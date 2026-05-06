@@ -1403,6 +1403,10 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(arrayElements(kk_list_toShortArray(makeList([1, -2, 32767]))), [1, -2, 32767])
     }
 
+    func testIntListToPrimitiveArrayConversionCopiesElements() {
+        XCTAssertEqual(arrayElements(kk_list_toIntArray(makeList([1, -2, 1_000_000]))), [1, -2, 1_000_000])
+    }
+
     func testDoubleListToPrimitiveArrayConversionCopiesElements() {
         let first = kk_double_to_bits(1.5)
         let second = kk_double_to_bits(-2.25)

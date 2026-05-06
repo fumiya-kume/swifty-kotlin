@@ -57,6 +57,7 @@ extension ABIMismatchTests {
             "kk_list_sumByDouble",
             "kk_list_toBooleanArray",
             "kk_list_toShortArray",
+            "kk_list_toIntArray",
             "kk_list_toDoubleArray",
             "kk_list_toFloatArray",
             "kk_string_hexToShort",

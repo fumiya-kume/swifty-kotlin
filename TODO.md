@@ -304,7 +304,7 @@
 - [x] STDLIB-COL-FN-208: `toDoubleArray` 関数の実装
 - [ ] STDLIB-COL-FN-209: `toFloatArray` 関数の実装
 - [ ] STDLIB-COL-FN-210: `toHashSet` 関数の実装
-- [ ] STDLIB-COL-FN-211: `toIntArray` 関数の実装
+- [x] STDLIB-COL-FN-211: `toIntArray` 関数の実装
 - [ ] STDLIB-COL-FN-212: `toList` 関数の実装
 - [ ] STDLIB-COL-FN-213: `toLongArray` 関数の実装
 - [ ] STDLIB-COL-FN-214: `toMap` 関数の実装
