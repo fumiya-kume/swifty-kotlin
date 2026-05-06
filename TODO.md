@@ -629,7 +629,7 @@
 - [ ] STDLIB-MATH-FN-006: `atan` 関数の実装
 - [ ] STDLIB-MATH-FN-007: `atan2` 関数の実装
 - [ ] STDLIB-MATH-FN-008: `atanh` 関数の実装
-- [ ] STDLIB-MATH-FN-009: `cbrt` 関数の実装
+- [x] STDLIB-MATH-FN-009: `cbrt` 関数の実装
 - [ ] STDLIB-MATH-FN-010: `ceil` 関数の実装
 - [ ] STDLIB-MATH-FN-011: `cos` 関数の実装
 - [ ] STDLIB-MATH-FN-012: `cosh` 関数の実装
