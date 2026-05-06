@@ -4232,6 +4232,67 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testListZipUsesRuntimeExternalLinkAndReturnsPairList() throws {
+        let source = """
+        fun zipValues(values: List<Int>, labels: List<String>) = values.zip(labels)
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected List.zip to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, args, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "zip" && args.count == 1
+            }, "Expected values.zip(labels) call in AST")
+
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_list_zip")
+
+            let callType = try XCTUnwrap(sema.bindings.exprType(for: callExpr))
+            guard case let .classType(listType) = sema.types.kind(of: callType) else {
+                return XCTFail("Expected List.zip to return a List type")
+            }
+            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(listType.classSymbol)?.name)), "List")
+            let pairType: TypeID
+            switch try XCTUnwrap(listType.args.first) {
+            case let .invariant(type), let .out(type), let .in(type):
+                pairType = type
+            case .star:
+                return XCTFail("Expected List.zip to return a concrete Pair projection")
+            }
+            guard case let .classType(pairClassType) = sema.types.kind(of: pairType) else {
+                return XCTFail("Expected List.zip to return List<Pair<Int, String>>, got \(sema.types.kind(of: pairType))")
+            }
+            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(pairClassType.classSymbol)?.name)), "Pair")
+            XCTAssertEqual(pairClassType.args.count, 2)
+
+            let firstArgument: TypeID
+            switch pairClassType.args[0] {
+            case let .invariant(type), let .out(type), let .in(type):
+                firstArgument = type
+            case .star:
+                return XCTFail("Expected concrete Pair first argument")
+            }
+            let secondArgument: TypeID
+            switch pairClassType.args[1] {
+            case let .invariant(type), let .out(type), let .in(type):
+                secondArgument = type
+            case .star:
+                return XCTFail("Expected concrete Pair second argument")
+            }
+            XCTAssertEqual(firstArgument, sema.types.intType)
+            XCTAssertEqual(secondArgument, sema.types.stringType)
+        }
+    }
+
     func testStringAsIterableImplicitReceiverDoesNotExposeListOnlyMembers() throws {
         let source = """
         fun probe(): Char = with("hello") {

@@ -1304,6 +1304,17 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(kk_list_zipWithNext(makeList([1]))), [])
     }
 
+    func testListZipPairsElementsAndStopsAtShorterList() {
+        let left = makeList([1, 2, 3])
+        let right = makeList([10, 20])
+
+        let zipped = kk_list_zip(left, right)
+        let pairs = listElements(zipped)
+
+        XCTAssertEqual(pairs.map { kk_pair_first($0) }, [1, 2])
+        XCTAssertEqual(pairs.map { kk_pair_second($0) }, [10, 20])
+    }
+
     func testMapKeysToMutatesDestinationAndReturnsIt() {
         let keys = makeArray([1, 2])
         let values = makeArray([10, 21])
