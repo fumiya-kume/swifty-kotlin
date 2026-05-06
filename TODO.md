@@ -373,7 +373,7 @@
 - [ ] STDLIB-ATOMIC-NEW-009: `ExperimentalAtomicApi` アノテーションの実装
 
 #### kotlin.concurrent.atomics 関数の実装
-- [ ] STDLIB-ATOMIC-NEW-FN-001: `asJavaAtomic` 関数の実装（AtomicBoolean版）
+- [x] STDLIB-ATOMIC-NEW-FN-001: `asJavaAtomic` 関数の実装（AtomicBoolean版）
 - [ ] STDLIB-ATOMIC-NEW-FN-002: `asJavaAtomic` 関数の実装（AtomicInt版）
 - [ ] STDLIB-ATOMIC-NEW-FN-003: `asJavaAtomic` 関数の実装（AtomicLong版）
 - [ ] STDLIB-ATOMIC-NEW-FN-004: `asJavaAtomic` 関数の実装（AtomicReference版）

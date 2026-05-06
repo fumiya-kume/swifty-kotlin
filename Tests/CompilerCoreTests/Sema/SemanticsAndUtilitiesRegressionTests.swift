@@ -168,6 +168,30 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testAtomicBooleanAsJavaAtomicIsResolved() throws {
+        let source = """
+        @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
+
+        import kotlin.concurrent.atomics.AtomicBoolean
+        import kotlin.concurrent.atomics.asJavaAtomic
+
+        fun main() {
+            val atomic = AtomicBoolean(false)
+            val javaAtomic: java.util.concurrent.atomic.AtomicBoolean = atomic.asJavaAtomic()
+            println(javaAtomic)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "AtomicBoolean.asJavaAtomic should resolve to java.util.concurrent.atomic.AtomicBoolean: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     func testAtomicReferenceInAtomicsPackageIsResolved() throws {
         let source = """
         @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
