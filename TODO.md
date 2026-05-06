@@ -310,7 +310,7 @@
 - [x] STDLIB-COL-FN-214: `toMap` 関数の実装
 - [ ] STDLIB-COL-FN-215: `toMutableList` 関数の実装
 - [ ] STDLIB-COL-FN-216: `toMutableSet` 関数の実装
-- [ ] STDLIB-COL-FN-217: `toShortArray` 関数の実装
+- [x] STDLIB-COL-FN-217: `toShortArray` 関数の実装
 - [ ] STDLIB-COL-FN-218: `toSortedSet` 関数の実装
 - [ ] STDLIB-COL-FN-219: `toTypedArray` 関数の実装
 - [ ] STDLIB-COL-FN-220: `toTypeArray` 関数の実装
