@@ -889,10 +889,9 @@ final class ExperimentalMarkerStubTests: XCTestCase {
                 interner: interner
             )
         )
-        let annotations = sema.symbols.annotations(for: symbol)
         let target = try XCTUnwrap(
-            annotations.first { $0.annotationFQName == "kotlin.annotation.Target" },
-            "ExperimentalJsReflectionCreateInstance should carry explicit @Target metadata"
+            sema.symbols.annotations(for: symbol).first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "ExperimentalJsReflectionCreateInstance must carry @Target metadata"
         )
         XCTAssertEqual(
             Set(target.arguments),
