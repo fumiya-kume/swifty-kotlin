@@ -722,7 +722,7 @@
 - [ ] STDLIB-REFLECT-TYPE-018: `KType` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-019: `KTypeParameter` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-020: `KTypeProjection` クラスの実装
-- [ ] STDLIB-REFLECT-TYPE-021: `KVariance` enum の実装
+- [x] STDLIB-REFLECT-TYPE-021: `KVariance` enum の実装
 - [ ] STDLIB-REFLECT-TYPE-022: `KVisibility` enum の実装
 
 #### kotlin.reflect プロパティの実装
