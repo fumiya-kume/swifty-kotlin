@@ -1296,6 +1296,60 @@ final class CallTypeChecker {
             return resultType
         }
 
+        if let calleeName,
+           args.count == 2,
+           interner.resolve(calleeName) == "AtomicIntArray",
+           !isShadowedByNonSyntheticSymbol(calleeName, locals: locals, ctx: ctx),
+           isSyntheticStdlibSymbol(
+               calleeName,
+               fqComponents: ["kotlin", "concurrent", "atomics", "AtomicIntArray"],
+               ctx: ctx
+           )
+        {
+            let intType = sema.types.intType
+            let countType = driver.inferExpr(
+                args[0].expr,
+                ctx: ctx,
+                locals: &locals,
+                expectedType: intType
+            )
+            driver.emitSubtypeConstraint(
+                left: countType,
+                right: intType,
+                range: ast.arena.exprRange(args[0].expr) ?? range,
+                solver: ConstraintSolver(),
+                sema: sema,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+            let initExpectedType = sema.types.make(.functionType(FunctionType(
+                params: [intType],
+                returnType: intType
+            )))
+            _ = driver.inferExpr(
+                args[1].expr,
+                ctx: ctx,
+                locals: &locals,
+                expectedType: initExpectedType
+            )
+            let resultType = sema.symbols.lookupAll(fqName: [
+                interner.intern("kotlin"),
+                interner.intern("concurrent"),
+                interner.intern("atomics"),
+                interner.intern("AtomicIntArray"),
+            ]).first(where: { candidate in
+                sema.symbols.symbol(candidate)?.kind == .class
+            }).map { symbol in
+                sema.types.make(.classType(ClassType(
+                    classSymbol: symbol,
+                    args: [],
+                    nullability: .nonNull
+                )))
+            } ?? sema.types.anyType
+            sema.bindings.markStdlibSpecialCallExpr(id, kind: .atomicIntArrayFactory)
+            sema.bindings.bindExprType(id, type: resultType)
+            return resultType
+        }
+
         // --- STDLIB-REFLECT-066: typeOf<T>() — inline reified reflection ---
         if let calleeName,
            args.isEmpty,
