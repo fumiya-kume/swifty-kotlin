@@ -704,7 +704,7 @@
 #### kotlin.reflect 型の実装
 - [ ] STDLIB-REFLECT-TYPE-001: `AssociatedObjectKey` アノテーションの実装
 - [ ] STDLIB-REFLECT-TYPE-002: `ExperimentalAssociatedObjects` アノテーションの実装
-- [ ] STDLIB-REFLECT-TYPE-003: `KAnnotatedElement` インターフェースの実装
+- [x] STDLIB-REFLECT-TYPE-003: `KAnnotatedElement` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-004: `KCallable` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-005: `KClass` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-006: `KClassifier` インターフェースの実装
