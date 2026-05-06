@@ -245,6 +245,29 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testAtomicIntArrayInitFactoryIsResolved() throws {
+        let source = """
+        @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
+
+        import kotlin.concurrent.atomics.AtomicIntArray
+
+        fun main() {
+            val ints = AtomicIntArray(3) { it }
+            println(ints.size)
+            println(ints.loadAt(2))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "AtomicIntArray(size, init) should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     func testCopyActionContextInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import kotlin.io.path.CopyActionContext
