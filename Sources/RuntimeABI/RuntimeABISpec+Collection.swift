@@ -370,6 +370,15 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         ),
+        // STDLIB-COL-FN-210: List<T>.toHashSet()
+        RuntimeABIFunctionSpec(
+            name: "kk_list_toHashSet",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
         // STDLIB-021: Iterable<T>.toMutableList()
         RuntimeABIFunctionSpec(
             name: "kk_iterable_toMutableList",

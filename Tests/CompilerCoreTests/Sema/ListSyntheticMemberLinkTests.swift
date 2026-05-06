@@ -152,6 +152,33 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testListToHashSetUsesRuntimeExternalLink() throws {
+        let source = """
+        fun copy(values: List<String>): MutableSet<String> {
+            return values.toHashSet()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected List.toHashSet to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "toHashSet"
+            })
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_list_toHashSet")
+        }
+    }
+
     func testListIndicesExtensionPropertyResolvesToRuntimeGetter() throws {
         let source = """
         import kotlin.collections.indices

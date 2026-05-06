@@ -2453,5 +2453,34 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         XCTAssertFalse(diagnostics.diagnostics.contains { $0.code == "KSWIFTK-BACKEND-1005" })
     }
 
+    func testCodegenListToHashSetDeduplicatesAndReturnsMutableSet() throws {
+        let source = """
+        fun main() {
+            val sourceList = listOf(1, 2, 2, 3)
+            val hashSet = sourceList.toHashSet()
+            println(hashSet)
+            println(hashSet.contains(2))
+            hashSet.add(4)
+            println(sourceList.contains(4))
+            println(hashSet)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListToHashSetRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[1, 2, 3]\ntrue\nfalse\n[1, 2, 3, 4]\n")
+        }
+    }
+
     // MARK: - Private Helpers
 }
