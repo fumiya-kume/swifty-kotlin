@@ -775,6 +775,17 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerPathExtensionFunction(
+            named: "moveTo",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("target", pathType), ("overwrite", types.booleanType)],
+            returnType: pathType,
+            externalLinkName: "kk_path_moveTo_overwrite",
+            symbols: symbols,
+            interner: interner
+        )
+
         // MARK: - Top-level Path() factory (kotlin.io.path.Path)
 
         registerPathTopLevelFunction(

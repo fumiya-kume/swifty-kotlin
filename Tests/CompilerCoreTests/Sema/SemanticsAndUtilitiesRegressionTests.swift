@@ -608,6 +608,50 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathMoveToOverwriteExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import kotlin.io.path.Path
+        import kotlin.io.path.moveTo
+
+        fun movePath(source: Path, target: Path): Path {
+            return source.moveTo(target, true)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.moveTo overwrite extension function in kotlin.io.path should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let moveToSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "moveTo"].map(interner.intern))
+            let moveToSymbol = try XCTUnwrap(moveToSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [pathType, types.booleanType]
+                    && signature.returnType == pathType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: moveToSymbol), "kk_path_moveTo_overwrite")
+
+            let moveToSignature = try XCTUnwrap(symbols.functionSignature(for: moveToSymbol))
+            XCTAssertEqual(moveToSignature.valueParameterHasDefaultValues, [false, false])
+            XCTAssertEqual(moveToSignature.valueParameterIsVararg, [false, false])
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let callExpr = try XCTUnwrap(memberCallExprIDs(named: "moveTo", in: ast, interner: interner).first)
+            XCTAssertEqual(sema.bindings.callBinding(for: callExpr)?.chosenCallee, moveToSymbol)
+            XCTAssertEqual(sema.bindings.exprTypes[callExpr], pathType)
+        }
+    }
+
     func testPathWriteBytesExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import kotlin.io.path.Path

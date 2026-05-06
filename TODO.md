@@ -1205,7 +1205,7 @@
 - [ ] STDLIB-IO-PATH-FN-048: `Path.isWritable()` を追加する
 - [ ] STDLIB-IO-PATH-FN-049: `Path.listDirectoryEntries(glob)` を既存 no-arg stub から公式 glob shape へ広げる
 - [ ] STDLIB-IO-PATH-FN-050: `Path.moveTo(target, options)` を追加する
-- [ ] STDLIB-IO-PATH-FN-051: `Path.moveTo(target, overwrite)` を追加する
+- [x] STDLIB-IO-PATH-FN-051: `Path.moveTo(target, overwrite)` を追加する
 - [ ] STDLIB-IO-PATH-FN-052: `Path.notExists(options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-053: `Path.outputStream(options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-054: `Path(pathString)` の公式 top-level factory shape を既存 stub と整合させる
