@@ -703,7 +703,7 @@
 
 #### kotlin.reflect 型の実装
 - [x] STDLIB-REFLECT-TYPE-001: `AssociatedObjectKey` アノテーションの実装
-- [ ] STDLIB-REFLECT-TYPE-002: `ExperimentalAssociatedObjects` アノテーションの実装
+- [x] STDLIB-REFLECT-TYPE-002: `ExperimentalAssociatedObjects` アノテーションの実装
 - [x] STDLIB-REFLECT-TYPE-003: `KAnnotatedElement` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-004: `KCallable` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-005: `KClass` インターフェースの実装
@@ -721,7 +721,7 @@
 - [ ] STDLIB-REFLECT-TYPE-017: `KProperty2` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-018: `KType` インターフェースの実装
 - [x] STDLIB-REFLECT-TYPE-019: `KTypeParameter` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-020: `KTypeProjection` クラスの実装
+- [x] STDLIB-REFLECT-TYPE-020: `KTypeProjection` クラスの実装
 - [x] STDLIB-REFLECT-TYPE-021: `KVariance` enum の実装
 - [ ] STDLIB-REFLECT-TYPE-022: `KVisibility` enum の実装
 
@@ -732,7 +732,7 @@
 - [x] STDLIB-REFLECT-FN-001: `cast` 拡張関数の実装
 - [ ] STDLIB-REFLECT-FN-002: `createInstance` 拡張関数の実装
 - [x] STDLIB-REFLECT-FN-003: `findAssociatedObject` 拡張関数の実装
-- [ ] STDLIB-REFLECT-FN-004: `safeCast` 拡張関数の実装
+- [x] STDLIB-REFLECT-FN-004: `safeCast` 拡張関数の実装
 - [ ] STDLIB-REFLECT-FN-005: `typeOf` 関数の実装
 
 #### kotlin.sequences 型の実装
