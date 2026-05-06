@@ -4352,7 +4352,8 @@ extension CollectionLiteralLoweringPass {
                         let receiverID = arguments[0]
                         let initialID = arguments[1]
                         let lambdaID = arguments[2]
-                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                        if sequenceExprIDs.contains(receiverID.rawValue),
+                           !listExprIDs.contains(receiverID.rawValue) {
                             let closureRawID: KIRExprID
                             if arguments.count == 4 {
                                 closureRawID = arguments[3]
@@ -4497,7 +4498,8 @@ extension CollectionLiteralLoweringPass {
                     if (callee == lookup.runningFoldIndexedName
                         || callee == lookup.scanIndexedName
                         || callee == lookup.kkListRunningFoldIndexedName
-                        || callee == lookup.kkListScanIndexedName),
+                        || callee == lookup.kkListScanIndexedName
+                        || callee == lookup.kkSequenceRunningFoldIndexedName),
                        (3 ... 4).contains(arguments.count) {
                         let receiverID = arguments[0]; let initialID = arguments[1]; let lambdaID = arguments[2]
                         if listExprIDs.contains(receiverID.rawValue) {
