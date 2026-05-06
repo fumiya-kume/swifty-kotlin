@@ -1807,6 +1807,48 @@ extension CallLowerer {
         if args.isEmpty {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            let runtimeCallee: InternedString? = switch interner.resolve(calleeName) {
+            case "any":
+                if isConcreteArrayLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                    interner.intern("kk_array_any")
+                } else if isSetLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                    interner.intern("kk_set_any")
+                } else if isConcreteListLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                    interner.intern("kk_list_any")
+                } else {
+                    nil
+                }
+            case "none":
+                if isConcreteArrayLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                    interner.intern("kk_array_none")
+                } else if isSetLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                    interner.intern("kk_set_none")
+                } else if isConcreteListLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                    interner.intern("kk_list_none")
+                } else {
+                    nil
+                }
+            default:
+                nil
+            }
+            if let runtimeCallee {
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: runtimeCallee,
+                    arguments: [loweredReceiverID, zeroExpr, zeroExpr],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
+        if args.isEmpty {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             let isRangeLikeReceiver = sema.bindings.isRangeExpr(receiverExpr) || {
                 guard case let .classType(classType) = sema.types.kind(of: nonNullReceiverType),
                       let symbol = sema.symbols.symbol(classType.classSymbol)
@@ -8324,6 +8366,12 @@ extension CallLowerer {
                 return interner.intern("kk_list_minOfWith")
             case "minOfWithOrNull":
                 return interner.intern("kk_list_minOfWithOrNull")
+            case "any":
+                return interner.intern("kk_list_any")
+            case "all":
+                return interner.intern("kk_list_all")
+            case "none":
+                return interner.intern("kk_list_none")
             case "partition":
                 return interner.intern("kk_list_partition")
             case "zipWithNext":
@@ -8538,6 +8586,12 @@ extension CallLowerer {
                 return interner.intern("kk_set_lastOrNull")
             case "singleOrNull":
                 return interner.intern("kk_set_singleOrNull")
+            case "any":
+                return interner.intern("kk_set_any")
+            case "all":
+                return interner.intern("kk_set_all")
+            case "none":
+                return interner.intern("kk_set_none")
             default:
                 break
             }
@@ -8592,6 +8646,12 @@ extension CallLowerer {
             return interner.intern("kk_list_minOfWith")
         case "minOfWithOrNull":
             return interner.intern("kk_list_minOfWithOrNull")
+        case "any":
+            return interner.intern("kk_list_any")
+        case "all":
+            return interner.intern("kk_list_all")
+        case "none":
+            return interner.intern("kk_list_none")
         case "firstOrNull":
             return interner.intern("kk_list_firstOrNull")
         case "lastOrNull":
