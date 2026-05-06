@@ -79,6 +79,23 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // @JvmRecord - marks a class as a JVM record candidate.
+        registerSyntheticJvmAnnotationClass(
+            named: "JvmRecord",
+            packageFQName: kotlinJvmPkg,
+            packageSymbol: kotlinJvmPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        attachAnnotationIfNeeded(
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: ["AnnotationTarget.CLASS"]
+            ),
+            to: kotlinJvmPkg + [interner.intern("JvmRecord")],
+            symbols: symbols
+        )
+
         // @JvmDefaultWithCompatibility - generates JVM default methods with
         // DefaultImpls compatibility accessors for annotated classes/interfaces.
         registerSyntheticJvmAnnotationClass(
