@@ -12,6 +12,7 @@ import XCTest
 //   • ExperimentalContextParameters — kotlin        — severity ERROR
 //   • ExperimentalUuidApi        — kotlin.uuid      — severity ERROR
 //   • ExperimentalEncodingApi    — kotlin.io.encoding — severity ERROR
+//   • ExperimentalWasmInterop    — kotlin.wasm      — severity WARNING
 //   • ExperimentalMultiplatform  — kotlin           — severity ERROR
 //   • ExperimentalSubclassOptIn  — kotlin           — severity WARNING
 //   • ExperimentalAssociatedObjects — kotlin.reflect — severity ERROR
@@ -274,6 +275,29 @@ final class ExperimentalMarkerStubTests: XCTestCase {
         XCTAssertNotNil(
             sema.symbols.lookup(fqName: fq),
             "kotlin.io.encoding package must be present in the symbol table after sema"
+        )
+    }
+
+    // MARK: - ExperimentalWasmInterop (kotlin.wasm, WARNING)
+
+    func testExperimentalWasmInteropIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let sym = lookupSymbol(fqPath: ["kotlin", "wasm", "ExperimentalWasmInterop"], sema: sema, interner: interner)
+        XCTAssertNotNil(sym, "kotlin.wasm.ExperimentalWasmInterop must be registered in the symbol table")
+    }
+
+    func testExperimentalWasmInteropIsAnnotationClass() throws {
+        let (sema, interner) = try makeSema()
+        assertIsAnnotationClass(fqPath: ["kotlin", "wasm", "ExperimentalWasmInterop"], sema: sema, interner: interner)
+    }
+
+    func testExperimentalWasmInteropHasRequiresOptInWithWarningSeverity() throws {
+        let (sema, interner) = try makeSema()
+        assertHasRequiresOptIn(
+            fqPath: ["kotlin", "wasm", "ExperimentalWasmInterop"],
+            expectedSeverity: "WARNING",
+            sema: sema,
+            interner: interner
         )
     }
 
