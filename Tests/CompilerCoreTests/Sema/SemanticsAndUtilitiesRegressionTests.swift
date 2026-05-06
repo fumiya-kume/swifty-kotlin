@@ -544,6 +544,55 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathSetOwnerExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import java.nio.file.attribute.UserPrincipal
+        import kotlin.io.path.Path
+        import kotlin.io.path.setOwner
+
+        fun setPathOwner(path: Path, value: UserPrincipal): Path {
+            return path.setOwner(value)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.setOwner extension function in kotlin.io.path should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let userPrincipalSymbol = try XCTUnwrap(symbols.lookup(fqName: ["java", "nio", "file", "attribute", "UserPrincipal"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let userPrincipalType = types.make(.classType(ClassType(classSymbol: userPrincipalSymbol, args: [], nullability: .nonNull)))
+            let setOwnerSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "setOwner"].map(interner.intern))
+            let setOwner = try XCTUnwrap(setOwnerSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [userPrincipalType]
+                    && signature.returnType == pathType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: setOwner), "kk_path_setOwner")
+
+            let signature = try XCTUnwrap(symbols.functionSignature(for: setOwner))
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [false])
+            XCTAssertEqual(signature.valueParameterIsVararg, [false])
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let callExprs = memberCallExprIDs(named: "setOwner", in: ast, interner: interner)
+
+            XCTAssertEqual(callExprs.count, 1)
+            XCTAssertEqual(sema.bindings.callBinding(for: callExprs[0])?.chosenCallee, setOwner)
+            XCTAssertEqual(sema.bindings.exprTypes[callExprs[0]], pathType)
+        }
+    }
+
     func testURIToPathExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import java.net.URI

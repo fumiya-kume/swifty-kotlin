@@ -22,6 +22,7 @@
 /// - `readText(): String`, `writeText(text: String)`, `readLines(): List<String>`
 /// - `createDirectories(): Path`, `deleteIfExists(): Boolean`
 /// - `Path.fileStore(): FileStore` extension function
+/// - `Path.setOwner(value: UserPrincipal): Path` extension function
 /// - `listDirectoryEntries(): List<Path>`
 /// - Top-level `Path(pathString: String)` factory (kotlin.io.path.Path)
 /// - `Paths.get(pathString: String)` factory (java.nio.file.Paths)
@@ -283,6 +284,26 @@ extension DataFlowSemaPhase {
             classSymbol: fileStoreSymbol, args: [], nullability: .nonNull
         )))
         symbols.setPropertyType(fileStoreType, for: fileStoreSymbol)
+
+        let javaNioFileAttributePkg = ensurePackage(
+            path: ["java", "nio", "file", "attribute"],
+            symbols: symbols,
+            interner: interner
+        )
+        let javaNioFileAttributePkgSymbol = symbols.lookup(fqName: javaNioFileAttributePkg)
+        let userPrincipalSymbol = ensureInterfaceSymbol(
+            named: "UserPrincipal",
+            in: javaNioFileAttributePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaNioFileAttributePkgSymbol {
+            symbols.setParentSymbol(javaNioFileAttributePkgSymbol, for: userPrincipalSymbol)
+        }
+        let userPrincipalType = types.make(.classType(ClassType(
+            classSymbol: userPrincipalSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(userPrincipalType, for: userPrincipalSymbol)
 
         // MARK: - Path(pathString: String) constructor
 
@@ -693,6 +714,17 @@ extension DataFlowSemaPhase {
             ownerType: pathType,
             parameters: [],
             returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "setOwner",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("value", userPrincipalType)],
+            returnType: pathType,
+            externalLinkName: "kk_path_setOwner",
             symbols: symbols,
             interner: interner
         )
