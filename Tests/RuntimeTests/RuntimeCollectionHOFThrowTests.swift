@@ -250,6 +250,24 @@ final class RuntimeCollectionHOFThrowTests: XCTestCase {
         XCTAssertNotEqual(outThrown, 0)
         XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
     }
+
+    func testListSingleEmptyThrows() {
+        let list = kk_list_of(kk_array_new(0), 0)
+        var outThrown = 0
+        let result = kk_list_single(list, &outThrown)
+
+        XCTAssertNotEqual(outThrown, 0)
+        XCTAssertEqual(result, 0)
+    }
+
+    func testListSingleMultipleElementsThrows() {
+        let list = makeList([1, 2])
+        var outThrown = 0
+        let result = kk_list_single(list, &outThrown)
+
+        XCTAssertNotEqual(outThrown, 0)
+        XCTAssertEqual(result, 0)
+    }
     
     func testListReduceOrNullEmptyDoesNotThrow() {
         let list = kk_list_of(kk_array_new(0), 0)

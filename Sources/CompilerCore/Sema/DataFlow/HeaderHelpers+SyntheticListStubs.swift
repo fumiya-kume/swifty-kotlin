@@ -2607,7 +2607,8 @@ extension DataFlowSemaPhase {
         func registerSimpleMember(
             name: String,
             returnType: TypeID,
-            externalLinkName: String
+            externalLinkName: String,
+            canThrow: Bool = false
         ) {
             let memberName = interner.intern(name)
             let memberFQName = listFQName + [memberName]
@@ -2627,6 +2628,7 @@ extension DataFlowSemaPhase {
                     receiverType: receiverType,
                     parameterTypes: [],
                     returnType: returnType,
+                    canThrow: canThrow,
                     typeParameterSymbols: [listTypeParamSymbol],
                     classTypeParameterCount: 1
                 ),
@@ -3067,6 +3069,8 @@ extension DataFlowSemaPhase {
         // firstOrNull / lastOrNull no-predicate (STDLIB-210)
         registerSimpleMember(name: "firstOrNull", returnType: nullableElementType, externalLinkName: "kk_list_firstOrNull")
         registerSimpleMember(name: "lastOrNull", returnType: nullableElementType, externalLinkName: "kk_list_lastOrNull")
+        // single no-predicate (STDLIB-COL-FN-184)
+        registerSimpleMember(name: "single", returnType: listTypeParamType, externalLinkName: "kk_list_single", canThrow: true)
         // singleOrNull no-predicate (STDLIB-211)
         registerSimpleMember(name: "singleOrNull", returnType: nullableElementType, externalLinkName: "kk_list_singleOrNull")
 

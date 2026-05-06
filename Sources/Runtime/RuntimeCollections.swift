@@ -525,6 +525,22 @@ public func kk_list_lastOrNull(_ listRaw: Int) -> Int {
 
 // MARK: - STDLIB-211: List.singleOrNull()
 
+@_cdecl("kk_list_single")
+public func kk_list_single(_ listRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard list.elements.count == 1 else {
+        let message = list.elements.isEmpty
+            ? "Collection is empty."
+            : "Collection has more than one element."
+        runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: message))
+        return 0
+    }
+    return list.elements[0]
+}
+
 @_cdecl("kk_list_singleOrNull")
 public func kk_list_singleOrNull(_ listRaw: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw),

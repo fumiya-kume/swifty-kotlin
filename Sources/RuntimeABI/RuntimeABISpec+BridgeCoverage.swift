@@ -125,6 +125,14 @@ private let listIndexedBridgeFunctions: [RuntimeABIFunctionSpec] = [
 private let listMiscBridgeFunctions: [RuntimeABIFunctionSpec] = [
     bridgeSpec("kk_list_intersect", section: "Collection", params: ["listRaw", "otherRaw"]),
     bridgeSpec("kk_list_of_not_null", section: "Collection", params: ["arrayRaw", "count"]),
+    bridgeSpec(
+        "kk_list_single",
+        section: "Collection",
+        typedParams: [
+            ("listRaw", .intptr),
+            ("outThrown", .nullableIntptrPointer),
+        ]
+    ),
     bridgeSpec("kk_list_singleOrNull", section: "Collection", params: ["listRaw"]),
     bridgeSpec("kk_list_subtract", section: "Collection", params: ["listRaw", "otherRaw"]),
     bridgeSpec("kk_list_toHashSet", section: "Collection", params: ["listRaw"]),
