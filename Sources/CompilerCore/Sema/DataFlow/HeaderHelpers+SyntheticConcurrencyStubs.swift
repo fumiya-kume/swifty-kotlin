@@ -1,6 +1,6 @@
 import Foundation
 
-/// Synthetic stdlib stubs for `java.lang.Thread` and `kotlin.concurrent.thread`.
+/// Synthetic stdlib stubs for `java.lang.Thread` and `kotlin.concurrent`.
 extension DataFlowSemaPhase {
     func registerSyntheticConcurrencyStubs(
         symbols: SymbolTable,
@@ -17,6 +17,7 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let concurrentPkgSymbol = symbols.lookup(fqName: concurrentPkg)
 
         let classLoaderSymbol = symbols.lookup(fqName: javaLangPkg + [interner.intern("ClassLoader")])
         let classLoaderType: TypeID = if let classLoaderSymbol {
@@ -49,7 +50,7 @@ extension DataFlowSemaPhase {
 
         registerSyntheticThreadTopLevelFunction(
             packageFQName: concurrentPkg,
-            packageSymbol: symbols.lookup(fqName: concurrentPkg),
+            packageSymbol: concurrentPkgSymbol,
             threadType: threadType,
             classLoaderType: nullableClassLoaderType,
             nullableStringType: nullableStringType,
@@ -57,6 +58,39 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerSyntheticVolatileAnnotation(
+            packageFQName: concurrentPkg,
+            packageSymbol: concurrentPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    private func registerSyntheticVolatileAnnotation(
+        packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let volatileSymbol = ensureAnnotationClassSymbol(
+            named: "Volatile",
+            in: packageFQName,
+            symbols: symbols,
+            interner: interner
+        )
+        if let packageSymbol {
+            symbols.setParentSymbol(packageSymbol, for: volatileSymbol)
+        }
+
+        let targetRecord = MetadataAnnotationRecord(
+            annotationFQName: "kotlin.annotation.Target",
+            arguments: ["AnnotationTarget.FIELD"]
+        )
+        var annotations = symbols.annotations(for: volatileSymbol)
+        if !annotations.contains(targetRecord) {
+            annotations.append(targetRecord)
+            symbols.setAnnotations(annotations, for: volatileSymbol)
+        }
     }
 
     private func registerSyntheticThreadTopLevelFunction(
