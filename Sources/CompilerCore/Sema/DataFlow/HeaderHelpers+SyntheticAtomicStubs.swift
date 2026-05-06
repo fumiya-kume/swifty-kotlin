@@ -145,6 +145,13 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerAtomicBooleanAsJavaAtomicFunction(
+            packageFQName: atomicsPkg,
+            receiverPackageFQName: concurrentPkg,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
 
         registerAtomicArrayFamily(
             packageFQName: atomicsPkg,
@@ -1054,6 +1061,103 @@ extension DataFlowSemaPhase {
                 valueParameterIsVararg: [false],
                 typeParameterSymbols: [typeParamSymbol],
                 classTypeParameterCount: 0
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerAtomicBooleanAsJavaAtomicFunction(
+        packageFQName: [InternedString],
+        receiverPackageFQName: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        guard let receiverSymbol = symbols.lookup(
+            fqName: receiverPackageFQName + [interner.intern("AtomicBoolean")]
+        ) else {
+            return
+        }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: receiverSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let javaAtomicPackage = ensurePackage(
+            path: ["java", "util", "concurrent", "atomic"],
+            symbols: symbols,
+            interner: interner
+        )
+        let javaAtomicBooleanSymbol = ensureClassSymbol(
+            named: "AtomicBoolean",
+            in: javaAtomicPackage,
+            symbols: symbols,
+            interner: interner
+        )
+        if let packageSymbol = symbols.lookup(fqName: javaAtomicPackage) {
+            symbols.setParentSymbol(packageSymbol, for: javaAtomicBooleanSymbol)
+        }
+        let javaAtomicBooleanType = types.make(.classType(ClassType(
+            classSymbol: javaAtomicBooleanSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(javaAtomicBooleanType, for: javaAtomicBooleanSymbol)
+
+        registerAtomicExtensionFunction(
+            packageFQName: packageFQName,
+            name: "asJavaAtomic",
+            externalLinkName: "kk_atomic_bool_asJavaAtomic",
+            receiverType: receiverType,
+            returnType: javaAtomicBooleanType,
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    private func registerAtomicExtensionFunction(
+        packageFQName: [InternedString],
+        name: String,
+        externalLinkName: String,
+        receiverType: TypeID,
+        returnType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return signature.receiverType == receiverType
+                && signature.parameterTypes.isEmpty
+                && signature.returnType == returnType
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: returnType,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: [],
+                valueParameterIsVararg: []
             ),
             for: functionSymbol
         )

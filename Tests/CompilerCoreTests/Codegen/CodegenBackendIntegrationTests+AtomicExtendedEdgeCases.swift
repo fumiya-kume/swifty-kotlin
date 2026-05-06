@@ -287,6 +287,27 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenAtomicBooleanAsJavaAtomic() throws {
+        let source = """
+        @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
+        import kotlin.concurrent.atomics.AtomicBoolean
+        import kotlin.concurrent.atomics.asJavaAtomic
+
+        fun main() {
+            val atomic = AtomicBoolean(true)
+            val javaAtomic: java.util.concurrent.atomic.AtomicBoolean = atomic.asJavaAtomic()
+            println("ok")
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(inputPath: path, moduleName: "AtomicBooleanAsJavaAtomic", emit: .executable, outputPath: outputBase)
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "ok\n")
+        }
+    }
+
     func testCodegenAtomicBooleanCASSuccessAndFailure() throws {
         let source = """
         @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)

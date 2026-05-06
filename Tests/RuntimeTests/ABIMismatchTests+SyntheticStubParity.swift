@@ -225,6 +225,7 @@ extension ABIMismatchTests {
             "kk_atomic_bool_exchange",
             "kk_atomic_bool_compareAndSet",
             "kk_atomic_bool_compareAndExchange",
+            "kk_atomic_bool_asJavaAtomic",
             "kk_atomic_bool_getAndUpdate",
             "kk_atomic_bool_updateAndGet",
             // kotlin.native.ref

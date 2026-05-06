@@ -495,6 +495,11 @@ public func kk_atomic_bool_compareAndExchange(_ receiver: Int, _ expect: Int, _ 
     return box.compareAndExchange(expect: expect != 0, update: update != 0) ? 1 : 0
 }
 
+@_cdecl("kk_atomic_bool_asJavaAtomic")
+public func kk_atomic_bool_asJavaAtomic(_ receiver: Int) -> Int {
+    receiver
+}
+
 @_cdecl("kk_atomic_bool_getAndUpdate")
 public func kk_atomic_bool_getAndUpdate(
     _ receiver: Int,
