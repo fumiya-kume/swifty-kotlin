@@ -17,6 +17,7 @@
 /// - `Path.invariantSeparatorsPath: String` extension property
 /// - `Path.absolute(): Path` extension function
 /// - `Path.invariantSeparatorsPathString: String` extension property
+/// - `Path.writeBytes(array: ByteArray, vararg options: OpenOption)` extension function
 /// - `readText(): String`, `writeText(text: String)`, `readLines(): List<String>`
 /// - `createDirectories(): Path`, `deleteIfExists(): Boolean`
 /// - `listDirectoryEntries(): List<Path>`
@@ -60,6 +61,12 @@ extension DataFlowSemaPhase {
         let kotlinTextPkg = ensurePackage(path: ["kotlin", "text"], symbols: symbols, interner: interner)
         let kotlinPkgSymbol = symbols.lookup(fqName: kotlinPkg)
         let kotlinTextPkgSymbol = symbols.lookup(fqName: kotlinTextPkg)
+        let javaNioFilePkg = ensurePackage(
+            path: ["java", "nio", "file"],
+            symbols: symbols,
+            interner: interner
+        )
+        let javaNioFilePkgSymbol = symbols.lookup(fqName: javaNioFilePkg)
 
         let charSequenceSymbol = ensureInterfaceSymbol(
             named: "CharSequence",
@@ -92,6 +99,38 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(charsetType, for: charsetSymbol)
+
+        let byteArraySymbol = ensureClassSymbol(
+            named: "ByteArray",
+            in: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinPkgSymbol {
+            symbols.setParentSymbol(kotlinPkgSymbol, for: byteArraySymbol)
+        }
+        let byteArrayType = types.make(.classType(ClassType(
+            classSymbol: byteArraySymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(byteArrayType, for: byteArraySymbol)
+
+        let openOptionSymbol = ensureInterfaceSymbol(
+            named: "OpenOption",
+            in: javaNioFilePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaNioFilePkgSymbol {
+            symbols.setParentSymbol(javaNioFilePkgSymbol, for: openOptionSymbol)
+        }
+        let openOptionType = types.make(.classType(ClassType(
+            classSymbol: openOptionSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(openOptionType, for: openOptionSymbol)
 
         registerPathCopyActionContextSurface(
             packageFQName: kotlinIOPathPkg,
@@ -572,6 +611,18 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerPathExtensionFunction(
+            named: "writeBytes",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("array", byteArrayType), ("options", openOptionType)],
+            returnType: types.unitType,
+            externalLinkName: "kk_path_writeBytes",
+            valueParameterIsVararg: [false, true],
+            symbols: symbols,
+            interner: interner
+        )
+
         // MARK: - Path filesystem operations
 
         registerPathMemberFunction(
@@ -620,13 +671,6 @@ extension DataFlowSemaPhase {
         )
 
         // MARK: - Paths.get() (java.nio.file.Paths)
-
-        let javaNioFilePkg = ensurePackage(
-            path: ["java", "nio", "file"],
-            symbols: symbols,
-            interner: interner
-        )
-        let javaNioFilePkgSymbol = symbols.lookup(fqName: javaNioFilePkg)
 
         let pathsSymbol = ensureClassSymbol(
             named: "Paths",
@@ -1220,9 +1264,11 @@ extension DataFlowSemaPhase {
         parameters: [(name: String, type: TypeID)],
         returnType: TypeID,
         externalLinkName: String,
+        valueParameterIsVararg: [Bool]? = nil,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
+        let parameterIsVararg = valueParameterIsVararg ?? Array(repeating: false, count: parameters.count)
         let functionName = interner.intern(name)
         let functionFQName = packageFQName + [functionName]
         if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
@@ -1234,7 +1280,7 @@ extension DataFlowSemaPhase {
         }) {
             symbols.setExternalLinkName(externalLinkName, for: existing)
             if let existingSignature = symbols.functionSignature(for: existing),
-               existingSignature.returnType != returnType {
+               existingSignature.returnType != returnType || existingSignature.valueParameterIsVararg != parameterIsVararg {
                 symbols.setFunctionSignature(
                     FunctionSignature(
                         receiverType: existingSignature.receiverType,
@@ -1243,7 +1289,7 @@ extension DataFlowSemaPhase {
                         isSuspend: existingSignature.isSuspend,
                         valueParameterSymbols: existingSignature.valueParameterSymbols,
                         valueParameterHasDefaultValues: existingSignature.valueParameterHasDefaultValues,
-                        valueParameterIsVararg: existingSignature.valueParameterIsVararg
+                        valueParameterIsVararg: parameterIsVararg
                     ),
                     for: existing
                 )
@@ -1287,7 +1333,7 @@ extension DataFlowSemaPhase {
                 isSuspend: false,
                 valueParameterSymbols: valueParameterSymbols,
                 valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
-                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+                valueParameterIsVararg: parameterIsVararg
             ),
             for: functionSymbol
         )

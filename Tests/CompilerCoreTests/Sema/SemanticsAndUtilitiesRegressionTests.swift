@@ -450,6 +450,51 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathWriteBytesExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import kotlin.io.path.Path
+        import kotlin.io.path.writeBytes
+
+        fun writePathBytes(path: Path, bytes: ByteArray): Unit = path.writeBytes(bytes)
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.writeBytes extension function in kotlin.io.path should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let byteArraySymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "ByteArray"].map(interner.intern)))
+            let openOptionSymbol = try XCTUnwrap(symbols.lookup(fqName: ["java", "nio", "file", "OpenOption"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let byteArrayType = types.make(.classType(ClassType(classSymbol: byteArraySymbol, args: [], nullability: .nonNull)))
+            let openOptionType = types.make(.classType(ClassType(classSymbol: openOptionSymbol, args: [], nullability: .nonNull)))
+            let writeBytesSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "writeBytes"].map(interner.intern))
+            let writeBytes = try XCTUnwrap(writeBytesSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [byteArrayType, openOptionType]
+                    && signature.returnType == types.unitType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: writeBytes), "kk_path_writeBytes")
+            let signature = try XCTUnwrap(symbols.functionSignature(for: writeBytes))
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [false, false])
+            XCTAssertEqual(signature.valueParameterIsVararg, [false, true])
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let callExpr = try XCTUnwrap(memberCallExprIDs(named: "writeBytes", in: ast, interner: interner).first)
+            XCTAssertEqual(sema.bindings.callBinding(for: callExpr)?.chosenCallee, writeBytes)
+            XCTAssertEqual(sema.bindings.exprTypes[callExpr], types.unitType)
+        }
+    }
+
     func testFileVisitorBuilderInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import kotlin.io.path.FileVisitorBuilder
