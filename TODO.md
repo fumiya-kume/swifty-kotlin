@@ -1214,9 +1214,9 @@
 - [ ] STDLIB-IO-PATH-FN-057: `Path.readAttributes(attributes, options)` を追加する
 - [x] STDLIB-IO-PATH-FN-058: `Path.readBytes()` を追加する
 - [ ] STDLIB-IO-PATH-FN-059: `Path.reader(charset, options)` を追加する
-- [ ] STDLIB-IO-PATH-FN-060: `Path.readLines(charset)` を既存 no-arg stub から公式 charset shape へ広げる
+- [x] STDLIB-IO-PATH-FN-060: `Path.readLines(charset)` を既存 no-arg stub から公式 charset shape へ広げる
 - [ ] STDLIB-IO-PATH-FN-061: `Path.readSymbolicLink()` を追加する
-- [ ] STDLIB-IO-PATH-FN-062: `Path.readText(charset)` を既存 no-arg stub から公式 charset shape へ広げる
+- [x] STDLIB-IO-PATH-FN-062: `Path.readText(charset)` を既存 no-arg stub から公式 charset shape へ広げる
 - [ ] STDLIB-IO-PATH-FN-063: `Path.relativeTo(base)` を追加する
 - [ ] STDLIB-IO-PATH-FN-064: `Path.relativeToOrNull(base)` を追加する
 - [ ] STDLIB-IO-PATH-FN-065: `Path.relativeToOrSelf(base)` を追加する

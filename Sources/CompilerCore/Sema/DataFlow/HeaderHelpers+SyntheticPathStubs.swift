@@ -651,6 +651,28 @@ extension DataFlowSemaPhase {
         )
 
         registerPathExtensionFunction(
+            named: "readLines",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("charset", charsetType)],
+            returnType: listOfStringType,
+            externalLinkName: "kk_path_readLines_charset",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "readText",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("charset", charsetType)],
+            returnType: types.stringType,
+            externalLinkName: "kk_path_readText_charset",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
             named: "appendText",
             packageFQName: kotlinIOPathPkg,
             receiverType: pathType,

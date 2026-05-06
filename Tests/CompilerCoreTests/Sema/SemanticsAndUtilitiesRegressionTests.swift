@@ -499,6 +499,80 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathReadTextAndReadLinesCharsetExtensionFunctionsInIOPathPackageSurfaceAreResolved() throws {
+        let source = """
+        import kotlin.collections.List
+        import kotlin.io.path.Path
+        import kotlin.io.path.readLines
+        import kotlin.io.path.readText
+        import kotlin.text.Charsets
+
+        fun readPathText(path: Path): String {
+            return path.readText(Charsets.UTF_8)
+        }
+
+        fun readPathLines(path: Path): List<String> {
+            return path.readLines(Charsets.UTF_8)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.readText/readLines charset extension functions in kotlin.io.path should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let charsetSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "text", "Charset"].map(interner.intern)))
+            let listSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "collections", "List"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let charsetType = types.make(.classType(ClassType(classSymbol: charsetSymbol, args: [], nullability: .nonNull)))
+            let listOfStringType = types.make(.classType(ClassType(
+                classSymbol: listSymbol,
+                args: [.out(types.stringType)],
+                nullability: .nonNull
+            )))
+
+            let readTextSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "readText"].map(interner.intern))
+            let readTextSymbol = try XCTUnwrap(readTextSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [charsetType]
+                    && signature.returnType == types.stringType
+            })
+            let readLinesSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "readLines"].map(interner.intern))
+            let readLinesSymbol = try XCTUnwrap(readLinesSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [charsetType]
+                    && signature.returnType == listOfStringType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: readTextSymbol), "kk_path_readText_charset")
+            XCTAssertEqual(symbols.externalLinkName(for: readLinesSymbol), "kk_path_readLines_charset")
+
+            let readTextSignature = try XCTUnwrap(symbols.functionSignature(for: readTextSymbol))
+            let readLinesSignature = try XCTUnwrap(symbols.functionSignature(for: readLinesSymbol))
+            XCTAssertEqual(readTextSignature.valueParameterHasDefaultValues, [false])
+            XCTAssertEqual(readLinesSignature.valueParameterHasDefaultValues, [false])
+            XCTAssertEqual(readTextSignature.valueParameterIsVararg, [false])
+            XCTAssertEqual(readLinesSignature.valueParameterIsVararg, [false])
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let readTextCall = try XCTUnwrap(memberCallExprIDs(named: "readText", in: ast, interner: interner).first)
+            let readLinesCall = try XCTUnwrap(memberCallExprIDs(named: "readLines", in: ast, interner: interner).first)
+            XCTAssertEqual(sema.bindings.callBinding(for: readTextCall)?.chosenCallee, readTextSymbol)
+            XCTAssertEqual(sema.bindings.callBinding(for: readLinesCall)?.chosenCallee, readLinesSymbol)
+            XCTAssertEqual(sema.bindings.exprTypes[readTextCall], types.stringType)
+            XCTAssertEqual(sema.bindings.exprTypes[readLinesCall], listOfStringType)
+        }
+    }
+
     func testPathFileStoreExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import java.nio.file.FileStore
