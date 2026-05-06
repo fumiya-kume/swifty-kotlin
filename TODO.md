@@ -545,7 +545,7 @@
 - [ ] STDLIB-IO-PATH-FN-014: `deleteExisting` 関数の実装
 - [x] STDLIB-IO-PATH-FN-015: `deleteIfExists` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-016: `deleteRecursively` 関数の実装
-- [ ] STDLIB-IO-PATH-FN-017: `div` 関数の実装
+- [x] STDLIB-IO-PATH-FN-017: `div` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-018: `fileVisitor` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-019: `forEachDirectoryEntry` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-020: `forEachLine` 関数の実装
@@ -1135,8 +1135,8 @@
 - [ ] STDLIB-IO-PATH-FN-023: `Path.deleteExisting()` を追加する
 - [ ] STDLIB-IO-PATH-FN-024: `Path.deleteIfExists()` の公式 return/annotation shape を既存 stub と整合させる
 - [ ] STDLIB-IO-PATH-FN-025: `Path.deleteRecursively()` を追加する
-- [ ] STDLIB-IO-PATH-FN-026: `Path.div(other: Path)` を追加する
-- [ ] STDLIB-IO-PATH-FN-027: `Path.div(other: String)` を追加する
+- [x] STDLIB-IO-PATH-FN-026: `Path.div(other: Path)` を追加する
+- [x] STDLIB-IO-PATH-FN-027: `Path.div(other: String)` を追加する
 - [ ] STDLIB-IO-PATH-FN-028: `Path.exists(options)` を既存 no-arg stub から公式 vararg shape へ広げる
 - [ ] STDLIB-IO-PATH-FN-029: `Path.fileAttributesView<V>(options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-030: `Path.fileAttributesViewOrNull<V>(options)` を追加する

@@ -499,6 +499,66 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathDivExtensionFunctionsInIOPathPackageSurfaceAreResolved() throws {
+        let source = """
+        import kotlin.io.path.Path
+        import kotlin.io.path.div
+
+        fun pathDivPath(source: Path, child: Path): Path {
+            return source.div(child)
+        }
+
+        fun pathDivString(source: Path): Path {
+            return source / "child"
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.div extension functions in kotlin.io.path should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let divSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "div"].map(interner.intern))
+            let pathDivSymbol = try XCTUnwrap(divSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [pathType]
+                    && signature.returnType == pathType
+            })
+            let stringDivSymbol = try XCTUnwrap(divSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [types.stringType]
+                    && signature.returnType == pathType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: pathDivSymbol), "kk_path_div_path")
+            XCTAssertEqual(symbols.externalLinkName(for: stringDivSymbol), "kk_path_div_string")
+            XCTAssertTrue(symbols.symbol(pathDivSymbol)?.flags.contains(.operatorFunction) ?? false)
+            XCTAssertTrue(symbols.symbol(stringDivSymbol)?.flags.contains(.operatorFunction) ?? false)
+
+            let pathDivSignature = try XCTUnwrap(symbols.functionSignature(for: pathDivSymbol))
+            let stringDivSignature = try XCTUnwrap(symbols.functionSignature(for: stringDivSymbol))
+            XCTAssertEqual(pathDivSignature.valueParameterHasDefaultValues, [false])
+            XCTAssertEqual(stringDivSignature.valueParameterHasDefaultValues, [false])
+            XCTAssertEqual(pathDivSignature.valueParameterIsVararg, [false])
+            XCTAssertEqual(stringDivSignature.valueParameterIsVararg, [false])
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let memberCall = try XCTUnwrap(memberCallExprIDs(named: "div", in: ast, interner: interner).first)
+            XCTAssertEqual(sema.bindings.callBinding(for: memberCall)?.chosenCallee, pathDivSymbol)
+            XCTAssertEqual(sema.bindings.exprTypes[memberCall], pathType)
+        }
+    }
+
     func testPathWriteBytesExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import kotlin.io.path.Path
