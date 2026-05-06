@@ -285,7 +285,7 @@
 - [ ] STDLIB-COL-FN-189: `sortByDescending` 関数の実装
 - [ ] STDLIB-COL-FN-190: `sorted` 関数の実装
 - [ ] STDLIB-COL-FN-191: `sortedBy` 関数の実装
-- [ ] STDLIB-COL-FN-192: `sortedByDescending` 関数の実装
+- [x] STDLIB-COL-FN-192: `sortedByDescending` 関数の実装
 - [ ] STDLIB-COL-FN-193: `sortedDescending` 関数の実装
 - [ ] STDLIB-COL-FN-194: `sortedWith` 関数の実装
 - [ ] STDLIB-COL-FN-195: `subtract` 関数の実装
