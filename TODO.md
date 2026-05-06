@@ -468,7 +468,7 @@
 - [x] STDLIB-ENUMS-FN-001: `enumEntries` 関数の実装
 
 #### kotlin.experimental 型の実装
-- [ ] STDLIB-EXP-TYPE-001: `ExpectRefinement` アノテーションの実装
+- [x] STDLIB-EXP-TYPE-001: `ExpectRefinement` アノテーションの実装
 - [x] STDLIB-EXP-TYPE-002: `ExperimentalNativeApi` アノテーションの実装
 - [ ] STDLIB-EXP-TYPE-003: `ExperimentalObjCEnum` アノテーションの実装
 - [x] STDLIB-EXP-TYPE-004: `ExperimentalObjCName` アノテーションの実装
