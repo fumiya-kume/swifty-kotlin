@@ -1348,7 +1348,7 @@
 - [ ] STDLIB-JS-TYPE-023: `kotlin.js.JsName` annotation を追加する
 - [ ] STDLIB-JS-TYPE-024: `kotlin.js.JsNonModule` annotation を追加する
 - [ ] STDLIB-JS-TYPE-025: `kotlin.js.JsNumber` external class を追加する
-- [ ] STDLIB-JS-TYPE-026: `kotlin.js.JsQualifier` annotation を追加する
+- [x] STDLIB-JS-TYPE-026: `kotlin.js.JsQualifier` annotation を追加する
 - [ ] STDLIB-JS-TYPE-027: `kotlin.js.JsReference` external interface を追加する
 - [ ] STDLIB-JS-TYPE-028: `kotlin.js.JsStatic` annotation を追加する
 - [ ] STDLIB-JS-TYPE-029: `kotlin.js.JsString` external class を追加する
