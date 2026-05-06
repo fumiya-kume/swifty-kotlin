@@ -729,7 +729,7 @@
 - [ ] STDLIB-REFLECT-PROP-001: `javaType` 拡張プロパティの実装
 
 #### kotlin.reflect 関数の実装
-- [ ] STDLIB-REFLECT-FN-001: `cast` 拡張関数の実装
+- [x] STDLIB-REFLECT-FN-001: `cast` 拡張関数の実装
 - [ ] STDLIB-REFLECT-FN-002: `createInstance` 拡張関数の実装
 - [x] STDLIB-REFLECT-FN-003: `findAssociatedObject` 拡張関数の実装
 - [ ] STDLIB-REFLECT-FN-004: `safeCast` 拡張関数の実装
