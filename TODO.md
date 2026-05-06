@@ -546,7 +546,7 @@
 
 #### kotlin.io.encoding 型の実装
 - [ ] STDLIB-IO-ENC-TYPE-001: `Base64` クラスの実装
-- [ ] STDLIB-IO-ENC-TYPE-002: `ExperimentalEncodingApi` アノテーションの実装
+- [x] STDLIB-IO-ENC-TYPE-002: `ExperimentalEncodingApi` アノテーションの実装
 
 #### kotlin.io.encoding 関数の実装
 - [ ] STDLIB-IO-ENC-FN-001: `decodingWith` 関数の実装
