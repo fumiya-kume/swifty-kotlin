@@ -11,6 +11,7 @@
 /// - `startsWith(other: Path): Boolean`, `startsWith(other: String): Boolean`
 /// - `endsWith(other: Path): Boolean`, `endsWith(other: String): Boolean`
 /// - `toFile(): File`, `toUri(): URI`, `toAbsolutePath(): Path`
+/// - `URI.toPath(): Path` extension function
 /// - `getName(index: Int): Path`
 /// - `Path.name: String` extension property
 /// - `Path.appendText(text: CharSequence, charset)` extension function
@@ -242,19 +243,25 @@ extension DataFlowSemaPhase {
             types.anyType
         }
 
-        // Resolve java.net.URI type for toUri() return
-        let javaNetPkg: [InternedString] = [
-            interner.intern("java"),
-            interner.intern("net"),
-        ]
-        let uriSymbol = symbols.lookup(fqName: javaNetPkg + [interner.intern("URI")])
-        let uriType: TypeID = if let uriSym = uriSymbol {
-            types.make(.classType(ClassType(
-                classSymbol: uriSym, args: [], nullability: .nonNull
-            )))
-        } else {
-            types.anyType
+        let javaNetPkg = ensurePackage(
+            path: ["java", "net"],
+            symbols: symbols,
+            interner: interner
+        )
+        let javaNetPkgSymbol = symbols.lookup(fqName: javaNetPkg)
+        let uriSymbol = ensureClassSymbol(
+            named: "URI",
+            in: javaNetPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaNetPkgSymbol {
+            symbols.setParentSymbol(javaNetPkgSymbol, for: uriSymbol)
         }
+        let uriType = types.make(.classType(ClassType(
+            classSymbol: uriSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(uriType, for: uriSymbol)
 
         // MARK: - Path(pathString: String) constructor
 
@@ -528,6 +535,17 @@ extension DataFlowSemaPhase {
             ownerType: pathType,
             parameters: [],
             returnType: uriType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "toPath",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: uriType,
+            parameters: [],
+            returnType: pathType,
+            externalLinkName: "kk_uri_toPath",
             symbols: symbols,
             interner: interner
         )
