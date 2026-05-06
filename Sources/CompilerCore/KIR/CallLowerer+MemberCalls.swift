@@ -125,7 +125,7 @@ extension CallLowerer {
         "any", "none", "all",
         "fold", "foldIndexed", "foldRight", "foldRightIndexed",
         "reduce", "reduceRight", "reduceRightOrNull", "reduceRightIndexed", "reduceRightIndexedOrNull", "reduceIndexed", "reduceIndexedOrNull",
-        "scan", "scanIndexed", "runningFold", "runningFoldIndexed",
+        "scan", "scanIndexed", "scanReduce", "runningFold", "runningFoldIndexed",
         "runningReduce", "runningReduceIndexed",
         "groupBy", "groupingBy", "sortedBy", "find", "findLast", "associateBy", "associateWith", "associate", "zip", "zipWithNext", "unzip",
         "eachCount", "eachCountTo", "aggregate", "aggregateTo",
@@ -4672,7 +4672,7 @@ extension CallLowerer {
     ) -> Bool {
         [
             "map", "filter", "mapNotNull", "firstNotNullOf", "firstNotNullOfOrNull", "forEach", "flatMap",
-            "any", "none", "all", "fold", "foldRight", "reduce", "reduceRight", "scan", "scanIndexed",
+            "any", "none", "all", "fold", "foldRight", "reduce", "reduceRight", "scan", "scanIndexed", "scanReduce",
             "runningFold", "runningFoldIndexed", "runningReduce", "runningReduceIndexed", "groupBy", "groupingBy",
             "aggregate", "aggregateTo",
             "sortedBy", "count", "first", "last", "find", "distinctBy",
