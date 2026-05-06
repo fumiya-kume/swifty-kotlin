@@ -2620,6 +2620,39 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testIterableToMutableSetUsesRuntimeExternalLink() throws {
+        let source = """
+        fun copy(values: Iterable<String>) {
+            values.toMutableSet()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected Iterable.toMutableSet to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "toMutableSet"
+            })
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_iterable_toMutableSet")
+
+            let callType = try XCTUnwrap(sema.bindings.exprType(for: callExpr))
+            guard case let .classType(classType) = sema.types.kind(of: callType) else {
+                return XCTFail("Expected Iterable.toMutableSet to return MutableSet")
+            }
+            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(classType.classSymbol)?.name)), "MutableSet")
+        }
+    }
+
     func testSetBinaryMembersKeepSetResultTypeInFallbackPath() throws {
         let source = """
         fun combine(values: Set<Int>, other: Set<Int>) {

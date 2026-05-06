@@ -78,6 +78,7 @@ extension ABIMismatchTests {
             "kk_list_windowed",
             "kk_list_windowed_partial",
             "kk_list_windowed_transform",
+            "kk_iterable_toMutableSet",
             "kk_string_hexToShort",
             "kk_string_hexToUByte",
             "kk_string_hexToUByteArray",

@@ -4779,7 +4779,9 @@ extension CallLowerer {
                         interner: interner
                     )
                 case toMutableSetID:
-                    interner.intern("kk_sequence_toMutableSet")
+                    interner.intern(useIterableRuntimeForTerminalFallback
+                        ? "kk_iterable_toMutableSet"
+                        : "kk_sequence_toMutableSet")
                 case toHashSetID:
                     interner.intern("kk_sequence_toHashSet")
                 case unzipID:
@@ -8973,7 +8975,9 @@ extension CallLowerer {
                     interner: interner
                 )
             case interner.intern("toMutableSet"):
-                return interner.intern("kk_sequence_toMutableSet")
+                return interner.intern(useIterableRuntimeForCollectionFallback
+                    ? "kk_iterable_toMutableSet"
+                    : "kk_sequence_toMutableSet")
             case interner.intern("toHashSet"):
                 return interner.intern("kk_sequence_toHashSet")
             case interner.intern("partition"):
