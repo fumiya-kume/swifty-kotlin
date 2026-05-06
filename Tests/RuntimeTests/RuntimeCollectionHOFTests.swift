@@ -380,10 +380,12 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         let removed = kk_list_minus_element(source, 2)
         let unchanged = kk_list_minus_element(source, 9)
         let arrayRemoved = kk_list_minus_element(makeArray([1, 2, 2, 3]), 2)
+        let collectionRemoved = kk_list_minus_collection(source, makeList([2, 4]))
 
         XCTAssertEqual(listElements(removed), [1, 2, 3])
         XCTAssertEqual(listElements(unchanged), [1, 2, 2, 3])
         XCTAssertEqual(listElements(arrayRemoved), [1, 2, 3])
+        XCTAssertEqual(listElements(collectionRemoved), [1, 3])
         XCTAssertEqual(listElements(source), [1, 2, 2, 3])
     }
 
