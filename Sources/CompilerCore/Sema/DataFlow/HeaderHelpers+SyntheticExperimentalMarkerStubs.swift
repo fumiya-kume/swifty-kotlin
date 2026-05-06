@@ -16,6 +16,7 @@ import Foundation
 /// | ExperimentalMultiplatform | kotlin               | ERROR    |
 /// | ExperimentalSubclassOptIn | kotlin               | WARNING  |
 /// | ExperimentalAssociatedObjects | kotlin.reflect    | ERROR    |
+/// | ExperimentalJsFileName    | kotlin.js            | WARNING  |
 /// | ExpectRefinement          | kotlin.experimental  | @ExperimentalMultiplatform |
 ///
 /// See: https://kotlinlang.org/api/latest/jvm/stdlib/
@@ -112,6 +113,23 @@ extension DataFlowSemaPhase {
             packageFQName: kotlinIoEncodingPkg,
             packageSymbol: kotlinIoEncodingPkgSymbol,
             severity: "ERROR",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- kotlin.js.ExperimentalJsFileName (WARNING) ---
+        let kotlinJsPkg = ensurePackage(
+            path: ["kotlin", "js"],
+            symbols: symbols,
+            interner: interner
+        )
+        let kotlinJsPkgSymbol = symbols.lookup(fqName: kotlinJsPkg) ?? .invalid
+        registerSyntheticExperimentalMarker(
+            named: "ExperimentalJsFileName",
+            packageFQName: kotlinJsPkg,
+            packageSymbol: kotlinJsPkgSymbol,
+            severity: "WARNING",
+            targetArguments: nil,
             symbols: symbols,
             interner: interner
         )
