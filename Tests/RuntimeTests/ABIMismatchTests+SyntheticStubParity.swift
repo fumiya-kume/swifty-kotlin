@@ -52,6 +52,7 @@ extension ABIMismatchTests {
             "kk_list_reduceRightIndexed",
             "kk_list_reduceRightIndexedOrNull",
             "kk_list_reduceRightOrNull",
+            "kk_collection_toList",
             "kk_list_toMap",
             "kk_list_indices",
             "kk_list_sumBy",

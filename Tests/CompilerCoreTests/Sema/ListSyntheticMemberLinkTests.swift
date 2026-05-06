@@ -119,6 +119,41 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testCollectionToListUsesRuntimeExternalLink() throws {
+        let source = """
+        fun copy(values: Collection<String>): List<String> {
+            return values.toList()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected Collection.toList to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "toList"
+            })
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_collection_toList")
+
+            let resultType = try XCTUnwrap(sema.bindings.exprTypes[callExpr])
+            guard case let .classType(classType) = sema.types.kind(of: resultType),
+                  let symbol = sema.symbols.symbol(classType.classSymbol)
+            else {
+                return XCTFail("Expected toList to return List")
+            }
+            XCTAssertEqual(ctx.interner.resolve(symbol.name), "List")
+        }
+    }
+
     func testListIndicesExtensionPropertyResolvesToRuntimeGetter() throws {
         let source = """
         import kotlin.collections.indices

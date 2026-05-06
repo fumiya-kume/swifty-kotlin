@@ -1312,6 +1312,16 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(kk_map_get(map, 2), 20)
     }
 
+    func testCollectionToListCopiesListAndSetElements() {
+        let listSource = makeList([1, 2, 3])
+        let listCopy = kk_collection_toList(listSource)
+        XCTAssertEqual(listElements(listCopy), [1, 2, 3])
+        XCTAssertEqual(listElements(listSource), [1, 2, 3])
+
+        let setSource = registerRuntimeObject(RuntimeSetBox(elements: [3, 1, 2]))
+        XCTAssertEqual(listElements(kk_collection_toList(setSource)), [3, 1, 2])
+    }
+
     func testListZipWithNextReturnsAdjacentPairsAndTransformResults() {
         let values = makeList([1, 3, 6, 10])
 
