@@ -8486,6 +8486,8 @@ extension CallLowerer {
                 return interner.intern("kk_mutable_list_replaceAll")
             case "removeIf":
                 return interner.intern("kk_mutable_list_removeIf")
+            case "removeFirst":
+                return interner.intern("kk_mutable_list_removeFirst")
             case "removeFirstOrNull":
                 return interner.intern("kk_mutable_list_removeFirstOrNull")
             case "removeLastOrNull":
