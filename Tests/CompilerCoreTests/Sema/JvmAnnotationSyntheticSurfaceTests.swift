@@ -58,6 +58,52 @@ final class JvmAnnotationSyntheticSurfaceTests: XCTestCase {
         _ = try makeSema(source: source)
     }
 
+    func testJvmWildcardAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmWildcard"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.jvm.JvmWildcard must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(info.kind, .annotationClass)
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+    }
+
+    func testJvmWildcardCarriesTypeTarget() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmWildcard"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let annotations = sema.symbols.annotations(for: symbol)
+
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.annotation.Target"
+                    && $0.arguments == ["AnnotationTarget.TYPE"]
+            },
+            "JvmWildcard must carry @Target(TYPE), got \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.SinceKotlin"
+                    && $0.arguments == ["1.0"]
+            },
+            "JvmWildcard must carry @SinceKotlin(\"1.0\"), got \(annotations)"
+        )
+    }
+
+    func testJvmWildcardResolvesOnTypeUse() throws {
+        let source = """
+        import kotlin.jvm.JvmWildcard
+
+        fun identity(value: @JvmWildcard String): String = value
+        """
+
+        _ = try makeSema(source: source)
+    }
+
     func testJvmDefaultWithCompatibilityAnnotationIsRegistered() throws {
         let (sema, interner) = try makeSema()
         let fqName = ["kotlin", "jvm", "JvmDefaultWithCompatibility"].map { interner.intern($0) }

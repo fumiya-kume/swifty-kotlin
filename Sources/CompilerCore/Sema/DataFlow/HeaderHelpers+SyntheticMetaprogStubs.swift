@@ -96,6 +96,33 @@ extension DataFlowSemaPhase {
             symbols: symbols
         )
 
+        // @JvmWildcard - forces wildcard generation for an annotated type use.
+        registerSyntheticJvmAnnotationClass(
+            named: "JvmWildcard",
+            packageFQName: kotlinJvmPkg,
+            packageSymbol: kotlinJvmPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        if let jvmWildcardSymbol = symbols.lookup(fqName: kotlinJvmPkg + [interner.intern("JvmWildcard")]) {
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.target.qualifiedName,
+                    arguments: ["AnnotationTarget.TYPE"]
+                ),
+                to: jvmWildcardSymbol,
+                symbols: symbols
+            )
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.sinceKotlin.qualifiedName,
+                    arguments: ["1.0"]
+                ),
+                to: jvmWildcardSymbol,
+                symbols: symbols
+            )
+        }
+
         // @JvmDefaultWithCompatibility - generates JVM default methods with
         // DefaultImpls compatibility accessors for annotated classes/interfaces.
         registerSyntheticJvmAnnotationClass(
