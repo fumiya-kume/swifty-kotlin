@@ -1324,7 +1324,7 @@
 - [ ] STDLIB-JVM-OPTIONALS-FN-006: `Optional<T>.toList()` を追加する
 - [ ] STDLIB-JVM-OPTIONALS-FN-007: `Optional<T>.toSet()` を追加する
 - [ ] STDLIB-JS-TYPE-001: `kotlin.js.Console` external interface を追加する
-- [ ] STDLIB-JS-TYPE-002: `kotlin.js.Date` external class を追加する
+- [x] STDLIB-JS-TYPE-002: `kotlin.js.Date` external class を追加する
 - [ ] STDLIB-JS-TYPE-003: `kotlin.js.Dynamic` external interface を追加する
 - [x] STDLIB-JS-TYPE-004: `kotlin.js.EagerInitialization` annotation を追加する
 - [ ] STDLIB-JS-TYPE-005: `kotlin.js.ExperimentalJsCollectionsApi` marker を追加する
