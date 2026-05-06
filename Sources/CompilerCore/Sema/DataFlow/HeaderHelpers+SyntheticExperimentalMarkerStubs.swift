@@ -17,6 +17,7 @@ import Foundation
 /// | ExperimentalMultiplatform | kotlin               | ERROR    |
 /// | ExperimentalSubclassOptIn | kotlin               | WARNING  |
 /// | ExperimentalAssociatedObjects | kotlin.reflect    | ERROR    |
+/// | ExperimentalJsCollectionsApi | kotlin.js         | WARNING  |
 /// | ExperimentalJsExport      | kotlin.js            | WARNING  |
 /// | ExperimentalJsFileName    | kotlin.js            | WARNING  |
 /// | ExperimentalJsStatic      | kotlin.js            | WARNING  |
@@ -127,6 +128,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
         let kotlinJsPkgSymbol = symbols.lookup(fqName: kotlinJsPkg) ?? .invalid
+
+        // --- kotlin.js.ExperimentalJsCollectionsApi (WARNING) ---
+        registerSyntheticExperimentalMarker(
+            named: "ExperimentalJsCollectionsApi",
+            packageFQName: kotlinJsPkg,
+            packageSymbol: kotlinJsPkgSymbol,
+            severity: "WARNING",
+            targetArguments: [
+                "AnnotationTarget.CLASS",
+                "AnnotationTarget.FUNCTION",
+            ],
+            symbols: symbols,
+            interner: interner
+        )
 
         // --- kotlin.js.ExperimentalJsExport (WARNING) ---
         registerSyntheticExperimentalMarker(

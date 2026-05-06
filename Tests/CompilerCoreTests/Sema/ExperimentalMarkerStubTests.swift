@@ -735,6 +735,48 @@ final class ExperimentalMarkerStubTests: XCTestCase {
         }
     }
 
+    // MARK: - ExperimentalJsCollectionsApi (kotlin.js, WARNING)
+
+    func testExperimentalJsCollectionsApiIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let sym = lookupSymbol(fqPath: ["kotlin", "js", "ExperimentalJsCollectionsApi"], sema: sema, interner: interner)
+        XCTAssertNotNil(sym, "kotlin.js.ExperimentalJsCollectionsApi must be registered in the symbol table")
+    }
+
+    func testExperimentalJsCollectionsApiIsAnnotationClass() throws {
+        let (sema, interner) = try makeSema()
+        assertIsAnnotationClass(fqPath: ["kotlin", "js", "ExperimentalJsCollectionsApi"], sema: sema, interner: interner)
+    }
+
+    func testExperimentalJsCollectionsApiHasRequiresOptInWarning() throws {
+        let (sema, interner) = try makeSema()
+        assertHasRequiresOptIn(
+            fqPath: ["kotlin", "js", "ExperimentalJsCollectionsApi"],
+            expectedSeverity: "WARNING",
+            sema: sema,
+            interner: interner
+        )
+    }
+
+    func testExperimentalJsCollectionsApiHasOfficialTargets() throws {
+        let (sema, interner) = try makeSema()
+        let symbol = try XCTUnwrap(
+            lookupSymbol(fqPath: ["kotlin", "js", "ExperimentalJsCollectionsApi"], sema: sema, interner: interner)
+        )
+        let annotations = sema.symbols.annotations(for: symbol)
+        let target = try XCTUnwrap(
+            annotations.first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "ExperimentalJsCollectionsApi should carry explicit @Target metadata"
+        )
+        XCTAssertEqual(
+            Set(target.arguments),
+            Set([
+                "AnnotationTarget.CLASS",
+                "AnnotationTarget.FUNCTION",
+            ])
+        )
+    }
+
     // MARK: - ExperimentalJsExport (kotlin.js, WARNING)
 
     func testExperimentalJsExportIsRegistered() throws {
