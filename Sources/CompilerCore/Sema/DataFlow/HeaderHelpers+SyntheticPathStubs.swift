@@ -19,6 +19,7 @@
 /// - `Path.invariantSeparatorsPathString: String` extension property
 /// - `readText(): String`, `writeText(text: String)`, `readLines(): List<String>`
 /// - `createDirectories(): Path`, `deleteIfExists(): Boolean`
+/// - `Path.fileStore(): FileStore` extension function
 /// - `listDirectoryEntries(): List<Path>`
 /// - Top-level `Path(pathString: String)` factory (kotlin.io.path.Path)
 /// - `Paths.get(pathString: String)` factory (java.nio.file.Paths)
@@ -216,6 +217,26 @@ extension DataFlowSemaPhase {
         } else {
             types.anyType
         }
+
+        let javaNioFilePackage = ensurePackage(
+            path: ["java", "nio", "file"],
+            symbols: symbols,
+            interner: interner
+        )
+        let javaNioFilePackageSymbol = symbols.lookup(fqName: javaNioFilePackage)
+        let fileStoreSymbol = ensureClassSymbol(
+            named: "FileStore",
+            in: javaNioFilePackage,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaNioFilePackageSymbol {
+            symbols.setParentSymbol(javaNioFilePackageSymbol, for: fileStoreSymbol)
+        }
+        let fileStoreType = types.make(.classType(ClassType(
+            classSymbol: fileStoreSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(fileStoreType, for: fileStoreSymbol)
 
         // MARK: - Path(pathString: String) constructor
 
@@ -419,6 +440,17 @@ extension DataFlowSemaPhase {
             ownerType: pathType,
             parameters: [],
             returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "fileStore",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [],
+            returnType: fileStoreType,
+            externalLinkName: "kk_path_fileStore",
             symbols: symbols,
             interner: interner
         )

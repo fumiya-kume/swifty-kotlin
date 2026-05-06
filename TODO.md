@@ -1241,7 +1241,7 @@
 - [ ] STDLIB-IO-PATH-FN-029: `Path.fileAttributesView<V>(options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-030: `Path.fileAttributesViewOrNull<V>(options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-031: `Path.fileSize()` を追加する
-- [ ] STDLIB-IO-PATH-FN-032: `Path.fileStore()` を追加する
+- [x] STDLIB-IO-PATH-FN-032: `Path.fileStore()` を追加する
 - [ ] STDLIB-IO-PATH-FN-033: `fileVisitor(builderAction)` を追加する
 - [ ] STDLIB-IO-PATH-FN-034: `Path.forEachDirectoryEntry(glob, action)` を追加する
 - [ ] STDLIB-IO-PATH-FN-035: `Path.forEachLine(charset, action)` を追加する
