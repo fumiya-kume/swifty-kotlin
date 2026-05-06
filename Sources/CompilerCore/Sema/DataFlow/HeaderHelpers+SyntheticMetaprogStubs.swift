@@ -150,7 +150,31 @@ extension DataFlowSemaPhase {
                 to: jvmWildcardSymbol,
                 symbols: symbols
             )
-        }
+        })
+
+        // @JvmSynthetic - hides Kotlin declarations from Java source by setting
+        // the JVM ACC_SYNTHETIC flag.
+        registerSyntheticJvmAnnotationClass(
+            named: "JvmSynthetic",
+            packageFQName: kotlinJvmPkg,
+            packageSymbol: kotlinJvmPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        attachAnnotationIfNeeded(
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: [
+                    "AnnotationTarget.FILE",
+                    "AnnotationTarget.FUNCTION",
+                    "AnnotationTarget.PROPERTY_GETTER",
+                    "AnnotationTarget.PROPERTY_SETTER",
+                    "AnnotationTarget.FIELD",
+                ]
+            ),
+            to: kotlinJvmPkg + [interner.intern("JvmSynthetic")],
+            symbols: symbols
+        )
 
         // @JvmSuppressWildcards - suppresses JVM wildcard generation.
         registerSyntheticJvmAnnotationClass(

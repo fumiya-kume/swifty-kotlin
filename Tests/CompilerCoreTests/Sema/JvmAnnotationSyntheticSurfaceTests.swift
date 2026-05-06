@@ -555,6 +555,13 @@ final class JvmAnnotationSyntheticSurfaceTests: XCTestCase {
         let symbol = try XCTUnwrap(
             sema.symbols.lookup(fqName: fqName),
             "kotlin.jvm.Synchronized must be registered"
+
+    func testJvmSyntheticAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmSynthetic"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.jvm.JvmSynthetic must be registered"
         )
         let info = try XCTUnwrap(sema.symbols.symbol(symbol))
 
@@ -570,6 +577,14 @@ final class JvmAnnotationSyntheticSurfaceTests: XCTestCase {
         let target = try XCTUnwrap(
             sema.symbols.annotations(for: symbol).first { $0.annotationFQName == "kotlin.annotation.Target" },
             "Synchronized must carry @Target metadata"
+
+    func testJvmSyntheticCarriesOfficialTargets() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmSynthetic"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let target = try XCTUnwrap(
+            sema.symbols.annotations(for: symbol).first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "JvmSynthetic must carry @Target metadata"
         )
 
         XCTAssertEqual(
@@ -578,6 +593,27 @@ final class JvmAnnotationSyntheticSurfaceTests: XCTestCase {
                 "AnnotationTarget.FUNCTION",
                 "AnnotationTarget.PROPERTY_GETTER",
                 "AnnotationTarget.PROPERTY_SETTER",
+            ]
+        )
+    }
+
+    func testJvmSyntheticCarriesOfficialTargets() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmSynthetic"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let target = try XCTUnwrap(
+            sema.symbols.annotations(for: symbol).first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "JvmSynthetic must carry @Target metadata"
+        )
+
+        XCTAssertEqual(
+            target.arguments,
+            [
+                "AnnotationTarget.FILE",
+                "AnnotationTarget.FUNCTION",
+                "AnnotationTarget.PROPERTY_GETTER",
+                "AnnotationTarget.PROPERTY_SETTER",
+                "AnnotationTarget.FIELD",
             ]
         )
     }
@@ -594,6 +630,19 @@ final class JvmAnnotationSyntheticSurfaceTests: XCTestCase {
             @set:Synchronized
             var count: Int = 0
         }
+        """
+
+        _ = try makeSema(source: source)
+    }
+
+    func testJvmSyntheticResolvesOnFileAndFunctionUseSites() throws {
+        let source = """
+        @file:kotlin.jvm.JvmSynthetic
+
+        import kotlin.jvm.JvmSynthetic
+
+        @JvmSynthetic
+        fun hiddenFromJava(): Int = 1
         """
 
         _ = try makeSema(source: source)
