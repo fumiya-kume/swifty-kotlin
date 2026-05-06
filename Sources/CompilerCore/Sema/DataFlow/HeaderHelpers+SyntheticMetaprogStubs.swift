@@ -159,6 +159,29 @@ extension DataFlowSemaPhase {
             symbols: symbols
         )
 
+        // @ImplicitlyActualizedByJvmDeclaration - marks expect declarations
+        // that are implicitly actualized by Java/JVM declarations.
+        registerSyntheticJvmAnnotationClass(
+            named: "ImplicitlyActualizedByJvmDeclaration",
+            packageFQName: kotlinJvmPkg,
+            packageSymbol: kotlinJvmPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        attachAnnotationIfNeeded(
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: ["AnnotationTarget.CLASS"]
+            ),
+            to: kotlinJvmPkg + [interner.intern("ImplicitlyActualizedByJvmDeclaration")],
+            symbols: symbols
+        )
+        attachAnnotationIfNeeded(
+            MetadataAnnotationRecord(annotationFQName: "kotlin.ExperimentalMultiplatform"),
+            to: kotlinJvmPkg + [interner.intern("ImplicitlyActualizedByJvmDeclaration")],
+            symbols: symbols
+        )
+
         // @JvmName — controls the JVM-level name of the generated class or member.
         registerSyntheticJvmAnnotationClass(
             named: "JvmName",

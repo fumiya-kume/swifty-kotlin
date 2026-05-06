@@ -379,6 +379,52 @@ final class JvmAnnotationSyntheticSurfaceTests: XCTestCase {
         _ = try makeSema(source: source)
     }
 
+    func testImplicitlyActualizedByJvmDeclarationAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "ImplicitlyActualizedByJvmDeclaration"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.jvm.ImplicitlyActualizedByJvmDeclaration must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(info.kind, .annotationClass)
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+    }
+
+    func testImplicitlyActualizedByJvmDeclarationCarriesMetadata() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "ImplicitlyActualizedByJvmDeclaration"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let annotations = sema.symbols.annotations(for: symbol)
+
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.annotation.Target"
+                    && $0.arguments == ["AnnotationTarget.CLASS"]
+            },
+            "ImplicitlyActualizedByJvmDeclaration must carry @Target(AnnotationTarget.CLASS), got \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains { $0.annotationFQName == "kotlin.ExperimentalMultiplatform" },
+            "ImplicitlyActualizedByJvmDeclaration must carry @ExperimentalMultiplatform, got \(annotations)"
+        )
+    }
+
+    func testImplicitlyActualizedByJvmDeclarationResolvesOnOptedInClass() throws {
+        let source = """
+        @file:OptIn(kotlin.ExperimentalMultiplatform::class)
+
+        import kotlin.jvm.ImplicitlyActualizedByJvmDeclaration
+
+        @ImplicitlyActualizedByJvmDeclaration
+        class JavaBacked
+        """
+
+        _ = try makeSema(source: source)
+    }
+
     private func assertArrayOfOutThrowableKClass(
         _ type: TypeID,
         in sema: SemaModule,
