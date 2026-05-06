@@ -208,7 +208,7 @@
 - [ ] STDLIB-COL-FN-112: `mapIndexed` 関数の実装
 - [x] STDLIB-COL-FN-113: `mapIndexedNotNull` 関数の実装
 - [ ] STDLIB-COL-FN-114: `mapIndexedNotNullTo` 関数の実装
-- [ ] STDLIB-COL-FN-115: `mapIndexedTo` 関数の実装
+- [x] STDLIB-COL-FN-115: `mapIndexedTo` 関数の実装
 - [x] STDLIB-COL-FN-116: `mapKeys` 関数の実装
 - [ ] STDLIB-COL-FN-117: `mapKeysTo` 関数の実装
 - [x] STDLIB-COL-FN-118: `mapNotNull` 関数の実装
