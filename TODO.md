@@ -115,7 +115,7 @@
 - [ ] STDLIB-COL-FN-021: `associateWith` 関数の実装
 - [x] STDLIB-COL-FN-022: `associateWithTo` 関数の実装
 - [ ] STDLIB-COL-FN-023: `average` 関数の実装
-- [ ] STDLIB-COL-FN-024: `binarySearch` 関数の実装（各オーバーロード）
+- [x] STDLIB-COL-FN-024: `binarySearch` 関数の実装（各オーバーロード）
 - [ ] STDLIB-COL-FN-025: `buildList` 関数の実装
 - [x] STDLIB-COL-FN-026: `buildMap` 関数の実装
 - [ ] STDLIB-COL-FN-027: `buildSet` 関数の実装
