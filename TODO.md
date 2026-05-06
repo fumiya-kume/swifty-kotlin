@@ -473,7 +473,7 @@
 - [ ] STDLIB-EXP-TYPE-003: `ExperimentalObjCEnum` アノテーションの実装
 - [x] STDLIB-EXP-TYPE-004: `ExperimentalObjCName` アノテーションの実装
 - [ ] STDLIB-EXP-TYPE-005: `ExperimentalObjCRefinement` アノテーションの実装
-- [ ] STDLIB-EXP-TYPE-006: `ExperimentalTypeInference` アノテーションの実装
+- [x] STDLIB-EXP-TYPE-006: `ExperimentalTypeInference` アノテーションの実装
 
 #### kotlin.experimental 関数の実装
 - [ ] STDLIB-EXP-FN-001: `and` 関数の実装（Byte版）
