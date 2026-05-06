@@ -1170,7 +1170,7 @@
 - [ ] STDLIB-IO-PATH-FN-013: `Path.createDirectories(attributes)` を追加する
 - [ ] STDLIB-IO-PATH-FN-014: `Path.createDirectory(attributes)` を追加する
 - [ ] STDLIB-IO-PATH-FN-015: `Path.createFile(attributes)` を追加する
-- [ ] STDLIB-IO-PATH-FN-016: `Path.createLinkPointingTo(target)` を追加する
+- [x] STDLIB-IO-PATH-FN-016: `Path.createLinkPointingTo(target)` を追加する
 - [ ] STDLIB-IO-PATH-FN-017: `Path.createParentDirectories(attributes)` を追加する
 - [ ] STDLIB-IO-PATH-FN-018: `Path.createSymbolicLinkPointingTo(target, attributes)` を追加する
 - [ ] STDLIB-IO-PATH-FN-019: `createTempDirectory(prefix, attributes)` を追加する

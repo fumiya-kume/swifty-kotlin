@@ -20,7 +20,7 @@
 /// - `Path.invariantSeparatorsPathString: String` extension property
 /// - `Path.writeBytes(array: ByteArray, vararg options: OpenOption)` extension function
 /// - `readBytes(): ByteArray`, `readText(): String`, `writeText(text: String)`, `readLines(): List<String>`
-/// - `createDirectories(): Path`, `deleteIfExists(): Boolean`
+/// - `createDirectories(): Path`, `createLinkPointingTo(target): Path`, `deleteIfExists(): Boolean`
 /// - `Path.fileStore(): FileStore` extension function
 /// - `listDirectoryEntries(): List<Path>`
 /// - Top-level `Path(pathString: String)` factory (kotlin.io.path.Path)
@@ -693,6 +693,17 @@ extension DataFlowSemaPhase {
             ownerType: pathType,
             parameters: [],
             returnType: pathType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "createLinkPointingTo",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("target", pathType)],
+            returnType: pathType,
+            externalLinkName: "kk_path_createLinkPointingTo",
             symbols: symbols,
             interner: interner
         )
