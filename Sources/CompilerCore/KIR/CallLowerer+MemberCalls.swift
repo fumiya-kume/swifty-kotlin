@@ -6174,10 +6174,12 @@ extension CallLowerer {
         let hasHOFLambdaArg = sourceArgExprs.contains { sema.bindings.isCollectionHOFLambdaExpr($0) }
         if normalized.defaultMask != 0,
            let chosenCallee,
-           sema.symbols.externalLinkName(for: chosenCallee) == "kk_list_joinToString"
+           let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
+           externalLinkName == "kk_list_joinToString" || externalLinkName == "kk_iterable_joinTo"
         {
             materializeJoinToStringDefaultArguments(
                 normalized.defaultMask,
+                firstDefaultParameterIndex: externalLinkName == "kk_iterable_joinTo" ? 1 : 0,
                 sema: sema,
                 arena: arena,
                 interner: interner,
@@ -7201,6 +7203,7 @@ extension CallLowerer {
 
     private func materializeJoinToStringDefaultArguments(
         _ defaultMask: Int64,
+        firstDefaultParameterIndex: Int = 0,
         sema: SemaModule,
         arena: KIRArena,
         interner: StringInterner,
@@ -7209,7 +7212,8 @@ extension CallLowerer {
     ) {
         let defaults = [", ", "", ""]
         let stringType = sema.types.stringType
-        for (paramIndex, defaultValue) in defaults.enumerated() {
+        for (offset, defaultValue) in defaults.enumerated() {
+            let paramIndex = firstDefaultParameterIndex + offset
             let maskBit = Int64(1) << paramIndex
             guard (defaultMask & maskBit) != 0 else { continue }
             let argumentIndex = paramIndex + 1

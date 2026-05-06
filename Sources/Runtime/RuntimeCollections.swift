@@ -292,6 +292,27 @@ public func kk_list_joinToString(
     }
 }
 
+@_cdecl("kk_iterable_joinTo")
+public func kk_iterable_joinTo(
+    _ iterableRaw: Int,
+    _ destinationRaw: Int,
+    _ separatorRaw: Int,
+    _ prefixRaw: Int,
+    _ postfixRaw: Int
+) -> Int {
+    let separator = extractString(from: UnsafeMutableRawPointer(bitPattern: separatorRaw)) ?? ", "
+    let prefix = extractString(from: UnsafeMutableRawPointer(bitPattern: prefixRaw)) ?? ""
+    let postfix = extractString(from: UnsafeMutableRawPointer(bitPattern: postfixRaw)) ?? ""
+    let elements = runtimeCollectionElements(from: iterableRaw) ?? []
+    let rendered = elements.map(runtimeElementToString).joined(separator: separator)
+    let stringValue = prefix + rendered + postfix
+    let utf8 = Array(stringValue.utf8)
+    let stringRaw = utf8.withUnsafeBufferPointer { buf in
+        kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
+    }
+    return kk_string_builder_append_obj(destinationRaw, Int(bitPattern: stringRaw))
+}
+
 // MARK: - List toMap (STDLIB-200)
 
 @_cdecl("kk_list_toMap")
