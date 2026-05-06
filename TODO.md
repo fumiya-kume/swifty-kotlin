@@ -614,11 +614,11 @@
 - [ ] STDLIB-IO-PATH-FN-043: `writeText` 関数の実装
 
 #### kotlin.math プロパティの実装
-- [ ] STDLIB-MATH-PROP-001: `absoluteValue` 拡張プロパティの実装（各型）
-- [ ] STDLIB-MATH-PROP-002: `E` プロパティの実装
-- [ ] STDLIB-MATH-PROP-003: `PI` プロパティの実装
-- [ ] STDLIB-MATH-PROP-004: `sign` 拡張プロパティの実装（各型）
-- [ ] STDLIB-MATH-PROP-005: `ulp` 拡張プロパティの実装
+- [x] STDLIB-MATH-PROP-001: `absoluteValue` 拡張プロパティの実装（各型）
+- [x] STDLIB-MATH-PROP-002: `E` プロパティの実装
+- [x] STDLIB-MATH-PROP-003: `PI` プロパティの実装
+- [x] STDLIB-MATH-PROP-004: `sign` 拡張プロパティの実装（各型）
+- [x] STDLIB-MATH-PROP-005: `ulp` 拡張プロパティの実装
 
 #### kotlin.math 関数の実装
 - [x] STDLIB-MATH-FN-001: `abs` 関数の実装（各型）
