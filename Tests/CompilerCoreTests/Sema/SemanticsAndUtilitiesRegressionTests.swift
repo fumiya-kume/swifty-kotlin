@@ -593,6 +593,73 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathBooleanQueryExtensionFunctionsInIOPathPackageSurfaceAreResolved() throws {
+        let source = """
+        import kotlin.io.path.Path
+        import kotlin.io.path.isExecutable
+        import kotlin.io.path.isHidden
+        import kotlin.io.path.isReadable
+        import kotlin.io.path.isSameFileAs
+        import kotlin.io.path.isSymbolicLink
+        import kotlin.io.path.isWritable
+
+        fun queryPath(path: Path, other: Path): Boolean {
+            val executable = path.isExecutable()
+            val hidden = path.isHidden()
+            val readable = path.isReadable()
+            val same = path.isSameFileAs(other)
+            val symbolic = path.isSymbolicLink()
+            val writable = path.isWritable()
+            return executable || hidden || readable || same || symbolic || writable
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path boolean query extension functions in kotlin.io.path should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let expectedQueries: [(name: String, parameterTypes: [TypeID], externalLinkName: String)] = [
+                ("isExecutable", [], "kk_path_isExecutable"),
+                ("isHidden", [], "kk_path_isHidden"),
+                ("isReadable", [], "kk_path_isReadable"),
+                ("isSameFileAs", [pathType], "kk_path_isSameFileAs"),
+                ("isSymbolicLink", [], "kk_path_isSymbolicLink"),
+                ("isWritable", [], "kk_path_isWritable"),
+            ]
+            let ast = try XCTUnwrap(ctx.ast)
+
+            for expected in expectedQueries {
+                let fqName = ["kotlin", "io", "path", expected.name].map(interner.intern)
+                let function = try XCTUnwrap(symbols.lookupAll(fqName: fqName).first { symbolID in
+                    guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                    return signature.receiverType == pathType
+                        && signature.parameterTypes == expected.parameterTypes
+                        && signature.returnType == types.booleanType
+                })
+                XCTAssertEqual(symbols.externalLinkName(for: function), expected.externalLinkName)
+
+                let signature = try XCTUnwrap(symbols.functionSignature(for: function))
+                XCTAssertEqual(signature.valueParameterHasDefaultValues, Array(repeating: false, count: expected.parameterTypes.count))
+                XCTAssertEqual(signature.valueParameterIsVararg, Array(repeating: false, count: expected.parameterTypes.count))
+
+                let callExprs = memberCallExprIDs(named: expected.name, in: ast, interner: interner)
+                XCTAssertEqual(callExprs.count, 1)
+                XCTAssertEqual(sema.bindings.callBinding(for: callExprs[0])?.chosenCallee, function)
+                XCTAssertEqual(sema.bindings.exprTypes[callExprs[0]], types.booleanType)
+            }
+        }
+    }
+
     func testFileVisitorBuilderInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import kotlin.io.path.FileVisitorBuilder

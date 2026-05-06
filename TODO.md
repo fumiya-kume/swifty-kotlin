@@ -1149,13 +1149,13 @@
 - [ ] STDLIB-IO-PATH-FN-039: `Path.getPosixFilePermissions(options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-040: `Path.inputStream(options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-041: `Path.isDirectory(options)` を既存 no-arg stub から公式 vararg shape へ広げる
-- [ ] STDLIB-IO-PATH-FN-042: `Path.isExecutable()` を追加する
-- [ ] STDLIB-IO-PATH-FN-043: `Path.isHidden()` を追加する
-- [ ] STDLIB-IO-PATH-FN-044: `Path.isReadable()` を追加する
+- [x] STDLIB-IO-PATH-FN-042: `Path.isExecutable()` を追加する
+- [x] STDLIB-IO-PATH-FN-043: `Path.isHidden()` を追加する
+- [x] STDLIB-IO-PATH-FN-044: `Path.isReadable()` を追加する
 - [ ] STDLIB-IO-PATH-FN-045: `Path.isRegularFile(options)` を既存 no-arg stub から公式 vararg shape へ広げる
-- [ ] STDLIB-IO-PATH-FN-046: `Path.isSameFileAs(other)` を追加する
-- [ ] STDLIB-IO-PATH-FN-047: `Path.isSymbolicLink()` を追加する
-- [ ] STDLIB-IO-PATH-FN-048: `Path.isWritable()` を追加する
+- [x] STDLIB-IO-PATH-FN-046: `Path.isSameFileAs(other)` を追加する
+- [x] STDLIB-IO-PATH-FN-047: `Path.isSymbolicLink()` を追加する
+- [x] STDLIB-IO-PATH-FN-048: `Path.isWritable()` を追加する
 - [ ] STDLIB-IO-PATH-FN-049: `Path.listDirectoryEntries(glob)` を既存 no-arg stub から公式 glob shape へ広げる
 - [ ] STDLIB-IO-PATH-FN-050: `Path.moveTo(target, options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-051: `Path.moveTo(target, overwrite)` を追加する
