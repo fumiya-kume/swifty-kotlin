@@ -713,12 +713,12 @@
 - [ ] STDLIB-REFLECT-TYPE-009: `KMutableProperty` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-010: `KMutableProperty0` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-011: `KMutableProperty1` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-012: `KMutableProperty2` インターフェースの実装
+- [x] STDLIB-REFLECT-TYPE-012: `KMutableProperty2` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-013: `KParameter` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-014: `KProperty` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-015: `KProperty0` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-016: `KProperty1` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-017: `KProperty2` インターフェースの実装
+- [x] STDLIB-REFLECT-TYPE-017: `KProperty2` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-018: `KType` インターフェースの実装
 - [x] STDLIB-REFLECT-TYPE-019: `KTypeParameter` インターフェースの実装
 - [x] STDLIB-REFLECT-TYPE-020: `KTypeProjection` クラスの実装
