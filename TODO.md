@@ -708,7 +708,7 @@
 - [ ] STDLIB-REFLECT-TYPE-004: `KCallable` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-005: `KClass` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-006: `KClassifier` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-007: `KDeclarationContainer` インターフェースの実装
+- [x] STDLIB-REFLECT-TYPE-007: `KDeclarationContainer` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-008: `KFunction` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-009: `KMutableProperty` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-010: `KMutableProperty0` インターフェースの実装
