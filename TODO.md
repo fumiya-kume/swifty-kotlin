@@ -553,18 +553,18 @@
 - [ ] STDLIB-IO-ENC-FN-002: `encodingWith` 関数の実装
 
 #### kotlin.io.path 型の実装
-- [ ] STDLIB-IO-PATH-TYPE-001: `CopyActionContext` クラスの実装
-- [ ] STDLIB-IO-PATH-TYPE-002: `CopyActionResult` enum の実装
+- [x] STDLIB-IO-PATH-TYPE-001: `CopyActionContext` クラスの実装
+- [x] STDLIB-IO-PATH-TYPE-002: `CopyActionResult` enum の実装
 - [x] STDLIB-IO-PATH-TYPE-003: `ExperimentalPathApi` アノテーションの実装
-- [ ] STDLIB-IO-PATH-TYPE-004: `FileVisitorBuilder` クラスの実装
-- [ ] STDLIB-IO-PATH-TYPE-005: `OnErrorResult` enum の実装
-- [ ] STDLIB-IO-PATH-TYPE-006: `PathWalkOption` enum の実装
+- [x] STDLIB-IO-PATH-TYPE-004: `FileVisitorBuilder` クラスの実装
+- [x] STDLIB-IO-PATH-TYPE-005: `OnErrorResult` enum の実装
+- [x] STDLIB-IO-PATH-TYPE-006: `PathWalkOption` enum の実装
 
 #### kotlin.io.path プロパティの実装
 - [ ] STDLIB-IO-PATH-PROP-001: `extension` 拡張プロパティの実装
-- [ ] STDLIB-IO-PATH-PROP-002: `invariantSeparatorsPath` 拡張プロパティの実装
-- [ ] STDLIB-IO-PATH-PROP-003: `invariantSeparatorsPathString` 拡張プロパティの実装
-- [ ] STDLIB-IO-PATH-PROP-004: `name` 拡張プロパティの実装
+- [x] STDLIB-IO-PATH-PROP-002: `invariantSeparatorsPath` 拡張プロパティの実装
+- [x] STDLIB-IO-PATH-PROP-003: `invariantSeparatorsPathString` 拡張プロパティの実装
+- [x] STDLIB-IO-PATH-PROP-004: `name` 拡張プロパティの実装
 - [ ] STDLIB-IO-PATH-PROP-005: `nameWithoutExtension` 拡張プロパティの実装
 - [ ] STDLIB-IO-PATH-PROP-006: `pathString` 拡張プロパティの実装
 
@@ -574,7 +574,7 @@
 - [ ] STDLIB-IO-PATH-FN-003: `appendBytes` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-004: `appendLines` 関数の実装（Iterable版）
 - [ ] STDLIB-IO-PATH-FN-005: `appendLines` 関数の実装（Sequence版）
-- [ ] STDLIB-IO-PATH-FN-006: `appendText` 関数の実装
+- [x] STDLIB-IO-PATH-FN-006: `appendText` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-007: `bufferedReader` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-008: `bufferedWriter` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-009: `copyTo` 関数の実装
@@ -583,7 +583,7 @@
 - [ ] STDLIB-IO-PATH-FN-012: `createTempDirectory` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-013: `createTempFile` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-014: `deleteExisting` 関数の実装
-- [ ] STDLIB-IO-PATH-FN-015: `deleteIfExists` 関数の実装
+- [x] STDLIB-IO-PATH-FN-015: `deleteIfExists` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-016: `deleteRecursively` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-017: `div` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-018: `fileVisitor` 関数の実装
@@ -597,7 +597,7 @@
 - [ ] STDLIB-IO-PATH-FN-026: `moveTo` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-027: `notExists` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-028: `outputStream` 関数の実装
-- [ ] STDLIB-IO-PATH-FN-029: `Path` 関数の実装（factory版）
+- [x] STDLIB-IO-PATH-FN-029: `Path` 関数の実装（factory版）
 - [ ] STDLIB-IO-PATH-FN-030: `readAttributes` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-031: `relativeToOrSelf` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-032: `setAttribute` 関数の実装
@@ -611,7 +611,7 @@
 - [ ] STDLIB-IO-PATH-FN-040: `writeLines` 関数の実装（Iterable版）
 - [ ] STDLIB-IO-PATH-FN-041: `writeLines` 関数の実装（Sequence版）
 - [ ] STDLIB-IO-PATH-FN-042: `writer` 関数の実装
-- [ ] STDLIB-IO-PATH-FN-043: `writeText` 関数の実装
+- [x] STDLIB-IO-PATH-FN-043: `writeText` 関数の実装
 
 #### kotlin.math プロパティの実装
 - [ ] STDLIB-MATH-PROP-001: `absoluteValue` 拡張プロパティの実装（各型）
