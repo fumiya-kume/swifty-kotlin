@@ -2451,6 +2451,7 @@ public extension RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "listRaw", type: .intptr),
                 RuntimeABIParameter(name: "count", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Collection"

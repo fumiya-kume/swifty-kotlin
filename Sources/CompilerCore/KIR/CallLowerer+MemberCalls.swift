@@ -6773,6 +6773,7 @@ extension CallLowerer {
             interner.intern("kk_base64_decodeFromByteArray_instance"),
             interner.intern("kk_list_random"),
             interner.intern("kk_list_elementAt"),
+            interner.intern("kk_list_take"),
             interner.intern("kk_list_drop"),
             interner.intern("kk_list_maxOf"),
             interner.intern("kk_list_minOf"),

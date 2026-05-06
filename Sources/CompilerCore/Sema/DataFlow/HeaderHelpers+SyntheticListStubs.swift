@@ -2010,7 +2010,7 @@ extension DataFlowSemaPhase {
             )
         }
 
-        registerMember(name: "take", parameterTypes: [types.intType], externalLinkName: "kk_list_take")
+        registerMember(name: "take", parameterTypes: [types.intType], externalLinkName: "kk_list_take", canThrow: true)
         registerMember(name: "drop", parameterTypes: [types.intType], externalLinkName: "kk_list_drop", canThrow: true)
         registerMember(name: "takeLast", parameterTypes: [types.intType], externalLinkName: "kk_list_takeLast")
         registerMember(name: "dropLast", parameterTypes: [types.intType], externalLinkName: "kk_list_dropLast")

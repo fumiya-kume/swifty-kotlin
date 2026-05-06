@@ -1288,10 +1288,26 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             println(list.sorted())
             println(list.distinct())
             try {
-                println(list.drop(-1))
-                println("missing")
+                println(list.take(-1))
+                println("missing-take")
             } catch (e: IllegalArgumentException) {
-                println("negative")
+                println("negative-take")
+            }
+            try {
+                println(list.drop(-1))
+                println("missing-drop")
+            } catch (e: IllegalArgumentException) {
+                println("negative-drop")
+            }
+            render(list)
+        }
+
+        fun render(values: List<Int>) {
+            try {
+                println(values.take(-1))
+                println("missing-param-take")
+            } catch (e: IllegalArgumentException) {
+                println("negative-param-take")
             }
         }
         """
@@ -1308,7 +1324,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "[3, 1, 2]\n[2, 1]\n[1, 2, 1, 3]\n[1, 1, 2, 3]\n[3, 1, 2]\nnegative\n")
+            XCTAssertEqual(normalizedStdout, "[3, 1, 2]\n[2, 1]\n[1, 2, 1, 3]\n[1, 1, 2, 3]\n[3, 1, 2]\nnegative-take\nnegative-drop\nnegative-param-take\n")
         }
     }
 

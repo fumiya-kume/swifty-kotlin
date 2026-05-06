@@ -2155,8 +2155,15 @@ public func kk_list_minOfWith(_ listRaw: Int, _ cmpFnPtr: Int, _ cmpClosureRaw: 
 }
 
 @_cdecl("kk_list_take")
-public func kk_list_take(_ listRaw: Int, _ count: Int) -> Int {
+public func kk_list_take(_ listRaw: Int, _ count: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let _listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    outThrown?.pointee = 0
+    if count < 0 {
+        outThrown?.pointee = runtimeAllocateIllegalArgumentException(
+            message: "Requested element count \(count) is less than zero."
+        )
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
     let elements = _listBox.elements
     let clamped = max(0, min(count, elements.count))
     return registerRuntimeObject(RuntimeListBox(elements: Array(elements.prefix(clamped))))

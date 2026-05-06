@@ -1836,7 +1836,7 @@ extension CollectionLiteralLoweringPass {
                                 callee: lookup.kkListTakeName,
                                 arguments: arguments,
                                 result: transformResult,
-                                canThrow: false,
+                                canThrow: true,
                                 thrownResult: nil
                             ))
                             if let result {
