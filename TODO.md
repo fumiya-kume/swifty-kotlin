@@ -654,7 +654,7 @@
 - [ ] STDLIB-MATH-FN-031: `sinh` 関数の実装
 - [ ] STDLIB-MATH-FN-032: `sqrt` 関数の実装
 - [ ] STDLIB-MATH-FN-033: `tan` 関数の実装
-- [ ] STDLIB-MATH-FN-034: `tanh` 関数の実装
+- [x] STDLIB-MATH-FN-034: `tanh` 関数の実装
 - [ ] STDLIB-MATH-FN-035: `trunc` 関数の実装
 - [ ] STDLIB-MATH-FN-036: `withSign` 関数の実装
 
