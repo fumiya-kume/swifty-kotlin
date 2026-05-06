@@ -331,7 +331,7 @@
 #### kotlin.concurrent 型の実装
 - [x] STDLIB-CONC-TYPE-001: `AtomicArray<T>` クラスの実装
 - [x] STDLIB-CONC-TYPE-002: `AtomicInt` クラスの実装
-- [ ] STDLIB-CONC-TYPE-003: `AtomicIntArray` クラスの実装
+- [x] STDLIB-CONC-TYPE-003: `AtomicIntArray` クラスの実装
 - [x] STDLIB-CONC-TYPE-004: `AtomicLong` クラスの実装
 - [x] STDLIB-CONC-TYPE-005: `AtomicLongArray` クラスの実装
 - [x] STDLIB-CONC-TYPE-006: `AtomicReference<T>` クラスの実装

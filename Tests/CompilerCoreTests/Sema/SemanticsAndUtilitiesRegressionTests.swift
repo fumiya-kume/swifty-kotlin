@@ -213,15 +213,15 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
-    func testAtomicArrayInConcurrentPackageIsResolved() throws {
+    func testAtomicIntArrayInConcurrentPackageIsResolved() throws {
         let source = """
-        import kotlin.concurrent.AtomicArray
+        import kotlin.concurrent.AtomicIntArray
 
         fun main() {
-            val values = AtomicArray<String?>(2)
-            values.storeAt(0, "hello")
-            println(values.loadAt(0))
-            println(values.size)
+            val values = AtomicIntArray(2)
+            values.storeAt(0, 10)
+            val ok = values.compareAndSetAt(0, 10, 11)
+            println(if (ok) values.loadAt(0) else values.size)
         }
         """
 
@@ -230,7 +230,7 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
             try runToKIR(ctx)
             XCTAssertFalse(
                 ctx.diagnostics.hasError,
-                "AtomicArray in kotlin.concurrent should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+                "AtomicIntArray in kotlin.concurrent should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
             )
         }
     }

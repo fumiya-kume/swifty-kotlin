@@ -868,25 +868,26 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
-    func testCodegenKotlinConcurrentAtomicArrayLoadStore() throws {
+    func testCodegenKotlinConcurrentAtomicIntArrayOperations() throws {
         let source = """
-        import kotlin.concurrent.AtomicArray
+        import kotlin.concurrent.AtomicIntArray
 
         fun main() {
-            val values = AtomicArray<String?>(2)
-            values.storeAt(0, "first")
-            values[1] = "second"
+            let values = AtomicIntArray(2)
+            values.storeAt(0, 10)
+            values[1] = 20
             println(values.loadAt(0))
             println(values[1])
+            println(values.addAndFetchAt(0, 5))
             println(values.size)
         }
         """
         try withTemporaryFile(contents: source) { path in
             let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
-            let ctx = try runCodegenPipeline(inputPath: path, moduleName: "KConcurrentAtomicArray", emit: .executable, outputPath: outputBase)
+            let ctx = try runCodegenPipeline(inputPath: path, moduleName: "KConcurrentAtomicIntArray", emit: .executable, outputPath: outputBase)
             try LinkPhase().run(ctx)
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "first\nsecond\n2\n")
+            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "10\n20\n15\n2\n")
         }
     }
 

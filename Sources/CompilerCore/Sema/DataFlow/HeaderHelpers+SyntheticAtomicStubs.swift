@@ -79,10 +79,15 @@ extension DataFlowSemaPhase {
             interner: interner,
             externalLinkPrefix: "kk_atomic_ref"
         )
-        registerAtomicRefArrayStub(
+        registerAtomicArrayFamily(
             packageFQName: concurrentPkg,
+            className: "AtomicIntArray",
+            constructorLinkName: "kk_atomic_int_array_create",
+            valueType: intType,
             boolType: boolType,
             unitType: unitType,
+            prefix: "kk_atomic_int_array",
+            includeArithmetic: true,
             symbols: symbols,
             interner: interner,
             types: types
