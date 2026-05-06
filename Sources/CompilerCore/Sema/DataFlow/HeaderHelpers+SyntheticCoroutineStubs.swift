@@ -190,6 +190,28 @@ extension DataFlowSemaPhase {
             symbol: suspendCoroutineTypeParamSymbol,
             nullability: .nonNull
         )))
+        let continuationFactoryTypeParamName = interner.intern("T")
+        let continuationFactoryTypeParamFQName = kotlinCoroutinesPkg + [
+            interner.intern("Continuation"),
+            interner.intern("$factory"),
+            continuationFactoryTypeParamName,
+        ]
+        let continuationFactoryTypeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: continuationFactoryTypeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: continuationFactoryTypeParamName,
+                fqName: continuationFactoryTypeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+        }
+        let continuationFactoryTType = types.make(.typeParam(TypeParamType(
+            symbol: continuationFactoryTypeParamSymbol,
+            nullability: .nonNull
+        )))
 
         let throwableSymbol = ensureClassSymbol(
             named: "Throwable",
@@ -363,6 +385,37 @@ extension DataFlowSemaPhase {
             isSuspend: true,
             flags: [.synthetic, .inlineFunction],
             explicitTypeParameterSymbols: [suspendCoroutineTypeParamSymbol],
+            symbols: symbols,
+            interner: interner
+        )
+
+        let resultOfContinuationFactoryTType = types.make(.classType(ClassType(
+            classSymbol: kotlinResultSymbol,
+            args: [.out(continuationFactoryTType)],
+            nullability: .nonNull
+        )))
+        let continuationFactoryResumeWithType = types.make(.functionType(FunctionType(
+            params: [resultOfContinuationFactoryTType],
+            returnType: types.unitType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let continuationFactoryReturnType = types.make(.classType(ClassType(
+            classSymbol: continuationSymbol,
+            args: [.invariant(continuationFactoryTType)],
+            nullability: .nonNull
+        )))
+        registerSyntheticCoroutineTopLevelFunction(
+            named: "Continuation",
+            packageFQName: kotlinCoroutinesPkg,
+            parameters: [
+                (name: "context", type: kotlinCoroutineContextType),
+                (name: "resumeWith", type: continuationFactoryResumeWithType),
+            ],
+            returnType: continuationFactoryReturnType,
+            externalLinkName: "kk_coroutine_continuation_factory",
+            explicitTypeParameterSymbols: [continuationFactoryTypeParamSymbol],
+            valueParameterFQNameSuffixes: ["$factoryContext", "$factoryResumeWith"],
             symbols: symbols,
             interner: interner
         )
@@ -2483,6 +2536,7 @@ extension DataFlowSemaPhase {
         flags: SymbolFlags = [.synthetic],
         explicitTypeParameterSymbols: [SymbolID]? = nil,
         syntheticVarargParameterIndices: Set<Int> = [],
+        valueParameterFQNameSuffixes: [String]? = nil,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -2543,12 +2597,18 @@ extension DataFlowSemaPhase {
             }
         }
         var valueParameterSymbols: [SymbolID] = []
-        for parameter in parameters {
+        for (index, parameter) in parameters.enumerated() {
             let paramNameID = interner.intern(parameter.name)
+            let paramFQNameSuffix = if let valueParameterFQNameSuffixes,
+                                       valueParameterFQNameSuffixes.indices.contains(index) {
+                interner.intern(valueParameterFQNameSuffixes[index])
+            } else {
+                paramNameID
+            }
             let paramSymbol = symbols.define(
                 kind: .valueParameter,
                 name: paramNameID,
-                fqName: functionFQName + [paramNameID],
+                fqName: functionFQName + [paramFQNameSuffix],
                 declSite: nil,
                 visibility: .private,
                 flags: [.synthetic]
