@@ -1053,6 +1053,7 @@ extension DataFlowSemaPhase {
         registerSyntheticJsFunctionStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsEvalStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsJsonStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsTypeOfStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticTODOAndIOStubs(symbols: symbols, types: types, interner: interner)
         // Function interfaces are registered by TODO/IO stubs, so patch KProperty2's Function2 supertype here.
         patchKProperty2FunctionSupertype(symbols: symbols, types: types, interner: interner)
