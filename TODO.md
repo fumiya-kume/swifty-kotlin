@@ -509,7 +509,7 @@
 - [ ] STDLIB-IO-PATH-FN-032: `setAttribute` 関数の実装
 - [x] STDLIB-IO-PATH-FN-033: `setLastModifiedTime` 関数の実装
 - [x] STDLIB-IO-PATH-FN-034: `setOwner` 関数の実装
-- [ ] STDLIB-IO-PATH-FN-035: `setPosixFilePermissions` 関数の実装
+- [x] STDLIB-IO-PATH-FN-035: `setPosixFilePermissions` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-036: `toPath` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-037: `useDirectoryEntries` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-038: `useLines` 関数の実装
@@ -1159,7 +1159,7 @@
 - [ ] STDLIB-IO-PATH-FN-066: `Path.setAttribute(attribute, value, options)` を追加する
 - [x] STDLIB-IO-PATH-FN-067: `Path.setLastModifiedTime(value)` を追加する
 - [x] STDLIB-IO-PATH-FN-068: `Path.setOwner(value)` を追加する
-- [ ] STDLIB-IO-PATH-FN-069: `Path.setPosixFilePermissions(value)` を追加する
+- [x] STDLIB-IO-PATH-FN-069: `Path.setPosixFilePermissions(value)` を追加する
 - [x] STDLIB-IO-PATH-FN-070: `URI.toPath()` を追加する
 - [ ] STDLIB-IO-PATH-FN-071: `Path.useDirectoryEntries(glob, block)` を追加する
 - [ ] STDLIB-IO-PATH-FN-072: `Path.useLines(charset, block)` を追加する
