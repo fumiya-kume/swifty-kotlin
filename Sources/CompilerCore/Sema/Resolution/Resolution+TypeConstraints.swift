@@ -238,6 +238,8 @@ extension OverloadResolver {
                     false
                 }
             }
+        case let .kClassType(kClassType):
+            return containsTypeVariable(kClassType.argument, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem)
         case let .functionType(functionType):
             if functionType.contextReceivers.contains(where: {
                 containsTypeVariable($0, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem)
@@ -359,6 +361,20 @@ extension OverloadResolver {
            containsTypeVariable(supertype, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem)
         {
             let subtypeKind = typeSystem.kind(of: subtype)
+            if case let .kClassType(subKClass) = subtypeKind,
+               superClass.classSymbol == typeSystem.kClassInterfaceSymbol,
+               subKClass.nullability == superClass.nullability || superClass.nullability == .nullable,
+               let superArg = superClass.args.first
+            {
+                return decomposeTypeArgConstraintImpl(
+                    subArg: .invariant(subKClass.argument),
+                    superArg: superArg,
+                    typeVarBySymbol: typeVarBySymbol,
+                    typeSystem: typeSystem,
+                    blameRange: blameRange,
+                    depth: depth + 1
+                )
+            }
             if case let .classType(subClass) = subtypeKind,
                let alignedSubtype = alignNominalSubtype(
                    subClass,
@@ -429,6 +445,23 @@ extension OverloadResolver {
             }
             // Different class symbols or mismatched arity – fall through to
             // simple constraint which will use isSubtype.
+        }
+
+        // KClass<T> is covariant in T. Decompose receiver constraints like
+        // KClass<String> <: KClass<T> so extension properties can infer T.
+        if case let .kClassType(superKClass) = supertypeKind,
+           containsTypeVariable(supertype, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem),
+           case let .kClassType(subKClass) = typeSystem.kind(of: subtype),
+           subKClass.nullability == superKClass.nullability || superKClass.nullability == .nullable
+        {
+            return decomposeSubtypeConstraintImpl(
+                subtype: subKClass.argument,
+                supertype: superKClass.argument,
+                typeVarBySymbol: typeVarBySymbol,
+                typeSystem: typeSystem,
+                blameRange: blameRange,
+                depth: depth + 1
+            )
         }
 
         // Case 3: supertype is a function type with type variables in params/return.
@@ -529,6 +562,21 @@ extension OverloadResolver {
                 }
                 return result
             }
+        }
+
+        if case let .kClassType(subKClass) = subtypeKind,
+           containsTypeVariable(subtype, typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem),
+           case let .kClassType(superKClass) = supertypeKind,
+           subKClass.nullability == superKClass.nullability || superKClass.nullability == .nullable
+        {
+            return decomposeSubtypeConstraintImpl(
+                subtype: subKClass.argument,
+                supertype: superKClass.argument,
+                typeVarBySymbol: typeVarBySymbol,
+                typeSystem: typeSystem,
+                blameRange: blameRange,
+                depth: depth + 1
+            )
         }
 
         // Default: simple type-to-type constraint.
