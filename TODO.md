@@ -1225,7 +1225,7 @@
 - [ ] STDLIB-JS-TYPE-027: `kotlin.js.JsReference` external interface を追加する
 - [x] STDLIB-JS-TYPE-028: `kotlin.js.JsStatic` annotation を追加する
 - [ ] STDLIB-JS-TYPE-029: `kotlin.js.JsString` external class を追加する
-- [ ] STDLIB-JS-TYPE-030: `kotlin.js.JsSymbol` annotation を追加する
+- [x] STDLIB-JS-TYPE-030: `kotlin.js.JsSymbol` annotation を追加する
 - [x] STDLIB-JS-TYPE-031: `kotlin.js.nativeGetter` annotation を追加する
 - [x] STDLIB-JS-TYPE-032: `kotlin.js.nativeInvoke` annotation を追加する
 - [x] STDLIB-JS-TYPE-033: `kotlin.js.nativeSetter` annotation を追加する

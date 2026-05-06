@@ -1108,6 +1108,7 @@ extension DataFlowSemaPhase {
         registerSyntheticCoroutinesABIStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsExternalInheritorsOnlyStubs(symbols: symbols, interner: interner)
         registerSyntheticJsClassStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsSymbolStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticKPropertyIsInitializedStub(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsStaticStubs(symbols: symbols, interner: interner)
         registerSyntheticJsExternalArgumentStubs(symbols: symbols, interner: interner)
