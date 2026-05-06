@@ -1407,6 +1407,21 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(arrayElements(kk_list_toFloatArray(list)), [first, second])
     }
 
+    func testListUnzipSplitsPairElementsIntoLists() {
+        let source = makeList([
+            kk_pair_new(1, 10),
+            kk_pair_new(2, 20),
+            kk_pair_new(3, 30),
+        ])
+
+        let result = kk_list_unzip(source)
+        let first = kk_pair_first(result)
+        let second = kk_pair_second(result)
+
+        XCTAssertEqual(listElements(first), [1, 2, 3])
+        XCTAssertEqual(listElements(second), [10, 20, 30])
+    }
+
     private func makeArray(_ elements: [Int]) -> Int {
         let arrayRaw = kk_array_new(elements.count)
         var thrown = 0

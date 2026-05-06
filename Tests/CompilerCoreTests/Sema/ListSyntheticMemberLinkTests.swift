@@ -2353,6 +2353,48 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testListUnzipUsesRuntimeExternalLinkAndReturnsPairOfLists() throws {
+        let source = """
+        fun split(values: List<Pair<Int, String>>) {
+            val result: Pair<List<Int>, List<String>> = values.unzip()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected List.unzip to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "unzip"
+            }, "Expected values.unzip() member call in AST")
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_list_unzip")
+
+            let resultType = try XCTUnwrap(sema.bindings.exprType(for: callExpr))
+            guard case let .classType(pairType) = sema.types.kind(of: resultType) else {
+                return XCTFail("Expected List.unzip to return Pair<List<Int>, List<String>>")
+            }
+            XCTAssertEqual(
+                try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(pairType.classSymbol)?.name)),
+                "Pair"
+            )
+            XCTAssertEqual(pairType.args.count, 2)
+
+            let firstListType = try projectedType(pairType.args[0])
+            let secondListType = try projectedType(pairType.args[1])
+            try assertListType(firstListType, elementType: sema.types.intType, sema: sema, interner: ctx.interner)
+            try assertListType(secondListType, elementType: sema.types.stringType, sema: sema, interner: ctx.interner)
+        }
+    }
+
     func testSequenceJoinToStringUsesRuntimeExternalLink() throws {
         let source = """
         fun render(values: Sequence<Int>) {
@@ -3950,4 +3992,39 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             assertHasDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
         }
     }
+}
+
+private func projectedType(
+    _ arg: TypeArg,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) throws -> TypeID {
+    switch arg {
+    case let .invariant(type), let .out(type), let .in(type):
+        return type
+    case .star:
+        return try XCTUnwrap(nil as TypeID?, "Expected concrete type projection", file: file, line: line)
+    }
+}
+
+private func assertListType(
+    _ type: TypeID,
+    elementType expectedElementType: TypeID,
+    sema: SemaModule,
+    interner: StringInterner,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) throws {
+    guard case let .classType(listType) = sema.types.kind(of: type) else {
+        return XCTFail("Expected List type", file: file, line: line)
+    }
+    XCTAssertEqual(
+        try interner.resolve(XCTUnwrap(sema.symbols.symbol(listType.classSymbol)?.name, file: file, line: line)),
+        "List",
+        file: file,
+        line: line
+    )
+    XCTAssertEqual(listType.args.count, 1, file: file, line: line)
+    let elementType = try projectedType(try XCTUnwrap(listType.args.first, file: file, line: line), file: file, line: line)
+    XCTAssertEqual(elementType, expectedElementType, file: file, line: line)
 }
