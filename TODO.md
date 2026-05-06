@@ -705,21 +705,21 @@
 - [x] STDLIB-REFLECT-TYPE-001: `AssociatedObjectKey` アノテーションの実装
 - [x] STDLIB-REFLECT-TYPE-002: `ExperimentalAssociatedObjects` アノテーションの実装
 - [x] STDLIB-REFLECT-TYPE-003: `KAnnotatedElement` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-004: `KCallable` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-005: `KClass` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-006: `KClassifier` インターフェースの実装
+- [x] STDLIB-REFLECT-TYPE-004: `KCallable` インターフェースの実装
+- [x] STDLIB-REFLECT-TYPE-005: `KClass` インターフェースの実装
+- [x] STDLIB-REFLECT-TYPE-006: `KClassifier` インターフェースの実装
 - [x] STDLIB-REFLECT-TYPE-007: `KDeclarationContainer` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-008: `KFunction` インターフェースの実装
+- [x] STDLIB-REFLECT-TYPE-008: `KFunction` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-009: `KMutableProperty` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-010: `KMutableProperty0` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-011: `KMutableProperty1` インターフェースの実装
 - [x] STDLIB-REFLECT-TYPE-012: `KMutableProperty2` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-013: `KParameter` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-014: `KProperty` インターフェースの実装
+- [x] STDLIB-REFLECT-TYPE-014: `KProperty` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-015: `KProperty0` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-016: `KProperty1` インターフェースの実装
 - [x] STDLIB-REFLECT-TYPE-017: `KProperty2` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-018: `KType` インターフェースの実装
+- [x] STDLIB-REFLECT-TYPE-018: `KType` インターフェースの実装
 - [x] STDLIB-REFLECT-TYPE-019: `KTypeParameter` インターフェースの実装
 - [x] STDLIB-REFLECT-TYPE-020: `KTypeProjection` クラスの実装
 - [x] STDLIB-REFLECT-TYPE-021: `KVariance` enum の実装
@@ -733,7 +733,7 @@
 - [ ] STDLIB-REFLECT-FN-002: `createInstance` 拡張関数の実装
 - [x] STDLIB-REFLECT-FN-003: `findAssociatedObject` 拡張関数の実装
 - [x] STDLIB-REFLECT-FN-004: `safeCast` 拡張関数の実装
-- [ ] STDLIB-REFLECT-FN-005: `typeOf` 関数の実装
+- [x] STDLIB-REFLECT-FN-005: `typeOf` 関数の実装
 
 #### kotlin.sequences 型の実装
 - [ ] STDLIB-SEQ-TYPE-001: `Sequence` インターフェースの実装
