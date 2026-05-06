@@ -660,6 +660,18 @@ public func kk_mutable_list_removeFirstOrNull(_ listRaw: Int) -> Int {
     return list.elements.removeFirst()
 }
 
+@_cdecl("kk_mutable_list_removeLast")
+public func kk_mutable_list_removeLast(_ listRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let list = runtimeListBox(from: listRaw),
+          !list.elements.isEmpty
+    else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "List is empty.")
+        return 0
+    }
+    return list.elements.removeLast()
+}
+
 @_cdecl("kk_mutable_list_removeLastOrNull")
 public func kk_mutable_list_removeLastOrNull(_ listRaw: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw),

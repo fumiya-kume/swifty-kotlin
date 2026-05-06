@@ -1939,6 +1939,15 @@ public extension RuntimeABISpec {
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_mutable_list_removeLast",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_mutable_list_removeLastOrNull",
             parameters: [
                 RuntimeABIParameter(name: "listRaw", type: .intptr),

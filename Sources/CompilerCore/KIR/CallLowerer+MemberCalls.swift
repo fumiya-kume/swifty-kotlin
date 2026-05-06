@@ -8490,6 +8490,8 @@ extension CallLowerer {
                 return interner.intern("kk_mutable_list_removeFirst")
             case "removeFirstOrNull":
                 return interner.intern("kk_mutable_list_removeFirstOrNull")
+            case "removeLast":
+                return interner.intern("kk_mutable_list_removeLast")
             case "removeLastOrNull":
                 return interner.intern("kk_mutable_list_removeLastOrNull")
             default:

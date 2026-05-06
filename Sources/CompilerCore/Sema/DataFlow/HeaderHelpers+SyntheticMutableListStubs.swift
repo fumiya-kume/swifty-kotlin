@@ -103,6 +103,13 @@ extension DataFlowSemaPhase {
             mlTypeParamSymbol: mlTypeParamSymbol,
             mlTypeParamType: mlTypeParamType
         )
+        registerMutableListRemoveLastMember(
+            symbols: symbols, types: types, interner: interner,
+            mutableListFQName: mutableListFQName,
+            mutableListInterfaceSymbol: mutableListInterfaceSymbol,
+            mlTypeParamSymbol: mlTypeParamSymbol,
+            mlTypeParamType: mlTypeParamType
+        )
         registerMutableListRemoveLastOrNullMember(
             symbols: symbols, types: types, interner: interner,
             mutableListFQName: mutableListFQName,
@@ -453,6 +460,46 @@ extension DataFlowSemaPhase {
                 receiverType: receiverType,
                 parameterTypes: [],
                 returnType: types.makeNullable(mlTypeParamType),
+                typeParameterSymbols: [mlTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    /// Register `fun removeLast(): E` on MutableList (STDLIB-COL-MUT-004).
+    private func registerMutableListRemoveLastMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        mutableListFQName: [InternedString],
+        mutableListInterfaceSymbol: SymbolID,
+        mlTypeParamSymbol: SymbolID,
+        mlTypeParamType: TypeID
+    ) {
+        let memberName = interner.intern("removeLast")
+        let memberFQName = mutableListFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: mutableListInterfaceSymbol,
+            args: [.invariant(mlTypeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(mutableListInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_mutable_list_removeLast", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: mlTypeParamType,
                 typeParameterSymbols: [mlTypeParamSymbol],
                 classTypeParameterCount: 1
             ),

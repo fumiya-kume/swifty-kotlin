@@ -67,6 +67,7 @@ extension ABIMismatchTests {
             "kk_string_hexToUShort",
             "kk_mutable_list_removeFirst",
             "kk_mutable_list_removeFirstOrNull",
+            "kk_mutable_list_removeLast",
             "kk_mutable_list_removeLastOrNull",
             "kk_mutable_list_sortWith",
             "kk_sequence_of",

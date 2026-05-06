@@ -2573,6 +2573,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             values.removeAt(0)
             values.removeFirst()
             values.removeFirstOrNull()
+            values.removeLast()
             values.removeLastOrNull()
             values.clear()
         }
@@ -2594,6 +2595,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                 ("removeAt", 1, "kk_mutable_list_removeAt"),
                 ("removeFirst", 0, "kk_mutable_list_removeFirst"),
                 ("removeFirstOrNull", 0, "kk_mutable_list_removeFirstOrNull"),
+                ("removeLast", 0, "kk_mutable_list_removeLast"),
                 ("removeLastOrNull", 0, "kk_mutable_list_removeLastOrNull"),
                 ("clear", 0, "kk_mutable_list_clear"),
             ]
