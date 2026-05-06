@@ -270,7 +270,7 @@
 - [x] STDLIB-COL-FN-174: `reversed` 関数の実装
 - [ ] STDLIB-COL-FN-175: `runningFold` 関数の実装
 - [x] STDLIB-COL-FN-176: `runningFoldIndexed` 関数の実装
-- [ ] STDLIB-COL-FN-177: `runningReduce` 関数の実装
+- [x] STDLIB-COL-FN-177: `runningReduce` 関数の実装
 - [x] STDLIB-COL-FN-178: `runningReduceIndexed` 関数の実装
 - [ ] STDLIB-COL-FN-179: `scan` 関数の実装
 - [ ] STDLIB-COL-FN-180: `scanIndexed` 関数の実装
