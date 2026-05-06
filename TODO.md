@@ -659,16 +659,16 @@
 - [ ] STDLIB-MATH-FN-036: `withSign` 関数の実装
 
 #### kotlin.random 型の実装
-- [ ] STDLIB-RANDOM-TYPE-001: `Random` 抽象クラスの実装
+- [x] STDLIB-RANDOM-TYPE-001: `Random` 抽象クラスの実装
 
 #### kotlin.random 関数の実装
 - [ ] STDLIB-RANDOM-FN-001: `asJavaRandom` 関数の実装
 - [ ] STDLIB-RANDOM-FN-002: `asKotlinRandom` 関数の実装
-- [ ] STDLIB-RANDOM-FN-003: `nextInt` 拡張関数の実装
-- [ ] STDLIB-RANDOM-FN-004: `nextLong` 拡張関数の実装
-- [ ] STDLIB-RANDOM-FN-005: `nextUBytes` 拡張関数の実装（各オーバーロード）
-- [ ] STDLIB-RANDOM-FN-006: `nextUInt` 拡張関数の実装（各オーバーロード）
-- [ ] STDLIB-RANDOM-FN-007: `nextULong` 拡張関数の実装（各オーバーロード）
+- [x] STDLIB-RANDOM-FN-003: `nextInt` 拡張関数の実装
+- [x] STDLIB-RANDOM-FN-004: `nextLong` 拡張関数の実装
+- [x] STDLIB-RANDOM-FN-005: `nextUBytes` 拡張関数の実装（各オーバーロード）
+- [x] STDLIB-RANDOM-FN-006: `nextUInt` 拡張関数の実装（各オーバーロード）
+- [x] STDLIB-RANDOM-FN-007: `nextULong` 拡張関数の実装（各オーバーロード）
 
 #### kotlin.ranges 型の実装
 - [ ] STDLIB-RANGES-TYPE-001: `CharProgression` クラスの実装
