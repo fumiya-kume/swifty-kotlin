@@ -735,6 +735,42 @@ final class ExperimentalMarkerStubTests: XCTestCase {
         }
     }
 
+    // MARK: - ExperimentalJsExport (kotlin.js, WARNING)
+
+    func testExperimentalJsExportIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let sym = lookupSymbol(fqPath: ["kotlin", "js", "ExperimentalJsExport"], sema: sema, interner: interner)
+        XCTAssertNotNil(sym, "kotlin.js.ExperimentalJsExport must be registered in the symbol table")
+    }
+
+    func testExperimentalJsExportIsAnnotationClass() throws {
+        let (sema, interner) = try makeSema()
+        assertIsAnnotationClass(fqPath: ["kotlin", "js", "ExperimentalJsExport"], sema: sema, interner: interner)
+    }
+
+    func testExperimentalJsExportHasRequiresOptInWarning() throws {
+        let (sema, interner) = try makeSema()
+        assertHasRequiresOptIn(
+            fqPath: ["kotlin", "js", "ExperimentalJsExport"],
+            expectedSeverity: "WARNING",
+            sema: sema,
+            interner: interner
+        )
+    }
+
+    func testExperimentalJsExportDoesNotCarryExplicitTargetMetadata() throws {
+        let (sema, interner) = try makeSema()
+        let symbol = try XCTUnwrap(
+            lookupSymbol(fqPath: ["kotlin", "js", "ExperimentalJsExport"], sema: sema, interner: interner)
+        )
+        let annotations = sema.symbols.annotations(for: symbol)
+
+        XCTAssertFalse(
+            annotations.contains { $0.annotationFQName == "kotlin.annotation.Target" },
+            "ExperimentalJsExport should not carry explicit @Target metadata, got \(annotations)"
+        )
+    }
+
     // MARK: - ExperimentalJsFileName (kotlin.js, WARNING)
 
     func testExperimentalJsFileNameIsRegistered() throws {
