@@ -332,7 +332,7 @@
 #### kotlin.concurrent.atomics 型の実装
 - [x] STDLIB-ATOMIC-NEW-001: `AtomicArray<T>` クラスの実装（kotlin.concurrent.atomics パッケージ版）
 - [x] STDLIB-ATOMIC-NEW-002: `AtomicBoolean` クラスの実装
-- [ ] STDLIB-ATOMIC-NEW-003: `AtomicIntArray` クラスの実装（kotlin.concurrent.atomics パッケージ版）
+- [x] STDLIB-ATOMIC-NEW-003: `AtomicIntArray` クラスの実装（kotlin.concurrent.atomics パッケージ版）
 - [x] STDLIB-ATOMIC-NEW-004: `AtomicInt` クラスの実装
 - [ ] STDLIB-ATOMIC-NEW-005: `AtomicLong` クラスの実装
 - [x] STDLIB-ATOMIC-NEW-006: `AtomicLongArray` クラスの実装（kotlin.concurrent.atomics パッケージ版）
