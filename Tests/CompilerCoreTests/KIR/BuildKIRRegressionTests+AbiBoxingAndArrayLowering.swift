@@ -105,6 +105,26 @@ extension BuildKIRRegressionTests {
         }
     }
 
+    func testBuildKIRLowersListWithIndexToCollectionRuntimeCall() throws {
+        let source = """
+        fun main(values: List<Int>) {
+            values.withIndex()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
+
+            XCTAssertTrue(callNames.contains("kk_list_withIndex"))
+            XCTAssertFalse(callNames.contains("withIndex"))
+        }
+    }
+
     func testABILoweringMarksAtomicRuntimeHelpersAsNonThrowing() {
         let pass = ABILoweringPass()
         let interner = StringInterner()

@@ -1494,6 +1494,23 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(second), [10, 20, 30])
     }
 
+    func testListWithIndexIteratorYieldsIndexedValues() {
+        let indexed = kk_list_withIndex(makeList([10, 20]))
+        let iterator = kk_indexing_iterable_iterator(indexed)
+
+        XCTAssertEqual(kk_indexing_iterable_hasNext(iterator), 1)
+        let first = kk_indexing_iterable_next(iterator)
+        XCTAssertEqual(kk_pair_first(first), 0)
+        XCTAssertEqual(kk_pair_second(first), 10)
+
+        XCTAssertEqual(kk_indexing_iterable_hasNext(iterator), 1)
+        let second = kk_indexing_iterable_next(iterator)
+        XCTAssertEqual(kk_pair_first(second), 1)
+        XCTAssertEqual(kk_pair_second(second), 20)
+
+        XCTAssertEqual(kk_indexing_iterable_hasNext(iterator), 0)
+    }
+
     private func makeArray(_ elements: [Int]) -> Int {
         let arrayRaw = kk_array_new(elements.count)
         var thrown = 0
