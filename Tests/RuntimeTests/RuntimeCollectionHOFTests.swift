@@ -941,6 +941,12 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(kk_list_slice_iterable(source, indices)), [40, 20, 40])
     }
 
+    func testSingleOrNullReturnsElementOnlyForSingletonList() {
+        XCTAssertEqual(kk_list_singleOrNull(makeList([42])), 42)
+        XCTAssertEqual(kk_list_singleOrNull(makeList([])), runtimeNullSentinelInt)
+        XCTAssertEqual(kk_list_singleOrNull(makeList([1, 2])), runtimeNullSentinelInt)
+    }
+
     func testGroupByPreservesKeyAndBucketOrder() {
         let source = makeList([3, 1, 4, 2, 5])
         let grouped = kk_list_groupBy(source, unsafeBitCast(groupByParity, to: Int.self), 0, nil)
