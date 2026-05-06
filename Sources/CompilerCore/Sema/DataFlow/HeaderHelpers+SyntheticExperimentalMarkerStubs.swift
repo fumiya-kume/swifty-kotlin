@@ -13,6 +13,7 @@ import Foundation
 /// | ExperimentalContextParameters | kotlin           | ERROR    |
 /// | ExperimentalUuidApi       | kotlin.uuid          | ERROR    |
 /// | ExperimentalEncodingApi   | kotlin.io.encoding   | ERROR    |
+/// | ExperimentalWasmInterop   | kotlin.wasm          | WARNING  |
 /// | ExperimentalMultiplatform | kotlin               | ERROR    |
 /// | ExperimentalSubclassOptIn | kotlin               | WARNING  |
 /// | ExperimentalAssociatedObjects | kotlin.reflect    | ERROR    |
@@ -128,6 +129,23 @@ extension DataFlowSemaPhase {
             packageFQName: kotlinReflectPkg,
             packageSymbol: kotlinReflectPkgSymbol,
             severity: "ERROR",
+            targetArguments: nil,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- kotlin.wasm.ExperimentalWasmInterop (WARNING) ---
+        let kotlinWasmPkg = ensurePackage(
+            path: ["kotlin", "wasm"],
+            symbols: symbols,
+            interner: interner
+        )
+        let kotlinWasmPkgSymbol = symbols.lookup(fqName: kotlinWasmPkg) ?? .invalid
+        registerSyntheticExperimentalMarker(
+            named: "ExperimentalWasmInterop",
+            packageFQName: kotlinWasmPkg,
+            packageSymbol: kotlinWasmPkgSymbol,
+            severity: "WARNING",
             targetArguments: nil,
             symbols: symbols,
             interner: interner
