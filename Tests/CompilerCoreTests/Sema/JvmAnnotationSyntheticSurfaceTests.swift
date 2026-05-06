@@ -58,6 +58,97 @@ final class JvmAnnotationSyntheticSurfaceTests: XCTestCase {
         _ = try makeSema(source: source)
     }
 
+    func testJvmPackageNameAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmPackageName"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.jvm.JvmPackageName must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(info.kind, .annotationClass)
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+    }
+
+    func testJvmPackageNameCarriesFileTargetAndSourceRetention() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmPackageName"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let annotations = sema.symbols.annotations(for: symbol)
+
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.annotation.Target"
+                    && $0.arguments == ["AnnotationTarget.FILE"]
+            },
+            "JvmPackageName must carry @Target(FILE), got \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.annotation.Retention"
+                    && $0.arguments == ["AnnotationRetention.SOURCE"]
+            },
+            "JvmPackageName must carry @Retention(SOURCE), got \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.annotation.MustBeDocumented"
+            },
+            "JvmPackageName must carry @MustBeDocumented, got \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.SinceKotlin"
+                    && $0.arguments == ["1.2"]
+            },
+            "JvmPackageName must carry @SinceKotlin(\"1.2\"), got \(annotations)"
+        )
+    }
+
+    func testJvmPackageNameHasNamePropertyAndConstructor() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmPackageName"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let nameProperty = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName + [interner.intern("name")]),
+            "JvmPackageName.name must be registered"
+        )
+
+        XCTAssertEqual(sema.symbols.propertyType(for: nameProperty), sema.types.stringType)
+
+        let constructorSymbol = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: fqName + [interner.intern("<init>")]).first { symbolID in
+                sema.symbols.symbol(symbolID)?.kind == .constructor
+            },
+            "JvmPackageName(String) constructor must be registered"
+        )
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: constructorSymbol))
+        let ownerType = sema.types.make(.classType(ClassType(
+            classSymbol: symbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        XCTAssertEqual(signature.parameterTypes, [sema.types.stringType])
+        XCTAssertEqual(signature.returnType, ownerType)
+        XCTAssertEqual(signature.valueParameterHasDefaultValues, [false])
+        XCTAssertEqual(signature.valueParameterIsVararg, [false])
+    }
+
+    func testJvmPackageNameResolvesOnFile() throws {
+        let source = """
+        @file:kotlin.jvm.JvmPackageName("com.example.generated")
+
+        package sample
+
+        fun value(): Int = 1
+        """
+
+        _ = try makeSema(source: source)
+    }
+
     func testJvmWildcardAnnotationIsRegistered() throws {
         let (sema, interner) = try makeSema()
         let fqName = ["kotlin", "jvm", "JvmWildcard"].map { interner.intern($0) }

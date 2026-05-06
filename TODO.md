@@ -1196,7 +1196,7 @@
 - [ ] STDLIB-JVM-TYPE-004: `kotlin.jvm.JvmExposeBoxed` annotation を追加する
 - [ ] STDLIB-JVM-TYPE-005: `kotlin.jvm.JvmInline` annotation surface を追加する
 - [ ] STDLIB-JVM-TYPE-006: `kotlin.jvm.JvmMultifileClass` annotation を追加する
-- [ ] STDLIB-JVM-TYPE-007: `kotlin.jvm.JvmPackageName` annotation を追加する
+- [x] STDLIB-JVM-TYPE-007: `kotlin.jvm.JvmPackageName` annotation を追加する
 - [x] STDLIB-JVM-TYPE-008: `kotlin.jvm.JvmRecord` annotation を追加する
 - [ ] STDLIB-JVM-TYPE-009: `kotlin.jvm.JvmSerializableLambda` annotation を追加する
 - [ ] STDLIB-JVM-TYPE-010: `kotlin.jvm.JvmSuppressWildcards` annotation を追加する

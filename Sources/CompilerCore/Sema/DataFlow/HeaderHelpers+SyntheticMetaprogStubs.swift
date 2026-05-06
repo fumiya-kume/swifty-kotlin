@@ -168,6 +168,54 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // @JvmPackageName — changes the JVM package name generated for a file.
+        registerSyntheticJvmAnnotationClass(
+            named: "JvmPackageName",
+            packageFQName: kotlinJvmPkg,
+            packageSymbol: kotlinJvmPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        if let jvmPackageNameSymbol = symbols.lookup(fqName: kotlinJvmPkg + [interner.intern("JvmPackageName")]) {
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.target.qualifiedName,
+                    arguments: ["AnnotationTarget.FILE"]
+                ),
+                to: jvmPackageNameSymbol,
+                symbols: symbols
+            )
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.annotation.Retention",
+                    arguments: ["AnnotationRetention.SOURCE"]
+                ),
+                to: jvmPackageNameSymbol,
+                symbols: symbols
+            )
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(annotationFQName: "kotlin.annotation.MustBeDocumented"),
+                to: jvmPackageNameSymbol,
+                symbols: symbols
+            )
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.sinceKotlin.qualifiedName,
+                    arguments: ["1.2"]
+                ),
+                to: jvmPackageNameSymbol,
+                symbols: symbols
+            )
+            registerSyntheticStringAnnotationPropertyAndConstructor(
+                ownerSymbol: jvmPackageNameSymbol,
+                ownerFQName: kotlinJvmPkg + [interner.intern("JvmPackageName")],
+                propertyName: "name",
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
+        }
+
         // kotlin package — ensure built-in metadata annotations are present.
         let kotlinPkg = ensurePackage(
             path: ["kotlin"],
