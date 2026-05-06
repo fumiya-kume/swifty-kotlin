@@ -2741,6 +2741,11 @@ extension DataFlowSemaPhase {
             }
 
             registerByOrNull(
+                name: "maxBy",
+                externalLinkName: "kk_list_maxBy",
+                returnTypeBuilder: { _ in listTypeParamType }
+            )
+            registerByOrNull(
                 name: "maxByOrNull",
                 externalLinkName: "kk_list_maxByOrNull",
                 returnTypeBuilder: { _ in nullableElementType }

@@ -170,7 +170,7 @@ extension CallLowerer {
         "withIndex", "forEachIndexed", "mapIndexed", "mapIndexedNotNull", "filterIndexed", "mapValues", "mapValuesTo", "mapKeys", "mapKeysTo", "filterKeys", "filterValues",
         "getValue", "getOrDefault", "getOrElse", "getOrPut", "getOrNull", "elementAtOrNull", "elementAt", "elementAtOrElse",
         "putAll", "addAll",
-        "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull", "maxOrNull", "minOrNull",
+        "maxBy", "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull", "maxOrNull", "minOrNull",
         "plus", "plusElement", "minus", "minusElement",
         "asSequence", "asIterable", "toList", "toSet", "toMap", "toCollection", "toMutableList", "toMutableSet", "toTypedArray",
         "toBooleanArray", "toShortArray", "toDoubleArray", "toFloatArray", "toIntArray", "toLongArray", "toByteArray", "toUByteArray", "toUShortArray", "toUIntArray", "toULongArray",
@@ -5014,7 +5014,7 @@ extension CallLowerer {
             "associateBy", "associateWith", "associate",
             "forEachIndexed", "mapIndexed", "mapIndexedNotNull", "filterIndexed", "sumOf", "sumBy", "sumByDouble", "mapValues", "mapValuesTo", "mapKeys", "mapKeysTo", "filterKeys", "filterValues",
             "getOrElse", "elementAtOrElse", "getOrPut",
-            "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
+            "maxBy", "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
             "maxOf", "minOf",
             "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",
             "maxOfWith", "maxOfWithOrNull", "minOfWith", "minOfWithOrNull",
@@ -6729,6 +6729,7 @@ extension CallLowerer {
             interner.intern("kk_list_drop"),
             interner.intern("kk_list_maxOf"),
             interner.intern("kk_list_minOf"),
+            interner.intern("kk_list_maxBy"),
             interner.intern("kk_list_maxWith"),
             interner.intern("kk_list_minWith"),
             interner.intern("kk_list_maxOfWith"),
@@ -8297,6 +8298,8 @@ extension CallLowerer {
                 return interner.intern("kk_list_indexOfFirst")
             case "indexOfLast":
                 return interner.intern("kk_list_indexOfLast")
+            case "maxBy":
+                return interner.intern("kk_list_maxBy")
             case "maxByOrNull":
                 return interner.intern("kk_list_maxByOrNull")
             case "minByOrNull":
@@ -8563,6 +8566,8 @@ extension CallLowerer {
             return interner.intern("kk_list_indexOfFirst")
         case "indexOfLast":
             return interner.intern("kk_list_indexOfLast")
+        case "maxBy":
+            return interner.intern("kk_list_maxBy")
         case "maxByOrNull":
             return interner.intern("kk_list_maxByOrNull")
         case "minByOrNull":

@@ -2836,6 +2836,17 @@ public extension RuntimeABISpec {
                 hofSpec("kk_list_takeLastWhile"),
                 hofSpec("kk_list_dropLastWhile"),
                 RuntimeABIFunctionSpec(
+                    name: "kk_list_maxBy",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                        RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                        RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                        RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
                     name: "kk_list_maxByOrNull",
                     parameters: [
                         RuntimeABIParameter(name: "listRaw", type: .intptr),

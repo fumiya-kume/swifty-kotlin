@@ -1816,7 +1816,7 @@ extension CollectionLiteralLoweringPass {
         guard callee == lookup.groupByName || callee == lookup.sortedByName || callee == lookup.findName
             || callee == lookup.associateByName || callee == lookup.associateWithName || callee == lookup.associateName
             || callee == lookup.sortedByDescendingName || callee == lookup.sortedWithName
-            || callee == lookup.maxByOrNullName || callee == lookup.minByOrNullName
+            || callee == lookup.maxByName || callee == lookup.maxByOrNullName || callee == lookup.minByOrNullName
             || callee == lookup.maxOfOrNullName || callee == lookup.minOfOrNullName
             || callee == lookup.maxOfName || callee == lookup.minOfName
             || callee == lookup.maxWithName || callee == lookup.maxWithOrNullName
@@ -1843,6 +1843,7 @@ extension CollectionLiteralLoweringPass {
         case lookup.associateByName: lookup.kkListAssociateByName
         case lookup.associateWithName: lookup.kkListAssociateWithName
         case lookup.associateName: lookup.kkListAssociateName
+        case lookup.maxByName: lookup.kkListMaxByName
         case lookup.maxByOrNullName: lookup.kkListMaxByOrNullName
         case lookup.minByOrNullName: lookup.kkListMinByOrNullName
         case lookup.maxOfOrNullName: lookup.kkListMaxOfOrNullName
@@ -2085,7 +2086,8 @@ extension CollectionLiteralLoweringPass {
         } else {
             hofArgs = arguments
         }
-        let needsClosureRaw = callee != lookup.maxByOrNullName && callee != lookup.minByOrNullName
+        let needsClosureRaw = callee != lookup.maxByName
+            && callee != lookup.maxByOrNullName && callee != lookup.minByOrNullName
             && callee != lookup.maxOfOrNullName && callee != lookup.minOfOrNullName
             && callee != lookup.maxOfWithName && callee != lookup.maxOfWithOrNullName
             && callee != lookup.minOfWithName && callee != lookup.minOfWithOrNullName

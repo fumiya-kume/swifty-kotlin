@@ -115,6 +115,10 @@ private let sumByDoubleWeightedTwo: @convention(c) (Int, Int, UnsafeMutablePoint
     kk_double_to_bits(value == 2 ? 1.5 : 0.25)
 }
 
+private let maxByNegativeValue: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    -value
+}
+
 private let groupingFoldToInitialValueSelector: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = {
     _, key, element, _ in
     gHOFState.addCall()
@@ -340,6 +344,22 @@ final class RuntimeCollectionHOFTests: XCTestCase {
 
         let sorted = kk_list_sortedBy(makeList([22, 12, 21, 11]), unsafeBitCast(sortedByTens, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
         XCTAssertEqual(listElements(sorted), [12, 11, 22, 21])
+    }
+
+    func testMaxByReturnsElementWithLargestSelectorAndThrowsOnEmpty() {
+        var thrown = 0
+        let source = makeList([3, 1, 4, 2])
+        let result = kk_list_maxBy(source, unsafeBitCast(maxByNegativeValue, to: Int.self), 0, &thrown)
+
+        XCTAssertEqual(result, 1)
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        XCTAssertEqual(
+            kk_list_maxBy(makeList([]), unsafeBitCast(maxByNegativeValue, to: Int.self), 0, &thrown),
+            runtimeExceptionCaughtSentinel
+        )
+        XCTAssertNotEqual(thrown, 0)
     }
 
     func testListElementAtReturnsElementAndThrowsWhenOutOfBounds() {
