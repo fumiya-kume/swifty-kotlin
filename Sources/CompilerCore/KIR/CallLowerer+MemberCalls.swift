@@ -190,7 +190,7 @@ extension CallLowerer {
         "toHashSet",
         "containsAll", "binarySearch", "average",
         "addFirst", "addLast",
-        "sum", "sumBy", "sumByDouble",
+        "sum", "sumOf", "sumBy", "sumByDouble",
         "to", // FUNC-002
     ]
 
@@ -6807,6 +6807,7 @@ extension CallLowerer {
             interner.intern("kk_list_runningFoldIndexed"),
             interner.intern("kk_list_runningReduceIndexed"),
             interner.intern("kk_list_scanIndexed"),
+            interner.intern("kk_list_sumOf"),
             interner.intern("kk_list_sumBy"),
             interner.intern("kk_list_sumByDouble"),
             interner.intern("kk_list_distinctBy"),
