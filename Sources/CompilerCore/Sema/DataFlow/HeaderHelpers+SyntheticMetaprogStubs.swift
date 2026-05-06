@@ -97,6 +97,24 @@ extension DataFlowSemaPhase {
             symbols: symbols
         )
 
+        // @JvmDefaultWithoutCompatibility - generates JVM default methods without
+        // DefaultImpls compatibility accessors for annotated classes/interfaces.
+        registerSyntheticJvmAnnotationClass(
+            named: "JvmDefaultWithoutCompatibility",
+            packageFQName: kotlinJvmPkg,
+            packageSymbol: kotlinJvmPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        attachAnnotationIfNeeded(
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: ["AnnotationTarget.CLASS"]
+            ),
+            to: kotlinJvmPkg + [interner.intern("JvmDefaultWithoutCompatibility")],
+            symbols: symbols
+        )
+
         // @JvmName — controls the JVM-level name of the generated class or member.
         registerSyntheticJvmAnnotationClass(
             named: "JvmName",

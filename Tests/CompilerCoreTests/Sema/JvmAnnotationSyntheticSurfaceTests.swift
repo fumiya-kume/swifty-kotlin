@@ -62,4 +62,46 @@ final class JvmAnnotationSyntheticSurfaceTests: XCTestCase {
 
         _ = try makeSema(source: source)
     }
+
+    func testJvmDefaultWithoutCompatibilityAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmDefaultWithoutCompatibility"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.jvm.JvmDefaultWithoutCompatibility must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(info.kind, .annotationClass)
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+    }
+
+    func testJvmDefaultWithoutCompatibilityCarriesClassTarget() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmDefaultWithoutCompatibility"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let target = try XCTUnwrap(
+            sema.symbols.annotations(for: symbol).first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "JvmDefaultWithoutCompatibility must carry @Target metadata"
+        )
+
+        XCTAssertEqual(target.arguments, ["AnnotationTarget.CLASS"])
+    }
+
+    func testJvmDefaultWithoutCompatibilityResolvesOnInterfaceAndClass() throws {
+        let source = """
+        import kotlin.jvm.JvmDefaultWithoutCompatibility
+
+        @JvmDefaultWithoutCompatibility
+        interface Service {
+            fun ping(): String = "ok"
+        }
+
+        @JvmDefaultWithoutCompatibility
+        open class BaseService
+        """
+
+        _ = try makeSema(source: source)
+    }
 }
