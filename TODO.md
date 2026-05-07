@@ -1235,7 +1235,7 @@
 - [ ] STDLIB-IO-PATH-FN-078: `Path.writeLines(lines: Sequence<CharSequence>, charset, options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-079: `Path.writer(charset, options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-080: `Path.writeText(text, charset, options)` を既存 `writeText(text)` stub から公式 shape へ広げる
-- [ ] STDLIB-JVM-TYPE-001: `kotlin.jvm.ImplicitlyActualizedByJvmDeclaration` annotation を追加する
+- [x] STDLIB-JVM-TYPE-001: `kotlin.jvm.ImplicitlyActualizedByJvmDeclaration` annotation を追加する
 - [x] STDLIB-JVM-TYPE-002: `kotlin.jvm.JvmDefaultWithCompatibility` annotation を追加する
 - [x] STDLIB-JVM-TYPE-003: `kotlin.jvm.JvmDefaultWithoutCompatibility` annotation を追加する
 - [ ] STDLIB-JVM-TYPE-004: `kotlin.jvm.JvmExposeBoxed` annotation を追加する
