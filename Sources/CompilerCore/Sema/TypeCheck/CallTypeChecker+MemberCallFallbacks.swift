@@ -1358,6 +1358,10 @@ extension CallTypeChecker {
             return receiverElementType
         }
 
+        if memberName == interner.intern("average") {
+            return sema.types.doubleType
+        }
+
         if memberName == interner.intern("chunked") && args.count == 2 {
             let transformExpr = args[1].expr
             let lambdaReturnType: TypeID = if let transformType = sema.bindings.exprTypes[transformExpr],
