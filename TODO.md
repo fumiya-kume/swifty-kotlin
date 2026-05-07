@@ -503,13 +503,13 @@
 
 #### kotlin.io 関数の実装
 - [ ] STDLIB-IO-FN-001: `appendBytes` 関数の実装
-- [ ] STDLIB-IO-FN-002: `appendText` 関数の実装
+- [x] STDLIB-IO-FN-002: `appendText` 関数の実装
 - [ ] STDLIB-IO-FN-003: `buffered` 関数の実装（InputStream版）
 - [ ] STDLIB-IO-FN-004: `buffered` 関数の実装（OutputStream版）
 - [ ] STDLIB-IO-FN-005: `buffered` 関数の実装（Reader版）
 - [ ] STDLIB-IO-FN-006: `buffered` 関数の実装（Writer版）
 - [ ] STDLIB-IO-FN-007: `bufferedReader` 関数の実装（InputStream版）
-- [ ] STDLIB-IO-FN-008: `bufferedReader` 関数の実装（File版）
+- [x] STDLIB-IO-FN-008: `bufferedReader` 関数の実装（File版）
 - [ ] STDLIB-IO-FN-009: `bufferedWriter` 関数の実装（OutputStream版）
 - [ ] STDLIB-IO-FN-010: `bufferedWriter` 関数の実装（File版）
 - [ ] STDLIB-IO-FN-011: `byteInputStream` 関数の実装
@@ -519,30 +519,30 @@
 - [ ] STDLIB-IO-FN-015: `copyTo` 関数の実装（File版）
 - [ ] STDLIB-IO-FN-016: `forEachBlock` 関数の実装
 - [ ] STDLIB-IO-FN-017: `forEachLine` 関数の実装（Reader版）
-- [ ] STDLIB-IO-FN-018: `forEachLine` 関数の実装（File版）
-- [ ] STDLIB-IO-FN-019: `inputStream` 関数の実装（File版）
+- [x] STDLIB-IO-FN-018: `forEachLine` 関数の実装（File版）
+- [x] STDLIB-IO-FN-019: `inputStream` 関数の実装（File版）
 - [ ] STDLIB-IO-FN-020: `inputStream` 関数の実装（ByteArray版）
 - [ ] STDLIB-IO-FN-021: `inputStream` 関数の実装（ByteArray範囲版）
 - [ ] STDLIB-IO-FN-022: `iterator` 関数の実装
-- [ ] STDLIB-IO-FN-023: `lineSequence` 関数の実装
+- [x] STDLIB-IO-FN-023: `lineSequence` 関数の実装
 - [ ] STDLIB-IO-FN-024: `normalize` 関数の実装
-- [ ] STDLIB-IO-FN-025: `outputStream` 関数の実装
-- [ ] STDLIB-IO-FN-026: `println` 関数の実装（各オーバーロード）
+- [x] STDLIB-IO-FN-025: `outputStream` 関数の実装
+- [x] STDLIB-IO-FN-026: `println` 関数の実装（各オーバーロード）
 - [ ] STDLIB-IO-FN-027: `printWriter` 関数の実装
-- [ ] STDLIB-IO-FN-028: `readBytes` 関数の実装（File版）
+- [x] STDLIB-IO-FN-028: `readBytes` 関数の実装（File版）
 - [ ] STDLIB-IO-FN-029: `readBytes` 関数の実装（InputStream版）
 - [ ] STDLIB-IO-FN-030: `readBytes` 関数の実装（URL版）
-- [ ] STDLIB-IO-FN-031: `readln` 関数の実装
-- [ ] STDLIB-IO-FN-032: `readlnOrNull` 関数の実装
+- [x] STDLIB-IO-FN-031: `readln` 関数の実装
+- [x] STDLIB-IO-FN-032: `readlnOrNull` 関数の実装
 - [ ] STDLIB-IO-FN-033: `readText` 関数の実装（Reader版）
-- [ ] STDLIB-IO-FN-034: `readText` 関数の実装（File版）
+- [x] STDLIB-IO-FN-034: `readText` 関数の実装（File版）
 - [ ] STDLIB-IO-FN-035: `readText` 関数の実装（URL版）
 - [ ] STDLIB-IO-FN-036: `resolveSibling` 関数の実装
 - [ ] STDLIB-IO-FN-037: `startsWith` 関数の実装
 - [ ] STDLIB-IO-FN-038: `toRelativeString` 関数の実装
-- [ ] STDLIB-IO-FN-039: `use` 関数の実装
+- [x] STDLIB-IO-FN-039: `use` 関数の実装
 - [ ] STDLIB-IO-FN-040: `useLines` 関数の実装（Reader版）
-- [ ] STDLIB-IO-FN-041: `useLines` 関数の実装（File版）
+- [x] STDLIB-IO-FN-041: `useLines` 関数の実装（File版）
 
 #### kotlin.io.encoding 型の実装
 - [x] STDLIB-IO-ENC-TYPE-001: `Base64` クラスの実装

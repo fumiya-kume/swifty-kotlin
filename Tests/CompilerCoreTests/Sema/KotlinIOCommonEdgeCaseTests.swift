@@ -628,6 +628,54 @@ final class KotlinIOCommonEdgeCaseTests: XCTestCase {
         }
     }
 
+    // MARK: - File read / append helpers
+
+    func testFileReadAppendAndByteHelpersResolve() throws {
+        let source = """
+        import java.io.File
+
+        fun main() {
+            val f = File("/tmp/kswiftk-io.txt")
+            val text: String = f.readText()
+            f.appendText(text)
+            val bytes = f.readBytes()
+            println(bytes)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "File.readText(), appendText(), and readBytes() should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
+    // MARK: - File stream helpers
+
+    func testFileInputAndOutputStreamResolve() throws {
+        let source = """
+        import java.io.File
+
+        fun main() {
+            val f = File("/tmp/kswiftk-io.txt")
+            val source = f.inputStream()
+            val sink = f.outputStream()
+            println(source)
+            println(sink)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "File.inputStream() and outputStream() should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     // MARK: - java.io.Closeable maps to kotlin.io.Closeable
 
     func testJavaIOCloseableIsAcceptedByUseExtension() throws {
