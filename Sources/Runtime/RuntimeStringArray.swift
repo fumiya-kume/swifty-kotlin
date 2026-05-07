@@ -1534,6 +1534,12 @@ public func kk_println_newline() {
     Swift.print()
 }
 
+/// Runtime support for kotlin.io.DEFAULT_BUFFER_SIZE.
+@_cdecl("kk_io_default_buffer_size")
+public func kk_io_default_buffer_size() -> Int {
+    8192
+}
+
 /// Runtime support for kotlin.io.readLine() (STDLIB-063).
 /// Reads a line from stdin. Returns null (runtimeNullSentinelInt) on EOF.
 @_cdecl("kk_readline")

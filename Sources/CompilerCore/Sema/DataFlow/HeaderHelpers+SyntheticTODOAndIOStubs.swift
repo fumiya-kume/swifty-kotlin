@@ -36,6 +36,16 @@ extension DataFlowSemaPhase {
 
         let kotlinIOPkg = ensureSyntheticPackageHierarchy(fqName: [interner.intern("kotlin"), interner.intern("io")], symbols: symbols)
 
+        registerSyntheticIOTopLevelProperty(
+            named: "DEFAULT_BUFFER_SIZE",
+            packageFQName: kotlinIOPkg,
+            returnType: types.intType,
+            externalLinkName: "kk_io_default_buffer_size",
+            constValue: .intLiteral(8192),
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticTopLevelFunction(
             named: "println",
             packageFQName: kotlinIOPkg,
@@ -1430,6 +1440,47 @@ extension DataFlowSemaPhase {
             }
         }
         return fqName
+    }
+
+    private func registerSyntheticIOTopLevelProperty(
+        named name: String,
+        packageFQName: [InternedString],
+        returnType: TypeID,
+        externalLinkName: String,
+        constValue: KIRExprKind? = nil,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let propertyName = interner.intern(name)
+        let propertyFQName = packageFQName + [propertyName]
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
+            symbols.symbol(symbolID)?.kind == .property
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            symbols.setPropertyType(returnType, for: existing)
+            if let constValue {
+                symbols.insertFlags(.constValue, for: existing)
+                symbols.setConstValueExprKind(constValue, for: existing)
+            }
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: constValue == nil ? [.synthetic] : [.synthetic, .constValue]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: propertySymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
+        symbols.setPropertyType(returnType, for: propertySymbol)
+        if let constValue {
+            symbols.setConstValueExprKind(constValue, for: propertySymbol)
+        }
     }
 
     private func registerSyntheticPreconditionFunction(

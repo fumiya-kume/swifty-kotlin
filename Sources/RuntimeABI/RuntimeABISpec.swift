@@ -2439,6 +2439,12 @@ public enum RuntimeABISpec {
 
     public static let ioFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
+            name: "kk_io_default_buffer_size",
+            parameters: [],
+            returnType: .intptr,
+            section: "IO"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_readline",
             parameters: [],
             returnType: .intptr,

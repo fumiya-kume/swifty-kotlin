@@ -416,6 +416,54 @@ final class KotlinIOCommonEdgeCaseTests: XCTestCase {
         }
     }
 
+    // MARK: - DEFAULT_BUFFER_SIZE property
+
+    func testDefaultBufferSizePropertyIsRegistered() throws {
+        let source = """
+        fun main() {
+            println("ok")
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let sema = try XCTUnwrap(ctx.sema)
+            let interner = ctx.interner
+
+            let kotlinIOFQN: [InternedString] = [interner.intern("kotlin"), interner.intern("io")]
+            let propertyFQN = kotlinIOFQN + [interner.intern("DEFAULT_BUFFER_SIZE")]
+            let propertySymbol = try XCTUnwrap(
+                sema.symbols.lookupAll(fqName: propertyFQN).first { symbolID in
+                    sema.symbols.symbol(symbolID)?.kind == .property
+                },
+                "kotlin.io.DEFAULT_BUFFER_SIZE should be registered as a synthetic top-level property"
+            )
+            XCTAssertEqual(sema.symbols.propertyType(for: propertySymbol), sema.types.intType)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: propertySymbol), "kk_io_default_buffer_size")
+            XCTAssertTrue(sema.symbols.symbol(propertySymbol)?.flags.contains(.constValue) == true)
+            XCTAssertEqual(sema.symbols.constValueExprKind(for: propertySymbol), .intLiteral(8192))
+        }
+    }
+
+    func testDefaultBufferSizePropertyResolvesAsInt() throws {
+        let source = """
+        import kotlin.io.DEFAULT_BUFFER_SIZE
+
+        fun main() {
+            val size: Int = DEFAULT_BUFFER_SIZE
+            println(size)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "DEFAULT_BUFFER_SIZE should resolve as Int: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     // MARK: - readLine stub
 
     func testReadLineStubResolvesToNullableString() throws {

@@ -495,7 +495,7 @@
 - [ ] STDLIB-IO-TYPE-007: `OnErrorAction` enum の実装
 
 #### kotlin.io プロパティの実装
-- [ ] STDLIB-IO-PROP-001: `DEFAULT_BUFFER_SIZE` プロパティの実装
+- [x] STDLIB-IO-PROP-001: `DEFAULT_BUFFER_SIZE` プロパティの実装
 - [ ] STDLIB-IO-PROP-002: `extension` 拡張プロパティの実装
 - [ ] STDLIB-IO-PROP-003: `invariantSeparatorsPath` 拡張プロパティの実装
 - [ ] STDLIB-IO-PROP-004: `isRooted` 拡張プロパティの実装
