@@ -24,6 +24,7 @@
 /// - `Path.fileStore(): FileStore` extension function
 /// - `Path.setOwner(value: UserPrincipal): Path` extension function
 /// - `listDirectoryEntries(): List<Path>`
+/// - `Path.isExecutable()`, `isHidden()`, `isReadable()`, `isSameFileAs()`, `isSymbolicLink()`, `isWritable()`
 /// - Top-level `Path(pathString: String)` factory (kotlin.io.path.Path)
 /// - `Paths.get(pathString: String)` factory (java.nio.file.Paths)
 /// - `CopyActionContext` type surface
@@ -518,6 +519,36 @@ extension DataFlowSemaPhase {
             parameters: [],
             returnType: fileStoreType,
             externalLinkName: "kk_path_fileStore",
+            symbols: symbols,
+            interner: interner
+        )
+
+        for (name, link) in [
+            ("isExecutable", "kk_path_isExecutable"),
+            ("isHidden", "kk_path_isHidden"),
+            ("isReadable", "kk_path_isReadable"),
+            ("isSymbolicLink", "kk_path_isSymbolicLink"),
+            ("isWritable", "kk_path_isWritable"),
+        ] {
+            registerPathExtensionFunction(
+                named: name,
+                packageFQName: kotlinIOPathPkg,
+                receiverType: pathType,
+                parameters: [],
+                returnType: types.booleanType,
+                externalLinkName: link,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
+        registerPathExtensionFunction(
+            named: "isSameFileAs",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("other", pathType)],
+            returnType: types.booleanType,
+            externalLinkName: "kk_path_isSameFileAs",
             symbols: symbols,
             interner: interner
         )
