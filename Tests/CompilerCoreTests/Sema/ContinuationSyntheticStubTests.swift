@@ -91,6 +91,42 @@ final class ContinuationSyntheticStubTests: XCTestCase {
             )))
         )
 
+        let continuationFactorySymbol = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: continuationFQName).first { symbolID in
+                sema.symbols.symbol(symbolID)?.kind == .function
+            },
+            "Expected kotlin.coroutines.Continuation factory function to be registered"
+        )
+        let continuationFactorySignature = try XCTUnwrap(sema.symbols.functionSignature(for: continuationFactorySymbol))
+        XCTAssertEqual(sema.symbols.externalLinkName(for: continuationFactorySymbol), "kk_coroutine_continuation_factory")
+        XCTAssertEqual(continuationFactorySignature.typeParameterSymbols.count, 1)
+        let continuationFactoryTParamSymbol = try XCTUnwrap(continuationFactorySignature.typeParameterSymbols.first)
+        let continuationFactoryTType = sema.types.make(.typeParam(TypeParamType(
+            symbol: continuationFactoryTParamSymbol,
+            nullability: .nonNull
+        )))
+        let resultOfContinuationFactoryTType = sema.types.make(.classType(ClassType(
+            classSymbol: resultSymbol,
+            args: [.out(continuationFactoryTType)],
+            nullability: .nonNull
+        )))
+        let continuationFactoryResumeWithType = sema.types.make(.functionType(FunctionType(
+            params: [resultOfContinuationFactoryTType],
+            returnType: sema.types.unitType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let continuationFactoryReturnType = sema.types.make(.classType(ClassType(
+            classSymbol: continuationSymbol,
+            args: [.invariant(continuationFactoryTType)],
+            nullability: .nonNull
+        )))
+        XCTAssertEqual(continuationFactorySignature.parameterTypes, [
+            coroutineContextType,
+            continuationFactoryResumeWithType,
+        ])
+        XCTAssertEqual(continuationFactorySignature.returnType, continuationFactoryReturnType)
+
         let interceptorFQName = ["kotlin", "coroutines", "ContinuationInterceptor"].map { interner.intern($0) }
         let interceptorSymbol = try XCTUnwrap(
             sema.symbols.lookup(fqName: interceptorFQName),
@@ -214,6 +250,44 @@ final class ContinuationSyntheticStubTests: XCTestCase {
             XCTAssertEqual(
                 sema.symbols.externalLinkName(for: chosenCallee),
                 "kk_continuation_intercepted"
+            )
+        }
+    }
+
+    func testContinuationFactoryResolvesInSource() throws {
+        let source = """
+        import kotlin.coroutines.Continuation
+        import kotlin.coroutines.CoroutineContext
+
+        fun probe(context: CoroutineContext): Continuation<Int> {
+            return Continuation<Int>(context = context, resumeWith = { result: Result<Int> -> println(result) })
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "\(ctx.diagnostics.diagnostics)")
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .call(calleeExpr, _, _, _) = expr,
+                      case let .nameRef(calleeName, _) = ast.arena.expr(calleeExpr)
+                else {
+                    return false
+                }
+                return ctx.interner.resolve(calleeName) == "Continuation"
+            })
+            let chosenCallee = try XCTUnwrap(
+                sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                "Expected Continuation(context, resumeWith) to resolve"
+            )
+            XCTAssertEqual(
+                sema.symbols.externalLinkName(for: chosenCallee),
+                "kk_coroutine_continuation_factory"
             )
         }
     }

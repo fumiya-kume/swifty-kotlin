@@ -408,6 +408,7 @@ extension ABILoweringPass {
             interner.intern("kk_coroutine_suspended"),
             interner.intern("kk_coroutine_continuation_new"),
             interner.intern("kk_coroutine_current_context"),
+            interner.intern("kk_coroutine_continuation_factory"),
             interner.intern("kk_create_coroutine_unintercepted"),
             interner.intern("kk_coroutine_state_enter"),
             interner.intern("kk_coroutine_state_set_label"),
