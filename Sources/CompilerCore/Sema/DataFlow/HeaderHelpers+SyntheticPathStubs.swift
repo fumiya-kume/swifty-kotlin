@@ -19,7 +19,7 @@
 /// - `Path.absolute(): Path` extension function
 /// - `Path.invariantSeparatorsPathString: String` extension property
 /// - `Path.writeBytes(array: ByteArray, vararg options: OpenOption)` extension function
-/// - `readText(): String`, `writeText(text: String)`, `readLines(): List<String>`
+/// - `readBytes(): ByteArray`, `readText(): String`, `writeText(text: String)`, `readLines(): List<String>`
 /// - `createDirectories(): Path`, `deleteIfExists(): Boolean`
 /// - `Path.fileStore(): FileStore` extension function
 /// - `listDirectoryEntries(): List<Path>`
@@ -86,22 +86,6 @@ extension DataFlowSemaPhase {
         )))
         symbols.setPropertyType(charSequenceType, for: charSequenceSymbol)
 
-        let charsetSymbol = ensureClassSymbol(
-            named: "Charset",
-            in: kotlinTextPkg,
-            symbols: symbols,
-            interner: interner
-        )
-        if let kotlinTextPkgSymbol {
-            symbols.setParentSymbol(kotlinTextPkgSymbol, for: charsetSymbol)
-        }
-        let charsetType = types.make(.classType(ClassType(
-            classSymbol: charsetSymbol,
-            args: [],
-            nullability: .nonNull
-        )))
-        symbols.setPropertyType(charsetType, for: charsetSymbol)
-
         let byteArraySymbol = ensureClassSymbol(
             named: "ByteArray",
             in: kotlinPkg,
@@ -117,6 +101,22 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(byteArrayType, for: byteArraySymbol)
+
+        let charsetSymbol = ensureClassSymbol(
+            named: "Charset",
+            in: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinTextPkgSymbol {
+            symbols.setParentSymbol(kotlinTextPkgSymbol, for: charsetSymbol)
+        }
+        let charsetType = types.make(.classType(ClassType(
+            classSymbol: charsetSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(charsetType, for: charsetSymbol)
 
         let openOptionSymbol = ensureInterfaceSymbol(
             named: "OpenOption",
@@ -605,6 +605,17 @@ extension DataFlowSemaPhase {
         )
 
         // MARK: - Path read/write methods
+
+        registerPathExtensionFunction(
+            named: "readBytes",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [],
+            returnType: byteArrayType,
+            externalLinkName: "kk_path_readBytes",
+            symbols: symbols,
+            interner: interner
+        )
 
         registerPathMemberFunction(
             named: "readText",

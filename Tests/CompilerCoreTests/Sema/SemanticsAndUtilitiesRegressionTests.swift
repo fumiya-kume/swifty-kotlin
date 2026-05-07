@@ -450,6 +450,55 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathReadBytesExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import kotlin.ByteArray
+        import kotlin.io.path.Path
+        import kotlin.io.path.readBytes
+
+        fun bytes(path: Path): ByteArray {
+            return path.readBytes()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.readBytes extension function in kotlin.io.path should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let byteArraySymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "ByteArray"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let byteArrayType = types.make(.classType(ClassType(classSymbol: byteArraySymbol, args: [], nullability: .nonNull)))
+            let readBytesSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "readBytes"].map(interner.intern))
+            let readBytes = try XCTUnwrap(readBytesSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes.isEmpty
+                    && signature.returnType == byteArrayType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: readBytes), "kk_path_readBytes")
+
+            let signature = try XCTUnwrap(symbols.functionSignature(for: readBytes))
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [])
+            XCTAssertEqual(signature.valueParameterIsVararg, [])
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let callExprs = memberCallExprIDs(named: "readBytes", in: ast, interner: interner)
+
+            XCTAssertEqual(callExprs.count, 1)
+            XCTAssertEqual(sema.bindings.callBinding(for: callExprs[0])?.chosenCallee, readBytes)
+            XCTAssertEqual(sema.bindings.exprTypes[callExprs[0]], byteArrayType)
+        }
+    }
+
     func testPathFileStoreExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import java.nio.file.FileStore
