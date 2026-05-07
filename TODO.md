@@ -99,7 +99,7 @@
 - [ ] STDLIB-COL-FN-005: `aggregateTo` 関数の実装
 - [ ] STDLIB-COL-FN-006: `all` 関数の実装（Array版）
 - [ ] STDLIB-COL-FN-007: `all` 関数の実装（Iterable版）
-- [ ] STDLIB-COL-FN-008: `all` 関数の実装（Map版）
+- [x] STDLIB-COL-FN-008: `all` 関数の実装（Map版）
 - [ ] STDLIB-COL-FN-009: `any` 関数の実装（各オーバーロード）
 - [x] STDLIB-COL-FN-010: `arrayListOf` 関数の実装
 - [ ] STDLIB-COL-FN-011: `asByteArray` 関数の実装
