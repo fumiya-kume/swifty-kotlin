@@ -1059,6 +1059,7 @@ extension DataFlowSemaPhase {
         registerSyntheticPathStubs(symbols: symbols, types: types, interner: interner)
         registerLateListIndexedMembers(symbols: symbols, types: types, interner: interner)
         registerSyntheticCoercionStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticExperimentalBitwiseStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticEnumStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticAtomicStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticUuidStubs(symbols: symbols, types: types, interner: interner)

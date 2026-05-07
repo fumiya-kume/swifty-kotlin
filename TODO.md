@@ -476,14 +476,14 @@
 - [x] STDLIB-EXP-TYPE-006: `ExperimentalTypeInference` アノテーションの実装
 
 #### kotlin.experimental 関数の実装
-- [ ] STDLIB-EXP-FN-001: `and` 関数の実装（Byte版）
-- [ ] STDLIB-EXP-FN-002: `and` 関数の実装（Short版）
-- [ ] STDLIB-EXP-FN-003: `inv` 関数の実装（Byte版）
-- [ ] STDLIB-EXP-FN-004: `inv` 関数の実装（Short版）
-- [ ] STDLIB-EXP-FN-005: `or` 関数の実装（Byte版）
-- [ ] STDLIB-EXP-FN-006: `or` 関数の実装（Short版）
-- [ ] STDLIB-EXP-FN-007: `xor` 関数の実装（Byte版）
-- [ ] STDLIB-EXP-FN-008: `xor` 関数の実装（Short版）
+- [x] STDLIB-EXP-FN-001: `and` 関数の実装（Byte版）
+- [x] STDLIB-EXP-FN-002: `and` 関数の実装（Short版）
+- [x] STDLIB-EXP-FN-003: `inv` 関数の実装（Byte版）
+- [x] STDLIB-EXP-FN-004: `inv` 関数の実装（Short版）
+- [x] STDLIB-EXP-FN-005: `or` 関数の実装（Byte版）
+- [x] STDLIB-EXP-FN-006: `or` 関数の実装（Short版）
+- [x] STDLIB-EXP-FN-007: `xor` 関数の実装（Byte版）
+- [x] STDLIB-EXP-FN-008: `xor` 関数の実装（Short版）
 
 #### kotlin.io 型の実装
 - [ ] STDLIB-IO-TYPE-001: `AccessDeniedException` クラスの実装
