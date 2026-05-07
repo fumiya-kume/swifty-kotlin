@@ -337,7 +337,7 @@
 - [ ] STDLIB-ATOMIC-NEW-005: `AtomicLong` クラスの実装
 - [ ] STDLIB-ATOMIC-NEW-006: `AtomicLongArray` クラスの実装（kotlin.concurrent.atomics パッケージ版）
 - [x] STDLIB-ATOMIC-NEW-007: `AtomicNativePtr` クラスの実装
-- [ ] STDLIB-ATOMIC-NEW-008: `AtomicReference<T>` クラスの実装（kotlin.concurrent.atomics パッケージ版）
+- [x] STDLIB-ATOMIC-NEW-008: `AtomicReference<T>` クラスの実装（kotlin.concurrent.atomics パッケージ版）
 - [x] STDLIB-ATOMIC-NEW-009: `ExperimentalAtomicApi` アノテーションの実装
 
 #### kotlin.concurrent.atomics 関数の実装
