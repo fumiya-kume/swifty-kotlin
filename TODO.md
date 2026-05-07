@@ -405,7 +405,7 @@
 
 #### kotlin.coroutines 関数の実装
 - [ ] STDLIB-COROUTINE-FN-001: `Continuation` 関数の実装（factory版）
-- [ ] STDLIB-COROUTINE-FN-002: `createCoroutine` 関数の実装（各オーバーロード）
+- [x] STDLIB-COROUTINE-FN-002: `createCoroutine` 関数の実装（各オーバーロード）
 - [x] STDLIB-COROUTINE-FN-003: `getPolymorphicElement` 関数の実装
 - [x] STDLIB-COROUTINE-FN-004: `minusPolymorphicKey` 関数の実装
 - [x] STDLIB-COROUTINE-FN-005: `resume` 関数の実装

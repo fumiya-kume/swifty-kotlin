@@ -17,6 +17,7 @@ extension CoroutineLoweringPass {
         let yieldCallee: InternedString
         let runtimeYieldCallee: InternedString
         let startCoroutineCallee: InternedString
+        let createCoroutineCallee: InternedString
         let createCoroutineUninterceptedCallee: InternedString
         let startCoroutineUninterceptedOrReturnCallee: InternedString
         let runtimeCreateCoroutineUninterceptedCallee: InternedString
@@ -633,7 +634,7 @@ extension CoroutineLoweringPass {
         symbolByExprRaw: [Int32: SymbolID],
         using rewrite: SuspendRewriteContext
     ) -> [KIRInstruction]? {
-        guard call.callee == rewrite.createCoroutineUninterceptedCallee,
+        guard (call.callee == rewrite.createCoroutineUninterceptedCallee || call.callee == rewrite.createCoroutineCallee),
               call.arguments.count == 2 || call.arguments.count == 3
         else {
             return nil

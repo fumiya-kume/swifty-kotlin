@@ -438,6 +438,11 @@ extension DataFlowSemaPhase {
             args: [.in(types.unitType)],
             nullability: .nonNull
         )))
+        let invariantContinuationOfUnitType = types.make(.classType(ClassType(
+            classSymbol: continuationSymbol,
+            args: [.invariant(types.unitType)],
+            nullability: .nonNull
+        )))
         let rootCancellationType = types.make(.classType(ClassType(
             classSymbol: rootCancellationSymbol,
             args: [],
@@ -761,6 +766,77 @@ extension DataFlowSemaPhase {
             isSuspend: true,
             nullability: .nonNull
         )))
+        let publicCreateCoroutineName = interner.intern("createCoroutine")
+        let publicCreateCoroutineReceiverTypeParameterName = interner.intern("R")
+        let publicCreateCoroutineReceiverTypeParameterSymbol = symbols.define(
+            kind: .typeParameter,
+            name: publicCreateCoroutineReceiverTypeParameterName,
+            fqName: kotlinCoroutinesPkg + [publicCreateCoroutineName, interner.intern("$synthetic"), publicCreateCoroutineReceiverTypeParameterName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let publicCreateCoroutineReceiverTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: publicCreateCoroutineReceiverTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let publicCreateCoroutineTypeParameterName = interner.intern("T")
+        let publicCreateCoroutineTypeParameterSymbol = symbols.define(
+            kind: .typeParameter,
+            name: publicCreateCoroutineTypeParameterName,
+            fqName: kotlinCoroutinesPkg + [publicCreateCoroutineName, interner.intern("$synthetic"), publicCreateCoroutineTypeParameterName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let publicCreateCoroutineTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: publicCreateCoroutineTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let publicCreateCoroutineContinuationType = types.make(.classType(ClassType(
+            classSymbol: continuationSymbol,
+            args: [.invariant(publicCreateCoroutineTypeParameterType)],
+            nullability: .nonNull
+        )))
+        let publicCreateCoroutineNoReceiverFunctionType = types.make(.functionType(FunctionType(
+            params: [],
+            returnType: publicCreateCoroutineTypeParameterType,
+            isSuspend: true,
+            nullability: .nonNull
+        )))
+        let publicCreateCoroutineWithReceiverFunctionType = types.make(.functionType(FunctionType(
+            receiver: publicCreateCoroutineReceiverTypeParameterType,
+            params: [],
+            returnType: publicCreateCoroutineTypeParameterType,
+            isSuspend: true,
+            nullability: .nonNull
+        )))
+        registerSyntheticCoroutineExtensionFunction(
+            named: "createCoroutine",
+            packageFQName: kotlinCoroutinesPkg,
+            receiverType: publicCreateCoroutineNoReceiverFunctionType,
+            parameters: [(name: "completion", type: publicCreateCoroutineContinuationType)],
+            returnType: invariantContinuationOfUnitType,
+            typeParameterSymbols: [publicCreateCoroutineTypeParameterSymbol],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineExtensionFunction(
+            named: "createCoroutine",
+            packageFQName: kotlinCoroutinesPkg,
+            receiverType: publicCreateCoroutineWithReceiverFunctionType,
+            parameters: [
+                (name: "receiver", type: publicCreateCoroutineReceiverTypeParameterType),
+                (name: "completion", type: publicCreateCoroutineContinuationType),
+            ],
+            returnType: invariantContinuationOfUnitType,
+            typeParameterSymbols: [
+                publicCreateCoroutineReceiverTypeParameterSymbol,
+                publicCreateCoroutineTypeParameterSymbol,
+            ],
+            symbols: symbols,
+            interner: interner
+        )
         registerSyntheticCoroutineExtensionFunction(
             named: "startCoroutine",
             packageFQName: kotlinCoroutinesPkg,

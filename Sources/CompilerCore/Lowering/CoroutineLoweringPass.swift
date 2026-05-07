@@ -123,6 +123,7 @@ final class CoroutineLoweringPass: LoweringPass {
         let kxMiniDelayCallee = ctx.interner.intern("delay")
         let kxMiniYieldCallee = ctx.interner.intern("yield")
         let startCoroutineCallee = ctx.interner.intern("startCoroutine")
+        let createCoroutineCallee = ctx.interner.intern("createCoroutine")
         let createCoroutineUninterceptedCallee = ctx.interner.intern("createCoroutineUnintercepted")
         let startCoroutineUninterceptedOrReturnCallee = ctx.interner.intern("startCoroutineUninterceptedOrReturn")
         let runtimeRunBlockingCallee = ctx.interner.intern("kk_kxmini_run_blocking")
@@ -332,6 +333,7 @@ final class CoroutineLoweringPass: LoweringPass {
             yieldCallee: kxMiniYieldCallee,
             runtimeYieldCallee: runtimeYieldCallee,
             startCoroutineCallee: startCoroutineCallee,
+            createCoroutineCallee: createCoroutineCallee,
             createCoroutineUninterceptedCallee: createCoroutineUninterceptedCallee,
             startCoroutineUninterceptedOrReturnCallee: startCoroutineUninterceptedOrReturnCallee,
             runtimeCreateCoroutineUninterceptedCallee: runtimeCreateCoroutineUninterceptedCallee,
