@@ -573,6 +573,53 @@
 - [ ] STDLIB-IO-PATH-FN-042: `writer` 関数の実装
 - [x] STDLIB-IO-PATH-FN-043: `writeText` 関数の実装
 
+#### kotlin.math プロパティの実装
+- [x] STDLIB-MATH-PROP-001: `absoluteValue` 拡張プロパティの実装（各型）
+- [x] STDLIB-MATH-PROP-002: `E` プロパティの実装
+- [x] STDLIB-MATH-PROP-003: `PI` プロパティの実装
+- [x] STDLIB-MATH-PROP-004: `sign` 拡張プロパティの実装（各型）
+- [x] STDLIB-MATH-PROP-005: `ulp` 拡張プロパティの実装
+
+#### kotlin.math 関数の実装
+- [x] STDLIB-MATH-FN-001: `abs` 関数の実装（各型）
+- [x] STDLIB-MATH-FN-002: `acos` 関数の実装
+- [x] STDLIB-MATH-FN-003: `acosh` 関数の実装
+- [x] STDLIB-MATH-FN-004: `asin` 関数の実装
+- [x] STDLIB-MATH-FN-005: `asinh` 関数の実装
+- [x] STDLIB-MATH-FN-006: `atan` 関数の実装
+- [x] STDLIB-MATH-FN-007: `atan2` 関数の実装
+- [x] STDLIB-MATH-FN-008: `atanh` 関数の実装
+- [x] STDLIB-MATH-FN-009: `cbrt` 関数の実装
+- [x] STDLIB-MATH-FN-010: `ceil` 関数の実装
+- [x] STDLIB-MATH-FN-011: `cos` 関数の実装
+- [x] STDLIB-MATH-FN-012: `cosh` 関数の実装
+- [x] STDLIB-MATH-FN-013: `exp` 関数の実装
+- [x] STDLIB-MATH-FN-014: `expm1` 関数の実装
+- [x] STDLIB-MATH-FN-015: `floor` 関数の実装
+- [x] STDLIB-MATH-FN-016: `hypot` 関数の実装
+- [x] STDLIB-MATH-FN-017: `log` 関数の実装（自然対数）
+- [x] STDLIB-MATH-FN-018: `log` 関数の実装（指定底）
+- [x] STDLIB-MATH-FN-019: `log10` 関数の実装
+- [x] STDLIB-MATH-FN-020: `log1p` 関数の実装
+- [x] STDLIB-MATH-FN-017: `ln` 関数の実装（自然対数）
+- [x] STDLIB-MATH-FN-020: `ln1p` 関数の実装
+- [x] STDLIB-MATH-FN-021: `log2` 関数の実装
+- [x] STDLIB-MATH-FN-022: `max` 関数の実装（各型）
+- [x] STDLIB-MATH-FN-023: `min` 関数の実装（各型）
+- [x] STDLIB-MATH-FN-024: `nextDown` 関数の実装
+- [x] STDLIB-MATH-FN-025: `nextUp` 関数の実装
+- [x] STDLIB-MATH-FN-026: `pow` 関数の実装（各型）
+- [x] STDLIB-MATH-FN-027: `round` 関数の実装
+- [x] STDLIB-MATH-FN-028: `roundToInt` 関数の実装
+- [x] STDLIB-MATH-FN-029: `roundToLong` 関数の実装
+- [x] STDLIB-MATH-FN-030: `sin` 関数の実装
+- [x] STDLIB-MATH-FN-031: `sinh` 関数の実装
+- [x] STDLIB-MATH-FN-032: `sqrt` 関数の実装
+- [x] STDLIB-MATH-FN-033: `tan` 関数の実装
+- [x] STDLIB-MATH-FN-034: `tanh` 関数の実装
+- [x] STDLIB-MATH-FN-035: `trunc` 関数の実装
+- [x] STDLIB-MATH-FN-036: `withSign` 関数の実装
+
 #### kotlin.random 型の実装
 - [x] STDLIB-RANDOM-TYPE-001: `Random` 抽象クラスの実装
 
