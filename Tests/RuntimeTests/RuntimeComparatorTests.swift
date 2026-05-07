@@ -494,6 +494,18 @@ final class RuntimeComparatorTests: XCTestCase {
         XCTAssertEqual(listElements(sorted), [8, 5, 4, 3, 1])
     }
 
+    func testListSortedDescendingComparableObjectsReturnsNewSortedList() {
+        let source = makeList([
+            makeRuntimeString("b"),
+            makeRuntimeString("a"),
+            makeRuntimeString("c"),
+        ])
+        let sorted = kk_list_sortedDescending(source)
+
+        XCTAssertEqual(listElements(sorted).map(runtimeStringValue), ["c", "b", "a"])
+        XCTAssertEqual(listElements(source).map(runtimeStringValue), ["b", "a", "c"])
+    }
+
     func testPrimitiveListSortedByAscending() {
         let source = makeList([22, 12, 21, 11])
         let sorted = kk_list_sortedBy_primitive(source, selectorPtr(selectModTen), 0, 0, nil)
