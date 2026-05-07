@@ -177,6 +177,14 @@ extension DataFlowSemaPhase {
         let kotlinPkgSymbol = symbols.lookup(fqName: kotlinPkg) ?? .invalid
 
         registerSyntheticJvmAnnotationClass(
+            named: "Throws",
+            packageFQName: kotlinJvmPkg,
+            packageSymbol: kotlinJvmPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticJvmAnnotationClass(
             named: "Suppress",
             packageFQName: kotlinPkg,
             packageSymbol: kotlinPkgSymbol,
@@ -760,6 +768,38 @@ extension DataFlowSemaPhase {
             registerSyntheticThrowsExceptionClassesPropertyAndConstructor(
                 ownerSymbol: throwsSymbol,
                 ownerFQName: kotlinPkg + [interner.intern("Throws")],
+                kotlinPkg: kotlinPkg,
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
+        }
+
+        if let throwsSymbol = symbols.lookup(fqName: kotlinJvmPkg + [interner.intern("Throws")]) {
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.target.qualifiedName,
+                    arguments: [
+                        "AnnotationTarget.FUNCTION",
+                        "AnnotationTarget.PROPERTY_GETTER",
+                        "AnnotationTarget.PROPERTY_SETTER",
+                        "AnnotationTarget.CONSTRUCTOR",
+                    ]
+                ),
+                to: throwsSymbol,
+                symbols: symbols
+            )
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.sinceKotlin.qualifiedName,
+                    arguments: ["1.0"]
+                ),
+                to: throwsSymbol,
+                symbols: symbols
+            )
+            registerSyntheticThrowsExceptionClassesPropertyAndConstructor(
+                ownerSymbol: throwsSymbol,
+                ownerFQName: kotlinJvmPkg + [interner.intern("Throws")],
                 kotlinPkg: kotlinPkg,
                 symbols: symbols,
                 types: types,
