@@ -1320,7 +1320,7 @@
 - [ ] STDLIB-JS-FN-010: `json(vararg pairs)` を追加する
 - [ ] STDLIB-JS-FN-011: `jsTypeOf(a)` を追加する
 - [x] STDLIB-JS-FN-012: `parseFloat(s, radix)` を追加する
-- [ ] STDLIB-JS-FN-013: `parseInt(s)` を追加する
+- [x] STDLIB-JS-FN-013: `parseInt(s)` を追加する
 - [x] STDLIB-JS-FN-014: `parseInt(s, radix)` を追加する
 - [ ] STDLIB-JS-FN-015: `RegExp.reset()` を追加する
 - [ ] STDLIB-JS-FN-016: `JsArray<T>.set(index, value)` を追加する
