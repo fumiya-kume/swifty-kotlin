@@ -1047,6 +1047,37 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenBuildSetUseRuntimeBuilder() throws {
+        let source = """
+        fun main() {
+            val s = buildSet {
+                add("a")
+                add("b")
+                add("a")
+                addAll(setOf("c", "b"))
+            }
+            println(s)
+            println(s.size)
+            println(s.contains("c"))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "BuildSetRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[a, b, c]\n3\ntrue\n")
+        }
+    }
+
     func testCodegenMapWithDefaultUsesRuntimeDefaultForGetValue() throws {
         let source = """
         fun main() {
