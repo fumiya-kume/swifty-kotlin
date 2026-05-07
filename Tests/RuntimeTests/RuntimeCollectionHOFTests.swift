@@ -1423,6 +1423,10 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(arrayElements(kk_list_toBooleanArray(list)), [1, 0, 1])
     }
 
+    func testByteListToPrimitiveArrayConversionCopiesElements() {
+        XCTAssertEqual(arrayElements(kk_list_toByteArray(makeList([1, -2, 127]))), [1, -2, 127])
+    }
+
     func testShortListToPrimitiveArrayConversionCopiesElements() {
         XCTAssertEqual(arrayElements(kk_list_toShortArray(makeList([1, -2, 32767]))), [1, -2, 32767])
     }

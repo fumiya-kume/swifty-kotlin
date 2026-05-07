@@ -852,6 +852,37 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testListToByteArrayRoundTrip() throws {
+        let source = """
+        fun main() {
+            val list = listOf(1.toByte(), (-2).toByte(), 127.toByte())
+            val arr = list.toByteArray()
+            println(arr.size)
+            println(arr[0])
+            println(arr[1])
+            println(arr[2])
+
+            arr[0] = (-8).toByte()
+            println(list[0])
+            println(arr[0])
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListToByteArrayRoundTrip",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let out = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(out, "3\n1\n-2\n127\n1\n-8\n")
+        }
+    }
+
     func testListToBooleanArrayRoundTrip() throws {
         let source = """
         fun main() {
