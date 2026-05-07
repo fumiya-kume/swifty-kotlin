@@ -671,35 +671,35 @@
 - [x] STDLIB-RANDOM-FN-007: `nextULong` 拡張関数の実装（各オーバーロード）
 
 #### kotlin.ranges 型の実装
-- [ ] STDLIB-RANGES-TYPE-001: `CharProgression` クラスの実装
-- [ ] STDLIB-RANGES-TYPE-002: `CharRange` クラスの実装
-- [ ] STDLIB-RANGES-TYPE-003: `ClosedFloatingPointRange` インターフェースの実装
-- [ ] STDLIB-RANGES-TYPE-004: `ClosedRange` インターフェースの実装
-- [ ] STDLIB-RANGES-TYPE-005: `IntProgression` クラスの実装
-- [ ] STDLIB-RANGES-TYPE-006: `IntRange` クラスの実装
-- [ ] STDLIB-RANGES-TYPE-007: `LongProgression` クラスの実装
-- [ ] STDLIB-RANGES-TYPE-008: `LongRange` クラスの実装
-- [ ] STDLIB-RANGES-TYPE-009: `OpenEndRange` インターフェースの実装
-- [ ] STDLIB-RANGES-TYPE-010: `UIntProgression` クラスの実装
-- [ ] STDLIB-RANGES-TYPE-011: `UIntRange` クラスの実装
-- [ ] STDLIB-RANGES-TYPE-012: `ULongProgression` クラスの実装
-- [ ] STDLIB-RANGES-TYPE-013: `ULongRange` クラスの実装
+- [x] STDLIB-RANGES-TYPE-001: `CharProgression` クラスの実装
+- [x] STDLIB-RANGES-TYPE-002: `CharRange` クラスの実装
+- [x] STDLIB-RANGES-TYPE-003: `ClosedFloatingPointRange` インターフェースの実装
+- [x] STDLIB-RANGES-TYPE-004: `ClosedRange` インターフェースの実装
+- [x] STDLIB-RANGES-TYPE-005: `IntProgression` クラスの実装
+- [x] STDLIB-RANGES-TYPE-006: `IntRange` クラスの実装
+- [x] STDLIB-RANGES-TYPE-007: `LongProgression` クラスの実装
+- [x] STDLIB-RANGES-TYPE-008: `LongRange` クラスの実装
+- [x] STDLIB-RANGES-TYPE-009: `OpenEndRange` インターフェースの実装
+- [x] STDLIB-RANGES-TYPE-010: `UIntProgression` クラスの実装
+- [x] STDLIB-RANGES-TYPE-011: `UIntRange` クラスの実装
+- [x] STDLIB-RANGES-TYPE-012: `ULongProgression` クラスの実装
+- [x] STDLIB-RANGES-TYPE-013: `ULongRange` クラスの実装
 
 #### kotlin.ranges 関数の実装
-- [ ] STDLIB-RANGES-FN-001: `coerceAtLeast` 関数の実装（各型）
-- [ ] STDLIB-RANGES-FN-002: `coerceAtMost` 関数の実装（各型）
-- [ ] STDLIB-RANGES-FN-003: `coerceIn` 関数の実装（各オーバーロード）
+- [x] STDLIB-RANGES-FN-001: `coerceAtLeast` 関数の実装（各型）
+- [x] STDLIB-RANGES-FN-002: `coerceAtMost` 関数の実装（各型）
+- [x] STDLIB-RANGES-FN-003: `coerceIn` 関数の実装（各オーバーロード）
 - [ ] STDLIB-RANGES-FN-004: `coerceValueIn` 関数の実装
-- [ ] STDLIB-RANGES-FN-005: `contains` 関数の実装（各範囲型）
+- [x] STDLIB-RANGES-FN-005: `contains` 関数の実装（各範囲型）
 - [ ] STDLIB-RANGES-FN-006: `downTo` 関数の実装（各型）
-- [ ] STDLIB-RANGES-FN-007: `first` 関数の実装（各進行）
-- [ ] STDLIB-RANGES-FN-008: `last` 関数の実装（各進行）
-- [ ] STDLIB-RANGES-FN-009: `lastOrNull` 関数の実装（各進行）
-- [ ] STDLIB-RANGES-FN-010: `random` 関数の実装（各範囲型）
-- [ ] STDLIB-RANGES-FN-011: `random` 関数の実装（Random引数版）
-- [ ] STDLIB-RANGES-FN-012: `rangeTo` 関数の実装（各型）
-- [ ] STDLIB-RANGES-FN-013: `step` 関数の実装（各進行）
-- [ ] STDLIB-RANGES-FN-014: `until` 関数の実装（各型）
+- [x] STDLIB-RANGES-FN-007: `first` 関数の実装（各進行）
+- [x] STDLIB-RANGES-FN-008: `last` 関数の実装（各進行）
+- [x] STDLIB-RANGES-FN-009: `lastOrNull` 関数の実装（各進行）
+- [x] STDLIB-RANGES-FN-010: `random` 関数の実装（各範囲型）
+- [x] STDLIB-RANGES-FN-011: `random` 関数の実装（Random引数版）
+- [x] STDLIB-RANGES-FN-012: `rangeTo` 関数の実装（各型）
+- [x] STDLIB-RANGES-FN-013: `step` 関数の実装（各進行）
+- [x] STDLIB-RANGES-FN-014: `until` 関数の実装（各型）
 
 #### kotlin.reflect 型の実装
 - [x] STDLIB-REFLECT-TYPE-001: `AssociatedObjectKey` アノテーションの実装
