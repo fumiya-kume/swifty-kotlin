@@ -774,8 +774,8 @@
 - [ ] STDLIB-SEQ-FN-032: `find` 関数の実装
 - [ ] STDLIB-SEQ-FN-033: `findLast` 関数の実装
 - [ ] STDLIB-SEQ-FN-034: `first` 関数の実装
-- [ ] STDLIB-SEQ-FN-035: `firstNotNullOf` 関数の実装
-- [ ] STDLIB-SEQ-FN-036: `firstNotNullOfOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-035: `firstNotNullOf` 関数の実装
+- [x] STDLIB-SEQ-FN-036: `firstNotNullOfOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-037: `firstOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-038: `flatMap` 関数の実装
 - [ ] STDLIB-SEQ-FN-039: `flatMapIndexed` 関数の実装
@@ -821,7 +821,7 @@
 - [ ] STDLIB-SEQ-FN-079: `minWith` 関数の実装
 - [ ] STDLIB-SEQ-FN-080: `minWithOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-081: `minus` 関数の実装
-- [ ] STDLIB-SEQ-FN-082: `minusElement` 関数の実装
+- [x] STDLIB-SEQ-FN-082: `minusElement` 関数の実装
 - [ ] STDLIB-SEQ-FN-083: `none` 関数の実装
 - [ ] STDLIB-SEQ-FN-084: `onEach` 関数の実装
 - [ ] STDLIB-SEQ-FN-085: `onEachIndexed` 関数の実装
@@ -856,7 +856,7 @@
 - [ ] STDLIB-SEQ-FN-114: `sortedWith` 関数の実装
 - [ ] STDLIB-SEQ-FN-115: `subtract` 関数の実装
 - [ ] STDLIB-SEQ-FN-116: `sum` 関数の実装
-- [ ] STDLIB-SEQ-FN-117: `sumBy` 関数の実装
+- [x] STDLIB-SEQ-FN-117: `sumBy` 関数の実装
 - [ ] STDLIB-SEQ-FN-118: `sumOf` 関数の実装
 - [ ] STDLIB-SEQ-FN-119: `take` 関数の実装
 - [ ] STDLIB-SEQ-FN-120: `takeLast` 関数の実装
