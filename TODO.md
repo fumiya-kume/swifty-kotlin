@@ -591,7 +591,7 @@
 - [x] STDLIB-RANGES-FN-003: `coerceIn` 関数の実装（各オーバーロード）
 - [ ] STDLIB-RANGES-FN-004: `coerceValueIn` 関数の実装
 - [x] STDLIB-RANGES-FN-005: `contains` 関数の実装（各範囲型）
-- [ ] STDLIB-RANGES-FN-006: `downTo` 関数の実装（各型）
+- [x] STDLIB-RANGES-FN-006: `downTo` 関数の実装（各型）
 - [x] STDLIB-RANGES-FN-007: `first` 関数の実装（各進行）
 - [x] STDLIB-RANGES-FN-008: `last` 関数の実装（各進行）
 - [x] STDLIB-RANGES-FN-009: `lastOrNull` 関数の実装（各進行）
