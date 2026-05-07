@@ -1179,7 +1179,7 @@
 - [ ] STDLIB-IO-PATH-FN-067: `Path.setLastModifiedTime(value)` を追加する
 - [ ] STDLIB-IO-PATH-FN-068: `Path.setOwner(value)` を追加する
 - [ ] STDLIB-IO-PATH-FN-069: `Path.setPosixFilePermissions(value)` を追加する
-- [ ] STDLIB-IO-PATH-FN-070: `URI.toPath()` を追加する
+- [x] STDLIB-IO-PATH-FN-070: `URI.toPath()` を追加する
 - [ ] STDLIB-IO-PATH-FN-071: `Path.useDirectoryEntries(glob, block)` を追加する
 - [ ] STDLIB-IO-PATH-FN-072: `Path.useLines(charset, block)` を追加する
 - [ ] STDLIB-IO-PATH-FN-073: `Path.visitFileTree(visitor, maxDepth, followLinks)` を追加する
