@@ -1057,7 +1057,7 @@ public func kk_list_runningReduce(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: In
         invalidContainerPanic(#function, "list")
     }
     guard !list.elements.isEmpty else {
-        return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "Empty collection can't be reduced."), outThrown)
+        return registerRuntimeObject(RuntimeListBox(elements: []))
     }
     var acc = maybeUnbox(list.elements[0])
     var results: [Int] = []
