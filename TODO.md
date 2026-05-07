@@ -254,7 +254,7 @@
 - [ ] STDLIB-COL-FN-180: `scanIndexed` 関数の実装
 - [ ] STDLIB-COL-FN-181: `scanReduce` 関数の実装
 - [x] STDLIB-COL-FN-182: `setOf` 関数の実装
-- [ ] STDLIB-COL-FN-183: `shuffled` 関数の実装
+- [x] STDLIB-COL-FN-183: `shuffled` 関数の実装
 - [x] STDLIB-COL-FN-184: `single` 関数の実装
 - [ ] STDLIB-COL-FN-185: `singleOrNull` 関数の実装
 - [x] STDLIB-COL-FN-186: `slice` 関数の実装
