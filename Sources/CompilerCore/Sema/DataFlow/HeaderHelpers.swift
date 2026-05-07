@@ -1077,6 +1077,7 @@ extension DataFlowSemaPhase {
         registerSyntheticDateFormatStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticMetaprogStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsStubs(symbols: symbols, interner: interner)
+        registerSyntheticJvmAnnotationPropertyStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticNativeInteropStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticBigIntegerStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticNativeInvokeStubs(symbols: symbols, interner: interner)
