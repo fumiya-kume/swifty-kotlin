@@ -67,7 +67,7 @@
 - [ ] STDLIB-COL-CONCRETE-004: `HashSet<E>` 具象クラスの実装（現在は型エイリアスのみ）
 - [ ] STDLIB-COL-CONCRETE-005: `LinkedHashMap<K,V>` 具象クラスの実装（現在は型エイリアスのみ）
 - [x] STDLIB-COL-CONCRETE-006: `LinkedHashSet<E>` 具象クラスの実装（現在は型エイリアスのみ）
-- [ ] STDLIB-COL-CONCRETE-007: `ArrayDeque<E>` 具象クラスの実装
+- [x] STDLIB-COL-CONCRETE-007: `ArrayDeque<E>` 具象クラスの実装
 
 #### kotlin.collections プリミティブイテレータの実装
 - [x] STDLIB-COL-ITERATOR-001: `BooleanIterator` クラスの実装
@@ -84,7 +84,7 @@
 - [x] STDLIB-COL-OTHER-002: `Grouping<T,K>` インターフェースの実装
 - [x] STDLIB-COL-OTHER-003: `RandomAccess` マーカーインターフェースの実装
 - [x] STDLIB-COL-OTHER-004: `MutableIterable<T>` インターフェースの実装
-- [ ] STDLIB-COL-OTHER-005: `MutableIterator<T>` インターフェースの実装
+- [x] STDLIB-COL-OTHER-005: `MutableIterator<T>` インターフェースの実装
 - [x] STDLIB-COL-OTHER-006: `MutableListIterator<T>` インターフェースの実装
 
 #### kotlin.collections プロパティの実装
