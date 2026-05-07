@@ -398,7 +398,7 @@
 - [x] STDLIB-COROUTINE-TYPE-005: `CoroutineContext` インターフェースの実装
 - [x] STDLIB-COROUTINE-TYPE-006: `EmptyCoroutineContext` クラスの実装
 - [x] STDLIB-COROUTINE-TYPE-007: `RestrictsSuspension` アノテーションの実装
-- [ ] STDLIB-COROUTINE-TYPE-008: `SuspendFunction<R>` インターフェースの実装
+- [x] STDLIB-COROUTINE-TYPE-008: `SuspendFunction<R>` インターフェースの実装
 
 #### kotlin.coroutines プロパティの実装
 - [x] STDLIB-COROUTINE-PROP-001: `coroutineContext` 拡張プロパティの実装

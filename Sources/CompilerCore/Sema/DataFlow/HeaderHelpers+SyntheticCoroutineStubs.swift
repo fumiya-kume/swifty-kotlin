@@ -137,6 +137,42 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let suspendFunctionSymbol = ensureInterfaceSymbol(
+            named: "SuspendFunction",
+            in: kotlinCoroutinesPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let suspendFunctionTypeParamName = interner.intern("R")
+        let suspendFunctionTypeParamFQName = kotlinCoroutinesPkg + [
+            interner.intern("SuspendFunction"),
+            suspendFunctionTypeParamName,
+        ]
+        let suspendFunctionTypeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: suspendFunctionTypeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: suspendFunctionTypeParamName,
+                fqName: suspendFunctionTypeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        symbols.setParentSymbol(suspendFunctionSymbol, for: suspendFunctionTypeParamSymbol)
+        let suspendFunctionReturnType = types.make(.typeParam(TypeParamType(
+            symbol: suspendFunctionTypeParamSymbol,
+            nullability: .nonNull
+        )))
+        let suspendFunctionType = types.make(.classType(ClassType(
+            classSymbol: suspendFunctionSymbol,
+            args: [.out(suspendFunctionReturnType)],
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([suspendFunctionTypeParamSymbol], for: suspendFunctionSymbol)
+        types.setNominalTypeParameterVariances([.out], for: suspendFunctionSymbol)
+        symbols.setPropertyType(suspendFunctionType, for: suspendFunctionSymbol)
         let continuationTypeParamName = interner.intern("T")
         let continuationTypeParamFQName = kotlinCoroutinesPkg + [interner.intern("Continuation"), continuationTypeParamName]
         let continuationTypeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: continuationTypeParamFQName) {
