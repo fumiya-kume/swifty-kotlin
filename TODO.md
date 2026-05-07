@@ -1285,7 +1285,7 @@
 - [x] STDLIB-JS-TYPE-015: `kotlin.js.JsClass` external interface を追加する
 - [x] STDLIB-JS-TYPE-016: `kotlin.js.JsException` class を追加する
 - [ ] STDLIB-JS-TYPE-017: `kotlin.js.JsExport` annotation を追加する
-- [ ] STDLIB-JS-TYPE-018: `kotlin.js.JsExternalArgument` annotation を追加する
+- [x] STDLIB-JS-TYPE-018: `kotlin.js.JsExternalArgument` annotation を追加する
 - [x] STDLIB-JS-TYPE-019: `kotlin.js.JsExternalInheritorsOnly` annotation を追加する
 - [ ] STDLIB-JS-TYPE-020: `kotlin.js.JsFileName` annotation を追加する
 - [ ] STDLIB-JS-TYPE-021: `kotlin.js.JsFun` annotation を追加する
