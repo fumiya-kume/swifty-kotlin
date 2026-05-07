@@ -185,7 +185,7 @@
 - [x] STDLIB-COL-FN-089: `getValue` 関数の実装
 - [ ] STDLIB-COL-FN-090: `groupBy` 関数の実装
 - [x] STDLIB-COL-FN-091: `groupByTo` 関数の実装
-- [ ] STDLIB-COL-FN-092: `groupingBy` 関数の実装
+- [x] STDLIB-COL-FN-092: `groupingBy` 関数の実装
 - [x] STDLIB-COL-FN-093: `hashMapOf` 関数の実装
 - [ ] STDLIB-COL-FN-094: `hashSetOf` 関数の実装
 - [x] STDLIB-COL-FN-095: `indexOf` 関数の実装
