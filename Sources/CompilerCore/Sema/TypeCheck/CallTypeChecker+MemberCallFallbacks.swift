@@ -589,6 +589,7 @@ extension CallTypeChecker {
         if isCollectionReturningMember(
             calleeName,
             isMapReceiver: isMapReceiver,
+            isListReceiver: isListReceiver,
             isSetReceiver: isSetReceiver,
             interner: interner
         ) {
@@ -636,6 +637,7 @@ extension CallTypeChecker {
             memberName: calleeName,
             receiverElementType: receiverElementType,
             isMapReceiver: isMapReceiver,
+            isListReceiver: isListReceiver,
             isSetReceiver: isSetReceiver,
             isSequenceReceiver: isSequenceReceiver,
             args: args,
@@ -648,7 +650,7 @@ extension CallTypeChecker {
         // filter, etc.) should return Sequence<E> so the KIR builder's
         // sequence HOF handler recognises chained calls (STDLIB-471).
         if isSequenceReceiver,
-           isCollectionReturningMember(calleeName, isMapReceiver: false, isSetReceiver: false, interner: interner),
+           isCollectionReturningMember(calleeName, isMapReceiver: false, isListReceiver: false, isSetReceiver: false, interner: interner),
            resultType == sema.types.anyType
         {
             resultType = makeSyntheticSequenceType(
@@ -1181,6 +1183,7 @@ extension CallTypeChecker {
     func isCollectionReturningMember(
         _ memberName: InternedString,
         isMapReceiver: Bool,
+        isListReceiver: Bool,
         isSetReceiver: Bool,
         interner: StringInterner
     ) -> Bool {
@@ -1222,7 +1225,7 @@ extension CallTypeChecker {
             return isMapReceiver
         }
         if setReturningMembers.contains(memberName) {
-            return isSetReceiver
+            return isListReceiver || isSetReceiver
         }
         return collectionReturningMembers.contains(memberName)
     }
@@ -1329,6 +1332,7 @@ extension CallTypeChecker {
         memberName: InternedString,
         receiverElementType: TypeID,
         isMapReceiver: Bool,
+        isListReceiver: Bool,
         isSetReceiver: Bool,
         isSequenceReceiver: Bool = false,
         args: [CallArgument],
@@ -1832,7 +1836,7 @@ extension CallTypeChecker {
             )))
         }
 
-        if isSetReceiver,
+        if (isListReceiver || isSetReceiver),
            (memberName == interner.intern("intersect") ||
                memberName == interner.intern("union") ||
                memberName == interner.intern("subtract")),

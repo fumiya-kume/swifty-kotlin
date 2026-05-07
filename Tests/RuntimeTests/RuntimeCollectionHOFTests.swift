@@ -1366,6 +1366,15 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(setElements(subtracted), [1])
     }
 
+    func testListSubtractAcceptsIterableInputDeduplicatesAndPreservesReceiverOrder() {
+        let left = makeList([1, 2, 2, 3, 4])
+        let right = makeList([2, 4, 2])
+
+        let subtracted = kk_list_subtract(left, right)
+
+        XCTAssertEqual(setElements(subtracted), [1, 3])
+    }
+
     func testBoolAbiForCollectionHelpersReturnsRaw() {
         let source = makeList([1, 2, 3])
         XCTAssertEqual(kk_unbox_bool(kk_list_contains(source, 2)), 1)

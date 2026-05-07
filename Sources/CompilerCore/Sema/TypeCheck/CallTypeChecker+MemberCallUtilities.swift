@@ -30,6 +30,7 @@ extension CallTypeChecker {
                  "kk_sequence_plus_element", "kk_sequence_minus",
                  "kk_array_binarySearch_compare", "kk_array_binarySearch",
                  "kk_list_windowed_transform",
+                 "kk_list_intersect", "kk_list_union", "kk_list_subtract",
                  "kk_set_contains", "kk_set_containsAll", "kk_set_intersect", "kk_set_union", "kk_set_subtract",
                  "kk_map_get", "kk_map_contains_key", "kk_map_contains_value",
                  "kk_map_getValue", "kk_map_getOrDefault", "kk_map_getOrElse":
@@ -78,6 +79,9 @@ extension CallTypeChecker {
              (knownNames.kotlinCollectionsListFQName, interner.intern("minOfWith")),
              (knownNames.kotlinCollectionsListFQName, interner.intern("minOfWithOrNull")),
              (knownNames.kotlinCollectionsListFQName, interner.intern("windowed")),
+             (knownNames.kotlinCollectionsListFQName, interner.intern("intersect")),
+             (knownNames.kotlinCollectionsListFQName, interner.intern("union")),
+             (knownNames.kotlinCollectionsListFQName, interner.intern("subtract")),
              (knownNames.kotlinCollectionsListFQName, knownNames.isEmpty),
              ([interner.intern("kotlin"), interner.intern("Array")], interner.intern("binarySearch")),
              (knownNames.kotlinCollectionsSetFQName, interner.intern("contains")),
