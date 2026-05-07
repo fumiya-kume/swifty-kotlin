@@ -21,6 +21,7 @@ import Foundation
 /// | ExperimentalJsExport      | kotlin.js            | WARNING  |
 /// | ExperimentalJsFileName    | kotlin.js            | WARNING  |
 /// | ExperimentalJsStatic      | kotlin.js            | WARNING  |
+/// | ExperimentalWasmJsInterop | kotlin.js            | WARNING  |
 /// | ExpectRefinement          | kotlin.experimental  | @ExperimentalMultiplatform |
 ///
 /// See: https://kotlinlang.org/api/latest/jvm/stdlib/
@@ -171,6 +172,22 @@ extension DataFlowSemaPhase {
             packageSymbol: kotlinJsPkgSymbol,
             severity: "WARNING",
             targetArguments: nil,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- kotlin.js.ExperimentalWasmJsInterop (WARNING) ---
+        registerSyntheticExperimentalMarker(
+            named: "ExperimentalWasmJsInterop",
+            packageFQName: kotlinJsPkg,
+            packageSymbol: kotlinJsPkgSymbol,
+            severity: "WARNING",
+            targetArguments: [
+                "AnnotationTarget.CLASS",
+                "AnnotationTarget.FUNCTION",
+                "AnnotationTarget.PROPERTY",
+                "AnnotationTarget.TYPEALIAS",
+            ],
             symbols: symbols,
             interner: interner
         )
