@@ -450,6 +450,55 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathFileStoreExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import java.nio.file.FileStore
+        import kotlin.io.path.Path
+        import kotlin.io.path.fileStore
+
+        fun store(path: Path): FileStore {
+            return path.fileStore()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.fileStore extension function in kotlin.io.path should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let fileStoreSymbol = try XCTUnwrap(symbols.lookup(fqName: ["java", "nio", "file", "FileStore"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let fileStoreType = types.make(.classType(ClassType(classSymbol: fileStoreSymbol, args: [], nullability: .nonNull)))
+            let fileStoreSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "fileStore"].map(interner.intern))
+            let fileStore = try XCTUnwrap(fileStoreSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes.isEmpty
+                    && signature.returnType == fileStoreType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: fileStore), "kk_path_fileStore")
+
+            let signature = try XCTUnwrap(symbols.functionSignature(for: fileStore))
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [])
+            XCTAssertEqual(signature.valueParameterIsVararg, [])
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let callExprs = memberCallExprIDs(named: "fileStore", in: ast, interner: interner)
+
+            XCTAssertEqual(callExprs.count, 1)
+            XCTAssertEqual(sema.bindings.callBinding(for: callExprs[0])?.chosenCallee, fileStore)
+            XCTAssertEqual(sema.bindings.exprTypes[callExprs[0]], fileStoreType)
+        }
+    }
+
     func testPathWriteBytesExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import kotlin.io.path.Path
