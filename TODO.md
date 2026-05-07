@@ -176,7 +176,7 @@
 - [x] STDLIB-COL-FN-102: `joinTo` 関数の実装
 - [ ] STDLIB-COL-FN-103: `joinToString` 関数の実装
 - [x] STDLIB-COL-FN-104: `last` 関数の実装
-- [ ] STDLIB-COL-FN-105: `lastIndexOf` 関数の実装
+- [x] STDLIB-COL-FN-105: `lastIndexOf` 関数の実装
 - [x] STDLIB-COL-FN-106: `lastOrNull` 関数の実装
 - [x] STDLIB-COL-FN-107: `linkedMapOf` 関数の実装
 - [x] STDLIB-COL-FN-108: `linkedSetOf` 関数の実装
