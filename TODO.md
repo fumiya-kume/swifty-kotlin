@@ -659,7 +659,7 @@
 - [x] STDLIB-MATH-FN-036: `withSign` 関数の実装
 
 #### kotlin.random 型の実装
-- [ ] STDLIB-RANDOM-TYPE-001: `Random` 抽象クラスの実装
+- [x] STDLIB-RANDOM-TYPE-001: `Random` 抽象クラスの実装
 
 #### kotlin.random 関数の実装
 - [ ] STDLIB-RANDOM-FN-001: `asJavaRandom` 関数の実装
