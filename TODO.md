@@ -182,7 +182,7 @@
 - [x] STDLIB-COL-FN-108: `linkedSetOf` 関数の実装
 - [x] STDLIB-COL-FN-109: `listOf` 関数の実装
 - [x] STDLIB-COL-FN-110: `listOfNotNull` 関数の実装
-- [ ] STDLIB-COL-FN-111: `map` 関数の実装
+- [x] STDLIB-COL-FN-111: `map` 関数の実装
 - [x] STDLIB-COL-FN-112: `mapIndexed` 関数の実装
 - [x] STDLIB-COL-FN-113: `mapIndexedNotNull` 関数の実装
 - [ ] STDLIB-COL-FN-114: `mapIndexedNotNullTo` 関数の実装
