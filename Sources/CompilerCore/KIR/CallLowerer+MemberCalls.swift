@@ -8444,6 +8444,8 @@ extension CallLowerer {
                 return interner.intern("kk_list_reduceRightIndexedOrNull")
             case "reduceRightOrNull":
                 return interner.intern("kk_list_reduceRightOrNull")
+            case "runningFold":
+                return interner.intern("kk_list_runningFold")
             case "runningReduce":
                 return interner.intern("kk_list_runningReduce")
             case "runningFoldIndexed":
