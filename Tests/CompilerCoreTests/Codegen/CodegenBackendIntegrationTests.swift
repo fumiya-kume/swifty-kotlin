@@ -1339,6 +1339,33 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenListWithIndexSupportsDestructuringIteration() throws {
+        let source = """
+        fun main() {
+            val values = listOf(4, 5)
+            for ((index, value) in values.withIndex()) {
+                println(index)
+                println(value)
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListWithIndexRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "0\n4\n1\n5\n")
+        }
+    }
+
     func testCodegenListTransformsUseRuntimeHelpers() throws {
         let source = """
         fun main() {
