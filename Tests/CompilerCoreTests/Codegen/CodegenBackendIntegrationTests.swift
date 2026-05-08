@@ -1169,6 +1169,41 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenListUnionUsesRuntimeSetOperation() throws {
+        let source = """
+        fun main() {
+            val values: List<Int> = listOf(1, 2, 2, 3)
+            val other: List<Int> = listOf(3, 4, 2, 5)
+            val unioned = values.union(other)
+            println(unioned.size)
+            println(unioned.contains(1))
+            println(unioned.contains(4))
+            println(unioned.contains(9))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListUnionRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            do {
+                try LinkPhase().run(ctx)
+            } catch {
+                let diagnostics = ctx.diagnostics.diagnostics.map { "\($0.code): \($0.message)" }
+                XCTFail("Link failed for List.union: \(diagnostics)")
+                throw error
+            }
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "5\ntrue\ntrue\nfalse\n")
+        }
+    }
+
     func testCodegenListJoinToStringUsesRuntimeDefaultsAndNamedArguments() throws {
         let source = """
         fun main() {

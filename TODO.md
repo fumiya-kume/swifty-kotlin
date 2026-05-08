@@ -292,7 +292,7 @@
 - [ ] STDLIB-COL-FN-218: `toSortedSet` 関数の実装
 - [ ] STDLIB-COL-FN-219: `toTypedArray` 関数の実装
 - [ ] STDLIB-COL-FN-220: `toTypeArray` 関数の実装
-- [ ] STDLIB-COL-FN-221: `union` 関数の実装
+- [x] STDLIB-COL-FN-221: `union` 関数の実装
 - [x] STDLIB-COL-FN-222: `unzip` 関数の実装
 - [ ] STDLIB-COL-FN-223: `withDefault` 関数の実装
 - [x] STDLIB-COL-FN-224: `withIndex` 関数の実装

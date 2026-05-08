@@ -2785,6 +2785,36 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testListUnionUsesRuntimeExternalLinkAndReturnsSet() throws {
+        let source = """
+        fun combine(values: List<Int>, other: List<Int>) {
+            val unioned: Set<Int> = values.union(other)
+            unioned.contains(4)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Unexpected diagnostics: \(ctx.diagnostics.diagnostics.map(\.message))")
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "union"
+            })
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_list_union")
+            let resultType = try XCTUnwrap(sema.bindings.exprTypes[callExpr])
+            guard case let .classType(classType) = sema.types.kind(of: resultType),
+                  let symbol = sema.symbols.symbol(classType.classSymbol)
+            else {
+                return XCTFail("Expected List.union to return Set")
+            }
+            XCTAssertEqual(ctx.interner.resolve(symbol.name), "Set")
+        }
+    }
+
     func testListToBooleanArrayUsesRuntimeExternalLink() throws {
         let source = """
         fun convert(values: List<Boolean>) {

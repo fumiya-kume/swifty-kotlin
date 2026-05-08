@@ -1396,6 +1396,15 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(setElements(subtracted), [1, 3])
     }
 
+    func testListUnionAcceptsListInputDeduplicatesAndPreservesOrder() {
+        let left = makeList([1, 2, 2, 3])
+        let right = makeList([3, 4, 2, 5])
+
+        let unioned = kk_list_union(left, right)
+
+        XCTAssertEqual(setElements(unioned), [1, 2, 3, 4, 5])
+    }
+
     func testBoolAbiForCollectionHelpersReturnsRaw() {
         let source = makeList([1, 2, 3])
         XCTAssertEqual(kk_unbox_bool(kk_list_contains(source, 2)), 1)
