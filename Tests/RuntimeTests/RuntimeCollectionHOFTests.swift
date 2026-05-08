@@ -1000,6 +1000,25 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(kk_list_last(makeList([]), 0, 0, &thrown), runtimeExceptionCaughtSentinel)
     }
 
+    func testMinWithOrNullReturnsComparatorMinimumAndNullOnEmpty() {
+        var thrown = 0
+        let result = kk_list_minWithOrNull(
+            makeList([5, 2, 3]),
+            unsafeBitCast(reverseIntComparator, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(result, 5)
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        XCTAssertEqual(
+            kk_list_minWithOrNull(makeList([]), unsafeBitCast(reverseIntComparator, to: Int.self), 0, &thrown),
+            runtimeNullSentinelInt
+        )
+        XCTAssertEqual(thrown, 0)
+    }
+
     func testListSliceRangeAndIterableReturnSelectedElements() {
         let source = makeList([10, 20, 30, 40, 50])
         let range = kk_op_rangeTo(1, 3)
