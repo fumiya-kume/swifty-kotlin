@@ -229,7 +229,7 @@
 - [x] STDLIB-COL-FN-155: `plus` 関数の実装
 - [ ] STDLIB-COL-FN-156: `plusAssign` 関数の実装
 - [x] STDLIB-COL-FN-157: `plusElement` 関数の実装
-- [ ] STDLIB-COL-FN-158: `random` 関数の実装
+- [x] STDLIB-COL-FN-158: `random` 関数の実装
 - [ ] STDLIB-COL-FN-159: `randomOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-160: `reduce` 関数の実装
 - [ ] STDLIB-COL-FN-161: `reduceIndexed` 関数の実装

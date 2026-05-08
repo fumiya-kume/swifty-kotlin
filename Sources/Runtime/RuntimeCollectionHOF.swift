@@ -2452,13 +2452,13 @@ public func kk_list_shuffled_random(_ listRaw: Int, _ randomRaw: Int) -> Int {
 @_cdecl("kk_list_random")
 public func kk_list_random(_ listRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
-    guard let list = runtimeListBox(from: listRaw) else {
-        invalidContainerPanic(#function, "list")
+    guard let elements = runtimeCollectionElements(from: listRaw) else {
+        invalidContainerPanic(#function, "collection")
     }
-    guard !list.elements.isEmpty else {
-        return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "NoSuchElementException: List is empty."), outThrown)
+    guard !elements.isEmpty else {
+        return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "NoSuchElementException: Collection is empty."), outThrown)
     }
-    return list.elements.randomElement()!
+    return elements.randomElement()!
 }
 
 @_cdecl("kk_list_randomOrNull")

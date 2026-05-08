@@ -62,7 +62,8 @@ extension DataFlowSemaPhase {
             name: String,
             parameterTypes: [TypeID],
             returnType: TypeID,
-            flags: SymbolFlags
+            flags: SymbolFlags,
+            externalLinkName: String? = nil
         ) {
             let memberName = interner.intern(name)
             let memberFQName = collectionFQName + [memberName]
@@ -76,6 +77,9 @@ extension DataFlowSemaPhase {
                 flags: flags
             )
             symbols.setParentSymbol(collectionInterfaceSymbol, for: memberSymbol)
+            if let externalLinkName {
+                symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+            }
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: collectionReceiverType,
@@ -152,6 +156,15 @@ extension DataFlowSemaPhase {
                 for: lastSymbol
             )
         }
+
+        // random(): E
+        defineCollectionFunctionMember(
+            name: "random",
+            parameterTypes: [],
+            returnType: typeParamType,
+            flags: [.synthetic],
+            externalLinkName: "kk_list_random"
+        )
 
         return collectionInterfaceSymbol
     }
