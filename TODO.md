@@ -316,7 +316,7 @@
 - [ ] STDLIB-CONC-TYPE-003: `AtomicIntArray` クラスの実装
 - [x] STDLIB-CONC-TYPE-004: `AtomicLong` クラスの実装
 - [ ] STDLIB-CONC-TYPE-005: `AtomicLongArray` クラスの実装
-- [ ] STDLIB-CONC-TYPE-006: `AtomicReference<T>` クラスの実装
+- [x] STDLIB-CONC-TYPE-006: `AtomicReference<T>` クラスの実装
 - [ ] STDLIB-CONC-TYPE-007: `Volatile` アノテーションの実装
 
 #### kotlin.concurrent 関数の実装
