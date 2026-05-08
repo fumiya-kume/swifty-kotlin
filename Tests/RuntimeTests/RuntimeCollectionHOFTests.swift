@@ -1222,6 +1222,8 @@ final class RuntimeCollectionHOFTests: XCTestCase {
 
         _ = kk_map_forEach(map, unsafeBitCast(accumulateEntryScore, to: Int.self), 0, nil)
         XCTAssertEqual(gHOFState.sumSnapshot(), 123)
+        XCTAssertEqual(kk_map_getOrDefault(map, 2, 99), 21)
+        XCTAssertEqual(kk_map_getOrDefault(map, 9, 99), 99)
 
         var thrown = 0
         XCTAssertEqual(kk_map_getValue(map, 2, &thrown), 21)
