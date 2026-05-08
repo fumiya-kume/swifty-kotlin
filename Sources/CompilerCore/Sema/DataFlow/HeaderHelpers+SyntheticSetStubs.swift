@@ -397,6 +397,14 @@ extension DataFlowSemaPhase {
             typeParamSymbol: typeParamSymbol,
             typeParamType: typeParamType
         )
+        registerMutableSetPlusAssignMembers(
+            symbols: symbols, types: types, interner: interner,
+            mutableSetFQName: mutableSetFQName,
+            mutableSetInterfaceSymbol: mutableSetInterfaceSymbol,
+            collectionInterfaceSymbol: collectionInterfaceSymbol,
+            typeParamSymbol: typeParamSymbol,
+            typeParamType: typeParamType
+        )
         registerMutableSetRemoveAllMember(
             symbols: symbols, types: types, interner: interner,
             mutableSetFQName: mutableSetFQName,
@@ -715,6 +723,65 @@ extension DataFlowSemaPhase {
             ),
             for: memberSymbol
         )
+    }
+
+    private func registerMutableSetPlusAssignMembers(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        mutableSetFQName: [InternedString],
+        mutableSetInterfaceSymbol: SymbolID,
+        collectionInterfaceSymbol: SymbolID,
+        typeParamSymbol: SymbolID,
+        typeParamType: TypeID
+    ) {
+        let memberName = interner.intern("plusAssign")
+        let memberFQName = mutableSetFQName + [memberName]
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: mutableSetInterfaceSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        let collectionType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let overloads: [(params: [TypeID], external: String)] = [
+            ([typeParamType], "kk_mutable_set_add"),
+            ([collectionType], "kk_mutable_set_addAll"),
+        ]
+
+        for overload in overloads {
+            guard symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.parameterTypes == overload.params &&
+                    signature.returnType == types.unitType
+            }) == nil else {
+                continue
+            }
+
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: memberName,
+                fqName: memberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .operatorFunction]
+            )
+            symbols.setParentSymbol(mutableSetInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName(overload.external, for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: overload.params,
+                    returnType: types.unitType,
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
     }
 
     private func registerMutableSetRemoveAllMember(

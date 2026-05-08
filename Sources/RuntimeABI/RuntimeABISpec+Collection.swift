@@ -2162,6 +2162,15 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_mutable_map_plusAssign_pair",
+            parameters: [
+                RuntimeABIParameter(name: "mapRaw", type: .intptr),
+                RuntimeABIParameter(name: "pairRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
     ]
 
     private static let hofLambdaParams: [RuntimeABIParameter] = [
