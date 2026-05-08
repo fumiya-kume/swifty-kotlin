@@ -957,6 +957,60 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathDeleteExtensionFunctionsInIOPathPackageSurfaceAreResolved() throws {
+        let source = """
+        import kotlin.io.path.Path
+        import kotlin.io.path.deleteExisting
+        import kotlin.io.path.deleteRecursively
+
+        fun deletePaths(path: Path) {
+            path.deleteExisting()
+            path.deleteRecursively()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path delete extension functions in kotlin.io.path should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let expectedDeletes: [(name: String, externalLinkName: String)] = [
+                ("deleteExisting", "kk_path_deleteExisting"),
+                ("deleteRecursively", "kk_path_deleteRecursively"),
+            ]
+            let ast = try XCTUnwrap(ctx.ast)
+
+            for expected in expectedDeletes {
+                let fqName = ["kotlin", "io", "path", expected.name].map(interner.intern)
+                let function = try XCTUnwrap(symbols.lookupAll(fqName: fqName).first { symbolID in
+                    guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                    return signature.receiverType == pathType
+                        && signature.parameterTypes.isEmpty
+                        && signature.returnType == types.unitType
+                })
+                XCTAssertEqual(symbols.externalLinkName(for: function), expected.externalLinkName)
+
+                let signature = try XCTUnwrap(symbols.functionSignature(for: function))
+                XCTAssertEqual(signature.valueParameterHasDefaultValues, [])
+                XCTAssertEqual(signature.valueParameterIsVararg, [])
+
+                let callExprs = memberCallExprIDs(named: expected.name, in: ast, interner: interner)
+                XCTAssertEqual(callExprs.count, 1)
+                XCTAssertEqual(sema.bindings.callBinding(for: callExprs[0])?.chosenCallee, function)
+                XCTAssertEqual(sema.bindings.exprTypes[callExprs[0]], types.unitType)
+            }
+        }
+    }
+
     func testFileVisitorBuilderInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import kotlin.io.path.FileVisitorBuilder
