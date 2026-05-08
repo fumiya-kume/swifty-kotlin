@@ -2694,6 +2694,52 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testMutableCollectionMinusAssignMembersUseRuntimeExternalLinks() throws {
+        let source = """
+        fun mutate(list: MutableList<Int>, set: MutableSet<Int>) {
+            list -= 1
+            list -= listOf(2, 3)
+            set -= 1
+            set -= listOf(2, 3)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            var compoundAssigns: [ExprID] = []
+            for index in ast.arena.exprs.indices {
+                let exprID = ExprID(rawValue: Int32(index))
+                guard let expr = ast.arena.expr(exprID),
+                      case let .compoundAssign(op, _, _, _) = expr,
+                      op == .minusAssign
+                else {
+                    continue
+                }
+                compoundAssigns.append(exprID)
+            }
+            XCTAssertEqual(compoundAssigns.count, 4)
+
+            let expectedExternalLinks = [
+                "kk_mutable_list_remove",
+                "kk_mutable_list_removeAll",
+                "kk_mutable_set_remove",
+                "kk_mutable_set_removeAll",
+            ]
+            for (exprID, externalLinkName) in zip(compoundAssigns, expectedExternalLinks) {
+                let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: exprID)?.chosenCallee)
+                XCTAssertEqual(
+                    sema.symbols.externalLinkName(for: chosenCallee),
+                    externalLinkName,
+                    "Expected -= to resolve to \(externalLinkName)"
+                )
+            }
+        }
+    }
+
     func testMutableListBulkMutationFallbacksReturnBoolean() throws {
         let source = """
         fun mutate(): Boolean {

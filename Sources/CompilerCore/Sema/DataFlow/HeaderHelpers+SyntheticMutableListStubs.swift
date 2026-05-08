@@ -210,6 +210,21 @@ extension DataFlowSemaPhase {
             mlTypeParamSymbol: mlTypeParamSymbol,
             mlTypeParamType: mlTypeParamType
         )
+        registerMutableListMinusAssignElementMember(
+            symbols: symbols, types: types, interner: interner,
+            mutableListFQName: mutableListFQName,
+            mutableListInterfaceSymbol: mutableListInterfaceSymbol,
+            mlTypeParamSymbol: mlTypeParamSymbol,
+            mlTypeParamType: mlTypeParamType
+        )
+        registerMutableListMinusAssignCollectionMember(
+            symbols: symbols, types: types, interner: interner,
+            mutableListFQName: mutableListFQName,
+            mutableListInterfaceSymbol: mutableListInterfaceSymbol,
+            collectionInterfaceSymbol: collectionInterfaceSymbol,
+            mlTypeParamSymbol: mlTypeParamSymbol,
+            mlTypeParamType: mlTypeParamType
+        )
         registerMutableListRetainAllMember(
             symbols: symbols, types: types, interner: interner,
             mutableListFQName: mutableListFQName,
@@ -1169,6 +1184,98 @@ extension DataFlowSemaPhase {
                 receiverType: receiverType,
                 parameterTypes: [paramType],
                 returnType: types.booleanType,
+                typeParameterSymbols: [mlTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    private func registerMutableListMinusAssignElementMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        mutableListFQName: [InternedString],
+        mutableListInterfaceSymbol: SymbolID,
+        mlTypeParamSymbol: SymbolID,
+        mlTypeParamType: TypeID
+    ) {
+        let memberName = interner.intern("minusAssign")
+        let memberFQName = mutableListFQName + [memberName]
+        guard symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+            symbols.externalLinkName(for: symbolID) == "kk_mutable_list_remove"
+        }) == nil else {
+            return
+        }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: mutableListInterfaceSymbol,
+            args: [.invariant(mlTypeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(mutableListInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_mutable_list_remove", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [mlTypeParamType],
+                returnType: types.unitType,
+                typeParameterSymbols: [mlTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    private func registerMutableListMinusAssignCollectionMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        mutableListFQName: [InternedString],
+        mutableListInterfaceSymbol: SymbolID,
+        collectionInterfaceSymbol: SymbolID,
+        mlTypeParamSymbol: SymbolID,
+        mlTypeParamType: TypeID
+    ) {
+        let memberName = interner.intern("minusAssign")
+        let memberFQName = mutableListFQName + [memberName]
+        guard symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+            symbols.externalLinkName(for: symbolID) == "kk_mutable_list_removeAll"
+        }) == nil else {
+            return
+        }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: mutableListInterfaceSymbol,
+            args: [.invariant(mlTypeParamType)],
+            nullability: .nonNull
+        )))
+        let paramType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(mlTypeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(mutableListInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_mutable_list_removeAll", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [paramType],
+                returnType: types.unitType,
                 typeParameterSymbols: [mlTypeParamSymbol],
                 classTypeParameterCount: 1
             ),
