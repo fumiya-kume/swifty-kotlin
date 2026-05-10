@@ -62,7 +62,8 @@ extension DataFlowSemaPhase {
             name: String,
             parameterTypes: [TypeID],
             returnType: TypeID,
-            flags: SymbolFlags
+            flags: SymbolFlags,
+            externalLinkName: String? = nil
         ) {
             let memberName = interner.intern(name)
             let memberFQName = collectionFQName + [memberName]
@@ -76,6 +77,9 @@ extension DataFlowSemaPhase {
                 flags: flags
             )
             symbols.setParentSymbol(collectionInterfaceSymbol, for: memberSymbol)
+            if let externalLinkName {
+                symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+            }
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: collectionReceiverType,
@@ -152,6 +156,15 @@ extension DataFlowSemaPhase {
                 for: lastSymbol
             )
         }
+
+        // random(): E
+        defineCollectionFunctionMember(
+            name: "random",
+            parameterTypes: [],
+            returnType: typeParamType,
+            flags: [.synthetic],
+            externalLinkName: "kk_list_random"
+        )
 
         return collectionInterfaceSymbol
     }
@@ -1857,6 +1870,80 @@ extension DataFlowSemaPhase {
                 parameterTypes: [],
                 returnType: elementType,
                 canThrow: true,
+                typeParameterSymbols: [iterableTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    /// Register `Iterable<E>.joinToString(separator, prefix, postfix)` (STDLIB-COL-FN-103).
+    func registerIterableJoinToStringMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        iterableInterfaceSymbol: SymbolID
+    ) {
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName,
+              let iterableTypeParamSymbol = types.nominalTypeParameterSymbols(for: iterableInterfaceSymbol).first
+        else { return }
+
+        let memberName = interner.intern("joinToString")
+        let memberFQName = iterableFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let elementType = types.make(.typeParam(TypeParamType(
+            symbol: iterableTypeParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_iterable_joinToString", for: memberSymbol)
+
+        let parameters: [(name: String, type: TypeID, hasDefault: Bool)] = [
+            ("separator", types.stringType, true),
+            ("prefix", types.stringType, true),
+            ("postfix", types.stringType, true),
+        ]
+        var parameterTypes: [TypeID] = []
+        var parameterSymbols: [SymbolID] = []
+        var parameterDefaults: [Bool] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: memberFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: parameterSymbol)
+            parameterTypes.append(parameter.type)
+            parameterSymbols.append(parameterSymbol)
+            parameterDefaults.append(parameter.hasDefault)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameterTypes,
+                returnType: types.stringType,
+                valueParameterSymbols: parameterSymbols,
+                valueParameterHasDefaultValues: parameterDefaults,
+                valueParameterIsVararg: Array(repeating: false, count: parameters.count),
                 typeParameterSymbols: [iterableTypeParamSymbol],
                 classTypeParameterCount: 1
             ),

@@ -96,6 +96,35 @@ extension DataFlowSemaPhase {
             symbols: symbols
         )
 
+        // @JvmSerializableLambda - marks a lambda expression as JVM serializable.
+        registerSyntheticJvmAnnotationClass(
+            named: "JvmSerializableLambda",
+            packageFQName: kotlinJvmPkg,
+            packageSymbol: kotlinJvmPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        if let jvmSerializableLambdaSymbol = symbols.lookup(
+            fqName: kotlinJvmPkg + [interner.intern("JvmSerializableLambda")]
+        ) {
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.target.qualifiedName,
+                    arguments: ["AnnotationTarget.EXPRESSION"]
+                ),
+                to: jvmSerializableLambdaSymbol,
+                symbols: symbols
+            )
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.sinceKotlin.qualifiedName,
+                    arguments: ["1.8"]
+                ),
+                to: jvmSerializableLambdaSymbol,
+                symbols: symbols
+            )
+        }
+
         // @JvmWildcard - forces wildcard generation for an annotated type use.
         registerSyntheticJvmAnnotationClass(
             named: "JvmWildcard",
@@ -120,6 +149,49 @@ extension DataFlowSemaPhase {
                 ),
                 to: jvmWildcardSymbol,
                 symbols: symbols
+            )
+        }
+
+        // @JvmSuppressWildcards - suppresses JVM wildcard generation.
+        registerSyntheticJvmAnnotationClass(
+            named: "JvmSuppressWildcards",
+            packageFQName: kotlinJvmPkg,
+            packageSymbol: kotlinJvmPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        if let jvmSuppressWildcardsSymbol = symbols.lookup(
+            fqName: kotlinJvmPkg + [interner.intern("JvmSuppressWildcards")]
+        ) {
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.target.qualifiedName,
+                    arguments: [
+                        "AnnotationTarget.CLASS",
+                        "AnnotationTarget.FUNCTION",
+                        "AnnotationTarget.PROPERTY",
+                        "AnnotationTarget.TYPE",
+                    ]
+                ),
+                to: jvmSuppressWildcardsSymbol,
+                symbols: symbols
+            )
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: KnownCompilerAnnotation.sinceKotlin.qualifiedName,
+                    arguments: ["1.0"]
+                ),
+                to: jvmSuppressWildcardsSymbol,
+                symbols: symbols
+            )
+            registerSyntheticBooleanAnnotationPropertyAndConstructor(
+                ownerSymbol: jvmSuppressWildcardsSymbol,
+                ownerFQName: kotlinJvmPkg + [interner.intern("JvmSuppressWildcards")],
+                propertyName: "suppress",
+                hasDefaultValue: true,
+                symbols: symbols,
+                types: types,
+                interner: interner
             )
         }
 
@@ -174,6 +246,50 @@ extension DataFlowSemaPhase {
                 arguments: ["AnnotationTarget.FILE"]
             ),
             to: kotlinJvmPkg + [interner.intern("JvmMultifileClass")],
+            symbols: symbols
+        )
+
+        // @Synchronized - marks generated JVM methods as synchronized.
+        registerSyntheticJvmAnnotationClass(
+            named: "Synchronized",
+            packageFQName: kotlinJvmPkg,
+            packageSymbol: kotlinJvmPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        attachAnnotationIfNeeded(
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: [
+                    "AnnotationTarget.FUNCTION",
+                    "AnnotationTarget.PROPERTY_GETTER",
+                    "AnnotationTarget.PROPERTY_SETTER",
+                ]
+            ),
+            to: kotlinJvmPkg + [interner.intern("Synchronized")],
+            symbols: symbols
+        )
+
+        // @ImplicitlyActualizedByJvmDeclaration - marks expect declarations
+        // that are implicitly actualized by Java/JVM declarations.
+        registerSyntheticJvmAnnotationClass(
+            named: "ImplicitlyActualizedByJvmDeclaration",
+            packageFQName: kotlinJvmPkg,
+            packageSymbol: kotlinJvmPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        attachAnnotationIfNeeded(
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: ["AnnotationTarget.CLASS"]
+            ),
+            to: kotlinJvmPkg + [interner.intern("ImplicitlyActualizedByJvmDeclaration")],
+            symbols: symbols
+        )
+        attachAnnotationIfNeeded(
+            MetadataAnnotationRecord(annotationFQName: "kotlin.ExperimentalMultiplatform"),
+            to: kotlinJvmPkg + [interner.intern("ImplicitlyActualizedByJvmDeclaration")],
             symbols: symbols
         )
 
@@ -1921,6 +2037,85 @@ extension DataFlowSemaPhase {
                 returnType: ownerType,
                 valueParameterSymbols: [parameterSymbol],
                 valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false]
+            ),
+            for: constructorSymbol
+        )
+    }
+
+    private func registerSyntheticBooleanAnnotationPropertyAndConstructor(
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        propertyName: String,
+        hasDefaultValue: Bool,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let property = interner.intern(propertyName)
+        let propertyFQName = ownerFQName + [property]
+        let propertySymbol: SymbolID
+        if let existing = symbols.lookup(fqName: propertyFQName) {
+            propertySymbol = existing
+        } else {
+            propertySymbol = symbols.define(
+                kind: .property,
+                name: property,
+                fqName: propertyFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
+        symbols.setPropertyType(types.booleanType, for: propertySymbol)
+
+        let initName = interner.intern("<init>")
+        let constructorFQName = ownerFQName + [initName]
+        let hasMatchingConstructor = symbols.lookupAll(fqName: constructorFQName).contains { symbolID in
+            guard let symbol = symbols.symbol(symbolID),
+                  symbol.kind == .constructor,
+                  let signature = symbols.functionSignature(for: symbolID)
+            else {
+                return false
+            }
+            return signature.parameterTypes == [types.booleanType]
+        }
+        guard !hasMatchingConstructor else {
+            return
+        }
+
+        let constructorSymbol = symbols.define(
+            kind: .constructor,
+            name: initName,
+            fqName: constructorFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: constructorSymbol)
+
+        let parameterSymbol = symbols.define(
+            kind: .valueParameter,
+            name: property,
+            fqName: constructorFQName + [property],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(constructorSymbol, for: parameterSymbol)
+
+        let ownerType = types.make(.classType(ClassType(
+            classSymbol: ownerSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [types.booleanType],
+                returnType: ownerType,
+                valueParameterSymbols: [parameterSymbol],
+                valueParameterHasDefaultValues: [hasDefaultValue],
                 valueParameterIsVararg: [false]
             ),
             for: constructorSymbol

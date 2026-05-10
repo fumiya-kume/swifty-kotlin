@@ -43,6 +43,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         let source = """
         fun render(values: List<Int>) {
             values.take(3)
+            values.takeLast(2)
             values.drop(2)
             values.reversed()
             values.sorted()
@@ -60,6 +61,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
 
             let expectedExternalLinks = [
                 "take": "kk_list_take",
+                "takeLast": "kk_list_takeLast",
                 "drop": "kk_list_drop",
                 "reversed": "kk_list_reversed",
                 "sorted": "kk_list_sorted",
@@ -508,6 +510,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                 "maxOrNull": "kk_list_maxOrNull",
                 "minOrNull": "kk_list_minOrNull",
                 "maxBy": "kk_list_maxBy",
+                "minOfWithOrNull": "kk_list_minOfWithOrNull",
                 "filterNotTo": "kk_list_filterNotTo",
             ]
 
@@ -2692,6 +2695,52 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testMutableCollectionMinusAssignMembersUseRuntimeExternalLinks() throws {
+        let source = """
+        fun mutate(list: MutableList<Int>, set: MutableSet<Int>) {
+            list -= 1
+            list -= listOf(2, 3)
+            set -= 1
+            set -= listOf(2, 3)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            var compoundAssigns: [ExprID] = []
+            for index in ast.arena.exprs.indices {
+                let exprID = ExprID(rawValue: Int32(index))
+                guard let expr = ast.arena.expr(exprID),
+                      case let .compoundAssign(op, _, _, _) = expr,
+                      op == .minusAssign
+                else {
+                    continue
+                }
+                compoundAssigns.append(exprID)
+            }
+            XCTAssertEqual(compoundAssigns.count, 4)
+
+            let expectedExternalLinks = [
+                "kk_mutable_list_remove",
+                "kk_mutable_list_removeAll",
+                "kk_mutable_set_remove",
+                "kk_mutable_set_removeAll",
+            ]
+            for (exprID, externalLinkName) in zip(compoundAssigns, expectedExternalLinks) {
+                let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: exprID)?.chosenCallee)
+                XCTAssertEqual(
+                    sema.symbols.externalLinkName(for: chosenCallee),
+                    externalLinkName,
+                    "Expected -= to resolve to \(externalLinkName)"
+                )
+            }
+        }
+    }
+
     func testMutableListBulkMutationFallbacksReturnBoolean() throws {
         let source = """
         fun mutate(): Boolean {
@@ -2782,6 +2831,36 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                     )
                 }
             }
+        }
+    }
+
+    func testListUnionUsesRuntimeExternalLinkAndReturnsSet() throws {
+        let source = """
+        fun combine(values: List<Int>, other: List<Int>) {
+            val unioned: Set<Int> = values.union(other)
+            unioned.contains(4)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "Unexpected diagnostics: \(ctx.diagnostics.diagnostics.map(\.message))")
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "union"
+            })
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_list_union")
+            let resultType = try XCTUnwrap(sema.bindings.exprTypes[callExpr])
+            guard case let .classType(classType) = sema.types.kind(of: resultType),
+                  let symbol = sema.symbols.symbol(classType.classSymbol)
+            else {
+                return XCTFail("Expected List.union to return Set")
+            }
+            XCTAssertEqual(ctx.interner.resolve(symbol.name), "Set")
         }
     }
 
@@ -2894,6 +2973,34 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                 return XCTFail("Expected toIntArray to return IntArray")
             }
             XCTAssertEqual(ctx.interner.resolve(symbol.name), "IntArray")
+        }
+    }
+
+    func testListToLongArrayUsesRuntimeExternalLink() throws {
+        let source = """
+        fun convert(values: List<Long>) {
+            values.toLongArray()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "toLongArray"
+            })
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_list_toLongArray")
+            let resultType = try XCTUnwrap(sema.bindings.exprTypes[callExpr])
+            guard case let .classType(classType) = sema.types.kind(of: resultType),
+                  let symbol = sema.symbols.symbol(classType.classSymbol)
+            else {
+                return XCTFail("Expected toLongArray to return LongArray")
+            }
+            XCTAssertEqual(ctx.interner.resolve(symbol.name), "LongArray")
         }
     }
 

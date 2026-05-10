@@ -20,10 +20,12 @@
 /// - `Path.invariantSeparatorsPathString: String` extension property
 /// - `Path.writeBytes(array: ByteArray, vararg options: OpenOption)` extension function
 /// - `readBytes(): ByteArray`, `readText(): String`, `writeText(text: String)`, `readLines(): List<String>`
-/// - `createDirectories(): Path`, `deleteIfExists(): Boolean`
+/// - `createDirectories(): Path`, `createLinkPointingTo(target): Path`, `deleteIfExists(): Boolean`
+/// - `deleteExisting()`, `deleteRecursively()`
 /// - `Path.fileStore(): FileStore` extension function
 /// - `Path.setOwner(value: UserPrincipal): Path` extension function
 /// - `listDirectoryEntries(): List<Path>`
+/// - `Path.isExecutable()`, `isHidden()`, `isReadable()`, `isSameFileAs()`, `isSymbolicLink()`, `isWritable()`
 /// - Top-level `Path(pathString: String)` factory (kotlin.io.path.Path)
 /// - `Paths.get(pathString: String)` factory (java.nio.file.Paths)
 /// - `CopyActionContext` type surface
@@ -522,6 +524,36 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        for (name, link) in [
+            ("isExecutable", "kk_path_isExecutable"),
+            ("isHidden", "kk_path_isHidden"),
+            ("isReadable", "kk_path_isReadable"),
+            ("isSymbolicLink", "kk_path_isSymbolicLink"),
+            ("isWritable", "kk_path_isWritable"),
+        ] {
+            registerPathExtensionFunction(
+                named: name,
+                packageFQName: kotlinIOPathPkg,
+                receiverType: pathType,
+                parameters: [],
+                returnType: types.booleanType,
+                externalLinkName: link,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
+        registerPathExtensionFunction(
+            named: "isSameFileAs",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("other", pathType)],
+            returnType: types.booleanType,
+            externalLinkName: "kk_path_isSameFileAs",
+            symbols: symbols,
+            interner: interner
+        )
+
         // MARK: - Path comparison methods
 
         registerPathMemberFunction(
@@ -672,6 +704,28 @@ extension DataFlowSemaPhase {
         )
 
         registerPathExtensionFunction(
+            named: "readLines",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("charset", charsetType)],
+            returnType: listOfStringType,
+            externalLinkName: "kk_path_readLines_charset",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "readText",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("charset", charsetType)],
+            returnType: types.stringType,
+            externalLinkName: "kk_path_readText_charset",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
             named: "appendText",
             packageFQName: kotlinIOPathPkg,
             receiverType: pathType,
@@ -718,6 +772,28 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerPathExtensionFunction(
+            named: "createLinkPointingTo",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("target", pathType)],
+            returnType: pathType,
+            externalLinkName: "kk_path_createLinkPointingTo",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "deleteExisting",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [],
+            returnType: types.unitType,
+            externalLinkName: "kk_path_deleteExisting",
+            symbols: symbols,
+            interner: interner
+        )
+
         registerPathMemberFunction(
             named: "deleteIfExists",
             externalLinkName: "kk_path_deleteIfExists",
@@ -736,6 +812,17 @@ extension DataFlowSemaPhase {
             parameters: [("value", userPrincipalType)],
             returnType: pathType,
             externalLinkName: "kk_path_setOwner",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "deleteRecursively",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [],
+            returnType: types.unitType,
+            externalLinkName: "kk_path_deleteRecursively",
             symbols: symbols,
             interner: interner
         )
@@ -771,6 +858,17 @@ extension DataFlowSemaPhase {
             returnType: pathType,
             externalLinkName: "kk_path_div_string",
             isOperator: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "moveTo",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("target", pathType), ("overwrite", types.booleanType)],
+            returnType: pathType,
+            externalLinkName: "kk_path_moveTo_overwrite",
             symbols: symbols,
             interner: interner
         )
