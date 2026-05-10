@@ -300,6 +300,13 @@ extension DataFlowSemaPhase {
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg
         )
+        _ = registerSyntheticAbstractMapStub(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            mapInterfaceSymbol: mapSymbols.mapSymbol
+        )
 
         registerListConversionMembers(
             symbols: symbols, types: types, interner: interner,
