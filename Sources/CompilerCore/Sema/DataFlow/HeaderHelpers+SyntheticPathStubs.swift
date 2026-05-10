@@ -20,7 +20,7 @@
 /// - `Path.invariantSeparatorsPathString: String` extension property
 /// - `Path.writeBytes(array: ByteArray, vararg options: OpenOption)` extension function
 /// - `readBytes(): ByteArray`, `readText(): String`, `writeText(text: String)`, `readLines(): List<String>`
-/// - `createDirectories(): Path`, `deleteIfExists(): Boolean`
+/// - `createDirectories(): Path`, `deleteExisting()`, `deleteIfExists(): Boolean`, `deleteRecursively()`
 /// - `Path.fileStore(): FileStore` extension function
 /// - `Path.setOwner(value: UserPrincipal): Path` extension function
 /// - `listDirectoryEntries(): List<Path>`
@@ -703,6 +703,28 @@ extension DataFlowSemaPhase {
         )
 
         registerPathExtensionFunction(
+            named: "readLines",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("charset", charsetType)],
+            returnType: listOfStringType,
+            externalLinkName: "kk_path_readLines_charset",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "readText",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("charset", charsetType)],
+            returnType: types.stringType,
+            externalLinkName: "kk_path_readText_charset",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
             named: "appendText",
             packageFQName: kotlinIOPathPkg,
             receiverType: pathType,
@@ -749,6 +771,17 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerPathExtensionFunction(
+            named: "deleteExisting",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [],
+            returnType: types.unitType,
+            externalLinkName: "kk_path_deleteExisting",
+            symbols: symbols,
+            interner: interner
+        )
+
         registerPathMemberFunction(
             named: "deleteIfExists",
             externalLinkName: "kk_path_deleteIfExists",
@@ -767,6 +800,17 @@ extension DataFlowSemaPhase {
             parameters: [("value", userPrincipalType)],
             returnType: pathType,
             externalLinkName: "kk_path_setOwner",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "deleteRecursively",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [],
+            returnType: types.unitType,
+            externalLinkName: "kk_path_deleteRecursively",
             symbols: symbols,
             interner: interner
         )
@@ -802,6 +846,17 @@ extension DataFlowSemaPhase {
             returnType: pathType,
             externalLinkName: "kk_path_div_string",
             isOperator: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "moveTo",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("target", pathType), ("overwrite", types.booleanType)],
+            returnType: pathType,
+            externalLinkName: "kk_path_moveTo_overwrite",
             symbols: symbols,
             interner: interner
         )

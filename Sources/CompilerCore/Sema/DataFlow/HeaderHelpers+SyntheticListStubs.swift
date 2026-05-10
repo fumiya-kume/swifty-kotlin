@@ -2012,7 +2012,7 @@ extension DataFlowSemaPhase {
 
         registerMember(name: "take", parameterTypes: [types.intType], externalLinkName: "kk_list_take", canThrow: true)
         registerMember(name: "drop", parameterTypes: [types.intType], externalLinkName: "kk_list_drop", canThrow: true)
-        registerMember(name: "takeLast", parameterTypes: [types.intType], externalLinkName: "kk_list_takeLast")
+        registerMember(name: "takeLast", parameterTypes: [types.intType], externalLinkName: "kk_list_takeLast", canThrow: true)
         registerMember(name: "dropLast", parameterTypes: [types.intType], externalLinkName: "kk_list_dropLast")
         registerMember(name: "sum", parameterTypes: [], externalLinkName: "kk_list_sum", returnTypeOverride: types.intType)
         registerMember(name: "average", parameterTypes: [], externalLinkName: "kk_list_average", returnTypeOverride: types.doubleType)

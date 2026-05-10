@@ -849,6 +849,69 @@ final class ExperimentalMarkerStubTests: XCTestCase {
         )
     }
 
+    // MARK: - ExperimentalJsReflectionCreateInstance (kotlin.js, WARNING)
+
+    func testExperimentalJsReflectionCreateInstanceIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let sym = lookupSymbol(
+            fqPath: ["kotlin", "js", "ExperimentalJsReflectionCreateInstance"],
+            sema: sema,
+            interner: interner
+        )
+        XCTAssertNotNil(sym, "kotlin.js.ExperimentalJsReflectionCreateInstance must be registered in the symbol table")
+    }
+
+    func testExperimentalJsReflectionCreateInstanceIsAnnotationClass() throws {
+        let (sema, interner) = try makeSema()
+        assertIsAnnotationClass(
+            fqPath: ["kotlin", "js", "ExperimentalJsReflectionCreateInstance"],
+            sema: sema,
+            interner: interner
+        )
+    }
+
+    func testExperimentalJsReflectionCreateInstanceHasRequiresOptInWarning() throws {
+        let (sema, interner) = try makeSema()
+        assertHasRequiresOptIn(
+            fqPath: ["kotlin", "js", "ExperimentalJsReflectionCreateInstance"],
+            expectedSeverity: "WARNING",
+            sema: sema,
+            interner: interner
+        )
+    }
+
+    func testExperimentalJsReflectionCreateInstanceHasOfficialTargets() throws {
+        let (sema, interner) = try makeSema()
+        let symbol = try XCTUnwrap(
+            lookupSymbol(
+                fqPath: ["kotlin", "js", "ExperimentalJsReflectionCreateInstance"],
+                sema: sema,
+                interner: interner
+            )
+        )
+        let annotations = sema.symbols.annotations(for: symbol)
+        let target = try XCTUnwrap(
+            annotations.first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "ExperimentalJsReflectionCreateInstance should carry explicit @Target metadata"
+        )
+        XCTAssertEqual(
+            Set(target.arguments),
+            Set([
+                "AnnotationTarget.CLASS",
+                "AnnotationTarget.ANNOTATION_CLASS",
+                "AnnotationTarget.PROPERTY",
+                "AnnotationTarget.FIELD",
+                "AnnotationTarget.LOCAL_VARIABLE",
+                "AnnotationTarget.VALUE_PARAMETER",
+                "AnnotationTarget.CONSTRUCTOR",
+                "AnnotationTarget.FUNCTION",
+                "AnnotationTarget.PROPERTY_GETTER",
+                "AnnotationTarget.PROPERTY_SETTER",
+                "AnnotationTarget.TYPEALIAS",
+            ])
+        )
+    }
+
     // MARK: - ExperimentalJsStatic (kotlin.js, WARNING)
 
     func testExperimentalJsStaticIsRegistered() throws {
