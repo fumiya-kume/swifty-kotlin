@@ -16,6 +16,31 @@ final class ExperimentalTimeSourceSyntheticSurfaceTests: XCTestCase {
         return try XCTUnwrap(result)
     }
 
+    func testExperimentalTimeIsRequiresOptInMarker() throws {
+        let (sema, interner) = try makeSema()
+        let kotlinTime = ["kotlin", "time"].map { interner.intern($0) }
+        let experimentalTimeSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: kotlinTime + [
+            interner.intern("ExperimentalTime"),
+        ]))
+        XCTAssertEqual(sema.symbols.symbol(experimentalTimeSymbol)?.kind, .annotationClass)
+
+        let annotations = sema.symbols.annotations(for: experimentalTimeSymbol)
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.RequiresOptIn"
+                    && $0.arguments.contains("level=RequiresOptIn.Level.ERROR")
+            },
+            "ExperimentalTime should be an ERROR-level opt-in marker, got: \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.annotation.Retention"
+                    && $0.arguments.contains("AnnotationRetention.BINARY")
+            },
+            "ExperimentalTime should use binary retention, got: \(annotations)"
+        )
+    }
+
     func testAbstractDoubleTimeSourceSurfaceIsRegistered() throws {
         let (sema, interner) = try makeSema()
         let kotlinTime = ["kotlin", "time"].map { interner.intern($0) }

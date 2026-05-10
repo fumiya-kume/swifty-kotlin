@@ -709,11 +709,11 @@ extension CallTypeChecker {
             "filterTo", "filterNotTo", "mapTo", "flatMapTo", "mapNotNullTo", "mapIndexedTo", "flatMapIndexedTo",
             "mapIndexedNotNullTo", "filterIndexedTo", "filterNotNullTo",
             "mapKeysTo", "mapValuesTo",
-            "forEachIndexed", "mapIndexed",
+            "forEachIndexed", "mapIndexed", "mapIndexedNotNull",
             "onEach", "onEachIndexed",
             "sumOf", "sumBy", "sumByDouble", "maxOrNull", "minOrNull",
             "indexOfFirst", "indexOfLast", "binarySearch", "binarySearchBy",
-            "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
+            "maxBy", "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
             "maxOf", "minOf",
             "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",
             "maxOfWith", "maxOfWithOrNull", "minOfWith", "minOfWithOrNull",
@@ -761,6 +761,8 @@ extension CallTypeChecker {
         }
         if !isSequenceReceiver {
             activeCollectionHOFNames.remove("flatMapIndexed")
+        } else {
+            activeCollectionHOFNames.remove("mapIndexedNotNull")
         }
         if isMapReceiver {
             activeCollectionHOFNames.formUnion(mapOnlyCollectionHOFNames)
@@ -1397,7 +1399,8 @@ extension CallTypeChecker {
                     switch calleeStr {
                     case "any", "none": resultType = sema.types.booleanType
                     case "count": resultType = sema.types.intType
-                    case "first", "last": resultType = sema.types.makeNullable(collectionElementType)
+                    case "last": resultType = collectionElementType
+                    case "first": resultType = sema.types.makeNullable(collectionElementType)
                     default: resultType = sema.types.anyType
                     }
                 } else {
@@ -2679,14 +2682,21 @@ extension CallTypeChecker {
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                 resultType = sema.types.intType
 
-            case "forEachIndexed", "mapIndexed", "onEachIndexed":
+            case "forEachIndexed", "mapIndexed", "mapIndexedNotNull", "filterIndexed", "onEachIndexed":
                 guard args.count == 1 else {
                     sema.bindings.bindExprType(id, type: sema.types.anyType)
                     return sema.types.anyType
                 }
-                let lambdaReturnType = calleeStr == "forEachIndexed" || calleeStr == "onEachIndexed"
-                    ? sema.types.unitType
-                    : sema.types.anyType
+                let lambdaReturnType: TypeID = switch calleeStr {
+                case "forEachIndexed", "onEachIndexed":
+                    sema.types.unitType
+                case "filterIndexed":
+                    sema.types.booleanType
+                case "mapIndexedNotNull":
+                    sema.types.nullableAnyType
+                default:
+                    sema.types.anyType
+                }
                 let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
                     params: [sema.types.intType, collectionElementType],
                     returnType: lambdaReturnType
@@ -2708,6 +2718,17 @@ extension CallTypeChecker {
                     } else {
                         resultType = receiverType
                     }
+                } else if calleeStr == "filterIndexed" {
+                    if isSequenceReceiver {
+                        resultType = makeSyntheticSequenceType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            elementType: collectionElementType
+                        )
+                    } else {
+                        resultType = receiverType
+                    }
                 } else if isSequenceReceiver {
                     let bodyType = inferredLambdaReturnType(
                         argExpr: args[0].expr, ast: ast, sema: sema
@@ -2719,9 +2740,12 @@ extension CallTypeChecker {
                         elementType: bodyType
                     )
                 } else if let listSymbol = lookupStdlibSymbol("List", symbols: sema.symbols, interner: interner) {
-                    let bodyType = inferredLambdaReturnType(
+                    let inferredBodyType = inferredLambdaReturnType(
                         argExpr: args[0].expr, ast: ast, sema: sema
                     )
+                    let bodyType = calleeStr == "mapIndexedNotNull"
+                        ? sema.types.makeNonNullable(inferredBodyType)
+                        : inferredBodyType
                     resultType = sema.types.make(.classType(ClassType(
                         classSymbol: listSymbol,
                         args: [.invariant(bodyType)],
@@ -2819,7 +2843,7 @@ extension CallTypeChecker {
                 }
                 resultType = sema.types.makeNullable(collectionElementType)
 
-            case "maxByOrNull", "minByOrNull":
+            case "maxBy", "maxByOrNull", "minByOrNull":
                 guard args.count == 1 else {
                     let failedType = safeCall ? sema.types.makeNullable(sema.types.errorType) : sema.types.errorType
                     ctx.semaCtx.diagnostics.error(
@@ -2881,7 +2905,7 @@ extension CallTypeChecker {
                         return failedType
                     }
                 }
-                resultType = sema.types.makeNullable(collectionElementType)
+                resultType = calleeStr == "maxBy" ? collectionElementType : sema.types.makeNullable(collectionElementType)
 
             case "maxOf", "minOf":
                 guard args.count == 1 else {
@@ -3108,6 +3132,21 @@ extension CallTypeChecker {
 
             default:
                 resultType = sema.types.anyType
+            }
+
+            if calleeStr == "filterIndexed", isCollectionReceiver {
+                let knownNames = KnownCompilerNames(interner: interner)
+                let memberFQName = knownNames.kotlinCollectionsListFQName + [calleeName]
+                if let chosenCallee = sema.symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+                    sema.symbols.functionSignature(for: symbolID)?.parameterTypes.count == args.count
+                }) {
+                    sema.bindings.bindCall(id, binding: CallBinding(
+                        chosenCallee: chosenCallee,
+                        substitutedTypeArguments: [collectionElementType],
+                        parameterMapping: [0: 0]
+                    ))
+                    sema.bindings.bindCallableTarget(id, target: .symbol(chosenCallee))
+                }
             }
 
             let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
@@ -4962,6 +5001,14 @@ extension CallTypeChecker {
             if args.isEmpty {
                 let calleeStr = interner.resolve(calleeName)
                 if !isNullLiteralReceiver,
+                   calleeStr == "isNullOrEmpty",
+                   isNullableCollectionIsNullOrEmptyReceiver(lookupReceiverType, sema: sema, interner: interner)
+                {
+                    let resultType = sema.types.booleanType
+                    sema.bindings.bindExprType(id, type: resultType)
+                    return resultType
+                }
+                if !isNullLiteralReceiver,
                    calleeStr == "isNullOrEmpty" || calleeStr == "isNullOrBlank"
                 {
                     // Strip nullability so that String? and String both match.
@@ -6385,6 +6432,18 @@ extension CallTypeChecker {
             ) {
                 return fallbackType
             }
+            if let fallbackType = tryPathCharsetReadExtensionFallback(
+                id,
+                calleeName: calleeName,
+                isClassNameReceiver: isClassNameReceiver,
+                safeCall: safeCall,
+                receiverID: receiverID,
+                args: args,
+                ctx: ctx,
+                locals: &locals
+            ) {
+                return fallbackType
+            }
             if let fallbackType = tryFileMemberFallback(
                 id,
                 calleeName: calleeName,
@@ -6934,6 +6993,18 @@ extension CallTypeChecker {
                 return fallbackType
             }
             if let fallbackType = tryStringMemberFallback(
+                id,
+                calleeName: calleeName,
+                isClassNameReceiver: isClassNameReceiver,
+                safeCall: safeCall,
+                receiverID: receiverID,
+                args: args,
+                ctx: ctx,
+                locals: &locals
+            ) {
+                return fallbackType
+            }
+            if let fallbackType = tryPathCharsetReadExtensionFallback(
                 id,
                 calleeName: calleeName,
                 isClassNameReceiver: isClassNameReceiver,
@@ -8056,6 +8127,24 @@ extension CallTypeChecker {
 
         default:
             return nil
+        }
+    }
+
+    private func isNullableCollectionIsNullOrEmptyReceiver(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        switch KnownCompilerNames(interner: interner).collectionKind(of: symbol) {
+        case .map?, .set?, .array?, .list?, .collection?:
+            return true
+        case .sequence?, nil:
+            return false
         }
     }
 

@@ -50,175 +50,153 @@
 - [ ] STDLIB-022: range / progression / unsigned range の網羅性を上げる
 
 #### kotlin.collections 抽象基底クラスの実装
-- [ ] STDLIB-COL-ABSTRACT-001: `AbstractCollection<E>` 抽象クラスの実装
+- [x] STDLIB-COL-ABSTRACT-001: `AbstractCollection<E>` 抽象クラスの実装
 - [x] STDLIB-COL-ABSTRACT-002: `AbstractIterator<T>` 抽象クラスの実装
-- [ ] STDLIB-COL-ABSTRACT-003: `AbstractList<E>` 抽象クラスの実装
+- [x] STDLIB-COL-ABSTRACT-003: `AbstractList<E>` 抽象クラスの実装
 - [x] STDLIB-COL-ABSTRACT-004: `AbstractMap<K,V>` 抽象クラスの実装
 - [x] STDLIB-COL-ABSTRACT-005: `AbstractMutableCollection<E>` 抽象クラスの実装
 - [ ] STDLIB-COL-ABSTRACT-006: `AbstractMutableList<E>` 抽象クラスの実装
 - [x] STDLIB-COL-ABSTRACT-007: `AbstractMutableMap<K,V>` 抽象クラスの実装
-- [ ] STDLIB-COL-ABSTRACT-008: `AbstractMutableSet<E>` 抽象クラスの実装
+- [x] STDLIB-COL-ABSTRACT-008: `AbstractMutableSet<E>` 抽象クラスの実装
 - [ ] STDLIB-COL-ABSTRACT-009: `AbstractSet<E>` 抽象クラスの実装
 
 #### kotlin.collections 具象実装クラスの実装
 - [ ] STDLIB-COL-CONCRETE-001: `ArrayList<E>` 具象クラスの実装（現在は型エイリアスのみ）
-- [ ] STDLIB-COL-CONCRETE-002: `LinkedList<E>` 具象クラスの実装（現在は型エイリアスのみ）
+- [x] STDLIB-COL-CONCRETE-002: `LinkedList<E>` 具象クラスの実装（現在は型エイリアスのみ）
 - [ ] STDLIB-COL-CONCRETE-003: `HashMap<K,V>` 具象クラスの実装（現在は型エイリアスのみ）
 - [ ] STDLIB-COL-CONCRETE-004: `HashSet<E>` 具象クラスの実装（現在は型エイリアスのみ）
 - [ ] STDLIB-COL-CONCRETE-005: `LinkedHashMap<K,V>` 具象クラスの実装（現在は型エイリアスのみ）
-- [ ] STDLIB-COL-CONCRETE-006: `LinkedHashSet<E>` 具象クラスの実装（現在は型エイリアスのみ）
-- [ ] STDLIB-COL-CONCRETE-007: `ArrayDeque<E>` 具象クラスの実装
-
-#### kotlin.collections プリミティブイテレータの実装
-- [x] STDLIB-COL-ITERATOR-001: `BooleanIterator` クラスの実装
-- [ ] STDLIB-COL-ITERATOR-002: `ByteIterator` クラスの実装
-- [x] STDLIB-COL-ITERATOR-003: `CharIterator` クラスの実装
-- [ ] STDLIB-COL-ITERATOR-004: `DoubleIterator` クラスの実装
-- [ ] STDLIB-COL-ITERATOR-005: `FloatIterator` クラスの実装
-- [x] STDLIB-COL-ITERATOR-006: `IntIterator` クラスの実装
-- [ ] STDLIB-COL-ITERATOR-007: `LongIterator` クラスの実装
-- [x] STDLIB-COL-ITERATOR-008: `ShortIterator` クラスの実装
-
-#### kotlin.collections その他の型の実装
-- [x] STDLIB-COL-OTHER-001: `IndexedValue<T>` データクラスの実装
-- [ ] STDLIB-COL-OTHER-002: `Grouping<T,K>` インターフェースの実装
-- [ ] STDLIB-COL-OTHER-003: `RandomAccess` マーカーインターフェースの実装
-- [x] STDLIB-COL-OTHER-004: `MutableIterable<T>` インターフェースの実装
-- [ ] STDLIB-COL-OTHER-005: `MutableIterator<T>` インターフェースの実装
-- [x] STDLIB-COL-OTHER-006: `MutableListIterator<T>` インターフェースの実装
-
-#### kotlin.collections プロパティの実装
-- [x] STDLIB-COL-PROP-001: `indices` 拡張プロパティの実装
-- [ ] STDLIB-COL-PROP-002: `lastIndex` 拡張プロパティの実装
+- [x] STDLIB-COL-CONCRETE-006: `LinkedHashSet<E>` 具象クラスの実装（現在は型エイリアスのみ）
+- [x] STDLIB-COL-CONCRETE-007: `ArrayDeque<E>` 具象クラスの実装
 
 #### kotlin.collections 関数の実装（A-C）
 - [ ] STDLIB-COL-FN-001: `addAll` 関数の実装（Array版）
 - [ ] STDLIB-COL-FN-002: `addAll` 関数の実装（Iterable版）
 - [ ] STDLIB-COL-FN-003: `addAll` 関数の実装（Sequence版）
-- [ ] STDLIB-COL-FN-004: `aggregate` 関数の実装
-- [ ] STDLIB-COL-FN-005: `aggregateTo` 関数の実装
+- [x] STDLIB-COL-FN-004: `aggregate` 関数の実装
+- [x] STDLIB-COL-FN-005: `aggregateTo` 関数の実装
 - [ ] STDLIB-COL-FN-006: `all` 関数の実装（Array版）
 - [ ] STDLIB-COL-FN-007: `all` 関数の実装（Iterable版）
-- [ ] STDLIB-COL-FN-008: `all` 関数の実装（Map版）
+- [x] STDLIB-COL-FN-008: `all` 関数の実装（Map版）
 - [ ] STDLIB-COL-FN-009: `any` 関数の実装（各オーバーロード）
-- [ ] STDLIB-COL-FN-010: `arrayListOf` 関数の実装
-- [ ] STDLIB-COL-FN-011: `asByteArray` 関数の実装
-- [ ] STDLIB-COL-FN-012: `asIntArray` 関数の実装
-- [ ] STDLIB-COL-FN-013: `asIterable` 関数の実装
-- [ ] STDLIB-COL-FN-014: `asList` 関数の実装
+- [x] STDLIB-COL-FN-010: `arrayListOf` 関数の実装
+- [x] STDLIB-COL-FN-011: `asByteArray` 関数の実装
+- [x] STDLIB-COL-FN-012: `asIntArray` 関数の実装
+- [x] STDLIB-COL-FN-013: `asIterable` 関数の実装
+- [x] STDLIB-COL-FN-014: `asList` 関数の実装
 - [ ] STDLIB-COL-FN-015: `asLongArray` 関数の実装
-- [ ] STDLIB-COL-FN-016: `asSequence` 関数の実装
-- [ ] STDLIB-COL-FN-017: `asShortArray` 関数の実装
+- [x] STDLIB-COL-FN-016: `asSequence` 関数の実装
+- [x] STDLIB-COL-FN-017: `asShortArray` 関数の実装
 - [ ] STDLIB-COL-FN-018: `associate` 関数の実装
 - [ ] STDLIB-COL-FN-019: `associateBy` 関数の実装
-- [ ] STDLIB-COL-FN-020: `associateByTo` 関数の実装
+- [x] STDLIB-COL-FN-020: `associateByTo` 関数の実装
 - [ ] STDLIB-COL-FN-021: `associateWith` 関数の実装
-- [ ] STDLIB-COL-FN-022: `associateWithTo` 関数の実装
-- [ ] STDLIB-COL-FN-023: `average` 関数の実装
-- [ ] STDLIB-COL-FN-024: `binarySearch` 関数の実装（各オーバーロード）
-- [ ] STDLIB-COL-FN-025: `buildList` 関数の実装
-- [ ] STDLIB-COL-FN-026: `buildMap` 関数の実装
-- [ ] STDLIB-COL-FN-027: `buildSet` 関数の実装
+- [x] STDLIB-COL-FN-022: `associateWithTo` 関数の実装
+- [x] STDLIB-COL-FN-023: `average` 関数の実装
+- [x] STDLIB-COL-FN-024: `binarySearch` 関数の実装（各オーバーロード）
+- [x] STDLIB-COL-FN-025: `buildList` 関数の実装
+- [x] STDLIB-COL-FN-026: `buildMap` 関数の実装
+- [x] STDLIB-COL-FN-027: `buildSet` 関数の実装
 - [ ] STDLIB-COL-FN-028: `chunked` 関数の実装
-- [ ] STDLIB-COL-FN-029: `component1` 関数の実装
-- [ ] STDLIB-COL-FN-030: `component2` 関数の実装
-- [ ] STDLIB-COL-FN-031: `component3` 関数の実装
-- [ ] STDLIB-COL-FN-032: `component4` 関数の実装
-- [ ] STDLIB-COL-FN-033: `component5` 関数の実装
+- [x] STDLIB-COL-FN-029: `component1` 関数の実装
+- [x] STDLIB-COL-FN-030: `component2` 関数の実装
+- [x] STDLIB-COL-FN-031: `component3` 関数の実装
+- [x] STDLIB-COL-FN-032: `component4` 関数の実装
+- [x] STDLIB-COL-FN-033: `component5` 関数の実装
 - [ ] STDLIB-COL-FN-034: `contains` 関数の実装
-- [ ] STDLIB-COL-FN-035: `containsAll` 関数の実装
-- [ ] STDLIB-COL-FN-036: `contentDeepEquals` 関数の実装
-- [ ] STDLIB-COL-FN-037: `contentDeepToString` 関数の実装
-- [ ] STDLIB-COL-FN-038: `contentEquals` 関数の実装
-- [ ] STDLIB-COL-FN-039: `contentHashCode` 関数の実装
-- [ ] STDLIB-COL-FN-040: `contentToString` 関数の実装
-- [ ] STDLIB-COL-FN-041: `copyOf` 関数の実装
-- [ ] STDLIB-COL-FN-042: `copyOfRange` 関数の実装
-- [ ] STDLIB-COL-FN-043: `count` 関数の実装
+- [x] STDLIB-COL-FN-035: `containsAll` 関数の実装
+- [x] STDLIB-COL-FN-036: `contentDeepEquals` 関数の実装
+- [x] STDLIB-COL-FN-037: `contentDeepToString` 関数の実装
+- [x] STDLIB-COL-FN-038: `contentEquals` 関数の実装
+- [x] STDLIB-COL-FN-039: `contentHashCode` 関数の実装
+- [x] STDLIB-COL-FN-040: `contentToString` 関数の実装
+- [x] STDLIB-COL-FN-041: `copyOf` 関数の実装
+- [x] STDLIB-COL-FN-042: `copyOfRange` 関数の実装
+- [x] STDLIB-COL-FN-043: `count` 関数の実装
 
 #### kotlin.collections 関数の実装（D-Z）
-- [ ] STDLIB-COL-FN-044: `distinct` 関数の実装
-- [ ] STDLIB-COL-FN-045: `distinctBy` 関数の実装
-- [ ] STDLIB-COL-FN-046: `drop` 関数の実装
+- [x] STDLIB-COL-FN-044: `distinct` 関数の実装
+- [x] STDLIB-COL-FN-045: `distinctBy` 関数の実装
+- [x] STDLIB-COL-FN-046: `drop` 関数の実装
 - [ ] STDLIB-COL-FN-047: `dropLast` 関数の実装
 - [ ] STDLIB-COL-FN-048: `dropLastWhile` 関数の実装
 - [ ] STDLIB-COL-FN-049: `dropWhile` 関数の実装
-- [ ] STDLIB-COL-FN-050: `elementAt` 関数の実装
+- [x] STDLIB-COL-FN-050: `elementAt` 関数の実装
 - [ ] STDLIB-COL-FN-051: `elementAtOrElse` 関数の実装
 - [ ] STDLIB-COL-FN-052: `elementAtOrNull` 関数の実装
-- [ ] STDLIB-COL-FN-053: `emptyList` 関数の実装
-- [ ] STDLIB-COL-FN-054: `emptyMap` 関数の実装
-- [ ] STDLIB-COL-FN-055: `emptySet` 関数の実装
+- [x] STDLIB-COL-FN-053: `emptyList` 関数の実装
+- [x] STDLIB-COL-FN-054: `emptyMap` 関数の実装
+- [x] STDLIB-COL-FN-055: `emptySet` 関数の実装
 - [ ] STDLIB-COL-FN-056: `fill` 関数の実装
 - [ ] STDLIB-COL-FN-057: `filter` 関数の実装
-- [ ] STDLIB-COL-FN-058: `filterIndexed` 関数の実装
+- [x] STDLIB-COL-FN-058: `filterIndexed` 関数の実装
 - [ ] STDLIB-COL-FN-059: `filterIndexedTo` 関数の実装
 - [ ] STDLIB-COL-FN-060: `filterIsInstance` 関数の実装
 - [ ] STDLIB-COL-FN-061: `filterIsInstanceTo` 関数の実装
-- [ ] STDLIB-COL-FN-062: `filterKeys` 関数の実装
+- [x] STDLIB-COL-FN-062: `filterKeys` 関数の実装
 - [ ] STDLIB-COL-FN-063: `filterNot` 関数の実装
 - [ ] STDLIB-COL-FN-064: `filterNotNull` 関数の実装
 - [ ] STDLIB-COL-FN-065: `filterNotNullTo` 関数の実装
-- [ ] STDLIB-COL-FN-066: `filterNotTo` 関数の実装
+- [x] STDLIB-COL-FN-066: `filterNotTo` 関数の実装
 - [ ] STDLIB-COL-FN-067: `filterTo` 関数の実装
 - [ ] STDLIB-COL-FN-068: `filterValues` 関数の実装
 - [ ] STDLIB-COL-FN-069: `find` 関数の実装
 - [ ] STDLIB-COL-FN-070: `findLast` 関数の実装
 - [ ] STDLIB-COL-FN-071: `first` 関数の実装
-- [ ] STDLIB-COL-FN-072: `firstNotNullOf` 関数の実装
-- [ ] STDLIB-COL-FN-073: `firstNotNullOfOrNull` 関数の実装
+- [x] STDLIB-COL-FN-072: `firstNotNullOf` 関数の実装
+- [x] STDLIB-COL-FN-073: `firstNotNullOfOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-074: `firstOrNull` 関数の実装
-- [ ] STDLIB-COL-FN-075: `flatMap` 関数の実装
+- [x] STDLIB-COL-FN-075: `flatMap` 関数の実装
 - [ ] STDLIB-COL-FN-076: `flatMapIndexed` 関数の実装
-- [ ] STDLIB-COL-FN-077: `flatMapIndexedTo` 関数の実装
-- [ ] STDLIB-COL-FN-078: `flatMapTo` 関数の実装
+- [x] STDLIB-COL-FN-077: `flatMapIndexedTo` 関数の実装
+- [x] STDLIB-COL-FN-078: `flatMapTo` 関数の実装
 - [ ] STDLIB-COL-FN-079: `flatten` 関数の実装
 - [ ] STDLIB-COL-FN-080: `fold` 関数の実装
 - [ ] STDLIB-COL-FN-081: `foldIndexed` 関数の実装
-- [ ] STDLIB-COL-FN-082: `foldRight` 関数の実装
+- [x] STDLIB-COL-FN-082: `foldRight` 関数の実装
 - [ ] STDLIB-COL-FN-083: `foldRightIndexed` 関数の実装
 - [ ] STDLIB-COL-FN-084: `forEach` 関数の実装
 - [ ] STDLIB-COL-FN-085: `forEachIndexed` 関数の実装
 - [ ] STDLIB-COL-FN-086: `get` 関数の実装
-- [ ] STDLIB-COL-FN-087: `getOrDefault` 関数の実装
-- [ ] STDLIB-COL-FN-088: `getOrPut` 関数の実装
-- [ ] STDLIB-COL-FN-089: `getValue` 関数の実装
+- [x] STDLIB-COL-FN-087: `getOrDefault` 関数の実装
+- [x] STDLIB-COL-FN-088: `getOrPut` 関数の実装
+- [x] STDLIB-COL-FN-089: `getValue` 関数の実装
 - [ ] STDLIB-COL-FN-090: `groupBy` 関数の実装
-- [ ] STDLIB-COL-FN-091: `groupByTo` 関数の実装
-- [ ] STDLIB-COL-FN-092: `groupingBy` 関数の実装
-- [ ] STDLIB-COL-FN-093: `hashMapOf` 関数の実装
-- [ ] STDLIB-COL-FN-094: `hashSetOf` 関数の実装
-- [ ] STDLIB-COL-FN-095: `indexOf` 関数の実装
-- [ ] STDLIB-COL-FN-096: `indexOfFirst` 関数の実装
-- [ ] STDLIB-COL-FN-097: `indexOfLast` 関数の実装
-- [ ] STDLIB-COL-FN-098: `intersect` 関数の実装
+- [x] STDLIB-COL-FN-091: `groupByTo` 関数の実装
+- [x] STDLIB-COL-FN-092: `groupingBy` 関数の実装
+- [x] STDLIB-COL-FN-093: `hashMapOf` 関数の実装
+- [x] STDLIB-COL-FN-094: `hashSetOf` 関数の実装
+- [x] STDLIB-COL-FN-095: `indexOf` 関数の実装
+- [x] STDLIB-COL-FN-096: `indexOfFirst` 関数の実装
+- [x] STDLIB-COL-FN-097: `indexOfLast` 関数の実装
+- [x] STDLIB-COL-FN-098: `intersect` 関数の実装
 - [ ] STDLIB-COL-FN-099: `isNotEmpty` 関数の実装
-- [ ] STDLIB-COL-FN-100: `isNullOrEmpty` 関数の実装
+- [x] STDLIB-COL-FN-100: `isNullOrEmpty` 関数の実装
 - [ ] STDLIB-COL-FN-101: `iterator` 関数の実装
-- [ ] STDLIB-COL-FN-102: `joinTo` 関数の実装
-- [ ] STDLIB-COL-FN-103: `joinToString` 関数の実装
-- [ ] STDLIB-COL-FN-104: `last` 関数の実装
-- [ ] STDLIB-COL-FN-105: `lastIndexOf` 関数の実装
-- [ ] STDLIB-COL-FN-106: `lastOrNull` 関数の実装
-- [ ] STDLIB-COL-FN-107: `linkedMapOf` 関数の実装
-- [ ] STDLIB-COL-FN-108: `linkedSetOf` 関数の実装
-- [ ] STDLIB-COL-FN-109: `listOf` 関数の実装
-- [ ] STDLIB-COL-FN-110: `listOfNotNull` 関数の実装
-- [ ] STDLIB-COL-FN-111: `map` 関数の実装
-- [ ] STDLIB-COL-FN-112: `mapIndexed` 関数の実装
-- [ ] STDLIB-COL-FN-113: `mapIndexedNotNull` 関数の実装
-- [ ] STDLIB-COL-FN-114: `mapIndexedNotNullTo` 関数の実装
-- [ ] STDLIB-COL-FN-115: `mapIndexedTo` 関数の実装
-- [ ] STDLIB-COL-FN-116: `mapKeys` 関数の実装
-- [ ] STDLIB-COL-FN-117: `mapKeysTo` 関数の実装
-- [ ] STDLIB-COL-FN-118: `mapNotNull` 関数の実装
-- [ ] STDLIB-COL-FN-119: `mapNotNullTo` 関数の実装
-- [ ] STDLIB-COL-FN-120: `mapOf` 関数の実装
-- [ ] STDLIB-COL-FN-121: `mapTo` 関数の実装
-- [ ] STDLIB-COL-FN-122: `mapValues` 関数の実装
-- [ ] STDLIB-COL-FN-123: `mapValuesTo` 関数の実装
+- [x] STDLIB-COL-FN-102: `joinTo` 関数の実装
+- [x] STDLIB-COL-FN-103: `joinToString` 関数の実装
+- [x] STDLIB-COL-FN-104: `last` 関数の実装
+- [x] STDLIB-COL-FN-105: `lastIndexOf` 関数の実装
+- [x] STDLIB-COL-FN-106: `lastOrNull` 関数の実装
+- [x] STDLIB-COL-FN-107: `linkedMapOf` 関数の実装
+- [x] STDLIB-COL-FN-108: `linkedSetOf` 関数の実装
+- [x] STDLIB-COL-FN-109: `listOf` 関数の実装
+- [x] STDLIB-COL-FN-110: `listOfNotNull` 関数の実装
+- [x] STDLIB-COL-FN-111: `map` 関数の実装
+- [x] STDLIB-COL-FN-112: `mapIndexed` 関数の実装
+- [x] STDLIB-COL-FN-113: `mapIndexedNotNull` 関数の実装
+- [x] STDLIB-COL-FN-114: `mapIndexedNotNullTo` 関数の実装
+- [x] STDLIB-COL-FN-115: `mapIndexedTo` 関数の実装
+- [x] STDLIB-COL-FN-116: `mapKeys` 関数の実装
+- [x] STDLIB-COL-FN-117: `mapKeysTo` 関数の実装
+- [x] STDLIB-COL-FN-118: `mapNotNull` 関数の実装
+- [x] STDLIB-COL-FN-119: `mapNotNullTo` 関数の実装
+- [x] STDLIB-COL-FN-120: `mapOf` 関数の実装
+- [x] STDLIB-COL-FN-121: `mapTo` 関数の実装
+- [x] STDLIB-COL-FN-122: `mapValues` 関数の実装
+- [x] STDLIB-COL-FN-123: `mapValuesTo` 関数の実装
 - [ ] STDLIB-COL-FN-124: `max` 関数の実装
-- [ ] STDLIB-COL-FN-125: `maxBy` 関数の実装
+- [x] STDLIB-COL-FN-125: `maxBy` 関数の実装
 - [ ] STDLIB-COL-FN-126: `maxByOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-127: `maxOf` 関数の実装
 - [ ] STDLIB-COL-FN-128: `maxOfOrNull` 関数の実装
@@ -233,94 +211,94 @@
 - [ ] STDLIB-COL-FN-137: `minOf` 関数の実装
 - [ ] STDLIB-COL-FN-138: `minOfOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-139: `minOfWith` 関数の実装
-- [ ] STDLIB-COL-FN-140: `minOfWithOrNull` 関数の実装
+- [x] STDLIB-COL-FN-140: `minOfWithOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-141: `minOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-142: `minWith` 関数の実装
-- [ ] STDLIB-COL-FN-143: `minWithOrNull` 関数の実装
-- [ ] STDLIB-COL-FN-144: `minus` 関数の実装
-- [ ] STDLIB-COL-FN-145: `minusAssign` 関数の実装
-- [ ] STDLIB-COL-FN-146: `minusElement` 関数の実装
-- [ ] STDLIB-COL-FN-147: `mutableListOf` 関数の実装
-- [ ] STDLIB-COL-FN-148: `mutableMapOf` 関数の実装
-- [ ] STDLIB-COL-FN-149: `mutableSetOf` 関数の実装
-- [ ] STDLIB-COL-FN-150: `none` 関数の実装
-- [ ] STDLIB-COL-FN-151: `onEach` 関数の実装
+- [x] STDLIB-COL-FN-143: `minWithOrNull` 関数の実装
+- [x] STDLIB-COL-FN-144: `minus` 関数の実装
+- [x] STDLIB-COL-FN-145: `minusAssign` 関数の実装
+- [x] STDLIB-COL-FN-146: `minusElement` 関数の実装
+- [x] STDLIB-COL-FN-147: `mutableListOf` 関数の実装
+- [x] STDLIB-COL-FN-148: `mutableMapOf` 関数の実装
+- [x] STDLIB-COL-FN-149: `mutableSetOf` 関数の実装
+- [x] STDLIB-COL-FN-150: `none` 関数の実装
+- [x] STDLIB-COL-FN-151: `onEach` 関数の実装
 - [ ] STDLIB-COL-FN-152: `onEachIndexed` 関数の実装
-- [ ] STDLIB-COL-FN-153: `orEmpty` 関数の実装
-- [ ] STDLIB-COL-FN-154: `partition` 関数の実装
-- [ ] STDLIB-COL-FN-155: `plus` 関数の実装
-- [ ] STDLIB-COL-FN-156: `plusAssign` 関数の実装
-- [ ] STDLIB-COL-FN-157: `plusElement` 関数の実装
-- [ ] STDLIB-COL-FN-158: `random` 関数の実装
+- [x] STDLIB-COL-FN-153: `orEmpty` 関数の実装
+- [x] STDLIB-COL-FN-154: `partition` 関数の実装
+- [x] STDLIB-COL-FN-155: `plus` 関数の実装
+- [x] STDLIB-COL-FN-156: `plusAssign` 関数の実装
+- [x] STDLIB-COL-FN-157: `plusElement` 関数の実装
+- [x] STDLIB-COL-FN-158: `random` 関数の実装
 - [ ] STDLIB-COL-FN-159: `randomOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-160: `reduce` 関数の実装
 - [ ] STDLIB-COL-FN-161: `reduceIndexed` 関数の実装
 - [ ] STDLIB-COL-FN-162: `reduceIndexedOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-163: `reduceOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-164: `reduceRight` 関数の実装
-- [ ] STDLIB-COL-FN-165: `reduceRightIndexed` 関数の実装
-- [ ] STDLIB-COL-FN-166: `reduceRightIndexedOrNull` 関数の実装
-- [ ] STDLIB-COL-FN-167: `reduceRightOrNull` 関数の実装
-- [ ] STDLIB-COL-FN-168: `removeAll` 関数の実装
-- [ ] STDLIB-COL-FN-169: `removeFirst` 関数の実装
-- [ ] STDLIB-COL-FN-170: `removeFirstOrNull` 関数の実装
-- [ ] STDLIB-COL-FN-171: `removeLast` 関数の実装
-- [ ] STDLIB-COL-FN-172: `removeLastOrNull` 関数の実装
-- [ ] STDLIB-COL-FN-173: `requireNoNulls` 関数の実装
-- [ ] STDLIB-COL-FN-174: `reversed` 関数の実装
-- [ ] STDLIB-COL-FN-175: `runningFold` 関数の実装
-- [ ] STDLIB-COL-FN-176: `runningFoldIndexed` 関数の実装
-- [ ] STDLIB-COL-FN-177: `runningReduce` 関数の実装
-- [ ] STDLIB-COL-FN-178: `runningReduceIndexed` 関数の実装
-- [ ] STDLIB-COL-FN-179: `scan` 関数の実装
+- [x] STDLIB-COL-FN-165: `reduceRightIndexed` 関数の実装
+- [x] STDLIB-COL-FN-166: `reduceRightIndexedOrNull` 関数の実装
+- [x] STDLIB-COL-FN-167: `reduceRightOrNull` 関数の実装
+- [x] STDLIB-COL-FN-168: `removeAll` 関数の実装
+- [x] STDLIB-COL-FN-169: `removeFirst` 関数の実装
+- [x] STDLIB-COL-FN-170: `removeFirstOrNull` 関数の実装
+- [x] STDLIB-COL-FN-171: `removeLast` 関数の実装
+- [x] STDLIB-COL-FN-172: `removeLastOrNull` 関数の実装
+- [x] STDLIB-COL-FN-173: `requireNoNulls` 関数の実装
+- [x] STDLIB-COL-FN-174: `reversed` 関数の実装
+- [x] STDLIB-COL-FN-175: `runningFold` 関数の実装
+- [x] STDLIB-COL-FN-176: `runningFoldIndexed` 関数の実装
+- [x] STDLIB-COL-FN-177: `runningReduce` 関数の実装
+- [x] STDLIB-COL-FN-178: `runningReduceIndexed` 関数の実装
+- [x] STDLIB-COL-FN-179: `scan` 関数の実装
 - [ ] STDLIB-COL-FN-180: `scanIndexed` 関数の実装
 - [ ] STDLIB-COL-FN-181: `scanReduce` 関数の実装
-- [ ] STDLIB-COL-FN-182: `setOf` 関数の実装
-- [ ] STDLIB-COL-FN-183: `shuffled` 関数の実装
-- [ ] STDLIB-COL-FN-184: `single` 関数の実装
-- [ ] STDLIB-COL-FN-185: `singleOrNull` 関数の実装
-- [ ] STDLIB-COL-FN-186: `slice` 関数の実装
+- [x] STDLIB-COL-FN-182: `setOf` 関数の実装
+- [x] STDLIB-COL-FN-183: `shuffled` 関数の実装
+- [x] STDLIB-COL-FN-184: `single` 関数の実装
+- [x] STDLIB-COL-FN-185: `singleOrNull` 関数の実装
+- [x] STDLIB-COL-FN-186: `slice` 関数の実装
 - [ ] STDLIB-COL-FN-187: `sort` 関数の実装
-- [ ] STDLIB-COL-FN-188: `sortBy` 関数の実装
-- [ ] STDLIB-COL-FN-189: `sortByDescending` 関数の実装
-- [ ] STDLIB-COL-FN-190: `sorted` 関数の実装
-- [ ] STDLIB-COL-FN-191: `sortedBy` 関数の実装
-- [ ] STDLIB-COL-FN-192: `sortedByDescending` 関数の実装
-- [ ] STDLIB-COL-FN-193: `sortedDescending` 関数の実装
-- [ ] STDLIB-COL-FN-194: `sortedWith` 関数の実装
-- [ ] STDLIB-COL-FN-195: `subtract` 関数の実装
+- [x] STDLIB-COL-FN-188: `sortBy` 関数の実装
+- [x] STDLIB-COL-FN-189: `sortByDescending` 関数の実装
+- [x] STDLIB-COL-FN-190: `sorted` 関数の実装
+- [x] STDLIB-COL-FN-191: `sortedBy` 関数の実装
+- [x] STDLIB-COL-FN-192: `sortedByDescending` 関数の実装
+- [x] STDLIB-COL-FN-193: `sortedDescending` 関数の実装
+- [x] STDLIB-COL-FN-194: `sortedWith` 関数の実装
+- [x] STDLIB-COL-FN-195: `subtract` 関数の実装
 - [ ] STDLIB-COL-FN-196: `sum` 関数の実装
 - [ ] STDLIB-COL-FN-197: `sumBy` 関数の実装
 - [ ] STDLIB-COL-FN-198: `sumByDouble` 関数の実装
-- [ ] STDLIB-COL-FN-199: `sumOf` 関数の実装
-- [ ] STDLIB-COL-FN-200: `take` 関数の実装
-- [ ] STDLIB-COL-FN-201: `takeLast` 関数の実装
+- [x] STDLIB-COL-FN-199: `sumOf` 関数の実装
+- [x] STDLIB-COL-FN-200: `take` 関数の実装
+- [x] STDLIB-COL-FN-201: `takeLast` 関数の実装
 - [ ] STDLIB-COL-FN-202: `takeLastWhile` 関数の実装
 - [ ] STDLIB-COL-FN-203: `takeWhile` 関数の実装
-- [ ] STDLIB-COL-FN-204: `toBooleanArray` 関数の実装
-- [ ] STDLIB-COL-FN-205: `toByteArray` 関数の実装
+- [x] STDLIB-COL-FN-204: `toBooleanArray` 関数の実装
+- [x] STDLIB-COL-FN-205: `toByteArray` 関数の実装
 - [ ] STDLIB-COL-FN-206: `toCharArray` 関数の実装
-- [ ] STDLIB-COL-FN-207: `toCollection` 関数の実装
-- [ ] STDLIB-COL-FN-208: `toDoubleArray` 関数の実装
-- [ ] STDLIB-COL-FN-209: `toFloatArray` 関数の実装
+- [x] STDLIB-COL-FN-207: `toCollection` 関数の実装
+- [x] STDLIB-COL-FN-208: `toDoubleArray` 関数の実装
+- [x] STDLIB-COL-FN-209: `toFloatArray` 関数の実装
 - [ ] STDLIB-COL-FN-210: `toHashSet` 関数の実装
-- [ ] STDLIB-COL-FN-211: `toIntArray` 関数の実装
+- [x] STDLIB-COL-FN-211: `toIntArray` 関数の実装
 - [ ] STDLIB-COL-FN-212: `toList` 関数の実装
-- [ ] STDLIB-COL-FN-213: `toLongArray` 関数の実装
-- [ ] STDLIB-COL-FN-214: `toMap` 関数の実装
+- [x] STDLIB-COL-FN-213: `toLongArray` 関数の実装
+- [x] STDLIB-COL-FN-214: `toMap` 関数の実装
 - [ ] STDLIB-COL-FN-215: `toMutableList` 関数の実装
 - [ ] STDLIB-COL-FN-216: `toMutableSet` 関数の実装
-- [ ] STDLIB-COL-FN-217: `toShortArray` 関数の実装
+- [x] STDLIB-COL-FN-217: `toShortArray` 関数の実装
 - [ ] STDLIB-COL-FN-218: `toSortedSet` 関数の実装
 - [ ] STDLIB-COL-FN-219: `toTypedArray` 関数の実装
 - [ ] STDLIB-COL-FN-220: `toTypeArray` 関数の実装
-- [ ] STDLIB-COL-FN-221: `union` 関数の実装
-- [ ] STDLIB-COL-FN-222: `unzip` 関数の実装
+- [x] STDLIB-COL-FN-221: `union` 関数の実装
+- [x] STDLIB-COL-FN-222: `unzip` 関数の実装
 - [ ] STDLIB-COL-FN-223: `withDefault` 関数の実装
-- [ ] STDLIB-COL-FN-224: `withIndex` 関数の実装
+- [x] STDLIB-COL-FN-224: `withIndex` 関数の実装
 - [ ] STDLIB-COL-FN-225: `windowed` 関数の実装
 - [ ] STDLIB-COL-FN-226: `zip` 関数の実装
-- [ ] STDLIB-COL-FN-227: `zipWithNext` 関数の実装
+- [x] STDLIB-COL-FN-227: `zipWithNext` 関数の実装
 
 ### Phase 3: I/O・パス・時間・並行（common）
 - [~] STDLIB-GAP-PH3: `kotlin.io`（common） / `kotlin.time` / `kotlin.concurrent` / `kotlin.concurrent.atomics` の未対応を潰す
@@ -329,26 +307,16 @@
 - [x] STDLIB-IO-ENC-002: `Base64.encode(ByteArray)` / `decode(String)` を追加する
 - [x] STDLIB-IO-ENC-003: `Base64.encodeToByteArray(ByteArray)` / `decodeFromByteArray(ByteArray)` を追加する
 - [x] STDLIB-IO-ENC-004: `Base64.withPadding(PaddingOption)` と MIME / URL-safe variant の挙動を追加する
-- [ ] STDLIB-032: `kotlin.time` の stable / experimental 境界を明文化
+- [x] STDLIB-032: `kotlin.time` の stable / experimental 境界を明文化
 - [ ] STDLIB-033: `kotlin.concurrent` / `kotlin.concurrent.atomics` / Native concurrent の parity を上げる
-- [x] STDLIB-ATOMIC-001: `kotlin.concurrent.atomics.AtomicNativePtr` surface を追加する
-- [x] STDLIB-ATOMIC-002: `atomicArrayOfNulls<T>(size)` を追加する
-- [x] STDLIB-ATOMIC-003: `AtomicInt.fetchAndDecrement()` / `AtomicLong.fetchAndDecrement()` を追加する
-- [x] STDLIB-ATOMIC-004: `AtomicIntArray.fetchAndDecrementAt(index)` / `AtomicLongArray.fetchAndDecrementAt(index)` を追加する
-- [x] STDLIB-ATOMIC-005: `AtomicIntArray.fetchAndIncrementAt(index)` / `AtomicLongArray.fetchAndIncrementAt(index)` を追加する
-- [x] STDLIB-ATOMIC-006: `AtomicReference.fetchAndUpdate(function)` を追加する
-- [x] STDLIB-ATOMIC-007: `AtomicArray.fetchAndUpdateAt(index, function)` を追加する
-- [x] STDLIB-ATOMIC-008: `AtomicArray.updateAt(index, function)` を追加する
-- [x] STDLIB-ATOMIC-009: `AtomicReference.updateAndFetch(function)` を追加する
-- [x] STDLIB-ATOMIC-010: `AtomicArray.updateAndFetchAt(index, function)` を追加する
 
 #### kotlin.concurrent 型の実装
 - [ ] STDLIB-CONC-TYPE-001: `AtomicArray<T>` クラスの実装
-- [ ] STDLIB-CONC-TYPE-002: `AtomicInt` クラスの実装
+- [x] STDLIB-CONC-TYPE-002: `AtomicInt` クラスの実装
 - [ ] STDLIB-CONC-TYPE-003: `AtomicIntArray` クラスの実装
-- [ ] STDLIB-CONC-TYPE-004: `AtomicLong` クラスの実装
+- [x] STDLIB-CONC-TYPE-004: `AtomicLong` クラスの実装
 - [ ] STDLIB-CONC-TYPE-005: `AtomicLongArray` クラスの実装
-- [ ] STDLIB-CONC-TYPE-006: `AtomicReference<T>` クラスの実装
+- [x] STDLIB-CONC-TYPE-006: `AtomicReference<T>` クラスの実装
 - [ ] STDLIB-CONC-TYPE-007: `Volatile` アノテーションの実装
 
 #### kotlin.concurrent 関数の実装
@@ -362,18 +330,18 @@
 - [ ] STDLIB-CONC-FN-008: `timer` 関数の実装（各オーバーロード）
 
 #### kotlin.concurrent.atomics 型の実装
-- [ ] STDLIB-ATOMIC-NEW-001: `AtomicArray<T>` クラスの実装（kotlin.concurrent.atomics パッケージ版）
-- [ ] STDLIB-ATOMIC-NEW-002: `AtomicBoolean` クラスの実装
-- [ ] STDLIB-ATOMIC-NEW-003: `AtomicIntArray` クラスの実装（kotlin.concurrent.atomics パッケージ版）
-- [ ] STDLIB-ATOMIC-NEW-004: `AtomicInt` クラスの実装
-- [ ] STDLIB-ATOMIC-NEW-005: `AtomicLong` クラスの実装
-- [ ] STDLIB-ATOMIC-NEW-006: `AtomicLongArray` クラスの実装（kotlin.concurrent.atomics パッケージ版）
-- [ ] STDLIB-ATOMIC-NEW-007: `AtomicNativePtr` クラスの実装
-- [ ] STDLIB-ATOMIC-NEW-008: `AtomicReference<T>` クラスの実装（kotlin.concurrent.atomics パッケージ版）
-- [ ] STDLIB-ATOMIC-NEW-009: `ExperimentalAtomicApi` アノテーションの実装
+- [x] STDLIB-ATOMIC-NEW-001: `AtomicArray<T>` クラスの実装（kotlin.concurrent.atomics パッケージ版）
+- [x] STDLIB-ATOMIC-NEW-002: `AtomicBoolean` クラスの実装
+- [x] STDLIB-ATOMIC-NEW-003: `AtomicIntArray` クラスの実装（kotlin.concurrent.atomics パッケージ版）
+- [x] STDLIB-ATOMIC-NEW-004: `AtomicInt` クラスの実装
+- [x] STDLIB-ATOMIC-NEW-005: `AtomicLong` クラスの実装
+- [x] STDLIB-ATOMIC-NEW-006: `AtomicLongArray` クラスの実装（kotlin.concurrent.atomics パッケージ版）
+- [x] STDLIB-ATOMIC-NEW-007: `AtomicNativePtr` クラスの実装
+- [x] STDLIB-ATOMIC-NEW-008: `AtomicReference<T>` クラスの実装（kotlin.concurrent.atomics パッケージ版）
+- [x] STDLIB-ATOMIC-NEW-009: `ExperimentalAtomicApi` アノテーションの実装
 
 #### kotlin.concurrent.atomics 関数の実装
-- [ ] STDLIB-ATOMIC-NEW-FN-001: `asJavaAtomic` 関数の実装（AtomicBoolean版）
+- [x] STDLIB-ATOMIC-NEW-FN-001: `asJavaAtomic` 関数の実装（AtomicBoolean版）
 - [ ] STDLIB-ATOMIC-NEW-FN-002: `asJavaAtomic` 関数の実装（AtomicInt版）
 - [ ] STDLIB-ATOMIC-NEW-FN-003: `asJavaAtomic` 関数の実装（AtomicLong版）
 - [ ] STDLIB-ATOMIC-NEW-FN-004: `asJavaAtomic` 関数の実装（AtomicReference版）
@@ -382,13 +350,13 @@
 - [ ] STDLIB-ATOMIC-NEW-FN-007: `asJavaAtomicArray` 関数の実装（AtomicLongArray版）
 - [ ] STDLIB-ATOMIC-NEW-FN-008: `asKotlinAtomic` 関数の実装（各オーバーロード）
 - [ ] STDLIB-ATOMIC-NEW-FN-009: `asKotlinAtomicArray` 関数の実装（各オーバーロード）
-- [ ] STDLIB-ATOMIC-NEW-FN-010: `atomicArrayOfNulls` 関数の実装
-- [ ] STDLIB-ATOMIC-NEW-FN-011: `AtomicIntArray` 関数の実装（factory版）
+- [x] STDLIB-ATOMIC-NEW-FN-010: `atomicArrayOfNulls` 関数の実装
+- [x] STDLIB-ATOMIC-NEW-FN-011: `AtomicIntArray` 関数の実装（factory版）
 - [ ] STDLIB-ATOMIC-NEW-FN-012: `AtomicLongArray` 関数の実装（factory版）
 - [ ] STDLIB-ATOMIC-NEW-FN-013: `fetchAndUpdate` 拡張関数の実装（AtomicArray版）
 - [ ] STDLIB-ATOMIC-NEW-FN-014: `fetchAndUpdate` 拡張関数の実装（AtomicBoolean版）
 - [ ] STDLIB-ATOMIC-NEW-FN-015: `fetchAndUpdate` 拡張関数の実装（AtomicIntArray版）
-- [ ] STDLIB-ATOMIC-NEW-FN-016: `fetchAndUpdate` 拡張関数の実装（AtomicInt版）
+- [x] STDLIB-ATOMIC-NEW-FN-016: `fetchAndUpdate` 拡張関数の実装（AtomicInt版）
 - [ ] STDLIB-ATOMIC-NEW-FN-017: `fetchAndUpdate` 拡張関数の実装（AtomicLongArray版）
 - [ ] STDLIB-ATOMIC-NEW-FN-018: `fetchAndUpdate` 拡張関数の実装（AtomicLong版）
 - [ ] STDLIB-ATOMIC-NEW-FN-019: `fetchAndUpdate` 拡張関数の実装（AtomicNativePtr版）
@@ -408,82 +376,20 @@
 
 #### kotlin.contracts 型の実装
 - [ ] STDLIB-CONTRACT-TYPE-001: `CallsInPlace` クラスの実装
-- [ ] STDLIB-CONTRACT-TYPE-002: `ConditionalEffect` クラスの実装
-- [ ] STDLIB-CONTRACT-TYPE-003: `ContractBuilder` クラスの実装
-- [ ] STDLIB-CONTRACT-TYPE-004: `Effect` クラスの実装
-- [ ] STDLIB-CONTRACT-TYPE-005: `ExperimentalContracts` アノテーションの実装
-- [ ] STDLIB-CONTRACT-TYPE-006: `ExperimentalExtendedContracts` アノテーションの実装
-- [ ] STDLIB-CONTRACT-TYPE-007: `HoldsIn` クラスの実装
-- [ ] STDLIB-CONTRACT-TYPE-008: `InvocationKind` enum の実装
+- [x] STDLIB-CONTRACT-TYPE-002: `ConditionalEffect` クラスの実装
+- [x] STDLIB-CONTRACT-TYPE-003: `ContractBuilder` クラスの実装
+- [x] STDLIB-CONTRACT-TYPE-004: `Effect` クラスの実装
+- [x] STDLIB-CONTRACT-TYPE-005: `ExperimentalContracts` アノテーションの実装
+- [x] STDLIB-CONTRACT-TYPE-006: `ExperimentalExtendedContracts` アノテーションの実装
+- [x] STDLIB-CONTRACT-TYPE-007: `HoldsIn` クラスの実装
+- [x] STDLIB-CONTRACT-TYPE-008: `InvocationKind` enum の実装
 - [ ] STDLIB-CONTRACT-TYPE-009: `Returns` クラスの実装
 - [ ] STDLIB-CONTRACT-TYPE-010: `ReturnsNotNull` クラスの実装
-- [ ] STDLIB-CONTRACT-TYPE-011: `SimpleEffect` クラスの実装
-
-#### kotlin.contracts 関数の実装
-- [ ] STDLIB-CONTRACT-FN-001: `contract` 関数の実装
-
-#### kotlin.coroutines 型の実装
-- [ ] STDLIB-COROUTINE-TYPE-001: `AbstractCoroutineContextElement` クラスの実装
-- [ ] STDLIB-COROUTINE-TYPE-002: `AbstractCoroutineContextKey` クラスの実装
-- [ ] STDLIB-COROUTINE-TYPE-003: `Continuation<T>` インターフェースの実装
-- [ ] STDLIB-COROUTINE-TYPE-004: `ContinuationInterceptor` インターフェースの実装
-- [ ] STDLIB-COROUTINE-TYPE-005: `CoroutineContext` インターフェースの実装
-- [ ] STDLIB-COROUTINE-TYPE-006: `EmptyCoroutineContext` クラスの実装
-- [ ] STDLIB-COROUTINE-TYPE-007: `RestrictsSuspension` アノテーションの実装
-- [ ] STDLIB-COROUTINE-TYPE-008: `SuspendFunction<R>` インターフェースの実装
-
-#### kotlin.coroutines プロパティの実装
-- [ ] STDLIB-COROUTINE-PROP-001: `coroutineContext` 拡張プロパティの実装
-
-#### kotlin.coroutines 関数の実装
-- [ ] STDLIB-COROUTINE-FN-001: `Continuation` 関数の実装（factory版）
-- [ ] STDLIB-COROUTINE-FN-002: `createCoroutine` 関数の実装（各オーバーロード）
-- [ ] STDLIB-COROUTINE-FN-003: `getPolymorphicElement` 関数の実装
-- [ ] STDLIB-COROUTINE-FN-004: `minusPolymorphicKey` 関数の実装
-- [ ] STDLIB-COROUTINE-FN-005: `resume` 関数の実装
-- [ ] STDLIB-COROUTINE-FN-006: `resumeWithException` 関数の実装
-- [ ] STDLIB-COROUTINE-FN-007: `startCoroutine` 関数の実装（各オーバーロード）
-- [ ] STDLIB-COROUTINE-FN-008: `suspendCoroutine` 関数の実装
-
-#### kotlin.coroutines.cancellation 型の実装
-- [ ] STDLIB-COROUTINE-CANCEL-TYPE-001: `CancellationException` クラスの実装
+- [x] STDLIB-CONTRACT-TYPE-011: `SimpleEffect` クラスの実装
 
 #### kotlin.coroutines.cancellation 関数の実装
 - [ ] STDLIB-COROUTINE-CANCEL-FN-001: `CancellationException` 関数の実装（cause版）
-- [ ] STDLIB-COROUTINE-CANCEL-FN-002: `CancellationException` 関数の実装（messageとcause版）
-
-#### kotlin.coroutines.intrinsics プロパティの実装
-- [ ] STDLIB-COROUTINE-INTRINSIC-PROP-001: `COROUTINE_SUSPENDED` プロパティの実装
-
-#### kotlin.coroutines.intrinsics 関数の実装
-- [ ] STDLIB-COROUTINE-INTRINSIC-FN-001: `createCoroutineUnintercepted` 関数の実装（各オーバーロード）
-- [ ] STDLIB-COROUTINE-INTRINSIC-FN-002: `intercepted` 関数の実装
-- [ ] STDLIB-COROUTINE-INTRINSIC-FN-003: `startCoroutineUninterceptedOrReturn` 関数の実装（各オーバーロード）
-- [ ] STDLIB-COROUTINE-INTRINSIC-FN-004: `suspendCoroutineUninterceptedOrReturn` 関数の実装
-
-#### kotlin.enums 型の実装
-- [ ] STDLIB-ENUMS-TYPE-001: `EnumEntries<E>` インターフェースの実装
-
-#### kotlin.enums 関数の実装
-- [ ] STDLIB-ENUMS-FN-001: `enumEntries` 関数の実装
-
-#### kotlin.experimental 型の実装
-- [ ] STDLIB-EXP-TYPE-001: `ExpectRefinement` アノテーションの実装
-- [ ] STDLIB-EXP-TYPE-002: `ExperimentalNativeApi` アノテーションの実装
-- [ ] STDLIB-EXP-TYPE-003: `ExperimentalObjCEnum` アノテーションの実装
-- [ ] STDLIB-EXP-TYPE-004: `ExperimentalObjCName` アノテーションの実装
-- [ ] STDLIB-EXP-TYPE-005: `ExperimentalObjCRefinement` アノテーションの実装
-- [ ] STDLIB-EXP-TYPE-006: `ExperimentalTypeInference` アノテーションの実装
-
-#### kotlin.experimental 関数の実装
-- [ ] STDLIB-EXP-FN-001: `and` 関数の実装（Byte版）
-- [ ] STDLIB-EXP-FN-002: `and` 関数の実装（Short版）
-- [ ] STDLIB-EXP-FN-003: `inv` 関数の実装（Byte版）
-- [ ] STDLIB-EXP-FN-004: `inv` 関数の実装（Short版）
-- [ ] STDLIB-EXP-FN-005: `or` 関数の実装（Byte版）
-- [ ] STDLIB-EXP-FN-006: `or` 関数の実装（Short版）
-- [ ] STDLIB-EXP-FN-007: `xor` 関数の実装（Byte版）
-- [ ] STDLIB-EXP-FN-008: `xor` 関数の実装（Short版）
+- [x] STDLIB-COROUTINE-CANCEL-FN-002: `CancellationException` 関数の実装（messageとcause版）
 
 #### kotlin.io 型の実装
 - [ ] STDLIB-IO-TYPE-001: `AccessDeniedException` クラスの実装
@@ -495,7 +401,7 @@
 - [ ] STDLIB-IO-TYPE-007: `OnErrorAction` enum の実装
 
 #### kotlin.io プロパティの実装
-- [ ] STDLIB-IO-PROP-001: `DEFAULT_BUFFER_SIZE` プロパティの実装
+- [x] STDLIB-IO-PROP-001: `DEFAULT_BUFFER_SIZE` プロパティの実装
 - [ ] STDLIB-IO-PROP-002: `extension` 拡張プロパティの実装
 - [ ] STDLIB-IO-PROP-003: `invariantSeparatorsPath` 拡張プロパティの実装
 - [ ] STDLIB-IO-PROP-004: `isRooted` 拡張プロパティの実装
@@ -503,13 +409,13 @@
 
 #### kotlin.io 関数の実装
 - [ ] STDLIB-IO-FN-001: `appendBytes` 関数の実装
-- [ ] STDLIB-IO-FN-002: `appendText` 関数の実装
+- [x] STDLIB-IO-FN-002: `appendText` 関数の実装
 - [ ] STDLIB-IO-FN-003: `buffered` 関数の実装（InputStream版）
 - [ ] STDLIB-IO-FN-004: `buffered` 関数の実装（OutputStream版）
 - [ ] STDLIB-IO-FN-005: `buffered` 関数の実装（Reader版）
 - [ ] STDLIB-IO-FN-006: `buffered` 関数の実装（Writer版）
 - [ ] STDLIB-IO-FN-007: `bufferedReader` 関数の実装（InputStream版）
-- [ ] STDLIB-IO-FN-008: `bufferedReader` 関数の実装（File版）
+- [x] STDLIB-IO-FN-008: `bufferedReader` 関数の実装（File版）
 - [ ] STDLIB-IO-FN-009: `bufferedWriter` 関数の実装（OutputStream版）
 - [ ] STDLIB-IO-FN-010: `bufferedWriter` 関数の実装（File版）
 - [ ] STDLIB-IO-FN-011: `byteInputStream` 関数の実装
@@ -519,52 +425,44 @@
 - [ ] STDLIB-IO-FN-015: `copyTo` 関数の実装（File版）
 - [ ] STDLIB-IO-FN-016: `forEachBlock` 関数の実装
 - [ ] STDLIB-IO-FN-017: `forEachLine` 関数の実装（Reader版）
-- [ ] STDLIB-IO-FN-018: `forEachLine` 関数の実装（File版）
-- [ ] STDLIB-IO-FN-019: `inputStream` 関数の実装（File版）
+- [x] STDLIB-IO-FN-018: `forEachLine` 関数の実装（File版）
+- [x] STDLIB-IO-FN-019: `inputStream` 関数の実装（File版）
 - [ ] STDLIB-IO-FN-020: `inputStream` 関数の実装（ByteArray版）
 - [ ] STDLIB-IO-FN-021: `inputStream` 関数の実装（ByteArray範囲版）
 - [ ] STDLIB-IO-FN-022: `iterator` 関数の実装
-- [ ] STDLIB-IO-FN-023: `lineSequence` 関数の実装
+- [x] STDLIB-IO-FN-023: `lineSequence` 関数の実装
 - [ ] STDLIB-IO-FN-024: `normalize` 関数の実装
-- [ ] STDLIB-IO-FN-025: `outputStream` 関数の実装
-- [ ] STDLIB-IO-FN-026: `println` 関数の実装（各オーバーロード）
+- [x] STDLIB-IO-FN-025: `outputStream` 関数の実装
+- [x] STDLIB-IO-FN-026: `println` 関数の実装（各オーバーロード）
 - [ ] STDLIB-IO-FN-027: `printWriter` 関数の実装
-- [ ] STDLIB-IO-FN-028: `readBytes` 関数の実装（File版）
+- [x] STDLIB-IO-FN-028: `readBytes` 関数の実装（File版）
 - [ ] STDLIB-IO-FN-029: `readBytes` 関数の実装（InputStream版）
 - [ ] STDLIB-IO-FN-030: `readBytes` 関数の実装（URL版）
-- [ ] STDLIB-IO-FN-031: `readln` 関数の実装
-- [ ] STDLIB-IO-FN-032: `readlnOrNull` 関数の実装
+- [x] STDLIB-IO-FN-031: `readln` 関数の実装
+- [x] STDLIB-IO-FN-032: `readlnOrNull` 関数の実装
 - [ ] STDLIB-IO-FN-033: `readText` 関数の実装（Reader版）
-- [ ] STDLIB-IO-FN-034: `readText` 関数の実装（File版）
+- [x] STDLIB-IO-FN-034: `readText` 関数の実装（File版）
 - [ ] STDLIB-IO-FN-035: `readText` 関数の実装（URL版）
 - [ ] STDLIB-IO-FN-036: `resolveSibling` 関数の実装
 - [ ] STDLIB-IO-FN-037: `startsWith` 関数の実装
 - [ ] STDLIB-IO-FN-038: `toRelativeString` 関数の実装
-- [ ] STDLIB-IO-FN-039: `use` 関数の実装
+- [x] STDLIB-IO-FN-039: `use` 関数の実装
 - [ ] STDLIB-IO-FN-040: `useLines` 関数の実装（Reader版）
-- [ ] STDLIB-IO-FN-041: `useLines` 関数の実装（File版）
+- [x] STDLIB-IO-FN-041: `useLines` 関数の実装（File版）
 
 #### kotlin.io.encoding 型の実装
-- [ ] STDLIB-IO-ENC-TYPE-001: `Base64` クラスの実装
-- [ ] STDLIB-IO-ENC-TYPE-002: `ExperimentalEncodingApi` アノテーションの実装
+- [x] STDLIB-IO-ENC-TYPE-001: `Base64` クラスの実装
+- [x] STDLIB-IO-ENC-TYPE-002: `ExperimentalEncodingApi` アノテーションの実装
 
 #### kotlin.io.encoding 関数の実装
 - [ ] STDLIB-IO-ENC-FN-001: `decodingWith` 関数の実装
 - [ ] STDLIB-IO-ENC-FN-002: `encodingWith` 関数の実装
 
-#### kotlin.io.path 型の実装
-- [ ] STDLIB-IO-PATH-TYPE-001: `CopyActionContext` クラスの実装
-- [ ] STDLIB-IO-PATH-TYPE-002: `CopyActionResult` enum の実装
-- [ ] STDLIB-IO-PATH-TYPE-003: `ExperimentalPathApi` アノテーションの実装
-- [ ] STDLIB-IO-PATH-TYPE-004: `FileVisitorBuilder` クラスの実装
-- [ ] STDLIB-IO-PATH-TYPE-005: `OnErrorResult` enum の実装
-- [ ] STDLIB-IO-PATH-TYPE-006: `PathWalkOption` enum の実装
-
 #### kotlin.io.path プロパティの実装
 - [ ] STDLIB-IO-PATH-PROP-001: `extension` 拡張プロパティの実装
-- [ ] STDLIB-IO-PATH-PROP-002: `invariantSeparatorsPath` 拡張プロパティの実装
-- [ ] STDLIB-IO-PATH-PROP-003: `invariantSeparatorsPathString` 拡張プロパティの実装
-- [ ] STDLIB-IO-PATH-PROP-004: `name` 拡張プロパティの実装
+- [x] STDLIB-IO-PATH-PROP-002: `invariantSeparatorsPath` 拡張プロパティの実装
+- [x] STDLIB-IO-PATH-PROP-003: `invariantSeparatorsPathString` 拡張プロパティの実装
+- [x] STDLIB-IO-PATH-PROP-004: `name` 拡張プロパティの実装
 - [ ] STDLIB-IO-PATH-PROP-005: `nameWithoutExtension` 拡張プロパティの実装
 - [ ] STDLIB-IO-PATH-PROP-006: `pathString` 拡張プロパティの実装
 
@@ -574,7 +472,7 @@
 - [ ] STDLIB-IO-PATH-FN-003: `appendBytes` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-004: `appendLines` 関数の実装（Iterable版）
 - [ ] STDLIB-IO-PATH-FN-005: `appendLines` 関数の実装（Sequence版）
-- [ ] STDLIB-IO-PATH-FN-006: `appendText` 関数の実装
+- [x] STDLIB-IO-PATH-FN-006: `appendText` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-007: `bufferedReader` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-008: `bufferedWriter` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-009: `copyTo` 関数の実装
@@ -582,10 +480,10 @@
 - [ ] STDLIB-IO-PATH-FN-011: `createSymbolicLinkPointingTo` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-012: `createTempDirectory` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-013: `createTempFile` 関数の実装
-- [ ] STDLIB-IO-PATH-FN-014: `deleteExisting` 関数の実装
-- [ ] STDLIB-IO-PATH-FN-015: `deleteIfExists` 関数の実装
-- [ ] STDLIB-IO-PATH-FN-016: `deleteRecursively` 関数の実装
-- [ ] STDLIB-IO-PATH-FN-017: `div` 関数の実装
+- [x] STDLIB-IO-PATH-FN-014: `deleteExisting` 関数の実装
+- [x] STDLIB-IO-PATH-FN-015: `deleteIfExists` 関数の実装
+- [x] STDLIB-IO-PATH-FN-016: `deleteRecursively` 関数の実装
+- [x] STDLIB-IO-PATH-FN-017: `div` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-018: `fileVisitor` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-019: `forEachDirectoryEntry` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-020: `forEachLine` 関数の実装
@@ -597,12 +495,12 @@
 - [ ] STDLIB-IO-PATH-FN-026: `moveTo` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-027: `notExists` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-028: `outputStream` 関数の実装
-- [ ] STDLIB-IO-PATH-FN-029: `Path` 関数の実装（factory版）
+- [x] STDLIB-IO-PATH-FN-029: `Path` 関数の実装（factory版）
 - [ ] STDLIB-IO-PATH-FN-030: `readAttributes` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-031: `relativeToOrSelf` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-032: `setAttribute` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-033: `setLastModifiedTime` 関数の実装
-- [ ] STDLIB-IO-PATH-FN-034: `setOwner` 関数の実装
+- [x] STDLIB-IO-PATH-FN-034: `setOwner` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-035: `setPosixFilePermissions` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-036: `toPath` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-037: `useDirectoryEntries` 関数の実装
@@ -611,129 +509,106 @@
 - [ ] STDLIB-IO-PATH-FN-040: `writeLines` 関数の実装（Iterable版）
 - [ ] STDLIB-IO-PATH-FN-041: `writeLines` 関数の実装（Sequence版）
 - [ ] STDLIB-IO-PATH-FN-042: `writer` 関数の実装
-- [ ] STDLIB-IO-PATH-FN-043: `writeText` 関数の実装
+- [x] STDLIB-IO-PATH-FN-043: `writeText` 関数の実装
 
 #### kotlin.math プロパティの実装
-- [ ] STDLIB-MATH-PROP-001: `absoluteValue` 拡張プロパティの実装（各型）
-- [ ] STDLIB-MATH-PROP-002: `E` プロパティの実装
-- [ ] STDLIB-MATH-PROP-003: `PI` プロパティの実装
-- [ ] STDLIB-MATH-PROP-004: `sign` 拡張プロパティの実装（各型）
-- [ ] STDLIB-MATH-PROP-005: `ulp` 拡張プロパティの実装
+- [x] STDLIB-MATH-PROP-001: `absoluteValue` 拡張プロパティの実装（各型）
+- [x] STDLIB-MATH-PROP-002: `E` プロパティの実装
+- [x] STDLIB-MATH-PROP-003: `PI` プロパティの実装
+- [x] STDLIB-MATH-PROP-004: `sign` 拡張プロパティの実装（各型）
+- [x] STDLIB-MATH-PROP-005: `ulp` 拡張プロパティの実装
 
 #### kotlin.math 関数の実装
-- [ ] STDLIB-MATH-FN-001: `abs` 関数の実装（各型）
-- [ ] STDLIB-MATH-FN-002: `acos` 関数の実装
-- [ ] STDLIB-MATH-FN-003: `acosh` 関数の実装
-- [ ] STDLIB-MATH-FN-004: `asin` 関数の実装
-- [ ] STDLIB-MATH-FN-005: `asinh` 関数の実装
-- [ ] STDLIB-MATH-FN-006: `atan` 関数の実装
-- [ ] STDLIB-MATH-FN-007: `atan2` 関数の実装
-- [ ] STDLIB-MATH-FN-008: `atanh` 関数の実装
-- [ ] STDLIB-MATH-FN-009: `cbrt` 関数の実装
-- [ ] STDLIB-MATH-FN-010: `ceil` 関数の実装
-- [ ] STDLIB-MATH-FN-011: `cos` 関数の実装
-- [ ] STDLIB-MATH-FN-012: `cosh` 関数の実装
-- [ ] STDLIB-MATH-FN-013: `exp` 関数の実装
-- [ ] STDLIB-MATH-FN-014: `expm1` 関数の実装
-- [ ] STDLIB-MATH-FN-015: `floor` 関数の実装
-- [ ] STDLIB-MATH-FN-016: `hypot` 関数の実装
-- [ ] STDLIB-MATH-FN-017: `log` 関数の実装（自然対数）
-- [ ] STDLIB-MATH-FN-018: `log` 関数の実装（指定底）
-- [ ] STDLIB-MATH-FN-019: `log10` 関数の実装
-- [ ] STDLIB-MATH-FN-020: `log1p` 関数の実装
-- [ ] STDLIB-MATH-FN-021: `log2` 関数の実装
-- [ ] STDLIB-MATH-FN-022: `max` 関数の実装（各型）
-- [ ] STDLIB-MATH-FN-023: `min` 関数の実装（各型）
-- [ ] STDLIB-MATH-FN-024: `nextDown` 関数の実装
-- [ ] STDLIB-MATH-FN-025: `nextUp` 関数の実装
-- [ ] STDLIB-MATH-FN-026: `pow` 関数の実装（各型）
-- [ ] STDLIB-MATH-FN-027: `round` 関数の実装
-- [ ] STDLIB-MATH-FN-028: `roundToInt` 関数の実装
-- [ ] STDLIB-MATH-FN-029: `roundToLong` 関数の実装
-- [ ] STDLIB-MATH-FN-030: `sin` 関数の実装
-- [ ] STDLIB-MATH-FN-031: `sinh` 関数の実装
-- [ ] STDLIB-MATH-FN-032: `sqrt` 関数の実装
-- [ ] STDLIB-MATH-FN-033: `tan` 関数の実装
-- [ ] STDLIB-MATH-FN-034: `tanh` 関数の実装
-- [ ] STDLIB-MATH-FN-035: `trunc` 関数の実装
-- [ ] STDLIB-MATH-FN-036: `withSign` 関数の実装
+- [x] STDLIB-MATH-FN-001: `abs` 関数の実装（各型）
+- [x] STDLIB-MATH-FN-002: `acos` 関数の実装
+- [x] STDLIB-MATH-FN-003: `acosh` 関数の実装
+- [x] STDLIB-MATH-FN-004: `asin` 関数の実装
+- [x] STDLIB-MATH-FN-005: `asinh` 関数の実装
+- [x] STDLIB-MATH-FN-006: `atan` 関数の実装
+- [x] STDLIB-MATH-FN-007: `atan2` 関数の実装
+- [x] STDLIB-MATH-FN-008: `atanh` 関数の実装
+- [x] STDLIB-MATH-FN-009: `cbrt` 関数の実装
+- [x] STDLIB-MATH-FN-010: `ceil` 関数の実装
+- [x] STDLIB-MATH-FN-011: `cos` 関数の実装
+- [x] STDLIB-MATH-FN-012: `cosh` 関数の実装
+- [x] STDLIB-MATH-FN-013: `exp` 関数の実装
+- [x] STDLIB-MATH-FN-014: `expm1` 関数の実装
+- [x] STDLIB-MATH-FN-015: `floor` 関数の実装
+- [x] STDLIB-MATH-FN-016: `hypot` 関数の実装
+- [x] STDLIB-MATH-FN-017: `log` 関数の実装（自然対数）
+- [x] STDLIB-MATH-FN-018: `log` 関数の実装（指定底）
+- [x] STDLIB-MATH-FN-019: `log10` 関数の実装
+- [x] STDLIB-MATH-FN-020: `log1p` 関数の実装
+- [x] STDLIB-MATH-FN-017: `ln` 関数の実装（自然対数）
+- [x] STDLIB-MATH-FN-020: `ln1p` 関数の実装
+- [x] STDLIB-MATH-FN-021: `log2` 関数の実装
+- [x] STDLIB-MATH-FN-022: `max` 関数の実装（各型）
+- [x] STDLIB-MATH-FN-023: `min` 関数の実装（各型）
+- [x] STDLIB-MATH-FN-024: `nextDown` 関数の実装
+- [x] STDLIB-MATH-FN-025: `nextUp` 関数の実装
+- [x] STDLIB-MATH-FN-026: `pow` 関数の実装（各型）
+- [x] STDLIB-MATH-FN-027: `round` 関数の実装
+- [x] STDLIB-MATH-FN-028: `roundToInt` 関数の実装
+- [x] STDLIB-MATH-FN-029: `roundToLong` 関数の実装
+- [x] STDLIB-MATH-FN-030: `sin` 関数の実装
+- [x] STDLIB-MATH-FN-031: `sinh` 関数の実装
+- [x] STDLIB-MATH-FN-032: `sqrt` 関数の実装
+- [x] STDLIB-MATH-FN-033: `tan` 関数の実装
+- [x] STDLIB-MATH-FN-034: `tanh` 関数の実装
+- [x] STDLIB-MATH-FN-035: `trunc` 関数の実装
+- [x] STDLIB-MATH-FN-036: `withSign` 関数の実装
 
 #### kotlin.random 型の実装
-- [ ] STDLIB-RANDOM-TYPE-001: `Random` 抽象クラスの実装
+- [x] STDLIB-RANDOM-TYPE-001: `Random` 抽象クラスの実装
 
 #### kotlin.random 関数の実装
 - [ ] STDLIB-RANDOM-FN-001: `asJavaRandom` 関数の実装
 - [ ] STDLIB-RANDOM-FN-002: `asKotlinRandom` 関数の実装
-- [ ] STDLIB-RANDOM-FN-003: `nextInt` 拡張関数の実装
-- [ ] STDLIB-RANDOM-FN-004: `nextLong` 拡張関数の実装
-- [ ] STDLIB-RANDOM-FN-005: `nextUBytes` 拡張関数の実装（各オーバーロード）
-- [ ] STDLIB-RANDOM-FN-006: `nextUInt` 拡張関数の実装（各オーバーロード）
-- [ ] STDLIB-RANDOM-FN-007: `nextULong` 拡張関数の実装（各オーバーロード）
-
-#### kotlin.ranges 型の実装
-- [ ] STDLIB-RANGES-TYPE-001: `CharProgression` クラスの実装
-- [ ] STDLIB-RANGES-TYPE-002: `CharRange` クラスの実装
-- [ ] STDLIB-RANGES-TYPE-003: `ClosedFloatingPointRange` インターフェースの実装
-- [ ] STDLIB-RANGES-TYPE-004: `ClosedRange` インターフェースの実装
-- [ ] STDLIB-RANGES-TYPE-005: `IntProgression` クラスの実装
-- [ ] STDLIB-RANGES-TYPE-006: `IntRange` クラスの実装
-- [ ] STDLIB-RANGES-TYPE-007: `LongProgression` クラスの実装
-- [ ] STDLIB-RANGES-TYPE-008: `LongRange` クラスの実装
-- [ ] STDLIB-RANGES-TYPE-009: `OpenEndRange` インターフェースの実装
-- [ ] STDLIB-RANGES-TYPE-010: `UIntProgression` クラスの実装
-- [ ] STDLIB-RANGES-TYPE-011: `UIntRange` クラスの実装
-- [ ] STDLIB-RANGES-TYPE-012: `ULongProgression` クラスの実装
-- [ ] STDLIB-RANGES-TYPE-013: `ULongRange` クラスの実装
+- [x] STDLIB-RANDOM-FN-003: `nextInt` 拡張関数の実装
+- [x] STDLIB-RANDOM-FN-004: `nextLong` 拡張関数の実装
+- [x] STDLIB-RANDOM-FN-005: `nextUBytes` 拡張関数の実装（各オーバーロード）
+- [x] STDLIB-RANDOM-FN-006: `nextUInt` 拡張関数の実装（各オーバーロード）
+- [x] STDLIB-RANDOM-FN-007: `nextULong` 拡張関数の実装（各オーバーロード）
 
 #### kotlin.ranges 関数の実装
-- [ ] STDLIB-RANGES-FN-001: `coerceAtLeast` 関数の実装（各型）
-- [ ] STDLIB-RANGES-FN-002: `coerceAtMost` 関数の実装（各型）
-- [ ] STDLIB-RANGES-FN-003: `coerceIn` 関数の実装（各オーバーロード）
+- [x] STDLIB-RANGES-FN-001: `coerceAtLeast` 関数の実装（各型）
+- [x] STDLIB-RANGES-FN-002: `coerceAtMost` 関数の実装（各型）
+- [x] STDLIB-RANGES-FN-003: `coerceIn` 関数の実装（各オーバーロード）
 - [ ] STDLIB-RANGES-FN-004: `coerceValueIn` 関数の実装
-- [ ] STDLIB-RANGES-FN-005: `contains` 関数の実装（各範囲型）
-- [ ] STDLIB-RANGES-FN-006: `downTo` 関数の実装（各型）
-- [ ] STDLIB-RANGES-FN-007: `first` 関数の実装（各進行）
-- [ ] STDLIB-RANGES-FN-008: `last` 関数の実装（各進行）
-- [ ] STDLIB-RANGES-FN-009: `lastOrNull` 関数の実装（各進行）
-- [ ] STDLIB-RANGES-FN-010: `random` 関数の実装（各範囲型）
-- [ ] STDLIB-RANGES-FN-011: `random` 関数の実装（Random引数版）
-- [ ] STDLIB-RANGES-FN-012: `rangeTo` 関数の実装（各型）
-- [ ] STDLIB-RANGES-FN-013: `step` 関数の実装（各進行）
-- [ ] STDLIB-RANGES-FN-014: `until` 関数の実装（各型）
 
 #### kotlin.reflect 型の実装
-- [ ] STDLIB-REFLECT-TYPE-001: `AssociatedObjectKey` アノテーションの実装
-- [ ] STDLIB-REFLECT-TYPE-002: `ExperimentalAssociatedObjects` アノテーションの実装
-- [ ] STDLIB-REFLECT-TYPE-003: `KAnnotatedElement` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-004: `KCallable` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-005: `KClass` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-006: `KClassifier` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-007: `KDeclarationContainer` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-008: `KFunction` インターフェースの実装
+- [x] STDLIB-REFLECT-TYPE-001: `AssociatedObjectKey` アノテーションの実装
+- [x] STDLIB-REFLECT-TYPE-002: `ExperimentalAssociatedObjects` アノテーションの実装
+- [x] STDLIB-REFLECT-TYPE-003: `KAnnotatedElement` インターフェースの実装
+- [x] STDLIB-REFLECT-TYPE-004: `KCallable` インターフェースの実装
+- [x] STDLIB-REFLECT-TYPE-005: `KClass` インターフェースの実装
+- [x] STDLIB-REFLECT-TYPE-006: `KClassifier` インターフェースの実装
+- [x] STDLIB-REFLECT-TYPE-007: `KDeclarationContainer` インターフェースの実装
+- [x] STDLIB-REFLECT-TYPE-008: `KFunction` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-009: `KMutableProperty` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-010: `KMutableProperty0` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-011: `KMutableProperty1` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-012: `KMutableProperty2` インターフェースの実装
+- [x] STDLIB-REFLECT-TYPE-012: `KMutableProperty2` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-013: `KParameter` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-014: `KProperty` インターフェースの実装
+- [x] STDLIB-REFLECT-TYPE-014: `KProperty` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-015: `KProperty0` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-016: `KProperty1` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-017: `KProperty2` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-018: `KType` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-019: `KTypeParameter` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-020: `KTypeProjection` クラスの実装
-- [ ] STDLIB-REFLECT-TYPE-021: `KVariance` enum の実装
+- [x] STDLIB-REFLECT-TYPE-017: `KProperty2` インターフェースの実装
+- [x] STDLIB-REFLECT-TYPE-018: `KType` インターフェースの実装
+- [x] STDLIB-REFLECT-TYPE-019: `KTypeParameter` インターフェースの実装
+- [x] STDLIB-REFLECT-TYPE-020: `KTypeProjection` クラスの実装
+- [x] STDLIB-REFLECT-TYPE-021: `KVariance` enum の実装
 - [ ] STDLIB-REFLECT-TYPE-022: `KVisibility` enum の実装
 
 #### kotlin.reflect プロパティの実装
 - [ ] STDLIB-REFLECT-PROP-001: `javaType` 拡張プロパティの実装
 
 #### kotlin.reflect 関数の実装
-- [ ] STDLIB-REFLECT-FN-001: `cast` 拡張関数の実装
+- [x] STDLIB-REFLECT-FN-001: `cast` 拡張関数の実装
 - [ ] STDLIB-REFLECT-FN-002: `createInstance` 拡張関数の実装
-- [ ] STDLIB-REFLECT-FN-003: `findAssociatedObject` 拡張関数の実装
-- [ ] STDLIB-REFLECT-FN-004: `safeCast` 拡張関数の実装
-- [ ] STDLIB-REFLECT-FN-005: `typeOf` 関数の実装
+- [x] STDLIB-REFLECT-FN-003: `findAssociatedObject` 拡張関数の実装
+- [x] STDLIB-REFLECT-FN-004: `safeCast` 拡張関数の実装
+- [x] STDLIB-REFLECT-FN-005: `typeOf` 関数の実装
 
 #### kotlin.sequences 型の実装
 - [ ] STDLIB-SEQ-TYPE-001: `Sequence` インターフェースの実装
@@ -774,8 +649,8 @@
 - [ ] STDLIB-SEQ-FN-032: `find` 関数の実装
 - [ ] STDLIB-SEQ-FN-033: `findLast` 関数の実装
 - [ ] STDLIB-SEQ-FN-034: `first` 関数の実装
-- [ ] STDLIB-SEQ-FN-035: `firstNotNullOf` 関数の実装
-- [ ] STDLIB-SEQ-FN-036: `firstNotNullOfOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-035: `firstNotNullOf` 関数の実装
+- [x] STDLIB-SEQ-FN-036: `firstNotNullOfOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-037: `firstOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-038: `flatMap` 関数の実装
 - [ ] STDLIB-SEQ-FN-039: `flatMapIndexed` 関数の実装
@@ -821,7 +696,7 @@
 - [ ] STDLIB-SEQ-FN-079: `minWith` 関数の実装
 - [ ] STDLIB-SEQ-FN-080: `minWithOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-081: `minus` 関数の実装
-- [ ] STDLIB-SEQ-FN-082: `minusElement` 関数の実装
+- [x] STDLIB-SEQ-FN-082: `minusElement` 関数の実装
 - [ ] STDLIB-SEQ-FN-083: `none` 関数の実装
 - [ ] STDLIB-SEQ-FN-084: `onEach` 関数の実装
 - [ ] STDLIB-SEQ-FN-085: `onEachIndexed` 関数の実装
@@ -856,7 +731,7 @@
 - [ ] STDLIB-SEQ-FN-114: `sortedWith` 関数の実装
 - [ ] STDLIB-SEQ-FN-115: `subtract` 関数の実装
 - [ ] STDLIB-SEQ-FN-116: `sum` 関数の実装
-- [ ] STDLIB-SEQ-FN-117: `sumBy` 関数の実装
+- [x] STDLIB-SEQ-FN-117: `sumBy` 関数の実装
 - [ ] STDLIB-SEQ-FN-118: `sumOf` 関数の実装
 - [ ] STDLIB-SEQ-FN-119: `take` 関数の実装
 - [ ] STDLIB-SEQ-FN-120: `takeLast` 関数の実装
@@ -1079,7 +954,7 @@
 - [ ] STDLIB-TIME-FN-012: `toTimeUnit` 関数の実装
 
 #### kotlin.uuid 型の実装
-- [ ] STDLIB-UUID-TYPE-001: `ExperimentalUuidApi` アノテーションの実装
+- [x] STDLIB-UUID-TYPE-001: `ExperimentalUuidApi` アノテーションの実装
 - [ ] STDLIB-UUID-TYPE-002: `Uuid` クラスの実装
 
 #### kotlin.uuid 関数の実装
@@ -1095,8 +970,8 @@
 - [ ] STDLIB-REFLECT-067: `KClass` / metadata / メンバ introspection の残差を詰める
 - [x] STDLIB-REFLECT-068: `kotlin.reflect.KAnnotatedElement` interface と `annotations` surface を追加する
 - [x] STDLIB-REFLECT-069: `kotlin.reflect.KDeclarationContainer` interface surface を追加し、`KClass` との継承関係を整える
-- [ ] STDLIB-REFLECT-070: `kotlin.reflect.KProperty2<D, E, V>` interface surface を追加する
-- [ ] STDLIB-REFLECT-071: `kotlin.reflect.KMutableProperty2<D, E, V>` interface surface を追加する
+- [x] STDLIB-REFLECT-070: `kotlin.reflect.KProperty2<D, E, V>` interface surface を追加する
+- [x] STDLIB-REFLECT-071: `kotlin.reflect.KMutableProperty2<D, E, V>` interface surface を追加する
 - [x] STDLIB-REFLECT-072: `kotlin.reflect.KTypeParameter` interface surface を追加する
 - [x] STDLIB-MATH-008: 公開されている非公式 rounding helper 名（`roundUp` など）を整理する
 - [ ] STDLIB-RANDOM-001: `kotlin.random` の対象 API 一覧を固定
@@ -1199,13 +1074,11 @@
 - [x] STDLIB-IO-PATH-TYPE-001: `kotlin.io.path.CopyActionContext` type surface を追加する
 - [x] STDLIB-IO-PATH-TYPE-002: `kotlin.io.path.CopyActionResult` enum surface を追加する
 - [x] STDLIB-IO-PATH-TYPE-003: `kotlin.io.path.ExperimentalPathApi` marker annotation を追加する
-- [ ] STDLIB-IO-PATH-TYPE-004: `kotlin.io.path.FileVisitorBuilder` type surface を追加する
+- [x] STDLIB-IO-PATH-TYPE-004: `kotlin.io.path.FileVisitorBuilder` type surface を追加する
 - [x] STDLIB-IO-PATH-TYPE-005: `kotlin.io.path.OnErrorResult` enum surface を追加する
 - [x] STDLIB-IO-PATH-TYPE-006: `kotlin.io.path.PathWalkOption` enum surface を追加する
 - [ ] STDLIB-IO-PATH-PROP-001: `Path.extension` extension property を追加する
 - [x] STDLIB-IO-PATH-PROP-002: `Path.invariantSeparatorsPath` extension property を追加する
-- [ ] STDLIB-IO-PATH-PROP-003: `Path.invariantSeparatorsPathString` extension property を追加する
-- [ ] STDLIB-IO-PATH-PROP-002: `Path.invariantSeparatorsPath` extension property を追加する
 - [x] STDLIB-IO-PATH-PROP-003: `Path.invariantSeparatorsPathString` extension property を追加する
 - [x] STDLIB-IO-PATH-PROP-004: `Path.name` extension property を既存 `Path` member stub と整合させる
 - [ ] STDLIB-IO-PATH-PROP-005: `Path.nameWithoutExtension` extension property を追加する
@@ -1232,16 +1105,16 @@
 - [ ] STDLIB-IO-PATH-FN-020: `createTempDirectory(directory, prefix, attributes)` を追加する
 - [ ] STDLIB-IO-PATH-FN-021: `createTempFile(prefix, suffix, attributes)` を追加する
 - [ ] STDLIB-IO-PATH-FN-022: `createTempFile(directory, prefix, suffix, attributes)` を追加する
-- [ ] STDLIB-IO-PATH-FN-023: `Path.deleteExisting()` を追加する
+- [x] STDLIB-IO-PATH-FN-023: `Path.deleteExisting()` を追加する
 - [ ] STDLIB-IO-PATH-FN-024: `Path.deleteIfExists()` の公式 return/annotation shape を既存 stub と整合させる
-- [ ] STDLIB-IO-PATH-FN-025: `Path.deleteRecursively()` を追加する
-- [ ] STDLIB-IO-PATH-FN-026: `Path.div(other: Path)` を追加する
-- [ ] STDLIB-IO-PATH-FN-027: `Path.div(other: String)` を追加する
+- [x] STDLIB-IO-PATH-FN-025: `Path.deleteRecursively()` を追加する
+- [x] STDLIB-IO-PATH-FN-026: `Path.div(other: Path)` を追加する
+- [x] STDLIB-IO-PATH-FN-027: `Path.div(other: String)` を追加する
 - [ ] STDLIB-IO-PATH-FN-028: `Path.exists(options)` を既存 no-arg stub から公式 vararg shape へ広げる
 - [ ] STDLIB-IO-PATH-FN-029: `Path.fileAttributesView<V>(options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-030: `Path.fileAttributesViewOrNull<V>(options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-031: `Path.fileSize()` を追加する
-- [ ] STDLIB-IO-PATH-FN-032: `Path.fileStore()` を追加する
+- [x] STDLIB-IO-PATH-FN-032: `Path.fileStore()` を追加する
 - [ ] STDLIB-IO-PATH-FN-033: `fileVisitor(builderAction)` を追加する
 - [ ] STDLIB-IO-PATH-FN-034: `Path.forEachDirectoryEntry(glob, action)` を追加する
 - [ ] STDLIB-IO-PATH-FN-035: `Path.forEachLine(charset, action)` を追加する
@@ -1251,116 +1124,116 @@
 - [ ] STDLIB-IO-PATH-FN-039: `Path.getPosixFilePermissions(options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-040: `Path.inputStream(options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-041: `Path.isDirectory(options)` を既存 no-arg stub から公式 vararg shape へ広げる
-- [ ] STDLIB-IO-PATH-FN-042: `Path.isExecutable()` を追加する
-- [ ] STDLIB-IO-PATH-FN-043: `Path.isHidden()` を追加する
-- [ ] STDLIB-IO-PATH-FN-044: `Path.isReadable()` を追加する
+- [x] STDLIB-IO-PATH-FN-042: `Path.isExecutable()` を追加する
+- [x] STDLIB-IO-PATH-FN-043: `Path.isHidden()` を追加する
+- [x] STDLIB-IO-PATH-FN-044: `Path.isReadable()` を追加する
 - [ ] STDLIB-IO-PATH-FN-045: `Path.isRegularFile(options)` を既存 no-arg stub から公式 vararg shape へ広げる
-- [ ] STDLIB-IO-PATH-FN-046: `Path.isSameFileAs(other)` を追加する
-- [ ] STDLIB-IO-PATH-FN-047: `Path.isSymbolicLink()` を追加する
-- [ ] STDLIB-IO-PATH-FN-048: `Path.isWritable()` を追加する
+- [x] STDLIB-IO-PATH-FN-046: `Path.isSameFileAs(other)` を追加する
+- [x] STDLIB-IO-PATH-FN-047: `Path.isSymbolicLink()` を追加する
+- [x] STDLIB-IO-PATH-FN-048: `Path.isWritable()` を追加する
 - [ ] STDLIB-IO-PATH-FN-049: `Path.listDirectoryEntries(glob)` を既存 no-arg stub から公式 glob shape へ広げる
 - [ ] STDLIB-IO-PATH-FN-050: `Path.moveTo(target, options)` を追加する
-- [ ] STDLIB-IO-PATH-FN-051: `Path.moveTo(target, overwrite)` を追加する
+- [x] STDLIB-IO-PATH-FN-051: `Path.moveTo(target, overwrite)` を追加する
 - [ ] STDLIB-IO-PATH-FN-052: `Path.notExists(options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-053: `Path.outputStream(options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-054: `Path(pathString)` の公式 top-level factory shape を既存 stub と整合させる
 - [ ] STDLIB-IO-PATH-FN-055: `Path(base, subpaths)` top-level factory overload を追加する
 - [ ] STDLIB-IO-PATH-FN-056: `Path.readAttributes<A>(options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-057: `Path.readAttributes(attributes, options)` を追加する
-- [ ] STDLIB-IO-PATH-FN-058: `Path.readBytes()` を追加する
+- [x] STDLIB-IO-PATH-FN-058: `Path.readBytes()` を追加する
 - [ ] STDLIB-IO-PATH-FN-059: `Path.reader(charset, options)` を追加する
-- [ ] STDLIB-IO-PATH-FN-060: `Path.readLines(charset)` を既存 no-arg stub から公式 charset shape へ広げる
+- [x] STDLIB-IO-PATH-FN-060: `Path.readLines(charset)` を既存 no-arg stub から公式 charset shape へ広げる
 - [ ] STDLIB-IO-PATH-FN-061: `Path.readSymbolicLink()` を追加する
-- [ ] STDLIB-IO-PATH-FN-062: `Path.readText(charset)` を既存 no-arg stub から公式 charset shape へ広げる
+- [x] STDLIB-IO-PATH-FN-062: `Path.readText(charset)` を既存 no-arg stub から公式 charset shape へ広げる
 - [ ] STDLIB-IO-PATH-FN-063: `Path.relativeTo(base)` を追加する
 - [ ] STDLIB-IO-PATH-FN-064: `Path.relativeToOrNull(base)` を追加する
 - [ ] STDLIB-IO-PATH-FN-065: `Path.relativeToOrSelf(base)` を追加する
 - [ ] STDLIB-IO-PATH-FN-066: `Path.setAttribute(attribute, value, options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-067: `Path.setLastModifiedTime(value)` を追加する
-- [ ] STDLIB-IO-PATH-FN-068: `Path.setOwner(value)` を追加する
+- [x] STDLIB-IO-PATH-FN-068: `Path.setOwner(value)` を追加する
 - [ ] STDLIB-IO-PATH-FN-069: `Path.setPosixFilePermissions(value)` を追加する
-- [ ] STDLIB-IO-PATH-FN-070: `URI.toPath()` を追加する
+- [x] STDLIB-IO-PATH-FN-070: `URI.toPath()` を追加する
 - [ ] STDLIB-IO-PATH-FN-071: `Path.useDirectoryEntries(glob, block)` を追加する
 - [ ] STDLIB-IO-PATH-FN-072: `Path.useLines(charset, block)` を追加する
 - [ ] STDLIB-IO-PATH-FN-073: `Path.visitFileTree(visitor, maxDepth, followLinks)` を追加する
 - [ ] STDLIB-IO-PATH-FN-074: `Path.visitFileTree(maxDepth, followLinks, builderAction)` を追加する
 - [ ] STDLIB-IO-PATH-FN-075: `Path.walk(options)` を追加する
-- [ ] STDLIB-IO-PATH-FN-076: `Path.writeBytes(array, options)` を追加する
+- [x] STDLIB-IO-PATH-FN-076: `Path.writeBytes(array, options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-077: `Path.writeLines(lines: Iterable<CharSequence>, charset, options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-078: `Path.writeLines(lines: Sequence<CharSequence>, charset, options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-079: `Path.writer(charset, options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-080: `Path.writeText(text, charset, options)` を既存 `writeText(text)` stub から公式 shape へ広げる
-- [ ] STDLIB-JVM-TYPE-001: `kotlin.jvm.ImplicitlyActualizedByJvmDeclaration` annotation を追加する
+- [x] STDLIB-JVM-TYPE-001: `kotlin.jvm.ImplicitlyActualizedByJvmDeclaration` annotation を追加する
 - [x] STDLIB-JVM-TYPE-002: `kotlin.jvm.JvmDefaultWithCompatibility` annotation を追加する
-- [ ] STDLIB-JVM-TYPE-003: `kotlin.jvm.JvmDefaultWithoutCompatibility` annotation を追加する
+- [x] STDLIB-JVM-TYPE-003: `kotlin.jvm.JvmDefaultWithoutCompatibility` annotation を追加する
 - [ ] STDLIB-JVM-TYPE-004: `kotlin.jvm.JvmExposeBoxed` annotation を追加する
 - [ ] STDLIB-JVM-TYPE-005: `kotlin.jvm.JvmInline` annotation surface を追加する
 - [ ] STDLIB-JVM-TYPE-006: `kotlin.jvm.JvmMultifileClass` annotation を追加する
-- [ ] STDLIB-JVM-TYPE-007: `kotlin.jvm.JvmPackageName` annotation を追加する
-- [ ] STDLIB-JVM-TYPE-008: `kotlin.jvm.JvmRecord` annotation を追加する
-- [ ] STDLIB-JVM-TYPE-009: `kotlin.jvm.JvmSerializableLambda` annotation を追加する
-- [ ] STDLIB-JVM-TYPE-010: `kotlin.jvm.JvmSuppressWildcards` annotation を追加する
+- [x] STDLIB-JVM-TYPE-007: `kotlin.jvm.JvmPackageName` annotation を追加する
+- [x] STDLIB-JVM-TYPE-008: `kotlin.jvm.JvmRecord` annotation を追加する
+- [x] STDLIB-JVM-TYPE-009: `kotlin.jvm.JvmSerializableLambda` annotation を追加する
+- [x] STDLIB-JVM-TYPE-010: `kotlin.jvm.JvmSuppressWildcards` annotation を追加する
 - [ ] STDLIB-JVM-TYPE-011: `kotlin.jvm.JvmSynthetic` annotation を追加する
-- [ ] STDLIB-JVM-TYPE-012: `kotlin.jvm.JvmWildcard` annotation を追加する
+- [x] STDLIB-JVM-TYPE-012: `kotlin.jvm.JvmWildcard` annotation を追加する
 - [ ] STDLIB-JVM-TYPE-013: `kotlin.jvm.Strictfp` annotation を追加する
 - [ ] STDLIB-JVM-TYPE-014: `kotlin.jvm.Synchronized` annotation を追加する
-- [ ] STDLIB-JVM-TYPE-015: `kotlin.jvm.Throws` annotation を追加する
+- [x] STDLIB-JVM-TYPE-015: `kotlin.jvm.Throws` annotation を追加する
 - [ ] STDLIB-JVM-TYPE-016: `kotlin.jvm.Transient` annotation を追加する
 - [ ] STDLIB-JVM-TYPE-017: `kotlin.jvm.Volatile` annotation を追加する
-- [ ] STDLIB-JVM-PROP-001: `Annotation.annotationClass` extension property を追加する
+- [x] STDLIB-JVM-PROP-001: `Annotation.annotationClass` extension property を追加する
 - [ ] STDLIB-JVM-PROP-002: `Enum.declaringJavaClass` extension property を追加する
 - [ ] STDLIB-JVM-PROP-003: `KClass<T>.java` extension property を追加する
-- [ ] STDLIB-JVM-PROP-004: `T.javaClass` extension property を追加する
+- [x] STDLIB-JVM-PROP-004: `T.javaClass` extension property を追加する
 - [ ] STDLIB-JVM-PROP-005: `KClass<T>.javaClass` extension property を追加する
 - [ ] STDLIB-JVM-PROP-006: `KClass<T>.javaObjectType` extension property を追加する
 - [ ] STDLIB-JVM-PROP-007: `KClass<T>.javaPrimitiveType` extension property を追加する
 - [ ] STDLIB-JVM-PROP-008: `Class<T>.kotlin` extension property を追加する
 - [ ] STDLIB-JVM-FN-001: `Array<*>.isArrayOf<T>()` を追加する
 - [ ] STDLIB-JVM-OPTIONALS-FN-001: `Optional<T>.asSequence()` を追加する
-- [ ] STDLIB-JVM-OPTIONALS-FN-002: `Optional<T>.getOrDefault(defaultValue)` を追加する
+- [x] STDLIB-JVM-OPTIONALS-FN-002: `Optional<T>.getOrDefault(defaultValue)` を追加する
 - [ ] STDLIB-JVM-OPTIONALS-FN-003: `Optional<T>.getOrElse(defaultValue)` を追加する
 - [ ] STDLIB-JVM-OPTIONALS-FN-004: `Optional<T>.getOrNull()` を追加する
 - [ ] STDLIB-JVM-OPTIONALS-FN-005: `Optional<T>.toCollection(destination)` を追加する
 - [ ] STDLIB-JVM-OPTIONALS-FN-006: `Optional<T>.toList()` を追加する
 - [ ] STDLIB-JVM-OPTIONALS-FN-007: `Optional<T>.toSet()` を追加する
-- [ ] STDLIB-JS-TYPE-001: `kotlin.js.Console` external interface を追加する
-- [ ] STDLIB-JS-TYPE-002: `kotlin.js.Date` external class を追加する
+- [x] STDLIB-JS-TYPE-001: `kotlin.js.Console` external interface を追加する
+- [x] STDLIB-JS-TYPE-002: `kotlin.js.Date` external class を追加する
 - [ ] STDLIB-JS-TYPE-003: `kotlin.js.Dynamic` external interface を追加する
-- [ ] STDLIB-JS-TYPE-004: `kotlin.js.EagerInitialization` annotation を追加する
-- [ ] STDLIB-JS-TYPE-005: `kotlin.js.ExperimentalJsCollectionsApi` marker を追加する
-- [ ] STDLIB-JS-TYPE-006: `kotlin.js.ExperimentalJsExport` marker を追加する
-- [ ] STDLIB-JS-TYPE-007: `kotlin.js.ExperimentalJsFileName` marker を追加する
-- [ ] STDLIB-JS-TYPE-008: `kotlin.js.ExperimentalJsReflectionCreateInstance` marker を追加する
-- [ ] STDLIB-JS-TYPE-009: `kotlin.js.ExperimentalJsStatic` marker を追加する
-- [ ] STDLIB-JS-TYPE-010: `kotlin.js.ExperimentalWasmJsInterop` marker を追加する
+- [x] STDLIB-JS-TYPE-004: `kotlin.js.EagerInitialization` annotation を追加する
+- [x] STDLIB-JS-TYPE-005: `kotlin.js.ExperimentalJsCollectionsApi` marker を追加する
+- [x] STDLIB-JS-TYPE-006: `kotlin.js.ExperimentalJsExport` marker を追加する
+- [x] STDLIB-JS-TYPE-007: `kotlin.js.ExperimentalJsFileName` marker を追加する
+- [x] STDLIB-JS-TYPE-008: `kotlin.js.ExperimentalJsReflectionCreateInstance` marker を追加する
+- [x] STDLIB-JS-TYPE-009: `kotlin.js.ExperimentalJsStatic` marker を追加する
+- [x] STDLIB-JS-TYPE-010: `kotlin.js.ExperimentalWasmJsInterop` marker を追加する
 - [ ] STDLIB-JS-TYPE-011: `kotlin.js.JsAny` external interface を追加する
 - [ ] STDLIB-JS-TYPE-012: `kotlin.js.JsArray` external class を追加する
 - [ ] STDLIB-JS-TYPE-013: `kotlin.js.JsBigInt` external class を追加する
 - [ ] STDLIB-JS-TYPE-014: `kotlin.js.JsBoolean` external class を追加する
-- [ ] STDLIB-JS-TYPE-015: `kotlin.js.JsClass` external interface を追加する
-- [ ] STDLIB-JS-TYPE-016: `kotlin.js.JsException` class を追加する
+- [x] STDLIB-JS-TYPE-015: `kotlin.js.JsClass` external interface を追加する
+- [x] STDLIB-JS-TYPE-016: `kotlin.js.JsException` class を追加する
 - [ ] STDLIB-JS-TYPE-017: `kotlin.js.JsExport` annotation を追加する
-- [ ] STDLIB-JS-TYPE-018: `kotlin.js.JsExternalArgument` annotation を追加する
-- [ ] STDLIB-JS-TYPE-019: `kotlin.js.JsExternalInheritorsOnly` annotation を追加する
+- [x] STDLIB-JS-TYPE-018: `kotlin.js.JsExternalArgument` annotation を追加する
+- [x] STDLIB-JS-TYPE-019: `kotlin.js.JsExternalInheritorsOnly` annotation を追加する
 - [ ] STDLIB-JS-TYPE-020: `kotlin.js.JsFileName` annotation を追加する
 - [ ] STDLIB-JS-TYPE-021: `kotlin.js.JsFun` annotation を追加する
-- [ ] STDLIB-JS-TYPE-022: `kotlin.js.JsModule` annotation を追加する
+- [x] STDLIB-JS-TYPE-022: `kotlin.js.JsModule` annotation を追加する
 - [ ] STDLIB-JS-TYPE-023: `kotlin.js.JsName` annotation を追加する
-- [ ] STDLIB-JS-TYPE-024: `kotlin.js.JsNonModule` annotation を追加する
+- [x] STDLIB-JS-TYPE-024: `kotlin.js.JsNonModule` annotation を追加する
 - [ ] STDLIB-JS-TYPE-025: `kotlin.js.JsNumber` external class を追加する
-- [ ] STDLIB-JS-TYPE-026: `kotlin.js.JsQualifier` annotation を追加する
+- [x] STDLIB-JS-TYPE-026: `kotlin.js.JsQualifier` annotation を追加する
 - [ ] STDLIB-JS-TYPE-027: `kotlin.js.JsReference` external interface を追加する
-- [ ] STDLIB-JS-TYPE-028: `kotlin.js.JsStatic` annotation を追加する
+- [x] STDLIB-JS-TYPE-028: `kotlin.js.JsStatic` annotation を追加する
 - [ ] STDLIB-JS-TYPE-029: `kotlin.js.JsString` external class を追加する
 - [ ] STDLIB-JS-TYPE-030: `kotlin.js.JsSymbol` annotation を追加する
-- [ ] STDLIB-JS-TYPE-031: `kotlin.js.nativeGetter` annotation を追加する
-- [ ] STDLIB-JS-TYPE-032: `kotlin.js.nativeInvoke` annotation を追加する
-- [ ] STDLIB-JS-TYPE-033: `kotlin.js.nativeSetter` annotation を追加する
-- [ ] STDLIB-JS-TYPE-034: `kotlin.js.Promise<T>` external class を追加する
+- [x] STDLIB-JS-TYPE-031: `kotlin.js.nativeGetter` annotation を追加する
+- [x] STDLIB-JS-TYPE-032: `kotlin.js.nativeInvoke` annotation を追加する
+- [x] STDLIB-JS-TYPE-033: `kotlin.js.nativeSetter` annotation を追加する
+- [x] STDLIB-JS-TYPE-034: `kotlin.js.Promise<T>` external class を追加する
 - [ ] STDLIB-JS-TYPE-035: `kotlin.js.RegExp` external class を追加する
-- [ ] STDLIB-JS-TYPE-036: `kotlin.js.RegExpMatch` external interface を追加する
+- [x] STDLIB-JS-TYPE-036: `kotlin.js.RegExpMatch` external interface を追加する
 - [ ] STDLIB-JS-PROP-001: `kotlin.js.console` external property を追加する
-- [ ] STDLIB-JS-PROP-002: `kotlin.js.definedExternally` external property を追加する
+- [x] STDLIB-JS-PROP-002: `kotlin.js.definedExternally` external property を追加する
 - [ ] STDLIB-JS-PROP-003: `KClass<T>.js` extension property を追加する
 - [ ] STDLIB-JS-PROP-004: `JsClass<T>.kotlin` extension property を追加する
 - [ ] STDLIB-JS-FN-001: `Date.Companion.now()` を追加する
@@ -1370,13 +1243,13 @@
 - [ ] STDLIB-JS-FN-005: `JsArray<T>.get(index)` を追加する
 - [ ] STDLIB-JS-FN-006: `RegExpMatch.get(index)` を追加する
 - [ ] STDLIB-JS-FN-007: `dynamic.iterator()` を追加する
-- [ ] STDLIB-JS-FN-008: `js(code)` を追加する
+- [x] STDLIB-JS-FN-008: `js(code)` を追加する
 - [ ] STDLIB-JS-FN-009: `JsArray<T>()` factory を追加する
-- [ ] STDLIB-JS-FN-010: `json(vararg pairs)` を追加する
+- [x] STDLIB-JS-FN-010: `json(vararg pairs)` を追加する
 - [ ] STDLIB-JS-FN-011: `jsTypeOf(a)` を追加する
-- [ ] STDLIB-JS-FN-012: `parseFloat(s, radix)` を追加する
-- [ ] STDLIB-JS-FN-013: `parseInt(s)` を追加する
-- [ ] STDLIB-JS-FN-014: `parseInt(s, radix)` を追加する
+- [x] STDLIB-JS-FN-012: `parseFloat(s, radix)` を追加する
+- [x] STDLIB-JS-FN-013: `parseInt(s)` を追加する
+- [x] STDLIB-JS-FN-014: `parseInt(s, radix)` を追加する
 - [ ] STDLIB-JS-FN-015: `RegExp.reset()` を追加する
 - [ ] STDLIB-JS-FN-016: `JsArray<T>.set(index, value)` を追加する
 - [ ] STDLIB-JS-FN-017: `Promise<T>.then(onFulfilled)` を追加する
@@ -1417,7 +1290,7 @@
 - [ ] STDLIB-STREAMS-FN-007: `IntStream.toList()` を追加する
 - [ ] STDLIB-STREAMS-FN-008: `LongStream.toList()` を追加する
 - [ ] STDLIB-STREAMS-FN-009: `Stream<T>.toList()` を追加する
-- [ ] STDLIB-WASM-TYPE-001: `kotlin.wasm.ExperimentalWasmInterop` marker annotation を追加する
+- [x] STDLIB-WASM-TYPE-001: `kotlin.wasm.ExperimentalWasmInterop` marker annotation を追加する
 - [ ] STDLIB-WASM-TYPE-002: `kotlin.wasm.WasmExport` annotation を追加する
 - [ ] STDLIB-WASM-TYPE-003: `kotlin.wasm.WasmImport` annotation を追加する
 - [ ] STDLIB-WASM-UNSAFE-TYPE-001: `kotlin.wasm.unsafe.MemoryAllocator` abstract class を追加する

@@ -116,6 +116,13 @@ extension DataFlowSemaPhase {
             )
         }
 
+        registerSyntheticRandomAccessStub(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg
+        )
+
         let iterableInterfaceSymbol = registerSyntheticIterableStub(
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg
@@ -126,11 +133,23 @@ extension DataFlowSemaPhase {
             kotlinCollectionsPkg: kotlinCollectionsPkg,
             iterableInterfaceSymbol: iterableInterfaceSymbol
         )
+        registerIterableJoinToMember(
+            symbols: symbols, types: types, interner: interner,
+            iterableInterfaceSymbol: iterableInterfaceSymbol
+        )
         registerIterableFirstNotNullOfMember(
             symbols: symbols, types: types, interner: interner,
             iterableInterfaceSymbol: iterableInterfaceSymbol
         )
         registerIterableFirstNotNullOfOrNullMember(
+            symbols: symbols, types: types, interner: interner,
+            iterableInterfaceSymbol: iterableInterfaceSymbol
+        )
+        registerIterableLastMember(
+            symbols: symbols, types: types, interner: interner,
+            iterableInterfaceSymbol: iterableInterfaceSymbol
+        )
+        registerIterableJoinToStringMember(
             symbols: symbols, types: types, interner: interner,
             iterableInterfaceSymbol: iterableInterfaceSymbol
         )
@@ -148,7 +167,7 @@ extension DataFlowSemaPhase {
             iterableInterfaceSymbol: iterableInterfaceSymbol
         )
 
-        _ = registerSyntheticAbstractCollectionStub(
+        let abstractCollectionSymbol = registerSyntheticAbstractCollectionStub(
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg,
             collectionInterfaceSymbol: collectionInterfaceSymbol
@@ -179,9 +198,21 @@ extension DataFlowSemaPhase {
             collectionInterfaceSymbol: collectionInterfaceSymbol
         )
 
+        _ = registerSyntheticAbstractListStub(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            abstractCollectionSymbol: abstractCollectionSymbol,
+            listInterfaceSymbol: listInterfaceSymbol
+        )
+
         registerIterableWindowedTransformMember(
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg,
+            iterableInterfaceSymbol: iterableInterfaceSymbol,
+            listInterfaceSymbol: listInterfaceSymbol
+        )
+        registerIterablePlusElementMember(
+            symbols: symbols, types: types, interner: interner,
             iterableInterfaceSymbol: iterableInterfaceSymbol,
             listInterfaceSymbol: listInterfaceSymbol
         )
@@ -368,6 +399,26 @@ extension DataFlowSemaPhase {
         )
     }
 
+    /// Register `kotlin.collections.RandomAccess` marker interface surface.
+    private func registerSyntheticRandomAccessStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString]
+    ) {
+        let randomAccessSymbol = ensureInterfaceSymbol(
+            named: "RandomAccess",
+            in: kotlinCollectionsPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let randomAccessType = types.make(.classType(ClassType(
+            classSymbol: randomAccessSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(randomAccessType, for: randomAccessSymbol)
+    }
 
     func registerLateListIndexedMembers(
         symbols: SymbolTable,

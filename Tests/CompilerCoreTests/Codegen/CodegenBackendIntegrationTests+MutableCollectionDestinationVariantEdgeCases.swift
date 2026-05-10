@@ -300,10 +300,8 @@ extension CodegenBackendIntegrationTests {
     }
 
     // MARK: - STDLIB-021-19: partition with empty source returns two empty lists
-    // NOTE: .size on destructured partition result unresolved; skipped until lowering fix
 
     func testPartitionEmptySource() throws {
-        throw XCTSkip("partition result member access not yet lowered (KSWIFTK-SEMA-0024 on .size)")
         let source = """
         fun main() {
             val src = emptyList<Int>()
@@ -316,10 +314,8 @@ extension CodegenBackendIntegrationTests {
     }
 
     // MARK: - STDLIB-021-20: partition all-match puts everything in first list
-    // NOTE: .size on destructured partition result unresolved; skipped until lowering fix
 
     func testPartitionAllMatch() throws {
-        throw XCTSkip("partition result member access not yet lowered (KSWIFTK-SEMA-0024 on .size)")
         let source = """
         fun main() {
             val src = listOf(2, 4, 6)

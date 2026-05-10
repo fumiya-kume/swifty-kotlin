@@ -50,6 +50,11 @@ extension DataFlowSemaPhase {
         symbols.setSupertypeTypeArgs([.out(listTypeParamType)], for: listInterfaceSymbol, supertype: collectionInterfaceSymbol)
         types.setNominalSupertypeTypeArgs([.out(listTypeParamType)], for: listInterfaceSymbol, supertype: collectionInterfaceSymbol)
 
+        registerListLastIndexExtensionProperty(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            listInterfaceSymbol: listInterfaceSymbol
+        )
         registerListGetOperator(
             symbols: symbols, types: types, interner: interner,
             listFQName: listFQName,
@@ -110,6 +115,96 @@ extension DataFlowSemaPhase {
         return listInterfaceSymbol
     }
 
+    /// Register `kotlin.collections.AbstractList<E>` surface (STDLIB-COL-ABSTRACT-003).
+    func registerSyntheticAbstractListStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        abstractCollectionSymbol: SymbolID,
+        listInterfaceSymbol: SymbolID
+    ) -> SymbolID {
+        let abstractListName = interner.intern("AbstractList")
+        let abstractListFQName = kotlinCollectionsPkg + [abstractListName]
+        let abstractListSymbol: SymbolID = if let existing = symbols.lookup(fqName: abstractListFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .class,
+                name: abstractListName,
+                fqName: abstractListFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .abstractType]
+            )
+        }
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = abstractListFQName + [typeParamName]
+        let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: abstractListSymbol)
+        types.setNominalTypeParameterVariances([.out], for: abstractListSymbol)
+
+        let abstractListType = types.make(.classType(ClassType(
+            classSymbol: abstractListSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(abstractListType, for: abstractListSymbol)
+
+        let directSupertypes = [abstractCollectionSymbol, listInterfaceSymbol]
+        symbols.setDirectSupertypes(directSupertypes, for: abstractListSymbol)
+        types.setNominalDirectSupertypes(directSupertypes, for: abstractListSymbol)
+        symbols.setSupertypeTypeArgs([.out(typeParamType)], for: abstractListSymbol, supertype: abstractCollectionSymbol)
+        types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: abstractListSymbol, supertype: abstractCollectionSymbol)
+        symbols.setSupertypeTypeArgs([.out(typeParamType)], for: abstractListSymbol, supertype: listInterfaceSymbol)
+        types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: abstractListSymbol, supertype: listInterfaceSymbol)
+
+        let initName = interner.intern("<init>")
+        let initFQName = abstractListFQName + [initName]
+        if symbols.lookup(fqName: initFQName) == nil {
+            let initSymbol = symbols.define(
+                kind: .constructor,
+                name: initName,
+                fqName: initFQName,
+                declSite: nil,
+                visibility: .protected,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(abstractListSymbol, for: initSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: [],
+                    returnType: abstractListType,
+                    valueParameterSymbols: [],
+                    valueParameterHasDefaultValues: [],
+                    valueParameterIsVararg: [],
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: initSymbol
+            )
+        }
+
+        return abstractListSymbol
+    }
+
     /// Register `operator fun get(index: Int): E` on the List interface.
     private func registerListGetOperator(
         symbols: SymbolTable,
@@ -148,6 +243,110 @@ extension DataFlowSemaPhase {
             ),
             for: listGetSymbol
         )
+    }
+
+    /// Register `val <T> List<T>.lastIndex: Int`.
+    private func registerListLastIndexExtensionProperty(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        listInterfaceSymbol: SymbolID
+    ) {
+        let propertyName = interner.intern("lastIndex")
+        let propertyFQName = kotlinCollectionsPkg + [propertyName]
+        let existing = symbols.lookupAll(fqName: propertyFQName).first { symbolID in
+            guard symbols.symbol(symbolID)?.kind == .property,
+                  let receiverType = symbols.extensionPropertyReceiverType(for: symbolID),
+                  case let .classType(receiverClass) = types.kind(of: types.makeNonNullable(receiverType))
+            else {
+                return false
+            }
+            return receiverClass.classSymbol == listInterfaceSymbol
+        }
+
+        let propertySymbol: SymbolID
+        let receiverType: TypeID
+        let typeParameterSymbol: SymbolID
+        if let existing {
+            propertySymbol = existing
+            guard let existingReceiver = symbols.extensionPropertyReceiverType(for: existing),
+                  case let .classType(existingReceiverClass) = types.kind(of: types.makeNonNullable(existingReceiver)),
+                  case let .out(existingElementType)? = existingReceiverClass.args.first,
+                  case let .typeParam(existingElementParam) = types.kind(of: existingElementType)
+            else {
+                symbols.setPropertyType(types.intType, for: existing)
+                symbols.setExternalLinkName("kk_list_lastIndex", for: existing)
+                return
+            }
+            receiverType = existingReceiver
+            typeParameterSymbol = existingElementParam.symbol
+        } else {
+            let typeParameterName = interner.intern("T")
+            let typeParameterFQName = propertyFQName + [typeParameterName]
+            typeParameterSymbol = symbols.define(
+                kind: .typeParameter,
+                name: typeParameterName,
+                fqName: typeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let typeParameterType = types.make(.typeParam(TypeParamType(
+                symbol: typeParameterSymbol,
+                nullability: .nonNull
+            )))
+            receiverType = types.make(.classType(ClassType(
+                classSymbol: listInterfaceSymbol,
+                args: [.out(typeParameterType)],
+                nullability: .nonNull
+            )))
+            propertySymbol = symbols.define(
+                kind: .property,
+                name: propertyName,
+                fqName: propertyFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            if let packageSymbol = symbols.lookup(fqName: kotlinCollectionsPkg) {
+                symbols.setParentSymbol(packageSymbol, for: propertySymbol)
+            }
+            symbols.setParentSymbol(propertySymbol, for: typeParameterSymbol)
+            symbols.setExtensionPropertyReceiverType(receiverType, for: propertySymbol)
+        }
+
+        symbols.setPropertyType(types.intType, for: propertySymbol)
+        symbols.setExternalLinkName("kk_list_lastIndex", for: propertySymbol)
+
+        let getterFQName = propertyFQName + [interner.intern("$get")]
+        let getterSymbol: SymbolID
+        if let existingGetter = symbols.extensionPropertyGetterAccessor(for: propertySymbol) {
+            getterSymbol = existingGetter
+        } else {
+            getterSymbol = symbols.define(
+                kind: .function,
+                name: interner.intern("get"),
+                fqName: getterFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(propertySymbol, for: getterSymbol)
+            symbols.setExtensionPropertyGetterAccessor(getterSymbol, for: propertySymbol)
+            symbols.setAccessorOwnerProperty(propertySymbol, for: getterSymbol)
+        }
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: types.intType,
+                typeParameterSymbols: [typeParameterSymbol],
+                typeParameterUpperBoundsList: [[]]
+            ),
+            for: getterSymbol
+        )
+        symbols.setExternalLinkName("kk_list_lastIndex", for: getterSymbol)
     }
 
     /// Register `val <T> List<T>.indices: IntRange`.
@@ -1746,7 +1945,8 @@ extension DataFlowSemaPhase {
             parameterTypes: [TypeID],
             externalLinkName: String,
             returnTypeOverride: TypeID? = nil,
-            typeParameterUpperBoundsList: [[TypeID]]? = nil
+            typeParameterUpperBoundsList: [[TypeID]]? = nil,
+            canThrow: Bool = false
         ) {
             let memberName = interner.intern(name)
             let memberFQName = listFQName + [memberName]
@@ -1761,7 +1961,8 @@ extension DataFlowSemaPhase {
                 parameterTypes: parameterTypes,
                 externalLinkName: externalLinkName,
                 returnTypeOverride: returnTypeOverride,
-                typeParameterUpperBoundsList: typeParameterUpperBoundsList
+                typeParameterUpperBoundsList: typeParameterUpperBoundsList,
+                canThrow: canThrow
             )
         }
 
@@ -1776,7 +1977,8 @@ extension DataFlowSemaPhase {
             typeParameterSymbols: [SymbolID]? = nil,
             typeParameterUpperBoundsList: [[TypeID]]? = nil,
             flags: SymbolFlags = [.synthetic],
-            reifiedTypeParameterIndices: Set<Int> = []
+            reifiedTypeParameterIndices: Set<Int> = [],
+            canThrow: Bool = false
         ) {
             let alreadyRegistered = symbols.lookupAll(fqName: memberFQName).contains { symbolID in
                 guard let sig = symbols.functionSignature(for: symbolID) else { return false }
@@ -1798,6 +2000,7 @@ extension DataFlowSemaPhase {
                     receiverType: receiverType,
                     parameterTypes: parameterTypes,
                     returnType: returnTypeOverride ?? receiverType,
+                    canThrow: canThrow,
                     typeParameterSymbols: typeParameterSymbols ?? [listTypeParamSymbol],
                     reifiedTypeParameterIndices: reifiedTypeParameterIndices,
                     typeParameterUpperBoundsList: typeParameterUpperBoundsList ?? [],
@@ -1807,9 +2010,9 @@ extension DataFlowSemaPhase {
             )
         }
 
-        registerMember(name: "take", parameterTypes: [types.intType], externalLinkName: "kk_list_take")
-        registerMember(name: "drop", parameterTypes: [types.intType], externalLinkName: "kk_list_drop")
-        registerMember(name: "takeLast", parameterTypes: [types.intType], externalLinkName: "kk_list_takeLast")
+        registerMember(name: "take", parameterTypes: [types.intType], externalLinkName: "kk_list_take", canThrow: true)
+        registerMember(name: "drop", parameterTypes: [types.intType], externalLinkName: "kk_list_drop", canThrow: true)
+        registerMember(name: "takeLast", parameterTypes: [types.intType], externalLinkName: "kk_list_takeLast", canThrow: true)
         registerMember(name: "dropLast", parameterTypes: [types.intType], externalLinkName: "kk_list_dropLast")
         registerMember(name: "sum", parameterTypes: [], externalLinkName: "kk_list_sum", returnTypeOverride: types.intType)
         registerMember(name: "average", parameterTypes: [], externalLinkName: "kk_list_average", returnTypeOverride: types.doubleType)
@@ -1920,6 +2123,44 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_list_mapTo",
             returnTypeOverride: mapToDestinationType,
             typeParameterSymbols: [listTypeParamSymbol, mapToTypeParamSymbol]
+        )
+
+        let flatMapTypeParamName = interner.intern("R")
+        let flatMapTypeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: flatMapTypeParamName,
+            fqName: listFQName + [interner.intern("flatMap"), flatMapTypeParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let flatMapTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: flatMapTypeParamSymbol, nullability: .nonNull
+        )))
+        let flatMapReturnType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(flatMapTypeParamType)],
+            nullability: .nonNull
+        )))
+        let flatMapLambdaReturnType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(flatMapTypeParamType)],
+            nullability: .nonNull
+        )))
+        registerMemberOverload(
+            memberName: interner.intern("flatMap"),
+            memberFQName: listFQName + [interner.intern("flatMap")],
+            parameterTypes: [
+                types.make(.functionType(FunctionType(
+                    params: [listTypeParamType],
+                    returnType: flatMapLambdaReturnType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+            ],
+            externalLinkName: "kk_list_flatMap",
+            returnTypeOverride: flatMapReturnType,
+            typeParameterSymbols: [listTypeParamSymbol, flatMapTypeParamSymbol]
         )
 
         let flatMapToTypeParamName = interner.intern("R")
@@ -2366,7 +2607,8 @@ extension DataFlowSemaPhase {
         func registerSimpleMember(
             name: String,
             returnType: TypeID,
-            externalLinkName: String
+            externalLinkName: String,
+            canThrow: Bool = false
         ) {
             let memberName = interner.intern(name)
             let memberFQName = listFQName + [memberName]
@@ -2386,6 +2628,7 @@ extension DataFlowSemaPhase {
                     receiverType: receiverType,
                     parameterTypes: [],
                     returnType: returnType,
+                    canThrow: canThrow,
                     typeParameterSymbols: [listTypeParamSymbol],
                     classTypeParameterCount: 1
                 ),
@@ -2499,6 +2742,11 @@ extension DataFlowSemaPhase {
                 )
             }
 
+            registerByOrNull(
+                name: "maxBy",
+                externalLinkName: "kk_list_maxBy",
+                returnTypeBuilder: { _ in listTypeParamType }
+            )
             registerByOrNull(
                 name: "maxByOrNull",
                 externalLinkName: "kk_list_maxByOrNull",
@@ -2821,6 +3069,8 @@ extension DataFlowSemaPhase {
         // firstOrNull / lastOrNull no-predicate (STDLIB-210)
         registerSimpleMember(name: "firstOrNull", returnType: nullableElementType, externalLinkName: "kk_list_firstOrNull")
         registerSimpleMember(name: "lastOrNull", returnType: nullableElementType, externalLinkName: "kk_list_lastOrNull")
+        // single no-predicate (STDLIB-COL-FN-184)
+        registerSimpleMember(name: "single", returnType: listTypeParamType, externalLinkName: "kk_list_single", canThrow: true)
         // singleOrNull no-predicate (STDLIB-211)
         registerSimpleMember(name: "singleOrNull", returnType: nullableElementType, externalLinkName: "kk_list_singleOrNull")
 

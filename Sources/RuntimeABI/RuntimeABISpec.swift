@@ -2439,6 +2439,12 @@ public enum RuntimeABISpec {
 
     public static let ioFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
+            name: "kk_io_default_buffer_size",
+            parameters: [],
+            returnType: .intptr,
+            section: "IO"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_readline",
             parameters: [],
             returnType: .intptr,
@@ -2735,6 +2741,21 @@ public enum RuntimeABISpec {
             name: "kk_coroutine_continuation_new",
             parameters: [
                 RuntimeABIParameter(name: "functionID", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_current_context",
+            parameters: [],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_continuation_factory",
+            parameters: [
+                RuntimeABIParameter(name: "contextRaw", type: .intptr),
+                RuntimeABIParameter(name: "resumeWithRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"

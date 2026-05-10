@@ -35,4 +35,40 @@ final class RuntimePathTests: XCTestCase {
             "C:/tmp/archive.tar.gz"
         )
     }
+
+    func testPathNameReturnsLastComponent() {
+        XCTAssertEqual(
+            extractStringRaw(kk_path_name(makePathRaw("/tmp/archive.tar.gz"))),
+            "archive.tar.gz"
+        )
+    }
+
+    func testPathFactoryWriteTextAndAppendTextRoundTrip() throws {
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        let pathRaw = kk_path_get(makeStringRaw(fileURL.path))
+        XCTAssertEqual(extractStringRaw(kk_path_toString(pathRaw)), fileURL.path)
+
+        var thrown = 0
+        XCTAssertEqual(kk_path_writeText(pathRaw, makeStringRaw("alpha"), &thrown), 0)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(try String(contentsOf: fileURL, encoding: .utf8), "alpha")
+
+        let appendedPathRaw = kk_path_appendText_default(pathRaw, makeStringRaw("\nbeta"), &thrown)
+        XCTAssertEqual(extractStringRaw(kk_path_toString(appendedPathRaw)), fileURL.path)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(try String(contentsOf: fileURL, encoding: .utf8), "alpha\nbeta")
+    }
+
+    func testPathDeleteIfExistsRemovesExistingFile() throws {
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try "data".write(to: fileURL, atomically: true, encoding: .utf8)
+
+        let pathRaw = makePathRaw(fileURL.path)
+
+        XCTAssertEqual(kk_unbox_bool(kk_path_deleteIfExists(pathRaw)), 1)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: fileURL.path))
+        XCTAssertEqual(kk_unbox_bool(kk_path_deleteIfExists(pathRaw)), 0)
+    }
 }

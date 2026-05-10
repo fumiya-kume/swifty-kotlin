@@ -397,7 +397,30 @@ extension DataFlowSemaPhase {
             typeParamSymbol: typeParamSymbol,
             typeParamType: typeParamType
         )
+        registerMutableSetPlusAssignMembers(
+            symbols: symbols, types: types, interner: interner,
+            mutableSetFQName: mutableSetFQName,
+            mutableSetInterfaceSymbol: mutableSetInterfaceSymbol,
+            collectionInterfaceSymbol: collectionInterfaceSymbol,
+            typeParamSymbol: typeParamSymbol,
+            typeParamType: typeParamType
+        )
         registerMutableSetRemoveAllMember(
+            symbols: symbols, types: types, interner: interner,
+            mutableSetFQName: mutableSetFQName,
+            mutableSetInterfaceSymbol: mutableSetInterfaceSymbol,
+            collectionInterfaceSymbol: collectionInterfaceSymbol,
+            typeParamSymbol: typeParamSymbol,
+            typeParamType: typeParamType
+        )
+        registerMutableSetMinusAssignElementMember(
+            symbols: symbols, types: types, interner: interner,
+            mutableSetFQName: mutableSetFQName,
+            mutableSetInterfaceSymbol: mutableSetInterfaceSymbol,
+            typeParamSymbol: typeParamSymbol,
+            typeParamType: typeParamType
+        )
+        registerMutableSetMinusAssignCollectionMember(
             symbols: symbols, types: types, interner: interner,
             mutableSetFQName: mutableSetFQName,
             mutableSetInterfaceSymbol: mutableSetInterfaceSymbol,
@@ -412,6 +435,14 @@ extension DataFlowSemaPhase {
             collectionInterfaceSymbol: collectionInterfaceSymbol,
             typeParamSymbol: typeParamSymbol,
             typeParamType: typeParamType
+        )
+        _ = registerSyntheticAbstractMutableSetStub(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            setInterfaceSymbol: setInterfaceSymbol,
+            mutableSetInterfaceSymbol: mutableSetInterfaceSymbol
         )
 
         // STDLIB-651: Set.toMutableSet() → kk_set_to_mutable_set
@@ -433,6 +464,103 @@ extension DataFlowSemaPhase {
                 )
             }
         }
+    }
+
+    /// Register `kotlin.collections.AbstractMutableSet<E>` surface (STDLIB-COL-ABSTRACT-008).
+    func registerSyntheticAbstractMutableSetStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        setInterfaceSymbol: SymbolID,
+        mutableSetInterfaceSymbol: SymbolID
+    ) -> SymbolID {
+        let abstractMutableSetName = interner.intern("AbstractMutableSet")
+        let abstractMutableSetFQName = kotlinCollectionsPkg + [abstractMutableSetName]
+        let abstractMutableSetSymbol: SymbolID = if let existing = symbols.lookup(fqName: abstractMutableSetFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .class,
+                name: abstractMutableSetName,
+                fqName: abstractMutableSetFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .abstractType]
+            )
+        }
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = abstractMutableSetFQName + [typeParamName]
+        let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: abstractMutableSetSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: abstractMutableSetSymbol)
+
+        let abstractMutableSetType = types.make(.classType(ClassType(
+            classSymbol: abstractMutableSetSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(abstractMutableSetType, for: abstractMutableSetSymbol)
+
+        let abstractSetSymbol = symbols.lookup(
+            fqName: kotlinCollectionsPkg + [interner.intern("AbstractSet")]
+        )
+        let readonlySupertype = abstractSetSymbol ?? setInterfaceSymbol
+        symbols.setDirectSupertypes([readonlySupertype, mutableSetInterfaceSymbol], for: abstractMutableSetSymbol)
+        types.setNominalDirectSupertypes([readonlySupertype, mutableSetInterfaceSymbol], for: abstractMutableSetSymbol)
+        symbols.setSupertypeTypeArgs([.out(typeParamType)], for: abstractMutableSetSymbol, supertype: readonlySupertype)
+        types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: abstractMutableSetSymbol, supertype: readonlySupertype)
+        symbols.setSupertypeTypeArgs([.invariant(typeParamType)], for: abstractMutableSetSymbol, supertype: mutableSetInterfaceSymbol)
+        types.setNominalSupertypeTypeArgs(
+            [.invariant(typeParamType)],
+            for: abstractMutableSetSymbol,
+            supertype: mutableSetInterfaceSymbol
+        )
+
+        let initName = interner.intern("<init>")
+        let initFQName = abstractMutableSetFQName + [initName]
+        if symbols.lookup(fqName: initFQName) == nil {
+            let initSymbol = symbols.define(
+                kind: .constructor,
+                name: initName,
+                fqName: initFQName,
+                declSite: nil,
+                visibility: .protected,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(abstractMutableSetSymbol, for: initSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: [],
+                    returnType: abstractMutableSetType,
+                    valueParameterSymbols: [],
+                    valueParameterHasDefaultValues: [],
+                    valueParameterIsVararg: [],
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: initSymbol
+            )
+        }
+
+        return abstractMutableSetSymbol
     }
 
     private func registerMutableSetAddMember(
@@ -597,6 +725,65 @@ extension DataFlowSemaPhase {
         )
     }
 
+    private func registerMutableSetPlusAssignMembers(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        mutableSetFQName: [InternedString],
+        mutableSetInterfaceSymbol: SymbolID,
+        collectionInterfaceSymbol: SymbolID,
+        typeParamSymbol: SymbolID,
+        typeParamType: TypeID
+    ) {
+        let memberName = interner.intern("plusAssign")
+        let memberFQName = mutableSetFQName + [memberName]
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: mutableSetInterfaceSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        let collectionType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let overloads: [(params: [TypeID], external: String)] = [
+            ([typeParamType], "kk_mutable_set_add"),
+            ([collectionType], "kk_mutable_set_addAll"),
+        ]
+
+        for overload in overloads {
+            guard symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.parameterTypes == overload.params &&
+                    signature.returnType == types.unitType
+            }) == nil else {
+                continue
+            }
+
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: memberName,
+                fqName: memberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .operatorFunction]
+            )
+            symbols.setParentSymbol(mutableSetInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName(overload.external, for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: overload.params,
+                    returnType: types.unitType,
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+    }
+
     private func registerMutableSetRemoveAllMember(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -635,6 +822,98 @@ extension DataFlowSemaPhase {
                 receiverType: receiverType,
                 parameterTypes: [collectionType],
                 returnType: types.booleanType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    private func registerMutableSetMinusAssignElementMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        mutableSetFQName: [InternedString],
+        mutableSetInterfaceSymbol: SymbolID,
+        typeParamSymbol: SymbolID,
+        typeParamType: TypeID
+    ) {
+        let memberName = interner.intern("minusAssign")
+        let memberFQName = mutableSetFQName + [memberName]
+        guard symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+            symbols.externalLinkName(for: symbolID) == "kk_mutable_set_remove"
+        }) == nil else {
+            return
+        }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: mutableSetInterfaceSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(mutableSetInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_mutable_set_remove", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [typeParamType],
+                returnType: types.unitType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    private func registerMutableSetMinusAssignCollectionMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        mutableSetFQName: [InternedString],
+        mutableSetInterfaceSymbol: SymbolID,
+        collectionInterfaceSymbol: SymbolID,
+        typeParamSymbol: SymbolID,
+        typeParamType: TypeID
+    ) {
+        let memberName = interner.intern("minusAssign")
+        let memberFQName = mutableSetFQName + [memberName]
+        guard symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+            symbols.externalLinkName(for: symbolID) == "kk_mutable_set_removeAll"
+        }) == nil else {
+            return
+        }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: mutableSetInterfaceSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        let collectionType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(mutableSetInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_mutable_set_removeAll", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [collectionType],
+                returnType: types.unitType,
                 typeParameterSymbols: [typeParamSymbol],
                 classTypeParameterCount: 1
             ),

@@ -227,7 +227,9 @@ struct KnownCompilerNames {
     let mutableList: InternedString
     let set: InternedString
     let mutableSet: InternedString
+    let linkedHashSet: InternedString
     let collection: InternedString
+    let linkedList: InternedString
     let arrayDeque: InternedString
     let array: InternedString
     let intArray: InternedString
@@ -372,8 +374,10 @@ struct KnownCompilerNames {
     let kotlinCollectionsMutableListFQName: [InternedString]
     let kotlinCollectionsSetFQName: [InternedString]
     let kotlinCollectionsMutableSetFQName: [InternedString]
+    let kotlinCollectionsLinkedHashSetFQName: [InternedString]
     let kotlinCollectionsMapFQName: [InternedString]
     let kotlinCollectionsMutableMapFQName: [InternedString]
+    let kotlinCollectionsLinkedListFQName: [InternedString]
     let kotlinCollectionsArrayDequeFQName: [InternedString]
     let kotlinCollectionsCollectionFQName: [InternedString]
     let kotlinCoroutinesFQName: [InternedString]
@@ -419,7 +423,9 @@ struct KnownCompilerNames {
         mutableList = interner.intern("MutableList")
         set = interner.intern("Set")
         mutableSet = interner.intern("MutableSet")
+        linkedHashSet = interner.intern("LinkedHashSet")
         collection = interner.intern("Collection")
+        linkedList = interner.intern("LinkedList")
         arrayDeque = interner.intern("ArrayDeque")
         array = interner.intern("Array")
         intArray = interner.intern("IntArray")
@@ -577,8 +583,10 @@ struct KnownCompilerNames {
         kotlinCollectionsMutableListFQName = [kotlin, kotlinCollections, mutableList]
         kotlinCollectionsSetFQName = [kotlin, kotlinCollections, set]
         kotlinCollectionsMutableSetFQName = [kotlin, kotlinCollections, mutableSet]
+        kotlinCollectionsLinkedHashSetFQName = [kotlin, kotlinCollections, linkedHashSet]
         kotlinCollectionsMapFQName = [kotlin, kotlinCollections, map]
         kotlinCollectionsMutableMapFQName = [kotlin, kotlinCollections, mutableMap]
+        kotlinCollectionsLinkedListFQName = [kotlin, kotlinCollections, linkedList]
         kotlinCollectionsArrayDequeFQName = [kotlin, kotlinCollections, arrayDeque]
         kotlinCollectionsCollectionFQName = [kotlin, kotlinCollections, collection]
         kotlinxCoroutinesJobFQName = [kotlinx, coroutines, job]
@@ -724,15 +732,16 @@ struct KnownCompilerNames {
         "setOf", "setOfNotNull", "mutableSetOf", "hashSetOf", "linkedSetOf", "emptySet",
         "listOfNotNull",
         "sequenceOf", "generateSequence",
-        "ArrayList",
+        "ArrayList", "LinkedList",
         "HashMap", "LinkedHashMap",
         "HashSet", "LinkedHashSet",
     ]
 
     func isConcreteListLikeSymbol(_ symbol: SemanticSymbol) -> Bool {
-        symbol.name == list || symbol.name == mutableList
+        symbol.name == list || symbol.name == mutableList || symbol.name == linkedList
             || symbolMatches(symbol, fqName: kotlinCollectionsListFQName)
             || symbolMatches(symbol, fqName: kotlinCollectionsMutableListFQName)
+            || symbolMatches(symbol, fqName: kotlinCollectionsLinkedListFQName)
     }
 
     func isMapLikeSymbol(_ symbol: SemanticSymbol) -> Bool {
@@ -746,7 +755,9 @@ struct KnownCompilerNames {
     }
 
     func isMutableSetSymbol(_ symbol: SemanticSymbol) -> Bool {
-        symbol.name == mutableSet || symbolMatches(symbol, fqName: kotlinCollectionsMutableSetFQName)
+        symbol.name == mutableSet || symbol.name == linkedHashSet
+            || symbolMatches(symbol, fqName: kotlinCollectionsMutableSetFQName)
+            || symbolMatches(symbol, fqName: kotlinCollectionsLinkedHashSetFQName)
     }
 
     func isArrayDequeSymbol(_ symbol: SemanticSymbol) -> Bool {
@@ -756,11 +767,12 @@ struct KnownCompilerNames {
     func isSetLikeSymbol(_ symbol: SemanticSymbol) -> Bool {
         if symbolMatches(symbol, fqName: kotlinCollectionsSetFQName)
             || symbolMatches(symbol, fqName: kotlinCollectionsMutableSetFQName)
+            || symbolMatches(symbol, fqName: kotlinCollectionsLinkedHashSetFQName)
         {
             return true
         }
         // Fall back to simple name match only for synthetic symbols (no FQN)
-        return (symbol.name == set || symbol.name == mutableSet) && symbol.fqName.isEmpty
+        return (symbol.name == set || symbol.name == mutableSet || symbol.name == linkedHashSet) && symbol.fqName.isEmpty
     }
 
     func isCollectionLikeSymbol(_ symbol: SemanticSymbol) -> Bool {

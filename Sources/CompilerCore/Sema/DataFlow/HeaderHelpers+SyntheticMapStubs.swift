@@ -346,7 +346,16 @@ extension DataFlowSemaPhase {
         ) {
             let memberName = interner.intern(name)
             let memberFQName = mapFQName + [memberName]
-            guard symbols.lookup(fqName: memberFQName) == nil else { return }
+            if let existing = symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else {
+                    return false
+                }
+                return signature.receiverType == receiverType
+                    && signature.parameterTypes == parameterTypes
+            }) {
+                symbols.setExternalLinkName(externalLinkName, for: existing)
+                return
+            }
             let memberSymbol = symbols.define(
                 kind: .function,
                 name: memberName,
@@ -683,6 +692,14 @@ extension DataFlowSemaPhase {
             flags: [.synthetic, .inlineFunction]
         )
 
+        registerMember(
+            name: "count",
+            externalLinkName: "kk_map_size",
+            parameterTypes: [],
+            returnType: types.intType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
+            flags: [.synthetic]
+        )
         registerMember(
             name: "count",
             externalLinkName: "kk_map_count",
@@ -1045,6 +1062,17 @@ extension DataFlowSemaPhase {
             args: [.out(keyType), .out(valueType)],
             nullability: .nonNull
         )))
+        let pairSymbol = symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Pair")])
+            ?? symbols.lookupByShortName(interner.intern("Pair")).first
+        let pairType = if let pairSymbol {
+            types.make(.classType(ClassType(
+                classSymbol: pairSymbol,
+                args: [.invariant(keyType), .invariant(valueType)],
+                nullability: .nonNull
+            )))
+        } else {
+            types.anyType
+        }
 
         let members: [(name: String, params: [TypeID], ret: TypeID, external: String, flags: SymbolFlags)] = [
             ("set", [keyType, valueType], types.unitType, "kk_mutable_map_put", [.synthetic, .operatorFunction]),
@@ -1053,12 +1081,20 @@ extension DataFlowSemaPhase {
             ("clear", [], types.unitType, "kk_mutable_map_clear", [.synthetic]),
             ("getOrPut", [keyType, getOrPutLambdaType], valueType, "kk_mutable_map_getOrPut", [.synthetic, .inlineFunction]),
             ("putAll", [mapParamType], types.unitType, "kk_mutable_map_putAll", [.synthetic]),
+            ("plusAssign", [pairType], types.unitType, "kk_mutable_map_plusAssign_pair", [.synthetic, .operatorFunction]),
+            ("plusAssign", [mapParamType], types.unitType, "kk_mutable_map_putAll", [.synthetic, .operatorFunction]),
         ]
 
         for member in members {
             let memberName = interner.intern(member.name)
             let memberFQName = mutableMapFQName + [memberName]
-            guard symbols.lookup(fqName: memberFQName) == nil else { continue }
+            guard symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.parameterTypes == member.params &&
+                    signature.returnType == member.ret
+            }) == nil else {
+                continue
+            }
             let memberSymbol = symbols.define(
                 kind: .function,
                 name: memberName,

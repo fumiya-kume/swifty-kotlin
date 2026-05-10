@@ -12,6 +12,7 @@ import XCTest
 //   • ExperimentalContextParameters — kotlin        — severity ERROR
 //   • ExperimentalUuidApi        — kotlin.uuid      — severity ERROR
 //   • ExperimentalEncodingApi    — kotlin.io.encoding — severity ERROR
+//   • ExperimentalWasmInterop    — kotlin.wasm      — severity WARNING
 //   • ExperimentalMultiplatform  — kotlin           — severity ERROR
 //   • ExperimentalSubclassOptIn  — kotlin           — severity WARNING
 //   • ExperimentalAssociatedObjects — kotlin.reflect — severity ERROR
@@ -274,6 +275,29 @@ final class ExperimentalMarkerStubTests: XCTestCase {
         XCTAssertNotNil(
             sema.symbols.lookup(fqName: fq),
             "kotlin.io.encoding package must be present in the symbol table after sema"
+        )
+    }
+
+    // MARK: - ExperimentalWasmInterop (kotlin.wasm, WARNING)
+
+    func testExperimentalWasmInteropIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let sym = lookupSymbol(fqPath: ["kotlin", "wasm", "ExperimentalWasmInterop"], sema: sema, interner: interner)
+        XCTAssertNotNil(sym, "kotlin.wasm.ExperimentalWasmInterop must be registered in the symbol table")
+    }
+
+    func testExperimentalWasmInteropIsAnnotationClass() throws {
+        let (sema, interner) = try makeSema()
+        assertIsAnnotationClass(fqPath: ["kotlin", "wasm", "ExperimentalWasmInterop"], sema: sema, interner: interner)
+    }
+
+    func testExperimentalWasmInteropHasRequiresOptInWithWarningSeverity() throws {
+        let (sema, interner) = try makeSema()
+        assertHasRequiresOptIn(
+            fqPath: ["kotlin", "wasm", "ExperimentalWasmInterop"],
+            expectedSeverity: "WARNING",
+            sema: sema,
+            interner: interner
         )
     }
 
@@ -709,5 +733,262 @@ final class ExperimentalMarkerStubTests: XCTestCase {
                 "Expected @OptIn(\(marker)::class) to suppress opt-in diagnostics, got \(ctx.diagnostics.diagnostics)"
             )
         }
+    }
+
+    // MARK: - ExperimentalJsCollectionsApi (kotlin.js, WARNING)
+
+    func testExperimentalJsCollectionsApiIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let sym = lookupSymbol(fqPath: ["kotlin", "js", "ExperimentalJsCollectionsApi"], sema: sema, interner: interner)
+        XCTAssertNotNil(sym, "kotlin.js.ExperimentalJsCollectionsApi must be registered in the symbol table")
+    }
+
+    func testExperimentalJsCollectionsApiIsAnnotationClass() throws {
+        let (sema, interner) = try makeSema()
+        assertIsAnnotationClass(fqPath: ["kotlin", "js", "ExperimentalJsCollectionsApi"], sema: sema, interner: interner)
+    }
+
+    func testExperimentalJsCollectionsApiHasRequiresOptInWarning() throws {
+        let (sema, interner) = try makeSema()
+        assertHasRequiresOptIn(
+            fqPath: ["kotlin", "js", "ExperimentalJsCollectionsApi"],
+            expectedSeverity: "WARNING",
+            sema: sema,
+            interner: interner
+        )
+    }
+
+    func testExperimentalJsCollectionsApiHasOfficialTargets() throws {
+        let (sema, interner) = try makeSema()
+        let symbol = try XCTUnwrap(
+            lookupSymbol(fqPath: ["kotlin", "js", "ExperimentalJsCollectionsApi"], sema: sema, interner: interner)
+        )
+        let annotations = sema.symbols.annotations(for: symbol)
+        let target = try XCTUnwrap(
+            annotations.first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "ExperimentalJsCollectionsApi should carry explicit @Target metadata"
+        )
+        XCTAssertEqual(
+            Set(target.arguments),
+            Set([
+                "AnnotationTarget.CLASS",
+                "AnnotationTarget.FUNCTION",
+            ])
+        )
+    }
+
+    // MARK: - ExperimentalJsExport (kotlin.js, WARNING)
+
+    func testExperimentalJsExportIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let sym = lookupSymbol(fqPath: ["kotlin", "js", "ExperimentalJsExport"], sema: sema, interner: interner)
+        XCTAssertNotNil(sym, "kotlin.js.ExperimentalJsExport must be registered in the symbol table")
+    }
+
+    func testExperimentalJsExportIsAnnotationClass() throws {
+        let (sema, interner) = try makeSema()
+        assertIsAnnotationClass(fqPath: ["kotlin", "js", "ExperimentalJsExport"], sema: sema, interner: interner)
+    }
+
+    func testExperimentalJsExportHasRequiresOptInWarning() throws {
+        let (sema, interner) = try makeSema()
+        assertHasRequiresOptIn(
+            fqPath: ["kotlin", "js", "ExperimentalJsExport"],
+            expectedSeverity: "WARNING",
+            sema: sema,
+            interner: interner
+        )
+    }
+
+    func testExperimentalJsExportDoesNotCarryExplicitTargetMetadata() throws {
+        let (sema, interner) = try makeSema()
+        let symbol = try XCTUnwrap(
+            lookupSymbol(fqPath: ["kotlin", "js", "ExperimentalJsExport"], sema: sema, interner: interner)
+        )
+        let annotations = sema.symbols.annotations(for: symbol)
+
+        XCTAssertFalse(
+            annotations.contains { $0.annotationFQName == "kotlin.annotation.Target" },
+            "ExperimentalJsExport should not carry explicit @Target metadata, got \(annotations)"
+        )
+    }
+
+    // MARK: - ExperimentalJsFileName (kotlin.js, WARNING)
+
+    func testExperimentalJsFileNameIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let sym = lookupSymbol(fqPath: ["kotlin", "js", "ExperimentalJsFileName"], sema: sema, interner: interner)
+        XCTAssertNotNil(sym, "kotlin.js.ExperimentalJsFileName must be registered in the symbol table")
+    }
+
+    func testExperimentalJsFileNameIsAnnotationClass() throws {
+        let (sema, interner) = try makeSema()
+        assertIsAnnotationClass(fqPath: ["kotlin", "js", "ExperimentalJsFileName"], sema: sema, interner: interner)
+    }
+
+    func testExperimentalJsFileNameHasRequiresOptInWarning() throws {
+        let (sema, interner) = try makeSema()
+        assertHasRequiresOptIn(
+            fqPath: ["kotlin", "js", "ExperimentalJsFileName"],
+            expectedSeverity: "WARNING",
+            sema: sema,
+            interner: interner
+        )
+    }
+
+    func testExperimentalJsFileNameDoesNotCarryExplicitTargetMetadata() throws {
+        let (sema, interner) = try makeSema()
+        let symbol = try XCTUnwrap(
+            lookupSymbol(fqPath: ["kotlin", "js", "ExperimentalJsFileName"], sema: sema, interner: interner)
+        )
+        let annotations = sema.symbols.annotations(for: symbol)
+
+        XCTAssertFalse(
+            annotations.contains { $0.annotationFQName == "kotlin.annotation.Target" },
+            "ExperimentalJsFileName should not carry explicit @Target metadata, got \(annotations)"
+        )
+    }
+
+    // MARK: - ExperimentalJsReflectionCreateInstance (kotlin.js, WARNING)
+
+    func testExperimentalJsReflectionCreateInstanceIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let sym = lookupSymbol(
+            fqPath: ["kotlin", "js", "ExperimentalJsReflectionCreateInstance"],
+            sema: sema,
+            interner: interner
+        )
+        XCTAssertNotNil(sym, "kotlin.js.ExperimentalJsReflectionCreateInstance must be registered in the symbol table")
+    }
+
+    func testExperimentalJsReflectionCreateInstanceIsAnnotationClass() throws {
+        let (sema, interner) = try makeSema()
+        assertIsAnnotationClass(
+            fqPath: ["kotlin", "js", "ExperimentalJsReflectionCreateInstance"],
+            sema: sema,
+            interner: interner
+        )
+    }
+
+    func testExperimentalJsReflectionCreateInstanceHasRequiresOptInWarning() throws {
+        let (sema, interner) = try makeSema()
+        assertHasRequiresOptIn(
+            fqPath: ["kotlin", "js", "ExperimentalJsReflectionCreateInstance"],
+            expectedSeverity: "WARNING",
+            sema: sema,
+            interner: interner
+        )
+    }
+
+    func testExperimentalJsReflectionCreateInstanceHasOfficialTargets() throws {
+        let (sema, interner) = try makeSema()
+        let symbol = try XCTUnwrap(
+            lookupSymbol(
+                fqPath: ["kotlin", "js", "ExperimentalJsReflectionCreateInstance"],
+                sema: sema,
+                interner: interner
+            )
+        )
+        let annotations = sema.symbols.annotations(for: symbol)
+        let target = try XCTUnwrap(
+            annotations.first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "ExperimentalJsReflectionCreateInstance should carry explicit @Target metadata"
+        )
+        XCTAssertEqual(
+            Set(target.arguments),
+            Set([
+                "AnnotationTarget.CLASS",
+                "AnnotationTarget.ANNOTATION_CLASS",
+                "AnnotationTarget.PROPERTY",
+                "AnnotationTarget.FIELD",
+                "AnnotationTarget.LOCAL_VARIABLE",
+                "AnnotationTarget.VALUE_PARAMETER",
+                "AnnotationTarget.CONSTRUCTOR",
+                "AnnotationTarget.FUNCTION",
+                "AnnotationTarget.PROPERTY_GETTER",
+                "AnnotationTarget.PROPERTY_SETTER",
+                "AnnotationTarget.TYPEALIAS",
+            ])
+        )
+    }
+
+    // MARK: - ExperimentalJsStatic (kotlin.js, WARNING)
+
+    func testExperimentalJsStaticIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let sym = lookupSymbol(fqPath: ["kotlin", "js", "ExperimentalJsStatic"], sema: sema, interner: interner)
+        XCTAssertNotNil(sym, "kotlin.js.ExperimentalJsStatic must be registered in the symbol table")
+    }
+
+    func testExperimentalJsStaticIsAnnotationClass() throws {
+        let (sema, interner) = try makeSema()
+        assertIsAnnotationClass(fqPath: ["kotlin", "js", "ExperimentalJsStatic"], sema: sema, interner: interner)
+    }
+
+    func testExperimentalJsStaticHasRequiresOptInWarning() throws {
+        let (sema, interner) = try makeSema()
+        assertHasRequiresOptIn(
+            fqPath: ["kotlin", "js", "ExperimentalJsStatic"],
+            expectedSeverity: "WARNING",
+            sema: sema,
+            interner: interner
+        )
+    }
+
+    func testExperimentalJsStaticDoesNotCarryExplicitTargetMetadata() throws {
+        let (sema, interner) = try makeSema()
+        let symbol = try XCTUnwrap(
+            lookupSymbol(fqPath: ["kotlin", "js", "ExperimentalJsStatic"], sema: sema, interner: interner)
+        )
+        let annotations = sema.symbols.annotations(for: symbol)
+
+        XCTAssertFalse(
+            annotations.contains { $0.annotationFQName == "kotlin.annotation.Target" },
+            "ExperimentalJsStatic should not carry explicit @Target metadata, got \(annotations)"
+        )
+    }
+
+    // MARK: - ExperimentalWasmJsInterop (kotlin.js, WARNING)
+
+    func testExperimentalWasmJsInteropIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let sym = lookupSymbol(fqPath: ["kotlin", "js", "ExperimentalWasmJsInterop"], sema: sema, interner: interner)
+        XCTAssertNotNil(sym, "kotlin.js.ExperimentalWasmJsInterop must be registered in the symbol table")
+    }
+
+    func testExperimentalWasmJsInteropIsAnnotationClass() throws {
+        let (sema, interner) = try makeSema()
+        assertIsAnnotationClass(fqPath: ["kotlin", "js", "ExperimentalWasmJsInterop"], sema: sema, interner: interner)
+    }
+
+    func testExperimentalWasmJsInteropHasRequiresOptInWarning() throws {
+        let (sema, interner) = try makeSema()
+        assertHasRequiresOptIn(
+            fqPath: ["kotlin", "js", "ExperimentalWasmJsInterop"],
+            expectedSeverity: "WARNING",
+            sema: sema,
+            interner: interner
+        )
+    }
+
+    func testExperimentalWasmJsInteropHasOfficialTargets() throws {
+        let (sema, interner) = try makeSema()
+        let symbol = try XCTUnwrap(
+            lookupSymbol(fqPath: ["kotlin", "js", "ExperimentalWasmJsInterop"], sema: sema, interner: interner)
+        )
+        let annotations = sema.symbols.annotations(for: symbol)
+        let target = try XCTUnwrap(
+            annotations.first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "ExperimentalWasmJsInterop should carry explicit @Target metadata"
+        )
+        XCTAssertEqual(
+            Set(target.arguments),
+            Set([
+                "AnnotationTarget.CLASS",
+                "AnnotationTarget.FUNCTION",
+                "AnnotationTarget.PROPERTY",
+                "AnnotationTarget.TYPEALIAS",
+            ])
+        )
     }
 }

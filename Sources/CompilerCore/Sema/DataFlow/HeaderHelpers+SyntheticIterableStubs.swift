@@ -62,7 +62,8 @@ extension DataFlowSemaPhase {
             name: String,
             parameterTypes: [TypeID],
             returnType: TypeID,
-            flags: SymbolFlags
+            flags: SymbolFlags,
+            externalLinkName: String? = nil
         ) {
             let memberName = interner.intern(name)
             let memberFQName = collectionFQName + [memberName]
@@ -76,6 +77,9 @@ extension DataFlowSemaPhase {
                 flags: flags
             )
             symbols.setParentSymbol(collectionInterfaceSymbol, for: memberSymbol)
+            if let externalLinkName {
+                symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+            }
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: collectionReceiverType,
@@ -123,6 +127,43 @@ extension DataFlowSemaPhase {
             parameterTypes: [typeParamType],
             returnType: types.booleanType,
             flags: [.synthetic, .operatorFunction]
+        )
+
+        // last(): E — modeled directly here because Collection member lookup does
+        // not currently inherit synthetic Iterable extension members.
+        let lastName = interner.intern("last")
+        let lastFQName = collectionFQName + [lastName]
+        if symbols.lookup(fqName: lastFQName) == nil {
+            let lastSymbol = symbols.define(
+                kind: .function,
+                name: lastName,
+                fqName: lastFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .operatorFunction]
+            )
+            symbols.setParentSymbol(collectionInterfaceSymbol, for: lastSymbol)
+            symbols.setExternalLinkName("kk_iterable_last", for: lastSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: collectionReceiverType,
+                    parameterTypes: [],
+                    returnType: typeParamType,
+                    canThrow: true,
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: lastSymbol
+            )
+        }
+
+        // random(): E
+        defineCollectionFunctionMember(
+            name: "random",
+            parameterTypes: [],
+            returnType: typeParamType,
+            flags: [.synthetic],
+            externalLinkName: "kk_list_random"
         )
 
         return collectionInterfaceSymbol
@@ -1623,6 +1664,102 @@ extension DataFlowSemaPhase {
         )
     }
 
+    /// Register `Iterable<E>.joinTo(buffer, separator, prefix, postfix)` (STDLIB-COL-FN-102).
+    ///
+    /// This mirrors the subset already supported by `joinToString`: separator,
+    /// prefix, and postfix defaults, without limit/truncated/transform.
+    func registerIterableJoinToMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        iterableInterfaceSymbol: SymbolID
+    ) {
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName else { return }
+        let memberName = interner.intern("joinTo")
+        let memberFQName = iterableFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = iterableFQName + [typeParamName]
+        guard let typeParamSymbol = symbols.lookup(fqName: typeParamFQName) else { return }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+
+        let kotlinTextPkg = ensurePackage(path: ["kotlin", "text"], symbols: symbols, interner: interner)
+        let appendableSymbol = ensureInterfaceSymbol(
+            named: "Appendable",
+            in: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinTextPkgSymbol = symbols.lookup(fqName: kotlinTextPkg) {
+            symbols.setParentSymbol(kotlinTextPkgSymbol, for: appendableSymbol)
+        }
+        let appendableType = types.make(.classType(ClassType(
+            classSymbol: appendableSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_iterable_joinTo", for: memberSymbol)
+
+        let parameters: [(name: String, type: TypeID, hasDefault: Bool)] = [
+            ("buffer", appendableType, false),
+            ("separator", types.stringType, true),
+            ("prefix", types.stringType, true),
+            ("postfix", types.stringType, true),
+        ]
+        var parameterTypes: [TypeID] = []
+        var parameterSymbols: [SymbolID] = []
+        var parameterDefaults: [Bool] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: memberFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: parameterSymbol)
+            parameterTypes.append(parameter.type)
+            parameterSymbols.append(parameterSymbol)
+            parameterDefaults.append(parameter.hasDefault)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameterTypes,
+                returnType: appendableType,
+                valueParameterSymbols: parameterSymbols,
+                valueParameterHasDefaultValues: parameterDefaults,
+                valueParameterIsVararg: Array(repeating: false, count: parameters.count),
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
     /// Register `Iterable<E>.firstNotNullOfOrNull(transform)` (STDLIB-COL-HOF-002).
     func registerIterableFirstNotNullOfOrNullMember(
         symbols: SymbolTable,
@@ -1687,6 +1824,127 @@ extension DataFlowSemaPhase {
                 parameterTypes: [transformType],
                 returnType: resultType,
                 typeParameterSymbols: [iterableTypeParamSymbol, resultTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    /// Register `Iterable<E>.last()` (STDLIB-COL-FN-104).
+    func registerIterableLastMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        iterableInterfaceSymbol: SymbolID
+    ) {
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName,
+              let iterableTypeParamSymbol = types.nominalTypeParameterSymbols(for: iterableInterfaceSymbol).first
+        else { return }
+
+        let memberName = interner.intern("last")
+        let memberFQName = iterableFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let elementType = types.make(.typeParam(TypeParamType(
+            symbol: iterableTypeParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_iterable_last", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: elementType,
+                canThrow: true,
+                typeParameterSymbols: [iterableTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    /// Register `Iterable<E>.joinToString(separator, prefix, postfix)` (STDLIB-COL-FN-103).
+    func registerIterableJoinToStringMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        iterableInterfaceSymbol: SymbolID
+    ) {
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName,
+              let iterableTypeParamSymbol = types.nominalTypeParameterSymbols(for: iterableInterfaceSymbol).first
+        else { return }
+
+        let memberName = interner.intern("joinToString")
+        let memberFQName = iterableFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let elementType = types.make(.typeParam(TypeParamType(
+            symbol: iterableTypeParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_iterable_joinToString", for: memberSymbol)
+
+        let parameters: [(name: String, type: TypeID, hasDefault: Bool)] = [
+            ("separator", types.stringType, true),
+            ("prefix", types.stringType, true),
+            ("postfix", types.stringType, true),
+        ]
+        var parameterTypes: [TypeID] = []
+        var parameterSymbols: [SymbolID] = []
+        var parameterDefaults: [Bool] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: memberFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: parameterSymbol)
+            parameterTypes.append(parameter.type)
+            parameterSymbols.append(parameterSymbol)
+            parameterDefaults.append(parameter.hasDefault)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameterTypes,
+                returnType: types.stringType,
+                valueParameterSymbols: parameterSymbols,
+                valueParameterHasDefaultValues: parameterDefaults,
+                valueParameterIsVararg: Array(repeating: false, count: parameters.count),
+                typeParameterSymbols: [iterableTypeParamSymbol],
                 classTypeParameterCount: 1
             ),
             for: memberSymbol
@@ -1845,6 +2103,72 @@ extension DataFlowSemaPhase {
                 parameterTypes: [transformType],
                 returnType: resultType,
                 typeParameterSymbols: [iterableTypeParamSymbol, resultTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    /// Register `Iterable<E>.plusElement(element): List<E>`.
+    func registerIterablePlusElementMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        iterableInterfaceSymbol: SymbolID,
+        listInterfaceSymbol: SymbolID
+    ) {
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName else { return }
+        let memberName = interner.intern("plusElement")
+        let memberFQName = iterableFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = iterableFQName + [typeParamName]
+        guard let typeParamSymbol = symbols.lookup(fqName: typeParamFQName) else { return }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_list_plus_element", for: memberSymbol)
+        let elementParameterName = interner.intern("element")
+        let elementParameterSymbol = symbols.define(
+            kind: .valueParameter,
+            name: elementParameterName,
+            fqName: memberFQName + [elementParameterName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(memberSymbol, for: elementParameterSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [typeParamType],
+                returnType: returnType,
+                valueParameterSymbols: [elementParameterSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
+                typeParameterSymbols: [typeParamSymbol],
                 classTypeParameterCount: 1
             ),
             for: memberSymbol

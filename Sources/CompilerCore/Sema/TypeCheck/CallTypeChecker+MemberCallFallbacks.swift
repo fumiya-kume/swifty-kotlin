@@ -448,6 +448,87 @@ extension CallTypeChecker {
         return finalType
     }
 
+    func tryPathCharsetReadExtensionFallback(
+        _ id: ExprID,
+        calleeName: InternedString,
+        isClassNameReceiver: Bool,
+        safeCall: Bool,
+        receiverID: ExprID,
+        args: [CallArgument],
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
+    ) -> TypeID? {
+        let sema = ctx.sema
+        let interner = ctx.interner
+        guard !isClassNameReceiver, args.count == 1 else {
+            return nil
+        }
+
+        let memberName = interner.resolve(calleeName)
+        guard memberName == "readText" || memberName == "readLines" else {
+            return nil
+        }
+
+        let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
+        let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+        guard case let .classType(classType) = sema.types.kind(of: nonNullReceiverType),
+              let owner = sema.symbols.symbol(classType.classSymbol),
+              owner.fqName.count == 4,
+              interner.resolve(owner.fqName[0]) == "kotlin",
+              interner.resolve(owner.fqName[1]) == "io",
+              interner.resolve(owner.fqName[2]) == "path",
+              interner.resolve(owner.fqName[3]) == "Path",
+              let charsetSymbol = sema.symbols.lookup(fqName: [
+                  interner.intern("kotlin"),
+                  interner.intern("text"),
+                  interner.intern("Charset"),
+              ])
+        else {
+            return nil
+        }
+
+        let charsetType = sema.types.make(.classType(ClassType(
+            classSymbol: charsetSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let argType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: charsetType)
+        guard sema.types.isSubtype(sema.types.makeNonNullable(argType), charsetType) else {
+            return nil
+        }
+
+        let functionFQName = [
+            interner.intern("kotlin"),
+            interner.intern("io"),
+            interner.intern("path"),
+            calleeName,
+        ]
+        guard let chosen = sema.symbols.lookupAll(fqName: functionFQName).first(where: { candidate in
+            guard let signature = sema.symbols.functionSignature(for: candidate) else {
+                return false
+            }
+            return signature.receiverType == nonNullReceiverType
+                && signature.parameterTypes == [charsetType]
+        }) else {
+            return nil
+        }
+
+        let returnType = bindCallAndResolveReturnType(
+            id,
+            chosen: chosen,
+            resolved: ResolvedCall(
+                chosenCallee: chosen,
+                substitutedTypeArguments: [:],
+                parameterMapping: [0: 0],
+                diagnostic: nil
+            ),
+            sema: sema
+        )
+        let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
+        sema.bindings.bindExprType(id, type: finalType)
+        return finalType
+    }
+
     func tryCollectionMemberFallback(
         _ id: ExprID,
         calleeName: InternedString,
@@ -511,6 +592,10 @@ extension CallTypeChecker {
             }
             return firstArgNode.isLambdaOrCallableRef
         }()
+        let isIterableRequireNoNullsCall =
+            memberName == "requireNoNulls"
+            && args.isEmpty
+            && isIterableLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isCollectionReceiver = isCollectionLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isSequenceReceiver = isSequenceLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         // Allow arrays to fall through to collection fallback only when
@@ -523,10 +608,12 @@ extension CallTypeChecker {
                 || isIterableChunkedTransformCall
                 || isIterableFirstNotNullOfCall
                 || isIterableFirstNotNullOfOrNullCall
+                || isIterableRequireNoNullsCall
         else {
             return nil
         }
 
+        let isIterableReceiver = isIterableLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isMapReceiver = isMapLikeCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isSetReceiver = isSetLikeCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isMutableListReceiver = isMutableListCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
@@ -535,6 +622,7 @@ extension CallTypeChecker {
         let isListReceiver = isConcreteListLikeCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         guard isSupportedCollectionFallbackMember(
             calleeName,
+            isIterableReceiver: isIterableReceiver,
             isListReceiver: isListReceiver,
             isSequenceReceiver: isSequenceReceiver,
             isMapReceiver: isMapReceiver,
@@ -589,6 +677,7 @@ extension CallTypeChecker {
         if isCollectionReturningMember(
             calleeName,
             isMapReceiver: isMapReceiver,
+            isListReceiver: isListReceiver,
             isSetReceiver: isSetReceiver,
             interner: interner
         ) {
@@ -636,6 +725,7 @@ extension CallTypeChecker {
             memberName: calleeName,
             receiverElementType: receiverElementType,
             isMapReceiver: isMapReceiver,
+            isListReceiver: isListReceiver,
             isSetReceiver: isSetReceiver,
             isSequenceReceiver: isSequenceReceiver,
             args: args,
@@ -648,7 +738,7 @@ extension CallTypeChecker {
         // filter, etc.) should return Sequence<E> so the KIR builder's
         // sequence HOF handler recognises chained calls (STDLIB-471).
         if isSequenceReceiver,
-           isCollectionReturningMember(calleeName, isMapReceiver: false, isSetReceiver: false, interner: interner),
+           isCollectionReturningMember(calleeName, isMapReceiver: false, isListReceiver: false, isSetReceiver: false, interner: interner),
            resultType == sema.types.anyType
         {
             resultType = makeSyntheticSequenceType(
@@ -965,6 +1055,7 @@ extension CallTypeChecker {
 
     func isSupportedCollectionFallbackMember(
         _ memberName: InternedString,
+        isIterableReceiver: Bool,
         isListReceiver: Bool,
         isSequenceReceiver: Bool,
         isMapReceiver: Bool,
@@ -996,6 +1087,7 @@ extension CallTypeChecker {
             interner.intern("firstNotNullOf"),
             interner.intern("firstNotNullOfOrNull"),
             interner.intern("filterNotNull"),
+            interner.intern("requireNoNulls"),
             interner.intern("filterTo"),
             interner.intern("filterNotTo"),
             interner.intern("mapTo"),
@@ -1173,7 +1265,7 @@ extension CallTypeChecker {
             return isSequenceReceiver
         }
         if memberName == interner.intern("requireNoNulls") {
-            return isSequenceReceiver
+            return isIterableReceiver || isListReceiver || isSetReceiver || isSequenceReceiver
         }
         return collectionMembers.contains(memberName)
     }
@@ -1181,6 +1273,7 @@ extension CallTypeChecker {
     func isCollectionReturningMember(
         _ memberName: InternedString,
         isMapReceiver: Bool,
+        isListReceiver: Bool,
         isSetReceiver: Bool,
         interner: StringInterner
     ) -> Bool {
@@ -1222,7 +1315,7 @@ extension CallTypeChecker {
             return isMapReceiver
         }
         if setReturningMembers.contains(memberName) {
-            return isSetReceiver
+            return isListReceiver || isSetReceiver
         }
         return collectionReturningMembers.contains(memberName)
     }
@@ -1266,7 +1359,7 @@ extension CallTypeChecker {
              interner.intern("takeWhile"), interner.intern("dropWhile"),
              interner.intern("sortBy"), interner.intern("sortByDescending"), interner.intern("distinctBy"),
              interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"),
-             interner.intern("maxByOrNull"), interner.intern("minByOrNull"),
+             interner.intern("maxBy"), interner.intern("maxByOrNull"), interner.intern("minByOrNull"),
              interner.intern("maxOfOrNull"), interner.intern("minOfOrNull"),
              interner.intern("maxOf"), interner.intern("minOf"),
              interner.intern("maxWith"), interner.intern("maxWithOrNull"),
@@ -1329,6 +1422,7 @@ extension CallTypeChecker {
         memberName: InternedString,
         receiverElementType: TypeID,
         isMapReceiver: Bool,
+        isListReceiver: Bool,
         isSetReceiver: Bool,
         isSequenceReceiver: Bool = false,
         args: [CallArgument],
@@ -1353,9 +1447,13 @@ extension CallTypeChecker {
             return sema.types.make(.primitive(.int, .nonNull))
         }
 
-        // sum() returns the element type (Int for List<Int>, Long for List<Long>, etc.)
-        if memberName == interner.intern("sum") {
+        // sum()/maxBy() use the receiver element type as the result.
+        if memberName == interner.intern("sum") || memberName == interner.intern("maxBy") {
             return receiverElementType
+        }
+
+        if memberName == interner.intern("average") {
+            return sema.types.doubleType
         }
 
         if memberName == interner.intern("chunked") && args.count == 2 {
@@ -1386,13 +1484,27 @@ extension CallTypeChecker {
             return sema.types.anyType
         }
 
-        if memberName == interner.intern("requireNoNulls"), isSequenceReceiver {
-            return makeSyntheticSequenceType(
-                symbols: sema.symbols,
-                types: sema.types,
-                interner: interner,
-                elementType: sema.types.makeNonNullable(receiverElementType)
-            )
+        if memberName == interner.intern("requireNoNulls") {
+            let elementType = sema.types.makeNonNullable(receiverElementType)
+            if isSequenceReceiver {
+                return makeSyntheticSequenceType(
+                    symbols: sema.symbols,
+                    types: sema.types,
+                    interner: interner,
+                    elementType: elementType
+                )
+            }
+            if let iterableSymbol = sema.symbols.lookup(fqName: [
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("Iterable"),
+            ]) {
+                return sema.types.make(.classType(ClassType(
+                    classSymbol: iterableSymbol,
+                    args: [.out(elementType)],
+                    nullability: .nonNull
+                )))
+            }
         }
 
         let boolReturningMembers: Set = [
@@ -1828,7 +1940,7 @@ extension CallTypeChecker {
             )))
         }
 
-        if isSetReceiver,
+        if (isListReceiver || isSetReceiver),
            (memberName == interner.intern("intersect") ||
                memberName == interner.intern("union") ||
                memberName == interner.intern("subtract")),

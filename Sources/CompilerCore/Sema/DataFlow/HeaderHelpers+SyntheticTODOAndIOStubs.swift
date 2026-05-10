@@ -36,6 +36,16 @@ extension DataFlowSemaPhase {
 
         let kotlinIOPkg = ensureSyntheticPackageHierarchy(fqName: [interner.intern("kotlin"), interner.intern("io")], symbols: symbols)
 
+        registerSyntheticIOTopLevelProperty(
+            named: "DEFAULT_BUFFER_SIZE",
+            packageFQName: kotlinIOPkg,
+            returnType: types.intType,
+            externalLinkName: "kk_io_default_buffer_size",
+            constValue: .intLiteral(8192),
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticTopLevelFunction(
             named: "println",
             packageFQName: kotlinIOPkg,
@@ -461,6 +471,19 @@ extension DataFlowSemaPhase {
         let javaLangPkg = ensureSyntheticPackageHierarchy(
             fqName: [interner.intern("java"), interner.intern("lang")],
             symbols: symbols
+        )
+        let javaClassSymbol = ensureSyntheticJavaLangClassSymbol(
+            in: javaLangPkg,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerSyntheticJavaClassExtensionProperty(
+            kotlinPkg: kotlinPkg,
+            javaClassSymbol: javaClassSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
         )
 
         let javaSystemSymbol = ensureSyntheticObjectSymbol(
@@ -1039,6 +1062,121 @@ extension DataFlowSemaPhase {
         symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
     }
 
+    private func ensureSyntheticJavaLangClassSymbol(
+        in javaLangPkg: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> SymbolID {
+        let classSymbol = ensureClassSymbol(
+            named: "Class",
+            in: javaLangPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let className = interner.intern("Class")
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = javaLangPkg + [className, typeParamName]
+        let typeParamSymbol = symbols.lookup(fqName: typeParamFQName) ?? symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: typeParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: classSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: classSymbol)
+        return classSymbol
+    }
+
+    private func registerSyntheticJavaClassExtensionProperty(
+        kotlinPkg: [InternedString],
+        javaClassSymbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let propertyName = interner.intern("javaClass")
+        let propertyFQName = kotlinPkg + [propertyName]
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = propertyFQName + [typeParamName]
+        let typeParamSymbol = symbols.lookup(fqName: typeParamFQName) ?? symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: typeParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: javaClassSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        let externalLinkName = "kk_any_javaClass"
+
+        let propertySymbol: SymbolID
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
+            symbols.symbol(symbolID)?.kind == .property
+                && symbols.extensionPropertyReceiverType(for: symbolID) == typeParamType
+        }) {
+            propertySymbol = existing
+        } else {
+            propertySymbol = symbols.define(
+                kind: .property,
+                name: propertyName,
+                fqName: propertyFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            if let packageSymbol = symbols.lookup(fqName: kotlinPkg) {
+                symbols.setParentSymbol(packageSymbol, for: propertySymbol)
+            }
+            symbols.setExtensionPropertyReceiverType(typeParamType, for: propertySymbol)
+        }
+
+        symbols.setPropertyType(returnType, for: propertySymbol)
+        symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
+
+        let getterSymbol: SymbolID
+        if let existingGetter = symbols.extensionPropertyGetterAccessor(for: propertySymbol) {
+            getterSymbol = existingGetter
+        } else {
+            getterSymbol = symbols.define(
+                kind: .function,
+                name: interner.intern("get"),
+                fqName: propertyFQName + [interner.intern("$get")],
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(propertySymbol, for: getterSymbol)
+            symbols.setExtensionPropertyGetterAccessor(getterSymbol, for: propertySymbol)
+            symbols.setAccessorOwnerProperty(propertySymbol, for: getterSymbol)
+        }
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: typeParamType,
+                parameterTypes: [],
+                returnType: returnType,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: [],
+                valueParameterIsVararg: [],
+                typeParameterSymbols: [typeParamSymbol],
+                typeParameterUpperBoundsList: [[types.anyType]],
+                classTypeParameterCount: 0
+            ),
+            for: getterSymbol
+        )
+        symbols.setExternalLinkName(externalLinkName, for: getterSymbol)
+    }
+
     private func ensureSyntheticPlatformEnumClass(
         named name: String,
         entries: [String],
@@ -1302,6 +1440,47 @@ extension DataFlowSemaPhase {
             }
         }
         return fqName
+    }
+
+    private func registerSyntheticIOTopLevelProperty(
+        named name: String,
+        packageFQName: [InternedString],
+        returnType: TypeID,
+        externalLinkName: String,
+        constValue: KIRExprKind? = nil,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let propertyName = interner.intern(name)
+        let propertyFQName = packageFQName + [propertyName]
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
+            symbols.symbol(symbolID)?.kind == .property
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            symbols.setPropertyType(returnType, for: existing)
+            if let constValue {
+                symbols.insertFlags(.constValue, for: existing)
+                symbols.setConstValueExprKind(constValue, for: existing)
+            }
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: constValue == nil ? [.synthetic] : [.synthetic, .constValue]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: propertySymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
+        symbols.setPropertyType(returnType, for: propertySymbol)
+        if let constValue {
+            symbols.setConstValueExprKind(constValue, for: propertySymbol)
+        }
     }
 
     private func registerSyntheticPreconditionFunction(

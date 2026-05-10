@@ -132,6 +132,14 @@ public func kk_list_get(_ listRaw: Int, _ index: Int) -> Int {
     return list.elements[index]
 }
 
+@_cdecl("kk_list_lastIndex")
+public func kk_list_lastIndex(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return -1
+    }
+    return list.elements.count - 1
+}
+
 // STDLIB-183: List destructuring component1() ~ component5()
 @_cdecl("kk_list_component1")
 public func kk_list_component1(_ listRaw: Int) -> Int {
@@ -276,6 +284,46 @@ public func kk_list_joinToString(
     let prefix = extractString(from: UnsafeMutableRawPointer(bitPattern: prefixRaw)) ?? ""
     let postfix = extractString(from: UnsafeMutableRawPointer(bitPattern: postfixRaw)) ?? ""
     let elements = runtimeListBox(from: listRaw)?.elements ?? []
+    let rendered = elements.map(runtimeElementToString).joined(separator: separator)
+    let stringValue = prefix + rendered + postfix
+    let utf8 = Array(stringValue.utf8)
+    return utf8.withUnsafeBufferPointer { buf in
+        kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
+    }
+}
+
+@_cdecl("kk_iterable_joinTo")
+public func kk_iterable_joinTo(
+    _ iterableRaw: Int,
+    _ destinationRaw: Int,
+    _ separatorRaw: Int,
+    _ prefixRaw: Int,
+    _ postfixRaw: Int
+) -> Int {
+    let separator = extractString(from: UnsafeMutableRawPointer(bitPattern: separatorRaw)) ?? ", "
+    let prefix = extractString(from: UnsafeMutableRawPointer(bitPattern: prefixRaw)) ?? ""
+    let postfix = extractString(from: UnsafeMutableRawPointer(bitPattern: postfixRaw)) ?? ""
+    let elements = runtimeCollectionElements(from: iterableRaw) ?? []
+    let rendered = elements.map(runtimeElementToString).joined(separator: separator)
+    let stringValue = prefix + rendered + postfix
+    let utf8 = Array(stringValue.utf8)
+    let stringRaw = utf8.withUnsafeBufferPointer { buf in
+        kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
+    }
+    return kk_string_builder_append_obj(destinationRaw, Int(bitPattern: stringRaw))
+}
+
+@_cdecl("kk_iterable_joinToString")
+public func kk_iterable_joinToString(
+    _ iterableRaw: Int,
+    _ separatorRaw: Int,
+    _ prefixRaw: Int,
+    _ postfixRaw: Int
+) -> UnsafeMutableRawPointer {
+    let separator = extractString(from: UnsafeMutableRawPointer(bitPattern: separatorRaw)) ?? ", "
+    let prefix = extractString(from: UnsafeMutableRawPointer(bitPattern: prefixRaw)) ?? ""
+    let postfix = extractString(from: UnsafeMutableRawPointer(bitPattern: postfixRaw)) ?? ""
+    let elements = runtimeCollectionElements(from: iterableRaw) ?? []
     let rendered = elements.map(runtimeElementToString).joined(separator: separator)
     let stringValue = prefix + rendered + postfix
     let utf8 = Array(stringValue.utf8)
@@ -496,6 +544,22 @@ public func kk_list_lastOrNull(_ listRaw: Int) -> Int {
 
 // MARK: - STDLIB-211: List.singleOrNull()
 
+@_cdecl("kk_list_single")
+public func kk_list_single(_ listRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard list.elements.count == 1 else {
+        let message = list.elements.isEmpty
+            ? "Collection is empty."
+            : "Collection has more than one element."
+        runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: message))
+        return 0
+    }
+    return list.elements[0]
+}
+
 @_cdecl("kk_list_singleOrNull")
 public func kk_list_singleOrNull(_ listRaw: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw),
@@ -599,6 +663,17 @@ public func kk_mutable_list_add(_ listRaw: Int, _ elem: Int) -> Int {
     return kk_box_bool(1)
 }
 
+@_cdecl("kk_mutable_list_remove")
+public func kk_mutable_list_remove(_ listRaw: Int, _ elem: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw),
+          let index = list.elements.firstIndex(where: { runtimeValuesEqual($0, elem) })
+    else {
+        return kk_box_bool(0)
+    }
+    list.elements.remove(at: index)
+    return kk_box_bool(1)
+}
+
 @_cdecl("kk_mutable_list_removeAt")
 public func kk_mutable_list_removeAt(_ listRaw: Int, _ index: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw),
@@ -609,6 +684,18 @@ public func kk_mutable_list_removeAt(_ listRaw: Int, _ index: Int) -> Int {
     return list.elements.remove(at: index)
 }
 
+@_cdecl("kk_mutable_list_removeFirst")
+public func kk_mutable_list_removeFirst(_ listRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let list = runtimeListBox(from: listRaw),
+          !list.elements.isEmpty
+    else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "List is empty.")
+        return 0
+    }
+    return list.elements.removeFirst()
+}
+
 @_cdecl("kk_mutable_list_removeFirstOrNull")
 public func kk_mutable_list_removeFirstOrNull(_ listRaw: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw),
@@ -617,6 +704,18 @@ public func kk_mutable_list_removeFirstOrNull(_ listRaw: Int) -> Int {
         return runtimeNullSentinelInt
     }
     return list.elements.removeFirst()
+}
+
+@_cdecl("kk_mutable_list_removeLast")
+public func kk_mutable_list_removeLast(_ listRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let list = runtimeListBox(from: listRaw),
+          !list.elements.isEmpty
+    else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "List is empty.")
+        return 0
+    }
+    return list.elements.removeLast()
 }
 
 @_cdecl("kk_mutable_list_removeLastOrNull")
@@ -835,11 +934,7 @@ public func kk_list_binarySearch(_ listRaw: Int, _ element: Int) -> Int {
 
 @_cdecl("kk_list_plus_element")
 public func kk_list_plus_element(_ listRaw: Int, _ element: Int) -> Int {
-    let elements: [Int] = if let list = runtimeListBox(from: listRaw) {
-        list.elements
-    } else {
-        []
-    }
+    let elements = runtimeCollectionElements(from: listRaw) ?? runtimeArrayBox(from: listRaw)?.elements ?? []
     return registerRuntimeObject(RuntimeListBox(elements: elements + [element]))
 }
 
@@ -1305,6 +1400,17 @@ public func kk_mutable_map_putAll(_ mapRaw: Int, _ otherMapRaw: Int) -> Int {
             map.values.append(other.values[idx])
         }
     }
+    return 0
+}
+
+@_cdecl("kk_mutable_map_plusAssign_pair")
+public func kk_mutable_map_plusAssign_pair(_ mapRaw: Int, _ pairRaw: Int) -> Int {
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
+          let pairBox = tryCast(pointer, to: RuntimePairBox.self)
+    else {
+        return 0
+    }
+    _ = kk_mutable_map_put(mapRaw, pairBox.first, pairBox.second)
     return 0
 }
 
@@ -3152,6 +3258,18 @@ public func kk_iterable_toHashSet(_ iterableRaw: Int) -> Int {
         return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(array.elements)))
     }
     return registerRuntimeObject(RuntimeSetBox(elements: []))
+}
+
+/// Generic `Iterable<T>.last()` that accepts any collection handle (List, Set, etc.).
+@_cdecl("kk_iterable_last")
+public func kk_iterable_last(_ iterableRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let elements = runtimeCollectionElements(from: iterableRaw) ?? runtimeArrayBox(from: iterableRaw)?.elements ?? []
+    guard let last = elements.last else {
+        runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "Collection is empty."))
+        return 0
+    }
+    return last
 }
 
 /// Generic `Collection<T>.toMutableList()` that accepts any collection handle (List, Set, etc.).

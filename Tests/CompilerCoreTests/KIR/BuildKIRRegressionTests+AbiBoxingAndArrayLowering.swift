@@ -31,10 +31,33 @@ extension BuildKIRRegressionTests {
         let interner = StringInterner()
         let callees = pass.nonThrowingCallees(interner: interner)
 
+        XCTAssertTrue(callees.contains(interner.intern("kk_list_intersect")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_list_union")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_list_subtract")))
         XCTAssertTrue(callees.contains(interner.intern("kk_set_toList")))
         XCTAssertTrue(callees.contains(interner.intern("kk_set_intersect")))
         XCTAssertTrue(callees.contains(interner.intern("kk_set_union")))
         XCTAssertTrue(callees.contains(interner.intern("kk_set_subtract")))
+    }
+
+    func testBuildKIRLowersListUnionToCollectionRuntimeCall() throws {
+        let source = """
+        fun main(values: List<Int>, other: List<Int>) {
+            values.union(other)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
+
+            XCTAssertTrue(callNames.contains("kk_list_union"))
+            XCTAssertFalse(callNames.contains("union"))
+        }
     }
 
     func testBuildKIRLowersSetBinaryMembersToCollectionRuntimeCalls() throws {
@@ -60,6 +83,68 @@ extension BuildKIRRegressionTests {
             XCTAssertFalse(callNames.contains("intersect"))
             XCTAssertFalse(callNames.contains("union"))
             XCTAssertFalse(callNames.contains("subtract"))
+        }
+    }
+
+    func testBuildKIRLowersListUnzipToCollectionRuntimeCall() throws {
+        let source = """
+        fun main(values: List<Pair<Int, String>>) {
+            values.unzip()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
+
+            XCTAssertTrue(callNames.contains("kk_list_unzip"))
+            XCTAssertFalse(callNames.contains("unzip"))
+        }
+    }
+
+    func testBuildKIRLowersListZipWithNextOverloadsToCollectionRuntimeCalls() throws {
+        let source = """
+        fun main(values: List<Int>) {
+            values.zipWithNext()
+            values.zipWithNext { left, right -> right - left }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
+
+            XCTAssertTrue(callNames.contains("kk_list_zipWithNext"))
+            XCTAssertTrue(callNames.contains("kk_list_zipWithNextTransform"))
+            XCTAssertFalse(callNames.contains("zipWithNext"))
+        }
+    }
+
+    func testBuildKIRLowersListWithIndexToCollectionRuntimeCall() throws {
+        let source = """
+        fun main(values: List<Int>) {
+            values.withIndex()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
+
+            XCTAssertTrue(callNames.contains("kk_list_withIndex"))
+            XCTAssertFalse(callNames.contains("withIndex"))
         }
     }
 

@@ -446,7 +446,7 @@ extension CollectionLiteralLoweringPass {
                 callee: lookup.kkListTakeName,
                 arguments: [receiver] + arguments,
                 result: transformResult,
-                canThrow: false,
+                canThrow: true,
                 thrownResult: nil
             ))
             if let result {
@@ -466,7 +466,7 @@ extension CollectionLiteralLoweringPass {
                 callee: lookup.kkListDropName,
                 arguments: [receiver] + arguments,
                 result: transformResult,
-                canThrow: false,
+                canThrow: true,
                 thrownResult: nil
             ))
             if let result {
@@ -1816,7 +1816,7 @@ extension CollectionLiteralLoweringPass {
         guard callee == lookup.groupByName || callee == lookup.sortedByName || callee == lookup.findName
             || callee == lookup.associateByName || callee == lookup.associateWithName || callee == lookup.associateName
             || callee == lookup.sortedByDescendingName || callee == lookup.sortedWithName
-            || callee == lookup.maxByOrNullName || callee == lookup.minByOrNullName
+            || callee == lookup.maxByName || callee == lookup.maxByOrNullName || callee == lookup.minByOrNullName
             || callee == lookup.maxOfOrNullName || callee == lookup.minOfOrNullName
             || callee == lookup.maxOfName || callee == lookup.minOfName
             || callee == lookup.maxWithName || callee == lookup.maxWithOrNullName
@@ -1843,6 +1843,7 @@ extension CollectionLiteralLoweringPass {
         case lookup.associateByName: lookup.kkListAssociateByName
         case lookup.associateWithName: lookup.kkListAssociateWithName
         case lookup.associateName: lookup.kkListAssociateName
+        case lookup.maxByName: lookup.kkListMaxByName
         case lookup.maxByOrNullName: lookup.kkListMaxByOrNullName
         case lookup.minByOrNullName: lookup.kkListMinByOrNullName
         case lookup.maxOfOrNullName: lookup.kkListMaxOfOrNullName
@@ -2085,7 +2086,8 @@ extension CollectionLiteralLoweringPass {
         } else {
             hofArgs = arguments
         }
-        let needsClosureRaw = callee != lookup.maxByOrNullName && callee != lookup.minByOrNullName
+        let needsClosureRaw = callee != lookup.maxByName
+            && callee != lookup.maxByOrNullName && callee != lookup.minByOrNullName
             && callee != lookup.maxOfOrNullName && callee != lookup.minOfOrNullName
             && callee != lookup.maxOfWithName && callee != lookup.maxOfWithOrNullName
             && callee != lookup.minOfWithName && callee != lookup.minOfWithOrNullName
@@ -2172,6 +2174,7 @@ extension CollectionLiteralLoweringPass {
         guard callee == lookup.filterToName || callee == lookup.filterNotToName
             || callee == lookup.mapToName || callee == lookup.flatMapToName
             || callee == lookup.mapNotNullToName || callee == lookup.mapIndexedToName
+            || callee == lookup.mapIndexedNotNullToName
             || callee == lookup.flatMapIndexedToName || callee == lookup.associateToName
         else {
             return false
@@ -2202,6 +2205,7 @@ extension CollectionLiteralLoweringPass {
         case lookup.flatMapToName: lookup.kkListFlatMapToName
         case lookup.mapNotNullToName: lookup.kkListMapNotNullToName
         case lookup.mapIndexedToName: lookup.kkListMapIndexedToName
+        case lookup.mapIndexedNotNullToName: lookup.kkListMapIndexedNotNullToName
         case lookup.flatMapIndexedToName: lookup.kkListFlatMapIndexedToName
         case lookup.associateToName:
             isSequenceReceiver ? lookup.kkSequenceAssociateToName : lookup.kkListAssociateToName
@@ -2390,12 +2394,14 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
-        if callee == lookup.forEachIndexedName || callee == lookup.mapIndexedName || callee == lookup.onEachIndexedName, arguments.count == 1 {
+        if callee == lookup.forEachIndexedName || callee == lookup.mapIndexedName || callee == lookup.mapIndexedNotNullName || callee == lookup.onEachIndexedName, arguments.count == 1 {
             let kkName: InternedString
             if callee == lookup.forEachIndexedName {
                 kkName = lookup.kkListForEachIndexedName
             } else if callee == lookup.onEachIndexedName {
                 kkName = lookup.kkListOnEachIndexedName
+            } else if callee == lookup.mapIndexedNotNullName {
+                kkName = lookup.kkListMapIndexedNotNullName
             } else {
                 kkName = lookup.kkListMapIndexedName
             }
@@ -2411,7 +2417,7 @@ extension CollectionLiteralLoweringPass {
                 module: module,
                 loweredBody: &loweredBody
             )
-            if callee == lookup.mapIndexedName || callee == lookup.onEachIndexedName, let result {
+            if callee == lookup.mapIndexedName || callee == lookup.mapIndexedNotNullName || callee == lookup.onEachIndexedName, let result {
                 listExprIDs.insert(result.rawValue)
                 listExprIDs.insert(hofResult.rawValue)
             }
@@ -2533,10 +2539,15 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
-        // any/none on array → kk_array_any/kk_array_none
-        if callee == lookup.anyName || callee == lookup.noneName, arguments.count == 1 {
-            let kkName = callee == lookup.anyName
-                ? lookup.kkArrayAnyName : lookup.kkArrayNoneName
+        // any/none/count on array → kk_array_any/kk_array_none/kk_array_count
+        if callee == lookup.anyName || callee == lookup.noneName || callee == lookup.countName, arguments.count == 1 {
+            let kkName: InternedString = if callee == lookup.anyName {
+                lookup.kkArrayAnyName
+            } else if callee == lookup.noneName {
+                lookup.kkArrayNoneName
+            } else {
+                lookup.kkArrayCountName
+            }
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             _ = emitHOFCall(

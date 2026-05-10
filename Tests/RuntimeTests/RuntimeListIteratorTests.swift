@@ -35,6 +35,12 @@ final class RuntimeListIteratorTests: XCTestCase {
         return value
     }
 
+    func testListLastIndexReturnsSizeMinusOne() {
+        XCTAssertEqual(kk_list_lastIndex(makeList([10, 20, 30])), 2)
+        XCTAssertEqual(kk_list_lastIndex(makeList([10])), 0)
+        XCTAssertEqual(kk_list_lastIndex(makeList([])), -1)
+    }
+
     // MARK: - Basic Functionality Tests
 
     func testHasPreviousReturnsFalseAtStart() {

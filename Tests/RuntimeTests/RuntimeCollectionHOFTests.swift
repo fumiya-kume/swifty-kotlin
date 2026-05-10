@@ -57,6 +57,14 @@ private let filterGreaterThanOne: @convention(c) (Int, Int, UnsafeMutablePointer
     value > 1 ? 1 : 0
 }
 
+private let filterEvenIndex: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, _, _ in
+    index.isMultiple(of: 2) ? 1 : 0
+}
+
+private let mapIndexedEvenIndexToValuePlusIndex: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, value, _ in
+    index.isMultiple(of: 2) ? value + index : runtimeNullSentinelInt
+}
+
 // Helper function to extract string value from runtime handle
 private func runtimeStringValue(_ raw: Int) -> String {
     extractString(from: UnsafeMutableRawPointer(bitPattern: raw)) ?? ""
@@ -105,6 +113,15 @@ private let sumByWeightedTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int
 
 private let sumByDoubleWeightedTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     kk_double_to_bits(value == 2 ? 1.5 : 0.25)
+}
+
+private let maxByNegativeValue: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    -value
+}
+
+private let reverseIntComparator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, lhs, rhs, _ in
+    if lhs == rhs { return 0 }
+    return lhs > rhs ? -1 : 1
 }
 
 private let groupingFoldToInitialValueSelector: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = {
@@ -220,6 +237,10 @@ private let keepEvenValueEntries: @convention(c) (Int, Int, UnsafeMutablePointer
     kk_pair_second(pairRaw) % 2 == 0 ? 1 : 0
 }
 
+private let keepOddMapKeys: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, key, _ in
+    key % 2 != 0 ? 1 : 0
+}
+
 private let accumulateEntryScore: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, pairRaw, _ in
     gHOFState.addSum(kk_pair_first(pairRaw) * 10 + kk_pair_second(pairRaw))
     return 0
@@ -239,6 +260,10 @@ private let mapEntryKeyTimesTen: @convention(c) (Int, Int, UnsafeMutablePointer<
 
 private let mapEntryValuePlusOne: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, pairRaw, _ in
     kk_pair_second(pairRaw) + 1
+}
+
+private let adjacentDifference: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, left, right, _ in
+    right - left
 }
 
 private let returnSeven: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { _, _ in
@@ -289,6 +314,23 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(mapped), [4, 6])
     }
 
+    func testFilterIndexedMatchesIndexPredicate() {
+        let source = makeList([10, 20, 30, 40])
+        let filtered = kk_list_filterIndexed(source, unsafeBitCast(filterEvenIndex, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
+        XCTAssertEqual(listElements(filtered), [10, 30])
+    }
+
+    func testMapIndexedNotNullFiltersNullResults() {
+        let source = makeList([10, 20, 30, 40])
+        let mapped = kk_list_mapIndexedNotNull(
+            source,
+            unsafeBitCast(mapIndexedEvenIndexToValuePlusIndex, to: Int.self),
+            0,
+            nil as UnsafeMutablePointer<Int>?
+        )
+        XCTAssertEqual(listElements(mapped), [10, 32])
+    }
+
     func testCaptureLambdaForMapAndForEach() {
         let source = makeList([1, 2, 3])
         let closure = makeArray([5])
@@ -306,10 +348,61 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(flatMapped), [1, 10, 2, 20, 3, 30])
 
         XCTAssertEqual(kk_list_fold(source, 0, unsafeBitCast(foldOrder, to: Int.self), 0, nil), 123)
+        XCTAssertEqual(kk_list_foldRight(source, 0, unsafeBitCast(reduceRightChecksum, to: Int.self), 0, nil), 60)
         XCTAssertEqual(kk_list_reduce(source, unsafeBitCast(foldOrder, to: Int.self), 0, nil), 123)
 
         let sorted = kk_list_sortedBy(makeList([22, 12, 21, 11]), unsafeBitCast(sortedByTens, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
         XCTAssertEqual(listElements(sorted), [12, 11, 22, 21])
+    }
+
+    func testMaxByReturnsElementWithLargestSelectorAndThrowsOnEmpty() {
+        var thrown = 0
+        let source = makeList([3, 1, 4, 2])
+        let result = kk_list_maxBy(source, unsafeBitCast(maxByNegativeValue, to: Int.self), 0, &thrown)
+
+        XCTAssertEqual(result, 1)
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        XCTAssertEqual(
+            kk_list_maxBy(makeList([]), unsafeBitCast(maxByNegativeValue, to: Int.self), 0, &thrown),
+            runtimeExceptionCaughtSentinel
+        )
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testMinOfWithOrNullReturnsComparatorSelectedValueAndNullOnEmpty() {
+        let result = kk_list_minOfWithOrNull(
+            makeList([5, 2, 3]),
+            unsafeBitCast(reverseIntComparator, to: Int.self),
+            0,
+            unsafeBitCast(valueTimesTen, to: Int.self),
+            0,
+            nil as UnsafeMutablePointer<Int>?
+        )
+        XCTAssertEqual(result, 50)
+
+        let emptyResult = kk_list_minOfWithOrNull(
+            makeList([]),
+            unsafeBitCast(reverseIntComparator, to: Int.self),
+            0,
+            unsafeBitCast(valueTimesTen, to: Int.self),
+            0,
+            nil as UnsafeMutablePointer<Int>?
+        )
+        XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
+    }
+
+    func testListElementAtReturnsElementAndThrowsWhenOutOfBounds() {
+        let source = makeList([10, 20, 30])
+
+        var thrown = -1
+        XCTAssertEqual(kk_list_elementAt(source, 1, &thrown), 20)
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        XCTAssertEqual(kk_list_elementAt(source, 5, &thrown), 0)
+        XCTAssertNotEqual(thrown, 0)
     }
 
     func testListMinusElementRemovesFirstMatchingValue() {
@@ -318,11 +411,52 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         let removed = kk_list_minus_element(source, 2)
         let unchanged = kk_list_minus_element(source, 9)
         let arrayRemoved = kk_list_minus_element(makeArray([1, 2, 2, 3]), 2)
+        let collectionRemoved = kk_list_minus_collection(source, makeList([2, 4]))
 
         XCTAssertEqual(listElements(removed), [1, 2, 3])
         XCTAssertEqual(listElements(unchanged), [1, 2, 2, 3])
         XCTAssertEqual(listElements(arrayRemoved), [1, 2, 3])
+        XCTAssertEqual(listElements(collectionRemoved), [1, 3])
         XCTAssertEqual(listElements(source), [1, 2, 2, 3])
+    }
+
+    func testMutableListRemoveRemovesFirstMatchingValue() {
+        let source = makeList([1, 2, 2, 3])
+
+        XCTAssertEqual(kk_unbox_bool(kk_mutable_list_remove(source, 2)), 1)
+        XCTAssertEqual(listElements(source), [1, 2, 3])
+        XCTAssertEqual(kk_unbox_bool(kk_mutable_list_remove(source, 9)), 0)
+        XCTAssertEqual(listElements(source), [1, 2, 3])
+    }
+
+    func testListTakeNegativeCountSetsIllegalArgumentException() {
+        var thrown = 0
+        let result = kk_list_take(makeList([1, 2, 3]), -1, &thrown)
+
+        XCTAssertNotEqual(thrown, 0)
+        let throwable = tryCast(UnsafeMutableRawPointer(bitPattern: thrown)!, to: RuntimeThrowableBox.self)
+        XCTAssertEqual(throwable?.exceptionFQName, "kotlin.IllegalArgumentException")
+        XCTAssertEqual(listElements(result), [])
+    }
+
+    func testListDropNegativeCountSetsIllegalArgumentException() {
+        var thrown = 0
+        let result = kk_list_drop(makeList([1, 2, 3]), -1, &thrown)
+
+        XCTAssertNotEqual(thrown, 0)
+        let throwable = tryCast(UnsafeMutableRawPointer(bitPattern: thrown)!, to: RuntimeThrowableBox.self)
+        XCTAssertEqual(throwable?.exceptionFQName, "kotlin.IllegalArgumentException")
+        XCTAssertEqual(listElements(result), [])
+    }
+
+    func testListTakeLastNegativeCountSetsIllegalArgumentException() {
+        var thrown = 0
+        let result = kk_list_takeLast(makeList([1, 2, 3]), -1, &thrown)
+
+        XCTAssertNotEqual(thrown, 0)
+        let throwable = tryCast(UnsafeMutableRawPointer(bitPattern: thrown)!, to: RuntimeThrowableBox.self)
+        XCTAssertEqual(throwable?.exceptionFQName, "kotlin.IllegalArgumentException")
+        XCTAssertEqual(listElements(result), [])
     }
 
     func testListReduceRightIndexedUsesIndexValueAndAccumulator() {
@@ -449,6 +583,28 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         )
         XCTAssertEqual(thrown, 0)
         XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
+    }
+
+    func testListSumOfAccumulatesSelectorResults() {
+        var thrown = 0
+        let result = kk_list_sumOf(
+            makeList([1, 2, 3]),
+            unsafeBitCast(sumByWeightedTwo, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 14)
+
+        thrown = 0
+        let emptyResult = kk_list_sumOf(
+            makeList([]),
+            unsafeBitCast(sumByWeightedTwo, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(emptyResult, 0)
     }
 
     func testListSumByAccumulatesSelectorResults() {
@@ -653,6 +809,16 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(arrayMapped), [0, 1, 2])
     }
 
+    func testListFilterNotToAppendsRejectedElementsToDestination() {
+        let source = makeList([1, 2, 3, 4])
+        let destination = makeList([99])
+
+        let result = kk_list_filterNotTo(source, destination, unsafeBitCast(countEven, to: Int.self), 0, nil)
+
+        XCTAssertEqual(result, destination)
+        XCTAssertEqual(listElements(destination), [99, 1, 3])
+    }
+
     func testCollectionFilterNotNullPreservesZeroAfterMapNotNull() {
         let source = makeList([0, 1, 2])
         let mapped = kk_list_mapNotNull(source, unsafeBitCast(identityMapValue, to: Int.self), 0, nil)
@@ -832,6 +998,40 @@ final class RuntimeCollectionHOFTests: XCTestCase {
 
         thrown = 0
         XCTAssertEqual(kk_list_last(makeList([]), 0, 0, &thrown), runtimeExceptionCaughtSentinel)
+    }
+
+    func testMinWithOrNullReturnsComparatorMinimumAndNullOnEmpty() {
+        var thrown = 0
+        let result = kk_list_minWithOrNull(
+            makeList([5, 2, 3]),
+            unsafeBitCast(reverseIntComparator, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(result, 5)
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        XCTAssertEqual(
+            kk_list_minWithOrNull(makeList([]), unsafeBitCast(reverseIntComparator, to: Int.self), 0, &thrown),
+            runtimeNullSentinelInt
+        )
+        XCTAssertEqual(thrown, 0)
+    }
+
+    func testListSliceRangeAndIterableReturnSelectedElements() {
+        let source = makeList([10, 20, 30, 40, 50])
+        let range = kk_op_rangeTo(1, 3)
+        XCTAssertEqual(listElements(kk_list_slice(source, range)), [20, 30, 40])
+
+        let indices = makeList([3, 1, 3])
+        XCTAssertEqual(listElements(kk_list_slice_iterable(source, indices)), [40, 20, 40])
+    }
+
+    func testSingleOrNullReturnsElementOnlyForSingletonList() {
+        XCTAssertEqual(kk_list_singleOrNull(makeList([42])), 42)
+        XCTAssertEqual(kk_list_singleOrNull(makeList([])), runtimeNullSentinelInt)
+        XCTAssertEqual(kk_list_singleOrNull(makeList([1, 2])), runtimeNullSentinelInt)
     }
 
     func testGroupByPreservesKeyAndBucketOrder() {
@@ -1022,11 +1222,33 @@ final class RuntimeCollectionHOFTests: XCTestCase {
 
         _ = kk_map_forEach(map, unsafeBitCast(accumulateEntryScore, to: Int.self), 0, nil)
         XCTAssertEqual(gHOFState.sumSnapshot(), 123)
+        XCTAssertEqual(kk_map_getOrDefault(map, 2, 99), 21)
+        XCTAssertEqual(kk_map_getOrDefault(map, 9, 99), 99)
+
+        var thrown = 0
+        XCTAssertEqual(kk_map_getValue(map, 2, &thrown), 21)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_map_getValue(kk_map_withDefault(map, unsafeBitCast(mapTimesTwo, to: Int.self), 0), 9, &thrown), 18)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_map_getValue(map, 9, &thrown), 0)
+        XCTAssertNotEqual(thrown, 0)
 
         let mapped = kk_map_map(map, unsafeBitCast(mapEntrySum, to: Int.self), 0, nil)
         XCTAssertEqual(listElements(mapped), [11, 23, 35])
 
         let filtered = kk_map_filter(map, unsafeBitCast(keepEvenValueEntries, to: Int.self), 0, nil)
+        XCTAssertEqual(mapKeys(filtered), [1, 3])
+        XCTAssertEqual(kk_map_get(filtered, 1), 10)
+        XCTAssertEqual(kk_map_get(filtered, 3), 32)
+    }
+
+    func testMapFilterKeysPassesOnlyKeysToPredicate() {
+        let keys = makeArray([1, 2, 3])
+        let values = makeArray([10, 21, 32])
+        let map = kk_map_of(keys, values, 3)
+
+        let filtered = kk_map_filterKeys(map, unsafeBitCast(keepOddMapKeys, to: Int.self), 0, nil)
+
         XCTAssertEqual(mapKeys(filtered), [1, 3])
         XCTAssertEqual(kk_map_get(filtered, 1), 10)
         XCTAssertEqual(kk_map_get(filtered, 3), 32)
@@ -1050,6 +1272,36 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         let list = kk_map_toList(map)
         XCTAssertEqual(listElements(list).map { kk_pair_first($0) }, [1, 2])
         XCTAssertEqual(listElements(list).map { kk_pair_second($0) }, [32, 21])
+    }
+
+    func testListToMapKeepsLastValueForDuplicateKeys() {
+        let pairs = makeList([
+            kk_pair_new(1, 10),
+            kk_pair_new(2, 20),
+            kk_pair_new(1, 99),
+        ])
+
+        let map = kk_list_toMap(pairs)
+        XCTAssertEqual(mapKeys(map), [1, 2])
+        XCTAssertEqual(kk_map_get(map, 1), 99)
+        XCTAssertEqual(kk_map_get(map, 2), 20)
+    }
+
+    func testListZipWithNextReturnsAdjacentPairsAndTransformResults() {
+        let values = makeList([1, 3, 6, 10])
+
+        let pairs = listElements(kk_list_zipWithNext(values))
+        XCTAssertEqual(pairs.map { kk_pair_first($0) }, [1, 3, 6])
+        XCTAssertEqual(pairs.map { kk_pair_second($0) }, [3, 6, 10])
+
+        let transformed = kk_list_zipWithNextTransform(
+            values,
+            unsafeBitCast(adjacentDifference, to: Int.self),
+            0,
+            nil
+        )
+        XCTAssertEqual(listElements(transformed), [2, 3, 4])
+        XCTAssertEqual(listElements(kk_list_zipWithNext(makeList([1]))), [])
     }
 
     func testMapKeysToMutatesDestinationAndReturnsIt() {
@@ -1155,6 +1407,17 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(kk_map_get(map, 1), boxedLongMin)
     }
 
+    func testMutableMapGetOrPutInsertsValueForMissingKey() {
+        let map = registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+
+        gHOFState.reset()
+        let result = kk_mutable_map_getOrPut(map, 1, unsafeBitCast(returnSeven, to: Int.self), 0, nil)
+
+        XCTAssertEqual(gHOFState.callsSnapshot(), 1)
+        XCTAssertEqual(result, 7)
+        XCTAssertEqual(kk_map_get(map, 1), 7)
+    }
+
     func testMutableMapGetOrPutReturnsZeroWhenLambdaThrowsForExistingNullEntry() {
         let map = registerRuntimeObject(RuntimeMapBox(keys: [1], values: [runtimeNullSentinelInt]))
 
@@ -1219,6 +1482,24 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(setElements(subtracted), [1])
     }
 
+    func testListSubtractAcceptsIterableInputDeduplicatesAndPreservesReceiverOrder() {
+        let left = makeList([1, 2, 2, 3, 4])
+        let right = makeList([2, 4, 2])
+
+        let subtracted = kk_list_subtract(left, right)
+
+        XCTAssertEqual(setElements(subtracted), [1, 3])
+    }
+
+    func testListUnionAcceptsListInputDeduplicatesAndPreservesOrder() {
+        let left = makeList([1, 2, 2, 3])
+        let right = makeList([3, 4, 2, 5])
+
+        let unioned = kk_list_union(left, right)
+
+        XCTAssertEqual(setElements(unioned), [1, 2, 3, 4, 5])
+    }
+
     func testBoolAbiForCollectionHelpersReturnsRaw() {
         let source = makeList([1, 2, 3])
         XCTAssertEqual(kk_unbox_bool(kk_list_contains(source, 2)), 1)
@@ -1276,8 +1557,21 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(arrayElements(kk_list_toBooleanArray(list)), [1, 0, 1])
     }
 
+    func testByteListToPrimitiveArrayConversionCopiesElements() {
+        XCTAssertEqual(arrayElements(kk_list_toByteArray(makeList([1, -2, 127]))), [1, -2, 127])
+    }
+
     func testShortListToPrimitiveArrayConversionCopiesElements() {
         XCTAssertEqual(arrayElements(kk_list_toShortArray(makeList([1, -2, 32767]))), [1, -2, 32767])
+    }
+
+    func testIntListToPrimitiveArrayConversionCopiesElements() {
+        XCTAssertEqual(arrayElements(kk_list_toIntArray(makeList([1, -2, 1_000_000]))), [1, -2, 1_000_000])
+    }
+
+    func testLongListToPrimitiveArrayConversionCopiesElements() {
+        let list = makeList([kk_box_long(1), kk_box_long(-2), kk_box_long(1_000_000)])
+        XCTAssertEqual(arrayElements(kk_list_toLongArray(list)), [1, -2, 1_000_000])
     }
 
     func testDoubleListToPrimitiveArrayConversionCopiesElements() {
@@ -1292,6 +1586,38 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         let second = kk_float_to_bits(-2.25)
         let list = makeList([kk_box_float(first), kk_box_float(second)])
         XCTAssertEqual(arrayElements(kk_list_toFloatArray(list)), [first, second])
+    }
+
+    func testListUnzipSplitsPairElementsIntoLists() {
+        let source = makeList([
+            kk_pair_new(1, 10),
+            kk_pair_new(2, 20),
+            kk_pair_new(3, 30),
+        ])
+
+        let result = kk_list_unzip(source)
+        let first = kk_pair_first(result)
+        let second = kk_pair_second(result)
+
+        XCTAssertEqual(listElements(first), [1, 2, 3])
+        XCTAssertEqual(listElements(second), [10, 20, 30])
+    }
+
+    func testListWithIndexIteratorYieldsIndexedValues() {
+        let indexed = kk_list_withIndex(makeList([10, 20]))
+        let iterator = kk_indexing_iterable_iterator(indexed)
+
+        XCTAssertEqual(kk_indexing_iterable_hasNext(iterator), 1)
+        let first = kk_indexing_iterable_next(iterator)
+        XCTAssertEqual(kk_pair_first(first), 0)
+        XCTAssertEqual(kk_pair_second(first), 10)
+
+        XCTAssertEqual(kk_indexing_iterable_hasNext(iterator), 1)
+        let second = kk_indexing_iterable_next(iterator)
+        XCTAssertEqual(kk_pair_first(second), 1)
+        XCTAssertEqual(kk_pair_second(second), 20)
+
+        XCTAssertEqual(kk_indexing_iterable_hasNext(iterator), 0)
     }
 
     private func makeArray(_ elements: [Int]) -> Int {
@@ -1487,6 +1813,14 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         // Existing key 0 gets 2 appended; new key 1 gets [1]
         XCTAssertEqual(listElements(kk_map_get(result, 0)), [10, 2])
         XCTAssertEqual(listElements(kk_map_get(result, 1)), [1])
+    }
+
+    func testListIndexOfFindsFirstMatchAndMissingElement() {
+        let source = makeList([10, 20, 10])
+
+        XCTAssertEqual(kk_list_indexOf(source, 10), 0)
+        XCTAssertEqual(kk_list_indexOf(source, 20), 1)
+        XCTAssertEqual(kk_list_indexOf(source, 30), -1)
     }
 
     // MARK: - Throwing lambda tests for *To functions
