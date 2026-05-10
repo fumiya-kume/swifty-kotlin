@@ -397,6 +397,18 @@ public func kk_list_filterNotNull(_ listRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: filtered))
 }
 
+@_cdecl("kk_iterable_requireNoNulls")
+public func kk_iterable_requireNoNulls(_ iterableRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let elements = runtimeCollectionElements(from: iterableRaw) else {
+        invalidContainerPanic(#function, "iterable")
+    }
+    for elem in elements where runtimeNormalizeNullableCollectionValue(elem) == nil {
+        let thrown = runtimeAllocateThrowable(message: "null element found in collection.")
+        return handleCollectionLambdaThrow(thrown, outThrown)
+    }
+    return iterableRaw
+}
+
 @_cdecl("kk_list_forEach")
 public func kk_list_forEach(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
@@ -1616,6 +1628,27 @@ public func kk_list_mapIndexedTo(_ listRaw: Int, _ destRaw: Int, _ fnPtr: Int, _
     return destRaw
 }
 
+@_cdecl("kk_list_mapIndexedNotNullTo")
+public func kk_list_mapIndexedNotNullTo(_ listRaw: Int, _ destRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let elements = runtimeCollectionElements(from: listRaw) else {
+        invalidContainerPanic(#function, "collection")
+    }
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    for (index, elem) in elements.enumerated() {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: index, rhs: elem, outThrown: &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        if let normalized = runtimeMapNotNullResultValue(result) {
+            runtimeAppendToMutableCollection(destRaw, normalized)
+        }
+    }
+    return destRaw
+}
+
 @_cdecl("kk_list_flatMapIndexedTo")
 public func kk_list_flatMapIndexedTo(_ listRaw: Int, _ destRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let elements = runtimeCollectionElements(from: listRaw) else {
@@ -2185,8 +2218,15 @@ public func kk_list_drop(_ listRaw: Int, _ count: Int, _ outThrown: UnsafeMutabl
 }
 
 @_cdecl("kk_list_takeLast")
-public func kk_list_takeLast(_ listRaw: Int, _ count: Int) -> Int {
+public func kk_list_takeLast(_ listRaw: Int, _ count: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let _listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    outThrown?.pointee = 0
+    if count < 0 {
+        outThrown?.pointee = runtimeAllocateIllegalArgumentException(
+            message: "Requested element count \(count) is less than zero."
+        )
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
     let elements = _listBox.elements
     let clamped = max(0, min(count, elements.count))
     return registerRuntimeObject(RuntimeListBox(elements: Array(elements.suffix(clamped))))
@@ -2433,13 +2473,13 @@ public func kk_list_shuffled_random(_ listRaw: Int, _ randomRaw: Int) -> Int {
 @_cdecl("kk_list_random")
 public func kk_list_random(_ listRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
-    guard let list = runtimeListBox(from: listRaw) else {
-        invalidContainerPanic(#function, "list")
+    guard let elements = runtimeCollectionElements(from: listRaw) else {
+        invalidContainerPanic(#function, "collection")
     }
-    guard !list.elements.isEmpty else {
-        return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "NoSuchElementException: List is empty."), outThrown)
+    guard !elements.isEmpty else {
+        return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "NoSuchElementException: Collection is empty."), outThrown)
     }
-    return list.elements.randomElement()!
+    return elements.randomElement()!
 }
 
 @_cdecl("kk_list_randomOrNull")

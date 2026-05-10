@@ -58,6 +58,24 @@ private final class RuntimeResumeContinuationBox: @unchecked Sendable {
     }
 }
 
+private final class RuntimeCallbackContinuation: KKContinuation, @unchecked Sendable {
+    let context: UnsafeMutableRawPointer?
+    private let resumeWithRaw: Int
+
+    init(contextRaw: Int, resumeWithRaw: Int) {
+        self.context = UnsafeMutableRawPointer(bitPattern: contextRaw)
+        self.resumeWithRaw = resumeWithRaw
+    }
+
+    func resumeWith(_ result: UnsafeMutableRawPointer?) {
+        var thrown = 0
+        _ = kk_function_invoke(resumeWithRaw, Int(bitPattern: result), &thrown)
+        if thrown != 0 {
+            _ = kk_native_processUnhandledException(thrown, nil)
+        }
+    }
+}
+
 // MARK: - CORO-004 Migration Plan: DispatchSemaphore -> Continuation Model
 //
 // The suspend-entry loop (`runSuspendEntryLoopWithContinuation`) has already
@@ -1433,6 +1451,9 @@ public func kk_coroutine_continuation_context(_ continuation: Int) -> Int {
     guard let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_coroutine_continuation_context received invalid continuation handle")
     }
+    if let callbackContinuation = tryCast(continuationPtr, to: RuntimeCallbackContinuation.self) {
+        return Int(bitPattern: callbackContinuation.context)
+    }
     let state = Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
     return runtimeRegisterObject(state.makeContinuationContext())
 }
@@ -1444,10 +1465,19 @@ public func kk_coroutine_current_context() -> Int {
     return runtimeRegisterObject(context)
 }
 
+@_cdecl("kk_coroutine_continuation_factory")
+public func kk_coroutine_continuation_factory(_ contextRaw: Int, _ resumeWithRaw: Int) -> Int {
+    runtimeRegisterObject(RuntimeCallbackContinuation(contextRaw: contextRaw, resumeWithRaw: resumeWithRaw))
+}
+
 @_cdecl("kk_coroutine_continuation_resume_with")
 public func kk_coroutine_continuation_resume_with(_ continuation: Int, _ resultRaw: Int) {
     guard let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_coroutine_continuation_resume_with received invalid continuation handle")
+    }
+    if let callbackContinuation = tryCast(continuationPtr, to: RuntimeCallbackContinuation.self) {
+        callbackContinuation.resumeWith(UnsafeMutableRawPointer(bitPattern: resultRaw))
+        return
     }
     let state = Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
 
@@ -1499,6 +1529,11 @@ public func kk_coroutine_continuation_resume(_ continuation: Int, _ value: Int) 
     guard let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_coroutine_continuation_resume received invalid continuation handle")
     }
+    if let callbackContinuation = tryCast(continuationPtr, to: RuntimeCallbackContinuation.self) {
+        let resultRaw = runtimeRegisterObject(RuntimeResultBox(isSuccess: true, value: value, exception: 0))
+        callbackContinuation.resumeWith(UnsafeMutableRawPointer(bitPattern: resultRaw))
+        return
+    }
     let state = Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
     if let start = state.takeUninterceptedCoroutineStart() {
         startUninterceptedCoroutineFromResume(
@@ -1518,6 +1553,11 @@ public func kk_coroutine_continuation_resume(_ continuation: Int, _ value: Int) 
 public func kk_coroutine_continuation_resume_with_exception(_ continuation: Int, _ exception: Int) {
     guard let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_coroutine_continuation_resume_with_exception received invalid continuation handle")
+    }
+    if let callbackContinuation = tryCast(continuationPtr, to: RuntimeCallbackContinuation.self) {
+        let resultRaw = runtimeRegisterObject(RuntimeResultBox(isSuccess: false, value: 0, exception: exception))
+        callbackContinuation.resumeWith(UnsafeMutableRawPointer(bitPattern: resultRaw))
+        return
     }
     let state = Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
     if let ise = state.resume(withException: exception) {

@@ -23,6 +23,20 @@ private func coro_base_fail_lambda(
     return 0
 }
 
+private nonisolated(unsafe) var continuationFactoryCallbackResultRaw = 0
+private nonisolated(unsafe) var continuationFactoryCallbackThrown = 0
+
+@_cdecl("coro_base_continuation_factory_callback")
+private func coro_base_continuation_factory_callback(
+    _ resultRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    continuationFactoryCallbackResultRaw = resultRaw
+    continuationFactoryCallbackThrown = 0
+    return 0
+}
+
 // MARK: - Helper classes
 
 /// Generic mutable value box for cross-closure capture.
@@ -68,6 +82,8 @@ final class RuntimeCoroutineBaseEdgeCaseTests: XCTestCase {
     override func setUp() {
         super.setUp()
         kk_runtime_force_reset()
+        continuationFactoryCallbackResultRaw = 0
+        continuationFactoryCallbackThrown = 0
     }
 
     override func tearDown() {
@@ -437,6 +453,41 @@ final class RuntimeCoroutineBaseEdgeCaseTests: XCTestCase {
     func testCurrentCoroutineContextFallsBackToEmptyContextOutsideCoroutine() {
         let ctx = kk_coroutine_current_context()
         XCTAssertNotEqual(ctx, 0, "current coroutine context should be non-zero outside a coroutine")
+    }
+
+    func testContinuationFactoryContextAndResumeSuccessRoundTrip() {
+        let contextRaw = kk_context_plus(0, 0)
+        XCTAssertNotEqual(contextRaw, 0)
+        let resumeWithRaw = unsafeBitCast(
+            coro_base_continuation_factory_callback as @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int,
+            to: Int.self
+        )
+
+        let cont = kk_coroutine_continuation_factory(contextRaw, resumeWithRaw)
+        XCTAssertNotEqual(cont, 0)
+        XCTAssertEqual(kk_coroutine_continuation_context(cont), contextRaw)
+
+        kk_coroutine_continuation_resume(cont, 321)
+
+        XCTAssertNotEqual(continuationFactoryCallbackResultRaw, 0)
+        XCTAssertEqual(continuationFactoryCallbackThrown, 0)
+        XCTAssertEqual(kk_result_isSuccess(continuationFactoryCallbackResultRaw), 1)
+        XCTAssertEqual(kk_result_getOrNull(continuationFactoryCallbackResultRaw), 321)
+    }
+
+    func testContinuationFactoryResumeWithExceptionWrapsFailureResult() {
+        let resumeWithRaw = unsafeBitCast(
+            coro_base_continuation_factory_callback as @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int,
+            to: Int.self
+        )
+        let cont = kk_coroutine_continuation_factory(kk_context_plus(0, 0), resumeWithRaw)
+        let exceptionRaw = runtimeAllocateThrowable(message: "factory boom")
+
+        kk_coroutine_continuation_resume_with_exception(cont, exceptionRaw)
+
+        XCTAssertNotEqual(continuationFactoryCallbackResultRaw, 0)
+        XCTAssertEqual(kk_result_isFailure(continuationFactoryCallbackResultRaw), 1)
+        XCTAssertEqual(kk_result_exceptionOrNull(continuationFactoryCallbackResultRaw), exceptionRaw)
     }
 
     // MARK: - Result round-trip

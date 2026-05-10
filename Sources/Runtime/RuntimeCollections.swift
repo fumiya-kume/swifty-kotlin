@@ -313,6 +313,25 @@ public func kk_iterable_joinTo(
     return kk_string_builder_append_obj(destinationRaw, Int(bitPattern: stringRaw))
 }
 
+@_cdecl("kk_iterable_joinToString")
+public func kk_iterable_joinToString(
+    _ iterableRaw: Int,
+    _ separatorRaw: Int,
+    _ prefixRaw: Int,
+    _ postfixRaw: Int
+) -> UnsafeMutableRawPointer {
+    let separator = extractString(from: UnsafeMutableRawPointer(bitPattern: separatorRaw)) ?? ", "
+    let prefix = extractString(from: UnsafeMutableRawPointer(bitPattern: prefixRaw)) ?? ""
+    let postfix = extractString(from: UnsafeMutableRawPointer(bitPattern: postfixRaw)) ?? ""
+    let elements = runtimeCollectionElements(from: iterableRaw) ?? []
+    let rendered = elements.map(runtimeElementToString).joined(separator: separator)
+    let stringValue = prefix + rendered + postfix
+    let utf8 = Array(stringValue.utf8)
+    return utf8.withUnsafeBufferPointer { buf in
+        kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
+    }
+}
+
 // MARK: - List toMap (STDLIB-200)
 
 @_cdecl("kk_list_toMap")
@@ -641,6 +660,17 @@ public func kk_mutable_list_add(_ listRaw: Int, _ elem: Int) -> Int {
         return kk_box_bool(0)
     }
     list.elements.append(elem)
+    return kk_box_bool(1)
+}
+
+@_cdecl("kk_mutable_list_remove")
+public func kk_mutable_list_remove(_ listRaw: Int, _ elem: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw),
+          let index = list.elements.firstIndex(where: { runtimeValuesEqual($0, elem) })
+    else {
+        return kk_box_bool(0)
+    }
+    list.elements.remove(at: index)
     return kk_box_bool(1)
 }
 
@@ -1370,6 +1400,17 @@ public func kk_mutable_map_putAll(_ mapRaw: Int, _ otherMapRaw: Int) -> Int {
             map.values.append(other.values[idx])
         }
     }
+    return 0
+}
+
+@_cdecl("kk_mutable_map_plusAssign_pair")
+public func kk_mutable_map_plusAssign_pair(_ mapRaw: Int, _ pairRaw: Int) -> Int {
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
+          let pairBox = tryCast(pointer, to: RuntimePairBox.self)
+    else {
+        return 0
+    }
+    _ = kk_mutable_map_put(mapRaw, pairBox.first, pairBox.second)
     return 0
 }
 
