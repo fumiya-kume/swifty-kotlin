@@ -520,6 +520,52 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+func testPathCreateLinkPointingToExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import kotlin.io.path.Path
+        import kotlin.io.path.createLinkPointingTo
+
+        fun createLink(path: Path, target: Path): Path {
+            return path.createLinkPointingTo(target)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.createLinkPointingTo extension function in kotlin.io.path should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let createLinkSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "createLinkPointingTo"].map(interner.intern))
+            let createLink = try XCTUnwrap(createLinkSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [pathType]
+                    && signature.returnType == pathType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: createLink), "kk_path_createLinkPointingTo")
+
+            let signature = try XCTUnwrap(symbols.functionSignature(for: createLink))
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [false])
+            XCTAssertEqual(signature.valueParameterIsVararg, [false])
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let callExprs = memberCallExprIDs(named: "createLinkPointingTo", in: ast, interner: interner)
+
+            XCTAssertEqual(callExprs.count, 1)
+            XCTAssertEqual(sema.bindings.callBinding(for: callExprs[0])?.chosenCallee, createLink)
+            XCTAssertEqual(sema.bindings.exprTypes[callExprs[0]], pathType)
+        }
+    }
+
     func testPathReadTextAndReadLinesCharsetExtensionFunctionsInIOPathPackageSurfaceAreResolved() throws {
         let source = """
         import kotlin.collections.List
