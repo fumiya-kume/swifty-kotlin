@@ -2174,6 +2174,7 @@ extension CollectionLiteralLoweringPass {
         guard callee == lookup.filterToName || callee == lookup.filterNotToName
             || callee == lookup.mapToName || callee == lookup.flatMapToName
             || callee == lookup.mapNotNullToName || callee == lookup.mapIndexedToName
+            || callee == lookup.mapIndexedNotNullToName
             || callee == lookup.flatMapIndexedToName || callee == lookup.associateToName
         else {
             return false
@@ -2204,6 +2205,7 @@ extension CollectionLiteralLoweringPass {
         case lookup.flatMapToName: lookup.kkListFlatMapToName
         case lookup.mapNotNullToName: lookup.kkListMapNotNullToName
         case lookup.mapIndexedToName: lookup.kkListMapIndexedToName
+        case lookup.mapIndexedNotNullToName: lookup.kkListMapIndexedNotNullToName
         case lookup.flatMapIndexedToName: lookup.kkListFlatMapIndexedToName
         case lookup.associateToName:
             isSequenceReceiver ? lookup.kkSequenceAssociateToName : lookup.kkListAssociateToName

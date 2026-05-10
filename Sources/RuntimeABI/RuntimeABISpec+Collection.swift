@@ -177,6 +177,17 @@ public extension RuntimeABISpec {
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_iterable_joinToString",
+            parameters: [
+                RuntimeABIParameter(name: "iterableRaw", type: .intptr),
+                RuntimeABIParameter(name: "separatorRaw", type: .intptr),
+                RuntimeABIParameter(name: "prefixRaw", type: .intptr),
+                RuntimeABIParameter(name: "postfixRaw", type: .intptr),
+            ],
+            returnType: .opaquePointer,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_list_to_set",
             parameters: [
                 RuntimeABIParameter(name: "listRaw", type: .intptr),
@@ -1357,6 +1368,14 @@ public extension RuntimeABISpec {
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_list_toLongArray",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_list_toDoubleArray",
             parameters: [
                 RuntimeABIParameter(name: "listRaw", type: .intptr),
@@ -1872,6 +1891,15 @@ public extension RuntimeABISpec {
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_mutable_list_remove",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "elem", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_mutable_list_addAll",
             parameters: [
                 RuntimeABIParameter(name: "listRaw", type: .intptr),
@@ -2145,6 +2173,15 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_mutable_map_plusAssign_pair",
+            parameters: [
+                RuntimeABIParameter(name: "mapRaw", type: .intptr),
+                RuntimeABIParameter(name: "pairRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
     ]
 
     private static let hofLambdaParams: [RuntimeABIParameter] = [
@@ -2224,6 +2261,15 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         )
+        let requireNoNullsSpec = RuntimeABIFunctionSpec(
+            name: "kk_iterable_requireNoNulls",
+            parameters: [
+                RuntimeABIParameter(name: "iterableRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
         let filterIsInstanceToSpec = RuntimeABIFunctionSpec(
             name: "kk_list_filterIsInstanceTo",
             parameters: [
@@ -2297,6 +2343,12 @@ public extension RuntimeABISpec {
         )
         let mapIndexedToSpec = RuntimeABIFunctionSpec(
             name: "kk_list_mapIndexedTo",
+            parameters: destinationLambdaParams,
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let mapIndexedNotNullToSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_mapIndexedNotNullTo",
             parameters: destinationLambdaParams,
             returnType: .intptr,
             section: "Collection"
@@ -2491,6 +2543,16 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         )
+        let takeLastSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_takeLast",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "count", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
         let sumSpec = RuntimeABIFunctionSpec(
             name: "kk_list_sum",
             parameters: [
@@ -2595,12 +2657,12 @@ public extension RuntimeABISpec {
             section: "Collection"
         )
         return before.map { hofSpec($0) }
-            + [filterNotNullSpec, foldSpec]
+            + [filterNotNullSpec, requireNoNullsSpec, foldSpec]
             + [
                 filterIsInstanceToSpec,
                 filterToSpec, filterNotToSpec, mapToSpec, flatMapToSpec,
                 mapNotNullToSpec, firstNotNullOfSpec, firstNotNullOfOrNullSpec, iterableLastSpec,
-                mapIndexedToSpec, flatMapIndexedToSpec,
+                mapIndexedToSpec, mapIndexedNotNullToSpec, flatMapIndexedToSpec,
             ]
             + genericAfter.flatMap { name in
                 if name == "kk_list_sortedBy" {
@@ -2662,7 +2724,7 @@ public extension RuntimeABISpec {
                 ),
                 zipSpec, zipWithNextSpec, zipWithNextTransformSpec, unzipSpec, withIndexSpec, forEachIndexedSpec, mapIndexedSpec, mapIndexedNotNullSpec,
                 sumOfSpec, sumBySpec, sumByDoubleSpec, maxOrNullSpec, minOrNullSpec,
-                takeSpec, dropSpec, sumSpec, averageSpec, reversedSpec, asReversedSpec, sortedSpec, distinctSpec,
+                takeSpec, dropSpec, takeLastSpec, sumSpec, averageSpec, reversedSpec, asReversedSpec, sortedSpec, distinctSpec,
                 sortedPrimitiveSpec,
                 shuffledSpec, shuffledRandomSpec, randomSpec, randomOrNullSpec,
                 RuntimeABIFunctionSpec(
