@@ -231,6 +231,27 @@ extension DataFlowSemaPhase {
             symbols: symbols
         )
 
+        // @Synchronized - marks generated JVM methods as synchronized.
+        registerSyntheticJvmAnnotationClass(
+            named: "Synchronized",
+            packageFQName: kotlinJvmPkg,
+            packageSymbol: kotlinJvmPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        attachAnnotationIfNeeded(
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: [
+                    "AnnotationTarget.FUNCTION",
+                    "AnnotationTarget.PROPERTY_GETTER",
+                    "AnnotationTarget.PROPERTY_SETTER",
+                ]
+            ),
+            to: kotlinJvmPkg + [interner.intern("Synchronized")],
+            symbols: symbols
+        )
+
         // @ImplicitlyActualizedByJvmDeclaration - marks expect declarations
         // that are implicitly actualized by Java/JVM declarations.
         registerSyntheticJvmAnnotationClass(

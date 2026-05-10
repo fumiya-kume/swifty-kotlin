@@ -513,6 +513,56 @@ final class JvmAnnotationSyntheticSurfaceTests: XCTestCase {
         _ = try makeSema(source: source)
     }
 
+    func testSynchronizedAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "Synchronized"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.jvm.Synchronized must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(info.kind, .annotationClass)
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+    }
+
+    func testSynchronizedCarriesOfficialTargets() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "Synchronized"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let target = try XCTUnwrap(
+            sema.symbols.annotations(for: symbol).first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "Synchronized must carry @Target metadata"
+        )
+
+        XCTAssertEqual(
+            target.arguments,
+            [
+                "AnnotationTarget.FUNCTION",
+                "AnnotationTarget.PROPERTY_GETTER",
+                "AnnotationTarget.PROPERTY_SETTER",
+            ]
+        )
+    }
+
+    func testSynchronizedResolvesOnFunctionAndAccessors() throws {
+        let source = """
+        import kotlin.jvm.Synchronized
+
+        class LockHost {
+            @Synchronized
+            fun guarded(): Int = 1
+
+            @get:Synchronized
+            @set:Synchronized
+            var count: Int = 0
+        }
+        """
+
+        _ = try makeSema(source: source)
+    }
+
     func testImplicitlyActualizedByJvmDeclarationAnnotationIsRegistered() throws {
         let (sema, interner) = try makeSema()
         let fqName = ["kotlin", "jvm", "ImplicitlyActualizedByJvmDeclaration"].map { interner.intern($0) }
