@@ -485,6 +485,20 @@ final class JvmAnnotationSyntheticSurfaceTests: XCTestCase {
         XCTAssertTrue(info.flags.contains(.synthetic))
     }
 
+    func testJvmMultifileClassAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmMultifileClass"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.jvm.JvmMultifileClass must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(info.kind, .annotationClass)
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+    }
+
     func testJvmDefaultWithoutCompatibilityCarriesClassTarget() throws {
         let (sema, interner) = try makeSema()
         let fqName = ["kotlin", "jvm", "JvmDefaultWithoutCompatibility"].map { interner.intern($0) }
@@ -508,6 +522,28 @@ final class JvmAnnotationSyntheticSurfaceTests: XCTestCase {
 
         @JvmDefaultWithoutCompatibility
         open class BaseService
+        """
+
+        _ = try makeSema(source: source)
+    }
+
+    func testJvmMultifileClassCarriesFileTarget() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmMultifileClass"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let target = try XCTUnwrap(
+            sema.symbols.annotations(for: symbol).first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "JvmMultifileClass must carry @Target metadata"
+        )
+
+        XCTAssertEqual(target.arguments, ["AnnotationTarget.FILE"])
+    }
+
+    func testJvmMultifileClassResolvesOnFileUseSite() throws {
+        let source = """
+        @file:kotlin.jvm.JvmMultifileClass
+
+        fun part(): Int = 1
         """
 
         _ = try makeSema(source: source)

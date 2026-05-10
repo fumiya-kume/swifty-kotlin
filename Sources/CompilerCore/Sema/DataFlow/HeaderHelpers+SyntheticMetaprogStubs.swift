@@ -231,6 +231,24 @@ extension DataFlowSemaPhase {
             symbols: symbols
         )
 
+        // @JvmMultifileClass - marks a Kotlin source file as part of a
+        // generated JVM multifile class facade.
+        registerSyntheticJvmAnnotationClass(
+            named: "JvmMultifileClass",
+            packageFQName: kotlinJvmPkg,
+            packageSymbol: kotlinJvmPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        attachAnnotationIfNeeded(
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: ["AnnotationTarget.FILE"]
+            ),
+            to: kotlinJvmPkg + [interner.intern("JvmMultifileClass")],
+            symbols: symbols
+        )
+
         // @Synchronized - marks generated JVM methods as synchronized.
         registerSyntheticJvmAnnotationClass(
             named: "Synchronized",
