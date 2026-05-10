@@ -499,6 +499,20 @@ final class JvmAnnotationSyntheticSurfaceTests: XCTestCase {
         XCTAssertTrue(info.flags.contains(.synthetic))
     }
 
+    func testJvmInlineAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmInline"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.jvm.JvmInline must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(info.kind, .annotationClass)
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+    }
+
     func testJvmDefaultWithoutCompatibilityCarriesClassTarget() throws {
         let (sema, interner) = try makeSema()
         let fqName = ["kotlin", "jvm", "JvmDefaultWithoutCompatibility"].map { interner.intern($0) }
@@ -640,6 +654,33 @@ final class JvmAnnotationSyntheticSurfaceTests: XCTestCase {
 
         @ImplicitlyActualizedByJvmDeclaration
         class JavaBacked
+    }
+
+    func testJvmInlineCarriesClassTargetAndBinaryRetention() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmInline"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let annotations = sema.symbols.annotations(for: symbol)
+
+        let target = try XCTUnwrap(
+            annotations.first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "JvmInline must carry @Target metadata"
+        )
+        XCTAssertEqual(target.arguments, ["AnnotationTarget.CLASS"])
+
+        let retention = try XCTUnwrap(
+            annotations.first { $0.annotationFQName == "kotlin.annotation.Retention" },
+            "JvmInline must carry @Retention metadata"
+        )
+        XCTAssertEqual(retention.arguments, ["AnnotationRetention.BINARY"])
+    }
+
+    func testJvmInlineResolvesOnValueClass() throws {
+        let source = """
+        import kotlin.jvm.JvmInline
+
+        @JvmInline
+        value class UserId(val raw: Int)
         """
 
         _ = try makeSema(source: source)
