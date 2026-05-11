@@ -310,6 +310,23 @@ extension DataFlowSemaPhase {
             symbols: symbols
         )
 
+        // @Transient - marks the JVM backing field as transient.
+        registerSyntheticJvmAnnotationClass(
+            named: "Transient",
+            packageFQName: kotlinJvmPkg,
+            packageSymbol: kotlinJvmPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        attachAnnotationIfNeeded(
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: ["AnnotationTarget.FIELD"]
+            ),
+            to: kotlinJvmPkg + [interner.intern("Transient")],
+            symbols: symbols
+        )
+
         // @ImplicitlyActualizedByJvmDeclaration - marks expect declarations
         // that are implicitly actualized by Java/JVM declarations.
         registerSyntheticJvmAnnotationClass(
