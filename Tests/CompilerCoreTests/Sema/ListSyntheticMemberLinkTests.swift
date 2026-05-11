@@ -540,6 +540,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             let sema = try XCTUnwrap(ctx.sema)
             let expectedExternalLinks = [
                 "filterNot": "kk_list_filterNot",
+                "sum": "kk_list_sum",
                 "sumOf": "kk_list_sumOf",
                 "maxOfWith": "kk_list_maxOfWith",
                 "minBy": "kk_list_minBy",

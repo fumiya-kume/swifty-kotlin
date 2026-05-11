@@ -664,6 +664,13 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(spec.parameters[3].type, .nullableIntptrPointer)
     }
 
+    func testKKListSumSignature() throws {
+        let spec = try requireSpec("kk_list_sum")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 1)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+    }
+
     func testKKListSumByDoubleSignature() throws {
         let spec = try requireSpec("kk_list_sumByDouble")
         XCTAssertEqual(spec.returnType, .intptr)

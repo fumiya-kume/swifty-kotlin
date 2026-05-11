@@ -791,6 +791,37 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
     }
 
+    func testListSumOfAccumulatesSelectorResults() {
+        var thrown = 0
+        let result = kk_list_sumOf(
+            makeList([1, 2, 3]),
+            unsafeBitCast(sumByWeightedTwo, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 14)
+
+        thrown = 0
+        let emptyResult = kk_list_sumOf(
+            makeList([]),
+            unsafeBitCast(sumByWeightedTwo, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(emptyResult, 0)
+    }
+
+    func testListSumAddsBoxedAndRawIntegers() {
+        let boxedTwo = kk_box_int(2)
+        let boxedMinusThree = kk_box_int(-3)
+        let source = registerRuntimeObject(RuntimeListBox(elements: [1, boxedTwo, boxedMinusThree, 4]))
+
+        XCTAssertEqual(kk_list_sum(source), 4)
+        XCTAssertEqual(kk_list_sum(makeList([])), 0)
+    }
+
     func testListSumByAccumulatesSelectorResults() {
         var thrown = 0
         let result = kk_list_sumBy(
