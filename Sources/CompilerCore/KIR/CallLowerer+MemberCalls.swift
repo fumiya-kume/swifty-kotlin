@@ -8416,6 +8416,8 @@ extension CallLowerer {
                 return interner.intern("kk_list_none")
             case "onEach":
                 return interner.intern("kk_list_onEach")
+            case "onEachIndexed":
+                return interner.intern("kk_list_onEachIndexed")
             case "partition":
                 return interner.intern("kk_list_partition")
             case "zipWithNext":
@@ -8710,6 +8712,8 @@ extension CallLowerer {
             return interner.intern("kk_list_none")
         case "onEach":
             return interner.intern("kk_list_onEach")
+        case "onEachIndexed":
+            return interner.intern("kk_list_onEachIndexed")
         case "firstOrNull":
             return interner.intern("kk_list_firstOrNull")
         case "lastOrNull":
