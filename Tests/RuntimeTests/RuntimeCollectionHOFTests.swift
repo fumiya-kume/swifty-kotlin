@@ -403,6 +403,25 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(kk_list_minOrNull(makeList([])), runtimeNullSentinelInt)
     }
 
+    func testMinWithReturnsComparatorMinimumAndThrowsOnEmpty() {
+        var thrown = 0
+        let result = kk_list_minWith(
+            makeList([5, 2, 3]),
+            unsafeBitCast(reverseIntComparator, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(result, 5)
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        XCTAssertEqual(
+            kk_list_minWith(makeList([]), unsafeBitCast(reverseIntComparator, to: Int.self), 0, &thrown),
+            runtimeExceptionCaughtSentinel
+        )
+        XCTAssertNotEqual(thrown, 0)
+    }
+
     func testListElementAtReturnsElementAndThrowsWhenOutOfBounds() {
         let source = makeList([10, 20, 30])
 
