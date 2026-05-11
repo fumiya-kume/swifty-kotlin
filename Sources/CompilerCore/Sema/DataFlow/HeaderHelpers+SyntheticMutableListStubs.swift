@@ -241,6 +241,111 @@ extension DataFlowSemaPhase {
             mlTypeParamSymbol: mlTypeParamSymbol,
             mlTypeParamType: mlTypeParamType
         )
+        _ = registerSyntheticAbstractMutableListStub(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            listInterfaceSymbol: listInterfaceSymbol,
+            mutableListInterfaceSymbol: mutableListInterfaceSymbol
+        )
+    }
+
+    /// Register `kotlin.collections.AbstractMutableList<E>` surface (STDLIB-COL-ABSTRACT-006).
+    func registerSyntheticAbstractMutableListStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        listInterfaceSymbol: SymbolID,
+        mutableListInterfaceSymbol: SymbolID
+    ) -> SymbolID {
+        let abstractMutableListName = interner.intern("AbstractMutableList")
+        let abstractMutableListFQName = kotlinCollectionsPkg + [abstractMutableListName]
+        let abstractMutableListSymbol: SymbolID = if let existing = symbols.lookup(fqName: abstractMutableListFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .class,
+                name: abstractMutableListName,
+                fqName: abstractMutableListFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .abstractType]
+            )
+        }
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = abstractMutableListFQName + [typeParamName]
+        let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: abstractMutableListSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: abstractMutableListSymbol)
+
+        let abstractMutableListType = types.make(.classType(ClassType(
+            classSymbol: abstractMutableListSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(abstractMutableListType, for: abstractMutableListSymbol)
+
+        let abstractListSymbol = symbols.lookup(
+            fqName: kotlinCollectionsPkg + [interner.intern("AbstractList")]
+        )
+        let readonlySupertype = abstractListSymbol ?? listInterfaceSymbol
+        symbols.setDirectSupertypes([readonlySupertype, mutableListInterfaceSymbol], for: abstractMutableListSymbol)
+        types.setNominalDirectSupertypes([readonlySupertype, mutableListInterfaceSymbol], for: abstractMutableListSymbol)
+        symbols.setSupertypeTypeArgs([.out(typeParamType)], for: abstractMutableListSymbol, supertype: readonlySupertype)
+        types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: abstractMutableListSymbol, supertype: readonlySupertype)
+        symbols.setSupertypeTypeArgs([.invariant(typeParamType)], for: abstractMutableListSymbol, supertype: mutableListInterfaceSymbol)
+        types.setNominalSupertypeTypeArgs(
+            [.invariant(typeParamType)],
+            for: abstractMutableListSymbol,
+            supertype: mutableListInterfaceSymbol
+        )
+
+        let initName = interner.intern("<init>")
+        let initFQName = abstractMutableListFQName + [initName]
+        if symbols.lookup(fqName: initFQName) == nil {
+            let initSymbol = symbols.define(
+                kind: .constructor,
+                name: initName,
+                fqName: initFQName,
+                declSite: nil,
+                visibility: .protected,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(abstractMutableListSymbol, for: initSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: [],
+                    returnType: abstractMutableListType,
+                    valueParameterSymbols: [],
+                    valueParameterHasDefaultValues: [],
+                    valueParameterIsVararg: [],
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: initSymbol
+            )
+        }
+
+        return abstractMutableListSymbol
     }
 
     /// Register `operator fun set(index: Int, element: E): E` on MutableList.
