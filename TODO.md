@@ -259,7 +259,7 @@
 - [x] STDLIB-COL-FN-184: `single` 関数の実装
 - [x] STDLIB-COL-FN-185: `singleOrNull` 関数の実装
 - [x] STDLIB-COL-FN-186: `slice` 関数の実装
-- [ ] STDLIB-COL-FN-187: `sort` 関数の実装
+- [x] STDLIB-COL-FN-187: `sort` 関数の実装
 - [x] STDLIB-COL-FN-188: `sortBy` 関数の実装
 - [x] STDLIB-COL-FN-189: `sortByDescending` 関数の実装
 - [x] STDLIB-COL-FN-190: `sorted` 関数の実装
