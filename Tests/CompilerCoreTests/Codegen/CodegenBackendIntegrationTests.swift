@@ -1264,6 +1264,36 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenCollectionToListCopiesListAndSetReceivers() throws {
+        let source = """
+        fun main() {
+            val sourceList = listOf(1, 2, 3)
+            val copiedList = sourceList.toList()
+            println(copiedList)
+
+            val sourceSet = setOf(3, 1, 3, 2)
+            val copiedSetList = sourceSet.toList()
+            println(copiedSetList)
+            println(copiedSetList.contains(2))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "CollectionToListRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[1, 2, 3]\n[3, 1, 2]\ntrue\n")
+        }
+    }
+
     func testCodegenListJoinToStringUsesRuntimeDefaultsAndNamedArguments() throws {
         let source = """
         fun main() {
