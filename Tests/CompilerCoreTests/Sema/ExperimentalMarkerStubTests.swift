@@ -428,51 +428,6 @@ final class ExperimentalMarkerStubTests: XCTestCase {
         )
     }
 
-    // MARK: - ExperimentalJsExport (kotlin.js, WARNING)
-
-    func testExperimentalJsExportIsRegistered() throws {
-        let (sema, interner) = try makeSema()
-        let sym = lookupSymbol(fqPath: ["kotlin", "js", "ExperimentalJsExport"], sema: sema, interner: interner)
-        XCTAssertNotNil(sym, "kotlin.js.ExperimentalJsExport must be registered in the symbol table")
-    }
-
-    func testExperimentalJsExportIsAnnotationClass() throws {
-        let (sema, interner) = try makeSema()
-        assertIsAnnotationClass(fqPath: ["kotlin", "js", "ExperimentalJsExport"], sema: sema, interner: interner)
-    }
-
-    func testExperimentalJsExportHasRequiresOptInWithWarningSeverity() throws {
-        let (sema, interner) = try makeSema()
-        assertHasRequiresOptIn(
-            fqPath: ["kotlin", "js", "ExperimentalJsExport"],
-            expectedSeverity: "WARNING",
-            sema: sema,
-            interner: interner
-        )
-    }
-
-    func testExperimentalJsExportEmitsWarningOnUse() {
-        let source = """
-        import kotlin.js.ExperimentalJsExport
-
-        @ExperimentalJsExport
-        @Target(AnnotationTarget.FUNCTION)
-        annotation class UsesExperimentalJsExport
-
-        @UsesExperimentalJsExport
-        fun exported(): Int = 1
-
-        fun callExported(): Int = exported()
-        """
-
-        let ctx = runSemaCollectingDiagnostics(source)
-        let diagnostics = ctx.diagnostics.diagnostics.filter { $0.code == "KSWIFTK-SEMA-OPT-IN" }
-        XCTAssertTrue(
-            diagnostics.contains { $0.severity == .warning },
-            "Expected ExperimentalJsExport use to emit an opt-in warning, got \(ctx.diagnostics.diagnostics)"
-        )
-    }
-
     // MARK: - ExperimentalSubclassOptIn (kotlin, WARNING)
 
     func testExperimentalSubclassOptInIsRegistered() throws {
@@ -813,6 +768,28 @@ final class ExperimentalMarkerStubTests: XCTestCase {
         XCTAssertFalse(
             annotations.contains { $0.annotationFQName == "kotlin.annotation.Target" },
             "ExperimentalJsExport should not carry explicit @Target metadata, got \(annotations)"
+        )
+    }
+
+    func testExperimentalJsExportEmitsWarningOnUse() {
+        let source = """
+        import kotlin.js.ExperimentalJsExport
+
+        @ExperimentalJsExport
+        @Target(AnnotationTarget.FUNCTION)
+        annotation class UsesExperimentalJsExport
+
+        @UsesExperimentalJsExport
+        fun exported(): Int = 1
+
+        fun callExported(): Int = exported()
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = ctx.diagnostics.diagnostics.filter { $0.code == "KSWIFTK-SEMA-OPT-IN" }
+        XCTAssertTrue(
+            diagnostics.contains { $0.severity == .warning },
+            "Expected ExperimentalJsExport use to emit an opt-in warning, got \(ctx.diagnostics.diagnostics)"
         )
     }
 

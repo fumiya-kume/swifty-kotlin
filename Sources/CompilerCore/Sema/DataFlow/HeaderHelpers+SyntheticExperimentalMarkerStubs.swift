@@ -78,22 +78,6 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // --- kotlin.js.ExperimentalJsExport (WARNING) ---
-        let kotlinJsPkg = ensurePackage(
-            path: ["kotlin", "js"],
-            symbols: symbols,
-            interner: interner
-        )
-        let kotlinJsPkgSymbol = symbols.lookup(fqName: kotlinJsPkg) ?? .invalid
-        registerSyntheticExperimentalMarker(
-            named: "ExperimentalJsExport",
-            packageFQName: kotlinJsPkg,
-            packageSymbol: kotlinJsPkgSymbol,
-            severity: "WARNING",
-            symbols: symbols,
-            interner: interner
-        )
-
         // --- kotlin.ExperimentalSubclassOptIn (WARNING) ---
         registerSyntheticExperimentalMarker(
             named: "ExperimentalSubclassOptIn",
