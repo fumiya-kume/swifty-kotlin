@@ -271,6 +271,8 @@
 - [ ] STDLIB-COL-FN-197: `sumBy` 関数の実装
 - [ ] STDLIB-COL-FN-198: `sumByDouble` 関数の実装
 - [x] STDLIB-COL-FN-199: `sumOf` 関数の実装
+- [x] STDLIB-COL-FN-198: `sumByDouble` 関数の実装
+- [x] STDLIB-COL-FN-199: `sumOf` 関数の実装
 - [x] STDLIB-COL-FN-200: `take` 関数の実装
 - [x] STDLIB-COL-FN-201: `takeLast` 関数の実装
 - [ ] STDLIB-COL-FN-202: `takeLastWhile` 関数の実装
