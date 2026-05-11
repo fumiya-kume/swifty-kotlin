@@ -297,7 +297,7 @@
 - [ ] STDLIB-COL-FN-223: `withDefault` 関数の実装
 - [x] STDLIB-COL-FN-224: `withIndex` 関数の実装
 - [ ] STDLIB-COL-FN-225: `windowed` 関数の実装
-- [ ] STDLIB-COL-FN-226: `zip` 関数の実装
+- [x] STDLIB-COL-FN-226: `zip` 関数の実装
 - [x] STDLIB-COL-FN-227: `zipWithNext` 関数の実装
 
 ### Phase 3: I/O・パス・時間・並行（common）
