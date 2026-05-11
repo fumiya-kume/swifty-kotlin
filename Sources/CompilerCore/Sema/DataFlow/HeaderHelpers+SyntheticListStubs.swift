@@ -2373,6 +2373,13 @@ extension DataFlowSemaPhase {
             typeParameterSymbols: [listTypeParamSymbol, filterIsInstanceToTypeParamSymbol],
             reifiedTypeParameterIndices: [1]
         )
+        registerMemberOverload(
+            memberName: interner.intern("filterNotNullTo"),
+            memberFQName: listFQName + [interner.intern("filterNotNullTo")],
+            parameterTypes: [destinationCollectionType],
+            externalLinkName: "kk_list_filterNotNullTo",
+            returnTypeOverride: destinationCollectionType
+        )
 
         // chunked(size: Int): List<List<E>> and windowed(size: Int, step: Int): List<List<E>>
         // These return List<List<E>>, not List<E>.

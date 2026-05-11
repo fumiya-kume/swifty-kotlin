@@ -1381,6 +1381,26 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        // filterNotNullTo on list (1 arg: destination)
+        if callee == lookup.filterNotNullToName,
+           arguments.count == 1,
+           listExprIDs.contains(receiver.rawValue)
+        {
+            let destID = arguments[0]
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListFilterNotNullToName,
+                arguments: [receiver, destID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result, listExprIDs.contains(destID.rawValue) {
+                listExprIDs.insert(result.rawValue)
+            }
+            return true
+        }
+
         // filterNotNullTo on sequence (1 arg: destination)
         if callee == lookup.filterNotNullToName,
            arguments.count == 1,

@@ -842,6 +842,7 @@ extension ABILoweringPass {
             interner.intern("kk_list_sortedDescending"),
             interner.intern("kk_list_filterIsInstance"),
             interner.intern("kk_list_filterIsInstanceTo"),
+            interner.intern("kk_list_filterNotNullTo"),
             interner.intern("kk_list_subList"),
             interner.intern("kk_list_slice"),
             interner.intern("kk_list_slice_iterable"),

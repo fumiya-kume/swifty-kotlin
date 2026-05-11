@@ -536,6 +536,21 @@ extension CodegenBackendIntegrationTests {
         try assertKotlinCompilesToKIR(source, moduleName: "STDLIB021_34")
     }
 
+    // MARK: - STDLIB-021-34b: filterNotNullTo appends non-null values to destination
+
+    func testFilterNotNullToAppendsNonNullValues() throws {
+        let source = """
+        fun main() {
+            val src = listOf("a", null, "b", null)
+            val dest = mutableListOf<String>()
+            val result = src.filterNotNullTo(dest)
+            println(result === dest)
+            println(result)
+        }
+        """
+        try assertKotlinCompilesToKIR(source, moduleName: "STDLIB021_34_FILTER_NOT_NULL_TO")
+    }
+
     // MARK: - STDLIB-021-35: filterNotTo appends non-matching elements to destination
 
     func testFilterNotToAppendsNonMatchingElements() throws {

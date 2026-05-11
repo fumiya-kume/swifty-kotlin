@@ -853,6 +853,16 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(arrayFiltered), [0, 1, 2])
     }
 
+    func testCollectionFilterNotNullToAppendsToDestination() {
+        let source = makeList([0, runtimeNullSentinelInt, 1, runtimeNullSentinelInt, 2])
+        let destination = makeList([99])
+
+        let result = kk_list_filterNotNullTo(source, destination)
+
+        XCTAssertEqual(result, destination)
+        XCTAssertEqual(listElements(destination), [99, 0, 1, 2])
+    }
+
     func testIterableFirstNotNullOfOrNullReturnsFirstNonNullTransformResult() {
         let source = makeList([1, 2, 4])
         let result = kk_iterable_firstNotNullOfOrNull(
