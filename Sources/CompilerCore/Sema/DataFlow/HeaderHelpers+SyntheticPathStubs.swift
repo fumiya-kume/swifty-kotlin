@@ -25,6 +25,7 @@
 /// - `deleteExisting()`, `deleteRecursively()`
 /// - `Path.fileStore(): FileStore` extension function
 /// - `Path.setOwner(value: UserPrincipal): Path` extension function
+/// - `Path.fileSize(): Long` extension function
 /// - `listDirectoryEntries(): List<Path>`
 /// - `Path.isExecutable()`, `isHidden()`, `isReadable()`, `isSameFileAs()`, `isSymbolicLink()`, `isWritable()`
 /// - Top-level `Path(pathString: String)` factory (kotlin.io.path.Path)
@@ -569,6 +570,17 @@ extension DataFlowSemaPhase {
             parameters: [("other", pathType)],
             returnType: types.booleanType,
             externalLinkName: "kk_path_isSameFileAs",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "fileSize",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [],
+            returnType: types.longType,
+            externalLinkName: "kk_path_fileSize",
             symbols: symbols,
             interner: interner
         )
