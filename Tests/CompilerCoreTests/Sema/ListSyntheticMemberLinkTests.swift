@@ -4135,6 +4135,34 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testListFilterIsInstanceUsesRuntimeExternalLink() throws {
+        let source = """
+        fun main() {
+            val list: List<Any> = listOf(1, "two", 3)
+            list.filterIsInstance<Int>()
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let ast = try XCTUnwrap(ctx.ast)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "filterIsInstance"
+            })
+            let chosenCallee = try XCTUnwrap(
+                sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                "filterIsInstance should resolve"
+            )
+            XCTAssertEqual(
+                sema.symbols.externalLinkName(for: chosenCallee),
+                "kk_list_filterIsInstance"
+            )
+        }
+    }
+
     func testMapHigherOrderMembersAreInlineAndToListPreservesPairType() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])

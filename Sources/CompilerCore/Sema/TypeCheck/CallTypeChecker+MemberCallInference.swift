@@ -806,6 +806,14 @@ extension CallTypeChecker {
            isCollectionReceiver
         {
             let filterType = explicitTypeArgs.first ?? sema.types.anyType
+            let receiverElementType = resolvedCollectionElementType(
+                receiverID: receiverID,
+                receiverType: receiverType,
+                sema: sema,
+                interner: interner,
+                ctx: ctx,
+                locals: &locals
+            )
             if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
                 let resultType = sema.types.make(.classType(ClassType(
                     classSymbol: listSymbol,
@@ -814,6 +822,18 @@ extension CallTypeChecker {
                 )))
                 let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                 sema.bindings.markCollectionExpr(id)
+                let knownNames = KnownCompilerNames(interner: interner)
+                let memberFQName = knownNames.kotlinCollectionsListFQName + [calleeName]
+                if let chosenCallee = sema.symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+                    sema.symbols.functionSignature(for: symbolID)?.parameterTypes.count == args.count
+                }) {
+                    sema.bindings.bindCall(id, binding: CallBinding(
+                        chosenCallee: chosenCallee,
+                        substitutedTypeArguments: [receiverElementType, filterType],
+                        parameterMapping: [:]
+                    ))
+                    sema.bindings.bindCallableTarget(id, target: .symbol(chosenCallee))
+                }
                 sema.bindings.bindExprType(id, type: finalType)
                 return finalType
             }

@@ -135,6 +135,7 @@
 - [x] STDLIB-COL-FN-061: `filterIsInstanceTo` 関数の実装
 - [x] STDLIB-COL-FN-062: `filterKeys` 関数の実装
 - [x] STDLIB-COL-FN-063: `filterNot` 関数の実装
+- [x] STDLIB-COL-FN-060: `filterIsInstance` 関数の実装
 - [ ] STDLIB-COL-FN-064: `filterNotNull` 関数の実装
 - [x] STDLIB-COL-FN-065: `filterNotNullTo` 関数の実装
 - [x] STDLIB-COL-FN-066: `filterNotTo` 関数の実装

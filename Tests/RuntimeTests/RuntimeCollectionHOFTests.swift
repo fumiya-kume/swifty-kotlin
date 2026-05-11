@@ -335,6 +335,12 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(mapped), [10, 32])
     }
 
+    func testFilterIsInstanceCollectsMatchingRuntimeTypes() {
+        let source = makeList([1, runtimeStringRaw("two"), 3])
+        let filtered = kk_list_filterIsInstance(source, 3)
+        XCTAssertEqual(listElements(filtered), [1, 3])
+    }
+
     func testCaptureLambdaForMapAndForEach() {
         let source = makeList([1, 2, 3])
         let closure = makeArray([5])
