@@ -1190,7 +1190,7 @@
 - [ ] STDLIB-JVM-PROP-006: `KClass<T>.javaObjectType` extension property を追加する
 - [ ] STDLIB-JVM-PROP-007: `KClass<T>.javaPrimitiveType` extension property を追加する
 - [ ] STDLIB-JVM-PROP-008: `Class<T>.kotlin` extension property を追加する
-- [ ] STDLIB-JVM-FN-001: `Array<*>.isArrayOf<T>()` を追加する
+- [x] STDLIB-JVM-FN-001: `Array<*>.isArrayOf<T>()` を追加する
 - [ ] STDLIB-JVM-OPTIONALS-FN-001: `Optional<T>.asSequence()` を追加する
 - [x] STDLIB-JVM-OPTIONALS-FN-002: `Optional<T>.getOrDefault(defaultValue)` を追加する
 - [ ] STDLIB-JVM-OPTIONALS-FN-003: `Optional<T>.getOrElse(defaultValue)` を追加する
