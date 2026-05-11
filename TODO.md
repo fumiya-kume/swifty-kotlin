@@ -297,7 +297,7 @@
 - [ ] STDLIB-COL-FN-223: `withDefault` 関数の実装
 - [x] STDLIB-COL-FN-224: `withIndex` 関数の実装
 - [ ] STDLIB-COL-FN-225: `windowed` 関数の実装
-- [ ] STDLIB-COL-FN-226: `zip` 関数の実装
+- [x] STDLIB-COL-FN-226: `zip` 関数の実装
 - [x] STDLIB-COL-FN-227: `zipWithNext` 関数の実装
 
 ### Phase 3: I/O・パス・時間・並行（common）
@@ -1216,7 +1216,7 @@
 - [x] STDLIB-JS-TYPE-018: `kotlin.js.JsExternalArgument` annotation を追加する
 - [x] STDLIB-JS-TYPE-019: `kotlin.js.JsExternalInheritorsOnly` annotation を追加する
 - [ ] STDLIB-JS-TYPE-020: `kotlin.js.JsFileName` annotation を追加する
-- [ ] STDLIB-JS-TYPE-021: `kotlin.js.JsFun` annotation を追加する
+- [x] STDLIB-JS-TYPE-021: `kotlin.js.JsFun` annotation を追加する
 - [x] STDLIB-JS-TYPE-022: `kotlin.js.JsModule` annotation を追加する
 - [x] STDLIB-JS-TYPE-023: `kotlin.js.JsName` annotation を追加する
 - [x] STDLIB-JS-TYPE-024: `kotlin.js.JsNonModule` annotation を追加する
