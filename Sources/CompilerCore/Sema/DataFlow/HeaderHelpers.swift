@@ -1107,6 +1107,7 @@ extension DataFlowSemaPhase {
         registerSyntheticExperimentalMarkerStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsNonModuleStubs(symbols: symbols, interner: interner)
         registerSyntheticJsConsoleStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsExportStubs(symbols: symbols, interner: interner)
         registerSyntheticCoroutinesABIStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsExternalInheritorsOnlyStubs(symbols: symbols, interner: interner)
         registerSyntheticJsClassStubs(symbols: symbols, types: types, interner: interner)
