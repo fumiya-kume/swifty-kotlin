@@ -3720,8 +3720,9 @@ extension CollectionLiteralLoweringPass {
                             }
                         }
                     }
-                    // maxBy / maxByOrNull / minByOrNull / maxOfOrNull / minOfOrNull / maxOf / minOf (STDLIB-301)
-                    if callee == lookup.maxByName || callee == lookup.maxByOrNullName || callee == lookup.minByOrNullName
+                    // maxBy / maxByOrNull / minBy / minByOrNull / maxOfOrNull / minOfOrNull / maxOf / minOf (STDLIB-301)
+                    if callee == lookup.maxByName || callee == lookup.maxByOrNullName
+                        || callee == lookup.minByName || callee == lookup.minByOrNullName
                         || callee == lookup.maxOfOrNullName || callee == lookup.minOfOrNullName
                         || callee == lookup.maxOfName || callee == lookup.minOfName
                     {
@@ -3740,6 +3741,7 @@ extension CollectionLiteralLoweringPass {
                                 let kkName: InternedString = switch callee {
                                 case lookup.maxByName: lookup.kkListMaxByName
                                 case lookup.maxByOrNullName: lookup.kkListMaxByOrNullName
+                                case lookup.minByName: lookup.kkListMinByName
                                 case lookup.minByOrNullName: lookup.kkListMinByOrNullName
                                 case lookup.maxOfOrNullName: lookup.kkListMaxOfOrNullName
                                 case lookup.minOfOrNullName: lookup.kkListMinOfOrNullName

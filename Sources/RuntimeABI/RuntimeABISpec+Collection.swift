@@ -2975,6 +2975,17 @@ public extension RuntimeABISpec {
                     section: "Collection"
                 ),
                 RuntimeABIFunctionSpec(
+                    name: "kk_list_minBy",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                        RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                        RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                        RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
                     name: "kk_list_maxOfOrNull",
                     parameters: [
                         RuntimeABIParameter(name: "listRaw", type: .intptr),

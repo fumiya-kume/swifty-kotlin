@@ -97,7 +97,7 @@
 - [x] STDLIB-COL-FN-025: `buildList` 関数の実装
 - [x] STDLIB-COL-FN-026: `buildMap` 関数の実装
 - [x] STDLIB-COL-FN-027: `buildSet` 関数の実装
-- [ ] STDLIB-COL-FN-028: `chunked` 関数の実装
+- [x] STDLIB-COL-FN-028: `chunked` 関数の実装
 - [x] STDLIB-COL-FN-029: `component1` 関数の実装
 - [x] STDLIB-COL-FN-030: `component2` 関数の実装
 - [x] STDLIB-COL-FN-031: `component3` 関数の実装
@@ -127,7 +127,7 @@
 - [x] STDLIB-COL-FN-053: `emptyList` 関数の実装
 - [x] STDLIB-COL-FN-054: `emptyMap` 関数の実装
 - [x] STDLIB-COL-FN-055: `emptySet` 関数の実装
-- [ ] STDLIB-COL-FN-056: `fill` 関数の実装
+- [x] STDLIB-COL-FN-056: `fill` 関数の実装
 - [ ] STDLIB-COL-FN-057: `filter` 関数の実装
 - [x] STDLIB-COL-FN-058: `filterIndexed` 関数の実装
 - [ ] STDLIB-COL-FN-059: `filterIndexedTo` 関数の実装
@@ -135,6 +135,7 @@
 - [x] STDLIB-COL-FN-061: `filterIsInstanceTo` 関数の実装
 - [x] STDLIB-COL-FN-062: `filterKeys` 関数の実装
 - [x] STDLIB-COL-FN-063: `filterNot` 関数の実装
+- [x] STDLIB-COL-FN-060: `filterIsInstance` 関数の実装
 - [ ] STDLIB-COL-FN-064: `filterNotNull` 関数の実装
 - [x] STDLIB-COL-FN-065: `filterNotNullTo` 関数の実装
 - [x] STDLIB-COL-FN-066: `filterNotTo` 関数の実装
@@ -145,7 +146,7 @@
 - [ ] STDLIB-COL-FN-071: `first` 関数の実装
 - [x] STDLIB-COL-FN-072: `firstNotNullOf` 関数の実装
 - [x] STDLIB-COL-FN-073: `firstNotNullOfOrNull` 関数の実装
-- [ ] STDLIB-COL-FN-074: `firstOrNull` 関数の実装
+- [x] STDLIB-COL-FN-074: `firstOrNull` 関数の実装
 - [x] STDLIB-COL-FN-075: `flatMap` 関数の実装
 - [ ] STDLIB-COL-FN-076: `flatMapIndexed` 関数の実装
 - [x] STDLIB-COL-FN-077: `flatMapIndexedTo` 関数の実装
@@ -154,7 +155,7 @@
 - [ ] STDLIB-COL-FN-080: `fold` 関数の実装
 - [x] STDLIB-COL-FN-081: `foldIndexed` 関数の実装
 - [x] STDLIB-COL-FN-082: `foldRight` 関数の実装
-- [ ] STDLIB-COL-FN-083: `foldRightIndexed` 関数の実装
+- [x] STDLIB-COL-FN-083: `foldRightIndexed` 関数の実装
 - [ ] STDLIB-COL-FN-084: `forEach` 関数の実装
 - [ ] STDLIB-COL-FN-085: `forEachIndexed` 関数の実装
 - [ ] STDLIB-COL-FN-086: `get` 関数の実装
@@ -197,7 +198,7 @@
 - [x] STDLIB-COL-FN-123: `mapValuesTo` 関数の実装
 - [ ] STDLIB-COL-FN-124: `max` 関数の実装
 - [x] STDLIB-COL-FN-125: `maxBy` 関数の実装
-- [ ] STDLIB-COL-FN-126: `maxByOrNull` 関数の実装
+- [x] STDLIB-COL-FN-126: `maxByOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-127: `maxOf` 関数の実装
 - [ ] STDLIB-COL-FN-128: `maxOfOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-129: `maxOfWith` 関数の実装
@@ -206,7 +207,7 @@
 - [ ] STDLIB-COL-FN-132: `maxWith` 関数の実装
 - [ ] STDLIB-COL-FN-133: `maxWithOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-134: `min` 関数の実装
-- [ ] STDLIB-COL-FN-135: `minBy` 関数の実装
+- [x] STDLIB-COL-FN-135: `minBy` 関数の実装
 - [ ] STDLIB-COL-FN-136: `minByOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-137: `minOf` 関数の実装
 - [ ] STDLIB-COL-FN-138: `minOfOrNull` 関数の実装
@@ -268,7 +269,7 @@
 - [x] STDLIB-COL-FN-194: `sortedWith` 関数の実装
 - [x] STDLIB-COL-FN-195: `subtract` 関数の実装
 - [ ] STDLIB-COL-FN-196: `sum` 関数の実装
-- [ ] STDLIB-COL-FN-197: `sumBy` 関数の実装
+- [x] STDLIB-COL-FN-197: `sumBy` 関数の実装
 - [ ] STDLIB-COL-FN-198: `sumByDouble` 関数の実装
 - [x] STDLIB-COL-FN-199: `sumOf` 関数の実装
 - [x] STDLIB-COL-FN-198: `sumByDouble` 関数の実装
@@ -287,9 +288,12 @@
 - [x] STDLIB-COL-FN-211: `toIntArray` 関数の実装
 - [ ] STDLIB-COL-FN-212: `toList` 関数の実装
 - [x] STDLIB-COL-FN-213: `toLongArray` 関数の実装
+- [x] STDLIB-COL-FN-212: `toList` 関数の実装
+- [x] STDLIB-COL-FN-213: `toLongArray` 関数の実装
 - [x] STDLIB-COL-FN-214: `toMap` 関数の実装
+- [ ] STDLIB-COL-FN-215: `toMutableList` 関数の実装
 - [x] STDLIB-COL-FN-215: `toMutableList` 関数の実装
-- [ ] STDLIB-COL-FN-216: `toMutableSet` 関数の実装
+- [x] STDLIB-COL-FN-216: `toMutableSet` 関数の実装
 - [x] STDLIB-COL-FN-217: `toShortArray` 関数の実装
 - [ ] STDLIB-COL-FN-218: `toSortedSet` 関数の実装
 - [ ] STDLIB-COL-FN-219: `toTypedArray` 関数の実装
@@ -299,6 +303,8 @@
 - [x] STDLIB-COL-FN-223: `withDefault` 関数の実装
 - [x] STDLIB-COL-FN-224: `withIndex` 関数の実装
 - [ ] STDLIB-COL-FN-225: `windowed` 関数の実装
+- [x] STDLIB-COL-FN-226: `zip` 関数の実装
+- [x] STDLIB-COL-FN-225: `windowed` 関数の実装
 - [x] STDLIB-COL-FN-226: `zip` 関数の実装
 - [x] STDLIB-COL-FN-227: `zipWithNext` 関数の実装
 
@@ -501,7 +507,7 @@
 - [ ] STDLIB-IO-PATH-FN-030: `readAttributes` 関数の実装
 - [x] STDLIB-IO-PATH-FN-031: `relativeToOrSelf` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-032: `setAttribute` 関数の実装
-- [ ] STDLIB-IO-PATH-FN-033: `setLastModifiedTime` 関数の実装
+- [x] STDLIB-IO-PATH-FN-033: `setLastModifiedTime` 関数の実装
 - [x] STDLIB-IO-PATH-FN-034: `setOwner` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-035: `setPosixFilePermissions` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-036: `toPath` 関数の実装
@@ -1147,11 +1153,11 @@
 - [x] STDLIB-IO-PATH-FN-060: `Path.readLines(charset)` を既存 no-arg stub から公式 charset shape へ広げる
 - [ ] STDLIB-IO-PATH-FN-061: `Path.readSymbolicLink()` を追加する
 - [x] STDLIB-IO-PATH-FN-062: `Path.readText(charset)` を既存 no-arg stub から公式 charset shape へ広げる
-- [ ] STDLIB-IO-PATH-FN-063: `Path.relativeTo(base)` を追加する
+- [x] STDLIB-IO-PATH-FN-063: `Path.relativeTo(base)` を追加する
 - [ ] STDLIB-IO-PATH-FN-064: `Path.relativeToOrNull(base)` を追加する
 - [x] STDLIB-IO-PATH-FN-065: `Path.relativeToOrSelf(base)` を追加する
 - [ ] STDLIB-IO-PATH-FN-066: `Path.setAttribute(attribute, value, options)` を追加する
-- [ ] STDLIB-IO-PATH-FN-067: `Path.setLastModifiedTime(value)` を追加する
+- [x] STDLIB-IO-PATH-FN-067: `Path.setLastModifiedTime(value)` を追加する
 - [x] STDLIB-IO-PATH-FN-068: `Path.setOwner(value)` を追加する
 - [ ] STDLIB-IO-PATH-FN-069: `Path.setPosixFilePermissions(value)` を追加する
 - [x] STDLIB-IO-PATH-FN-070: `URI.toPath()` を追加する
@@ -1175,7 +1181,7 @@
 - [x] STDLIB-JVM-TYPE-008: `kotlin.jvm.JvmRecord` annotation を追加する
 - [x] STDLIB-JVM-TYPE-009: `kotlin.jvm.JvmSerializableLambda` annotation を追加する
 - [x] STDLIB-JVM-TYPE-010: `kotlin.jvm.JvmSuppressWildcards` annotation を追加する
-- [ ] STDLIB-JVM-TYPE-011: `kotlin.jvm.JvmSynthetic` annotation を追加する
+- [x] STDLIB-JVM-TYPE-011: `kotlin.jvm.JvmSynthetic` annotation を追加する
 - [x] STDLIB-JVM-TYPE-012: `kotlin.jvm.JvmWildcard` annotation を追加する
 - [x] STDLIB-JVM-TYPE-013: `kotlin.jvm.Strictfp` annotation を追加する
 - [x] STDLIB-JVM-TYPE-014: `kotlin.jvm.Synchronized` annotation を追加する

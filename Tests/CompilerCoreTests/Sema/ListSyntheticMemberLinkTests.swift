@@ -119,6 +119,41 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testCollectionToListUsesRuntimeExternalLink() throws {
+        let source = """
+        fun copy(values: Collection<String>): List<String> {
+            return values.toList()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected Collection.toList to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "toList"
+            })
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_collection_toList")
+
+            let resultType = try XCTUnwrap(sema.bindings.exprTypes[callExpr])
+            guard case let .classType(classType) = sema.types.kind(of: resultType),
+                  let symbol = sema.symbols.symbol(classType.classSymbol)
+            else {
+                return XCTFail("Expected toList to return List")
+            }
+            XCTAssertEqual(ctx.interner.resolve(symbol.name), "List")
+        }
+    }
+
     func testListIndicesExtensionPropertyResolvesToRuntimeGetter() throws {
         let source = """
         import kotlin.collections.indices
@@ -508,9 +543,11 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             let expectedExternalLinks = [
                 "filterNot": "kk_list_filterNot",
                 "sumOf": "kk_list_sumOf",
+                "minBy": "kk_list_minBy",
                 "maxOrNull": "kk_list_maxOrNull",
                 "minOrNull": "kk_list_minOrNull",
                 "maxBy": "kk_list_maxBy",
+                "maxByOrNull": "kk_list_maxByOrNull",
                 "minOfWithOrNull": "kk_list_minOfWithOrNull",
                 "filterNotTo": "kk_list_filterNotTo",
                 "filterNotNullTo": "kk_list_filterNotNullTo",
@@ -2584,6 +2621,39 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testIterableToMutableSetUsesRuntimeExternalLink() throws {
+        let source = """
+        fun copy(values: Iterable<String>) {
+            values.toMutableSet()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected Iterable.toMutableSet to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "toMutableSet"
+            })
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_iterable_toMutableSet")
+
+            let callType = try XCTUnwrap(sema.bindings.exprType(for: callExpr))
+            guard case let .classType(classType) = sema.types.kind(of: callType) else {
+                return XCTFail("Expected Iterable.toMutableSet to return MutableSet")
+            }
+            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(classType.classSymbol)?.name)), "MutableSet")
+        }
+    }
+
     func testSetBinaryMembersKeepSetResultTypeInFallbackPath() throws {
         let source = """
         fun combine(values: Set<Int>, other: Set<Int>) {
@@ -2905,6 +2975,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             values.removeLast()
             values.removeLastOrNull()
             values.clear()
+            values.fill(9)
         }
         """
 
@@ -2927,6 +2998,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                 ("removeLast", 0, "kk_mutable_list_removeLast"),
                 ("removeLastOrNull", 0, "kk_mutable_list_removeLastOrNull"),
                 ("clear", 0, "kk_mutable_list_clear"),
+                ("fill", 1, "kk_mutable_list_fill"),
             ]
 
             for (memberName, argumentCount, externalLinkName) in expectedExternalLinks {
@@ -4092,6 +4164,34 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             XCTAssertEqual(
                 sema.symbols.externalLinkName(for: chosenCallee),
                 "kk_list_filterIndexed"
+            )
+        }
+    }
+
+    func testListFilterIsInstanceUsesRuntimeExternalLink() throws {
+        let source = """
+        fun main() {
+            val list: List<Any> = listOf(1, "two", 3)
+            list.filterIsInstance<Int>()
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let ast = try XCTUnwrap(ctx.ast)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "filterIsInstance"
+            })
+            let chosenCallee = try XCTUnwrap(
+                sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                "filterIsInstance should resolve"
+            )
+            XCTAssertEqual(
+                sema.symbols.externalLinkName(for: chosenCallee),
+                "kk_list_filterIsInstance"
             )
         }
     }

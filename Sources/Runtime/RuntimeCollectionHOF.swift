@@ -1927,6 +1927,30 @@ public func kk_list_minByOrNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
     return bestElem
 }
 
+@_cdecl("kk_list_minBy")
+public func kk_list_minBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard !list.elements.isEmpty else {
+        return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "NoSuchElementException: List is empty."), outThrown)
+    }
+    var bestElem = list.elements[0]
+    var thrown = 0
+    var bestKey = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: bestElem, outThrown: &thrown)
+    if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+    for elem in list.elements.dropFirst() {
+        thrown = 0
+        let key = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if runtimeCompareValues(key, bestKey) < 0 {
+            bestElem = elem
+            bestKey = key
+        }
+    }
+    return bestElem
+}
+
 @_cdecl("kk_list_maxOfOrNull")
 public func kk_list_maxOfOrNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {

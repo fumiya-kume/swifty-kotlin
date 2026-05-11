@@ -713,7 +713,7 @@ extension CallTypeChecker {
             "onEach", "onEachIndexed",
             "sumOf", "sumBy", "sumByDouble", "maxOrNull", "minOrNull",
             "indexOfFirst", "indexOfLast", "binarySearch", "binarySearchBy",
-            "maxBy", "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
+            "maxBy", "minBy", "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
             "maxOf", "minOf",
             "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",
             "maxOfWith", "maxOfWithOrNull", "minOfWith", "minOfWithOrNull",
@@ -806,6 +806,14 @@ extension CallTypeChecker {
            isCollectionReceiver
         {
             let filterType = explicitTypeArgs.first ?? sema.types.anyType
+            let receiverElementType = resolvedCollectionElementType(
+                receiverID: receiverID,
+                receiverType: receiverType,
+                sema: sema,
+                interner: interner,
+                ctx: ctx,
+                locals: &locals
+            )
             if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
                 let resultType = sema.types.make(.classType(ClassType(
                     classSymbol: listSymbol,
@@ -814,6 +822,18 @@ extension CallTypeChecker {
                 )))
                 let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                 sema.bindings.markCollectionExpr(id)
+                let knownNames = KnownCompilerNames(interner: interner)
+                let memberFQName = knownNames.kotlinCollectionsListFQName + [calleeName]
+                if let chosenCallee = sema.symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+                    sema.symbols.functionSignature(for: symbolID)?.parameterTypes.count == args.count
+                }) {
+                    sema.bindings.bindCall(id, binding: CallBinding(
+                        chosenCallee: chosenCallee,
+                        substitutedTypeArguments: [receiverElementType, filterType],
+                        parameterMapping: [:]
+                    ))
+                    sema.bindings.bindCallableTarget(id, target: .symbol(chosenCallee))
+                }
                 sema.bindings.bindExprType(id, type: finalType)
                 return finalType
             }
@@ -2878,7 +2898,7 @@ extension CallTypeChecker {
                 }
                 resultType = sema.types.makeNullable(collectionElementType)
 
-            case "maxBy", "maxByOrNull", "minByOrNull":
+            case "maxBy", "minBy", "maxByOrNull", "minByOrNull":
                 guard args.count == 1 else {
                     let failedType = safeCall ? sema.types.makeNullable(sema.types.errorType) : sema.types.errorType
                     ctx.semaCtx.diagnostics.error(
@@ -2940,7 +2960,9 @@ extension CallTypeChecker {
                         return failedType
                     }
                 }
-                resultType = calleeStr == "maxBy" ? collectionElementType : sema.types.makeNullable(collectionElementType)
+                resultType = (calleeStr == "maxBy" || calleeStr == "minBy")
+                    ? collectionElementType
+                    : sema.types.makeNullable(collectionElementType)
 
             case "maxOf", "minOf":
                 guard args.count == 1 else {

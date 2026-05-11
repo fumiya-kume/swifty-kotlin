@@ -19,6 +19,7 @@
 /// - `Path.invariantSeparatorsPath: String` extension property
 /// - `Path.absolute(): Path` extension function
 /// - `Path.relativeToOrSelf(base: Path): Path` extension function
+/// - `Path.relativeTo(base: Path): Path` extension function
 /// - `Path.invariantSeparatorsPathString: String` extension property
 /// - `Path.writeBytes(array: ByteArray, vararg options: OpenOption)` extension function
 /// - `readBytes(): ByteArray`, `readText(): String`, `writeText(text: String)`, `readLines(): List<String>`
@@ -423,6 +424,17 @@ extension DataFlowSemaPhase {
             parameters: [("base", pathType)],
             returnType: pathType,
             externalLinkName: "kk_path_relativeToOrSelf",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "relativeTo",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("base", pathType)],
+            returnType: pathType,
+            externalLinkName: "kk_path_relativeTo",
             symbols: symbols,
             interner: interner
         )

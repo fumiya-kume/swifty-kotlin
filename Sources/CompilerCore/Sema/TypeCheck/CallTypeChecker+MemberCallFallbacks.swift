@@ -1359,7 +1359,7 @@ extension CallTypeChecker {
              interner.intern("takeWhile"), interner.intern("dropWhile"),
              interner.intern("sortBy"), interner.intern("sortByDescending"), interner.intern("distinctBy"),
              interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"),
-             interner.intern("maxBy"), interner.intern("maxByOrNull"), interner.intern("minByOrNull"),
+             interner.intern("maxBy"), interner.intern("minBy"), interner.intern("maxByOrNull"), interner.intern("minByOrNull"),
              interner.intern("maxOfOrNull"), interner.intern("minOfOrNull"),
              interner.intern("maxOf"), interner.intern("minOf"),
              interner.intern("maxWith"), interner.intern("maxWithOrNull"),
@@ -1708,6 +1708,10 @@ extension CallTypeChecker {
                 }
             }
             return sema.types.anyType
+        }
+
+        if memberName == interner.intern("minBy") {
+            return receiverElementType
         }
 
         if memberName == interner.intern("maxOrNull")

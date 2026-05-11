@@ -335,6 +335,12 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(mapped), [10, 32])
     }
 
+    func testFilterIsInstanceCollectsMatchingRuntimeTypes() {
+        let source = makeList([1, runtimeStringRaw("two"), 3])
+        let filtered = kk_list_filterIsInstance(source, 3)
+        XCTAssertEqual(listElements(filtered), [1, 3])
+    }
+
     func testCaptureLambdaForMapAndForEach() {
         let source = makeList([1, 2, 3])
         let closure = makeArray([5])
@@ -354,10 +360,18 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(kk_list_fold(source, 0, unsafeBitCast(foldOrder, to: Int.self), 0, nil), 123)
         XCTAssertEqual(kk_list_foldRight(source, 0, unsafeBitCast(reduceRightChecksum, to: Int.self), 0, nil), 60)
         XCTAssertEqual(kk_list_foldIndexed(source, 0, unsafeBitCast(foldIndexedChecksum, to: Int.self), 0, nil), 306)
+        XCTAssertEqual(kk_list_foldRightIndexed(source, 0, unsafeBitCast(reduceRightIndexedChecksum, to: Int.self), 0, nil), 360)
         XCTAssertEqual(kk_list_reduce(source, unsafeBitCast(foldOrder, to: Int.self), 0, nil), 123)
 
         let sorted = kk_list_sortedBy(makeList([22, 12, 21, 11]), unsafeBitCast(sortedByTens, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
         XCTAssertEqual(listElements(sorted), [12, 11, 22, 21])
+    }
+
+    func testMutableListFillReplacesEveryElement() {
+        let source = makeList([1, 2, 3])
+
+        XCTAssertEqual(kk_mutable_list_fill(source, 9), 0)
+        XCTAssertEqual(listElements(source), [9, 9, 9])
     }
 
     func testMaxByReturnsElementWithLargestSelectorAndThrowsOnEmpty() {
@@ -420,6 +434,22 @@ final class RuntimeCollectionHOFTests: XCTestCase {
             runtimeExceptionCaughtSentinel
         )
         XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testMaxByOrNullReturnsElementWithLargestSelectorAndNullForEmpty() {
+        var thrown = 0
+        let source = makeList([3, 1, 4, 2])
+        let result = kk_list_maxByOrNull(source, unsafeBitCast(maxByNegativeValue, to: Int.self), 0, &thrown)
+
+        XCTAssertEqual(result, 1)
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        XCTAssertEqual(
+            kk_list_maxByOrNull(makeList([]), unsafeBitCast(maxByNegativeValue, to: Int.self), 0, &thrown),
+            runtimeNullSentinelInt
+        )
+        XCTAssertEqual(thrown, 0)
     }
 
     func testListElementAtReturnsElementAndThrowsWhenOutOfBounds() {
@@ -773,6 +803,19 @@ final class RuntimeCollectionHOFTests: XCTestCase {
 
         XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
         XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testWindowedNonTransformOverloadsReturnListWindows() {
+        let source = makeList([1, 2, 3, 4, 5])
+
+        let defaultStep = kk_list_windowed_default(source, 3)
+        XCTAssertEqual(listElements(defaultStep).map(listElements), [[1, 2, 3], [2, 3, 4], [3, 4, 5]])
+
+        let explicitStep = kk_list_windowed(source, 3, 2)
+        XCTAssertEqual(listElements(explicitStep).map(listElements), [[1, 2, 3], [3, 4, 5]])
+
+        let partialWindows = kk_list_windowed_partial(source, 3, 2, 1)
+        XCTAssertEqual(listElements(partialWindows).map(listElements), [[1, 2, 3], [3, 4, 5], [5]])
     }
 
     func testCollectionMapNotNullPassesSentinelInputsToTransform() {
@@ -1351,6 +1394,16 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(kk_map_get(map, 2), 20)
     }
 
+    func testCollectionToListCopiesListAndSetElements() {
+        let listSource = makeList([1, 2, 3])
+        let listCopy = kk_collection_toList(listSource)
+        XCTAssertEqual(listElements(listCopy), [1, 2, 3])
+        XCTAssertEqual(listElements(listSource), [1, 2, 3])
+
+        let setSource = registerRuntimeObject(RuntimeSetBox(elements: [3, 1, 2]))
+        XCTAssertEqual(listElements(kk_collection_toList(setSource)), [3, 1, 2])
+    }
+
     func testListZipWithNextReturnsAdjacentPairsAndTransformResults() {
         let values = makeList([1, 3, 6, 10])
 
@@ -1542,6 +1595,24 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(kk_unbox_bool(kk_mutable_list_add(iterableCopy, 9)), 1)
         XCTAssertEqual(setElements(setSource), [3, 1, 2])
         XCTAssertEqual(listElements(iterableCopy), [3, 1, 2, 9])
+    }
+
+    func testIterableToMutableSetDeduplicatesAndCopiesElements() {
+        let listSource = makeList([3, 1, 2, 1])
+        let listCopy = kk_iterable_toMutableSet(listSource)
+
+        XCTAssertEqual(setElements(listCopy), [3, 1, 2])
+        XCTAssertEqual(kk_unbox_bool(kk_mutable_set_add(listCopy, 9)), 1)
+        XCTAssertEqual(listElements(listSource), [3, 1, 2, 1])
+        XCTAssertEqual(setElements(listCopy), [3, 1, 2, 9])
+
+        let setSource = registerRuntimeObject(RuntimeSetBox(elements: [2, 3, 2, 1]))
+        let setCopy = kk_iterable_toMutableSet(setSource)
+
+        XCTAssertEqual(setElements(setCopy), [2, 3, 1])
+        XCTAssertEqual(kk_unbox_bool(kk_mutable_set_add(setCopy, 4)), 1)
+        XCTAssertEqual(setElements(setSource), [2, 3, 2, 1])
+        XCTAssertEqual(setElements(setCopy), [2, 3, 1, 4])
     }
 
     func testSetBinaryOperationsWithStringHandlesUseValueEqualityAndPreserveLeftOrder() {
@@ -1914,6 +1985,28 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(kk_list_indexOf(source, 10), 0)
         XCTAssertEqual(kk_list_indexOf(source, 20), 1)
         XCTAssertEqual(kk_list_indexOf(source, 30), -1)
+    }
+
+    func testMinByReturnsElementWithSmallestSelectorAndThrowsOnEmpty() {
+        var thrown = 0
+
+        let minResult = kk_list_minBy(
+            makeList([5, 2, 3]),
+            unsafeBitCast(countEven, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(minResult, 5)
+        XCTAssertEqual(thrown, 0)
+
+        let emptyResult = kk_list_minBy(
+            makeList([]),
+            unsafeBitCast(countEven, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(emptyResult, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
     }
 
     // MARK: - Throwing lambda tests for *To functions

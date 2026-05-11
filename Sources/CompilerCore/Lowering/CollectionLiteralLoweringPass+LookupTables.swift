@@ -174,6 +174,7 @@ struct CollectionLiteralLookupTables {
     let kkListMaxByName: InternedString
     let kkListMaxByOrNullName: InternedString
     let kkListMinByOrNullName: InternedString
+    let kkListMinByName: InternedString
     let kkListMaxOfOrNullName: InternedString
     let kkListMinOfOrNullName: InternedString
     let kkListMaxOfName: InternedString
@@ -586,6 +587,7 @@ struct CollectionLiteralLookupTables {
     let maxByName: InternedString
     let maxByOrNullName: InternedString
     let minByOrNullName: InternedString
+    let minByName: InternedString
     let maxOfOrNullName: InternedString
     let minOfOrNullName: InternedString
     let maxOfName: InternedString
@@ -981,6 +983,7 @@ struct CollectionLiteralLookupTables {
         kkListMaxByName = interner.intern("kk_list_maxBy")
         kkListMaxByOrNullName = interner.intern("kk_list_maxByOrNull")
         kkListMinByOrNullName = interner.intern("kk_list_minByOrNull")
+        kkListMinByName = interner.intern("kk_list_minBy")
         kkListMaxOfOrNullName = interner.intern("kk_list_maxOfOrNull")
         kkListMinOfOrNullName = interner.intern("kk_list_minOfOrNull")
         kkListMaxOfName = interner.intern("kk_list_maxOf")
@@ -1380,6 +1383,7 @@ struct CollectionLiteralLookupTables {
         maxByName = interner.intern("maxBy")
         maxByOrNullName = interner.intern("maxByOrNull")
         minByOrNullName = interner.intern("minByOrNull")
+        minByName = interner.intern("minBy")
         maxOfOrNullName = interner.intern("maxOfOrNull")
         minOfOrNullName = interner.intern("minOfOrNull")
         maxOfName = interner.intern("maxOf")

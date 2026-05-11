@@ -37,4 +37,9 @@ final class RuntimeListPropertyTests: XCTestCase {
         XCTAssertEqual(kk_range_last(indices), -1)
         XCTAssertEqual(kk_range_isEmpty(indices), 1)
     }
+
+    func testListFirstOrNullReturnsHeadOrNullSentinel() {
+        XCTAssertEqual(kk_list_firstOrNull(makeList([10, 20])), 10)
+        XCTAssertEqual(kk_list_firstOrNull(makeList([])), runtimeNullSentinelInt)
+    }
 }

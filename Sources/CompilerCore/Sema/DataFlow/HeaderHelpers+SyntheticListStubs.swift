@@ -2347,6 +2347,33 @@ extension DataFlowSemaPhase {
             typeParameterSymbols: [listTypeParamSymbol, flatMapIndexedToTypeParamSymbol]
         )
 
+        let filterIsInstanceTypeParamName = interner.intern("R")
+        let filterIsInstanceTypeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: filterIsInstanceTypeParamName,
+            fqName: listFQName + [interner.intern("filterIsInstance"), filterIsInstanceTypeParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.reifiedTypeParameter]
+        )
+        let filterIsInstanceTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: filterIsInstanceTypeParamSymbol, nullability: .nonNull
+        )))
+        let filterIsInstanceResultType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.invariant(filterIsInstanceTypeParamType)],
+            nullability: .nonNull
+        )))
+        registerMemberOverload(
+            memberName: interner.intern("filterIsInstance"),
+            memberFQName: listFQName + [interner.intern("filterIsInstance")],
+            parameterTypes: [],
+            externalLinkName: "kk_list_filterIsInstance",
+            returnTypeOverride: filterIsInstanceResultType,
+            typeParameterSymbols: [listTypeParamSymbol, filterIsInstanceTypeParamSymbol],
+            reifiedTypeParameterIndices: [1]
+        )
+
         let filterIsInstanceToTypeParamName = interner.intern("R")
         let filterIsInstanceToTypeParamSymbol = symbols.define(
             kind: .typeParameter,
@@ -2801,6 +2828,11 @@ extension DataFlowSemaPhase {
                 name: "minByOrNull",
                 externalLinkName: "kk_list_minByOrNull",
                 returnTypeBuilder: { _ in nullableElementType }
+            )
+            registerByOrNull(
+                name: "minBy",
+                externalLinkName: "kk_list_minBy",
+                returnTypeBuilder: { _ in listTypeParamType }
             )
             registerByOrNull(
                 name: "maxOfOrNull",
