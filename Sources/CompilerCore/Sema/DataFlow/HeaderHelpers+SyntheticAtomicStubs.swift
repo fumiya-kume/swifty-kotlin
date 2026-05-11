@@ -79,6 +79,14 @@ extension DataFlowSemaPhase {
             interner: interner,
             externalLinkPrefix: "kk_atomic_ref"
         )
+        registerAtomicRefArrayStub(
+            packageFQName: concurrentPkg,
+            boolType: boolType,
+            unitType: unitType,
+            symbols: symbols,
+            interner: interner,
+            types: types
+        )
 
         registerSyntheticAtomicAnnotation(
             named: "ExperimentalAtomicApi",

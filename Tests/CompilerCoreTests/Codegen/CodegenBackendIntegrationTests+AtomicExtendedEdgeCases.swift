@@ -868,6 +868,28 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenKotlinConcurrentAtomicArrayLoadStore() throws {
+        let source = """
+        import kotlin.concurrent.AtomicArray
+
+        fun main() {
+            val values = AtomicArray<String?>(2)
+            values.storeAt(0, "first")
+            values[1] = "second"
+            println(values.loadAt(0))
+            println(values[1])
+            println(values.size)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(inputPath: path, moduleName: "KConcurrentAtomicArray", emit: .executable, outputPath: outputBase)
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "first\nsecond\n2\n")
+        }
+    }
+
     // MARK: - ABI-001: AtomicBoolean.value setter
 
     func testCodegenAtomicBooleanValueSetterWiresBoolStore() throws {
