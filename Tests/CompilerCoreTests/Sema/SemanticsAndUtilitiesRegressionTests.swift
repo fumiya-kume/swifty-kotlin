@@ -235,6 +235,28 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testAtomicLongArrayInConcurrentPackageIsResolved() throws {
+        let source = """
+        import kotlin.concurrent.AtomicLongArray
+
+        fun main() {
+            val values = AtomicLongArray(2)
+            values.storeAt(0, 10L)
+            val ok = values.compareAndSetAt(0, 10L, 11L)
+            println(if (ok) values.loadAt(0) else values.size.toLong())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "AtomicLongArray in kotlin.concurrent should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     func testExperimentalAtomicArraysInAtomicsPackageAreResolved() throws {
         let source = """
         @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
