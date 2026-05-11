@@ -170,7 +170,7 @@
 - [x] STDLIB-COL-FN-096: `indexOfFirst` 関数の実装
 - [x] STDLIB-COL-FN-097: `indexOfLast` 関数の実装
 - [x] STDLIB-COL-FN-098: `intersect` 関数の実装
-- [ ] STDLIB-COL-FN-099: `isNotEmpty` 関数の実装
+- [x] STDLIB-COL-FN-099: `isNotEmpty` 関数の実装
 - [x] STDLIB-COL-FN-100: `isNullOrEmpty` 関数の実装
 - [ ] STDLIB-COL-FN-101: `iterator` 関数の実装
 - [x] STDLIB-COL-FN-102: `joinTo` 関数の実装

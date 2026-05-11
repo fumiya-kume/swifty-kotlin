@@ -182,6 +182,14 @@ public func kk_list_is_empty(_ listRaw: Int) -> Int {
     return kk_box_bool(list.elements.isEmpty ? 1 : 0)
 }
 
+@_cdecl("kk_list_is_not_empty")
+public func kk_list_is_not_empty(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return kk_box_bool(0)
+    }
+    return kk_box_bool(list.elements.isEmpty ? 0 : 1)
+}
+
 @_cdecl("kk_list_iterator")
 public func kk_list_iterator(_ listRaw: Int) -> Int {
     let elements: [Int] = if let list = runtimeListBox(from: listRaw) {

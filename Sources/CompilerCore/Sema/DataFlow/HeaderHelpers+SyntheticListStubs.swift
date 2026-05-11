@@ -1052,6 +1052,31 @@ extension DataFlowSemaPhase {
             )
         }
 
+        let isNotEmptyName = interner.intern("isNotEmpty")
+        let isNotEmptyFQName = listFQName + [isNotEmptyName]
+        if symbols.lookup(fqName: isNotEmptyFQName) == nil {
+            let isNotEmptySymbol = symbols.define(
+                kind: .function,
+                name: isNotEmptyName,
+                fqName: isNotEmptyFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: isNotEmptySymbol)
+            symbols.setExternalLinkName("kk_list_is_not_empty", for: isNotEmptySymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: listReceiverType,
+                    parameterTypes: [],
+                    returnType: types.booleanType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: isNotEmptySymbol
+            )
+        }
+
     }
 
     private func registerListToMutableListMember(
