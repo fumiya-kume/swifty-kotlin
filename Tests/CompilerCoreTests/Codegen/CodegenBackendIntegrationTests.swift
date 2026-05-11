@@ -600,6 +600,33 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenListFilterIsInstanceToUsesRuntimeHelper() throws {
+        let source = """
+        fun main() {
+            val values: List<Any> = listOf(1, "two", 3, "four")
+            val dest = mutableListOf<Int>(99)
+            val result = values.filterIsInstanceTo(dest)
+            println(result)
+            println(dest)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListFilterIsInstanceToRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[99, 1, 3]\n[99, 1, 3]\n")
+        }
+    }
+
     func testCodegenMutableListRemoveFirstOrNullUsesCanonicalDiffCase() throws {
         let root = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent() // Codegen/
@@ -1204,6 +1231,39 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenCollectionAndIterableToMutableListReturnIndependentCopies() throws {
+        let source = """
+        fun main() {
+            val sourceCollection: Collection<Int> = listOf(1, 2, 3)
+            val collectionCopy = sourceCollection.toMutableList()
+            collectionCopy.add(4)
+            println(sourceCollection)
+            println(collectionCopy)
+
+            val sourceIterable: Iterable<Int> = setOf(3, 1, 2)
+            val iterableCopy = sourceIterable.toMutableList()
+            iterableCopy.add(9)
+            println(sourceIterable)
+            println(iterableCopy)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "CollectionIterableToMutableListRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[1, 2, 3]\n[1, 2, 3, 4]\n[3, 1, 2]\n[3, 1, 2, 9]\n")
+        }
+    }
+
     func testCodegenListJoinToStringUsesRuntimeDefaultsAndNamedArguments() throws {
         let source = """
         fun main() {
@@ -1312,6 +1372,30 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(normalizedStdout, "1\nempty\n")
+        }
+    }
+
+    func testCodegenListFilterNotUsesRuntimeHelper() throws {
+        let source = """
+        fun main() {
+            val values = listOf(1, 2, 3, 4)
+            println(values.filterNot { it % 2 == 0 })
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListFilterNotRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[1, 3]\n")
         }
     }
 
@@ -1488,6 +1572,31 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenListElementAtOrNullUsesRuntimeHelper() throws {
+        let source = """
+        fun main() {
+            val list = listOf(10, 20, 30)
+            println(list.elementAtOrNull(1) ?: -1)
+            println(list.elementAtOrNull(5) ?: -1)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListElementAtOrNullRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "20\n-1\n")
+        }
+    }
+
     func testCodegenListAggregateHelpersUseRuntimeHelpers() throws {
         let source = """
         fun main() {
@@ -1498,6 +1607,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             println(list.minOrNull())
             println(list.minOfWithOrNull(reverseOrder<Int>()) { it * 10 })
             println(list.foldRight(0) { value, acc -> value * 10 + acc })
+            println(list.foldIndexed(0) { index, acc, value -> acc + index * value })
         }
         """
 
@@ -1514,6 +1624,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             XCTAssertTrue(callees.contains("kk_list_minOrNull"))
             XCTAssertTrue(callees.contains("kk_list_minOfWithOrNull"))
             XCTAssertTrue(callees.contains("kk_list_foldRight"))
+            XCTAssertTrue(callees.contains("kk_list_foldIndexed"))
         }
     }
 
@@ -1538,6 +1649,30 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(normalizedStdout, "4.0\n")
+        }
+    }
+
+    func testCodegenListMinOrNullReturnsSmallestElementAndNullOnEmpty() throws {
+        let source = """
+        fun main() {
+            println(listOf(5, 2, 3).minOrNull())
+            println(emptyList<Int>().minOrNull() == null)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListMinOrNullRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "2\ntrue\n")
         }
     }
 

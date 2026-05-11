@@ -1052,6 +1052,31 @@ extension DataFlowSemaPhase {
             )
         }
 
+        let isNotEmptyName = interner.intern("isNotEmpty")
+        let isNotEmptyFQName = listFQName + [isNotEmptyName]
+        if symbols.lookup(fqName: isNotEmptyFQName) == nil {
+            let isNotEmptySymbol = symbols.define(
+                kind: .function,
+                name: isNotEmptyName,
+                fqName: isNotEmptyFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: isNotEmptySymbol)
+            symbols.setExternalLinkName("kk_list_is_not_empty", for: isNotEmptySymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: listReceiverType,
+                    parameterTypes: [],
+                    returnType: types.booleanType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: isNotEmptySymbol
+            )
+        }
+
     }
 
     private func registerListToMutableListMember(
@@ -2055,6 +2080,19 @@ extension DataFlowSemaPhase {
 
         registerMember(name: "flatten", parameterTypes: [], externalLinkName: "kk_list_flatten")
 
+        let listPredicateType = types.make(.functionType(FunctionType(
+            params: [listTypeParamType],
+            returnType: types.booleanType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        registerMemberOverload(
+            memberName: interner.intern("filterNot"),
+            memberFQName: listFQName + [interner.intern("filterNot")],
+            parameterTypes: [listPredicateType],
+            externalLinkName: "kk_list_filterNot"
+        )
+
         let destinationCollectionType = types.make(.classType(ClassType(
             classSymbol: collectionInterfaceSymbol,
             args: [.out(listTypeParamType)],
@@ -2334,6 +2372,13 @@ extension DataFlowSemaPhase {
             returnTypeOverride: filterIsInstanceToDestinationType,
             typeParameterSymbols: [listTypeParamSymbol, filterIsInstanceToTypeParamSymbol],
             reifiedTypeParameterIndices: [1]
+        )
+        registerMemberOverload(
+            memberName: interner.intern("filterNotNullTo"),
+            memberFQName: listFQName + [interner.intern("filterNotNullTo")],
+            parameterTypes: [destinationCollectionType],
+            externalLinkName: "kk_list_filterNotNullTo",
+            returnTypeOverride: destinationCollectionType
         )
 
         // chunked(size: Int): List<List<E>> and windowed(size: Int, step: Int): List<List<E>>

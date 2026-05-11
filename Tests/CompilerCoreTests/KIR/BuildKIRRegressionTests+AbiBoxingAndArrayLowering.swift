@@ -148,6 +148,46 @@ extension BuildKIRRegressionTests {
         }
     }
 
+    func testBuildKIRLowersListZipToCollectionRuntimeCall() throws {
+        let source = """
+        fun main(left: List<Int>, right: List<String>) {
+            left.zip(right)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
+
+            XCTAssertTrue(callNames.contains("kk_list_zip"))
+            XCTAssertFalse(callNames.contains("zip"))
+        }
+    }
+
+    func testBuildKIRLowersMapWithDefaultToCollectionRuntimeCall() throws {
+        let source = """
+        fun main(values: Map<Int, Int>) {
+            values.withDefault { it * 10 }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
+
+            XCTAssertTrue(callNames.contains("kk_map_withDefault"))
+            XCTAssertFalse(callNames.contains("withDefault"))
+        }
+    }
+
     func testABILoweringMarksAtomicRuntimeHelpersAsNonThrowing() {
         let pass = ABILoweringPass()
         let interner = StringInterner()

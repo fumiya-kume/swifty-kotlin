@@ -506,12 +506,14 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
 
             let sema = try XCTUnwrap(ctx.sema)
             let expectedExternalLinks = [
+                "filterNot": "kk_list_filterNot",
                 "sumOf": "kk_list_sumOf",
                 "maxOrNull": "kk_list_maxOrNull",
                 "minOrNull": "kk_list_minOrNull",
                 "maxBy": "kk_list_maxBy",
                 "minOfWithOrNull": "kk_list_minOfWithOrNull",
                 "filterNotTo": "kk_list_filterNotTo",
+                "filterNotNullTo": "kk_list_filterNotNullTo",
             ]
 
             for (memberName, externalLinkName) in expectedExternalLinks {
@@ -532,6 +534,40 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                     "Expected \(memberName) to resolve to \(externalLinkName)"
                 )
             }
+        }
+    }
+
+    func testListFilterIsInstanceToUsesRuntimeExternalLink() throws {
+        let source = """
+        fun collect(values: List<Any>, dest: MutableList<String>) {
+            values.filterIsInstanceTo(dest)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected List.filterIsInstanceTo to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "filterIsInstanceTo"
+            })
+            let chosenCallee = try XCTUnwrap(
+                sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                "Expected filterIsInstanceTo to bind to its synthetic runtime callee"
+            )
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_list_filterIsInstanceTo")
+            XCTAssertTrue(
+                sema.bindings.isCollectionExpr(callExpr),
+                "Expected filterIsInstanceTo result to be tracked as a collection expression"
+            )
         }
     }
 
@@ -1521,6 +1557,88 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testAbstractMutableListSurfaceIsRegistered() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let collectionsPkg = ["kotlin", "collections"].map { ctx.interner.intern($0) }
+            let listSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: collectionsPkg + [ctx.interner.intern("List")])
+            )
+            let mutableListSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: collectionsPkg + [ctx.interner.intern("MutableList")])
+            )
+            let abstractMutableListFQName = collectionsPkg + [ctx.interner.intern("AbstractMutableList")]
+            let abstractMutableListSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: abstractMutableListFQName),
+                "Expected kotlin.collections.AbstractMutableList to be registered"
+            )
+            let abstractMutableListInfo = try XCTUnwrap(sema.symbols.symbol(abstractMutableListSymbol))
+            XCTAssertEqual(abstractMutableListInfo.kind, .class)
+            XCTAssertTrue(abstractMutableListInfo.flags.contains(.synthetic))
+            XCTAssertTrue(abstractMutableListInfo.flags.contains(.abstractType))
+            XCTAssertEqual(
+                sema.types.nominalTypeParameterVariances(for: abstractMutableListSymbol),
+                [.invariant]
+            )
+
+            let abstractListSymbol = sema.symbols.lookup(
+                fqName: collectionsPkg + [ctx.interner.intern("AbstractList")]
+            )
+            let readonlySupertype = abstractListSymbol ?? listSymbol
+            let directSupertypes = sema.symbols.directSupertypes(for: abstractMutableListSymbol)
+            XCTAssertTrue(directSupertypes.contains(readonlySupertype))
+            XCTAssertTrue(directSupertypes.contains(mutableListSymbol))
+            XCTAssertEqual(
+                sema.symbols.supertypeTypeArgs(for: abstractMutableListSymbol, supertype: readonlySupertype).count,
+                1
+            )
+            XCTAssertEqual(
+                sema.symbols.supertypeTypeArgs(for: abstractMutableListSymbol, supertype: mutableListSymbol).count,
+                1
+            )
+
+            let constructorSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: abstractMutableListFQName + [ctx.interner.intern("<init>")]),
+                "Expected AbstractMutableList protected constructor to be registered"
+            )
+            let constructorInfo = try XCTUnwrap(sema.symbols.symbol(constructorSymbol))
+            XCTAssertEqual(constructorInfo.kind, .constructor)
+            XCTAssertEqual(constructorInfo.visibility, .protected)
+            XCTAssertTrue(try XCTUnwrap(sema.symbols.functionSignature(for: constructorSymbol)).parameterTypes.isEmpty)
+        }
+    }
+
+    func testAbstractMutableListCanBeUsedAsListAndMutableListSupertype() throws {
+        let source = """
+        import kotlin.collections.AbstractMutableList
+        import kotlin.collections.List
+        import kotlin.collections.MutableList
+
+        class ProbeMutableList : AbstractMutableList<Int>()
+
+        fun acceptReadonly(values: List<Int>) {}
+        fun acceptMutable(values: MutableList<Int>) {}
+
+        fun probe(values: ProbeMutableList) {
+            acceptReadonly(values)
+            acceptMutable(values)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected AbstractMutableList subtype surface to resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     func testAbstractMapSurfaceIsRegistered() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])
@@ -2397,6 +2515,72 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                     )
                 }
             }
+        }
+    }
+
+    func testCollectionToMutableListUsesRuntimeExternalLink() throws {
+        let source = """
+        fun copy(values: Collection<String>) {
+            values.toMutableList()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected Collection.toMutableList to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "toMutableList"
+            })
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_collection_toMutableList")
+
+            let callType = try XCTUnwrap(sema.bindings.exprType(for: callExpr))
+            guard case let .classType(classType) = sema.types.kind(of: callType) else {
+                return XCTFail("Expected Collection.toMutableList to return MutableList")
+            }
+            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(classType.classSymbol)?.name)), "MutableList")
+        }
+    }
+
+    func testIterableToMutableListUsesRuntimeExternalLink() throws {
+        let source = """
+        fun copy(values: Iterable<String>) {
+            values.toMutableList()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected Iterable.toMutableList to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "toMutableList"
+            })
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_iterable_toMutableList")
+
+            let callType = try XCTUnwrap(sema.bindings.exprType(for: callExpr))
+            guard case let .classType(classType) = sema.types.kind(of: callType) else {
+                return XCTFail("Expected Iterable.toMutableList to return MutableList")
+            }
+            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(classType.classSymbol)?.name)), "MutableList")
         }
     }
 
@@ -3430,6 +3614,34 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testListElementAtOrNullUsesRuntimeExternalLink() throws {
+        let source = """
+        fun main() {
+            val list = listOf(1, 2, 3)
+            list.elementAtOrNull(1)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let ast = try XCTUnwrap(ctx.ast)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "elementAtOrNull"
+            })
+            let chosenCallee = try XCTUnwrap(
+                sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                "elementAtOrNull should resolve"
+            )
+            XCTAssertEqual(
+                sema.symbols.externalLinkName(for: chosenCallee),
+                "kk_list_elementAtOrNull"
+            )
+        }
+    }
+
     func testSetMembersUseRuntimeExternalLinks() throws {
         let source = """
         fun check(values: Set<Int>) {
@@ -3779,6 +3991,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                 (mapFQ, "forEach", "kk_map_forEach"),
                 (mapFQ, "map", "kk_map_map"),
                 (mapFQ, "filter", "kk_map_filter"),
+                (mapFQ, "filterNot", "kk_map_filterNot"),
                 (mapFQ, "keys", "kk_map_keys"),
                 (mapFQ, "values", "kk_map_values"),
                 (mapFQ, "entries", "kk_map_entries"),
@@ -4294,6 +4507,67 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             }
             XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(transformListType.classSymbol)?.name)), "List")
             XCTAssertEqual(transformElementType, sema.types.intType)
+        }
+    }
+
+    func testListZipUsesRuntimeExternalLinkAndReturnsPairList() throws {
+        let source = """
+        fun zipValues(values: List<Int>, labels: List<String>) = values.zip(labels)
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected List.zip to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, args, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "zip" && args.count == 1
+            }, "Expected values.zip(labels) call in AST")
+
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_list_zip")
+
+            let callType = try XCTUnwrap(sema.bindings.exprType(for: callExpr))
+            guard case let .classType(listType) = sema.types.kind(of: callType) else {
+                return XCTFail("Expected List.zip to return a List type")
+            }
+            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(listType.classSymbol)?.name)), "List")
+            let pairType: TypeID
+            switch try XCTUnwrap(listType.args.first) {
+            case let .invariant(type), let .out(type), let .in(type):
+                pairType = type
+            case .star:
+                return XCTFail("Expected List.zip to return a concrete Pair projection")
+            }
+            guard case let .classType(pairClassType) = sema.types.kind(of: pairType) else {
+                return XCTFail("Expected List.zip to return List<Pair<Int, String>>, got \(sema.types.kind(of: pairType))")
+            }
+            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(pairClassType.classSymbol)?.name)), "Pair")
+            XCTAssertEqual(pairClassType.args.count, 2)
+
+            let firstArgument: TypeID
+            switch pairClassType.args[0] {
+            case let .invariant(type), let .out(type), let .in(type):
+                firstArgument = type
+            case .star:
+                return XCTFail("Expected concrete Pair first argument")
+            }
+            let secondArgument: TypeID
+            switch pairClassType.args[1] {
+            case let .invariant(type), let .out(type), let .in(type):
+                secondArgument = type
+            case .star:
+                return XCTFail("Expected concrete Pair second argument")
+            }
+            XCTAssertEqual(firstArgument, sema.types.intType)
+            XCTAssertEqual(secondArgument, sema.types.stringType)
         }
     }
 

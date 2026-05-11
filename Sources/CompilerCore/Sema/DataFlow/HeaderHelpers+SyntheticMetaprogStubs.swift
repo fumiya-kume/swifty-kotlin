@@ -273,6 +273,29 @@ extension DataFlowSemaPhase {
             symbols: symbols
         )
 
+        // @Strictfp - marks generated JVM methods/classes for strict floating-point semantics.
+        registerSyntheticJvmAnnotationClass(
+            named: "Strictfp",
+            packageFQName: kotlinJvmPkg,
+            packageSymbol: kotlinJvmPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        attachAnnotationIfNeeded(
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: [
+                    "AnnotationTarget.FUNCTION",
+                    "AnnotationTarget.CONSTRUCTOR",
+                    "AnnotationTarget.PROPERTY_GETTER",
+                    "AnnotationTarget.PROPERTY_SETTER",
+                    "AnnotationTarget.CLASS",
+                ]
+            ),
+            to: kotlinJvmPkg + [interner.intern("Strictfp")],
+            symbols: symbols
+        )
+
         // @Synchronized - marks generated JVM methods as synchronized.
         registerSyntheticJvmAnnotationClass(
             named: "Synchronized",
@@ -291,6 +314,40 @@ extension DataFlowSemaPhase {
                 ]
             ),
             to: kotlinJvmPkg + [interner.intern("Synchronized")],
+            symbols: symbols
+        )
+
+        // @Volatile - marks the JVM backing field as volatile.
+        registerSyntheticJvmAnnotationClass(
+            named: "Volatile",
+            packageFQName: kotlinJvmPkg,
+            packageSymbol: kotlinJvmPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        attachAnnotationIfNeeded(
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: ["AnnotationTarget.FIELD"]
+            ),
+            to: kotlinJvmPkg + [interner.intern("Volatile")],
+            symbols: symbols
+        )
+
+        // @Transient - marks the JVM backing field as transient.
+        registerSyntheticJvmAnnotationClass(
+            named: "Transient",
+            packageFQName: kotlinJvmPkg,
+            packageSymbol: kotlinJvmPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        attachAnnotationIfNeeded(
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: ["AnnotationTarget.FIELD"]
+            ),
+            to: kotlinJvmPkg + [interner.intern("Transient")],
             symbols: symbols
         )
 
@@ -373,6 +430,31 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
         }
+
+        // @JvmInline - marks value classes for JVM inline class ABI.
+        registerSyntheticJvmAnnotationClass(
+            named: "JvmInline",
+            packageFQName: kotlinJvmPkg,
+            packageSymbol: kotlinJvmPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        attachAnnotationIfNeeded(
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: ["AnnotationTarget.CLASS"]
+            ),
+            to: kotlinJvmPkg + [interner.intern("JvmInline")],
+            symbols: symbols
+        )
+        attachAnnotationIfNeeded(
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Retention",
+                arguments: ["AnnotationRetention.BINARY"]
+            ),
+            to: kotlinJvmPkg + [interner.intern("JvmInline")],
+            symbols: symbols
+        )
 
         // kotlin package — ensure built-in metadata annotations are present.
         let kotlinPkg = ensurePackage(

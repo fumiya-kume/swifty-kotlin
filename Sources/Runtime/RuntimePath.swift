@@ -290,6 +290,29 @@ public func kk_path_appendText(
     return pathRaw
 }
 
+@_cdecl("kk_path_copyTo_options")
+public func kk_path_copyTo_options(
+    _ pathRaw: Int,
+    _ targetRaw: Int,
+    _ optionsRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    _ = optionsRaw
+    guard let source = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_copyTo_options received invalid source Path handle")
+    }
+    guard let target = runtimePathBox(from: targetRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_copyTo_options received invalid target Path handle")
+    }
+    do {
+        try FileManager.default.copyItem(atPath: source.pathString, toPath: target.pathString)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return targetRaw
+}
+
 @_cdecl("kk_path_readLines")
 public func kk_path_readLines(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0

@@ -98,6 +98,14 @@ public extension RuntimeABISpec {
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_list_is_not_empty",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_list_iterator",
             parameters: [
                 RuntimeABIParameter(name: "listRaw", type: .intptr),
@@ -2270,6 +2278,15 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         )
+        let filterNotNullToSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_filterNotNullTo",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "destRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
         let filterIsInstanceToSpec = RuntimeABIFunctionSpec(
             name: "kk_list_filterIsInstanceTo",
             parameters: [
@@ -2661,8 +2678,8 @@ public extension RuntimeABISpec {
             + [
                 filterIsInstanceToSpec,
                 filterToSpec, filterNotToSpec, mapToSpec, flatMapToSpec,
-                mapNotNullToSpec, firstNotNullOfSpec, firstNotNullOfOrNullSpec, iterableLastSpec,
-                mapIndexedToSpec, mapIndexedNotNullToSpec, flatMapIndexedToSpec,
+                mapNotNullToSpec, filterNotNullToSpec, firstNotNullOfSpec, firstNotNullOfOrNullSpec,
+                iterableLastSpec, mapIndexedToSpec, mapIndexedNotNullToSpec, flatMapIndexedToSpec,
             ]
             + genericAfter.flatMap { name in
                 if name == "kk_list_sortedBy" {

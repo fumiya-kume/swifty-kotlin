@@ -485,12 +485,40 @@ final class JvmAnnotationSyntheticSurfaceTests: XCTestCase {
         XCTAssertTrue(info.flags.contains(.synthetic))
     }
 
+    func testStrictfpAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "Strictfp"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.jvm.Strictfp must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(info.kind, .annotationClass)
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+    }
+
     func testJvmMultifileClassAnnotationIsRegistered() throws {
         let (sema, interner) = try makeSema()
         let fqName = ["kotlin", "jvm", "JvmMultifileClass"].map { interner.intern($0) }
         let symbol = try XCTUnwrap(
             sema.symbols.lookup(fqName: fqName),
             "kotlin.jvm.JvmMultifileClass must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(info.kind, .annotationClass)
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+    }
+
+    func testJvmInlineAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmInline"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.jvm.JvmInline must be registered"
         )
         let info = try XCTUnwrap(sema.symbols.symbol(symbol))
 
@@ -522,6 +550,43 @@ final class JvmAnnotationSyntheticSurfaceTests: XCTestCase {
 
         @JvmDefaultWithoutCompatibility
         open class BaseService
+        """
+
+        _ = try makeSema(source: source)
+    }
+
+    func testStrictfpCarriesOfficialTargets() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "Strictfp"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName)
+        )
+        let target = try XCTUnwrap(
+            sema.symbols.annotations(for: symbol).first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "Strictfp must carry @Target metadata"
+        )
+
+        XCTAssertEqual(
+            target.arguments,
+            [
+                "AnnotationTarget.FUNCTION",
+                "AnnotationTarget.CONSTRUCTOR",
+                "AnnotationTarget.PROPERTY_GETTER",
+                "AnnotationTarget.PROPERTY_SETTER",
+                "AnnotationTarget.CLASS",
+            ]
+        )
+    }
+
+    func testStrictfpResolvesOnClassAndFunction() throws {
+        let source = """
+        import kotlin.jvm.Strictfp
+
+        @Strictfp
+        class MathHost {
+            @Strictfp
+            fun sum(a: Double, b: Double): Double = a + b
+        }
         """
 
         _ = try makeSema(source: source)
@@ -647,6 +712,45 @@ final class JvmAnnotationSyntheticSurfaceTests: XCTestCase {
         _ = try makeSema(source: source)
     }
 
+    func testVolatileAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "Volatile"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.jvm.Volatile must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(info.kind, .annotationClass)
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+    }
+
+    func testVolatileCarriesFieldTarget() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "Volatile"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let target = try XCTUnwrap(
+            sema.symbols.annotations(for: symbol).first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "Volatile must carry @Target metadata"
+        )
+
+        XCTAssertEqual(target.arguments, ["AnnotationTarget.FIELD"])
+    }
+
+    func testVolatileResolvesOnFieldTargetedProperty() throws {
+        let source = """
+        import kotlin.jvm.Volatile
+
+        class SharedState {
+            @field:Volatile
+            var ready: Boolean = false
+        }
+        """
+
+        _ = try makeSema(source: source)
+    }
+
     func testImplicitlyActualizedByJvmDeclarationAnnotationIsRegistered() throws {
         let (sema, interner) = try makeSema()
         let fqName = ["kotlin", "jvm", "ImplicitlyActualizedByJvmDeclaration"].map { interner.intern($0) }
@@ -688,6 +792,36 @@ final class JvmAnnotationSyntheticSurfaceTests: XCTestCase {
 
         @ImplicitlyActualizedByJvmDeclaration
         class JavaBacked
+        """
+
+        _ = try makeSema(source: source)
+    }
+
+    func testJvmInlineCarriesClassTargetAndBinaryRetention() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmInline"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let annotations = sema.symbols.annotations(for: symbol)
+
+        let target = try XCTUnwrap(
+            annotations.first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "JvmInline must carry @Target metadata"
+        )
+        XCTAssertEqual(target.arguments, ["AnnotationTarget.CLASS"])
+
+        let retention = try XCTUnwrap(
+            annotations.first { $0.annotationFQName == "kotlin.annotation.Retention" },
+            "JvmInline must carry @Retention metadata"
+        )
+        XCTAssertEqual(retention.arguments, ["AnnotationRetention.BINARY"])
+    }
+
+    func testJvmInlineResolvesOnValueClass() throws {
+        let source = """
+        import kotlin.jvm.JvmInline
+
+        @JvmInline
+        value class UserId(val raw: Int)
         """
 
         _ = try makeSema(source: source)

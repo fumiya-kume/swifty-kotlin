@@ -1286,6 +1286,22 @@ extension CallLowerer {
         return symbolName == "Iterable" || symbolName == "Collection"
     }
 
+    private func toMutableListRuntimeCalleeForSequenceOrIterableFallback(
+        chosenCallee: SymbolID?,
+        useIterableFallback: Bool,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> InternedString {
+        if useIterableFallback,
+           let chosenCallee,
+           let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
+           externalLinkName == "kk_collection_toMutableList" || externalLinkName == "kk_iterable_toMutableList"
+        {
+            return interner.intern(externalLinkName)
+        }
+        return interner.intern(useIterableFallback ? "kk_iterable_toMutableList" : "kk_sequence_toMutableList")
+    }
+
     private func isGroupingLikeType(
         _ receiverType: TypeID,
         sema: SemaModule,
@@ -4753,7 +4769,12 @@ extension CallLowerer {
                 case averageID:
                     interner.intern("kk_sequence_average")
                 case toMutableListID:
-                    interner.intern("kk_sequence_toMutableList")
+                    toMutableListRuntimeCalleeForSequenceOrIterableFallback(
+                        chosenCallee: sema.bindings.callBindings[exprID]?.chosenCallee,
+                        useIterableFallback: useIterableRuntimeForTerminalFallback,
+                        sema: sema,
+                        interner: interner
+                    )
                 case toMutableSetID:
                     interner.intern("kk_sequence_toMutableSet")
                 case toHashSetID:
@@ -8395,6 +8416,8 @@ extension CallLowerer {
                 return interner.intern("kk_list_none")
             case "onEach":
                 return interner.intern("kk_list_onEach")
+            case "onEachIndexed":
+                return interner.intern("kk_list_onEachIndexed")
             case "partition":
                 return interner.intern("kk_list_partition")
             case "zipWithNext":
@@ -8689,6 +8712,8 @@ extension CallLowerer {
             return interner.intern("kk_list_none")
         case "onEach":
             return interner.intern("kk_list_onEach")
+        case "onEachIndexed":
+            return interner.intern("kk_list_onEachIndexed")
         case "firstOrNull":
             return interner.intern("kk_list_firstOrNull")
         case "lastOrNull":
@@ -8933,7 +8958,12 @@ extension CallLowerer {
             case interner.intern("toCollection"):
                 return interner.intern("kk_sequence_toCollection")
             case interner.intern("toMutableList"):
-                return interner.intern("kk_sequence_toMutableList")
+                return toMutableListRuntimeCalleeForSequenceOrIterableFallback(
+                    chosenCallee: nil,
+                    useIterableFallback: useIterableRuntimeForCollectionFallback,
+                    sema: sema,
+                    interner: interner
+                )
             case interner.intern("toMutableSet"):
                 return interner.intern("kk_sequence_toMutableSet")
             case interner.intern("toHashSet"):
@@ -8981,7 +9011,12 @@ extension CallLowerer {
         sema: SemaModule,
         interner: StringInterner
     ) -> InternedString? {
-        guard memberName == "size" || memberName == "isEmpty" || memberName == "firstNotNullOf" || memberName == "firstNotNullOfOrNull" || memberName == "requireNoNulls",
+        guard memberName == "size"
+              || memberName == "isEmpty"
+              || memberName == "isNotEmpty"
+              || memberName == "firstNotNullOf"
+              || memberName == "firstNotNullOfOrNull"
+              || memberName == "requireNoNulls",
               case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
               let symbol = sema.symbols.symbol(classType.classSymbol)
         else {
@@ -9013,6 +9048,13 @@ extension CallLowerer {
                 return interner.intern("kk_array_is_empty")
             case .list?, .collection?:
                 return interner.intern("kk_list_is_empty")
+            default:
+                break
+            }
+        case "isNotEmpty":
+            switch knownNames.collectionKind(of: symbol) {
+            case .list?, .collection?:
+                return interner.intern("kk_list_is_not_empty")
             default:
                 break
             }
