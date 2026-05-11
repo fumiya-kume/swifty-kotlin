@@ -1179,7 +1179,7 @@
 - [x] STDLIB-JVM-TYPE-014: `kotlin.jvm.Synchronized` annotation を追加する
 - [x] STDLIB-JVM-TYPE-015: `kotlin.jvm.Throws` annotation を追加する
 - [ ] STDLIB-JVM-TYPE-016: `kotlin.jvm.Transient` annotation を追加する
-- [ ] STDLIB-JVM-TYPE-017: `kotlin.jvm.Volatile` annotation を追加する
+- [x] STDLIB-JVM-TYPE-017: `kotlin.jvm.Volatile` annotation を追加する
 - [x] STDLIB-JVM-PROP-001: `Annotation.annotationClass` extension property を追加する
 - [ ] STDLIB-JVM-PROP-002: `Enum.declaringJavaClass` extension property を追加する
 - [ ] STDLIB-JVM-PROP-003: `KClass<T>.java` extension property を追加する
