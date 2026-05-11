@@ -1218,7 +1218,7 @@
 - [x] STDLIB-JS-TYPE-018: `kotlin.js.JsExternalArgument` annotation を追加する
 - [x] STDLIB-JS-TYPE-019: `kotlin.js.JsExternalInheritorsOnly` annotation を追加する
 - [ ] STDLIB-JS-TYPE-020: `kotlin.js.JsFileName` annotation を追加する
-- [ ] STDLIB-JS-TYPE-021: `kotlin.js.JsFun` annotation を追加する
+- [x] STDLIB-JS-TYPE-021: `kotlin.js.JsFun` annotation を追加する
 - [x] STDLIB-JS-TYPE-022: `kotlin.js.JsModule` annotation を追加する
 - [x] STDLIB-JS-TYPE-023: `kotlin.js.JsName` annotation を追加する
 - [x] STDLIB-JS-TYPE-024: `kotlin.js.JsNonModule` annotation を追加する
