@@ -813,6 +813,28 @@ final class ExperimentalMarkerStubTests: XCTestCase {
         )
     }
 
+    func testExperimentalJsExportEmitsWarningOnUse() {
+        let source = """
+        import kotlin.js.ExperimentalJsExport
+
+        @ExperimentalJsExport
+        @Target(AnnotationTarget.FUNCTION)
+        annotation class UsesExperimentalJsExport
+
+        @UsesExperimentalJsExport
+        fun exported(): Int = 1
+
+        fun callExported(): Int = exported()
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = ctx.diagnostics.diagnostics.filter { $0.code == "KSWIFTK-SEMA-OPT-IN" }
+        XCTAssertTrue(
+            diagnostics.contains { $0.severity == .warning },
+            "Expected ExperimentalJsExport use to emit an opt-in warning, got \(ctx.diagnostics.diagnostics)"
+        )
+    }
+
     // MARK: - ExperimentalJsFileName (kotlin.js, WARNING)
 
     func testExperimentalJsFileNameIsRegistered() throws {

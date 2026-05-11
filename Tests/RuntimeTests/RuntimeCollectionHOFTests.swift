@@ -403,6 +403,22 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(kk_list_minOrNull(makeList([])), runtimeNullSentinelInt)
     }
 
+    func testMaxByOrNullReturnsElementWithLargestSelectorAndNullForEmpty() {
+        var thrown = 0
+        let source = makeList([3, 1, 4, 2])
+        let result = kk_list_maxByOrNull(source, unsafeBitCast(maxByNegativeValue, to: Int.self), 0, &thrown)
+
+        XCTAssertEqual(result, 1)
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        XCTAssertEqual(
+            kk_list_maxByOrNull(makeList([]), unsafeBitCast(maxByNegativeValue, to: Int.self), 0, &thrown),
+            runtimeNullSentinelInt
+        )
+        XCTAssertEqual(thrown, 0)
+    }
+
     func testListElementAtReturnsElementAndThrowsWhenOutOfBounds() {
         let source = makeList([10, 20, 30])
 
