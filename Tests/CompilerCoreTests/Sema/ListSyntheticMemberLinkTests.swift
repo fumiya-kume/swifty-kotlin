@@ -3497,6 +3497,34 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testListElementAtOrNullUsesRuntimeExternalLink() throws {
+        let source = """
+        fun main() {
+            val list = listOf(1, 2, 3)
+            list.elementAtOrNull(1)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let ast = try XCTUnwrap(ctx.ast)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "elementAtOrNull"
+            })
+            let chosenCallee = try XCTUnwrap(
+                sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                "elementAtOrNull should resolve"
+            )
+            XCTAssertEqual(
+                sema.symbols.externalLinkName(for: chosenCallee),
+                "kk_list_elementAtOrNull"
+            )
+        }
+    }
+
     func testSetMembersUseRuntimeExternalLinks() throws {
         let source = """
         fun check(values: Set<Int>) {
