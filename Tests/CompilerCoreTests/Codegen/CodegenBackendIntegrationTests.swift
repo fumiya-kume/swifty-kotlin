@@ -1326,6 +1326,34 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenIterableToMutableSetDeduplicatesAndReturnsIndependentCopy() throws {
+        let source = """
+        fun main() {
+            val sourceIterable: Iterable<Int> = listOf(3, 1, 2, 1)
+            val mutableSet = sourceIterable.toMutableSet()
+            mutableSet.add(9)
+            println(sourceIterable)
+            println(mutableSet)
+            println(mutableSet.contains(1))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "IterableToMutableSetRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[3, 1, 2, 1]\n[3, 1, 2, 9]\ntrue\n")
+        }
+    }
+
     func testCodegenListJoinToStringUsesRuntimeDefaultsAndNamedArguments() throws {
         let source = """
         fun main() {
