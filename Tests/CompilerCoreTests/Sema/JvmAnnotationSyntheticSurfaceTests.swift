@@ -654,6 +654,9 @@ final class JvmAnnotationSyntheticSurfaceTests: XCTestCase {
 
         @ImplicitlyActualizedByJvmDeclaration
         class JavaBacked
+        """
+
+        _ = try makeSema(source: source)
     }
 
     func testJvmInlineCarriesClassTargetAndBinaryRetention() throws {
