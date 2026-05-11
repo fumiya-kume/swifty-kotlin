@@ -125,6 +125,16 @@ private let maxWithOrNullNaturalComparator: @convention(c) (Int, Int, Int, Unsaf
     return 0
 }
 
+private let reverseIntComparator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, lhs, rhs, _ in
+    if lhs > rhs {
+        return -1
+    }
+    if lhs < rhs {
+        return 1
+    }
+    return 0
+}
+
 private let sumByDoubleWeightedTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     kk_double_to_bits(value == 2 ? 1.5 : 0.25)
 }
