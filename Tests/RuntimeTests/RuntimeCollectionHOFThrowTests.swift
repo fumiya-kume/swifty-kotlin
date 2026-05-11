@@ -113,7 +113,7 @@ private func makeList(_ elements: [Int]) -> Int {
     let array = kk_array_new(elements.count)
     var thrown = 0
     for (index, element) in elements.enumerated() {
-        _ = _ = kk_array_set(array, index, element, &thrown)
+        _ = kk_array_set(array, index, element, &thrown)
         XCTAssertEqual(thrown, 0)
     }
     return kk_list_of(array, elements.count)
@@ -163,9 +163,9 @@ final class RuntimeCollectionHOFThrowTests: XCTestCase {
     func testListMapThrows() {
         let array = kk_array_new(3)
         var thrown = 0
-        _ = _ = kk_array_set(array, 0, 1, &thrown)
-        _ = _ = kk_array_set(array, 1, 2, &thrown)
-        _ = _ = kk_array_set(array, 2, 3, &thrown)
+        _ = kk_array_set(array, 0, 1, &thrown)
+        _ = kk_array_set(array, 1, 2, &thrown)
+        _ = kk_array_set(array, 2, 3, &thrown)
         let listWithData = kk_list_of(array, 3)
         
         var outThrown = 0
@@ -178,7 +178,7 @@ final class RuntimeCollectionHOFThrowTests: XCTestCase {
     func testListFilterThrows() {
         let array = kk_array_new(1)
         var thrown = 0
-        _ = _ = kk_array_set(array, 0, 1, &thrown)
+        _ = kk_array_set(array, 0, 1, &thrown)
         let list = kk_list_of(array, 1)
         
         var outThrown = 0
@@ -191,7 +191,7 @@ final class RuntimeCollectionHOFThrowTests: XCTestCase {
     func testListForEachThrows() {
         let array = kk_array_new(1)
         var thrown = 0
-        _ = _ = kk_array_set(array, 0, 1, &thrown)
+        _ = kk_array_set(array, 0, 1, &thrown)
         let list = kk_list_of(array, 1)
         
         var outThrown = 0
@@ -204,7 +204,7 @@ final class RuntimeCollectionHOFThrowTests: XCTestCase {
     func testArrayMapThrows() {
         let array = kk_array_new(1)
         var thrown = 0
-        _ = _ = kk_array_set(array, 0, 1, &thrown)
+        _ = kk_array_set(array, 0, 1, &thrown)
         
         var outThrown = 0
         let result = kk_array_map(array, unsafeBitCast(lambdaThatThrows, to: Int.self), 0, &outThrown)
@@ -299,7 +299,7 @@ final class RuntimeCollectionHOFThrowTests: XCTestCase {
     func testListFoldThrows() {
         let array = kk_array_new(1)
         var thrown = 0
-        _ = _ = kk_array_set(array, 0, 1, &thrown)
+        _ = kk_array_set(array, 0, 1, &thrown)
         let list = kk_list_of(array, 1)
         
         var outThrown = 0
@@ -357,9 +357,9 @@ final class RuntimeCollectionHOFThrowTests: XCTestCase {
     func testGroupingByEachCountThrows() {
         let array = kk_array_new(3)
         var thrown = 0
-        _ = _ = kk_array_set(array, 0, 1, &thrown)
-        _ = _ = kk_array_set(array, 1, 2, &thrown)
-        _ = _ = kk_array_set(array, 2, 3, &thrown)
+        _ = kk_array_set(array, 0, 1, &thrown)
+        _ = kk_array_set(array, 1, 2, &thrown)
+        _ = kk_array_set(array, 2, 3, &thrown)
         let list = kk_list_of(array, 3)
         let grouping = kk_list_groupingBy(list, unsafeBitCast(groupingByThrowingLambda, to: Int.self), 0)
 
@@ -373,9 +373,9 @@ final class RuntimeCollectionHOFThrowTests: XCTestCase {
     func testGroupingReduceToThrows() {
         let array = kk_array_new(3)
         var thrown = 0
-        _ = _ = kk_array_set(array, 0, 1, &thrown)
-        _ = _ = kk_array_set(array, 1, 2, &thrown)
-        _ = _ = kk_array_set(array, 2, 3, &thrown)
+        _ = kk_array_set(array, 0, 1, &thrown)
+        _ = kk_array_set(array, 1, 2, &thrown)
+        _ = kk_array_set(array, 2, 3, &thrown)
         let list = kk_list_of(array, 3)
         let grouping = kk_list_groupingBy(list, unsafeBitCast(throwingGroupByParity, to: Int.self), 0)
         let dest = registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
@@ -451,9 +451,9 @@ final class RuntimeCollectionHOFThrowTests: XCTestCase {
     func testGroupingByEachCountToThrows() {
         let array = kk_array_new(3)
         var thrown = 0
-        _ = _ = kk_array_set(array, 0, 1, &thrown)
-        _ = _ = kk_array_set(array, 1, 2, &thrown)
-        _ = _ = kk_array_set(array, 2, 3, &thrown)
+        _ = kk_array_set(array, 0, 1, &thrown)
+        _ = kk_array_set(array, 1, 2, &thrown)
+        _ = kk_array_set(array, 2, 3, &thrown)
         let list = kk_list_of(array, 3)
         let grouping = kk_list_groupingBy(list, unsafeBitCast(groupingByThrowingLambda, to: Int.self), 0)
         let dest = registerRuntimeObject(RuntimeMapBox(keys: [], values: []))

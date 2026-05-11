@@ -59,7 +59,7 @@ final class RuntimeKTypeReflectionTests: IsolatedRuntimeXCTestCase {
             let array = kk_array_new(arguments.count)
             var thrown = 0
             for (index, argument) in arguments.enumerated() {
-                _ = _ = kk_array_set(array, index, argument, &thrown)
+                _ = kk_array_set(array, index, argument, &thrown)
                 XCTAssertEqual(thrown, 0)
             }
             argsRaw = kk_list_of(array, arguments.count)
