@@ -390,6 +390,31 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // @JvmInline - marks value classes for JVM inline class ABI.
+        registerSyntheticJvmAnnotationClass(
+            named: "JvmInline",
+            packageFQName: kotlinJvmPkg,
+            packageSymbol: kotlinJvmPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        attachAnnotationIfNeeded(
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: ["AnnotationTarget.CLASS"]
+            ),
+            to: kotlinJvmPkg + [interner.intern("JvmInline")],
+            symbols: symbols
+        )
+        attachAnnotationIfNeeded(
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Retention",
+                arguments: ["AnnotationRetention.BINARY"]
+            ),
+            to: kotlinJvmPkg + [interner.intern("JvmInline")],
+            symbols: symbols
+        )
+
         // kotlin package — ensure built-in metadata annotations are present.
         let kotlinPkg = ensurePackage(
             path: ["kotlin"],
