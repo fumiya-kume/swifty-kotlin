@@ -3792,6 +3792,7 @@ extension CallLowerer {
             }
         }
 
+ 
         // String stdlib: replaceFirst(oldValue, newValue) (STDLIB-188)
         // Skip when first arg is a Regex — handled by the STDLIB-REGEX-094 block below.
         if args.count == 2, interner.resolve(calleeName) == "replaceFirst" {
@@ -4378,8 +4379,8 @@ extension CallLowerer {
                         instructions.append(.constValue(result: kindExpr, value: .intLiteral(Int64(primitiveSelectorKind.rawValue))))
                         callArguments.append(kindExpr)
                     }
-                    let canThrow = runtimeCallee == "kk_list_elementAt"
-                        || runtimeCallee == "kk_list_distinctBy"
+                let canThrow = runtimeCallee == "kk_list_elementAt"
+                    || runtimeCallee == "kk_list_distinctBy"
                         || runtimeCallee == "kk_list_minBy"
                         || runtimeCallee == "kk_list_min"
                     instructions.append(.call(
@@ -8472,6 +8473,8 @@ extension CallLowerer {
                 default:
                     break
                 }
+            case "reduceIndexed":
+                return interner.intern("kk_list_reduceIndexed")
             case "reduceIndexedOrNull":
                 return interner.intern("kk_list_reduceIndexedOrNull")
             case "foldRight":
@@ -9038,7 +9041,8 @@ extension CallLowerer {
               || memberName == "firstNotNullOf"
               || memberName == "firstNotNullOfOrNull"
               || memberName == "requireNoNulls"
-              || memberName == "reduceRight",
+              || memberName == "reduceRight"
+              || memberName == "reduceIndexed",
               case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
               let symbol = sema.symbols.symbol(classType.classSymbol)
         else {
@@ -9111,9 +9115,24 @@ extension CallLowerer {
                         interner.intern("kotlin"),
                         interner.intern("collections"),
                         interner.intern("Iterable"),
-                ]
+                    ]
                 {
                     return interner.intern("kk_list_reduceRight")
+                }
+            }
+        case "reduceIndexed":
+            switch knownNames.collectionKind(of: symbol) {
+            case .list?, .set?, .collection?:
+                return interner.intern("kk_list_reduceIndexed")
+            default:
+                if symbol.name == interner.intern("Iterable")
+                    || symbol.fqName == [
+                        interner.intern("kotlin"),
+                        interner.intern("collections"),
+                        interner.intern("Iterable"),
+                    ]
+                {
+                    return interner.intern("kk_list_reduceIndexed")
                 }
             }
         default:
