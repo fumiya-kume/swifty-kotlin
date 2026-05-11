@@ -249,6 +249,29 @@ extension DataFlowSemaPhase {
             symbols: symbols
         )
 
+        // @Strictfp - marks generated JVM methods/classes for strict floating-point semantics.
+        registerSyntheticJvmAnnotationClass(
+            named: "Strictfp",
+            packageFQName: kotlinJvmPkg,
+            packageSymbol: kotlinJvmPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        attachAnnotationIfNeeded(
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.annotation.Target",
+                arguments: [
+                    "AnnotationTarget.FUNCTION",
+                    "AnnotationTarget.CONSTRUCTOR",
+                    "AnnotationTarget.PROPERTY_GETTER",
+                    "AnnotationTarget.PROPERTY_SETTER",
+                    "AnnotationTarget.CLASS",
+                ]
+            ),
+            to: kotlinJvmPkg + [interner.intern("Strictfp")],
+            symbols: symbols
+        )
+
         // @Synchronized - marks generated JVM methods as synchronized.
         registerSyntheticJvmAnnotationClass(
             named: "Synchronized",

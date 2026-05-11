@@ -1175,7 +1175,7 @@
 - [x] STDLIB-JVM-TYPE-010: `kotlin.jvm.JvmSuppressWildcards` annotation を追加する
 - [ ] STDLIB-JVM-TYPE-011: `kotlin.jvm.JvmSynthetic` annotation を追加する
 - [x] STDLIB-JVM-TYPE-012: `kotlin.jvm.JvmWildcard` annotation を追加する
-- [ ] STDLIB-JVM-TYPE-013: `kotlin.jvm.Strictfp` annotation を追加する
+- [x] STDLIB-JVM-TYPE-013: `kotlin.jvm.Strictfp` annotation を追加する
 - [x] STDLIB-JVM-TYPE-014: `kotlin.jvm.Synchronized` annotation を追加する
 - [x] STDLIB-JVM-TYPE-015: `kotlin.jvm.Throws` annotation を追加する
 - [ ] STDLIB-JVM-TYPE-016: `kotlin.jvm.Transient` annotation を追加する

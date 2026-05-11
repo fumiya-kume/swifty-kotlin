@@ -485,6 +485,20 @@ final class JvmAnnotationSyntheticSurfaceTests: XCTestCase {
         XCTAssertTrue(info.flags.contains(.synthetic))
     }
 
+    func testStrictfpAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "Strictfp"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.jvm.Strictfp must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(info.kind, .annotationClass)
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+    }
+
     func testJvmMultifileClassAnnotationIsRegistered() throws {
         let (sema, interner) = try makeSema()
         let fqName = ["kotlin", "jvm", "JvmMultifileClass"].map { interner.intern($0) }
@@ -522,6 +536,43 @@ final class JvmAnnotationSyntheticSurfaceTests: XCTestCase {
 
         @JvmDefaultWithoutCompatibility
         open class BaseService
+        """
+
+        _ = try makeSema(source: source)
+    }
+
+    func testStrictfpCarriesOfficialTargets() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "Strictfp"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName)
+        )
+        let target = try XCTUnwrap(
+            sema.symbols.annotations(for: symbol).first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "Strictfp must carry @Target metadata"
+        )
+
+        XCTAssertEqual(
+            target.arguments,
+            [
+                "AnnotationTarget.FUNCTION",
+                "AnnotationTarget.CONSTRUCTOR",
+                "AnnotationTarget.PROPERTY_GETTER",
+                "AnnotationTarget.PROPERTY_SETTER",
+                "AnnotationTarget.CLASS",
+            ]
+        )
+    }
+
+    func testStrictfpResolvesOnClassAndFunction() throws {
+        let source = """
+        import kotlin.jvm.Strictfp
+
+        @Strictfp
+        class MathHost {
+            @Strictfp
+            fun sum(a: Double, b: Double): Double = a + b
+        }
         """
 
         _ = try makeSema(source: source)
