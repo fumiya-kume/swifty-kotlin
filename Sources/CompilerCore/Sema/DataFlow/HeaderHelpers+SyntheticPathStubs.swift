@@ -20,6 +20,7 @@
 /// - `Path.absolute(): Path` extension function
 /// - `Path.relativeToOrSelf(base: Path): Path` extension function
 /// - `Path.relativeTo(base: Path): Path` extension function
+/// - `Path.readSymbolicLink(): Path` extension function
 /// - `Path.invariantSeparatorsPathString: String` extension property
 /// - `Path.writeBytes(array: ByteArray, vararg options: OpenOption)` extension function
 /// - `readBytes(): ByteArray`, `readText(): String`, `writeText(text: String)`, `readLines(): List<String>`
@@ -470,6 +471,16 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerPathExtensionFunction(
+            named: "readSymbolicLink",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [],
+            returnType: pathType,
+            externalLinkName: "kk_path_readSymbolicLink",
+            symbols: symbols,
+            interner: interner
+        )
 
         registerPathExtensionProperty(
             named: "invariantSeparatorsPath",

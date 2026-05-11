@@ -623,6 +623,52 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathReadSymbolicLinkExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import kotlin.io.path.Path
+        import kotlin.io.path.readSymbolicLink
+
+        fun readLinkTarget(path: Path): Path {
+            return path.readSymbolicLink()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.readSymbolicLink extension function in kotlin.io.path should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let readSymbolicLinkSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "readSymbolicLink"].map(interner.intern))
+            let readSymbolicLink = try XCTUnwrap(readSymbolicLinkSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes.isEmpty
+                    && signature.returnType == pathType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: readSymbolicLink), "kk_path_readSymbolicLink")
+
+            let signature = try XCTUnwrap(symbols.functionSignature(for: readSymbolicLink))
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [])
+            XCTAssertEqual(signature.valueParameterIsVararg, [])
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let callExprs = memberCallExprIDs(named: "readSymbolicLink", in: ast, interner: interner)
+
+            XCTAssertEqual(callExprs.count, 1)
+            XCTAssertEqual(sema.bindings.callBinding(for: callExprs[0])?.chosenCallee, readSymbolicLink)
+            XCTAssertEqual(sema.bindings.exprTypes[callExprs[0]], pathType)
+        }
+    }
+
     func testPathRelativeToOrSelfExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import kotlin.io.path.Path
