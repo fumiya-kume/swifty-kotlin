@@ -1912,6 +1912,30 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenMapFilterValuesReturnsFilteredEntries() throws {
+        let source = """
+        fun main() {
+            val values = mapOf("a" to 1, "b" to 2, "c" to 3)
+            println(values.filterValues { it % 2 == 0 })
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "MapFilterValuesRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "{b=2}\n")
+        }
+    }
+
     func testCodegenMapHigherOrderHelpersUseRuntimeHelpers() throws {
         let source = """
         fun main() {

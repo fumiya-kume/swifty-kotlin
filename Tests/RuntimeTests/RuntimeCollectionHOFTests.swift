@@ -1335,6 +1335,11 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(mapKeys(filtered), [1, 3])
         XCTAssertEqual(kk_map_get(filtered, 1), 10)
         XCTAssertEqual(kk_map_get(filtered, 3), 32)
+
+        let filteredValues = kk_map_filterValues(map, unsafeBitCast(countEven, to: Int.self), 0, nil)
+        XCTAssertEqual(mapKeys(filteredValues), [1, 3])
+        XCTAssertEqual(kk_map_get(filteredValues, 1), 10)
+        XCTAssertEqual(kk_map_get(filteredValues, 3), 32)
     }
 
     func testMapFilterKeysPassesOnlyKeysToPredicate() {

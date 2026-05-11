@@ -3822,6 +3822,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                 (mapFQ, "mapKeys", "kk_map_mapKeys"),
                 (mapFQ, "mapKeysTo", "kk_map_mapKeysTo"),
                 (mapFQ, "filterKeys", "kk_map_filterKeys"),
+                (mapFQ, "filterValues", "kk_map_filterValues"),
                 (mapFQ, "getValue", "kk_map_getValue"),
                 (mapFQ, "withDefault", "kk_map_withDefault"),
                 (mapFQ, "toList", "kk_map_toList"),
