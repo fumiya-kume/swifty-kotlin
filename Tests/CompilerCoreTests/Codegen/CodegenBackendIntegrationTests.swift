@@ -627,6 +627,38 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenCollectionContainsAndContainsAllUseRuntimeHelpers() throws {
+        let source = """
+        fun main() {
+            val list = listOf(1, 2, 3)
+            println(list.contains(2))
+            println(list.contains(9))
+            println(list.containsAll(listOf(1, 3)))
+            println(list.containsAll(listOf(1, 9)))
+
+            val set = setOf("a", "b")
+            println(set.contains("a"))
+            println(set.containsAll(listOf("a", "b")))
+            println(set.containsAll(listOf("a", "c")))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "CollectionContainsRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "true\nfalse\ntrue\nfalse\ntrue\ntrue\nfalse\n")
+        }
+    }
+
     func testCodegenMutableListRemoveFirstOrNullUsesCanonicalDiffCase() throws {
         let root = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent() // Codegen/
