@@ -636,6 +636,7 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+
     func testPathWalkOptionInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import kotlin.io.path.PathWalkOption

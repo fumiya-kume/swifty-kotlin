@@ -439,6 +439,7 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+
         registerPathExtensionProperty(
             named: "invariantSeparatorsPath",
             packageFQName: kotlinIOPathPkg,
