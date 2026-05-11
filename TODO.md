@@ -197,7 +197,7 @@
 - [x] STDLIB-COL-FN-123: `mapValuesTo` 関数の実装
 - [ ] STDLIB-COL-FN-124: `max` 関数の実装
 - [x] STDLIB-COL-FN-125: `maxBy` 関数の実装
-- [ ] STDLIB-COL-FN-126: `maxByOrNull` 関数の実装
+- [x] STDLIB-COL-FN-126: `maxByOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-127: `maxOf` 関数の実装
 - [ ] STDLIB-COL-FN-128: `maxOfOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-129: `maxOfWith` 関数の実装
