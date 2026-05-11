@@ -72,6 +72,7 @@ extension ABIMismatchTests {
             "kk_list_zipWithNextTransform",
             "kk_list_withIndex",
             "kk_list_zip",
+            "kk_map_withDefault",
             "kk_string_hexToShort",
             "kk_string_hexToUByte",
             "kk_string_hexToUByteArray",
