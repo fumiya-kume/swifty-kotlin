@@ -2,22 +2,6 @@ import Foundation
 
 // MARK: - Sequence Functions (STDLIB-003)
 
-/// Resolve a raw integer handle to a registered runtime object of the given type.
-/// Returns nil if the handle is zero/null, not a registered object pointer, or
-/// points to an object of a different type.
-func resolveRuntimeHandle<T: AnyObject>(_ rawValue: Int, as _: T.Type) -> T? {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
-        return nil
-    }
-    let isObjectPointer = runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: ptr))
-    }
-    guard isObjectPointer else {
-        return nil
-    }
-    return tryCast(ptr, to: T.self)
-}
-
 func runtimeSequenceBox(from rawValue: Int) -> RuntimeSequenceBox? {
     resolveRuntimeHandle(rawValue, as: RuntimeSequenceBox.self)
 }

@@ -1203,27 +1203,9 @@ public func kk_ulong_range_toULongArray(_ rangeRaw: Int) -> Int {
 
 
 private func runtimeRangeIteratorBox(from rawValue: Int) -> RuntimeRangeIteratorBox? {
-    guard let pointer = UnsafeMutableRawPointer(bitPattern: rawValue) else {
-        return nil
-    }
-    let isObjectPointer = runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: pointer))
-    }
-    guard isObjectPointer else {
-        return nil
-    }
-    return tryCast(pointer, to: RuntimeRangeIteratorBox.self)
+    resolveRuntimeHandle(rawValue, as: RuntimeRangeIteratorBox.self)
 }
 
 private func runtimeIteratorBuilderBox(from rawValue: Int) -> RuntimeIteratorBuilderBox? {
-    guard let pointer = UnsafeMutableRawPointer(bitPattern: rawValue) else {
-        return nil
-    }
-    let isObjectPointer = runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: pointer))
-    }
-    guard isObjectPointer else {
-        return nil
-    }
-    return tryCast(pointer, to: RuntimeIteratorBuilderBox.self)
+    resolveRuntimeHandle(rawValue, as: RuntimeIteratorBuilderBox.self)
 }
