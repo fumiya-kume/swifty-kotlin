@@ -15,6 +15,7 @@
 /// - `getName(index: Int): Path`
 /// - `Path.name: String` extension property
 /// - `Path.appendText(text: CharSequence, charset)` extension function
+/// - `Path.copyTo(target: Path, options)` extension function
 /// - `Path.invariantSeparatorsPath: String` extension property
 /// - `Path.absolute(): Path` extension function
 /// - `Path.invariantSeparatorsPathString: String` extension property
@@ -120,6 +121,24 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(charsetType, for: charsetSymbol)
+
+        let copyOptionPkg = ensurePackage(path: ["java", "nio", "file"], symbols: symbols, interner: interner)
+        let copyOptionPkgSymbol = symbols.lookup(fqName: copyOptionPkg)
+        let copyOptionSymbol = ensureInterfaceSymbol(
+            named: "CopyOption",
+            in: copyOptionPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let copyOptionPkgSymbol {
+            symbols.setParentSymbol(copyOptionPkgSymbol, for: copyOptionSymbol)
+        }
+        let copyOptionType = types.make(.classType(ClassType(
+            classSymbol: copyOptionSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(copyOptionType, for: copyOptionSymbol)
 
         let openOptionSymbol = ensureInterfaceSymbol(
             named: "OpenOption",
@@ -743,6 +762,18 @@ extension DataFlowSemaPhase {
             parameters: [("text", charSequenceType), ("charset", charsetType)],
             returnType: pathType,
             externalLinkName: "kk_path_appendText",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "copyTo",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("target", pathType), ("options", copyOptionType)],
+            returnType: pathType,
+            externalLinkName: "kk_path_copyTo_options",
+            valueParameterIsVararg: [false, true],
             symbols: symbols,
             interner: interner
         )
@@ -1479,6 +1510,7 @@ extension DataFlowSemaPhase {
         parameters: [(name: String, type: TypeID)],
         returnType: TypeID,
         externalLinkName: String,
+        valueParameterHasDefaultValues: [Bool]? = nil,
         valueParameterIsVararg: [Bool]? = nil,
         isOperator: Bool = false,
         symbols: SymbolTable,
@@ -1487,19 +1519,31 @@ extension DataFlowSemaPhase {
         let parameterIsVararg = valueParameterIsVararg ?? Array(repeating: false, count: parameters.count)
         let functionName = interner.intern(name)
         let functionFQName = packageFQName + [functionName]
+        let parameterTypes = parameters.map(\.type)
+        let defaults = valueParameterHasDefaultValues
+            ?? Array(repeating: false, count: parameters.count)
+        let varargs = valueParameterIsVararg
+            ?? Array(repeating: false, count: parameters.count)
+
         if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
             guard let existingSignature = symbols.functionSignature(for: symbolID) else {
                 return false
             }
             return existingSignature.receiverType == receiverType
-                && existingSignature.parameterTypes == parameters.map(\.type)
+                && existingSignature.parameterTypes == parameterTypes
         }) {
             symbols.setExternalLinkName(externalLinkName, for: existing)
             if isOperator {
                 symbols.insertFlags([.operatorFunction], for: existing)
             }
-            if let existingSignature = symbols.functionSignature(for: existing),
-               existingSignature.returnType != returnType || existingSignature.valueParameterIsVararg != parameterIsVararg {
+            if let existingSignature = symbols.functionSignature(for: existing) {
+                let shouldUpdateSignature =
+                    existingSignature.returnType != returnType
+                    || existingSignature.valueParameterHasDefaultValues != defaults
+                    || existingSignature.valueParameterIsVararg != varargs
+                guard shouldUpdateSignature else {
+                    return
+                }
                 symbols.setFunctionSignature(
                     FunctionSignature(
                         receiverType: existingSignature.receiverType,
@@ -1507,8 +1551,8 @@ extension DataFlowSemaPhase {
                         returnType: returnType,
                         isSuspend: existingSignature.isSuspend,
                         valueParameterSymbols: existingSignature.valueParameterSymbols,
-                        valueParameterHasDefaultValues: existingSignature.valueParameterHasDefaultValues,
-                        valueParameterIsVararg: parameterIsVararg
+                        valueParameterHasDefaultValues: defaults,
+                        valueParameterIsVararg: varargs
                     ),
                     for: existing
                 )
@@ -1547,12 +1591,12 @@ extension DataFlowSemaPhase {
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: receiverType,
-                parameterTypes: parameters.map(\.type),
+                parameterTypes: parameterTypes,
                 returnType: returnType,
                 isSuspend: false,
                 valueParameterSymbols: valueParameterSymbols,
-                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
-                valueParameterIsVararg: parameterIsVararg
+                valueParameterHasDefaultValues: defaults,
+                valueParameterIsVararg: varargs
             ),
             for: functionSymbol
         )
