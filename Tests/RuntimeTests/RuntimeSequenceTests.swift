@@ -959,7 +959,7 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         let arrayRaw = kk_array_new(elements.count)
         var thrown = 0
         for (index, element) in elements.enumerated() {
-            _ = _ = kk_array_set(arrayRaw, index, element, &thrown)
+            _ = kk_array_set(arrayRaw, index, element, &thrown)
             XCTAssertEqual(thrown, 0)
         }
         return arrayRaw

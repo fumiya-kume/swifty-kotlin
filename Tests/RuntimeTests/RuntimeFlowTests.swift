@@ -753,9 +753,9 @@ final class RuntimeFlowTests: IsolatedRuntimeXCTestCase {
 
     func testShareInAndStateInMaterializeFromColdFlowSource() {
         let valuesArray = registerRuntimeObject(RuntimeArrayBox(length: 3))
-        _ = _ = kk_array_set(valuesArray, 0, 1, nil)
-        _ = _ = kk_array_set(valuesArray, 1, 2, nil)
-        _ = _ = kk_array_set(valuesArray, 2, 3, nil)
+        _ = kk_array_set(valuesArray, 0, 1, nil)
+        _ = kk_array_set(valuesArray, 1, 2, nil)
+        _ = kk_array_set(valuesArray, 2, 3, nil)
         let coldFlow = kk_flow_of(valuesArray, 3)
 
         let sharedHandle = kk_flow_share_in(coldFlow, 2)
