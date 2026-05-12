@@ -582,7 +582,14 @@ public final class SymbolTable {
         existingSymbols: [SemanticSymbol]
     ) -> Bool {
         // Allow exactly one matching `expect`/`actual` partner at a given FQ name.
-        let existingNonPackage = existingSymbols.filter { $0.kind != .package }
+        let existingNonPackage = existingSymbols.filter {
+            $0.kind != .package && !$0.flags.contains(.synthetic)
+        }
+        if (flags.contains(.expectDeclaration) || flags.contains(.actualDeclaration))
+            && existingNonPackage.isEmpty
+        {
+            return true
+        }
         guard existingNonPackage.count == 1, let existing = existingNonPackage.first else {
             return false
         }

@@ -395,11 +395,16 @@ extension DataFlowSemaPhase {
         }
         let existing = Array(existingByID.values)
         if newFlags.contains(.expectDeclaration) || newFlags.contains(.actualDeclaration) {
-            let existingNonPackage = existing.filter { $0.kind != .package }
+            let existingNonPackage = existing.filter {
+                $0.kind != .package && !$0.flags.contains(.synthetic)
+            }
             if existingNonPackage.count == 1,
                let existingSymbol = existingNonPackage.first,
                isCompatibleExpectActualPair(newKind: newKind, newFlags: newFlags, existing: existingSymbol)
             {
+                return
+            }
+            if existingNonPackage.isEmpty {
                 return
             }
         }
