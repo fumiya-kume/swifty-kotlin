@@ -797,7 +797,7 @@ extension DataFlowSemaPhase {
 
     /// Register `Iterable<E>.minusElement(element): List<E>` (STDLIB-COL-HOF-005).
 
-    func registerIterableMinusElementMember(((
+    func registerIterableMinusElementMember(
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,
