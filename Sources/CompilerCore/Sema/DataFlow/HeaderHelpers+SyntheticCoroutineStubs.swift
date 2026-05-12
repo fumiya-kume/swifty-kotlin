@@ -656,6 +656,19 @@ extension DataFlowSemaPhase {
             includeMessageOverload: true,
             throwableSymbol: throwableSymbol
         )
+        let nullableThrowableType = types.make(.classType(ClassType(
+            classSymbol: throwableSymbol,
+            args: [],
+            nullability: .nullable
+        )))
+        registerSyntheticExceptionConstructor(
+            ownerSymbol: cancellationSymbol,
+            ownerType: cancellationType,
+            parameters: [("cause", nullableThrowableType)],
+            externalLinkName: "kk_throwable_new_cause",
+            symbols: symbols,
+            interner: interner
+        )
 
         if symbols.lookup(fqName: coroutinesPkg + [cancellationName]) == nil {
             let kotlinxCancellationSymbol = symbols.define(

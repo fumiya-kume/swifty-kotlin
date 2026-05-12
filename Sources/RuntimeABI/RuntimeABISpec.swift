@@ -118,6 +118,14 @@ public enum RuntimeABISpec {
             section: "Exception"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_throwable_new_cause",
+            parameters: [
+                RuntimeABIParameter(name: "causeRaw", type: .intptr),
+            ],
+            returnType: .opaquePointer,
+            section: "Exception"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_no_when_branch_matched_exception_new",
             parameters: [],
             returnType: .intptr,

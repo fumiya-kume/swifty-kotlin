@@ -407,7 +407,7 @@
 - [x] STDLIB-CONTRACT-TYPE-011: `SimpleEffect` クラスの実装
 
 #### kotlin.coroutines.cancellation 関数の実装
-- [ ] STDLIB-COROUTINE-CANCEL-FN-001: `CancellationException` 関数の実装（cause版）
+- [x] STDLIB-COROUTINE-CANCEL-FN-001: `CancellationException` 関数の実装（cause版）
 - [x] STDLIB-COROUTINE-CANCEL-FN-002: `CancellationException` 関数の実装（messageとcause版）
 
 #### kotlin.io 型の実装

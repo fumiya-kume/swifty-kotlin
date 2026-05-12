@@ -544,6 +544,7 @@ extension ABILoweringPass {
             interner.intern("kk_any_hashCode"),
             interner.intern("kk_any_equals"),
             interner.intern("kk_throwable_new_with_cause"),
+            interner.intern("kk_throwable_new_cause"),
             interner.intern("kk_no_when_branch_matched_exception_new"),
             interner.intern("kk_no_when_branch_matched_exception_new_message"),
             interner.intern("kk_no_when_branch_matched_exception_new_message_cause"),

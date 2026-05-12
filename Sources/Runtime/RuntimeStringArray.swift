@@ -62,6 +62,17 @@ public func kk_throwable_new_with_cause(_ message: UnsafeMutableRawPointer?, _ c
     return ptr
 }
 
+@_cdecl("kk_throwable_new_cause")
+public func kk_throwable_new_cause(_ causeRaw: Int) -> UnsafeMutableRawPointer {
+    let cause = (causeRaw == runtimeNullSentinelInt || causeRaw == 0) ? 0 : causeRaw
+    let message = runtimeThrowableStackTraceText(from: cause)
+    let throwableInt = runtimeAllocateThrowable(message: message.isEmpty ? "Throwable" : message, cause: cause)
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: throwableInt) else {
+        fatalError("kk_throwable_new_cause: allocation returned null")
+    }
+    return ptr
+}
+
 @_cdecl("kk_throwable_is_cancellation")
 public func kk_throwable_is_cancellation(_ throwableRaw: Int) -> Int {
     kk_is_cancellation_exception(throwableRaw)

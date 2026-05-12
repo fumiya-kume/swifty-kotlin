@@ -286,7 +286,7 @@ final class CoroutineSyntheticStubTests: XCTestCase {
 
         let ctorFQName = cancellationFQName + [interner.intern("<init>")]
         let constructors = sema.symbols.lookupAll(fqName: ctorFQName)
-        XCTAssertEqual(constructors.count, 3)
+        XCTAssertEqual(constructors.count, 4)
 
         let nullableThrowableType = sema.types.make(.classType(ClassType(
             classSymbol: throwableSymbol,
@@ -296,6 +296,7 @@ final class CoroutineSyntheticStubTests: XCTestCase {
         let expectedParameterTypes: Set<[TypeID]> = [
             [],
             [sema.types.stringType],
+            [nullableThrowableType],
             [sema.types.stringType, nullableThrowableType],
         ]
         let actualParameterTypes = Set(constructors.compactMap { sema.symbols.functionSignature(for: $0)?.parameterTypes })
@@ -471,5 +472,30 @@ final class CoroutineSyntheticStubTests: XCTestCase {
 
             XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty, "\(ctx.diagnostics.diagnostics)")
         }
+    }
+
+    func testCancellationExceptionCauseConstructorIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let cancellationFQName = ["kotlin", "coroutines", "cancellation", "CancellationException"].map {
+            interner.intern($0)
+        }
+        let cancellationSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: cancellationFQName))
+        let throwableSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: ["kotlin", "Throwable"].map { interner.intern($0) })
+        )
+        let nullableThrowableType = sema.types.make(.classType(ClassType(
+            classSymbol: throwableSymbol,
+            args: [],
+            nullability: .nullable
+        )))
+
+        let constructors = sema.symbols.lookupAll(fqName: cancellationFQName + [interner.intern("<init>")])
+        let causeConstructor = try XCTUnwrap(constructors.first { symbol in
+            sema.symbols.functionSignature(for: symbol)?.parameterTypes == [nullableThrowableType]
+        })
+        let causeSignature = try XCTUnwrap(sema.symbols.functionSignature(for: causeConstructor))
+        XCTAssertEqual(causeSignature.returnType, sema.symbols.propertyType(for: cancellationSymbol))
+        XCTAssertEqual(sema.symbols.externalLinkName(for: causeConstructor), "kk_throwable_new_cause")
     }
 }
