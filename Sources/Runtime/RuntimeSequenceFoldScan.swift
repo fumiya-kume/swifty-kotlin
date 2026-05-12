@@ -20,32 +20,16 @@ public func kk_sequence_scan(
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var acc = maybeUnbox(initial)
     var results: [Int] = [acc]
-    var traversalState: SequenceTraversalState?
-    if let seq = runtimeSequenceBox(from: seqRaw) {
-        let st = SequenceTraversalState()
-        traversalState = st
-        runtimeTraverseSequenceWithState(seq, state: st, outThrown: outThrown) { elem in
-            var thrown = 0
-            let nextAcc = lambda(closureRaw, acc, elem, &thrown)
-            if thrown != 0 {
-                outThrown?.pointee = thrown
-                return false
-            }
-            acc = maybeUnbox(nextAcc)
-            results.append(acc)
-            return true
+    let traversalState = runtimeTraverseSequenceSource(seqRaw, caller: #function, outThrown: outThrown) { elem in
+        var thrown = 0
+        let nextAcc = lambda(closureRaw, acc, elem, &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
         }
-    } else {
-        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
-            var thrown = 0
-            let nextAcc = lambda(closureRaw, acc, elem, &thrown)
-            if thrown != 0 {
-                outThrown?.pointee = thrown
-                return 0
-            }
-            acc = maybeUnbox(nextAcc)
-            results.append(acc)
-        }
+        acc = maybeUnbox(nextAcc)
+        results.append(acc)
+        return true
     }
     if let outThrown, outThrown.pointee != 0 { return 0 }
     if let traversalState, traversalState.limitReached {
@@ -95,16 +79,7 @@ public func kk_sequence_runningReduce(
         return true
     }
 
-    var traversalState: SequenceTraversalState?
-    if let seq = runtimeSequenceBox(from: seqRaw) {
-        let st = SequenceTraversalState()
-        traversalState = st
-        runtimeTraverseSequenceWithState(seq, state: st, outThrown: outThrown, yield: visit)
-    } else {
-        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
-            if !visit(elem) { break }
-        }
-    }
+    let traversalState = runtimeTraverseSequenceSource(seqRaw, caller: #function, outThrown: outThrown, yield: visit)
 
     if let outThrown, outThrown.pointee != 0 { return 0 }
     if let traversalState, traversalState.limitReached {
@@ -158,16 +133,7 @@ public func kk_sequence_runningReduceIndexed(
         return true
     }
 
-    var traversalState: SequenceTraversalState?
-    if let seq = runtimeSequenceBox(from: seqRaw) {
-        let st = SequenceTraversalState()
-        traversalState = st
-        runtimeTraverseSequenceWithState(seq, state: st, outThrown: outThrown, yield: visit)
-    } else {
-        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
-            if !visit(elem) { break }
-        }
-    }
+    let traversalState = runtimeTraverseSequenceSource(seqRaw, caller: #function, outThrown: outThrown, yield: visit)
 
     if let outThrown, outThrown.pointee != 0 { return 0 }
     if let traversalState, traversalState.limitReached {
@@ -187,36 +153,18 @@ public func kk_sequence_foldIndexed(
 ) -> Int {
     var acc = initial
     var index = 0
-    var traversalState: SequenceTraversalState?
-    if let seq = runtimeSequenceBox(from: seqRaw) {
-        let st = SequenceTraversalState()
-        traversalState = st
-        runtimeTraverseSequenceWithState(seq, state: st, outThrown: outThrown) { elem in
-            var thrown = 0
-            let nextAcc = runtimeInvokeCollectionLambda3(
-                fnPtr: fnPtr, closureRaw: closureRaw,
-                arg1: index, arg2: acc, arg3: elem, outThrown: &thrown)
-            if thrown != 0 {
-                outThrown?.pointee = thrown
-                return false
-            }
-            acc = maybeUnbox(nextAcc)
-            index += 1
-            return true
+    let traversalState = runtimeTraverseSequenceSource(seqRaw, caller: #function, outThrown: outThrown) { elem in
+        var thrown = 0
+        let nextAcc = runtimeInvokeCollectionLambda3(
+            fnPtr: fnPtr, closureRaw: closureRaw,
+            arg1: index, arg2: acc, arg3: elem, outThrown: &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
         }
-    } else {
-        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
-            var thrown = 0
-            let nextAcc = runtimeInvokeCollectionLambda3(
-                fnPtr: fnPtr, closureRaw: closureRaw,
-                arg1: index, arg2: acc, arg3: elem, outThrown: &thrown)
-            if thrown != 0 {
-                outThrown?.pointee = thrown
-                return initial
-            }
-            acc = maybeUnbox(nextAcc)
-            index += 1
-        }
+        acc = maybeUnbox(nextAcc)
+        index += 1
+        return true
     }
     if let outThrown, outThrown.pointee != 0 { return initial }
     if let traversalState, traversalState.limitReached {
@@ -248,38 +196,19 @@ public func kk_sequence_scanIndexed(
     var acc = maybeUnbox(initial)
     var index = 0
     var results: [Int] = [acc]
-    var traversalState: SequenceTraversalState?
-    if let seq = runtimeSequenceBox(from: seqRaw) {
-        let st = SequenceTraversalState()
-        traversalState = st
-        runtimeTraverseSequenceWithState(seq, state: st, outThrown: outThrown) { elem in
-            var thrown = 0
-            let nextAcc = runtimeInvokeCollectionLambda3(
-                fnPtr: fnPtr, closureRaw: closureRaw,
-                arg1: index, arg2: acc, arg3: elem, outThrown: &thrown)
-            if thrown != 0 {
-                outThrown?.pointee = thrown
-                return false
-            }
-            acc = maybeUnbox(nextAcc)
-            index += 1
-            results.append(acc)
-            return true
+    let traversalState = runtimeTraverseSequenceSource(seqRaw, caller: #function, outThrown: outThrown) { elem in
+        var thrown = 0
+        let nextAcc = runtimeInvokeCollectionLambda3(
+            fnPtr: fnPtr, closureRaw: closureRaw,
+            arg1: index, arg2: acc, arg3: elem, outThrown: &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
         }
-    } else {
-        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
-            var thrown = 0
-            let nextAcc = runtimeInvokeCollectionLambda3(
-                fnPtr: fnPtr, closureRaw: closureRaw,
-                arg1: index, arg2: acc, arg3: elem, outThrown: &thrown)
-            if thrown != 0 {
-                outThrown?.pointee = thrown
-                return 0
-            }
-            acc = maybeUnbox(nextAcc)
-            index += 1
-            results.append(acc)
-        }
+        acc = maybeUnbox(nextAcc)
+        index += 1
+        results.append(acc)
+        return true
     }
     if let outThrown, outThrown.pointee != 0 { return 0 }
     if let traversalState, traversalState.limitReached {
@@ -319,16 +248,7 @@ public func kk_sequence_reduceIndexed(
         return true
     }
 
-    var traversalState: SequenceTraversalState?
-    if let seq = runtimeSequenceBox(from: seqRaw) {
-        let st = SequenceTraversalState()
-        traversalState = st
-        runtimeTraverseSequenceWithState(seq, state: st, outThrown: outThrown, yield: visit)
-    } else {
-        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
-            if !visit(elem) { break }
-        }
-    }
+    let traversalState = runtimeTraverseSequenceSource(seqRaw, caller: #function, outThrown: outThrown, yield: visit)
 
     if let outThrown, outThrown.pointee != 0 { return 0 }
     if let traversalState, traversalState.limitReached {
@@ -377,16 +297,7 @@ public func kk_sequence_reduceIndexedOrNull(
         return true
     }
 
-    var traversalState: SequenceTraversalState?
-    if let seq = runtimeSequenceBox(from: seqRaw) {
-        let st = SequenceTraversalState()
-        traversalState = st
-        runtimeTraverseSequenceWithState(seq, state: st, outThrown: outThrown, yield: visit)
-    } else {
-        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
-            if !visit(elem) { break }
-        }
-    }
+    let traversalState = runtimeTraverseSequenceSource(seqRaw, caller: #function, outThrown: outThrown, yield: visit)
 
     if let outThrown, outThrown.pointee != 0 { return 0 }
     if let traversalState, traversalState.limitReached {

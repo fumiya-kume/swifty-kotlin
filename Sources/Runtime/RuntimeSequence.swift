@@ -791,6 +791,24 @@ func runtimeTraverseSequence(
     )
 }
 
+@discardableResult
+func runtimeTraverseSequenceSource(
+    _ rawValue: Int,
+    caller: StaticString,
+    outThrown: UnsafeMutablePointer<Int>?,
+    yield: @escaping (Int) -> Bool
+) -> SequenceTraversalState? {
+    if let seq = runtimeSequenceBox(from: rawValue) {
+        let state = SequenceTraversalState()
+        runtimeTraverseSequenceWithState(seq, state: state, outThrown: outThrown, yield: yield)
+        return state
+    }
+    for elem in runtimeSequenceSourceElementsOrPanic(from: rawValue, caller: caller) {
+        if !yield(elem) { break }
+    }
+    return nil
+}
+
 /// Extracts source elements from a sequence step, if applicable.
 /// `.stringSource` is NOT extracted here — it is handled lazily in evaluateSequence
 /// and runtimeTraverseSequence to avoid eager materialization.
@@ -2982,4 +3000,3 @@ public func kk_sequence_minus(_ seqRaw: Int, _ element: Int) -> Int {
     let newSeq = RuntimeSequenceBox(steps: [.source(elements: result)])
     return registerRuntimeObject(newSeq)
 }
-
