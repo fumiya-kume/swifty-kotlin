@@ -397,6 +397,28 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(sorted), [12, 11, 22, 21])
     }
 
+    func testMinOfReturnsSmallestSelectedValueAndThrowsOnEmpty() {
+        var thrown = 0
+        let result = kk_list_minOf(
+            makeList([5, 2, 3]),
+            unsafeBitCast(valueTimesTen, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 20)
+
+        thrown = 0
+        let emptyResult = kk_list_minOf(
+            makeList([]),
+            unsafeBitCast(valueTimesTen, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(emptyResult, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
     func testMutableListFillReplacesEveryElement() {
         let source = makeList([1, 2, 3])
 
