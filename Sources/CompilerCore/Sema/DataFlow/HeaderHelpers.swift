@@ -1033,6 +1033,7 @@ extension DataFlowSemaPhase {
         )
         registerSyntheticCoroutineStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticExceptionStubs(symbols: symbols, types: types, interner: interner, kotlinPkg: kotlinPkg)
+        registerSyntheticJsExceptionStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticContractStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticPreconditionStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticRegexStubs(symbols: symbols, types: types, interner: interner)
@@ -1045,16 +1046,25 @@ extension DataFlowSemaPhase {
         registerSyntheticClockStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticExperimentalTimeStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticPlatformTimeConversionStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsDefinedExternallyStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsParseIntStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticStringBuilderStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsParseIntRadixStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsFunctionStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsEvalStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsJsonStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsTypeOfStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticTODOAndIOStubs(symbols: symbols, types: types, interner: interner)
         // Function interfaces are registered by TODO/IO stubs, so patch KProperty2's Function2 supertype here.
         patchKProperty2FunctionSupertype(symbols: symbols, types: types, interner: interner)
         registerSyntheticCloseableStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsParseFloatStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticFileIOStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticFilesUtilityStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticPathStubs(symbols: symbols, types: types, interner: interner)
         registerLateListIndexedMembers(symbols: symbols, types: types, interner: interner)
         registerSyntheticCoercionStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticExperimentalBitwiseStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticEnumStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticAtomicStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticUuidStubs(symbols: symbols, types: types, interner: interner)
@@ -1071,19 +1081,43 @@ extension DataFlowSemaPhase {
         registerSyntheticNumberFormatStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticDateFormatStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticMetaprogStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsStubs(symbols: symbols, interner: interner)
+        registerSyntheticJvmAnnotationPropertyStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticNativeInteropStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticBigIntegerStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticNativeInvokeStubs(symbols: symbols, interner: interner)
+        registerSyntheticJvmOptionalStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticThreadLocalStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticNativeSetterStubs(symbols: symbols, interner: interner)
         registerSyntheticConcurrencyStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCoroutineCancellationStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCoroutineIntrinsicsStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticReadWriteLockStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsQualifierStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsRegExpStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsRegExpMatchStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsAnyStubs(symbols: symbols, interner: interner)
+        registerSyntheticJsFunStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsFileNameStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticNativeRefRuntimeStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticBase64Stubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsModuleStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsPromiseStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticNativeConcurrentStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsDateStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticNativeGetterStubs(symbols: symbols, interner: interner)
+        registerSyntheticJsNameStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticExperimentalMarkerStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsNonModuleStubs(symbols: symbols, interner: interner)
+        registerSyntheticJsConsoleStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsExportStubs(symbols: symbols, interner: interner)
         registerSyntheticCoroutinesABIStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsExternalInheritorsOnlyStubs(symbols: symbols, interner: interner)
+        registerSyntheticJsClassStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsSymbolStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticKPropertyIsInitializedStub(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsStaticStubs(symbols: symbols, interner: interner)
+        registerSyntheticJsExternalArgumentStubs(symbols: symbols, interner: interner)
     }
 
     /// Register the synthetic `kotlin.Any` and `kotlin.Annotation` built-in stubs.
@@ -1452,7 +1486,7 @@ extension DataFlowSemaPhase {
         }
 
         // STDLIB-592: InvocationKind enum class stub
-        let invocationKindSymbol = ensureClassSymbol(
+        let invocationKindSymbol = ensureEnumClassSymbol(
             named: "InvocationKind",
             in: contractsFQName,
             symbols: symbols,
@@ -1576,6 +1610,27 @@ extension DataFlowSemaPhase {
         }
         return symbols.define(
             kind: .class,
+            name: internedName,
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+    }
+
+    func ensureEnumClassSymbol(
+        named name: String,
+        in pkg: [InternedString],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> SymbolID {
+        let internedName = interner.intern(name)
+        let fqName = pkg + [internedName]
+        if let existing = symbols.lookup(fqName: fqName) {
+            return existing
+        }
+        return symbols.define(
+            kind: .enumClass,
             name: internedName,
             fqName: fqName,
             declSite: nil,

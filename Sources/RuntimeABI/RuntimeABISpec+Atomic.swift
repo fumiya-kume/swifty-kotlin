@@ -580,6 +580,14 @@ public extension RuntimeABISpec {
             section: "Atomic"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_atomic_bool_asJavaAtomic",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Atomic"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_atomic_bool_getAndUpdate",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),

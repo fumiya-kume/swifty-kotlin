@@ -3,15 +3,6 @@
 public extension RuntimeABISpec {
     static let abiParityFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
-            name: "kk_list_single",
-            parameters: [
-                RuntimeABIParameter(name: "p0", type: .intptr),
-                RuntimeABIParameter(name: "p1", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "ABIParity"
-        ),
-        RuntimeABIFunctionSpec(
             name: "kk_result_mapCatching",
             parameters: [
                 RuntimeABIParameter(name: "p0", type: .intptr),

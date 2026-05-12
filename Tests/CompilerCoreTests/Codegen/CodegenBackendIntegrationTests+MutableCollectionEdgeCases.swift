@@ -22,6 +22,16 @@ extension CodegenBackendIntegrationTests {
 
             numbers.retainAll(listOf(1, 4))
             println(numbers)
+
+            val subtractable = mutableListOf(1, 2, 2, 3)
+            subtractable -= 2
+            subtractable -= listOf(3)
+            println(subtractable)
+
+            val mutableSet = mutableSetOf(1, 2, 3)
+            mutableSet -= 2
+            mutableSet -= listOf(3)
+            println(mutableSet)
         }
         """
 
@@ -47,6 +57,8 @@ extension CodegenBackendIntegrationTests {
                 [1, 2, 3]
                 [1, 3, 4]
                 [1, 4]
+                [1, 2]
+                [1]
                 """ + "\n"
             )
         }

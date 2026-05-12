@@ -135,6 +135,112 @@ extension DataFlowSemaPhase {
         return (mapSymbol, keyParamSymbol, valueParamSymbol)
     }
 
+    /// Register `kotlin.collections.AbstractMap<K, V>` surface (STDLIB-COL-ABSTRACT-004).
+    func registerSyntheticAbstractMapStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        mapInterfaceSymbol: SymbolID
+    ) -> SymbolID {
+        let abstractMapName = interner.intern("AbstractMap")
+        let abstractMapFQName = kotlinCollectionsPkg + [abstractMapName]
+        let abstractMapSymbol: SymbolID = if let existing = symbols.lookup(fqName: abstractMapFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .class,
+                name: abstractMapName,
+                fqName: abstractMapFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .abstractType]
+            )
+        }
+
+        let keyName = interner.intern("K")
+        let valueName = interner.intern("V")
+        let keyParamFQName = abstractMapFQName + [keyName]
+        let valueParamFQName = abstractMapFQName + [valueName]
+        let keyParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: keyParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: keyName,
+                fqName: keyParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let valueParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: valueParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: valueName,
+                fqName: valueParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let keyType = types.make(.typeParam(TypeParamType(symbol: keyParamSymbol, nullability: .nonNull)))
+        let valueType = types.make(.typeParam(TypeParamType(symbol: valueParamSymbol, nullability: .nonNull)))
+
+        types.setNominalTypeParameterSymbols([keyParamSymbol, valueParamSymbol], for: abstractMapSymbol)
+        types.setNominalTypeParameterVariances([.invariant, .out], for: abstractMapSymbol)
+
+        let abstractMapType = types.make(.classType(ClassType(
+            classSymbol: abstractMapSymbol,
+            args: [.invariant(keyType), .out(valueType)],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(abstractMapType, for: abstractMapSymbol)
+        symbols.setDirectSupertypes([mapInterfaceSymbol], for: abstractMapSymbol)
+        types.setNominalDirectSupertypes([mapInterfaceSymbol], for: abstractMapSymbol)
+        symbols.setSupertypeTypeArgs(
+            [.invariant(keyType), .out(valueType)],
+            for: abstractMapSymbol,
+            supertype: mapInterfaceSymbol
+        )
+        types.setNominalSupertypeTypeArgs(
+            [.invariant(keyType), .out(valueType)],
+            for: abstractMapSymbol,
+            supertype: mapInterfaceSymbol
+        )
+
+        let initName = interner.intern("<init>")
+        let initFQName = abstractMapFQName + [initName]
+        if symbols.lookup(fqName: initFQName) == nil {
+            let initSymbol = symbols.define(
+                kind: .constructor,
+                name: initName,
+                fqName: initFQName,
+                declSite: nil,
+                visibility: .protected,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(abstractMapSymbol, for: initSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: [],
+                    returnType: abstractMapType,
+                    valueParameterSymbols: [],
+                    valueParameterHasDefaultValues: [],
+                    valueParameterIsVararg: [],
+                    typeParameterSymbols: [keyParamSymbol, valueParamSymbol],
+                    classTypeParameterCount: 2
+                ),
+                for: initSymbol
+            )
+        }
+
+        return abstractMapSymbol
+    }
+
     func registerMapToMutableMapMember(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -956,6 +1062,17 @@ extension DataFlowSemaPhase {
             args: [.out(keyType), .out(valueType)],
             nullability: .nonNull
         )))
+        let pairSymbol = symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Pair")])
+            ?? symbols.lookupByShortName(interner.intern("Pair")).first
+        let pairType = if let pairSymbol {
+            types.make(.classType(ClassType(
+                classSymbol: pairSymbol,
+                args: [.invariant(keyType), .invariant(valueType)],
+                nullability: .nonNull
+            )))
+        } else {
+            types.anyType
+        }
 
         let members: [(name: String, params: [TypeID], ret: TypeID, external: String, flags: SymbolFlags)] = [
             ("set", [keyType, valueType], types.unitType, "kk_mutable_map_put", [.synthetic, .operatorFunction]),
@@ -964,12 +1081,20 @@ extension DataFlowSemaPhase {
             ("clear", [], types.unitType, "kk_mutable_map_clear", [.synthetic]),
             ("getOrPut", [keyType, getOrPutLambdaType], valueType, "kk_mutable_map_getOrPut", [.synthetic, .inlineFunction]),
             ("putAll", [mapParamType], types.unitType, "kk_mutable_map_putAll", [.synthetic]),
+            ("plusAssign", [pairType], types.unitType, "kk_mutable_map_plusAssign_pair", [.synthetic, .operatorFunction]),
+            ("plusAssign", [mapParamType], types.unitType, "kk_mutable_map_putAll", [.synthetic, .operatorFunction]),
         ]
 
         for member in members {
             let memberName = interner.intern(member.name)
             let memberFQName = mutableMapFQName + [memberName]
-            guard symbols.lookup(fqName: memberFQName) == nil else { continue }
+            guard symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.parameterTypes == member.params &&
+                    signature.returnType == member.ret
+            }) == nil else {
+                continue
+            }
             let memberSymbol = symbols.define(
                 kind: .function,
                 name: memberName,

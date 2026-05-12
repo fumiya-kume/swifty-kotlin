@@ -3,99 +3,6 @@ import Foundation
 
 extension CollectionLiteralLoweringPass {
 
-    private func primitiveBoxCalleeName(
-        for type: TypeID,
-        types: TypeSystem,
-        interner: StringInterner
-    ) -> InternedString? {
-        switch types.kind(of: type) {
-        case .primitive(.int, _), .primitive(.uint, _), .primitive(.ubyte, _), .primitive(.ushort, _):
-            return interner.intern("kk_box_int")
-        case .primitive(.boolean, _):
-            return interner.intern("kk_box_bool")
-        case .primitive(.long, _), .primitive(.ulong, _):
-            return interner.intern("kk_box_long")
-        case .primitive(.float, _):
-            return interner.intern("kk_box_float")
-        case .primitive(.double, _):
-            return interner.intern("kk_box_double")
-        case .primitive(.char, _):
-            return interner.intern("kk_box_char")
-        default:
-            return nil
-        }
-    }
-
-    /// Returns true when the resolved symbol's FQN matches one of the known
-    /// `kotlin.collections.*` factory FQNs.  When the symbol is nil (unresolved)
-    /// we conservatively allow the rewrite – the name check already passed and
-    /// unresolved symbols are common for synthetic stubs that have no KIR-level
-    /// symbol entry.
-    private func isStdlibCollectionFactory(
-        symbol: SymbolID?,
-        callee: InternedString,
-        lookup: CollectionLiteralLookupTables,
-        ctx: KIRContext
-    ) -> Bool {
-        guard let sym = symbol,
-              let resolved = ctx.sema?.symbols.symbol(sym)
-        else {
-            // No symbol info available – fall through to name-only rewrite
-            // (backwards compatible with pre-symbol resolution passes).
-            return true
-        }
-        let fqName = resolved.fqName
-        // Match against known stdlib collection factory FQNs
-        return fqName == lookup.emptyListFQName
-            || fqName == lookup.emptyArrayFQName
-            || fqName == lookup.listOfFQName
-            || fqName == lookup.mutableListOfFQName
-            || fqName == lookup.arrayListOfFQName
-            || fqName == lookup.listOfNotNullFQName
-            || fqName == lookup.emptySetFQName
-            || fqName == lookup.setOfFQName
-            || fqName == lookup.setOfNotNullFQName
-            || fqName == lookup.mutableSetOfFQName
-            || fqName == lookup.linkedSetOfFQName
-            || fqName == lookup.hashSetOfFQName
-            || fqName == lookup.emptyMapFQName
-            || fqName == lookup.mapOfFQName
-            || fqName == lookup.mutableMapOfFQName
-            || fqName == lookup.hashMapOfFQName
-            || fqName == lookup.linkedMapOfFQName
-    }
-
-    private func isStdlibArrayFactoryCall(
-        symbol: SymbolID?,
-        callee: InternedString,
-        lookup: CollectionLiteralLookupTables,
-        ctx: KIRContext
-    ) -> Bool {
-        guard lookup.arrayOfFactoryNames.contains(callee) else {
-            return false
-        }
-        return isStdlibCollectionFactory(symbol: symbol, callee: callee, lookup: lookup, ctx: ctx)
-    }
-
-    private func isJavaIOFileMember(
-        symbol: SymbolID?,
-        ctx: KIRContext,
-        interner: StringInterner
-    ) -> Bool {
-        guard let symbol,
-              let resolved = ctx.sema?.symbols.symbol(symbol)
-        else {
-            return false
-        }
-
-        let javaIOFilePrefix: [InternedString] = [
-            interner.intern("java"),
-            interner.intern("io"),
-            interner.intern("File"),
-        ]
-        return resolved.fqName.starts(with: javaIOFilePrefix)
-    }
-
     // swiftlint:disable:next cyclomatic_complexity function_body_length
     func rewriteCalls(module: KIRModule, ctx: KIRContext) throws {
         let lookup = CollectionLiteralLookupTables(interner: ctx.interner)
@@ -1836,7 +1743,7 @@ extension CollectionLiteralLoweringPass {
                                 callee: lookup.kkListTakeName,
                                 arguments: arguments,
                                 result: transformResult,
-                                canThrow: false,
+                                canThrow: true,
                                 thrownResult: nil
                             ))
                             if let result {
@@ -3334,6 +3241,7 @@ extension CollectionLiteralLoweringPass {
                     if callee == lookup.filterToName || callee == lookup.filterNotToName
                         || callee == lookup.mapToName || callee == lookup.flatMapToName
                         || callee == lookup.mapNotNullToName || callee == lookup.mapIndexedToName
+                        || callee == lookup.mapIndexedNotNullToName
                         || callee == lookup.flatMapIndexedToName || callee == lookup.associateToName
                     {
                         if (arguments.count == 3 || arguments.count == 4),
@@ -3361,6 +3269,7 @@ extension CollectionLiteralLoweringPass {
                             case lookup.flatMapToName: lookup.kkListFlatMapToName
                             case lookup.mapNotNullToName: lookup.kkListMapNotNullToName
                             case lookup.mapIndexedToName: lookup.kkListMapIndexedToName
+                            case lookup.mapIndexedNotNullToName: lookup.kkListMapIndexedNotNullToName
                             case lookup.flatMapIndexedToName: lookup.kkListFlatMapIndexedToName
                             case lookup.associateToName:
                                 isSequenceReceiver ? lookup.kkSequenceAssociateToName : lookup.kkListAssociateToName
@@ -3607,7 +3516,7 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
-                    if callee == lookup.forEachIndexedName || callee == lookup.mapIndexedName || callee == lookup.onEachIndexedName {
+                    if callee == lookup.forEachIndexedName || callee == lookup.mapIndexedName || callee == lookup.mapIndexedNotNullName || callee == lookup.onEachIndexedName {
                         if arguments.count == 2 || arguments.count == 3 {
                             let receiverID = arguments[0]
                             let lambdaID = arguments[1]
@@ -3617,6 +3526,8 @@ extension CollectionLiteralLoweringPass {
                                     kkName = lookup.kkListForEachIndexedName
                                 } else if callee == lookup.onEachIndexedName {
                                     kkName = lookup.kkListOnEachIndexedName
+                                } else if callee == lookup.mapIndexedNotNullName {
+                                    kkName = lookup.kkListMapIndexedNotNullName
                                 } else {
                                     kkName = lookup.kkListMapIndexedName
                                 }
@@ -3639,7 +3550,7 @@ extension CollectionLiteralLoweringPass {
                                     canThrow: canThrow,
                                     thrownResult: thrownResult
                                 ))
-                                if callee == lookup.mapIndexedName || callee == lookup.onEachIndexedName, let result {
+                                if callee == lookup.mapIndexedName || callee == lookup.mapIndexedNotNullName || callee == lookup.onEachIndexedName, let result {
                                     listExprIDs.insert(result.rawValue)
                                     listExprIDs.insert(hofResult.rawValue)
                                 }
@@ -3691,13 +3602,16 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
-                    if callee == lookup.maxOrNullName || callee == lookup.minOrNullName {
+                    if callee == lookup.minName || callee == lookup.maxOrNullName || callee == lookup.minOrNullName {
                         if arguments.count == 1 {
                             let receiverID = arguments[0]
                             if listExprIDs.contains(receiverID.rawValue) {
-                                let kkName: InternedString = callee == lookup.maxOrNullName
-                                    ? lookup.kkListMaxOrNullName
-                                    : lookup.kkListMinOrNullName
+                                let kkName: InternedString = switch callee {
+                                case lookup.minName: lookup.kkListMinName
+                                case lookup.maxOrNullName: lookup.kkListMaxOrNullName
+                                default: lookup.kkListMinOrNullName
+                                }
+                                let isThrowingMin = callee == lookup.minName
                                 let hofResult = module.arena.appendExpr(
                                     .temporary(Int32(module.arena.expressions.count)), type: nil
                                 )
@@ -3706,8 +3620,8 @@ extension CollectionLiteralLoweringPass {
                                     callee: kkName,
                                     arguments: [receiverID],
                                     result: hofResult,
-                                    canThrow: false,
-                                    thrownResult: nil
+                                    canThrow: isThrowingMin,
+                                    thrownResult: isThrowingMin ? thrownResult : nil
                                 ))
                                 if let result {
                                     loweredBody.append(.copy(from: hofResult, to: result))
@@ -3716,8 +3630,9 @@ extension CollectionLiteralLoweringPass {
                             }
                         }
                     }
-                    // maxByOrNull / minByOrNull / maxOfOrNull / minOfOrNull / maxOf / minOf (STDLIB-301)
-                    if callee == lookup.maxByOrNullName || callee == lookup.minByOrNullName
+                    // maxBy / maxByOrNull / minBy / minByOrNull / maxOfOrNull / minOfOrNull / maxOf / minOf (STDLIB-301)
+                    if callee == lookup.maxByName || callee == lookup.maxByOrNullName
+                        || callee == lookup.minByName || callee == lookup.minByOrNullName
                         || callee == lookup.maxOfOrNullName || callee == lookup.minOfOrNullName
                         || callee == lookup.maxOfName || callee == lookup.minOfName
                     {
@@ -3734,7 +3649,9 @@ extension CollectionLiteralLoweringPass {
                                     closureRawID = zeroExpr
                                 }
                                 let kkName: InternedString = switch callee {
+                                case lookup.maxByName: lookup.kkListMaxByName
                                 case lookup.maxByOrNullName: lookup.kkListMaxByOrNullName
+                                case lookup.minByName: lookup.kkListMinByName
                                 case lookup.minByOrNullName: lookup.kkListMinByOrNullName
                                 case lookup.maxOfOrNullName: lookup.kkListMaxOfOrNullName
                                 case lookup.minOfOrNullName: lookup.kkListMinOfOrNullName
@@ -4350,7 +4267,8 @@ extension CollectionLiteralLoweringPass {
                         let receiverID = arguments[0]
                         let initialID = arguments[1]
                         let lambdaID = arguments[2]
-                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                        if sequenceExprIDs.contains(receiverID.rawValue),
+                           !listExprIDs.contains(receiverID.rawValue) {
                             let closureRawID: KIRExprID
                             if arguments.count == 4 {
                                 closureRawID = arguments[3]
@@ -4473,6 +4391,37 @@ extension CollectionLiteralLoweringPass {
                             listExprIDs.insert(hofResult.rawValue); continue
                         }
                     }
+                    // takeWhile: args = [receiver, lambda, closureRaw?]
+                    if (callee == lookup.takeWhileName || callee == lookup.kkListTakeWhileName),
+                       (arguments.count == 2 || arguments.count == 3) {
+                        let receiverID = arguments[0]
+                        let lambdaID = arguments[1]
+                        if listExprIDs.contains(receiverID.rawValue) {
+                            let closureRawID: KIRExprID
+                            if arguments.count == 3 {
+                                closureRawID = arguments[2]
+                            } else {
+                                let z = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                loweredBody.append(.constValue(result: z, value: .intLiteral(0)))
+                                closureRawID = z
+                            }
+                            let hofResult = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)), type: nil)
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkListTakeWhileName,
+                                arguments: [receiverID, lambdaID, closureRawID],
+                                result: hofResult,
+                                canThrow: canThrow,
+                                thrownResult: thrownResult
+                            ))
+                            if let result {
+                                loweredBody.append(.copy(from: hofResult, to: result))
+                                listExprIDs.insert(result.rawValue)
+                            }
+                            listExprIDs.insert(hofResult.rawValue)
+                            continue
+                        }
+                    }
                     // reduceIndexedOrNull: args = [receiver, lambda, closureRaw?]
                     if (callee == lookup.reduceIndexedOrNullName
                         || callee == lookup.kkListReduceIndexedOrNullName
@@ -4495,7 +4444,8 @@ extension CollectionLiteralLoweringPass {
                     if (callee == lookup.runningFoldIndexedName
                         || callee == lookup.scanIndexedName
                         || callee == lookup.kkListRunningFoldIndexedName
-                        || callee == lookup.kkListScanIndexedName),
+                        || callee == lookup.kkListScanIndexedName
+                        || callee == lookup.kkSequenceRunningFoldIndexedName),
                        (3 ... 4).contains(arguments.count) {
                         let receiverID = arguments[0]; let initialID = arguments[1]; let lambdaID = arguments[2]
                         if listExprIDs.contains(receiverID.rawValue) {

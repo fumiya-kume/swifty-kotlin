@@ -494,6 +494,18 @@ final class RuntimeComparatorTests: XCTestCase {
         XCTAssertEqual(listElements(sorted), [8, 5, 4, 3, 1])
     }
 
+    func testListSortedDescendingComparableObjectsReturnsNewSortedList() {
+        let source = makeList([
+            makeRuntimeString("b"),
+            makeRuntimeString("a"),
+            makeRuntimeString("c"),
+        ])
+        let sorted = kk_list_sortedDescending(source)
+
+        XCTAssertEqual(listElements(sorted).map(runtimeStringValue), ["c", "b", "a"])
+        XCTAssertEqual(listElements(source).map(runtimeStringValue), ["b", "a", "c"])
+    }
+
     func testPrimitiveListSortedByAscending() {
         let source = makeList([22, 12, 21, 11])
         let sorted = kk_list_sortedBy_primitive(source, selectorPtr(selectModTen), 0, 0, nil)
@@ -510,6 +522,17 @@ final class RuntimeComparatorTests: XCTestCase {
         let source = makeList([2, 1, 2, 1, 2])
         let sorted = kk_list_sorted_primitive(source, 0)
         XCTAssertEqual(listElements(sorted), [1, 1, 2, 2, 2])
+    }
+
+    func testListSortedComparableObjectsReturnsNewSortedList() {
+        let source = makeList([
+            makeRuntimeString("b"),
+            makeRuntimeString("a"),
+            makeRuntimeString("c"),
+        ])
+        let sorted = kk_list_sorted(source)
+        XCTAssertEqual(listElements(sorted).map(runtimeStringValue), ["a", "b", "c"])
+        XCTAssertEqual(listElements(source).map(runtimeStringValue), ["b", "a", "c"])
     }
 
     func testPrimitiveListSortedFloatAndDouble() {
@@ -692,6 +715,16 @@ final class RuntimeComparatorTests: XCTestCase {
         let source = makeList([5, 3, 8, 1, 4])
         XCTAssertEqual(kk_mutable_list_sort_primitive(source, 0), 0)
         XCTAssertEqual(listElements(source), [1, 3, 4, 5, 8])
+    }
+
+    func testMutableListSortComparableObjectsMutatesInPlace() {
+        let source = makeList([
+            makeRuntimeString("b"),
+            makeRuntimeString("a"),
+            makeRuntimeString("c"),
+        ])
+        XCTAssertEqual(kk_mutable_list_sort(source), 0)
+        XCTAssertEqual(listElements(source).map(runtimeStringValue), ["a", "b", "c"])
     }
 
     func testMutableListPrimitiveSortDescending() {

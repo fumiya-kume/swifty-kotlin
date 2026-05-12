@@ -140,9 +140,13 @@ jobs:
         with:
           path: ${{ runner.temp }}/kotlin-tools
           key: kotlin-tools-${{ env.KOTLIN_VERSION }}-coroutines-${{ env.KOTLINX_COROUTINES_VERSION }}
-      - name: Install Kotlin and Java
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Install Kotlin compiler and coroutines jar
         run: |
-          sudo apt-get install -y default-jdk unzip
           TOOLS_DIR="${RUNNER_TEMP}/kotlin-tools"
           KOTLIN_DIR="${TOOLS_DIR}/kotlin"
           mkdir -p "$TOOLS_DIR"
@@ -187,7 +191,7 @@ jobs:
           DIFF_PARALLEL="$NCPU" DIFF_WORKERS="$NCPU" \
             bash Scripts/diff_kotlinc.sh --report "$DIFF_REPORT" Scripts/diff_cases
       - name: Summarize kotlinc diff artifacts
-        if: always()
+        if: always() && steps.diff_kotlinc.outcome != 'cancelled'
         env:
           DIFF_REPORT: ${{ runner.temp }}/diff_kotlinc_report.tsv
         run: bash Scripts/diff_kotlinc_ci_summary.sh --report "$DIFF_REPORT"

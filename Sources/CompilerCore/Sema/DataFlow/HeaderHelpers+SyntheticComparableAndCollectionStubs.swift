@@ -133,11 +133,31 @@ extension DataFlowSemaPhase {
             kotlinCollectionsPkg: kotlinCollectionsPkg,
             iterableInterfaceSymbol: iterableInterfaceSymbol
         )
+        registerIterableJoinToMember(
+            symbols: symbols, types: types, interner: interner,
+            iterableInterfaceSymbol: iterableInterfaceSymbol
+        )
         registerIterableFirstNotNullOfMember(
             symbols: symbols, types: types, interner: interner,
             iterableInterfaceSymbol: iterableInterfaceSymbol
         )
         registerIterableFirstNotNullOfOrNullMember(
+            symbols: symbols, types: types, interner: interner,
+            iterableInterfaceSymbol: iterableInterfaceSymbol
+        )
+        registerIterableReduceIndexedMember(
+            symbols: symbols, types: types, interner: interner,
+            iterableInterfaceSymbol: iterableInterfaceSymbol
+        )
+        registerIterableLastMember(
+            symbols: symbols, types: types, interner: interner,
+            iterableInterfaceSymbol: iterableInterfaceSymbol
+        )
+        registerIterableJoinToStringMember(
+            symbols: symbols, types: types, interner: interner,
+            iterableInterfaceSymbol: iterableInterfaceSymbol
+        )
+        registerIterableReduceRightMember(
             symbols: symbols, types: types, interner: interner,
             iterableInterfaceSymbol: iterableInterfaceSymbol
         )
@@ -196,6 +216,11 @@ extension DataFlowSemaPhase {
         registerIterableWindowedTransformMember(
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg,
+            iterableInterfaceSymbol: iterableInterfaceSymbol,
+            listInterfaceSymbol: listInterfaceSymbol
+        )
+        registerIterablePlusElementMember(
+            symbols: symbols, types: types, interner: interner,
             iterableInterfaceSymbol: iterableInterfaceSymbol,
             listInterfaceSymbol: listInterfaceSymbol
         )
@@ -282,6 +307,13 @@ extension DataFlowSemaPhase {
         let mapSymbols = registerSyntheticMapStub(
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg
+        )
+        _ = registerSyntheticAbstractMapStub(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            mapInterfaceSymbol: mapSymbols.mapSymbol
         )
 
         registerListConversionMembers(

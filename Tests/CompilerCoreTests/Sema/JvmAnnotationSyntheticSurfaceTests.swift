@@ -21,6 +21,414 @@ final class JvmAnnotationSyntheticSurfaceTests: XCTestCase {
         return try XCTUnwrap(result)
     }
 
+    private func runSemaCollectingDiagnostics(_ source: String) -> CompilationContext {
+        let ctx = makeContextFromSource(source)
+        do {
+            try runSema(ctx)
+        } catch {
+            // Error diagnostics are asserted by each test.
+        }
+        return ctx
+    }
+
+    private func diagnostics(withCode code: String, in ctx: CompilationContext) -> [Diagnostic] {
+        ctx.diagnostics.diagnostics.filter { $0.code == code }
+    }
+
+    func testJvmRecordAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmRecord"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.jvm.JvmRecord must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(info.kind, .annotationClass)
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+    }
+
+    func testJvmRecordCarriesClassTarget() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmRecord"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let target = try XCTUnwrap(
+            sema.symbols.annotations(for: symbol).first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "JvmRecord must carry @Target metadata"
+        )
+
+        XCTAssertEqual(target.arguments, ["AnnotationTarget.CLASS"])
+    }
+
+    func testJvmRecordResolvesOnClass() throws {
+        let source = """
+        import kotlin.jvm.JvmRecord
+
+        @JvmRecord
+        class User(val name: String)
+        """
+
+        _ = try makeSema(source: source)
+    }
+
+    func testJvmSerializableLambdaAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmSerializableLambda"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.jvm.JvmSerializableLambda must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(info.kind, .annotationClass)
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+    }
+
+    func testJvmSerializableLambdaCarriesExpressionTarget() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmSerializableLambda"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let annotations = sema.symbols.annotations(for: symbol)
+
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.annotation.Target"
+                    && $0.arguments == ["AnnotationTarget.EXPRESSION"]
+            },
+            "JvmSerializableLambda must carry @Target(EXPRESSION), got \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.SinceKotlin"
+                    && $0.arguments == ["1.8"]
+            },
+            "JvmSerializableLambda must carry @SinceKotlin(\"1.8\"), got \(annotations)"
+        )
+    }
+
+    func testJvmSerializableLambdaResolvesOnLambdaExpression() throws {
+        let source = """
+        import kotlin.jvm.JvmSerializableLambda
+
+        fun factory() = @JvmSerializableLambda { 42 }
+        """
+
+        _ = try makeSema(source: source)
+    }
+
+    func testJvmPackageNameAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmPackageName"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.jvm.JvmPackageName must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(info.kind, .annotationClass)
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+    }
+
+    func testJvmPackageNameCarriesFileTargetAndSourceRetention() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmPackageName"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let annotations = sema.symbols.annotations(for: symbol)
+
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.annotation.Target"
+                    && $0.arguments == ["AnnotationTarget.FILE"]
+            },
+            "JvmPackageName must carry @Target(FILE), got \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.annotation.Retention"
+                    && $0.arguments == ["AnnotationRetention.SOURCE"]
+            },
+            "JvmPackageName must carry @Retention(SOURCE), got \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.annotation.MustBeDocumented"
+            },
+            "JvmPackageName must carry @MustBeDocumented, got \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.SinceKotlin"
+                    && $0.arguments == ["1.2"]
+            },
+            "JvmPackageName must carry @SinceKotlin(\"1.2\"), got \(annotations)"
+        )
+    }
+
+    func testJvmPackageNameHasNamePropertyAndConstructor() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmPackageName"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let nameProperty = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName + [interner.intern("name")]),
+            "JvmPackageName.name must be registered"
+        )
+
+        XCTAssertEqual(sema.symbols.propertyType(for: nameProperty), sema.types.stringType)
+
+        let constructorSymbol = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: fqName + [interner.intern("<init>")]).first { symbolID in
+                sema.symbols.symbol(symbolID)?.kind == .constructor
+            },
+            "JvmPackageName(String) constructor must be registered"
+        )
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: constructorSymbol))
+        let ownerType = sema.types.make(.classType(ClassType(
+            classSymbol: symbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        XCTAssertEqual(signature.parameterTypes, [sema.types.stringType])
+        XCTAssertEqual(signature.returnType, ownerType)
+        XCTAssertEqual(signature.valueParameterHasDefaultValues, [false])
+        XCTAssertEqual(signature.valueParameterIsVararg, [false])
+    }
+
+    func testJvmPackageNameResolvesOnFile() throws {
+        let source = """
+        @file:kotlin.jvm.JvmPackageName("com.example.generated")
+
+        package sample
+
+        fun value(): Int = 1
+        """
+
+        _ = try makeSema(source: source)
+    }
+
+    func testJvmWildcardAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmWildcard"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.jvm.JvmWildcard must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(info.kind, .annotationClass)
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+    }
+
+    func testJvmWildcardCarriesTypeTarget() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmWildcard"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let annotations = sema.symbols.annotations(for: symbol)
+
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.annotation.Target"
+                    && $0.arguments == ["AnnotationTarget.TYPE"]
+            },
+            "JvmWildcard must carry @Target(TYPE), got \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.SinceKotlin"
+                    && $0.arguments == ["1.0"]
+            },
+            "JvmWildcard must carry @SinceKotlin(\"1.0\"), got \(annotations)"
+        )
+    }
+
+    func testJvmWildcardResolvesOnTypeUse() throws {
+        let source = """
+        import kotlin.jvm.JvmWildcard
+
+        fun identity(value: @JvmWildcard String): String = value
+        """
+
+        _ = try makeSema(source: source)
+    }
+
+    func testJvmSuppressWildcardsAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmSuppressWildcards"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.jvm.JvmSuppressWildcards must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(info.kind, .annotationClass)
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+    }
+
+    func testJvmSuppressWildcardsCarriesTargetsAndSinceKotlin() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmSuppressWildcards"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let annotations = sema.symbols.annotations(for: symbol)
+
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.annotation.Target"
+                    && Set($0.arguments) == Set([
+                        "AnnotationTarget.CLASS",
+                        "AnnotationTarget.FUNCTION",
+                        "AnnotationTarget.PROPERTY",
+                        "AnnotationTarget.TYPE",
+                    ])
+            },
+            "JvmSuppressWildcards must carry class/function/property/type targets, got \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.SinceKotlin"
+                    && $0.arguments == ["1.0"]
+            },
+            "JvmSuppressWildcards must carry @SinceKotlin(\"1.0\"), got \(annotations)"
+        )
+    }
+
+    func testJvmSuppressWildcardsHasSuppressPropertyAndDefaultedConstructor() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmSuppressWildcards"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let suppressProperty = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName + [interner.intern("suppress")]),
+            "JvmSuppressWildcards.suppress must be registered"
+        )
+
+        XCTAssertEqual(sema.symbols.propertyType(for: suppressProperty), sema.types.booleanType)
+
+        let constructorSymbol = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: fqName + [interner.intern("<init>")]).first { symbolID in
+                sema.symbols.symbol(symbolID)?.kind == .constructor
+            },
+            "JvmSuppressWildcards(Boolean = true) constructor must be registered"
+        )
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: constructorSymbol))
+        let ownerType = sema.types.make(.classType(ClassType(
+            classSymbol: symbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        XCTAssertEqual(signature.parameterTypes, [sema.types.booleanType])
+        XCTAssertEqual(signature.returnType, ownerType)
+        XCTAssertEqual(signature.valueParameterHasDefaultValues, [true])
+        XCTAssertEqual(signature.valueParameterIsVararg, [false])
+    }
+
+    func testJvmSuppressWildcardsResolvesOnSupportedTargets() throws {
+        let source = """
+        import kotlin.jvm.JvmSuppressWildcards
+
+        @JvmSuppressWildcards
+        class Box
+
+        @JvmSuppressWildcards(false)
+        fun identity(value: @JvmSuppressWildcards String): String = value
+
+        @JvmSuppressWildcards
+        val value: String = "ok"
+        """
+
+        _ = try makeSema(source: source)
+    }
+
+    func testJvmThrowsAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "Throws"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.jvm.Throws must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(info.kind, .annotationClass)
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+    }
+
+    func testJvmThrowsCarriesTargetsAndSinceKotlin() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "Throws"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let annotations = sema.symbols.annotations(for: symbol)
+
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.annotation.Target"
+                    && $0.arguments == [
+                        "AnnotationTarget.FUNCTION",
+                        "AnnotationTarget.PROPERTY_GETTER",
+                        "AnnotationTarget.PROPERTY_SETTER",
+                        "AnnotationTarget.CONSTRUCTOR",
+                    ]
+            },
+            "Throws must carry function/getter/setter/constructor targets, got \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.SinceKotlin"
+                    && $0.arguments == ["1.0"]
+            },
+            "Throws must carry @SinceKotlin(\"1.0\"), got \(annotations)"
+        )
+    }
+
+    func testJvmThrowsHasExceptionClassesPropertyAndVarargConstructor() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "Throws"].map { interner.intern($0) }
+        let exceptionClassesSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName + [interner.intern("exceptionClasses")]),
+            "Throws.exceptionClasses property must be registered"
+        )
+        let exceptionClassesType = try XCTUnwrap(sema.symbols.propertyType(for: exceptionClassesSymbol))
+        try assertArrayOfOutThrowableKClass(exceptionClassesType, in: sema, interner: interner)
+
+        let constructors = sema.symbols.lookupAll(fqName: fqName + [interner.intern("<init>")])
+        let constructorSignature = try XCTUnwrap(
+            constructors.lazy.compactMap { sema.symbols.functionSignature(for: $0) }.first { signature in
+                signature.valueParameterIsVararg == [true]
+                    && signature.valueParameterSymbols.count == 1
+            },
+            "Throws(vararg exceptionClasses: KClass<out Throwable>) constructor must be registered"
+        )
+        try assertThrowableKClass(constructorSignature.parameterTypes[0], in: sema, interner: interner)
+        let parameter = try XCTUnwrap(sema.symbols.symbol(constructorSignature.valueParameterSymbols[0]))
+        XCTAssertEqual(interner.resolve(parameter.name), "exceptionClasses")
+    }
+
+    func testJvmThrowsResolvesOnDocumentedDeclarationTargets() throws {
+        let source = """
+        import kotlin.jvm.Throws
+
+        class Host @Throws() constructor() {
+            @get:Throws()
+            val readonly: Int = 1
+
+            @set:Throws()
+            var value: Int = 0
+
+            @Throws()
+            fun expose(): Int = value
+        }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        let diagnostics = diagnostics(withCode: "KSWIFTK-SEMA-ANNOTATION-TARGET", in: ctx)
+
+        XCTAssertTrue(diagnostics.isEmpty, "Expected kotlin.jvm.Throws declaration targets to be accepted, got: \(ctx.diagnostics.diagnostics)")
+    }
+
     func testJvmDefaultWithCompatibilityAnnotationIsRegistered() throws {
         let (sema, interner) = try makeSema()
         let fqName = ["kotlin", "jvm", "JvmDefaultWithCompatibility"].map { interner.intern($0) }
@@ -61,5 +469,472 @@ final class JvmAnnotationSyntheticSurfaceTests: XCTestCase {
         """
 
         _ = try makeSema(source: source)
+    }
+
+    func testJvmDefaultWithoutCompatibilityAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmDefaultWithoutCompatibility"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.jvm.JvmDefaultWithoutCompatibility must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(info.kind, .annotationClass)
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+    }
+
+    func testStrictfpAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "Strictfp"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.jvm.Strictfp must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(info.kind, .annotationClass)
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+    }
+
+    func testJvmMultifileClassAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmMultifileClass"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.jvm.JvmMultifileClass must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(info.kind, .annotationClass)
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+    }
+
+    func testJvmInlineAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmInline"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.jvm.JvmInline must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(info.kind, .annotationClass)
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+    }
+
+    func testJvmDefaultWithoutCompatibilityCarriesClassTarget() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmDefaultWithoutCompatibility"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let target = try XCTUnwrap(
+            sema.symbols.annotations(for: symbol).first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "JvmDefaultWithoutCompatibility must carry @Target metadata"
+        )
+
+        XCTAssertEqual(target.arguments, ["AnnotationTarget.CLASS"])
+    }
+
+    func testJvmDefaultWithoutCompatibilityResolvesOnInterfaceAndClass() throws {
+        let source = """
+        import kotlin.jvm.JvmDefaultWithoutCompatibility
+
+        @JvmDefaultWithoutCompatibility
+        interface Service {
+            fun ping(): String = "ok"
+        }
+
+        @JvmDefaultWithoutCompatibility
+        open class BaseService
+        """
+
+        _ = try makeSema(source: source)
+    }
+
+    func testStrictfpCarriesOfficialTargets() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "Strictfp"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName)
+        )
+        let target = try XCTUnwrap(
+            sema.symbols.annotations(for: symbol).first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "Strictfp must carry @Target metadata"
+        )
+
+        XCTAssertEqual(
+            target.arguments,
+            [
+                "AnnotationTarget.FUNCTION",
+                "AnnotationTarget.CONSTRUCTOR",
+                "AnnotationTarget.PROPERTY_GETTER",
+                "AnnotationTarget.PROPERTY_SETTER",
+                "AnnotationTarget.CLASS",
+            ]
+        )
+    }
+
+    func testStrictfpResolvesOnClassAndFunction() throws {
+        let source = """
+        import kotlin.jvm.Strictfp
+
+        @Strictfp
+        class MathHost {
+            @Strictfp
+            fun sum(a: Double, b: Double): Double = a + b
+        }
+        """
+
+        _ = try makeSema(source: source)
+    }
+
+    func testJvmMultifileClassCarriesFileTarget() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmMultifileClass"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let target = try XCTUnwrap(
+            sema.symbols.annotations(for: symbol).first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "JvmMultifileClass must carry @Target metadata"
+        )
+
+        XCTAssertEqual(target.arguments, ["AnnotationTarget.FILE"])
+    }
+
+    func testJvmMultifileClassResolvesOnFileUseSite() throws {
+        let source = """
+        @file:kotlin.jvm.JvmMultifileClass
+
+        fun part(): Int = 1
+        """
+
+        _ = try makeSema(source: source)
+    }
+
+    func testSynchronizedAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "Synchronized"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.jvm.Synchronized must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(info.kind, .annotationClass)
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+    }
+
+    func testSynchronizedCarriesOfficialTargets() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "Synchronized"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let target = try XCTUnwrap(
+            sema.symbols.annotations(for: symbol).first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "Synchronized must carry @Target metadata"
+        )
+
+        XCTAssertEqual(
+            target.arguments,
+            [
+                "AnnotationTarget.FUNCTION",
+                "AnnotationTarget.PROPERTY_GETTER",
+                "AnnotationTarget.PROPERTY_SETTER",
+            ]
+        )
+    }
+
+    func testSynchronizedResolvesOnFunctionAndAccessors() throws {
+        let source = """
+        import kotlin.jvm.Synchronized
+
+        class LockHost {
+            @Synchronized
+            fun guarded(): Int = 1
+
+            @get:Synchronized
+            @set:Synchronized
+            var count: Int = 0
+        }
+        """
+
+        _ = try makeSema(source: source)
+    }
+
+    func testJvmSyntheticAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmSynthetic"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.jvm.JvmSynthetic must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(info.kind, .annotationClass)
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+    }
+
+    func testJvmSyntheticCarriesOfficialTargets() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmSynthetic"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let target = try XCTUnwrap(
+            sema.symbols.annotations(for: symbol).first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "JvmSynthetic must carry @Target metadata"
+        )
+
+        XCTAssertEqual(
+            target.arguments,
+            [
+                "AnnotationTarget.FILE",
+                "AnnotationTarget.FUNCTION",
+                "AnnotationTarget.PROPERTY_GETTER",
+                "AnnotationTarget.PROPERTY_SETTER",
+                "AnnotationTarget.FIELD",
+            ]
+        )
+    }
+
+    func testJvmSyntheticResolvesOnFileAndFunctionUseSites() throws {
+        let source = """
+        @file:kotlin.jvm.JvmSynthetic
+
+        import kotlin.jvm.JvmSynthetic
+
+        @JvmSynthetic
+        fun hiddenFromJava(): Int = 1
+        """
+
+        _ = try makeSema(source: source)
+    }
+
+    func testVolatileAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "Volatile"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.jvm.Volatile must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(info.kind, .annotationClass)
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+    }
+
+    func testVolatileCarriesFieldTarget() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "Volatile"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let target = try XCTUnwrap(
+            sema.symbols.annotations(for: symbol).first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "Volatile must carry @Target metadata"
+        )
+
+        XCTAssertEqual(target.arguments, ["AnnotationTarget.FIELD"])
+    }
+
+    func testVolatileResolvesOnFieldTargetedProperty() throws {
+        let source = """
+        import kotlin.jvm.Volatile
+
+        class SharedState {
+            @field:Volatile
+            var ready: Boolean = false
+        }
+        """
+
+        _ = try makeSema(source: source)
+    }
+
+    func testJvmExposeBoxedCarriesOfficialMetadata() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmExposeBoxed"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let annotations = sema.symbols.annotations(for: symbol)
+
+        XCTAssertTrue(
+            annotations.contains { $0.annotationFQName == "kotlin.ExperimentalStdlibApi" },
+            "JvmExposeBoxed must be gated by ExperimentalStdlibApi"
+        )
+        let target = try XCTUnwrap(
+            annotations.first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "JvmExposeBoxed must carry @Target metadata"
+        )
+        XCTAssertEqual(
+            target.arguments,
+            [
+                "AnnotationTarget.FUNCTION",
+                "AnnotationTarget.CONSTRUCTOR",
+                "AnnotationTarget.PROPERTY_GETTER",
+                "AnnotationTarget.PROPERTY_SETTER",
+                "AnnotationTarget.CLASS",
+            ]
+        )
+    }
+
+    func testJvmExposeBoxedHasJvmNameConstructorWithDefault() throws {
+        let (sema, interner) = try makeSema()
+        let classFQName = ["kotlin", "jvm", "JvmExposeBoxed"].map { interner.intern($0) }
+        let classSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: classFQName))
+        let propertySymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: classFQName + [interner.intern("jvmName")]),
+            "JvmExposeBoxed.jvmName property must be registered"
+        )
+        XCTAssertEqual(sema.symbols.propertyType(for: propertySymbol), sema.types.stringType)
+
+        let constructorFQName = classFQName + [interner.intern("<init>")]
+        let constructor = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: constructorFQName).first {
+                sema.symbols.symbol($0)?.kind == .constructor
+            },
+            "JvmExposeBoxed constructor must be registered"
+        )
+        XCTAssertEqual(sema.symbols.parentSymbol(for: constructor), classSymbol)
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: constructor))
+        XCTAssertEqual(signature.parameterTypes, [sema.types.stringType])
+        XCTAssertEqual(signature.valueParameterHasDefaultValues, [true])
+        XCTAssertEqual(signature.valueParameterIsVararg, [false])
+    }
+
+    func testJvmExposeBoxedResolvesWithDefaultAndExplicitName() throws {
+        let source = """
+        @file:OptIn(kotlin.ExperimentalStdlibApi::class)
+        import kotlin.jvm.JvmExposeBoxed
+
+        @JvmExposeBoxed
+        class BoxedId(val value: Int)
+
+        class Api {
+            @JvmExposeBoxed("boxedValue")
+            fun value(): BoxedId = BoxedId(1)
+        }
+        """
+
+        _ = try makeSema(source: source)
+    }
+
+    func testImplicitlyActualizedByJvmDeclarationAnnotationIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "ImplicitlyActualizedByJvmDeclaration"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.jvm.ImplicitlyActualizedByJvmDeclaration must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(symbol))
+
+        XCTAssertEqual(info.kind, .annotationClass)
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+    }
+
+    func testImplicitlyActualizedByJvmDeclarationCarriesMetadata() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "ImplicitlyActualizedByJvmDeclaration"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let annotations = sema.symbols.annotations(for: symbol)
+
+        XCTAssertTrue(
+            annotations.contains {
+                $0.annotationFQName == "kotlin.annotation.Target"
+                    && $0.arguments == ["AnnotationTarget.CLASS"]
+            },
+            "ImplicitlyActualizedByJvmDeclaration must carry @Target(AnnotationTarget.CLASS), got \(annotations)"
+        )
+        XCTAssertTrue(
+            annotations.contains { $0.annotationFQName == "kotlin.ExperimentalMultiplatform" },
+            "ImplicitlyActualizedByJvmDeclaration must carry @ExperimentalMultiplatform, got \(annotations)"
+        )
+    }
+
+    func testImplicitlyActualizedByJvmDeclarationResolvesOnOptedInClass() throws {
+        let source = """
+        @file:OptIn(kotlin.ExperimentalMultiplatform::class)
+
+        import kotlin.jvm.ImplicitlyActualizedByJvmDeclaration
+
+        @ImplicitlyActualizedByJvmDeclaration
+        class JavaBacked
+        """
+
+        _ = try makeSema(source: source)
+    }
+
+    func testJvmInlineCarriesClassTargetAndBinaryRetention() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmInline"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let annotations = sema.symbols.annotations(for: symbol)
+
+        let target = try XCTUnwrap(
+            annotations.first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "JvmInline must carry @Target metadata"
+        )
+        XCTAssertEqual(target.arguments, ["AnnotationTarget.CLASS"])
+
+        let retention = try XCTUnwrap(
+            annotations.first { $0.annotationFQName == "kotlin.annotation.Retention" },
+            "JvmInline must carry @Retention metadata"
+        )
+        XCTAssertEqual(retention.arguments, ["AnnotationRetention.BINARY"])
+    }
+
+    func testJvmInlineResolvesOnValueClass() throws {
+        let source = """
+        import kotlin.jvm.JvmInline
+
+        @JvmInline
+        value class UserId(val raw: Int)
+        """
+
+        _ = try makeSema(source: source)
+    }
+
+    private func assertArrayOfOutThrowableKClass(
+        _ type: TypeID,
+        in sema: SemaModule,
+        interner: StringInterner,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) throws {
+        guard case let .classType(arrayType) = sema.types.kind(of: type) else {
+            return XCTFail("Expected Array<out KClass<Throwable>>, got \(sema.types.renderType(type))", file: file, line: line)
+        }
+        let arraySymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Array")]),
+            file: file,
+            line: line
+        )
+        XCTAssertEqual(arrayType.classSymbol, arraySymbol, file: file, line: line)
+        XCTAssertEqual(arrayType.args.count, 1, file: file, line: line)
+        guard case let .out(elementType) = arrayType.args[0] else {
+            return XCTFail("Expected covariant Array element, got \(arrayType.args[0])", file: file, line: line)
+        }
+        try assertThrowableKClass(elementType, in: sema, interner: interner, file: file, line: line)
+    }
+
+    private func assertThrowableKClass(
+        _ type: TypeID,
+        in sema: SemaModule,
+        interner: StringInterner,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) throws {
+        guard case let .kClassType(kClassType) = sema.types.kind(of: type) else {
+            return XCTFail("Expected KClass<Throwable>, got \(sema.types.renderType(type))", file: file, line: line)
+        }
+        guard case let .classType(argumentType) = sema.types.kind(of: kClassType.argument) else {
+            return XCTFail("Expected KClass argument to be Throwable, got \(sema.types.renderType(kClassType.argument))", file: file, line: line)
+        }
+        let throwableSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Throwable")]),
+            file: file,
+            line: line
+        )
+        XCTAssertEqual(argumentType.classSymbol, throwableSymbol, file: file, line: line)
     }
 }

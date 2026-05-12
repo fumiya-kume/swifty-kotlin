@@ -5,15 +5,15 @@ final class VolatileExpectActualTests: XCTestCase {
     func testJvmVolatileExpectActualTypealiasLinks() throws {
         let sources = [
             """
-            package kotlin.jvm
+            package volatile.expect.test.jvm
             annotation class Volatile
             """,
             """
-            package kotlin.concurrent
+            package volatile.expect.test.concurrent
             actual typealias Volatile = kotlin.jvm.Volatile
             """,
             """
-            package kotlin.concurrent
+            package volatile.expect.test.concurrent
             expect annotation class Volatile
             """,
         ]
@@ -31,7 +31,9 @@ final class VolatileExpectActualTests: XCTestCase {
 
         let sema = try XCTUnwrap(ctx.sema)
         let fqName = [
-            ctx.interner.intern("kotlin"),
+            ctx.interner.intern("volatile"),
+            ctx.interner.intern("expect"),
+            ctx.interner.intern("test"),
             ctx.interner.intern("concurrent"),
             ctx.interner.intern("Volatile")
         ]
@@ -89,15 +91,15 @@ final class VolatileExpectActualTests: XCTestCase {
     func testExpectActualLinkValidation() throws {
         let sources = [
             """
-            package kotlin.jvm
+            package volatile.expect.validation.jvm
             annotation class Volatile
             """,
             """
-            package kotlin.concurrent
+            package volatile.expect.validation.concurrent
             actual typealias Volatile = kotlin.jvm.Volatile
             """,
             """
-            package kotlin.concurrent
+            package volatile.expect.validation.concurrent
             expect annotation class Volatile
             """,
         ]
@@ -113,7 +115,9 @@ final class VolatileExpectActualTests: XCTestCase {
         
         // Test that links are properly established
         let fqName = [
-            ctx.interner.intern("kotlin"),
+            ctx.interner.intern("volatile"),
+            ctx.interner.intern("expect"),
+            ctx.interner.intern("validation"),
             ctx.interner.intern("concurrent"),
             ctx.interner.intern("Volatile")
         ]

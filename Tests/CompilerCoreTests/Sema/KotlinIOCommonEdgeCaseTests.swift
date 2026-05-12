@@ -416,6 +416,54 @@ final class KotlinIOCommonEdgeCaseTests: XCTestCase {
         }
     }
 
+    // MARK: - DEFAULT_BUFFER_SIZE property
+
+    func testDefaultBufferSizePropertyIsRegistered() throws {
+        let source = """
+        fun main() {
+            println("ok")
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let sema = try XCTUnwrap(ctx.sema)
+            let interner = ctx.interner
+
+            let kotlinIOFQN: [InternedString] = [interner.intern("kotlin"), interner.intern("io")]
+            let propertyFQN = kotlinIOFQN + [interner.intern("DEFAULT_BUFFER_SIZE")]
+            let propertySymbol = try XCTUnwrap(
+                sema.symbols.lookupAll(fqName: propertyFQN).first { symbolID in
+                    sema.symbols.symbol(symbolID)?.kind == .property
+                },
+                "kotlin.io.DEFAULT_BUFFER_SIZE should be registered as a synthetic top-level property"
+            )
+            XCTAssertEqual(sema.symbols.propertyType(for: propertySymbol), sema.types.intType)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: propertySymbol), "kk_io_default_buffer_size")
+            XCTAssertTrue(sema.symbols.symbol(propertySymbol)?.flags.contains(.constValue) == true)
+            XCTAssertEqual(sema.symbols.constValueExprKind(for: propertySymbol), .intLiteral(8192))
+        }
+    }
+
+    func testDefaultBufferSizePropertyResolvesAsInt() throws {
+        let source = """
+        import kotlin.io.DEFAULT_BUFFER_SIZE
+
+        fun main() {
+            val size: Int = DEFAULT_BUFFER_SIZE
+            println(size)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "DEFAULT_BUFFER_SIZE should resolve as Int: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     // MARK: - readLine stub
 
     func testReadLineStubResolvesToNullableString() throws {
@@ -576,6 +624,54 @@ final class KotlinIOCommonEdgeCaseTests: XCTestCase {
             XCTAssertFalse(
                 ctx.diagnostics.hasError,
                 "File.bufferedReader() and BufferedReader.readLine() / close() should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
+    // MARK: - File read / append helpers
+
+    func testFileReadAppendAndByteHelpersResolve() throws {
+        let source = """
+        import java.io.File
+
+        fun main() {
+            val f = File("/tmp/kswiftk-io.txt")
+            val text: String = f.readText()
+            f.appendText(text)
+            val bytes = f.readBytes()
+            println(bytes)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "File.readText(), appendText(), and readBytes() should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
+    // MARK: - File stream helpers
+
+    func testFileInputAndOutputStreamResolve() throws {
+        let source = """
+        import java.io.File
+
+        fun main() {
+            val f = File("/tmp/kswiftk-io.txt")
+            val source = f.inputStream()
+            val sink = f.outputStream()
+            println(source)
+            println(sink)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "File.inputStream() and outputStream() should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
             )
         }
     }

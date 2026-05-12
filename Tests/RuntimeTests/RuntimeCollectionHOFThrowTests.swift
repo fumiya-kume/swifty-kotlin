@@ -250,6 +250,24 @@ final class RuntimeCollectionHOFThrowTests: XCTestCase {
         XCTAssertNotEqual(outThrown, 0)
         XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
     }
+
+    func testListSingleEmptyThrows() {
+        let list = kk_list_of(kk_array_new(0), 0)
+        var outThrown = 0
+        let result = kk_list_single(list, &outThrown)
+
+        XCTAssertNotEqual(outThrown, 0)
+        XCTAssertEqual(result, 0)
+    }
+
+    func testListSingleMultipleElementsThrows() {
+        let list = makeList([1, 2])
+        var outThrown = 0
+        let result = kk_list_single(list, &outThrown)
+
+        XCTAssertNotEqual(outThrown, 0)
+        XCTAssertEqual(result, 0)
+    }
     
     func testListReduceOrNullEmptyDoesNotThrow() {
         let list = kk_list_of(kk_array_new(0), 0)
@@ -260,22 +278,22 @@ final class RuntimeCollectionHOFThrowTests: XCTestCase {
         XCTAssertEqual(result, runtimeNullSentinelInt, "reduceOrNull should return runtimeNullSentinelInt (null) for empty list")
     }
 
-    func testListScanReduceEmptyThrows() {
+    func testListScanReduceEmptyDoesNotThrow() {
         let list = kk_list_of(kk_array_new(0), 0)
         var outThrown = 0
         let result = kk_list_scanReduce(list, 0, 0, &outThrown)
 
-        XCTAssertNotEqual(outThrown, 0)
-        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertEqual(outThrown, 0)
+        XCTAssertEqual(runtimeListBox(from: result)?.elements ?? [], [])
     }
 
-    func testListRunningReduceEmptyThrows() {
+    func testListRunningReduceEmptyDoesNotThrow() {
         let list = kk_list_of(kk_array_new(0), 0)
         var outThrown = 0
         let result = kk_list_runningReduce(list, 0, 0, &outThrown)
 
-        XCTAssertNotEqual(outThrown, 0)
-        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertEqual(outThrown, 0)
+        XCTAssertEqual(runtimeListBox(from: result)?.elements ?? [], [])
     }
 
     func testListFoldThrows() {
