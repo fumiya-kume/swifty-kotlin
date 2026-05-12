@@ -5,6 +5,9 @@
   "minLines": 5,
   "minTokens": 50,
   "path": ["Sources/"],
+  "ignore": [
+    "Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticMetaprogAnnotationHelpers.swift"
+  ],
   "absolute": false,
   "gitignore": true
 }
