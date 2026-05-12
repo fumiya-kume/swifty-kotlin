@@ -1912,6 +1912,25 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenListFlattenUsesRuntimeHelper() throws {
+        let source = """
+        fun main() {
+            val nested = listOf(listOf(1, 2), listOf(3))
+            println(nested.flatten())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "ListFlattenRuntime", emit: .kirDump)
+            try runToLowering(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: body, interner: ctx.interner)
+            XCTAssertTrue(callees.contains("kk_list_flatten"))
+        }
+    }
+
     func testCodegenMapFilterValuesReturnsFilteredEntries() throws {
         let source = """
         fun main() {
