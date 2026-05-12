@@ -166,6 +166,15 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_list_random"
         )
 
+        // randomOrNull(): E?
+        defineCollectionFunctionMember(
+            name: "randomOrNull",
+            parameterTypes: [],
+            returnType: types.makeNullable(typeParamType),
+            flags: [.synthetic],
+            externalLinkName: "kk_list_randomOrNull"
+        )
+
         return collectionInterfaceSymbol
     }
 
