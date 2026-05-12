@@ -1057,6 +1057,16 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(destination), [99, 1, 3])
     }
 
+    func testListFilterToAppendsMatchingElementsToDestination() {
+        let source = makeList([1, 2, 3, 4])
+        let destination = makeList([99])
+
+        let result = kk_list_filterTo(source, destination, unsafeBitCast(countEven, to: Int.self), 0, nil)
+
+        XCTAssertEqual(result, destination)
+        XCTAssertEqual(listElements(destination), [99, 2, 4])
+    }
+
     func testCollectionFilterNotNullPreservesZeroAfterMapNotNull() {
         let source = makeList([0, 1, 2])
         let mapped = kk_list_mapNotNull(source, unsafeBitCast(identityMapValue, to: Int.self), 0, nil)
