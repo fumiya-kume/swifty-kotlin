@@ -2761,6 +2761,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(name: "kk_path_toUri", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_get", parameters: [RuntimeABIParameter(name: "pathStringRaw", type: .intptr)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_toAbsolutePath", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_toAbsolutePathString", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_getName", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "indexRaw", type: .intptr)], returnType: .intptr, section: "Path"),
     ]
 

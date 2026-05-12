@@ -977,6 +977,60 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathAbsolutePathStringExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import kotlin.io.path.Path
+        import kotlin.io.path.absolutePathString
+
+        fun pathAbsolutePathString(path: Path): String {
+            return path.absolutePathString()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let diagnostics = ctx.diagnostics.diagnostics.map(\.message)
+            let sema = try XCTUnwrap(ctx.sema)
+            let astAbs = try XCTUnwrap(ctx.ast)
+            let interner = ctx.interner
+            let pathSymbolAbs = try XCTUnwrap(
+                sema.symbols.lookup(fqName: [
+                    interner.intern("kotlin"),
+                    interner.intern("io"),
+                    interner.intern("path"),
+                    interner.intern("Path"),
+                ])
+            )
+            let pathTypeAbs = sema.types.make(.classType(ClassType(
+                classSymbol: pathSymbolAbs,
+                args: [],
+                nullability: .nonNull
+            )))
+            let absolutePathStringSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: [
+                    interner.intern("kotlin"),
+                    interner.intern("io"),
+                    interner.intern("path"),
+                    interner.intern("absolutePathString"),
+                ])
+            )
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: absolutePathStringSymbol))
+            XCTAssertEqual(signature.receiverType, pathTypeAbs)
+            XCTAssertEqual(signature.parameterTypes, [])
+            XCTAssertEqual(signature.returnType, sema.types.stringType)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.absolutePathString() in kotlin.io.path should resolve as String: \(diagnostics)"
+            )
+
+            let callExpr = try XCTUnwrap(memberCallExprIDs(named: "absolutePathString", in: astAbs, interner: interner).first)
+            XCTAssertEqual(sema.bindings.callBinding(for: callExpr)?.chosenCallee, absolutePathStringSymbol)
+            XCTAssertEqual(sema.bindings.exprTypes[callExpr], sema.types.stringType)
+        }
+    }
+
     func testMemoryOrderInAtomicsPackageIsResolved() throws {
         let source = """
         import kotlin.concurrent.atomics.MemoryOrder

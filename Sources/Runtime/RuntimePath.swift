@@ -598,6 +598,19 @@ public func kk_path_toAbsolutePath(_ pathRaw: Int) -> Int {
     return registerRuntimeObject(RuntimePathBox(absolute))
 }
 
+@_cdecl("kk_path_toAbsolutePathString")
+public func kk_path_toAbsolutePathString(_ pathRaw: Int) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_toAbsolutePathString received invalid Path handle")
+    }
+    if path.pathString.hasPrefix("/") {
+        return pathMakeStringRaw(path.pathString)
+    }
+    let absolute = (FileManager.default.currentDirectoryPath as NSString)
+        .appendingPathComponent(path.pathString)
+    return pathMakeStringRaw(absolute)
+}
+
 @_cdecl("kk_path_getName")
 public func kk_path_getName(_ pathRaw: Int, _ indexRaw: Int) -> Int {
     guard let path = runtimePathBox(from: pathRaw) else {
