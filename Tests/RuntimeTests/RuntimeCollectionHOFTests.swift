@@ -516,6 +516,11 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(thrown, 0)
     }
 
+    func testMaxOrNullReturnsLargestElementAndNullForEmpty() {
+        XCTAssertEqual(kk_list_maxOrNull(makeList([3, 1, 4, 2])), 4)
+        XCTAssertEqual(kk_list_maxOrNull(makeList([])), runtimeNullSentinelInt)
+    }
+
     func testMinByOrNullReturnsElementWithSmallestSelectorAndNullOnEmpty() {
         let result = kk_list_minByOrNull(
             makeList([5, 2, 3]),
