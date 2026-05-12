@@ -1155,7 +1155,7 @@
 - [x] STDLIB-IO-PATH-FN-061: `Path.readSymbolicLink()` を追加する
 - [x] STDLIB-IO-PATH-FN-062: `Path.readText(charset)` を既存 no-arg stub から公式 charset shape へ広げる
 - [x] STDLIB-IO-PATH-FN-063: `Path.relativeTo(base)` を追加する
-- [ ] STDLIB-IO-PATH-FN-064: `Path.relativeToOrNull(base)` を追加する
+- [x] STDLIB-IO-PATH-FN-064: `Path.relativeToOrNull(base)` を追加する
 - [x] STDLIB-IO-PATH-FN-065: `Path.relativeToOrSelf(base)` を追加する
 - [ ] STDLIB-IO-PATH-FN-066: `Path.setAttribute(attribute, value, options)` を追加する
 - [x] STDLIB-IO-PATH-FN-067: `Path.setLastModifiedTime(value)` を追加する
