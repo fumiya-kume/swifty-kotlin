@@ -163,6 +163,10 @@ private let maxOfWithSquareValue: @convention(c) (Int, Int, UnsafeMutablePointer
     value * value
 }
 
+private let maxOfOrNullSquareValue: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value * value
+}
+
 private let sumByDoubleWeightedTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     kk_double_to_bits(value == 2 ? 1.5 : 0.25)
 }
@@ -609,6 +613,21 @@ final class RuntimeCollectionHOFTests: XCTestCase {
             runtimeExceptionCaughtSentinel
         )
         XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testMaxOfOrNullReturnsLargestTransformedValueAndNullForEmpty() {
+        var thrown = 0
+        let result = kk_list_maxOfOrNull(makeList([-3, 1, 2]), unsafeBitCast(maxOfOrNullSquareValue, to: Int.self), 0, &thrown)
+
+        XCTAssertEqual(result, 9)
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        XCTAssertEqual(
+            kk_list_maxOfOrNull(makeList([]), unsafeBitCast(maxOfOrNullSquareValue, to: Int.self), 0, &thrown),
+            runtimeNullSentinelInt
+        )
+        XCTAssertEqual(thrown, 0)
     }
 
     func testListElementAtReturnsElementAndThrowsWhenOutOfBounds() {

@@ -1490,6 +1490,31 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenListMaxOfOrNullReturnsLargestTransformedValueOrNull() throws {
+        let source = """
+        fun main() {
+            val values = listOf(-3, 1, 2)
+            println(values.maxOfOrNull { it * it })
+            println(emptyList<Int>().maxOfOrNull { it * it })
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListMaxOfOrNullRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "9\nnull\n")
+        }
+    }
+
     func testCodegenListMaxByOrNullReturnsSelectedElementOrNull() throws {
         let source = """
         fun main() {
