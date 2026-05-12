@@ -4193,6 +4193,3 @@ extension DataFlowSemaPhase {
             for: memberSymbol
         )
     }
-
-    /// Register `kotlin.collections.MutableList<E>` interface stub with `operator fun set(index: Int, element: E): E`.
-}
