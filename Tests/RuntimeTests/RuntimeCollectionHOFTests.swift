@@ -178,11 +178,6 @@ private let maxByNegativeValue: @convention(c) (Int, Int, UnsafeMutablePointer<I
     -value
 }
 
-private let reverseIntComparator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, lhs, rhs, _ in
-    if lhs == rhs { return 0 }
-    return lhs > rhs ? -1 : 1
-}
-
 private let groupingFoldToInitialValueSelector: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = {
     _, key, element, _ in
     gHOFState.addCall()
