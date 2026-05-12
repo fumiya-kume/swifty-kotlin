@@ -1223,6 +1223,7 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(kk_list_last(source, unsafeBitCast(lastLessThanThree, to: Int.self), 0, nil), 2)
         XCTAssertEqual(kk_list_find(source, unsafeBitCast(findEqualTwo, to: Int.self), 0, nil), 2)
         XCTAssertEqual(kk_list_find(source, unsafeBitCast(firstGreaterThanTwo, to: Int.self), 0, nil), 3)
+        XCTAssertEqual(kk_list_findLast(source, unsafeBitCast(countEven, to: Int.self), 0, nil), 4)
 
         var thrown = 0
         XCTAssertEqual(kk_list_reduce(makeList([]), unsafeBitCast(foldSum, to: Int.self), 0, &thrown), runtimeExceptionCaughtSentinel)

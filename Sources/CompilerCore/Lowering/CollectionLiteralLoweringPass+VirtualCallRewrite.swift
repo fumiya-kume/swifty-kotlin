@@ -730,7 +730,7 @@ extension CollectionLiteralLoweringPass {
     ) -> Bool {
         let module = context.module
         let lookup = context.lookup
-        guard callee == lookup.groupByName || callee == lookup.sortedByName || callee == lookup.findName
+        guard callee == lookup.groupByName || callee == lookup.sortedByName || callee == lookup.findName || callee == lookup.findLastName
             || callee == lookup.associateByName || callee == lookup.associateWithName || callee == lookup.associateName
             || callee == lookup.sortedByDescendingName || callee == lookup.sortedWithName
             || callee == lookup.maxByName || callee == lookup.maxByOrNullName || callee == lookup.minByOrNullName
@@ -757,6 +757,7 @@ extension CollectionLiteralLoweringPass {
         case lookup.sortedByDescendingName: lookup.kkListSortedByDescendingName
         case lookup.sortedWithName: lookup.kkListSortedWithName
         case lookup.findName: lookup.kkListFindName
+        case lookup.findLastName: lookup.kkListFindLastName
         case lookup.associateByName: lookup.kkListAssociateByName
         case lookup.associateWithName: lookup.kkListAssociateWithName
         case lookup.associateName: lookup.kkListAssociateName
