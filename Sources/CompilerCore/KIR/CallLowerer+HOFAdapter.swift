@@ -43,30 +43,14 @@ extension CallLowerer {
         let closureExpr = arena.appendExpr(.symbolRef(closureParam.symbol), type: closureParam.type)
         body.append(.constValue(result: closureExpr, value: .symbolRef(closureParam.symbol)))
 
-        var callArguments: [KIRExprID] = []
-        if callableInfo.captureArguments.count >= 2 {
-            let arrayGet = interner.intern("kk_array_get_inbounds")
-            for (captureIndex, captureExpr) in callableInfo.captureArguments.enumerated() {
-                let captureType = arena.exprType(captureExpr) ?? sema.types.anyType
-                let offsetExpr = arena.appendExpr(.intLiteral(Int64(captureIndex + 2)), type: sema.types.intType)
-                body.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(captureIndex + 2))))
-                let loadedExpr = arena.appendExpr(
-                    .temporary(Int32(clamping: arena.expressions.count)),
-                    type: captureType
-                )
-                body.append(.call(
-                    symbol: nil,
-                    callee: arrayGet,
-                    arguments: [closureExpr, offsetExpr],
-                    result: loadedExpr,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
-                callArguments.append(loadedExpr)
-            }
-        } else if !callableInfo.captureArguments.isEmpty {
-            callArguments.append(closureExpr)
-        }
+        let callArguments = appendCallableCaptureLoads(
+            callableInfo: callableInfo,
+            closureExpr: closureExpr,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            body: &body
+        )
 
         for param in valueParams {
             let paramExpr = arena.appendExpr(.symbolRef(param.symbol), type: param.type)
