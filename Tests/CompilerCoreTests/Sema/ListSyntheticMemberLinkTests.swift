@@ -1419,6 +1419,57 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testAbstractSetSurfaceIsRegistered() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let collectionsPkg = ["kotlin", "collections"].map { ctx.interner.intern($0) }
+            let collectionSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: collectionsPkg + [ctx.interner.intern("Collection")])
+            )
+            let setSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: collectionsPkg + [ctx.interner.intern("Set")])
+            )
+
+            let abstractSetFQName = collectionsPkg + [ctx.interner.intern("AbstractSet")]
+            let abstractSetSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: abstractSetFQName),
+                "Expected kotlin.collections.AbstractSet to be registered"
+            )
+            let abstractSetInfo = try XCTUnwrap(sema.symbols.symbol(abstractSetSymbol))
+            XCTAssertEqual(abstractSetInfo.kind, .class)
+            XCTAssertTrue(abstractSetInfo.flags.contains(.synthetic))
+            XCTAssertTrue(abstractSetInfo.flags.contains(.abstractType))
+            XCTAssertEqual(
+                sema.types.nominalTypeParameterVariances(for: abstractSetSymbol),
+                [.out]
+            )
+
+            let abstractCollectionSymbol = sema.symbols.lookup(
+                fqName: collectionsPkg + [ctx.interner.intern("AbstractCollection")]
+            )
+            let collectionSupertype = abstractCollectionSymbol ?? collectionSymbol
+            let directSupertypes = sema.symbols.directSupertypes(for: abstractSetSymbol)
+            XCTAssertTrue(directSupertypes.contains(collectionSupertype))
+            XCTAssertTrue(directSupertypes.contains(setSymbol))
+            XCTAssertEqual(sema.symbols.supertypeTypeArgs(for: abstractSetSymbol, supertype: collectionSupertype).count, 1)
+            XCTAssertEqual(sema.symbols.supertypeTypeArgs(for: abstractSetSymbol, supertype: setSymbol).count, 1)
+            XCTAssertEqual(sema.types.nominalSupertypeTypeArgs(for: abstractSetSymbol, supertype: collectionSupertype).count, 1)
+            XCTAssertEqual(sema.types.nominalSupertypeTypeArgs(for: abstractSetSymbol, supertype: setSymbol).count, 1)
+
+            let constructorSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: abstractSetFQName + [ctx.interner.intern("<init>")]),
+                "Expected AbstractSet protected constructor to be registered"
+            )
+            let constructorInfo = try XCTUnwrap(sema.symbols.symbol(constructorSymbol))
+            XCTAssertEqual(constructorInfo.kind, .constructor)
+            XCTAssertEqual(constructorInfo.visibility, .protected)
+            XCTAssertTrue(try XCTUnwrap(sema.symbols.functionSignature(for: constructorSymbol)).parameterTypes.isEmpty)
+        }
+    }
+
     func testAbstractListCanBeUsedAsListSupertype() throws {
         let source = """
         import kotlin.collections.AbstractList
@@ -1445,6 +1496,36 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             XCTAssertFalse(
                 ctx.diagnostics.hasError,
                 "Expected AbstractList subtype surface to resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
+    func testAbstractSetCanBeUsedAsCollectionAndSetSupertype() throws {
+        let source = """
+        import kotlin.collections.AbstractSet
+        import kotlin.collections.Collection
+        import kotlin.collections.Set
+
+        abstract class ProbeSet : AbstractSet<Int>()
+
+        fun acceptCollection(values: Collection<Int>) {}
+        fun acceptSet(values: Set<Int>) {}
+
+        fun probe(values: ProbeSet) {
+            acceptCollection(values)
+            acceptSet(values)
+            values.contains(1)
+            values.isEmpty()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected AbstractSet subtype surface to resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
             )
         }
     }
@@ -1486,6 +1567,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             XCTAssertTrue(sema.types.nominalTypeParameterSymbols(for: randomAccessSymbol).isEmpty)
         }
     }
+
 
     func testAbstractMutableCollectionSurfaceIsRegistered() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
