@@ -135,6 +135,20 @@ private let reverseIntComparator: @convention(c) (Int, Int, Int, UnsafeMutablePo
     return 0
 }
 
+private let maxOfWithOrNullNaturalComparator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, lhs, rhs, _ in
+    if lhs < rhs {
+        return -1
+    }
+    if lhs > rhs {
+        return 1
+    }
+    return 0
+}
+
+private let maxOfWithOrNullSquareValue: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value * value
+}
+
 private let sumByDoubleWeightedTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     kk_double_to_bits(value == 2 ? 1.5 : 0.25)
 }
@@ -475,6 +489,53 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         thrown = 0
         XCTAssertEqual(
             kk_list_maxWithOrNull(makeList([]), unsafeBitCast(maxWithOrNullNaturalComparator, to: Int.self), 0, &thrown),
+            runtimeNullSentinelInt
+        )
+        XCTAssertEqual(thrown, 0)
+    }
+
+    func testMinByOrNullReturnsElementWithSmallestSelectorAndNullOnEmpty() {
+        let result = kk_list_minByOrNull(
+            makeList([5, 2, 3]),
+            unsafeBitCast(countEven, to: Int.self),
+            0,
+            nil as UnsafeMutablePointer<Int>?
+        )
+        XCTAssertEqual(result, 5)
+
+        let emptyResult = kk_list_minByOrNull(
+            makeList([]),
+            unsafeBitCast(countEven, to: Int.self),
+            0,
+            nil as UnsafeMutablePointer<Int>?
+        )
+        XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
+    }
+
+    func testMaxOfWithOrNullReturnsLargestTransformedValueAndNullForEmpty() {
+        var thrown = 0
+        let result = kk_list_maxOfWithOrNull(
+            makeList([-3, 1, 2]),
+            unsafeBitCast(maxOfWithOrNullNaturalComparator, to: Int.self),
+            0,
+            unsafeBitCast(maxOfWithOrNullSquareValue, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(result, 9)
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        XCTAssertEqual(
+            kk_list_maxOfWithOrNull(
+                makeList([]),
+                unsafeBitCast(maxOfWithOrNullNaturalComparator, to: Int.self),
+                0,
+                unsafeBitCast(maxOfWithOrNullSquareValue, to: Int.self),
+                0,
+                &thrown
+            ),
             runtimeNullSentinelInt
         )
         XCTAssertEqual(thrown, 0)
@@ -1069,6 +1130,17 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(filtered), [1, 3])
     }
 
+    func testListTakeWhileKeepsMatchingPrefixAndPropagatesThrow() {
+        let source = makeList([3, 4, 1, 5])
+        let taken = kk_list_takeWhile(source, unsafeBitCast(filterGreaterThanOne, to: Int.self), 0, nil)
+        XCTAssertEqual(listElements(taken), [3, 4])
+
+        var thrown = 0
+        let thrownResult = kk_list_takeWhile(source, unsafeBitCast(throwingHOFLambda, to: Int.self), 0, &thrown)
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(listElements(thrownResult), [])
+    }
+
     func testCountFirstLastFindAndEmptyFailures() {
         let source = makeList([1, 2, 3, 4])
 
@@ -1307,6 +1379,11 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(mapKeys(filtered), [1, 3])
         XCTAssertEqual(kk_map_get(filtered, 1), 10)
         XCTAssertEqual(kk_map_get(filtered, 3), 32)
+
+        let filteredValues = kk_map_filterValues(map, unsafeBitCast(countEven, to: Int.self), 0, nil)
+        XCTAssertEqual(mapKeys(filteredValues), [1, 3])
+        XCTAssertEqual(kk_map_get(filteredValues, 1), 10)
+        XCTAssertEqual(kk_map_get(filteredValues, 3), 32)
     }
 
     func testMapFilterKeysPassesOnlyKeysToPredicate() {
@@ -1934,6 +2011,18 @@ final class RuntimeCollectionHOFTests: XCTestCase {
             0,
             &thrown
         )
+        XCTAssertEqual(emptyResult, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testMinReturnsSmallestElementAndThrowsOnEmpty() {
+        var thrown = 0
+
+        let minResult = kk_list_min(makeList([3, 1, 4, 2]), &thrown)
+        XCTAssertEqual(minResult, 1)
+        XCTAssertEqual(thrown, 0)
+
+        let emptyResult = kk_list_min(makeList([]), &thrown)
         XCTAssertEqual(emptyResult, runtimeExceptionCaughtSentinel)
         XCTAssertNotEqual(thrown, 0)
     }
