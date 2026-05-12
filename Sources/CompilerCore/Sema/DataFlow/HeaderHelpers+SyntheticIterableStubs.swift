@@ -2320,6 +2320,72 @@ extension DataFlowSemaPhase {
         )
     }
 
+    /// Register `Iterable<T>.reduceIndexed(operation: (Int, S, T) -> S): S`.
+    func registerIterableReduceIndexedMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        iterableInterfaceSymbol: SymbolID
+    ) {
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName,
+              let iterableTypeParamSymbol = types.nominalTypeParameterSymbols(for: iterableInterfaceSymbol).first
+        else { return }
+
+        let memberName = interner.intern("reduceIndexed")
+        let memberFQName = iterableFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let elementType = types.make(.typeParam(TypeParamType(
+            symbol: iterableTypeParamSymbol,
+            nullability: .nonNull
+        )))
+        let accumulatorTypeParamName = interner.intern("S")
+        let accumulatorTypeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: accumulatorTypeParamName,
+            fqName: memberFQName + [accumulatorTypeParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let accumulatorType = types.make(.typeParam(TypeParamType(
+            symbol: accumulatorTypeParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+        let operationType = types.make(.functionType(FunctionType(
+            params: [types.intType, accumulatorType, elementType],
+            returnType: accumulatorType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .inlineFunction]
+        )
+        symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_list_reduceIndexed", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [operationType],
+                returnType: accumulatorType,
+                typeParameterSymbols: [iterableTypeParamSymbol, accumulatorTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
     /// Register `Iterable<E>.minusElement(element): List<E>` (STDLIB-COL-HOF-005).
     func registerIterableMinusElementMember(
         symbols: SymbolTable,

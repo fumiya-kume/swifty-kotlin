@@ -235,6 +235,28 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testAtomicLongArrayInConcurrentPackageIsResolved() throws {
+        let source = """
+        import kotlin.concurrent.AtomicLongArray
+
+        fun main() {
+            val values = AtomicLongArray(2)
+            values.storeAt(0, 10L)
+            val ok = values.compareAndSetAt(0, 10L, 11L)
+            println(if (ok) values.loadAt(0) else values.size.toLong())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "AtomicLongArray in kotlin.concurrent should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     func testExperimentalAtomicArraysInAtomicsPackageAreResolved() throws {
         let source = """
         @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
@@ -522,6 +544,63 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
             XCTAssertEqual(sema.bindings.exprTypes[callExprs[0]], types.longType)
         }
     }
+
+    func testPathSetPosixFilePermissionsExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import java.nio.file.attribute.PosixFilePermission
+        import kotlin.collections.Set
+        import kotlin.io.path.Path
+        import kotlin.io.path.setPosixFilePermissions
+
+        fun setPermissions(path: Path, value: Set<PosixFilePermission>): Path {
+            return path.setPosixFilePermissions(value)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.setPosixFilePermissions extension function in kotlin.io.path should resolve: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let setSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "collections", "Set"].map(interner.intern)))
+            let posixFilePermissionSymbol = try XCTUnwrap(symbols.lookup(fqName: ["java", "nio", "file", "attribute", "PosixFilePermission"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let posixFilePermissionType = types.make(.classType(ClassType(classSymbol: posixFilePermissionSymbol, args: [], nullability: .nonNull)))
+            let setOfPosixFilePermissionType = types.make(.classType(ClassType(
+                classSymbol: setSymbol,
+                args: [.out(posixFilePermissionType)],
+                nullability: .nonNull
+            )))
+            let setPosixFilePermissionsSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "setPosixFilePermissions"].map(interner.intern))
+            let setPosixFilePermissions = try XCTUnwrap(setPosixFilePermissionsSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [setOfPosixFilePermissionType]
+                    && signature.returnType == pathType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: setPosixFilePermissions), "kk_path_setPosixFilePermissions")
+
+            let signature = try XCTUnwrap(symbols.functionSignature(for: setPosixFilePermissions))
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [false])
+            XCTAssertEqual(signature.valueParameterIsVararg, [false])
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let callExprs = memberCallExprIDs(named: "setPosixFilePermissions", in: ast, interner: interner)
+
+            XCTAssertEqual(callExprs.count, 1)
+            XCTAssertEqual(sema.bindings.callBinding(for: callExprs[0])?.chosenCallee, setPosixFilePermissions)
+            XCTAssertEqual(sema.bindings.exprTypes[callExprs[0]], pathType)
+        }
+    }
+
     func testOnErrorResultInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import kotlin.io.path.OnErrorResult
@@ -541,6 +620,52 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
                 ctx.diagnostics.hasError,
                 "OnErrorResult entries in kotlin.io.path should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
             )
+        }
+    }
+
+    func testPathReadSymbolicLinkExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import kotlin.io.path.Path
+        import kotlin.io.path.readSymbolicLink
+
+        fun readLinkTarget(path: Path): Path {
+            return path.readSymbolicLink()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.readSymbolicLink extension function in kotlin.io.path should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let readSymbolicLinkSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "readSymbolicLink"].map(interner.intern))
+            let readSymbolicLink = try XCTUnwrap(readSymbolicLinkSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes.isEmpty
+                    && signature.returnType == pathType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: readSymbolicLink), "kk_path_readSymbolicLink")
+
+            let signature = try XCTUnwrap(symbols.functionSignature(for: readSymbolicLink))
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [])
+            XCTAssertEqual(signature.valueParameterIsVararg, [])
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let callExprs = memberCallExprIDs(named: "readSymbolicLink", in: ast, interner: interner)
+
+            XCTAssertEqual(callExprs.count, 1)
+            XCTAssertEqual(sema.bindings.callBinding(for: callExprs[0])?.chosenCallee, readSymbolicLink)
+            XCTAssertEqual(sema.bindings.exprTypes[callExprs[0]], pathType)
         }
     }
 

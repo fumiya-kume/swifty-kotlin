@@ -351,6 +351,45 @@ extension DataFlowSemaPhase {
             symbols: symbols
         )
 
+        // @JvmExposeBoxed - exposes value-class based JVM APIs as boxed variants.
+        registerSyntheticJvmAnnotationClass(
+            named: "JvmExposeBoxed",
+            packageFQName: kotlinJvmPkg,
+            packageSymbol: kotlinJvmPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        if let exposeBoxedSymbol = symbols.lookup(fqName: kotlinJvmPkg + [interner.intern("JvmExposeBoxed")]) {
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(annotationFQName: "kotlin.ExperimentalStdlibApi"),
+                to: exposeBoxedSymbol,
+                symbols: symbols
+            )
+            appendSyntheticAnnotation(
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.annotation.Target",
+                    arguments: [
+                        "AnnotationTarget.FUNCTION",
+                        "AnnotationTarget.CONSTRUCTOR",
+                        "AnnotationTarget.PROPERTY_GETTER",
+                        "AnnotationTarget.PROPERTY_SETTER",
+                        "AnnotationTarget.CLASS",
+                    ]
+                ),
+                to: exposeBoxedSymbol,
+                symbols: symbols
+            )
+            registerSyntheticStringAnnotationPropertyAndConstructor(
+                ownerSymbol: exposeBoxedSymbol,
+                ownerFQName: kotlinJvmPkg + [interner.intern("JvmExposeBoxed")],
+                propertyName: "jvmName",
+                parameterHasDefaultValue: true,
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
+        }
+
         // @ImplicitlyActualizedByJvmDeclaration - marks expect declarations
         // that are implicitly actualized by Java/JVM declarations.
         registerSyntheticJvmAnnotationClass(
@@ -2075,6 +2114,7 @@ extension DataFlowSemaPhase {
         ownerSymbol: SymbolID,
         ownerFQName: [InternedString],
         propertyName: String,
+        parameterHasDefaultValue: Bool = false,
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner
@@ -2142,7 +2182,7 @@ extension DataFlowSemaPhase {
                 parameterTypes: [types.stringType],
                 returnType: ownerType,
                 valueParameterSymbols: [parameterSymbol],
-                valueParameterHasDefaultValues: [false],
+                valueParameterHasDefaultValues: [parameterHasDefaultValue],
                 valueParameterIsVararg: [false]
             ),
             for: constructorSymbol
