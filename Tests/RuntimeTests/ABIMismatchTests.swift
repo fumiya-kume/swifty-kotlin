@@ -692,6 +692,13 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(spec.parameters[3].type, .nullableIntptrPointer)
     }
 
+    func testKKMutableListSortSignature() throws {
+        let spec = try requireSpec("kk_mutable_list_sort")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 1)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+    }
+
     func testKKMutableListSortPrimitiveSignature() throws {
         let spec = try requireSpec("kk_mutable_list_sort_primitive")
         XCTAssertEqual(spec.returnType, .intptr)
@@ -945,6 +952,19 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(spec.parameters[1].type, .intptr)
         XCTAssertEqual(spec.parameters[2].name, "outThrown")
         XCTAssertEqual(spec.parameters[2].type, .nullableIntptrPointer)
+    }
+
+    func testKKListTakeWhileSignature() throws {
+        let spec = try requireSpec("kk_list_takeWhile")
+        XCTAssertEqual(spec.parameters.count, 4)
+        XCTAssertEqual(spec.parameters[0].name, "listRaw")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].name, "fnPtr")
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].name, "closureRaw")
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
+        XCTAssertEqual(spec.parameters[3].name, "outThrown")
+        XCTAssertEqual(spec.parameters[3].type, .nullableIntptrPointer)
         XCTAssertEqual(spec.returnType, .intptr)
     }
 

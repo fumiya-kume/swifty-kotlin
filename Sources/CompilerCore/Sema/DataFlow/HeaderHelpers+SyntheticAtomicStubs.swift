@@ -87,6 +87,19 @@ extension DataFlowSemaPhase {
             interner: interner,
             types: types
         )
+        registerAtomicArrayFamily(
+            packageFQName: concurrentPkg,
+            className: "AtomicLongArray",
+            constructorLinkName: "kk_atomic_long_array_create",
+            valueType: longType,
+            boolType: boolType,
+            unitType: unitType,
+            prefix: "kk_atomic_long_array",
+            includeArithmetic: true,
+            symbols: symbols,
+            interner: interner,
+            types: types
+        )
 
         registerSyntheticAtomicAnnotation(
             named: "ExperimentalAtomicApi",

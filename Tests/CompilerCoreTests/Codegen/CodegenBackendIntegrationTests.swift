@@ -1583,6 +1583,8 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             println(list.reversed())
             println(list.sorted())
             println(list.distinct())
+            println(list.takeWhile { it > 2 })
+            renderPrefix(list)
             try {
                 println(list.take(-1))
                 println("missing-take")
@@ -1606,6 +1608,21 @@ final class CodegenBackendIntegrationTests: XCTestCase {
                 println("negative-param-take")
             }
         }
+
+        fun renderPrefix(values: List<Int>) {
+            println(values.takeWhile { it > 2 })
+            try {
+                println(values.takeWhile {
+                    if (it == 3) {
+                        throw IllegalArgumentException("prefix")
+                    }
+                    true
+                })
+                println("missing-prefix")
+            } catch (e: IllegalArgumentException) {
+                println("negative-prefix")
+            }
+        }
         """
 
         try withTemporaryFile(contents: source) { path in
@@ -1620,7 +1637,10 @@ final class CodegenBackendIntegrationTests: XCTestCase {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "[3, 1, 2]\n[2, 1]\n[1, 2, 1, 3]\n[1, 1, 2, 3]\n[3, 1, 2]\nnegative-take\nnegative-drop\nnegative-param-take\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                "[3, 1, 2]\n[2, 1]\n[1, 2, 1, 3]\n[1, 1, 2, 3]\n[3, 1, 2]\n[3]\n[3]\nnegative-prefix\nnegative-take\nnegative-drop\nnegative-param-take\n"
+            )
         }
     }
 
@@ -1707,6 +1727,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             println(list.maxOrNull())
             println(list.minOrNull())
             println(list.minOfOrNull { it * 10 })
+            println(list.minByOrNull { it % 3 })
             println(list.foldRight(0) { value, acc -> value * 10 + acc })
             println(list.foldIndexed(0) { index, acc, value -> acc + index * value })
             println(list.foldRightIndexed(0) { index, value, acc -> index + value + acc })
@@ -1726,6 +1747,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             XCTAssertTrue(callees.contains("kk_list_maxOrNull"))
             XCTAssertTrue(callees.contains("kk_list_minOrNull"))
             XCTAssertTrue(callees.contains("kk_list_minOfOrNull"))
+            XCTAssertTrue(callees.contains("kk_list_minByOrNull"))
             XCTAssertTrue(callees.contains("kk_list_foldRight"))
             XCTAssertTrue(callees.contains("kk_list_foldIndexed"))
             XCTAssertTrue(callees.contains("kk_list_foldRightIndexed"))
@@ -1780,6 +1802,32 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenListMinByOrNullReturnsSmallestSelectedElementAndNullOnEmpty() throws {
+        let source = """
+        fun main() {
+            val values = listOf(5, 2, 3)
+            println(values.minByOrNull { it % 3 })
+            val empty = emptyList<Int>()
+            println(empty.minByOrNull { it % 3 } == null)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListMinByOrNullRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "3\ntrue\n")
+        }
+    }
+
     func testCodegenListMinByReturnsSmallestSelectedElementAndThrowsOnEmpty() throws {
         let source = """
         fun main() {
@@ -1807,6 +1855,36 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(normalizedStdout, "3\nempty\n")
+        }
+    }
+
+    func testCodegenListMinReturnsSmallestElementAndThrowsOnEmpty() throws {
+        let source = """
+        fun main() {
+            val values = listOf(3, 1, 4, 2)
+            println(values.min())
+            try {
+                emptyList<Int>().min()
+                println("missing")
+            } catch (e: NoSuchElementException) {
+                println("empty")
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListMinRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "1\nempty\n")
         }
     }
 
@@ -1856,6 +1934,75 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(normalizedStdout, "4\ntrue\n")
+        }
+    }
+
+    func testCodegenListFlattenUsesRuntimeHelper() throws {
+        let source = """
+        fun main() {
+            val nested = listOf(listOf(1, 2), listOf(3))
+            println(nested.flatten())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "ListFlattenRuntime", emit: .kirDump)
+            try runToLowering(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: body, interner: ctx.interner)
+            XCTAssertTrue(callees.contains("kk_list_flatten"))
+        }
+    }
+
+    func testCodegenMapFilterValuesReturnsFilteredEntries() throws {
+        let source = """
+        fun main() {
+            val values = mapOf("a" to 1, "b" to 2, "c" to 3)
+            println(values.filterValues { it % 2 == 0 })
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "MapFilterValuesRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "{b=2}\n")
+        }
+    }
+
+    func testCodegenListMaxOfWithOrNullReturnsLargestTransformedValueOrNull() throws {
+        let source = """
+        fun main() {
+            val values = listOf(-3, 1, 2)
+            println(values.maxOfWithOrNull(naturalOrder<Int>()) { it * it })
+            val missing = emptyList<Int>().maxOfWithOrNull(naturalOrder<Int>()) { it * it }
+            println(missing == null)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListMaxOfWithOrNullRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "9\ntrue\n")
         }
     }
 

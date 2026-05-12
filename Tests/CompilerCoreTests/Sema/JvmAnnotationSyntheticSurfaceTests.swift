@@ -751,6 +751,73 @@ final class JvmAnnotationSyntheticSurfaceTests: XCTestCase {
         _ = try makeSema(source: source)
     }
 
+    func testJvmExposeBoxedCarriesOfficialMetadata() throws {
+        let (sema, interner) = try makeSema()
+        let fqName = ["kotlin", "jvm", "JvmExposeBoxed"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fqName))
+        let annotations = sema.symbols.annotations(for: symbol)
+
+        XCTAssertTrue(
+            annotations.contains { $0.annotationFQName == "kotlin.ExperimentalStdlibApi" },
+            "JvmExposeBoxed must be gated by ExperimentalStdlibApi"
+        )
+        let target = try XCTUnwrap(
+            annotations.first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "JvmExposeBoxed must carry @Target metadata"
+        )
+        XCTAssertEqual(
+            target.arguments,
+            [
+                "AnnotationTarget.FUNCTION",
+                "AnnotationTarget.CONSTRUCTOR",
+                "AnnotationTarget.PROPERTY_GETTER",
+                "AnnotationTarget.PROPERTY_SETTER",
+                "AnnotationTarget.CLASS",
+            ]
+        )
+    }
+
+    func testJvmExposeBoxedHasJvmNameConstructorWithDefault() throws {
+        let (sema, interner) = try makeSema()
+        let classFQName = ["kotlin", "jvm", "JvmExposeBoxed"].map { interner.intern($0) }
+        let classSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: classFQName))
+        let propertySymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: classFQName + [interner.intern("jvmName")]),
+            "JvmExposeBoxed.jvmName property must be registered"
+        )
+        XCTAssertEqual(sema.symbols.propertyType(for: propertySymbol), sema.types.stringType)
+
+        let constructorFQName = classFQName + [interner.intern("<init>")]
+        let constructor = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: constructorFQName).first {
+                sema.symbols.symbol($0)?.kind == .constructor
+            },
+            "JvmExposeBoxed constructor must be registered"
+        )
+        XCTAssertEqual(sema.symbols.parentSymbol(for: constructor), classSymbol)
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: constructor))
+        XCTAssertEqual(signature.parameterTypes, [sema.types.stringType])
+        XCTAssertEqual(signature.valueParameterHasDefaultValues, [true])
+        XCTAssertEqual(signature.valueParameterIsVararg, [false])
+    }
+
+    func testJvmExposeBoxedResolvesWithDefaultAndExplicitName() throws {
+        let source = """
+        @file:OptIn(kotlin.ExperimentalStdlibApi::class)
+        import kotlin.jvm.JvmExposeBoxed
+
+        @JvmExposeBoxed
+        class BoxedId(val value: Int)
+
+        class Api {
+            @JvmExposeBoxed("boxedValue")
+            fun value(): BoxedId = BoxedId(1)
+        }
+        """
+
+        _ = try makeSema(source: source)
+    }
+
     func testImplicitlyActualizedByJvmDeclarationAnnotationIsRegistered() throws {
         let (sema, interner) = try makeSema()
         let fqName = ["kotlin", "jvm", "ImplicitlyActualizedByJvmDeclaration"].map { interner.intern($0) }

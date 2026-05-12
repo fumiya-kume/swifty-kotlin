@@ -20,6 +20,7 @@
 /// - `Path.absolute(): Path` extension function
 /// - `Path.relativeToOrSelf(base: Path): Path` extension function
 /// - `Path.relativeTo(base: Path): Path` extension function
+/// - `Path.readSymbolicLink(): Path` extension function
 /// - `Path.invariantSeparatorsPathString: String` extension property
 /// - `Path.writeBytes(array: ByteArray, vararg options: OpenOption)` extension function
 /// - `readBytes(): ByteArray`, `readText(): String`, `writeText(text: String)`, `readLines(): List<String>`
@@ -28,6 +29,7 @@
 /// - `Path.fileStore(): FileStore` extension function
 /// - `Path.setOwner(value: UserPrincipal): Path` extension function
 /// - `Path.fileSize(): Long` extension function
+/// - `Path.setPosixFilePermissions(value: Set<PosixFilePermission>): Path` extension function
 /// - `listDirectoryEntries(): List<Path>`
 /// - `Path.isExecutable()`, `isHidden()`, `isReadable()`, `isSameFileAs()`, `isSymbolicLink()`, `isWritable()`
 /// - Top-level `Path(pathString: String)` factory (kotlin.io.path.Path)
@@ -329,6 +331,36 @@ extension DataFlowSemaPhase {
         )))
         symbols.setPropertyType(userPrincipalType, for: userPrincipalSymbol)
 
+        let posixFilePermissionName = interner.intern("PosixFilePermission")
+        let posixFilePermissionFQName = javaNioFileAttributePkg + [posixFilePermissionName]
+        let posixFilePermissionSymbol = symbols.lookup(fqName: posixFilePermissionFQName) ?? symbols.define(
+            kind: .enumClass,
+            name: posixFilePermissionName,
+            fqName: posixFilePermissionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let javaNioFileAttributePkgSymbol {
+            symbols.setParentSymbol(javaNioFileAttributePkgSymbol, for: posixFilePermissionSymbol)
+        }
+        let posixFilePermissionType = types.make(.classType(ClassType(
+            classSymbol: posixFilePermissionSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(posixFilePermissionType, for: posixFilePermissionSymbol)
+
+        let setOfPosixFilePermissionType: TypeID = if let setSymbol = symbols.lookup(
+            fqName: [interner.intern("kotlin"), interner.intern("collections"), interner.intern("Set")]
+        ) {
+            types.make(.classType(ClassType(
+                classSymbol: setSymbol,
+                args: [.out(posixFilePermissionType)],
+                nullability: .nonNull
+            )))
+        } else {
+            types.anyType
+        }
+
         // MARK: - Path(pathString: String) constructor
 
         registerPathConstructor(
@@ -439,6 +471,16 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerPathExtensionFunction(
+            named: "readSymbolicLink",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [],
+            returnType: pathType,
+            externalLinkName: "kk_path_readSymbolicLink",
+            symbols: symbols,
+            interner: interner
+        )
 
         registerPathExtensionProperty(
             named: "invariantSeparatorsPath",
@@ -880,6 +922,17 @@ extension DataFlowSemaPhase {
             parameters: [("value", userPrincipalType)],
             returnType: pathType,
             externalLinkName: "kk_path_setOwner",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "setPosixFilePermissions",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("value", setOfPosixFilePermissionType)],
+            returnType: pathType,
+            externalLinkName: "kk_path_setPosixFilePermissions",
             symbols: symbols,
             interner: interner
         )
