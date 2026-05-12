@@ -912,16 +912,16 @@ public func kk_list_fold(
 
 @_cdecl("kk_list_reduce")
 public func kk_list_reduce(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let list = runtimeListBox(from: listRaw) else {
-        invalidContainerPanic(#function, "list")
+    guard let elements = runtimeCollectionElements(from: listRaw) ?? runtimeArrayBox(from: listRaw)?.elements else {
+        invalidContainerPanic(#function, "collection")
     }
-    guard !list.elements.isEmpty else {
+    guard !elements.isEmpty else {
         return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "Empty collection can't be reduced."), outThrown)
     }
-    var acc = maybeUnbox(list.elements[0])
-    for idx in 1 ..< list.elements.count {
+    var acc = maybeUnbox(elements[0])
+    for idx in 1 ..< elements.count {
         var thrown = 0
-        acc = maybeUnbox(runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: acc, rhs: list.elements[idx], outThrown: &thrown))
+        acc = maybeUnbox(runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: acc, rhs: elements[idx], outThrown: &thrown))
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
     }
     return acc

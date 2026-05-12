@@ -2250,6 +2250,85 @@ extension DataFlowSemaPhase {
         )
     }
 
+    /// Register `Iterable<T>.reduce(operation: (S, T) -> S): S`.
+    func registerIterableReduceMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        iterableInterfaceSymbol: SymbolID
+    ) {
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName,
+              let iterableTypeParamSymbol = types.nominalTypeParameterSymbols(for: iterableInterfaceSymbol).first
+        else { return }
+
+        let memberName = interner.intern("reduce")
+        let memberFQName = iterableFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let elementType = types.make(.typeParam(TypeParamType(
+            symbol: iterableTypeParamSymbol,
+            nullability: .nonNull
+        )))
+        let accumulatorTypeParamName = interner.intern("S")
+        let accumulatorTypeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: accumulatorTypeParamName,
+            fqName: memberFQName + [accumulatorTypeParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let accumulatorType = types.make(.typeParam(TypeParamType(
+            symbol: accumulatorTypeParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+        let operationType = types.make(.functionType(FunctionType(
+            params: [accumulatorType, elementType],
+            returnType: accumulatorType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .inlineFunction]
+        )
+        symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_list_reduce", for: memberSymbol)
+        let operationParameterName = interner.intern("operation")
+        let operationParameterSymbol = symbols.define(
+            kind: .valueParameter,
+            name: operationParameterName,
+            fqName: memberFQName + [operationParameterName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(memberSymbol, for: operationParameterSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [operationType],
+                returnType: accumulatorType,
+                valueParameterSymbols: [operationParameterSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
+                typeParameterSymbols: [iterableTypeParamSymbol, accumulatorTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
     /// Register `Iterable<T>.reduceIndexed(operation: (Int, S, T) -> S): S`.
     func registerIterableReduceIndexedMember(
         symbols: SymbolTable,

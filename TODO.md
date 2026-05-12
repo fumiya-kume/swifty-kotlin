@@ -209,7 +209,7 @@
 - [x] STDLIB-COL-FN-134: `min` 関数の実装
 - [x] STDLIB-COL-FN-135: `minBy` 関数の実装
 - [x] STDLIB-COL-FN-136: `minByOrNull` 関数の実装
-- [ ] STDLIB-COL-FN-137: `minOf` 関数の実装
+- [x] STDLIB-COL-FN-137: `minOf` 関数の実装
 - [x] STDLIB-COL-FN-138: `minOfOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-139: `minOfWith` 関数の実装
 - [x] STDLIB-COL-FN-140: `minOfWithOrNull` 関数の実装
@@ -233,6 +233,8 @@
 - [x] STDLIB-COL-FN-158: `random` 関数の実装
 - [x] STDLIB-COL-FN-159: `randomOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-160: `reduce` 関数の実装
+- [ ] STDLIB-COL-FN-159: `randomOrNull` 関数の実装
+- [x] STDLIB-COL-FN-160: `reduce` 関数の実装
 - [x] STDLIB-COL-FN-161: `reduceIndexed` 関数の実装
 - [ ] STDLIB-COL-FN-162: `reduceIndexedOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-163: `reduceOrNull` 関数の実装
@@ -1155,7 +1157,7 @@
 - [x] STDLIB-IO-PATH-FN-061: `Path.readSymbolicLink()` を追加する
 - [x] STDLIB-IO-PATH-FN-062: `Path.readText(charset)` を既存 no-arg stub から公式 charset shape へ広げる
 - [x] STDLIB-IO-PATH-FN-063: `Path.relativeTo(base)` を追加する
-- [ ] STDLIB-IO-PATH-FN-064: `Path.relativeToOrNull(base)` を追加する
+- [x] STDLIB-IO-PATH-FN-064: `Path.relativeToOrNull(base)` を追加する
 - [x] STDLIB-IO-PATH-FN-065: `Path.relativeToOrSelf(base)` を追加する
 - [ ] STDLIB-IO-PATH-FN-066: `Path.setAttribute(attribute, value, options)` を追加する
 - [x] STDLIB-IO-PATH-FN-067: `Path.setLastModifiedTime(value)` を追加する

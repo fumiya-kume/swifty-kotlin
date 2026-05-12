@@ -141,28 +141,6 @@ extension DataFlowSemaPhase {
         }
     }
 
-    private func ensureSyntheticPackageHierarchy(
-        fqName path: [InternedString],
-        symbols: SymbolTable
-    ) -> [InternedString] {
-        guard !path.isEmpty else { return path }
-        var current: [InternedString] = []
-        for part in path {
-            current.append(part)
-            if symbols.lookup(fqName: current) == nil {
-                _ = symbols.define(
-                    kind: .package,
-                    name: part,
-                    fqName: current,
-                    declSite: nil,
-                    visibility: .public,
-                    flags: [.synthetic]
-                )
-            }
-        }
-        return current
-    }
-
     private func registerSyntheticTopLevelFunction(
         named name: String,
         packageFQName: [InternedString],

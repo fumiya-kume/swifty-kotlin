@@ -81,8 +81,8 @@ private func runtimeStringRaw(_ value: String) -> Int {
 private let flatMapPair: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     let array = kk_array_new(2)
     var thrown = 0
-    _ = _ = kk_array_set(array, 0, value, &thrown)
-    _ = _ = kk_array_set(array, 1, value * 10, &thrown)
+    _ = kk_array_set(array, 0, value, &thrown)
+    _ = kk_array_set(array, 1, value * 10, &thrown)
     return kk_list_of(array, 2)
 }
 
@@ -395,6 +395,28 @@ final class RuntimeCollectionHOFTests: XCTestCase {
 
         let sorted = kk_list_sortedBy(makeList([22, 12, 21, 11]), unsafeBitCast(sortedByTens, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
         XCTAssertEqual(listElements(sorted), [12, 11, 22, 21])
+    }
+
+    func testMinOfReturnsSmallestSelectedValueAndThrowsOnEmpty() {
+        var thrown = 0
+        let result = kk_list_minOf(
+            makeList([5, 2, 3]),
+            unsafeBitCast(valueTimesTen, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 20)
+
+        thrown = 0
+        let emptyResult = kk_list_minOf(
+            makeList([]),
+            unsafeBitCast(valueTimesTen, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(emptyResult, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
     }
 
     func testMutableListFillReplacesEveryElement() {
@@ -1794,7 +1816,7 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         let arrayRaw = kk_array_new(elements.count)
         var thrown = 0
         for (index, element) in elements.enumerated() {
-            _ = _ = kk_array_set(arrayRaw, index, element, &thrown)
+            _ = kk_array_set(arrayRaw, index, element, &thrown)
             XCTAssertEqual(thrown, 0)
         }
         return arrayRaw
