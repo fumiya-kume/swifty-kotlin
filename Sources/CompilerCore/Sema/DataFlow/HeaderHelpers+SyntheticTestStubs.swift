@@ -114,31 +114,26 @@ extension DataFlowSemaPhase {
         )
     }
 
-    private func registerSyntheticAnnotationClass(
-        named name: String,
-        packageFQName: [InternedString],
-        packageSymbol: SymbolID,
-        symbols: SymbolTable,
-        interner: StringInterner
-    ) {
-        let className = interner.intern(name)
-        let classFQName = packageFQName + [className]
-        let classSymbol: SymbolID
-        if let existing = symbols.lookup(fqName: classFQName) {
-            classSymbol = existing
-        } else {
-            classSymbol = symbols.define(
-                kind: .annotationClass,
-                name: className,
-                fqName: classFQName,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic]
-            )
+    private func ensureSyntheticPackageHierarchy(
+        fqName path: [InternedString],
+        symbols: SymbolTable
+    ) -> [InternedString] {
+        guard !path.isEmpty else { return path }
+        var current: [InternedString] = []
+        for part in path {
+            current.append(part)
+            if symbols.lookup(fqName: current) == nil {
+                _ = symbols.define(
+                    kind: .package,
+                    name: part,
+                    fqName: current,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+            }
         }
-        if packageSymbol != .invalid {
-            symbols.setParentSymbol(packageSymbol, for: classSymbol)
-        }
+        return current
     }
 
     private func registerSyntheticTopLevelFunction(
