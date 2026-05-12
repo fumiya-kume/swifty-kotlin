@@ -692,6 +692,13 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(spec.parameters[3].type, .nullableIntptrPointer)
     }
 
+    func testKKMutableListSortSignature() throws {
+        let spec = try requireSpec("kk_mutable_list_sort")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 1)
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+    }
+
     func testKKMutableListSortPrimitiveSignature() throws {
         let spec = try requireSpec("kk_mutable_list_sort_primitive")
         XCTAssertEqual(spec.returnType, .intptr)

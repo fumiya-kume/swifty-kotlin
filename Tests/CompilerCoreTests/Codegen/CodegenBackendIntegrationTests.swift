@@ -1936,6 +1936,32 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenListMaxOfWithOrNullReturnsLargestTransformedValueOrNull() throws {
+        let source = """
+        fun main() {
+            val values = listOf(-3, 1, 2)
+            println(values.maxOfWithOrNull(naturalOrder<Int>()) { it * it })
+            val missing = emptyList<Int>().maxOfWithOrNull(naturalOrder<Int>()) { it * it }
+            println(missing == null)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListMaxOfWithOrNullRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "9\ntrue\n")
+        }
+    }
+
     func testCodegenMapHigherOrderHelpersUseRuntimeHelpers() throws {
         let source = """
         fun main() {

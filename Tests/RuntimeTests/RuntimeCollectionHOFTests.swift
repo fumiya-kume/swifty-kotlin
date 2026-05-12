@@ -135,6 +135,20 @@ private let reverseIntComparator: @convention(c) (Int, Int, Int, UnsafeMutablePo
     return 0
 }
 
+private let maxOfWithOrNullNaturalComparator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, lhs, rhs, _ in
+    if lhs < rhs {
+        return -1
+    }
+    if lhs > rhs {
+        return 1
+    }
+    return 0
+}
+
+private let maxOfWithOrNullSquareValue: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value * value
+}
+
 private let sumByDoubleWeightedTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     kk_double_to_bits(value == 2 ? 1.5 : 0.25)
 }
@@ -495,6 +509,35 @@ final class RuntimeCollectionHOFTests: XCTestCase {
             nil as UnsafeMutablePointer<Int>?
         )
         XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
+    }
+
+    func testMaxOfWithOrNullReturnsLargestTransformedValueAndNullForEmpty() {
+        var thrown = 0
+        let result = kk_list_maxOfWithOrNull(
+            makeList([-3, 1, 2]),
+            unsafeBitCast(maxOfWithOrNullNaturalComparator, to: Int.self),
+            0,
+            unsafeBitCast(maxOfWithOrNullSquareValue, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(result, 9)
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        XCTAssertEqual(
+            kk_list_maxOfWithOrNull(
+                makeList([]),
+                unsafeBitCast(maxOfWithOrNullNaturalComparator, to: Int.self),
+                0,
+                unsafeBitCast(maxOfWithOrNullSquareValue, to: Int.self),
+                0,
+                &thrown
+            ),
+            runtimeNullSentinelInt
+        )
+        XCTAssertEqual(thrown, 0)
     }
 
     func testListElementAtReturnsElementAndThrowsWhenOutOfBounds() {

@@ -202,7 +202,7 @@
 - [ ] STDLIB-COL-FN-127: `maxOf` 関数の実装
 - [ ] STDLIB-COL-FN-128: `maxOfOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-129: `maxOfWith` 関数の実装
-- [ ] STDLIB-COL-FN-130: `maxOfWithOrNull` 関数の実装
+- [x] STDLIB-COL-FN-130: `maxOfWithOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-131: `maxOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-132: `maxWith` 関数の実装
 - [x] STDLIB-COL-FN-133: `maxWithOrNull` 関数の実装
@@ -233,7 +233,7 @@
 - [x] STDLIB-COL-FN-158: `random` 関数の実装
 - [ ] STDLIB-COL-FN-159: `randomOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-160: `reduce` 関数の実装
-- [ ] STDLIB-COL-FN-161: `reduceIndexed` 関数の実装
+- [x] STDLIB-COL-FN-161: `reduceIndexed` 関数の実装
 - [ ] STDLIB-COL-FN-162: `reduceIndexedOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-163: `reduceOrNull` 関数の実装
 - [x] STDLIB-COL-FN-164: `reduceRight` 関数の実装
@@ -259,7 +259,7 @@
 - [x] STDLIB-COL-FN-184: `single` 関数の実装
 - [x] STDLIB-COL-FN-185: `singleOrNull` 関数の実装
 - [x] STDLIB-COL-FN-186: `slice` 関数の実装
-- [ ] STDLIB-COL-FN-187: `sort` 関数の実装
+- [x] STDLIB-COL-FN-187: `sort` 関数の実装
 - [x] STDLIB-COL-FN-188: `sortBy` 関数の実装
 - [x] STDLIB-COL-FN-189: `sortByDescending` 関数の実装
 - [x] STDLIB-COL-FN-190: `sorted` 関数の実装
