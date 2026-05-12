@@ -29,49 +29,15 @@ extension DataEnumSealedSynthesisPass {
         let signature = FunctionSignature(parameterTypes: [], returnType: returnType, isSuspend: false)
 
         var body: [KIRInstruction] = []
-
-        // count constant
-        let countExpr = module.arena.appendExpr(
-            .temporary(Int32(module.arena.expressions.count)), type: intType
+        let (arrayExpr, countExpr) = appendEnumOrdinalArrayCreation(
+            entries: entries,
+            entryType: entryType,
+            intType: intType,
+            body: &body,
+            module: module,
+            sema: sema,
+            interner: interner
         )
-        body.append(.constValue(result: countExpr, value: .intLiteral(Int64(entries.count))))
-
-        // kk_array_new(count) -- intermediate array uses anyType
-        let arrayExpr = module.arena.appendExpr(
-            .temporary(Int32(module.arena.expressions.count)), type: sema.types.anyType
-        )
-        body.append(.call(
-            symbol: nil,
-            callee: interner.intern("kk_array_new"),
-            arguments: [countExpr],
-            result: arrayExpr,
-            canThrow: false,
-            thrownResult: nil
-        ))
-
-        // Enum values are represented by their ordinal payloads at runtime, so
-        // populate the array directly with ordinal literals rather than reading
-        // enum globals that may not have been static-initialized yet.
-        for (ordinal, _) in entries.enumerated() {
-            let indexExpr = module.arena.appendExpr(
-                .temporary(Int32(module.arena.expressions.count)), type: intType
-            )
-            body.append(.constValue(result: indexExpr, value: .intLiteral(Int64(ordinal))))
-
-            let entryRef = module.arena.appendExpr(
-                .temporary(Int32(module.arena.expressions.count)), type: entryType
-            )
-            body.append(.constValue(result: entryRef, value: .intLiteral(Int64(ordinal))))
-
-            body.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_array_set"),
-                arguments: [arrayExpr, indexExpr, entryRef],
-                result: nil,
-                canThrow: false,
-                thrownResult: nil
-            ))
-        }
 
         // kk_enum_make_values_array(array, count) -- result uses the enum type
         let listExpr = module.arena.appendExpr(
@@ -127,49 +93,15 @@ extension DataEnumSealedSynthesisPass {
         let signature = FunctionSignature(parameterTypes: [], returnType: returnType, isSuspend: false)
 
         var body: [KIRInstruction] = []
-
-        // count constant
-        let countExpr = module.arena.appendExpr(
-            .temporary(Int32(module.arena.expressions.count)), type: intType
+        let (arrayExpr, countExpr) = appendEnumOrdinalArrayCreation(
+            entries: entries,
+            entryType: entryType,
+            intType: intType,
+            body: &body,
+            module: module,
+            sema: sema,
+            interner: interner
         )
-        body.append(.constValue(result: countExpr, value: .intLiteral(Int64(entries.count))))
-
-        // kk_array_new(count) -- intermediate array uses anyType
-        let arrayExpr = module.arena.appendExpr(
-            .temporary(Int32(module.arena.expressions.count)), type: sema.types.anyType
-        )
-        body.append(.call(
-            symbol: nil,
-            callee: interner.intern("kk_array_new"),
-            arguments: [countExpr],
-            result: arrayExpr,
-            canThrow: false,
-            thrownResult: nil
-        ))
-
-        // Enum values are represented by their ordinal payloads at runtime, so
-        // populate the array directly with ordinal literals rather than reading
-        // enum globals that may not have been static-initialized yet.
-        for (ordinal, _) in entries.enumerated() {
-            let indexExpr = module.arena.appendExpr(
-                .temporary(Int32(module.arena.expressions.count)), type: intType
-            )
-            body.append(.constValue(result: indexExpr, value: .intLiteral(Int64(ordinal))))
-
-            let entryRef = module.arena.appendExpr(
-                .temporary(Int32(module.arena.expressions.count)), type: entryType
-            )
-            body.append(.constValue(result: entryRef, value: .intLiteral(Int64(ordinal))))
-
-            body.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_array_set"),
-                arguments: [arrayExpr, indexExpr, entryRef],
-                result: nil,
-                canThrow: false,
-                thrownResult: nil
-            ))
-        }
 
         // kk_enum_make_entries_list(array, count) -- returns List for EnumEntries
         let listExpr = module.arena.appendExpr(
@@ -196,6 +128,56 @@ extension DataEnumSealedSynthesisPass {
             body: body,
             existingFunctionSymbols: existingFunctionSymbols
         )
+    }
+
+    private func appendEnumOrdinalArrayCreation(
+        entries: [SemanticSymbol],
+        entryType: TypeID,
+        intType: TypeID,
+        body: inout [KIRInstruction],
+        module: KIRModule,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> (array: KIRExprID, count: KIRExprID) {
+        let countExpr = module.arena.appendExpr(
+            .temporary(Int32(module.arena.expressions.count)), type: intType
+        )
+        body.append(.constValue(result: countExpr, value: .intLiteral(Int64(entries.count))))
+
+        let arrayExpr = module.arena.appendExpr(
+            .temporary(Int32(module.arena.expressions.count)), type: sema.types.anyType
+        )
+        body.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_array_new"),
+            arguments: [countExpr],
+            result: arrayExpr,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
+        for (ordinal, _) in entries.enumerated() {
+            let indexExpr = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: intType
+            )
+            body.append(.constValue(result: indexExpr, value: .intLiteral(Int64(ordinal))))
+
+            let entryRef = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: entryType
+            )
+            body.append(.constValue(result: entryRef, value: .intLiteral(Int64(ordinal))))
+
+            body.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_array_set"),
+                arguments: [arrayExpr, indexExpr, entryRef],
+                result: nil,
+                canThrow: false,
+                thrownResult: nil
+            ))
+        }
+
+        return (arrayExpr, countExpr)
     }
 
     /// Synthesizes `$enumOrdinalToName(ordinal: Int): String` for (valueOf result).name.
