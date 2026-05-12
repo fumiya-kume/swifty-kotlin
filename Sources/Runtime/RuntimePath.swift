@@ -329,6 +329,30 @@ public func kk_path_readLines(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<
     }
 }
 
+@_cdecl("kk_path_bufferedReader")
+public func kk_path_bufferedReader(
+    _ pathRaw: Int,
+    _ charsetRaw: Int,
+    _ bufferSizeRaw: Int,
+    _ optionsRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_bufferedReader received invalid Path handle")
+    }
+    _ = charsetRaw
+    _ = optionsRaw
+    let bufferSize = max(1, kk_unbox_int(bufferSizeRaw))
+    do {
+        let fileHandle = try FileHandle(forReadingFrom: URL(fileURLWithPath: path.pathString))
+        return registerRuntimeObject(RuntimeBufferedReaderBox(fileHandle: fileHandle, chunkSize: bufferSize))
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+        return 0
+    }
+}
+
 // MARK: - Path filesystem operations
 
 @_cdecl("kk_path_createDirectories")
