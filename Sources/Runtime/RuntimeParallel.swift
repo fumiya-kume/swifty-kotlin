@@ -40,29 +40,11 @@ final class RuntimeParallelStreamBox {
 }
 
 private func runtimeParallelPoolBox(from rawValue: Int) -> RuntimeParallelPoolBox? {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
-        return nil
-    }
-    let isObjectPointer = runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: ptr))
-    }
-    guard isObjectPointer else {
-        return nil
-    }
-    return tryCast(ptr, to: RuntimeParallelPoolBox.self)
+    resolveRuntimeHandle(rawValue, as: RuntimeParallelPoolBox.self)
 }
 
 private func runtimeParallelStreamBox(from rawValue: Int) -> RuntimeParallelStreamBox? {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
-        return nil
-    }
-    let isObjectPointer = runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: ptr))
-    }
-    guard isObjectPointer else {
-        return nil
-    }
-    return tryCast(ptr, to: RuntimeParallelStreamBox.self)
+    resolveRuntimeHandle(rawValue, as: RuntimeParallelStreamBox.self)
 }
 
 private func runtimeParallelSourceElements(from rawValue: Int) -> [Int]? {

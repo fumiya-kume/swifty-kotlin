@@ -668,16 +668,7 @@ struct BigIntValue: Equatable {
 // MARK: - Helper
 
 private func runtimeBigIntegerBox(from rawValue: Int) -> RuntimeBigIntegerBox? {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
-        return nil
-    }
-    let isObjectPointer = runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: ptr))
-    }
-    guard isObjectPointer else {
-        return nil
-    }
-    return tryCast(ptr, to: RuntimeBigIntegerBox.self)
+    resolveRuntimeHandle(rawValue, as: RuntimeBigIntegerBox.self)
 }
 
 private func bigIntMakeStringRaw(_ value: String) -> Int {

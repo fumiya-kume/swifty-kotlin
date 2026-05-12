@@ -19,29 +19,11 @@ final class RuntimeDeepRecursiveScopeBox {
 }
 
 private func runtimeDeepRecursiveFunctionBox(from rawValue: Int) -> RuntimeDeepRecursiveFunctionBox? {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
-        return nil
-    }
-    let isObjectPointer = runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: ptr))
-    }
-    guard isObjectPointer else {
-        return nil
-    }
-    return tryCast(ptr, to: RuntimeDeepRecursiveFunctionBox.self)
+    resolveRuntimeHandle(rawValue, as: RuntimeDeepRecursiveFunctionBox.self)
 }
 
 private func runtimeDeepRecursiveScopeBox(from rawValue: Int) -> RuntimeDeepRecursiveScopeBox? {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
-        return nil
-    }
-    let isObjectPointer = runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: ptr))
-    }
-    guard isObjectPointer else {
-        return nil
-    }
-    return tryCast(ptr, to: RuntimeDeepRecursiveScopeBox.self)
+    resolveRuntimeHandle(rawValue, as: RuntimeDeepRecursiveScopeBox.self)
 }
 
 private func runtimeInvokeDeepRecursive(

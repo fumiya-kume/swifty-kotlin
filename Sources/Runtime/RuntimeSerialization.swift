@@ -128,42 +128,15 @@ private func runtimeMapKeyToJSONString(_ rawValue: Int) -> String {
 }
 
 private func runtimeJsonBox(from rawValue: Int) -> RuntimeJsonBox? {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
-        return nil
-    }
-    let isObjectPointer = runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: ptr))
-    }
-    guard isObjectPointer else {
-        return nil
-    }
-    return tryCast(ptr, to: RuntimeJsonBox.self)
+    resolveRuntimeHandle(rawValue, as: RuntimeJsonBox.self)
 }
 
 private func runtimeJsonEncoderBox(from rawValue: Int) -> RuntimeJsonEncoderBox? {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
-        return nil
-    }
-    let isObjectPointer = runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: ptr))
-    }
-    guard isObjectPointer else {
-        return nil
-    }
-    return tryCast(ptr, to: RuntimeJsonEncoderBox.self)
+    resolveRuntimeHandle(rawValue, as: RuntimeJsonEncoderBox.self)
 }
 
 private func runtimeJsonDecoderBox(from rawValue: Int) -> RuntimeJsonDecoderBox? {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
-        return nil
-    }
-    let isObjectPointer = runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: ptr))
-    }
-    guard isObjectPointer else {
-        return nil
-    }
-    return tryCast(ptr, to: RuntimeJsonDecoderBox.self)
+    resolveRuntimeHandle(rawValue, as: RuntimeJsonDecoderBox.self)
 }
 
 private func runtimeKClassBoxLocal(from rawValue: Int) -> RuntimeKClassBox? {

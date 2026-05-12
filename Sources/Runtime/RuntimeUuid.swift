@@ -103,16 +103,7 @@ private func runtimeCompareUuidLexically(_ lhs: RuntimeUuidBox, _ rhs: RuntimeUu
 
 /// Extract a RuntimeUuidBox from a raw receiver value.
 private func runtimeUuidBox(from rawValue: Int) -> RuntimeUuidBox? {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
-        return nil
-    }
-    let isObjectPointer = runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: ptr))
-    }
-    guard isObjectPointer else {
-        return nil
-    }
-    return tryCast(ptr, to: RuntimeUuidBox.self)
+    resolveRuntimeHandle(rawValue, as: RuntimeUuidBox.self)
 }
 
 /// Helper to create a runtime string from a Swift String, returning Int.

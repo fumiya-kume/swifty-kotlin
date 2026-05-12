@@ -7,12 +7,7 @@ import Foundation
 // MARK: - Grouping (STDLIB-285/286)
 
 private func runtimeGroupingBox(from rawValue: Int) -> RuntimeGroupingBox? {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else { return nil }
-    let isObjectPointer = runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: ptr))
-    }
-    guard isObjectPointer else { return nil }
-    return tryCast(ptr, to: RuntimeGroupingBox.self)
+    resolveRuntimeHandle(rawValue, as: RuntimeGroupingBox.self)
 }
 
 private func runtimeGroupingKeyIndex(from dest: RuntimeMapBox) -> [RuntimeElementKey: Int] {
