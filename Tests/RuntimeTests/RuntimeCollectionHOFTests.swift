@@ -1902,6 +1902,14 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(second), [10, 20, 30])
     }
 
+    func testListToHashSetDeduplicatesAndCopiesElements() {
+        let source = makeList([1, 2, 2, 3])
+        let copied = kk_list_toHashSet(source)
+
+        XCTAssertEqual(setElements(copied), [1, 2, 3])
+        XCTAssertEqual(listElements(source), [1, 2, 2, 3])
+    }
+
     private func makeArray(_ elements: [Int]) -> Int {
         let arrayRaw = kk_array_new(elements.count)
         var thrown = 0
