@@ -482,7 +482,7 @@
 - [x] STDLIB-IO-PATH-PROP-002: `invariantSeparatorsPath` 拡張プロパティの実装
 - [x] STDLIB-IO-PATH-PROP-003: `invariantSeparatorsPathString` 拡張プロパティの実装
 - [x] STDLIB-IO-PATH-PROP-004: `name` 拡張プロパティの実装
-- [ ] STDLIB-IO-PATH-PROP-005: `nameWithoutExtension` 拡張プロパティの実装
+- [x] STDLIB-IO-PATH-PROP-005: `nameWithoutExtension` 拡張プロパティの実装
 - [ ] STDLIB-IO-PATH-PROP-006: `pathString` 拡張プロパティの実装
 
 #### kotlin.io.path 関数の実装
@@ -1096,7 +1096,7 @@
 - [x] STDLIB-IO-PATH-TYPE-004: `kotlin.io.path.FileVisitorBuilder` type surface を追加する
 - [x] STDLIB-IO-PATH-TYPE-005: `kotlin.io.path.OnErrorResult` enum surface を追加する
 - [x] STDLIB-IO-PATH-TYPE-006: `kotlin.io.path.PathWalkOption` enum surface を追加する
-- [ ] STDLIB-IO-PATH-PROP-001: `Path.extension` extension property を追加する
+- [x] STDLIB-IO-PATH-PROP-001: `Path.extension` extension property を追加する
 - [x] STDLIB-IO-PATH-PROP-002: `Path.invariantSeparatorsPath` extension property を追加する
 - [x] STDLIB-IO-PATH-PROP-003: `Path.invariantSeparatorsPathString` extension property を追加する
 - [x] STDLIB-IO-PATH-PROP-004: `Path.name` extension property を既存 `Path` member stub と整合させる
