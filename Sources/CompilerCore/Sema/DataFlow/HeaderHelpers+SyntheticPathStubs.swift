@@ -409,6 +409,24 @@ extension DataFlowSemaPhase {
         )
 
         registerPathMemberProperty(
+            named: "nameWithoutExtension",
+            externalLinkName: "kk_path_nameWithoutExtension",
+            ownerSymbol: pathSymbol,
+            returnType: types.stringType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathMemberProperty(
+            named: "extension",
+            externalLinkName: "kk_path_extension",
+            ownerSymbol: pathSymbol,
+            returnType: types.stringType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathMemberProperty(
             named: "parent",
             externalLinkName: "kk_path_parent",
             ownerSymbol: pathSymbol,

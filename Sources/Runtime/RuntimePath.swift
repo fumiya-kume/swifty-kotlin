@@ -623,3 +623,27 @@ public func kk_path_getName(_ pathRaw: Int, _ indexRaw: Int) -> Int {
     }
     return registerRuntimeObject(RuntimePathBox(components[index]))
 }
+
+@_cdecl("kk_path_nameWithoutExtension")
+public func kk_path_nameWithoutExtension(_ pathRaw: Int) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_nameWithoutExtension received invalid Path handle")
+    }
+    let name = (path.pathString as NSString).lastPathComponent
+    guard let dotIndex = name.lastIndex(of: ".") else {
+        return pathMakeStringRaw(name)
+    }
+    return pathMakeStringRaw(String(name[..<dotIndex]))
+}
+
+@_cdecl("kk_path_extension")
+public func kk_path_extension(_ pathRaw: Int) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_extension received invalid Path handle")
+    }
+    let name = (path.pathString as NSString).lastPathComponent
+    guard let dotIndex = name.lastIndex(of: ".") else {
+        return pathMakeStringRaw("")
+    }
+    return pathMakeStringRaw(String(name[name.index(after: dotIndex)...]))
+}
