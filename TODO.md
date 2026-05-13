@@ -130,7 +130,7 @@
 - [x] STDLIB-COL-FN-056: `fill` 関数の実装
 - [x] STDLIB-COL-FN-057: `filter` 関数の実装
 - [x] STDLIB-COL-FN-058: `filterIndexed` 関数の実装
-- [ ] STDLIB-COL-FN-059: `filterIndexedTo` 関数の実装
+- [x] STDLIB-COL-FN-059: `filterIndexedTo` 関数の実装
 - [ ] STDLIB-COL-FN-060: `filterIsInstance` 関数の実装
 - [x] STDLIB-COL-FN-061: `filterIsInstanceTo` 関数の実装
 - [x] STDLIB-COL-FN-062: `filterKeys` 関数の実装
