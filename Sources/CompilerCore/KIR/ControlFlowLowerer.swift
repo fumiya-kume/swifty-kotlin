@@ -326,10 +326,9 @@ final class ControlFlowLowerer {
 
     // MARK: - Channel For-Loop (CORO-075)
 
-    /// Lower a `for (value in channel)` loop by receiving one value at a time.
-    /// `kk_channel_receive` is recognized by `CoroutineLoweringPass`, so this
-    /// path can suspend without leaking the runtime suspension marker into the
-    /// loop body.
+    /// Lower a `for (value in channel)` loop using the channel iterator
+    /// protocol: `kk_channel_iterator` / `kk_channel_iterator_hasNext` /
+    /// `kk_channel_iterator_next`.
     private func lowerChannelForExpr(
         _ exprID: ExprID,
         iterableExpr: ExprID,
@@ -342,7 +341,7 @@ final class ControlFlowLowerer {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
-        let intType = sema.types.intType
+        let boolType = sema.types.make(.primitive(.boolean, .nonNull))
         // Lower the channel expression.
         let channelID = driver.lowerExpr(
             iterableExpr,
@@ -353,37 +352,48 @@ final class ControlFlowLowerer {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
+        // Create the channel iterator.
+        let iteratorID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_channel_iterator"),
+            arguments: [channelID],
+            result: iteratorID,
+            canThrow: false,
+            thrownResult: nil
+        ))
 
         let continueLabel = driver.ctx.makeLoopLabel()
         let breakLabel = driver.ctx.makeLoopLabel()
         instructions.append(.label(continueLabel))
 
-        let receivedValueID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+        // Call hasNext (blocks until value or close).
+        let hasNextID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
         instructions.append(.call(
             symbol: nil,
-            callee: interner.intern("kk_channel_receive"),
-            arguments: [channelID],
-            result: receivedValueID,
+            callee: interner.intern("kk_channel_iterator_hasNext"),
+            arguments: [iteratorID],
+            result: hasNextID,
             canThrow: false,
             thrownResult: nil
         ))
-        let closedTokenID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
-        instructions.append(.call(
-            symbol: nil,
-            callee: interner.intern("kk_channel_is_closed_token"),
-            arguments: [receivedValueID],
-            result: closedTokenID,
-            canThrow: false,
-            thrownResult: nil
-        ))
-        let trueTokenID = arena.appendExpr(.intLiteral(1), type: intType)
-        instructions.append(.constValue(result: trueTokenID, value: .intLiteral(1)))
-        instructions.append(.jumpIfEqual(lhs: closedTokenID, rhs: trueTokenID, target: breakLabel))
+        let falseID = arena.appendExpr(.boolLiteral(false), type: boolType)
+        instructions.append(.constValue(result: falseID, value: .boolLiteral(false)))
+        instructions.append(.jumpIfEqual(lhs: hasNextID, rhs: falseID, target: breakLabel))
 
         let loopVariableSymbol = sema.bindings.identifierSymbols[exprID]
         let previousLoopValue = loopVariableSymbol.flatMap { driver.ctx.localValue(for: $0) }
+        let nextValueID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_channel_iterator_next"),
+            arguments: [iteratorID],
+            result: nextValueID,
+            canThrow: false,
+            thrownResult: nil
+        ))
         if let loopVariableSymbol {
-            driver.ctx.setLocalValue(receivedValueID, for: loopVariableSymbol)
+            driver.ctx.setLocalValue(nextValueID, for: loopVariableSymbol)
         }
 
         driver.ctx.pushLoopControl(continueLabel: continueLabel, breakLabel: breakLabel, name: label)
