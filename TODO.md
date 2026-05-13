@@ -96,7 +96,7 @@
 - [ ] STDLIB-033: `kotlin.concurrent` / `kotlin.concurrent.atomics` / Native concurrent の parity を上げる
 
 #### kotlin.concurrent 型の実装
-- [ ] STDLIB-CONC-TYPE-007: `Volatile` アノテーションの実装
+- [x] STDLIB-CONC-TYPE-007: `Volatile` アノテーションの実装
 
 #### kotlin.concurrent 関数の実装
 - [ ] STDLIB-CONC-FN-001: `atomicArrayOf` 関数の実装
