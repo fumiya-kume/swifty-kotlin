@@ -3773,7 +3773,7 @@ extension CallLowerer {
                 } else if calleeName == interner.intern("any") {
                     runtimeCallee = "kk_sequence_any"
                 } else if calleeName == interner.intern("all") {
-                    runtimeCallee = "kk_sequence_all"
+                    runtimeCallee = useIterableRuntimeForCollectionFallback ? "kk_iterable_all" : "kk_sequence_all"
                 } else if calleeName == interner.intern("none") {
                     runtimeCallee = "kk_sequence_none"
                 } else if calleeName == interner.intern("mapNotNull") {
@@ -3846,6 +3846,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_partition"
                         || runtimeCallee == "kk_sequence_any"
                         || runtimeCallee == "kk_sequence_all"
+                        || runtimeCallee == "kk_iterable_all"
                         || runtimeCallee == "kk_sequence_none"
                         || runtimeCallee == "kk_sequence_mapNotNull"
                         || runtimeCallee == "kk_sequence_firstNotNullOf"
@@ -5544,7 +5545,8 @@ extension CallLowerer {
             finalArguments = [finalArguments[0], fnPtrExpr, envPtrExpr]
         }
         if (loweredCallee == interner.intern("kk_iterable_firstNotNullOf")
-            || loweredCallee == interner.intern("kk_iterable_firstNotNullOfOrNull")),
+            || loweredCallee == interner.intern("kk_iterable_firstNotNullOfOrNull")
+            || loweredCallee == interner.intern("kk_iterable_all")),
            finalArguments.count == 2
         {
             let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
@@ -5884,6 +5886,7 @@ extension CallLowerer {
             interner.intern("kk_list_takeWhile"),
             interner.intern("kk_iterable_firstNotNullOf"),
             interner.intern("kk_iterable_firstNotNullOfOrNull"),
+            interner.intern("kk_iterable_all"),
             interner.intern("kk_iterable_requireNoNulls"),
             interner.intern("kk_kclass_cast"),
             interner.intern("kk_range_first_predicate"),
@@ -7683,7 +7686,7 @@ extension CallLowerer {
             case interner.intern("any"):
                 return interner.intern("kk_sequence_any")
             case interner.intern("all"):
-                return interner.intern("kk_sequence_all")
+                return interner.intern(useIterableRuntimeForCollectionFallback ? "kk_iterable_all" : "kk_sequence_all")
             case interner.intern("none"):
                 return interner.intern("kk_sequence_none")
             case interner.intern("mapNotNull"):

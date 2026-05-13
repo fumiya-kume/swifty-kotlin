@@ -1,7 +1,7 @@
 // swiftlint:disable file_length
 
 /// Per-member synthetic Iterable<E> registrations:
-/// `asSequence`, `joinTo`, `firstNotNullOf{,OrNull}`, `last`,
+/// `asSequence`, `joinTo`, `firstNotNullOf{,OrNull}`, `all`, `last`,
 /// `joinToString`, `windowed(transform:)`, `plusElement`,
 /// `minusElement`, `reduceRight*`, `sumBy{,Double}`.
 ///
@@ -232,6 +232,59 @@ extension DataFlowSemaPhase {
                 parameterTypes: [transformType],
                 returnType: resultType,
                 typeParameterSymbols: [iterableTypeParamSymbol, resultTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    /// Register `Iterable<E>.all(predicate)` (STDLIB-COL-FN-007).
+    func registerIterableAllMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        iterableInterfaceSymbol: SymbolID
+    ) {
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName,
+              let iterableTypeParamSymbol = types.nominalTypeParameterSymbols(for: iterableInterfaceSymbol).first
+        else { return }
+
+        let memberName = interner.intern("all")
+        let memberFQName = iterableFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let elementType = types.make(.typeParam(TypeParamType(
+            symbol: iterableTypeParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+        let predicateType = types.make(.functionType(FunctionType(
+            params: [elementType],
+            returnType: types.booleanType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .inlineFunction]
+        )
+        symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_iterable_all", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [predicateType],
+                returnType: types.booleanType,
+                typeParameterSymbols: [iterableTypeParamSymbol],
                 classTypeParameterCount: 1
             ),
             for: memberSymbol

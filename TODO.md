@@ -57,7 +57,7 @@
 - [ ] STDLIB-COL-FN-002: `addAll` 関数の実装（Iterable版）
 - [ ] STDLIB-COL-FN-003: `addAll` 関数の実装（Sequence版）
 - [ ] STDLIB-COL-FN-006: `all` 関数の実装（Array版）
-- [ ] STDLIB-COL-FN-007: `all` 関数の実装（Iterable版）
+- [x] STDLIB-COL-FN-007: `all` 関数の実装（Iterable版）
 - [ ] STDLIB-COL-FN-009: `any` 関数の実装（各オーバーロード）
 - [ ] STDLIB-COL-FN-018: `associate` 関数の実装
 - [ ] STDLIB-COL-FN-019: `associateBy` 関数の実装

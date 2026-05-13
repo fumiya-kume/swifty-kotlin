@@ -1237,6 +1237,33 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(kk_list_none(makeList([]), 0, 0, nil), 1)
     }
 
+    func testIterableAllShortCircuitsAcrossCollectionKinds() {
+        let listSource = makeList([1, 2, 3, 4])
+
+        gHOFState.reset()
+        XCTAssertEqual(kk_iterable_all(listSource, unsafeBitCast(allLtThreeCounting, to: Int.self), 0, nil), 0)
+        XCTAssertEqual(gHOFState.callsSnapshot(), 3)
+
+        let setSource = kk_set_of(makeArray([1, 2]), 2)
+        gHOFState.reset()
+        XCTAssertEqual(kk_iterable_all(setSource, unsafeBitCast(allLtThreeCounting, to: Int.self), 0, nil), 1)
+        XCTAssertEqual(gHOFState.callsSnapshot(), 2)
+
+        gHOFState.reset()
+        XCTAssertEqual(kk_iterable_all(makeList([]), unsafeBitCast(allLtThreeCounting, to: Int.self), 0, nil), 1)
+        XCTAssertEqual(gHOFState.callsSnapshot(), 0)
+    }
+
+    func testIterableAllPropagatesThrowingLambda() {
+        let source = makeList([1])
+        var thrown = 0
+
+        let result = kk_iterable_all(source, unsafeBitCast(throwingHOFLambda, to: Int.self), 0, &thrown)
+
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
     func testListFilterNotKeepsElementsRejectedByPredicate() {
         let source = makeList([1, 2, 3, 4])
 
