@@ -864,7 +864,7 @@ extension DataFlowSemaPhase {
             ("takeWhile", "kk_list_takeWhile", true),
             ("dropWhile", "kk_list_dropWhile", false),
             ("takeLastWhile", "kk_list_takeLastWhile", false),
-            ("dropLastWhile", "kk_list_dropLastWhile", false),
+            ("dropLastWhile", "kk_list_dropLastWhile", true),
         ] {
             let name = interner.intern(funcName)
             let fqName = listFQName + [name]

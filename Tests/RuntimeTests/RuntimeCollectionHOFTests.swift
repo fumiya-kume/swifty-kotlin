@@ -1313,6 +1313,17 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(thrownResult), [])
     }
 
+    func testListDropLastWhileDropsMatchingSuffixAndPropagatesThrow() {
+        let source = makeList([3, 4, 1, 5])
+        let dropped = kk_list_dropLastWhile(source, unsafeBitCast(filterGreaterThanOne, to: Int.self), 0, nil)
+        XCTAssertEqual(listElements(dropped), [3, 4, 1])
+
+        var thrown = 0
+        let thrownResult = kk_list_dropLastWhile(source, unsafeBitCast(throwingHOFLambda, to: Int.self), 0, &thrown)
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(listElements(thrownResult), [])
+    }
+
     func testCountFirstLastFindAndEmptyFailures() {
         let source = makeList([1, 2, 3, 4])
 

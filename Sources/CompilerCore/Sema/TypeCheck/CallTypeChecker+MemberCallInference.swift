@@ -717,7 +717,7 @@ extension CallTypeChecker {
             "maxOf", "minOf",
             "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",
             "maxOfWith", "maxOfWithOrNull", "minOfWith", "minOfWithOrNull",
-            "sortedByDescending", "sortedWith", "sortedArrayWith", "partition", "takeWhile", "dropWhile", "distinctBy", "zipWithNext",
+            "sortedByDescending", "sortedWith", "sortedArrayWith", "partition", "takeWhile", "dropWhile", "dropLastWhile", "distinctBy", "zipWithNext",
             "flatten",
             "sort", "sortBy", "sortByDescending", "sortWith",
         ]
@@ -763,6 +763,7 @@ extension CallTypeChecker {
             activeCollectionHOFNames.remove("flatMapIndexed")
         } else {
             activeCollectionHOFNames.remove("mapIndexedNotNull")
+            activeCollectionHOFNames.remove("dropLastWhile")
         }
         if isMapReceiver {
             activeCollectionHOFNames.formUnion(mapOnlyCollectionHOFNames)
@@ -1464,7 +1465,7 @@ extension CallTypeChecker {
             switch calleeStr {
             case "map", "filter", "filterNot", "filterKeys", "filterValues", "mapNotNull", "firstNotNullOf", "firstNotNullOfOrNull", "forEach", "flatMap", "flatMapIndexed", "any", "none", "all",
                  "count", "first", "last", "find", "associateBy", "associateWith", "associate",
-                 "mapValues", "mapKeys", "takeWhile", "dropWhile", "onEach":
+                 "mapValues", "mapKeys", "takeWhile", "dropWhile", "dropLastWhile", "onEach":
                 // any(), none(), count(), first(), last() can be called with no args
                 if args.isEmpty {
                     switch calleeStr {
@@ -1476,7 +1477,7 @@ extension CallTypeChecker {
                     }
                 } else {
                     let lambdaReturnType: TypeID = switch calleeStr {
-                    case "filter", "filterNot", "filterKeys", "filterValues", "any", "none", "all", "takeWhile", "dropWhile": sema.types.booleanType
+                    case "filter", "filterNot", "filterKeys", "filterValues", "any", "none", "all", "takeWhile", "dropWhile", "dropLastWhile": sema.types.booleanType
                     case "forEach", "onEach": sema.types.unitType
                     case "count": sema.types.booleanType
                     case "mapNotNull", "firstNotNullOf", "firstNotNullOfOrNull": sema.types.nullableAnyType
@@ -1539,7 +1540,7 @@ extension CallTypeChecker {
                         } else {
                             resultType = receiverType
                         }
-                    case "takeWhile", "dropWhile":
+                    case "takeWhile", "dropWhile", "dropLastWhile":
                         if isSequenceReceiver {
                             resultType = makeSyntheticSequenceType(
                                 symbols: sema.symbols,

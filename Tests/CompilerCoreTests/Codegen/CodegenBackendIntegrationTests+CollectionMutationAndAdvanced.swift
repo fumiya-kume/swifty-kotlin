@@ -425,7 +425,9 @@ extension CodegenBackendIntegrationTests {
             println(list.sorted())
             println(list.distinct())
             println(list.takeWhile { it > 2 })
+            println(list.dropLastWhile { it == 1 })
             renderPrefix(list)
+            renderSuffix(list)
             try {
                 println(list.take(-1))
                 println("missing-take")
@@ -464,6 +466,21 @@ extension CodegenBackendIntegrationTests {
                 println("negative-prefix")
             }
         }
+
+        fun renderSuffix(values: List<Int>) {
+            println(values.dropLastWhile { it == 1 })
+            try {
+                println(values.dropLastWhile {
+                    if (it == 1) {
+                        throw IllegalArgumentException("suffix")
+                    }
+                    true
+                })
+                println("missing-suffix")
+            } catch (e: IllegalArgumentException) {
+                println("thrown-suffix")
+            }
+        }
         """
 
         try withTemporaryFile(contents: source) { path in
@@ -480,7 +497,7 @@ extension CodegenBackendIntegrationTests {
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(
                 normalizedStdout,
-                "[3, 1, 2]\n[2, 1]\n[1, 2, 1, 3]\n[1, 1, 2, 3]\n[3, 1, 2]\n[3]\n[3]\nnegative-prefix\nnegative-take\nnegative-drop\nnegative-param-take\n"
+                "[3, 1, 2]\n[2, 1]\n[1, 2, 1, 3]\n[1, 1, 2, 3]\n[3, 1, 2]\n[3]\n[3, 1, 2]\n[3]\nnegative-prefix\n[3, 1, 2]\nthrown-suffix\nnegative-take\nnegative-drop\nnegative-param-take\n"
             )
         }
     }

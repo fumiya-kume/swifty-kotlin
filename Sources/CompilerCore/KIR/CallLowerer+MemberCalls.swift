@@ -3910,6 +3910,8 @@ extension CallLowerer {
                     primitiveSelectorKind != nil ? "kk_list_sortedByDescending_primitive" : "kk_list_sortedByDescending"
                 case "distinctBy":
                     "kk_list_distinctBy"
+                case "dropLastWhile":
+                    "kk_list_dropLastWhile"
                 case "sortedWith":
                     "kk_list_sortedWith"
                 case "maxOf":
@@ -3968,8 +3970,9 @@ extension CallLowerer {
                         instructions.append(.constValue(result: kindExpr, value: .intLiteral(Int64(primitiveSelectorKind.rawValue))))
                         callArguments.append(kindExpr)
                     }
-                let canThrow = runtimeCallee == "kk_list_elementAt"
-                    || runtimeCallee == "kk_list_distinctBy"
+                    let canThrow = runtimeCallee == "kk_list_elementAt"
+                        || runtimeCallee == "kk_list_distinctBy"
+                        || runtimeCallee == "kk_list_dropLastWhile"
                         || runtimeCallee == "kk_list_minBy"
                         || runtimeCallee == "kk_list_min"
                     instructions.append(.call(
@@ -4693,7 +4696,7 @@ extension CallLowerer {
             "indexOfFirst", "indexOfLast", "binarySearch", "binarySearchBy", "reduceIndexed", "reduceIndexedOrNull", "reduceRightOrNull", "reduceRightIndexed", "reduceRightIndexedOrNull", "foldIndexed", "foldRightIndexed",
             "sortedByDescending", "sortedWith", "partition", "zipWithNext",
             "sortedArrayWith",
-            "takeWhile", "dropWhile", "filterNot", "findLast", "replaceAll", "removeIf",
+            "takeWhile", "dropWhile", "dropLastWhile", "filterNot", "findLast", "replaceAll", "removeIf",
             "replaceFirstChar",
             "trim", "trimStart", "trimEnd",
             "sortWith", "sortBy", "sortByDescending",
@@ -5889,6 +5892,7 @@ extension CallLowerer {
             interner.intern("kk_list_sumByDouble"),
             interner.intern("kk_list_distinctBy"),
             interner.intern("kk_list_takeWhile"),
+            interner.intern("kk_list_dropLastWhile"),
             interner.intern("kk_iterable_firstNotNullOf"),
             interner.intern("kk_iterable_firstNotNullOfOrNull"),
             interner.intern("kk_iterable_any"),

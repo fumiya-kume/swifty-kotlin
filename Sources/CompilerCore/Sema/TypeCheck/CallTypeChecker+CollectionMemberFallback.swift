@@ -807,6 +807,7 @@ extension CallTypeChecker {
             interner.intern("filterIsInstance"),
             interner.intern("takeWhile"),
             interner.intern("dropWhile"),
+            interner.intern("dropLastWhile"),
             interner.intern("firstOrNull"),
             interner.intern("lastOrNull"),
             interner.intern("singleOrNull"),
@@ -867,6 +868,9 @@ extension CallTypeChecker {
         }
         if collectionSpecificMembers.contains(memberName) {
             return isListReceiver || isSetReceiver || isSequenceReceiver
+        }
+        if memberName == interner.intern("dropLastWhile") {
+            return isListReceiver
         }
         if memberName == knownNames.getOrElse {
             return isListReceiver || isMapReceiver
@@ -937,7 +941,7 @@ extension CallTypeChecker {
             interner.intern("onEach"), interner.intern("onEachIndexed"),
             interner.intern("filterIsInstance"),
             interner.intern("toCollection"),
-            interner.intern("takeWhile"), interner.intern("dropWhile"),
+            interner.intern("takeWhile"), interner.intern("dropWhile"), interner.intern("dropLastWhile"),
             interner.intern("subList"), interner.intern("slice"),
             interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"),
             interner.intern("scan"), interner.intern("scanIndexed"),
@@ -1023,7 +1027,7 @@ extension CallTypeChecker {
              interner.intern("groupBy"), interner.intern("groupingBy"), interner.intern("sortedBy"), interner.intern("find"), interner.intern("associateBy"), interner.intern("associateWith"), interner.intern("associate"), interner.intern("reduce"), interner.intern("reduceOrNull"), interner.intern("reduceIndexedOrNull"), interner.intern("runningReduce"), interner.intern("runningReduceIndexed"), interner.intern("scanReduce"), interner.intern("take"), interner.intern("drop"), interner.intern("zip"),
              interner.intern("forEachIndexed"), interner.intern("mapIndexed"), interner.intern("filterIndexed"), interner.intern("sumOf"), interner.intern("sumBy"), interner.intern("sumByDouble"), interner.intern("chunked"), interner.intern("onEach"), interner.intern("onEachIndexed"),
              interner.intern("sortedByDescending"), interner.intern("sortedWith"), interner.intern("partition"),
-             interner.intern("takeWhile"), interner.intern("dropWhile"),
+             interner.intern("takeWhile"), interner.intern("dropWhile"), interner.intern("dropLastWhile"),
              interner.intern("sortBy"), interner.intern("sortByDescending"), interner.intern("distinctBy"),
              interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"),
              interner.intern("maxBy"), interner.intern("minBy"), interner.intern("maxByOrNull"), interner.intern("minByOrNull"),
@@ -2063,6 +2067,7 @@ extension CallTypeChecker {
             interner.intern("partition"),
             interner.intern("takeWhile"),
             interner.intern("dropWhile"),
+            interner.intern("dropLastWhile"),
         ]
         let knownNames = KnownCompilerNames(interner: interner)
         let oneParamMembers: Set = [
@@ -2096,6 +2101,7 @@ extension CallTypeChecker {
             interner.intern("partition"),
             interner.intern("takeWhile"),
             interner.intern("dropWhile"),
+            interner.intern("dropLastWhile"),
             interner.intern("onEach"),
             interner.intern("sortBy"),
             interner.intern("sortByDescending"),

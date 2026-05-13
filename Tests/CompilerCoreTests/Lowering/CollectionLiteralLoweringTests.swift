@@ -1290,6 +1290,16 @@ final class CollectionLiteralLoweringTests: XCTestCase {
         )
     }
 
+    func testVirtualCallOnListTypedParameterRewritesToKkListDropLastWhile() throws {
+        let callees = try buildAndLowerVirtualCallWithArgs(
+            receiverTypeName: "List", callee: "dropLastWhile", argCount: 1
+        )
+        XCTAssertTrue(
+            callees.contains("kk_list_dropLastWhile"),
+            "virtualCall(dropLastWhile) on List-typed parameter should be rewritten to kk_list_dropLastWhile, got: \(callees)"
+        )
+    }
+
     func testVirtualCallOnSequenceTypedParameterRewritesToKkSequenceToList() throws {
         let callees = try buildAndLowerVirtualCall(receiverTypeName: "Sequence", callee: "toList")
         XCTAssertTrue(
