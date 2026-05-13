@@ -94,10 +94,32 @@ extension CallTypeChecker {
         let isIterableReceiver = isIterableLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isMapReceiver = isMapLikeCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isSetReceiver = isSetLikeCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
+        let isMutableCollectionReceiverFlag = isMutableCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isMutableListReceiver = isMutableListCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isMutableSetReceiver = isMutableSetCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isMutableMapReceiver = isMutableMapCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isListReceiver = isConcreteListLikeCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
+        let addAllFirstArgumentExpr: ExprID? = if memberName == "addAll",
+                                                  args.count == 1,
+                                                  let firstArg = args.first {
+            firstArg.expr
+        } else {
+            nil
+        }
+        if let addAllFirstArgumentExpr,
+           sema.bindings.exprTypes[addAllFirstArgumentExpr] == nil
+        {
+            _ = driver.inferExpr(addAllFirstArgumentExpr, ctx: ctx, locals: &locals)
+        }
+        let isAddAllArrayArgument = addAllFirstArgumentExpr.map {
+            isArrayLikeReceiver(receiverID: $0, sema: sema, interner: interner)
+        } ?? false
+        let isAddAllSequenceArgument: Bool = if let addAllFirstArgumentExpr,
+                                                let firstArgType = sema.bindings.exprTypes[addAllFirstArgumentExpr] {
+            isSequenceLikeType(firstArgType, sema: sema, interner: interner)
+        } else {
+            false
+        }
         guard isSupportedCollectionFallbackMember(
             calleeName,
             isIterableReceiver: isIterableReceiver,
@@ -105,9 +127,12 @@ extension CallTypeChecker {
             isSequenceReceiver: isSequenceReceiver,
             isMapReceiver: isMapReceiver,
             isSetReceiver: isSetReceiver,
+            isMutableCollectionReceiver: isMutableCollectionReceiverFlag,
             isMutableListReceiver: isMutableListReceiver,
             isMutableSetReceiver: isMutableSetReceiver,
             isMutableMapReceiver: isMutableMapReceiver,
+            isAddAllArrayArgument: isAddAllArrayArgument,
+            isAddAllSequenceArgument: isAddAllSequenceArgument,
             interner: interner
         ),
         isValidCollectionFallbackArity(
@@ -116,9 +141,12 @@ extension CallTypeChecker {
             isMapReceiver: isMapReceiver,
             isSetReceiver: isSetReceiver,
             isSequenceReceiver: isSequenceReceiver,
+            isMutableCollectionReceiver: isMutableCollectionReceiverFlag,
             isMutableMapReceiver: isMutableMapReceiver,
             isMutableSetReceiver: isMutableSetReceiver,
             isMutableListReceiver: isMutableListReceiver,
+            isAddAllArrayArgument: isAddAllArrayArgument,
+            isAddAllSequenceArgument: isAddAllSequenceArgument,
             interner: interner
         )
         else {
@@ -507,6 +535,23 @@ extension CallTypeChecker {
             {
                 return arrayMatch
             }
+            if memberName == interner.intern("addAll"),
+               argCount == 1,
+               let firstArgExpr = argExprs.first,
+               let firstArgType = sema.bindings.exprTypes[firstArgExpr],
+               isSequenceLikeType(firstArgType, sema: sema, interner: interner),
+               let sequenceMatch = allCandidates.first(where: { candidate in
+                   guard let sig = sema.symbols.functionSignature(for: candidate),
+                         sig.parameterTypes.count == 1,
+                         let firstParamType = sig.parameterTypes.first
+                   else {
+                       return false
+                   }
+                   return isSequenceLikeType(firstParamType, sema: sema, interner: interner)
+               })
+            {
+                return sequenceMatch
+            }
 
         let lastArgIsFunctionLike: Bool = if let lastExpr = argExprs.last,
                                              let lastExprNode = ctx.ast.arena.expr(lastExpr) {
@@ -570,9 +615,12 @@ extension CallTypeChecker {
         isSequenceReceiver: Bool,
         isMapReceiver: Bool,
         isSetReceiver: Bool,
+        isMutableCollectionReceiver: Bool,
         isMutableListReceiver: Bool,
         isMutableSetReceiver: Bool = false,
         isMutableMapReceiver: Bool,
+        isAddAllArrayArgument: Bool = false,
+        isAddAllSequenceArgument: Bool = false,
         interner: StringInterner
     ) -> Bool {
         let knownNames = KnownCompilerNames(interner: interner)
@@ -768,7 +816,13 @@ extension CallTypeChecker {
             return isMutableListReceiver
         }
         if mutableCollectionMembers.contains(memberName) {
-            return isMutableListReceiver || isMutableSetReceiver
+            return isMutableListReceiver
+                || isMutableSetReceiver
+                || (
+                    memberName == interner.intern("addAll")
+                        && isMutableCollectionReceiver
+                        && (isAddAllArrayArgument || isAddAllSequenceArgument)
+                )
         }
         if memberName == knownNames.getOrPut || memberName == knownNames.putAll {
             return isMutableMapReceiver
@@ -838,9 +892,12 @@ extension CallTypeChecker {
         isMapReceiver: Bool,
         isSetReceiver: Bool,
         isSequenceReceiver: Bool,
+        isMutableCollectionReceiver: Bool,
         isMutableMapReceiver: Bool,
         isMutableSetReceiver: Bool = false,
         isMutableListReceiver: Bool,
+        isAddAllArrayArgument: Bool = false,
+        isAddAllSequenceArgument: Bool = false,
         interner: StringInterner
     ) -> Bool {
         let knownNames = KnownCompilerNames(interner: interner)
@@ -907,7 +964,15 @@ extension CallTypeChecker {
         case knownNames.getOrPut:
             return isMutableMapReceiver && argCount == 2
         case interner.intern("addAll"), interner.intern("removeAll"), interner.intern("retainAll"):
-            return (isMutableListReceiver || isMutableSetReceiver) && argCount == 1
+            return (
+                isMutableListReceiver
+                    || isMutableSetReceiver
+                    || (
+                        memberName == interner.intern("addAll")
+                            && isMutableCollectionReceiver
+                            && (isAddAllArrayArgument || isAddAllSequenceArgument)
+                    )
+            ) && argCount == 1
         case knownNames.putAll:
             return isMutableMapReceiver && argCount == 1
         case interner.intern("plus"), interner.intern("minus"):
@@ -2418,6 +2483,27 @@ extension CallTypeChecker {
         return (
             symbol.name == knownNames.mutableList
                 || symbol.fqName == knownNames.kotlinCollectionsMutableListFQName
+        ) && classType.args.count == 1
+    }
+
+    private func isMutableCollectionReceiver(
+        receiverID: ExprID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return (
+            symbol.name == interner.intern("MutableCollection")
+                || symbol.fqName == [
+                    interner.intern("kotlin"),
+                    interner.intern("collections"),
+                    interner.intern("MutableCollection"),
+                ]
         ) && classType.args.count == 1
     }
 
