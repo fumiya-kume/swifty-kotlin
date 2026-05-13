@@ -49,7 +49,7 @@ fun main() {
     val stringNumberList = listOf("1", "2", "3")
     println("stringNumberList.firstOrNull(): ${stringNumberList.firstOrNull()}")
     
-    // List with null values (firstOrNull should return first non-null if exists)
+    // List whose first element is null; firstOrNull returns that null.
     val listWithNulls = listOf(null, null, 42, null)
     println("listWithNulls.firstOrNull(): ${listWithNulls.firstOrNull()}")
     
