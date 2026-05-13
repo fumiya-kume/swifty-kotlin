@@ -9,7 +9,9 @@ firebase-debug.log
 .build-codex-run/
 .bench_results/
 .artifacts/
+.air/
 .claude/settings.local.json
+.claude/worktrees/
 .runnerctl/
 *.profraw
 

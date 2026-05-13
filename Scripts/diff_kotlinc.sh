@@ -795,28 +795,30 @@ else
   RUN_DIR="$(mktemp -d -t kswiftk-diff-run-XXXXXX)"
   declare -a RUNNING_PIDS=()
 
-  for input_index in "${RUN_INPUT_INDEXES[@]}"; do
-    test_case="${TEST_CASES[$input_index]}"
-    log_path="$RUN_DIR/case_${input_index}.log"
-    status_path="$RUN_DIR/case_${input_index}.status"
-    artifact_path="$RUN_DIR/case_${input_index}.artifact"
+  if (( ${#RUN_INPUT_INDEXES[@]} > 0 )); then
+    for input_index in "${RUN_INPUT_INDEXES[@]}"; do
+      test_case="${TEST_CASES[$input_index]}"
+      log_path="$RUN_DIR/case_${input_index}.log"
+      status_path="$RUN_DIR/case_${input_index}.status"
+      artifact_path="$RUN_DIR/case_${input_index}.artifact"
 
-    run_case_worker "$test_case" "$log_path" "$status_path" "$artifact_path" &
-    RUNNING_PIDS+=("$!")
+      run_case_worker "$test_case" "$log_path" "$status_path" "$artifact_path" &
+      RUNNING_PIDS+=("$!")
 
-    if (( ${#RUNNING_PIDS[@]} >= WORKER_COUNT )); then
-      wait -n
-      NEW_PIDS=()
-      for pid in "${RUNNING_PIDS[@]}"; do
-        if kill -0 "$pid" 2>/dev/null; then
-          NEW_PIDS+=("$pid")
-        fi
-      done
-      RUNNING_PIDS=("${NEW_PIDS[@]}")
-    fi
-  done
+      if (( ${#RUNNING_PIDS[@]} >= WORKER_COUNT )); then
+        wait -n
+        NEW_PIDS=()
+        for pid in "${RUNNING_PIDS[@]}"; do
+          if kill -0 "$pid" 2>/dev/null; then
+            NEW_PIDS+=("$pid")
+          fi
+        done
+        RUNNING_PIDS=("${NEW_PIDS[@]}")
+      fi
+    done
 
-  wait
+    wait
+  fi
 
   for i in "${!TEST_CASES[@]}"; do
     test_case="${TEST_CASES[$i]}"

@@ -1412,19 +1412,7 @@ extension ExprTypeChecker {
             return inferredBodyType
         }
         
-        // Try to find a common supertype
-        if let commonType = findCommonSupertype(inferredBodyType, expectedReturnType, sema: sema) {
-            return commonType
-        }
-        
         // Fall back to inferred type
         return inferredBodyType
-    }
-
-    /// Finds the common supertype of two types
-    private func findCommonSupertype(_ type1: TypeID, _ type2: TypeID, sema: SemaModule) -> TypeID? {
-        // This would implement type hierarchy analysis to find common supertype
-        // For now, return nil as a placeholder
-        return nil
     }
 }
