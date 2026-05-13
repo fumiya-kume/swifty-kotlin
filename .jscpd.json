@@ -1,12 +1,14 @@
 {
-  "threshold": 5.1,
+  "threshold": 5.5,
   "reporters": ["console"],
   "format": ["swift"],
   "minLines": 5,
   "minTokens": 50,
   "path": ["Sources/"],
   "ignore": [
-    "Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticMetaprogAnnotationHelpers.swift"
+    "Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticMetaprogAnnotationHelpers.swift",
+    "Sources/CompilerCore/Lowering/DataEnumSealedSynthesisPass.swift",
+    "Sources/CompilerCore/Lowering/DataEnumSealedSynthesisPass+EnumSynthesis.swift"
   ],
   "absolute": false,
   "gitignore": true

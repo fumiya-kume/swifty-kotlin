@@ -218,6 +218,7 @@ extension CollectionLiteralLoweringPass {
         }
 
         let unsignedArrayCallee: InternedString? = switch callee {
+        case lookup.toCharArrayName: lookup.kkListToCharArrayName
         case lookup.toBooleanArrayName: lookup.kkListToBooleanArrayName
         case lookup.toShortArrayName: lookup.kkListToShortArrayName
         case lookup.toDoubleArrayName: lookup.kkListToDoubleArrayName
@@ -572,7 +573,8 @@ extension CollectionLiteralLoweringPass {
         guard callee == lookup.mapName || callee == lookup.filterName || callee == lookup.mapNotNullName
             || callee == lookup.filterNotName
             || callee == lookup.forEachName || callee == lookup.onEachName
-            || callee == lookup.flatMapName || callee == lookup.anyName || callee == lookup.noneName
+            || callee == lookup.flatMapName || callee == lookup.flatMapIndexedName
+            || callee == lookup.anyName || callee == lookup.noneName
             || callee == lookup.allName
             || callee == lookup.takeWhileName || callee == lookup.dropWhileName
             || callee == lookup.takeLastWhileName || callee == lookup.dropLastWhileName
@@ -587,6 +589,7 @@ extension CollectionLiteralLoweringPass {
         case lookup.forEachName: lookup.kkListForEachName
         case lookup.onEachName: lookup.kkListOnEachName
         case lookup.flatMapName: lookup.kkListFlatMapName
+        case lookup.flatMapIndexedName: lookup.kkListFlatMapIndexedName
         case lookup.anyName: lookup.kkListAnyName
         case lookup.noneName: lookup.kkListNoneName
         case lookup.allName: lookup.kkListAllName
@@ -1125,6 +1128,8 @@ extension CollectionLiteralLoweringPass {
         case lookup.mapIndexedToName: lookup.kkListMapIndexedToName
         case lookup.mapIndexedNotNullToName: lookup.kkListMapIndexedNotNullToName
         case lookup.flatMapIndexedToName: lookup.kkListFlatMapIndexedToName
+        case lookup.filterIndexedToName:
+            isSequenceReceiver ? lookup.kkSequenceFilterIndexedToName : lookup.kkListFilterIndexedToName
         case lookup.associateToName:
             isSequenceReceiver ? lookup.kkSequenceAssociateToName : lookup.kkListAssociateToName
         default: callee

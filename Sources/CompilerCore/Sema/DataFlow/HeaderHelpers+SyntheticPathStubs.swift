@@ -25,6 +25,8 @@
 /// - `Path.invariantSeparatorsPathString: String` extension property
 /// - `Path.writeBytes(array: ByteArray, vararg options: OpenOption)` extension function
 /// - `Path.appendLines(lines: Iterable<CharSequence>, charset)` extension function
+/// - `Path.absolutePathString(): String` extension function
+/// - `Path.appendBytes(array: ByteArray)` extension function
 /// - `readBytes(): ByteArray`, `readText(): String`, `writeText(text: String)`, `readLines(): List<String>`
 /// - `createDirectories(): Path`, `createLinkPointingTo(target): Path`, `deleteIfExists(): Boolean`
 /// - `deleteExisting()`, `deleteRecursively()`
@@ -301,6 +303,22 @@ extension DataFlowSemaPhase {
         )))
         symbols.setPropertyType(bufferedReaderType, for: bufferedReaderSymbol)
 
+        let bufferedWriterSymbol = ensureClassSymbol(
+            named: "BufferedWriter",
+            in: javaIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaIOPkgSymbol {
+            symbols.setParentSymbol(javaIOPkgSymbol, for: bufferedWriterSymbol)
+        }
+        let bufferedWriterType = types.make(.classType(ClassType(
+            classSymbol: bufferedWriterSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(bufferedWriterType, for: bufferedWriterSymbol)
+
         let javaNetPkg = ensurePackage(
             path: ["java", "net"],
             symbols: symbols,
@@ -418,6 +436,24 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_path_fileName",
             ownerSymbol: pathSymbol,
             returnType: nullablePathType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathMemberProperty(
+            named: "nameWithoutExtension",
+            externalLinkName: "kk_path_nameWithoutExtension",
+            ownerSymbol: pathSymbol,
+            returnType: types.stringType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathMemberProperty(
+            named: "extension",
+            externalLinkName: "kk_path_extension",
+            ownerSymbol: pathSymbol,
+            returnType: types.stringType,
             symbols: symbols,
             interner: interner
         )
@@ -561,6 +597,28 @@ extension DataFlowSemaPhase {
             parameters: [("lines", iterableOfCharSequenceType), ("charset", charsetType)],
             returnType: pathType,
             externalLinkName: "kk_path_appendLines_iterable",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "absolutePathString",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [],
+            returnType: types.stringType,
+            externalLinkName: "kk_path_toAbsolutePathString",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "appendBytes",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("array", byteArrayType)],
+            returnType: types.unitType,
+            externalLinkName: "kk_path_appendBytes",
             symbols: symbols,
             interner: interner
         )
@@ -943,6 +1001,23 @@ extension DataFlowSemaPhase {
             ],
             returnType: bufferedReaderType,
             externalLinkName: "kk_path_bufferedReader",
+            valueParameterHasDefaultValues: [true, true, false],
+            valueParameterIsVararg: [false, false, true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "bufferedWriter",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [
+                ("charset", charsetType),
+                ("bufferSize", types.intType),
+                ("options", openOptionType),
+            ],
+            returnType: bufferedWriterType,
+            externalLinkName: "kk_path_bufferedWriter",
             valueParameterHasDefaultValues: [true, true, false],
             valueParameterIsVararg: [false, false, true],
             symbols: symbols,

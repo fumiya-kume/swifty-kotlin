@@ -6,6 +6,98 @@
 ///
 /// Split out from `CallLowerer.swift`.
 extension CallLowerer {
+    func appendCallableCaptureLoads(
+        callableInfo: KIRCallableValueInfo,
+        closureExpr: KIRExprID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        body: inout [KIRInstruction]
+    ) -> [KIRExprID] {
+        var callArguments: [KIRExprID] = []
+        if callableInfo.captureArguments.count >= 2 {
+            let arrayGet = interner.intern("kk_array_get_inbounds")
+            for (captureIndex, captureExpr) in callableInfo.captureArguments.enumerated() {
+                let captureType = arena.exprType(captureExpr) ?? sema.types.anyType
+                let offsetExpr = arena.appendExpr(.intLiteral(Int64(captureIndex + 2)), type: sema.types.intType)
+                body.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(captureIndex + 2))))
+                let loadedExpr = arena.appendExpr(
+                    .temporary(Int32(clamping: arena.expressions.count)),
+                    type: captureType
+                )
+                body.append(.call(
+                    symbol: nil,
+                    callee: arrayGet,
+                    arguments: [closureExpr, offsetExpr],
+                    result: loadedExpr,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                callArguments.append(loadedExpr)
+            }
+        } else if !callableInfo.captureArguments.isEmpty {
+            callArguments.append(closureExpr)
+        }
+        return callArguments
+    }
+
+    private func makeBoxedCallableCaptureArguments(
+        callableInfo: KIRCallableValueInfo,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> [KIRExprID] {
+        if callableInfo.captureArguments.count >= 2 {
+            let slotCountExpr = arena.appendExpr(
+                .intLiteral(Int64(2 + callableInfo.captureArguments.count)),
+                type: sema.types.intType
+            )
+            instructions.append(.constValue(
+                result: slotCountExpr,
+                value: .intLiteral(Int64(2 + callableInfo.captureArguments.count))
+            ))
+            let classIDExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+            instructions.append(.constValue(result: classIDExpr, value: .intLiteral(0)))
+            let closureObjExpr = arena.appendExpr(
+                .temporary(Int32(clamping: arena.expressions.count)),
+                type: sema.types.anyType
+            )
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_object_new"),
+                arguments: [slotCountExpr, classIDExpr],
+                result: closureObjExpr,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            for (captureIndex, captureArg) in callableInfo.captureArguments.enumerated() {
+                let offsetExpr = arena.appendExpr(
+                    .intLiteral(Int64(captureIndex + 2)),
+                    type: sema.types.intType
+                )
+                instructions.append(.constValue(
+                    result: offsetExpr,
+                    value: .intLiteral(Int64(captureIndex + 2))
+                ))
+                let unusedResult = arena.appendExpr(
+                    .temporary(Int32(clamping: arena.expressions.count)),
+                    type: sema.types.anyType
+                )
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_array_set"),
+                    arguments: [closureObjExpr, offsetExpr, captureArg],
+                    result: unusedResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            }
+            return [closureObjExpr]
+        }
+        return callableInfo.captureArguments
+    }
+
     func appendClosureArgumentsIfNeeded(
         _ loweredArguments: [KIRExprID],
         originalArgs: [CallArgument],
@@ -95,7 +187,9 @@ extension CallLowerer {
                     argExprID: originalArgs[0].expr,
                     sema: sema,
                     arena: arena,
-                    interner: interner
+                    interner: interner,
+                    namePrefix: "kk_compare_values_hof_adapter",
+                    symbolIDOffsetBase: -710_000
                )
             {
                 let adaptedExpr = arena.appendExpr(
@@ -109,52 +203,15 @@ extension CallLowerer {
 
             var finalArgs: [KIRExprID] = [loweredCallableID]
             if let callableInfo {
-                if callableInfo.captureArguments.count >= 2 {
-                    let slotCountExpr = arena.appendExpr(
-                        .intLiteral(Int64(2 + callableInfo.captureArguments.count)),
-                        type: sema.types.intType
-                    )
-                    instructions.append(.constValue(
-                        result: slotCountExpr,
-                        value: .intLiteral(Int64(2 + callableInfo.captureArguments.count))
-                    ))
-                    let classIDExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
-                    instructions.append(.constValue(result: classIDExpr, value: .intLiteral(0)))
-                    let closureObjExpr = arena.appendExpr(
-                        .temporary(Int32(clamping: arena.expressions.count)),
-                        type: sema.types.anyType
-                    )
-                    instructions.append(.call(
-                        symbol: nil,
-                        callee: interner.intern("kk_object_new"),
-                        arguments: [slotCountExpr, classIDExpr],
-                        result: closureObjExpr,
-                        canThrow: false,
-                        thrownResult: nil
-                    ))
-                    for (captureIndex, captureArg) in callableInfo.captureArguments.enumerated() {
-                        let offsetExpr = arena.appendExpr(
-                            .intLiteral(Int64(captureIndex + 2)),
-                            type: sema.types.intType
-                        )
-                        instructions.append(.constValue(
-                            result: offsetExpr,
-                            value: .intLiteral(Int64(captureIndex + 2))
-                        ))
-                        let unusedResult = arena.appendExpr(
-                            .temporary(Int32(clamping: arena.expressions.count)),
-                            type: sema.types.anyType
-                        )
-                        instructions.append(.call(
-                            symbol: nil,
-                            callee: interner.intern("kk_array_set"),
-                            arguments: [closureObjExpr, offsetExpr, captureArg],
-                            result: unusedResult,
-                            canThrow: false,
-                            thrownResult: nil
-                        ))
-                    }
-                    finalArgs.append(closureObjExpr)
+                let boxedCaptureArguments = makeBoxedCallableCaptureArguments(
+                    callableInfo: callableInfo,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    instructions: &instructions
+                )
+                if let boxedCaptureArgument = boxedCaptureArguments.first {
+                    finalArgs.append(boxedCaptureArgument)
                 } else if let closureRaw = callableInfo.captureArguments.first {
                     finalArgs.append(closureRaw)
                 } else {
@@ -321,7 +378,9 @@ extension CallLowerer {
                     argExprID: originalArgs[0].expr,
                     sema: sema,
                     arena: arena,
-                    interner: interner
+                    interner: interner,
+                    namePrefix: "kk_compare_values_hof_adapter",
+                    symbolIDOffsetBase: -710_000
                )
             {
                 let adaptedExpr = arena.appendExpr(
@@ -335,61 +394,15 @@ extension CallLowerer {
 
             var finalArgs: [KIRExprID] = [loweredCallableID]
             if let callableInfo {
-                if callableInfo.captureArguments.count >= 2 {
-                    let intType = sema.types.intType
-                    let anyType = sema.types.anyType
-                    let kkObjectNew = interner.intern("kk_object_new")
-                    let kkArraySet = interner.intern("kk_array_set")
-
-                    let slotCountExpr = arena.appendExpr(
-                        .intLiteral(Int64(2 + callableInfo.captureArguments.count)),
-                        type: intType
-                    )
-                    instructions.append(.constValue(
-                        result: slotCountExpr,
-                        value: .intLiteral(Int64(2 + callableInfo.captureArguments.count))
-                    ))
-
-                    let classIDExpr = arena.appendExpr(.intLiteral(0), type: intType)
-                    instructions.append(.constValue(result: classIDExpr, value: .intLiteral(0)))
-
-                    let closureObjExpr = arena.appendExpr(
-                        .temporary(Int32(clamping: arena.expressions.count)),
-                        type: anyType
-                    )
-                    instructions.append(.call(
-                        symbol: nil,
-                        callee: kkObjectNew,
-                        arguments: [slotCountExpr, classIDExpr],
-                        result: closureObjExpr,
-                        canThrow: false,
-                        thrownResult: nil
-                    ))
-
-                    for (captureIndex, captureArg) in callableInfo.captureArguments.enumerated() {
-                        let offsetExpr = arena.appendExpr(
-                            .intLiteral(Int64(captureIndex + 2)),
-                            type: intType
-                        )
-                        instructions.append(.constValue(
-                            result: offsetExpr,
-                            value: .intLiteral(Int64(captureIndex + 2))
-                        ))
-                        let unusedResult = arena.appendExpr(
-                            .temporary(Int32(clamping: arena.expressions.count)),
-                            type: anyType
-                        )
-                        instructions.append(.call(
-                            symbol: nil,
-                            callee: kkArraySet,
-                            arguments: [closureObjExpr, offsetExpr, captureArg],
-                            result: unusedResult,
-                            canThrow: false,
-                            thrownResult: nil
-                        ))
-                    }
-
-                    finalArgs.append(closureObjExpr)
+                let boxedCaptureArguments = makeBoxedCallableCaptureArguments(
+                    callableInfo: callableInfo,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    instructions: &instructions
+                )
+                if let boxedCaptureArgument = boxedCaptureArguments.first {
+                    finalArgs.append(boxedCaptureArgument)
                 } else if let closureRaw = callableInfo.captureArguments.first {
                     finalArgs.append(closureRaw)
                 } else {
@@ -566,7 +579,9 @@ extension CallLowerer {
                         argExprID: originalArgs[i].expr,
                         sema: sema,
                         arena: arena,
-                        interner: interner
+                        interner: interner,
+                        namePrefix: "kk_compare_values_hof_adapter",
+                        symbolIDOffsetBase: -710_000
                    )
                 {
                     let adaptedExpr = arena.appendExpr(.symbolRef(adaptedInfo.symbol), type: arena.exprType(loweredSelectorID) ?? sema.types.anyType)
@@ -651,7 +666,9 @@ extension CallLowerer {
                         argExprID: originalArgs[argIndex].expr,
                         sema: sema,
                         arena: arena,
-                        interner: interner
+                        interner: interner,
+                        namePrefix: "kk_compare_values_hof_adapter",
+                        symbolIDOffsetBase: -710_000
                    )
                 {
                     let adaptedExpr = arena.appendExpr(
@@ -725,7 +742,9 @@ extension CallLowerer {
                     argExprID: originalArgs[3].expr,
                     sema: sema,
                     arena: arena,
-                    interner: interner
+                    interner: interner,
+                    namePrefix: "kk_compare_values_hof_adapter",
+                    symbolIDOffsetBase: -710_000
                )
             {
                 let adaptedExpr = arena.appendExpr(
@@ -782,7 +801,9 @@ extension CallLowerer {
                         argExprID: originalArgs[i].expr,
                         sema: sema,
                         arena: arena,
-                        interner: interner
+                        interner: interner,
+                        namePrefix: "kk_compare_values_hof_adapter",
+                        symbolIDOffsetBase: -710_000
                     )
                 {
                     let adaptedExpr = arena.appendExpr(.symbolRef(adaptedInfo.symbol), type: arena.exprType(loweredSelectorID) ?? sema.types.anyType)
@@ -805,115 +826,6 @@ extension CallLowerer {
         }
 
         return loweredArguments
-    }
-
-    private func makeCollectionHOFCallableAdapter(
-        callableInfo: KIRCallableValueInfo,
-        loweredArgID: KIRExprID,
-        argExprID: ExprID,
-        sema: SemaModule,
-        arena: KIRArena,
-        interner: StringInterner
-    ) -> KIRCallableValueInfo? {
-        let callableType = arena.exprType(loweredArgID) ?? sema.bindings.exprTypes[argExprID] ?? sema.types.anyType
-        let nonNullCallableType = sema.types.makeNonNullable(callableType)
-        guard case let .functionType(functionType) = sema.types.kind(of: nonNullCallableType) else {
-            return nil
-        }
-
-        let adapterSymbol = driver.ctx.allocateSyntheticGeneratedSymbol()
-        let adapterName = interner.intern("kk_compare_values_hof_adapter_\(argExprID.rawValue)_\(adapterSymbol.rawValue)")
-        let closureParam = KIRParameter(
-            symbol: driver.ctx.allocateSyntheticGeneratedSymbol(),
-            type: sema.types.intType
-        )
-        // Build value parameters including the receiver (if present).
-        // For receiver-bearing function types like `DeepRecursiveScope<T,R>.(T) -> R`,
-        // the receiver is stored in `functionType.receiver` and must be forwarded
-        // as an explicit parameter so the adapter's ABI matches the runtime call site.
-        var allValueTypes: [TypeID] = []
-        if let receiverType = functionType.receiver {
-            allValueTypes.append(receiverType)
-        }
-        allValueTypes.append(contentsOf: functionType.params)
-        let valueParams: [KIRParameter] = allValueTypes.enumerated().map { index, type in
-            KIRParameter(
-                symbol: SymbolID(rawValue: Int32(clamping: -710_000 - Int64(argExprID.rawValue) * 16 - Int64(index))),
-                type: type
-            )
-        }
-
-        var body: [KIRInstruction] = [.beginBlock]
-        let closureExpr = arena.appendExpr(.symbolRef(closureParam.symbol), type: closureParam.type)
-        body.append(.constValue(result: closureExpr, value: .symbolRef(closureParam.symbol)))
-
-        var callArguments: [KIRExprID] = []
-        if callableInfo.captureArguments.count >= 2 {
-            let arrayGet = interner.intern("kk_array_get_inbounds")
-            for (captureIndex, captureExpr) in callableInfo.captureArguments.enumerated() {
-                let captureType = arena.exprType(captureExpr) ?? sema.types.anyType
-                let offsetExpr = arena.appendExpr(.intLiteral(Int64(captureIndex + 2)), type: sema.types.intType)
-                body.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(captureIndex + 2))))
-                let loadedExpr = arena.appendExpr(.temporary(Int32(clamping: arena.expressions.count)), type: captureType)
-                body.append(.call(
-                    symbol: nil,
-                    callee: arrayGet,
-                    arguments: [closureExpr, offsetExpr],
-                    result: loadedExpr,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
-                callArguments.append(loadedExpr)
-            }
-        } else if !callableInfo.captureArguments.isEmpty {
-            callArguments.append(closureExpr)
-        }
-
-        for param in valueParams {
-            let paramExpr = arena.appendExpr(.symbolRef(param.symbol), type: param.type)
-            body.append(.constValue(result: paramExpr, value: .symbolRef(param.symbol)))
-            callArguments.append(paramExpr)
-        }
-
-        let callResult = arena.appendExpr(.temporary(Int32(clamping: arena.expressions.count)), type: functionType.returnType)
-        body.append(.call(
-            symbol: callableInfo.symbol,
-            callee: callableInfo.callee,
-            arguments: callArguments,
-            result: callResult,
-            canThrow: false,
-            thrownResult: nil
-        ))
-
-        switch sema.types.kind(of: functionType.returnType) {
-        case .unit, .nothing(.nonNull), .nothing(.nullable):
-            body.append(.returnUnit)
-        default:
-            body.append(.returnValue(callResult))
-        }
-        body.append(.endBlock)
-
-        let adapterDecl = arena.appendDecl(
-            .function(
-                KIRFunction(
-                    symbol: adapterSymbol,
-                    name: adapterName,
-                    params: [closureParam] + valueParams,
-                    returnType: functionType.returnType,
-                    body: body,
-                    isSuspend: functionType.isSuspend,
-                    isInline: false
-                )
-            )
-        )
-        driver.ctx.appendGeneratedCallableDecl(adapterDecl)
-
-        return KIRCallableValueInfo(
-            symbol: adapterSymbol,
-            callee: adapterName,
-            captureArguments: callableInfo.captureArguments,
-            hasClosureParam: true
-        )
     }
 
     func makeClosureThunkCallableAdapter(
@@ -944,30 +856,14 @@ extension CallLowerer {
         let closureExpr = arena.appendExpr(.symbolRef(closureParam.symbol), type: closureParam.type)
         body.append(.constValue(result: closureExpr, value: .symbolRef(closureParam.symbol)))
 
-        var callArguments: [KIRExprID] = []
-        if callableInfo.captureArguments.count >= 2 {
-            let arrayGet = interner.intern("kk_array_get_inbounds")
-            for (captureIndex, captureExpr) in callableInfo.captureArguments.enumerated() {
-                let captureType = arena.exprType(captureExpr) ?? sema.types.anyType
-                let offsetExpr = arena.appendExpr(.intLiteral(Int64(captureIndex + 2)), type: sema.types.intType)
-                body.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(captureIndex + 2))))
-                let loadedExpr = arena.appendExpr(
-                    .temporary(Int32(clamping: arena.expressions.count)),
-                    type: captureType
-                )
-                body.append(.call(
-                    symbol: nil,
-                    callee: arrayGet,
-                    arguments: [closureExpr, offsetExpr],
-                    result: loadedExpr,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
-                callArguments.append(loadedExpr)
-            }
-        } else if !callableInfo.captureArguments.isEmpty {
-            callArguments.append(closureExpr)
-        }
+        let callArguments = appendCallableCaptureLoads(
+            callableInfo: callableInfo,
+            closureExpr: closureExpr,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            body: &body
+        )
 
         let lambdaCanThrow = callableRequiresThrownChannel(callableInfo.symbol, arena: arena)
         let callResult = arena.appendExpr(
@@ -1021,50 +917,13 @@ extension CallLowerer {
         )
         driver.ctx.appendGeneratedCallableDecl(adapterDecl)
 
-        let adapterCaptureArguments: [KIRExprID]
-        if callableInfo.captureArguments.count >= 2 {
-            let slotCountExpr = arena.appendExpr(
-                .intLiteral(Int64(2 + callableInfo.captureArguments.count)),
-                type: sema.types.intType
-            )
-            instructions.append(.constValue(
-                result: slotCountExpr,
-                value: .intLiteral(Int64(2 + callableInfo.captureArguments.count))
-            ))
-            let classIDExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
-            instructions.append(.constValue(result: classIDExpr, value: .intLiteral(0)))
-            let closureObj = arena.appendExpr(
-                .temporary(Int32(clamping: arena.expressions.count)),
-                type: sema.types.intType
-            )
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_object_new"),
-                arguments: [slotCountExpr, classIDExpr],
-                result: closureObj,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            for (captureIndex, captureExpr) in callableInfo.captureArguments.enumerated() {
-                let offsetExpr = arena.appendExpr(.intLiteral(Int64(captureIndex + 2)), type: sema.types.intType)
-                instructions.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(captureIndex + 2))))
-                let setResult = arena.appendExpr(
-                    .temporary(Int32(clamping: arena.expressions.count)),
-                    type: sema.types.anyType
-                )
-                instructions.append(.call(
-                    symbol: nil,
-                    callee: interner.intern("kk_array_set"),
-                    arguments: [closureObj, offsetExpr, captureExpr],
-                    result: setResult,
-                    canThrow: true,
-                    thrownResult: nil
-                ))
-            }
-            adapterCaptureArguments = [closureObj]
-        } else {
-            adapterCaptureArguments = callableInfo.captureArguments
-        }
+        let adapterCaptureArguments = makeBoxedCallableCaptureArguments(
+            callableInfo: callableInfo,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            instructions: &instructions
+        )
 
         return KIRCallableValueInfo(
             symbol: adapterSymbol,

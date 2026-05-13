@@ -61,11 +61,11 @@
 - [x] STDLIB-COL-ABSTRACT-009: `AbstractSet<E>` 抽象クラスの実装
 
 #### kotlin.collections 具象実装クラスの実装
-- [ ] STDLIB-COL-CONCRETE-001: `ArrayList<E>` 具象クラスの実装（現在は型エイリアスのみ）
+- [x] STDLIB-COL-CONCRETE-001: `ArrayList<E>` 具象クラスの実装（現在は型エイリアスのみ）
 - [x] STDLIB-COL-CONCRETE-002: `LinkedList<E>` 具象クラスの実装（現在は型エイリアスのみ）
-- [ ] STDLIB-COL-CONCRETE-003: `HashMap<K,V>` 具象クラスの実装（現在は型エイリアスのみ）
+- [x] STDLIB-COL-CONCRETE-003: `HashMap<K,V>` 具象クラスの実装（現在は型エイリアスのみ）
 - [ ] STDLIB-COL-CONCRETE-004: `HashSet<E>` 具象クラスの実装（現在は型エイリアスのみ）
-- [ ] STDLIB-COL-CONCRETE-005: `LinkedHashMap<K,V>` 具象クラスの実装（現在は型エイリアスのみ）
+- [x] STDLIB-COL-CONCRETE-005: `LinkedHashMap<K,V>` 具象クラスの実装（現在は型エイリアスのみ）
 - [x] STDLIB-COL-CONCRETE-006: `LinkedHashSet<E>` 具象クラスの実装（現在は型エイリアスのみ）
 - [x] STDLIB-COL-CONCRETE-007: `ArrayDeque<E>` 具象クラスの実装
 
@@ -118,37 +118,37 @@
 - [x] STDLIB-COL-FN-044: `distinct` 関数の実装
 - [x] STDLIB-COL-FN-045: `distinctBy` 関数の実装
 - [x] STDLIB-COL-FN-046: `drop` 関数の実装
-- [ ] STDLIB-COL-FN-047: `dropLast` 関数の実装
+- [x] STDLIB-COL-FN-047: `dropLast` 関数の実装
 - [ ] STDLIB-COL-FN-048: `dropLastWhile` 関数の実装
-- [ ] STDLIB-COL-FN-049: `dropWhile` 関数の実装
+- [x] STDLIB-COL-FN-049: `dropWhile` 関数の実装
 - [x] STDLIB-COL-FN-050: `elementAt` 関数の実装
-- [ ] STDLIB-COL-FN-051: `elementAtOrElse` 関数の実装
+- [x] STDLIB-COL-FN-051: `elementAtOrElse` 関数の実装
 - [x] STDLIB-COL-FN-052: `elementAtOrNull` 関数の実装
 - [x] STDLIB-COL-FN-053: `emptyList` 関数の実装
 - [x] STDLIB-COL-FN-054: `emptyMap` 関数の実装
 - [x] STDLIB-COL-FN-055: `emptySet` 関数の実装
 - [x] STDLIB-COL-FN-056: `fill` 関数の実装
-- [ ] STDLIB-COL-FN-057: `filter` 関数の実装
+- [x] STDLIB-COL-FN-057: `filter` 関数の実装
 - [x] STDLIB-COL-FN-058: `filterIndexed` 関数の実装
-- [ ] STDLIB-COL-FN-059: `filterIndexedTo` 関数の実装
+- [x] STDLIB-COL-FN-059: `filterIndexedTo` 関数の実装
 - [ ] STDLIB-COL-FN-060: `filterIsInstance` 関数の実装
 - [x] STDLIB-COL-FN-061: `filterIsInstanceTo` 関数の実装
 - [x] STDLIB-COL-FN-062: `filterKeys` 関数の実装
 - [x] STDLIB-COL-FN-063: `filterNot` 関数の実装
 - [x] STDLIB-COL-FN-060: `filterIsInstance` 関数の実装
-- [ ] STDLIB-COL-FN-064: `filterNotNull` 関数の実装
+- [x] STDLIB-COL-FN-064: `filterNotNull` 関数の実装
 - [x] STDLIB-COL-FN-065: `filterNotNullTo` 関数の実装
 - [x] STDLIB-COL-FN-066: `filterNotTo` 関数の実装
 - [x] STDLIB-COL-FN-067: `filterTo` 関数の実装
 - [x] STDLIB-COL-FN-068: `filterValues` 関数の実装
-- [ ] STDLIB-COL-FN-069: `find` 関数の実装
+- [x] STDLIB-COL-FN-069: `find` 関数の実装
 - [x] STDLIB-COL-FN-070: `findLast` 関数の実装
 - [ ] STDLIB-COL-FN-071: `first` 関数の実装
 - [x] STDLIB-COL-FN-072: `firstNotNullOf` 関数の実装
 - [x] STDLIB-COL-FN-073: `firstNotNullOfOrNull` 関数の実装
 - [x] STDLIB-COL-FN-074: `firstOrNull` 関数の実装
 - [x] STDLIB-COL-FN-075: `flatMap` 関数の実装
-- [ ] STDLIB-COL-FN-076: `flatMapIndexed` 関数の実装
+- [x] STDLIB-COL-FN-076: `flatMapIndexed` 関数の実装
 - [ ] STDLIB-COL-FN-077: `flatMapIndexedTo` 関数の実装
 - [ ] STDLIB-COL-FN-078: `flatMapTo` 関数の実装
 - [ ] STDLIB-COL-FN-079: `flatten` 関数の実装
@@ -166,8 +166,8 @@
 - [ ] STDLIB-COL-FN-084: `forEach` 関数の実装
 - [x] STDLIB-COL-FN-084: `forEach` 関数の実装
 - [ ] STDLIB-COL-FN-085: `forEachIndexed` 関数の実装
-- [ ] STDLIB-COL-FN-086: `get` 関数の実装
-- [x] STDLIB-COL-FN-087: `getOrDefault` 関数の実装
+- [x] STDLIB-COL-FN-086: `get` 関数の実装
+- [ ] STDLIB-COL-FN-087: `getOrDefault` 関数の実装
 - [x] STDLIB-COL-FN-088: `getOrPut` 関数の実装
 - [x] STDLIB-COL-FN-089: `getValue` 関数の実装
 - [ ] STDLIB-COL-FN-090: `groupBy` 関数の実装
@@ -204,15 +204,15 @@
 - [x] STDLIB-COL-FN-121: `mapTo` 関数の実装
 - [x] STDLIB-COL-FN-122: `mapValues` 関数の実装
 - [x] STDLIB-COL-FN-123: `mapValuesTo` 関数の実装
-- [ ] STDLIB-COL-FN-124: `max` 関数の実装
+- [x] STDLIB-COL-FN-124: `max` 関数の実装
 - [x] STDLIB-COL-FN-125: `maxBy` 関数の実装
 - [x] STDLIB-COL-FN-126: `maxByOrNull` 関数の実装
-- [ ] STDLIB-COL-FN-127: `maxOf` 関数の実装
+- [x] STDLIB-COL-FN-127: `maxOf` 関数の実装
 - [x] STDLIB-COL-FN-128: `maxOfOrNull` 関数の実装
 - [x] STDLIB-COL-FN-129: `maxOfWith` 関数の実装
 - [x] STDLIB-COL-FN-130: `maxOfWithOrNull` 関数の実装
 - [x] STDLIB-COL-FN-131: `maxOrNull` 関数の実装
-- [ ] STDLIB-COL-FN-132: `maxWith` 関数の実装
+- [x] STDLIB-COL-FN-132: `maxWith` 関数の実装
 - [x] STDLIB-COL-FN-133: `maxWithOrNull` 関数の実装
 - [x] STDLIB-COL-FN-134: `min` 関数の実装
 - [x] STDLIB-COL-FN-135: `minBy` 関数の実装
@@ -263,7 +263,7 @@
 - [x] STDLIB-COL-FN-178: `runningReduceIndexed` 関数の実装
 - [x] STDLIB-COL-FN-179: `scan` 関数の実装
 - [ ] STDLIB-COL-FN-180: `scanIndexed` 関数の実装
-- [ ] STDLIB-COL-FN-181: `scanReduce` 関数の実装
+- [x] STDLIB-COL-FN-181: `scanReduce` 関数の実装
 - [x] STDLIB-COL-FN-182: `setOf` 関数の実装
 - [x] STDLIB-COL-FN-183: `shuffled` 関数の実装
 - [x] STDLIB-COL-FN-184: `single` 関数の実装
@@ -286,12 +286,12 @@
 - [x] STDLIB-COL-FN-199: `sumOf` 関数の実装
 - [x] STDLIB-COL-FN-200: `take` 関数の実装
 - [x] STDLIB-COL-FN-201: `takeLast` 関数の実装
-- [ ] STDLIB-COL-FN-202: `takeLastWhile` 関数の実装
+- [x] STDLIB-COL-FN-202: `takeLastWhile` 関数の実装
 - [ ] STDLIB-COL-FN-203: `takeWhile` 関数の実装
  - [x] STDLIB-COL-FN-203: `takeWhile` 関数の実装
 - [x] STDLIB-COL-FN-204: `toBooleanArray` 関数の実装
 - [x] STDLIB-COL-FN-205: `toByteArray` 関数の実装
-- [ ] STDLIB-COL-FN-206: `toCharArray` 関数の実装
+- [x] STDLIB-COL-FN-206: `toCharArray` 関数の実装
 - [x] STDLIB-COL-FN-207: `toCollection` 関数の実装
 - [x] STDLIB-COL-FN-208: `toDoubleArray` 関数の実装
 - [x] STDLIB-COL-FN-209: `toFloatArray` 関数の実装
@@ -307,7 +307,7 @@
 - [x] STDLIB-COL-FN-216: `toMutableSet` 関数の実装
 - [x] STDLIB-COL-FN-217: `toShortArray` 関数の実装
 - [ ] STDLIB-COL-FN-218: `toSortedSet` 関数の実装
-- [ ] STDLIB-COL-FN-219: `toTypedArray` 関数の実装
+- [x] STDLIB-COL-FN-219: `toTypedArray` 関数の実装
 - [ ] STDLIB-COL-FN-220: `toTypeArray` 関数の実装
 - [x] STDLIB-COL-FN-221: `union` 関数の実装
 - [x] STDLIB-COL-FN-222: `unzip` 関数の実装
@@ -482,19 +482,19 @@
 - [x] STDLIB-IO-PATH-PROP-002: `invariantSeparatorsPath` 拡張プロパティの実装
 - [x] STDLIB-IO-PATH-PROP-003: `invariantSeparatorsPathString` 拡張プロパティの実装
 - [x] STDLIB-IO-PATH-PROP-004: `name` 拡張プロパティの実装
-- [ ] STDLIB-IO-PATH-PROP-005: `nameWithoutExtension` 拡張プロパティの実装
+- [x] STDLIB-IO-PATH-PROP-005: `nameWithoutExtension` 拡張プロパティの実装
 - [ ] STDLIB-IO-PATH-PROP-006: `pathString` 拡張プロパティの実装
 
 #### kotlin.io.path 関数の実装
 - [x] STDLIB-IO-PATH-FN-001: `absolute` 関数の実装
-- [ ] STDLIB-IO-PATH-FN-002: `absolutePathString` 関数の実装
-- [ ] STDLIB-IO-PATH-FN-003: `appendBytes` 関数の実装
+- [x] STDLIB-IO-PATH-FN-002: `absolutePathString` 関数の実装
+- [x] STDLIB-IO-PATH-FN-003: `appendBytes` 関数の実装
 - [x] STDLIB-IO-PATH-FN-004: `appendLines` 関数の実装（Iterable版）
 - [ ] STDLIB-IO-PATH-FN-005: `appendLines` 関数の実装（Sequence版）
 - [x] STDLIB-IO-PATH-FN-006: `appendText` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-007: `bufferedReader` 関数の実装
-- [ ] STDLIB-IO-PATH-FN-008: `bufferedWriter` 関数の実装
-- [ ] STDLIB-IO-PATH-FN-009: `copyTo` 関数の実装
+- [x] STDLIB-IO-PATH-FN-008: `bufferedWriter` 関数の実装
+- [x] STDLIB-IO-PATH-FN-009: `copyTo` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-010: `copyToRecursively` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-011: `createSymbolicLinkPointingTo` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-012: `createTempDirectory` 関数の実装
@@ -1096,15 +1096,15 @@
 - [x] STDLIB-IO-PATH-TYPE-004: `kotlin.io.path.FileVisitorBuilder` type surface を追加する
 - [x] STDLIB-IO-PATH-TYPE-005: `kotlin.io.path.OnErrorResult` enum surface を追加する
 - [x] STDLIB-IO-PATH-TYPE-006: `kotlin.io.path.PathWalkOption` enum surface を追加する
-- [ ] STDLIB-IO-PATH-PROP-001: `Path.extension` extension property を追加する
+- [x] STDLIB-IO-PATH-PROP-001: `Path.extension` extension property を追加する
 - [x] STDLIB-IO-PATH-PROP-002: `Path.invariantSeparatorsPath` extension property を追加する
 - [x] STDLIB-IO-PATH-PROP-003: `Path.invariantSeparatorsPathString` extension property を追加する
 - [x] STDLIB-IO-PATH-PROP-004: `Path.name` extension property を既存 `Path` member stub と整合させる
 - [ ] STDLIB-IO-PATH-PROP-005: `Path.nameWithoutExtension` extension property を追加する
 - [ ] STDLIB-IO-PATH-PROP-006: `Path.pathString` extension property を追加する
 - [x] STDLIB-IO-PATH-FN-001: `Path.absolute()` を追加する
-- [ ] STDLIB-IO-PATH-FN-002: `Path.absolutePathString()` を追加する
-- [ ] STDLIB-IO-PATH-FN-003: `Path.appendBytes(array)` を追加する
+- [x] STDLIB-IO-PATH-FN-002: `Path.absolutePathString()` を追加する
+- [x] STDLIB-IO-PATH-FN-003: `Path.appendBytes(array)` を追加する
 - [x] STDLIB-IO-PATH-FN-004: `Path.appendLines(lines: Iterable<CharSequence>, charset)` を追加する
 - [ ] STDLIB-IO-PATH-FN-005: `Path.appendLines(lines: Sequence<CharSequence>, charset)` を追加する
 - [x] STDLIB-IO-PATH-FN-006: `Path.appendText(text, charset)` を追加する

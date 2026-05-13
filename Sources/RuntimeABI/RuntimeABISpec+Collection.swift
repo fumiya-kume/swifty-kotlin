@@ -1352,6 +1352,14 @@ public extension RuntimeABISpec {
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_list_toCharArray",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_list_toBooleanArray",
             parameters: [
                 RuntimeABIParameter(name: "listRaw", type: .intptr),

@@ -574,6 +574,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                 "maxOfWithOrNull": "kk_list_maxOfWithOrNull",
                 "maxWithOrNull": "kk_list_maxWithOrNull",
                 "min": "kk_list_min",
+                "maxWith": "kk_list_maxWith",
                 "maxOrNull": "kk_list_maxOrNull",
                 "minOrNull": "kk_list_minOrNull",
                 "minOf": "kk_list_minOf",
@@ -584,8 +585,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                 "maxOfOrNull": "kk_list_maxOfOrNull",
                 "filterNotTo": "kk_list_filterNotTo",
                 "filterNotNullTo": "kk_list_filterNotNullTo",
-                "findLast": "kk_list_findLast",
-                "filterTo": "kk_list_filterTo",
+                "find": "kk_list_find",
             ]
 
             for (memberName, externalLinkName) in expectedExternalLinks {

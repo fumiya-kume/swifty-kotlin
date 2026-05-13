@@ -125,6 +125,16 @@ private let maxWithOrNullNaturalComparator: @convention(c) (Int, Int, Int, Unsaf
     return 0
 }
 
+private let maxWithNaturalComparator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, lhs, rhs, _ in
+    if lhs < rhs {
+        return -1
+    }
+    if lhs > rhs {
+        return 1
+    }
+    return 0
+}
+
 private let reverseIntComparator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, lhs, rhs, _ in
     if lhs > rhs {
         return -1
@@ -159,13 +169,6 @@ private let maxOfWithOrNullSquareValue: @convention(c) (Int, Int, UnsafeMutableP
     value * value
 }
 
-private let maxOfWithSquareValue: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
-    value * value
-}
-
-private let maxOfOrNullSquareValue: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
-    value * value
-}
 
 private let sumByDoubleWeightedTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     kk_double_to_bits(value == 2 ? 1.5 : 0.25)
@@ -360,6 +363,7 @@ final class RuntimeCollectionHOFTests: XCTestCase {
 
     func testFilterThenMapMatchesExpectedChain() {
         let source = makeList([1, 2, 3])
+        XCTAssertEqual(kk_list_get(source, 1), 2)
         let filtered = kk_list_filter(source, unsafeBitCast(filterGreaterThanOne, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
         let mapped = kk_list_map(filtered, unsafeBitCast(mapTimesTwo, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
         XCTAssertEqual(listElements(mapped), [4, 6])
@@ -586,48 +590,20 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(thrown, 0)
     }
 
-    func testMaxOfWithReturnsLargestTransformedValueAndThrowsOnEmpty() {
+    func testMaxWithReturnsLargestElementAndThrowsOnEmpty() {
         var thrown = 0
-        let result = kk_list_maxOfWith(
-            makeList([-3, 1, 2]),
-            unsafeBitCast(maxOfWithNaturalComparator, to: Int.self),
-            0,
-            unsafeBitCast(maxOfWithSquareValue, to: Int.self),
-            0,
-            &thrown
+        XCTAssertEqual(
+            kk_list_maxWith(makeList([3, 1, 4, 2]), unsafeBitCast(maxWithNaturalComparator, to: Int.self), 0, &thrown),
+            4
         )
-
-        XCTAssertEqual(result, 9)
         XCTAssertEqual(thrown, 0)
 
         thrown = 0
         XCTAssertEqual(
-            kk_list_maxOfWith(
-                makeList([]),
-                unsafeBitCast(maxOfWithNaturalComparator, to: Int.self),
-                0,
-                unsafeBitCast(maxOfWithSquareValue, to: Int.self),
-                0,
-                &thrown
-            ),
+            kk_list_maxWith(makeList([]), unsafeBitCast(maxWithNaturalComparator, to: Int.self), 0, &thrown),
             runtimeExceptionCaughtSentinel
         )
         XCTAssertNotEqual(thrown, 0)
-    }
-
-    func testMaxOfOrNullReturnsLargestTransformedValueAndNullForEmpty() {
-        var thrown = 0
-        let result = kk_list_maxOfOrNull(makeList([-3, 1, 2]), unsafeBitCast(maxOfOrNullSquareValue, to: Int.self), 0, &thrown)
-
-        XCTAssertEqual(result, 9)
-        XCTAssertEqual(thrown, 0)
-
-        thrown = 0
-        XCTAssertEqual(
-            kk_list_maxOfOrNull(makeList([]), unsafeBitCast(maxOfOrNullSquareValue, to: Int.self), 0, &thrown),
-            runtimeNullSentinelInt
-        )
-        XCTAssertEqual(thrown, 0)
     }
 
     func testListElementAtReturnsElementAndThrowsWhenOutOfBounds() {

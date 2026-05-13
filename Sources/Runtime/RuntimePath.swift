@@ -357,6 +357,32 @@ public func kk_path_appendLines_iterable(_ pathRaw: Int, _ linesRaw: Int, _ char
     return pathRaw
 }
 
+@_cdecl("kk_path_appendBytes")
+public func kk_path_appendBytes(_ pathRaw: Int, _ arrayRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_appendBytes received invalid Path handle")
+    }
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_appendBytes received invalid ByteArray handle")
+    }
+    do {
+        let url = URL(fileURLWithPath: path.pathString)
+        let data = Data(array.elements.map { UInt8(truncatingIfNeeded: $0) })
+        if FileManager.default.fileExists(atPath: path.pathString) {
+            let handle = try FileHandle(forWritingTo: url)
+            defer { try? handle.close() }
+            try handle.seekToEnd()
+            try handle.write(contentsOf: data)
+        } else {
+            try data.write(to: url)
+        }
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return 0
+}
+
 @_cdecl("kk_path_readLines")
 public func kk_path_readLines(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
@@ -642,6 +668,19 @@ public func kk_path_toAbsolutePath(_ pathRaw: Int) -> Int {
     return registerRuntimeObject(RuntimePathBox(absolute))
 }
 
+@_cdecl("kk_path_toAbsolutePathString")
+public func kk_path_toAbsolutePathString(_ pathRaw: Int) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_toAbsolutePathString received invalid Path handle")
+    }
+    if path.pathString.hasPrefix("/") {
+        return pathMakeStringRaw(path.pathString)
+    }
+    let absolute = (FileManager.default.currentDirectoryPath as NSString)
+        .appendingPathComponent(path.pathString)
+    return pathMakeStringRaw(absolute)
+}
+
 @_cdecl("kk_path_getName")
 public func kk_path_getName(_ pathRaw: Int, _ indexRaw: Int) -> Int {
     guard let path = runtimePathBox(from: pathRaw) else {
@@ -653,4 +692,57 @@ public func kk_path_getName(_ pathRaw: Int, _ indexRaw: Int) -> Int {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_getName index out of bounds: \(index)")
     }
     return registerRuntimeObject(RuntimePathBox(components[index]))
+}
+
+@_cdecl("kk_path_nameWithoutExtension")
+public func kk_path_nameWithoutExtension(_ pathRaw: Int) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_nameWithoutExtension received invalid Path handle")
+    }
+    let name = (path.pathString as NSString).lastPathComponent
+    guard let dotIndex = name.lastIndex(of: ".") else {
+        return pathMakeStringRaw(name)
+    }
+    return pathMakeStringRaw(String(name[..<dotIndex]))
+}
+
+@_cdecl("kk_path_extension")
+public func kk_path_extension(_ pathRaw: Int) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_extension received invalid Path handle")
+    }
+    let name = (path.pathString as NSString).lastPathComponent
+    guard let dotIndex = name.lastIndex(of: ".") else {
+        return pathMakeStringRaw("")
+    }
+    return pathMakeStringRaw(String(name[name.index(after: dotIndex)...]))
+}
+
+@_cdecl("kk_path_bufferedWriter")
+public func kk_path_bufferedWriter(
+    _ pathRaw: Int,
+    _ charsetRaw: Int,
+    _ bufferSizeRaw: Int,
+    _ optionsRaw: Int
+) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_bufferedWriter received invalid Path handle")
+    }
+    _ = optionsRaw
+    let url = URL(fileURLWithPath: path.pathString)
+    if !FileManager.default.fileExists(atPath: path.pathString) {
+        _ = FileManager.default.createFile(atPath: path.pathString, contents: Data())
+    }
+    do {
+        let fileHandle = try FileHandle(forWritingTo: url)
+        fileHandle.truncateFile(atOffset: 0)
+        let bufferSize = max(1, kk_unbox_int(bufferSizeRaw))
+        return registerRuntimeObject(RuntimeBufferedWriterBox(
+            fileHandle: fileHandle,
+            bufferSize: bufferSize,
+            encoding: pathStringEncoding(for: charsetRaw)
+        ))
+    } catch {
+        return 0
+    }
 }

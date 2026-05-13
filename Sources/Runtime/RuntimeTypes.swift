@@ -1543,19 +1543,21 @@ final class RuntimeBufferedWriterBox {
     private let fileHandle: FileHandle
     private var buffer: Data
     private let bufferSize: Int
+    private let encoding: String.Encoding
     private var closed: Bool
 
-    init(fileHandle: FileHandle, bufferSize: Int = 8192) {
+    init(fileHandle: FileHandle, bufferSize: Int = 8192, encoding: String.Encoding = .utf8) {
         self.fileHandle = fileHandle
         self.buffer = Data()
         self.bufferSize = max(1, bufferSize)
+        self.encoding = encoding
         self.closed = false
     }
 
     /// Writes a string to the buffer, flushing when full.
     func write(_ text: String) throws {
         guard !closed else { return }
-        guard let data = text.data(using: .utf8) else { return }
+        guard let data = text.data(using: encoding) ?? text.data(using: .utf8) else { return }
         buffer.append(data)
         if buffer.count >= bufferSize {
             try flushBuffer()

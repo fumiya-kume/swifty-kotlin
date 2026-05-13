@@ -997,6 +997,107 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathAbsolutePathStringExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import kotlin.io.path.Path
+        import kotlin.io.path.absolutePathString
+
+        fun pathAbsolutePathString(path: Path): String {
+            return path.absolutePathString()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let diagnostics = ctx.diagnostics.diagnostics.map(\.message)
+            let sema = try XCTUnwrap(ctx.sema)
+            let astAbs = try XCTUnwrap(ctx.ast)
+            let interner = ctx.interner
+            let pathSymbolAbs = try XCTUnwrap(
+                sema.symbols.lookup(fqName: [
+                    interner.intern("kotlin"),
+                    interner.intern("io"),
+                    interner.intern("path"),
+                    interner.intern("Path"),
+                ])
+            )
+            let pathTypeAbs = sema.types.make(.classType(ClassType(
+                classSymbol: pathSymbolAbs,
+                args: [],
+                nullability: .nonNull
+            )))
+            let absolutePathStringSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: [
+                    interner.intern("kotlin"),
+                    interner.intern("io"),
+                    interner.intern("path"),
+                    interner.intern("absolutePathString"),
+                ])
+            )
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: absolutePathStringSymbol))
+            XCTAssertEqual(signature.receiverType, pathTypeAbs)
+            XCTAssertEqual(signature.parameterTypes, [])
+            XCTAssertEqual(signature.returnType, sema.types.stringType)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.absolutePathString() in kotlin.io.path should resolve as String: \(diagnostics)"
+            )
+
+            let callExpr = try XCTUnwrap(memberCallExprIDs(named: "absolutePathString", in: astAbs, interner: interner).first)
+            XCTAssertEqual(sema.bindings.callBinding(for: callExpr)?.chosenCallee, absolutePathStringSymbol)
+            XCTAssertEqual(sema.bindings.exprTypes[callExpr], sema.types.stringType)
+        }
+    }
+
+    func testPathAppendBytesExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import kotlin.io.path.Path
+        import kotlin.io.path.appendBytes
+
+        fun appendPathBytes(path: Path, bytes: ByteArray) {
+            path.appendBytes(bytes)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let diagnostics = ctx.diagnostics.diagnostics.map(\.message)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.appendBytes extension function in kotlin.io.path should resolve: \(diagnostics)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let ast = try XCTUnwrap(ctx.ast)
+            let interner = ctx.interner
+            let pathTypeSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("io"), interner.intern("path"), interner.intern("Path")])
+            )
+            let byteArraySymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("ByteArray")])
+            )
+            let pathType = sema.types.make(.classType(ClassType(classSymbol: pathTypeSymbol, args: [], nullability: .nonNull)))
+            let byteArrayType = sema.types.make(.classType(ClassType(classSymbol: byteArraySymbol, args: [], nullability: .nonNull)))
+            let appendBytesSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("io"), interner.intern("path"), interner.intern("appendBytes")]),
+                "Expected kotlin.io.path.appendBytes synthetic extension function"
+            )
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: appendBytesSymbol))
+            XCTAssertEqual(signature.receiverType, pathType)
+            XCTAssertEqual(signature.parameterTypes, [byteArrayType])
+            XCTAssertEqual(signature.returnType, sema.types.unitType)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: appendBytesSymbol), "kk_path_appendBytes")
+
+            let appendBytesCall = try XCTUnwrap(memberCallExprIDs(named: "appendBytes", in: ast, interner: interner).first)
+            XCTAssertEqual(sema.bindings.callBinding(for: appendBytesCall)?.chosenCallee, appendBytesSymbol)
+            XCTAssertEqual(sema.bindings.exprTypes[appendBytesCall], sema.types.unitType)
+        }
+    }
+
     func testMemoryOrderInAtomicsPackageIsResolved() throws {
         let source = """
         import kotlin.concurrent.atomics.MemoryOrder

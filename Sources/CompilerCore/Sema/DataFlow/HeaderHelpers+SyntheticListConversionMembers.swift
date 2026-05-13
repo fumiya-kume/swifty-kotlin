@@ -87,6 +87,15 @@ extension DataFlowSemaPhase {
             symbols: symbols, types: types, interner: interner,
             listInterfaceSymbol: listInterfaceSymbol,
             listTypeParamSymbol: listTypeParamSymbol,
+            memberName: "toCharArray",
+            arrayTypeName: "CharArray",
+            arrayPackage: kotlinPkg,
+            externalLinkName: "kk_list_toCharArray"
+        )
+        registerListToPrimitiveArrayMember(
+            symbols: symbols, types: types, interner: interner,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
             memberName: "toBooleanArray",
             arrayTypeName: "BooleanArray",
             arrayPackage: kotlinPkg,

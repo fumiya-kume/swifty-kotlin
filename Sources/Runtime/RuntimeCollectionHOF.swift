@@ -3070,3 +3070,44 @@ public func kk_set_count_predicate(_ setRaw: Int, _ fnPtr: Int, _ closureRaw: In
     return count
 }
 
+
+/// Collection<T>.flatMapIndexed((index: Int, T) -> Iterable<R>): List<R>
+@_cdecl("kk_list_flatMapIndexed")
+public func kk_list_flatMapIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    var result: [Int] = []
+    for (index, elem) in list.elements.enumerated() {
+        var thrown = 0
+        let flattened = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: index, rhs: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        guard let flattenedElements = runtimeCollectionElements(from: flattened) else {
+            invalidContainerPanic(#function, "collection")
+        }
+        result.append(contentsOf: flattenedElements)
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: result))
+}
+
+/// Collection<T>.filterIndexedTo(dest, predicate: (index: Int, T) -> Boolean): MutableCollection<T>
+@_cdecl("kk_list_filterIndexedTo")
+public func kk_list_filterIndexedTo(_ listRaw: Int, _ destRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let elements = runtimeCollectionElements(from: listRaw) else {
+        invalidContainerPanic(#function, "collection")
+    }
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    for (index, elem) in elements.enumerated() {
+        var thrown = 0
+        let predicate = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: index, rhs: elem, outThrown: &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        if runtimeCollectionBool(predicate) {
+            runtimeAppendToMutableCollection(destRaw, elem)
+        }
+    }
+    return destRaw
+}
