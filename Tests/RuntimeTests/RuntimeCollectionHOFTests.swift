@@ -1875,6 +1875,8 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(kk_unbox_bool(kk_list_is_empty(makeList([]))), 1)
 
         let set = kk_set_of(makeArray([1, 2, 3]), 3)
+        XCTAssertEqual(kk_unbox_bool(kk_set_contains(set, 2)), 1)
+        XCTAssertEqual(kk_unbox_bool(kk_set_contains(set, 9)), 0)
         XCTAssertEqual(kk_unbox_bool(kk_set_containsAll(set, makeList([1, 3]))), 1)
         XCTAssertEqual(kk_unbox_bool(kk_set_containsAll(set, makeList([1, 9]))), 0)
 
