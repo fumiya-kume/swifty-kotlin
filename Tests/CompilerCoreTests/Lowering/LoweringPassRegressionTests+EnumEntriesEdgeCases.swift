@@ -450,4 +450,28 @@ extension LoweringPassRegressionTests {
         XCTAssertEqual(entriesFn.params.count, 0,
                        "entries$get should have 0 parameters (property getter)")
     }
+
+    func testTopLevelEnumEntriesCallUsesEntriesRuntime() throws {
+        let source = """
+        enum class Color { RED, GREEN }
+
+        fun useEntries() = enumEntries<Color>()
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            XCTAssertFalse(ctx.diagnostics.hasError,
+                           "enumEntries<Color>() should compile without diagnostics")
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "useEntries", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: body, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_enum_make_entries_list"),
+                          "enumEntries<Color>() should call kk_enum_make_entries_list; callees: \(callees)")
+            XCTAssertFalse(callees.contains("kk_enum_make_values_array"),
+                           "enumEntries<Color>() must not call kk_enum_make_values_array; callees: \(callees)")
+        }
+    }
 }
