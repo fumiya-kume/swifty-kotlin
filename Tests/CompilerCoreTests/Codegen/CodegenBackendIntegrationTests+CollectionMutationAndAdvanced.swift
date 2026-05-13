@@ -623,6 +623,7 @@ extension CodegenBackendIntegrationTests {
             println(list.fold(0) { acc, value -> acc * 10 + value })
             println(list.foldRight(0) { value, acc -> value * 10 + acc })
             println(list.foldIndexed(0) { index, acc, value -> acc + index * value })
+            println(setOf(3, 1, 2).foldIndexed(0) { index, acc, value -> acc + index * value })
             println(list.foldRightIndexed(0) { index, value, acc -> index + value + acc })
             println(setOf(3, 1, 2).fold(0) { acc, value -> acc * 10 + value })
             println(list.find { it > 1 })

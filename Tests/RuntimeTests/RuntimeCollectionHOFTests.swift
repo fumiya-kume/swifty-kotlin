@@ -429,6 +429,9 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(kk_list_fold(setSource, 0, unsafeBitCast(foldOrder, to: Int.self), 0, nil), 123)
         XCTAssertEqual(kk_list_foldRight(source, 0, unsafeBitCast(reduceRightChecksum, to: Int.self), 0, nil), 60)
         XCTAssertEqual(kk_list_foldIndexed(source, 0, unsafeBitCast(foldIndexedChecksum, to: Int.self), 0, nil), 306)
+        let setSource = kk_set_of(makeArray([1, 2, 3]), 3)
+        let setFoldIndexed = kk_list_foldIndexed(setSource, 0, unsafeBitCast(foldIndexedChecksum, to: Int.self), 0, nil)
+        XCTAssertEqual(setFoldIndexed, 306)
         XCTAssertEqual(kk_list_foldRightIndexed(source, 0, unsafeBitCast(reduceRightIndexedChecksum, to: Int.self), 0, nil), 360)
         XCTAssertEqual(kk_list_reduce(source, unsafeBitCast(foldOrder, to: Int.self), 0, nil), 123)
 

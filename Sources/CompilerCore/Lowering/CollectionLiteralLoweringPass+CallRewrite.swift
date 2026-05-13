@@ -4208,7 +4208,10 @@ extension CollectionLiteralLoweringPass {
                     // foldIndexed: args = [receiver, initial, lambda, closureRaw?]
                     if (callee == lookup.foldIndexedName || callee == lookup.kkListFoldIndexedName || callee == lookup.kkSequenceFoldIndexedName), (arguments.count == 3 || arguments.count == 4) {
                         let receiverID = arguments[0]
-                        if state.listExprIDs.contains(receiverID.rawValue) || state.sequenceExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue)
+                            || state.setExprIDs.contains(receiverID.rawValue)
+                            || state.sequenceExprIDs.contains(receiverID.rawValue)
+                        {
                             let initialID = arguments[1]
                             let lambdaID = arguments[2]
                             let closureRawID: KIRExprID

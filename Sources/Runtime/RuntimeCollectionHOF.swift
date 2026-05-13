@@ -1775,9 +1775,11 @@ public func kk_list_filterIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: In
 
 @_cdecl("kk_list_foldIndexed")
 public func kk_list_foldIndexed(_ listRaw: Int, _ initial: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    guard let elements = runtimeCollectionElements(from: listRaw) else {
+        invalidContainerPanic(#function, "collection")
+    }
     var acc = initial
-    for (idx, elem) in list.elements.enumerated() {
+    for (idx, elem) in elements.enumerated() {
         var thrown = 0
         acc = maybeUnbox(runtimeInvokeCollectionLambda3(fnPtr: fnPtr, closureRaw: closureRaw, arg1: idx, arg2: acc, arg3: elem, outThrown: &thrown))
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
