@@ -2830,6 +2830,7 @@ extension CollectionLiteralLoweringPass {
                                 case lookup.forEachName: lookup.kkListForEachName
                                 case lookup.onEachName: lookup.kkListOnEachName
                                 case lookup.flatMapName: lookup.kkListFlatMapName
+                                case lookup.flatMapIndexedName: lookup.kkListFlatMapIndexedName
                                 case lookup.anyName: lookup.kkListAnyName
                                 case lookup.noneName: lookup.kkListNoneName
                                 case lookup.allName: lookup.kkListAllName
@@ -2838,6 +2839,7 @@ extension CollectionLiteralLoweringPass {
                                 let needsListTag = callee == lookup.mapName
                                     || callee == lookup.mapNotNullName
                                     || callee == lookup.flatMapName
+                                    || callee == lookup.flatMapIndexedName
                                     || callee == lookup.filterName
                                     || callee == lookup.filterNotName
                                     || callee == lookup.onEachName

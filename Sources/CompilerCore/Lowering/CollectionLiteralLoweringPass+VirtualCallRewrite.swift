@@ -572,7 +572,8 @@ extension CollectionLiteralLoweringPass {
         guard callee == lookup.mapName || callee == lookup.filterName || callee == lookup.mapNotNullName
             || callee == lookup.filterNotName
             || callee == lookup.forEachName || callee == lookup.onEachName
-            || callee == lookup.flatMapName || callee == lookup.anyName || callee == lookup.noneName
+            || callee == lookup.flatMapName || callee == lookup.flatMapIndexedName
+            || callee == lookup.anyName || callee == lookup.noneName
             || callee == lookup.allName
             || callee == lookup.takeWhileName || callee == lookup.dropWhileName
             || callee == lookup.takeLastWhileName || callee == lookup.dropLastWhileName
@@ -587,6 +588,7 @@ extension CollectionLiteralLoweringPass {
         case lookup.forEachName: lookup.kkListForEachName
         case lookup.onEachName: lookup.kkListOnEachName
         case lookup.flatMapName: lookup.kkListFlatMapName
+        case lookup.flatMapIndexedName: lookup.kkListFlatMapIndexedName
         case lookup.anyName: lookup.kkListAnyName
         case lookup.noneName: lookup.kkListNoneName
         case lookup.allName: lookup.kkListAllName

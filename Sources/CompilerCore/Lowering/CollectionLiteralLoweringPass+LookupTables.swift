@@ -110,6 +110,7 @@ struct CollectionLiteralLookupTables {
     let kkListMapIndexedToName: InternedString
     let kkListMapIndexedNotNullToName: InternedString
     let kkListFlatMapIndexedToName: InternedString
+    let kkListFlatMapIndexedName: InternedString
     let kkListAssociateToName: InternedString
     let kkListFilterIsInstanceToName: InternedString
     let kkListForEachName: InternedString
@@ -923,6 +924,7 @@ struct CollectionLiteralLookupTables {
         kkListMapIndexedToName = interner.intern("kk_list_mapIndexedTo")
         kkListMapIndexedNotNullToName = interner.intern("kk_list_mapIndexedNotNullTo")
         kkListFlatMapIndexedToName = interner.intern("kk_list_flatMapIndexedTo")
+        kkListFlatMapIndexedName = interner.intern("kk_list_flatMapIndexed")
         kkListAssociateToName = interner.intern("kk_list_associateTo")
         kkListFilterIsInstanceToName = interner.intern("kk_list_filterIsInstanceTo")
         kkListForEachName = interner.intern("kk_list_forEach")
