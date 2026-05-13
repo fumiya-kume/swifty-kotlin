@@ -1127,6 +1127,8 @@ extension CollectionLiteralLoweringPass {
         case lookup.mapIndexedToName: lookup.kkListMapIndexedToName
         case lookup.mapIndexedNotNullToName: lookup.kkListMapIndexedNotNullToName
         case lookup.flatMapIndexedToName: lookup.kkListFlatMapIndexedToName
+        case lookup.filterIndexedToName:
+            isSequenceReceiver ? lookup.kkSequenceFilterIndexedToName : lookup.kkListFilterIndexedToName
         case lookup.associateToName:
             isSequenceReceiver ? lookup.kkSequenceAssociateToName : lookup.kkListAssociateToName
         default: callee

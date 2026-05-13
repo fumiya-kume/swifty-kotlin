@@ -204,6 +204,22 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_list_filterNotTo",
             returnTypeOverride: destinationCollectionType
         )
+        let indexedPredicateType = types.make(.functionType(FunctionType(
+            params: [types.intType, listTypeParamType],
+            returnType: types.booleanType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        registerMemberOverload(
+            memberName: interner.intern("filterIndexedTo"),
+            memberFQName: listFQName + [interner.intern("filterIndexedTo")],
+            parameterTypes: [
+                destinationCollectionType,
+                indexedPredicateType,
+            ],
+            externalLinkName: "kk_list_filterIndexedTo",
+            returnTypeOverride: destinationCollectionType
+        )
 
         let mapToTypeParamName = interner.intern("R")
         let mapToTypeParamSymbol = symbols.define(

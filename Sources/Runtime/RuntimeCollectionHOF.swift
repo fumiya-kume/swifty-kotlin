@@ -3089,3 +3089,25 @@ public func kk_list_flatMapIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: I
     }
     return registerRuntimeObject(RuntimeListBox(elements: result))
 }
+
+/// Collection<T>.filterIndexedTo(dest, predicate: (index: Int, T) -> Boolean): MutableCollection<T>
+@_cdecl("kk_list_filterIndexedTo")
+public func kk_list_filterIndexedTo(_ listRaw: Int, _ destRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let elements = runtimeCollectionElements(from: listRaw) else {
+        invalidContainerPanic(#function, "collection")
+    }
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    for (index, elem) in elements.enumerated() {
+        var thrown = 0
+        let predicate = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: index, rhs: elem, outThrown: &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        if runtimeCollectionBool(predicate) {
+            runtimeAppendToMutableCollection(destRaw, elem)
+        }
+    }
+    return destRaw
+}
