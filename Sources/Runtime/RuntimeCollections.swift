@@ -1203,6 +1203,16 @@ public func kk_collection_toMutableList(_ collRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: []))
 }
 
+@_cdecl("kk_collection_toTypedArray")
+public func kk_collection_toTypedArray(_ collRaw: Int) -> Int {
+    let elements = runtimeCollectionOrArrayElements(from: collRaw) ?? []
+    let box = RuntimeArrayBox(length: elements.count)
+    for (index, element) in elements.enumerated() {
+        box.elements[index] = element
+    }
+    return registerRuntimeObject(box)
+}
+
 /// Generic `Iterable.asSequence()` that accepts any collection handle (List, Set, etc.).
 /// Falls back to fatalError only when the handle is truly unrecognized.
 @_cdecl("kk_iterable_asSequence")

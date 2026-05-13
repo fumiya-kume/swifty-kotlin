@@ -1840,6 +1840,20 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(setElements(setCopy), [2, 3, 1, 4])
     }
 
+    func testCollectionToTypedArrayCopiesListAndSetElements() {
+        let listSource = makeList([1, 2, 3])
+        let listArray = kk_collection_toTypedArray(listSource)
+
+        XCTAssertEqual(arrayElements(listArray), [1, 2, 3])
+        runtimeArrayBox(from: listArray)?.elements[0] = 9
+        XCTAssertEqual(listElements(listSource), [1, 2, 3])
+        XCTAssertEqual(arrayElements(listArray), [9, 2, 3])
+
+        let setSource = registerRuntimeObject(RuntimeSetBox(elements: [3, 1, 2]))
+
+        XCTAssertEqual(arrayElements(kk_collection_toTypedArray(setSource)), [3, 1, 2])
+    }
+
     func testSetBinaryOperationsWithStringHandlesUseValueEqualityAndPreserveLeftOrder() {
         let leftAlpha = makeRuntimeStringRaw("alpha")
         let leftBeta = makeRuntimeStringRaw("beta")

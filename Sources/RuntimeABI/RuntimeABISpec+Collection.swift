@@ -370,6 +370,14 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_collection_toTypedArray",
+            parameters: [
+                RuntimeABIParameter(name: "collRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
         // STDLIB-021: Iterable<T>.toMutableList()
         RuntimeABIFunctionSpec(
             name: "kk_iterable_toMutableList",

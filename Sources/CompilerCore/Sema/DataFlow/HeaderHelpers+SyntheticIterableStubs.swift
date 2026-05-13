@@ -578,6 +578,58 @@ extension DataFlowSemaPhase {
         }
     }
 
+    func registerCollectionToTypedArrayMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        collectionInterfaceSymbol: SymbolID
+    ) {
+        let collectionFQName = kotlinCollectionsPkg + [interner.intern("Collection")]
+        guard let typeParamSymbol = symbols.lookup(
+            fqName: collectionFQName + [interner.intern("E")]
+        ),
+        let arraySymbol = symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Array")])
+        else { return }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol, nullability: .nonNull
+        )))
+        let collectionReceiverType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let arrayReturnType = types.make(.classType(ClassType(
+            classSymbol: arraySymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+
+        let memberName = interner.intern("toTypedArray")
+        let memberFQName = collectionFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(collectionInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_collection_toTypedArray", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: collectionReceiverType,
+                parameterTypes: [],
+                returnType: arrayReturnType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
     /// Register `Collection<E>.toMutableList(): MutableList<E>` (STDLIB-021).
     func registerCollectionToMutableListMember(
         symbols: SymbolTable,

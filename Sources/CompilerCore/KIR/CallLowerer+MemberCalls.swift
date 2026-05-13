@@ -7220,6 +7220,8 @@ extension CallLowerer {
                 return interner.intern("kk_list_getOrElse")
             case "subList":
                 return interner.intern("kk_list_subList")
+            case "toTypedArray":
+                return interner.intern("kk_list_toTypedArray")
             case "containsAll":
                 return interner.intern("kk_list_containsAll")
             case "binarySearch":
@@ -7418,6 +7420,8 @@ extension CallLowerer {
                 return interner.intern("kk_set_sortedDescending")
             case "toList":
                 return interner.intern("kk_set_toList")
+            case "toTypedArray":
+                return interner.intern("kk_collection_toTypedArray")
             case "contains":
                 return interner.intern("kk_set_contains")
             case "containsAll":

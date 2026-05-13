@@ -168,6 +168,39 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenCollectionToTypedArrayCopiesListAndSetReceivers() throws {
+        let source = """
+        fun main() {
+            val sourceCollection: Collection<Int> = listOf(1, 2, 3)
+            val copiedArray = sourceCollection.toTypedArray()
+            println(copiedArray.toList())
+            copiedArray[0] = 9
+            println(sourceCollection)
+            println(copiedArray.toList())
+
+            val sourceSet: Collection<Int> = setOf(3, 1, 3, 2)
+            val setArray = sourceSet.toTypedArray()
+            println(setArray.toList())
+            println(setArray.size)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "CollectionToTypedArrayRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[1, 2, 3]\n[1, 2, 3]\n[9, 2, 3]\n[3, 1, 2]\n3\n")
+        }
+    }
+
     func testCodegenIterableToMutableSetDeduplicatesAndReturnsIndependentCopy() throws {
         let source = """
         fun main() {

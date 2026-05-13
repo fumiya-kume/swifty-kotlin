@@ -158,6 +158,39 @@ extension ListSyntheticMemberLinkTests {
         }
     }
 
+    func testCollectionToTypedArrayUsesRuntimeExternalLink() throws {
+        let source = """
+        fun copy(values: Collection<String>) {
+            values.toTypedArray()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected Collection.toTypedArray to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "toTypedArray"
+            })
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_collection_toTypedArray")
+
+            let callType = try XCTUnwrap(sema.bindings.exprType(for: callExpr))
+            guard case let .classType(classType) = sema.types.kind(of: callType) else {
+                return XCTFail("Expected Collection.toTypedArray to return Array")
+            }
+            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(classType.classSymbol)?.name)), "Array")
+        }
+    }
+
     func testIterableToMutableListUsesRuntimeExternalLink() throws {
         let source = """
         fun copy(values: Iterable<String>) {

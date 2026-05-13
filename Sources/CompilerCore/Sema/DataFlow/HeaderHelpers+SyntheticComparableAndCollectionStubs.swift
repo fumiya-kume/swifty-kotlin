@@ -439,6 +439,11 @@ extension DataFlowSemaPhase {
         registerSyntheticArrayStubs(
             symbols: symbols, types: types, interner: interner
         )
+        registerCollectionToTypedArrayMember(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            collectionInterfaceSymbol: collectionInterfaceSymbol
+        )
         registerMutableCollectionArrayAddAllMembers(
             symbols: symbols,
             types: types,

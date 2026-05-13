@@ -5,4 +5,7 @@ fun main() {
     val arr2 = list.toTypedArray()
     println(arr2.size)
     println(arr2[0])
+    val collection: Collection<Int> = setOf(7, 8, 7)
+    val arr3 = collection.toTypedArray()
+    println(arr3.toList())
 }
