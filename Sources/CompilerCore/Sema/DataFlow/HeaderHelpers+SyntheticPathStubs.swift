@@ -24,7 +24,7 @@
 /// - `Path.readSymbolicLink(): Path` extension function
 /// - `Path.invariantSeparatorsPathString: String` extension property
 /// - `Path.writeBytes(array: ByteArray, vararg options: OpenOption)` extension function
-/// - `Path.bufferedReader(charset, bufferSize, options): BufferedReader` extension function
+/// - `Path.absolutePathString(): String` extension function
 /// - `readBytes(): ByteArray`, `readText(): String`, `writeText(text: String)`, `readLines(): List<String>`
 /// - `createDirectories(): Path`, `createLinkPointingTo(target): Path`, `deleteIfExists(): Boolean`
 /// - `deleteExisting()`, `deleteRecursively()`
@@ -409,6 +409,24 @@ extension DataFlowSemaPhase {
         )
 
         registerPathMemberProperty(
+            named: "nameWithoutExtension",
+            externalLinkName: "kk_path_nameWithoutExtension",
+            ownerSymbol: pathSymbol,
+            returnType: types.stringType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathMemberProperty(
+            named: "extension",
+            externalLinkName: "kk_path_extension",
+            ownerSymbol: pathSymbol,
+            returnType: types.stringType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathMemberProperty(
             named: "parent",
             externalLinkName: "kk_path_parent",
             ownerSymbol: pathSymbol,
@@ -525,6 +543,17 @@ extension DataFlowSemaPhase {
             receiverType: pathType,
             returnType: types.stringType,
             externalLinkName: "kk_path_invariantSeparatorsPathString",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "absolutePathString",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [],
+            returnType: types.stringType,
+            externalLinkName: "kk_path_toAbsolutePathString",
             symbols: symbols,
             interner: interner
         )

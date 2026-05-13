@@ -32,7 +32,7 @@ public extension RuntimeABISpec {
         )
         let before = [
             "kk_list_map", "kk_list_filter", "kk_list_mapNotNull", "kk_list_forEach",
-            "kk_list_flatMap", "kk_list_any", "kk_list_none", "kk_list_all",
+            "kk_list_flatMap", "kk_list_flatMapIndexed", "kk_list_any", "kk_list_none", "kk_list_all",
         ]
         let reduceOrNullSpec = hofSpec("kk_list_reduceOrNull")
         let scanSpec = RuntimeABIFunctionSpec(
@@ -352,6 +352,15 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         )
+        let maxSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_max",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
         let minSpec = RuntimeABIFunctionSpec(
             name: "kk_list_min",
             parameters: [
@@ -561,7 +570,7 @@ public extension RuntimeABISpec {
                 ),
                 zipSpec, zipWithNextSpec, zipWithNextTransformSpec, unzipSpec, withIndexSpec, forEachIndexedSpec, mapIndexedSpec, mapIndexedNotNullSpec,
                 sumOfSpec, sumBySpec, sumByDoubleSpec, maxOrNullSpec, minOrNullSpec,
-                minSpec,
+                maxSpec, minSpec,
                 takeSpec, dropSpec, takeLastSpec, sumSpec, averageSpec, reversedSpec, asReversedSpec, sortedSpec, distinctSpec,
                 sortedPrimitiveSpec,
                 shuffledSpec, shuffledRandomSpec, randomSpec, randomOrNullSpec,
