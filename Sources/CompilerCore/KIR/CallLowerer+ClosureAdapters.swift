@@ -41,7 +41,7 @@ extension CallLowerer {
         return callArguments
     }
 
-    private func makeBoxedCallableCaptureArguments(
+    func makeBoxedCallableCaptureArguments(
         callableInfo: KIRCallableValueInfo,
         sema: SemaModule,
         arena: KIRArena,
@@ -98,6 +98,219 @@ extension CallLowerer {
         return callableInfo.captureArguments
     }
 
+    private func makeClosureThunkExpandedArguments(
+        prefixArguments: [KIRExprID] = [],
+        loweredArgID: KIRExprID,
+        argExprID: ExprID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> [KIRExprID] {
+        var finalArgs = prefixArguments
+        var lambdaID = loweredArgID
+        var resolvedCallableInfo = driver.ctx.callableValueInfo(for: lambdaID)
+        if let callableInfo = resolvedCallableInfo,
+           !callableInfo.hasClosureParam,
+           let adaptedInfo = makeClosureThunkCallableAdapter(
+               callableInfo: callableInfo,
+               loweredArgID: lambdaID,
+               argExprID: argExprID,
+               sema: sema,
+               arena: arena,
+               interner: interner,
+               instructions: &instructions
+            )
+        {
+            let adaptedExpr = arena.appendExpr(
+                .symbolRef(adaptedInfo.symbol),
+                type: arena.exprType(lambdaID) ?? sema.types.anyType
+            )
+            instructions.append(.constValue(result: adaptedExpr, value: .symbolRef(adaptedInfo.symbol)))
+            lambdaID = adaptedExpr
+            resolvedCallableInfo = adaptedInfo
+        }
+        if let callableInfo = resolvedCallableInfo {
+            let fnPtrExpr = arena.appendExpr(.symbolRef(callableInfo.symbol), type: sema.types.intType)
+            instructions.append(.constValue(result: fnPtrExpr, value: .symbolRef(callableInfo.symbol)))
+            finalArgs.append(fnPtrExpr)
+        } else {
+            finalArgs.append(lambdaID)
+        }
+        finalArgs.append(makeClosureRawArgument(
+            callableInfo: resolvedCallableInfo,
+            sema: sema,
+            arena: arena,
+            instructions: &instructions
+        ))
+        return finalArgs
+    }
+
+    private func makeCollectionHOFExpandedArguments(
+        loweredArgID: KIRExprID,
+        argExprID: ExprID,
+        adaptOnlyWhenCapturing: Bool = false,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> [KIRExprID] {
+        var loweredCallableID = loweredArgID
+        var callableInfo = driver.ctx.callableValueInfo(for: loweredArgID)
+        if let originalCallableInfo = callableInfo,
+           !originalCallableInfo.hasClosureParam,
+           (!adaptOnlyWhenCapturing || !originalCallableInfo.captureArguments.isEmpty),
+           let adapted = makeCollectionHOFCallableAdapter(
+                callableInfo: originalCallableInfo,
+                loweredArgID: loweredArgID,
+                argExprID: argExprID,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                namePrefix: "kk_compare_values_hof_adapter",
+                symbolIDOffsetBase: -710_000
+           )
+        {
+            let adaptedExpr = arena.appendExpr(
+                .symbolRef(adapted.symbol),
+                type: arena.exprType(loweredArgID) ?? sema.types.anyType
+            )
+            instructions.append(.constValue(result: adaptedExpr, value: .symbolRef(adapted.symbol)))
+            loweredCallableID = adaptedExpr
+            callableInfo = adapted
+        }
+
+        var finalArgs: [KIRExprID] = [loweredCallableID]
+        if let callableInfo {
+            let boxedCaptureArguments = makeBoxedCallableCaptureArguments(
+                callableInfo: callableInfo,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            if let boxedCaptureArgument = boxedCaptureArguments.first {
+                finalArgs.append(boxedCaptureArgument)
+            } else {
+                finalArgs.append(makeClosureRawArgument(
+                    callableInfo: callableInfo,
+                    sema: sema,
+                    arena: arena,
+                    instructions: &instructions
+                ))
+            }
+        } else {
+            finalArgs.append(makeClosureRawArgument(
+                callableInfo: nil,
+                sema: sema,
+                arena: arena,
+                instructions: &instructions
+            ))
+        }
+        return finalArgs
+    }
+
+    private func makeCollectionHOFSelectorArgument(
+        loweredArgID: KIRExprID,
+        argExprID: ExprID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> (loweredArgID: KIRExprID, callableInfo: KIRCallableValueInfo?) {
+        var loweredSelectorID = loweredArgID
+        var selectorCallableInfo = driver.ctx.callableValueInfo(for: loweredArgID)
+        if selectorCallableInfo == nil,
+           case let .symbolRef(symbol)? = arena.expr(loweredSelectorID),
+           let function = arena.function(for: symbol)
+        {
+            selectorCallableInfo = KIRCallableValueInfo(
+                symbol: function.symbol,
+                callee: function.name,
+                captureArguments: arena.lambdaCaptureArgsBySymbol[function.symbol] ?? [],
+                hasClosureParam: function.params.count >= 2
+            )
+        }
+        if let callableInfo = selectorCallableInfo,
+           !callableInfo.hasClosureParam,
+           let adaptedInfo = makeCollectionHOFCallableAdapter(
+                callableInfo: callableInfo,
+                loweredArgID: loweredSelectorID,
+                argExprID: argExprID,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                namePrefix: "kk_compare_values_hof_adapter",
+                symbolIDOffsetBase: -710_000
+           )
+        {
+            let adaptedExpr = arena.appendExpr(
+                .symbolRef(adaptedInfo.symbol),
+                type: arena.exprType(loweredSelectorID) ?? sema.types.anyType
+            )
+            instructions.append(.constValue(result: adaptedExpr, value: .symbolRef(adaptedInfo.symbol)))
+            loweredSelectorID = adaptedExpr
+            selectorCallableInfo = adaptedInfo
+        }
+        return (loweredSelectorID, selectorCallableInfo)
+    }
+
+    private func makeClosureRawArgument(
+        callableInfo: KIRCallableValueInfo?,
+        sema: SemaModule,
+        arena: KIRArena,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        if let callableInfo,
+           let closureRaw = callableInfo.captureArguments.first
+        {
+            return closureRaw
+        }
+        let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+        instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+        return zeroExpr
+    }
+
+    private func appendCollectionHOFSelectorPair(
+        _ selector: (loweredArgID: KIRExprID, callableInfo: KIRCallableValueInfo?),
+        to arrayExpr: KIRExprID,
+        selectorOffset: Int,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) {
+        let fnIndexExpr = arena.appendExpr(.intLiteral(Int64(selectorOffset * 2)), type: sema.types.intType)
+        instructions.append(.constValue(result: fnIndexExpr, value: .intLiteral(Int64(selectorOffset * 2))))
+        let fnSetResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_array_set"),
+            arguments: [arrayExpr, fnIndexExpr, selector.loweredArgID],
+            result: fnSetResult,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
+        let closureRaw = makeClosureRawArgument(
+            callableInfo: selector.callableInfo,
+            sema: sema,
+            arena: arena,
+            instructions: &instructions
+        )
+        let closureIndexExpr = arena.appendExpr(.intLiteral(Int64(selectorOffset * 2 + 1)), type: sema.types.intType)
+        instructions.append(.constValue(result: closureIndexExpr, value: .intLiteral(Int64(selectorOffset * 2 + 1))))
+        let closureSetResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_array_set"),
+            arguments: [arrayExpr, closureIndexExpr, closureRaw],
+            result: closureSetResult,
+            canThrow: false,
+            thrownResult: nil
+        ))
+    }
+
     func appendClosureArgumentsIfNeeded(
         _ loweredArguments: [KIRExprID],
         originalArgs: [CallArgument],
@@ -114,46 +327,14 @@ extension CallLowerer {
         }
 
         if externalLinkName == "kk_suspend_coroutine", loweredArguments.count == 1 {
-            var lambdaID = loweredArguments[0]
-            var resolvedCallableInfo = driver.ctx.callableValueInfo(for: lambdaID)
-            if let callableInfo = resolvedCallableInfo,
-               !callableInfo.hasClosureParam,
-               let adaptedInfo = makeClosureThunkCallableAdapter(
-                   callableInfo: callableInfo,
-                   loweredArgID: lambdaID,
-                   argExprID: originalArgs[0].expr,
-                   sema: sema,
-                   arena: arena,
-                   interner: interner,
-                   instructions: &instructions
-               )
-            {
-                let adaptedExpr = arena.appendExpr(
-                    .symbolRef(adaptedInfo.symbol),
-                    type: arena.exprType(lambdaID) ?? sema.types.anyType
-                )
-                instructions.append(.constValue(result: adaptedExpr, value: .symbolRef(adaptedInfo.symbol)))
-                lambdaID = adaptedExpr
-                resolvedCallableInfo = adaptedInfo
-            }
-            var finalArgs: [KIRExprID] = []
-            if let callableInfo = resolvedCallableInfo {
-                let fnPtrExpr = arena.appendExpr(.symbolRef(callableInfo.symbol), type: sema.types.intType)
-                instructions.append(.constValue(result: fnPtrExpr, value: .symbolRef(callableInfo.symbol)))
-                finalArgs.append(fnPtrExpr)
-            } else {
-                finalArgs.append(lambdaID)
-            }
-            if let callableInfo = resolvedCallableInfo,
-               let closureRaw = callableInfo.captureArguments.first
-            {
-                finalArgs.append(closureRaw)
-            } else {
-                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
-                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-                finalArgs.append(zeroExpr)
-            }
-            return finalArgs
+            return makeClosureThunkExpandedArguments(
+                loweredArgID: loweredArguments[0],
+                argExprID: originalArgs[0].expr,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
         }
 
         // STDLIB-SEQ-002: 1-arg generateSequence(nextFunction) → kk_sequence_generate_noarg(fnPtr, closureRaw)
@@ -175,56 +356,14 @@ extension CallLowerer {
         // Capturing builder lambdas need the same closure-aware adapter shape as
         // collection HOFs so the runtime can call (closureRaw, builderRaw, outThrown).
         if externalLinkName == "kk_sequence_builder_build", loweredArguments.count == 1 {
-            let lambdaID = loweredArguments[0]
-            var loweredCallableID = lambdaID
-            var callableInfo = driver.ctx.callableValueInfo(for: lambdaID)
-
-            if let originalCallableInfo = callableInfo,
-               !originalCallableInfo.hasClosureParam,
-               let adapted = makeCollectionHOFCallableAdapter(
-                    callableInfo: originalCallableInfo,
-                    loweredArgID: lambdaID,
-                    argExprID: originalArgs[0].expr,
-                    sema: sema,
-                    arena: arena,
-                    interner: interner,
-                    namePrefix: "kk_compare_values_hof_adapter",
-                    symbolIDOffsetBase: -710_000
-               )
-            {
-                let adaptedExpr = arena.appendExpr(
-                    .symbolRef(adapted.symbol),
-                    type: arena.exprType(lambdaID) ?? sema.types.anyType
-                )
-                instructions.append(.constValue(result: adaptedExpr, value: .symbolRef(adapted.symbol)))
-                loweredCallableID = adaptedExpr
-                callableInfo = adapted
-            }
-
-            var finalArgs: [KIRExprID] = [loweredCallableID]
-            if let callableInfo {
-                let boxedCaptureArguments = makeBoxedCallableCaptureArguments(
-                    callableInfo: callableInfo,
-                    sema: sema,
-                    arena: arena,
-                    interner: interner,
-                    instructions: &instructions
-                )
-                if let boxedCaptureArgument = boxedCaptureArguments.first {
-                    finalArgs.append(boxedCaptureArgument)
-                } else if let closureRaw = callableInfo.captureArguments.first {
-                    finalArgs.append(closureRaw)
-                } else {
-                    let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
-                    instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-                    finalArgs.append(zeroExpr)
-                }
-            } else {
-                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
-                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-                finalArgs.append(zeroExpr)
-            }
-            return finalArgs
+            return makeCollectionHOFExpandedArguments(
+                loweredArgID: loweredArguments[0],
+                argExprID: originalArgs[0].expr,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
         }
 
         let legacyNames: Set = ["kk_require_lazy", "kk_check_lazy", "kk_precondition_assert_lazy", "kk_sequence_generate"]
@@ -272,92 +411,28 @@ extension CallLowerer {
             "kk_auto_closeable_create",
         ]
         if function0RuntimeNames.contains(externalLinkName), loweredArguments.count == 1 {
-            var finalArgs: [KIRExprID] = []
-            var lambdaID = loweredArguments[0]
-            var resolvedCallableInfo = driver.ctx.callableValueInfo(for: lambdaID)
-            if let callableInfo = resolvedCallableInfo,
-               !callableInfo.hasClosureParam,
-               let adaptedInfo = makeClosureThunkCallableAdapter(
-                   callableInfo: callableInfo,
-                   loweredArgID: lambdaID,
-                   argExprID: originalArgs[0].expr,
-                   sema: sema,
-                   arena: arena,
-                   interner: interner,
-                   instructions: &instructions
-                )
-            {
-                let adaptedExpr = arena.appendExpr(
-                    .symbolRef(adaptedInfo.symbol),
-                    type: arena.exprType(lambdaID) ?? sema.types.anyType
-                )
-                instructions.append(.constValue(result: adaptedExpr, value: .symbolRef(adaptedInfo.symbol)))
-                lambdaID = adaptedExpr
-                resolvedCallableInfo = adaptedInfo
-            }
-            // Runtime expects a raw function pointer, not a boxed function value.
-            if let callableInfo = resolvedCallableInfo {
-                let fnPtrExpr = arena.appendExpr(.symbolRef(callableInfo.symbol), type: sema.types.intType)
-                instructions.append(.constValue(result: fnPtrExpr, value: .symbolRef(callableInfo.symbol)))
-                finalArgs.append(fnPtrExpr)
-            } else {
-                finalArgs.append(lambdaID)
-            }
-            if let callableInfo = resolvedCallableInfo,
-               let closureRaw = callableInfo.captureArguments.first
-            {
-                finalArgs.append(closureRaw) // closureRaw
-            } else {
-                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
-                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-                finalArgs.append(zeroExpr) // closureRaw = 0 (no captures)
-            }
-            return finalArgs
+            return makeClosureThunkExpandedArguments(
+                loweredArgID: loweredArguments[0],
+                argExprID: originalArgs[0].expr,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
         }
 
         // STDLIB-325: synchronized(lock) { block } — expand block lambda to
         // (lock, fnPtr, closureRaw) while preserving the runtime outThrown slot.
         if externalLinkName == "kk_synchronized", loweredArguments.count == 2 {
-            var finalArgs: [KIRExprID] = [loweredArguments[0]]
-            var lambdaID = loweredArguments[1]
-            var resolvedCallableInfo = driver.ctx.callableValueInfo(for: lambdaID)
-            if let callableInfo = resolvedCallableInfo,
-               !callableInfo.hasClosureParam,
-               let adaptedInfo = makeClosureThunkCallableAdapter(
-                   callableInfo: callableInfo,
-                   loweredArgID: lambdaID,
-                   argExprID: originalArgs[1].expr,
-                   sema: sema,
-                   arena: arena,
-                   interner: interner,
-                   instructions: &instructions
-                )
-            {
-                let adaptedExpr = arena.appendExpr(
-                    .symbolRef(adaptedInfo.symbol),
-                    type: arena.exprType(lambdaID) ?? sema.types.anyType
-                )
-                instructions.append(.constValue(result: adaptedExpr, value: .symbolRef(adaptedInfo.symbol)))
-                lambdaID = adaptedExpr
-                resolvedCallableInfo = adaptedInfo
-            }
-            if let callableInfo = resolvedCallableInfo {
-                let fnPtrExpr = arena.appendExpr(.symbolRef(callableInfo.symbol), type: sema.types.intType)
-                instructions.append(.constValue(result: fnPtrExpr, value: .symbolRef(callableInfo.symbol)))
-                finalArgs.append(fnPtrExpr)
-            } else {
-                finalArgs.append(lambdaID)
-            }
-            if let callableInfo = resolvedCallableInfo,
-               let closureRaw = callableInfo.captureArguments.first
-            {
-                finalArgs.append(closureRaw) // closureRaw
-            } else {
-                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
-                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-                finalArgs.append(zeroExpr) // closureRaw = 0 (no captures)
-            }
-            return finalArgs
+            return makeClosureThunkExpandedArguments(
+                prefixArguments: [loweredArguments[0]],
+                loweredArgID: loweredArguments[1],
+                argExprID: originalArgs[1].expr,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
         }
 
         // kotlin.DeepRecursiveFunction { block } — expand the callable argument
@@ -365,103 +440,29 @@ extension CallLowerer {
         // the captured environment. Multi-capture lambdas are packed into a
         // closure object, reusing the same adapter strategy as collection HOFs.
         if externalLinkName == "kk_deep_recursive_function_new", loweredArguments.count == 1 {
-            let lambdaID = loweredArguments[0]
-            var loweredCallableID = lambdaID
-            var callableInfo = driver.ctx.callableValueInfo(for: lambdaID)
-
-            if let originalCallableInfo = callableInfo,
-               !originalCallableInfo.hasClosureParam,
-               !originalCallableInfo.captureArguments.isEmpty,
-               let adapted = makeCollectionHOFCallableAdapter(
-                    callableInfo: originalCallableInfo,
-                    loweredArgID: lambdaID,
-                    argExprID: originalArgs[0].expr,
-                    sema: sema,
-                    arena: arena,
-                    interner: interner,
-                    namePrefix: "kk_compare_values_hof_adapter",
-                    symbolIDOffsetBase: -710_000
-               )
-            {
-                let adaptedExpr = arena.appendExpr(
-                    .symbolRef(adapted.symbol),
-                    type: arena.exprType(lambdaID) ?? sema.types.anyType
-                )
-                instructions.append(.constValue(result: adaptedExpr, value: .symbolRef(adapted.symbol)))
-                loweredCallableID = adaptedExpr
-                callableInfo = adapted
-            }
-
-            var finalArgs: [KIRExprID] = [loweredCallableID]
-            if let callableInfo {
-                let boxedCaptureArguments = makeBoxedCallableCaptureArguments(
-                    callableInfo: callableInfo,
-                    sema: sema,
-                    arena: arena,
-                    interner: interner,
-                    instructions: &instructions
-                )
-                if let boxedCaptureArgument = boxedCaptureArguments.first {
-                    finalArgs.append(boxedCaptureArgument)
-                } else if let closureRaw = callableInfo.captureArguments.first {
-                    finalArgs.append(closureRaw)
-                } else {
-                    let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
-                    instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-                    finalArgs.append(zeroExpr)
-                }
-            } else {
-                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
-                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-                finalArgs.append(zeroExpr)
-            }
-            return finalArgs
+            return makeCollectionHOFExpandedArguments(
+                loweredArgID: loweredArguments[0],
+                argExprID: originalArgs[0].expr,
+                adaptOnlyWhenCapturing: true,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
         }
 
         if (externalLinkName == "kk_comparator_from_selector_primitive"
             || externalLinkName == "kk_comparator_from_selector_primitive_descending"),
            loweredArguments.count == 1
         {
-            var lambdaID = loweredArguments[0]
-            var resolvedCallableInfo = driver.ctx.callableValueInfo(for: lambdaID)
-            if let callableInfo = resolvedCallableInfo,
-               !callableInfo.hasClosureParam,
-               let adaptedInfo = makeClosureThunkCallableAdapter(
-                   callableInfo: callableInfo,
-                   loweredArgID: lambdaID,
-                   argExprID: originalArgs[0].expr,
-                   sema: sema,
-                   arena: arena,
-                   interner: interner,
-                   instructions: &instructions
-                )
-            {
-                let adaptedExpr = arena.appendExpr(
-                    .symbolRef(adaptedInfo.symbol),
-                    type: arena.exprType(lambdaID) ?? sema.types.anyType
-                )
-                instructions.append(.constValue(result: adaptedExpr, value: .symbolRef(adaptedInfo.symbol)))
-                lambdaID = adaptedExpr
-                resolvedCallableInfo = adaptedInfo
-            }
-
-            var finalArgs: [KIRExprID] = []
-            if let callableInfo = resolvedCallableInfo {
-                let fnPtrExpr = arena.appendExpr(.symbolRef(callableInfo.symbol), type: sema.types.intType)
-                instructions.append(.constValue(result: fnPtrExpr, value: .symbolRef(callableInfo.symbol)))
-                finalArgs.append(fnPtrExpr)
-            } else {
-                finalArgs.append(lambdaID)
-            }
-            if let callableInfo = resolvedCallableInfo,
-               let closureRaw = callableInfo.captureArguments.first
-            {
-                finalArgs.append(closureRaw)
-            } else {
-                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
-                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-                finalArgs.append(zeroExpr)
-            }
+            var finalArgs = makeClosureThunkExpandedArguments(
+                loweredArgID: loweredArguments[0],
+                argExprID: originalArgs[0].expr,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
             let selectorType = sema.bindings.exprType(for: originalArgs[0].expr) ?? sema.types.anyType
             let primitiveKindRaw: Int32 = switch sema.types.kind(of: sema.types.makeNonNullable(selectorType)) {
             case let .functionType(functionType):
@@ -498,47 +499,15 @@ extension CallLowerer {
             externalLinkName == "kk_comparator_from_comparator_selector_descending"),
            loweredArguments.count == 2
         {
-            var finalArgs: [KIRExprID] = [loweredArguments[0]]
-            var lambdaID = loweredArguments[1]
-            var resolvedCallableInfo = driver.ctx.callableValueInfo(for: lambdaID)
-            if let callableInfo = resolvedCallableInfo,
-               !callableInfo.hasClosureParam,
-               let adaptedInfo = makeClosureThunkCallableAdapter(
-                   callableInfo: callableInfo,
-                   loweredArgID: lambdaID,
-                   argExprID: originalArgs[1].expr,
-                   sema: sema,
-                   arena: arena,
-                   interner: interner,
-                   instructions: &instructions
-                )
-            {
-                let adaptedExpr = arena.appendExpr(
-                    .symbolRef(adaptedInfo.symbol),
-                    type: arena.exprType(lambdaID) ?? sema.types.anyType
-                )
-                instructions.append(.constValue(result: adaptedExpr, value: .symbolRef(adaptedInfo.symbol)))
-                lambdaID = adaptedExpr
-                resolvedCallableInfo = adaptedInfo
-            }
-
-            if let callableInfo = resolvedCallableInfo {
-                let fnPtrExpr = arena.appendExpr(.symbolRef(callableInfo.symbol), type: sema.types.intType)
-                instructions.append(.constValue(result: fnPtrExpr, value: .symbolRef(callableInfo.symbol)))
-                finalArgs.append(fnPtrExpr)
-            } else {
-                finalArgs.append(lambdaID)
-            }
-            if let callableInfo = resolvedCallableInfo,
-               let closureRaw = callableInfo.captureArguments.first
-            {
-                finalArgs.append(closureRaw)
-            } else {
-                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
-                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-                finalArgs.append(zeroExpr)
-            }
-            return finalArgs
+            return makeClosureThunkExpandedArguments(
+                prefixArguments: [loweredArguments[0]],
+                loweredArgID: loweredArguments[1],
+                argExprID: originalArgs[1].expr,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
         }
 
         // compareBy(vararg selectors): pack selector (fnPtr, closureRaw) pairs into a runtime array.
@@ -557,72 +526,24 @@ extension CallLowerer {
             ))
 
             for i in 0..<loweredArguments.count {
-                let lambdaID = loweredArguments[i]
-                var loweredSelectorID = lambdaID
-                var selectorCallableInfo = driver.ctx.callableValueInfo(for: lambdaID)
-                if selectorCallableInfo == nil,
-                   case let .symbolRef(symbol)? = arena.expr(loweredSelectorID),
-                   let function = arena.function(for: symbol)
-                {
-                    selectorCallableInfo = KIRCallableValueInfo(
-                        symbol: function.symbol,
-                        callee: function.name,
-                        captureArguments: arena.lambdaCaptureArgsBySymbol[function.symbol] ?? [],
-                        hasClosureParam: function.params.count >= 2
-                    )
-                }
-                if let callableInfo = selectorCallableInfo,
-                   !callableInfo.hasClosureParam,
-                   let adaptedInfo = makeCollectionHOFCallableAdapter(
-                        callableInfo: callableInfo,
-                        loweredArgID: loweredSelectorID,
-                        argExprID: originalArgs[i].expr,
-                        sema: sema,
-                        arena: arena,
-                        interner: interner,
-                        namePrefix: "kk_compare_values_hof_adapter",
-                        symbolIDOffsetBase: -710_000
-                   )
-                {
-                    let adaptedExpr = arena.appendExpr(.symbolRef(adaptedInfo.symbol), type: arena.exprType(loweredSelectorID) ?? sema.types.anyType)
-                    instructions.append(.constValue(result: adaptedExpr, value: .symbolRef(adaptedInfo.symbol)))
-                    loweredSelectorID = adaptedExpr
-                    selectorCallableInfo = adaptedInfo
-                }
+                let selector = makeCollectionHOFSelectorArgument(
+                    loweredArgID: loweredArguments[i],
+                    argExprID: originalArgs[i].expr,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    instructions: &instructions
+                )
 
-                let fnIndexExpr = arena.appendExpr(.intLiteral(Int64(i * 2)), type: sema.types.intType)
-                instructions.append(.constValue(result: fnIndexExpr, value: .intLiteral(Int64(i * 2))))
-                let fnSetResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
-                instructions.append(.call(
-                    symbol: nil,
-                    callee: interner.intern("kk_array_set"),
-                    arguments: [arrayExpr, fnIndexExpr, loweredSelectorID],
-                    result: fnSetResult,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
-
-                let closureRaw: KIRExprID
-                if let callableInfo = selectorCallableInfo,
-                   let capturedClosureRaw = callableInfo.captureArguments.first
-                {
-                    closureRaw = capturedClosureRaw
-                } else {
-                    let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
-                    instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-                    closureRaw = zeroExpr
-                }
-                let closureIndexExpr = arena.appendExpr(.intLiteral(Int64(i * 2 + 1)), type: sema.types.intType)
-                instructions.append(.constValue(result: closureIndexExpr, value: .intLiteral(Int64(i * 2 + 1))))
-                let closureSetResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
-                instructions.append(.call(
-                    symbol: nil,
-                    callee: interner.intern("kk_array_set"),
-                    arguments: [arrayExpr, closureIndexExpr, closureRaw],
-                    result: closureSetResult,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
+                appendCollectionHOFSelectorPair(
+                    selector,
+                    to: arrayExpr,
+                    selectorOffset: i,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    instructions: &instructions
+                )
             }
             return [arrayExpr]
         }
@@ -644,75 +565,24 @@ extension CallLowerer {
 
             for argIndex in 2..<loweredArguments.count {
                 let selectorOffset = argIndex - 2
-                let lambdaID = loweredArguments[argIndex]
-                var loweredSelectorID = lambdaID
-                var selectorCallableInfo = driver.ctx.callableValueInfo(for: lambdaID)
-                if selectorCallableInfo == nil,
-                   case let .symbolRef(symbol)? = arena.expr(loweredSelectorID),
-                   let function = arena.function(for: symbol)
-                {
-                    selectorCallableInfo = KIRCallableValueInfo(
-                        symbol: function.symbol,
-                        callee: function.name,
-                        captureArguments: arena.lambdaCaptureArgsBySymbol[function.symbol] ?? [],
-                        hasClosureParam: function.params.count >= 2
-                    )
-                }
-                if let callableInfo = selectorCallableInfo,
-                   !callableInfo.hasClosureParam,
-                   let adaptedInfo = makeCollectionHOFCallableAdapter(
-                        callableInfo: callableInfo,
-                        loweredArgID: loweredSelectorID,
-                        argExprID: originalArgs[argIndex].expr,
-                        sema: sema,
-                        arena: arena,
-                        interner: interner,
-                        namePrefix: "kk_compare_values_hof_adapter",
-                        symbolIDOffsetBase: -710_000
-                   )
-                {
-                    let adaptedExpr = arena.appendExpr(
-                        .symbolRef(adaptedInfo.symbol),
-                        type: arena.exprType(loweredSelectorID) ?? sema.types.anyType
-                    )
-                    instructions.append(.constValue(result: adaptedExpr, value: .symbolRef(adaptedInfo.symbol)))
-                    loweredSelectorID = adaptedExpr
-                    selectorCallableInfo = adaptedInfo
-                }
+                let selector = makeCollectionHOFSelectorArgument(
+                    loweredArgID: loweredArguments[argIndex],
+                    argExprID: originalArgs[argIndex].expr,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    instructions: &instructions
+                )
 
-                let fnIndexExpr = arena.appendExpr(.intLiteral(Int64(selectorOffset * 2)), type: sema.types.intType)
-                instructions.append(.constValue(result: fnIndexExpr, value: .intLiteral(Int64(selectorOffset * 2))))
-                let fnSetResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
-                instructions.append(.call(
-                    symbol: nil,
-                    callee: interner.intern("kk_array_set"),
-                    arguments: [arrayExpr, fnIndexExpr, loweredSelectorID],
-                    result: fnSetResult,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
-
-                let closureRaw: KIRExprID
-                if let callableInfo = selectorCallableInfo,
-                   let capturedClosureRaw = callableInfo.captureArguments.first
-                {
-                    closureRaw = capturedClosureRaw
-                } else {
-                    let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
-                    instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-                    closureRaw = zeroExpr
-                }
-                let closureIndexExpr = arena.appendExpr(.intLiteral(Int64(selectorOffset * 2 + 1)), type: sema.types.intType)
-                instructions.append(.constValue(result: closureIndexExpr, value: .intLiteral(Int64(selectorOffset * 2 + 1))))
-                let closureSetResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
-                instructions.append(.call(
-                    symbol: nil,
-                    callee: interner.intern("kk_array_set"),
-                    arguments: [arrayExpr, closureIndexExpr, closureRaw],
-                    result: closureSetResult,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
+                appendCollectionHOFSelectorPair(
+                    selector,
+                    to: arrayExpr,
+                    selectorOffset: selectorOffset,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    instructions: &instructions
+                )
             }
             return [loweredArguments[0], loweredArguments[1], arrayExpr]
         }
@@ -721,51 +591,21 @@ extension CallLowerer {
            loweredArguments.count == 4
         {
             var finalArgs: [KIRExprID] = [loweredArguments[0], loweredArguments[1], loweredArguments[2]]
-            var lambdaID = loweredArguments[3]
-            var selectorCallableInfo = driver.ctx.callableValueInfo(for: lambdaID)
-            if selectorCallableInfo == nil,
-               case let .symbolRef(symbol)? = arena.expr(lambdaID),
-               let function = arena.function(for: symbol)
-            {
-                selectorCallableInfo = KIRCallableValueInfo(
-                    symbol: function.symbol,
-                    callee: function.name,
-                    captureArguments: arena.lambdaCaptureArgsBySymbol[function.symbol] ?? [],
-                    hasClosureParam: function.params.count >= 2
-                )
-            }
-            if let callableInfo = selectorCallableInfo,
-               !callableInfo.hasClosureParam,
-               let adaptedInfo = makeCollectionHOFCallableAdapter(
-                    callableInfo: callableInfo,
-                    loweredArgID: lambdaID,
-                    argExprID: originalArgs[3].expr,
-                    sema: sema,
-                    arena: arena,
-                    interner: interner,
-                    namePrefix: "kk_compare_values_hof_adapter",
-                    symbolIDOffsetBase: -710_000
-               )
-            {
-                let adaptedExpr = arena.appendExpr(
-                    .symbolRef(adaptedInfo.symbol),
-                    type: arena.exprType(lambdaID) ?? sema.types.anyType
-                )
-                instructions.append(.constValue(result: adaptedExpr, value: .symbolRef(adaptedInfo.symbol)))
-                lambdaID = adaptedExpr
-                selectorCallableInfo = adaptedInfo
-            }
-
-            finalArgs.append(lambdaID)
-            if let callableInfo = selectorCallableInfo,
-               let closureRaw = callableInfo.captureArguments.first
-            {
-                finalArgs.append(closureRaw)
-            } else {
-                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
-                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-                finalArgs.append(zeroExpr)
-            }
+            let selector = makeCollectionHOFSelectorArgument(
+                loweredArgID: loweredArguments[3],
+                argExprID: originalArgs[3].expr,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            finalArgs.append(selector.loweredArgID)
+            finalArgs.append(makeClosureRawArgument(
+                callableInfo: selector.callableInfo,
+                sema: sema,
+                arena: arena,
+                instructions: &instructions
+            ))
             return finalArgs
         }
 
@@ -779,48 +619,21 @@ extension CallLowerer {
             var finalArgs = [loweredArguments[0], loweredArguments[1]]
             // Remaining arguments are selector lambdas that need expansion
             for i in 2..<loweredArguments.count {
-                let lambdaID = loweredArguments[i]
-                var loweredSelectorID = lambdaID
-                var selectorCallableInfo = driver.ctx.callableValueInfo(for: lambdaID)
-                if selectorCallableInfo == nil,
-                   case let .symbolRef(symbol)? = arena.expr(loweredSelectorID),
-                   let function = arena.function(for: symbol)
-                {
-                    selectorCallableInfo = KIRCallableValueInfo(
-                        symbol: function.symbol,
-                        callee: function.name,
-                        captureArguments: arena.lambdaCaptureArgsBySymbol[function.symbol] ?? [],
-                        hasClosureParam: function.params.count >= 2
-                    )
-                }
-                if let callableInfo = selectorCallableInfo,
-                   !callableInfo.hasClosureParam,
-                   let adaptedInfo = makeCollectionHOFCallableAdapter(
-                        callableInfo: callableInfo,
-                        loweredArgID: loweredSelectorID,
-                        argExprID: originalArgs[i].expr,
-                        sema: sema,
-                        arena: arena,
-                        interner: interner,
-                        namePrefix: "kk_compare_values_hof_adapter",
-                        symbolIDOffsetBase: -710_000
-                    )
-                {
-                    let adaptedExpr = arena.appendExpr(.symbolRef(adaptedInfo.symbol), type: arena.exprType(loweredSelectorID) ?? sema.types.anyType)
-                    instructions.append(.constValue(result: adaptedExpr, value: .symbolRef(adaptedInfo.symbol)))
-                    loweredSelectorID = adaptedExpr
-                    selectorCallableInfo = adaptedInfo
-                }
-                finalArgs.append(loweredSelectorID) // fnPtr
-                if let callableInfo = selectorCallableInfo,
-                   let closureRaw = callableInfo.captureArguments.first
-                {
-                    finalArgs.append(closureRaw) // closureRaw
-                } else {
-                    let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
-                    instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-                    finalArgs.append(zeroExpr) // closureRaw = 0 (no captures)
-                }
+                let selector = makeCollectionHOFSelectorArgument(
+                    loweredArgID: loweredArguments[i],
+                    argExprID: originalArgs[i].expr,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    instructions: &instructions
+                )
+                finalArgs.append(selector.loweredArgID)
+                finalArgs.append(makeClosureRawArgument(
+                    callableInfo: selector.callableInfo,
+                    sema: sema,
+                    arena: arena,
+                    instructions: &instructions
+                ))
             }
             return finalArgs
         }

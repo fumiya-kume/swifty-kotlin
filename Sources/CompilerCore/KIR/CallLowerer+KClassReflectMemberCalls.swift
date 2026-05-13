@@ -104,7 +104,6 @@ extension CallLowerer {
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
         let intType = sema.types.make(.primitive(.int, .nonNull))
-        let boolType = sema.types.make(.primitive(.boolean, .nonNull))
         let stringType = sema.types.stringType
 
         // 1. Create the KClass box via kk_kclass_create.
@@ -248,278 +247,203 @@ extension CallLowerer {
             }
         }
 
-        // 2. Emit the specific member call.
-        switch memberName {
-        case "isInstance":
-            // isInstance(value: Any?) -> Boolean
-            let valueExpr: KIRExprID
-            if let firstArg = args.first {
-                valueExpr = driver.lowerExpr(
-                    firstArg.expr,
-                    ast: ast, sema: sema, arena: arena, interner: interner,
-                    propertyConstantInitializers: propertyConstantInitializers,
-                    instructions: &instructions
-                )
-            } else {
-                valueExpr = arena.appendExpr(.intLiteral(0), type: intType)
-                instructions.append(.constValue(result: valueExpr, value: .intLiteral(0)))
-            }
-            let resultType = sema.bindings.exprTypes[exprID] ?? boolType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_isInstance"),
-                arguments: [kclassExpr, valueExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
+        return lowerKClassRuntimeMemberCall(
+            exprID,
+            kclassExpr: kclassExpr,
+            memberName: memberName,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            castFallbackType: classRefTargetType,
+            visibilityFallbackType: stringType,
+            instructions: &instructions
+        )
+    }
 
-        case "cast", "safeCast":
-            let valueExpr: KIRExprID
-            if let firstArg = args.first {
-                valueExpr = driver.lowerExpr(
-                    firstArg.expr,
-                    ast: ast, sema: sema, arena: arena, interner: interner,
-                    propertyConstantInitializers: propertyConstantInitializers,
-                    instructions: &instructions
-                )
-            } else {
-                valueExpr = arena.appendExpr(.intLiteral(0), type: intType)
+    private func lowerKClassRuntimeMemberCall(
+        _ exprID: ExprID,
+        kclassExpr: KIRExprID,
+        memberName: String,
+        args: [CallArgument],
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        castFallbackType: TypeID,
+        visibilityFallbackType: TypeID,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        let intType = sema.types.make(.primitive(.int, .nonNull))
+        let boolType = sema.types.make(.primitive(.boolean, .nonNull))
+        let stringType = sema.types.stringType
+
+        func lowerFirstArgumentOrNull() -> KIRExprID {
+            guard let firstArg = args.first else {
+                let valueExpr = arena.appendExpr(.intLiteral(0), type: intType)
                 instructions.append(.constValue(result: valueExpr, value: .intLiteral(0)))
+                return valueExpr
             }
-            let resultType = sema.bindings.exprTypes[exprID] ?? classRefTargetType
+            return driver.lowerExpr(
+                firstArg.expr,
+                ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+        }
+
+        func emitRuntimeCall(
+            callee: String,
+            arguments: [KIRExprID],
+            fallbackType: TypeID,
+            canThrow: Bool = false
+        ) -> KIRExprID {
+            let resultType = sema.bindings.exprTypes[exprID] ?? fallbackType
             let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            let canThrow = memberName == "cast"
             instructions.append(.call(
                 symbol: nil,
-                callee: interner.intern(canThrow ? "kk_kclass_cast" : "kk_kclass_safeCast"),
-                arguments: [kclassExpr, valueExpr],
+                callee: interner.intern(callee),
+                arguments: arguments,
                 result: result,
                 canThrow: canThrow,
                 thrownResult: nil
             ))
             return result
+        }
+
+        switch memberName {
+        case "isInstance":
+            return emitRuntimeCall(
+                callee: "kk_kclass_isInstance",
+                arguments: [kclassExpr, lowerFirstArgumentOrNull()],
+                fallbackType: boolType
+            )
+
+        case "cast", "safeCast":
+            let canThrow = memberName == "cast"
+            return emitRuntimeCall(
+                callee: canThrow ? "kk_kclass_cast" : "kk_kclass_safeCast",
+                arguments: [kclassExpr, lowerFirstArgumentOrNull()],
+                fallbackType: castFallbackType,
+                canThrow: canThrow
+            )
 
         case "members":
-            // members: Collection<KCallable<*>>
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_members"),
+            return emitRuntimeCall(
+                callee: "kk_kclass_members",
                 arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
+                fallbackType: sema.types.anyType
+            )
 
         case "constructors":
-            // constructors: Collection<KFunction<T>>
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_constructors"),
+            return emitRuntimeCall(
+                callee: "kk_kclass_constructors",
                 arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
+                fallbackType: sema.types.anyType
+            )
 
-        // STDLIB-REFLECT-064: KClass.primaryConstructor
         case "primaryConstructor":
-            // primaryConstructor: KFunction<T>?
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_primary_constructor"),
+            return emitRuntimeCall(
+                callee: "kk_kclass_primary_constructor",
                 arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
+                fallbackType: sema.types.anyType
+            )
 
-        // STDLIB-REFLECT-061: KClass member access — properties/functions variants
         case "properties":
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_properties"),
+            return emitRuntimeCall(
+                callee: "kk_kclass_properties",
                 arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
+                fallbackType: sema.types.anyType
+            )
 
         case "memberProperties":
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_member_properties"),
+            return emitRuntimeCall(
+                callee: "kk_kclass_member_properties",
                 arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
+                fallbackType: sema.types.anyType
+            )
 
         case "declaredMemberProperties":
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_declared_member_properties"),
+            return emitRuntimeCall(
+                callee: "kk_kclass_declared_member_properties",
                 arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
+                fallbackType: sema.types.anyType
+            )
 
         case "functions":
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_functions"),
+            return emitRuntimeCall(
+                callee: "kk_kclass_functions",
                 arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
+                fallbackType: sema.types.anyType
+            )
 
         case "memberFunctions":
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_member_functions"),
+            return emitRuntimeCall(
+                callee: "kk_kclass_member_functions",
                 arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
+                fallbackType: sema.types.anyType
+            )
 
         case "declaredMemberFunctions":
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_declared_member_functions"),
+            return emitRuntimeCall(
+                callee: "kk_kclass_declared_member_functions",
                 arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
+                fallbackType: sema.types.anyType
+            )
 
-        // STDLIB-REFLECT-060: KClass basic reflection features
         case "isFinal":
-            let resultType = sema.bindings.exprTypes[exprID] ?? boolType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_is_final"),
+            return emitRuntimeCall(
+                callee: "kk_kclass_is_final",
                 arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
+                fallbackType: boolType
+            )
 
         case "isOpen":
-            let resultType = sema.bindings.exprTypes[exprID] ?? boolType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_is_open"),
+            return emitRuntimeCall(
+                callee: "kk_kclass_is_open",
                 arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
+                fallbackType: boolType
+            )
 
         case "isAbstract":
-            let resultType = sema.bindings.exprTypes[exprID] ?? boolType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_is_abstract"),
+            return emitRuntimeCall(
+                callee: "kk_kclass_is_abstract",
                 arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
+                fallbackType: boolType
+            )
 
         case "visibility":
-            let resultType = sema.bindings.exprTypes[exprID] ?? stringType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_visibility"),
+            return emitRuntimeCall(
+                callee: "kk_kclass_visibility",
                 arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
+                fallbackType: visibilityFallbackType
+            )
 
         case "typeParameters":
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_type_parameters"),
+            return emitRuntimeCall(
+                callee: "kk_kclass_type_parameters",
                 arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
+                fallbackType: sema.types.anyType
+            )
 
         case "supertypes":
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_supertypes"),
+            return emitRuntimeCall(
+                callee: "kk_kclass_supertypes",
                 arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
+                fallbackType: sema.types.anyType
+            )
 
-        // STDLIB-REFLECT-065: annotations
         case "annotations":
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_get_annotations"),
+            return emitRuntimeCall(
+                callee: "kk_kclass_get_annotations",
                 arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
+                fallbackType: sema.types.anyType
+            )
 
-        // STDLIB-REFLECT-065: findAnnotation<T>()
         case "findAnnotation":
-            // findAnnotation<T>() -> T?  — the type argument name is passed as a string hint
             let searchNameExpr: KIRExprID
             if let firstArg = args.first {
                 searchNameExpr = driver.lowerExpr(
@@ -529,24 +453,16 @@ extension CallLowerer {
                     instructions: &instructions
                 )
             } else {
-                // No argument — use empty string to match nothing.
                 let emptyStr = interner.intern("")
                 searchNameExpr = arena.appendExpr(.stringLiteral(emptyStr), type: stringType)
                 instructions.append(.constValue(result: searchNameExpr, value: .stringLiteral(emptyStr)))
             }
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_find_annotation"),
+            return emitRuntimeCall(
+                callee: "kk_kclass_find_annotation",
                 arguments: [kclassExpr, searchNameExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
+                fallbackType: sema.types.anyType
+            )
 
-        // STDLIB-REFLECT-079: findAssociatedObject<T>()
         case "findAssociatedObject":
             let keyNameExpr = lowerKClassReifiedTypeNameHint(
                 exprID: exprID,
@@ -555,20 +471,13 @@ extension CallLowerer {
                 interner: interner,
                 instructions: &instructions
             )
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.makeNullable(sema.types.anyType)
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_find_associated_object"),
+            return emitRuntimeCall(
+                callee: "kk_kclass_find_associated_object",
                 arguments: [kclassExpr, keyNameExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
+                fallbackType: sema.types.makeNullable(sema.types.anyType)
+            )
 
         default:
-            // Fallback — should not happen.
             let result = arena.appendExpr(.intLiteral(0), type: intType)
             instructions.append(.constValue(result: result, value: .intLiteral(0)))
             return result
@@ -592,9 +501,6 @@ extension CallLowerer {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
-        let intType = sema.types.make(.primitive(.int, .nonNull))
-        let boolType = sema.types.make(.primitive(.boolean, .nonNull))
-
         // Lower the receiver expression to get the KClass box.
         let kclassExpr = driver.lowerExpr(
             receiverExpr,
@@ -603,322 +509,19 @@ extension CallLowerer {
             instructions: &instructions
         )
 
-        switch memberName {
-        case "isInstance":
-            let valueExpr: KIRExprID
-            if let firstArg = args.first {
-                valueExpr = driver.lowerExpr(
-                    firstArg.expr,
-                    ast: ast, sema: sema, arena: arena, interner: interner,
-                    propertyConstantInitializers: propertyConstantInitializers,
-                    instructions: &instructions
-                )
-            } else {
-                valueExpr = arena.appendExpr(.intLiteral(0), type: intType)
-                instructions.append(.constValue(result: valueExpr, value: .intLiteral(0)))
-            }
-            let resultType = sema.bindings.exprTypes[exprID] ?? boolType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_isInstance"),
-                arguments: [kclassExpr, valueExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-
-        case "cast", "safeCast":
-            let valueExpr: KIRExprID
-            if let firstArg = args.first {
-                valueExpr = driver.lowerExpr(
-                    firstArg.expr,
-                    ast: ast, sema: sema, arena: arena, interner: interner,
-                    propertyConstantInitializers: propertyConstantInitializers,
-                    instructions: &instructions
-                )
-            } else {
-                valueExpr = arena.appendExpr(.intLiteral(0), type: intType)
-                instructions.append(.constValue(result: valueExpr, value: .intLiteral(0)))
-            }
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            let canThrow = memberName == "cast"
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern(canThrow ? "kk_kclass_cast" : "kk_kclass_safeCast"),
-                arguments: [kclassExpr, valueExpr],
-                result: result,
-                canThrow: canThrow,
-                thrownResult: nil
-            ))
-            return result
-
-        case "members":
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_members"),
-                arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-
-        case "constructors":
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_constructors"),
-                arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-
-        // STDLIB-REFLECT-064: KClass.primaryConstructor (variable receiver)
-        case "primaryConstructor":
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_primary_constructor"),
-                arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-
-        // STDLIB-REFLECT-061: KClass member access — properties/functions variants
-        case "properties":
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_properties"),
-                arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-
-        case "memberProperties":
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_member_properties"),
-                arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-
-        case "declaredMemberProperties":
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_declared_member_properties"),
-                arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-
-        case "functions":
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_functions"),
-                arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-
-        case "memberFunctions":
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_member_functions"),
-                arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-
-        case "declaredMemberFunctions":
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_declared_member_functions"),
-                arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-
-        // STDLIB-REFLECT-060: KClass basic reflection features (variable receiver)
-        case "isFinal":
-            let resultType = sema.bindings.exprTypes[exprID] ?? boolType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_is_final"),
-                arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-
-        case "isOpen":
-            let resultType = sema.bindings.exprTypes[exprID] ?? boolType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_is_open"),
-                arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-
-        case "isAbstract":
-            let resultType = sema.bindings.exprTypes[exprID] ?? boolType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_is_abstract"),
-                arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-
-        case "visibility":
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_visibility"),
-                arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-
-        case "typeParameters":
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_type_parameters"),
-                arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-
-        case "supertypes":
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_supertypes"),
-                arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-
-        // STDLIB-REFLECT-065: annotations
-        case "annotations":
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_get_annotations"),
-                arguments: [kclassExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-
-        // STDLIB-REFLECT-065: findAnnotation<T>()
-        case "findAnnotation":
-            let searchNameExpr: KIRExprID
-            if let firstArg = args.first {
-                searchNameExpr = driver.lowerExpr(
-                    firstArg.expr,
-                    ast: ast, sema: sema, arena: arena, interner: interner,
-                    propertyConstantInitializers: propertyConstantInitializers,
-                    instructions: &instructions
-                )
-            } else {
-                let emptyStr = interner.intern("")
-                searchNameExpr = arena.appendExpr(.stringLiteral(emptyStr), type: sema.types.stringType)
-                instructions.append(.constValue(result: searchNameExpr, value: .stringLiteral(emptyStr)))
-            }
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_find_annotation"),
-                arguments: [kclassExpr, searchNameExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-
-        // STDLIB-REFLECT-079: findAssociatedObject<T>()
-        case "findAssociatedObject":
-            let keyNameExpr = lowerKClassReifiedTypeNameHint(
-                exprID: exprID,
-                sema: sema,
-                arena: arena,
-                interner: interner,
-                instructions: &instructions
-            )
-            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.makeNullable(sema.types.anyType)
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_kclass_find_associated_object"),
-                arguments: [kclassExpr, keyNameExpr],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-
-        default:
-            let result = arena.appendExpr(.intLiteral(0), type: intType)
-            instructions.append(.constValue(result: result, value: .intLiteral(0)))
-            return result
-        }
+        return lowerKClassRuntimeMemberCall(
+            exprID,
+            kclassExpr: kclassExpr,
+            memberName: memberName,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            castFallbackType: sema.types.anyType,
+            visibilityFallbackType: sema.types.anyType,
+            instructions: &instructions
+        )
     }
 }
