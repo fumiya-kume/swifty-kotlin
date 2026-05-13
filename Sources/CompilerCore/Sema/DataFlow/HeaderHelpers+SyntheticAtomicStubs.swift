@@ -192,6 +192,15 @@ extension DataFlowSemaPhase {
             interner: interner,
             types: types
         )
+        registerAtomicArrayAsJavaAtomicArrayFunction(
+            packageFQName: atomicsPkg,
+            receiverName: "AtomicIntArray",
+            javaAtomicName: "AtomicIntegerArray",
+            externalLinkName: "kk_atomic_int_array_asJavaAtomicArray",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
 
         registerAtomicArrayFamily(
             packageFQName: atomicsPkg,
@@ -683,6 +692,55 @@ extension DataFlowSemaPhase {
             typeParameterSymbols: [typeParamSymbol],
             classTypeParameterCount: 1,
             flags: [.synthetic, .operatorFunction],
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    private func registerAtomicArrayAsJavaAtomicArrayFunction(
+        packageFQName: [InternedString],
+        receiverName: String,
+        javaAtomicName: String,
+        externalLinkName: String,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        guard let receiverSymbol = symbols.lookup(fqName: packageFQName + [interner.intern(receiverName)]) else {
+            return
+        }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: receiverSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let javaAtomicPackage = ensurePackage(
+            path: ["java", "util", "concurrent", "atomic"],
+            symbols: symbols,
+            interner: interner
+        )
+        let javaAtomicSymbol = ensureClassSymbol(
+            named: javaAtomicName,
+            in: javaAtomicPackage,
+            symbols: symbols,
+            interner: interner
+        )
+        if let packageSymbol = symbols.lookup(fqName: javaAtomicPackage) {
+            symbols.setParentSymbol(packageSymbol, for: javaAtomicSymbol)
+        }
+        let javaAtomicType = types.make(.classType(ClassType(
+            classSymbol: javaAtomicSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(javaAtomicType, for: javaAtomicSymbol)
+
+        registerAtomicExtensionFunction(
+            packageFQName: packageFQName,
+            name: "asJavaAtomicArray",
+            externalLinkName: externalLinkName,
+            receiverType: receiverType,
+            returnType: javaAtomicType,
             symbols: symbols,
             interner: interner
         )

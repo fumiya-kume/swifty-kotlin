@@ -115,7 +115,7 @@
 - [ ] STDLIB-ATOMIC-NEW-FN-003: `asJavaAtomic` 関数の実装（AtomicLong版）
 - [ ] STDLIB-ATOMIC-NEW-FN-004: `asJavaAtomic` 関数の実装（AtomicReference版）
 - [ ] STDLIB-ATOMIC-NEW-FN-005: `asJavaAtomicArray` 関数の実装（AtomicArray版）
-- [ ] STDLIB-ATOMIC-NEW-FN-006: `asJavaAtomicArray` 関数の実装（AtomicIntArray版）
+- [x] STDLIB-ATOMIC-NEW-FN-006: `asJavaAtomicArray` 関数の実装（AtomicIntArray版）
 - [ ] STDLIB-ATOMIC-NEW-FN-007: `asJavaAtomicArray` 関数の実装（AtomicLongArray版）
 - [ ] STDLIB-ATOMIC-NEW-FN-008: `asKotlinAtomic` 関数の実装（各オーバーロード）
 - [ ] STDLIB-ATOMIC-NEW-FN-009: `asKotlinAtomicArray` 関数の実装（各オーバーロード）

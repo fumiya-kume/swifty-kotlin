@@ -528,6 +528,27 @@ extension CodegenBackendIntegrationTests {
 
     // MARK: - AtomicIntArray edge cases
 
+    func testCodegenAtomicIntArrayAsJavaAtomicArray() throws {
+        let source = """
+        @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
+        import kotlin.concurrent.atomics.AtomicIntArray
+        import kotlin.concurrent.atomics.asJavaAtomicArray
+
+        fun main() {
+            val atomic = AtomicIntArray(1)
+            val javaAtomic: java.util.concurrent.atomic.AtomicIntegerArray = atomic.asJavaAtomicArray()
+            println("ok")
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(inputPath: path, moduleName: "AtomicIntArrayAsJavaAtomicArray", emit: .executable, outputPath: outputBase)
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "ok\n")
+        }
+    }
+
     func testCodegenAtomicIntArrayBasicOperations() throws {
         let source = """
         @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)

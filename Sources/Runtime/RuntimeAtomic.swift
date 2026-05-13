@@ -854,6 +854,11 @@ public func kk_atomic_int_array_compareAndExchangeAt(
     return box.compareAndExchange(at: index, expect: expect, update: update)
 }
 
+@_cdecl("kk_atomic_int_array_asJavaAtomicArray")
+public func kk_atomic_int_array_asJavaAtomicArray(_ receiver: Int) -> Int {
+    receiver
+}
+
 @_cdecl("kk_atomic_int_array_fetchAndAddAt")
 public func kk_atomic_int_array_fetchAndAddAt(
     _ receiver: Int, _ index: Int, _ delta: Int, _ outThrown: UnsafeMutablePointer<Int>?
