@@ -274,6 +274,12 @@ extension DataFlowSemaPhase {
             interner: interner,
             types: types
         )
+        registerAtomicRefArrayAsJavaAtomicArrayFunction(
+            packageFQName: atomicsPkg,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
         registerAtomicArrayOfNullsFactory(
             packageFQName: atomicsPkg,
             symbols: symbols,
@@ -813,6 +819,100 @@ extension DataFlowSemaPhase {
             externalLinkName: externalLinkName,
             receiverType: receiverType,
             returnType: javaAtomicType,
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    private func registerAtomicRefArrayAsJavaAtomicArrayFunction(
+        packageFQName: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        guard let receiverSymbol = symbols.lookup(fqName: packageFQName + [interner.intern("AtomicArray")]) else {
+            return
+        }
+
+        let functionName = interner.intern("asJavaAtomicArray")
+        let functionFQName = packageFQName + [functionName]
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = functionFQName + [typeParamName]
+        let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nullable
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: receiverSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+
+        let javaAtomicPackage = ensurePackage(
+            path: ["java", "util", "concurrent", "atomic"],
+            symbols: symbols,
+            interner: interner
+        )
+        let javaAtomicReferenceArraySymbol = ensureClassSymbol(
+            named: "AtomicReferenceArray",
+            in: javaAtomicPackage,
+            symbols: symbols,
+            interner: interner
+        )
+        if let packageSymbol = symbols.lookup(fqName: javaAtomicPackage) {
+            symbols.setParentSymbol(packageSymbol, for: javaAtomicReferenceArraySymbol)
+        }
+        let javaTypeParamFQName = javaAtomicPackage + [interner.intern("AtomicReferenceArray"), typeParamName]
+        let javaTypeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: javaTypeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: javaTypeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let javaTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: javaTypeParamSymbol,
+            nullability: .nullable
+        )))
+        let javaAtomicReferenceArrayType = types.make(.classType(ClassType(
+            classSymbol: javaAtomicReferenceArraySymbol,
+            args: [.invariant(javaTypeParamType)],
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([javaTypeParamSymbol], for: javaAtomicReferenceArraySymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: javaAtomicReferenceArraySymbol)
+        symbols.setPropertyType(javaAtomicReferenceArrayType, for: javaAtomicReferenceArraySymbol)
+
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: javaAtomicReferenceArraySymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+
+        registerAtomicExtensionFunction(
+            packageFQName: packageFQName,
+            name: "asJavaAtomicArray",
+            externalLinkName: "kk_atomic_ref_array_asJavaAtomicArray",
+            receiverType: receiverType,
+            returnType: returnType,
+            typeParameterSymbols: [typeParamSymbol],
             symbols: symbols,
             interner: interner
         )
