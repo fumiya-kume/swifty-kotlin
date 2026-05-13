@@ -1916,6 +1916,15 @@ public extension RuntimeABISpec {
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_mutable_collection_addAll",
+            parameters: [
+                RuntimeABIParameter(name: "collectionRaw", type: .intptr),
+                RuntimeABIParameter(name: "elementsRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_mutable_list_addAll",
             parameters: [
                 RuntimeABIParameter(name: "listRaw", type: .intptr),

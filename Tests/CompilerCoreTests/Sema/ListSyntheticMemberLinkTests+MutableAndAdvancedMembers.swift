@@ -1506,6 +1506,57 @@ extension ListSyntheticMemberLinkTests {
         }
     }
 
+    func testMutableCollectionArrayAddAllOverloadsUseRuntimeExternalLinks() throws {
+        let cases: [(String, String, String)] = [
+            (
+                "MutableCollection",
+                "kk_mutable_collection_addAll",
+                "fun mutate(values: MutableCollection<Int>) { values.addAll(arrayOf(1, 2)) }"
+            ),
+            (
+                "MutableList",
+                "kk_mutable_list_addAll",
+                "fun mutate(values: MutableList<Int>) { values.addAll(arrayOf(1, 2)) }"
+            ),
+            (
+                "MutableSet",
+                "kk_mutable_set_addAll",
+                "fun mutate(values: MutableSet<Int>) { values.addAll(arrayOf(1, 2)) }"
+            ),
+        ]
+
+        for (receiverName, expectedExternalLink, source) in cases {
+            try withTemporaryFile(contents: source) { path in
+                let ctx = makeCompilationContext(inputs: [path])
+                try runSema(ctx)
+
+                let ast = try XCTUnwrap(ctx.ast)
+                let sema = try XCTUnwrap(ctx.sema)
+                let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                    guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                    return ctx.interner.resolve(callee) == "addAll"
+                }, "Expected \(receiverName).addAll(Array) call in AST")
+                let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+
+                XCTAssertEqual(
+                    sema.symbols.externalLinkName(for: chosenCallee),
+                    expectedExternalLink,
+                    "Expected \(receiverName).addAll(Array) to resolve to \(expectedExternalLink)"
+                )
+
+                let signature = try XCTUnwrap(sema.symbols.functionSignature(for: chosenCallee))
+                let parameterType = try XCTUnwrap(signature.parameterTypes.first)
+                guard case let .classType(classType) = sema.types.kind(of: parameterType) else {
+                    return XCTFail("Expected \(receiverName).addAll(Array) to take an Array parameter")
+                }
+                XCTAssertEqual(
+                    try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(classType.classSymbol)?.name)),
+                    "Array"
+                )
+            }
+        }
+    }
+
     /// Map member calls (containsKey, put, remove) go through the collection-fallback
     /// inference path which does not record a callBinding. Instead we verify that the
     /// synthetic symbols in the symbol table carry the correct external link names.

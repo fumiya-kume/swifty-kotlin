@@ -420,6 +420,29 @@ func runtimeAppendToMutableCollection(_ destRaw: Int, _ element: Int) {
     invalidContainerPanic(#function, "mutable collection")
 }
 
+@_cdecl("kk_mutable_collection_addAll")
+public func kk_mutable_collection_addAll(_ collectionRaw: Int, _ elementsRaw: Int) -> Int {
+    guard let elements = runtimeCollectionOrArrayElements(from: elementsRaw) else {
+        return kk_box_bool(0)
+    }
+    if let list = runtimeListBox(from: collectionRaw) {
+        if elements.isEmpty {
+            return kk_box_bool(0)
+        }
+        list.elements.append(contentsOf: elements)
+        return kk_box_bool(1)
+    }
+    if let set = runtimeSetBox(from: collectionRaw) {
+        var modified = false
+        for element in elements where !set.elements.contains(where: { runtimeValuesEqual($0, element) }) {
+            set.elements.append(element)
+            modified = true
+        }
+        return kk_box_bool(modified ? 1 : 0)
+    }
+    return kk_box_bool(0)
+}
+
 @_cdecl("kk_collection_toCollection")
 public func kk_collection_toCollection(_ collRaw: Int, _ destRaw: Int) -> Int {
     guard let elements = runtimeCollectionElements(from: collRaw) else {
@@ -823,22 +846,7 @@ public func kk_mutable_list_reverse(_ listRaw: Int) -> Int {
 
 @_cdecl("kk_mutable_list_addAll")
 public func kk_mutable_list_addAll(_ listRaw: Int, _ collectionRaw: Int) -> Int {
-    guard let list = runtimeListBox(from: listRaw) else {
-        return kk_box_bool(0)
-    }
-    let collectionElements: [Int]
-    if let collection = runtimeListBox(from: collectionRaw) {
-        collectionElements = collection.elements
-    } else if let collection = runtimeSetBox(from: collectionRaw) {
-        collectionElements = collection.elements
-    } else {
-        return kk_box_bool(0)
-    }
-    if collectionElements.isEmpty {
-        return kk_box_bool(0)
-    }
-    list.elements.append(contentsOf: collectionElements)
-    return kk_box_bool(1)
+    kk_mutable_collection_addAll(listRaw, collectionRaw)
 }
 
 @_cdecl("kk_mutable_list_removeAll")

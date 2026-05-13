@@ -96,6 +96,16 @@ func runtimeCollectionElements(from rawValue: Int) -> [Int]? {
     return nil
 }
 
+func runtimeCollectionOrArrayElements(from rawValue: Int) -> [Int]? {
+    if let elements = runtimeCollectionElements(from: rawValue) {
+        return elements
+    }
+    if let arrayBox = runtimeArrayBox(from: rawValue) {
+        return arrayBox.elements
+    }
+    return nil
+}
+
 func runtimeListIteratorBox(from rawValue: Int) -> RuntimeListIteratorBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
