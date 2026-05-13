@@ -274,20 +274,7 @@ public func kk_mutable_set_clear(_ setRaw: Int) -> Int {
 
 @_cdecl("kk_mutable_set_addAll")
 public func kk_mutable_set_addAll(_ setRaw: Int, _ collectionRaw: Int) -> Int {
-    guard let set = runtimeSetBox(from: setRaw) else {
-        return kk_box_bool(0)
-    }
-    guard let elements = runtimeCollectionElements(from: collectionRaw) else {
-        return kk_box_bool(0)
-    }
-    var modified = false
-    for elem in elements {
-        if !set.elements.contains(where: { runtimeValuesEqual($0, elem) }) {
-            set.elements.append(elem)
-            modified = true
-        }
-    }
-    return kk_box_bool(modified ? 1 : 0)
+    kk_mutable_collection_addAll(setRaw, collectionRaw)
 }
 
 @_cdecl("kk_mutable_set_removeAll")

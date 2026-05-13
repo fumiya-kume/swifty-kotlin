@@ -409,6 +409,12 @@ extension DataFlowSemaPhase {
         registerSyntheticArrayStubs(
             symbols: symbols, types: types, interner: interner
         )
+        registerMutableCollectionArrayAddAllMembers(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg
+        )
     }
 
     /// Register `kotlin.collections.RandomAccess` marker interface surface.

@@ -53,7 +53,7 @@
 #### kotlin.collections 具象実装クラスの実装
 
 #### kotlin.collections 関数の実装（A-C）
-- [ ] STDLIB-COL-FN-001: `addAll` 関数の実装（Array版）
+- [x] STDLIB-COL-FN-001: `addAll` 関数の実装（Array版）
 - [ ] STDLIB-COL-FN-002: `addAll` 関数の実装（Iterable版）
 - [ ] STDLIB-COL-FN-003: `addAll` 関数の実装（Sequence版）
 - [ ] STDLIB-COL-FN-006: `all` 関数の実装（Array版）

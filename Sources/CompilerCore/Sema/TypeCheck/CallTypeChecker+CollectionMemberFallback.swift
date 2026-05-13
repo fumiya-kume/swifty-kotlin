@@ -151,6 +151,9 @@ extension CallTypeChecker {
                 expectedType: expectation.expectedType
             )
         }
+        if memberName == "addAll", args.count == 1 {
+            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+        }
 
         if isCollectionReturningMember(
             calleeName,
@@ -489,6 +492,21 @@ extension CallTypeChecker {
                     return match
                 }
             }
+            if memberName == interner.intern("addAll"),
+               argCount == 1,
+               let firstArgExpr = argExprs.first,
+               isArrayLikeReceiver(receiverID: firstArgExpr, sema: sema, interner: interner),
+               let arrayMatch = allCandidates.first(where: { candidate in
+                   guard let signature = sema.symbols.functionSignature(for: candidate),
+                         let parameterType = signature.parameterTypes.first
+                   else {
+                       return false
+                   }
+                   return isCollectionFallbackArrayLikeType(parameterType, sema: sema, interner: interner)
+               })
+            {
+                return arrayMatch
+            }
 
         let lastArgIsFunctionLike: Bool = if let lastExpr = argExprs.last,
                                              let lastExprNode = ctx.ast.arena.expr(lastExpr) {
@@ -529,6 +547,20 @@ extension CallTypeChecker {
         queue.append(contentsOf: sema.symbols.directSupertypes(for: owner))
         }
         return nil
+    }
+
+    private func isCollectionFallbackArrayLikeType(
+        _ type: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(type)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return knownNames.isArrayLikeName(symbol.name)
     }
 
     func isSupportedCollectionFallbackMember(
