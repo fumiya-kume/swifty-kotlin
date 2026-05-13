@@ -291,7 +291,7 @@
  - [x] STDLIB-COL-FN-203: `takeWhile` 関数の実装
 - [x] STDLIB-COL-FN-204: `toBooleanArray` 関数の実装
 - [x] STDLIB-COL-FN-205: `toByteArray` 関数の実装
-- [ ] STDLIB-COL-FN-206: `toCharArray` 関数の実装
+- [x] STDLIB-COL-FN-206: `toCharArray` 関数の実装
 - [x] STDLIB-COL-FN-207: `toCollection` 関数の実装
 - [x] STDLIB-COL-FN-208: `toDoubleArray` 関数の実装
 - [x] STDLIB-COL-FN-209: `toFloatArray` 関数の実装
