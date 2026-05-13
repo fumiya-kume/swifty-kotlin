@@ -570,9 +570,11 @@ extension CodegenBackendIntegrationTests {
             println(list.minOrNull())
             println(list.minOfOrNull { it * 10 })
             println(list.minByOrNull { it % 3 })
+            println(list.fold(0) { acc, value -> acc * 10 + value })
             println(list.foldRight(0) { value, acc -> value * 10 + acc })
             println(list.foldIndexed(0) { index, acc, value -> acc + index * value })
             println(list.foldRightIndexed(0) { index, value, acc -> index + value + acc })
+            println(setOf(3, 1, 2).fold(0) { acc, value -> acc * 10 + value })
             println(list.find { it > 1 })
         }
         """
@@ -593,6 +595,7 @@ extension CodegenBackendIntegrationTests {
             XCTAssertTrue(callees.contains("kk_list_find"))
             XCTAssertTrue(callees.contains("kk_list_minOfOrNull"))
             XCTAssertTrue(callees.contains("kk_list_minByOrNull"))
+            XCTAssertTrue(callees.contains("kk_list_fold"))
             XCTAssertTrue(callees.contains("kk_list_foldRight"))
             XCTAssertTrue(callees.contains("kk_list_foldIndexed"))
             XCTAssertTrue(callees.contains("kk_list_foldRightIndexed"))

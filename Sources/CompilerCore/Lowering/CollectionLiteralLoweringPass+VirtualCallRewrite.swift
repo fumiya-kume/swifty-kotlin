@@ -71,7 +71,7 @@ extension CollectionLiteralLoweringPass {
             result: result, origCanThrow: origCanThrow,
             origThrownResult: origThrownResult, context: context,
             listExprIDs: &listExprIDs, mapExprIDs: &mapExprIDs,
-            sequenceExprIDs: &sequenceExprIDs,
+            setExprIDs: &setExprIDs, sequenceExprIDs: &sequenceExprIDs,
             indexingIterableExprIDs: &indexingIterableExprIDs,
             loweredBody: &loweredBody
         ) { return true }
@@ -362,6 +362,7 @@ extension CollectionLiteralLoweringPass {
         context: VirtualCallRewriteContext,
         listExprIDs: inout Set<Int32>,
         mapExprIDs: inout Set<Int32>,
+        setExprIDs: inout Set<Int32>,
         sequenceExprIDs: inout Set<Int32>,
         indexingIterableExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
@@ -420,7 +421,7 @@ extension CollectionLiteralLoweringPass {
             callee: callee, receiver: receiver, arguments: arguments,
             result: result, origCanThrow: origCanThrow,
             origThrownResult: origThrownResult, module: module, lookup: lookup,
-            listExprIDs: &listExprIDs, loweredBody: &loweredBody
+            listExprIDs: &listExprIDs, setExprIDs: &setExprIDs, loweredBody: &loweredBody
         ) { return true }
 
         return false
@@ -1379,8 +1380,21 @@ extension CollectionLiteralLoweringPass {
         module: KIRModule,
         lookup: CollectionLiteralLookupTables,
         listExprIDs: inout Set<Int32>,
+        setExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
+        if setExprIDs.contains(receiver.rawValue), callee == lookup.foldName, arguments.count == 2 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            _ = emitHOFCall(
+                kkName: lookup.kkListFoldName, receiver: receiver, arguments: arguments + [zeroExpr],
+                result: result, origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult, module: module,
+                loweredBody: &loweredBody
+            )
+            return true
+        }
+
         guard listExprIDs.contains(receiver.rawValue) else { return false }
 
         if callee == lookup.countName, arguments.count == 1 {

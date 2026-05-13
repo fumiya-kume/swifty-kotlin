@@ -4181,7 +4181,10 @@ extension CollectionLiteralLoweringPass {
                         let receiverID = arguments[0]
                         let initialID = arguments[1]
                         let lambdaID = arguments[2]
-                        if listExprIDs.contains(receiverID.rawValue) || sequenceExprIDs.contains(receiverID.rawValue) {
+                        if listExprIDs.contains(receiverID.rawValue)
+                            || setExprIDs.contains(receiverID.rawValue)
+                            || sequenceExprIDs.contains(receiverID.rawValue)
+                        {
                             let closureRawID: KIRExprID
                             if arguments.count == 4 {
                                 closureRawID = arguments[3]

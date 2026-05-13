@@ -7,6 +7,7 @@ fun main() {
 
     println(listOf(1, 2, 3).flatMap { listOf(it, it * 10) })
     println(listOf(1, 2, 3).fold(0) { acc, e -> acc + e })
+    println(setOf(1, 2, 3).fold(0) { acc, e -> acc * 10 + e })
     println(listOf(1, 2, 3).reduce { acc, e -> acc + e })
 
     println(listOf(1, 2, 3, 4).any())

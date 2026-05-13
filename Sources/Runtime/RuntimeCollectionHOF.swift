@@ -931,9 +931,11 @@ public func kk_list_fold(
     _ listRaw: Int, _ initial: Int, _ fnPtr: Int, _ closureRaw: Int,
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
-    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    guard let elements = runtimeCollectionElements(from: listRaw) else {
+        invalidContainerPanic(#function, "collection")
+    }
     var acc = initial
-    for elem in list.elements {
+    for elem in elements {
         var thrown = 0
         acc = maybeUnbox(runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: acc, rhs: elem, outThrown: &thrown))
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
