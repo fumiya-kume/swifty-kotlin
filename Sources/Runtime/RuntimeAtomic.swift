@@ -128,6 +128,11 @@ public func kk_atomic_int_compareAndExchange(_ receiver: Int, _ expect: Int, _ u
     return box.compareAndExchange(expect: expect, update: update)
 }
 
+@_cdecl("kk_atomic_int_asJavaAtomic")
+public func kk_atomic_int_asJavaAtomic(_ receiver: Int) -> Int {
+    receiver
+}
+
 @_cdecl("kk_atomic_int_fetchAndAdd")
 public func kk_atomic_int_fetchAndAdd(_ receiver: Int, _ delta: Int) -> Int {
     guard let box = atomicIntBox(from: receiver) else { return 0 }

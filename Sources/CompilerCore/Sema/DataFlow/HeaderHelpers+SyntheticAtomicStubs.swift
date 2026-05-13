@@ -171,9 +171,22 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
-        registerAtomicBooleanAsJavaAtomicFunction(
+        registerAtomicAsJavaAtomicFunction(
             packageFQName: atomicsPkg,
             receiverPackageFQName: concurrentPkg,
+            receiverName: "AtomicInt",
+            javaAtomicName: "AtomicInteger",
+            externalLinkName: "kk_atomic_int_asJavaAtomic",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerAtomicAsJavaAtomicFunction(
+            packageFQName: atomicsPkg,
+            receiverPackageFQName: concurrentPkg,
+            receiverName: "AtomicBoolean",
+            javaAtomicName: "AtomicBoolean",
+            externalLinkName: "kk_atomic_bool_asJavaAtomic",
             symbols: symbols,
             types: types,
             interner: interner
@@ -1092,15 +1105,18 @@ extension DataFlowSemaPhase {
         )
     }
 
-    private func registerAtomicBooleanAsJavaAtomicFunction(
+    private func registerAtomicAsJavaAtomicFunction(
         packageFQName: [InternedString],
         receiverPackageFQName: [InternedString],
+        receiverName: String,
+        javaAtomicName: String,
+        externalLinkName: String,
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner
     ) {
         guard let receiverSymbol = symbols.lookup(
-            fqName: receiverPackageFQName + [interner.intern("AtomicBoolean")]
+            fqName: receiverPackageFQName + [interner.intern(receiverName)]
         ) else {
             return
         }
@@ -1114,28 +1130,28 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
-        let javaAtomicBooleanSymbol = ensureClassSymbol(
-            named: "AtomicBoolean",
+        let javaAtomicSymbol = ensureClassSymbol(
+            named: javaAtomicName,
             in: javaAtomicPackage,
             symbols: symbols,
             interner: interner
         )
         if let packageSymbol = symbols.lookup(fqName: javaAtomicPackage) {
-            symbols.setParentSymbol(packageSymbol, for: javaAtomicBooleanSymbol)
+            symbols.setParentSymbol(packageSymbol, for: javaAtomicSymbol)
         }
-        let javaAtomicBooleanType = types.make(.classType(ClassType(
-            classSymbol: javaAtomicBooleanSymbol,
+        let javaAtomicType = types.make(.classType(ClassType(
+            classSymbol: javaAtomicSymbol,
             args: [],
             nullability: .nonNull
         )))
-        symbols.setPropertyType(javaAtomicBooleanType, for: javaAtomicBooleanSymbol)
+        symbols.setPropertyType(javaAtomicType, for: javaAtomicSymbol)
 
         registerAtomicExtensionFunction(
             packageFQName: packageFQName,
             name: "asJavaAtomic",
-            externalLinkName: "kk_atomic_bool_asJavaAtomic",
+            externalLinkName: externalLinkName,
             receiverType: receiverType,
-            returnType: javaAtomicBooleanType,
+            returnType: javaAtomicType,
             symbols: symbols,
             interner: interner
         )
