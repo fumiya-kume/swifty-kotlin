@@ -2108,13 +2108,15 @@ public func kk_list_randomOrNull(_ listRaw: Int) -> Int {
 
 @_cdecl("kk_list_flatten")
 public func kk_list_flatten(_ listRaw: Int) -> Int {
-    guard let _listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
-    let elements = _listBox.elements
+    guard let elements = runtimeCollectionElements(from: listRaw) else {
+        invalidContainerPanic(#function, "collection")
+    }
     var result: [Int] = []
-    for subListRaw in elements {
-        if let subList = runtimeListBox(from: subListRaw) {
-            result.append(contentsOf: subList.elements)
+    for subCollectionRaw in elements {
+        guard let subElements = runtimeCollectionElements(from: subCollectionRaw) else {
+            invalidContainerPanic(#function, "collection")
         }
+        result.append(contentsOf: subElements)
     }
     return registerRuntimeObject(RuntimeListBox(elements: result))
 }

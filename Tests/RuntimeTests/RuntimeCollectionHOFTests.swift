@@ -421,6 +421,8 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         let flatMapped = kk_list_flatMap(source, unsafeBitCast(flatMapPair, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
         XCTAssertEqual(listElements(flatMapped), [1, 10, 2, 20, 3, 30])
         XCTAssertEqual(listElements(kk_list_flatten(makeList([makeList([1, 2]), makeList([3])]))), [1, 2, 3])
+        let nestedCollections = makeList([makeList([1]), kk_set_of(makeArray([2, 3]), 2)])
+        XCTAssertEqual(listElements(kk_list_flatten(nestedCollections)), [1, 2, 3])
 
         XCTAssertEqual(kk_list_fold(source, 0, unsafeBitCast(foldOrder, to: Int.self), 0, nil), 123)
         XCTAssertEqual(kk_list_foldRight(source, 0, unsafeBitCast(reduceRightChecksum, to: Int.self), 0, nil), 60)
