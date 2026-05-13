@@ -118,7 +118,7 @@
 - [x] STDLIB-COL-FN-044: `distinct` 関数の実装
 - [x] STDLIB-COL-FN-045: `distinctBy` 関数の実装
 - [x] STDLIB-COL-FN-046: `drop` 関数の実装
-- [ ] STDLIB-COL-FN-047: `dropLast` 関数の実装
+- [x] STDLIB-COL-FN-047: `dropLast` 関数の実装
 - [ ] STDLIB-COL-FN-048: `dropLastWhile` 関数の実装
 - [ ] STDLIB-COL-FN-049: `dropWhile` 関数の実装
 - [x] STDLIB-COL-FN-050: `elementAt` 関数の実装
