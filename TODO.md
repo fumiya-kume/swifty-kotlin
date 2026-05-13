@@ -245,7 +245,7 @@
 - [x] STDLIB-COL-FN-160: `reduce` 関数の実装
 - [x] STDLIB-COL-FN-161: `reduceIndexed` 関数の実装
 - [ ] STDLIB-COL-FN-162: `reduceIndexedOrNull` 関数の実装
-- [ ] STDLIB-COL-FN-163: `reduceOrNull` 関数の実装
+- [x] STDLIB-COL-FN-163: `reduceOrNull` 関数の実装
 - [x] STDLIB-COL-FN-164: `reduceRight` 関数の実装
 - [x] STDLIB-COL-FN-165: `reduceRightIndexed` 関数の実装
 - [x] STDLIB-COL-FN-166: `reduceRightIndexedOrNull` 関数の実装
