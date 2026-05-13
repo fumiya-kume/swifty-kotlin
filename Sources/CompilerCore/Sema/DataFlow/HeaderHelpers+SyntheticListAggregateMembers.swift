@@ -102,6 +102,11 @@ extension DataFlowSemaPhase {
         }
 
         registerComparableMember(
+            name: "max",
+            externalLinkName: "kk_list_max",
+            returnType: listTypeParamType
+        )
+        registerComparableMember(
             name: "min",
             externalLinkName: "kk_list_min",
             returnType: listTypeParamType

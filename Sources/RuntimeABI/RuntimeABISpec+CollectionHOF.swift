@@ -352,6 +352,15 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         )
+        let maxSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_max",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
         let minSpec = RuntimeABIFunctionSpec(
             name: "kk_list_min",
             parameters: [
@@ -561,7 +570,7 @@ public extension RuntimeABISpec {
                 ),
                 zipSpec, zipWithNextSpec, zipWithNextTransformSpec, unzipSpec, withIndexSpec, forEachIndexedSpec, mapIndexedSpec, mapIndexedNotNullSpec,
                 sumOfSpec, sumBySpec, sumByDoubleSpec, maxOrNullSpec, minOrNullSpec,
-                minSpec,
+                maxSpec, minSpec,
                 takeSpec, dropSpec, takeLastSpec, sumSpec, averageSpec, reversedSpec, asReversedSpec, sortedSpec, distinctSpec,
                 sortedPrimitiveSpec,
                 shuffledSpec, shuffledRandomSpec, randomSpec, randomOrNullSpec,
