@@ -132,7 +132,7 @@ extension CallLowerer {
         "withIndex", "forEachIndexed", "mapIndexed", "mapIndexedNotNull", "filterIndexed", "mapValues", "mapValuesTo", "mapKeys", "mapKeysTo", "filterKeys", "filterValues",
         "getValue", "getOrDefault", "getOrElse", "getOrPut", "getOrNull", "elementAtOrNull", "elementAt", "elementAtOrElse",
         "putAll", "addAll",
-        "maxBy", "minBy", "min", "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull", "maxOrNull", "minOrNull",
+        "maxBy", "minBy", "max", "min", "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull", "maxOrNull", "minOrNull",
         "plus", "plusElement", "minus", "minusElement",
         "asSequence", "asIterable", "toList", "toSet", "toMap", "toCollection", "toMutableList", "toMutableSet", "toTypedArray",
         "toBooleanArray", "toShortArray", "toDoubleArray", "toFloatArray", "toIntArray", "toLongArray", "toByteArray", "toUByteArray", "toUShortArray", "toUIntArray", "toULongArray",
@@ -3912,6 +3912,8 @@ extension CallLowerer {
                     "kk_list_maxOf"
                 case "minOf":
                     "kk_list_minOf"
+                case "max":
+                    "kk_list_max"
                 case "min":
                     "kk_list_min"
                 case "maxWith":
@@ -5993,6 +5995,7 @@ extension CallLowerer {
             interner.intern("kk_list_take"),
             interner.intern("kk_list_takeLast"),
             interner.intern("kk_list_drop"),
+            interner.intern("kk_list_max"),
             interner.intern("kk_list_minBy"),
             interner.intern("kk_list_min"),
             interner.intern("kk_list_maxOf"),
@@ -7304,6 +7307,8 @@ extension CallLowerer {
                 return interner.intern("kk_list_maxOf")
             case "minOf":
                 return interner.intern("kk_list_minOf")
+            case "max":
+                return interner.intern("kk_list_max")
             case "min":
                 return interner.intern("kk_list_min")
             case "maxWith":
@@ -7608,6 +7613,8 @@ extension CallLowerer {
             return interner.intern("kk_list_maxOf")
         case "minOf":
             return interner.intern("kk_list_minOf")
+        case "max":
+            return interner.intern("kk_list_max")
         case "min":
             return interner.intern("kk_list_min")
         case "maxWith":
