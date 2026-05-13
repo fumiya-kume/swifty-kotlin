@@ -483,7 +483,7 @@
 - [x] STDLIB-IO-PATH-PROP-003: `invariantSeparatorsPathString` 拡張プロパティの実装
 - [x] STDLIB-IO-PATH-PROP-004: `name` 拡張プロパティの実装
 - [x] STDLIB-IO-PATH-PROP-005: `nameWithoutExtension` 拡張プロパティの実装
-- [ ] STDLIB-IO-PATH-PROP-006: `pathString` 拡張プロパティの実装
+- [x] STDLIB-IO-PATH-PROP-006: `pathString` 拡張プロパティの実装
 
 #### kotlin.io.path 関数の実装
 - [x] STDLIB-IO-PATH-FN-001: `absolute` 関数の実装

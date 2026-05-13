@@ -676,3 +676,11 @@ public func kk_path_bufferedWriter(
         return 0
     }
 }
+
+@_cdecl("kk_path_pathString")
+public func kk_path_pathString(_ pathRaw: Int) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_pathString received invalid Path handle")
+    }
+    return pathMakeStringRaw(path.pathString)
+}
