@@ -323,6 +323,19 @@ final class CallLowerer {
             return loweredAtomicIntArrayFactory
         }
 
+        if let loweredAtomicLongArrayFactory = lowerAtomicLongArrayFactoryCallExpr(
+            exprID,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        ) {
+            return loweredAtomicLongArrayFactory
+        }
+
         if let loweredEnumValues = lowerEnumValuesCallExpr(
             exprID,
             args: args,
