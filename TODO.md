@@ -68,7 +68,7 @@
 - [ ] STDLIB-COL-FN-048: `dropLastWhile` 関数の実装
 - [ ] STDLIB-COL-FN-060: `filterIsInstance` 関数の実装
 - [ ] STDLIB-COL-FN-071: `first` 関数の実装
-- [ ] STDLIB-COL-FN-077: `flatMapIndexedTo` 関数の実装
+- [x] STDLIB-COL-FN-077: `flatMapIndexedTo` 関数の実装
 - [ ] STDLIB-COL-FN-078: `flatMapTo` 関数の実装
 - [ ] STDLIB-COL-FN-079: `flatten` 関数の実装
 - [ ] STDLIB-COL-FN-081: `foldIndexed` 関数の実装
