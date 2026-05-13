@@ -2990,3 +2990,29 @@ public func kk_suspend_function_invoke(
     
     return Int(continuationState.completion)
 }
+
+@_cdecl("kk_channel_send_suspending")
+public func kk_channel_send_suspending(_ handle: Int, _ value: Int, _ continuation: Int) -> Int {
+    func isRegisteredChannelHandle(_ raw: Int) -> Bool {
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return false }
+        let isRegistered = runtimeStorage.withLock { state in
+            state.objectPointers.contains(UInt(bitPattern: ptr))
+        }
+        guard isRegistered else { return false }
+        return tryCast(ptr, to: RuntimeChannelHandle.self) != nil
+    }
+    let resolvedHandle: Int
+    let resolvedValue: Int
+    if !isRegisteredChannelHandle(handle), isRegisteredChannelHandle(value) {
+        resolvedHandle = value
+        resolvedValue = handle
+    } else {
+        resolvedHandle = handle
+        resolvedValue = value
+    }
+    guard let resolvedPtr = UnsafeMutableRawPointer(bitPattern: resolvedHandle) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_channel_send_suspending received invalid channel handle")
+    }
+    let channel = Unmanaged<RuntimeChannelHandle>.fromOpaque(resolvedPtr).takeUnretainedValue()
+    return channel.send(resolvedValue, continuation: continuation)
+}
