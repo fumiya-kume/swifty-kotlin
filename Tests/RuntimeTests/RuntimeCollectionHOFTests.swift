@@ -1241,6 +1241,32 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(kk_list_none(makeList([]), 0, 0, nil), 1)
     }
 
+    func testIterableAnyShortCircuitsAcrossCollectionKindsAndNoArgOverload() {
+        let listSource = makeList([1, 2, 3, 4])
+
+        gHOFState.reset()
+        XCTAssertEqual(kk_iterable_any(listSource, unsafeBitCast(anyGtTwoCounting, to: Int.self), 0, nil), 1)
+        XCTAssertEqual(gHOFState.callsSnapshot(), 3)
+
+        let setSource = kk_set_of(makeArray([1, 2]), 2)
+        gHOFState.reset()
+        XCTAssertEqual(kk_iterable_any(setSource, unsafeBitCast(anyGtTwoCounting, to: Int.self), 0, nil), 0)
+        XCTAssertEqual(gHOFState.callsSnapshot(), 2)
+
+        XCTAssertEqual(kk_iterable_any(listSource, 0, 0, nil), 1)
+        XCTAssertEqual(kk_iterable_any(makeList([]), 0, 0, nil), 0)
+    }
+
+    func testIterableAnyPropagatesThrowingLambda() {
+        let source = makeList([1])
+        var thrown = 0
+
+        let result = kk_iterable_any(source, unsafeBitCast(throwingHOFLambda, to: Int.self), 0, &thrown)
+
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
     func testIterableAllShortCircuitsAcrossCollectionKinds() {
         let listSource = makeList([1, 2, 3, 4])
 

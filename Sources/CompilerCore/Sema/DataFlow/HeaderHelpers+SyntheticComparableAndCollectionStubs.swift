@@ -153,6 +153,10 @@ extension DataFlowSemaPhase {
             symbols: symbols, types: types, interner: interner,
             iterableInterfaceSymbol: iterableInterfaceSymbol
         )
+        registerIterableAnyMember(
+            symbols: symbols, types: types, interner: interner,
+            iterableInterfaceSymbol: iterableInterfaceSymbol
+        )
         registerIterableLastMember(
             symbols: symbols, types: types, interner: interner,
             iterableInterfaceSymbol: iterableInterfaceSymbol

@@ -3771,7 +3771,7 @@ extension CallLowerer {
                 } else if calleeName == interner.intern("findLast") {
                     runtimeCallee = "kk_sequence_findLast"
                 } else if calleeName == interner.intern("any") {
-                    runtimeCallee = "kk_sequence_any"
+                    runtimeCallee = useIterableRuntimeForCollectionFallback ? "kk_iterable_any" : "kk_sequence_any"
                 } else if calleeName == interner.intern("all") {
                     runtimeCallee = useIterableRuntimeForCollectionFallback ? "kk_iterable_all" : "kk_sequence_all"
                 } else if calleeName == interner.intern("none") {
@@ -3845,6 +3845,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_maxOf"
                         || runtimeCallee == "kk_sequence_partition"
                         || runtimeCallee == "kk_sequence_any"
+                        || runtimeCallee == "kk_iterable_any"
                         || runtimeCallee == "kk_sequence_all"
                         || runtimeCallee == "kk_iterable_all"
                         || runtimeCallee == "kk_sequence_none"
@@ -4323,6 +4324,7 @@ extension CallLowerer {
                 let seqLastOrNullCallee = interner.intern("kk_sequence_lastOrNull")
                 let seqCountCallee = interner.intern("kk_sequence_count")
                 let seqAnyCallee = interner.intern("kk_sequence_any")
+                let iterableAnyCallee = interner.intern("kk_iterable_any")
                 let seqNoneCallee = interner.intern("kk_sequence_none")
                 let seqToListCallee = interner.intern("kk_sequence_to_list")
 
@@ -4377,7 +4379,7 @@ extension CallLowerer {
                 case unzipID:
                     interner.intern("kk_sequence_unzip")
                 case anyID:
-                    seqAnyCallee
+                    useIterableRuntimeForTerminalFallback ? iterableAnyCallee : seqAnyCallee
                 case noneID:
                     seqNoneCallee
                 default:
@@ -4385,7 +4387,7 @@ extension CallLowerer {
                 }
                 if let runtimeCallee {
                     // any()/none() with no predicate: pass fnPtr=0, closure=0 sentinel
-                    if runtimeCallee == seqAnyCallee || runtimeCallee == seqNoneCallee {
+                    if runtimeCallee == seqAnyCallee || runtimeCallee == iterableAnyCallee || runtimeCallee == seqNoneCallee {
                         let zeroExpr = arena.appendExpr(.intLiteral(0), type: nil)
                         instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
                         instructions.append(.call(
@@ -5546,6 +5548,7 @@ extension CallLowerer {
         }
         if (loweredCallee == interner.intern("kk_iterable_firstNotNullOf")
             || loweredCallee == interner.intern("kk_iterable_firstNotNullOfOrNull")
+            || loweredCallee == interner.intern("kk_iterable_any")
             || loweredCallee == interner.intern("kk_iterable_all")),
            finalArguments.count == 2
         {
@@ -5886,6 +5889,7 @@ extension CallLowerer {
             interner.intern("kk_list_takeWhile"),
             interner.intern("kk_iterable_firstNotNullOf"),
             interner.intern("kk_iterable_firstNotNullOfOrNull"),
+            interner.intern("kk_iterable_any"),
             interner.intern("kk_iterable_all"),
             interner.intern("kk_iterable_requireNoNulls"),
             interner.intern("kk_kclass_cast"),
@@ -7684,7 +7688,7 @@ extension CallLowerer {
             case interner.intern("findLast"):
                 return interner.intern("kk_sequence_findLast")
             case interner.intern("any"):
-                return interner.intern("kk_sequence_any")
+                return interner.intern(useIterableRuntimeForCollectionFallback ? "kk_iterable_any" : "kk_sequence_any")
             case interner.intern("all"):
                 return interner.intern(useIterableRuntimeForCollectionFallback ? "kk_iterable_all" : "kk_sequence_all")
             case interner.intern("none"):

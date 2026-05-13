@@ -895,6 +895,23 @@ public func kk_list_all(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outTh
     return 1
 }
 
+@_cdecl("kk_iterable_any")
+public func kk_iterable_any(_ iterableRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let elements = runtimeCollectionElements(from: iterableRaw) ?? runtimeArrayBox(from: iterableRaw)?.elements else {
+        invalidContainerPanic(#function, "iterable")
+    }
+    if fnPtr == 0 {
+        return elements.isEmpty ? 0 : 1
+    }
+    for elem in elements {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if maybeUnbox(result) != 0 { return 1 }
+    }
+    return 0
+}
+
 @_cdecl("kk_iterable_all")
 public func kk_iterable_all(_ iterableRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let elements = runtimeCollectionElements(from: iterableRaw) ?? runtimeArrayBox(from: iterableRaw)?.elements else {

@@ -1,7 +1,7 @@
 // swiftlint:disable file_length
 
 /// Per-member synthetic Iterable<E> registrations:
-/// `asSequence`, `joinTo`, `firstNotNullOf{,OrNull}`, `all`, `last`,
+/// `asSequence`, `joinTo`, `firstNotNullOf{,OrNull}`, `all`, `any`, `last`,
 /// `joinToString`, `windowed(transform:)`, `plusElement`,
 /// `minusElement`, `reduceRight*`, `sumBy{,Double}`.
 ///
@@ -297,6 +297,88 @@ extension DataFlowSemaPhase {
             ),
             for: memberSymbol
         )
+    }
+
+    /// Register `Iterable<E>.any()` and `Iterable<E>.any(predicate)` (STDLIB-COL-FN-009).
+    func registerIterableAnyMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        iterableInterfaceSymbol: SymbolID
+    ) {
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName,
+              let iterableTypeParamSymbol = types.nominalTypeParameterSymbols(for: iterableInterfaceSymbol).first
+        else { return }
+
+        let memberName = interner.intern("any")
+        let memberFQName = iterableFQName + [memberName]
+        let elementType = types.make(.typeParam(TypeParamType(
+            symbol: iterableTypeParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+        let predicateType = types.make(.functionType(FunctionType(
+            params: [elementType],
+            returnType: types.booleanType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        func registerAnyOverload(parameterTypes: [TypeID], parameterNames: [String]) {
+            let alreadyRegistered = symbols.lookupAll(fqName: memberFQName).contains { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == receiverType
+                    && signature.parameterTypes == parameterTypes
+                    && signature.returnType == types.booleanType
+            }
+            guard !alreadyRegistered else { return }
+
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: memberName,
+                fqName: memberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_iterable_any", for: memberSymbol)
+
+            var parameterSymbols: [SymbolID] = []
+            for parameterNameString in parameterNames {
+                let parameterName = interner.intern(parameterNameString)
+                let parameterSymbol = symbols.define(
+                    kind: .valueParameter,
+                    name: parameterName,
+                    fqName: memberFQName + [parameterName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(memberSymbol, for: parameterSymbol)
+                parameterSymbols.append(parameterSymbol)
+            }
+
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: parameterTypes,
+                    returnType: types.booleanType,
+                    valueParameterSymbols: parameterSymbols,
+                    valueParameterIsVararg: Array(repeating: false, count: parameterTypes.count),
+                    typeParameterSymbols: [iterableTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        registerAnyOverload(parameterTypes: [], parameterNames: [])
+        registerAnyOverload(parameterTypes: [predicateType], parameterNames: ["predicate"])
     }
 
     /// Register `Iterable<E>.last()` (STDLIB-COL-FN-104).
