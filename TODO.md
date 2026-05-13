@@ -494,7 +494,7 @@
 - [x] STDLIB-IO-PATH-FN-006: `appendText` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-007: `bufferedReader` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-008: `bufferedWriter` 関数の実装
-- [ ] STDLIB-IO-PATH-FN-009: `copyTo` 関数の実装
+- [x] STDLIB-IO-PATH-FN-009: `copyTo` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-010: `copyToRecursively` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-011: `createSymbolicLinkPointingTo` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-012: `createTempDirectory` 関数の実装
