@@ -165,7 +165,7 @@
 - [x] STDLIB-COL-FN-083: `foldRightIndexed` 関数の実装
 - [ ] STDLIB-COL-FN-084: `forEach` 関数の実装
 - [x] STDLIB-COL-FN-084: `forEach` 関数の実装
-- [ ] STDLIB-COL-FN-085: `forEachIndexed` 関数の実装
+- [x] STDLIB-COL-FN-085: `forEachIndexed` 関数の実装
 - [x] STDLIB-COL-FN-086: `get` 関数の実装
 - [ ] STDLIB-COL-FN-087: `getOrDefault` 関数の実装
 - [x] STDLIB-COL-FN-088: `getOrPut` 関数の実装
@@ -678,7 +678,7 @@
 - [ ] STDLIB-SEQ-FN-042: `fold` 関数の実装
 - [ ] STDLIB-SEQ-FN-043: `foldIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-044: `forEach` 関数の実装
-- [ ] STDLIB-SEQ-FN-045: `forEachIndexed` 関数の実装
+- [x] STDLIB-SEQ-FN-045: `forEachIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-046: `groupBy` 関数の実装
 - [ ] STDLIB-SEQ-FN-047: `groupByTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-048: `indexOf` 関数の実装
