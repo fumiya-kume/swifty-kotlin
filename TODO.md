@@ -166,8 +166,8 @@
 - [ ] STDLIB-COL-FN-084: `forEach` 関数の実装
 - [x] STDLIB-COL-FN-084: `forEach` 関数の実装
 - [ ] STDLIB-COL-FN-085: `forEachIndexed` 関数の実装
-- [ ] STDLIB-COL-FN-086: `get` 関数の実装
-- [x] STDLIB-COL-FN-087: `getOrDefault` 関数の実装
+- [x] STDLIB-COL-FN-086: `get` 関数の実装
+- [ ] STDLIB-COL-FN-087: `getOrDefault` 関数の実装
 - [x] STDLIB-COL-FN-088: `getOrPut` 関数の実装
 - [x] STDLIB-COL-FN-089: `getValue` 関数の実装
 - [ ] STDLIB-COL-FN-090: `groupBy` 関数の実装

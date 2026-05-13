@@ -360,6 +360,7 @@ final class RuntimeCollectionHOFTests: XCTestCase {
 
     func testFilterThenMapMatchesExpectedChain() {
         let source = makeList([1, 2, 3])
+        XCTAssertEqual(kk_list_get(source, 1), 2)
         let filtered = kk_list_filter(source, unsafeBitCast(filterGreaterThanOne, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
         let mapped = kk_list_map(filtered, unsafeBitCast(mapTimesTwo, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
         XCTAssertEqual(listElements(mapped), [4, 6])
