@@ -865,6 +865,33 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenAsKotlinAtomicArrayOverloads() throws {
+        let source = """
+        @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
+        import java.util.concurrent.atomic.AtomicIntegerArray
+        import java.util.concurrent.atomic.AtomicLongArray
+        import java.util.concurrent.atomic.AtomicReferenceArray
+        import kotlin.concurrent.atomics.asKotlinAtomicArray
+
+        fun main() {
+            val intArray = AtomicIntegerArray(2).asKotlinAtomicArray()
+            val longArray = AtomicLongArray(2).asKotlinAtomicArray()
+            val refArray = AtomicReferenceArray<String>(2).asKotlinAtomicArray()
+            refArray.storeAt(0, "ref")
+            println(intArray.loadAt(0))
+            println(longArray.loadAt(1))
+            println(refArray.loadAt(0))
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(inputPath: path, moduleName: "AsKotlinAtomicArrayOverloads", emit: .executable, outputPath: outputBase)
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "0\n0\nref\n")
+        }
+    }
+
     // MARK: - AtomicLongArray edge cases
 
     func testCodegenAtomicLongArrayAsJavaAtomicArray() throws {

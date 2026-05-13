@@ -278,6 +278,7 @@ extension ABIMismatchTests {
             "kk_atomic_int_array_compareAndSetAt",
             "kk_atomic_int_array_compareAndExchangeAt",
             "kk_atomic_int_array_asJavaAtomicArray",
+            "kk_java_atomic_int_array_asKotlinAtomicArray",
             "kk_atomic_int_array_fetchAndUpdateAt",
             "kk_atomic_int_array_fetchAndAddAt",
             "kk_atomic_int_array_addAndFetchAt",
@@ -293,6 +294,7 @@ extension ABIMismatchTests {
             "kk_atomic_long_array_compareAndSetAt",
             "kk_atomic_long_array_compareAndExchangeAt",
             "kk_atomic_long_array_asJavaAtomicArray",
+            "kk_java_atomic_long_array_asKotlinAtomicArray",
             "kk_atomic_long_array_fetchAndAddAt",
             "kk_atomic_long_array_addAndFetchAt",
             "kk_atomic_long_array_fetchAndIncrementAt",
@@ -301,6 +303,7 @@ extension ABIMismatchTests {
             "kk_atomic_long_array_decrementAndFetchAt",
             "kk_atomic_ref_array_exchangeAt",
             "kk_atomic_ref_array_asJavaAtomicArray",
+            "kk_java_atomic_ref_array_asKotlinAtomicArray",
             // ThreadLocal (java.lang / kotlin.concurrent)
             "kk_thread_local_new",
             "kk_thread_local_getOrSet",
