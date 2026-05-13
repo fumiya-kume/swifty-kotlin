@@ -316,6 +316,13 @@ extension DataFlowSemaPhase {
             collectionInterfaceSymbol: collectionInterfaceSymbol,
             mutableIterableInterfaceSymbol: mutableIterableInterfaceSymbol
         )
+        registerMutableCollectionIterableAddAllMembers(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            iterableInterfaceSymbol: iterableInterfaceSymbol
+        )
         let mapSymbols = registerSyntheticMapStub(
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg

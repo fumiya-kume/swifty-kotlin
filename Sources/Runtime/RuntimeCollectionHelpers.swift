@@ -106,6 +106,27 @@ func runtimeCollectionOrArrayElements(from rawValue: Int) -> [Int]? {
     return nil
 }
 
+func runtimeIterableElements(from rawValue: Int) -> [Int]? {
+    if let elements = runtimeCollectionElements(from: rawValue) {
+        return elements
+    }
+    if let stringIterable = runtimeStringIterableBox(from: rawValue) {
+        let listRaw = kk_string_toList(stringIterable.strRaw)
+        return runtimeCollectionElements(from: listRaw)
+    }
+    if let indexingIterable = runtimeIndexingIterableBox(from: rawValue),
+       let list = runtimeListBox(from: indexingIterable.listRaw)
+    {
+        return list.elements.enumerated().map { index, element in
+            kk_pair_new(index, element)
+        }
+    }
+    if runtimeSequenceBox(from: rawValue) != nil {
+        return runtimeSequenceSourceElements(from: rawValue)
+    }
+    return nil
+}
+
 func runtimeListIteratorBox(from rawValue: Int) -> RuntimeListIteratorBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
@@ -143,6 +164,19 @@ func runtimeStringIterableBox(from rawValue: Int) -> RuntimeStringIterableBox? {
         return nil
     }
     return tryCast(ptr, to: RuntimeStringIterableBox.self)
+}
+
+func runtimeIndexingIterableBox(from rawValue: Int) -> RuntimeIndexingIterableBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
+        return nil
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObjectPointer else {
+        return nil
+    }
+    return tryCast(ptr, to: RuntimeIndexingIterableBox.self)
 }
 
 func runtimeMapIteratorBox(from rawValue: Int) -> RuntimeMapIteratorBox? {

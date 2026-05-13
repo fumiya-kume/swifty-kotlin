@@ -1297,7 +1297,7 @@ symbol s1295 kind=function fq=kotlin.sequences.Sequence.lastOrNull vis=public fl
 symbol s1296 kind=function fq=kotlin.sequences.Sequence.singleOrNull vis=public flags=synthetic|operatorFunction sig=recv=Class#96<out T#97> params=[] ret=T#97? suspend=0 defaults=[] vararg=[]
 symbol s1297 kind=function fq=kotlin.sequences.Sequence.count vis=public flags=synthetic|operatorFunction sig=recv=Class#96<out T#97> params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s1298 kind=function fq=kotlin.sequences.Sequence.toList vis=public flags=synthetic|operatorFunction sig=recv=Class#96<out T#97> params=[] ret=Class#105<out T#97> suspend=0 defaults=[] vararg=[]
-symbol s1299 kind=function fq=kotlin.sequences.Sequence.asIterable vis=public flags=synthetic|operatorFunction sig=recv=Class#96<out T#97> params=[] ret=Class#96<out T#97> suspend=0 defaults=[] vararg=[]
+symbol s1299 kind=function fq=kotlin.sequences.Sequence.asIterable vis=public flags=synthetic|operatorFunction sig=recv=Class#96<out T#97> params=[] ret=Class#87<out T#97> suspend=0 defaults=[] vararg=[]
 symbol s1300 kind=function fq=kotlin.sequences.Sequence.filterNot vis=public flags=synthetic|operatorFunction sig=recv=Class#96<out T#97> params=[(T#97) -> Boolean] ret=Class#96<out T#97> suspend=0 defaults=[0] vararg=[0]
 symbol s1301 kind=valueParameter fq=kotlin.sequences.Sequence.filterNot.predicate vis=private flags=synthetic
 symbol s1302 kind=function fq=kotlin.sequences.Sequence.foldIndexed vis=public flags=synthetic|operatorFunction sig=recv=Class#96<out T#97> params=[Any,(Int, Any, T#97) -> Any] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]

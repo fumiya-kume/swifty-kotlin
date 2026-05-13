@@ -904,6 +904,34 @@ public func kk_mutable_list_addAll_sequence(_ listRaw: Int, _ sequenceRaw: Int) 
     return runtimeMutableListAddAllSequence(listRaw: listRaw, sequenceRaw: sequenceRaw)
 }
 
+@_cdecl("kk_mutable_collection_addAll_iterable")
+public func kk_mutable_collection_addAll_iterable(_ collectionRaw: Int, _ iterableRaw: Int) -> Int {
+    guard let elements = runtimeIterableElements(from: iterableRaw) else {
+        return kk_box_bool(0)
+    }
+    if let list = runtimeListBox(from: collectionRaw) {
+        if elements.isEmpty {
+            return kk_box_bool(0)
+        }
+        list.elements.append(contentsOf: elements)
+        return kk_box_bool(1)
+    }
+    if let set = runtimeSetBox(from: collectionRaw) {
+        var modified = false
+        for element in elements where !set.elements.contains(where: { runtimeValuesEqual($0, element) }) {
+            set.elements.append(element)
+            modified = true
+        }
+        return kk_box_bool(modified ? 1 : 0)
+    }
+    return kk_box_bool(0)
+}
+
+@_cdecl("kk_mutable_list_addAll_iterable")
+public func kk_mutable_list_addAll_iterable(_ listRaw: Int, _ iterableRaw: Int) -> Int {
+    kk_mutable_collection_addAll_iterable(listRaw, iterableRaw)
+}
+
 @_cdecl("kk_mutable_list_removeAll")
 public func kk_mutable_list_removeAll(_ listRaw: Int, _ collectionRaw: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {

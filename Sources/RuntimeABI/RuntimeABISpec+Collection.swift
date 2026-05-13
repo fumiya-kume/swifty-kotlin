@@ -1943,10 +1943,28 @@ public extension RuntimeABISpec {
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_mutable_collection_addAll_iterable",
+            parameters: [
+                RuntimeABIParameter(name: "collectionRaw", type: .intptr),
+                RuntimeABIParameter(name: "iterableRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_mutable_list_addAll_sequence",
             parameters: [
                 RuntimeABIParameter(name: "listRaw", type: .intptr),
                 RuntimeABIParameter(name: "sequenceRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_mutable_list_addAll_iterable",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "iterableRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Collection"
@@ -2146,6 +2164,15 @@ public extension RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "setRaw", type: .intptr),
                 RuntimeABIParameter(name: "sequenceRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_mutable_set_addAll_iterable",
+            parameters: [
+                RuntimeABIParameter(name: "setRaw", type: .intptr),
+                RuntimeABIParameter(name: "iterableRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Collection"

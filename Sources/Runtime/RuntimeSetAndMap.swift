@@ -282,6 +282,11 @@ public func kk_mutable_set_addAll_sequence(_ setRaw: Int, _ sequenceRaw: Int) ->
     return runtimeMutableSetAddAllSequence(setRaw: setRaw, sequenceRaw: sequenceRaw)
 }
 
+@_cdecl("kk_mutable_set_addAll_iterable")
+public func kk_mutable_set_addAll_iterable(_ setRaw: Int, _ iterableRaw: Int) -> Int {
+    kk_mutable_collection_addAll_iterable(setRaw, iterableRaw)
+}
+
 @_cdecl("kk_mutable_set_removeAll")
 public func kk_mutable_set_removeAll(_ setRaw: Int, _ collectionRaw: Int) -> Int {
     guard let set = runtimeSetBox(from: setRaw) else {

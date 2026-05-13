@@ -120,6 +120,14 @@ extension CallTypeChecker {
         } else {
             false
         }
+        let isAddAllIterableArgument: Bool = if let addAllFirstArgumentExpr,
+                                                let firstArgType = sema.bindings.exprTypes[addAllFirstArgumentExpr] {
+            isIterableLikeReceiver(receiverID: addAllFirstArgumentExpr, sema: sema, interner: interner)
+                && !isCollectionLikeType(firstArgType, sema: sema, interner: interner)
+                && !isSequenceLikeType(firstArgType, sema: sema, interner: interner)
+        } else {
+            false
+        }
         guard isSupportedCollectionFallbackMember(
             calleeName,
             isIterableReceiver: isIterableReceiver,
@@ -133,6 +141,7 @@ extension CallTypeChecker {
             isMutableMapReceiver: isMutableMapReceiver,
             isAddAllArrayArgument: isAddAllArrayArgument,
             isAddAllSequenceArgument: isAddAllSequenceArgument,
+            isAddAllIterableArgument: isAddAllIterableArgument,
             interner: interner
         ),
         isValidCollectionFallbackArity(
@@ -147,6 +156,7 @@ extension CallTypeChecker {
             isMutableListReceiver: isMutableListReceiver,
             isAddAllArrayArgument: isAddAllArrayArgument,
             isAddAllSequenceArgument: isAddAllSequenceArgument,
+            isAddAllIterableArgument: isAddAllIterableArgument,
             interner: interner
         )
         else {
@@ -552,6 +562,22 @@ extension CallTypeChecker {
             {
                 return sequenceMatch
             }
+            if memberName == interner.intern("addAll"),
+               argCount == 1,
+               let firstArgExpr = argExprs.first,
+               isIterableLikeReceiver(receiverID: firstArgExpr, sema: sema, interner: interner),
+               !isCollectionLikeType(sema.bindings.exprTypes[firstArgExpr] ?? sema.types.anyType, sema: sema, interner: interner),
+               let iterableMatch = allCandidates.first(where: { candidate in
+                   guard let signature = sema.symbols.functionSignature(for: candidate),
+                         let parameterType = signature.parameterTypes.first
+                   else {
+                       return false
+                   }
+                   return isCollectionFallbackIterableLikeType(parameterType, sema: sema, interner: interner)
+               })
+            {
+                return iterableMatch
+            }
 
         let lastArgIsFunctionLike: Bool = if let lastExpr = argExprs.last,
                                              let lastExprNode = ctx.ast.arena.expr(lastExpr) {
@@ -606,6 +632,24 @@ extension CallTypeChecker {
             return false
         }
         return knownNames.isArrayLikeName(symbol.name)
+    }
+
+    private func isCollectionFallbackIterableLikeType(
+        _ type: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(type)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return symbol.name == interner.intern("Iterable")
+            || symbol.fqName == [
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("Iterable"),
+            ]
     }
 
     private func stdlibSurfaceOwnerKindsForCollectionFallback(
@@ -675,6 +719,7 @@ extension CallTypeChecker {
         isMutableMapReceiver: Bool,
         isAddAllArrayArgument: Bool = false,
         isAddAllSequenceArgument: Bool = false,
+        isAddAllIterableArgument: Bool = false,
         interner: StringInterner
     ) -> Bool {
         let knownNames = KnownCompilerNames(interner: interner)
@@ -889,7 +934,7 @@ extension CallTypeChecker {
                 || (
                     memberName == interner.intern("addAll")
                         && isMutableCollectionReceiver
-                        && (isAddAllArrayArgument || isAddAllSequenceArgument)
+                        && (isAddAllArrayArgument || isAddAllSequenceArgument || isAddAllIterableArgument)
                 )
         }
         if memberName == knownNames.getOrPut || memberName == knownNames.putAll {
@@ -981,6 +1026,7 @@ extension CallTypeChecker {
         isMutableListReceiver: Bool,
         isAddAllArrayArgument: Bool = false,
         isAddAllSequenceArgument: Bool = false,
+        isAddAllIterableArgument: Bool = false,
         interner: StringInterner
     ) -> Bool {
         let knownNames = KnownCompilerNames(interner: interner)
@@ -1068,7 +1114,7 @@ extension CallTypeChecker {
                     || (
                         memberName == interner.intern("addAll")
                             && isMutableCollectionReceiver
-                            && (isAddAllArrayArgument || isAddAllSequenceArgument)
+                            && (isAddAllArrayArgument || isAddAllSequenceArgument || isAddAllIterableArgument)
                     )
             ) && argCount == 1
         case knownNames.putAll:
@@ -1312,7 +1358,7 @@ extension CallTypeChecker {
         }
 
         if memberName == interner.intern("asIterable") {
-            return makeSyntheticSequenceType(
+            return makeSyntheticIterableType(
                 symbols: sema.symbols,
                 types: sema.types,
                 interner: interner,

@@ -168,6 +168,11 @@ extension DataFlowSemaPhase {
             interner.intern("collections"),
             interner.intern("Collection"),
         ], elementType: typeParamType)
+        let iterableReturnType = nominalCollectionType([
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("Iterable"),
+        ], elementType: typeParamType)
         let setReturnType = nominalCollectionType([
             interner.intern("kotlin"),
             interner.intern("collections"),
@@ -645,7 +650,7 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_sequence_asIterable",
             receiverType: receiverType,
             parameters: [],
-            returnType: receiverType,
+            returnType: iterableReturnType,
             sequenceSymbol: sequenceSymbol,
             sequenceFQName: sequenceFQName,
             typeParamSymbol: typeParamSymbol,

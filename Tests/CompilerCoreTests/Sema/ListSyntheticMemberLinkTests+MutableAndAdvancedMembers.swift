@@ -1598,6 +1598,62 @@ extension ListSyntheticMemberLinkTests {
         }
     }
 
+    func testMutableCollectionIterableAddAllOverloadsUseRuntimeExternalLinks() throws {
+        let cases: [(String, String, String)] = [
+            (
+                "MutableCollection",
+                "kk_mutable_collection_addAll_iterable",
+                "fun mutate(values: MutableCollection<Int>, source: Iterable<Int>) { values.addAll(source) }"
+            ),
+            (
+                "MutableList",
+                "kk_mutable_list_addAll_iterable",
+                "fun mutate(values: MutableList<Int>, source: Iterable<Int>) { values.addAll(source) }"
+            ),
+            (
+                "MutableList sequence as Iterable",
+                "kk_mutable_list_addAll_iterable",
+                "fun mutate(values: MutableList<Int>) { values.addAll(sequenceOf(1).asIterable()) }"
+            ),
+            (
+                "MutableSet",
+                "kk_mutable_set_addAll_iterable",
+                "fun mutate(values: MutableSet<Int>, source: Iterable<Int>) { values.addAll(source) }"
+            ),
+        ]
+
+        for (receiverName, expectedExternalLink, source) in cases {
+            try withTemporaryFile(contents: source) { path in
+                let ctx = makeCompilationContext(inputs: [path])
+                try runSema(ctx)
+
+                let ast = try XCTUnwrap(ctx.ast)
+                let sema = try XCTUnwrap(ctx.sema)
+                let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                    guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                    return ctx.interner.resolve(callee) == "addAll"
+                }, "Expected \(receiverName).addAll(Iterable) call in AST")
+                let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+
+                XCTAssertEqual(
+                    sema.symbols.externalLinkName(for: chosenCallee),
+                    expectedExternalLink,
+                    "Expected \(receiverName).addAll(Iterable) to resolve to \(expectedExternalLink)"
+                )
+
+                let signature = try XCTUnwrap(sema.symbols.functionSignature(for: chosenCallee))
+                let parameterType = try XCTUnwrap(signature.parameterTypes.first)
+                guard case let .classType(classType) = sema.types.kind(of: parameterType) else {
+                    return XCTFail("Expected \(receiverName).addAll(Iterable) to take an Iterable parameter")
+                }
+                XCTAssertEqual(
+                    try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(classType.classSymbol)?.name)),
+                    "Iterable"
+                )
+            }
+        }
+    }
+
     /// Map member calls (containsKey, put, remove) go through the collection-fallback
     /// inference path which does not record a callBinding. Instead we verify that the
     /// synthetic symbols in the symbol table carry the correct external link names.
