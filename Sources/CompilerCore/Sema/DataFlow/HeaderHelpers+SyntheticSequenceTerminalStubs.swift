@@ -114,7 +114,13 @@ extension DataFlowSemaPhase {
                 flags: [.synthetic, .operatorFunction]
             )
             symbols.setParentSymbol(sequenceSymbol, for: memberSymbol)
-            symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+            let resolvedExternalLinkName = StdlibSurfaceSpec.collectionHOFRuntimeLinkName(
+                ownerKind: .sequence,
+                memberName: name,
+                arity: parameterTypes.count,
+                fallback: externalLinkName
+            )
+            symbols.setExternalLinkName(resolvedExternalLinkName, for: memberSymbol)
 
             var parameterSymbols: [SymbolID] = []
             for parameter in parameters {

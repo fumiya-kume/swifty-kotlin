@@ -225,7 +225,15 @@ extension DataFlowSemaPhase {
             flags: [.synthetic, .inlineFunction]
         )
         symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
-        symbols.setExternalLinkName("kk_iterable_firstNotNullOfOrNull", for: memberSymbol)
+        symbols.setExternalLinkName(
+            StdlibSurfaceSpec.collectionHOFRuntimeLinkName(
+                ownerKind: .list,
+                memberName: "firstNotNullOfOrNull",
+                arity: 1,
+                fallback: "kk_iterable_firstNotNullOfOrNull"
+            ),
+            for: memberSymbol
+        )
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: receiverType,
@@ -557,7 +565,15 @@ extension DataFlowSemaPhase {
             flags: [.synthetic, .inlineFunction]
         )
         symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
-        symbols.setExternalLinkName("kk_iterable_firstNotNullOf", for: memberSymbol)
+        symbols.setExternalLinkName(
+            StdlibSurfaceSpec.collectionHOFRuntimeLinkName(
+                ownerKind: .list,
+                memberName: "firstNotNullOf",
+                arity: 1,
+                fallback: "kk_iterable_firstNotNullOf"
+            ),
+            for: memberSymbol
+        )
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: receiverType,
@@ -1158,7 +1174,15 @@ extension DataFlowSemaPhase {
             flags: [.synthetic, .inlineFunction]
         )
         symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
-        symbols.setExternalLinkName("kk_list_sumBy", for: memberSymbol)
+        symbols.setExternalLinkName(
+            StdlibSurfaceSpec.collectionHOFRuntimeLinkName(
+                ownerKind: .list,
+                memberName: "sumBy",
+                arity: 1,
+                fallback: "kk_list_sumBy"
+            ),
+            for: memberSymbol
+        )
         symbols.setAnnotations([
             MetadataAnnotationRecord(
                 annotationFQName: "kotlin.Deprecated",
@@ -1233,7 +1257,15 @@ extension DataFlowSemaPhase {
             flags: [.synthetic, .inlineFunction]
         )
         symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
-        symbols.setExternalLinkName("kk_list_sumByDouble", for: memberSymbol)
+        symbols.setExternalLinkName(
+            StdlibSurfaceSpec.collectionHOFRuntimeLinkName(
+                ownerKind: .list,
+                memberName: "sumByDouble",
+                arity: 1,
+                fallback: "kk_list_sumByDouble"
+            ),
+            for: memberSymbol
+        )
         symbols.setAnnotations([
             MetadataAnnotationRecord(
                 annotationFQName: "kotlin.Deprecated",

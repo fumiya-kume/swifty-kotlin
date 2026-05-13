@@ -1270,6 +1270,22 @@ extension CallTypeChecker {
                 ctx: ctx,
                 locals: &locals
             )
+            let collectionMapTypes: (key: TypeID, value: TypeID) = {
+                guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+                      classType.args.count >= 2
+                else {
+                    return (sema.types.anyType, sema.types.anyType)
+                }
+                let keyType: TypeID = switch classType.args[0] {
+                case let .invariant(id), let .out(id), let .in(id): id
+                case .star: sema.types.anyType
+                }
+                let valueType: TypeID = switch classType.args[1] {
+                case let .invariant(id), let .out(id), let .in(id): id
+                case .star: sema.types.anyType
+                }
+                return (keyType, valueType)
+            }()
 
             let resultType: TypeID
             let destinationCollectionHOFs: Set = [
@@ -1460,15 +1476,22 @@ extension CallTypeChecker {
                     }
                 } else {
                     let lambdaReturnType: TypeID = switch calleeStr {
-                    case "filter", "filterNot", "any", "none", "all", "takeWhile", "dropWhile": sema.types.booleanType
+                    case "filter", "filterNot", "filterKeys", "filterValues", "any", "none", "all", "takeWhile", "dropWhile": sema.types.booleanType
                     case "forEach", "onEach": sema.types.unitType
                     case "count": sema.types.booleanType
                     case "mapNotNull", "firstNotNullOf", "firstNotNullOfOrNull": sema.types.nullableAnyType
                     default: sema.types.anyType
                     }
-                    let lambdaParameterTypes = calleeStr == "flatMapIndexed"
-                        ? [sema.types.intType, collectionElementType]
-                        : [collectionElementType]
+                    let lambdaParameterTypes: [TypeID] = switch calleeStr {
+                    case "flatMapIndexed":
+                        [sema.types.intType, collectionElementType]
+                    case "filterKeys":
+                        [collectionMapTypes.key]
+                    case "filterValues":
+                        [collectionMapTypes.value]
+                    default:
+                        [collectionElementType]
+                    }
                     let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
                         params: lambdaParameterTypes,
                         returnType: lambdaReturnType

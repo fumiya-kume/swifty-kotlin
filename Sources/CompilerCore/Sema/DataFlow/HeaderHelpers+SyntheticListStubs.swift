@@ -1658,7 +1658,15 @@ extension DataFlowSemaPhase {
         symbols.setParentSymbol(listInterfaceSymbol, for: associateToMemberSymbol)
         symbols.setParentSymbol(associateToMemberSymbol, for: associateToKeyTypeParamSymbol)
         symbols.setParentSymbol(associateToMemberSymbol, for: associateToValueTypeParamSymbol)
-        symbols.setExternalLinkName("kk_list_associateTo", for: associateToMemberSymbol)
+        symbols.setExternalLinkName(
+            StdlibSurfaceSpec.collectionHOFRuntimeLinkName(
+                ownerKind: .list,
+                memberName: "associateTo",
+                arity: 2,
+                fallback: "kk_list_associateTo"
+            ),
+            for: associateToMemberSymbol
+        )
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: associateToReceiverType,
@@ -1712,7 +1720,15 @@ extension DataFlowSemaPhase {
             )
             symbols.setParentSymbol(listInterfaceSymbol, for: associateByToMemberSymbol)
             symbols.setParentSymbol(associateByToMemberSymbol, for: associateByToKeyTypeParamSymbol)
-            symbols.setExternalLinkName("kk_list_associateByTo", for: associateByToMemberSymbol)
+            symbols.setExternalLinkName(
+                StdlibSurfaceSpec.collectionHOFRuntimeLinkName(
+                    ownerKind: .list,
+                    memberName: "associateByTo",
+                    arity: 2,
+                    fallback: "kk_list_associateByTo"
+                ),
+                for: associateByToMemberSymbol
+            )
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: associateByToReceiverType,
@@ -1767,7 +1783,15 @@ extension DataFlowSemaPhase {
             )
             symbols.setParentSymbol(listInterfaceSymbol, for: associateWithToMemberSymbol)
             symbols.setParentSymbol(associateWithToMemberSymbol, for: associateWithToValueTypeParamSymbol)
-            symbols.setExternalLinkName("kk_list_associateWithTo", for: associateWithToMemberSymbol)
+            symbols.setExternalLinkName(
+                StdlibSurfaceSpec.collectionHOFRuntimeLinkName(
+                    ownerKind: .list,
+                    memberName: "associateWithTo",
+                    arity: 2,
+                    fallback: "kk_list_associateWithTo"
+                ),
+                for: associateWithToMemberSymbol
+            )
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: associateWithToReceiverType,
@@ -1822,7 +1846,15 @@ extension DataFlowSemaPhase {
             )
             symbols.setParentSymbol(listInterfaceSymbol, for: groupByToMemberSymbol)
             symbols.setParentSymbol(groupByToMemberSymbol, for: groupByToKeyTypeParamSymbol)
-            symbols.setExternalLinkName("kk_list_groupByTo", for: groupByToMemberSymbol)
+            symbols.setExternalLinkName(
+                StdlibSurfaceSpec.collectionHOFRuntimeLinkName(
+                    ownerKind: .list,
+                    memberName: "groupByTo",
+                    arity: 2,
+                    fallback: "kk_list_groupByTo"
+                ),
+                for: groupByToMemberSymbol
+            )
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: groupByToReceiverType,
