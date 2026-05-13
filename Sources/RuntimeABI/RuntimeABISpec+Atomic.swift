@@ -691,5 +691,13 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Atomic"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_atomic_ref_asJavaAtomic",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Atomic"
+        ),
     ]
 }

@@ -237,6 +237,7 @@ extension ABIMismatchTests {
             "kk_atomic_ref_exchange",
             "kk_atomic_ref_compareAndSet",
             "kk_atomic_ref_compareAndExchange",
+            "kk_atomic_ref_asJavaAtomic",
             "kk_atomic_ref_getAndUpdate",
             "kk_atomic_ref_updateAndGet",
             "kk_atomic_bool_create",

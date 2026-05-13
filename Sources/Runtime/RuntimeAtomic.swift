@@ -647,6 +647,11 @@ public func kk_atomic_ref_compareAndExchange(_ receiver: Int, _ expect: Int, _ u
     return box.compareAndExchange(expect: expect, update: update)
 }
 
+@_cdecl("kk_atomic_ref_asJavaAtomic")
+public func kk_atomic_ref_asJavaAtomic(_ receiver: Int) -> Int {
+    receiver
+}
+
 @_cdecl("kk_atomic_ref_getAndUpdate")
 public func kk_atomic_ref_getAndUpdate(
     _ receiver: Int,
