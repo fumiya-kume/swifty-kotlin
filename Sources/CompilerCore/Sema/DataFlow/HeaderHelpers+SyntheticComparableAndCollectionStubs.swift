@@ -342,6 +342,21 @@ extension DataFlowSemaPhase {
         let mutableSetSym = symbols.lookup(
             fqName: kotlinCollectionsPkg + [interner.intern("MutableSet")]
         ) {
+            let sequenceSymbol = ensureSyntheticSequenceStub(
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                kotlinCollectionsPkg: kotlinCollectionsPkg
+            )
+            registerMutableCollectionSequenceAddAllMembers(
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                mutableCollectionSymbol: mutableCollectionInterfaceSymbol,
+                mutableListSymbol: mutableListSym,
+                mutableSetSymbol: mutableSetSym,
+                sequenceSymbol: sequenceSymbol
+            )
             registerCollectionToMutableListMember(
                 symbols: symbols, types: types, interner: interner,
                 kotlinCollectionsPkg: kotlinCollectionsPkg,

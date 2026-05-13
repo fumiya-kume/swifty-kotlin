@@ -638,6 +638,47 @@ extension ListSyntheticMemberLinkTests {
         }
     }
 
+    func testMutableCollectionSequenceAddAllMembersUseRuntimeExternalLinks() throws {
+        let source = """
+        fun appendCollection(collection: MutableCollection<Int>, source: Sequence<Int>) = collection.addAll(source)
+        fun appendList(list: MutableList<Int>, source: Sequence<Int>) = list.addAll(source)
+        fun appendSet(set: MutableSet<Int>, source: Sequence<Int>) = set.addAll(source)
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let expectedExternalLinks = [
+                "collection": "kk_mutable_collection_addAll_sequence",
+                "list": "kk_mutable_list_addAll_sequence",
+                "set": "kk_mutable_set_addAll_sequence",
+            ]
+
+            for (receiverName, externalLinkName) in expectedExternalLinks {
+                let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                    guard case let .memberCall(receiver, callee, _, valueArgs, _) = expr,
+                          ctx.interner.resolve(callee) == "addAll",
+                          valueArgs.count == 1,
+                          case let .nameRef(name, _) = ast.arena.expr(receiver)
+                    else {
+                        return false
+                    }
+                    return ctx.interner.resolve(name) == receiverName
+                }, "Expected \(receiverName).addAll(source) call in AST")
+                let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+                XCTAssertEqual(
+                    sema.symbols.externalLinkName(for: chosenCallee),
+                    externalLinkName,
+                    "Expected \(receiverName).addAll(Sequence) to resolve to \(externalLinkName)"
+                )
+                XCTAssertEqual(sema.bindings.exprType(for: callExpr), sema.types.booleanType)
+            }
+        }
+    }
+
     func testMutableListSortMembersUseRuntimeExternalLinks() throws {
         let source = """
         fun mutate(values: MutableList<Int>) {

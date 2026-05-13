@@ -277,6 +277,11 @@ public func kk_mutable_set_addAll(_ setRaw: Int, _ collectionRaw: Int) -> Int {
     kk_mutable_collection_addAll(setRaw, collectionRaw)
 }
 
+@_cdecl("kk_mutable_set_addAll_sequence")
+public func kk_mutable_set_addAll_sequence(_ setRaw: Int, _ sequenceRaw: Int) -> Int {
+    return runtimeMutableSetAddAllSequence(setRaw: setRaw, sequenceRaw: sequenceRaw)
+}
+
 @_cdecl("kk_mutable_set_removeAll")
 public func kk_mutable_set_removeAll(_ setRaw: Int, _ collectionRaw: Int) -> Int {
     guard let set = runtimeSetBox(from: setRaw) else {
@@ -662,4 +667,3 @@ public func kk_map_to_mutable_map(_ mapRaw: Int) -> Int {
     }
     return registerRuntimeObject(RuntimeMapBox(keys: map.keys, values: map.values))
 }
-
