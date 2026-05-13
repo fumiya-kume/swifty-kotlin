@@ -563,6 +563,7 @@ extension CodegenBackendIntegrationTests {
         fun main() {
             val list = listOf(3, 1, 2)
             println(list.flatMap { listOf(it, it * 10) })
+            println(list.groupBy { it % 2 })
             println(list.get(0))
             println(list.sumOf { it * 2 })
             println(list.minBy { it % 3 })
@@ -585,6 +586,7 @@ extension CodegenBackendIntegrationTests {
             let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let callees = extractCallees(from: body, interner: ctx.interner)
             XCTAssertTrue(callees.contains("kk_list_flatMap"))
+            XCTAssertTrue(callees.contains("kk_list_groupBy"))
             XCTAssertTrue(callees.contains("kk_list_get"))
             XCTAssertTrue(callees.contains("kk_list_sumOf") || callees.contains("sumOf"))
             XCTAssertTrue(callees.contains("kk_list_minBy"))
