@@ -60,7 +60,7 @@
 - [x] STDLIB-COL-FN-007: `all` 関数の実装（Iterable版）
 - [ ] STDLIB-COL-FN-009: `any` 関数の実装（各オーバーロード）
 - [x] STDLIB-COL-FN-018: `associate` 関数の実装
-- [ ] STDLIB-COL-FN-019: `associateBy` 関数の実装
+- [x] STDLIB-COL-FN-019: `associateBy` 関数の実装
 - [x] STDLIB-COL-FN-021: `associateWith` 関数の実装
 - [ ] STDLIB-COL-FN-034: `contains` 関数の実装
 

@@ -1605,9 +1605,25 @@ extension CallTypeChecker {
                             let keyType = inferredLambdaReturnType(
                                 argExpr: args[0].expr, ast: ast, sema: sema
                             )
+                            let valueType: TypeID
+                            if args.count >= 2 {
+                                let valueLambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                                    params: [collectionElementType],
+                                    returnType: sema.types.anyType
+                                )))
+                                if let lambdaExpr = ast.arena.expr(args[1].expr), lambdaExpr.isLambdaOrCallableRef {
+                                    sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+                                }
+                                _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: valueLambdaExpectedType)
+                                valueType = inferredLambdaReturnType(
+                                    argExpr: args[1].expr, ast: ast, sema: sema
+                                )
+                            } else {
+                                valueType = collectionElementType
+                            }
                             resultType = sema.types.make(.classType(ClassType(
                                 classSymbol: mapSymbol,
-                                args: [.invariant(keyType), .invariant(collectionElementType)],
+                                args: [.invariant(keyType), .invariant(valueType)],
                                 nullability: .nonNull
                             )))
                         } else {

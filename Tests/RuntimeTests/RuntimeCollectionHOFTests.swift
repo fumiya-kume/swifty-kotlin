@@ -2066,6 +2066,47 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(kk_map_get(result, 0), 2)
     }
 
+    func testListAssociateByBuildsMapAndOverwritesDuplicateKeys() {
+        let source = makeList([1, 2, 3])
+
+        let result = kk_list_associateBy(
+            source,
+            unsafeBitCast(groupByParity, to: Int.self), 0, nil
+        )
+
+        XCTAssertEqual(mapKeys(result), [1, 0])
+        XCTAssertEqual(kk_map_get(result, 1), 3)
+        XCTAssertEqual(kk_map_get(result, 0), 2)
+    }
+
+    func testListAssociateByTransformBuildsMapAndOverwritesDuplicateKeys() {
+        let source = makeList([1, 2, 3])
+
+        let result = kk_list_associateByTransform(
+            source,
+            unsafeBitCast(groupByParity, to: Int.self), 0,
+            unsafeBitCast(valueTimesTen, to: Int.self), 0,
+            nil
+        )
+
+        XCTAssertEqual(mapKeys(result), [1, 0])
+        XCTAssertEqual(kk_map_get(result, 1), 30)
+        XCTAssertEqual(kk_map_get(result, 0), 20)
+    }
+
+    func testListAssociateByPropagatesThrowingLambda() {
+        let source = makeList([1])
+        var thrown = 0
+
+        let result = kk_list_associateBy(
+            source,
+            unsafeBitCast(throwingHOFLambda, to: Int.self), 0, &thrown
+        )
+
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
     func testAssociateByToPrePopulatedDestination() {
         // Pre-populate destination with key=100 -> value=999
         let dest = registerRuntimeObject(RuntimeMapBox(keys: [100], values: [999]))

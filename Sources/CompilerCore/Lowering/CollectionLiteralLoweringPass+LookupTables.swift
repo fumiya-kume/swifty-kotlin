@@ -138,6 +138,7 @@ struct CollectionLiteralLookupTables {
     let kkListGroupByTransformName: InternedString
     let kkListSortedByName: InternedString
     let kkListAssociateByName: InternedString
+    let kkListAssociateByTransformName: InternedString
     let kkListAssociateWithName: InternedString
     let kkListAssociateName: InternedString
     let kkListAssociateByToName: InternedString
@@ -954,6 +955,7 @@ struct CollectionLiteralLookupTables {
         kkListGroupByTransformName = interner.intern("kk_list_groupByTransform")
         kkListSortedByName = interner.intern("kk_list_sortedBy")
         kkListAssociateByName = interner.intern("kk_list_associateBy")
+        kkListAssociateByTransformName = interner.intern("kk_list_associateByTransform")
         kkListAssociateWithName = interner.intern("kk_list_associateWith")
         kkListAssociateName = interner.intern("kk_list_associate")
         kkListAssociateByToName = interner.intern("kk_list_associateByTo")

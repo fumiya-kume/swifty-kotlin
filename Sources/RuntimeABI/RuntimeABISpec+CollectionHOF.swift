@@ -209,6 +209,19 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         )
+        let associateByTransformSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_associateByTransform",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "keyFnPtr", type: .intptr),
+                RuntimeABIParameter(name: "keyClosureRaw", type: .intptr),
+                RuntimeABIParameter(name: "valueFnPtr", type: .intptr),
+                RuntimeABIParameter(name: "valueClosureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
         let associateWithSpec = RuntimeABIFunctionSpec(
             name: "kk_list_associateWith",
             parameters: [
@@ -529,7 +542,7 @@ public extension RuntimeABISpec {
             }
             + [reduceOrNullSpec, scanSpec, runningFoldSpec, runningReduceSpec, scanReduceSpec]
             + [
-                associateBySpec, associateWithSpec, associateSpec, associateToSpec,
+                associateBySpec, associateByTransformSpec, associateWithSpec, associateSpec, associateToSpec,
                 RuntimeABIFunctionSpec(
                     name: "kk_list_associateByTo",
                     parameters: [
