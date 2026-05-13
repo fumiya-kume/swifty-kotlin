@@ -584,8 +584,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                 "maxOfOrNull": "kk_list_maxOfOrNull",
                 "filterNotTo": "kk_list_filterNotTo",
                 "filterNotNullTo": "kk_list_filterNotNullTo",
-                "findLast": "kk_list_findLast",
-                "filterTo": "kk_list_filterTo",
+                "find": "kk_list_find",
             ]
 
             for (memberName, externalLinkName) in expectedExternalLinks {
