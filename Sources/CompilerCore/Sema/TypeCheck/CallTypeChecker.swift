@@ -2595,6 +2595,94 @@ final class CallTypeChecker {
                 return expectedType
             }
         }
+        if let calleeName,
+           interner.resolve(calleeName) == "atomicArrayOf",
+           !isShadowedByNonSyntheticSymbol(calleeName, locals: locals, ctx: ctx),
+           let chosen = candidates.first(where: { candidate in
+               sema.symbols.externalLinkName(for: candidate) == "kk_atomic_ref_array_of"
+           }),
+           let atomicArraySymbol = sema.symbols.lookup(fqName: [
+               interner.intern("kotlin"),
+               interner.intern("concurrent"),
+               interner.intern("atomics"),
+               interner.intern("AtomicArray"),
+           ])
+        {
+            let expectedElementType: TypeID? = if let expectedType,
+                                                  expectedType != sema.types.errorType,
+                                                  case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
+                                                  expectedClassType.classSymbol == atomicArraySymbol,
+                                                  let firstArg = expectedClassType.args.first
+            {
+                switch firstArg {
+                case let .invariant(type), let .in(type), let .out(type):
+                    type
+                case .star:
+                    sema.types.anyType
+                }
+            } else {
+                nil
+            }
+            func arrayElementType(from type: TypeID) -> TypeID {
+                let nonNullType = sema.types.makeNonNullable(type)
+                guard case let .classType(classType) = sema.types.kind(of: nonNullType),
+                      let symbol = sema.symbols.symbol(classType.classSymbol),
+                      symbol.name == knownNames.array,
+                      let firstArg = classType.args.first
+                else {
+                    return sema.types.anyType
+                }
+                return switch firstArg {
+                case let .invariant(type), let .in(type), let .out(type):
+                    type
+                case .star:
+                    sema.types.anyType
+                }
+            }
+            let argumentElementTypes = zip(args, argTypes).map { argument, type in
+                argument.isSpread ? arrayElementType(from: type) : type
+            }
+            let inferredElementType: TypeID
+            if let explicitTypeArg = explicitTypeArgs.first {
+                inferredElementType = explicitTypeArg
+            } else if let expectedElementType {
+                inferredElementType = expectedElementType
+            } else if !argumentElementTypes.isEmpty {
+                let lub = sema.types.lub(argumentElementTypes)
+                inferredElementType = lub == sema.types.errorType ? sema.types.anyType : lub
+            } else {
+                inferredElementType = sema.types.anyType
+            }
+            let returnType = sema.types.make(.classType(ClassType(
+                classSymbol: atomicArraySymbol,
+                args: [.invariant(inferredElementType)],
+                nullability: .nonNull
+            )))
+            driver.helpers.checkDeprecation(
+                for: chosen,
+                sema: sema,
+                interner: interner,
+                range: range,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+            driver.helpers.checkOptIn(
+                for: chosen,
+                ctx: ctx,
+                range: range,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+            sema.bindings.bindCall(
+                id,
+                binding: CallBinding(
+                    chosenCallee: chosen,
+                    substitutedTypeArguments: [inferredElementType],
+                    parameterMapping: Dictionary(uniqueKeysWithValues: args.indices.map { ($0, 0) })
+                )
+            )
+            sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+            sema.bindings.bindExprType(id, type: returnType)
+            return returnType
+        }
         if !candidates.isEmpty {
             let resolved = resolveCallRespectingLambdaReturnType(
                 candidates: candidates,

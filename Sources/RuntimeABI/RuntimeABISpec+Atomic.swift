@@ -690,6 +690,14 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Atomic"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_atomic_ref_array_of",
+            parameters: [
+                RuntimeABIParameter(name: "elements", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Atomic"
+        ),
         // AtomicReference
         RuntimeABIFunctionSpec(
             name: "kk_atomic_ref_create",

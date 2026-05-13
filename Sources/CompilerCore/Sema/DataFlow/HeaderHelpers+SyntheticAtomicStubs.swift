@@ -280,6 +280,12 @@ extension DataFlowSemaPhase {
             interner: interner,
             types: types
         )
+        registerAtomicArrayOfFactory(
+            packageFQName: atomicsPkg,
+            symbols: symbols,
+            interner: interner,
+            types: types
+        )
 
         // -- Lock --
         let lockSymbol = ensureClassSymbol(
@@ -1300,6 +1306,77 @@ extension DataFlowSemaPhase {
                 valueParameterSymbols: [sizeSymbol],
                 valueParameterHasDefaultValues: [false],
                 valueParameterIsVararg: [false],
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 0
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerAtomicArrayOfFactory(
+        packageFQName: [InternedString],
+        symbols: SymbolTable,
+        interner: StringInterner,
+        types: TypeSystem
+    ) {
+        let functionName = interner.intern("atomicArrayOf")
+        let functionFQName = packageFQName + [functionName]
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return signature.receiverType == nil
+                && signature.parameterTypes.count == 1
+                && signature.typeParameterSymbols.count == 1
+                && signature.valueParameterIsVararg.first == true
+        }) {
+            symbols.setExternalLinkName("kk_atomic_ref_array_of", for: existing)
+            return
+        }
+
+        guard let atomicArraySymbol = symbols.lookup(fqName: packageFQName + [interner.intern("AtomicArray")]) else {
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName("kk_atomic_ref_array_of", for: functionSymbol)
+
+        let typeParamName = interner.intern("T")
+        let typeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: functionFQName + [typeParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(functionSymbol, for: typeParamSymbol)
+        let typeParamType = types.make(.typeParam(TypeParamType(symbol: typeParamSymbol, nullability: .nonNull)))
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: atomicArraySymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: nil,
+                parameterTypes: [typeParamType],
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [true],
                 typeParameterSymbols: [typeParamSymbol],
                 classTypeParameterCount: 0
             ),

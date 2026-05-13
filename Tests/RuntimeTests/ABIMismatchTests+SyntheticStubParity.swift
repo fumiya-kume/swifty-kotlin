@@ -244,6 +244,7 @@ extension ABIMismatchTests {
             "kk_atomic_ref_getAndUpdate",
             "kk_atomic_ref_updateAndGet",
             "kk_atomic_ref_array_compareAndSetAt",
+            "kk_atomic_ref_array_of",
             "kk_atomic_bool_create",
             "kk_atomic_bool_load",
             "kk_atomic_bool_store",

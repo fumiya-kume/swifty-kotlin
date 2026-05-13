@@ -1389,14 +1389,28 @@ private func atomicRefArrayBox(from raw: Int) -> AtomicRefArrayBox? {
     return Unmanaged<AtomicRefArrayBox>.fromOpaque(ptr).takeUnretainedValue()
 }
 
-@_cdecl("kk_atomic_ref_array_new")
-public func kk_atomic_ref_array_new(_ size: Int) -> Int {
-    let box = AtomicRefArrayBox(size: size)
+private func registerAtomicRefArrayBox(_ box: AtomicRefArrayBox) -> Int {
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
     runtimeStorage.withLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
+}
+
+@_cdecl("kk_atomic_ref_array_new")
+public func kk_atomic_ref_array_new(_ size: Int) -> Int {
+    let box = AtomicRefArrayBox(size: size)
+    return registerAtomicRefArrayBox(box)
+}
+
+@_cdecl("kk_atomic_ref_array_of")
+public func kk_atomic_ref_array_of(_ arrayRaw: Int) -> Int {
+    let elements = runtimeArrayBox(from: arrayRaw)?.elements ?? []
+    let box = AtomicRefArrayBox(size: elements.count)
+    for (index, element) in elements.enumerated() {
+        box.store(at: index, value: element)
+    }
+    return registerAtomicRefArrayBox(box)
 }
 
 @_cdecl("kk_atomic_ref_array_size")
