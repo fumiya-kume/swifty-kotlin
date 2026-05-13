@@ -3,9 +3,10 @@ import Foundation
 import XCTest
 
 extension BuildKIRRegressionTests {
-    func testBuildKIRLowersListFirstOrNullAndLastOrNullToCollectionRuntimeCalls() throws {
+    func testBuildKIRLowersListFirstAndOrNullTerminalsToCollectionRuntimeCalls() throws {
         let source = """
         fun main(values: List<Int>) {
+            values.first()
             values.firstOrNull()
             values.lastOrNull()
         }
@@ -19,8 +20,10 @@ extension BuildKIRRegressionTests {
             let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let callNames = extractCallees(from: body, interner: ctx.interner)
 
+            XCTAssertTrue(callNames.contains("kk_list_first"))
             XCTAssertTrue(callNames.contains("kk_list_firstOrNull"))
             XCTAssertTrue(callNames.contains("kk_list_lastOrNull"))
+            XCTAssertFalse(callNames.contains("first"))
             XCTAssertFalse(callNames.contains("firstOrNull"))
             XCTAssertFalse(callNames.contains("lastOrNull"))
         }

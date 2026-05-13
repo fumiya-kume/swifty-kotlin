@@ -953,9 +953,10 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
-    func testListFirstOrNullAndLastOrNullReturnNullableElementsWithoutCollectionMarking() throws {
+    func testListFirstAndOrNullTerminalsReturnElementsWithoutCollectionMarking() throws {
         let source = """
         fun probe(values: List<Int>) {
+            values.first()
             values.firstOrNull()
             values.lastOrNull()
         }
@@ -967,31 +968,34 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
 
             let ast = try XCTUnwrap(ctx.ast)
             let sema = try XCTUnwrap(ctx.sema)
-            let expectedMembers = [
-                "firstOrNull": "kk_list_firstOrNull",
-                "lastOrNull": "kk_list_lastOrNull",
-            ]
             let nullableIntType = sema.types.makeNullable(sema.types.intType)
+            let expectedMembers: [(memberName: String, externalLinkName: String?, expectedType: TypeID)] = [
+                ("first", nil, sema.types.intType),
+                ("firstOrNull", "kk_list_firstOrNull", nullableIntType),
+                ("lastOrNull", "kk_list_lastOrNull", nullableIntType),
+            ]
 
-            for (memberName, externalLinkName) in expectedMembers {
+            for (memberName, externalLinkName, expectedType) in expectedMembers {
                 let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
                     guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
                     return ctx.interner.resolve(callee) == memberName
                 }, "Expected member call to \(memberName) in AST")
-                let chosenCallee = try XCTUnwrap(
-                    sema.bindings.callBinding(for: callExpr)?.chosenCallee,
-                    "Expected call binding for \(memberName)"
-                )
+                if let externalLinkName {
+                    let chosenCallee = try XCTUnwrap(
+                        sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                        "Expected call binding for \(memberName)"
+                    )
 
-                XCTAssertEqual(
-                    sema.symbols.externalLinkName(for: chosenCallee),
-                    externalLinkName,
-                    "Expected \(memberName) to resolve to \(externalLinkName)"
-                )
+                    XCTAssertEqual(
+                        sema.symbols.externalLinkName(for: chosenCallee),
+                        externalLinkName,
+                        "Expected \(memberName) to resolve to \(externalLinkName)"
+                    )
+                }
                 XCTAssertEqual(
                     sema.bindings.exprTypes[callExpr],
-                    nullableIntType,
-                    "Expected \(memberName) to return a nullable element type"
+                    expectedType,
+                    "Expected \(memberName) to return the expected element type"
                 )
                 XCTAssertFalse(
                     sema.bindings.isCollectionExpr(callExpr),
