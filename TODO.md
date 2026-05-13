@@ -100,7 +100,7 @@
 
 #### kotlin.concurrent 関数の実装
 - [ ] STDLIB-CONC-FN-001: `atomicArrayOf` 関数の実装
-- [ ] STDLIB-CONC-FN-002: `AtomicIntArray` 関数の実装（factory版）
+- [x] STDLIB-CONC-FN-002: `AtomicIntArray` 関数の実装（factory版）
 - [ ] STDLIB-CONC-FN-003: `AtomicLongArray` 関数の実装（factory版）
 - [ ] STDLIB-CONC-FN-004: `fixedRateTimer` 関数の実装（各オーバーロード）
 - [ ] STDLIB-CONC-FN-005: `schedule` 関数の実装
