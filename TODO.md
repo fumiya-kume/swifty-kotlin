@@ -61,7 +61,7 @@
 - [x] STDLIB-COL-ABSTRACT-009: `AbstractSet<E>` 抽象クラスの実装
 
 #### kotlin.collections 具象実装クラスの実装
-- [ ] STDLIB-COL-CONCRETE-001: `ArrayList<E>` 具象クラスの実装（現在は型エイリアスのみ）
+- [x] STDLIB-COL-CONCRETE-001: `ArrayList<E>` 具象クラスの実装（現在は型エイリアスのみ）
 - [x] STDLIB-COL-CONCRETE-002: `LinkedList<E>` 具象クラスの実装（現在は型エイリアスのみ）
 - [ ] STDLIB-COL-CONCRETE-003: `HashMap<K,V>` 具象クラスの実装（現在は型エイリアスのみ）
 - [ ] STDLIB-COL-CONCRETE-004: `HashSet<E>` 具象クラスの実装（現在は型エイリアスのみ）
