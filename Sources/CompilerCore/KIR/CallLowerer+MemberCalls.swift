@@ -3629,6 +3629,8 @@ extension CallLowerer {
                     "kk_array_forEach"
                 case "any":
                     "kk_array_any"
+                case "all":
+                    "kk_array_all"
                 case "none":
                     "kk_array_none"
                 case "count":
@@ -7367,6 +7369,8 @@ extension CallLowerer {
                 return interner.intern("kk_array_forEach")
             case "any":
                 return interner.intern("kk_array_any")
+            case "all":
+                return interner.intern("kk_array_all")
             case "none":
                 return interner.intern("kk_array_none")
             case "count":

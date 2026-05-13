@@ -409,6 +409,7 @@ struct CollectionLiteralLookupTables {
     let kkArrayFilterName: InternedString
     let kkArrayForEachName: InternedString
     let kkArrayAnyName: InternedString
+    let kkArrayAllName: InternedString
     let kkArrayNoneName: InternedString
     let kkArrayCountName: InternedString
     let kkArrayCopyOfName: InternedString
@@ -1217,6 +1218,7 @@ struct CollectionLiteralLookupTables {
         kkArrayFilterName = interner.intern("kk_array_filter")
         kkArrayForEachName = interner.intern("kk_array_forEach")
         kkArrayAnyName = interner.intern("kk_array_any")
+        kkArrayAllName = interner.intern("kk_array_all")
         kkArrayNoneName = interner.intern("kk_array_none")
         kkArrayCountName = interner.intern("kk_array_count")
         kkArrayCopyOfName = interner.intern("kk_array_copyOf")

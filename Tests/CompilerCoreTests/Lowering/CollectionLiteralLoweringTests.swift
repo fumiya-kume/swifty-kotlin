@@ -1182,6 +1182,16 @@ final class CollectionLiteralLoweringTests: XCTestCase {
         )
     }
 
+    func testVirtualCallOnArrayTypedParameterRewritesToKkArrayAll() throws {
+        let callees = try buildAndLowerVirtualCallWithArgs(
+            receiverTypeName: "Array", callee: "all", argCount: 1
+        )
+        XCTAssertTrue(
+            callees.contains("kk_array_all"),
+            "virtualCall(all) on Array-typed parameter should be rewritten to kk_array_all, got: \(callees)"
+        )
+    }
+
     func testVirtualCallOnListTypedParameterRewritesToKkListAsSequence() throws {
         let callees = try buildAndLowerVirtualCall(receiverTypeName: "List", callee: "asSequence")
         XCTAssertTrue(

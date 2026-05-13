@@ -2978,6 +2978,7 @@ extension CollectionLiteralLoweringPass {
                             if arrayExprIDs.contains(receiverID.rawValue),
                                callee == lookup.mapName || callee == lookup.filterName
                                || callee == lookup.forEachName || callee == lookup.anyName
+                               || callee == lookup.allName
                                || callee == lookup.noneName
                             {
                                 let closureRawID: KIRExprID
@@ -2993,6 +2994,7 @@ extension CollectionLiteralLoweringPass {
                                 case lookup.filterName: lookup.kkArrayFilterName
                                 case lookup.forEachName: lookup.kkArrayForEachName
                                 case lookup.anyName: lookup.kkArrayAnyName
+                                case lookup.allName: lookup.kkArrayAllName
                                 case lookup.noneName: lookup.kkArrayNoneName
                                 default: callee
                                 }

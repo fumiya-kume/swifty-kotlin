@@ -3,6 +3,32 @@ import Foundation
 import XCTest
 
 final class ArraySyntheticMemberLinkTests: XCTestCase {
+    func testArrayAllFallbackInfersBooleanResult() throws {
+        let source = """
+        fun sample(): Boolean {
+            val values = arrayOf(1, 2, 3)
+            return values.all { it > 0 }
+        }
+        """
+
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        XCTAssertFalse(
+            ctx.diagnostics.hasError,
+            "Expected Array.all to type-check without diagnostics: \(ctx.diagnostics.diagnostics.map(\.message))"
+        )
+
+        let ast = try XCTUnwrap(ctx.ast)
+        let sema = try XCTUnwrap(ctx.sema)
+        let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+            guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+            return ctx.interner.resolve(callee) == "all"
+        }, "Expected Array.all member call")
+
+        XCTAssertEqual(sema.bindings.exprType(for: callExpr), sema.types.booleanType)
+    }
+
     func testArrayOfNullsTopLevelFactoryUsesRuntimeExternalLink() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])

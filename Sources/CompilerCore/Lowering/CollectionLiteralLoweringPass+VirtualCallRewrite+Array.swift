@@ -97,10 +97,14 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
-        // any/none/count on array → kk_array_any/kk_array_none/kk_array_count
-        if callee == lookup.anyName || callee == lookup.noneName || callee == lookup.countName, arguments.count == 1 {
+        // any/all/none/count on array → kk_array_any/kk_array_all/kk_array_none/kk_array_count
+        if callee == lookup.anyName || callee == lookup.allName || callee == lookup.noneName || callee == lookup.countName,
+           arguments.count == 1
+        {
             let kkName: InternedString = if callee == lookup.anyName {
                 lookup.kkArrayAnyName
+            } else if callee == lookup.allName {
+                lookup.kkArrayAllName
             } else if callee == lookup.noneName {
                 lookup.kkArrayNoneName
             } else {

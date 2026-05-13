@@ -183,7 +183,7 @@ extension CallTypeChecker {
     func isSupportedArrayMember(_ memberName: String) -> Bool {
         let arrayMembers: Set = [
             "toList", "toMutableList",
-            "map", "filter", "forEach", "any", "none",
+            "map", "filter", "forEach", "any", "all", "none",
             "copyOf", "copyOfRange", "fill",
             "size", "get", "contains", "isEmpty",
             "binarySearch",
@@ -198,7 +198,7 @@ extension CallTypeChecker {
             argCount == 0
         case "copyOf":
             (0...2).contains(argCount)
-        case "map", "filter", "forEach", "any", "none", "fill", "get", "contains":
+        case "map", "filter", "forEach", "any", "all", "none", "fill", "get", "contains":
             argCount == 1
         case "binarySearch":
             (1...4).contains(argCount)
@@ -225,7 +225,7 @@ extension CallTypeChecker {
             return sema.types.intType
         case "binarySearch":
             return sema.types.intType
-        case "isEmpty", "contains", "any", "none":
+        case "isEmpty", "contains", "any", "all", "none":
             return sema.types.booleanType
         case "forEach", "fill":
             return sema.types.unitType
@@ -282,8 +282,8 @@ extension CallTypeChecker {
         receiverElementType: TypeID,
         sema: SemaModule
     ) -> (argumentIndex: Int, expectedType: TypeID)? {
-        let boolPredicateMembers: Set = ["filter", "any", "none"]
-        let oneParamMembers: Set = ["map", "filter", "forEach", "any", "none"]
+        let boolPredicateMembers: Set = ["filter", "any", "all", "none"]
+        let oneParamMembers: Set = ["map", "filter", "forEach", "any", "all", "none"]
         if memberName == "copyOf", argCount == 2 {
             let expectedType = sema.types.make(.functionType(FunctionType(
                 params: [sema.types.intType],

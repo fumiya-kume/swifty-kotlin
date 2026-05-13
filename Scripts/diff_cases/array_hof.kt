@@ -33,13 +33,21 @@ fun main() {
     
     // 判定関数
     println(arr.all { it < 10 })
+    println(arr.all { it < 3 })
     println(arr.any { it > 2 })
     println(arr.none { it > 10 })
     println(arr.count { it % 2 == 0 })
     println(arr.count())
-    
+    var visited = 0
+    println(arr.all {
+        visited += 1
+        it < 2
+    })
+    println(visited)
+
     // 空配列テスト
     val empty = emptyArray<Int>()
+    println(empty.all { false })
     println(empty.reduceOrNull { acc, value -> acc + value })
     println(empty.firstOrNull())
     println(empty.lastOrNull())
