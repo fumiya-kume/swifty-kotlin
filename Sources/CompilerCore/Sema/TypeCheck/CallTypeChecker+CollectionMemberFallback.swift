@@ -563,6 +563,60 @@ extension CallTypeChecker {
         return knownNames.isArrayLikeName(symbol.name)
     }
 
+    private func stdlibSurfaceOwnerKindsForCollectionFallback(
+        isIterableReceiver: Bool,
+        isListReceiver: Bool,
+        isSequenceReceiver: Bool,
+        isMapReceiver: Bool,
+        isSetReceiver: Bool
+    ) -> [StdlibSurfaceOwnerKind] {
+        if isMapReceiver {
+            return [.map]
+        }
+        if isSequenceReceiver {
+            return [.sequence]
+        }
+        if isIterableReceiver || isListReceiver || isSetReceiver {
+            return [.list]
+        }
+        return []
+    }
+
+    private func stdlibSurfaceSpecsForCollectionFallback(
+        memberName: InternedString,
+        ownerKinds: [StdlibSurfaceOwnerKind],
+        interner: StringInterner
+    ) -> [StdlibSurfaceSpec] {
+        let resolvedName = interner.resolve(memberName)
+        return ownerKinds.flatMap { ownerKind in
+            StdlibSurfaceSpec.collectionHOFSpecs(ownerKind: ownerKind, memberName: resolvedName)
+        }
+    }
+
+    private func stdlibSurfaceSpecForCollectionFallback(
+        memberName: InternedString,
+        argCount: Int,
+        ownerKinds: [StdlibSurfaceOwnerKind],
+        interner: StringInterner
+    ) -> StdlibSurfaceSpec? {
+        stdlibSurfaceSpecsForCollectionFallback(
+            memberName: memberName,
+            ownerKinds: ownerKinds,
+            interner: interner
+        )
+        .first { $0.arity.accepts(argCount) }
+    }
+
+    private func stdlibSurfaceCollectionReturning(_ spec: StdlibSurfaceSpec) -> Bool {
+        switch spec.returnStrategy {
+        case .destinationArgument, .list, .map, .sequence, .receiver:
+            return true
+        case .any, .nullableAny, .receiverElement, .nullableReceiverElement,
+             .unit, .boolean, .int, .double:
+            return false
+        }
+    }
+
     func isSupportedCollectionFallbackMember(
         _ memberName: InternedString,
         isIterableReceiver: Bool,
@@ -576,6 +630,20 @@ extension CallTypeChecker {
         interner: StringInterner
     ) -> Bool {
         let knownNames = KnownCompilerNames(interner: interner)
+        let surfaceOwnerKinds = stdlibSurfaceOwnerKindsForCollectionFallback(
+            isIterableReceiver: isIterableReceiver,
+            isListReceiver: isListReceiver,
+            isSequenceReceiver: isSequenceReceiver,
+            isMapReceiver: isMapReceiver,
+            isSetReceiver: isSetReceiver
+        )
+        if !stdlibSurfaceSpecsForCollectionFallback(
+            memberName: memberName,
+            ownerKinds: surfaceOwnerKinds,
+            interner: interner
+        ).isEmpty {
+            return true
+        }
         let collectionMembers: Set = [
             knownNames.size,
             knownNames.isEmpty,
@@ -789,6 +857,21 @@ extension CallTypeChecker {
         isSetReceiver: Bool,
         interner: StringInterner
     ) -> Bool {
+        let surfaceOwnerKinds: [StdlibSurfaceOwnerKind] = if isMapReceiver {
+            [.map]
+        } else if isListReceiver || isSetReceiver {
+            [.list]
+        } else {
+            []
+        }
+        if let spec = stdlibSurfaceSpecsForCollectionFallback(
+            memberName: memberName,
+            ownerKinds: surfaceOwnerKinds,
+            interner: interner
+        ).first {
+            return stdlibSurfaceCollectionReturning(spec)
+        }
+
         let collectionReturningMembers: Set = [
             interner.intern("asSequence"), interner.intern("asIterable"), interner.intern("map"), interner.intern("filter"), interner.intern("filterNot"), interner.intern("mapNotNull"), interner.intern("filterNotNull"), interner.intern("requireNoNulls"),
             interner.intern("filterTo"), interner.intern("filterNotTo"), interner.intern("mapTo"), interner.intern("flatMapTo"), interner.intern("mapNotNullTo"), interner.intern("filterIsInstanceTo"), interner.intern("mapIndexedTo"), interner.intern("mapIndexedNotNullTo"), interner.intern("flatMapIndexedTo"),
@@ -844,6 +927,21 @@ extension CallTypeChecker {
         interner: StringInterner
     ) -> Bool {
         let knownNames = KnownCompilerNames(interner: interner)
+        let surfaceOwnerKinds = stdlibSurfaceOwnerKindsForCollectionFallback(
+            isIterableReceiver: true,
+            isListReceiver: true,
+            isSequenceReceiver: isSequenceReceiver,
+            isMapReceiver: isMapReceiver,
+            isSetReceiver: isSetReceiver
+        )
+        let surfaceSpecs = stdlibSurfaceSpecsForCollectionFallback(
+            memberName: memberName,
+            ownerKinds: surfaceOwnerKinds,
+            interner: interner
+        )
+        if surfaceSpecs.contains(where: { $0.arity.accepts(argCount) }) {
+            return true
+        }
         switch memberName {
         case knownNames.size, knownNames.isEmpty, interner.intern("iterator"), interner.intern("asSequence"),
              interner.intern("asIterable"),
@@ -1699,6 +1797,130 @@ extension CallTypeChecker {
         return sema.types.anyType
     }
 
+    private func stdlibSurfaceDestinationTypes(
+        args: [CallArgument],
+        sema: SemaModule
+    ) -> (collectionElement: TypeID, mapKey: TypeID, mapValue: TypeID) {
+        let destinationType = args.first.flatMap { sema.bindings.exprTypes[$0.expr] } ?? sema.types.anyType
+        let destinationCollectionElementType: TypeID = if case let .classType(destClassType) = sema.types.kind(of: destinationType),
+                                                               destClassType.args.count >= 1
+        {
+            switch destClassType.args[0] {
+            case let .invariant(id), let .out(id), let .in(id): id
+            case .star: sema.types.anyType
+            }
+        } else {
+            sema.types.anyType
+        }
+        let destinationMapKeyType: TypeID = if case let .classType(destClassType) = sema.types.kind(of: destinationType),
+                                                      destClassType.args.count >= 2
+        {
+            switch destClassType.args[0] {
+            case let .invariant(id), let .out(id), let .in(id): id
+            case .star: sema.types.anyType
+            }
+        } else {
+            sema.types.anyType
+        }
+        let destinationMapValueType: TypeID = if case let .classType(destClassType) = sema.types.kind(of: destinationType),
+                                                        destClassType.args.count >= 2
+        {
+            switch destClassType.args[1] {
+            case let .invariant(id), let .out(id), let .in(id): id
+            case .star: sema.types.anyType
+            }
+        } else {
+            sema.types.anyType
+        }
+        return (destinationCollectionElementType, destinationMapKeyType, destinationMapValueType)
+    }
+
+    private func stdlibSurfaceLambdaReturnType(
+        _ strategy: StdlibSurfaceLambdaReturnStrategy,
+        args: [CallArgument],
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID {
+        let destinationTypes = stdlibSurfaceDestinationTypes(args: args, sema: sema)
+        switch strategy {
+        case .any:
+            return sema.types.anyType
+        case .nullableAny:
+            return sema.types.nullableAnyType
+        case .boolean:
+            return sema.types.booleanType
+        case .int:
+            return sema.types.intType
+        case .double:
+            return sema.types.doubleType
+        case .unit:
+            return sema.types.unitType
+        case .destinationElement:
+            return destinationTypes.collectionElement
+        case .destinationMapKey:
+            return destinationTypes.mapKey
+        case .destinationMapValue:
+            return destinationTypes.mapValue
+        case .collectionOfDestinationElement:
+            if let collectionSymbol = sema.symbols.lookupByShortName(interner.intern("Collection")).first {
+                return sema.types.make(.classType(ClassType(
+                    classSymbol: collectionSymbol,
+                    args: [.out(destinationTypes.collectionElement)],
+                    nullability: .nonNull
+                )))
+            }
+            return sema.types.anyType
+        case .pairOfDestinationKeyValue:
+            if let pairSymbol = sema.symbols.lookupByShortName(interner.intern("Pair")).first {
+                return sema.types.make(.classType(ClassType(
+                    classSymbol: pairSymbol,
+                    args: [.out(destinationTypes.mapKey), .out(destinationTypes.mapValue)],
+                    nullability: .nonNull
+                )))
+            }
+            return sema.types.anyType
+        }
+    }
+
+    private func stdlibSurfaceLambdaExpectation(
+        for spec: StdlibSurfaceSpec,
+        receiverElementType: TypeID,
+        args: [CallArgument],
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> (argumentIndex: Int, expectedType: TypeID)? {
+        let argumentIndex: Int
+        let parameterTypes: [TypeID]
+        let returnStrategy: StdlibSurfaceLambdaReturnStrategy
+        switch spec.lambdaExpectation {
+        case .none:
+            return nil
+        case let .receiverElement(argumentIndex: index, returnStrategy: strategy),
+             let .destinationElement(argumentIndex: index, returnStrategy: strategy):
+            argumentIndex = index
+            parameterTypes = [receiverElementType]
+            returnStrategy = strategy
+        case let .indexedReceiverElement(argumentIndex: index, returnStrategy: strategy),
+             let .indexedDestinationElement(argumentIndex: index, returnStrategy: strategy):
+            argumentIndex = index
+            parameterTypes = [sema.types.intType, receiverElementType]
+            returnStrategy = strategy
+        }
+        let returnType = stdlibSurfaceLambdaReturnType(
+            returnStrategy,
+            args: args,
+            sema: sema,
+            interner: interner
+        )
+        let expectedType = sema.types.make(.functionType(FunctionType(
+            params: parameterTypes,
+            returnType: returnType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        return (argumentIndex: argumentIndex, expectedType: expectedType)
+    }
+
     func collectionFallbackLambdaExpectation(
         memberName: InternedString,
         argCount: Int,
@@ -1714,6 +1936,22 @@ extension CallTypeChecker {
         let mapValuesTo = interner.intern("mapValuesTo")
         let mapKeys = interner.intern("mapKeys")
         let mapKeysTo = interner.intern("mapKeysTo")
+        let surfaceOwnerKinds: [StdlibSurfaceOwnerKind] = isMapReceiver ? [.map] : [.list, .sequence]
+        if let surfaceSpec = stdlibSurfaceSpecForCollectionFallback(
+            memberName: memberName,
+            argCount: argCount,
+            ownerKinds: surfaceOwnerKinds,
+            interner: interner
+        ),
+           let surfaceExpectation = stdlibSurfaceLambdaExpectation(
+            for: surfaceSpec,
+            receiverElementType: receiverElementType,
+            args: args,
+            sema: sema,
+            interner: interner
+           ) {
+            return surfaceExpectation
+        }
         let boolOneParamMembers: Set = [
             interner.intern("filter"),
             interner.intern("filterNot"),
