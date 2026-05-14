@@ -78,7 +78,7 @@ extension CallTypeChecker {
         // to avoid accidentally resolving unrelated experimental APIs.
         let knownJvmPropertyNames: Set<String> = ["java", "kotlin"]
         if getterCandidates.isEmpty,
-           knownJvmPropertyNames.contains(interner.resolve(calleeName))
+           knownJvmPropertyNames.contains(ctx.interner.resolve(calleeName))
         {
             for candidate in sema.symbols.lookupByShortName(calleeName) {
                 collectGetterCandidate(from: candidate, requireSynthetic: true)
