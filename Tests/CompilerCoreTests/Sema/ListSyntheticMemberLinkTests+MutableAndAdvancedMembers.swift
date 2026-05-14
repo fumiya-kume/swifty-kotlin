@@ -125,135 +125,52 @@ extension ListSyntheticMemberLinkTests {
         }
     }
 
-    func testCollectionToMutableListUsesRuntimeExternalLink() throws {
-        let source = """
-        fun copy(values: Collection<String>) {
-            values.toMutableList()
-        }
-        """
+    func testCollectionAndIterableConversionMembersUseRuntimeExternalLinks() throws {
+        let cases: [SyntheticMemberCallCase] = [
+            .init(
+                source: """
+                fun copy(values: Collection<String>) {
+                    values.toMutableList()
+                }
+                """,
+                memberName: "toMutableList",
+                expectedExternalLink: "kk_collection_toMutableList",
+                expectedTypeShape: .classNamed("MutableList")
+            ),
+            .init(
+                source: """
+                fun copy(values: Collection<String>) {
+                    values.toTypedArray()
+                }
+                """,
+                memberName: "toTypedArray",
+                expectedExternalLink: "kk_collection_toTypedArray",
+                expectedTypeShape: .classNamed("Array")
+            ),
+            .init(
+                source: """
+                fun copy(values: Iterable<String>) {
+                    values.toMutableList()
+                }
+                """,
+                memberName: "toMutableList",
+                expectedExternalLink: "kk_iterable_toMutableList",
+                expectedTypeShape: .classNamed("MutableList")
+            ),
+            .init(
+                source: """
+                fun copy(values: Iterable<String>) {
+                    values.toMutableSet()
+                }
+                """,
+                memberName: "toMutableSet",
+                expectedExternalLink: "kk_iterable_toMutableSet",
+                expectedTypeShape: .classNamed("MutableSet")
+            ),
+        ]
 
-        try withTemporaryFile(contents: source) { path in
-            let ctx = makeCompilationContext(inputs: [path])
-            try runSema(ctx)
-
-            XCTAssertTrue(
-                ctx.diagnostics.diagnostics.isEmpty,
-                "Expected Collection.toMutableList to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
-            )
-
-            let ast = try XCTUnwrap(ctx.ast)
-            let sema = try XCTUnwrap(ctx.sema)
-            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
-                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
-                return ctx.interner.resolve(callee) == "toMutableList"
-            })
-            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
-            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_collection_toMutableList")
-
-            let callType = try XCTUnwrap(sema.bindings.exprType(for: callExpr))
-            guard case let .classType(classType) = sema.types.kind(of: callType) else {
-                return XCTFail("Expected Collection.toMutableList to return MutableList")
-            }
-            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(classType.classSymbol)?.name)), "MutableList")
-        }
-    }
-
-    func testCollectionToTypedArrayUsesRuntimeExternalLink() throws {
-        let source = """
-        fun copy(values: Collection<String>) {
-            values.toTypedArray()
-        }
-        """
-
-        try withTemporaryFile(contents: source) { path in
-            let ctx = makeCompilationContext(inputs: [path])
-            try runSema(ctx)
-
-            XCTAssertTrue(
-                ctx.diagnostics.diagnostics.isEmpty,
-                "Expected Collection.toTypedArray to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
-            )
-
-            let ast = try XCTUnwrap(ctx.ast)
-            let sema = try XCTUnwrap(ctx.sema)
-            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
-                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
-                return ctx.interner.resolve(callee) == "toTypedArray"
-            })
-            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
-            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_collection_toTypedArray")
-
-            let callType = try XCTUnwrap(sema.bindings.exprType(for: callExpr))
-            guard case let .classType(classType) = sema.types.kind(of: callType) else {
-                return XCTFail("Expected Collection.toTypedArray to return Array")
-            }
-            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(classType.classSymbol)?.name)), "Array")
-        }
-    }
-
-    func testIterableToMutableListUsesRuntimeExternalLink() throws {
-        let source = """
-        fun copy(values: Iterable<String>) {
-            values.toMutableList()
-        }
-        """
-
-        try withTemporaryFile(contents: source) { path in
-            let ctx = makeCompilationContext(inputs: [path])
-            try runSema(ctx)
-
-            XCTAssertTrue(
-                ctx.diagnostics.diagnostics.isEmpty,
-                "Expected Iterable.toMutableList to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
-            )
-
-            let ast = try XCTUnwrap(ctx.ast)
-            let sema = try XCTUnwrap(ctx.sema)
-            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
-                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
-                return ctx.interner.resolve(callee) == "toMutableList"
-            })
-            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
-            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_iterable_toMutableList")
-
-            let callType = try XCTUnwrap(sema.bindings.exprType(for: callExpr))
-            guard case let .classType(classType) = sema.types.kind(of: callType) else {
-                return XCTFail("Expected Iterable.toMutableList to return MutableList")
-            }
-            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(classType.classSymbol)?.name)), "MutableList")
-        }
-    }
-
-    func testIterableToMutableSetUsesRuntimeExternalLink() throws {
-        let source = """
-        fun copy(values: Iterable<String>) {
-            values.toMutableSet()
-        }
-        """
-
-        try withTemporaryFile(contents: source) { path in
-            let ctx = makeCompilationContext(inputs: [path])
-            try runSema(ctx)
-
-            XCTAssertTrue(
-                ctx.diagnostics.diagnostics.isEmpty,
-                "Expected Iterable.toMutableSet to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
-            )
-
-            let ast = try XCTUnwrap(ctx.ast)
-            let sema = try XCTUnwrap(ctx.sema)
-            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
-                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
-                return ctx.interner.resolve(callee) == "toMutableSet"
-            })
-            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
-            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_iterable_toMutableSet")
-
-            let callType = try XCTUnwrap(sema.bindings.exprType(for: callExpr))
-            guard case let .classType(classType) = sema.types.kind(of: callType) else {
-                return XCTFail("Expected Iterable.toMutableSet to return MutableSet")
-            }
-            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(classType.classSymbol)?.name)), "MutableSet")
+        for testCase in cases {
+            try assertSyntheticMemberCall(testCase)
         }
     }
 
@@ -753,171 +670,72 @@ extension ListSyntheticMemberLinkTests {
         }
     }
 
-    func testListToBooleanArrayUsesRuntimeExternalLink() throws {
-        let source = """
-        fun convert(values: List<Boolean>) {
-            values.toBooleanArray()
-        }
-        """
+    func testListPrimitiveArrayConversionsUseRuntimeExternalLinks() throws {
+        let cases: [SyntheticMemberCallCase] = [
+            .init(
+                source: """
+                fun convert(values: List<Boolean>) {
+                    values.toBooleanArray()
+                }
+                """,
+                memberName: "toBooleanArray",
+                expectedExternalLink: "kk_list_toBooleanArray",
+                expectedTypeShape: .classNamed("BooleanArray")
+            ),
+            .init(
+                source: """
+                fun convert(values: List<Byte>) {
+                    values.toByteArray()
+                }
+                """,
+                memberName: "toByteArray",
+                expectedExternalLink: "kk_list_toByteArray",
+                expectedTypeShape: .classNamed("ByteArray")
+            ),
+            .init(
+                source: """
+                fun convert(values: List<Short>) {
+                    values.toShortArray()
+                }
+                """,
+                memberName: "toShortArray",
+                expectedExternalLink: "kk_list_toShortArray",
+                expectedTypeShape: .classNamed("ShortArray")
+            ),
+            .init(
+                source: """
+                fun convert(values: List<Int>) {
+                    values.toIntArray()
+                }
+                """,
+                memberName: "toIntArray",
+                expectedExternalLink: "kk_list_toIntArray",
+                expectedTypeShape: .classNamed("IntArray")
+            ),
+            .init(
+                source: """
+                fun convert(values: List<Double>) {
+                    values.toDoubleArray()
+                }
+                """,
+                memberName: "toDoubleArray",
+                expectedExternalLink: "kk_list_toDoubleArray",
+                expectedTypeShape: .classNamed("DoubleArray")
+            ),
+            .init(
+                source: """
+                fun convert(values: List<Float>) {
+                    values.toFloatArray()
+                }
+                """,
+                memberName: "toFloatArray",
+                expectedExternalLink: "kk_list_toFloatArray",
+                expectedTypeShape: .classNamed("FloatArray")
+            ),
+        ]
 
-        try withTemporaryFile(contents: source) { path in
-            let ctx = makeCompilationContext(inputs: [path])
-            try runSema(ctx)
-            let ast = try XCTUnwrap(ctx.ast)
-            let sema = try XCTUnwrap(ctx.sema)
-            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
-                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
-                return ctx.interner.resolve(callee) == "toBooleanArray"
-            })
-            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
-            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_list_toBooleanArray")
-            let resultType = try XCTUnwrap(sema.bindings.exprTypes[callExpr])
-            guard case let .classType(classType) = sema.types.kind(of: resultType),
-                  let symbol = sema.symbols.symbol(classType.classSymbol)
-            else {
-                return XCTFail("Expected toBooleanArray to return BooleanArray")
-            }
-            XCTAssertEqual(ctx.interner.resolve(symbol.name), "BooleanArray")
-        }
-    }
-
-    func testListToByteArrayUsesRuntimeExternalLink() throws {
-        let source = """
-        fun convert(values: List<Byte>) {
-            values.toByteArray()
-        }
-        """
-
-        try withTemporaryFile(contents: source) { path in
-            let ctx = makeCompilationContext(inputs: [path])
-            try runSema(ctx)
-            let ast = try XCTUnwrap(ctx.ast)
-            let sema = try XCTUnwrap(ctx.sema)
-            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
-                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
-                return ctx.interner.resolve(callee) == "toByteArray"
-            })
-            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
-            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_list_toByteArray")
-            let resultType = try XCTUnwrap(sema.bindings.exprTypes[callExpr])
-            guard case let .classType(classType) = sema.types.kind(of: resultType),
-                  let symbol = sema.symbols.symbol(classType.classSymbol)
-            else {
-                return XCTFail("Expected toByteArray to return ByteArray")
-            }
-            XCTAssertEqual(ctx.interner.resolve(symbol.name), "ByteArray")
-        }
-    }
-
-    func testListToShortArrayUsesRuntimeExternalLink() throws {
-        let source = """
-        fun convert(values: List<Short>) {
-            values.toShortArray()
-        }
-        """
-
-        try withTemporaryFile(contents: source) { path in
-            let ctx = makeCompilationContext(inputs: [path])
-            try runSema(ctx)
-            let ast = try XCTUnwrap(ctx.ast)
-            let sema = try XCTUnwrap(ctx.sema)
-            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
-                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
-                return ctx.interner.resolve(callee) == "toShortArray"
-            })
-            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
-            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_list_toShortArray")
-            let resultType = try XCTUnwrap(sema.bindings.exprTypes[callExpr])
-            guard case let .classType(classType) = sema.types.kind(of: resultType),
-                  let symbol = sema.symbols.symbol(classType.classSymbol)
-            else {
-                return XCTFail("Expected toShortArray to return ShortArray")
-            }
-            XCTAssertEqual(ctx.interner.resolve(symbol.name), "ShortArray")
-        }
-    }
-
-    func testListToIntArrayUsesRuntimeExternalLink() throws {
-        let source = """
-        fun convert(values: List<Int>) {
-            values.toIntArray()
-        }
-        """
-
-        try withTemporaryFile(contents: source) { path in
-            let ctx = makeCompilationContext(inputs: [path])
-            try runSema(ctx)
-            let ast = try XCTUnwrap(ctx.ast)
-            let sema = try XCTUnwrap(ctx.sema)
-            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
-                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
-                return ctx.interner.resolve(callee) == "toIntArray"
-            })
-            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
-            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_list_toIntArray")
-            let resultType = try XCTUnwrap(sema.bindings.exprTypes[callExpr])
-            guard case let .classType(classType) = sema.types.kind(of: resultType),
-                  let symbol = sema.symbols.symbol(classType.classSymbol)
-            else {
-                return XCTFail("Expected toIntArray to return IntArray")
-            }
-            XCTAssertEqual(ctx.interner.resolve(symbol.name), "IntArray")
-        }
-    }
-
-    func testListToDoubleArrayUsesRuntimeExternalLink() throws {
-        let source = """
-        fun convert(values: List<Double>) {
-            values.toDoubleArray()
-        }
-        """
-
-        try withTemporaryFile(contents: source) { path in
-            let ctx = makeCompilationContext(inputs: [path])
-            try runSema(ctx)
-            let ast = try XCTUnwrap(ctx.ast)
-            let sema = try XCTUnwrap(ctx.sema)
-            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
-                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
-                return ctx.interner.resolve(callee) == "toDoubleArray"
-            })
-            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
-            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_list_toDoubleArray")
-            let resultType = try XCTUnwrap(sema.bindings.exprTypes[callExpr])
-            guard case let .classType(classType) = sema.types.kind(of: resultType),
-                  let symbol = sema.symbols.symbol(classType.classSymbol)
-            else {
-                return XCTFail("Expected toDoubleArray to return DoubleArray")
-            }
-            XCTAssertEqual(ctx.interner.resolve(symbol.name), "DoubleArray")
-        }
-    }
-
-    func testListToFloatArrayUsesRuntimeExternalLink() throws {
-        let source = """
-        fun convert(values: List<Float>) {
-            values.toFloatArray()
-        }
-        """
-
-        try withTemporaryFile(contents: source) { path in
-            let ctx = makeCompilationContext(inputs: [path])
-            try runSema(ctx)
-            let ast = try XCTUnwrap(ctx.ast)
-            let sema = try XCTUnwrap(ctx.sema)
-            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
-                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
-                return ctx.interner.resolve(callee) == "toFloatArray"
-            })
-            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
-            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_list_toFloatArray")
-            let resultType = try XCTUnwrap(sema.bindings.exprTypes[callExpr])
-            guard case let .classType(classType) = sema.types.kind(of: resultType),
-                  let symbol = sema.symbols.symbol(classType.classSymbol)
-            else {
-                return XCTFail("Expected toFloatArray to return FloatArray")
-            }
-            XCTAssertEqual(ctx.interner.resolve(symbol.name), "FloatArray")
+        for testCase in cases {
+            try assertSyntheticMemberCall(testCase)
         }
     }
 

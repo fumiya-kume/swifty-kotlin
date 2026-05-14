@@ -82,100 +82,42 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
-    func testListToMapUsesRuntimeExternalLink() throws {
-        let source = """
-        fun copy(values: List<Pair<String, Int>>) {
-            values.toMap()
-        }
-        """
+    func testListAndCollectionConversionMembersUseRuntimeExternalLinks() throws {
+        let cases: [SyntheticMemberCallCase] = [
+            .init(
+                source: """
+                fun copy(values: List<Pair<String, Int>>) {
+                    values.toMap()
+                }
+                """,
+                memberName: "toMap",
+                expectedExternalLink: "kk_list_toMap",
+                expectedTypeShape: .classNamed("Map")
+            ),
+            .init(
+                source: """
+                fun copy(values: Collection<String>): List<String> {
+                    return values.toList()
+                }
+                """,
+                memberName: "toList",
+                expectedExternalLink: "kk_collection_toList",
+                expectedTypeShape: .classNamed("List")
+            ),
+            .init(
+                source: """
+                fun copy(values: List<String>): MutableSet<String> {
+                    return values.toHashSet()
+                }
+                """,
+                memberName: "toHashSet",
+                expectedExternalLink: "kk_list_toHashSet",
+                expectedTypeShape: nil
+            ),
+        ]
 
-        try withTemporaryFile(contents: source) { path in
-            let ctx = makeCompilationContext(inputs: [path])
-            try runSema(ctx)
-
-            XCTAssertTrue(
-                ctx.diagnostics.diagnostics.isEmpty,
-                "Expected List.toMap to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
-            )
-
-            let ast = try XCTUnwrap(ctx.ast)
-            let sema = try XCTUnwrap(ctx.sema)
-            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
-                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
-                return ctx.interner.resolve(callee) == "toMap"
-            })
-            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
-            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_list_toMap")
-
-            let resultType = try XCTUnwrap(sema.bindings.exprTypes[callExpr])
-            guard case let .classType(classType) = sema.types.kind(of: resultType),
-                  let symbol = sema.symbols.symbol(classType.classSymbol)
-            else {
-                return XCTFail("Expected toMap to return Map")
-            }
-            XCTAssertEqual(ctx.interner.resolve(symbol.name), "Map")
-        }
-    }
-
-    func testCollectionToListUsesRuntimeExternalLink() throws {
-        let source = """
-        fun copy(values: Collection<String>): List<String> {
-            return values.toList()
-        }
-        """
-
-        try withTemporaryFile(contents: source) { path in
-            let ctx = makeCompilationContext(inputs: [path])
-            try runSema(ctx)
-
-            XCTAssertTrue(
-                ctx.diagnostics.diagnostics.isEmpty,
-                "Expected Collection.toList to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
-            )
-
-            let ast = try XCTUnwrap(ctx.ast)
-            let sema = try XCTUnwrap(ctx.sema)
-            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
-                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
-                return ctx.interner.resolve(callee) == "toList"
-            })
-            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
-            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_collection_toList")
-
-            let resultType = try XCTUnwrap(sema.bindings.exprTypes[callExpr])
-            guard case let .classType(classType) = sema.types.kind(of: resultType),
-                  let symbol = sema.symbols.symbol(classType.classSymbol)
-            else {
-                return XCTFail("Expected toList to return List")
-            }
-            XCTAssertEqual(ctx.interner.resolve(symbol.name), "List")
-        }
-    }
-
-    func testListToHashSetUsesRuntimeExternalLink() throws {
-        let source = """
-        fun copy(values: List<String>): MutableSet<String> {
-            return values.toHashSet()
-        }
-        """
-
-        try withTemporaryFile(contents: source) { path in
-            let ctx = makeCompilationContext(inputs: [path])
-            try runSema(ctx)
-
-            XCTAssertTrue(
-                ctx.diagnostics.diagnostics.isEmpty,
-                "Expected List.toHashSet to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
-            )
-
-            let ast = try XCTUnwrap(ctx.ast)
-            let sema = try XCTUnwrap(ctx.sema)
-            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
-                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
-                return ctx.interner.resolve(callee) == "toHashSet"
-            })
-            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
-            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_list_toHashSet")
+        for testCase in cases {
+            try assertSyntheticMemberCall(testCase)
         }
     }
 
@@ -2406,6 +2348,88 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+}
+
+struct SyntheticMemberCallCase {
+    let source: String
+    let memberName: String
+    let expectedExternalLink: String
+    let expectedTypeShape: SyntheticMemberTypeShape?
+}
+
+enum SyntheticMemberTypeShape {
+    case classNamed(String)
+}
+
+func assertSyntheticMemberCall(
+    _ testCase: SyntheticMemberCallCase,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) throws {
+    try withTemporaryFile(contents: testCase.source) { path in
+        let ctx = makeCompilationContext(inputs: [path])
+        try runSema(ctx)
+
+        XCTAssertTrue(
+            ctx.diagnostics.diagnostics.isEmpty,
+            "Expected \(testCase.memberName) to type-check cleanly, got: \(ctx.diagnostics.diagnostics)",
+            file: file,
+            line: line
+        )
+
+        let ast = try XCTUnwrap(ctx.ast, file: file, line: line)
+        let sema = try XCTUnwrap(ctx.sema, file: file, line: line)
+        let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+            guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+            return ctx.interner.resolve(callee) == testCase.memberName
+        }, "Expected member call to \(testCase.memberName) in AST", file: file, line: line)
+        let chosenCallee = try XCTUnwrap(
+            sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+            "\(testCase.memberName) should resolve",
+            file: file,
+            line: line
+        )
+        XCTAssertEqual(
+            sema.symbols.externalLinkName(for: chosenCallee),
+            testCase.expectedExternalLink,
+            "Expected \(testCase.memberName) to resolve to \(testCase.expectedExternalLink)",
+            file: file,
+            line: line
+        )
+
+        if let expectedTypeShape = testCase.expectedTypeShape {
+            let resultType = try XCTUnwrap(sema.bindings.exprType(for: callExpr), file: file, line: line)
+            try assertSyntheticMemberType(
+                resultType,
+                matches: expectedTypeShape,
+                sema: sema,
+                interner: ctx.interner,
+                memberName: testCase.memberName,
+                file: file,
+                line: line
+            )
+        }
+    }
+}
+
+func assertSyntheticMemberType(
+    _ type: TypeID,
+    matches expectedTypeShape: SyntheticMemberTypeShape,
+    sema: SemaModule,
+    interner: StringInterner,
+    memberName: String,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) throws {
+    switch expectedTypeShape {
+    case let .classNamed(expectedName):
+        guard case let .classType(classType) = sema.types.kind(of: type),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return XCTFail("Expected \(memberName) to return \(expectedName)", file: file, line: line)
+        }
+        XCTAssertEqual(interner.resolve(symbol.name), expectedName, file: file, line: line)
+    }
 }
 
 func projectedType(
