@@ -360,7 +360,7 @@ final class KotlinContractsEffectModelTests: XCTestCase {
     // MARK: - ContractBuilder stubs resolve in symbol table
 
     /// The compiler must synthesize the full `kotlin.contracts` package with
-    /// ContractBuilder, Effect, CallsInPlace, SimpleEffect, ConditionalEffect,
+    /// ContractBuilder, Effect, CallsInPlace, SimpleEffect, ReturnsNotNull, ConditionalEffect,
     /// HoldsIn, and InvocationKind so that user code importing `kotlin.contracts.*` can
     /// resolve these names.
     func testContractBuilderAndInvocationKindSymbolsExist() throws {
@@ -387,6 +387,7 @@ final class KotlinContractsEffectModelTests: XCTestCase {
             ("Effect", .interface),
             ("CallsInPlace", .interface),
             ("SimpleEffect", .interface),
+            ("ReturnsNotNull", .interface),
             ("ConditionalEffect", .interface),
             ("HoldsIn", .interface),
             ("InvocationKind", .enumClass),
@@ -465,6 +466,63 @@ final class KotlinContractsEffectModelTests: XCTestCase {
                     && signature.returnType == callsInPlaceType
             },
             "ContractBuilder.callsInPlace(lambda, kind) should return CallsInPlace"
+        )
+    }
+
+    func testReturnsNotNullInterfaceAndBuilderSurfaceAreRegistered() throws {
+        let source = """
+        import kotlin.contracts.*
+
+        fun noop() {}
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+        let sema = try XCTUnwrap(ctx.sema)
+
+        let contractsFQName = [
+            ctx.interner.intern("kotlin"),
+            ctx.interner.intern("contracts"),
+        ]
+        let simpleEffectSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: contractsFQName + [ctx.interner.intern("SimpleEffect")])
+        )
+        let returnsNotNullSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: contractsFQName + [ctx.interner.intern("ReturnsNotNull")])
+        )
+        XCTAssertEqual(sema.symbols.symbol(returnsNotNullSymbol)?.kind, .interface)
+        XCTAssertTrue(
+            sema.symbols.directSupertypes(for: returnsNotNullSymbol).contains(simpleEffectSymbol),
+            "ReturnsNotNull must extend SimpleEffect"
+        )
+        let returnsNotNullAnnotations = sema.symbols.annotations(for: returnsNotNullSymbol)
+        XCTAssertTrue(
+            returnsNotNullAnnotations.contains { $0.annotationFQName == "kotlin.contracts.ExperimentalContracts" },
+            "ReturnsNotNull should carry ExperimentalContracts"
+        )
+
+        let builderFQName = contractsFQName + [ctx.interner.intern("ContractBuilder")]
+        let builderSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: builderFQName))
+        let builderType = sema.types.make(.classType(ClassType(
+            classSymbol: builderSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let returnsNotNullType = sema.types.make(.classType(ClassType(
+            classSymbol: returnsNotNullSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let returnsNotNullOverloads = sema.symbols.lookupAll(
+            fqName: builderFQName + [ctx.interner.intern("returnsNotNull")]
+        )
+        XCTAssertTrue(
+            returnsNotNullOverloads.contains { symbol in
+                guard let signature = sema.symbols.functionSignature(for: symbol) else { return false }
+                return signature.receiverType == builderType
+                    && signature.parameterTypes.isEmpty
+                    && signature.returnType == returnsNotNullType
+            },
+            "ContractBuilder.returnsNotNull() should return ReturnsNotNull"
         )
     }
 
