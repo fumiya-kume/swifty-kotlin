@@ -62,6 +62,22 @@ extension CallTypeChecker {
             return true
         }
         if case let .classType(declaredCt) = sema.types.kind(of: declared),
+           case let .kClassType(actualKClass) = sema.types.kind(of: actual),
+           declaredCt.classSymbol == sema.types.kClassInterfaceSymbol,
+           declaredCt.args.contains(where: { arg in
+               switch arg {
+               case let .invariant(t), let .out(t):
+                   return typeArgumentLikeMatch(actual: actualKClass.argument, declared: t)
+               case .in:
+                   return true
+               case .star:
+                   return true
+               }
+           })
+        {
+            return true
+        }
+        if case let .classType(declaredCt) = sema.types.kind(of: declared),
            case let .classType(actualCt) = sema.types.kind(of: actual),
            actualCt.classSymbol == declaredCt.classSymbol,
            declaredCt.args.contains(where: { arg in
@@ -77,6 +93,11 @@ extension CallTypeChecker {
            })
         {
             return true
+        }
+        if case let .kClassType(declaredKClass) = sema.types.kind(of: declared),
+           case let .kClassType(actualKClass) = sema.types.kind(of: actual)
+        {
+            return typeArgumentLikeMatch(actual: actualKClass.argument, declared: declaredKClass.argument)
         }
         return false
     }

@@ -52,15 +52,37 @@ extension CallTypeChecker {
         let sema = ctx.sema
         let visible = ctx.filterByVisibility(ctx.cachedScopeLookup(calleeName)).visible
         var getterCandidates: [SymbolID] = []
-        for candidate in visible {
+        func collectGetterCandidate(from candidate: SymbolID, requireSynthetic: Bool) {
             guard let symbol = sema.symbols.symbol(candidate),
                   symbol.kind == .property,
-                  sema.symbols.extensionPropertyReceiverType(for: candidate) != nil,
+                  !requireSynthetic || symbol.flags.contains(.synthetic),
+                  let receiver = sema.symbols.extensionPropertyReceiverType(for: candidate),
+                  extensionSyntheticFallbackReceiverMatches(
+                      callSiteReceiver: receiverType,
+                      declaredReceiver: receiver,
+                      sema: sema
+                  ),
                   let getterAccessor = sema.symbols.extensionPropertyGetterAccessor(for: candidate)
             else {
-                continue
+                return
             }
-            getterCandidates.append(getterAccessor)
+            if !getterCandidates.contains(getterAccessor) {
+                getterCandidates.append(getterAccessor)
+            }
+        }
+        for candidate in visible {
+            collectGetterCandidate(from: candidate, requireSynthetic: false)
+        }
+        // STDLIB-JVM-PROP-003: Fallback to short-name lookup for JVM reflection
+        // properties (e.g. KClass<T>.java). Restricted to known JVM property names
+        // to avoid accidentally resolving unrelated experimental APIs.
+        let knownJvmPropertyNames: Set<String> = ["java", "kotlin"]
+        if getterCandidates.isEmpty,
+           knownJvmPropertyNames.contains(ctx.interner.resolve(calleeName))
+        {
+            for candidate in sema.symbols.lookupByShortName(calleeName) {
+                collectGetterCandidate(from: candidate, requireSynthetic: true)
+            }
         }
         guard !getterCandidates.isEmpty else {
             return nil

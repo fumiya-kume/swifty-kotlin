@@ -34,10 +34,23 @@ extension CallTypeChecker {
         }
 
         _ = driver.inferExpr(receiverID, ctx: ctx, locals: &locals)
-        guard sema.bindings.classRefTargetType(for: receiverID) != nil else {
+        guard let classRefTargetType = sema.bindings.classRefTargetType(for: receiverID) else {
             return nil
         }
 
+        if calleeName == interner.intern("java"), args.isEmpty {
+            let javaTypeArgument = javaClassTypeArgument(
+                from: classRefTargetType,
+                sema: sema,
+                interner: interner
+            )
+            return bindKClassJavaPropertyAccess(
+                id,
+                typeArgument: javaTypeArgument,
+                sema: sema,
+                interner: interner
+            )
+        }
         if calleeName == knownNames.simpleName || calleeName == knownNames.qualifiedName {
             _ = args.map { driver.inferExpr($0.expr, ctx: ctx, locals: &locals) }
             let nullableStringType = sema.types.makeNullable(
@@ -149,6 +162,14 @@ extension CallTypeChecker {
             return nil
         }
 
+        if calleeName == interner.intern("java"), args.isEmpty {
+            return bindKClassJavaPropertyAccess(
+                id,
+                typeArgument: kClassArgumentType,
+                sema: sema,
+                interner: interner
+            )
+        }
         if calleeName == knownNames.isInstanceName, args.count == 1 {
             _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
             let boolType = sema.types.booleanType
@@ -226,5 +247,72 @@ extension CallTypeChecker {
             )
         }
         return nil
+    }
+
+    private func javaClassTypeArgument(
+        from classRefTargetType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID {
+        guard case let .classType(classType) = sema.types.kind(of: classRefTargetType),
+              let targetSymbol = sema.symbols.symbol(classType.classSymbol),
+              targetSymbol.fqName.count == 2,
+              targetSymbol.fqName.first == interner.intern("kotlin"),
+              let builtin = driver.helpers.resolveBuiltinTypeName(
+                  targetSymbol.name,
+                  nullability: classType.nullability,
+                  types: sema.types,
+                  interner: interner
+              )
+        else {
+            return classRefTargetType
+        }
+        return builtin
+    }
+
+    private func bindKClassJavaPropertyAccess(
+        _ id: ExprID,
+        typeArgument: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID? {
+        let classFQName = [
+            interner.intern("java"),
+            interner.intern("lang"),
+            interner.intern("Class"),
+        ]
+        guard let classSymbol = sema.symbols.lookup(fqName: classFQName) else {
+            return nil
+        }
+
+        let returnType = sema.types.make(.classType(ClassType(
+            classSymbol: classSymbol,
+            args: [.invariant(typeArgument)],
+            nullability: .nonNull
+        )))
+        let propertyFQName = [
+            interner.intern("kotlin"),
+            interner.intern("jvm"),
+            interner.intern("java"),
+        ]
+        if let propertySymbol = sema.symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
+            sema.symbols.symbol(symbolID)?.kind == .property
+                && sema.symbols.extensionPropertyReceiverType(for: symbolID) != nil
+        }) {
+            sema.bindings.bindIdentifier(id, symbol: propertySymbol)
+            if let getterSymbol = sema.symbols.extensionPropertyGetterAccessor(for: propertySymbol) {
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: getterSymbol,
+                        substitutedTypeArguments: [typeArgument],
+                        parameterMapping: [:]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(getterSymbol))
+            }
+        }
+        sema.bindings.bindExprType(id, type: returnType)
+        return returnType
     }
 }
