@@ -271,6 +271,7 @@ extension ABIMismatchTests {
             "kk_atomic_int_array_compareAndSetAt",
             "kk_atomic_int_array_compareAndExchangeAt",
             "kk_atomic_int_array_asJavaAtomicArray",
+            "kk_atomic_int_array_fetchAndUpdateAt",
             "kk_atomic_int_array_fetchAndAddAt",
             "kk_atomic_int_array_addAndFetchAt",
             "kk_atomic_int_array_fetchAndIncrementAt",

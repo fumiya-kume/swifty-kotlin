@@ -208,6 +208,7 @@ extension DataFlowSemaPhase {
             unitType: unitType,
             prefix: "kk_atomic_int_array",
             includeArithmetic: true,
+            includeFetchAndUpdate: true,
             symbols: symbols,
             interner: interner,
             types: types
@@ -775,6 +776,7 @@ extension DataFlowSemaPhase {
         unitType: TypeID,
         prefix: String,
         includeArithmetic: Bool,
+        includeFetchAndUpdate: Bool = false,
         symbols: SymbolTable,
         interner: StringInterner,
         types: TypeSystem
@@ -891,6 +893,25 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        if includeFetchAndUpdate {
+            let transformType = types.make(.functionType(FunctionType(
+                params: [valueType],
+                returnType: valueType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            registerAtomicMember(
+                ownerSymbol: symbol,
+                ownerType: ownerType,
+                name: "fetchAndUpdateAt",
+                externalLinkName: "\(prefix)_fetchAndUpdateAt",
+                returnType: valueType,
+                parameters: [(name: "index", type: types.intType), (name: "transform", type: transformType)],
+                symbols: symbols,
+                interner: interner
+            )
+        }
 
         if includeArithmetic {
             registerAtomicMember(
