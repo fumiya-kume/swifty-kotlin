@@ -607,6 +607,64 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(thrown, 0)
     }
 
+    func testMinOfWithReturnsSmallestTransformedValueAndThrowsOnEmpty() {
+        var thrown = 0
+        let result = kk_list_minOfWith(
+            makeList([-3, 1, 2]),
+            unsafeBitCast(maxOfWithNaturalComparator, to: Int.self),
+            0,
+            unsafeBitCast(maxOfWithOrNullSquareValue, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(result, 1)
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        XCTAssertEqual(
+            kk_list_minOfWith(
+                makeList([]),
+                unsafeBitCast(maxOfWithNaturalComparator, to: Int.self),
+                0,
+                unsafeBitCast(maxOfWithOrNullSquareValue, to: Int.self),
+                0,
+                &thrown
+            ),
+            runtimeExceptionCaughtSentinel
+        )
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testMinOfWithOrNullReturnsSmallestTransformedValueAndNullForEmpty() {
+        var thrown = 0
+        let result = kk_list_minOfWithOrNull(
+            makeList([-3, 1, 2]),
+            unsafeBitCast(maxOfWithOrNullNaturalComparator, to: Int.self),
+            0,
+            unsafeBitCast(maxOfWithOrNullSquareValue, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(result, 1)
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        XCTAssertEqual(
+            kk_list_minOfWithOrNull(
+                makeList([]),
+                unsafeBitCast(maxOfWithOrNullNaturalComparator, to: Int.self),
+                0,
+                unsafeBitCast(maxOfWithOrNullSquareValue, to: Int.self),
+                0,
+                &thrown
+            ),
+            runtimeNullSentinelInt
+        )
+        XCTAssertEqual(thrown, 0)
+    }
+
     func testMaxWithReturnsLargestElementAndThrowsOnEmpty() {
         var thrown = 0
         XCTAssertEqual(
