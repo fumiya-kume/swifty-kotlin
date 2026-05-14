@@ -878,6 +878,43 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenAtomicGetAndDecrementOverloads() throws {
+        let source = """
+        @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
+        import kotlin.concurrent.atomics.AtomicInt
+        import kotlin.concurrent.atomics.AtomicIntArray
+        import kotlin.concurrent.atomics.AtomicLong
+        import kotlin.concurrent.atomics.AtomicLongArray
+
+        fun main() {
+            val intValue = AtomicInt(2)
+            println(intValue.getAndDecrement())
+            println(intValue.load())
+
+            val longValue = AtomicLong(4L)
+            println(longValue.getAndDecrement())
+            println(longValue.load())
+
+            val intArray = AtomicIntArray(1)
+            intArray.storeAt(0, 6)
+            println(intArray.getAndDecrement(0))
+            println(intArray.loadAt(0))
+
+            val longArray = AtomicLongArray(1)
+            longArray.storeAt(0, 8L)
+            println(longArray.getAndDecrement(0))
+            println(longArray.loadAt(0))
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(inputPath: path, moduleName: "AtomicGetAndDecrement", emit: .executable, outputPath: outputBase)
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "2\n1\n4\n3\n6\n5\n8\n7\n")
+        }
+    }
+
     // MARK: - AtomicInt default initial value
 
     func testCodegenAtomicIntDefaultInitialValue() throws {
