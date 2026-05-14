@@ -842,6 +842,33 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenAtomicLongGetAndUpdate() throws {
+        let source = """
+        @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
+        import kotlin.concurrent.atomics.AtomicLong
+
+        fun main() {
+            val a = AtomicLong(10L)
+            val old = a.getAndUpdate { it * 2L }
+            println(old)
+            println(a.load())
+            val fetched = a.fetchAndUpdate { it - 3L }
+            println(fetched)
+            println(a.load())
+            val new2 = a.updateAndGet { it + 5L }
+            println(new2)
+            println(a.load())
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(inputPath: path, moduleName: "AtomicLongGetAndUpdate", emit: .executable, outputPath: outputBase)
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "10\n20\n20\n17\n22\n22\n")
+        }
+    }
+
     // MARK: - AtomicBoolean getAndUpdate / updateAndGet
 
     func testCodegenAtomicBooleanGetAndUpdate() throws {
