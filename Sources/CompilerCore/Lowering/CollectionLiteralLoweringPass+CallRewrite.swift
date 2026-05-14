@@ -22,16 +22,7 @@ extension CollectionLiteralLoweringPass {
             }
 
             // Phase 1: Identify collection-typed expression IDs
-            var listExprIDs: Set<Int32> = []
-            var setExprIDs: Set<Int32> = []
-            var mapExprIDs: Set<Int32> = []
-            var arrayExprIDs: Set<Int32> = []
-            var sequenceExprIDs: Set<Int32> = []
-            var rangeExprIDs: Set<Int32> = []
-            var charRangeExprIDs: Set<Int32> = []
-            var ulongRangeExprIDs: Set<Int32> = []
-            var stringExprIDs: Set<Int32> = []
-            var fileExprIDs: Set<Int32> = []
+            var state = CollectionRewriteState()
 
             collectInitialCollectionExprIDs(
                 function: function,
@@ -39,26 +30,19 @@ extension CollectionLiteralLoweringPass {
                 arena: module.arena,
                 sema: ctx.sema,
                 interner: ctx.interner,
-                listExprIDs: &listExprIDs,
-                setExprIDs: &setExprIDs,
-                mapExprIDs: &mapExprIDs,
-                arrayExprIDs: &arrayExprIDs,
-                sequenceExprIDs: &sequenceExprIDs,
-                rangeExprIDs: &rangeExprIDs,
-                charRangeExprIDs: &charRangeExprIDs,
-                ulongRangeExprIDs: &ulongRangeExprIDs,
-                stringExprIDs: &stringExprIDs,
-                fileExprIDs: &fileExprIDs
+                listExprIDs: &state.listExprIDs,
+                setExprIDs: &state.setExprIDs,
+                mapExprIDs: &state.mapExprIDs,
+                arrayExprIDs: &state.arrayExprIDs,
+                sequenceExprIDs: &state.sequenceExprIDs,
+                rangeExprIDs: &state.rangeExprIDs,
+                charRangeExprIDs: &state.charRangeExprIDs,
+                ulongRangeExprIDs: &state.ulongRangeExprIDs,
+                stringExprIDs: &state.stringExprIDs,
+                fileExprIDs: &state.fileExprIDs
             )
 
             // Phase 2: Rewrite instructions
-            var listIteratorExprIDs: Set<Int32> = []
-            var mapIteratorExprIDs: Set<Int32> = []
-            var stringIteratorExprIDs: Set<Int32> = []
-            var iteratorBuilderExprIDs: Set<Int32> = []
-            var indexingIterableExprIDs: Set<Int32> = []
-            var indexingIterableIteratorExprIDs: Set<Int32> = []
-            var ulongRangeIteratorExprIDs: Set<Int32> = []
             var loweredBody: [KIRInstruction] = []
             loweredBody.reserveCapacity(function.body.count + 32)
 
@@ -276,7 +260,7 @@ extension CollectionLiteralLoweringPass {
                     if callee == lookup.countName && (arguments.count == 2 || arguments.count == 3) {
                         let receiverID = arguments[0]
                         let lambdaID = arguments[1]
-                        if mapExprIDs.contains(receiverID.rawValue) {
+                        if state.mapExprIDs.contains(receiverID.rawValue) {
                             let closureRawID: KIRExprID
                             if arguments.count == 3 {
                                 closureRawID = arguments[2]
@@ -400,7 +384,7 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                         }
-                        if let result { setExprIDs.insert(result.rawValue) }
+                        if let result { state.setExprIDs.insert(result.rawValue) }
                         continue
                     }
 
@@ -586,7 +570,7 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                         }
-                        if let result { sequenceExprIDs.insert(result.rawValue) }
+                        if let result { state.sequenceExprIDs.insert(result.rawValue) }
                         continue
                     }
 
@@ -602,7 +586,7 @@ extension CollectionLiteralLoweringPass {
                             canThrow: false,
                             thrownResult: nil
                         ))
-                        if let result { sequenceExprIDs.insert(result.rawValue) }
+                        if let result { state.sequenceExprIDs.insert(result.rawValue) }
                         continue
                     }
 
@@ -619,7 +603,7 @@ extension CollectionLiteralLoweringPass {
                             canThrow: false,
                             thrownResult: nil
                         ))
-                        if let result { sequenceExprIDs.insert(result.rawValue) }
+                        if let result { state.sequenceExprIDs.insert(result.rawValue) }
                         continue
                     }
 
@@ -646,16 +630,16 @@ extension CollectionLiteralLoweringPass {
                             thrownResult: thrownResult
                         ))
                         if callee == lookup.buildListName, let result {
-                            listExprIDs.insert(result.rawValue)
-                            listExprIDs.insert(builderResult.rawValue)
+                            state.listExprIDs.insert(result.rawValue)
+                            state.listExprIDs.insert(builderResult.rawValue)
                         }
                         if callee == lookup.buildSetName, let result {
-                            setExprIDs.insert(result.rawValue)
-                            setExprIDs.insert(builderResult.rawValue)
+                            state.setExprIDs.insert(result.rawValue)
+                            state.setExprIDs.insert(builderResult.rawValue)
                         }
                         if callee == lookup.buildMapName, let result {
-                            mapExprIDs.insert(result.rawValue)
-                            mapExprIDs.insert(builderResult.rawValue)
+                            state.mapExprIDs.insert(result.rawValue)
+                            state.mapExprIDs.insert(builderResult.rawValue)
                         }
                         if let result {
                             loweredBody.append(.copy(from: builderResult, to: result))
@@ -754,14 +738,14 @@ extension CollectionLiteralLoweringPass {
                             canThrow: false,
                             thrownResult: nil
                         ))
-                        if let result { fileExprIDs.insert(result.rawValue) }
+                        if let result { state.fileExprIDs.insert(result.rawValue) }
                         continue
                     }
 
                     // --- Rewrite File member calls: readText/writeText/readLines (STDLIB-320) ---
                     if callee == lookup.readTextName,
                        arguments.count == 1,
-                       fileExprIDs.contains(arguments[0].rawValue),
+                       state.fileExprIDs.contains(arguments[0].rawValue),
                        isJavaIOFileMember(symbol: symbol, ctx: ctx, interner: ctx.interner)
                     {
                         loweredBody.append(.call(
@@ -777,7 +761,7 @@ extension CollectionLiteralLoweringPass {
 
                     if callee == lookup.writeTextName,
                        arguments.count == 2,
-                       fileExprIDs.contains(arguments[0].rawValue),
+                       state.fileExprIDs.contains(arguments[0].rawValue),
                        isJavaIOFileMember(symbol: symbol, ctx: ctx, interner: ctx.interner)
                     {
                         loweredBody.append(.call(
@@ -793,7 +777,7 @@ extension CollectionLiteralLoweringPass {
 
                     if callee == lookup.appendTextName,
                        arguments.count == 2,
-                       fileExprIDs.contains(arguments[0].rawValue),
+                       state.fileExprIDs.contains(arguments[0].rawValue),
                        isJavaIOFileMember(symbol: symbol, ctx: ctx, interner: ctx.interner)
                     {
                         loweredBody.append(.call(
@@ -809,7 +793,7 @@ extension CollectionLiteralLoweringPass {
 
                     if callee == lookup.readLinesName,
                        arguments.count == 1,
-                       fileExprIDs.contains(arguments[0].rawValue),
+                       state.fileExprIDs.contains(arguments[0].rawValue),
                        isJavaIOFileMember(symbol: symbol, ctx: ctx, interner: ctx.interner)
                     {
                         loweredBody.append(.call(
@@ -820,13 +804,13 @@ extension CollectionLiteralLoweringPass {
                             canThrow: true,
                             thrownResult: thrownResult
                         ))
-                        if let result { listExprIDs.insert(result.rawValue) }
+                        if let result { state.listExprIDs.insert(result.rawValue) }
                         continue
                     }
 
                     // --- Rewrite File member calls (STDLIB-321) ---
-                    // Only rewrite calls on File expressions (tracked in fileExprIDs)
-                    if arguments.count >= 1, fileExprIDs.contains(arguments[0].rawValue) {
+                    // Only rewrite calls on File expressions (tracked in state.fileExprIDs)
+                    if arguments.count >= 1, state.fileExprIDs.contains(arguments[0].rawValue) {
                         let receiverID = arguments[0]
                         let kkCallee: InternedString?
 
@@ -915,13 +899,13 @@ extension CollectionLiteralLoweringPass {
                             if let result,
                                callee == lookup.walkName || callee == lookup.listFilesName || callee == lookup.readLinesName || callee == lookup.readBytesName
                             {
-                                listExprIDs.insert(result.rawValue)
+                                state.listExprIDs.insert(result.rawValue)
                             }
                             // Track bufferedReader()/bufferedWriter() results as file-like exprs for chained member calls
                             if let result,
                                callee == lookup.bufferedReaderName || callee == lookup.bufferedWriterName
                             {
-                                fileExprIDs.insert(result.rawValue)
+                                state.fileExprIDs.insert(result.rawValue)
                             }
                             continue
                         }
@@ -985,8 +969,8 @@ extension CollectionLiteralLoweringPass {
                     // --- Rewrite kk_range_iterator on ULong range → kk_ulong_range_iterator (STDLIB-RANGE-037) ---
                     if callee == lookup.kkRangeIteratorName, arguments.count == 1 {
                         let argID = arguments[0]
-                        if ulongRangeExprIDs.contains(argID.rawValue) {
-                            if let result { ulongRangeIteratorExprIDs.insert(result.rawValue) }
+                        if state.ulongRangeExprIDs.contains(argID.rawValue) {
+                            if let result { state.ulongRangeIteratorExprIDs.insert(result.rawValue) }
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkULongRangeIteratorName,
@@ -1013,8 +997,8 @@ extension CollectionLiteralLoweringPass {
                     // --- Rewrite kk_range_iterator on list/set → kk_list_iterator ---
                     if callee == lookup.kkRangeIteratorName, arguments.count == 1 {
                         let argID = arguments[0]
-                        if listExprIDs.contains(argID.rawValue) || setExprIDs.contains(argID.rawValue) {
-                            if let result { listIteratorExprIDs.insert(result.rawValue) }
+                        if state.listExprIDs.contains(argID.rawValue) || state.setExprIDs.contains(argID.rawValue) {
+                            if let result { state.listIteratorExprIDs.insert(result.rawValue) }
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkListIteratorName,
@@ -1025,8 +1009,8 @@ extension CollectionLiteralLoweringPass {
                             ))
                             continue
                         }
-                        if mapExprIDs.contains(argID.rawValue) {
-                            if let result { mapIteratorExprIDs.insert(result.rawValue) }
+                        if state.mapExprIDs.contains(argID.rawValue) {
+                            if let result { state.mapIteratorExprIDs.insert(result.rawValue) }
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkMapIteratorName,
@@ -1038,8 +1022,8 @@ extension CollectionLiteralLoweringPass {
                             continue
                         }
                         // STDLIB-189: Rewrite kk_range_iterator on String → kk_string_iterator
-                        if stringExprIDs.contains(argID.rawValue) {
-                            if let result { stringIteratorExprIDs.insert(result.rawValue) }
+                        if state.stringExprIDs.contains(argID.rawValue) {
+                            if let result { state.stringIteratorExprIDs.insert(result.rawValue) }
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkStringIteratorName,
@@ -1051,16 +1035,16 @@ extension CollectionLiteralLoweringPass {
                             continue
                         }
                         // STDLIB-331/564: iterator {} result is already an iterator; pass through
-                        if iteratorBuilderExprIDs.contains(argID.rawValue) {
+                        if state.iteratorBuilderExprIDs.contains(argID.rawValue) {
                             if let result {
-                                iteratorBuilderExprIDs.insert(result.rawValue)
+                                state.iteratorBuilderExprIDs.insert(result.rawValue)
                                 loweredBody.append(.copy(from: argID, to: result))
                             }
                             continue
                         }
                         // Rewrite kk_range_iterator on IndexingIterable → kk_indexing_iterable_iterator
-                        if indexingIterableExprIDs.contains(argID.rawValue) {
-                            if let result { indexingIterableIteratorExprIDs.insert(result.rawValue) }
+                        if state.indexingIterableExprIDs.contains(argID.rawValue) {
+                            if let result { state.indexingIterableIteratorExprIDs.insert(result.rawValue) }
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkIndexingIterableIteratorName,
@@ -1076,7 +1060,7 @@ extension CollectionLiteralLoweringPass {
                     // --- Rewrite kk_range_hasNext on ULong range iterator → kk_ulong_range_hasNext (STDLIB-RANGE-037) ---
                     if callee == lookup.kkRangeHasNextName, arguments.count == 1 {
                         let argID = arguments[0]
-                        if ulongRangeIteratorExprIDs.contains(argID.rawValue) {
+                        if state.ulongRangeIteratorExprIDs.contains(argID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkULongRangeHasNextName,
@@ -1092,7 +1076,7 @@ extension CollectionLiteralLoweringPass {
                     // --- Rewrite kk_range_hasNext on list iterator → kk_list_iterator_hasNext ---
                     if callee == lookup.kkRangeHasNextName, arguments.count == 1 {
                         let argID = arguments[0]
-                        if listIteratorExprIDs.contains(argID.rawValue) {
+                        if state.listIteratorExprIDs.contains(argID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkListIteratorHasNextName,
@@ -1103,7 +1087,7 @@ extension CollectionLiteralLoweringPass {
                             ))
                             continue
                         }
-                        if mapIteratorExprIDs.contains(argID.rawValue) {
+                        if state.mapIteratorExprIDs.contains(argID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkMapIteratorHasNextName,
@@ -1115,7 +1099,7 @@ extension CollectionLiteralLoweringPass {
                             continue
                         }
                         // STDLIB-189: Rewrite kk_range_hasNext on string iterator → kk_string_iterator_hasNext
-                        if stringIteratorExprIDs.contains(argID.rawValue) {
+                        if state.stringIteratorExprIDs.contains(argID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkStringIteratorHasNextName,
@@ -1127,7 +1111,7 @@ extension CollectionLiteralLoweringPass {
                             continue
                         }
                         // STDLIB-331/564: Rewrite kk_range_hasNext on iterator builder → kk_iterator_builder_hasNext
-                        if iteratorBuilderExprIDs.contains(argID.rawValue) {
+                        if state.iteratorBuilderExprIDs.contains(argID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkIteratorBuilderHasNextName,
@@ -1139,7 +1123,7 @@ extension CollectionLiteralLoweringPass {
                             continue
                         }
                         // Rewrite kk_range_hasNext on IndexingIterable iterator → kk_indexing_iterable_hasNext
-                        if indexingIterableIteratorExprIDs.contains(argID.rawValue) {
+                        if state.indexingIterableIteratorExprIDs.contains(argID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkIndexingIterableHasNextName,
@@ -1155,7 +1139,7 @@ extension CollectionLiteralLoweringPass {
                     // --- Rewrite kk_range_next on ULong range iterator → kk_ulong_range_next (STDLIB-RANGE-037) ---
                     if callee == lookup.kkRangeNextName, arguments.count == 1 {
                         let argID = arguments[0]
-                        if ulongRangeIteratorExprIDs.contains(argID.rawValue) {
+                        if state.ulongRangeIteratorExprIDs.contains(argID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkULongRangeNextName,
@@ -1171,7 +1155,7 @@ extension CollectionLiteralLoweringPass {
                     // --- Rewrite kk_range_next on list iterator → kk_list_iterator_next ---
                     if callee == lookup.kkRangeNextName, arguments.count == 1 {
                         let argID = arguments[0]
-                        if listIteratorExprIDs.contains(argID.rawValue) {
+                        if state.listIteratorExprIDs.contains(argID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkListIteratorNextName,
@@ -1182,7 +1166,7 @@ extension CollectionLiteralLoweringPass {
                             ))
                             continue
                         }
-                        if mapIteratorExprIDs.contains(argID.rawValue) {
+                        if state.mapIteratorExprIDs.contains(argID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkMapIteratorNextName,
@@ -1194,7 +1178,7 @@ extension CollectionLiteralLoweringPass {
                             continue
                         }
                         // STDLIB-189: Rewrite kk_range_next on string iterator → kk_string_iterator_next
-                        if stringIteratorExprIDs.contains(argID.rawValue) {
+                        if state.stringIteratorExprIDs.contains(argID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkStringIteratorNextName,
@@ -1206,7 +1190,7 @@ extension CollectionLiteralLoweringPass {
                             continue
                         }
                         // STDLIB-331/564: Rewrite kk_range_next on iterator builder → kk_iterator_builder_next
-                        if iteratorBuilderExprIDs.contains(argID.rawValue) {
+                        if state.iteratorBuilderExprIDs.contains(argID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkIteratorBuilderNextName,
@@ -1218,7 +1202,7 @@ extension CollectionLiteralLoweringPass {
                             continue
                         }
                         // Rewrite kk_range_next on IndexingIterable iterator → kk_indexing_iterable_next
-                        if indexingIterableIteratorExprIDs.contains(argID.rawValue) {
+                        if state.indexingIterableIteratorExprIDs.contains(argID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkIndexingIterableNextName,
@@ -1234,8 +1218,8 @@ extension CollectionLiteralLoweringPass {
                     // --- STDLIB-538: Rewrite explicit listIterator() on list → kk_list_iterator ---
                     if callee == lookup.listIteratorMemberName, arguments.count == 1 {
                         let receiverID = arguments[0]
-                        if listExprIDs.contains(receiverID.rawValue) {
-                            if let result { listIteratorExprIDs.insert(result.rawValue) }
+                        if state.listExprIDs.contains(receiverID.rawValue) {
+                            if let result { state.listIteratorExprIDs.insert(result.rawValue) }
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkListIteratorName,
@@ -1251,8 +1235,8 @@ extension CollectionLiteralLoweringPass {
                     // --- Rewrite explicit iterator() on list/set → kk_list_iterator ---
                     if callee == lookup.iteratorName, arguments.count == 1 {
                         let receiverID = arguments[0]
-                        if listExprIDs.contains(receiverID.rawValue) || setExprIDs.contains(receiverID.rawValue) {
-                            if let result { listIteratorExprIDs.insert(result.rawValue) }
+                        if state.listExprIDs.contains(receiverID.rawValue) || state.setExprIDs.contains(receiverID.rawValue) {
+                            if let result { state.listIteratorExprIDs.insert(result.rawValue) }
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkListIteratorName,
@@ -1267,7 +1251,7 @@ extension CollectionLiteralLoweringPass {
 
                     // --- STDLIB-538: Rewrite hasPrevious()/previous() on list iterator ---
                     let isListIteratorReceiverCall = arguments.count == 1
-                        && listIteratorExprIDs.contains(arguments[0].rawValue)
+                        && state.listIteratorExprIDs.contains(arguments[0].rawValue)
                     if isListIteratorReceiverCall,
                        callee == lookup.hasPreviousName || callee == lookup.previousName {
                         let runtimeCallee = callee == lookup.hasPreviousName
@@ -1290,7 +1274,7 @@ extension CollectionLiteralLoweringPass {
                     if callee == lookup.anyName || callee == lookup.noneName || callee == lookup.firstName || callee == lookup.lastName {
                         if arguments.count == 1 {
                             let receiverID = arguments[0]
-                            if listExprIDs.contains(receiverID.rawValue) {
+                            if state.listExprIDs.contains(receiverID.rawValue) {
                                 let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
                                 loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
                                 let kkName: InternedString = switch callee {
@@ -1310,7 +1294,7 @@ extension CollectionLiteralLoweringPass {
                                 ))
                                 continue
                             }
-                            if rangeExprIDs.contains(receiverID.rawValue),
+                            if state.rangeExprIDs.contains(receiverID.rawValue),
                                callee == lookup.firstName || callee == lookup.lastName || callee == lookup.endExclusiveName
                             {
                                 let kkName: InternedString = switch callee {
@@ -1335,7 +1319,7 @@ extension CollectionLiteralLoweringPass {
                     if callee == lookup.sizeName || callee == lookup.countName {
                         if arguments.count == 1 {
                             let receiverID = arguments[0]
-                            if listExprIDs.contains(receiverID.rawValue) {
+                            if state.listExprIDs.contains(receiverID.rawValue) {
                                 loweredBody.append(.call(
                                     symbol: nil,
                                     callee: lookup.kkListSizeName,
@@ -1346,7 +1330,7 @@ extension CollectionLiteralLoweringPass {
                                 ))
                                 continue
                             }
-                            if mapExprIDs.contains(receiverID.rawValue) {
+                            if state.mapExprIDs.contains(receiverID.rawValue) {
                                 loweredBody.append(.call(
                                     symbol: nil,
                                     callee: lookup.kkMapSizeName,
@@ -1357,7 +1341,7 @@ extension CollectionLiteralLoweringPass {
                                 ))
                                 continue
                             }
-                            if setExprIDs.contains(receiverID.rawValue) {
+                            if state.setExprIDs.contains(receiverID.rawValue) {
                                 loweredBody.append(.call(
                                     symbol: nil,
                                     callee: lookup.kkSetSizeName,
@@ -1368,7 +1352,7 @@ extension CollectionLiteralLoweringPass {
                                 ))
                                 continue
                             }
-                            if arrayExprIDs.contains(receiverID.rawValue) {
+                            if state.arrayExprIDs.contains(receiverID.rawValue) {
                                 loweredBody.append(.call(
                                     symbol: nil,
                                     callee: lookup.kkArraySizeName,
@@ -1379,9 +1363,9 @@ extension CollectionLiteralLoweringPass {
                                 ))
                                 continue
                             }
-                            if rangeExprIDs.contains(receiverID.rawValue) {
+                            if state.rangeExprIDs.contains(receiverID.rawValue) {
                                 let countCallee: InternedString
-                                if ulongRangeExprIDs.contains(receiverID.rawValue) {
+                                if state.ulongRangeExprIDs.contains(receiverID.rawValue) {
                                     countCallee = lookup.kkULongRangeCountName
                                 } else if isUIntRangeExpr(receiverID) {
                                     countCallee = ctx.interner.intern("kk_uint_range_count")
@@ -1404,7 +1388,7 @@ extension CollectionLiteralLoweringPass {
                     if callee == lookup.getName {
                         if arguments.count == 2 {
                             let receiverID = arguments[0]
-                            if listExprIDs.contains(receiverID.rawValue) {
+                            if state.listExprIDs.contains(receiverID.rawValue) {
                                 loweredBody.append(.call(
                                     symbol: nil,
                                     callee: lookup.kkListGetName,
@@ -1415,7 +1399,7 @@ extension CollectionLiteralLoweringPass {
                                 ))
                                 continue
                             }
-                            if mapExprIDs.contains(receiverID.rawValue) {
+                            if state.mapExprIDs.contains(receiverID.rawValue) {
                                 loweredBody.append(.call(
                                     symbol: nil,
                                     callee: lookup.kkMapGetName,
@@ -1432,7 +1416,7 @@ extension CollectionLiteralLoweringPass {
                     if callee == lookup.containsName {
                         if arguments.count == 2 {
                             let receiverID = arguments[0]
-                            if listExprIDs.contains(receiverID.rawValue) {
+                            if state.listExprIDs.contains(receiverID.rawValue) {
                                 loweredBody.append(.call(
                                     symbol: nil,
                                     callee: lookup.kkListContainsName,
@@ -1443,7 +1427,7 @@ extension CollectionLiteralLoweringPass {
                                 ))
                                 continue
                             }
-                            if setExprIDs.contains(receiverID.rawValue) {
+                            if state.setExprIDs.contains(receiverID.rawValue) {
                                 loweredBody.append(.call(
                                     symbol: nil,
                                     callee: lookup.kkSetContainsName,
@@ -1460,7 +1444,7 @@ extension CollectionLiteralLoweringPass {
                     if callee == lookup.containsAllName {
                         if arguments.count == 2 {
                             let receiverID = arguments[0]
-                            if listExprIDs.contains(receiverID.rawValue) {
+                            if state.listExprIDs.contains(receiverID.rawValue) {
                                 loweredBody.append(.call(
                                     symbol: nil,
                                     callee: lookup.kkListContainsAllName,
@@ -1471,7 +1455,7 @@ extension CollectionLiteralLoweringPass {
                                 ))
                                 continue
                             }
-                            if setExprIDs.contains(receiverID.rawValue) {
+                            if state.setExprIDs.contains(receiverID.rawValue) {
                                 loweredBody.append(.call(
                                     symbol: nil,
                                     callee: lookup.kkSetContainsAllName,
@@ -1488,7 +1472,7 @@ extension CollectionLiteralLoweringPass {
                     if callee == lookup.containsKeyName {
                         if arguments.count == 2 {
                             let receiverID = arguments[0]
-                            if mapExprIDs.contains(receiverID.rawValue) {
+                            if state.mapExprIDs.contains(receiverID.rawValue) {
                                 loweredBody.append(.call(
                                     symbol: nil,
                                     callee: lookup.kkMapContainsKeyName,
@@ -1505,7 +1489,7 @@ extension CollectionLiteralLoweringPass {
                     if callee == lookup.containsValueName {
                         if arguments.count == 2 {
                             let receiverID = arguments[0]
-                            if mapExprIDs.contains(receiverID.rawValue) {
+                            if state.mapExprIDs.contains(receiverID.rawValue) {
                                 loweredBody.append(.call(
                                     symbol: nil,
                                     callee: lookup.kkMapContainsValueName,
@@ -1522,7 +1506,7 @@ extension CollectionLiteralLoweringPass {
                     if callee == lookup.addName {
                         if arguments.count == 2 {
                             let receiverID = arguments[0]
-                            if setExprIDs.contains(receiverID.rawValue) {
+                            if state.setExprIDs.contains(receiverID.rawValue) {
                                 loweredBody.append(.call(
                                     symbol: nil,
                                     callee: lookup.kkMutableSetAddName,
@@ -1539,7 +1523,7 @@ extension CollectionLiteralLoweringPass {
                     if callee == lookup.removeName {
                         if arguments.count == 2 {
                             let receiverID = arguments[0]
-                            if setExprIDs.contains(receiverID.rawValue) {
+                            if state.setExprIDs.contains(receiverID.rawValue) {
                                 loweredBody.append(.call(
                                     symbol: nil,
                                     callee: lookup.kkMutableSetRemoveName,
@@ -1556,7 +1540,7 @@ extension CollectionLiteralLoweringPass {
                     if callee == lookup.isEmptyName {
                         if arguments.count == 1 {
                             let receiverID = arguments[0]
-                            if listExprIDs.contains(receiverID.rawValue) {
+                            if state.listExprIDs.contains(receiverID.rawValue) {
                                 loweredBody.append(.call(
                                     symbol: nil,
                                     callee: lookup.kkListIsEmptyName,
@@ -1567,7 +1551,7 @@ extension CollectionLiteralLoweringPass {
                                 ))
                                 continue
                             }
-                            if setExprIDs.contains(receiverID.rawValue) {
+                            if state.setExprIDs.contains(receiverID.rawValue) {
                                 loweredBody.append(.call(
                                     symbol: nil,
                                     callee: lookup.kkSetIsEmptyName,
@@ -1578,7 +1562,7 @@ extension CollectionLiteralLoweringPass {
                                 ))
                                 continue
                             }
-                            if mapExprIDs.contains(receiverID.rawValue) {
+                            if state.mapExprIDs.contains(receiverID.rawValue) {
                                 loweredBody.append(.call(
                                     symbol: nil,
                                     callee: lookup.kkMapIsEmptyName,
@@ -1590,9 +1574,9 @@ extension CollectionLiteralLoweringPass {
                                 continue
                             }
                             // STDLIB-637: UIntRange/ULongRange isEmpty
-                            if rangeExprIDs.contains(receiverID.rawValue) {
+                            if state.rangeExprIDs.contains(receiverID.rawValue) {
                                 let isUIntRange = isUIntRangeExpr(receiverID)
-                                let isEmptyName = ulongRangeExprIDs.contains(receiverID.rawValue)
+                                let isEmptyName = state.ulongRangeExprIDs.contains(receiverID.rawValue)
                                     ? lookup.kkULongRangeIsEmptyName
                                     : (isUIntRange ? ctx.interner.intern("kk_uint_range_isEmpty") : lookup.kkRangeIsEmptyName)
                                 loweredBody.append(.call(
@@ -1612,7 +1596,7 @@ extension CollectionLiteralLoweringPass {
                     if callee == lookup.sumName {
                         if arguments.count == 1 {
                             let receiverID = arguments[0]
-                            if rangeExprIDs.contains(receiverID.rawValue) {
+                            if state.rangeExprIDs.contains(receiverID.rawValue) {
                                 let isUIntRange = isUIntRangeExpr(receiverID)
                                 loweredBody.append(.call(
                                     symbol: nil,
@@ -1624,7 +1608,7 @@ extension CollectionLiteralLoweringPass {
                                 ))
                                 continue
                             }
-                            if listExprIDs.contains(receiverID.rawValue) || arrayExprIDs.contains(receiverID.rawValue) {
+                            if state.listExprIDs.contains(receiverID.rawValue) || state.arrayExprIDs.contains(receiverID.rawValue) {
                                 loweredBody.append(.call(
                                     symbol: nil,
                                     callee: lookup.kkListSumName,
@@ -1640,7 +1624,7 @@ extension CollectionLiteralLoweringPass {
 
                     // --- Rewrite sequence member calls (STDLIB-003 / STDLIB-471) ---
                     // asSequence() on collection → kk_list_asSequence or kk_array_asSequence
-                    // Guard with arrayExprIDs / listExprIDs so we only rewrite
+                    // Guard with state.arrayExprIDs / state.listExprIDs so we only rewrite
                     // receivers whose concrete collection kind is known.
                     // Since LOWERING-001, non-tracked receivers (e.g., a List<Int>
                     // parameter or a function return value) are now seeded into
@@ -1660,13 +1644,13 @@ extension CollectionLiteralLoweringPass {
                         || callee == lookup.kkSequencePlusName || callee == lookup.kkSequenceMinusName
                     {
                         loweredBody.append(instruction)
-                        if let result { sequenceExprIDs.insert(result.rawValue) }
+                        if let result { state.sequenceExprIDs.insert(result.rawValue) }
                         continue
                     }
 
                     if callee == lookup.asSequenceName, arguments.count == 1 {
                         let receiverID = arguments[0]
-                        if arrayExprIDs.contains(receiverID.rawValue) {
+                        if state.arrayExprIDs.contains(receiverID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkArrayAsSequenceName,
@@ -1675,9 +1659,9 @@ extension CollectionLiteralLoweringPass {
                                 canThrow: false,
                                 thrownResult: nil
                             ))
-                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            if let result { state.sequenceExprIDs.insert(result.rawValue) }
                             continue
-                        } else if listExprIDs.contains(receiverID.rawValue) {
+                        } else if state.listExprIDs.contains(receiverID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkListAsSequenceName,
@@ -1686,7 +1670,7 @@ extension CollectionLiteralLoweringPass {
                                 canThrow: false,
                                 thrownResult: nil
                             ))
-                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            if let result { state.sequenceExprIDs.insert(result.rawValue) }
                             continue
                         } else {
                             // Receiver is not a tracked list/array literal — skip
@@ -1694,14 +1678,14 @@ extension CollectionLiteralLoweringPass {
                             // original symbol linkage handle it. Still mark the
                             // result as a sequence so downstream map/filter/take
                             // rewrites fire correctly for chained calls.
-                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            if let result { state.sequenceExprIDs.insert(result.rawValue) }
                         }
                     }
 
                     // constrainOnce() on sequence -> kk_sequence_constrainOnce
                     if callee == lookup.constrainOnceName, arguments.count == 1 {
                         let receiverID = arguments[0]
-                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                        if state.sequenceExprIDs.contains(receiverID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkSequenceConstrainOnceName,
@@ -1710,7 +1694,7 @@ extension CollectionLiteralLoweringPass {
                                 canThrow: false,
                                 thrownResult: nil
                             ))
-                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            if let result { state.sequenceExprIDs.insert(result.rawValue) }
                             continue
                         }
                     }
@@ -1720,8 +1704,8 @@ extension CollectionLiteralLoweringPass {
                        arguments.count == 2 || arguments.count == 3
                     {
                         let receiverID = arguments[0]
-                        if sequenceExprIDs.contains(receiverID.rawValue),
-                           !arrayExprIDs.contains(receiverID.rawValue)
+                        if state.sequenceExprIDs.contains(receiverID.rawValue),
+                           !state.arrayExprIDs.contains(receiverID.rawValue)
                         {
                             let kkName = callee == lookup.mapName ? lookup.kkSequenceMapName : lookup.kkSequenceFilterName
                             loweredBody.append(.call(
@@ -1732,7 +1716,7 @@ extension CollectionLiteralLoweringPass {
                                 canThrow: false,
                                 thrownResult: nil
                             ))
-                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            if let result { state.sequenceExprIDs.insert(result.rawValue) }
                             continue
                         }
                     }
@@ -1740,7 +1724,7 @@ extension CollectionLiteralLoweringPass {
                     // take(n) on sequence → kk_sequence_take
                     if callee == lookup.takeName, arguments.count == 2 {
                         let receiverID = arguments[0]
-                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                        if state.sequenceExprIDs.contains(receiverID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkSequenceTakeName,
@@ -1749,10 +1733,10 @@ extension CollectionLiteralLoweringPass {
                                 canThrow: false,
                                 thrownResult: nil
                             ))
-                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            if let result { state.sequenceExprIDs.insert(result.rawValue) }
                             continue
                         }
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let transformResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -1765,8 +1749,8 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                             if let result {
-                                listExprIDs.insert(result.rawValue)
-                                listExprIDs.insert(transformResult.rawValue)
+                                state.listExprIDs.insert(result.rawValue)
+                                state.listExprIDs.insert(transformResult.rawValue)
                                 loweredBody.append(.copy(from: transformResult, to: result))
                             }
                             continue
@@ -1778,7 +1762,7 @@ extension CollectionLiteralLoweringPass {
                        arguments.count == 2 || arguments.count == 3
                     {
                         let receiverID = arguments[0]
-                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                        if state.sequenceExprIDs.contains(receiverID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkSequenceForEachName,
@@ -1796,7 +1780,7 @@ extension CollectionLiteralLoweringPass {
                        arguments.count == 2 || arguments.count == 3
                     {
                         let receiverID = arguments[0]
-                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                        if state.sequenceExprIDs.contains(receiverID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkSequenceForEachIndexedName,
@@ -1814,7 +1798,7 @@ extension CollectionLiteralLoweringPass {
                        arguments.count == 1 || arguments.count == 2 || arguments.count == 3
                     {
                         let receiverID = arguments[0]
-                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                        if state.sequenceExprIDs.contains(receiverID.rawValue) {
                             if arguments.count == 1 {
                                 // zipWithNext() — no transform
                                 let hofResult = module.arena.appendExpr(
@@ -1829,8 +1813,8 @@ extension CollectionLiteralLoweringPass {
                                     thrownResult: nil
                                 ))
                                 if let result {
-                                    listExprIDs.insert(result.rawValue)
-                                    listExprIDs.insert(hofResult.rawValue)
+                                    state.listExprIDs.insert(result.rawValue)
+                                    state.listExprIDs.insert(hofResult.rawValue)
                                     loweredBody.append(.copy(from: hofResult, to: result))
                                 }
                                 continue
@@ -1857,8 +1841,8 @@ extension CollectionLiteralLoweringPass {
                                     thrownResult: thrownResult
                                 ))
                                 if let result {
-                                    listExprIDs.insert(result.rawValue)
-                                    listExprIDs.insert(hofResult.rawValue)
+                                    state.listExprIDs.insert(result.rawValue)
+                                    state.listExprIDs.insert(hofResult.rawValue)
                                     loweredBody.append(.copy(from: hofResult, to: result))
                                 }
                                 continue
@@ -1871,7 +1855,7 @@ extension CollectionLiteralLoweringPass {
                        arguments.count == 2 || arguments.count == 3
                     {
                         let receiverID = arguments[0]
-                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                        if state.sequenceExprIDs.contains(receiverID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkSequenceFlatMapName,
@@ -1880,7 +1864,7 @@ extension CollectionLiteralLoweringPass {
                                 canThrow: false,
                                 thrownResult: nil
                             ))
-                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            if let result { state.sequenceExprIDs.insert(result.rawValue) }
                             continue
                         }
                     }
@@ -1890,7 +1874,7 @@ extension CollectionLiteralLoweringPass {
                        arguments.count == 2 || arguments.count == 3
                     {
                         let receiverID = arguments[0]
-                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                        if state.sequenceExprIDs.contains(receiverID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkSequenceFlatMapIndexedName,
@@ -1899,7 +1883,7 @@ extension CollectionLiteralLoweringPass {
                                 canThrow: false,
                                 thrownResult: nil
                             ))
-                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            if let result { state.sequenceExprIDs.insert(result.rawValue) }
                             continue
                         }
                     }
@@ -1907,7 +1891,7 @@ extension CollectionLiteralLoweringPass {
                     // drop(n) on sequence → kk_sequence_drop (STDLIB-096)
                     if callee == lookup.dropName, arguments.count == 2 {
                         let receiverID = arguments[0]
-                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                        if state.sequenceExprIDs.contains(receiverID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkSequenceDropName,
@@ -1916,7 +1900,7 @@ extension CollectionLiteralLoweringPass {
                                 canThrow: false,
                                 thrownResult: nil
                             ))
-                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            if let result { state.sequenceExprIDs.insert(result.rawValue) }
                             continue
                         }
                     }
@@ -1924,7 +1908,7 @@ extension CollectionLiteralLoweringPass {
                     // distinct() on sequence → kk_sequence_distinct (STDLIB-096)
                     if callee == lookup.distinctName, arguments.count == 1 {
                         let receiverID = arguments[0]
-                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                        if state.sequenceExprIDs.contains(receiverID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkSequenceDistinctName,
@@ -1933,7 +1917,7 @@ extension CollectionLiteralLoweringPass {
                                 canThrow: false,
                                 thrownResult: nil
                             ))
-                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            if let result { state.sequenceExprIDs.insert(result.rawValue) }
                             continue
                         }
                     }
@@ -1941,7 +1925,7 @@ extension CollectionLiteralLoweringPass {
                     // shuffled([random]) on sequence -> kk_sequence_shuffled(_random)
                     if callee == lookup.shuffledName, arguments.count == 1 || arguments.count == 2 {
                         let receiverID = arguments[0]
-                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                        if state.sequenceExprIDs.contains(receiverID.rawValue) {
                             let kkName = arguments.count == 2
                                 ? lookup.kkSequenceShuffledRandomName
                                 : lookup.kkSequenceShuffledName
@@ -1953,7 +1937,7 @@ extension CollectionLiteralLoweringPass {
                                 canThrow: false,
                                 thrownResult: nil
                             ))
-                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            if let result { state.sequenceExprIDs.insert(result.rawValue) }
                             continue
                         }
                     }
@@ -1961,7 +1945,7 @@ extension CollectionLiteralLoweringPass {
                     // zip(other) on sequence → kk_sequence_zip (STDLIB-096)
                     if callee == lookup.zipName, arguments.count == 2 {
                         let receiverID = arguments[0]
-                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                        if state.sequenceExprIDs.contains(receiverID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkSequenceZipName,
@@ -1970,7 +1954,7 @@ extension CollectionLiteralLoweringPass {
                                 canThrow: false,
                                 thrownResult: nil
                             ))
-                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            if let result { state.sequenceExprIDs.insert(result.rawValue) }
                             continue
                         }
                     }
@@ -1981,13 +1965,13 @@ extension CollectionLiteralLoweringPass {
                     // receives a collection handle.
                     if callee == lookup.plusMemberName, arguments.count == 2 {
                         let receiverID = arguments[0]
-                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                        if state.sequenceExprIDs.contains(receiverID.rawValue) {
                             let argID = arguments[1]
                             // Only sequence/list/array are supported by
                             // kk_sequence_plus at the ABI level (not Set/Map).
-                            let isArgCollection = listExprIDs.contains(argID.rawValue)
-                                || sequenceExprIDs.contains(argID.rawValue)
-                                || arrayExprIDs.contains(argID.rawValue)
+                            let isArgCollection = state.listExprIDs.contains(argID.rawValue)
+                                || state.sequenceExprIDs.contains(argID.rawValue)
+                                || state.arrayExprIDs.contains(argID.rawValue)
                             let effectiveArg: KIRExprID
                             if isArgCollection {
                                 effectiveArg = argID
@@ -2013,7 +1997,7 @@ extension CollectionLiteralLoweringPass {
                                 canThrow: false,
                                 thrownResult: nil
                             ))
-                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            if let result { state.sequenceExprIDs.insert(result.rawValue) }
                             continue
                         }
                     }
@@ -2021,7 +2005,7 @@ extension CollectionLiteralLoweringPass {
                     // plusElement(element) on sequence -> kk_sequence_plus_element (STDLIB-SEQ-013)
                     if callee == lookup.plusElementName, arguments.count == 2 {
                         let receiverID = arguments[0]
-                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                        if state.sequenceExprIDs.contains(receiverID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkSequencePlusElementName,
@@ -2030,7 +2014,7 @@ extension CollectionLiteralLoweringPass {
                                 canThrow: false,
                                 thrownResult: nil
                             ))
-                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            if let result { state.sequenceExprIDs.insert(result.rawValue) }
                             continue
                         }
                     }
@@ -2051,9 +2035,9 @@ extension CollectionLiteralLoweringPass {
                         } ?? false
                         if isIterableMinusElementSymbol
                             || returnsList
-                            || listExprIDs.contains(receiverID.rawValue)
-                            || setExprIDs.contains(receiverID.rawValue)
-                            || arrayExprIDs.contains(receiverID.rawValue)
+                            || state.listExprIDs.contains(receiverID.rawValue)
+                            || state.setExprIDs.contains(receiverID.rawValue)
+                            || state.arrayExprIDs.contains(receiverID.rawValue)
                         {
                             loweredBody.append(.call(
                                 symbol: nil,
@@ -2063,7 +2047,7 @@ extension CollectionLiteralLoweringPass {
                                 canThrow: false,
                                 thrownResult: nil
                             ))
-                            if let result { listExprIDs.insert(result.rawValue) }
+                            if let result { state.listExprIDs.insert(result.rawValue) }
                             continue
                         }
                     }
@@ -2074,13 +2058,13 @@ extension CollectionLiteralLoweringPass {
                     // ABI level and falls through to the generic member-call path.
                     if (callee == lookup.minusMemberName || callee == lookup.minusElementName), arguments.count == 2 {
                         let receiverID = arguments[0]
-                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                        if state.sequenceExprIDs.contains(receiverID.rawValue) {
                             let argID = arguments[1]
                             // Only sequence/list/array are supported by the
                             // ABI (not Set/Map) -- consistent with plus path.
-                            let isArgCollection = listExprIDs.contains(argID.rawValue)
-                                || sequenceExprIDs.contains(argID.rawValue)
-                                || arrayExprIDs.contains(argID.rawValue)
+                            let isArgCollection = state.listExprIDs.contains(argID.rawValue)
+                                || state.sequenceExprIDs.contains(argID.rawValue)
+                                || state.arrayExprIDs.contains(argID.rawValue)
                             guard !isArgCollection else {
                                 // Fall through: collection-removal not supported
                                 loweredBody.append(instruction)
@@ -2094,7 +2078,7 @@ extension CollectionLiteralLoweringPass {
                                 canThrow: false,
                                 thrownResult: nil
                             ))
-                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            if let result { state.sequenceExprIDs.insert(result.rawValue) }
                             continue
                         }
                     }
@@ -2102,7 +2086,7 @@ extension CollectionLiteralLoweringPass {
                     // toSet() on sequence → kk_sequence_toSet (STDLIB-470)
                     if callee == lookup.toSetName, arguments.count == 1 {
                         let receiverID = arguments[0]
-                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                        if state.sequenceExprIDs.contains(receiverID.rawValue) {
                             let toSetResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -2115,8 +2099,8 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                             if let result {
-                                setExprIDs.insert(result.rawValue)
-                                setExprIDs.insert(toSetResult.rawValue)
+                                state.setExprIDs.insert(result.rawValue)
+                                state.setExprIDs.insert(toSetResult.rawValue)
                                 loweredBody.append(.copy(from: toSetResult, to: result))
                             }
                             continue
@@ -2126,7 +2110,7 @@ extension CollectionLiteralLoweringPass {
                     // toMap() on sequence → kk_sequence_toMap (STDLIB-470)
                     if callee == lookup.toMapName, arguments.count == 1 {
                         let receiverID = arguments[0]
-                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                        if state.sequenceExprIDs.contains(receiverID.rawValue) {
                             let toMapResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -2139,8 +2123,8 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                             if let result {
-                                mapExprIDs.insert(result.rawValue)
-                                mapExprIDs.insert(toMapResult.rawValue)
+                                state.mapExprIDs.insert(result.rawValue)
+                                state.mapExprIDs.insert(toMapResult.rawValue)
                                 loweredBody.append(.copy(from: toMapResult, to: result))
                             }
                             continue
@@ -2152,7 +2136,7 @@ extension CollectionLiteralLoweringPass {
                        arguments.count == 2 || arguments.count == 3
                     {
                         let receiverID = arguments[0]
-                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                        if state.sequenceExprIDs.contains(receiverID.rawValue) {
                             let lambdaID = arguments[1]
                             let closureRawID: KIRExprID
                             if arguments.count == 3 {
@@ -2174,8 +2158,8 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: thrownResult
                             ))
                             if let result {
-                                mapExprIDs.insert(result.rawValue)
-                                mapExprIDs.insert(hofResult.rawValue)
+                                state.mapExprIDs.insert(result.rawValue)
+                                state.mapExprIDs.insert(hofResult.rawValue)
                                 loweredBody.append(.copy(from: hofResult, to: result))
                             }
                             continue
@@ -2186,7 +2170,7 @@ extension CollectionLiteralLoweringPass {
                     if callee == lookup.maxOrNullName || callee == lookup.minOrNullName {
                         if arguments.count == 1 {
                             let receiverID = arguments[0]
-                            if sequenceExprIDs.contains(receiverID.rawValue) {
+                            if state.sequenceExprIDs.contains(receiverID.rawValue) {
                                 let kkName: InternedString = callee == lookup.maxOrNullName
                                     ? lookup.kkSequenceMaxOrNullName
                                     : lookup.kkSequenceMinOrNullName
@@ -2212,7 +2196,7 @@ extension CollectionLiteralLoweringPass {
                     // flatten on sequence → kk_sequence_flatten (STDLIB-470)
                     if callee == lookup.flattenName, arguments.count == 1 {
                         let receiverID = arguments[0]
-                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                        if state.sequenceExprIDs.contains(receiverID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkSequenceFlattenName,
@@ -2221,14 +2205,14 @@ extension CollectionLiteralLoweringPass {
                                 canThrow: false,
                                 thrownResult: nil
                             ))
-                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            if let result { state.sequenceExprIDs.insert(result.rawValue) }
                             continue
                         }
                     }
 
                     if callee == lookup.dropName, arguments.count == 2 {
                         let receiverID = arguments[0]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let transformResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -2241,8 +2225,8 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                             if let result {
-                                listExprIDs.insert(result.rawValue)
-                                listExprIDs.insert(transformResult.rawValue)
+                                state.listExprIDs.insert(result.rawValue)
+                                state.listExprIDs.insert(transformResult.rawValue)
                                 loweredBody.append(.copy(from: transformResult, to: result))
                             }
                             continue
@@ -2251,7 +2235,7 @@ extension CollectionLiteralLoweringPass {
 
                     if callee == lookup.reversedName || callee == lookup.asReversedName, arguments.count == 1 {
                         let receiverID = arguments[0]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let transformResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -2264,18 +2248,18 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                             if let result {
-                                listExprIDs.insert(result.rawValue)
-                                listExprIDs.insert(transformResult.rawValue)
+                                state.listExprIDs.insert(result.rawValue)
+                                state.listExprIDs.insert(transformResult.rawValue)
                                 loweredBody.append(.copy(from: transformResult, to: result))
                             }
                             continue
                         }
-                        if callee == lookup.reversedName, rangeExprIDs.contains(receiverID.rawValue) {
+                        if callee == lookup.reversedName, state.rangeExprIDs.contains(receiverID.rawValue) {
                             let isUIntRange = isUIntRangeExpr(receiverID)
                             let transformResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
-                            let reversedName = ulongRangeExprIDs.contains(receiverID.rawValue)
+                            let reversedName = state.ulongRangeExprIDs.contains(receiverID.rawValue)
                                 ? lookup.kkULongRangeReversedName
                                 : (isUIntRange ? ctx.interner.intern("kk_uint_range_reversed") : lookup.kkRangeReversedName)
                             loweredBody.append(.call(
@@ -2287,11 +2271,11 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                             if let result {
-                                rangeExprIDs.insert(result.rawValue)
-                                rangeExprIDs.insert(transformResult.rawValue)
-                                if ulongRangeExprIDs.contains(receiverID.rawValue) {
-                                    ulongRangeExprIDs.insert(transformResult.rawValue)
-                                    ulongRangeExprIDs.insert(result.rawValue)
+                                state.rangeExprIDs.insert(result.rawValue)
+                                state.rangeExprIDs.insert(transformResult.rawValue)
+                                if state.ulongRangeExprIDs.contains(receiverID.rawValue) {
+                                    state.ulongRangeExprIDs.insert(transformResult.rawValue)
+                                    state.ulongRangeExprIDs.insert(result.rawValue)
                                 }
                                 loweredBody.append(.copy(from: transformResult, to: result))
                             }
@@ -2301,7 +2285,7 @@ extension CollectionLiteralLoweringPass {
 
                     if callee == lookup.sortedName, arguments.count == 1 {
                         let receiverID = arguments[0]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let transformResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -2314,13 +2298,13 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                             if let result {
-                                listExprIDs.insert(result.rawValue)
-                                listExprIDs.insert(transformResult.rawValue)
+                                state.listExprIDs.insert(result.rawValue)
+                                state.listExprIDs.insert(transformResult.rawValue)
                                 loweredBody.append(.copy(from: transformResult, to: result))
                             }
                             continue
                         }
-                        if setExprIDs.contains(receiverID.rawValue) {
+                        if state.setExprIDs.contains(receiverID.rawValue) {
                             let transformResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -2333,8 +2317,8 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                             if let result {
-                                listExprIDs.insert(result.rawValue)
-                                listExprIDs.insert(transformResult.rawValue)
+                                state.listExprIDs.insert(result.rawValue)
+                                state.listExprIDs.insert(transformResult.rawValue)
                                 loweredBody.append(.copy(from: transformResult, to: result))
                             }
                             continue
@@ -2343,7 +2327,7 @@ extension CollectionLiteralLoweringPass {
 
                     if callee == lookup.distinctName, arguments.count == 1 {
                         let receiverID = arguments[0]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let transformResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -2356,8 +2340,8 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                             if let result {
-                                listExprIDs.insert(result.rawValue)
-                                listExprIDs.insert(transformResult.rawValue)
+                                state.listExprIDs.insert(result.rawValue)
+                                state.listExprIDs.insert(transformResult.rawValue)
                                 loweredBody.append(.copy(from: transformResult, to: result))
                             }
                             continue
@@ -2367,8 +2351,8 @@ extension CollectionLiteralLoweringPass {
                     // toList() on sequence → kk_sequence_to_list
                     if callee == lookup.toListName, arguments.count == 1 {
                         let receiverID = arguments[0]
-                        if sequenceExprIDs.contains(receiverID.rawValue),
-                           !arrayExprIDs.contains(receiverID.rawValue)
+                        if state.sequenceExprIDs.contains(receiverID.rawValue),
+                           !state.arrayExprIDs.contains(receiverID.rawValue)
                         {
                             let toListResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
@@ -2382,13 +2366,13 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                             if let result {
-                                listExprIDs.insert(result.rawValue)
-                                listExprIDs.insert(toListResult.rawValue)
+                                state.listExprIDs.insert(result.rawValue)
+                                state.listExprIDs.insert(toListResult.rawValue)
                                 loweredBody.append(.copy(from: toListResult, to: result))
                             }
                             continue
                         }
-                        if mapExprIDs.contains(receiverID.rawValue) {
+                        if state.mapExprIDs.contains(receiverID.rawValue) {
                             let toListResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -2401,13 +2385,13 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                             if let result {
-                                listExprIDs.insert(result.rawValue)
-                                listExprIDs.insert(toListResult.rawValue)
+                                state.listExprIDs.insert(result.rawValue)
+                                state.listExprIDs.insert(toListResult.rawValue)
                                 loweredBody.append(.copy(from: toListResult, to: result))
                             }
                             continue
                         }
-                        if arrayExprIDs.contains(receiverID.rawValue) {
+                        if state.arrayExprIDs.contains(receiverID.rawValue) {
                             let toListResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -2420,21 +2404,21 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                             if let result {
-                                listExprIDs.insert(result.rawValue)
-                                listExprIDs.insert(toListResult.rawValue)
+                                state.listExprIDs.insert(result.rawValue)
+                                state.listExprIDs.insert(toListResult.rawValue)
                                 loweredBody.append(.copy(from: toListResult, to: result))
                             }
                             continue
                         }
-                        if rangeExprIDs.contains(receiverID.rawValue) {
+                        if state.rangeExprIDs.contains(receiverID.rawValue) {
                             let toListResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
                             // Use char/ULong range variant if applicable (STDLIB-290, STDLIB-524)
                             let rangeToListCallee: InternedString
-                            if charRangeExprIDs.contains(receiverID.rawValue) {
+                            if state.charRangeExprIDs.contains(receiverID.rawValue) {
                                 rangeToListCallee = lookup.kkCharRangeToListName
-                            } else if ulongRangeExprIDs.contains(receiverID.rawValue) {
+                            } else if state.ulongRangeExprIDs.contains(receiverID.rawValue) {
                                 rangeToListCallee = lookup.kkULongRangeToListName
                             } else if isUIntRangeExpr(receiverID) {
                                 rangeToListCallee = ctx.interner.intern("kk_uint_range_toList")
@@ -2450,8 +2434,8 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                             if let result {
-                                listExprIDs.insert(result.rawValue)
-                                listExprIDs.insert(toListResult.rawValue)
+                                state.listExprIDs.insert(result.rawValue)
+                                state.listExprIDs.insert(toListResult.rawValue)
                                 loweredBody.append(.copy(from: toListResult, to: result))
                             }
                             continue
@@ -2461,7 +2445,7 @@ extension CollectionLiteralLoweringPass {
                     // toMutableList() on array → kk_array_toMutableList (STDLIB-087)
                     if callee == lookup.toMutableListName, arguments.count == 1 {
                         let receiverID = arguments[0]
-                        if arrayExprIDs.contains(receiverID.rawValue) {
+                        if state.arrayExprIDs.contains(receiverID.rawValue) {
                             let toMutableListResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -2474,8 +2458,8 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                             if let result {
-                                listExprIDs.insert(result.rawValue)
-                                listExprIDs.insert(toMutableListResult.rawValue)
+                                state.listExprIDs.insert(result.rawValue)
+                                state.listExprIDs.insert(toMutableListResult.rawValue)
                                 loweredBody.append(.copy(from: toMutableListResult, to: result))
                             }
                             continue
@@ -2485,7 +2469,7 @@ extension CollectionLiteralLoweringPass {
                     // toTypedArray() on list → kk_list_toTypedArray (STDLIB-087)
                     if callee == lookup.toTypedArrayName, arguments.count == 1 {
                         let receiverID = arguments[0]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let toArrayResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -2498,13 +2482,13 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                             if let result {
-                                arrayExprIDs.insert(result.rawValue)
-                                arrayExprIDs.insert(toArrayResult.rawValue)
+                                state.arrayExprIDs.insert(result.rawValue)
+                                state.arrayExprIDs.insert(toArrayResult.rawValue)
                                 loweredBody.append(.copy(from: toArrayResult, to: result))
                             }
                             continue
                         }
-                        if arrayExprIDs.contains(receiverID.rawValue) {
+                        if state.arrayExprIDs.contains(receiverID.rawValue) {
                             let toArrayResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -2517,8 +2501,8 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                             if let result {
-                                arrayExprIDs.insert(result.rawValue)
-                                arrayExprIDs.insert(toArrayResult.rawValue)
+                                state.arrayExprIDs.insert(result.rawValue)
+                                state.arrayExprIDs.insert(toArrayResult.rawValue)
                                 loweredBody.append(.copy(from: toArrayResult, to: result))
                             }
                             continue
@@ -2528,7 +2512,7 @@ extension CollectionLiteralLoweringPass {
                     // toIntArray() on list → kk_list_toIntArray (STDLIB-LIST-PRIM-ARRAY)
                     if callee == lookup.toIntArrayName, arguments.count == 1 {
                         let receiverID = arguments[0]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let toArrayResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -2541,8 +2525,8 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                             if let result {
-                                arrayExprIDs.insert(result.rawValue)
-                                arrayExprIDs.insert(toArrayResult.rawValue)
+                                state.arrayExprIDs.insert(result.rawValue)
+                                state.arrayExprIDs.insert(toArrayResult.rawValue)
                                 loweredBody.append(.copy(from: toArrayResult, to: result))
                             }
                             continue
@@ -2552,7 +2536,7 @@ extension CollectionLiteralLoweringPass {
                     // toLongArray() on list → kk_list_toLongArray (STDLIB-LIST-PRIM-ARRAY)
                     if callee == lookup.toLongArrayName, arguments.count == 1 {
                         let receiverID = arguments[0]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let toArrayResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -2565,8 +2549,8 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                             if let result {
-                                arrayExprIDs.insert(result.rawValue)
-                                arrayExprIDs.insert(toArrayResult.rawValue)
+                                state.arrayExprIDs.insert(result.rawValue)
+                                state.arrayExprIDs.insert(toArrayResult.rawValue)
                                 loweredBody.append(.copy(from: toArrayResult, to: result))
                             }
                             continue
@@ -2576,7 +2560,7 @@ extension CollectionLiteralLoweringPass {
                     // toByteArray() on list → kk_list_toByteArray (STDLIB-LIST-PRIM-ARRAY)
                     if callee == lookup.toByteArrayName, arguments.count == 1 {
                         let receiverID = arguments[0]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let toArrayResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -2589,8 +2573,8 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                             if let result {
-                                arrayExprIDs.insert(result.rawValue)
-                                arrayExprIDs.insert(toArrayResult.rawValue)
+                                state.arrayExprIDs.insert(result.rawValue)
+                                state.arrayExprIDs.insert(toArrayResult.rawValue)
                                 loweredBody.append(.copy(from: toArrayResult, to: result))
                             }
                             continue
@@ -2611,7 +2595,7 @@ extension CollectionLiteralLoweringPass {
                     }
                     if let unsignedArrayCallee, arguments.count == 1 {
                         let receiverID = arguments[0]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let toArrayResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -2624,8 +2608,8 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                             if let result {
-                                arrayExprIDs.insert(result.rawValue)
-                                arrayExprIDs.insert(toArrayResult.rawValue)
+                                state.arrayExprIDs.insert(result.rawValue)
+                                state.arrayExprIDs.insert(toArrayResult.rawValue)
                                 loweredBody.append(.copy(from: toArrayResult, to: result))
                             }
                             continue
@@ -2635,7 +2619,7 @@ extension CollectionLiteralLoweringPass {
                     // copyOf / copyOfRange / fill on array (STDLIB-089)
                     if callee == lookup.copyOfName, (1...4).contains(arguments.count) {
                         let receiverID = arguments[0]
-                        if arrayExprIDs.contains(receiverID.rawValue) {
+                        if state.arrayExprIDs.contains(receiverID.rawValue) {
                             let copyResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -2672,8 +2656,8 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: runtimeCanThrow ? thrownResult : nil
                             ))
                             if let result {
-                                arrayExprIDs.insert(result.rawValue)
-                                arrayExprIDs.insert(copyResult.rawValue)
+                                state.arrayExprIDs.insert(result.rawValue)
+                                state.arrayExprIDs.insert(copyResult.rawValue)
                                 loweredBody.append(.copy(from: copyResult, to: result))
                             }
                             continue
@@ -2682,7 +2666,7 @@ extension CollectionLiteralLoweringPass {
 
                     if callee == lookup.copyOfRangeName, arguments.count == 3 {
                         let receiverID = arguments[0]
-                        if arrayExprIDs.contains(receiverID.rawValue) {
+                        if state.arrayExprIDs.contains(receiverID.rawValue) {
                             let copyResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -2695,8 +2679,8 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                             if let result {
-                                arrayExprIDs.insert(result.rawValue)
-                                arrayExprIDs.insert(copyResult.rawValue)
+                                state.arrayExprIDs.insert(result.rawValue)
+                                state.arrayExprIDs.insert(copyResult.rawValue)
                                 loweredBody.append(.copy(from: copyResult, to: result))
                             }
                             continue
@@ -2705,7 +2689,7 @@ extension CollectionLiteralLoweringPass {
 
                     if callee == lookup.fillName, arguments.count == 2 {
                         let receiverID = arguments[0]
-                        if arrayExprIDs.contains(receiverID.rawValue) {
+                        if state.arrayExprIDs.contains(receiverID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkArrayFillName,
@@ -2728,7 +2712,7 @@ extension CollectionLiteralLoweringPass {
                             canThrow: canThrow,
                             thrownResult: thrownResult
                         ))
-                        if let result { sequenceExprIDs.insert(result.rawValue) }
+                        if let result { state.sequenceExprIDs.insert(result.rawValue) }
                         continue
                     }
 
@@ -2747,7 +2731,7 @@ extension CollectionLiteralLoweringPass {
                             canThrow: false,
                             thrownResult: nil
                         ))
-                        if let result { iteratorBuilderExprIDs.insert(result.rawValue) }
+                        if let result { state.iteratorBuilderExprIDs.insert(result.rawValue) }
                         continue
                     }
 
@@ -2783,172 +2767,25 @@ extension CollectionLiteralLoweringPass {
                         || callee == lookup.allName || callee == lookup.mapValuesName || callee == lookup.mapKeysName
                         || callee == lookup.toListName || callee == lookup.countName
                     {
-                        if callee == lookup.toListName, arguments.count == 1 {
-                            let receiverID = arguments[0]
-                            if mapExprIDs.contains(receiverID.rawValue) {
-                                let toListResult = module.arena.appendExpr(
-                                    .temporary(Int32(module.arena.expressions.count)), type: nil
-                                )
-                                loweredBody.append(.call(
-                                    symbol: nil,
-                                    callee: lookup.kkMapToListName,
-                                    arguments: [receiverID],
-                                    result: toListResult,
-                                    canThrow: false,
-                                    thrownResult: nil
-                                ))
-                                if let result {
-                                    listExprIDs.insert(result.rawValue)
-                                    listExprIDs.insert(toListResult.rawValue)
-                                    loweredBody.append(.copy(from: toListResult, to: result))
-                                }
-                                continue
-                            }
-                            if setExprIDs.contains(receiverID.rawValue) {
-                                let toListResult = module.arena.appendExpr(
-                                    .temporary(Int32(module.arena.expressions.count)), type: nil
-                                )
-                                loweredBody.append(.call(
-                                    symbol: nil,
-                                    callee: lookup.kkSetToListName,
-                                    arguments: [receiverID],
-                                    result: toListResult,
-                                    canThrow: false,
-                                    thrownResult: nil
-                                ))
-                                if let result {
-                                    listExprIDs.insert(result.rawValue)
-                                    listExprIDs.insert(toListResult.rawValue)
-                                    loweredBody.append(.copy(from: toListResult, to: result))
-                                }
-                                continue
-                            }
+                        if let rewrite = rewriteCollectionHOFCall(
+                            call: .init(
+                                callee: callee,
+                                arguments: arguments,
+                                result: result,
+                                canThrow: canThrow,
+                                thrownResult: thrownResult
+                            ),
+                            state: &state,
+                            ctx: .init(module: module, lookup: lookup)
+                        ) {
+                            loweredBody.append(contentsOf: rewrite.instructions)
+                            continue
                         }
-                        // args = [receiver, lambda, closureRaw?]; Runtime expects (listRaw, fnPtr, closureRaw, outThrown)
+
                         if arguments.count == 2 || arguments.count == 3 {
                             let receiverID = arguments[0]
                             let lambdaID = arguments[1]
-                            // countName with a List receiver is handled by the dedicated count/first/last
-                            // handler below, which correctly rewrites it to kk_list_count.
-                            // Entering this generic list-HOF path for countName would emit a call with
-                            // the un-rewritten "count" callee and then `continue`, skipping that handler.
-                            if listExprIDs.contains(receiverID.rawValue) && callee != lookup.countName {
-                                let closureRawID: KIRExprID
-                                if arguments.count == 3 {
-                                    closureRawID = arguments[2]
-                                } else {
-                                    let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
-                                    loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-                                    closureRawID = zeroExpr
-                                }
-                                let kkName: InternedString = switch callee {
-                                case lookup.mapName: lookup.kkListMapName
-                                case lookup.filterName: lookup.kkListFilterName
-                                case lookup.filterNotName: lookup.kkListFilterNotName
-                                case lookup.mapNotNullName: lookup.kkListMapNotNullName
-                                case lookup.forEachName: lookup.kkListForEachName
-                                case lookup.onEachName: lookup.kkListOnEachName
-                                case lookup.flatMapName: lookup.kkListFlatMapName
-                                case lookup.flatMapIndexedName: lookup.kkListFlatMapIndexedName
-                                case lookup.anyName: lookup.kkListAnyName
-                                case lookup.noneName: lookup.kkListNoneName
-                                case lookup.allName: lookup.kkListAllName
-                                default: callee
-                                }
-                                let needsListTag = callee == lookup.mapName
-                                    || callee == lookup.mapNotNullName
-                                    || callee == lookup.flatMapName
-                                    || callee == lookup.flatMapIndexedName
-                                    || callee == lookup.filterName
-                                    || callee == lookup.filterNotName
-                                    || callee == lookup.onEachName
-                                let hofResult = module.arena.appendExpr(
-                                    .temporary(Int32(module.arena.expressions.count)), type: nil
-                                )
-                                loweredBody.append(.call(
-                                    symbol: nil,
-                                    callee: kkName,
-                                    arguments: [receiverID, lambdaID, closureRawID],
-                                    result: hofResult,
-                                    canThrow: canThrow,
-                                    thrownResult: thrownResult
-                                ))
-                                if needsListTag, let result {
-                                    listExprIDs.insert(result.rawValue)
-                                    listExprIDs.insert(hofResult.rawValue)
-                                }
-                                if let result {
-                                    loweredBody.append(.copy(from: hofResult, to: result))
-                                }
-                                continue
-                            }
-                            if mapExprIDs.contains(receiverID.rawValue),
-                               callee == lookup.mapName || callee == lookup.filterName || callee == lookup.forEachName
-                               || callee == lookup.mapValuesName || callee == lookup.mapKeysName
-                               || callee == lookup.filterKeysName || callee == lookup.filterValuesName
-                               || callee == lookup.flatMapName || callee == lookup.maxByOrNullName || callee == lookup.minByOrNullName
-                               || callee == lookup.anyName || callee == lookup.allName
-                               || callee == lookup.noneName
-                               || callee == lookup.flatMapName || callee == lookup.maxByOrNullName || callee == lookup.minByOrNullName
-                            {
-                                let closureRawID: KIRExprID
-                                if arguments.count == 3 {
-                                    closureRawID = arguments[2]
-                                } else {
-                                    let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
-                                    loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-                                    closureRawID = zeroExpr
-                                }
-                                let kkName: InternedString = switch callee {
-                                case lookup.mapName: lookup.kkMapMapName
-                                case lookup.filterName: lookup.kkMapFilterName
-                                case lookup.filterNotName: lookup.kkMapFilterNotName
-                                case lookup.filterKeysName: lookup.kkMapFilterKeysName
-                                case lookup.filterValuesName: lookup.kkMapFilterValuesName
-                                case lookup.forEachName: lookup.kkMapForEachName
-                                case lookup.mapValuesName: lookup.kkMapMapValuesName
-                                case lookup.mapKeysName: lookup.kkMapMapKeysName
-                                case lookup.mapNotNullName: lookup.kkMapMapNotNullName
-                                case lookup.flatMapName: lookup.kkMapFlatMapName
-                                case lookup.maxByOrNullName: lookup.kkMapMaxByOrNullName
-                                case lookup.minByOrNullName: lookup.kkMapMinByOrNullName
-                                case lookup.anyName: lookup.kkMapAnyName
-                                case lookup.allName: lookup.kkMapAllName
-                                case lookup.noneName: lookup.kkMapNoneName
-                                case lookup.flatMapName: lookup.kkMapFlatMapName
-                                case lookup.maxByOrNullName: lookup.kkMapMaxByOrNullName
-                                case lookup.minByOrNullName: lookup.kkMapMinByOrNullName
-                                default: callee
-                                }
-                                let hofResult = module.arena.appendExpr(
-                                    .temporary(Int32(module.arena.expressions.count)), type: nil
-                                )
-                                loweredBody.append(.call(
-                                    symbol: nil,
-                                    callee: kkName,
-                                    arguments: [receiverID, lambdaID, closureRawID],
-                                    result: hofResult,
-                                    canThrow: canThrow,
-                                    thrownResult: thrownResult
-                                ))
-                                if callee == lookup.mapName || callee == lookup.flatMapName || callee == lookup.mapNotNullName, let result {
-                                    listExprIDs.insert(result.rawValue)
-                                    listExprIDs.insert(hofResult.rawValue)
-                                }
-                                if callee == lookup.mapValuesName || callee == lookup.mapKeysName, let result {
-                                    mapExprIDs.insert(result.rawValue)
-                                    mapExprIDs.insert(hofResult.rawValue)
-                                }
-                                if callee == lookup.filterName || callee == lookup.filterNotName || callee == lookup.filterKeysName || callee == lookup.filterValuesName, let result {
-                                    mapExprIDs.insert(result.rawValue)
-                                    mapExprIDs.insert(hofResult.rawValue)
-                                }
-                                if let result {
-                                    loweredBody.append(.copy(from: hofResult, to: result))
-                                }
-                                continue
-                            }
-                            if rangeExprIDs.contains(receiverID.rawValue),
+                            if state.rangeExprIDs.contains(receiverID.rawValue),
                                callee == lookup.mapName || callee == lookup.forEachName
                             {
                                 let closureRawID: KIRExprID
@@ -2959,8 +2796,8 @@ extension CollectionLiteralLoweringPass {
                                     loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
                                     closureRawID = zeroExpr
                                 }
-                                let isCharRange = charRangeExprIDs.contains(receiverID.rawValue)
-                                let isULongRange = ulongRangeExprIDs.contains(receiverID.rawValue)
+                                let isCharRange = state.charRangeExprIDs.contains(receiverID.rawValue)
+                                let isULongRange = state.ulongRangeExprIDs.contains(receiverID.rawValue)
                                 let kkName: InternedString
                                 if callee == lookup.mapName {
                                     // STDLIB-RANGE-037: use ULong-specific map for unsigned ranges
@@ -2985,15 +2822,15 @@ extension CollectionLiteralLoweringPass {
                                     thrownResult: thrownResult
                                 ))
                                 if callee == lookup.mapName, let result {
-                                    listExprIDs.insert(result.rawValue)
-                                    listExprIDs.insert(hofResult.rawValue)
+                                    state.listExprIDs.insert(result.rawValue)
+                                    state.listExprIDs.insert(hofResult.rawValue)
                                 }
                                 if let result {
                                     loweredBody.append(.copy(from: hofResult, to: result))
                                 }
                                 continue
                             }
-                            if arrayExprIDs.contains(receiverID.rawValue),
+                            if state.arrayExprIDs.contains(receiverID.rawValue),
                                callee == lookup.mapName || callee == lookup.filterName
                                || callee == lookup.forEachName || callee == lookup.anyName
                                || callee == lookup.allName
@@ -3029,15 +2866,15 @@ extension CollectionLiteralLoweringPass {
                                     thrownResult: thrownResult
                                 ))
                                 if needsListTag, let result {
-                                    listExprIDs.insert(result.rawValue)
-                                    listExprIDs.insert(hofResult.rawValue)
+                                    state.listExprIDs.insert(result.rawValue)
+                                    state.listExprIDs.insert(hofResult.rawValue)
                                 }
                                 if let result {
                                     loweredBody.append(.copy(from: hofResult, to: result))
                                 }
                                 continue
                             }
-                            if setExprIDs.contains(receiverID.rawValue),
+                            if state.setExprIDs.contains(receiverID.rawValue),
                                callee == lookup.mapName || callee == lookup.filterName
                                || callee == lookup.forEachName
                                || callee == lookup.filterNotName
@@ -3084,8 +2921,8 @@ extension CollectionLiteralLoweringPass {
                                     thrownResult: thrownResult
                                 ))
                                 if needsListTag, let result {
-                                    listExprIDs.insert(result.rawValue)
-                                    listExprIDs.insert(hofResult.rawValue)
+                                    state.listExprIDs.insert(result.rawValue)
+                                    state.listExprIDs.insert(hofResult.rawValue)
                                 }
                                 if let result {
                                     loweredBody.append(.copy(from: hofResult, to: result))
@@ -3097,7 +2934,7 @@ extension CollectionLiteralLoweringPass {
 
                     if callee == lookup.filterNotNullName, arguments.count == 1 {
                         let receiverID = arguments[0]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let hofResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -3110,8 +2947,8 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                             if let result {
-                                listExprIDs.insert(result.rawValue)
-                                listExprIDs.insert(hofResult.rawValue)
+                                state.listExprIDs.insert(result.rawValue)
+                                state.listExprIDs.insert(hofResult.rawValue)
                                 loweredBody.append(.copy(from: hofResult, to: result))
                             }
                             continue
@@ -3120,7 +2957,7 @@ extension CollectionLiteralLoweringPass {
 
                     if callee == lookup.associateByName,
                        arguments.count == 4 || arguments.count == 5,
-                       listExprIDs.contains(arguments[0].rawValue)
+                       state.listExprIDs.contains(arguments[0].rawValue)
                     {
                         let receiverID = arguments[0]
                         let keyLambdaID = arguments[1]
@@ -3146,8 +2983,8 @@ extension CollectionLiteralLoweringPass {
                             thrownResult: thrownResult
                         ))
                         if let result {
-                            mapExprIDs.insert(result.rawValue)
-                            mapExprIDs.insert(hofResult.rawValue)
+                            state.mapExprIDs.insert(result.rawValue)
+                            state.mapExprIDs.insert(hofResult.rawValue)
                             loweredBody.append(.copy(from: hofResult, to: result))
                         }
                         continue
@@ -3158,7 +2995,7 @@ extension CollectionLiteralLoweringPass {
                     // or [receiver, keyLambda, keyClosureRaw, valueLambda, valueClosureRaw] (5 args)
                     if callee == lookup.groupByName,
                        arguments.count == 4 || arguments.count == 5,
-                       listExprIDs.contains(arguments[0].rawValue)
+                       state.listExprIDs.contains(arguments[0].rawValue)
                     {
                         let receiverID = arguments[0]
                         let keyLambdaID = arguments[1]
@@ -3184,8 +3021,8 @@ extension CollectionLiteralLoweringPass {
                             thrownResult: thrownResult
                         ))
                         if let result {
-                            mapExprIDs.insert(result.rawValue)
-                            mapExprIDs.insert(hofResult.rawValue)
+                            state.mapExprIDs.insert(result.rawValue)
+                            state.mapExprIDs.insert(hofResult.rawValue)
                             loweredBody.append(.copy(from: hofResult, to: result))
                         }
                         continue
@@ -3200,7 +3037,7 @@ extension CollectionLiteralLoweringPass {
                         if arguments.count == 2 || arguments.count == 3 {
                             let receiverID = arguments[0]
                             let lambdaID = arguments[1]
-                            if listExprIDs.contains(receiverID.rawValue) {
+                            if state.listExprIDs.contains(receiverID.rawValue) {
                                 let closureRawID: KIRExprID
                                 if arguments.count == 3 {
                                     closureRawID = arguments[2]
@@ -3232,18 +3069,18 @@ extension CollectionLiteralLoweringPass {
                                     thrownResult: thrownResult
                                 ))
                                 if callee == lookup.sortedByName || callee == lookup.distinctByName, let result {
-                                    listExprIDs.insert(result.rawValue)
-                                    listExprIDs.insert(hofResult.rawValue)
+                                    state.listExprIDs.insert(result.rawValue)
+                                    state.listExprIDs.insert(hofResult.rawValue)
                                 }
                                 if callee == lookup.groupByName, let result {
-                                    mapExprIDs.insert(result.rawValue)
-                                    mapExprIDs.insert(hofResult.rawValue)
+                                    state.mapExprIDs.insert(result.rawValue)
+                                    state.mapExprIDs.insert(hofResult.rawValue)
                                 }
                                 if callee == lookup.associateByName || callee == lookup.associateWithName || callee == lookup.associateName,
                                    let result
                                 {
-                                    mapExprIDs.insert(result.rawValue)
-                                    mapExprIDs.insert(hofResult.rawValue)
+                                    state.mapExprIDs.insert(result.rawValue)
+                                    state.mapExprIDs.insert(hofResult.rawValue)
                                 }
                                 if let result {
                                     loweredBody.append(.copy(from: hofResult, to: result))
@@ -3256,7 +3093,7 @@ extension CollectionLiteralLoweringPass {
                     // --- STDLIB-SEQ-022: sequence destination-collection mapping variants ---
                     if (callee == lookup.mapToName || callee == lookup.mapIndexedNotNullToName),
                        (arguments.count == 3 || arguments.count == 4),
-                       sequenceExprIDs.contains(arguments[0].rawValue)
+                       state.sequenceExprIDs.contains(arguments[0].rawValue)
                     {
                         let receiverID = arguments[0]
                         let destID = arguments[1]
@@ -3284,12 +3121,12 @@ extension CollectionLiteralLoweringPass {
                             thrownResult: thrownResult
                         ))
                         if let result {
-                            if listExprIDs.contains(destID.rawValue) {
-                                listExprIDs.insert(result.rawValue)
-                                listExprIDs.insert(hofResult.rawValue)
-                            } else if setExprIDs.contains(destID.rawValue) {
-                                setExprIDs.insert(result.rawValue)
-                                setExprIDs.insert(hofResult.rawValue)
+                            if state.listExprIDs.contains(destID.rawValue) {
+                                state.listExprIDs.insert(result.rawValue)
+                                state.listExprIDs.insert(hofResult.rawValue)
+                            } else if state.setExprIDs.contains(destID.rawValue) {
+                                state.setExprIDs.insert(result.rawValue)
+                                state.setExprIDs.insert(hofResult.rawValue)
                             }
                             loweredBody.append(.copy(from: hofResult, to: result))
                         }
@@ -3304,10 +3141,10 @@ extension CollectionLiteralLoweringPass {
                         || callee == lookup.flatMapIndexedToName || callee == lookup.associateToName
                     {
                         if (arguments.count == 3 || arguments.count == 4),
-                           (listExprIDs.contains(arguments[0].rawValue)
-                            || setExprIDs.contains(arguments[0].rawValue)
-                            || sequenceExprIDs.contains(arguments[0].rawValue)
-                            || arrayExprIDs.contains(arguments[0].rawValue))
+                           (state.listExprIDs.contains(arguments[0].rawValue)
+                            || state.setExprIDs.contains(arguments[0].rawValue)
+                            || state.sequenceExprIDs.contains(arguments[0].rawValue)
+                            || state.arrayExprIDs.contains(arguments[0].rawValue))
                         {
                             let receiverID = arguments[0]
                             let destID = arguments[1]
@@ -3320,7 +3157,7 @@ extension CollectionLiteralLoweringPass {
                                 loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
                                 closureRawID = zeroExpr
                             }
-                            let isSequenceReceiver = sequenceExprIDs.contains(receiverID.rawValue)
+                            let isSequenceReceiver = state.sequenceExprIDs.contains(receiverID.rawValue)
                             let kkName: InternedString = switch callee {
                             case lookup.filterToName: lookup.kkListFilterToName
                             case lookup.filterNotToName: lookup.kkListFilterNotToName
@@ -3346,15 +3183,15 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: thrownResult
                             ))
                             if let result {
-                                if listExprIDs.contains(destID.rawValue) {
-                                    listExprIDs.insert(result.rawValue)
-                                    listExprIDs.insert(hofResult.rawValue)
-                                } else if setExprIDs.contains(destID.rawValue) {
-                                    setExprIDs.insert(result.rawValue)
-                                    setExprIDs.insert(hofResult.rawValue)
-                                } else if mapExprIDs.contains(destID.rawValue) {
-                                    mapExprIDs.insert(result.rawValue)
-                                    mapExprIDs.insert(hofResult.rawValue)
+                                if state.listExprIDs.contains(destID.rawValue) {
+                                    state.listExprIDs.insert(result.rawValue)
+                                    state.listExprIDs.insert(hofResult.rawValue)
+                                } else if state.setExprIDs.contains(destID.rawValue) {
+                                    state.setExprIDs.insert(result.rawValue)
+                                    state.setExprIDs.insert(hofResult.rawValue)
+                                } else if state.mapExprIDs.contains(destID.rawValue) {
+                                    state.mapExprIDs.insert(result.rawValue)
+                                    state.mapExprIDs.insert(hofResult.rawValue)
                                 }
                                 loweredBody.append(.copy(from: hofResult, to: result))
                             }
@@ -3366,12 +3203,12 @@ extension CollectionLiteralLoweringPass {
                         let receiverID = arguments[0]
                         let destID = arguments[1]
                         let runtimeCallee: InternedString?
-                        if listExprIDs.contains(receiverID.rawValue)
-                            || setExprIDs.contains(receiverID.rawValue)
-                            || arrayExprIDs.contains(receiverID.rawValue)
+                        if state.listExprIDs.contains(receiverID.rawValue)
+                            || state.setExprIDs.contains(receiverID.rawValue)
+                            || state.arrayExprIDs.contains(receiverID.rawValue)
                         {
                             runtimeCallee = lookup.kkCollectionToCollectionName
-                        } else if sequenceExprIDs.contains(receiverID.rawValue) {
+                        } else if state.sequenceExprIDs.contains(receiverID.rawValue) {
                             runtimeCallee = lookup.kkSequenceToCollectionName
                         } else {
                             runtimeCallee = nil
@@ -3389,12 +3226,12 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                             if let result {
-                                if listExprIDs.contains(destID.rawValue) {
-                                    listExprIDs.insert(result.rawValue)
-                                    listExprIDs.insert(hofResult.rawValue)
-                                } else if setExprIDs.contains(destID.rawValue) {
-                                    setExprIDs.insert(result.rawValue)
-                                    setExprIDs.insert(hofResult.rawValue)
+                                if state.listExprIDs.contains(destID.rawValue) {
+                                    state.listExprIDs.insert(result.rawValue)
+                                    state.listExprIDs.insert(hofResult.rawValue)
+                                } else if state.setExprIDs.contains(destID.rawValue) {
+                                    state.setExprIDs.insert(result.rawValue)
+                                    state.setExprIDs.insert(hofResult.rawValue)
                                 }
                                 loweredBody.append(.copy(from: hofResult, to: result))
                             }
@@ -3407,8 +3244,8 @@ extension CollectionLiteralLoweringPass {
                         || callee == lookup.groupByToName
                     {
                         if (arguments.count == 3 || arguments.count == 4),
-                           (listExprIDs.contains(arguments[0].rawValue)
-                            || sequenceExprIDs.contains(arguments[0].rawValue))
+                           (state.listExprIDs.contains(arguments[0].rawValue)
+                            || state.sequenceExprIDs.contains(arguments[0].rawValue))
                         {
                             let receiverID = arguments[0]
                             let destID = arguments[1]
@@ -3421,7 +3258,7 @@ extension CollectionLiteralLoweringPass {
                                 loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
                                 closureRawID = zeroExpr
                             }
-                            let isSequenceReceiver = sequenceExprIDs.contains(receiverID.rawValue)
+                            let isSequenceReceiver = state.sequenceExprIDs.contains(receiverID.rawValue)
                             let kkName: InternedString = switch callee {
                             case lookup.associateByToName:
                                 isSequenceReceiver ? lookup.kkSequenceAssociateByToName : lookup.kkListAssociateByToName
@@ -3443,8 +3280,8 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: thrownResult
                             ))
                             if let result {
-                                mapExprIDs.insert(result.rawValue)
-                                mapExprIDs.insert(hofResult.rawValue)
+                                state.mapExprIDs.insert(result.rawValue)
+                                state.mapExprIDs.insert(hofResult.rawValue)
                                 loweredBody.append(.copy(from: hofResult, to: result))
                             }
                             continue
@@ -3453,7 +3290,7 @@ extension CollectionLiteralLoweringPass {
 
                     if callee == lookup.zipName, arguments.count == 2 {
                         let receiverID = arguments[0]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let hofResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -3466,8 +3303,8 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                             if let result {
-                                listExprIDs.insert(result.rawValue)
-                                listExprIDs.insert(hofResult.rawValue)
+                                state.listExprIDs.insert(result.rawValue)
+                                state.listExprIDs.insert(hofResult.rawValue)
                                 loweredBody.append(.copy(from: hofResult, to: result))
                             }
                             continue
@@ -3476,7 +3313,7 @@ extension CollectionLiteralLoweringPass {
 
                     if callee == lookup.unzipName, arguments.count == 1 {
                         let receiverID = arguments[0]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let hofResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -3498,7 +3335,7 @@ extension CollectionLiteralLoweringPass {
                     // zipWithNext(): List<Pair<T, T>> — 0-arg (receiver only)
                     if callee == lookup.zipWithNextName, arguments.count == 1 {
                         let receiverID = arguments[0]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let hofResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -3511,8 +3348,8 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                             if let result {
-                                listExprIDs.insert(result.rawValue)
-                                listExprIDs.insert(hofResult.rawValue)
+                                state.listExprIDs.insert(result.rawValue)
+                                state.listExprIDs.insert(hofResult.rawValue)
                                 loweredBody.append(.copy(from: hofResult, to: result))
                             }
                             continue
@@ -3522,7 +3359,7 @@ extension CollectionLiteralLoweringPass {
                     // zipWithNext(transform): List<R> — 1-arg HOF (receiver + lambda + closure)
                     if callee == lookup.zipWithNextName, arguments.count == 2 || arguments.count == 3 {
                         let receiverID = arguments[0]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let lambdaID = arguments[1]
                             let closureRawID: KIRExprID
                             if arguments.count == 3 {
@@ -3544,8 +3381,8 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: thrownResult
                             ))
                             if let result {
-                                listExprIDs.insert(result.rawValue)
-                                listExprIDs.insert(hofResult.rawValue)
+                                state.listExprIDs.insert(result.rawValue)
+                                state.listExprIDs.insert(hofResult.rawValue)
                                 loweredBody.append(.copy(from: hofResult, to: result))
                             }
                             continue
@@ -3554,7 +3391,7 @@ extension CollectionLiteralLoweringPass {
 
                     if callee == lookup.withIndexName || callee == lookup.kkListWithIndexName, arguments.count == 1 {
                         let receiverID = arguments[0]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let transformResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -3567,8 +3404,8 @@ extension CollectionLiteralLoweringPass {
                                 thrownResult: nil
                             ))
                             if let result {
-                                indexingIterableExprIDs.insert(result.rawValue)
-                                indexingIterableExprIDs.insert(transformResult.rawValue)
+                                state.indexingIterableExprIDs.insert(result.rawValue)
+                                state.indexingIterableExprIDs.insert(transformResult.rawValue)
                                 loweredBody.append(.copy(from: transformResult, to: result))
                             }
                             continue
@@ -3579,7 +3416,7 @@ extension CollectionLiteralLoweringPass {
                         if arguments.count == 2 || arguments.count == 3 {
                             let receiverID = arguments[0]
                             let lambdaID = arguments[1]
-                            if listExprIDs.contains(receiverID.rawValue) {
+                            if state.listExprIDs.contains(receiverID.rawValue) {
                                 let kkName: InternedString
                                 if callee == lookup.forEachIndexedName {
                                     kkName = lookup.kkListForEachIndexedName
@@ -3610,8 +3447,8 @@ extension CollectionLiteralLoweringPass {
                                     thrownResult: thrownResult
                                 ))
                                 if callee == lookup.mapIndexedName || callee == lookup.mapIndexedNotNullName || callee == lookup.onEachIndexedName, let result {
-                                    listExprIDs.insert(result.rawValue)
-                                    listExprIDs.insert(hofResult.rawValue)
+                                    state.listExprIDs.insert(result.rawValue)
+                                    state.listExprIDs.insert(hofResult.rawValue)
                                 }
                                 if let result {
                                     loweredBody.append(.copy(from: hofResult, to: result))
@@ -3625,7 +3462,7 @@ extension CollectionLiteralLoweringPass {
                         if arguments.count == 2 || arguments.count == 3 {
                             let receiverID = arguments[0]
                             let lambdaID = arguments[1]
-                            if listExprIDs.contains(receiverID.rawValue) {
+                            if state.listExprIDs.contains(receiverID.rawValue) {
                                 let kkName: InternedString
                                 if callee == lookup.sumByName {
                                     kkName = lookup.kkListSumByName
@@ -3664,7 +3501,7 @@ extension CollectionLiteralLoweringPass {
                     if callee == lookup.minName || callee == lookup.maxOrNullName || callee == lookup.minOrNullName {
                         if arguments.count == 1 {
                             let receiverID = arguments[0]
-                            if listExprIDs.contains(receiverID.rawValue) {
+                            if state.listExprIDs.contains(receiverID.rawValue) {
                                 let kkName: InternedString = switch callee {
                                 case lookup.minName: lookup.kkListMinName
                                 case lookup.maxOrNullName: lookup.kkListMaxOrNullName
@@ -3698,7 +3535,7 @@ extension CollectionLiteralLoweringPass {
                         if arguments.count == 2 || arguments.count == 3 {
                             let receiverID = arguments[0]
                             let lambdaID = arguments[1]
-                            if listExprIDs.contains(receiverID.rawValue) {
+                            if state.listExprIDs.contains(receiverID.rawValue) {
                                 let closureRawID: KIRExprID
                                 if arguments.count == 3 {
                                     closureRawID = arguments[2]
@@ -3743,7 +3580,7 @@ extension CollectionLiteralLoweringPass {
                         if arguments.count == 2 || arguments.count == 3 {
                             let receiverID = arguments[0]
                             let comparatorExpr = arguments[1]
-                            if listExprIDs.contains(receiverID.rawValue) {
+                            if state.listExprIDs.contains(receiverID.rawValue) {
                                 let kkName: InternedString = switch callee {
                                 case lookup.maxWithName: lookup.kkListMaxWithName
                                 case lookup.maxWithOrNullName: lookup.kkListMaxWithOrNullName
@@ -3945,7 +3782,7 @@ extension CollectionLiteralLoweringPass {
                             let cmpExpr = arguments[1]
                             let selLambdaID: KIRExprID
                             let selClosureRawID: KIRExprID
-                            if listExprIDs.contains(receiverID.rawValue) {
+                            if state.listExprIDs.contains(receiverID.rawValue) {
                                 // Extract selector and its closure from remaining arguments
                                 if arguments.count == 5 {
                                     // [receiver, cmp, cmpClosure, sel, selClosure] — already expanded by VirtualCall path
@@ -4160,7 +3997,7 @@ extension CollectionLiteralLoweringPass {
                         if arguments.count == 2 || arguments.count == 3 {
                             let receiverID = arguments[0]
                             let lambdaID = arguments[1]
-                            if listExprIDs.contains(receiverID.rawValue) {
+                            if state.listExprIDs.contains(receiverID.rawValue) {
                                 let kkName: InternedString = switch callee {
                                 case lookup.countName: lookup.kkListCountName
                                 case lookup.firstName: lookup.kkListFirstName
@@ -4199,9 +4036,9 @@ extension CollectionLiteralLoweringPass {
                         let receiverID = arguments[0]
                         let initialID = arguments[1]
                         let lambdaID = arguments[2]
-                        if listExprIDs.contains(receiverID.rawValue)
-                            || setExprIDs.contains(receiverID.rawValue)
-                            || sequenceExprIDs.contains(receiverID.rawValue)
+                        if state.listExprIDs.contains(receiverID.rawValue)
+                            || state.setExprIDs.contains(receiverID.rawValue)
+                            || state.sequenceExprIDs.contains(receiverID.rawValue)
                         {
                             let closureRawID: KIRExprID
                             if arguments.count == 4 {
@@ -4214,7 +4051,7 @@ extension CollectionLiteralLoweringPass {
                             let hofResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
-                            let foldCallee = sequenceExprIDs.contains(receiverID.rawValue)
+                            let foldCallee = state.sequenceExprIDs.contains(receiverID.rawValue)
                                 ? lookup.kkSequenceFoldName
                                 : lookup.kkListFoldName
                             loweredBody.append(.call(
@@ -4235,7 +4072,7 @@ extension CollectionLiteralLoweringPass {
                     if callee == lookup.reduceName, (2 ... 3).contains(arguments.count) {
                         let receiverID = arguments[0]
                         let lambdaID = arguments[1]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let closureRawID: KIRExprID
                             if arguments.count == 3 {
                                 closureRawID = arguments[2]
@@ -4265,7 +4102,7 @@ extension CollectionLiteralLoweringPass {
                     if callee == lookup.reduceOrNullName, arguments.count == 2 || arguments.count == 3 {
                         let receiverID = arguments[0]
                         let lambdaID = arguments[1]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let closureRawID: KIRExprID
                             if arguments.count == 3 {
                                 closureRawID = arguments[2]
@@ -4295,13 +4132,13 @@ extension CollectionLiteralLoweringPass {
                     // foldIndexed: args = [receiver, initial, lambda, closureRaw?]
                     if (callee == lookup.foldIndexedName || callee == lookup.kkListFoldIndexedName || callee == lookup.kkSequenceFoldIndexedName), (arguments.count == 3 || arguments.count == 4) {
                         let receiverID = arguments[0]
-                        if listExprIDs.contains(receiverID.rawValue) || sequenceExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) || state.sequenceExprIDs.contains(receiverID.rawValue) {
                             let initialID = arguments[1]
                             let lambdaID = arguments[2]
                             let closureRawID: KIRExprID
                             if arguments.count == 4 { closureRawID = arguments[3] }
                             else { let z = module.arena.appendExpr(.intLiteral(0), type: nil); loweredBody.append(.constValue(result: z, value: .intLiteral(0))); closureRawID = z }
-                            let kkName = sequenceExprIDs.contains(receiverID.rawValue) ? lookup.kkSequenceFoldIndexedName : lookup.kkListFoldIndexedName
+                            let kkName = state.sequenceExprIDs.contains(receiverID.rawValue) ? lookup.kkSequenceFoldIndexedName : lookup.kkListFoldIndexedName
                             let callResult = result ?? module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)), type: nil)
                             loweredBody.append(.call(symbol: nil, callee: kkName, arguments: [receiverID, initialID, lambdaID, closureRawID], result: callResult, canThrow: canThrow, thrownResult: thrownResult))
                             continue
@@ -4310,12 +4147,12 @@ extension CollectionLiteralLoweringPass {
                     // reduceIndexed: args = [receiver, lambda, closureRaw?]
                     if (callee == lookup.reduceIndexedName || callee == lookup.kkListReduceIndexedName || callee == lookup.kkSequenceReduceIndexedName), (arguments.count == 2 || arguments.count == 3) {
                         let receiverID = arguments[0]
-                        if listExprIDs.contains(receiverID.rawValue) || sequenceExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) || state.sequenceExprIDs.contains(receiverID.rawValue) {
                             let lambdaID = arguments[1]
                             let closureRawID: KIRExprID
                             if arguments.count == 3 { closureRawID = arguments[2] }
                             else { let z = module.arena.appendExpr(.intLiteral(0), type: nil); loweredBody.append(.constValue(result: z, value: .intLiteral(0))); closureRawID = z }
-                            let kkName = sequenceExprIDs.contains(receiverID.rawValue) ? lookup.kkSequenceReduceIndexedName : lookup.kkListReduceIndexedName
+                            let kkName = state.sequenceExprIDs.contains(receiverID.rawValue) ? lookup.kkSequenceReduceIndexedName : lookup.kkListReduceIndexedName
                             let callResult = result ?? module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)), type: nil)
                             loweredBody.append(.call(symbol: nil, callee: kkName, arguments: [receiverID, lambdaID, closureRawID], result: callResult, canThrow: canThrow, thrownResult: thrownResult))
                             continue
@@ -4329,8 +4166,8 @@ extension CollectionLiteralLoweringPass {
                         let receiverID = arguments[0]
                         let initialID = arguments[1]
                         let lambdaID = arguments[2]
-                        if sequenceExprIDs.contains(receiverID.rawValue),
-                           !listExprIDs.contains(receiverID.rawValue) {
+                        if state.sequenceExprIDs.contains(receiverID.rawValue),
+                           !state.listExprIDs.contains(receiverID.rawValue) {
                             let closureRawID: KIRExprID
                             if arguments.count == 4 {
                                 closureRawID = arguments[3]
@@ -4354,15 +4191,15 @@ extension CollectionLiteralLoweringPass {
                             if let result {
                                 loweredBody.append(.copy(from: hofResult, to: result))
                             }
-                            sequenceExprIDs.insert(hofResult.rawValue)
-                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            state.sequenceExprIDs.insert(hofResult.rawValue)
+                            if let result { state.sequenceExprIDs.insert(result.rawValue) }
                             continue
                         }
                     }
                     // foldRight: args = [receiver, initial, lambda, closureRaw?]
                     if (callee == lookup.foldRightName || callee == lookup.kkListFoldRightName), (arguments.count == 3 || arguments.count == 4) {
                         let receiverID = arguments[0]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let initialID = arguments[1]
                             let lambdaID = arguments[2]
                             let closureRawID: KIRExprID
@@ -4376,7 +4213,7 @@ extension CollectionLiteralLoweringPass {
                     // foldRightIndexed: args = [receiver, initial, lambda, closureRaw?]
                     if (callee == lookup.foldRightIndexedName || callee == lookup.kkListFoldRightIndexedName), (arguments.count == 3 || arguments.count == 4) {
                         let receiverID = arguments[0]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let initialID = arguments[1]
                             let lambdaID = arguments[2]
                             let closureRawID: KIRExprID
@@ -4390,7 +4227,7 @@ extension CollectionLiteralLoweringPass {
                     // reduceRight: args = [receiver, lambda, closureRaw?]
                     if (callee == lookup.reduceRightName || callee == lookup.kkListReduceRightName), (arguments.count == 2 || arguments.count == 3) {
                         let receiverID = arguments[0]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let lambdaID = arguments[1]
                             let closureRawID: KIRExprID
                             if arguments.count == 3 { closureRawID = arguments[2] }
@@ -4403,7 +4240,7 @@ extension CollectionLiteralLoweringPass {
                     // reduceRightIndexed: args = [receiver, lambda, closureRaw?]
                     if (callee == lookup.reduceRightIndexedName || callee == lookup.kkListReduceRightIndexedName), (arguments.count == 2 || arguments.count == 3) {
                         let receiverID = arguments[0]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let lambdaID = arguments[1]
                             let closureRawID: KIRExprID
                             if arguments.count == 3 { closureRawID = arguments[2] }
@@ -4416,7 +4253,7 @@ extension CollectionLiteralLoweringPass {
                     // reduceRightIndexedOrNull: args = [receiver, lambda, closureRaw?]
                     if (callee == lookup.reduceRightIndexedOrNullName || callee == lookup.kkListReduceRightIndexedOrNullName), (arguments.count == 2 || arguments.count == 3) {
                         let receiverID = arguments[0]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let lambdaID = arguments[1]
                             let closureRawID: KIRExprID
                             if arguments.count == 3 { closureRawID = arguments[2] }
@@ -4429,7 +4266,7 @@ extension CollectionLiteralLoweringPass {
                     // reduceRightOrNull: args = [receiver, lambda, closureRaw?]
                     if (callee == lookup.reduceRightOrNullName || callee == lookup.kkListReduceRightOrNullName), (arguments.count == 2 || arguments.count == 3) {
                         let receiverID = arguments[0]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let lambdaID = arguments[1]
                             let closureRawID: KIRExprID
                             if arguments.count == 3 { closureRawID = arguments[2] }
@@ -4443,14 +4280,14 @@ extension CollectionLiteralLoweringPass {
                     if (callee == lookup.filterIndexedName || callee == lookup.kkListFilterIndexedName),
                        (arguments.count == 2 || arguments.count == 3) {
                         let receiverID = arguments[0]; let lambdaID = arguments[1]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let closureRawID: KIRExprID
                             if arguments.count == 3 { closureRawID = arguments[2] }
                             else { let z = module.arena.appendExpr(.intLiteral(0), type: nil); loweredBody.append(.constValue(result: z, value: .intLiteral(0))); closureRawID = z }
                             let hofResult = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)), type: nil)
                             loweredBody.append(.call(symbol: nil, callee: lookup.kkListFilterIndexedName, arguments: [receiverID, lambdaID, closureRawID], result: hofResult, canThrow: canThrow, thrownResult: thrownResult))
-                            if let result { loweredBody.append(.copy(from: hofResult, to: result)); listExprIDs.insert(result.rawValue) }
-                            listExprIDs.insert(hofResult.rawValue); continue
+                            if let result { loweredBody.append(.copy(from: hofResult, to: result)); state.listExprIDs.insert(result.rawValue) }
+                            state.listExprIDs.insert(hofResult.rawValue); continue
                         }
                     }
                     // takeWhile: args = [receiver, lambda, closureRaw?]
@@ -4458,7 +4295,7 @@ extension CollectionLiteralLoweringPass {
                        (arguments.count == 2 || arguments.count == 3) {
                         let receiverID = arguments[0]
                         let lambdaID = arguments[1]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let closureRawID: KIRExprID
                             if arguments.count == 3 {
                                 closureRawID = arguments[2]
@@ -4478,9 +4315,9 @@ extension CollectionLiteralLoweringPass {
                             ))
                             if let result {
                                 loweredBody.append(.copy(from: hofResult, to: result))
-                                listExprIDs.insert(result.rawValue)
+                                state.listExprIDs.insert(result.rawValue)
                             }
-                            listExprIDs.insert(hofResult.rawValue)
+                            state.listExprIDs.insert(hofResult.rawValue)
                             continue
                         }
                     }
@@ -4490,11 +4327,11 @@ extension CollectionLiteralLoweringPass {
                         || callee == lookup.kkSequenceReduceIndexedOrNullName),
                        (arguments.count == 2 || arguments.count == 3) {
                         let receiverID = arguments[0]; let lambdaID = arguments[1]
-                        if listExprIDs.contains(receiverID.rawValue) || sequenceExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) || state.sequenceExprIDs.contains(receiverID.rawValue) {
                             let closureRawID: KIRExprID
                             if arguments.count == 3 { closureRawID = arguments[2] }
                             else { let z = module.arena.appendExpr(.intLiteral(0), type: nil); loweredBody.append(.constValue(result: z, value: .intLiteral(0))); closureRawID = z }
-                            let kkName = sequenceExprIDs.contains(receiverID.rawValue)
+                            let kkName = state.sequenceExprIDs.contains(receiverID.rawValue)
                                 ? lookup.kkSequenceReduceIndexedOrNullName
                                 : lookup.kkListReduceIndexedOrNullName
                             let callResult = result ?? module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)), type: nil)
@@ -4510,29 +4347,29 @@ extension CollectionLiteralLoweringPass {
                         || callee == lookup.kkSequenceRunningFoldIndexedName),
                        (3 ... 4).contains(arguments.count) {
                         let receiverID = arguments[0]; let initialID = arguments[1]; let lambdaID = arguments[2]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let closureRawID: KIRExprID
                             if arguments.count == 4 { closureRawID = arguments[3] }
                             else { let z = module.arena.appendExpr(.intLiteral(0), type: nil); loweredBody.append(.constValue(result: z, value: .intLiteral(0))); closureRawID = z }
                             let kkName = (callee == lookup.scanIndexedName || callee == lookup.kkListScanIndexedName) ? lookup.kkListScanIndexedName : lookup.kkListRunningFoldIndexedName
                             let hofResult = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)), type: nil)
                             loweredBody.append(.call(symbol: nil, callee: kkName, arguments: [receiverID, initialID, lambdaID, closureRawID], result: hofResult, canThrow: canThrow, thrownResult: thrownResult))
-                            if let result { loweredBody.append(.copy(from: hofResult, to: result)); listExprIDs.insert(result.rawValue) }
-                            listExprIDs.insert(hofResult.rawValue); continue
+                            if let result { loweredBody.append(.copy(from: hofResult, to: result)); state.listExprIDs.insert(result.rawValue) }
+                            state.listExprIDs.insert(hofResult.rawValue); continue
                         }
                     }
                     // runningReduceIndexed: args = [receiver, lambda, closureRaw?]
                     if (callee == lookup.runningReduceIndexedName || callee == lookup.kkListRunningReduceIndexedName),
                        (arguments.count == 2 || arguments.count == 3) {
                         let receiverID = arguments[0]; let lambdaID = arguments[1]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let closureRawID: KIRExprID
                             if arguments.count == 3 { closureRawID = arguments[2] }
                             else { let z = module.arena.appendExpr(.intLiteral(0), type: nil); loweredBody.append(.constValue(result: z, value: .intLiteral(0))); closureRawID = z }
                             let hofResult = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)), type: nil)
                             loweredBody.append(.call(symbol: nil, callee: lookup.kkListRunningReduceIndexedName, arguments: [receiverID, lambdaID, closureRawID], result: hofResult, canThrow: canThrow, thrownResult: thrownResult))
-                            if let result { loweredBody.append(.copy(from: hofResult, to: result)); listExprIDs.insert(result.rawValue) }
-                            listExprIDs.insert(hofResult.rawValue); continue
+                            if let result { loweredBody.append(.copy(from: hofResult, to: result)); state.listExprIDs.insert(result.rawValue) }
+                            state.listExprIDs.insert(hofResult.rawValue); continue
                         }
                     }
 
@@ -4548,7 +4385,7 @@ extension CollectionLiteralLoweringPass {
                         let receiverID = arguments[0]
                         let initialID = arguments[1]
                         let lambdaID = arguments[2]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let closureRawID: KIRExprID
                             if arguments.count == 4 {
                                 closureRawID = arguments[3]
@@ -4572,8 +4409,8 @@ extension CollectionLiteralLoweringPass {
                             if let result {
                                 loweredBody.append(.copy(from: hofResult, to: result))
                             }
-                            listExprIDs.insert(hofResult.rawValue)
-                            if let result { listExprIDs.insert(result.rawValue) }
+                            state.listExprIDs.insert(hofResult.rawValue)
+                            if let result { state.listExprIDs.insert(result.rawValue) }
                             continue
                         }
                     }
@@ -4582,7 +4419,7 @@ extension CollectionLiteralLoweringPass {
                        (2 ... 3).contains(arguments.count) {
                         let receiverID = arguments[0]
                         let lambdaID = arguments[1]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let closureRawID: KIRExprID
                             if arguments.count == 3 {
                                 closureRawID = arguments[2]
@@ -4606,8 +4443,8 @@ extension CollectionLiteralLoweringPass {
                             if let result {
                                 loweredBody.append(.copy(from: hofResult, to: result))
                             }
-                            listExprIDs.insert(hofResult.rawValue)
-                            if let result { listExprIDs.insert(result.rawValue) }
+                            state.listExprIDs.insert(hofResult.rawValue)
+                            if let result { state.listExprIDs.insert(result.rawValue) }
                             continue
                         }
                     }
@@ -4617,7 +4454,7 @@ extension CollectionLiteralLoweringPass {
                         let receiverID = arguments[0]
                         let initialID = arguments[1]
                         let lambdaID = arguments[2]
-                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                        if state.sequenceExprIDs.contains(receiverID.rawValue) {
                             let closureRawID: KIRExprID
                             if arguments.count == 4 {
                                 closureRawID = arguments[3]
@@ -4642,8 +4479,8 @@ extension CollectionLiteralLoweringPass {
                             if let result {
                                 loweredBody.append(.copy(from: hofResult, to: result))
                             }
-                            listExprIDs.insert(hofResult.rawValue)
-                            if let result { listExprIDs.insert(result.rawValue) }
+                            state.listExprIDs.insert(hofResult.rawValue)
+                            if let result { state.listExprIDs.insert(result.rawValue) }
                             continue
                         }
                     }
@@ -4651,7 +4488,7 @@ extension CollectionLiteralLoweringPass {
                     if callee == lookup.runningReduceName, (2 ... 3).contains(arguments.count) {
                         let receiverID = arguments[0]
                         let lambdaID = arguments[1]
-                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                        if state.sequenceExprIDs.contains(receiverID.rawValue) {
                             let closureRawID: KIRExprID
                             if arguments.count == 3 {
                                 closureRawID = arguments[2]
@@ -4674,8 +4511,8 @@ extension CollectionLiteralLoweringPass {
                             if let result {
                                 loweredBody.append(.copy(from: hofResult, to: result))
                             }
-                            listExprIDs.insert(hofResult.rawValue)
-                            if let result { listExprIDs.insert(result.rawValue) }
+                            state.listExprIDs.insert(hofResult.rawValue)
+                            if let result { state.listExprIDs.insert(result.rawValue) }
                             continue
                         }
                     }
@@ -4683,7 +4520,7 @@ extension CollectionLiteralLoweringPass {
                     if callee == lookup.runningReduceIndexedName, (2 ... 3).contains(arguments.count) {
                         let receiverID = arguments[0]
                         let lambdaID = arguments[1]
-                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                        if state.sequenceExprIDs.contains(receiverID.rawValue) {
                             let closureRawID: KIRExprID
                             if arguments.count == 3 {
                                 closureRawID = arguments[2]
@@ -4706,8 +4543,8 @@ extension CollectionLiteralLoweringPass {
                             if let result {
                                 loweredBody.append(.copy(from: hofResult, to: result))
                             }
-                            listExprIDs.insert(hofResult.rawValue)
-                            if let result { listExprIDs.insert(result.rawValue) }
+                            state.listExprIDs.insert(hofResult.rawValue)
+                            if let result { state.listExprIDs.insert(result.rawValue) }
                             continue
                         }
                     }
@@ -4715,7 +4552,7 @@ extension CollectionLiteralLoweringPass {
                     if callee == lookup.scanReduceName, (arguments.count == 2 || arguments.count == 3) {
                         let receiverID = arguments[0]
                         let lambdaID = arguments[1]
-                        if listExprIDs.contains(receiverID.rawValue) {
+                        if state.listExprIDs.contains(receiverID.rawValue) {
                             let closureRawID: KIRExprID
                             if arguments.count == 3 {
                                 closureRawID = arguments[2]
@@ -4738,8 +4575,8 @@ extension CollectionLiteralLoweringPass {
                             if let result {
                                 loweredBody.append(.copy(from: hofResult, to: result))
                             }
-                            listExprIDs.insert(hofResult.rawValue)
-                            if let result { listExprIDs.insert(result.rawValue) }
+                            state.listExprIDs.insert(hofResult.rawValue)
+                            if let result { state.listExprIDs.insert(result.rawValue) }
                             continue
                         }
                     }
@@ -4747,7 +4584,7 @@ extension CollectionLiteralLoweringPass {
                     // Rewrite println on list/map → kk_list_to_string / kk_map_to_string
                     if callee == lookup.kkPrintlnAnyName || callee == lookup.printlnName, arguments.count == 1 {
                         let argID = arguments[0]
-                        if listExprIDs.contains(argID.rawValue) {
+                        if state.listExprIDs.contains(argID.rawValue) {
                             let strResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -4769,7 +4606,7 @@ extension CollectionLiteralLoweringPass {
                             ))
                             continue
                         }
-                        if setExprIDs.contains(argID.rawValue) {
+                        if state.setExprIDs.contains(argID.rawValue) {
                             let strResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -4791,7 +4628,7 @@ extension CollectionLiteralLoweringPass {
                             ))
                             continue
                         }
-                        if mapExprIDs.contains(argID.rawValue) {
+                        if state.mapExprIDs.contains(argID.rawValue) {
                             let strResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -4817,7 +4654,7 @@ extension CollectionLiteralLoweringPass {
 
                     if callee == lookup.kkAnyToStringName, arguments.count >= 1 {
                         let argID = arguments[0]
-                        if listExprIDs.contains(argID.rawValue) {
+                        if state.listExprIDs.contains(argID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkListToStringName,
@@ -4828,7 +4665,7 @@ extension CollectionLiteralLoweringPass {
                             ))
                             continue
                         }
-                        if setExprIDs.contains(argID.rawValue) {
+                        if state.setExprIDs.contains(argID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkSetToStringName,
@@ -4839,7 +4676,7 @@ extension CollectionLiteralLoweringPass {
                             ))
                             continue
                         }
-                        if mapExprIDs.contains(argID.rawValue) {
+                        if state.mapExprIDs.contains(argID.rawValue) {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkMapToStringName,
@@ -5027,7 +4864,7 @@ extension CollectionLiteralLoweringPass {
                             ))
                         }
                         if let result {
-                            listExprIDs.insert(result.rawValue)
+                            state.listExprIDs.insert(result.rawValue)
                         }
                         continue
                     }
@@ -5061,7 +4898,7 @@ extension CollectionLiteralLoweringPass {
                             thrownResult: thrownResult
                         ))
                         if isStringResult, let result {
-                            stringExprIDs.insert(result.rawValue)
+                            state.stringExprIDs.insert(result.rawValue)
                         }
                         continue
                     }
@@ -5078,16 +4915,16 @@ extension CollectionLiteralLoweringPass {
                         origCanThrow: origCanThrow,
                         origThrownResult: origThrownResult,
                         context: .init(module: module, lookup: lookup, functionBody: function.body, sema: ctx.sema, interner: ctx.interner),
-                        listExprIDs: &listExprIDs,
-                        setExprIDs: &setExprIDs,
-                        mapExprIDs: &mapExprIDs,
-                        arrayExprIDs: &arrayExprIDs,
-                        sequenceExprIDs: &sequenceExprIDs,
-                        rangeExprIDs: &rangeExprIDs,
-                        charRangeExprIDs: &charRangeExprIDs,
-                        ulongRangeExprIDs: &ulongRangeExprIDs,
-                        fileExprIDs: &fileExprIDs,
-                        indexingIterableExprIDs: &indexingIterableExprIDs,
+                        listExprIDs: &state.listExprIDs,
+                        setExprIDs: &state.setExprIDs,
+                        mapExprIDs: &state.mapExprIDs,
+                        arrayExprIDs: &state.arrayExprIDs,
+                        sequenceExprIDs: &state.sequenceExprIDs,
+                        rangeExprIDs: &state.rangeExprIDs,
+                        charRangeExprIDs: &state.charRangeExprIDs,
+                        ulongRangeExprIDs: &state.ulongRangeExprIDs,
+                        fileExprIDs: &state.fileExprIDs,
+                        indexingIterableExprIDs: &state.indexingIterableExprIDs,
                         loweredBody: &loweredBody
                     ) {
                         continue
@@ -5096,57 +4933,7 @@ extension CollectionLiteralLoweringPass {
 
                 case let .copy(from, to):
                     // Track copies of collection expressions
-                    if listExprIDs.contains(from.rawValue) {
-                        listExprIDs.insert(to.rawValue)
-                    }
-                    if setExprIDs.contains(from.rawValue) {
-                        setExprIDs.insert(to.rawValue)
-                    }
-                    if mapExprIDs.contains(from.rawValue) {
-                        mapExprIDs.insert(to.rawValue)
-                    }
-                    if arrayExprIDs.contains(from.rawValue) {
-                        arrayExprIDs.insert(to.rawValue)
-                    }
-                    if sequenceExprIDs.contains(from.rawValue) {
-                        sequenceExprIDs.insert(to.rawValue)
-                    }
-                    if rangeExprIDs.contains(from.rawValue) {
-                        rangeExprIDs.insert(to.rawValue)
-                    }
-                    if charRangeExprIDs.contains(from.rawValue) {
-                        charRangeExprIDs.insert(to.rawValue)
-                    }
-                    if ulongRangeExprIDs.contains(from.rawValue) {
-                        ulongRangeExprIDs.insert(to.rawValue)
-                    }
-                    if stringExprIDs.contains(from.rawValue) {
-                        stringExprIDs.insert(to.rawValue)
-                    }
-                    if listIteratorExprIDs.contains(from.rawValue) {
-                        listIteratorExprIDs.insert(to.rawValue)
-                    }
-                    if mapIteratorExprIDs.contains(from.rawValue) {
-                        mapIteratorExprIDs.insert(to.rawValue)
-                    }
-                    if stringIteratorExprIDs.contains(from.rawValue) {
-                        stringIteratorExprIDs.insert(to.rawValue)
-                    }
-                    if fileExprIDs.contains(from.rawValue) {
-                        fileExprIDs.insert(to.rawValue)
-                    }
-                    if iteratorBuilderExprIDs.contains(from.rawValue) {
-                        iteratorBuilderExprIDs.insert(to.rawValue)
-                    }
-                    if indexingIterableExprIDs.contains(from.rawValue) {
-                        indexingIterableExprIDs.insert(to.rawValue)
-                    }
-                    if indexingIterableIteratorExprIDs.contains(from.rawValue) {
-                        indexingIterableIteratorExprIDs.insert(to.rawValue)
-                    }
-                    if ulongRangeIteratorExprIDs.contains(from.rawValue) {
-                        ulongRangeIteratorExprIDs.insert(to.rawValue)
-                    }
+                    state.propagateCopy(from: from, to: to)
                     loweredBody.append(instruction)
 
                 default:
