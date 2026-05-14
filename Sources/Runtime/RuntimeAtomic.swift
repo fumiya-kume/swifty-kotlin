@@ -1451,6 +1451,11 @@ public func kk_atomic_ref_array_compareAndExchangeAt(_ receiver: Int, _ index: I
     return box.compareAndExchange(at: index, expect: expect, update: update)
 }
 
+@_cdecl("kk_atomic_ref_array_asJavaAtomicArray")
+public func kk_atomic_ref_array_asJavaAtomicArray(_ receiver: Int) -> Int {
+    receiver
+}
+
 @_cdecl("kk_atomic_ref_array_fetchAndUpdateAt")
 public func kk_atomic_ref_array_fetchAndUpdateAt(
     _ receiver: Int,

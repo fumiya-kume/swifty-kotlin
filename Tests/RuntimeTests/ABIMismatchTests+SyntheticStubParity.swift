@@ -298,6 +298,7 @@ extension ABIMismatchTests {
             "kk_atomic_long_array_fetchAndDecrementAt",
             "kk_atomic_long_array_decrementAndFetchAt",
             "kk_atomic_ref_array_exchangeAt",
+            "kk_atomic_ref_array_asJavaAtomicArray",
             // ThreadLocal (java.lang / kotlin.concurrent)
             "kk_thread_local_new",
             "kk_thread_local_getOrSet",
