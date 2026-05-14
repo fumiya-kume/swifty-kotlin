@@ -83,8 +83,7 @@
 - [x] STDLIB-COL-FN-160: `reduce` 関数の実装
 - [x] STDLIB-COL-FN-159: `randomOrNull` 関数の実装
 - [x] STDLIB-COL-FN-198: `sumByDouble` 関数の実装
-- [ ] STDLIB-COL-FN-203: `takeWhile` 関数の実装
- - [x] STDLIB-COL-FN-203: `takeWhile` 関数の実装
+- [x] STDLIB-COL-FN-203: `takeWhile` 関数の実装
 - [x] STDLIB-COL-FN-212: `toList` 関数の実装
 - [x] STDLIB-COL-FN-215: `toMutableList` 関数の実装
 - [x] STDLIB-COL-FN-220: `toTypeArray` 関数の実装
