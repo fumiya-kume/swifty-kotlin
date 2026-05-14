@@ -51,6 +51,7 @@ extension DataFlowSemaPhase {
             prefix: "kk_atomic_long",
             includeArithmetic: true,
             includeGetAndUpdate: true,
+            includeFetchAndUpdateAlias: true,
             symbols: symbols,
             interner: interner,
             types: types
