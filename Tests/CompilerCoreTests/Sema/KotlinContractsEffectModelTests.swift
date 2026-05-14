@@ -360,8 +360,8 @@ final class KotlinContractsEffectModelTests: XCTestCase {
     // MARK: - ContractBuilder stubs resolve in symbol table
 
     /// The compiler must synthesize the full `kotlin.contracts` package with
-    /// ContractBuilder, Effect, SimpleEffect, ConditionalEffect, HoldsIn, and
-    /// InvocationKind so that user code importing `kotlin.contracts.*` can
+    /// ContractBuilder, Effect, CallsInPlace, SimpleEffect, ConditionalEffect,
+    /// HoldsIn, and InvocationKind so that user code importing `kotlin.contracts.*` can
     /// resolve these names.
     func testContractBuilderAndInvocationKindSymbolsExist() throws {
         let source = """
@@ -385,6 +385,7 @@ final class KotlinContractsEffectModelTests: XCTestCase {
         let expectedSymbols: [(name: String, kind: SymbolKind)] = [
             ("ContractBuilder", .class),
             ("Effect", .interface),
+            ("CallsInPlace", .interface),
             ("SimpleEffect", .interface),
             ("ConditionalEffect", .interface),
             ("HoldsIn", .interface),
@@ -399,6 +400,72 @@ final class KotlinContractsEffectModelTests: XCTestCase {
             )
             XCTAssertEqual(sema.symbols.symbol(symbol)?.kind, expected.kind)
         }
+    }
+
+    func testCallsInPlaceInterfaceAndBuilderSurfaceAreRegistered() throws {
+        let source = """
+        import kotlin.contracts.*
+
+        fun noop() {}
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+        let sema = try XCTUnwrap(ctx.sema)
+
+        let contractsFQName = [
+            ctx.interner.intern("kotlin"),
+            ctx.interner.intern("contracts"),
+        ]
+        let effectSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: contractsFQName + [ctx.interner.intern("Effect")])
+        )
+        let callsInPlaceSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: contractsFQName + [ctx.interner.intern("CallsInPlace")])
+        )
+        XCTAssertEqual(sema.symbols.symbol(callsInPlaceSymbol)?.kind, .interface)
+        XCTAssertTrue(
+            sema.symbols.directSupertypes(for: callsInPlaceSymbol).contains(effectSymbol),
+            "CallsInPlace must extend Effect"
+        )
+        let callsInPlaceAnnotations = sema.symbols.annotations(for: callsInPlaceSymbol)
+        XCTAssertTrue(
+            callsInPlaceAnnotations.contains { $0.annotationFQName == "kotlin.contracts.ExperimentalContracts" },
+            "CallsInPlace should carry ExperimentalContracts"
+        )
+
+        let builderFQName = contractsFQName + [ctx.interner.intern("ContractBuilder")]
+        let builderSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: builderFQName))
+        let builderType = sema.types.make(.classType(ClassType(
+            classSymbol: builderSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let callsInPlaceType = sema.types.make(.classType(ClassType(
+            classSymbol: callsInPlaceSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let callsInPlaceOverloads = sema.symbols.lookupAll(
+            fqName: builderFQName + [ctx.interner.intern("callsInPlace")]
+        )
+        XCTAssertTrue(
+            callsInPlaceOverloads.contains { symbol in
+                guard let signature = sema.symbols.functionSignature(for: symbol) else { return false }
+                return signature.receiverType == builderType
+                    && signature.parameterTypes.count == 1
+                    && signature.returnType == callsInPlaceType
+            },
+            "ContractBuilder.callsInPlace(lambda) should return CallsInPlace"
+        )
+        XCTAssertTrue(
+            callsInPlaceOverloads.contains { symbol in
+                guard let signature = sema.symbols.functionSignature(for: symbol) else { return false }
+                return signature.receiverType == builderType
+                    && signature.parameterTypes.count == 2
+                    && signature.returnType == callsInPlaceType
+            },
+            "ContractBuilder.callsInPlace(lambda, kind) should return CallsInPlace"
+        )
     }
 
     func testHoldsInInterfaceAndBuilderSurfaceAreRegistered() throws {

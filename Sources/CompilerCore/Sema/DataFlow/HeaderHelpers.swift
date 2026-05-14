@@ -1187,6 +1187,12 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let callsInPlaceSymbol = ensureInterfaceSymbol(
+            named: "CallsInPlace",
+            in: contractsFQName,
+            symbols: symbols,
+            interner: interner
+        )
         let simpleEffectSymbol = ensureInterfaceSymbol(
             named: "SimpleEffect",
             in: contractsFQName,
@@ -1209,6 +1215,7 @@ extension DataFlowSemaPhase {
             symbols.setParentSymbol(contractsPkg, for: builderSymbol)
             symbols.setParentSymbol(contractsPkg, for: contractEffectSymbol)
             symbols.setParentSymbol(contractsPkg, for: effectSymbol)
+            symbols.setParentSymbol(contractsPkg, for: callsInPlaceSymbol)
             symbols.setParentSymbol(contractsPkg, for: simpleEffectSymbol)
             symbols.setParentSymbol(contractsPkg, for: conditionalEffectSymbol)
             symbols.setParentSymbol(contractsPkg, for: holdsInSymbol)
@@ -1316,20 +1323,32 @@ extension DataFlowSemaPhase {
         let builderType = types.make(.classType(ClassType(classSymbol: builderSymbol, args: [], nullability: .nonNull)))
         let contractEffectType = types.make(.classType(ClassType(classSymbol: contractEffectSymbol, args: [], nullability: .nonNull)))
         let effectType = types.make(.classType(ClassType(classSymbol: effectSymbol, args: [], nullability: .nonNull)))
+        let callsInPlaceType = types.make(.classType(ClassType(classSymbol: callsInPlaceSymbol, args: [], nullability: .nonNull)))
         let simpleEffectType = types.make(.classType(ClassType(classSymbol: simpleEffectSymbol, args: [], nullability: .nonNull)))
         let conditionalEffectType = types.make(.classType(ClassType(classSymbol: conditionalEffectSymbol, args: [], nullability: .nonNull)))
         let holdsInType = types.make(.classType(ClassType(classSymbol: holdsInSymbol, args: [], nullability: .nonNull)))
 
         symbols.setPropertyType(contractEffectType, for: contractEffectSymbol)
         symbols.setPropertyType(effectType, for: effectSymbol)
+        symbols.setPropertyType(callsInPlaceType, for: callsInPlaceSymbol)
         symbols.setPropertyType(simpleEffectType, for: simpleEffectSymbol)
         symbols.setPropertyType(conditionalEffectType, for: conditionalEffectSymbol)
         symbols.setPropertyType(holdsInType, for: holdsInSymbol)
 
         symbols.setDirectSupertypes([contractEffectSymbol], for: effectSymbol)
+        symbols.setDirectSupertypes([effectSymbol], for: callsInPlaceSymbol)
         symbols.setDirectSupertypes([effectSymbol], for: simpleEffectSymbol)
         symbols.setDirectSupertypes([effectSymbol], for: conditionalEffectSymbol)
         symbols.setDirectSupertypes([effectSymbol], for: holdsInSymbol)
+
+        let callsInPlaceAnnotations = [
+            MetadataAnnotationRecord(annotationFQName: "kotlin.contracts.ExperimentalContracts"),
+        ]
+        var existingCallsInPlaceAnnotations = symbols.annotations(for: callsInPlaceSymbol)
+        for annotation in callsInPlaceAnnotations where !existingCallsInPlaceAnnotations.contains(annotation) {
+            existingCallsInPlaceAnnotations.append(annotation)
+        }
+        symbols.setAnnotations(existingCallsInPlaceAnnotations, for: callsInPlaceSymbol)
 
         let holdsInAnnotations = [
             MetadataAnnotationRecord(annotationFQName: "kotlin.contracts.ExperimentalContracts"),
@@ -1538,7 +1557,7 @@ extension DataFlowSemaPhase {
                 }
                 return signature.receiverType == builderType
                     && signature.parameterTypes.count == parameterCount
-                    && signature.returnType == effectType
+                    && signature.returnType == callsInPlaceType
             }
             guard !alreadyDefined else {
                 return
@@ -1572,7 +1591,7 @@ extension DataFlowSemaPhase {
                 FunctionSignature(
                     receiverType: builderType,
                     parameterTypes: parameterTypes,
-                    returnType: effectType,
+                    returnType: callsInPlaceType,
                     typeParameterSymbols: [typeParamSymbol]
                 ),
                 for: symbol

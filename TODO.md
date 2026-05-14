@@ -140,7 +140,7 @@
 - [ ] STDLIB-ATOMIC-NEW-FN-032: `getAndAdd` 拡張関数の実装（各オーバーロード）
 
 #### kotlin.contracts 型の実装
-- [ ] STDLIB-CONTRACT-TYPE-001: `CallsInPlace` クラスの実装
+- [x] STDLIB-CONTRACT-TYPE-001: `CallsInPlace` クラスの実装
 - [ ] STDLIB-CONTRACT-TYPE-009: `Returns` クラスの実装
 - [ ] STDLIB-CONTRACT-TYPE-010: `ReturnsNotNull` クラスの実装
 
