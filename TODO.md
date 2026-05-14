@@ -121,7 +121,7 @@
 - [ ] STDLIB-ATOMIC-NEW-FN-009: `asKotlinAtomicArray` 関数の実装（各オーバーロード）
 - [ ] STDLIB-ATOMIC-NEW-FN-012: `AtomicLongArray` 関数の実装（factory版）
 - [x] STDLIB-ATOMIC-NEW-FN-013: `fetchAndUpdate` 拡張関数の実装（AtomicArray版）
-- [ ] STDLIB-ATOMIC-NEW-FN-014: `fetchAndUpdate` 拡張関数の実装（AtomicBoolean版）
+- [x] STDLIB-ATOMIC-NEW-FN-014: `fetchAndUpdate` 拡張関数の実装（AtomicBoolean版）
 - [x] STDLIB-ATOMIC-NEW-FN-015: `fetchAndUpdate` 拡張関数の実装（AtomicIntArray版）
 - [ ] STDLIB-ATOMIC-NEW-FN-017: `fetchAndUpdate` 拡張関数の実装（AtomicLongArray版）
 - [x] STDLIB-ATOMIC-NEW-FN-018: `fetchAndUpdate` 拡張関数の実装（AtomicLong版）
