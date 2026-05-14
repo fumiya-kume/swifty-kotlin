@@ -480,8 +480,6 @@ extension CallLowerer {
             return interner.intern("kk_list_onEach")
         case "onEachIndexed":
             return interner.intern("kk_list_onEachIndexed")
-        case "first":
-            return interner.intern("kk_list_first")
         case "firstOrNull":
             return interner.intern("kk_list_firstOrNull")
         case "lastOrNull":
