@@ -324,7 +324,8 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
             val loaded = atomic.load()
             val exchanged = atomic.exchange(next)
             atomic.compareAndSet(exchanged, loaded)
-            return atomic.compareAndExchange(loaded, next)
+            val fetched = atomic.fetchAndUpdate { current -> current }
+            return atomic.compareAndExchange(fetched, next)
         }
         """
 

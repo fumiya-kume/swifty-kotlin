@@ -1534,6 +1534,22 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let transformType = types.make(.functionType(FunctionType(
+            params: [nativePtrType],
+            returnType: nativePtrType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        registerNativeConcurrentMemberFunction(
+            ownerSymbol: classSymbol,
+            ownerType: ownerType,
+            name: "fetchAndUpdate",
+            returnType: nativePtrType,
+            parameters: [(name: "transform", type: transformType)],
+            defaultValues: [],
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func registerReadWriteLockConstructor(

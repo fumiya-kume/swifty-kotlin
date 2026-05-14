@@ -125,7 +125,7 @@
 - [x] STDLIB-ATOMIC-NEW-FN-015: `fetchAndUpdate` 拡張関数の実装（AtomicIntArray版）
 - [ ] STDLIB-ATOMIC-NEW-FN-017: `fetchAndUpdate` 拡張関数の実装（AtomicLongArray版）
 - [x] STDLIB-ATOMIC-NEW-FN-018: `fetchAndUpdate` 拡張関数の実装（AtomicLong版）
-- [ ] STDLIB-ATOMIC-NEW-FN-019: `fetchAndUpdate` 拡張関数の実装（AtomicNativePtr版）
+- [x] STDLIB-ATOMIC-NEW-FN-019: `fetchAndUpdate` 拡張関数の実装（AtomicNativePtr版）
 - [x] STDLIB-ATOMIC-NEW-FN-020: `fetchAndUpdate` 拡張関数の実装（AtomicReference版）
 - [x] STDLIB-ATOMIC-NEW-FN-021: `fetchAndDecrement` 拡張関数の実装（各オーバーロード）
 - [x] STDLIB-ATOMIC-NEW-FN-022: `fetchAndIncrement` 拡張関数の実装（各オーバーロード）
