@@ -98,6 +98,7 @@ public enum StdlibSpecialCallKind: Equatable {
     case minOfFloat3
     case arrayConstructor
     case atomicIntArrayFactory
+    case atomicLongArrayFactory
     case measureTimeMillis
     case measureTimeMicros
     case measureNanoTime

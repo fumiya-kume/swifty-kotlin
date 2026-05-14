@@ -11,7 +11,63 @@ extension CallLowerer {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID? {
-        guard sema.bindings.stdlibSpecialCallKind(for: exprID) == .atomicIntArrayFactory,
+        lowerAtomicNumericArrayFactoryCallExpr(
+            exprID,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions,
+            specialKind: .atomicIntArrayFactory,
+            valueType: sema.types.intType,
+            createCalleeName: "kk_atomic_int_array_create",
+            storeAtCalleeName: "kk_atomic_int_array_storeAt"
+        )
+    }
+
+    func lowerAtomicLongArrayFactoryCallExpr(
+        _ exprID: ExprID,
+        args: [CallArgument],
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        lowerAtomicNumericArrayFactoryCallExpr(
+            exprID,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions,
+            specialKind: .atomicLongArrayFactory,
+            valueType: sema.types.longType,
+            createCalleeName: "kk_atomic_long_array_create",
+            storeAtCalleeName: "kk_atomic_long_array_storeAt"
+        )
+    }
+
+    private func lowerAtomicNumericArrayFactoryCallExpr(
+        _ exprID: ExprID,
+        args: [CallArgument],
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction],
+        specialKind: StdlibSpecialCallKind,
+        valueType: TypeID,
+        createCalleeName: String,
+        storeAtCalleeName: String
+    ) -> KIRExprID? {
+        guard sema.bindings.stdlibSpecialCallKind(for: exprID) == specialKind,
               args.count == 2
         else {
             return nil
@@ -21,8 +77,8 @@ extension CallLowerer {
         let boolType = sema.types.booleanType
         let unitType = sema.types.unitType
         let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
-        let createCallee = interner.intern("kk_atomic_int_array_create")
-        let storeAtCallee = interner.intern("kk_atomic_int_array_storeAt")
+        let createCallee = interner.intern(createCalleeName)
+        let storeAtCallee = interner.intern(storeAtCalleeName)
         let lessThanCallee = interner.intern("kk_op_lt")
         let addCallee = interner.intern("kk_op_add")
         let unboxIntCallee = interner.intern("kk_unbox_int")
@@ -104,7 +160,7 @@ extension CallLowerer {
                 instructions: &instructions
             )
             if let callableInfo = driver.ctx.callableValueInfo(for: actionExpr) {
-                let actionResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
+                let actionResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: valueType)
                 instructions.append(.call(
                     symbol: callableInfo.symbol,
                     callee: callableInfo.callee,
