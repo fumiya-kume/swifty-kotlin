@@ -131,7 +131,7 @@
 - [ ] STDLIB-ATOMIC-NEW-FN-023: `getAndUpdate` 拡張関数の実装（各オーバーロード）
 - [x] STDLIB-ATOMIC-NEW-FN-024: `updateAndGet` 拡張関数の実装（各オーバーロード）
 - [x] STDLIB-ATOMIC-NEW-FN-025: `compareAndSet` 拡張関数の実装（各オーバーロード）
-- [ ] STDLIB-ATOMIC-NEW-FN-026: `getAndSet` 拡張関数の実装（各オーバーロード）
+- [x] STDLIB-ATOMIC-NEW-FN-026: `getAndSet` 拡張関数の実装（各オーバーロード）
 - [x] STDLIB-ATOMIC-NEW-FN-027: `incrementAndGet` 拡張関数の実装（各オーバーロード）
 - [ ] STDLIB-ATOMIC-NEW-FN-028: `decrementAndGet` 拡張関数の実装（各オーバーロード）
 - [ ] STDLIB-ATOMIC-NEW-FN-029: `getAndIncrement` 拡張関数の実装（各オーバーロード）

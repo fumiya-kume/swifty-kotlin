@@ -1073,6 +1073,56 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    // MARK: - Atomic getAndSet
+
+    func testCodegenAtomicGetAndSetOverloads() throws {
+        let source = """
+        @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
+        import kotlin.concurrent.atomics.AtomicArray
+        import kotlin.concurrent.atomics.AtomicInt
+        import kotlin.concurrent.atomics.AtomicIntArray
+        import kotlin.concurrent.atomics.AtomicLong
+        import kotlin.concurrent.atomics.AtomicLongArray
+        import kotlin.concurrent.atomics.AtomicReference
+
+        fun main() {
+            val intValue = AtomicInt(1)
+            println(intValue.getAndSet(2))
+            println(intValue.load())
+
+            val longValue = AtomicLong(3L)
+            println(longValue.getAndSet(4L))
+            println(longValue.load())
+
+            val refValue = AtomicReference("a")
+            println(refValue.getAndSet("b"))
+            println(refValue.load())
+
+            val refArray = AtomicArray<String?>(1)
+            refArray.storeAt(0, "x")
+            println(refArray.getAndSet(0, "y"))
+            println(refArray.loadAt(0))
+
+            val intArray = AtomicIntArray(1)
+            intArray.storeAt(0, 5)
+            println(intArray.getAndSet(0, 6))
+            println(intArray.loadAt(0))
+
+            val longArray = AtomicLongArray(1)
+            longArray.storeAt(0, 7L)
+            println(longArray.getAndSet(0, 8L))
+            println(longArray.loadAt(0))
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(inputPath: path, moduleName: "AtomicGetAndSet", emit: .executable, outputPath: outputBase)
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "1\n2\n3\n4\na\nb\nx\ny\n5\n6\n7\n8\n")
+        }
+    }
+
     // MARK: - kotlin.concurrent (non-atomics) AtomicInt
 
     func testCodegenKotlinConcurrentAtomicIntLoadStore() throws {

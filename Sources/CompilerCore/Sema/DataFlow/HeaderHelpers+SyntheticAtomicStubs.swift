@@ -38,6 +38,7 @@ extension DataFlowSemaPhase {
             includeFetchAndUpdateAlias: true,
             includeIncrementAndGetAlias: true,
             includeGetAndDecrementAlias: true,
+            includeGetAndSetAlias: true,
             symbols: symbols,
             interner: interner,
             types: types
@@ -56,6 +57,7 @@ extension DataFlowSemaPhase {
             includeFetchAndUpdateAlias: true,
             includeIncrementAndGetAlias: true,
             includeGetAndDecrementAlias: true,
+            includeGetAndSetAlias: true,
             symbols: symbols,
             interner: interner,
             types: types
@@ -223,6 +225,7 @@ extension DataFlowSemaPhase {
             includeArithmetic: true,
             includeIncrementAndGetAlias: true,
             includeGetAndDecrementAlias: true,
+            includeGetAndSetAlias: true,
             includeFetchAndUpdate: true,
             symbols: symbols,
             interner: interner,
@@ -249,6 +252,7 @@ extension DataFlowSemaPhase {
             includeArithmetic: true,
             includeIncrementAndGetAlias: true,
             includeGetAndDecrementAlias: true,
+            includeGetAndSetAlias: true,
             symbols: symbols,
             interner: interner,
             types: types
@@ -447,6 +451,7 @@ extension DataFlowSemaPhase {
         includeUpdateAndFetchAlias: Bool = false,
         includeIncrementAndGetAlias: Bool = false,
         includeGetAndDecrementAlias: Bool = false,
+        includeGetAndSetAlias: Bool = false,
         symbols: SymbolTable,
         interner: StringInterner,
         types: TypeSystem
@@ -489,6 +494,7 @@ extension DataFlowSemaPhase {
             boolType: boolType,
             unitType: unitType,
             prefix: prefix,
+            includeGetAndSetAlias: includeGetAndSetAlias,
             symbols: symbols,
             interner: interner
         )
@@ -620,6 +626,18 @@ extension DataFlowSemaPhase {
             ownerSymbol: symbol,
             ownerType: ownerType,
             name: "exchangeAt",
+            externalLinkName: "kk_atomic_ref_array_exchangeAt",
+            returnType: typeParamType,
+            parameters: [(name: "index", type: types.intType), (name: "newValue", type: typeParamType)],
+            typeParameterSymbols: [typeParamSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+        registerAtomicMember(
+            ownerSymbol: symbol,
+            ownerType: ownerType,
+            name: "getAndSet",
             externalLinkName: "kk_atomic_ref_array_exchangeAt",
             returnType: typeParamType,
             parameters: [(name: "index", type: types.intType), (name: "newValue", type: typeParamType)],
@@ -799,6 +817,7 @@ extension DataFlowSemaPhase {
         includeArithmetic: Bool,
         includeIncrementAndGetAlias: Bool = false,
         includeGetAndDecrementAlias: Bool = false,
+        includeGetAndSetAlias: Bool = false,
         includeFetchAndUpdate: Bool = false,
         symbols: SymbolTable,
         interner: StringInterner,
@@ -888,6 +907,18 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        if includeGetAndSetAlias {
+            registerAtomicMember(
+                ownerSymbol: symbol,
+                ownerType: ownerType,
+                name: "getAndSet",
+                externalLinkName: "\(prefix)_exchangeAt",
+                returnType: valueType,
+                parameters: [(name: "index", type: types.intType), (name: "newValue", type: valueType)],
+                symbols: symbols,
+                interner: interner
+            )
+        }
         registerAtomicMember(
                 ownerSymbol: symbol,
                 ownerType: ownerType,
@@ -1767,6 +1798,16 @@ extension DataFlowSemaPhase {
         registerNativeConcurrentMemberFunction(
             ownerSymbol: classSymbol,
             ownerType: ownerType,
+            name: "getAndSet",
+            returnType: nativePtrType,
+            parameters: [(name: "newValue", type: nativePtrType)],
+            defaultValues: [],
+            symbols: symbols,
+            interner: interner
+        )
+        registerNativeConcurrentMemberFunction(
+            ownerSymbol: classSymbol,
+            ownerType: ownerType,
             name: "compareAndSet",
             returnType: types.booleanType,
             parameters: [
@@ -1925,6 +1966,7 @@ extension DataFlowSemaPhase {
         prefix: String,
         typeParameterSymbols: [SymbolID] = [],
         classTypeParameterCount: Int = 0,
+        includeGetAndSetAlias: Bool = false,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -1955,6 +1997,16 @@ extension DataFlowSemaPhase {
             classTypeParameterCount: classTypeParameterCount,
             symbols: symbols, interner: interner
         )
+        if includeGetAndSetAlias {
+            registerAtomicMember(
+                ownerSymbol: ownerSymbol, ownerType: ownerType,
+                name: "getAndSet", externalLinkName: "\(prefix)_exchange",
+                returnType: valueType, parameters: [(name: "newValue", type: valueType)],
+                typeParameterSymbols: typeParameterSymbols,
+                classTypeParameterCount: classTypeParameterCount,
+                symbols: symbols, interner: interner
+            )
+        }
         // compareAndSet(expect: T, update: T) -> Boolean
         registerAtomicMember(
             ownerSymbol: ownerSymbol, ownerType: ownerType,
@@ -2206,6 +2258,7 @@ extension DataFlowSemaPhase {
             prefix: externalLinkPrefix,
             typeParameterSymbols: [typeParamSymbol],
             classTypeParameterCount: 1,
+            includeGetAndSetAlias: true,
             symbols: symbols,
             interner: interner
         )
