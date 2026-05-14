@@ -1004,6 +1004,9 @@ extension CodegenBackendIntegrationTests {
             val old = a.getAndUpdate { !it }
             println(old)
             println(a.load())
+            val fetched = a.fetchAndUpdate { !it }
+            println(fetched)
+            println(a.load())
             val new2 = a.updateAndGet { !it }
             println(new2)
         }
@@ -1013,7 +1016,7 @@ extension CodegenBackendIntegrationTests {
             let ctx = try runCodegenPipeline(inputPath: path, moduleName: "AtomicBooleanGetAndUpdate", emit: .executable, outputPath: outputBase)
             try LinkPhase().run(ctx)
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "false\ntrue\nfalse\n")
+            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "false\ntrue\ntrue\nfalse\ntrue\n")
         }
     }
 
