@@ -29,9 +29,15 @@ extension CallTypeChecker {
             return nil
         }
 
-        let isCharRange = sema.bindings.isCharRangeExpr(receiverID)
         let receiverType = sema.bindings.exprType(for: receiverID)
-        let isLongRange = receiverType == sema.types.longType
+        let rangeKind = MemberRuntimeDispatch.rangeReceiverKind(
+            receiverExpr: receiverID,
+            receiverType: receiverType ?? sema.types.anyType,
+            sema: sema,
+            interner: interner
+        ) ?? .intRange
+        let isCharRange = rangeKind.isCharRangeLike
+        let isLongRange = rangeKind.isLongRangeLike
         // STDLIB-523: UIntRange / ULongRange support
         // Note on lowering: UIntRange/ULongRange do not require separate lowering
         // passes or runtime helpers. All numeric ranges (Int, Long, UInt, ULong)
@@ -48,8 +54,8 @@ extension CallTypeChecker {
         // or comparison results. This is a known limitation; full ULong support
         // would require unsigned comparison helpers in the runtime.
         // Only CharRange needs separate helpers (kk_char_range_*) due to box/unbox.
-        let isUIntRange = sema.bindings.isUIntRangeExpr(receiverID) || receiverType == sema.types.uintType
-        let isULongRange = sema.bindings.isULongRangeExpr(receiverID) || receiverType == sema.types.ulongType
+        let isUIntRange = rangeKind.isUIntRangeLike
+        let isULongRange = rangeKind.isULongRangeLike
 
         if args.isEmpty,
            ["step", "start", "end", "endExclusive"].contains(memberName),
