@@ -98,7 +98,7 @@
 - [x] STDLIB-CONC-TYPE-007: `Volatile` アノテーションの実装
 
 #### kotlin.concurrent 関数の実装
-- [ ] STDLIB-CONC-FN-001: `atomicArrayOf` 関数の実装
+- [x] STDLIB-CONC-FN-001: `atomicArrayOf` 関数の実装
 - [x] STDLIB-CONC-FN-002: `AtomicIntArray` 関数の実装（factory版）
 - [x] STDLIB-CONC-FN-003: `AtomicLongArray` 関数の実装（factory版）
 - [ ] STDLIB-CONC-FN-004: `fixedRateTimer` 関数の実装（各オーバーロード）

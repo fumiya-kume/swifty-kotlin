@@ -599,6 +599,38 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenAtomicArrayOfFactory() throws {
+        let source = """
+        @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
+        import kotlin.concurrent.atomics.atomicArrayOf
+
+        fun main() {
+            val arr = atomicArrayOf("first", "value")
+            println(arr.size)
+            println(arr.loadAt(0))
+            println(arr.loadAt(1))
+            arr.storeAt(1, "next")
+            println(arr.loadAt(1))
+
+            val empty = atomicArrayOf<String>()
+            println(empty.size)
+
+            val source = arrayOf("spread", "values")
+            val spread = atomicArrayOf(*source)
+            println(spread.size)
+            println(spread.loadAt(0))
+            println(spread.loadAt(1))
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(inputPath: path, moduleName: "AtomicArrayOfFactory", emit: .executable, outputPath: outputBase)
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "2\nfirst\nvalue\nnext\n0\n2\nspread\nvalues\n")
+        }
+    }
+
     func testCodegenAtomicArrayUpdateAndFetchAt() throws {
         let source = """
         @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)

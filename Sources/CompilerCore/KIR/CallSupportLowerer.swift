@@ -259,7 +259,9 @@ final class CallSupportLowerer {
         let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee)
         let isVararg = normalizeBoolFlags(signature.valueParameterIsVararg, count: parameterCount)
         let hasDefaultValues = normalizeBoolFlags(signature.valueParameterHasDefaultValues, count: parameterCount)
-        let preserveArrayVarargs = externalLinkName == "kk_array_of" || externalLinkName == "kk_sequence_of"
+        let preserveArrayVarargs = externalLinkName == "kk_array_of"
+            || externalLinkName == "kk_sequence_of"
+            || externalLinkName == "kk_atomic_ref_array_of"
 
         var argIndicesByParameter: [Int: [Int]] = [:]
         for (argIndex, paramIndex) in callBinding.parameterMapping {
