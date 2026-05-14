@@ -8,6 +8,8 @@ fun main() {
     // foldIndexed
     val weighted = nums.foldIndexed(0) { index, acc, value -> acc + value * index }
     println(weighted) // 0*10 + 1*20 + 2*30 + 3*40 + 4*50 = 0+20+60+120+200 = 400
+    val setWeighted = setOf(10, 20, 30).foldIndexed(0) { index, acc, value -> acc + value * index }
+    println(setWeighted) // 0*10 + 1*20 + 2*30 = 80
 
     // reduceIndexed
     val reduced = nums.reduceIndexed { index, acc, value -> acc + value * index }
