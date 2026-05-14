@@ -37,6 +37,7 @@ extension DataFlowSemaPhase {
             includeGetAndUpdate: true,
             includeFetchAndUpdateAlias: true,
             includeIncrementAndGetAlias: true,
+            includeGetAndDecrementAlias: true,
             symbols: symbols,
             interner: interner,
             types: types
@@ -54,6 +55,7 @@ extension DataFlowSemaPhase {
             includeGetAndUpdate: true,
             includeFetchAndUpdateAlias: true,
             includeIncrementAndGetAlias: true,
+            includeGetAndDecrementAlias: true,
             symbols: symbols,
             interner: interner,
             types: types
@@ -212,6 +214,7 @@ extension DataFlowSemaPhase {
             prefix: "kk_atomic_int_array",
             includeArithmetic: true,
             includeIncrementAndGetAlias: true,
+            includeGetAndDecrementAlias: true,
             includeFetchAndUpdate: true,
             symbols: symbols,
             interner: interner,
@@ -237,6 +240,7 @@ extension DataFlowSemaPhase {
             prefix: "kk_atomic_long_array",
             includeArithmetic: true,
             includeIncrementAndGetAlias: true,
+            includeGetAndDecrementAlias: true,
             symbols: symbols,
             interner: interner,
             types: types
@@ -434,6 +438,7 @@ extension DataFlowSemaPhase {
         includeFetchAndUpdateAlias: Bool = false,
         includeUpdateAndFetchAlias: Bool = false,
         includeIncrementAndGetAlias: Bool = false,
+        includeGetAndDecrementAlias: Bool = false,
         symbols: SymbolTable,
         interner: StringInterner,
         types: TypeSystem
@@ -487,6 +492,7 @@ extension DataFlowSemaPhase {
                 valueType: valueType,
                 prefix: prefix,
                 includeIncrementAndGetAlias: includeIncrementAndGetAlias,
+                includeGetAndDecrementAlias: includeGetAndDecrementAlias,
                 symbols: symbols,
                 interner: interner
             )
@@ -784,6 +790,7 @@ extension DataFlowSemaPhase {
         prefix: String,
         includeArithmetic: Bool,
         includeIncrementAndGetAlias: Bool = false,
+        includeGetAndDecrementAlias: Bool = false,
         includeFetchAndUpdate: Bool = false,
         symbols: SymbolTable,
         interner: StringInterner,
@@ -938,6 +945,18 @@ extension DataFlowSemaPhase {
                     ownerType: ownerType,
                     name: "incrementAndGet",
                     externalLinkName: "\(prefix)_incrementAndFetchAt",
+                    returnType: valueType,
+                    parameters: [(name: "index", type: types.intType)],
+                    symbols: symbols,
+                    interner: interner
+                )
+            }
+            if includeGetAndDecrementAlias {
+                registerAtomicMember(
+                    ownerSymbol: symbol,
+                    ownerType: ownerType,
+                    name: "getAndDecrement",
+                    externalLinkName: "\(prefix)_fetchAndDecrementAt",
                     returnType: valueType,
                     parameters: [(name: "index", type: types.intType)],
                     symbols: symbols,
@@ -1700,6 +1719,7 @@ extension DataFlowSemaPhase {
         typeParameterSymbols: [SymbolID] = [],
         classTypeParameterCount: Int = 0,
         includeIncrementAndGetAlias: Bool = false,
+        includeGetAndDecrementAlias: Bool = false,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -1739,6 +1759,16 @@ extension DataFlowSemaPhase {
             classTypeParameterCount: classTypeParameterCount,
             symbols: symbols, interner: interner
         )
+        if includeGetAndDecrementAlias {
+            registerAtomicMember(
+                ownerSymbol: ownerSymbol, ownerType: ownerType,
+                name: "getAndDecrement", externalLinkName: "\(prefix)_fetchAndDecrement",
+                returnType: valueType, parameters: [],
+                typeParameterSymbols: typeParameterSymbols,
+                classTypeParameterCount: classTypeParameterCount,
+                symbols: symbols, interner: interner
+            )
+        }
         // incrementAndFetch() -> T
         registerAtomicMember(
             ownerSymbol: ownerSymbol, ownerType: ownerType,
