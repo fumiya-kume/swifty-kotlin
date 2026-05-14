@@ -691,6 +691,31 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenAtomicIntArrayFetchAndUpdateAt() throws {
+        let source = """
+        @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
+        import kotlin.concurrent.atomics.AtomicIntArray
+
+        fun main() {
+            val arr = AtomicIntArray(1)
+            arr.storeAt(0, 10)
+            val old = arr.fetchAndUpdateAt(0) { it * 2 }
+            println(old)
+            println(arr.loadAt(0))
+            val fetched = arr.fetchAndUpdateAt(0) { it - 5 }
+            println(fetched)
+            println(arr.loadAt(0))
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(inputPath: path, moduleName: "AtomicIntArrayFetchAndUpdateAt", emit: .executable, outputPath: outputBase)
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "10\n20\n20\n15\n")
+        }
+    }
+
     func testCodegenAtomicIntArrayIndexOperator() throws {
         let source = """
         @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
