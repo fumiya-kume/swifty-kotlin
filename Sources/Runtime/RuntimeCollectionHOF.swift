@@ -1164,17 +1164,18 @@ public func kk_list_groupBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ o
     }
     var groupKeys: [Int] = []
     var groupElements: [[Int]] = []
-    var keyToIndex: [Int: Int] = [:]
+    var keyToIndex: [RuntimeElementKey: Int] = [:]
     for elem in list.elements {
         var thrown = 0
         let key = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         let unboxedKey = maybeUnbox(key)
-        if let grpIdx = keyToIndex[unboxedKey] {
+        let runtimeKey = RuntimeElementKey(value: unboxedKey)
+        if let grpIdx = keyToIndex[runtimeKey] {
             groupElements[grpIdx].append(elem)
         } else {
             let newIndex = groupKeys.count
-            keyToIndex[unboxedKey] = newIndex
+            keyToIndex[runtimeKey] = newIndex
             groupKeys.append(unboxedKey)
             groupElements.append([elem])
         }
@@ -1193,20 +1194,21 @@ public func kk_list_groupByTransform(_ listRaw: Int, _ keyFnPtr: Int, _ keyClosu
     }
     var groupKeys: [Int] = []
     var groupElements: [[Int]] = []
-    var keyToIndex: [Int: Int] = [:]
+    var keyToIndex: [RuntimeElementKey: Int] = [:]
     for elem in list.elements {
         var thrown = 0
         let key = runtimeInvokeCollectionLambda1(fnPtr: keyFnPtr, closureRaw: keyClosureRaw, value: elem, outThrown: &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         let unboxedKey = maybeUnbox(key)
+        let runtimeKey = RuntimeElementKey(value: unboxedKey)
         var thrown2 = 0
         let transformedValue = runtimeInvokeCollectionLambda1(fnPtr: valueFnPtr, closureRaw: valueClosureRaw, value: elem, outThrown: &thrown2)
         if thrown2 != 0 { return handleCollectionLambdaThrow(thrown2, outThrown) }
-        if let grpIdx = keyToIndex[unboxedKey] {
+        if let grpIdx = keyToIndex[runtimeKey] {
             groupElements[grpIdx].append(transformedValue)
         } else {
             let newIndex = groupKeys.count
-            keyToIndex[unboxedKey] = newIndex
+            keyToIndex[runtimeKey] = newIndex
             groupKeys.append(unboxedKey)
             groupElements.append([transformedValue])
         }

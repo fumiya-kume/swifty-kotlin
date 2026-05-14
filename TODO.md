@@ -77,7 +77,7 @@
 - [x] STDLIB-COL-FN-080: `fold` 関数の実装
 - [ ] STDLIB-COL-FN-084: `forEach` 関数の実装
 - [x] STDLIB-COL-FN-087: `getOrDefault` 関数の実装
-- [ ] STDLIB-COL-FN-090: `groupBy` 関数の実装
+- [x] STDLIB-COL-FN-090: `groupBy` 関数の実装
 - [x] STDLIB-COL-FN-101: `iterator` 関数の実装
 - [ ] STDLIB-COL-FN-139: `minOfWith` 関数の実装
 - [x] STDLIB-COL-FN-160: `reduce` 関数の実装

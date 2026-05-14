@@ -1372,6 +1372,29 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(kk_map_get(grouped, 0)), [4, 2])
     }
 
+    func testGroupByUsesValueEqualityForStringKeys() {
+        let source = makeList([1, 2, 3, 4])
+        let grouped = kk_list_groupBy(source, unsafeBitCast(groupingByStringKey, to: Int.self), 0, nil)
+
+        XCTAssertEqual(mapKeys(grouped).map(runtimeStringValue), ["odd", "even"])
+        XCTAssertEqual(listElements(kk_map_get(grouped, runtimeStringRaw("odd"))), [1, 3])
+        XCTAssertEqual(listElements(kk_map_get(grouped, runtimeStringRaw("even"))), [2, 4])
+    }
+
+    func testGroupByTransformUsesValueEqualityForStringKeys() {
+        let source = makeList([1, 2, 3, 4])
+        let grouped = kk_list_groupByTransform(
+            source,
+            unsafeBitCast(groupingByStringKey, to: Int.self), 0,
+            unsafeBitCast(mapTimesTwo, to: Int.self), 0,
+            nil
+        )
+
+        XCTAssertEqual(mapKeys(grouped).map(runtimeStringValue), ["odd", "even"])
+        XCTAssertEqual(listElements(kk_map_get(grouped, runtimeStringRaw("odd"))), [2, 6])
+        XCTAssertEqual(listElements(kk_map_get(grouped, runtimeStringRaw("even"))), [4, 8])
+    }
+
     func testGroupingByEachCountPreservesKeyOrderAndCounts() {
         let source = makeList([3, 1, 4, 2, 5])
         let grouping = kk_list_groupingBy(source, unsafeBitCast(groupByParity, to: Int.self), 0)

@@ -68,5 +68,14 @@ fun main() {
     val g4 = listOf(1, 2, 3, 4).groupBy({ it % 2 }, { "n=$it" })
     println(g4)
 
+    // groupBy: string keys with equal values but separately produced runtime strings
+    val stringKeys = listOf("a", "a", "b").groupBy { it + "!" }
+    println(stringKeys)
+    println(stringKeys.get("a!"))
+
+    val stringKeyTransform = listOf("a", "a", "b").groupBy({ it + "!" }, { it + "?" })
+    println(stringKeyTransform)
+    println(stringKeyTransform.get("a!"))
+
     println(listOf(21, 11, 12, 22).sortedBy { it / 10 })
 }
