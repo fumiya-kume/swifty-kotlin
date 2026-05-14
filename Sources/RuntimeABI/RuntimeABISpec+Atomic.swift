@@ -718,5 +718,17 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Atomic"
         ),
+        // AtomicArray<T>
+        RuntimeABIFunctionSpec(
+            name: "kk_atomic_ref_array_compareAndSetAt",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
+                RuntimeABIParameter(name: "index", type: .intptr),
+                RuntimeABIParameter(name: "expect", type: .intptr),
+                RuntimeABIParameter(name: "update", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Atomic"
+        ),
     ]
 }
