@@ -73,7 +73,7 @@
 - [x] STDLIB-COL-FN-079: `flatten` 関数の実装
 - [ ] STDLIB-COL-FN-081: `foldIndexed` 関数の実装
 - [x] STDLIB-COL-FN-082: `foldRight` 関数の実装
-- [ ] STDLIB-COL-FN-083: `foldRightIndexed` 関数の実装
+- [x] STDLIB-COL-FN-083: `foldRightIndexed` 関数の実装
 - [x] STDLIB-COL-FN-080: `fold` 関数の実装
 - [x] STDLIB-COL-FN-084: `forEach` 関数の実装
 - [x] STDLIB-COL-FN-087: `getOrDefault` 関数の実装
