@@ -65,6 +65,7 @@ final class CompilationContextTests: XCTestCase {
         XCTAssertNil(ctx.generatedLLVMIRPath)
         XCTAssertNil(ctx.incrementalCache)
         XCTAssertNil(ctx.incrementalRecompileSet)
+        XCTAssertFalse(ctx.incrementalOutputRestored)
         XCTAssertNil(ctx.phaseTimer)
         XCTAssertTrue(ctx.fileIRs.isEmpty)
     }
@@ -108,6 +109,13 @@ final class CompilationContextTests: XCTestCase {
         let ctx = makeCompilationContext(inputs: ["/a.kt"])
         ctx.incrementalRecompileSet = Set()
         XCTAssertFalse(ctx.needsRecompilation(path: "/a.kt"))
+    }
+
+    func testMarkIncrementalOutputRestored() {
+        let ctx = makeCompilationContext(inputs: ["/a.kt"])
+        XCTAssertFalse(ctx.incrementalOutputRestored)
+        ctx.markIncrementalOutputRestored()
+        XCTAssertTrue(ctx.incrementalOutputRestored)
     }
 
     // MARK: - frontendJobs

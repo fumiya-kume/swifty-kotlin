@@ -7,13 +7,14 @@ import Foundation
 /// <cachePath>/
 ///   manifest.json       — file fingerprints from the previous build
 ///   deps.json           — dependency graph (symbol ↔ file relationships)
-///   per-file/           — (reserved for per-file artifacts; not used here yet)
-///     <hash>.kirbin     — serialized per-file frontend results (written/read by other components)
+///   artifacts/          — final output artifacts keyed by build configuration
 /// ```
 public final class IncrementalCompilationCache {
     public let cachePath: String
 
     private var previousFingerprints: [String: FileFingerprint] = [:]
+    private var previousBuildConfigurationHash: String?
+    private var previousOutputArtifact: CachedOutputArtifact?
 
     /// Dependency graph from the *previous* successful compilation.
     /// `nil` means no valid dependency graph was loaded (deps.json missing or corrupt).
@@ -48,6 +49,8 @@ public final class IncrementalCompilationCache {
                 for fp in manifest.fingerprints {
                     previousFingerprints[fp.path] = fp
                 }
+                previousBuildConfigurationHash = manifest.buildConfigurationHash
+                previousOutputArtifact = manifest.outputArtifact
             }
         }
 
@@ -63,6 +66,7 @@ public final class IncrementalCompilationCache {
     // MARK: - Change detection
 
     public func computeCurrentFingerprints(for paths: [String], sourceManager: SourceManager) {
+        currentFingerprints = [:]
         for path in paths {
             guard let fingerprint = computeCurrentFingerprint(for: path, sourceManager: sourceManager) else {
                 continue
@@ -72,6 +76,7 @@ public final class IncrementalCompilationCache {
     }
 
     public func computeCurrentFingerprints(for paths: [String]) {
+        currentFingerprints = [:]
         for path in paths {
             guard let fingerprint = computeCurrentFingerprint(for: path, sourceManager: nil) else {
                 continue
@@ -94,11 +99,6 @@ public final class IncrementalCompilationCache {
                 changed.insert(path)
                 continue
             }
-            // Fast path: if mtime is the same, skip hash comparison.
-            if current.mtimeUnchanged(from: previous) {
-                continue
-            }
-            // Slow path: compare content hashes.
             if current.contentChanged(from: previous) {
                 changed.insert(path)
             }
@@ -115,9 +115,15 @@ public final class IncrementalCompilationCache {
     /// Computes the full recompilation set using the dependency graph.
     /// Returns `nil` if no cache is available (full build needed), including
     /// when the dependency graph is missing or corrupt.
-    public func recompilationSet(allPaths: [String]) -> Set<String>? {
+    public func recompilationSet(allPaths: [String], options: CompilerOptions? = nil) -> Set<String>? {
         if previousFingerprints.isEmpty {
             // No previous build — full build needed.
+            return nil
+        }
+
+        if let options,
+           previousBuildConfigurationHash != Self.buildConfigurationHash(for: options)
+        {
             return nil
         }
 
@@ -138,6 +144,44 @@ public final class IncrementalCompilationCache {
         return Set(recompFiles)
     }
 
+    public func restoreCachedOutput(for options: CompilerOptions) -> Bool {
+        guard previousBuildConfigurationHash == Self.buildConfigurationHash(for: options),
+              let artifact = previousOutputArtifact
+        else {
+            return false
+        }
+
+        let sourcePath = cachePath + "/" + artifact.relativePath
+        var sourceIsDirectory = ObjCBool(false)
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: sourcePath, isDirectory: &sourceIsDirectory) else {
+            return false
+        }
+        if artifact.kind == .directory, !sourceIsDirectory.boolValue {
+            return false
+        }
+        if artifact.kind == .file, sourceIsDirectory.boolValue {
+            return false
+        }
+
+        let destinationPath = Self.outputArtifactPath(for: options)
+        if URL(fileURLWithPath: sourcePath).standardizedFileURL.path
+            == URL(fileURLWithPath: destinationPath).standardizedFileURL.path
+        {
+            return true
+        }
+
+        do {
+            try Self.removeItemIfPresent(at: destinationPath, fileManager: fm)
+            let parent = URL(fileURLWithPath: destinationPath).deletingLastPathComponent().path
+            try fm.createDirectory(atPath: parent, withIntermediateDirectories: true)
+            try fm.copyItem(atPath: sourcePath, toPath: destinationPath)
+            return true
+        } catch {
+            return false
+        }
+    }
+
     public var hasPreviousCache: Bool {
         !previousFingerprints.isEmpty
     }
@@ -149,7 +193,7 @@ public final class IncrementalCompilationCache {
     // MARK: - Saving state
 
     /// Saves the current fingerprints and the updated dependency graph to disk.
-    public func saveState(dependencyGraph: DependencyGraph) {
+    public func saveState(dependencyGraph: DependencyGraph, options: CompilerOptions? = nil) {
         let fm = FileManager.default
 
         do {
@@ -160,7 +204,9 @@ public final class IncrementalCompilationCache {
             let fingerprints = currentFingerprints.values.sorted(by: { $0.path < $1.path })
             let manifest = CacheManifest(
                 version: 1,
-                fingerprints: Array(fingerprints)
+                fingerprints: Array(fingerprints),
+                buildConfigurationHash: options.map(Self.buildConfigurationHash(for:)),
+                outputArtifact: options.flatMap { cacheOutputArtifact(for: $0, fileManager: fm) }
             )
             let encoder = JSONEncoder()
             encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
@@ -175,6 +221,11 @@ public final class IncrementalCompilationCache {
                 to: URL(fileURLWithPath: cachePath + "/deps.json"),
                 options: .atomic
             )
+
+            previousFingerprints = currentFingerprints
+            previousBuildConfigurationHash = manifest.buildConfigurationHash
+            previousOutputArtifact = manifest.outputArtifact
+            previousDependencyGraph = dependencyGraph
         } catch {
             // Cache save failure is non-fatal — next build will do a full compile.
             let message = "[IncrementalCompilationCache] Failed to save cache at '\(cachePath)': \(error)\n"
@@ -187,6 +238,8 @@ public final class IncrementalCompilationCache {
     public func clearCache() {
         try? FileManager.default.removeItem(atPath: cachePath)
         previousFingerprints = [:]
+        previousBuildConfigurationHash = nil
+        previousOutputArtifact = nil
         previousDependencyGraph = nil
         currentFingerprints = [:]
     }
@@ -198,6 +251,101 @@ public final class IncrementalCompilationCache {
         }
         return FileFingerprint.compute(for: path)
     }
+
+    private func cacheOutputArtifact(
+        for options: CompilerOptions,
+        fileManager fm: FileManager
+    ) -> CachedOutputArtifact? {
+        let sourcePath = Self.outputArtifactPath(for: options)
+        var isDirectory = ObjCBool(false)
+        guard fm.fileExists(atPath: sourcePath, isDirectory: &isDirectory) else {
+            return nil
+        }
+
+        let relativePath = "artifacts/\(Self.buildConfigurationHash(for: options))/output"
+        let destinationPath = cachePath + "/" + relativePath
+        do {
+            try Self.removeItemIfPresent(at: destinationPath, fileManager: fm)
+            let parent = URL(fileURLWithPath: destinationPath).deletingLastPathComponent().path
+            try fm.createDirectory(atPath: parent, withIntermediateDirectories: true)
+            try fm.copyItem(atPath: sourcePath, toPath: destinationPath)
+            return CachedOutputArtifact(
+                kind: isDirectory.boolValue ? .directory : .file,
+                relativePath: relativePath
+            )
+        } catch {
+            return nil
+        }
+    }
+
+    private static func removeItemIfPresent(at path: String, fileManager fm: FileManager) throws {
+        if fm.fileExists(atPath: path) {
+            try fm.removeItem(atPath: path)
+        }
+    }
+
+    private static func outputArtifactPath(for options: CompilerOptions) -> String {
+        switch options.emit {
+        case .kirDump:
+            outputPath(base: options.outputPath, defaultExtension: "kir")
+        case .llvmIR:
+            outputPath(base: options.outputPath, defaultExtension: "ll")
+        case .object:
+            outputPath(base: options.outputPath, defaultExtension: "o")
+        case .executable:
+            options.outputPath
+        case .library:
+            options.outputPath.hasSuffix(".kklib") ? options.outputPath : options.outputPath + ".kklib"
+        }
+    }
+
+    private static func outputPath(base: String, defaultExtension: String) -> String {
+        let fileURL = URL(fileURLWithPath: base)
+        if fileURL.pathExtension.isEmpty {
+            return fileURL.appendingPathExtension(defaultExtension).path
+        }
+        return base
+    }
+
+    private static func buildConfigurationHash(for options: CompilerOptions) -> String {
+        let config = IncrementalBuildConfiguration(
+            schemaVersion: 1,
+            moduleName: options.moduleName,
+            inputPaths: options.inputs,
+            emit: options.emit.rawValue,
+            searchPaths: options.searchPaths,
+            libraryPaths: options.libraryPaths,
+            linkLibraries: options.linkLibraries,
+            target: IncrementalTargetTriple(
+                arch: options.target.arch,
+                vendor: options.target.vendor,
+                os: options.target.os,
+                osVersion: options.target.osVersion
+            ),
+            optLevel: options.optLevel.rawValue,
+            debugInfo: options.debugInfo,
+            frontendFlags: options.frontendFlags.filter(Self.isOutputAffectingFrontendFlag),
+            irFlags: options.irFlags,
+            runtimeFlags: options.runtimeFlags
+        )
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        let data = (try? encoder.encode(config)) ?? Data()
+        return stableFNV1a64Hex(String(decoding: data, as: UTF8.self))
+    }
+
+    private static func isOutputAffectingFrontendFlag(_ flag: String) -> Bool {
+        flag != "incremental" && flag != "time-phases" && !flag.hasPrefix("jobs=")
+    }
+
+    private static func stableFNV1a64Hex(_ value: String) -> String {
+        var hash: UInt64 = 0xCBF2_9CE4_8422_2325
+        for byte in value.utf8 {
+            hash ^= UInt64(byte)
+            hash &*= 0x100_0000_01B3
+        }
+        return String(format: "%016llx", hash)
+    }
 }
 
 // MARK: - Cache manifest model
@@ -205,4 +353,51 @@ public final class IncrementalCompilationCache {
 struct CacheManifest: Codable {
     let version: Int
     let fingerprints: [FileFingerprint]
+    let buildConfigurationHash: String?
+    let outputArtifact: CachedOutputArtifact?
+
+    init(
+        version: Int,
+        fingerprints: [FileFingerprint],
+        buildConfigurationHash: String? = nil,
+        outputArtifact: CachedOutputArtifact? = nil
+    ) {
+        self.version = version
+        self.fingerprints = fingerprints
+        self.buildConfigurationHash = buildConfigurationHash
+        self.outputArtifact = outputArtifact
+    }
+}
+
+struct CachedOutputArtifact: Codable, Equatable {
+    let kind: CachedOutputArtifactKind
+    let relativePath: String
+}
+
+enum CachedOutputArtifactKind: String, Codable {
+    case file
+    case directory
+}
+
+private struct IncrementalBuildConfiguration: Encodable {
+    let schemaVersion: Int
+    let moduleName: String
+    let inputPaths: [String]
+    let emit: String
+    let searchPaths: [String]
+    let libraryPaths: [String]
+    let linkLibraries: [String]
+    let target: IncrementalTargetTriple
+    let optLevel: Int
+    let debugInfo: Bool
+    let frontendFlags: [String]
+    let irFlags: [String]
+    let runtimeFlags: [String]
+}
+
+private struct IncrementalTargetTriple: Encodable {
+    let arch: String
+    let vendor: String
+    let os: String
+    let osVersion: String?
 }

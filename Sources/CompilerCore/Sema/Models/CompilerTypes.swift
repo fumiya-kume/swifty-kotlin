@@ -99,7 +99,7 @@ public struct CompilerOptions: Equatable {
     /// Path to the incremental compilation cache directory, if any.
     /// Incremental compilation is enabled when either this is non-nil or the
     /// `incremental` frontend flag is set; when enabled and a cache is
-    /// available, the compiler will attempt to reuse results from previous builds.
+    /// available, exact no-op builds restore the previous output artifact.
     public var incrementalCachePath: String?
 
     public init(
