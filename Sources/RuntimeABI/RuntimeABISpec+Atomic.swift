@@ -66,6 +66,14 @@ public extension RuntimeABISpec {
             section: "Atomic"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_java_atomic_int_asKotlinAtomic",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Atomic"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_atomic_int_fetchAndAdd",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
@@ -187,6 +195,14 @@ public extension RuntimeABISpec {
                 RuntimeABIParameter(name: "receiver", type: .intptr),
                 RuntimeABIParameter(name: "expect", type: .intptr),
                 RuntimeABIParameter(name: "update", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Atomic"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_java_atomic_long_asKotlinAtomic",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
             ],
             returnType: .intptr,
             section: "Atomic"
@@ -615,6 +631,14 @@ public extension RuntimeABISpec {
             section: "Atomic"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_java_atomic_bool_asKotlinAtomic",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Atomic"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_atomic_bool_getAndUpdate",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
@@ -712,6 +736,14 @@ public extension RuntimeABISpec {
         ),
         RuntimeABIFunctionSpec(
             name: "kk_atomic_ref_asJavaAtomic",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Atomic"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_java_atomic_ref_asKotlinAtomic",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
             ],

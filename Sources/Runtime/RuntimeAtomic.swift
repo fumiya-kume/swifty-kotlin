@@ -133,6 +133,11 @@ public func kk_atomic_int_asJavaAtomic(_ receiver: Int) -> Int {
     receiver
 }
 
+@_cdecl("kk_java_atomic_int_asKotlinAtomic")
+public func kk_java_atomic_int_asKotlinAtomic(_ receiver: Int) -> Int {
+    receiver
+}
+
 @_cdecl("kk_atomic_int_fetchAndAdd")
 public func kk_atomic_int_fetchAndAdd(_ receiver: Int, _ delta: Int) -> Int {
     guard let box = atomicIntBox(from: receiver) else { return 0 }
@@ -323,6 +328,11 @@ public func kk_atomic_long_compareAndExchange(_ receiver: Int, _ expect: Int, _ 
     return box.compareAndExchange(expect: expect, update: update)
 }
 
+@_cdecl("kk_java_atomic_long_asKotlinAtomic")
+public func kk_java_atomic_long_asKotlinAtomic(_ receiver: Int) -> Int {
+    receiver
+}
+
 @_cdecl("kk_atomic_long_fetchAndAdd")
 public func kk_atomic_long_fetchAndAdd(_ receiver: Int, _ delta: Int) -> Int {
     guard let box = atomicLongBox(from: receiver) else { return 0 }
@@ -505,6 +515,11 @@ public func kk_atomic_bool_asJavaAtomic(_ receiver: Int) -> Int {
     receiver
 }
 
+@_cdecl("kk_java_atomic_bool_asKotlinAtomic")
+public func kk_java_atomic_bool_asKotlinAtomic(_ receiver: Int) -> Int {
+    receiver
+}
+
 @_cdecl("kk_atomic_bool_getAndUpdate")
 public func kk_atomic_bool_getAndUpdate(
     _ receiver: Int,
@@ -649,6 +664,11 @@ public func kk_atomic_ref_compareAndExchange(_ receiver: Int, _ expect: Int, _ u
 
 @_cdecl("kk_atomic_ref_asJavaAtomic")
 public func kk_atomic_ref_asJavaAtomic(_ receiver: Int) -> Int {
+    receiver
+}
+
+@_cdecl("kk_java_atomic_ref_asKotlinAtomic")
+public func kk_java_atomic_ref_asKotlinAtomic(_ receiver: Int) -> Int {
     receiver
 }
 
