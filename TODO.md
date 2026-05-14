@@ -137,7 +137,7 @@
 - [x] STDLIB-ATOMIC-NEW-FN-029: `getAndIncrement` 拡張関数の実装（各オーバーロード）
 - [x] STDLIB-ATOMIC-NEW-FN-030: `getAndDecrement` 拡張関数の実装（各オーバーロード）
 - [ ] STDLIB-ATOMIC-NEW-FN-031: `addAndGet` 拡張関数の実装（各オーバーロード）
-- [ ] STDLIB-ATOMIC-NEW-FN-032: `getAndAdd` 拡張関数の実装（各オーバーロード）
+- [x] STDLIB-ATOMIC-NEW-FN-032: `getAndAdd` 拡張関数の実装（各オーバーロード）
 
 #### kotlin.contracts 型の実装
 - [ ] STDLIB-CONTRACT-TYPE-001: `CallsInPlace` クラスの実装
