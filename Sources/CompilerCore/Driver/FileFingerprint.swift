@@ -1,7 +1,7 @@
 import Foundation
 
-/// The content hash is the primary comparison key; mtime serves as a fast-path
-/// to avoid re-hashing when the file system reports no modification.
+/// The content hash is the comparison key; mtime is retained as diagnostic
+/// metadata and for future cache optimizations.
 public struct FileFingerprint: Equatable, Codable {
     public let path: String
 
@@ -35,8 +35,8 @@ public struct FileFingerprint: Equatable, Codable {
         contentHash != other.contentHash
     }
 
-    /// Quick mtime-based check: returns `true` when the mtime is unchanged,
-    /// meaning we can *probably* skip re-hashing.
+    /// Returns `true` when the file path and recorded mtime are unchanged.
+    /// Incremental correctness must still use `contentHash`.
     public func mtimeUnchanged(from other: FileFingerprint) -> Bool {
         path == other.path && mtimeNanos == other.mtimeNanos
     }

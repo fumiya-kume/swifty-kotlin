@@ -114,6 +114,29 @@ final class IncrementalCompilationCacheTests: XCTestCase {
         XCTAssertTrue(changed.contains(sourceFile))
     }
 
+    func testChangedFilesDetectsContentChangeWhenMTimeIsUnchanged() throws {
+        let sourceDir = tempDir + "/src"
+        try FileManager.default.createDirectory(atPath: sourceDir, withIntermediateDirectories: true)
+        let sourceFile = sourceDir + "/a.kt"
+
+        try "fun main() {}".write(toFile: sourceFile, atomically: true, encoding: .utf8)
+        let cache1 = IncrementalCompilationCache(cachePath: tempDir)
+        cache1.computeCurrentFingerprints(for: [sourceFile])
+        cache1.saveState(dependencyGraph: DependencyGraph())
+        let originalMTime = try XCTUnwrap(
+            FileManager.default.attributesOfItem(atPath: sourceFile)[.modificationDate] as? Date
+        )
+
+        try "fun main() { println(\"changed\") }".write(toFile: sourceFile, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes([.modificationDate: originalMTime], ofItemAtPath: sourceFile)
+
+        let cache2 = IncrementalCompilationCache(cachePath: tempDir)
+        cache2.loadPreviousState()
+        cache2.computeCurrentFingerprints(for: [sourceFile])
+        let changed = cache2.changedFiles(allPaths: [sourceFile])
+        XCTAssertTrue(changed.contains(sourceFile))
+    }
+
     func testChangedFilesDetectsRemovedFile() throws {
         let sourceDir = tempDir + "/src"
         try FileManager.default.createDirectory(atPath: sourceDir, withIntermediateDirectories: true)

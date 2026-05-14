@@ -213,7 +213,7 @@ KIRModule (lowered)
 | `TypeSystem` | `Sema/TypeSystem/TypeSystem.swift` | 型の登録・部分型判定・変性・置換 |
 | `NameMangler` | `Codegen/NameMangler.swift` | ABI 安定なマングル名生成 |
 | `PhaseTimer` | `Driver/PhaseTimer.swift` | フェーズ実行時間計測 (`-Xfrontend time-phases`) |
-| `IncrementalCompilationCache` | `Driver/IncrementalCompilationCache.swift` | フィンガープリントベースのインクリメンタルビルド |
+| `IncrementalCompilationCache` | `Driver/IncrementalCompilationCache.swift` | 入力フィンガープリント + build 構成 hash による no-op build の出力 artifact 再利用 |
 
 ---
 

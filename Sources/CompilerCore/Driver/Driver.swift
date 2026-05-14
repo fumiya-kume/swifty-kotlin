@@ -88,27 +88,31 @@ public final class CompilerDriver {
         return parentDir + "/.kswiftk-cache"
     }
 
-    /// Computes fingerprints for loaded sources and determines the
-    /// incremental recompilation set.
-    private func setupIncrementalRecompileSet(ctx: CompilationContext) {
-        guard let cache = ctx.incrementalCache else { return }
+    /// Computes fingerprints for loaded sources, determines the incremental
+    /// recompilation set, and restores the cached output for exact no-op builds.
+    /// Returns `true` when the rest of the pipeline can be skipped.
+    private func prepareIncrementalPipeline(ctx: CompilationContext) -> Bool {
+        guard let cache = ctx.incrementalCache else { return false }
 
         let allPaths = ctx.options.inputs
         cache.computeCurrentFingerprints(for: allPaths, sourceManager: ctx.sourceManager)
 
-        if let recompileSet = cache.recompilationSet(allPaths: allPaths) {
+        if let recompileSet = cache.recompilationSet(allPaths: allPaths, options: ctx.options) {
+            ctx.setIncrementalRecompileSet(recompileSet)
             if recompileSet.isEmpty {
-                // Nothing changed — we still run the full pipeline to produce
-                // a consistent output. In the future, we could short-circuit
-                // here or reuse cached intermediate results more aggressively.
+                if cache.restoreCachedOutput(for: ctx.options) {
+                    ctx.markIncrementalOutputRestored()
+                    return true
+                }
+                // Old caches did not persist output artifacts. Fall back to a
+                // full build so the requested output is always produced.
                 ctx.setIncrementalRecompileSet(nil)
-            } else {
-                ctx.setIncrementalRecompileSet(recompileSet)
             }
         } else {
-            // No previous cache — full build.
+            // No compatible previous cache — full build.
             ctx.setIncrementalRecompileSet(nil)
         }
+        return false
     }
 
     private func prepareContext(options: CompilerOptions) -> PreparedRunContext {
@@ -154,7 +158,9 @@ public final class CompilerDriver {
                     try phase.run(ctx)
                     if ctx.diagnostics.hasError { break }
                     if incrementalEnabled {
-                        setupIncrementalRecompileSet(ctx: ctx)
+                        if prepareIncrementalPipeline(ctx: ctx) {
+                            return
+                        }
                     }
                     continue
                 }
@@ -180,9 +186,9 @@ public final class CompilerDriver {
         printDiagnostics: Bool,
         timePhasesEnabled: Bool
     ) -> (exitCode: Int, diagnostics: [Diagnostic]) {
-        if !ctx.diagnostics.hasError, let cache = ctx.incrementalCache {
+        if !ctx.diagnostics.hasError, let cache = ctx.incrementalCache, !ctx.incrementalOutputRestored {
             let depGraph = buildDependencyGraph(ctx: ctx)
-            cache.saveState(dependencyGraph: depGraph)
+            cache.saveState(dependencyGraph: depGraph, options: ctx.options)
         }
 
         if printDiagnostics {

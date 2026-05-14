@@ -1,6 +1,6 @@
 /// Per-file intermediate representation produced by frontend phases.
 /// Each `FileIR` holds the tokens, CST, and AST results for a single
-/// source file, enabling file-level parallel processing.
+/// source file, enabling file-level parallel processing in the frontend.
 public struct FileIR {
     public let fileID: FileID
     public var tokens: [Token]
@@ -58,6 +58,10 @@ public final class CompilationContext: @unchecked Sendable {
     /// Set of file paths that need recompilation in incremental mode.
     /// `nil` means full build (all files).
     public internal(set) var incrementalRecompileSet: Set<String>?
+
+    /// True when the driver restored the requested output from the incremental
+    /// cache and intentionally skipped the remaining pipeline phases.
+    public internal(set) var incrementalOutputRestored = false
 
     /// Phase timer for recording per-phase wall-clock durations.
     /// Non-nil when the `time-phases` frontend flag is active.
@@ -149,6 +153,10 @@ public final class CompilationContext: @unchecked Sendable {
 
     public func setIncrementalRecompileSet(_ recompileSet: Set<String>?) {
         incrementalRecompileSet = recompileSet
+    }
+
+    public func markIncrementalOutputRestored() {
+        incrementalOutputRestored = true
     }
 
     public func installPhaseTimer(_ timer: PhaseTimer) {

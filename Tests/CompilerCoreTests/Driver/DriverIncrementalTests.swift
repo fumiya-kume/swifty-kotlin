@@ -24,6 +24,24 @@ final class DriverIncrementalTests: XCTestCase {
         CompilerDriver()
     }
 
+    private func kirOutputPath() -> String {
+        outputPath + ".kir"
+    }
+
+    private func cachedOutputArtifactPath(in cachePath: String) throws -> String {
+        let artifactsPath = cachePath + "/artifacts"
+        let enumerator = try XCTUnwrap(FileManager.default.enumerator(atPath: artifactsPath))
+        for case let path as String in enumerator where URL(fileURLWithPath: path).lastPathComponent == "output" {
+            let output = artifactsPath + "/" + path
+            var isDirectory = ObjCBool(false)
+            if FileManager.default.fileExists(atPath: output, isDirectory: &isDirectory), !isDirectory.boolValue {
+                return output
+            }
+        }
+        XCTFail("Expected cached output artifact under \(artifactsPath)")
+        return artifactsPath + "/missing"
+    }
+
     // MARK: - time-phases flag
 
     func testTimePhasesFlagEnablesPhaseTimer() throws {
@@ -87,6 +105,103 @@ final class DriverIncrementalTests: XCTestCase {
             // Second build (no changes)
             let result2 = driver.runForTesting(options: options)
             XCTAssertEqual(result2.exitCode, 0)
+        }
+    }
+
+    func testIncrementalNoOpBuildRestoresCachedOutputArtifact() throws {
+        try withTemporaryFile(contents: "fun main() {}") { path in
+            let driver = makeDriver()
+            let cachePath = tempDir + "/cache"
+            let options = CompilerOptions(
+                moduleName: "Test",
+                inputs: [path],
+                outputPath: outputPath,
+                emit: .kirDump,
+                target: defaultTargetTriple(),
+                frontendFlags: ["incremental"],
+                incrementalCachePath: cachePath
+            )
+
+            let first = driver.runForTesting(options: options)
+            XCTAssertEqual(first.exitCode, 0,
+                           "Initial incremental build should succeed. Diagnostics: \(first.diagnostics.map(\.message))")
+
+            let sentinel = "// cached artifact\n"
+            try sentinel.write(toFile: cachedOutputArtifactPath(in: cachePath), atomically: true, encoding: .utf8)
+            try FileManager.default.removeItem(atPath: kirOutputPath())
+
+            let second = driver.runForTesting(options: options)
+            XCTAssertEqual(second.exitCode, 0,
+                           "No-op incremental build should restore cached artifact. Diagnostics: \(second.diagnostics.map(\.message))")
+            XCTAssertEqual(try String(contentsOfFile: kirOutputPath(), encoding: .utf8), sentinel)
+        }
+    }
+
+    func testIncrementalChangedInputDoesNotRestoreStaleOutputArtifact() throws {
+        try withTemporaryFile(contents: "fun main() {}") { path in
+            let driver = makeDriver()
+            let cachePath = tempDir + "/cache"
+            let options = CompilerOptions(
+                moduleName: "Test",
+                inputs: [path],
+                outputPath: outputPath,
+                emit: .kirDump,
+                target: defaultTargetTriple(),
+                frontendFlags: ["incremental"],
+                incrementalCachePath: cachePath
+            )
+
+            let first = driver.runForTesting(options: options)
+            XCTAssertEqual(first.exitCode, 0,
+                           "Initial incremental build should succeed. Diagnostics: \(first.diagnostics.map(\.message))")
+
+            let sentinel = "// stale cached artifact\n"
+            try sentinel.write(toFile: cachedOutputArtifactPath(in: cachePath), atomically: true, encoding: .utf8)
+            try "fun main() { println(\"changed\") }".write(toFile: path, atomically: true, encoding: .utf8)
+            try? FileManager.default.removeItem(atPath: kirOutputPath())
+
+            let second = driver.runForTesting(options: options)
+            XCTAssertEqual(second.exitCode, 0,
+                           "Changed input should fall back to a full build. Diagnostics: \(second.diagnostics.map(\.message))")
+            XCTAssertNotEqual(try String(contentsOfFile: kirOutputPath(), encoding: .utf8), sentinel)
+        }
+    }
+
+    func testIncrementalChangedConfigurationDoesNotRestoreStaleOutputArtifact() throws {
+        try withTemporaryFile(contents: "fun main() {}") { path in
+            let driver = makeDriver()
+            let cachePath = tempDir + "/cache"
+            let options = CompilerOptions(
+                moduleName: "Test",
+                inputs: [path],
+                outputPath: outputPath,
+                emit: .kirDump,
+                target: defaultTargetTriple(),
+                frontendFlags: ["incremental"],
+                incrementalCachePath: cachePath
+            )
+
+            let first = driver.runForTesting(options: options)
+            XCTAssertEqual(first.exitCode, 0,
+                           "Initial incremental build should succeed. Diagnostics: \(first.diagnostics.map(\.message))")
+
+            let sentinel = "// stale cached artifact\n"
+            try sentinel.write(toFile: cachedOutputArtifactPath(in: cachePath), atomically: true, encoding: .utf8)
+            try? FileManager.default.removeItem(atPath: kirOutputPath())
+
+            let changedOptions = CompilerOptions(
+                moduleName: "ChangedTest",
+                inputs: [path],
+                outputPath: outputPath,
+                emit: .kirDump,
+                target: defaultTargetTriple(),
+                frontendFlags: ["incremental"],
+                incrementalCachePath: cachePath
+            )
+            let second = driver.runForTesting(options: changedOptions)
+            XCTAssertEqual(second.exitCode, 0,
+                           "Changed build configuration should fall back to a full build. Diagnostics: \(second.diagnostics.map(\.message))")
+            XCTAssertNotEqual(try String(contentsOfFile: kirOutputPath(), encoding: .utf8), sentinel)
         }
     }
 
