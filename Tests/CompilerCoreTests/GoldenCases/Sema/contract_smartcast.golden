@@ -2,7 +2,7 @@ symbol s0 kind=function fq=kotlin.text.length vis=public flags=synthetic sig=rec
 symbol s1 kind=class fq=kotlin.IllegalArgumentException vis=public flags=synthetic type=Class#1
 symbol s2 kind=constructor fq=kotlin.IllegalArgumentException.<init> vis=public flags=synthetic sig=recv=_ params=[] ret=Class#1 suspend=0 defaults=[] vararg=[]
 symbol s3 kind=class fq=kotlin.contracts.ContractBuilder vis=public flags=synthetic
-symbol s4 kind=interface fq=kotlin.contracts.SimpleEffect vis=public flags=synthetic type=Class#4
+symbol s4 kind=interface fq=kotlin.contracts.Returns vis=public flags=synthetic type=Class#4
 symbol s5 kind=function fq=kotlin.contracts.ContractBuilder.returns vis=public flags=synthetic sig=recv=Class#3 params=[] ret=Class#4 suspend=0 defaults=[] vararg=[]
 symbol s6 kind=function fq=kotlin.require vis=public flags=synthetic sig=recv=_ params=[Boolean] ret=Unit suspend=0 defaults=[0] vararg=[0]
 symbol s7 kind=function fq=kotlin.require vis=public flags=synthetic sig=recv=_ params=[Boolean,() -> Any] ret=Unit suspend=0 defaults=[0,0] vararg=[0,0]
