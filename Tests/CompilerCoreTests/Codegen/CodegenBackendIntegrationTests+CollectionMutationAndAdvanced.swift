@@ -1338,4 +1338,185 @@ extension CodegenBackendIntegrationTests {
     }
 
     // MARK: - Private Helpers
+
+    func testCodegenListMaxOfOrNullReturnsLargestTransformedValueOrNull() throws {
+        let source = """
+        fun main() {
+            val values = listOf(-3, 1, 2)
+            println(values.maxOfOrNull { it * it })
+            println(emptyList<Int>().maxOfOrNull { it * it })
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListMaxOfOrNullRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "9\nnull\n")
+        }
+    }
+
+    func testCodegenListMaxOrNullReturnsLargestElementOrNull() throws {
+        let source = """
+        fun main() {
+            val values = listOf(3, 1, 4, 2)
+            println(values.maxOrNull())
+            println(emptyList<Int>().maxOrNull() == null)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListMaxOrNullRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "4\ntrue\n")
+        }
+    }
+
+    func testCodegenListFlattenUsesRuntimeHelper() throws {
+        let source = """
+        fun main() {
+            val nested = listOf(listOf(1, 2), listOf(3))
+            println(nested.flatten())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "ListFlattenRuntime", emit: .kirDump)
+            try runToLowering(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: body, interner: ctx.interner)
+            XCTAssertTrue(callees.contains("kk_list_flatten"))
+        }
+    }
+
+    func testCodegenListMaxOfWithOrNullReturnsLargestTransformedValueOrNull() throws {
+        let source = """
+        fun main() {
+            val values = listOf(-3, 1, 2)
+            println(values.maxOfWithOrNull(naturalOrder<Int>()) { it * it })
+            val missing = emptyList<Int>().maxOfWithOrNull(naturalOrder<Int>()) { it * it }
+            println(missing == null)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListMaxOfWithOrNullRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "9\ntrue\n")
+        }
+    }
+
+    func testCodegenListMinOfReturnsSmallestSelectedValueAndThrowsOnEmpty() throws {
+        let source = """
+        fun main() {
+            println(listOf(5, 2, 3).minOf { it * 10 })
+            try {
+                emptyList<Int>().minOf { it * 10 }
+                println("missing")
+            } catch (e: NoSuchElementException) {
+                println("empty")
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListMinOfRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "20\nempty\n")
+        }
+    }
+
+    func testCodegenListMaxOfWithReturnsLargestTransformedValueAndThrowsOnEmpty() throws {
+        let source = """
+        fun main() {
+            val values = listOf(-3, 1, 2)
+            println(values.maxOfWith(naturalOrder<Int>()) { it * it })
+            try {
+                emptyList<Int>().maxOfWith(naturalOrder<Int>()) { it * it }
+                println("missing")
+            } catch (e: NoSuchElementException) {
+                println("empty")
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListMaxOfWithRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "9\nempty\n")
+        }
+    }
+
+    func testCodegenListToTypeArrayUsesTypedArrayRuntime() throws {
+        let source = """
+        fun main() {
+            val array = listOf(3, 1, 2).toTypeArray()
+            println(array.size)
+            println(array[0])
+            println(array[2])
+            println(array.toList())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListToTypeArrayRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "3\n3\n2\n[3, 1, 2]\n")
+        }
+    }
 }
