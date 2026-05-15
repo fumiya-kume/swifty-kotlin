@@ -5781,12 +5781,17 @@ extension CallLowerer {
             )
             finalArguments = [finalArguments[0], fnPtrExpr, envPtrExpr]
         }
-        if let inst = tryEmitVirtualDispatch(
-            chosenCallee: chosenCallee, calleeName: loweredCallee,
-            receiverExpr: receiver.expr, loweredReceiverID: receiver.loweredID,
-            isSuperCall: isSuperCall, finalArguments: finalArguments,
-            result: result, sema: sema
-        ) {
+        // Skip virtual dispatch when loweredMemberCalleeName remapped the callee
+        // to a concrete runtime function (e.g. iterator → kk_list_iterator).
+        // Virtual dispatch is only correct when no remapping occurred.
+        if loweredCallee == calleeName,
+           let inst = tryEmitVirtualDispatch(
+               chosenCallee: chosenCallee, calleeName: loweredCallee,
+               receiverExpr: receiver.expr, loweredReceiverID: receiver.loweredID,
+               isSuperCall: isSuperCall, finalArguments: finalArguments,
+               result: result, sema: sema
+           )
+        {
             instructions.append(inst)
             return
         }
