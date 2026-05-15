@@ -208,6 +208,14 @@ public extension RuntimeABISpec {
             section: "Atomic"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_atomic_long_asJavaAtomic",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Atomic"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_atomic_long_fetchAndAdd",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),

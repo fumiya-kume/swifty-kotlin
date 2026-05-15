@@ -333,6 +333,11 @@ public func kk_java_atomic_long_asKotlinAtomic(_ receiver: Int) -> Int {
     receiver
 }
 
+@_cdecl("kk_atomic_long_asJavaAtomic")
+public func kk_atomic_long_asJavaAtomic(_ receiver: Int) -> Int {
+    receiver
+}
+
 @_cdecl("kk_atomic_long_fetchAndAdd")
 public func kk_atomic_long_fetchAndAdd(_ receiver: Int, _ delta: Int) -> Int {
     guard let box = atomicLongBox(from: receiver) else { return 0 }
