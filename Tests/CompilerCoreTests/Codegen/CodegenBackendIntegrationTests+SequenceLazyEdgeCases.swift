@@ -353,6 +353,30 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testSequenceElementAtOrNullReturnsValueOrNull() throws {
+        let source = """
+        fun main() {
+            val values = sequenceOf(10, 20, 30)
+            println(values.elementAtOrNull(1) ?: -1)
+            println(values.elementAtOrNull(5) ?: -1)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceElementAtOrNull",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "20\n-1\n")
+        }
+    }
 
     // MARK: - filterIsInstance keeps matching runtime types
 
