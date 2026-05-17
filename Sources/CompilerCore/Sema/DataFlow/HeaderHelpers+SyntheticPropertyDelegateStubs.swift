@@ -1793,6 +1793,33 @@ extension DataFlowSemaPhase {
             ),
             for: functionSymbol
         )
+
+        // Also register under kotlin.reflect for top-level reference resolution
+        let kotlinReflectFQName = kotlinReflectPkg + [functionName]
+        if symbols.lookupAll(fqName: kotlinReflectFQName).isEmpty {
+            let reflectFunctionSymbol = symbols.define(
+                kind: .function,
+                name: functionName,
+                fqName: kotlinReflectFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            if let packageSymbol = symbols.lookup(fqName: kotlinReflectPkg), packageSymbol != .invalid {
+                symbols.setParentSymbol(packageSymbol, for: reflectFunctionSymbol)
+            }
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [],
+                    returnType: typeParamType,
+                    typeParameterSymbols: [typeParamSymbol],
+                    typeParameterUpperBoundsList: [[types.anyType]],
+                    classTypeParameterCount: 0
+                ),
+                for: reflectFunctionSymbol
+            )
+        }
     }
 
     /// Updates `KAnnotatedElement.annotations` to `List<Annotation>` once collection stubs exist.
