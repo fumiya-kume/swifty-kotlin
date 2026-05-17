@@ -363,7 +363,7 @@
 - [ ] STDLIB-SEQ-FN-104: `scan` 関数の実装
 - [ ] STDLIB-SEQ-FN-105: `scanIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-106: `shuffled` 関数の実装
-- [ ] STDLIB-SEQ-FN-107: `single` 関数の実装
+- [x] STDLIB-SEQ-FN-107: `single` 関数の実装
 - [ ] STDLIB-SEQ-FN-108: `singleOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-109: `slice` 関数の実装
 - [ ] STDLIB-SEQ-FN-110: `sorted` 関数の実装

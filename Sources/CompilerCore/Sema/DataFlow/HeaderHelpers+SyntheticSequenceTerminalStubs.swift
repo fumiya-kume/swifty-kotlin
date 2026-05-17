@@ -350,6 +350,21 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // single(): T
+        registerSequenceMemberStub(
+            named: "single",
+            externalLinkName: "kk_sequence_single",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: typeParamType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner,
+            canThrow: true
+        )
+
         // singleOrNull(): T?
         registerSequenceMemberStub(
             named: "singleOrNull",
