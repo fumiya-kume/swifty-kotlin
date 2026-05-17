@@ -253,7 +253,7 @@
 - [ ] STDLIB-REFLECT-TYPE-013: `KParameter` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-015: `KProperty0` インターフェースの実装
 - [x] STDLIB-REFLECT-TYPE-016: `KProperty1` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-022: `KVisibility` enum の実装
+- [x] STDLIB-REFLECT-TYPE-022: `KVisibility` enum の実装
 
 #### kotlin.reflect プロパティの実装
 - [ ] STDLIB-REFLECT-PROP-001: `javaType` 拡張プロパティの実装
