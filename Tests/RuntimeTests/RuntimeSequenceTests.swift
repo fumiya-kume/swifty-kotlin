@@ -414,6 +414,19 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(result, 14)
     }
 
+    func testAverageOfAveragesSelectorResults() {
+        var thrown = 0
+        let result = kk_sequence_averageOf(
+            makeSequence([1, 2, 3]),
+            unsafeBitCast(sequenceValueTimesTen, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_bits_to_double(result), 20.0, accuracy: 0.0001)
+    }
+
     func testSumByDoubleAccumulatesSelectorResults() {
         var thrown = 0
         let result = kk_sequence_sumByDouble(
