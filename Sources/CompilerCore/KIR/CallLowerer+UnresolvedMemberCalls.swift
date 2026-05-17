@@ -750,6 +750,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_maxByOrNull")
             case interner.intern("minOf"):
                 return interner.intern("kk_sequence_minOf")
+            case interner.intern("minOfOrNull"):
+                return interner.intern("kk_sequence_minOfOrNull")
             case interner.intern("maxOf"):
                 return interner.intern("kk_sequence_maxOf")
             case interner.intern("unzip"):

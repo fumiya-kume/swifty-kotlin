@@ -2521,6 +2521,7 @@ extension CallLowerer {
                 let minByOrNullName = interner.intern("minByOrNull")
                 let maxByOrNullName = interner.intern("maxByOrNull")
                 let minOfName = interner.intern("minOf")
+                let minOfOrNullName = interner.intern("minOfOrNull")
                 let maxOfName = interner.intern("maxOf")
                 if calleeName == mapName {
                     runtimeCallee = "kk_sequence_map"
@@ -2592,6 +2593,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_maxByOrNull"
                 } else if calleeName == minOfName {
                     runtimeCallee = "kk_sequence_minOf"
+                } else if calleeName == minOfOrNullName {
+                    runtimeCallee = "kk_sequence_minOfOrNull"
                 } else if calleeName == maxOfName {
                     runtimeCallee = "kk_sequence_maxOf"
                 } else if calleeName == interner.intern("find") {
@@ -2671,6 +2674,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_minByOrNull"
                         || runtimeCallee == "kk_sequence_maxByOrNull"
                         || runtimeCallee == "kk_sequence_minOf"
+                        || runtimeCallee == "kk_sequence_minOfOrNull"
                         || runtimeCallee == "kk_sequence_maxOf"
                         || runtimeCallee == "kk_sequence_partition"
                         || runtimeCallee == "kk_sequence_any"

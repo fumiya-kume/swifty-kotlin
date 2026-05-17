@@ -1569,6 +1569,11 @@ extension DataFlowSemaPhase {
                 externalLinkName: "kk_sequence_minOf",
                 returnTypeBuilder: { selectorResultType in selectorResultType }
             )
+            registerComparableSelectorMember(
+                name: "minOfOrNull",
+                externalLinkName: "kk_sequence_minOfOrNull",
+                returnTypeBuilder: { selectorResultType in types.makeNullable(selectorResultType) }
+            )
         }
 
         // unzip(): Pair<List<A>, List<B>> for Sequence<Pair<A, B>>
