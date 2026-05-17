@@ -1135,8 +1135,11 @@ public extension RuntimeABISpec {
         ]),
         abiParitySpec("kk_worker_execute", parameters: [
             p("workerHandle", .intptr),
-            p("fnPtr", .intptr),
-            p("closureRaw", .intptr),
+            p("modeRaw", .intptr),
+            p("producerFnPtr", .intptr),
+            p("producerClosureRaw", .intptr),
+            p("jobFnPtr", .intptr),
+            p("jobClosureRaw", .intptr),
         ]),
         abiParitySpec("kk_worker_execute_after", parameters: [
             p("workerHandle", .intptr),
