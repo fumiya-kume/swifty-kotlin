@@ -265,6 +265,19 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(result, 14)
     }
 
+    func testSumOfAccumulatesSelectorResults() {
+        var thrown = 0
+        let result = kk_sequence_sumOf(
+            makeSequence([1, 2, 3]),
+            unsafeBitCast(sequenceSumByWeightedTwo, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 14)
+    }
+
     func testSumByDoubleAccumulatesSelectorResults() {
         var thrown = 0
         let result = kk_sequence_sumByDouble(

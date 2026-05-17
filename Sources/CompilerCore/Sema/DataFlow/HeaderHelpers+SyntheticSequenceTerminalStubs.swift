@@ -552,6 +552,19 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         registerSequenceMemberStub(
+            named: "sumOf",
+            externalLinkName: "kk_sequence_sumOf",
+            receiverType: receiverType,
+            parameters: [("selector", sequenceElementToIntType)],
+            returnType: types.intType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner,
+            canThrow: true
+        )
+        registerSequenceMemberStub(
             named: "sumBy",
             externalLinkName: "kk_sequence_sumBy",
             receiverType: receiverType,
