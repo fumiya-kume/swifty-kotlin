@@ -40,8 +40,7 @@ public final class TypeCheckSemaPhase: CompilerPhase {
         let lazyBoundDecls = collectLazyBoundObjectLiteralDecls(ast: ast)
 
         // Run consistency checks: every declaration should have a symbol binding.
-        for decl in 0 ..< ast.arena.declCount {
-            let declID = DeclID(rawValue: Int32(decl))
+        for declID in ast.activeDeclarationIDs.sorted(by: { $0.rawValue < $1.rawValue }) {
             if lazyBoundDecls.contains(declID) {
                 continue
             }

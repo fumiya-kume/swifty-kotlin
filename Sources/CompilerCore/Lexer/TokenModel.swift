@@ -1,6 +1,6 @@
 import Foundation
 
-public struct InternedString: Hashable, Sendable {
+public struct InternedString: Hashable, Sendable, Codable {
     public let rawValue: Int32
 
     public static let invalid = InternedString(rawValue: -1)
@@ -39,6 +39,18 @@ public final class StringInterner: @unchecked Sendable {
             return ""
         }
         return values[index]
+    }
+
+    public func snapshotValues() -> [String] {
+        lock.lock()
+        defer { lock.unlock() }
+        return values
+    }
+
+    public func preload(_ strings: [String]) {
+        for string in strings {
+            _ = intern(string)
+        }
     }
 }
 

@@ -1,5 +1,27 @@
 import Foundation
 
+public struct ASTArenaSnapshot: Codable {
+    public let declarations: [Decl]
+    public let expressions: [Expr]
+    public let typeRefs: [TypeRef]
+    public let loopLabels: [ExprID: InternedString]
+    public let whenSubjectVarNames: [ExprID: InternedString]
+
+    public init(
+        declarations: [Decl],
+        expressions: [Expr],
+        typeRefs: [TypeRef],
+        loopLabels: [ExprID: InternedString],
+        whenSubjectVarNames: [ExprID: InternedString]
+    ) {
+        self.declarations = declarations
+        self.expressions = expressions
+        self.typeRefs = typeRefs
+        self.loopLabels = loopLabels
+        self.whenSubjectVarNames = whenSubjectVarNames
+    }
+}
+
 public final class ASTArena: @unchecked Sendable {
     private let lock = NSLock()
     private var _decls: [Decl] = []
@@ -35,6 +57,26 @@ public final class ASTArena: @unchecked Sendable {
     }
 
     public init() {}
+
+    public init(snapshot: ASTArenaSnapshot) {
+        _decls = snapshot.declarations
+        _exprs = snapshot.expressions
+        _typeRefs = snapshot.typeRefs
+        _loopLabels = snapshot.loopLabels
+        _whenSubjectVarNames = snapshot.whenSubjectVarNames
+    }
+
+    public func snapshot() -> ASTArenaSnapshot {
+        lock.lock()
+        defer { lock.unlock() }
+        return ASTArenaSnapshot(
+            declarations: _decls,
+            expressions: _exprs,
+            typeRefs: _typeRefs,
+            loopLabels: _loopLabels,
+            whenSubjectVarNames: _whenSubjectVarNames
+        )
+    }
 
     public func appendDecl(_ decl: Decl) -> DeclID {
         lock.lock()
@@ -183,17 +225,33 @@ public final class ASTModule {
     public let arena: ASTArena
     public let declarationCount: Int
     public let tokenCount: Int
+    public let activeDeclsByFileRawID: [Int32: [DeclID]]
 
     /// Files pre-sorted by fileID for stable iteration order.
     /// All callers that previously used `sortedFiles` now use this directly.
     public let sortedFiles: [ASTFile]
 
-    public init(files: [ASTFile], arena: ASTArena, declarationCount: Int, tokenCount: Int) {
+    public init(
+        files: [ASTFile],
+        arena: ASTArena,
+        declarationCount: Int,
+        tokenCount: Int,
+        activeDeclsByFileRawID: [Int32: [DeclID]] = [:]
+    ) {
         self.files = files
         self.arena = arena
         self.declarationCount = declarationCount
         self.tokenCount = tokenCount
+        self.activeDeclsByFileRawID = activeDeclsByFileRawID
         sortedFiles = files.sorted(by: { $0.fileID.rawValue < $1.fileID.rawValue })
+    }
+
+    public var activeDeclarationIDs: Set<DeclID> {
+        let activeDecls = activeDeclsByFileRawID.values.flatMap { $0 }
+        if !activeDecls.isEmpty {
+            return Set(activeDecls)
+        }
+        return Set((0 ..< arena.declCount).map { DeclID(rawValue: Int32($0)) })
     }
 
     public convenience init(declarationCount: Int, tokenCount: Int) {
