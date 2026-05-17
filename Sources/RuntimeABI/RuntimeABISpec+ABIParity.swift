@@ -146,11 +146,6 @@ public extension RuntimeABISpec {
             p("expect", .intptr),
             p("update", .intptr),
         ]),
-        abiParitySpec("kk_atomic_ref_array_exchangeAt", parameters: [
-            p("receiver", .intptr),
-            p("index", .intptr),
-            p("newValue", .intptr),
-        ]),
         abiParitySpec("kk_atomic_ref_array_fetchAndUpdateAt", parameters: [
             p("receiver", .intptr),
             p("index", .intptr),
@@ -728,13 +723,6 @@ public extension RuntimeABISpec {
             p("closureRaw", .intptr),
             p("outThrown", .nullableIntptrPointer),
         ]),
-        abiParitySpec("kk_list_filterIndexedTo", parameters: [
-            p("listRaw", .intptr),
-            p("destRaw", .intptr),
-            p("fnPtr", .intptr),
-            p("closureRaw", .intptr),
-            p("outThrown", .nullableIntptrPointer),
-        ]),
         abiParitySpec("kk_list_foldRight", parameters: [
             p("listRaw", .intptr),
             p("initial", .intptr),
@@ -774,18 +762,6 @@ public extension RuntimeABISpec {
         ]),
         abiParitySpec("kk_map_entry_to_pair", parameters: [
             p("entryRaw", .intptr),
-        ]),
-        abiParitySpec("kk_map_filterNot", parameters: [
-            p("mapRaw", .intptr),
-            p("fnPtr", .intptr),
-            p("closureRaw", .intptr),
-            p("outThrown", .nullableIntptrPointer),
-        ]),
-        abiParitySpec("kk_map_mapNotNull", parameters: [
-            p("mapRaw", .intptr),
-            p("fnPtr", .intptr),
-            p("closureRaw", .intptr),
-            p("outThrown", .nullableIntptrPointer),
         ]),
         abiParitySpec("kk_match_group_collection_get_at", parameters: [
             p("collectionRaw", .intptr),
@@ -927,41 +903,6 @@ public extension RuntimeABISpec {
             p("maxBytes", .intptr),
             p("maxFiles", .intptr),
         ]),
-        abiParitySpec("kk_sequence_filterIndexedTo", parameters: [
-            p("seqRaw", .intptr),
-            p("destRaw", .intptr),
-            p("fnPtr", .intptr),
-            p("closureRaw", .intptr),
-            p("outThrown", .nullableIntptrPointer),
-        ]),
-        abiParitySpec("kk_sequence_filterIsInstanceTo", parameters: [
-            p("seqRaw", .intptr),
-            p("destRaw", .intptr),
-            p("typeToken", .intptr),
-        ]),
-        abiParitySpec("kk_sequence_filterNotNullTo", parameters: [
-            p("seqRaw", .intptr),
-            p("destRaw", .intptr),
-        ]),
-        abiParitySpec("kk_sequence_filterNotTo", parameters: [
-            p("seqRaw", .intptr),
-            p("destRaw", .intptr),
-            p("fnPtr", .intptr),
-            p("closureRaw", .intptr),
-            p("outThrown", .nullableIntptrPointer),
-        ]),
-        abiParitySpec("kk_sequence_filterTo", parameters: [
-            p("seqRaw", .intptr),
-            p("destRaw", .intptr),
-            p("fnPtr", .intptr),
-            p("closureRaw", .intptr),
-            p("outThrown", .nullableIntptrPointer),
-        ]),
-        abiParitySpec("kk_sequence_forEachIndexed", parameters: [
-            p("seqRaw", .intptr),
-            p("fnPtr", .intptr),
-            p("closureRaw", .intptr),
-        ]),
         abiParitySpec("kk_sequence_input_stream_available", parameters: [
             p("streamRaw", .intptr),
         ]),
@@ -976,20 +917,6 @@ public extension RuntimeABISpec {
             p("streamRaw", .intptr),
             p("outThrown", .nullableIntptrPointer),
         ]),
-        abiParitySpec("kk_sequence_mapIndexedNotNullTo", parameters: [
-            p("seqRaw", .intptr),
-            p("destRaw", .intptr),
-            p("fnPtr", .intptr),
-            p("closureRaw", .intptr),
-            p("outThrown", .nullableIntptrPointer),
-        ]),
-        abiParitySpec("kk_sequence_mapTo", parameters: [
-            p("seqRaw", .intptr),
-            p("destRaw", .intptr),
-            p("fnPtr", .intptr),
-            p("closureRaw", .intptr),
-            p("outThrown", .nullableIntptrPointer),
-        ]),
         abiParitySpec("kk_sequence_zipWithNext", parameters: [
             p("seqRaw", .intptr),
         ]),
@@ -999,35 +926,11 @@ public extension RuntimeABISpec {
             p("closureRaw", .intptr),
             p("outThrown", .nullableIntptrPointer),
         ]),
-        abiParitySpec("kk_set_all", parameters: [
-            p("setRaw", .intptr),
-            p("fnPtr", .intptr),
-            p("closureRaw", .intptr),
-            p("outThrown", .nullableIntptrPointer),
-        ]),
-        abiParitySpec("kk_set_any", parameters: [
-            p("setRaw", .intptr),
-            p("fnPtr", .intptr),
-            p("closureRaw", .intptr),
-            p("outThrown", .nullableIntptrPointer),
-        ]),
-        abiParitySpec("kk_set_count_predicate", parameters: [
-            p("setRaw", .intptr),
-            p("fnPtr", .intptr),
-            p("closureRaw", .intptr),
-            p("outThrown", .nullableIntptrPointer),
-        ]),
         abiParitySpec("kk_set_maxOrNull", parameters: [
             p("setRaw", .intptr),
         ]),
         abiParitySpec("kk_set_minOrNull", parameters: [
             p("setRaw", .intptr),
-        ]),
-        abiParitySpec("kk_set_none", parameters: [
-            p("setRaw", .intptr),
-            p("fnPtr", .intptr),
-            p("closureRaw", .intptr),
-            p("outThrown", .nullableIntptrPointer),
         ]),
         abiParitySpec("kk_set_toList", parameters: [
             p("setRaw", .intptr),
