@@ -357,7 +357,7 @@
 - [ ] STDLIB-SEQ-FN-098: `requireNoNulls` 関数の実装
 - [ ] STDLIB-SEQ-FN-099: `reversed` 関数の実装
 - [ ] STDLIB-SEQ-FN-100: `runningFold` 関数の実装
-- [ ] STDLIB-SEQ-FN-101: `runningFoldIndexed` 関数の実装
+- [x] STDLIB-SEQ-FN-101: `runningFoldIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-102: `runningReduce` 関数の実装
 - [ ] STDLIB-SEQ-FN-103: `runningReduceIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-104: `scan` 関数の実装
