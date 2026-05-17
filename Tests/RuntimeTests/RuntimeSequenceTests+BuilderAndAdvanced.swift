@@ -240,6 +240,14 @@ extension RuntimeSequenceTests {
             "STDLIB-563: first() should not force evaluation of all 3 elements; got \(_lazyTestYieldCounter) yields")
     }
 
+    func testSequenceFirstReturnsFirstElement() {
+        let seq = makeSequence([7, 8, 9])
+        var thrown = 0
+        let first = kk_sequence_first(seq, &thrown)
+        XCTAssertEqual(first, 7)
+        XCTAssertEqual(thrown, 0)
+    }
+
     // MARK: - STDLIB-HOF-022: Additional Higher-Order Functions
 
     func testSequenceFilterNot() {
