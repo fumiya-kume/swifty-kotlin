@@ -463,6 +463,16 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(result, 3)
     }
 
+    func testLastOrNullReturnsLastElementOrNullSentinel() {
+        var thrown = 0
+        let result = kk_sequence_lastOrNull(makeSequence([1, 2, 3]), &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 3)
+        XCTAssertEqual(kk_sequence_lastOrNull(makeSequence([]), &thrown), runtimeNullSentinelInt)
+        XCTAssertEqual(thrown, 0)
+    }
+
     func testAssociateToPopulatesExistingDestinationMap() {
         let seq = makeSequence([1, 2, 3])
         let dest = registerRuntimeObject(RuntimeMapBox(keys: [99], values: [999]))
