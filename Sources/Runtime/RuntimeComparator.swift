@@ -401,6 +401,21 @@ public func kk_comparator_then_comparator(
     return raw
 }
 
+@inline(__always)
+private func runtimeRegisterComparatorThenByComparatorSelector(
+    _ c1Fn: Int,
+    _ c1Closure: Int,
+    _ keyComparatorRaw: Int,
+    _ selectorFn: Int,
+    _ selectorClosure: Int,
+    _ trampoline: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
+) -> Int {
+    let box = RuntimeListBox(elements: [c1Fn, c1Closure, keyComparatorRaw, selectorFn, selectorClosure])
+    let raw = registerRuntimeObject(box)
+    runtimeRegisterComparatorCompareMethod(raw, trampoline)
+    return raw
+}
+
 @_cdecl("kk_comparator_then_by_comparator_selector")
 public func kk_comparator_then_by_comparator_selector(
     _ c1Fn: Int,
@@ -409,10 +424,14 @@ public func kk_comparator_then_by_comparator_selector(
     _ selectorFn: Int,
     _ selectorClosure: Int
 ) -> Int {
-    let box = RuntimeListBox(elements: [c1Fn, c1Closure, keyComparatorRaw, selectorFn, selectorClosure])
-    let raw = registerRuntimeObject(box)
-    runtimeRegisterComparatorCompareMethod(raw, kk_comparator_then_by_comparator_selector_trampoline)
-    return raw
+    runtimeRegisterComparatorThenByComparatorSelector(
+        c1Fn,
+        c1Closure,
+        keyComparatorRaw,
+        selectorFn,
+        selectorClosure,
+        kk_comparator_then_by_comparator_selector_trampoline
+    )
 }
 
 @_cdecl("kk_comparator_then_by_descending_comparator_selector")
@@ -423,10 +442,14 @@ public func kk_comparator_then_by_descending_comparator_selector(
     _ selectorFn: Int,
     _ selectorClosure: Int
 ) -> Int {
-    let box = RuntimeListBox(elements: [c1Fn, c1Closure, keyComparatorRaw, selectorFn, selectorClosure])
-    let raw = registerRuntimeObject(box)
-    runtimeRegisterComparatorCompareMethod(raw, kk_comparator_then_by_descending_comparator_selector_trampoline)
-    return raw
+    runtimeRegisterComparatorThenByComparatorSelector(
+        c1Fn,
+        c1Closure,
+        keyComparatorRaw,
+        selectorFn,
+        selectorClosure,
+        kk_comparator_then_by_descending_comparator_selector_trampoline
+    )
 }
 
 /// Trampoline for thenBy.
