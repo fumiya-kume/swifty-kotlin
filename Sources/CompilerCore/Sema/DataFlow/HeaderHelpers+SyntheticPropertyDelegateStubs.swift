@@ -167,6 +167,12 @@ extension DataFlowSemaPhase {
             kotlinReflectPkg: kotlinReflectPkg, kotlinPkg: kotlinPkg,
             kAnnotatedElementSymbol: kAnnotatedElementSymbol
         )
+        registerSyntheticKVisibilityEnum(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinReflectPkg: kotlinReflectPkg
+        )
         registerSyntheticKParameterStub(
             kAnnotatedElementSymbol: kAnnotatedElementSymbol,
             symbols: symbols,
@@ -958,6 +964,60 @@ extension DataFlowSemaPhase {
         }
 
         return kDeclarationContainerSymbol
+    }
+
+    // STDLIB-REFLECT-TYPE-022: Register KVisibility enum entries.
+    private func registerSyntheticKVisibilityEnum(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinReflectPkg: [InternedString]
+    ) {
+        let enumName = interner.intern("KVisibility")
+        let enumFQName = kotlinReflectPkg + [enumName]
+        let enumSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: enumFQName) {
+            enumSymbol = existing
+        } else {
+            enumSymbol = symbols.define(
+                kind: .enumClass,
+                name: enumName,
+                fqName: enumFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        if let packageSymbol = symbols.lookup(fqName: kotlinReflectPkg), packageSymbol != .invalid {
+            symbols.setParentSymbol(packageSymbol, for: enumSymbol)
+        }
+
+        let enumType = types.make(.classType(ClassType(
+            classSymbol: enumSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        for entryNameRaw in ["PUBLIC", "PROTECTED", "INTERNAL", "PRIVATE"] {
+            let entryName = interner.intern(entryNameRaw)
+            let entryFQName = enumFQName + [entryName]
+            let entrySymbol: SymbolID
+            if let existing = symbols.lookup(fqName: entryFQName) {
+                entrySymbol = existing
+            } else {
+                entrySymbol = symbols.define(
+                    kind: .field,
+                    name: entryName,
+                    fqName: entryFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+            }
+            symbols.setParentSymbol(enumSymbol, for: entrySymbol)
+            if symbols.propertyType(for: entrySymbol) == nil {
+                symbols.setPropertyType(enumType, for: entrySymbol)
+            }
+        }
     }
 
     // STDLIB-REFLECT-TYPE-010: Register KMutableProperty0<V> with mutable zero-receiver surface.
