@@ -98,7 +98,7 @@ extension CallLowerer {
         return callableInfo.captureArguments
     }
 
-    private func makeClosureThunkExpandedArguments(
+    func makeClosureThunkExpandedArguments(
         prefixArguments: [KIRExprID] = [],
         loweredArgID: KIRExprID,
         argExprID: ExprID,
@@ -146,7 +146,7 @@ extension CallLowerer {
         return finalArgs
     }
 
-    private func makeCollectionHOFExpandedArguments(
+    func makeCollectionHOFExpandedArguments(
         loweredArgID: KIRExprID,
         argExprID: ExprID,
         adaptOnlyWhenCapturing: Bool = false,
@@ -320,9 +320,59 @@ extension CallLowerer {
         interner: StringInterner,
         instructions: inout [KIRInstruction]
     ) -> [KIRExprID] {
-        guard let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
-              loweredArguments.count == originalArgs.count
-        else {
+        guard let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee) else {
+            return loweredArguments
+        }
+
+        // Worker.execute has an explicit receiver followed by:
+        // (mode, producer, job). The runtime ABI expects both lambdas as
+        // (fnPtr, closureRaw) pairs.
+        if externalLinkName == "kk_worker_execute",
+           loweredArguments.count == originalArgs.count + 1,
+           originalArgs.count == 3
+        {
+            let producerArgs = makeClosureThunkExpandedArguments(
+                loweredArgID: loweredArguments[2],
+                argExprID: originalArgs[1].expr,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            let jobArgs = makeCollectionHOFExpandedArguments(
+                loweredArgID: loweredArguments[3],
+                argExprID: originalArgs[2].expr,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            return [loweredArguments[0], loweredArguments[1]] + producerArgs + jobArgs
+        }
+        if externalLinkName == "kk_worker_execute",
+           loweredArguments.count == originalArgs.count,
+           originalArgs.count == 4
+        {
+            let producerArgs = makeClosureThunkExpandedArguments(
+                loweredArgID: loweredArguments[2],
+                argExprID: originalArgs[2].expr,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            let jobArgs = makeCollectionHOFExpandedArguments(
+                loweredArgID: loweredArguments[3],
+                argExprID: originalArgs[3].expr,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            return [loweredArguments[0], loweredArguments[1]] + producerArgs + jobArgs
+        }
+
+        guard loweredArguments.count == originalArgs.count else {
             return loweredArguments
         }
 

@@ -247,6 +247,28 @@ extension CallLowerer {
         {
             loweredCallee = interner.intern("kk_random_nextInt_rangeObject")
         }
+        if loweredCallee == interner.intern("kk_worker_execute"),
+           finalArguments.count == 4,
+           sourceArgExprs.count == 3
+        {
+            let producerArgs = makeClosureThunkExpandedArguments(
+                loweredArgID: finalArguments[2],
+                argExprID: sourceArgExprs[1],
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            let jobArgs = makeCollectionHOFExpandedArguments(
+                loweredArgID: finalArguments[3],
+                argExprID: sourceArgExprs[2],
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            finalArguments = [finalArguments[0], finalArguments[1]] + producerArgs + jobArgs
+        }
         if loweredCallee == interner.intern("kk_list_binarySearch_comparator") {
             materializeBinarySearchDefaultArguments(
                 normalized.defaultMask,
