@@ -379,7 +379,7 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
-    func testCodegenAsKotlinAtomicArrayOverloads() throws {
+    func testCodegenAsKotlinAtomicArrayStoreAndLoad() throws {
         let source = """
         @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
         import java.util.concurrent.atomic.AtomicIntegerArray
