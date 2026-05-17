@@ -914,6 +914,11 @@ extension CodegenBackendIntegrationTests {
         fun main() {
             val lastEven = sequenceOf(1, 2, 3, 4, 5).findLast { value -> value % 2 == 0 }
             println(lastEven)
+    func testSequenceFilterNotNullDropsNullValues() throws {
+        let source = """
+        fun main() {
+            val values = sequenceOf(1, null, 3)
+            println(values.filterNotNull().toList())
         }
         """
 
@@ -922,6 +927,7 @@ extension CodegenBackendIntegrationTests {
             let ctx = try runCodegenPipeline(
                 inputPath: path,
                 moduleName: "SequenceFindLastRuntime",
+                moduleName: "SequenceFilterNotNullRuntime",
                 emit: .executable,
                 outputPath: outputBase
             )
@@ -981,6 +987,7 @@ extension CodegenBackendIntegrationTests {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(normalizedStdout, "[0, 1, 3]\n[0, 1, 3]\n")
+            XCTAssertEqual(normalizedStdout, "[1, 3]\n")
         }
     }
 

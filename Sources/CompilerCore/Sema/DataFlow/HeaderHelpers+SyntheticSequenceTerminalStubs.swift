@@ -1534,6 +1534,18 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         registerSequenceMemberStub(
+            named: "filterNotNull",
+            externalLinkName: "kk_sequence_filterNotNull",
+            receiverType: nullableElementSequenceType,
+            parameters: [],
+            returnType: receiverType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSequenceMemberStub(
             named: "requireNoNulls",
             externalLinkName: "kk_sequence_requireNoNulls",
             receiverType: nullableElementSequenceType,

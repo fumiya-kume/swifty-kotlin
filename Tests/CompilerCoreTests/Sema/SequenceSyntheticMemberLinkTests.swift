@@ -1822,6 +1822,10 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
         fun largest(): Int {
             val values = sequenceOf(1, 3, 2)
             return values.maxWith { left, right -> left - right }
+    func testSequenceFilterNotNullResolvesInCallExpressions() throws {
+        let source = """
+        fun values(input: Sequence<Int?>): Sequence<Int> {
+            return input.filterNotNull()
         }
         """
 
@@ -1838,6 +1842,11 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
 
             let sema = try XCTUnwrap(ctx.sema)
             let memberFQName = ["kotlin", "sequences", "Sequence", "maxWith"]
+                "Expected Sequence.filterNotNull surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "sequences", "Sequence", "filterNotNull"]
                 .map { ctx.interner.intern($0) }
             let links = Set(
                 sema.symbols.lookupAll(fqName: memberFQName)
@@ -2064,6 +2073,7 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
                 sema.bindings.isCollectionExpr(callExpr),
                 "Expected filterIsInstanceTo result to be tracked as a collection expression"
             )
+            XCTAssertTrue(links.contains("kk_sequence_filterNotNull"))
         }
     }
 
