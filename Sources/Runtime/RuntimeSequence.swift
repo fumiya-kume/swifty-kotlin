@@ -1065,8 +1065,8 @@ private func applyFlatMapStep(_ elements: [Int], fnPtr: Int, closureRaw: Int, ou
             }
             return []
         }
-        if let subList = runtimeListBox(from: subRaw) {
-            result.append(contentsOf: subList.elements)
+        if let subElements = runtimeCollectionElements(from: subRaw) {
+            result.append(contentsOf: subElements)
         } else if let subSeq = runtimeSequenceBox(from: subRaw) {
             result.append(contentsOf: evaluateSequence(subSeq, outThrown: outThrown))
             if let outThrown, outThrown.pointee != 0 { return [] }
