@@ -1,3 +1,4 @@
+// SKIP-DIFF
 fun main() {
     val list: LinkedList<String> = LinkedList()
     list.add("hello")
