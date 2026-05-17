@@ -131,6 +131,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("none", 1),
             sequence("firstNotNullOf", 1),
             sequence("firstNotNullOfOrNull", 1),
+            sequence("maxOrNull", 0),
             sequence("foldIndexed", 2),
             sequence("forEachIndexed", 1),
             sequence("onEach", 1),
@@ -190,6 +191,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
                 (.sequence, ["kotlin", "sequences", "Sequence"], "requireNoNulls", 0),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "shuffled", 0),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "shuffled", 1),
+                (.sequence, ["kotlin", "sequences", "Sequence"], "maxOrNull", 0),
             ]
 
             for testCase in cases {
