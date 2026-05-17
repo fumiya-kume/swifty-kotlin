@@ -353,6 +353,7 @@ struct CollectionLiteralLookupTables {
     // STDLIB-SEQ-022: Sequence destination-collection mapping operations
     let kkSequenceMapToName: InternedString
     let kkSequenceMapIndexedNotNullToName: InternedString
+    let kkSequenceFlatMapIndexedToName: InternedString
     let kkSequenceFilterIndexedToName: InternedString
     let kkSequenceFilterNotNullToName: InternedString
     let kkSequenceFilterIsInstanceToName: InternedString
@@ -1167,6 +1168,7 @@ struct CollectionLiteralLookupTables {
         kkSequenceFilterNotToName = interner.intern("kk_sequence_filterNotTo")
         kkSequenceMapToName = interner.intern("kk_sequence_mapTo")
         kkSequenceMapIndexedNotNullToName = interner.intern("kk_sequence_mapIndexedNotNullTo")
+        kkSequenceFlatMapIndexedToName = interner.intern("kk_sequence_flatMapIndexedTo")
         kkSequenceFilterIndexedToName = interner.intern("kk_sequence_filterIndexedTo")
         kkSequenceFilterNotNullToName = interner.intern("kk_sequence_filterNotNullTo")
         kkSequenceFilterIsInstanceToName = interner.intern("kk_sequence_filterIsInstanceTo")

@@ -651,6 +651,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_associateWithTo")
             case interner.intern("groupByTo"):
                 return interner.intern("kk_sequence_groupByTo")
+            case interner.intern("flatMapIndexedTo"):
+                return interner.intern("kk_sequence_flatMapIndexedTo")
             case interner.intern("contains"):
                 return interner.intern("kk_sequence_contains")
             case interner.intern("indexOf"):

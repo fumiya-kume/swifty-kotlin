@@ -502,14 +502,25 @@ extension CallLowerer {
         if (loweredCallee == interner.intern("kk_sequence_associateTo")
             || loweredCallee == interner.intern("kk_sequence_associateByTo")
             || loweredCallee == interner.intern("kk_sequence_associateWithTo")
-            || loweredCallee == interner.intern("kk_sequence_groupByTo")),
+            || loweredCallee == interner.intern("kk_sequence_groupByTo")
+            || loweredCallee == interner.intern("kk_sequence_flatMapIndexedTo")),
            finalArguments.count == 3
         {
             let firstArg = finalArguments[1]
             let secondArg = finalArguments[2]
             let lambdaArg: KIRExprID
             let destinationArg: KIRExprID
-            if driver.ctx.callableValueInfo(for: firstArg) != nil {
+            if sourceArgExprs.count >= 2,
+               sema.bindings.isCollectionHOFLambdaExpr(sourceArgExprs[0])
+            {
+                lambdaArg = firstArg
+                destinationArg = secondArg
+            } else if sourceArgExprs.count >= 2,
+                      sema.bindings.isCollectionHOFLambdaExpr(sourceArgExprs[1])
+            {
+                destinationArg = firstArg
+                lambdaArg = secondArg
+            } else if driver.ctx.callableValueInfo(for: firstArg) != nil {
                 lambdaArg = firstArg
                 destinationArg = secondArg
             } else {
@@ -899,6 +910,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_associateWith"),
             interner.intern("kk_sequence_associateWithTo"),
             interner.intern("kk_sequence_groupByTo"),
+            interner.intern("kk_sequence_flatMapIndexedTo"),
             interner.intern("kk_sequence_ifEmpty"),
             interner.intern("kk_string_ifBlank"),
             interner.intern("kk_string_ifEmpty"),

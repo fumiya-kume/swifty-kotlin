@@ -2510,6 +2510,7 @@ extension CallLowerer {
                 let associateByToName = interner.intern("associateByTo")
                 let associateWithToName = interner.intern("associateWithTo")
                 let groupByToName = interner.intern("groupByTo")
+                let flatMapIndexedToName = interner.intern("flatMapIndexedTo")
                 let containsName = interner.intern("contains")
                 let indexOfName = interner.intern("indexOf")
                 let elementAtName = interner.intern("elementAt")
@@ -2567,6 +2568,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_associateWithTo"
                 } else if calleeName == groupByToName {
                     runtimeCallee = "kk_sequence_groupByTo"
+                } else if calleeName == flatMapIndexedToName {
+                    runtimeCallee = "kk_sequence_flatMapIndexedTo"
                 } else if calleeName == containsName {
                     runtimeCallee = "kk_sequence_contains"
                 } else if calleeName == indexOfName {
@@ -2657,6 +2660,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_associateWithTo"
                         || runtimeCallee == "kk_sequence_associateWith"
                         || runtimeCallee == "kk_sequence_groupByTo"
+                        || runtimeCallee == "kk_sequence_flatMapIndexedTo"
                         || runtimeCallee == "kk_sequence_find"
                         || runtimeCallee == "kk_sequence_findLast"
                         || runtimeCallee == "kk_sequence_elementAt"
@@ -2713,14 +2717,25 @@ extension CallLowerer {
                     if (runtimeCallee == "kk_sequence_associateTo"
                         || runtimeCallee == "kk_sequence_associateByTo"
                         || runtimeCallee == "kk_sequence_associateWithTo"
-                        || runtimeCallee == "kk_sequence_groupByTo"),
+                        || runtimeCallee == "kk_sequence_groupByTo"
+                        || runtimeCallee == "kk_sequence_flatMapIndexedTo"),
                        normalizedArgIDs.count == 2
                     {
                         let firstArg = normalizedArgIDs[0]
                         let secondArg = normalizedArgIDs[1]
                         let lambdaArg: KIRExprID
                         let destinationArg: KIRExprID
-                        if driver.ctx.callableValueInfo(for: firstArg) != nil {
+                        if args.count >= 2,
+                           sema.bindings.isCollectionHOFLambdaExpr(args[0].expr)
+                        {
+                            lambdaArg = firstArg
+                            destinationArg = secondArg
+                        } else if args.count >= 2,
+                                  sema.bindings.isCollectionHOFLambdaExpr(args[1].expr)
+                        {
+                            destinationArg = firstArg
+                            lambdaArg = secondArg
+                        } else if driver.ctx.callableValueInfo(for: firstArg) != nil {
                             lambdaArg = firstArg
                             destinationArg = secondArg
                         } else {
