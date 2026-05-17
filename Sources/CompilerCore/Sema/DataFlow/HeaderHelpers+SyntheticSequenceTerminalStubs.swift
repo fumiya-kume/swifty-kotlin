@@ -1651,6 +1651,21 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // max(): T
+        registerSequenceMemberStub(
+            named: "max",
+            externalLinkName: "kk_sequence_max",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: typeParamType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner,
+            canThrow: true
+        )
+
         // maxOrNull(): T?
         registerSequenceMemberStub(
             named: "maxOrNull",

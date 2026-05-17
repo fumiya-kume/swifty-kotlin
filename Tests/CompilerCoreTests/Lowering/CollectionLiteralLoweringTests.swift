@@ -1338,6 +1338,14 @@ final class CollectionLiteralLoweringTests: XCTestCase {
         )
     }
 
+    func testVirtualCallOnSequenceTypedParameterRewritesToKkSequenceMax() throws {
+        let callees = try buildAndLowerVirtualCall(receiverTypeName: "Sequence", callee: "max")
+        XCTAssertTrue(
+            callees.contains("kk_sequence_max"),
+            "virtualCall(max) on Sequence-typed parameter should be rewritten to kk_sequence_max, got: \(callees)"
+        )
+    }
+
     func testWithoutSemaContextVirtualCallIsNotRewritten() throws {
         let interner = StringInterner()
         let arena = KIRArena()

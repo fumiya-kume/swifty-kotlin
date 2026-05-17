@@ -322,7 +322,7 @@
 - [ ] STDLIB-SEQ-FN-062: `mapNotNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-063: `mapNotNullTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-064: `mapTo` 関数の実装
-- [ ] STDLIB-SEQ-FN-065: `max` 関数の実装
+- [x] STDLIB-SEQ-FN-065: `max` 関数の実装
 - [ ] STDLIB-SEQ-FN-066: `maxBy` 関数の実装
 - [ ] STDLIB-SEQ-FN-067: `maxByOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-068: `maxOf` 関数の実装

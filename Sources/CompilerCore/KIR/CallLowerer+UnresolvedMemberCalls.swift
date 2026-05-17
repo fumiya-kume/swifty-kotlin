@@ -715,6 +715,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_lastOrNull")
             case countName:
                 return interner.intern("kk_sequence_count")
+            case interner.intern("max"):
+                return interner.intern("kk_sequence_max")
             case interner.intern("sum"):
                 return interner.intern("kk_sequence_sum")
             case interner.intern("average"):
