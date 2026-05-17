@@ -823,6 +823,20 @@ extension DataFlowSemaPhase {
         types.setNominalTypeParameterSymbols([typeParamSymbol], for: sequenceSymbol)
         types.setNominalTypeParameterVariances([.out], for: sequenceSymbol)
 
+        let sequenceElementType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        registerSyntheticSequenceIteratorMember(
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            elementType: sequenceElementType,
+            typeParameterSymbol: typeParamSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
         let chunkedName = interner.intern("chunked")
         let chunkedFQName = sequenceFQName + [chunkedName]
         if let listSymbol = symbols.lookup(fqName: [
@@ -884,10 +898,6 @@ extension DataFlowSemaPhase {
             }
         }
 
-        let sequenceElementType = types.make(.typeParam(TypeParamType(
-            symbol: typeParamSymbol,
-            nullability: .nonNull
-        )))
         let nullableReceiverType = types.make(.classType(ClassType(
             classSymbol: sequenceSymbol,
             args: [.out(sequenceElementType)],
@@ -912,6 +922,63 @@ extension DataFlowSemaPhase {
         )
 
         return sequenceSymbol
+    }
+
+    private func registerSyntheticSequenceIteratorMember(
+        sequenceSymbol: SymbolID,
+        sequenceFQName: [InternedString],
+        elementType: TypeID,
+        typeParameterSymbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let iteratorSymbol = symbols.lookup(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("Iterator"),
+        ])
+        guard let iteratorSymbol else { return }
+
+        let iteratorReturnType = types.make(.classType(ClassType(
+            classSymbol: iteratorSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+        let memberName = interner.intern("iterator")
+        let memberFQName = sequenceFQName + [memberName]
+        let memberSymbol: SymbolID
+        if let existing = symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+            symbols.symbol(symbolID)?.kind == .function
+        }) {
+            memberSymbol = existing
+        } else {
+            memberSymbol = symbols.define(
+                kind: .function,
+                name: memberName,
+                fqName: memberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .operatorFunction]
+            )
+            symbols.setParentSymbol(sequenceSymbol, for: memberSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: iteratorReturnType,
+                typeParameterSymbols: [typeParameterSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
     }
 
     func registerSyntheticSequenceExtensionFunction(

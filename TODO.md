@@ -257,7 +257,7 @@
 - [ ] STDLIB-REFLECT-FN-002: `createInstance` 拡張関数の実装
 
 #### kotlin.sequences 型の実装
-- [ ] STDLIB-SEQ-TYPE-001: `Sequence` インターフェースの実装
+- [x] STDLIB-SEQ-TYPE-001: `Sequence` インターフェースの実装
 - [ ] STDLIB-SEQ-TYPE-002: `SequenceScope` クラスの実装
 
 #### kotlin.sequences 関数の実装
