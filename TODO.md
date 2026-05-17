@@ -337,7 +337,7 @@
 - [ ] STDLIB-SEQ-FN-077: `minOfOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-078: `minOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-079: `minWith` 関数の実装
-- [ ] STDLIB-SEQ-FN-080: `minWithOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-080: `minWithOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-081: `minus` 関数の実装
 - [x] STDLIB-SEQ-FN-083: `none` 関数の実装
 - [x] STDLIB-SEQ-FN-084: `onEach` 関数の実装
