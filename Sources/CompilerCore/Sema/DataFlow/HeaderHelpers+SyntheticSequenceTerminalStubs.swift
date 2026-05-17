@@ -580,6 +580,18 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerSequenceMemberStub(
+            named: "dropWhile",
+            externalLinkName: "kk_sequence_dropWhile",
+            receiverType: receiverType,
+            parameters: [("predicate", predicateType)],
+            returnType: receiverType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
         let sequenceElementToIntType = types.make(.functionType(FunctionType(
             params: [typeParamType],
             returnType: types.intType,

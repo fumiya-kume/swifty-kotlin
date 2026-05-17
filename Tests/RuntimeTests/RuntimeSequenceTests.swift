@@ -123,6 +123,10 @@ private let sequenceParitySelector: @convention(c) (Int, Int, UnsafeMutablePoint
     value % 2
 }
 
+private let sequenceLessThanThree: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value < 3 ? 1 : 0
+}
+
 private let sequenceValueTimesTen: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     value * 10
 }
@@ -1160,6 +1164,16 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         let secondList = kk_sequence_to_list(seq, &secondThrown)
         XCTAssertNotEqual(secondThrown, 0)
         XCTAssertEqual(secondList, runtimeNullSentinelInt)
+    }
+
+    func testDropWhileSkipsLeadingMatchesOnly() {
+        let result = kk_sequence_dropWhile(
+            makeSequence([1, 2, 3, 1, 4]),
+            unsafeBitCast(sequenceLessThanThree, to: Int.self),
+            0
+        )
+
+        XCTAssertEqual(listElements(kk_sequence_to_list(result, nil)), [3, 1, 4])
     }
 
     func testFilterIsInstanceKeepsMatchingRuntimeTypes() {
