@@ -95,6 +95,16 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Sequence"
         ),
+        // STDLIB-553: yieldAll(iterator)
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_builder_yieldAll_iterator",
+            parameters: [
+                RuntimeABIParameter(name: "builderRaw", type: .intptr),
+                RuntimeABIParameter(name: "iteratorRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_sequence_builder_build",
             parameters: [
