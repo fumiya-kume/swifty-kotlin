@@ -1002,7 +1002,52 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(result, 0)
     }
 
-    // MARK: - Sequence indexed reduction tests (STDLIB-556, STDLIB-SEQ-015)
+    // MARK: - Sequence reduction tests (STDLIB-SEQ-FN-093, STDLIB-556, STDLIB-SEQ-015)
+
+    func testReduceOrNullEmptySequenceReturnsNullSentinel() {
+        let seq = makeSequence([])
+        var thrown = 0
+
+        let result = kk_sequence_reduceOrNull(
+            seq,
+            unsafeBitCast(accumulatingSum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, runtimeNullSentinelInt)
+    }
+
+    func testReduceOrNullNonEmptySequenceAccumulates() {
+        let seq = makeSequence([1, 2, 3, 4])
+        var thrown = 0
+
+        let result = kk_sequence_reduceOrNull(
+            seq,
+            unsafeBitCast(accumulatingSum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 10)
+    }
+
+    func testReduceOrNullReturnsZeroWhenLambdaThrows() {
+        let seq = makeSequence([1, 2, 3])
+        var thrown = 0
+
+        let result = kk_sequence_reduceOrNull(
+            seq,
+            unsafeBitCast(throwingAccumulator, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(result, 0)
+    }
 
     func testReduceIndexedOrNullEmptySequenceReturnsNullSentinel() {
         let seq = makeSequence([])

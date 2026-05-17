@@ -1161,6 +1161,18 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Sequence"
         ),
+        // STDLIB-SEQ-FN-093: reduceOrNull
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_reduceOrNull",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
         // STDLIB-561: Sequence.plus(other)
         RuntimeABIFunctionSpec(
             name: "kk_sequence_plus",

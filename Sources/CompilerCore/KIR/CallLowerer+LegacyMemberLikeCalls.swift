@@ -2681,6 +2681,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_plus_element"
                 } else if calleeName == interner.intern("minus") || calleeName == interner.intern("minusElement") {
                     runtimeCallee = "kk_sequence_minus"
+                } else if calleeName == interner.intern("reduceOrNull") {
+                    runtimeCallee = "kk_sequence_reduceOrNull"
                 } else if calleeName == interner.intern("runningReduceIndexed") {
                     runtimeCallee = "kk_sequence_runningReduceIndexed"
                 } else if calleeName == interner.intern("shuffled") {
@@ -2740,6 +2742,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_windowed_transform"
                         || runtimeCallee == "kk_sequence_onEach"
                         || runtimeCallee == "kk_sequence_onEachIndexed"
+                        || runtimeCallee == "kk_sequence_reduceOrNull"
                         || runtimeCallee == "kk_sequence_runningReduceIndexed"
                         || runtimeCallee == "kk_sequence_ifEmpty"
                         || runtimeCallee == "kk_sequence_zipWithNextTransform"
@@ -2761,6 +2764,16 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_firstNotNullOfOrNull"),
                        normalizedArgIDs.count == 1
                     {
+                        let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                            normalizedArgIDs[0],
+                            sema: sema,
+                            arena: arena,
+                            interner: interner,
+                            instructions: &instructions
+                        )
+                        runtimeArguments = [loweredReceiverID, fnPtrExpr, envPtrExpr]
+                    }
+                    if runtimeCallee == "kk_sequence_reduceOrNull", normalizedArgIDs.count == 1 {
                         let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
                             normalizedArgIDs[0],
                             sema: sema,

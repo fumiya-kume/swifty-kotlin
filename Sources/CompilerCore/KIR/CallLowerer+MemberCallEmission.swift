@@ -880,6 +880,7 @@ extension CallLowerer {
             interner.intern("kk_uint_progression_fromClosedRange"),
             interner.intern("kk_ulong_progression_fromClosedRange"),
             interner.intern("kk_sequence_foldIndexed"),
+            interner.intern("kk_sequence_reduceOrNull"),
             interner.intern("kk_sequence_reduceIndexed"),
             interner.intern("kk_sequence_reduceIndexedOrNull"),
             interner.intern("kk_long_range_random"),
