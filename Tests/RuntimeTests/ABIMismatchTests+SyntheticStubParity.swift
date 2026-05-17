@@ -295,6 +295,7 @@ extension ABIMismatchTests {
             "kk_atomic_long_array_compareAndExchangeAt",
             "kk_atomic_long_array_asJavaAtomicArray",
             "kk_java_atomic_long_array_asKotlinAtomicArray",
+            "kk_atomic_long_array_fetchAndUpdateAt",
             "kk_atomic_long_array_fetchAndAddAt",
             "kk_atomic_long_array_addAndFetchAt",
             "kk_atomic_long_array_fetchAndIncrementAt",

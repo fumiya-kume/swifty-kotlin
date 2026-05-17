@@ -1108,6 +1108,19 @@ final class AtomicLongArrayBox {
         storage[index] = storage[index] &+ delta
         return storage[index]
     }
+
+    func fetchAndUpdate(at index: Int, transform: (Int) -> Int, outThrown: UnsafeMutablePointer<Int>?) -> (old: Int, new: Int) {
+        while true {
+            let old = load(at: index)
+            let new = transform(old)
+            if let thrown = outThrown, thrown.pointee != 0 {
+                return (old, old)
+            }
+            if compareAndSet(at: index, expect: old, update: new) {
+                return (old, new)
+            }
+        }
+    }
 }
 
 private func atomicLongArrayBox(from raw: Int) -> AtomicLongArrayBox? {
@@ -1222,6 +1235,28 @@ public func kk_atomic_long_array_asJavaAtomicArray(_ receiver: Int) -> Int {
 @_cdecl("kk_java_atomic_long_array_asKotlinAtomicArray")
 public func kk_java_atomic_long_array_asKotlinAtomicArray(_ receiver: Int) -> Int {
     receiver
+}
+
+@_cdecl("kk_atomic_long_array_fetchAndUpdateAt")
+public func kk_atomic_long_array_fetchAndUpdateAt(
+    _ receiver: Int,
+    _ index: Int,
+    _ updateFn: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let box = atomicLongArrayBox(from: receiver) else { return 0 }
+    let size = box.size()
+    guard index >= 0 && index < size else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IndexOutOfBoundsException: index \(index) out of bounds for size \(size)"
+        )
+        return 0
+    }
+    let result = box.fetchAndUpdate(at: index, transform: { old in
+        kk_function_invoke(updateFn, old, outThrown)
+    }, outThrown: outThrown)
+    return result.old
 }
 
 @_cdecl("kk_atomic_long_array_fetchAndAddAt")
