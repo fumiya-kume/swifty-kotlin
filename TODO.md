@@ -298,7 +298,7 @@
  - [ ] STDLIB-SEQ-FN-016: `distinct` 関数の実装
 - [ ] STDLIB-SEQ-FN-017: `distinctBy` 関数の実装
 - [ ] STDLIB-SEQ-FN-014: `contains` 関数の実装
-- [ ] STDLIB-SEQ-FN-015: `count` 関数の実装
+- [x] STDLIB-SEQ-FN-015: `count` 関数の実装
 - [ ] STDLIB-SEQ-FN-016: `distinct` 関数の実装
 - [x] STDLIB-SEQ-FN-017: `distinctBy` 関数の実装
 - [ ] STDLIB-SEQ-FN-018: `drop` 関数の実装

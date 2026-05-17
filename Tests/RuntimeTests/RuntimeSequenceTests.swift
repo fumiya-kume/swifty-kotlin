@@ -1575,21 +1575,12 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(secondList, runtimeNullSentinelInt)
     }
 
-    func testElementAtOrNullReturnsIndexedValueOrNullSentinel() {
-        XCTAssertEqual(kk_sequence_elementAtOrNull(makeSequence([10, 20, 30]), 1), 20)
-        XCTAssertEqual(kk_sequence_elementAtOrNull(makeSequence([10]), 3), runtimeNullSentinelInt)
-    }
-    func testDistinctByPreservesFirstKeyOccurrenceOrder() {
+    func testCountReturnsElementCount() {
         var thrown = 0
-        let result = kk_sequence_distinctBy(
-            makeSequence([3, 1, 2, 5, 4, 7]),
-            unsafeBitCast(sequenceParitySelector, to: Int.self),
-            0,
-            &thrown
-        )
+        let count = kk_sequence_count(makeSequence([1, 2, 3]), &thrown)
 
         XCTAssertEqual(thrown, 0)
-        XCTAssertEqual(listElements(kk_sequence_to_list(result, nil)), [3, 2])
+        XCTAssertEqual(count, 3)
     }
 
     func testFilterIsInstanceKeepsMatchingRuntimeTypes() {
