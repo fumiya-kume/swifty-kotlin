@@ -1091,6 +1091,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // reduceRightIndexed(operation): T
+        registerSequenceMemberStub(
+            named: "reduceRightIndexed",
+            externalLinkName: "kk_sequence_reduceRightIndexed",
+            receiverType: receiverType,
+            parameters: [("operation", reduceIndexedOperationType)],
+            returnType: typeParamType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // runningFoldIndexed(initial, operation): Sequence<R>
         let runningFoldIndexedName = interner.intern("runningFoldIndexed")
         let runningFoldIndexedFQName = sequenceFQName + [runningFoldIndexedName]

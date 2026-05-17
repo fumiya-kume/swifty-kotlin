@@ -764,6 +764,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_reduceIndexed")
             case interner.intern("reduceIndexedOrNull"):
                 return interner.intern("kk_sequence_reduceIndexedOrNull")
+            case interner.intern("reduceRightIndexed"):
+                return interner.intern("kk_sequence_reduceRightIndexed")
             case interner.intern("runningReduceIndexed"):
                 return interner.intern("kk_sequence_runningReduceIndexed")
             default:
@@ -794,7 +796,8 @@ extension CallLowerer {
               || memberName == "requireNoNulls"
               || memberName == "reduce"
               || memberName == "reduceRight"
-              || memberName == "reduceIndexed",
+              || memberName == "reduceIndexed"
+              || memberName == "reduceRightIndexed",
               case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
               let symbol = sema.symbols.symbol(classType.classSymbol)
         else {

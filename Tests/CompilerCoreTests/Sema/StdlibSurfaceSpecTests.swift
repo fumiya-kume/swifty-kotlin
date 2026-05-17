@@ -142,6 +142,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("filterNotNullTo", 1),
             sequence("filterIsInstance", 0),
             sequence("filterIsInstanceTo", 1),
+            sequence("reduceRightIndexed", 1),
             sequence("associateTo", 2),
             sequence("associateByTo", 2),
             sequence("associateWithTo", 2),
@@ -176,6 +177,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
                 (.sequence, ["kotlin", "sequences", "Sequence"], "flatMapIndexed", 1),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "firstNotNullOf", 1),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "scanIndexed", 2),
+                (.sequence, ["kotlin", "sequences", "Sequence"], "reduceRightIndexed", 1),
             ]
 
             for testCase in cases {
