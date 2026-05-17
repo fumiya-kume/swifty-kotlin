@@ -1738,6 +1738,38 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // maxWithOrNull(comparator): T?
+        do {
+            let comparatorType = if let comparatorSymbol = symbols.lookupByShortName(interner.intern("Comparator")).first {
+                types.make(.classType(ClassType(
+                    classSymbol: comparatorSymbol,
+                    args: [.invariant(typeParamType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                types.make(.functionType(FunctionType(
+                    params: [typeParamType, typeParamType],
+                    returnType: types.intType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+            }
+            registerSequenceMemberStub(
+                named: "maxWithOrNull",
+                externalLinkName: "kk_sequence_maxWithOrNull",
+                receiverType: receiverType,
+                parameters: [("comparator", comparatorType)],
+                returnType: types.makeNullable(typeParamType),
+                sequenceSymbol: sequenceSymbol,
+                sequenceFQName: sequenceFQName,
+                typeParamSymbol: typeParamSymbol,
+                symbols: symbols,
+                interner: interner,
+                canThrow: true,
+                flags: [.synthetic, .inlineFunction]
+            )
+        }
+
         // unzip(): Pair<List<A>, List<B>> for Sequence<Pair<A, B>>
         let unzipName = interner.intern("unzip")
         let unzipFQName = sequenceFQName + [unzipName]

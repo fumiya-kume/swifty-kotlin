@@ -291,6 +291,7 @@ private extension StdlibSurfaceSpec {
         sequence("sumBy", 1, "kk_sequence_sumBy", returnStrategy: .int, lambdaExpectation: .receiverElement(argumentIndex: 0, returnStrategy: .int)),
         sequence("sumByDouble", 1, "kk_sequence_sumByDouble", returnStrategy: .double, lambdaExpectation: .receiverElement(argumentIndex: 0, returnStrategy: .double)),
         sequence("maxOfOrNull", 1, "kk_sequence_maxOfOrNull", returnStrategy: .nullableAny, lambdaExpectation: .receiverElement(argumentIndex: 0, returnStrategy: .any)),
+        sequence("maxWithOrNull", 1, "kk_sequence_maxWithOrNull", returnStrategy: .nullableAny, lambdaExpectation: .none),
         sequence("none", 0, "kk_sequence_none", returnStrategy: .boolean, lambdaExpectation: .none),
         sequence("none", 1, "kk_sequence_none", returnStrategy: .boolean, lambdaExpectation: .receiverElement(argumentIndex: 0, returnStrategy: .boolean)),
         sequence("firstNotNullOf", 1, "kk_sequence_firstNotNullOf", returnStrategy: .any, lambdaExpectation: .receiverElement(argumentIndex: 0, returnStrategy: .nullableAny)),
