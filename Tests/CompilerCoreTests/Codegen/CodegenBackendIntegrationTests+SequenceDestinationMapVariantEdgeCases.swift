@@ -8,14 +8,34 @@ extension CodegenBackendIntegrationTests {
         fun main() {
             val src = sequenceOf("a", "bb", "ccc")
             val dest = mutableMapOf<String, Int>()
-            val result = src.associateTo(dest) { it to it.length }
-            println(result === dest)
+            src.associateTo(dest) { it to it.length }
             println(dest["a"])
             println(dest["bb"])
             println(dest["ccc"])
         }
         """
-        try assertKotlinCompilesToKIR(source, moduleName: "STDLIBSEQ023_01")
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceAssociateToRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                1
+                2
+                3
+                """ + "\n"
+            )
+        }
     }
 
     func testSequenceAssociateByToMapsKeysToOriginalElements() throws {
