@@ -353,6 +353,14 @@ public extension RuntimeABISpec {
             section: "Sequence"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_sequence_reversed",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
             name: stdlibSequenceHOFName("mapIndexed", arity: 1, fallback: "kk_sequence_mapIndexed"),
             parameters: [
                 RuntimeABIParameter(name: "seqRaw", type: .intptr),

@@ -916,6 +916,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // reversed(): Sequence<T> (STDLIB-SEQ-FN-099)
+        registerSequenceMemberStub(
+            named: "reversed",
+            externalLinkName: "kk_sequence_reversed",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: receiverType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // filterIsInstance<R>(): Sequence<R> (STDLIB-SEQ-FN-026)
         do {
             let rName = interner.intern("R")
