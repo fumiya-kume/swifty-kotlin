@@ -538,6 +538,17 @@ public extension RuntimeABISpec {
             section: "Atomic"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_atomic_long_array_fetchAndUpdateAt",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
+                RuntimeABIParameter(name: "index", type: .intptr),
+                RuntimeABIParameter(name: "updateFn", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Atomic"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_atomic_long_array_fetchAndAddAt",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),

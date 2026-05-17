@@ -151,6 +151,7 @@ extension CallTypeChecker {
             isMapReceiver: isMapReceiver,
             isSetReceiver: isSetReceiver,
             isSequenceReceiver: isSequenceReceiver,
+            isListReceiver: isListReceiver,
             isMutableCollectionReceiver: isMutableCollectionReceiverFlag,
             isMutableMapReceiver: isMutableMapReceiver,
             isMutableSetReceiver: isMutableSetReceiver,
@@ -711,6 +712,20 @@ extension CallTypeChecker {
         }
     }
 
+    private func isSetReturningCollectionBinaryMember(
+        _ memberName: InternedString,
+        interner: StringInterner
+    ) -> Bool {
+        switch memberName {
+        case interner.intern("intersect"),
+             interner.intern("union"),
+             interner.intern("subtract"):
+            return true
+        default:
+            return false
+        }
+    }
+
     func isSupportedCollectionFallbackMember(
         _ memberName: InternedString,
         isIterableReceiver: Bool,
@@ -757,7 +772,6 @@ extension CallTypeChecker {
             interner.intern("count"),
             interner.intern("iterator"),
             interner.intern("filterNotNull"),
-            interner.intern("requireNoNulls"),
             interner.intern("filterIsInstanceTo"),
             interner.intern("filterNotNullTo"),
             interner.intern("fold"),
@@ -831,11 +845,6 @@ extension CallTypeChecker {
             interner.intern("average"),
             interner.intern("minusElement"),
         ]
-        let setOnlyMembers: Set = [
-            interner.intern("intersect"),
-            interner.intern("union"),
-            interner.intern("subtract"),
-        ]
         let listOnlyMembers: Set = [
             interner.intern("subList"),
             interner.intern("slice"),
@@ -882,8 +891,8 @@ extension CallTypeChecker {
         if mapOnlyMembers.contains(memberName) {
             return isMapReceiver
         }
-        if setOnlyMembers.contains(memberName) {
-            return isSetReceiver
+        if isSetReturningCollectionBinaryMember(memberName, interner: interner) {
+            return isListReceiver || isSetReceiver
         }
         if mutableListOnlyMembers.contains(memberName) {
             return isMutableListReceiver
@@ -940,7 +949,6 @@ extension CallTypeChecker {
             interner.intern("filterIsInstance"),
             interner.intern("toCollection"),
             interner.intern("subList"), interner.intern("slice"),
-            interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"),
             interner.intern("scan"), interner.intern("scanIndexed"),
             interner.intern("runningFold"), interner.intern("runningFoldIndexed"),
             interner.intern("runningReduce"), interner.intern("runningReduceIndexed"),
@@ -948,17 +956,12 @@ extension CallTypeChecker {
             interner.intern("toMutableList"),
             interner.intern("minusElement"),
         ]
-        let setReturningMembers: Set = [
-            interner.intern("intersect"),
-            interner.intern("union"),
-            interner.intern("subtract"),
-        ]
         if memberName == interner.intern("plus") ||
             memberName == interner.intern("minus")
         {
             return isMapReceiver
         }
-        if setReturningMembers.contains(memberName) {
+        if isSetReturningCollectionBinaryMember(memberName, interner: interner) {
             return isListReceiver || isSetReceiver
         }
         return collectionReturningMembers.contains(memberName)
@@ -970,6 +973,7 @@ extension CallTypeChecker {
         isMapReceiver: Bool,
         isSetReceiver: Bool,
         isSequenceReceiver: Bool,
+        isListReceiver: Bool,
         isMutableCollectionReceiver: Bool,
         isMutableMapReceiver: Bool,
         isMutableSetReceiver: Bool = false,
@@ -995,6 +999,9 @@ extension CallTypeChecker {
         if surfaceSpecs.contains(where: { $0.arity.accepts(argCount) }) {
             return true
         }
+        if isSetReturningCollectionBinaryMember(memberName, interner: interner) {
+            return (isListReceiver || isSetReceiver) && argCount == 1
+        }
         switch memberName {
         case knownNames.size, knownNames.isEmpty, interner.intern("iterator"), interner.intern("asSequence"),
              interner.intern("asIterable"),
@@ -1010,15 +1017,14 @@ extension CallTypeChecker {
             return (0 ... 3).contains(argCount)
         case interner.intern("shuffled"):
             return argCount == 0 || argCount == 1
-        case interner.intern("filterNotNull"), interner.intern("requireNoNulls"), interner.intern("unzip"), interner.intern("eachCount"):
+        case interner.intern("filterNotNull"), interner.intern("unzip"), interner.intern("eachCount"):
             return argCount == 0
         case interner.intern("get"), interner.intern("getOrNull"), interner.intern("elementAtOrNull"),
              interner.intern("contains"), interner.intern("containsAll"), interner.intern("indexOf"), interner.intern("lastIndexOf"), interner.intern("indexOfFirst"), interner.intern("indexOfLast"), interner.intern("binarySearch"),
              interner.intern("sortedBy"), interner.intern("find"), interner.intern("reduce"), interner.intern("reduceOrNull"), interner.intern("reduceIndexedOrNull"), interner.intern("runningReduce"), interner.intern("runningReduceIndexed"), interner.intern("scanReduce"), interner.intern("take"), interner.intern("drop"), interner.intern("zip"),
-             interner.intern("filterIndexed"), interner.intern("chunked"),
+             interner.intern("filterIndexed"),
              interner.intern("sortedByDescending"), interner.intern("sortedWith"), interner.intern("partition"),
              interner.intern("sortBy"), interner.intern("sortByDescending"), interner.intern("distinctBy"),
-             interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"),
              interner.intern("maxBy"), interner.intern("minBy"), interner.intern("maxByOrNull"), interner.intern("minByOrNull"),
              interner.intern("maxOfOrNull"), interner.intern("minOfOrNull"),
              interner.intern("maxOf"), interner.intern("minOf"),
@@ -1036,8 +1042,6 @@ extension CallTypeChecker {
             return argCount == 1
         case interner.intern("reduceTo"):
             return argCount == 2
-        case interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"):
-            return isSetReceiver && argCount == 1
         case interner.intern("containsKey"):
             return isMapReceiver && argCount == 1
         case knownNames.getValue:
@@ -1722,9 +1726,7 @@ extension CallTypeChecker {
         }
 
         if (isListReceiver || isSetReceiver),
-           (memberName == interner.intern("intersect") ||
-               memberName == interner.intern("union") ||
-               memberName == interner.intern("subtract")),
+           isSetReturningCollectionBinaryMember(memberName, interner: interner),
            let setSymbol = sema.symbols.lookup(fqName: [
                interner.intern("kotlin"),
                interner.intern("collections"),
