@@ -894,6 +894,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_minByOrNull"),
             interner.intern("kk_sequence_maxByOrNull"),
             interner.intern("kk_sequence_minOf"),
+            interner.intern("kk_sequence_maxOfOrNull"),
             interner.intern("kk_sequence_maxOf"),
             interner.intern("kk_sequence_partition"),
             interner.intern("kk_sequence_associateWith"),
