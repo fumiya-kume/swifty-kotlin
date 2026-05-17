@@ -2158,6 +2158,40 @@ public func kk_sequence_sortedWith(
     return registerRuntimeObject(seq)
 }
 
+@_cdecl("kk_sequence_sortedByDescending")
+public func kk_sequence_sortedByDescending(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var elems: [Int] = []
+    var keys: [Int] = []
+    elems.reserveCapacity(elements.count)
+    keys.reserveCapacity(elements.count)
+    for elem in elements {
+        var thrown = 0
+        let key = lambda(closureRaw, elem, &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: [])]))
+        }
+        elems.append(elem)
+        keys.append(maybeUnbox(key))
+    }
+    let sorted = elems.indices.sorted { lhs, rhs in
+        let comparison = runtimeCompareValues(keys[lhs], keys[rhs])
+        if comparison != 0 {
+            return comparison > 0
+        }
+        return lhs < rhs
+    }
+    let seq = RuntimeSequenceBox(steps: [.source(elements: sorted.map { elems[$0] })])
+    return registerRuntimeObject(seq)
+}
+
 @_cdecl("kk_sequence_sortedDescending")
 public func kk_sequence_sortedDescending(_ seqRaw: Int) -> Int {
     let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)

@@ -212,7 +212,6 @@ extension DataFlowSemaPhase {
             returnType: receiverType,
             canThrow: true
         )
-
         // sorted(): Sequence<T>
         registerSequenceOverloadedMemberStub(
             named: "sorted",
@@ -261,6 +260,45 @@ extension DataFlowSemaPhase {
             registerSequenceOverloadedMemberStub(
                 named: "sortedBy",
                 externalLinkName: "kk_sequence_sortedBy",
+                receiverType: receiverType,
+                parameters: [("selector", selectorType)],
+                returnType: receiverType,
+                additionalTypeParameterSymbols: extraTypeParamSymbols,
+                additionalTypeParameterUpperBoundsList: extraUpperBoundsList,
+                canThrow: true
+            )
+        }
+
+        // sortedByDescending(selector: (T) -> R): Sequence<T>, where R : Comparable<R>
+        do {
+            let memberName = interner.intern("sortedByDescending")
+            let memberFQName = sequenceFQName + [memberName]
+            let selectorReturnType: TypeID
+            let extraTypeParamSymbols: [SymbolID]
+            let extraUpperBoundsList: [[TypeID]]
+            if let rParam = makeComparableTypeParam(
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                memberFQName: memberFQName
+            ) {
+                selectorReturnType = rParam.type
+                extraTypeParamSymbols = [rParam.symbol]
+                extraUpperBoundsList = [rParam.upperBounds]
+            } else {
+                selectorReturnType = types.anyType
+                extraTypeParamSymbols = []
+                extraUpperBoundsList = []
+            }
+            let selectorType = types.make(.functionType(FunctionType(
+                params: [typeParamType],
+                returnType: selectorReturnType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            registerSequenceOverloadedMemberStub(
+                named: "sortedByDescending",
+                externalLinkName: "kk_sequence_sortedByDescending",
                 receiverType: receiverType,
                 parameters: [("selector", selectorType)],
                 returnType: receiverType,

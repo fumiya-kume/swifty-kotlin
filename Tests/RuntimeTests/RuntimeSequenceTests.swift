@@ -471,6 +471,32 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(listElements(kk_sequence_to_list(sorted, nil)), [])
     }
 
+    func testSortedByDescendingUsesRuntimeValueComparisonForSelectorKeys() {
+        let source = makeSequence([1, 2, 3])
+        let sorted = kk_sequence_sortedByDescending(
+            source,
+            unsafeBitCast(stringKeySelector, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(listElements(kk_sequence_to_list(sorted, nil)), [3, 1, 2])
+    }
+
+    func testSortedByDescendingPropagatesSelectorThrowables() {
+        let source = makeSequence([1, 2, 3])
+        var thrown = 0
+        let sorted = kk_sequence_sortedByDescending(
+            source,
+            unsafeBitCast(throwingSelector, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(listElements(kk_sequence_to_list(sorted, nil)), [])
+    }
+
     func testSortedWithUsesComparatorResults() {
         let source = makeSequence([3, 1, 2, 1])
         let sorted = kk_sequence_sortedWith(
@@ -496,7 +522,6 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertNotEqual(thrown, 0)
         XCTAssertEqual(sequenceElements(sorted), [])
     }
-
     func testTakeWhileKeepsMatchingPrefixLazily() {
         let source = makeSequence([1, 2, 3, 4, 2])
         let taken = kk_sequence_takeWhile(
