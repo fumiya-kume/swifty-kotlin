@@ -665,6 +665,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_findLast")
             case interner.intern("find"):
                 return interner.intern("kk_sequence_find")
+            case interner.intern("singleOrNull"):
+                return interner.intern("kk_sequence_singleOrNull")
             case interner.intern("any"):
                 return interner.intern(useIterableRuntimeForCollectionFallback ? "kk_iterable_any" : "kk_sequence_any")
             case interner.intern("all"):
