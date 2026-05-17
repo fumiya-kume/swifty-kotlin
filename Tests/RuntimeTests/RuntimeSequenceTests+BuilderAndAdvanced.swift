@@ -329,6 +329,11 @@ extension RuntimeSequenceTests {
         XCTAssertEqual(iterable, seq)
     }
 
+    func testSequenceAsSequence() {
+        let seq = makeSequence([1, 2, 3])
+        XCTAssertEqual(kk_sequence_asSequence(seq), seq)
+    }
+
     func testSequenceOrEmptyReturnsEmptySequenceForNull() {
         let seq = kk_sequence_orEmpty(runtimeNullSentinelInt)
 
