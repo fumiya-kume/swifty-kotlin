@@ -474,6 +474,32 @@ extension CallLowerer {
             )
             finalArguments = [finalArguments[0], fnPtrExpr, envPtrExpr]
         }
+        if (loweredCallee == interner.intern("kk_sequence_associateTo")
+            || loweredCallee == interner.intern("kk_sequence_associateByTo")
+            || loweredCallee == interner.intern("kk_sequence_associateWithTo")
+            || loweredCallee == interner.intern("kk_sequence_groupByTo")),
+           finalArguments.count == 3
+        {
+            let firstArg = finalArguments[1]
+            let secondArg = finalArguments[2]
+            let lambdaArg: KIRExprID
+            let destinationArg: KIRExprID
+            if driver.ctx.callableValueInfo(for: firstArg) != nil {
+                lambdaArg = firstArg
+                destinationArg = secondArg
+            } else {
+                destinationArg = firstArg
+                lambdaArg = secondArg
+            }
+            let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                lambdaArg,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            finalArguments = [finalArguments[0], destinationArg, fnPtrExpr, envPtrExpr]
+        }
         if loweredCallee == interner.intern("kk_array_copyOf_newSize_init"),
            finalArguments.count == 3
         {
