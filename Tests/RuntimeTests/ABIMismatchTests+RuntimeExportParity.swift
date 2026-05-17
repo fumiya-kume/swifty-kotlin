@@ -21,6 +21,8 @@ extension ABIMismatchTests {
     func testRuntimeExportSignaturesMatchRuntimeABISpec() throws {
         let specsByName = Dictionary(uniqueKeysWithValues: RuntimeABISpec.allFunctions.map { ($0.name, $0) })
         for exported in try runtimeExportedABIs() {
+            // Generic functions cannot have their parameter types validated against C ABI types
+            guard exported.returnType != "generic" else { continue }
             let spec = try XCTUnwrap(
                 specsByName[exported.name],
                 "Runtime export '\(exported.name)' from \(exported.source) has no RuntimeABISpec entry"
@@ -59,9 +61,6 @@ extension ABIMismatchTests {
             "kk_annotation_simple_class_name",
             "kk_any_javaClass",
             "kk_array_isArrayOf",
-            "kk_function_andThen",
-            "kk_function_compose",
-            "kk_function_curried",
             "kk_future_getState",
             "kk_int_to_int",
             "kk_kclass_has_annotation",
@@ -152,12 +151,27 @@ extension ABIMismatchTests {
     }
 
     private func runtimeExportedABIs(in source: String, sourcePath: String) throws -> [RuntimeExportedABI] {
-        let patterns = [
+        let concretePatterns = [
             #"@_cdecl\("([^"]+)"\)\s*(?:public\s+)?func\s+[A-Za-z0-9_]+\s*\((.*?)\)\s*(?:->\s*([^{\n]+))?"#,
             #"@_silgen_name\("([^"]+)"\)\s*public\s+func\s+[A-Za-z0-9_]+\s*\((.*?)\)\s*(?:->\s*([^{\n]+))?"#,
         ]
+        let genericPattern = #"@_silgen_name\("([^"]+)"\)\s*public\s+func\s+[A-Za-z0-9_]+<[^>]+>"#
+
         var exports: [RuntimeExportedABI] = []
-        for pattern in patterns {
+
+        // Collect generic-function names first (name-only; signature cannot be mapped to C types)
+        let genericRegex = try NSRegularExpression(pattern: genericPattern, options: [])
+        let fullRange = NSRange(source.startIndex..<source.endIndex, in: source)
+        var genericNames: Set<String> = []
+        for match in genericRegex.matches(in: source, range: fullRange) {
+            guard let nameRange = Range(match.range(at: 1), in: source) else { continue }
+            genericNames.insert(String(source[nameRange]))
+        }
+        for name in genericNames {
+            exports.append(RuntimeExportedABI(name: name, returnType: "generic", parameterTypes: [], source: sourcePath))
+        }
+
+        for pattern in concretePatterns {
             let regex = try NSRegularExpression(pattern: pattern, options: [.dotMatchesLineSeparators])
             let range = NSRange(source.startIndex..<source.endIndex, in: source)
             for match in regex.matches(in: source, range: range) {
@@ -168,6 +182,7 @@ extension ABIMismatchTests {
                     continue
                 }
                 let name = String(source[nameRange])
+                guard !genericNames.contains(name) else { continue }
                 let params = String(source[paramsRange])
                 let returnType: String
                 if match.range(at: 3).location == NSNotFound {

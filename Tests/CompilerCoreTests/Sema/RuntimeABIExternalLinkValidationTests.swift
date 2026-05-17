@@ -29,6 +29,7 @@ final class RuntimeABIExternalLinkValidationTests: XCTestCase {
             under: [
                 compilerCore.appendingPathComponent("KIR"),
                 compilerCore.appendingPathComponent("Lowering"),
+                compilerCore.appendingPathComponent("Sema"),
             ]
         )
         let missing = linkNames
@@ -112,6 +113,8 @@ final class RuntimeABIExternalLinkValidationTests: XCTestCase {
         let patterns = [
             #"interner\.intern\("(kk_[A-Za-z0-9_]+)"\)"#,
             #"(?:==|!=)\s*"(kk_[A-Za-z0-9_]+)""#,
+            // Catch kk_ literals stored in variables ending in "Name" (e.g. createCalleeName: "kk_...")
+            #"\w+Name\s*:\s*"(kk_[A-Za-z0-9_]+)""#,
         ]
         var names: Set<String> = []
         let sourceRange = NSRange(source.startIndex..<source.endIndex, in: source)
