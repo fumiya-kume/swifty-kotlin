@@ -415,9 +415,12 @@ extension CallLowerer {
             }
         }
 
-        switch memberName {
-        case "flatMapIndexed":
+        if memberName == "flatMapIndexed",
+           isConcreteListLikeType(nonNullReceiverType, sema: sema, interner: interner) {
             return interner.intern("kk_list_flatMapIndexed")
+        }
+
+        switch memberName {
         case "sorted":
             return interner.intern("kk_list_sorted")
         case "sortedDescending":

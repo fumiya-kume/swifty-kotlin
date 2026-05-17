@@ -2196,7 +2196,9 @@ extension ListSyntheticMemberLinkTests {
             else {
                 return XCTFail("Expected List.flatMapIndexed transform to return Collection<R>")
             }
+            XCTAssertEqual(functionType.params.count, 2, "Expected flatMapIndexed transform to take (index, element)")
             XCTAssertEqual(functionType.params.first, sema.types.intType)
+            XCTAssertNotEqual(functionType.params.last, sema.types.intType, "Second transform parameter should be the list element type, not Int")
             XCTAssertEqual(ctx.interner.resolve(transformReturnSymbol.name), "Collection")
         }
     }

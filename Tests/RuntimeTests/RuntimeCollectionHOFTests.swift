@@ -89,8 +89,8 @@ private let flatMapPair: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -
 private let flatMapIndexedPair: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, value, _ in
     let array = kk_array_new(2)
     var thrown = 0
-    _ = _ = kk_array_set(array, 0, index, &thrown)
-    _ = _ = kk_array_set(array, 1, value * 10, &thrown)
+    _ = kk_array_set(array, 0, index, &thrown)
+    _ = kk_array_set(array, 1, value * 10, &thrown)
     return kk_list_of(array, 2)
 }
 
