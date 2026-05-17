@@ -122,6 +122,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("randomOrNull", 0),
             sequence("chunked", 1),
             sequence("constrainOnce", 0),
+            sequence("count", 0),
             sequence("shuffled", 0),
             sequence("shuffled", 1),
             sequence("sumOf", 1),
