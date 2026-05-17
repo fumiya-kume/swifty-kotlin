@@ -2597,6 +2597,20 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testSequenceReduceRightIndexedOrNullResolvesInCallExpressions() throws {
+        try assertSequenceMemberResolves(
+            source: """
+            fun checksum(): Int? {
+                val values = sequenceOf(1, 2, 3, 4)
+                return values.reduceRightIndexedOrNull { index, value, acc -> index * 100 + value * 10 + acc }
+            }
+            """,
+            memberName: "reduceRightIndexedOrNull",
+            expectedLinkName: "kk_sequence_reduceRightIndexedOrNull",
+            diagnosticContext: "Sequence.reduceRightIndexedOrNull"
+        )
+    }
+
     func testSequenceReduceRightOrNullResolvesInCallExpressions() throws {
         let source = """
         fun checksum(): Int? {
@@ -2809,6 +2823,7 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
                     .compactMap { sema.symbols.externalLinkName(for: $0) }
             )
             XCTAssertTrue(links.contains("kk_sequence_minByOrNull"))
+            XCTAssertTrue(links.contains("kk_sequence_reduceRightIndexedOrNull"))
         }
     }
 }

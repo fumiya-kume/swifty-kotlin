@@ -216,6 +216,38 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenSequenceReduceRightIndexedOrNullReturnsRightFoldedValueOrNullOnEmpty() throws {
+        let source = """
+        fun main() {
+            val reduced = sequenceOf(1, 2, 3, 4)
+                .reduceRightIndexedOrNull { index, value, acc -> index * 100 + value * 10 + acc }
+            val single = sequenceOf(42)
+                .reduceRightIndexedOrNull { index, value, acc -> index + value + acc }
+            val empty = emptySequence<Int>()
+                .reduceRightIndexedOrNull { index, value, acc -> index + value + acc }
+
+            println(reduced)
+            println(single)
+            println(empty ?: -1)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceReduceRightIndexedOrNull",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "364\n42\n-1\n")
+        }
+    }
+
     func testCodegenSequenceReduceRightOrNullReturnsRightFoldedValueOrNullOnEmpty() throws {
         let source = """
         fun main() {

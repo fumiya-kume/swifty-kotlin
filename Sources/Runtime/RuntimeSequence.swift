@@ -3228,6 +3228,46 @@ public func kk_sequence_reduceRight(
     return acc
 }
 
+@_cdecl("kk_sequence_reduceRightIndexedOrNull")
+public func kk_sequence_reduceRightIndexedOrNull(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    var elements: [Int] = []
+    let traversalState = runtimeTraverseSequenceSource(seqRaw, caller: #function, outThrown: outThrown) { elem in
+        elements.append(elem)
+        return true
+    }
+    if let outThrown, outThrown.pointee != 0 { return 0 }
+    if let traversalState, traversalState.limitReached {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached)
+        return 0
+    }
+    guard let last = elements.last else { return runtimeNullSentinelInt }
+    var acc = maybeUnbox(last)
+    guard elements.count > 1 else { return acc }
+
+    for index in stride(from: elements.count - 2, through: 0, by: -1) {
+        var thrown = 0
+        let nextAcc = runtimeInvokeCollectionLambda3(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            arg1: index,
+            arg2: elements[index],
+            arg3: acc,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return 0
+        }
+        acc = maybeUnbox(nextAcc)
+    }
+    return acc
+}
+
 @_cdecl("kk_sequence_reduceRightOrNull")
 public func kk_sequence_reduceRightOrNull(
     _ seqRaw: Int,

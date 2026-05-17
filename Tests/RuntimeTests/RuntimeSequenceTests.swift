@@ -1649,6 +1649,68 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(result, 0)
     }
 
+    // MARK: - Sequence nullable right-indexed reduction tests (STDLIB-SEQ-FN-096)
+
+    func testReduceRightIndexedOrNullEmptySequenceReturnsNullSentinel() {
+        let seq = makeSequence([])
+        var thrown = 0
+
+        let result = kk_sequence_reduceRightIndexedOrNull(
+            seq,
+            unsafeBitCast(reduceRightIndexedChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, runtimeNullSentinelInt)
+    }
+
+    func testReduceRightIndexedOrNullNonEmptySequenceAccumulatesFromRight() {
+        let seq = makeSequence([1, 2, 3, 4])
+        var thrown = 0
+
+        let result = kk_sequence_reduceRightIndexedOrNull(
+            seq,
+            unsafeBitCast(reduceRightIndexedChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 364)
+    }
+
+    func testReduceRightIndexedOrNullSingleElementReturnsElement() {
+        let seq = makeSequence([42])
+        var thrown = 0
+
+        let result = kk_sequence_reduceRightIndexedOrNull(
+            seq,
+            unsafeBitCast(reduceRightIndexedChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 42)
+    }
+
+    func testReduceRightIndexedOrNullReturnsZeroWhenLambdaThrows() {
+        let seq = makeSequence([1, 2, 3])
+        var thrown = 0
+
+        let result = kk_sequence_reduceRightIndexedOrNull(
+            seq,
+            unsafeBitCast(throwingIndexedAccumulator, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(result, 0)
+    }
+
     // MARK: - Sequence nullable right reduction tests (STDLIB-SEQ-FN-097)
 
     func testReduceRightOrNullEmptySequenceReturnsNullSentinel() {

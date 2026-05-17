@@ -935,6 +935,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_reduceIndexedOrNull"),
             interner.intern("kk_sequence_reduceRightIndexed"),
             interner.intern("kk_sequence_reduceRightOrNull"),
+            interner.intern("kk_sequence_reduceRightIndexedOrNull"),
             interner.intern("kk_long_range_random"),
             interner.intern("kk_random_nextLong_rangeObject"),
             interner.intern("kk_uint_range_random"),

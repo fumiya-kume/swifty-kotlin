@@ -1981,6 +1981,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // reduceRightIndexedOrNull(operation): T?
+        registerSequenceMemberStub(
+            named: "reduceRightIndexedOrNull",
+            externalLinkName: "kk_sequence_reduceRightIndexedOrNull",
+            receiverType: receiverType,
+            parameters: [("operation", reduceIndexedOperationType)],
+            returnType: types.makeNullable(typeParamType),
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // reduceRightOrNull(operation): T?
         registerSequenceMemberStub(
             named: "reduceRightOrNull",
