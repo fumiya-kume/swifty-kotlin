@@ -1156,6 +1156,67 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // associate(transform): Map<K, V>
+        if let mapSymbol = symbols.lookup(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("Map"),
+        ]), let pairSymbol = symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Pair")]) {
+            let associateName = interner.intern("associate")
+            let associateFQName = sequenceFQName + [associateName]
+            if symbols.lookup(fqName: associateFQName) == nil {
+                let keyTypeParamName = interner.intern("K")
+                let keyTypeParamSymbol = symbols.define(
+                    kind: .typeParameter,
+                    name: keyTypeParamName,
+                    fqName: associateFQName + [keyTypeParamName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
+                let valueTypeParamName = interner.intern("V")
+                let valueTypeParamSymbol = symbols.define(
+                    kind: .typeParameter,
+                    name: valueTypeParamName,
+                    fqName: associateFQName + [valueTypeParamName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
+                let keyType = types.make(.typeParam(TypeParamType(symbol: keyTypeParamSymbol, nullability: .nonNull)))
+                let valueType = types.make(.typeParam(TypeParamType(symbol: valueTypeParamSymbol, nullability: .nonNull)))
+                let transformType = types.make(.functionType(FunctionType(
+                    params: [typeParamType],
+                    returnType: types.make(.classType(ClassType(
+                        classSymbol: pairSymbol,
+                        args: [.out(keyType), .out(valueType)],
+                        nullability: .nonNull
+                    ))),
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                let returnType = types.make(.classType(ClassType(
+                    classSymbol: mapSymbol,
+                    args: [.out(keyType), .out(valueType)],
+                    nullability: .nonNull
+                )))
+                registerSequenceMemberStub(
+                    named: "associate",
+                    externalLinkName: "kk_sequence_associate",
+                    receiverType: receiverType,
+                    parameters: [("transform", transformType)],
+                    returnType: returnType,
+                    sequenceSymbol: sequenceSymbol,
+                    sequenceFQName: sequenceFQName,
+                    typeParamSymbol: typeParamSymbol,
+                    symbols: symbols,
+                    interner: interner,
+                    canThrow: true,
+                    additionalTypeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol]
+                )
+            }
+        }
+
         // associateWith(valueSelector): Map<T, R>
         if let mapSymbol = symbols.lookup(fqName: [
             interner.intern("kotlin"),
