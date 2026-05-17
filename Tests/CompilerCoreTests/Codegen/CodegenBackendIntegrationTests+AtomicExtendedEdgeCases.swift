@@ -379,6 +379,37 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenAsKotlinAtomicArrayOverloads() throws {
+        let source = """
+        @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
+        import java.util.concurrent.atomic.AtomicIntegerArray
+        import java.util.concurrent.atomic.AtomicLongArray
+        import java.util.concurrent.atomic.AtomicReferenceArray
+        import kotlin.concurrent.atomics.asKotlinAtomicArray
+
+        fun main() {
+            val intArray = AtomicIntegerArray(1).asKotlinAtomicArray()
+            intArray.storeAt(0, 11)
+            println(intArray.loadAt(0))
+
+            val longArray = AtomicLongArray(1).asKotlinAtomicArray()
+            longArray.storeAt(0, 22L)
+            println(longArray.loadAt(0))
+
+            val refArray = AtomicReferenceArray<String?>(1).asKotlinAtomicArray()
+            refArray.storeAt(0, "box")
+            println(refArray.loadAt(0))
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(inputPath: path, moduleName: "AsKotlinAtomicArrayOverloads", emit: .executable, outputPath: outputBase)
+            try LinkPhase().run(ctx)
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "11\n22\nbox\n")
+        }
+    }
+
     func testCodegenAtomicBooleanCASSuccessAndFailure() throws {
         let source = """
         @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
