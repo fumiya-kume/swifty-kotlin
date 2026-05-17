@@ -1031,6 +1031,24 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(multipleResult, runtimeNullSentinelInt)
     }
 
+    func testSequenceSliceRangeReturnsSequenceOfIndexedElements() {
+        let seq = makeSequence([10, 20, 30, 40, 50])
+        let range = kk_op_rangeTo(1, 3)
+
+        let result = kk_sequence_slice(seq, range)
+
+        XCTAssertEqual(sequenceElements(result), [20, 30, 40])
+    }
+
+    func testSequenceSliceIterableReturnsSequenceOfIndexedElements() {
+        let seq = makeSequence([10, 20, 30, 40, 50])
+        let indices = makeList([3, 1, 3])
+
+        let result = kk_sequence_slice_iterable(seq, indices)
+
+        XCTAssertEqual(sequenceElements(result), [40, 20, 40])
+    }
+
     private func makeArray(_ elements: [Int]) -> Int {
         let arrayRaw = kk_array_new(elements.count)
         var thrown = 0

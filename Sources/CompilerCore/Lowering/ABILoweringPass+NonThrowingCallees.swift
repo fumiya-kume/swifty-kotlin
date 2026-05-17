@@ -923,6 +923,8 @@ extension ABILoweringPass {
             interner.intern("kk_sequence_drop"),
             interner.intern("kk_sequence_distinct"),
             interner.intern("kk_sequence_zip"),
+            interner.intern("kk_sequence_slice"),
+            interner.intern("kk_sequence_slice_iterable"),
             interner.intern("kk_sequence_sorted"),
             interner.intern("kk_sequence_sortedDescending"),
             interner.intern("kk_sequence_filterIsInstance"),

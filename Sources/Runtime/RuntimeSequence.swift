@@ -2064,6 +2064,27 @@ public func kk_sequence_shuffled_random(_ seqRaw: Int, _ randomRaw: Int) -> Int 
     newSteps.append(.shuffledStep(randomRaw: randomRaw))
     return registerRuntimeObject(RuntimeSequenceBox(steps: newSteps, constrainOnceState: seq.constrainOnceState))
 }
+
+@_cdecl("kk_sequence_slice")
+public func kk_sequence_slice(_ seqRaw: Int, _ rangeRaw: Int) -> Int {
+    var thrown = 0
+    let listRaw = kk_sequence_to_list(seqRaw, &thrown)
+    if thrown != 0 {
+        return kk_sequence_from_list(registerRuntimeObject(RuntimeListBox(elements: [])))
+    }
+    return kk_sequence_from_list(kk_list_slice(listRaw, rangeRaw))
+}
+
+@_cdecl("kk_sequence_slice_iterable")
+public func kk_sequence_slice_iterable(_ seqRaw: Int, _ indicesRaw: Int) -> Int {
+    var thrown = 0
+    let listRaw = kk_sequence_to_list(seqRaw, &thrown)
+    if thrown != 0 {
+        return kk_sequence_from_list(registerRuntimeObject(RuntimeListBox(elements: [])))
+    }
+    return kk_sequence_from_list(kk_list_slice_iterable(listRaw, indicesRaw))
+}
+
 // MARK: - Sequence Terminal Operations: first/firstOrNull/last/count (STDLIB-273)
 
 @_cdecl("kk_sequence_first")

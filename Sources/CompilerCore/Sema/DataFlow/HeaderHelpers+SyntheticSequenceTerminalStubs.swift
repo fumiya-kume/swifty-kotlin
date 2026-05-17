@@ -159,6 +159,11 @@ extension DataFlowSemaPhase {
             interner.intern("collections"),
             interner.intern("List"),
         ], elementType: typeParamType)
+        let listOfIntType = nominalCollectionType([
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("List"),
+        ], elementType: types.intType)
         let mutableListReturnType = nominalCollectionType([
             interner.intern("kotlin"),
             interner.intern("collections"),
@@ -685,6 +690,25 @@ extension DataFlowSemaPhase {
             typeParamSymbol: typeParamSymbol,
             symbols: symbols,
             interner: interner
+        )
+
+        // slice(indices: IntRange): Sequence<T>
+        // IntRange expressions are represented as intType at this ABI layer.
+        registerSequenceOverloadedMemberStub(
+            named: "slice",
+            externalLinkName: "kk_sequence_slice",
+            receiverType: receiverType,
+            parameters: [("indices", types.intType)],
+            returnType: receiverType
+        )
+
+        // slice(indices: Iterable<Int>): Sequence<T>
+        registerSequenceOverloadedMemberStub(
+            named: "slice",
+            externalLinkName: "kk_sequence_slice_iterable",
+            receiverType: receiverType,
+            parameters: [("indices", listOfIntType)],
+            returnType: receiverType
         )
 
         // toMutableSet(): MutableSet<T>

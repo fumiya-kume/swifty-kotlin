@@ -2638,6 +2638,14 @@ extension CallLowerer {
                     case 1: runtimeCallee = "kk_sequence_shuffled_random"
                     default: runtimeCallee = nil
                     }
+                } else if calleeName == interner.intern("slice") {
+                    if let chosen = sema.bindings.callBindings[exprID]?.chosenCallee,
+                       sema.symbols.externalLinkName(for: chosen) == "kk_sequence_slice_iterable"
+                    {
+                        runtimeCallee = "kk_sequence_slice_iterable"
+                    } else {
+                        runtimeCallee = "kk_sequence_slice"
+                    }
                 } else if calleeName == interner.intern("ifEmpty") {
                     runtimeCallee = "kk_sequence_ifEmpty"
                 } else if calleeName == interner.intern("forEachIndexed") {

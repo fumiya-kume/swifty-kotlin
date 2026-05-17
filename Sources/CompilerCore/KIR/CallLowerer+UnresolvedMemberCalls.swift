@@ -608,6 +608,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_distinct")
             case zipName:
                 return interner.intern("kk_sequence_zip")
+            case interner.intern("slice"):
+                return interner.intern("kk_sequence_slice")
             case takeWhileName:
                 return interner.intern("kk_sequence_takeWhile")
             case dropWhileName:
