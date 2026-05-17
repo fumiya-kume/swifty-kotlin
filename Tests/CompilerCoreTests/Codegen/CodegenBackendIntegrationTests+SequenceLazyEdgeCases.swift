@@ -366,6 +366,8 @@ extension CodegenBackendIntegrationTests {
 
             val folded = seq.fold(0) { acc, x -> acc + x }
             println(folded)
+
+            println(seq.intersect(listOf(2, 4, 6)))
         }
         """
 
@@ -387,6 +389,7 @@ extension CodegenBackendIntegrationTests {
                 5
                 15
                 15
+                [2, 4]
                 """ + "\n"
             )
         }

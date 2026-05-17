@@ -462,6 +462,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // intersect(other: Iterable<T>): Set<T>
+        registerSequenceMemberStub(
+            named: "intersect",
+            externalLinkName: "kk_sequence_intersect",
+            receiverType: receiverType,
+            parameters: [("other", iterableReturnType)],
+            returnType: setReturnType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // elementAtOrNull(index: Int): T?
         registerSequenceMemberStub(
             named: "elementAtOrNull",

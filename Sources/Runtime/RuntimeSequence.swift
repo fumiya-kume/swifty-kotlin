@@ -2289,6 +2289,31 @@ public func kk_sequence_indexOf(_ seqRaw: Int, _ element: Int) -> Int {
     return index
 }
 
+@_cdecl("kk_sequence_intersect")
+public func kk_sequence_intersect(_ seqRaw: Int, _ otherRaw: Int) -> Int {
+    let otherElements = runtimeUnboxCollectionElements(otherRaw)
+    var otherKeys = Set<RuntimeElementKey>()
+    otherKeys.reserveCapacity(otherElements.count)
+    for elem in otherElements {
+        otherKeys.insert(RuntimeElementKey(value: elem))
+    }
+
+    var sourceElements: [Int] = []
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        runtimeTraverseSequence(seq, outThrown: nil) { elem in
+            sourceElements.append(elem)
+            return true
+        }
+    } else {
+        sourceElements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    }
+
+    let result = runtimeDeduplicatePreservingOrder(sourceElements).filter { elem in
+        otherKeys.contains(RuntimeElementKey(value: elem))
+    }
+    return registerRuntimeObject(RuntimeSetBox(elements: result))
+}
+
 @_cdecl("kk_sequence_elementAtOrNull")
 public func kk_sequence_elementAtOrNull(_ seqRaw: Int, _ index: Int) -> Int {
     let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)

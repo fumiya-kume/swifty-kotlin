@@ -2593,6 +2593,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_find"
                 } else if calleeName == interner.intern("findLast") {
                     runtimeCallee = "kk_sequence_findLast"
+                } else if calleeName == interner.intern("intersect") {
+                    runtimeCallee = "kk_sequence_intersect"
                 } else if calleeName == interner.intern("any") {
                     runtimeCallee = useIterableRuntimeForCollectionFallback ? "kk_iterable_any" : "kk_sequence_any"
                 } else if calleeName == interner.intern("all") {
