@@ -3469,6 +3469,31 @@ public func kk_sequence_minOrNull(_ seqRaw: Int) -> Int {
     return best ?? runtimeNullSentinelInt
 }
 
+@_cdecl("kk_sequence_min")
+public func kk_sequence_min(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    var best: Int? = nil
+    let traversalState = runtimeTraverseSequenceSource(seqRaw, caller: #function, outThrown: outThrown) { elem in
+        if let current = best {
+            if runtimeCompareValues(elem, current) < 0 {
+                best = elem
+            }
+        } else {
+            best = elem
+        }
+        return true
+    }
+    if (outThrown?.pointee ?? 0) != 0 {
+        return runtimeExceptionCaughtSentinel
+    }
+    if let traversalState, traversalState.limitReached {
+        return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached), outThrown)
+    }
+    guard let best else {
+        return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: kEmptySequenceNoSuchElement), outThrown)
+    }
+    return best
+}
+
 @_cdecl("kk_sequence_flatten")
 public func kk_sequence_flatten(_ seqRaw: Int) -> Int {
     var outerElements: [Int] = []

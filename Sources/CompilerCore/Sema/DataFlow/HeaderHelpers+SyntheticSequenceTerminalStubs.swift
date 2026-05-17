@@ -2575,6 +2575,35 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        if types.comparableInterfaceSymbol == nil {
+            registerSyntheticComparableStub(symbols: symbols, types: types, interner: interner)
+        }
+        let comparableElementBounds: [TypeID] = if let comparableSymbol = types.comparableInterfaceSymbol {
+            [types.make(.classType(ClassType(
+                classSymbol: comparableSymbol,
+                args: [.invariant(typeParamType)],
+                nullability: .nonNull
+            )))]
+        } else {
+            []
+        }
+
+        // min(): T
+        registerSequenceMemberStub(
+            named: "min",
+            externalLinkName: "kk_sequence_min",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: typeParamType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner,
+            canThrow: true,
+            typeParameterUpperBounds: comparableElementBounds
+        )
+
         // flatten(): Sequence<T>
         registerSequenceMemberStub(
             named: "flatten",
