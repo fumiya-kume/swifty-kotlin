@@ -1199,6 +1199,12 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let returnsSymbol = ensureInterfaceSymbol(
+            named: "Returns",
+            in: contractsFQName,
+            symbols: symbols,
+            interner: interner
+        )
         let returnsNotNullSymbol = ensureInterfaceSymbol(
             named: "ReturnsNotNull",
             in: contractsFQName,
@@ -1223,6 +1229,7 @@ extension DataFlowSemaPhase {
             symbols.setParentSymbol(contractsPkg, for: effectSymbol)
             symbols.setParentSymbol(contractsPkg, for: callsInPlaceSymbol)
             symbols.setParentSymbol(contractsPkg, for: simpleEffectSymbol)
+            symbols.setParentSymbol(contractsPkg, for: returnsSymbol)
             symbols.setParentSymbol(contractsPkg, for: returnsNotNullSymbol)
             symbols.setParentSymbol(contractsPkg, for: conditionalEffectSymbol)
             symbols.setParentSymbol(contractsPkg, for: holdsInSymbol)
@@ -1332,6 +1339,7 @@ extension DataFlowSemaPhase {
         let effectType = types.make(.classType(ClassType(classSymbol: effectSymbol, args: [], nullability: .nonNull)))
         let callsInPlaceType = types.make(.classType(ClassType(classSymbol: callsInPlaceSymbol, args: [], nullability: .nonNull)))
         let simpleEffectType = types.make(.classType(ClassType(classSymbol: simpleEffectSymbol, args: [], nullability: .nonNull)))
+        let returnsType = types.make(.classType(ClassType(classSymbol: returnsSymbol, args: [], nullability: .nonNull)))
         let returnsNotNullType = types.make(.classType(ClassType(classSymbol: returnsNotNullSymbol, args: [], nullability: .nonNull)))
         let conditionalEffectType = types.make(.classType(ClassType(classSymbol: conditionalEffectSymbol, args: [], nullability: .nonNull)))
         let holdsInType = types.make(.classType(ClassType(classSymbol: holdsInSymbol, args: [], nullability: .nonNull)))
@@ -1340,6 +1348,7 @@ extension DataFlowSemaPhase {
         symbols.setPropertyType(effectType, for: effectSymbol)
         symbols.setPropertyType(callsInPlaceType, for: callsInPlaceSymbol)
         symbols.setPropertyType(simpleEffectType, for: simpleEffectSymbol)
+        symbols.setPropertyType(returnsType, for: returnsSymbol)
         symbols.setPropertyType(returnsNotNullType, for: returnsNotNullSymbol)
         symbols.setPropertyType(conditionalEffectType, for: conditionalEffectSymbol)
         symbols.setPropertyType(holdsInType, for: holdsInSymbol)
@@ -1347,6 +1356,7 @@ extension DataFlowSemaPhase {
         symbols.setDirectSupertypes([contractEffectSymbol], for: effectSymbol)
         symbols.setDirectSupertypes([effectSymbol], for: callsInPlaceSymbol)
         symbols.setDirectSupertypes([effectSymbol], for: simpleEffectSymbol)
+        symbols.setDirectSupertypes([simpleEffectSymbol], for: returnsSymbol)
         symbols.setDirectSupertypes([simpleEffectSymbol], for: returnsNotNullSymbol)
         symbols.setDirectSupertypes([effectSymbol], for: conditionalEffectSymbol)
         symbols.setDirectSupertypes([effectSymbol], for: holdsInSymbol)
@@ -1359,6 +1369,15 @@ extension DataFlowSemaPhase {
             existingCallsInPlaceAnnotations.append(annotation)
         }
         symbols.setAnnotations(existingCallsInPlaceAnnotations, for: callsInPlaceSymbol)
+
+        let returnsAnnotations = [
+            MetadataAnnotationRecord(annotationFQName: "kotlin.contracts.ExperimentalContracts"),
+        ]
+        var existingReturnsAnnotations = symbols.annotations(for: returnsSymbol)
+        for annotation in returnsAnnotations where !existingReturnsAnnotations.contains(annotation) {
+            existingReturnsAnnotations.append(annotation)
+        }
+        symbols.setAnnotations(existingReturnsAnnotations, for: returnsSymbol)
 
         let returnsNotNullAnnotations = [
             MetadataAnnotationRecord(annotationFQName: "kotlin.contracts.ExperimentalContracts"),
@@ -1448,7 +1467,7 @@ extension DataFlowSemaPhase {
             name: "returns",
             receiverType: builderType,
             params: [],
-            returnType: simpleEffectType
+            returnType: returnsType
         )
         ensureMember(
             owner: builderSymbol,
@@ -1456,7 +1475,7 @@ extension DataFlowSemaPhase {
             name: "returns",
             receiverType: builderType,
             params: [types.booleanType],
-            returnType: simpleEffectType
+            returnType: returnsType
         )
         ensureMember(
             owner: simpleEffectSymbol,

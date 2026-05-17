@@ -360,7 +360,7 @@ final class KotlinContractsEffectModelTests: XCTestCase {
     // MARK: - ContractBuilder stubs resolve in symbol table
 
     /// The compiler must synthesize the full `kotlin.contracts` package with
-    /// ContractBuilder, Effect, CallsInPlace, SimpleEffect, ReturnsNotNull, ConditionalEffect,
+    /// ContractBuilder, Effect, CallsInPlace, SimpleEffect, Returns, ReturnsNotNull, ConditionalEffect,
     /// HoldsIn, and InvocationKind so that user code importing `kotlin.contracts.*` can
     /// resolve these names.
     func testContractBuilderAndInvocationKindSymbolsExist() throws {
@@ -387,6 +387,7 @@ final class KotlinContractsEffectModelTests: XCTestCase {
             ("Effect", .interface),
             ("CallsInPlace", .interface),
             ("SimpleEffect", .interface),
+            ("Returns", .interface),
             ("ReturnsNotNull", .interface),
             ("ConditionalEffect", .interface),
             ("HoldsIn", .interface),
@@ -466,6 +467,72 @@ final class KotlinContractsEffectModelTests: XCTestCase {
                     && signature.returnType == callsInPlaceType
             },
             "ContractBuilder.callsInPlace(lambda, kind) should return CallsInPlace"
+        )
+    }
+
+    func testReturnsInterfaceAndBuilderSurfaceAreRegistered() throws {
+        let source = """
+        import kotlin.contracts.*
+
+        fun noop() {}
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+        let sema = try XCTUnwrap(ctx.sema)
+
+        let contractsFQName = [
+            ctx.interner.intern("kotlin"),
+            ctx.interner.intern("contracts"),
+        ]
+        let simpleEffectSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: contractsFQName + [ctx.interner.intern("SimpleEffect")])
+        )
+        let returnsSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: contractsFQName + [ctx.interner.intern("Returns")])
+        )
+        XCTAssertEqual(sema.symbols.symbol(returnsSymbol)?.kind, .interface)
+        XCTAssertTrue(
+            sema.symbols.directSupertypes(for: returnsSymbol).contains(simpleEffectSymbol),
+            "Returns must extend SimpleEffect"
+        )
+        let returnsAnnotations = sema.symbols.annotations(for: returnsSymbol)
+        XCTAssertTrue(
+            returnsAnnotations.contains { $0.annotationFQName == "kotlin.contracts.ExperimentalContracts" },
+            "Returns should carry ExperimentalContracts"
+        )
+
+        let builderFQName = contractsFQName + [ctx.interner.intern("ContractBuilder")]
+        let builderSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: builderFQName))
+        let builderType = sema.types.make(.classType(ClassType(
+            classSymbol: builderSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let returnsType = sema.types.make(.classType(ClassType(
+            classSymbol: returnsSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let returnsOverloads = sema.symbols.lookupAll(
+            fqName: builderFQName + [ctx.interner.intern("returns")]
+        )
+        XCTAssertTrue(
+            returnsOverloads.contains { symbol in
+                guard let signature = sema.symbols.functionSignature(for: symbol) else { return false }
+                return signature.receiverType == builderType
+                    && signature.parameterTypes.isEmpty
+                    && signature.returnType == returnsType
+            },
+            "ContractBuilder.returns() should return Returns"
+        )
+        XCTAssertTrue(
+            returnsOverloads.contains { symbol in
+                guard let signature = sema.symbols.functionSignature(for: symbol) else { return false }
+                return signature.receiverType == builderType
+                    && signature.parameterTypes == [sema.types.booleanType]
+                    && signature.returnType == returnsType
+            },
+            "ContractBuilder.returns(value) should return Returns"
         )
     }
 
