@@ -119,6 +119,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("associate", 1),
             sequence("associateBy", 1),
             sequence("associateWith", 1),
+            sequence("chunked", 1),
             sequence("sumOf", 1),
             sequence("sumBy", 1),
             sequence("sumByDouble", 1),

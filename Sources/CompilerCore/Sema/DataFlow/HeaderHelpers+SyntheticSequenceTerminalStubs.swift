@@ -1637,6 +1637,21 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // STDLIB-SEQ-FN-012: chunked(size): Sequence<List<T>>
+        let chunkedReturnType = types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
+            args: [.out(listReturnType)],
+            nullability: .nonNull
+        )))
+        registerSequenceOverloadedMemberStub(
+            named: "chunked",
+            externalLinkName: "kk_sequence_chunked",
+            receiverType: receiverType,
+            parameters: [("size", types.intType)],
+            returnType: chunkedReturnType,
+            canThrow: true
+        )
+
         // forEachIndexed(action: (Int, T) -> Unit): Unit
         let forEachIndexedActionType = types.make(.functionType(FunctionType(
             params: [types.intType, typeParamType],

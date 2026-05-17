@@ -924,6 +924,13 @@ extension RuntimeSequenceTests {
         XCTAssertEqual(transformed, 0)
     }
 
+    func testSequenceChunkedReturnsSequenceOfChunkLists() {
+        let chunked = kk_sequence_chunked(makeSequence([1, 2, 3, 4, 5]), 2)
+        let chunkHandles = sequenceElements(chunked)
+
+        XCTAssertEqual(chunkHandles.map { listElements($0) }, [[1, 2], [3, 4], [5]])
+    }
+
     func testSequenceChunkedTransformCorrectness() {
         let seq = makeSequence([1, 2, 3, 4, 5])
         let transformed = kk_sequence_chunked_transform(
