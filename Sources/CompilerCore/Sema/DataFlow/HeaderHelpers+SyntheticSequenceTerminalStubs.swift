@@ -1811,6 +1811,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // reduceRightOrNull(operation): T?
+        registerSequenceMemberStub(
+            named: "reduceRightOrNull",
+            externalLinkName: "kk_sequence_reduceRightOrNull",
+            receiverType: receiverType,
+            parameters: [("operation", reduceRightOperationType)],
+            returnType: types.makeNullable(typeParamType),
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // scan(initial, operation): Sequence<R>
         let scanName = interner.intern("scan")
         let scanFQName = sequenceFQName + [scanName]
@@ -1852,7 +1866,6 @@ extension DataFlowSemaPhase {
                 additionalTypeParameterUpperBoundsList: [[]]
             )
         }
-
         // runningFoldIndexed(initial, operation): Sequence<R>
         let runningFoldIndexedName = interner.intern("runningFoldIndexed")
         let runningFoldIndexedFQName = sequenceFQName + [runningFoldIndexedName]

@@ -355,6 +355,7 @@ private extension StdlibSurfaceSpec {
         sequence("filterIsInstance", 0, "kk_sequence_filterIsInstance", returnStrategy: .sequence, lambdaExpectation: .none),
         sequence("filterIsInstanceTo", 1, "kk_sequence_filterIsInstanceTo", returnStrategy: .destinationArgument, lambdaExpectation: .none),
         sequence("reduceRightIndexed", 1, "kk_sequence_reduceRightIndexed", returnStrategy: .receiverElement, lambdaExpectation: .indexedReceiverElement(argumentIndex: 0, returnStrategy: .any)),
+        sequence("reduceRightOrNull", 1, "kk_sequence_reduceRightOrNull", returnStrategy: .nullableReceiverElement, lambdaExpectation: .receiverElement(argumentIndex: 0, returnStrategy: .any)),
         sequence("requireNoNulls", 0, "kk_sequence_requireNoNulls", returnStrategy: .sequence, lambdaExpectation: .none),
         sequence("minus", 1, "kk_sequence_minus", returnStrategy: .sequence, lambdaExpectation: .none),
         sequence("associateTo", 2, "kk_sequence_associateTo", returnStrategy: .destinationArgument, lambdaExpectation: .destinationElement(argumentIndex: 1, returnStrategy: .pairOfDestinationKeyValue)),
