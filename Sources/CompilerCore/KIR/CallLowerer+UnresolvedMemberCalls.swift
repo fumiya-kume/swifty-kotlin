@@ -689,6 +689,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_asIterable")
             case interner.intern("mapIndexed"):
                 return interner.intern("kk_sequence_mapIndexed")
+            case interner.intern("filterIndexed"):
+                return interner.intern("kk_sequence_filterIndexed")
             case interner.intern("flatMapIndexed"):
                 return interner.intern("kk_sequence_flatMapIndexed")
             case interner.intern("withIndex"):
