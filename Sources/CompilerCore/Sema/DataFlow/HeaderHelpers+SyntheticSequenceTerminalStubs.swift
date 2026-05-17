@@ -804,6 +804,92 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // flatMap(transform): Sequence<R> for Iterable<R> and Sequence<R> transform results.
+        do {
+            let memberName = interner.intern("flatMap")
+            let memberFQName = sequenceFQName + [memberName]
+            let rName = interner.intern("R")
+            let rSymbol = symbols.lookup(fqName: memberFQName + [rName]) ?? symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: memberFQName + [rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let sequenceRType = types.make(.classType(ClassType(
+                classSymbol: sequenceSymbol,
+                args: [.out(rType)],
+                nullability: .nonNull
+            )))
+
+            func registerFlatMapOverload(transformReturnType: TypeID) {
+                let transformType = types.make(.functionType(FunctionType(
+                    params: [typeParamType],
+                    returnType: transformReturnType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                let alreadyRegistered = symbols.lookupAll(fqName: memberFQName).contains { symbolID in
+                    guard let signature = symbols.functionSignature(for: symbolID),
+                          signature.receiverType == receiverType,
+                          signature.parameterTypes == [transformType],
+                          signature.returnType == sequenceRType
+                    else { return false }
+                    return true
+                }
+                guard !alreadyRegistered else { return }
+
+                let memberSymbol = symbols.define(
+                    kind: .function,
+                    name: memberName,
+                    fqName: memberFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic, .operatorFunction]
+                )
+                symbols.setParentSymbol(sequenceSymbol, for: memberSymbol)
+                symbols.setExternalLinkName("kk_sequence_flatMap", for: memberSymbol)
+
+                let transformName = interner.intern("transform")
+                let transformSymbol = symbols.define(
+                    kind: .valueParameter,
+                    name: transformName,
+                    fqName: memberFQName + [transformName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(memberSymbol, for: transformSymbol)
+
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [transformType],
+                        returnType: sequenceRType,
+                        canThrow: true,
+                        valueParameterSymbols: [transformSymbol],
+                        valueParameterHasDefaultValues: [false],
+                        valueParameterIsVararg: [false],
+                        typeParameterSymbols: [typeParamSymbol, rSymbol],
+                        typeParameterUpperBoundsList: [[], []],
+                        classTypeParameterCount: 1
+                    ),
+                    for: memberSymbol
+                )
+            }
+
+            let iterableRType = makeSyntheticIterableType(
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                elementType: rType
+            )
+            registerFlatMapOverload(transformReturnType: iterableRType)
+            registerFlatMapOverload(transformReturnType: sequenceRType)
+        }
+
         // flatMapIndexed(transform): Sequence<R> for Iterable<R> and Sequence<R> transform results.
         do {
             let memberName = interner.intern("flatMapIndexed")
