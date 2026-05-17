@@ -141,6 +141,11 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerCreateInstanceFunction(
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
         let kAnnotatedElementSymbol = registerSyntheticKAnnotatedElementStub(
             symbols: symbols, types: types, interner: interner,
             kotlinReflectPkg: kotlinReflectPkg
@@ -2022,6 +2027,76 @@ extension DataFlowSemaPhase {
         )
         symbols.setAnnotations(
             [MetadataAnnotationRecord(annotationFQName: "kotlin.reflect.ExperimentalAssociatedObjects")],
+            for: functionSymbol
+        )
+    }
+
+    private func registerCreateInstanceFunction(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let kotlinReflectFullPkg = ensurePackage(
+            path: ["kotlin", "reflect", "full"],
+            symbols: symbols,
+            interner: interner
+        )
+        let functionName = interner.intern("createInstance")
+        let functionFQName = kotlinReflectFullPkg + [functionName]
+        guard symbols.lookupAll(fqName: functionFQName).isEmpty else { return }
+
+        let typeParamName = interner.intern("T")
+        let typeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: functionFQName + [typeParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let kotlinReflectPkg = ensurePackage(
+            path: ["kotlin", "reflect"],
+            symbols: symbols,
+            interner: interner
+        )
+        let kClassSymbol = ensureInterfaceSymbol(
+            named: "KClass",
+            in: kotlinReflectPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: kClassSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: kotlinReflectFullPkg), packageSymbol != .invalid {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setParentSymbol(functionSymbol, for: typeParamSymbol)
+        symbols.setTypeParameterUpperBounds([types.anyType], for: typeParamSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: typeParamType,
+                typeParameterSymbols: [typeParamSymbol],
+                typeParameterUpperBoundsList: [[types.anyType]],
+                classTypeParameterCount: 0
+            ),
             for: functionSymbol
         )
     }
