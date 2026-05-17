@@ -777,6 +777,43 @@ extension DataFlowSemaPhase {
             interner: interner,
             canThrow: true
         )
+        // elementAtOrElse<T>(index: Int, defaultValue: (Int) -> T): T
+        // Use a method-local T so Sequence's `out T` projection does not block
+        // returning T from the default lambda.
+        do {
+            let memberName = interner.intern("elementAtOrElse")
+            let methodTName = interner.intern("T")
+            let methodTFQName = sequenceFQName + [memberName, methodTName]
+            let methodTSymbol = symbols.lookup(fqName: methodTFQName) ?? symbols.define(
+                kind: .typeParameter,
+                name: methodTName,
+                fqName: methodTFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let methodTType = types.make(.typeParam(TypeParamType(symbol: methodTSymbol, nullability: .nonNull)))
+            let methodReceiverType = types.make(.classType(ClassType(
+                classSymbol: sequenceSymbol,
+                args: [.out(methodTType)],
+                nullability: .nonNull
+            )))
+            let defaultValueType = types.make(.functionType(FunctionType(
+                params: [types.intType],
+                returnType: methodTType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            registerSequenceOverloadedMemberStub(
+                named: "elementAtOrElse",
+                externalLinkName: "kk_sequence_elementAtOrElse",
+                receiverType: methodReceiverType,
+                parameters: [("index", types.intType), ("defaultValue", defaultValueType)],
+                returnType: methodTType,
+                additionalTypeParameterSymbols: [methodTSymbol],
+                canThrow: true
+            )
+        }
 
         // findLast(predicate: (T) -> Boolean): T?
         registerSequenceMemberStub(

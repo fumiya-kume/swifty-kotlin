@@ -299,6 +299,7 @@ private extension StdlibSurfaceSpec {
         sequence("count", 0, "kk_sequence_count", returnStrategy: .int, lambdaExpectation: .none),
         sequence("distinctBy", 1, "kk_sequence_distinctBy", returnStrategy: .sequence, lambdaExpectation: .receiverElement(argumentIndex: 0, returnStrategy: .any)),
         sequence("elementAt", 1, "kk_sequence_elementAt", returnStrategy: .receiver, lambdaExpectation: .none),
+        sequence("elementAtOrElse", 2, "kk_sequence_elementAtOrElse", returnStrategy: .receiver, lambdaExpectation: .none),
         sequence("shuffled", 0, "kk_sequence_shuffled", returnStrategy: .sequence, lambdaExpectation: .none),
         sequence("shuffled", 1, "kk_sequence_shuffled_random", returnStrategy: .sequence, lambdaExpectation: .none),
         sequence("elementAtOrNull", 1, "kk_sequence_elementAtOrNull", returnStrategy: .nullableAny, lambdaExpectation: .none),

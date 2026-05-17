@@ -134,6 +134,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("averageOf", 1),
             sequence("elementAtOrNull", 1),
             sequence("elementAt", 1),
+            sequence("elementAtOrElse", 2),
             sequence("sumOf", 1),
             sequence("sumBy", 1),
             sequence("sumByDouble", 1),

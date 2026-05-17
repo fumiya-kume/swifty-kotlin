@@ -205,8 +205,10 @@
 - [ ] STDLIB-SEQ-FN-016: `distinct` 関数の実装
 - [ ] STDLIB-SEQ-FN-017: `distinctBy` 関数の実装
 - [ ] STDLIB-SEQ-FN-018: `drop` 関数の実装
+- [ ] STDLIB-SEQ-FN-019: `dropWhile` 関数の実装
 - [x] STDLIB-SEQ-FN-020: `elementAt` 関数の実装
-- [ ] STDLIB-SEQ-FN-021: `elementAtOrElse` 関数の実装
+- [x] STDLIB-SEQ-FN-021: `elementAtOrElse` 関数の実装
+- [ ] STDLIB-SEQ-FN-022: `elementAtOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-023: `filter` 関数の実装
 - [ ] STDLIB-SEQ-FN-025: `filterIndexedTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-026: `filterIsInstance` 関数の実装

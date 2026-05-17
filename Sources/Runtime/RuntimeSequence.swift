@@ -2834,6 +2834,28 @@ public func kk_sequence_elementAt(_ seqRaw: Int, _ index: Int, _ outThrown: Unsa
     return elements[index]
 }
 
+@_cdecl("kk_sequence_elementAtOrElse")
+public func kk_sequence_elementAtOrElse(
+    _ seqRaw: Int,
+    _ index: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    if elements.indices.contains(index) {
+        return elements[index]
+    }
+    let defaultValue = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var thrown = 0
+    let result = defaultValue(closureRaw, index, &thrown)
+    if thrown != 0 {
+        outThrown?.pointee = thrown
+        return runtimeNullSentinelInt
+    }
+    return result
+}
+
 @_cdecl("kk_sequence_sum")
 public func kk_sequence_sum(_ seqRaw: Int) -> Int {
     let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)

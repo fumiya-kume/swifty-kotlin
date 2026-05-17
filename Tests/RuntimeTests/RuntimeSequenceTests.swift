@@ -147,6 +147,10 @@ private let sequenceModuloThreeSelector: @convention(c) (Int, Int, UnsafeMutable
     value % 3
 }
 
+private let sequenceIndexTimesTen: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, _ in
+    index * 10
+}
+
 private let sequenceValueTimesTen: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     value * 10
 }
@@ -1860,6 +1864,34 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         let fn = unsafeBitCast(keepEvenIndexOrLargeValue, to: Int.self)
         let filtered = kk_sequence_filterIndexed(makeSequence([10, 20, 30, 40]), fn, 0, nil)
         XCTAssertEqual(sequenceElements(filtered), [10, 30, 40])
+    }
+
+    func testElementAtOrElseReturnsIndexedValueWhenPresent() {
+        var thrown = 0
+        let result = kk_sequence_elementAtOrElse(
+            makeSequence([10, 20, 30]),
+            1,
+            unsafeBitCast(sequenceIndexTimesTen, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 20)
+    }
+
+    func testElementAtOrElseUsesDefaultForOutOfBoundsIndex() {
+        var thrown = 0
+        let result = kk_sequence_elementAtOrElse(
+            makeSequence([10]),
+            3,
+            unsafeBitCast(sequenceIndexTimesTen, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 30)
     }
 
     // MARK: - Sequence shuffled tests (STDLIB-SEQ-019)

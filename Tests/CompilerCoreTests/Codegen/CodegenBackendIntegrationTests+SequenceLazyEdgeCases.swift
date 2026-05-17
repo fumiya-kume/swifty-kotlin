@@ -349,6 +349,29 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testSequenceElementAtOrElseUsesDefaultForMissingIndex() throws {
+        let source = """
+        fun main() {
+            println(sequenceOf(10, 20, 30).elementAtOrElse(4) { it * 10 })
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceElementAtOrElse",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "40\n")
+        }
+    }
+
     // MARK: - filterIndexed keeps indexed matches
 
     func testSequenceFilterIndexedKeepsIndexedMatches() throws {
@@ -448,6 +471,8 @@ extension CodegenBackendIntegrationTests {
             XCTAssertEqual(normalizedStdout, "20\n")
         }
     }
+
+
 
     // MARK: - filterIsInstance keeps matching runtime types
 
