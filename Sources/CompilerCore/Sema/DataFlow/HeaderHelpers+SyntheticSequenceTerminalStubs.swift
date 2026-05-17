@@ -1035,6 +1035,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // subtract(other: Iterable<T>): Set<T> (STDLIB-SEQ-FN-115)
+        registerSequenceMemberStub(
+            named: "subtract",
+            externalLinkName: "kk_sequence_subtract",
+            receiverType: receiverType,
+            parameters: [("other", iterableReturnType)],
+            returnType: setReturnType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // foldIndexed(initial, operation): R
         registerSequenceMemberStub(
             named: "foldIndexed",

@@ -1238,6 +1238,15 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(listElements(asList), [1, 3])
     }
 
+    // MARK: - Sequence.subtract (STDLIB-SEQ-FN-115)
+
+    func testSubtractReturnsSetRemovingIterableElements() {
+        let seq = makeSequence([1, 2, 2, 3, 4])
+        let other = makeList([2, 4, 2])
+        let result = kk_sequence_subtract(seq, other)
+        XCTAssertEqual(setElements(result), [1, 3])
+    }
+
     // MARK: - Eager Materialization (Intentional Simplification)
 
     func testPlusEagerlyMaterializesResult() {
