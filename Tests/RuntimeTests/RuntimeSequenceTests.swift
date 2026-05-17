@@ -408,6 +408,11 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
     }
 
+    func testMinOrNullReturnsSmallestElementAndNullOnEmpty() {
+        XCTAssertEqual(kk_sequence_minOrNull(makeSequence([5, 2, 3])), 2)
+        XCTAssertEqual(kk_sequence_minOrNull(makeSequence([])), runtimeNullSentinelInt)
+    }
+
     func testMaxOrNullReturnsLargestElementAndNullOnEmpty() {
         XCTAssertEqual(kk_sequence_maxOrNull(makeSequence([3, 1, 4, 2])), 4)
         XCTAssertEqual(kk_sequence_maxOrNull(makeSequence([])), runtimeNullSentinelInt)

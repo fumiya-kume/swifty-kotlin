@@ -196,6 +196,16 @@ extension DataFlowSemaPhase {
             interner.intern("collections"),
             interner.intern("MutableSet"),
         ], elementType: typeParamType, invariant: true)
+        let comparableElementBounds: [TypeID] = {
+            guard let comparableSymbol = types.comparableInterfaceSymbol else {
+                return []
+            }
+            return [types.make(.classType(ClassType(
+                classSymbol: comparableSymbol,
+                args: [.in(typeParamType)],
+                nullability: .nonNull
+            )))]
+        }()
 
         // sorted(): Sequence<T>
         registerSequenceOverloadedMemberStub(
@@ -2406,12 +2416,13 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_sequence_minOrNull",
             receiverType: receiverType,
             parameters: [],
-            returnType: types.makeNullable(types.anyType),
+            returnType: types.makeNullable(typeParamType),
             sequenceSymbol: sequenceSymbol,
             sequenceFQName: sequenceFQName,
             typeParamSymbol: typeParamSymbol,
             symbols: symbols,
-            interner: interner
+            interner: interner,
+            typeParameterUpperBoundsList: [comparableElementBounds]
         )
 
         // flatten(): Sequence<T>
