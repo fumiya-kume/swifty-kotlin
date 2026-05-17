@@ -114,6 +114,11 @@ private let sequenceAssociatePair: @convention(c) (Int, Int, UnsafeMutablePointe
     kk_pair_new(value * 2, value * 10)
 }
 
+// Maps value → (value % 2, value * 10), producing duplicate keys for odd/even groups.
+private let sequenceAssociatePairDuplicateKeys: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    kk_pair_new(value % 2, value * 10)
+}
+
 private let sequenceParitySelector: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     value % 2
 }
@@ -331,19 +336,22 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
     }
 
     func testAssociateBuildsMapWithLastWriteForDuplicateKeys() {
+        // Sequence [1, 2, 3] with key = value % 2 produces:
+        //   1 → key 1, value 10
+        //   2 → key 0, value 20
+        //   3 → key 1, value 30  (duplicate key 1; last-write-wins → 30)
         let seq = makeSequence([1, 2, 3])
 
         let result = kk_sequence_associate(
             seq,
-            unsafeBitCast(sequenceAssociatePair, to: Int.self),
+            unsafeBitCast(sequenceAssociatePairDuplicateKeys, to: Int.self),
             0,
             nil
         )
 
-        XCTAssertEqual(mapKeys(result), [2, 4, 6])
-        XCTAssertEqual(kk_map_get(result, 2), 10)
-        XCTAssertEqual(kk_map_get(result, 4), 20)
-        XCTAssertEqual(kk_map_get(result, 6), 30)
+        XCTAssertEqual(mapKeys(result).sorted(), [0, 1])
+        XCTAssertEqual(kk_map_get(result, 0), 20)
+        XCTAssertEqual(kk_map_get(result, 1), 30, "last-write-wins: key 1 should map to value from element 3")
     }
 
     func testAssociateByToUsesLastWriteForDuplicateKeys() {
