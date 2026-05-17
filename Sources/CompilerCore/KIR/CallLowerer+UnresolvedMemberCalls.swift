@@ -778,6 +778,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_toHashSet")
             case interner.intern("partition"):
                 return interner.intern("kk_sequence_partition")
+            case interner.intern("minBy"):
+                return interner.intern("kk_sequence_minBy")
             case interner.intern("maxBy"):
                 return interner.intern("kk_sequence_maxBy")
             case interner.intern("minByOrNull"):
