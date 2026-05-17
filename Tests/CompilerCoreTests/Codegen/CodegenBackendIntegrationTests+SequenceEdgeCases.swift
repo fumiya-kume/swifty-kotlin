@@ -68,6 +68,33 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenSequencePlusConcatenatesSequences() throws {
+        let source = """
+        fun main() {
+            val memberResult = sequenceOf(1, 2).plus(sequenceOf(3, 4)).toList()
+            val operatorResult = (sequenceOf(5, 6) + sequenceOf(7, 8)).toList()
+
+            println(memberResult)
+            println(operatorResult)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequencePlus",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[1, 2, 3, 4]\n[5, 6, 7, 8]\n")
+        }
+    }
+
     func testCodegenSequenceReduceIndexedOrNull() throws {
         let source = """
         fun main() {

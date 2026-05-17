@@ -2626,7 +2626,21 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_onEach"
                 } else if calleeName == interner.intern("onEachIndexed") {
                     runtimeCallee = "kk_sequence_onEachIndexed"
-                } else if calleeName == interner.intern("plus") || calleeName == interner.intern("plusElement") {
+                } else if calleeName == interner.intern("plus") {
+                    if let firstArg = args.first {
+                        let argType = sema.types.makeNonNullable(
+                            sema.bindings.exprTypes[firstArg.expr] ?? sema.types.anyType
+                        )
+                        runtimeCallee = (sema.bindings.isCollectionExpr(firstArg.expr)
+                            || isSequenceLikeType(argType, sema: sema, interner: interner)
+                            || isIterableOrCollectionInterfaceType(argType, sema: sema, interner: interner)
+                            || isConcreteCollectionLikeType(argType, sema: sema, interner: interner))
+                            ? "kk_sequence_plus"
+                            : "kk_sequence_plus_element"
+                    } else {
+                        runtimeCallee = "kk_sequence_plus_element"
+                    }
+                } else if calleeName == interner.intern("plusElement") {
                     runtimeCallee = "kk_sequence_plus_element"
                 } else if calleeName == interner.intern("minus") || calleeName == interner.intern("minusElement") {
                     runtimeCallee = "kk_sequence_minus"
