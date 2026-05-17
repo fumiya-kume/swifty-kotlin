@@ -297,7 +297,7 @@
 - [ ] STDLIB-SEQ-FN-034: `first` 関数の実装
 - [ ] STDLIB-SEQ-FN-037: `firstOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-038: `flatMap` 関数の実装
-- [ ] STDLIB-SEQ-FN-039: `flatMapIndexed` 関数の実装
+- [x] STDLIB-SEQ-FN-039: `flatMapIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-040: `flatMapIndexedTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-041: `flatMapTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-042: `fold` 関数の実装
