@@ -855,8 +855,6 @@ extension CollectionLiteralLoweringPass {
                             kkCallee = lookup.kkFileMkdirsName
                         case lookup.readBytesName:
                             kkCallee = lookup.kkFileReadBytesName
-                        case lookup.appendTextName:
-                            kkCallee = lookup.kkFileAppendTextName
                         // STDLIB-IO-087: Additional File operations
                         case lookup.absolutePathName:
                             kkCallee = lookup.kkFileAbsolutePathName
