@@ -316,6 +316,13 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(extractString(from: UnsafeMutableRawPointer(bitPattern: renderedRaw)), "[1:2:3]")
     }
 
+    func testLastIndexOfReturnsFinalMatchingIndexOrMinusOne() {
+        let seq = makeSequence([1, 2, 3, 2])
+
+        XCTAssertEqual(kk_sequence_lastIndexOf(seq, 2), 3)
+        XCTAssertEqual(kk_sequence_lastIndexOf(seq, 4), -1)
+    }
+
     func testAssociateToPopulatesExistingDestinationMap() {
         let seq = makeSequence([1, 2, 3])
         let dest = registerRuntimeObject(RuntimeMapBox(keys: [99], values: [999]))

@@ -2289,6 +2289,29 @@ public func kk_sequence_indexOf(_ seqRaw: Int, _ element: Int) -> Int {
     return index
 }
 
+@_cdecl("kk_sequence_lastIndexOf")
+public func kk_sequence_lastIndexOf(_ seqRaw: Int, _ element: Int) -> Int {
+    var index = -1
+    var currentIndex = 0
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        runtimeTraverseSequence(seq, outThrown: nil) { elem in
+            if runtimeValuesEqual(elem, element) {
+                index = currentIndex
+            }
+            currentIndex += 1
+            return true
+        }
+    } else {
+        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
+            if runtimeValuesEqual(elem, element) {
+                index = currentIndex
+            }
+            currentIndex += 1
+        }
+    }
+    return index
+}
+
 @_cdecl("kk_sequence_elementAtOrNull")
 public func kk_sequence_elementAtOrNull(_ seqRaw: Int, _ index: Int) -> Int {
     let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)

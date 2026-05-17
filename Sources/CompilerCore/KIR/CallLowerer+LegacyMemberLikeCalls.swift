@@ -2512,6 +2512,7 @@ extension CallLowerer {
                 let groupByToName = interner.intern("groupByTo")
                 let containsName = interner.intern("contains")
                 let indexOfName = interner.intern("indexOf")
+                let lastIndexOfName = interner.intern("lastIndexOf")
                 let elementAtName = interner.intern("elementAt")
                 let elementAtOrNullName = interner.intern("elementAtOrNull")
                 let findLastName = interner.intern("findLast")
@@ -2571,6 +2572,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_contains"
                 } else if calleeName == indexOfName {
                     runtimeCallee = "kk_sequence_indexOf"
+                } else if calleeName == lastIndexOfName {
+                    runtimeCallee = "kk_sequence_lastIndexOf"
                 } else if calleeName == elementAtName {
                     runtimeCallee = "kk_sequence_elementAt"
                 } else if calleeName == elementAtOrNullName {

@@ -462,6 +462,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // lastIndexOf(element: T): Int
+        registerSequenceMemberStub(
+            named: "lastIndexOf",
+            externalLinkName: "kk_sequence_lastIndexOf",
+            receiverType: receiverType,
+            parameters: [("element", typeParamType)],
+            returnType: types.intType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // elementAtOrNull(index: Int): T?
         registerSequenceMemberStub(
             named: "elementAtOrNull",
