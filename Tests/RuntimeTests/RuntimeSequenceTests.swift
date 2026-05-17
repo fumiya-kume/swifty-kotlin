@@ -330,6 +330,22 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_map_get(result, 6), 30)
     }
 
+    func testAssociateBuildsMapWithLastWriteForDuplicateKeys() {
+        let seq = makeSequence([1, 2, 3])
+
+        let result = kk_sequence_associate(
+            seq,
+            unsafeBitCast(sequenceAssociatePair, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(mapKeys(result), [2, 4, 6])
+        XCTAssertEqual(kk_map_get(result, 2), 10)
+        XCTAssertEqual(kk_map_get(result, 4), 20)
+        XCTAssertEqual(kk_map_get(result, 6), 30)
+    }
+
     func testAssociateByToUsesLastWriteForDuplicateKeys() {
         let seq = makeSequence([1, 2, 3])
         let dest = registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
