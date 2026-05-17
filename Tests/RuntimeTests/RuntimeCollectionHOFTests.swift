@@ -684,6 +684,32 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertNotEqual(thrown, 0)
     }
 
+    func testMinOfWithReturnsComparatorSelectedValueAndThrowsOnEmpty() {
+        var thrown = 0
+        let result = kk_list_minOfWith(
+            makeList([5, 2, 3]),
+            unsafeBitCast(reverseIntComparator, to: Int.self),
+            0,
+            unsafeBitCast(valueTimesTen, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 50)
+
+        thrown = 0
+        let emptyResult = kk_list_minOfWith(
+            makeList([]),
+            unsafeBitCast(reverseIntComparator, to: Int.self),
+            0,
+            unsafeBitCast(valueTimesTen, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(emptyResult, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
     func testListElementAtReturnsElementAndThrowsWhenOutOfBounds() {
         let source = makeList([10, 20, 30])
 
