@@ -745,6 +745,22 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(sequenceElements(result), [10, 10, 12, 18])
     }
 
+    func testScanIndexedIncludesInitialAccumulatorAndIndex() {
+        let seq = makeSequence([1, 2, 3])
+        var thrown = 0
+
+        let result = kk_sequence_scanIndexed(
+            seq,
+            10,
+            unsafeBitCast(indexedAccumulatingSum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(sequenceElements(result), [10, 10, 12, 18])
+    }
+
     func testRunningReduceEmptySequenceReturnsEmptyList() {
         let seq = makeSequence([])
         var thrown = 0

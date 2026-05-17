@@ -924,6 +924,7 @@ extension CallLowerer {
             interner.intern("kk_list_windowed_transform"),
             interner.intern("kk_sequence_chunked_transform"),
             interner.intern("kk_sequence_runningFoldIndexed"),
+            interner.intern("kk_sequence_scanIndexed"),
             interner.intern("kk_array_copyOf_newSize_init"),
             interner.intern("kk_mutable_list_replaceAll"),
             interner.intern("kk_mutable_list_removeIf"),
