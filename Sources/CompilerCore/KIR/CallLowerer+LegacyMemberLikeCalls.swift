@@ -2706,6 +2706,32 @@ extension CallLowerer {
                         )
                         runtimeArguments = [loweredReceiverID, fnPtrExpr, envPtrExpr]
                     }
+                    if (runtimeCallee == "kk_sequence_associateTo"
+                        || runtimeCallee == "kk_sequence_associateByTo"
+                        || runtimeCallee == "kk_sequence_associateWithTo"
+                        || runtimeCallee == "kk_sequence_groupByTo"),
+                       normalizedArgIDs.count == 2
+                    {
+                        let firstArg = normalizedArgIDs[0]
+                        let secondArg = normalizedArgIDs[1]
+                        let lambdaArg: KIRExprID
+                        let destinationArg: KIRExprID
+                        if driver.ctx.callableValueInfo(for: firstArg) != nil {
+                            lambdaArg = firstArg
+                            destinationArg = secondArg
+                        } else {
+                            destinationArg = firstArg
+                            lambdaArg = secondArg
+                        }
+                        let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                            lambdaArg,
+                            sema: sema,
+                            arena: arena,
+                            interner: interner,
+                            instructions: &instructions
+                        )
+                        runtimeArguments = [loweredReceiverID, destinationArg, fnPtrExpr, envPtrExpr]
+                    }
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern(runtimeCallee),

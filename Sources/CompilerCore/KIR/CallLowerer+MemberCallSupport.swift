@@ -126,7 +126,7 @@ extension CallLowerer {
         "reduce", "reduceRight", "reduceRightOrNull", "reduceRightIndexed", "reduceRightIndexedOrNull", "reduceIndexed", "reduceIndexedOrNull",
         "scan", "scanIndexed", "scanReduce", "runningFold", "runningFoldIndexed",
         "runningReduce", "runningReduceIndexed",
-        "groupBy", "groupingBy", "sortedBy", "find", "findLast", "associateBy", "associateWith", "associate", "zip", "zipWithNext", "unzip",
+        "groupBy", "groupByTo", "groupingBy", "sortedBy", "find", "findLast", "associateBy", "associateByTo", "associateWith", "associateWithTo", "associate", "associateTo", "zip", "zipWithNext", "unzip",
         "eachCount", "eachCountTo", "aggregate", "aggregateTo",
         "withIndex", "forEachIndexed", "mapIndexed", "mapIndexedNotNull", "filterIndexed", "mapValues", "mapValuesTo", "mapKeys", "mapKeysTo", "filterKeys", "filterValues",
         "getValue", "getOrDefault", "getOrElse", "getOrPut", "getOrNull", "elementAtOrNull", "elementAt", "elementAtOrElse",

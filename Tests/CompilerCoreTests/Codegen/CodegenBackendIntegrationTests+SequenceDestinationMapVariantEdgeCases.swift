@@ -38,14 +38,34 @@ extension CodegenBackendIntegrationTests {
         fun main() {
             val src = sequenceOf(1, 2, 3)
             val dest = mutableMapOf<Int, Int>()
-            val result = src.associateWithTo(dest) { it * it }
-            println(result === dest)
+            src.associateWithTo(dest) { it * it }
             println(dest[1])
             println(dest[2])
             println(dest[3])
         }
         """
-        try assertKotlinCompilesToKIR(source, moduleName: "STDLIBSEQ023_03")
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceAssociateWithToRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                1
+                4
+                9
+                """ + "\n"
+            )
+        }
     }
 
     func testSequenceGroupByToAppendsIntoMutableListBuckets() throws {
