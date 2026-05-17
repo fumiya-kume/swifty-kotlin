@@ -383,13 +383,15 @@ extension CodegenBackendIntegrationTests {
     // MARK: - terminal ops: count, forEach, fold
 
     func testSequenceTerminalOps() throws {
-        let source = """
+            let source = """
         fun main() {
             val seq = sequenceOf(1, 2, 3, 4, 5)
 
             println(seq.count())
             println(seq.indexOf(3))
             println(seq.indexOf(99))
+            println(seq.indexOfFirst { it % 2 == 0 })
+            println(seq.indexOfFirst { it > 10 })
 
             var sum = 0
             seq.forEach { sum += it }
@@ -420,6 +422,8 @@ extension CodegenBackendIntegrationTests {
                 """
                 5
                 2
+                -1
+                1
                 -1
                 15
                 15

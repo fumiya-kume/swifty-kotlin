@@ -129,6 +129,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("firstNotNullOf", 1),
             sequence("firstNotNullOfOrNull", 1),
             sequence("foldIndexed", 2),
+            sequence("indexOfFirst", 1),
             sequence("forEachIndexed", 1),
             sequence("onEach", 1),
             sequence("onEachIndexed", 1),

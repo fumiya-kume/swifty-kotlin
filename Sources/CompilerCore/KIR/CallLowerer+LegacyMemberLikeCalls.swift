@@ -2559,6 +2559,7 @@ extension CallLowerer {
                 let groupByToName = interner.intern("groupByTo")
                 let containsName = interner.intern("contains")
                 let indexOfName = interner.intern("indexOf")
+                let indexOfFirstName = interner.intern("indexOfFirst")
                 let elementAtName = interner.intern("elementAt")
                 let elementAtOrNullName = interner.intern("elementAtOrNull")
                 let filterIndexedName = interner.intern("filterIndexed")
@@ -2621,6 +2622,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_contains"
                 } else if calleeName == indexOfName {
                     runtimeCallee = "kk_sequence_indexOf"
+                } else if calleeName == indexOfFirstName {
+                    runtimeCallee = "kk_sequence_indexOfFirst"
                 } else if calleeName == elementAtName {
                     runtimeCallee = "kk_sequence_elementAt"
                 } else if calleeName == elementAtOrNullName {
@@ -2730,6 +2733,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_all"
                         || runtimeCallee == "kk_iterable_all"
                         || runtimeCallee == "kk_sequence_none"
+                        || runtimeCallee == "kk_sequence_indexOfFirst"
                         || runtimeCallee == "kk_sequence_mapNotNull"
                         || runtimeCallee == "kk_sequence_firstNotNullOf"
                         || runtimeCallee == "kk_sequence_firstNotNullOfOrNull"
@@ -2759,6 +2763,18 @@ extension CallLowerer {
                     }
                     if (runtimeCallee == "kk_sequence_firstNotNullOf"
                         || runtimeCallee == "kk_sequence_firstNotNullOfOrNull"),
+                       normalizedArgIDs.count == 1
+                    {
+                        let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                            normalizedArgIDs[0],
+                            sema: sema,
+                            arena: arena,
+                            interner: interner,
+                            instructions: &instructions
+                        )
+                        runtimeArguments = [loweredReceiverID, fnPtrExpr, envPtrExpr]
+                    }
+                    if runtimeCallee == "kk_sequence_indexOfFirst",
                        normalizedArgIDs.count == 1
                     {
                         let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
