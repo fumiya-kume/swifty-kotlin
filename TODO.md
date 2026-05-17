@@ -367,8 +367,8 @@
 - [ ] STDLIB-SEQ-FN-107: `single` 関数の実装
 - [x] STDLIB-SEQ-FN-108: `singleOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-109: `slice` 関数の実装
-- [ ] STDLIB-SEQ-FN-110: `sorted` 関数の実装
-- [x] STDLIB-SEQ-FN-111: `sortedBy` 関数の実装
+- [x] STDLIB-SEQ-FN-110: `sorted` 関数の実装
+- [ ] STDLIB-SEQ-FN-111: `sortedBy` 関数の実装
 - [ ] STDLIB-SEQ-FN-112: `sortedByDescending` 関数の実装
 - [ ] STDLIB-SEQ-FN-113: `sortedDescending` 関数の実装
 - [ ] STDLIB-SEQ-FN-114: `sortedWith` 関数の実装
