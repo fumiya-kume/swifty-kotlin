@@ -134,6 +134,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("mapIndexedNotNullTo", 2),
             sequence("filterIndexedTo", 2),
             sequence("filterNotNullTo", 1),
+            sequence("filterIsInstance", 0),
             sequence("filterIsInstanceTo", 1),
             sequence("associateTo", 2),
             sequence("associateByTo", 2),

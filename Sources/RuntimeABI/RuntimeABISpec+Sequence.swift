@@ -336,6 +336,15 @@ public extension RuntimeABISpec {
             section: "Sequence"
         ),
         RuntimeABIFunctionSpec(
+            name: stdlibSequenceHOFName("filterIsInstance", arity: 0, fallback: "kk_sequence_filterIsInstance"),
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "typeToken", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_sequence_requireNoNulls",
             parameters: [
                 RuntimeABIParameter(name: "seqRaw", type: .intptr),

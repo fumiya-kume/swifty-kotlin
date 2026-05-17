@@ -325,6 +325,32 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    // MARK: - filterIsInstance keeps matching runtime types
+
+    func testSequenceFilterIsInstanceKeepsMatchingTypes() throws {
+        let source = """
+        fun main() {
+            val values: Sequence<Any> = sequenceOf(1, "two", 3)
+            println(values.filterIsInstance<Int>().toList())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceFilterIsInstance",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[1, 3]\n")
+        }
+    }
+
     // MARK: - terminal ops: count, forEach, fold
 
     func testSequenceTerminalOps() throws {

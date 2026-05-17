@@ -903,6 +903,42 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // filterIsInstance<R>(): Sequence<R> (STDLIB-SEQ-FN-026)
+        do {
+            let rName = interner.intern("R")
+            let rSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: sequenceFQName + [interner.intern("filterIsInstance"), rName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.reifiedTypeParameter]
+            )
+            let rType = types.make(.typeParam(TypeParamType(
+                symbol: rSymbol,
+                nullability: .nonNull
+            )))
+            let sequenceRType = types.make(.classType(ClassType(
+                classSymbol: sequenceSymbol,
+                args: [.out(rType)],
+                nullability: .nonNull
+            )))
+            registerSequenceMemberStub(
+                named: "filterIsInstance",
+                externalLinkName: "kk_sequence_filterIsInstance",
+                receiverType: receiverType,
+                parameters: [],
+                returnType: sequenceRType,
+                sequenceSymbol: sequenceSymbol,
+                sequenceFQName: sequenceFQName,
+                typeParamSymbol: typeParamSymbol,
+                symbols: symbols,
+                interner: interner,
+                additionalTypeParameterSymbols: [rSymbol],
+                additionalTypeParameterUpperBoundsList: [[]]
+            )
+        }
+
         // partition(predicate: (T) -> Boolean): Pair<List<T>, List<T>> (STDLIB-SEQ-012)
         registerSequenceMemberStub(
             named: "partition",

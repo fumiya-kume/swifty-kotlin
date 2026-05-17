@@ -989,6 +989,12 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(secondList, runtimeNullSentinelInt)
     }
 
+    func testFilterIsInstanceKeepsMatchingRuntimeTypes() {
+        let seq = makeSequence([1, runtimeTestStringHandle("two"), 3])
+        let filtered = kk_sequence_filterIsInstance(seq, 3)
+        XCTAssertEqual(sequenceElements(filtered), [1, 3])
+    }
+
     // MARK: - Sequence shuffled tests (STDLIB-SEQ-019)
 
     func testSequenceShuffledPreservesElements() {

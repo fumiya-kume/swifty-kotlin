@@ -368,6 +368,17 @@ private func runtimeSequenceTransformElement(
                 yield: yield
             )
         }
+    case let .filterIsInstanceStep(typeToken):
+        if kk_op_is(element, typeToken) != 0 {
+            runtimeSequenceTransformElement(
+                element,
+                steps: steps,
+                stepIndex: stepIndex + 1,
+                state: state,
+                outThrown: outThrown,
+                yield: yield
+            )
+        }
     case .requireNoNullsStep:
         if runtimeNormalizeNullableCollectionValue(element) == nil {
             outThrown?.pointee = runtimeAllocateIllegalArgumentException(message: kSequenceRequireNoNullsFoundNull)
@@ -751,7 +762,7 @@ func runtimeTraverseSequenceWithState(
                 )
             }
             return
-        case .mapStep, .filterStep, .filterNotStep, .takeStep, .dropStep, .distinctStep, .zipStep, .takeWhileStep, .dropWhileStep, .onEachStep, .onEachIndexedStep, .mapNotNullStep, .filterNotNullStep, .requireNoNullsStep, .mapIndexedStep, .withIndexStep, .flatMapStep, .flatMapIndexedStep, .chunkedTransformStep, .shuffledStep:
+        case .mapStep, .filterStep, .filterNotStep, .takeStep, .dropStep, .distinctStep, .zipStep, .takeWhileStep, .dropWhileStep, .onEachStep, .onEachIndexedStep, .mapNotNullStep, .filterNotNullStep, .filterIsInstanceStep, .requireNoNullsStep, .mapIndexedStep, .withIndexStep, .flatMapStep, .flatMapIndexedStep, .chunkedTransformStep, .shuffledStep:
             continue
         }
     }
@@ -939,6 +950,10 @@ private func applyMapNotNullStep(_ elements: [Int], fnPtr: Int, closureRaw: Int,
 /// Applies a filterNotNull transformation: filters out null values.
 private func applyFilterNotNullStep(_ elements: [Int]) -> [Int] {
     return elements.filter { runtimeNormalizeNullableCollectionValue($0) != nil }
+}
+
+private func applyFilterIsInstanceStep(_ elements: [Int], typeToken: Int) -> [Int] {
+    return elements.filter { kk_op_is($0, typeToken) != 0 }
 }
 
 /// Applies a requireNoNulls transformation: fails on the first null element.
@@ -1258,6 +1273,8 @@ private func evaluateSequence(
             elements = applyMapNotNullStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown)
         case .filterNotNullStep:
             elements = applyFilterNotNullStep(elements)
+        case let .filterIsInstanceStep(typeToken):
+            elements = applyFilterIsInstanceStep(elements, typeToken: typeToken)
         case .requireNoNullsStep:
             elements = applyRequireNoNullsStep(elements, outThrown: outThrown)
         case let .mapIndexedStep(fnPtr, closureRaw):
@@ -1634,6 +1651,22 @@ public func kk_sequence_filterNotNull(_ seqRaw: Int) -> Int {
     }
     var newSteps = seq.steps
     newSteps.append(.filterNotNullStep)
+    let newSeq = RuntimeSequenceBox(steps: newSteps, constrainOnceState: seq.constrainOnceState)
+    return registerRuntimeObject(newSeq)
+}
+
+@_cdecl("kk_sequence_filterIsInstance")
+public func kk_sequence_filterIsInstance(_ seqRaw: Int, _ typeToken: Int) -> Int {
+    guard let seq = runtimeSequenceBox(from: seqRaw) else {
+        let sourceElements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+        let newSeq = RuntimeSequenceBox(steps: [
+            .source(elements: sourceElements),
+            .filterIsInstanceStep(typeToken: typeToken),
+        ])
+        return registerRuntimeObject(newSeq)
+    }
+    var newSteps = seq.steps
+    newSteps.append(.filterIsInstanceStep(typeToken: typeToken))
     let newSeq = RuntimeSequenceBox(steps: newSteps, constrainOnceState: seq.constrainOnceState)
     return registerRuntimeObject(newSeq)
 }
