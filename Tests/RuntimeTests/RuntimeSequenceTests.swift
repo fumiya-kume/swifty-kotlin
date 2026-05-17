@@ -193,6 +193,10 @@ private let sequenceSumByDoubleWeightedTwo: @convention(c) (Int, Int, UnsafeMuta
     kk_double_to_bits(value == 2 ? 1.5 : 0.25)
 }
 
+private let sequenceGreaterThanTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value > 2 ? 1 : 0
+}
+
 private let sequenceNegatedSelector: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     -value
 }
@@ -274,6 +278,31 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         var thrown = 0
         let result = kk_sequence_takeLast(makeSequence([1, 2]), -1, &thrown)
         XCTAssertEqual(listElements(result), [])
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testTakeLastWhileReturnsMatchingSuffixAsList() {
+        var thrown = 0
+        let result = kk_sequence_takeLastWhile(
+            makeSequence([1, 3, 4, 2, 5, 6]),
+            unsafeBitCast(sequenceGreaterThanTwo, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(listElements(result), [5, 6])
+    }
+
+    func testTakeLastWhilePropagatesPredicateThrowable() {
+        var thrown = 0
+        _ = kk_sequence_takeLastWhile(
+            makeSequence([1, 2]),
+            unsafeBitCast(throwingSequenceDestinationLambda, to: Int.self),
+            0,
+            &thrown
+        )
+
         XCTAssertNotEqual(thrown, 0)
     }
 

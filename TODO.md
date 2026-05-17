@@ -376,7 +376,7 @@
 - [x] STDLIB-SEQ-FN-118: `sumOf` 関数の実装
 - [ ] STDLIB-SEQ-FN-119: `take` 関数の実装
 - [x] STDLIB-SEQ-FN-120: `takeLast` 関数の実装
-- [ ] STDLIB-SEQ-FN-121: `takeLastWhile` 関数の実装
+- [x] STDLIB-SEQ-FN-121: `takeLastWhile` 関数の実装
 - [x] STDLIB-SEQ-FN-122: `takeWhile` 関数の実装
 - [ ] STDLIB-SEQ-FN-123: `toCollection` 関数の実装
 - [ ] STDLIB-SEQ-FN-124: `toHashSet` 関数の実装
