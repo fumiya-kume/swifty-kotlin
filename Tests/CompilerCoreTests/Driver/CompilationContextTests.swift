@@ -2,40 +2,6 @@
 import XCTest
 
 final class CompilationContextTests: XCTestCase {
-    // MARK: - FileIR
-
-    func testFileIRDefaultInit() {
-        let fileID = FileID(rawValue: 1)
-        let ir = FileIR(fileID: fileID)
-        XCTAssertEqual(ir.fileID, fileID)
-        XCTAssertTrue(ir.tokens.isEmpty)
-        XCTAssertNil(ir.syntaxArena)
-        XCTAssertNil(ir.astFile)
-        XCTAssertNil(ir.astArena)
-    }
-
-    func testFileIRWithTokens() {
-        let fileID = FileID(rawValue: 2)
-        let token = makeToken(kind: .keyword(.fun))
-        var ir = FileIR(fileID: fileID, tokens: [token])
-        XCTAssertEqual(ir.tokens.count, 1)
-        XCTAssertEqual(ir.tokens[0].kind, .keyword(.fun))
-
-        // Mutate tokens
-        let token2 = makeToken(kind: .keyword(.val))
-        ir.tokens.append(token2)
-        XCTAssertEqual(ir.tokens.count, 2)
-    }
-
-    func testFileIRWithSyntaxArena() {
-        let fileID = FileID(rawValue: 3)
-        let arena = SyntaxArena()
-        let root = NodeID()
-        let ir = FileIR(fileID: fileID, syntaxArena: arena, syntaxRoot: root)
-        XCTAssertNotNil(ir.syntaxArena)
-        XCTAssertEqual(ir.syntaxRoot, root)
-    }
-
     // MARK: - CompilationContext init
 
     func testCompilationContextInitStoresProperties() {
@@ -67,7 +33,6 @@ final class CompilationContextTests: XCTestCase {
         XCTAssertNil(ctx.incrementalRecompileSet)
         XCTAssertFalse(ctx.incrementalOutputRestored)
         XCTAssertNil(ctx.phaseTimer)
-        XCTAssertTrue(ctx.fileIRs.isEmpty)
     }
 
     // MARK: - isIncremental
@@ -131,17 +96,6 @@ final class CompilationContextTests: XCTestCase {
             frontendFlags: ["jobs=4"]
         )
         XCTAssertEqual(ctx.frontendJobs, 4)
-    }
-
-    // MARK: - fileIRs
-
-    func testFileIRsCanBePopulated() {
-        let ctx = makeCompilationContext(inputs: ["/a.kt"])
-        let fileID = FileID(rawValue: 0)
-        let ir = FileIR(fileID: fileID)
-        ctx.fileIRs[fileID] = ir
-        XCTAssertNotNil(ctx.fileIRs[fileID])
-        XCTAssertEqual(ctx.fileIRs[fileID]?.fileID, fileID)
     }
 
     // MARK: - phaseTimer

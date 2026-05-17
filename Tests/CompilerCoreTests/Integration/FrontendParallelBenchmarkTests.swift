@@ -68,33 +68,33 @@ final class FrontendParallelBenchmarkTests: XCTestCase {
         return (ctx, elapsed)
     }
 
-    // MARK: - Correctness: fileIR population
+    // MARK: - Correctness: per-file frontend results
 
-    func testFileIRPopulatedForAllFiles() throws {
+    func testPerFileFrontendResultsPopulatedForAllFiles() throws {
         let sources = generateSources(count: 5)
         let (ctx, _) = try runFrontendTimed(sources: sources, jobs: 1)
 
-        XCTAssertEqual(ctx.fileIRs.count, 5, "Expected 5 per-file IRs")
-        for (fileID, ir) in ctx.fileIRs {
-            XCTAssertEqual(ir.fileID, fileID)
-            XCTAssertFalse(ir.tokens.isEmpty, "Tokens should be populated for file \(fileID.rawValue)")
-            XCTAssertNotNil(ir.syntaxArena, "SyntaxArena should be populated for file \(fileID.rawValue)")
-            XCTAssertNotNil(ir.astFile, "ASTFile should be populated for file \(fileID.rawValue)")
-            XCTAssertNotNil(ir.astArena, "ASTArena should be populated for file \(fileID.rawValue)")
+        XCTAssertEqual(ctx.tokensByFile.count, 5, "Expected tokens for 5 files")
+        XCTAssertEqual(ctx.syntaxTrees.count, 5, "Expected syntax trees for 5 files")
+        let ast = try XCTUnwrap(ctx.ast)
+        XCTAssertEqual(ast.sortedFiles.count, 5, "Expected AST files for 5 files")
+
+        for (fileID, tokens) in ctx.tokensByFile {
+            XCTAssertFalse(tokens.isEmpty, "Tokens should be populated for file \(fileID.rawValue)")
         }
     }
 
-    func testFileIRPopulatedInParallelMode() throws {
+    func testPerFileFrontendResultsPopulatedInParallelMode() throws {
         let sources = generateSources(count: 5)
         let (ctx, _) = try runFrontendTimed(sources: sources, jobs: 4)
 
-        XCTAssertEqual(ctx.fileIRs.count, 5, "Expected 5 per-file IRs in parallel mode")
-        for (fileID, ir) in ctx.fileIRs {
-            XCTAssertEqual(ir.fileID, fileID)
-            XCTAssertFalse(ir.tokens.isEmpty)
-            XCTAssertNotNil(ir.syntaxArena)
-            XCTAssertNotNil(ir.astFile)
-            XCTAssertNotNil(ir.astArena)
+        XCTAssertEqual(ctx.tokensByFile.count, 5, "Expected tokens for 5 files in parallel mode")
+        XCTAssertEqual(ctx.syntaxTrees.count, 5, "Expected syntax trees for 5 files in parallel mode")
+        let ast = try XCTUnwrap(ctx.ast)
+        XCTAssertEqual(ast.sortedFiles.count, 5, "Expected AST files for 5 files in parallel mode")
+
+        for (fileID, tokens) in ctx.tokensByFile {
+            XCTAssertFalse(tokens.isEmpty, "Tokens should be populated for file \(fileID.rawValue)")
         }
     }
 

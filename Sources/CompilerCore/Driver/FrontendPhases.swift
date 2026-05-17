@@ -103,12 +103,6 @@ public final class LexPhase: CompilerPhase {
         }
         ctx.storeLexResults(allTokens: allTokens, tokensByFile: tokensByFile)
 
-        for (fileID, fileTokens) in tokensByFile {
-            ctx.updateFileIR(fileID: fileID) { fileIR in
-                fileIR.tokens = fileTokens
-            }
-        }
-
         ctx.diagnostics.sortBySourceLocation()
     }
 }
@@ -137,13 +131,6 @@ public final class ParsePhase: CompilerPhase {
         }
 
         ctx.storeSyntaxTrees(syntaxTrees)
-
-        for (fileID, cstArena, root) in syntaxTrees {
-            ctx.updateFileIR(fileID: fileID) { fileIR in
-                fileIR.syntaxArena = cstArena
-                fileIR.syntaxRoot = root
-            }
-        }
 
         ctx.diagnostics.sortBySourceLocation()
     }
@@ -477,12 +464,5 @@ public final class BuildASTPhase: CompilerPhase {
         }
 
         ctx.storeAST(ASTModule(files: files, arena: arena, declarationCount: declarations.count, tokenCount: totalTokenCount))
-
-        for file in files {
-            ctx.updateFileIR(fileID: file.fileID) { fileIR in
-                fileIR.astFile = file
-                fileIR.astArena = arena
-            }
-        }
     }
 }

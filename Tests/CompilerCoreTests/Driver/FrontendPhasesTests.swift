@@ -48,15 +48,12 @@ final class FrontendPhasesTests: XCTestCase {
         XCTAssertFalse(ctx.tokens.isEmpty, "LexPhase should populate ctx.tokens")
     }
 
-    func testLexPhasePopulatesFileIRs() throws {
+    func testLexPhasePopulatesTokensByFile() throws {
         let source = "fun main() {}"
         let ctx = makeContextFromSource(source)
         XCTAssertNoThrow(try LexPhase().run(ctx))
-        XCTAssertFalse(ctx.fileIRs.isEmpty, "LexPhase should populate fileIRs")
-        let fileID = try XCTUnwrap(ctx.fileIRs.keys.first)
-        let fileIR = ctx.fileIRs[fileID]
-        XCTAssertNotNil(fileIR, "FileIR should exist for lexed file")
-        XCTAssertFalse(fileIR?.tokens.isEmpty ?? true, "FileIR should have tokens")
+        let (_, fileTokens) = try XCTUnwrap(ctx.tokensByFile.first)
+        XCTAssertFalse(fileTokens.isEmpty, "LexPhase should populate per-file tokens")
     }
 
     func testLexPhaseProducesEOFTokenLast() throws {
@@ -78,14 +75,13 @@ final class FrontendPhasesTests: XCTestCase {
         XCTAssertFalse(ctx.syntaxTrees.isEmpty, "ParsePhase should populate syntaxTrees")
     }
 
-    func testParsePhasePopulatesFileIRSyntaxArena() throws {
+    func testParsePhasePopulatesSyntaxArenaPerFile() throws {
         let source = "fun main() {}"
         let ctx = makeContextFromSource(source)
         try LexPhase().run(ctx)
         XCTAssertNoThrow(try ParsePhase().run(ctx))
-        for (_, fileIR) in ctx.fileIRs {
-            XCTAssertNotNil(fileIR.syntaxArena, "FileIR should have a SyntaxArena after parsing")
-        }
+        let (_, arena, root) = try XCTUnwrap(ctx.syntaxTrees.first)
+        XCTAssertEqual(arena.node(root).kind, .kotlinFile, "ParsePhase should store each file's SyntaxArena and root")
     }
 
     func testParsePhaseHandlesValidDeclarations() throws {
