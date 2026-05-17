@@ -191,14 +191,28 @@ private func runtimeRandomUIntRange(receiver: Int, from: UInt64, until: UInt64) 
 
 // MARK: - Constructor
 
-@_cdecl("kk_random_create_seeded")
-public func kk_random_create_seeded(_ seed: Int) -> Int {
+private func runtimeCreateSeededRandom(seed: Int) -> Int {
     let box = SeededRandomBox(seed: seed)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
     runtimeStorage.withLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
+}
+
+@_cdecl("kk_random_create_seeded")
+public func kk_random_create_seeded(_ seed: Int) -> Int {
+    runtimeCreateSeededRandom(seed: seed)
+}
+
+@_cdecl("kk_java_random_new")
+public func kk_java_random_new() -> Int {
+    runtimeCreateSeededRandom(seed: Int.random(in: Int.min ... Int.max))
+}
+
+@_cdecl("kk_java_random_new_seed")
+public func kk_java_random_new_seed(_ seed: Int) -> Int {
+    runtimeCreateSeededRandom(seed: seed)
 }
 
 // MARK: - SecureRandom Constructor / Factory
@@ -254,6 +268,11 @@ public func kk_secure_random_next_bytes(_ receiver: Int, _ arrayRaw: Int) -> Int
 @_cdecl("kk_random_default")
 public func kk_random_default() -> Int {
     0
+}
+
+@_cdecl("kk_random_asKotlinRandom")
+public func kk_random_asKotlinRandom(_ receiver: Int) -> Int {
+    receiver
 }
 
 @_cdecl("kk_random_nextInt")

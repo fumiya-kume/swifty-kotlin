@@ -236,7 +236,7 @@
 
 #### kotlin.random 関数の実装
 - [ ] STDLIB-RANDOM-FN-001: `asJavaRandom` 関数の実装
-- [ ] STDLIB-RANDOM-FN-002: `asKotlinRandom` 関数の実装
+- [x] STDLIB-RANDOM-FN-002: `asKotlinRandom` 関数の実装
 
 #### kotlin.ranges 関数の実装
 - [ ] STDLIB-RANGES-FN-004: `coerceValueIn` 関数の実装

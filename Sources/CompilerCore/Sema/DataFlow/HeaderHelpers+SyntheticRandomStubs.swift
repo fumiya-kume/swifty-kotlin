@@ -42,6 +42,14 @@ extension DataFlowSemaPhase {
 
         symbols.setPropertyType(randomType, for: randomSymbol)
 
+        registerSyntheticRandomAsKotlinRandom(
+            packageFQName: kotlinRandomPkg,
+            returnType: randomType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
         registerSyntheticRandomProperty(
             ownerSymbol: randomSymbol,
             name: "Default",
@@ -633,6 +641,178 @@ extension DataFlowSemaPhase {
                 valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
             ),
             for: memberSymbol
+        )
+    }
+
+    private func registerSyntheticRandomAsKotlinRandom(
+        packageFQName: [InternedString],
+        returnType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let javaRandomType = ensureSyntheticJavaRandomType(
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        registerSyntheticRandomExtensionFunction(
+            packageFQName: packageFQName,
+            name: "asKotlinRandom",
+            externalLinkName: "kk_random_asKotlinRandom",
+            receiverType: javaRandomType,
+            returnType: returnType,
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    private func ensureSyntheticJavaRandomType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID {
+        let javaUtilPkg = ensurePackage(
+            path: ["java", "util"],
+            symbols: symbols,
+            interner: interner
+        )
+        let javaRandomSymbol = ensureClassSymbol(
+            named: "Random",
+            in: javaUtilPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let packageSymbol = symbols.lookup(fqName: javaUtilPkg) {
+            symbols.setParentSymbol(packageSymbol, for: javaRandomSymbol)
+        }
+
+        let javaRandomType = types.make(.classType(ClassType(
+            classSymbol: javaRandomSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(javaRandomType, for: javaRandomSymbol)
+
+        registerSyntheticJavaRandomConstructor(
+            ownerSymbol: javaRandomSymbol,
+            ownerType: javaRandomType,
+            externalLinkName: "kk_java_random_new",
+            parameters: [],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticJavaRandomConstructor(
+            ownerSymbol: javaRandomSymbol,
+            ownerType: javaRandomType,
+            externalLinkName: "kk_java_random_new_seed",
+            parameters: [(name: "seed", type: types.intType)],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticJavaRandomConstructor(
+            ownerSymbol: javaRandomSymbol,
+            ownerType: javaRandomType,
+            externalLinkName: "kk_java_random_new_seed",
+            parameters: [(name: "seed", type: types.longType)],
+            symbols: symbols,
+            interner: interner
+        )
+
+        return javaRandomType
+    }
+
+    private func registerSyntheticRandomExtensionFunction(
+        packageFQName: [InternedString],
+        name: String,
+        externalLinkName: String,
+        receiverType: TypeID,
+        returnType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return signature.receiverType == receiverType
+                && signature.parameterTypes.isEmpty
+                && signature.returnType == returnType
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: [],
+                valueParameterIsVararg: []
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerSyntheticJavaRandomConstructor(
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        externalLinkName: String,
+        parameters: [(name: String, type: TypeID)],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let initName = interner.intern("<init>")
+        let initFQName = ownerInfo.fqName + [initName]
+        if let existing = symbols.lookupAll(fqName: initFQName).first(where: { symbolID in
+            symbols.functionSignature(for: symbolID)?.parameterTypes == parameters.map(\.type)
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let constructorSymbol = symbols.define(
+            kind: .constructor,
+            name: initName,
+            fqName: initFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: constructorSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: constructorSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: nil,
+                parameterTypes: parameters.map(\.type),
+                returnType: ownerType,
+                isSuspend: false,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: Array(repeating: false, count: parameters.count),
+                valueParameterIsVararg: Array(repeating: false, count: parameters.count)
+            ),
+            for: constructorSymbol
         )
     }
 

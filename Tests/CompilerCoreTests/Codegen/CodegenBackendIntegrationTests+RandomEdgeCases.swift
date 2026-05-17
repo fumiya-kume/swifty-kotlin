@@ -3,6 +3,35 @@ import Foundation
 import XCTest
 
 extension CodegenBackendIntegrationTests {
+    func testCodegenRandomAsKotlinRandom() throws {
+        let source = """
+        import java.util.Random as JavaRandom
+        import kotlin.random.Random
+        import kotlin.random.asKotlinRandom
+
+        fun main() {
+            val r1: Random = JavaRandom(42).asKotlinRandom()
+            val r2: Random = JavaRandom(42).asKotlinRandom()
+
+            println(r1.nextInt(100) == r2.nextInt(100))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "RandomAsKotlinRandom",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            XCTAssertEqual(result.stdout.replacingOccurrences(of: "\r\n", with: "\n"), "true\n")
+        }
+    }
+
     func testCodegenCompilesRandomEdgeCases() throws {
         let source = """
         import kotlin.random.Random
