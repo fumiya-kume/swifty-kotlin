@@ -816,6 +816,42 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        do {
+            let memberName = interner.intern("filterIsInstanceTo")
+            let memberFQName = sequenceFQName + [memberName]
+            let resultTypeParamName = interner.intern("R")
+            let resultTypeParamSymbol = symbols.lookup(fqName: memberFQName + [resultTypeParamName]) ?? symbols.define(
+                kind: .typeParameter,
+                name: resultTypeParamName,
+                fqName: memberFQName + [resultTypeParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.reifiedTypeParameter]
+            )
+            let resultTypeParamType = types.make(.typeParam(TypeParamType(
+                symbol: resultTypeParamSymbol,
+                nullability: .nonNull
+            )))
+            let destinationType = nominalCollectionType([
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("MutableCollection"),
+            ], elementType: resultTypeParamType, invariant: true)
+            registerSequenceMemberStub(
+                named: "filterIsInstanceTo",
+                externalLinkName: "kk_sequence_filterIsInstanceTo",
+                receiverType: receiverType,
+                parameters: [("destination", destinationType)],
+                returnType: destinationType,
+                sequenceSymbol: sequenceSymbol,
+                sequenceFQName: sequenceFQName,
+                typeParamSymbol: typeParamSymbol,
+                symbols: symbols,
+                interner: interner,
+                additionalTypeParameterSymbols: [resultTypeParamSymbol]
+            )
+        }
+
         // filterNot(predicate): Sequence<T>
         registerSequenceMemberStub(
             named: "filterNot",

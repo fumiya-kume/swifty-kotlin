@@ -1153,9 +1153,15 @@ extension CallLowerer {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let tokenExpr = arena.appendExpr(.intLiteral(encodedToken), type: intType)
             instructions.append(.constValue(result: tokenExpr, value: .intLiteral(encodedToken)))
+            let nonNullReceiverType = sema.types.makeNonNullable(sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType)
+            let runtimeCallee = if isSequenceLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                interner.intern("kk_sequence_filterIsInstanceTo")
+            } else {
+                interner.intern("kk_list_filterIsInstanceTo")
+            }
             instructions.append(.call(
                 symbol: nil,
-                callee: interner.intern("kk_list_filterIsInstanceTo"),
+                callee: runtimeCallee,
                 arguments: [loweredReceiverID, loweredArgIDs[0], tokenExpr],
                 result: result,
                 canThrow: false,

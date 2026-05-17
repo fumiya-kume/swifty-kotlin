@@ -269,15 +269,14 @@
 - [x] STDLIB-SEQ-FN-006: `associateBy` 関数の実装
 - [ ] STDLIB-SEQ-FN-007: `associateByTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-008: `associateTo` 関数の実装
-- [ ] STDLIB-SEQ-FN-009: `associateWith` 関数の実装
 - [x] STDLIB-SEQ-FN-009: `associateWith` 関数の実装
 - [ ] STDLIB-SEQ-FN-010: `associateWithTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-011: `averageOf` 関数の実装
 - [ ] STDLIB-SEQ-FN-012: `chunked` 関数の実装
 - [x] STDLIB-SEQ-FN-013: `constrainOnce` 関数の実装
-- [ ] STDLIB-SEQ-FN-014: `contains` 関数の実装
-- [ ] STDLIB-SEQ-FN-015: `count` 関数の実装
-- [ ] STDLIB-SEQ-FN-016: `distinct` 関数の実装
+ - [ ] STDLIB-SEQ-FN-014: `contains` 関数の実装
+ - [ ] STDLIB-SEQ-FN-015: `count` 関数の実装
+ - [ ] STDLIB-SEQ-FN-016: `distinct` 関数の実装
 - [ ] STDLIB-SEQ-FN-017: `distinctBy` 関数の実装
 - [ ] STDLIB-SEQ-FN-018: `drop` 関数の実装
 - [ ] STDLIB-SEQ-FN-019: `dropWhile` 関数の実装
@@ -290,8 +289,8 @@
 - [ ] STDLIB-SEQ-FN-026: `filterIsInstance` 関数の実装
 - [ ] STDLIB-SEQ-FN-027: `filterIsInstanceTo` 関数の実装
 - [x] STDLIB-SEQ-FN-028: `filterNot` 関数の実装
-- [ ] STDLIB-SEQ-FN-029: `filterNotNull` 関数の実装
-- [ ] STDLIB-SEQ-FN-030: `filterNotTo` 関数の実装
+ - [ ] STDLIB-SEQ-FN-029: `filterNotNull` 関数の実装
+ - [ ] STDLIB-SEQ-FN-030: `filterNotTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-031: `filterTo` 関数の実装
 - [x] STDLIB-SEQ-FN-032: `find` 関数の実装
 - [ ] STDLIB-SEQ-FN-033: `findLast` 関数の実装
