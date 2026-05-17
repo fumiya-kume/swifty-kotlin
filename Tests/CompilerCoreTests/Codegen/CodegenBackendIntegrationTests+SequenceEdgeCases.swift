@@ -243,6 +243,30 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenSequenceMinusRemovesSingleElement() throws {
+        let source = """
+        fun main() {
+            println((sequenceOf(1, 2, 3, 2) - 2).toList())
+            println(sequenceOf(1, 2, 3).minus(99).toList())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceMinus",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[1, 3, 2]\n[1, 2, 3]\n")
+        }
+    }
+
     func testCodegenSequenceSumByUsesCanonicalDiffCase() throws {
         let root = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent() // Codegen/
