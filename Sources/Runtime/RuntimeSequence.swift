@@ -2419,6 +2419,49 @@ public func kk_sequence_indexOf(_ seqRaw: Int, _ element: Int) -> Int {
     return index
 }
 
+@_cdecl("kk_sequence_indexOfLast")
+public func kk_sequence_indexOfLast(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var matchIndex = -1
+    var currentIndex = 0
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        runtimeTraverseSequence(seq, outThrown: outThrown) { elem in
+            var thrown = 0
+            let result = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return false
+            }
+            if maybeUnbox(result) != 0 {
+                matchIndex = currentIndex
+            }
+            currentIndex += 1
+            return true
+        }
+    } else {
+        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
+            var thrown = 0
+            let result = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                return handleCollectionLambdaThrow(thrown, outThrown)
+            }
+            if maybeUnbox(result) != 0 {
+                matchIndex = currentIndex
+            }
+            currentIndex += 1
+        }
+    }
+    if let outThrown, outThrown.pointee != 0 {
+        return runtimeExceptionCaughtSentinel
+    }
+    return matchIndex
+}
+
 @_cdecl("kk_sequence_elementAtOrNull")
 public func kk_sequence_elementAtOrNull(_ seqRaw: Int, _ index: Int) -> Int {
     let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
