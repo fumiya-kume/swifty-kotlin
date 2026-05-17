@@ -358,6 +358,16 @@ extension CodegenBackendIntegrationTests {
                 .filterIndexed { index, value -> index % 2 == 0 || value > 30 }
                 .toList()
             println(result)
+    // MARK: - filterIndexedTo appends indexed matches
+
+    func testSequenceFilterIndexedToAppendsIndexedMatches() throws {
+        let source = """
+        fun main() {
+            val destination = mutableListOf(1)
+            val result = sequenceOf(10, 20, 30, 40)
+                .filterIndexedTo(destination) { index, value -> index % 2 == 0 || value > 30 }
+            println(result)
+            println(destination)
         }
         """
 
@@ -366,6 +376,7 @@ extension CodegenBackendIntegrationTests {
             let ctx = try runCodegenPipeline(
                 inputPath: path,
                 moduleName: "SequenceFilterIndexed",
+                moduleName: "SequenceFilterIndexedTo",
                 emit: .executable,
                 outputPath: outputBase
             )
@@ -446,6 +457,7 @@ extension CodegenBackendIntegrationTests {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(normalizedStdout, "20\n")
+            XCTAssertEqual(normalizedStdout, "[1, 10, 30, 40]\n[1, 10, 30, 40]\n")
         }
     }
 

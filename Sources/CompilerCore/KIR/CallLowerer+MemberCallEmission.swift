@@ -488,6 +488,26 @@ extension CallLowerer {
                 finalArguments = [receiver.loweredID] + finalArguments
             }
         }
+        if loweredCallee == interner.intern("kk_sequence_filterIndexedTo"),
+           finalArguments.count == 2 || finalArguments.count == 3,
+           sourceArgExprs.count >= 2
+        {
+            let includesReceiver = finalArguments.count != sourceArgExprs.count
+            let argumentOffset = includesReceiver ? 1 : 0
+            let receiverArg = includesReceiver ? finalArguments[0] : receiver.loweredID
+            let lambdaSourceIndex = sema.bindings.isCollectionHOFLambdaExpr(sourceArgExprs[0]) ? 0 : 1
+            let destinationSourceIndex = lambdaSourceIndex == 0 ? 1 : 0
+            let lambdaArgIndex = argumentOffset + lambdaSourceIndex
+            let destinationArgIndex = argumentOffset + destinationSourceIndex
+            let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                finalArguments[lambdaArgIndex],
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            finalArguments = [receiverArg, finalArguments[destinationArgIndex], fnPtrExpr, envPtrExpr]
+        }
         if (loweredCallee == interner.intern("kk_iterable_firstNotNullOf")
             || loweredCallee == interner.intern("kk_iterable_firstNotNullOfOrNull")
             || loweredCallee == interner.intern("kk_iterable_any")

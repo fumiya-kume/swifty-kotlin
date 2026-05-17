@@ -1848,6 +1848,13 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
 
         XCTAssertNotEqual(thrown, 0)
         XCTAssertEqual(result, runtimeNullSentinelInt)
+    func testFilterIndexedToAppendsMatchingElementsToDestination() {
+        let destination = makeList([1])
+        let fn = unsafeBitCast(keepEvenIndexOrLargeValue, to: Int.self)
+        let result = kk_sequence_filterIndexedTo(makeSequence([10, 20, 30, 40]), destination, fn, 0, nil)
+
+        XCTAssertEqual(result, destination)
+        XCTAssertEqual(listElements(destination), [1, 10, 30, 40])
     }
 
     func testFilterIsInstanceKeepsMatchingRuntimeTypes() {
