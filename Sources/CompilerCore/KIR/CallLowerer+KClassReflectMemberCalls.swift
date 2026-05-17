@@ -218,31 +218,14 @@ extension CallLowerer {
                     )
 
                     // Emit annotation registration.
-                    let annotations = sema.symbols.annotations(for: classSymbol)
-                    for annotation in annotations {
-                        let annNameInterned = interner.intern(annotation.annotationFQName)
-                        let annNameExpr = arena.appendExpr(.stringLiteral(annNameInterned), type: stringType)
-                        instructions.append(.constValue(result: annNameExpr, value: .stringLiteral(annNameInterned)))
-
-                        let argsEncoded = annotation.arguments.joined(separator: "|")
-                        let argsInterned = interner.intern(argsEncoded)
-                        let argsExpr = arena.appendExpr(.stringLiteral(argsInterned), type: stringType)
-                        instructions.append(.constValue(result: argsExpr, value: .stringLiteral(argsInterned)))
-
-                        let argCount = Int64(annotation.arguments.count)
-                        let argCountExpr = arena.appendExpr(.intLiteral(argCount), type: intType)
-                        instructions.append(.constValue(result: argCountExpr, value: .intLiteral(argCount)))
-
-                        let annRegResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
-                        instructions.append(.call(
-                            symbol: nil,
-                            callee: interner.intern("kk_kclass_register_single_annotation"),
-                            arguments: [tokenExpr, annNameExpr, argsExpr, argCountExpr],
-                            result: annRegResult,
-                            canThrow: false,
-                            thrownResult: nil
-                        ))
-                    }
+                    emitKClassAnnotationRegistration(
+                        objectSymbol: classSymbol,
+                        typeTokenExpr: tokenExpr,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        instructions: &instructions
+                    )
                 }
             }
         }
