@@ -2633,6 +2633,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_findLast"
                 } else if calleeName == partitionName {
                     runtimeCallee = "kk_sequence_partition"
+                } else if calleeName == interner.intern("maxBy") {
+                    runtimeCallee = "kk_sequence_maxBy"
                 } else if calleeName == minByOrNullName {
                     runtimeCallee = "kk_sequence_minByOrNull"
                 } else if calleeName == maxByOrNullName {
@@ -2719,6 +2721,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_elementAt"
                         || runtimeCallee == "kk_sequence_last"
                         || runtimeCallee == "kk_iterable_last"
+                        || runtimeCallee == "kk_sequence_maxBy"
                         || runtimeCallee == "kk_sequence_minByOrNull"
                         || runtimeCallee == "kk_sequence_maxByOrNull"
                         || runtimeCallee == "kk_sequence_minOf"

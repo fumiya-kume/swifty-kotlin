@@ -1670,6 +1670,11 @@ extension DataFlowSemaPhase {
             }
 
             registerComparableSelectorMember(
+                name: "maxBy",
+                externalLinkName: "kk_sequence_maxBy",
+                returnTypeBuilder: { _ in typeParamType }
+            )
+            registerComparableSelectorMember(
                 name: "maxByOrNull",
                 externalLinkName: "kk_sequence_maxByOrNull",
                 returnTypeBuilder: { _ in types.makeNullable(typeParamType) }
