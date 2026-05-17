@@ -457,8 +457,11 @@ extension CallLowerer {
         }
         if loweredCallee == interner.intern("kk_sequence_filterTo")
             || loweredCallee == interner.intern("kk_sequence_filterNotTo")
+            || loweredCallee == interner.intern("kk_sequence_filterIndexedTo")
             || loweredCallee == interner.intern("kk_sequence_mapNotNullTo")
             || loweredCallee == interner.intern("kk_sequence_mapTo")
+            || loweredCallee == interner.intern("kk_sequence_mapIndexedTo")
+            || loweredCallee == interner.intern("kk_sequence_mapIndexedNotNullTo")
         {
             if finalArguments.count == 2 {
                 let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
