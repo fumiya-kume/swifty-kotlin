@@ -1062,6 +1062,7 @@ extension DataFlowSemaPhase {
         registerSyntheticTODOAndIOStubs(symbols: symbols, types: types, interner: interner)
         // Function interfaces are registered by TODO/IO stubs, so patch KProperty2's Function2 supertype here.
         patchKProperty2FunctionSupertype(symbols: symbols, types: types, interner: interner)
+        patchKMutableProperty0FunctionSupertype(symbols: symbols, types: types, interner: interner)
         registerSyntheticCloseableStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsParseFloatStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticFileIOStubs(symbols: symbols, types: types, interner: interner)
