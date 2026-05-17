@@ -930,6 +930,7 @@ extension ABILoweringPass {
             interner.intern("kk_sequence_requireNoNulls"),
             interner.intern("kk_sequence_withIndex"),
             interner.intern("kk_sequence_flatMapIndexed"),
+            interner.intern("kk_sequence_joinTo"),
             interner.intern("kk_sequence_joinToString"),
             interner.intern("kk_sequence_chunked"),
             interner.intern("kk_sequence_windowed"),

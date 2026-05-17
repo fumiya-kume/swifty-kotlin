@@ -2319,6 +2319,53 @@ extension CallLowerer {
             }
         }
 
+        // Sequence joinTo (STDLIB-SEQ-FN-052): buffer plus separator/prefix/postfix defaults.
+        if (1 ... 4).contains(args.count), interner.resolve(calleeName) == "joinTo" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if isSequenceLikeType(nonNullReceiverType, sema: sema, interner: interner)
+                || sema.bindings.isCollectionExpr(receiverExpr) && !isConcreteCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner)
+            {
+                let stringType = sema.types.stringType
+                let paramNames = ["buffer", "separator", "prefix", "postfix"]
+                let defaults = [nil, ", ", "", ""]
+                var resolved: [KIRExprID?] = [nil, nil, nil, nil]
+                for (argIdx, arg) in args.enumerated() {
+                    if let label = arg.label,
+                       let paramIdx = paramNames.firstIndex(of: interner.resolve(label))
+                    {
+                        resolved[paramIdx] = loweredArgIDs[argIdx]
+                    } else if let slot = resolved.firstIndex(where: { $0 == nil }), slot <= argIdx {
+                        resolved[slot] = loweredArgIDs[argIdx]
+                    } else {
+                        resolved[argIdx] = loweredArgIDs[argIdx]
+                    }
+                }
+                if let destinationArg = resolved[0] {
+                    var joinArgs: [KIRExprID] = [destinationArg]
+                    for paramIndex in 1 ..< 4 {
+                        if let existing = resolved[paramIndex] {
+                            joinArgs.append(existing)
+                        } else if let defaultValue = defaults[paramIndex] {
+                            let interned = interner.intern(defaultValue)
+                            let exprID = arena.appendExpr(.stringLiteral(interned), type: stringType)
+                            instructions.append(.constValue(result: exprID, value: .stringLiteral(interned)))
+                            joinArgs.append(exprID)
+                        }
+                    }
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_sequence_joinTo"),
+                        arguments: [loweredReceiverID] + joinArgs,
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
+        }
+
         // Sequence joinToString (STDLIB-275): 0-3 args, non-HOF, non-throwing
         if args.count <= 3, interner.resolve(calleeName) == "joinToString" {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
