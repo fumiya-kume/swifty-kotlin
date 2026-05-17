@@ -320,7 +320,7 @@
 - [ ] STDLIB-SEQ-FN-059: `mapIndexedNotNull` 関数の実装
 - [x] STDLIB-SEQ-FN-060: `mapIndexedNotNullTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-061: `mapIndexedTo` 関数の実装
-- [ ] STDLIB-SEQ-FN-062: `mapNotNull` 関数の実装
+- [x] STDLIB-SEQ-FN-062: `mapNotNull` 関数の実装
 - [x] STDLIB-SEQ-FN-063: `mapNotNullTo` 関数の実装
 - [x] STDLIB-SEQ-FN-064: `mapTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-065: `max` 関数の実装
