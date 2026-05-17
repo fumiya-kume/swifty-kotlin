@@ -379,7 +379,7 @@
 - [ ] STDLIB-SEQ-FN-121: `takeLastWhile` 関数の実装
 - [x] STDLIB-SEQ-FN-122: `takeWhile` 関数の実装
 - [ ] STDLIB-SEQ-FN-123: `toCollection` 関数の実装
-- [ ] STDLIB-SEQ-FN-124: `toHashSet` 関数の実装
+- [x] STDLIB-SEQ-FN-124: `toHashSet` 関数の実装
 - [ ] STDLIB-SEQ-FN-125: `toList` 関数の実装
 - [ ] STDLIB-SEQ-FN-126: `toMutableList` 関数の実装
 - [ ] STDLIB-SEQ-FN-127: `toMutableSet` 関数の実装
