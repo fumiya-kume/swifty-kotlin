@@ -167,6 +167,13 @@ extension DataFlowSemaPhase {
             kotlinReflectPkg: kotlinReflectPkg, kotlinPkg: kotlinPkg,
             kAnnotatedElementSymbol: kAnnotatedElementSymbol
         )
+        registerSyntheticKParameterStub(
+            kAnnotatedElementSymbol: kAnnotatedElementSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinReflectPkg: kotlinReflectPkg
+        )
 
         registerObservablePropertyStub(
             kotlinPropertiesPkg: kotlinPropertiesPkg,
@@ -1591,6 +1598,79 @@ extension DataFlowSemaPhase {
         )
         symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
         symbols.setPropertyType(propertyType, for: propertySymbol)
+    }
+
+    // STDLIB-REFLECT-TYPE-013: Register KParameter interface and scalar properties.
+    private func registerSyntheticKParameterStub(
+        kAnnotatedElementSymbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinReflectPkg: [InternedString]
+    ) {
+        let kParameterSymbol = ensureInterfaceSymbol(
+            named: "KParameter", in: kotlinReflectPkg, symbols: symbols, interner: interner
+        )
+        addSyntheticDirectSupertypes(
+            [kAnnotatedElementSymbol],
+            to: kParameterSymbol,
+            symbols: symbols,
+            types: types
+        )
+
+        guard let kParameterInfo = symbols.symbol(kParameterSymbol) else { return }
+        let kTypeSymbol = ensureInterfaceSymbol(
+            named: "KType", in: kotlinReflectPkg, symbols: symbols, interner: interner
+        )
+        let kTypeType = types.make(.classType(ClassType(
+            classSymbol: kTypeSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        let propertySpecs: [(name: String, type: TypeID, externalLinkName: String)] = [
+            ("index", types.intType, "kk_kparameter_get_index"),
+            ("name", types.make(.primitive(.string, .nullable)), "kk_kparameter_get_name"),
+            ("type", kTypeType, "kk_kparameter_get_type"),
+            ("isOptional", types.booleanType, "kk_kparameter_is_optional"),
+            ("kind", types.intType, "kk_kparameter_get_kind"),
+        ]
+        for spec in propertySpecs {
+            registerSyntheticKParameterProperty(
+                named: spec.name,
+                ownerSymbol: kParameterSymbol,
+                ownerFQName: kParameterInfo.fqName,
+                propertyType: spec.type,
+                externalLinkName: spec.externalLinkName,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+    }
+
+    private func registerSyntheticKParameterProperty(
+        named name: String,
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        propertyType: TypeID,
+        externalLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let propertyName = interner.intern(name)
+        let propertyFQName = ownerFQName + [propertyName]
+        guard symbols.lookup(fqName: propertyFQName) == nil else { return }
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
+        symbols.setPropertyType(propertyType, for: propertySymbol)
+        symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
     }
 
     private func addKTypeParameterDirectSupertypes(
