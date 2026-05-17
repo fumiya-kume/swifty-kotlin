@@ -633,6 +633,42 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        do {
+            let distinctByName = interner.intern("distinctBy")
+            let distinctByFQName = sequenceFQName + [distinctByName]
+            if symbols.lookup(fqName: distinctByFQName) == nil {
+                let keyTypeParamName = interner.intern("K")
+                let keyTypeParamSymbol = symbols.define(
+                    kind: .typeParameter,
+                    name: keyTypeParamName,
+                    fqName: distinctByFQName + [keyTypeParamName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
+                let keyType = types.make(.typeParam(TypeParamType(symbol: keyTypeParamSymbol, nullability: .nonNull)))
+                let selectorType = types.make(.functionType(FunctionType(
+                    params: [typeParamType],
+                    returnType: keyType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                registerSequenceMemberStub(
+                    named: "distinctBy",
+                    externalLinkName: "kk_sequence_distinctBy",
+                    receiverType: receiverType,
+                    parameters: [("selector", selectorType)],
+                    returnType: receiverType,
+                    sequenceSymbol: sequenceSymbol,
+                    sequenceFQName: sequenceFQName,
+                    typeParamSymbol: typeParamSymbol,
+                    symbols: symbols,
+                    interner: interner,
+                    canThrow: true,
+                    additionalTypeParameterSymbols: [keyTypeParamSymbol]
+                )
+            }
+        }
         let sequenceElementToIntType = types.make(.functionType(FunctionType(
             params: [typeParamType],
             returnType: types.intType,

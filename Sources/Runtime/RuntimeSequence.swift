@@ -61,6 +61,7 @@ final class SequenceTraversalState {
     var takeCounts: [Int: Int] = [:]
     var dropCounts: [Int: Int] = [:]
     var distinctSeen: [Int: [Int]] = [:]
+    var distinctBySeen: [Int: [Int]] = [:]
     var zipIndices: [Int: Int] = [:]
     var chunkedBuffers: [Int: [Int]] = [:]
 }
@@ -226,6 +227,29 @@ private func runtimeSequenceTransformElement(
         }
         seen.append(element)
         state.distinctSeen[stepIndex] = seen
+        runtimeSequenceTransformElement(
+            element,
+            steps: steps,
+            stepIndex: stepIndex + 1,
+            state: state,
+            outThrown: outThrown,
+            yield: yield
+        )
+    case let .distinctByStep(fnPtr, closureRaw):
+        let selector = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+        var thrown = 0
+        let key = maybeUnbox(selector(closureRaw, element, &thrown))
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            state.stop = true
+            return
+        }
+        var seen = state.distinctBySeen[stepIndex] ?? []
+        if seen.contains(where: { runtimeValuesEqual($0, key) }) {
+            return
+        }
+        seen.append(key)
+        state.distinctBySeen[stepIndex] = seen
         runtimeSequenceTransformElement(
             element,
             steps: steps,
@@ -783,7 +807,11 @@ func runtimeTraverseSequenceWithState(
                 )
             }
             return
-        case .mapStep, .filterStep, .filterNotStep, .takeStep, .dropStep, .distinctStep, .zipStep, .takeWhileStep, .dropWhileStep, .onEachStep, .onEachIndexedStep, .mapNotNullStep, .filterNotNullStep, .filterIsInstanceStep, .filterIndexedStep, .requireNoNullsStep, .mapIndexedStep, .withIndexStep, .flatMapStep, .flatMapIndexedStep, .chunkedTransformStep, .shuffledStep:
+        case .mapStep, .filterStep, .filterNotStep, .takeStep, .dropStep, .distinctStep,
+             .distinctByStep, .zipStep, .takeWhileStep, .dropWhileStep, .onEachStep,
+             .onEachIndexedStep, .mapNotNullStep, .filterNotNullStep, .filterIsInstanceStep,
+             .filterIndexedStep, .requireNoNullsStep, .mapIndexedStep, .withIndexStep, .flatMapStep,
+             .flatMapIndexedStep, .chunkedTransformStep, .shuffledStep:
             continue
         }
     }
@@ -1282,6 +1310,19 @@ private func evaluateSequence(
             var seen = Set<RuntimeElementKey>()
             seen.reserveCapacity(elements.count)
             elements = elements.filter { seen.insert(RuntimeElementKey(value: $0)).inserted }
+        case let .distinctByStep(fnPtr, closureRaw):
+            let selector = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+            var seen = Set<RuntimeElementKey>()
+            seen.reserveCapacity(elements.count)
+            elements = elements.filter { elem in
+                var thrown = 0
+                let key = maybeUnbox(selector(closureRaw, elem, &thrown))
+                if thrown != 0 {
+                    outThrown?.pointee = thrown
+                    return false
+                }
+                return seen.insert(RuntimeElementKey(value: key)).inserted
+            }
         case let .zipStep(otherElements):
             let minCount = min(elements.count, otherElements.count)
             var zipped: [Int] = []
@@ -1534,6 +1575,27 @@ public func kk_sequence_distinct(_ seqRaw: Int) -> Int {
     }
     var newSteps = seq.steps
     newSteps.append(.distinctStep)
+    let newSeq = RuntimeSequenceBox(steps: newSteps, constrainOnceState: seq.constrainOnceState)
+    return registerRuntimeObject(newSeq)
+}
+
+@_cdecl("kk_sequence_distinctBy")
+public func kk_sequence_distinctBy(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let seq = runtimeSequenceBox(from: seqRaw) else {
+        let sourceElements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+        let newSeq = RuntimeSequenceBox(steps: [
+            .source(elements: sourceElements),
+            .distinctByStep(fnPtr: fnPtr, closureRaw: closureRaw),
+        ])
+        return registerRuntimeObject(newSeq)
+    }
+    var newSteps = seq.steps
+    newSteps.append(.distinctByStep(fnPtr: fnPtr, closureRaw: closureRaw))
     let newSeq = RuntimeSequenceBox(steps: newSteps, constrainOnceState: seq.constrainOnceState)
     return registerRuntimeObject(newSeq)
 }
