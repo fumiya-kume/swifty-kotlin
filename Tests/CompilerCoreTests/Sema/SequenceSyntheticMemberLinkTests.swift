@@ -3,6 +3,28 @@ import Foundation
 import XCTest
 
 final class SequenceSyntheticMemberLinkTests: XCTestCase {
+    func testSequenceFilterIndexedTypeChecksInCallExpressions() throws {
+        let source = """
+        fun indexedValues(): Sequence<Int> {
+            val values = sequenceOf(10, 20, 30)
+            return values.filterIndexed { index, value -> index == 1 || value == 30 }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Sequence.filterIndexed surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+        }
+    }
+
     func testSequenceFilterIsInstanceResolvesInCallExpressions() throws {
         let source = """
         fun intsOnly(): Sequence<Int> {

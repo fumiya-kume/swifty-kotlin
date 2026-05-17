@@ -149,6 +149,10 @@ let recordingOnEachIndexedAction: @convention(c) (Int, Int, Int, UnsafeMutablePo
     return 0
 }
 
+private let keepEvenIndexOrLargeValue: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, value, _ in
+    index.isMultiple(of: 2) || value > 30 ? 1 : 0
+}
+
 let summingWindowTransform: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, windowRaw, _ in
     let size = kk_list_size(windowRaw)
     guard size > 0 else { return 0 }
@@ -993,6 +997,12 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         let seq = makeSequence([1, runtimeTestStringHandle("two"), 3])
         let filtered = kk_sequence_filterIsInstance(seq, 3)
         XCTAssertEqual(sequenceElements(filtered), [1, 3])
+    }
+
+    func testFilterIndexedKeepsElementsMatchingIndexedPredicate() {
+        let fn = unsafeBitCast(keepEvenIndexOrLargeValue, to: Int.self)
+        let filtered = kk_sequence_filterIndexed(makeSequence([10, 20, 30, 40]), fn, 0, nil)
+        XCTAssertEqual(sequenceElements(filtered), [10, 30, 40])
     }
 
     // MARK: - Sequence shuffled tests (STDLIB-SEQ-019)

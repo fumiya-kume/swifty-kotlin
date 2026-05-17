@@ -325,6 +325,35 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    // MARK: - filterIndexed keeps indexed matches
+
+    func testSequenceFilterIndexedKeepsIndexedMatches() throws {
+        let source = """
+        fun main() {
+            val result = sequenceOf(10, 20, 30, 40)
+                .filterIndexed { index, value -> index % 2 == 0 || value > 30 }
+                .toList()
+            println(result)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceFilterIndexed",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[10, 30, 40]\n")
+        }
+    }
+
+
     // MARK: - filterIsInstance keeps matching runtime types
 
     func testSequenceFilterIsInstanceKeepsMatchingTypes() throws {
