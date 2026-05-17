@@ -368,6 +368,14 @@ public extension RuntimeABISpec {
             section: "Atomic"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_java_atomic_int_array_asKotlinAtomicArray",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Atomic"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_atomic_int_array_fetchAndUpdateAt",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
@@ -522,6 +530,14 @@ public extension RuntimeABISpec {
             section: "Atomic"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_java_atomic_long_array_asKotlinAtomicArray",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Atomic"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_atomic_long_array_fetchAndAddAt",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
@@ -597,6 +613,14 @@ public extension RuntimeABISpec {
         // AtomicArray
         RuntimeABIFunctionSpec(
             name: "kk_atomic_ref_array_asJavaAtomicArray",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Atomic"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_java_atomic_ref_array_asKotlinAtomicArray",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
             ],
