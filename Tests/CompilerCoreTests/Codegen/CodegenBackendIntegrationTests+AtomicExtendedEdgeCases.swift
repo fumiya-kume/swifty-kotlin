@@ -1047,7 +1047,7 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
-    func testCodegenAtomicLongArrayFetchAndUpdateAt() throws {
+    func testCodegenAtomicLongArrayFetchAndUpdateAtThirdScenario() throws {
         let source = """
         @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
         import kotlin.concurrent.atomics.AtomicLongArray
@@ -1109,7 +1109,7 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
-    func testCodegenAtomicLongArrayFetchAndUpdateAt() throws {
+    func testCodegenAtomicLongArrayFetchAndUpdateAtSecondScenario() throws {
         let source = """
         @file:OptIn(kotlin.concurrent.atomics.ExperimentalAtomicApi::class)
         import kotlin.concurrent.atomics.AtomicLongArray
