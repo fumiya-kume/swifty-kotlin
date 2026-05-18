@@ -758,6 +758,14 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "System"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_js_array_toArray",
+            parameters: [
+                RuntimeABIParameter(name: "jsArrayRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
     ]
 
     public static let gcFunctions: [RuntimeABIFunctionSpec] = [
