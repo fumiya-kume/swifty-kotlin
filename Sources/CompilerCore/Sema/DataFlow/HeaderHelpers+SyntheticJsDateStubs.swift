@@ -66,12 +66,27 @@ extension DataFlowSemaPhase {
         )))
         symbols.setPropertyType(localeOptionsType, for: localeOptionsSymbol)
 
-        registerJsDateCompanion(
+        if let dateCompanionSymbol = registerJsDateCompanion(
             ownerSymbol: dateSymbol,
             symbols: symbols,
             types: types,
             interner: interner
-        )
+        ) {
+            let dateCompanionType = types.make(.classType(ClassType(
+                classSymbol: dateCompanionSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            registerJsDateCompanionMember(
+                ownerSymbol: dateCompanionSymbol,
+                ownerType: dateCompanionType,
+                named: "now",
+                returnType: types.doubleType,
+                parameters: [],
+                symbols: symbols,
+                interner: interner
+            )
+        }
 
         let arraySymbol = ensureClassSymbol(
             named: "Array",
@@ -259,7 +274,7 @@ extension DataFlowSemaPhase {
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner
-    ) {
+    ) -> SymbolID? {
         if let existingCompanion = symbols.companionObjectSymbol(for: ownerSymbol),
            let companionInfo = symbols.symbol(existingCompanion)
         {
@@ -269,9 +284,9 @@ extension DataFlowSemaPhase {
                 nullability: .nonNull
             )))
             symbols.setPropertyType(companionType, for: companionInfo.id)
-            return
+            return companionInfo.id
         }
-        guard let ownerInfo = symbols.symbol(ownerSymbol) else { return }
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else { return nil }
         let companionName = interner.intern("Companion")
         let companionFQName = ownerInfo.fqName + [companionName]
         let companionSymbol = symbols.define(
@@ -290,6 +305,7 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(companionType, for: companionSymbol)
+        return companionSymbol
     }
 
     private func registerJsDateConstructor(
@@ -374,6 +390,66 @@ extension DataFlowSemaPhase {
             declSite: nil,
             visibility: .public,
             flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
+
+        let valueParameterSymbols = parameters.map { parameter in
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: memberFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: parameterSymbol)
+            return parameterSymbol
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: ownerType,
+                parameterTypes: parameterTypes,
+                returnType: returnType,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: parameters.map(\.hasDefault),
+                valueParameterIsVararg: Array(repeating: false, count: parameters.count)
+            ),
+            for: memberSymbol
+        )
+    }
+
+    private func registerJsDateCompanionMember(
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        named name: String,
+        returnType: TypeID,
+        parameters: [(name: String, type: TypeID, hasDefault: Bool)],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else { return }
+        let memberName = interner.intern(name)
+        let memberFQName = ownerInfo.fqName + [memberName]
+        let parameterTypes = parameters.map(\.type)
+        let alreadyRegistered = symbols.lookupAll(fqName: memberFQName).contains { symbol in
+            guard let signature = symbols.functionSignature(for: symbol) else {
+                return false
+            }
+            return signature.receiverType == ownerType
+                && signature.parameterTypes == parameterTypes
+                && signature.returnType == returnType
+        }
+        guard !alreadyRegistered else { return }
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .static]
         )
         symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
 
