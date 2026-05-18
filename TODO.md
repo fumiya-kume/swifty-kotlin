@@ -757,7 +757,7 @@
 - [x] STDLIB-JS-PROP-001: `kotlin.js.console` external property を追加する
 - [ ] STDLIB-JS-PROP-003: `KClass<T>.js` extension property を追加する
 - [ ] STDLIB-JS-PROP-004: `JsClass<T>.kotlin` extension property を追加する
-- [ ] STDLIB-JS-FN-001: `Date.Companion.now()` を追加する
+- [x] STDLIB-JS-FN-001: `Date.Companion.now()` を追加する
 - [ ] STDLIB-JS-FN-002: `dateLocaleOptions(init)` を追加する
 - [ ] STDLIB-JS-FN-004: `JsReference<T>.get()` を追加する
 - [ ] STDLIB-JS-FN-005: `JsArray<T>.get(index)` を追加する
