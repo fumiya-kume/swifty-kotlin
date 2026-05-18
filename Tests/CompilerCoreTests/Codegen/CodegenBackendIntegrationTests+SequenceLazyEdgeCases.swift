@@ -597,7 +597,6 @@ extension CodegenBackendIntegrationTests {
     }
 
     func testSequenceAllShortCircuits() throws {
-        throw XCTSkip("Sequence all() short-circuit not yet implemented")
         let source = """
         var counter = 0
 
