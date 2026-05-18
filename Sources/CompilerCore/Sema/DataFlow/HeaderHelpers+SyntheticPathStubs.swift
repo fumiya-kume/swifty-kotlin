@@ -40,6 +40,7 @@
 /// - `Path.setOwner(value: UserPrincipal): Path` extension function
 /// - `Path.getPosixFilePermissions(vararg options: LinkOption): Set<PosixFilePermission>` extension function
 /// - `Path.fileSize(): Long` extension function
+/// - `Path.forEachLine(charset, action)` extension function
 /// - `Path.setPosixFilePermissions(value: Set<PosixFilePermission>): Path` extension function
 /// - `Path.listDirectoryEntries(glob: String = "*"): List<Path>` extension function
 /// - `Path.isExecutable()`, `isHidden()`, `isReadable()`, `isSameFileAs()`, `isSymbolicLink()`, `isWritable()`
@@ -139,6 +140,12 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(charsetType, for: charsetSymbol)
+        let stringActionType = types.make(.functionType(FunctionType(
+            params: [types.stringType],
+            returnType: types.unitType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
 
         let copyOptionPkg = ensurePackage(path: ["java", "nio", "file"], symbols: symbols, interner: interner)
         let copyOptionPkgSymbol = symbols.lookup(fqName: copyOptionPkg)
@@ -905,6 +912,29 @@ extension DataFlowSemaPhase {
             parameters: [],
             returnType: types.longType,
             externalLinkName: "kk_path_fileSize",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "forEachLine",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("charset", charsetType), ("action", stringActionType)],
+            returnType: types.unitType,
+            externalLinkName: "kk_path_forEachLine",
+            valueParameterHasDefaultValues: [true, false],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "forEachLine",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("action", stringActionType)],
+            returnType: types.unitType,
+            externalLinkName: "kk_path_forEachLine_default",
             symbols: symbols,
             interner: interner
         )
