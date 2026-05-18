@@ -73,6 +73,7 @@ extension ABIMismatchTests {
             "kk_native_atomic_ref_create",
             "kk_native_atomic_ref_load",
             "kk_optional_getOrDefault",
+            "kk_optional_toCollection",
             "kk_path_createLinkPointingTo",
             "kk_path_deleteExisting",
             "kk_path_deleteRecursively",
