@@ -83,6 +83,7 @@ extension ABIMismatchTests {
             "kk_optional_getOrDefault",
             "kk_optional_getOrNull",
             "kk_optional_toCollection",
+            "kk_optional_toSet",
             "kk_path_createLinkPointingTo",
             "kk_path_deleteExisting",
             "kk_path_deleteRecursively",
