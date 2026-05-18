@@ -33,6 +33,9 @@ public extension RuntimeABISpec {
         abiParitySpec("kk_kclass_java", parameters: [
             p("kclassRaw", .intptr),
         ]),
+        abiParitySpec("kk_kclass_js", parameters: [
+            p("kclassRaw", .intptr),
+        ]),
         abiParitySpec("kk_annotation_class_name", parameters: [
             p("p0", .intptr),
         ]),
