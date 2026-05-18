@@ -64,14 +64,6 @@ extension DataFlowSemaPhase {
         types.setNominalTypeParameterVariances([.out], for: promiseSymbol)
         symbols.setPropertyType(promiseType, for: promiseSymbol)
 
-        registerJsPromiseThenOnFulfilled(
-            ownerSymbol: promiseSymbol,
-            ownerType: promiseType,
-            classTypeParameterType: typeParamType,
-            symbols: symbols,
-            types: types,
-            interner: interner
-        )
         let throwableType = ensureJsPromiseThrowableType(
             symbols: symbols,
             types: types,
@@ -85,103 +77,6 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             types: types,
             interner: interner
-        )
-    }
-
-    private func registerJsPromiseThenOnFulfilled(
-        ownerSymbol: SymbolID,
-        ownerType: TypeID,
-        classTypeParameterType: TypeID,
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner
-    ) {
-        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
-            return
-        }
-
-        let functionName = interner.intern("then")
-        let functionFQName = ownerInfo.fqName + [functionName]
-        let resultTypeParamName = interner.intern("R")
-        let resultTypeParamFQName = functionFQName + [resultTypeParamName]
-        let resultTypeParamSymbol: SymbolID
-        if let existing = symbols.lookup(fqName: resultTypeParamFQName),
-           symbols.symbol(existing)?.kind == .typeParameter {
-            resultTypeParamSymbol = existing
-        } else {
-            resultTypeParamSymbol = symbols.define(
-                kind: .typeParameter,
-                name: resultTypeParamName,
-                fqName: resultTypeParamFQName,
-                declSite: nil,
-                visibility: .private,
-                flags: []
-            )
-        }
-
-        let resultType = types.make(.typeParam(TypeParamType(
-            symbol: resultTypeParamSymbol,
-            nullability: .nonNull
-        )))
-        let onFulfilledType = types.make(.functionType(FunctionType(
-            params: [classTypeParameterType],
-            returnType: resultType,
-            isSuspend: false,
-            nullability: .nonNull
-        )))
-        let promiseReturnType = types.make(.classType(ClassType(
-            classSymbol: ownerSymbol,
-            args: [.out(resultType)],
-            nullability: .nonNull
-        )))
-
-        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbol in
-            guard let signature = symbols.functionSignature(for: symbol) else {
-                return false
-            }
-            return signature.receiverType == ownerType
-                && signature.parameterTypes == [onFulfilledType]
-                && signature.returnType == promiseReturnType
-                && signature.typeParameterSymbols == [resultTypeParamSymbol]
-        }) {
-            symbols.setParentSymbol(existing, for: resultTypeParamSymbol)
-            return
-        }
-
-        let functionSymbol = symbols.define(
-            kind: .function,
-            name: functionName,
-            fqName: functionFQName,
-            declSite: nil,
-            visibility: .public,
-            flags: [.synthetic]
-        )
-        symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
-        symbols.setParentSymbol(functionSymbol, for: resultTypeParamSymbol)
-
-        let parameterName = interner.intern("onFulfilled")
-        let parameterSymbol = symbols.define(
-            kind: .valueParameter,
-            name: parameterName,
-            fqName: functionFQName + [parameterName],
-            declSite: nil,
-            visibility: .private,
-            flags: [.synthetic]
-        )
-        symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
-        symbols.setPropertyType(onFulfilledType, for: parameterSymbol)
-
-        symbols.setFunctionSignature(
-            FunctionSignature(
-                receiverType: ownerType,
-                parameterTypes: [onFulfilledType],
-                returnType: promiseReturnType,
-                valueParameterSymbols: [parameterSymbol],
-                valueParameterHasDefaultValues: [false],
-                valueParameterIsVararg: [false],
-                typeParameterSymbols: [resultTypeParamSymbol]
-            ),
-            for: functionSymbol
         )
     }
 

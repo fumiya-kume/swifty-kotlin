@@ -50,48 +50,6 @@ final class JsPromiseExternalClassTests: XCTestCase {
         XCTAssertEqual(typeParam.name, interner.intern("T"))
     }
 
-    func testPromiseThenOnFulfilledIsRegistered() throws {
-        let (sema, interner) = try makeSema()
-        let promiseFQName = ["kotlin", "js", "Promise"].map { interner.intern($0) }
-        let promiseSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: promiseFQName))
-        let promiseTypeParameter = try XCTUnwrap(sema.types.nominalTypeParameterSymbols(for: promiseSymbol).first)
-        let promiseTypeParameterType = sema.types.make(.typeParam(TypeParamType(
-            symbol: promiseTypeParameter,
-            nullability: .nonNull
-        )))
-        let promiseReceiverType = try XCTUnwrap(sema.symbols.propertyType(for: promiseSymbol))
-        let thenFQName = promiseFQName + [interner.intern("then")]
-        let then = try XCTUnwrap(
-            sema.symbols.lookupAll(fqName: thenFQName).first { symbol in
-                guard let signature = sema.symbols.functionSignature(for: symbol),
-                      signature.receiverType == promiseReceiverType,
-                      signature.parameterTypes.count == 1,
-                      signature.typeParameterSymbols.count == 1,
-                      case let .functionType(onFulfilledType) = sema.types.kind(of: signature.parameterTypes[0]),
-                      case let .classType(returnType) = sema.types.kind(of: signature.returnType)
-                else {
-                    return false
-                }
-                return onFulfilledType.params == [promiseTypeParameterType]
-                    && onFulfilledType.returnType == sema.types.make(.typeParam(TypeParamType(
-                        symbol: signature.typeParameterSymbols[0],
-                        nullability: .nonNull
-                    )))
-                    && returnType.classSymbol == promiseSymbol
-                    && returnType.args.count == 1
-            },
-            "Promise.then(onFulfilled) member must be registered"
-        )
-        let info = try XCTUnwrap(sema.symbols.symbol(then))
-        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: then))
-
-        XCTAssertEqual(info.visibility, .public)
-        XCTAssertTrue(info.flags.contains(.synthetic))
-        XCTAssertEqual(signature.valueParameterHasDefaultValues, [false])
-        XCTAssertEqual(signature.valueParameterIsVararg, [false])
-        XCTAssertNil(sema.symbols.externalLinkName(for: then))
-    }
-
     func testPromiseThenOnFulfilledOnRejectedIsRegistered() throws {
         let (sema, interner) = try makeSema()
         let promiseFQName = ["kotlin", "js", "Promise"].map { interner.intern($0) }
