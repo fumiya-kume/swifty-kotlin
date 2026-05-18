@@ -252,6 +252,19 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(result, runtimeNullSentinelInt)
     }
 
+    func testTakeLastReturnsTrailingElementsAsList() {
+        XCTAssertEqual(listElements(kk_sequence_takeLast(makeSequence([1, 2, 3, 4]), 2, nil)), [3, 4])
+        XCTAssertEqual(listElements(kk_sequence_takeLast(makeSequence([1, 2]), 5, nil)), [1, 2])
+        XCTAssertEqual(listElements(kk_sequence_takeLast(makeSequence([1, 2]), 0, nil)), [])
+    }
+
+    func testTakeLastNegativeCountSetsThrowable() {
+        var thrown = 0
+        let result = kk_sequence_takeLast(makeSequence([1, 2]), -1, &thrown)
+        XCTAssertEqual(listElements(result), [])
+        XCTAssertNotEqual(thrown, 0)
+    }
+
     func testSumByAccumulatesSelectorResults() {
         var thrown = 0
         let result = kk_sequence_sumBy(

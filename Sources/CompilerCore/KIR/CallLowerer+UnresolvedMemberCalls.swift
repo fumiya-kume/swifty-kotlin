@@ -590,6 +590,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_filter")
             case takeName:
                 return interner.intern("kk_sequence_take")
+            case interner.intern("takeLast"):
+                return interner.intern("kk_sequence_takeLast")
             case toListName:
                 return interner.intern("kk_sequence_to_list")
             case interner.intern("constrainOnce"):
