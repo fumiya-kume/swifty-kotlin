@@ -239,7 +239,7 @@
 - [ ] STDLIB-RANDOM-FN-002: `asKotlinRandom` 関数の実装
 
 #### kotlin.ranges 関数の実装
-- [ ] STDLIB-RANGES-FN-004: `coerceValueIn` 関数の実装
+- [x] STDLIB-RANGES-FN-004: `coerceValueIn` 関数の実装
 
 #### kotlin.reflect 型の実装
 - [ ] STDLIB-REFLECT-TYPE-009: `KMutableProperty` インターフェースの実装
