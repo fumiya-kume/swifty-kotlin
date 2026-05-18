@@ -862,6 +862,52 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathWriterOptionsExtensionFunctionInIOPathPackageSurfaceIsRegistered() throws {
+        let source = """
+        import java.io.BufferedWriter
+        import java.nio.file.OpenOption
+        import kotlin.io.path.Path
+        import kotlin.io.path.writer
+        import kotlin.text.Charsets
+
+        fun pathWriter(path: Path, option: OpenOption) {}
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.writer(charset, options) extension function in kotlin.io.path should register: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let charsetSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "text", "Charset"].map(interner.intern)))
+            let openOptionSymbol = try XCTUnwrap(symbols.lookup(fqName: ["java", "nio", "file", "OpenOption"].map(interner.intern)))
+            let bufferedWriterSymbol = try XCTUnwrap(symbols.lookup(fqName: ["java", "io", "BufferedWriter"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let charsetType = types.make(.classType(ClassType(classSymbol: charsetSymbol, args: [], nullability: .nonNull)))
+            let openOptionType = types.make(.classType(ClassType(classSymbol: openOptionSymbol, args: [], nullability: .nonNull)))
+            let bufferedWriterType = types.make(.classType(ClassType(classSymbol: bufferedWriterSymbol, args: [], nullability: .nonNull)))
+            let writerSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "writer"].map(interner.intern))
+            let writer = try XCTUnwrap(writerSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [charsetType, openOptionType]
+                    && signature.returnType == bufferedWriterType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: writer), "kk_path_writer")
+
+            let signature = try XCTUnwrap(symbols.functionSignature(for: writer))
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [true, false])
+            XCTAssertEqual(signature.valueParameterIsVararg, [false, true])
+        }
+    }
+
     func testPathFileSizeExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import kotlin.io.path.Path
