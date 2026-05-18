@@ -25,6 +25,7 @@
 /// - `Path.relativeTo(base: Path): Path` extension function
 /// - `Path.relativeToOrNull(base: Path): Path?` extension function
 /// - `Path.readSymbolicLink(): Path` extension function
+/// - `Path.readAttributes(attributes, vararg options: LinkOption): Map<String, Any?>` extension function
 /// - `Path.invariantSeparatorsPathString: String` extension property
 /// - `Path.writeBytes(array: ByteArray, vararg options: OpenOption)` extension function
 /// - `Path.writer(charset, options)` extension function
@@ -298,6 +299,20 @@ extension DataFlowSemaPhase {
         let iterableOfCharSequenceType = types.make(.classType(ClassType(
             classSymbol: iterableSymbol,
             args: [.invariant(charSequenceType)],
+            nullability: .nonNull
+        )))
+
+        let mapSymbol = symbols.lookup(
+            fqName: kotlinCollectionsPkg + [interner.intern("Map")]
+        ) ?? registerSyntheticMapStub(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg
+        ).mapSymbol
+        let mapOfStringToNullableAnyType = types.make(.classType(ClassType(
+            classSymbol: mapSymbol,
+            args: [.invariant(types.stringType), .out(types.nullableAnyType)],
             nullability: .nonNull
         )))
 
@@ -623,6 +638,18 @@ extension DataFlowSemaPhase {
             parameters: [],
             returnType: pathType,
             externalLinkName: "kk_path_readSymbolicLink",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "readAttributes",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("attributes", types.stringType), ("options", linkOptionType)],
+            returnType: mapOfStringToNullableAnyType,
+            externalLinkName: "kk_path_readAttributes_string",
+            valueParameterIsVararg: [false, true],
             symbols: symbols,
             interner: interner
         )

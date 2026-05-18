@@ -724,7 +724,7 @@
 - [ ] STDLIB-IO-PATH-FN-054: `Path(pathString)` の公式 top-level factory shape を既存 stub と整合させる
 - [x] STDLIB-IO-PATH-FN-055: `Path(base, subpaths)` top-level factory overload を追加する
 - [ ] STDLIB-IO-PATH-FN-056: `Path.readAttributes<A>(options)` を追加する
-- [ ] STDLIB-IO-PATH-FN-057: `Path.readAttributes(attributes, options)` を追加する
+- [x] STDLIB-IO-PATH-FN-057: `Path.readAttributes(attributes, options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-059: `Path.reader(charset, options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-066: `Path.setAttribute(attribute, value, options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-071: `Path.useDirectoryEntries(glob, block)` を追加する
