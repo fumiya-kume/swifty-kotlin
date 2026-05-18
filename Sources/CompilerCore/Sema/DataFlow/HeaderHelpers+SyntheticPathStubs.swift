@@ -36,6 +36,7 @@
 /// - `deleteExisting()`, `deleteRecursively()`
 /// - `Path.fileStore(): FileStore` extension function
 /// - `Path.fileAttributesViewOrNull<V : FileAttributeView>(vararg options: LinkOption): V?` extension function
+/// - `Path.getAttribute(attribute: String, vararg options: LinkOption): Any` extension function
 /// - `Path.setOwner(value: UserPrincipal): Path` extension function
 /// - `Path.getPosixFilePermissions(vararg options: LinkOption): Set<PosixFilePermission>` extension function
 /// - `Path.fileSize(): Long` extension function
@@ -852,6 +853,18 @@ extension DataFlowSemaPhase {
             fileAttributeViewUpperBound: fileAttributeViewType,
             symbols: symbols,
             types: types,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "getAttribute",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("attribute", types.stringType), ("options", linkOptionType)],
+            returnType: types.anyType,
+            externalLinkName: "kk_path_getAttribute",
+            valueParameterIsVararg: [false, true],
+            symbols: symbols,
             interner: interner
         )
 
