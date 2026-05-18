@@ -775,30 +775,30 @@
 - [x] STDLIB-IO-PATH-FN-079: `Path.writer(charset, options)` を追加する
 - [x] STDLIB-IO-PATH-FN-080: `Path.writeText(text, charset, options)` を既存 `writeText(text)` stub から公式 shape へ広げる
 - [ ] STDLIB-JVM-PROP-002: `Enum.declaringJavaClass` extension property を追加する
-- [x] STDLIB-JVM-PROP-003: `KClass<T>.java` extension property を追加する
-- [x] STDLIB-JVM-PROP-005: `KClass<T>.javaClass` extension property を追加する
-- [x] STDLIB-JVM-PROP-006: `KClass<T>.javaObjectType` extension property を追加する
-- [x] STDLIB-JVM-PROP-007: `KClass<T>.javaPrimitiveType` extension property を追加する
-- [x] STDLIB-JVM-PROP-008: `Class<T>.kotlin` extension property を追加する
-- [x] STDLIB-JVM-OPTIONALS-FN-001: `Optional<T>.asSequence()` を追加する
-- [x] STDLIB-JVM-OPTIONALS-FN-003: `Optional<T>.getOrElse(defaultValue)` を追加する
-- [x] STDLIB-JVM-OPTIONALS-FN-004: `Optional<T>.getOrNull()` を追加する
-- [x] STDLIB-JVM-OPTIONALS-FN-005: `Optional<T>.toCollection(destination)` を追加する
-- [x] STDLIB-JVM-OPTIONALS-FN-006: `Optional<T>.toList()` を追加する
-- [x] STDLIB-JVM-OPTIONALS-FN-007: `Optional<T>.toSet()` を追加する
-- [x] STDLIB-JS-TYPE-003: `kotlin.js.Dynamic` external interface を追加する
-- [x] STDLIB-JS-TYPE-012: `kotlin.js.JsArray` external class を追加する
-- [x] STDLIB-JS-TYPE-013: `kotlin.js.JsBigInt` external class を追加する
-- [x] STDLIB-JS-TYPE-014: `kotlin.js.JsBoolean` external class を追加する
-- [x] STDLIB-JS-TYPE-025: `kotlin.js.JsNumber` external class を追加する
-- [x] STDLIB-JS-TYPE-027: `kotlin.js.JsReference` external interface を追加する
-- [x] STDLIB-JS-TYPE-029: `kotlin.js.JsString` external class を追加する
+- [ ] STDLIB-JVM-PROP-003: `KClass<T>.java` extension property を追加する
+- [ ] STDLIB-JVM-PROP-005: `KClass<T>.javaClass` extension property を追加する
+- [ ] STDLIB-JVM-PROP-006: `KClass<T>.javaObjectType` extension property を追加する
+- [ ] STDLIB-JVM-PROP-007: `KClass<T>.javaPrimitiveType` extension property を追加する
+- [ ] STDLIB-JVM-PROP-008: `Class<T>.kotlin` extension property を追加する
+- [ ] STDLIB-JVM-OPTIONALS-FN-001: `Optional<T>.asSequence()` を追加する
+- [ ] STDLIB-JVM-OPTIONALS-FN-003: `Optional<T>.getOrElse(defaultValue)` を追加する
+- [ ] STDLIB-JVM-OPTIONALS-FN-004: `Optional<T>.getOrNull()` を追加する
+- [ ] STDLIB-JVM-OPTIONALS-FN-005: `Optional<T>.toCollection(destination)` を追加する
+- [ ] STDLIB-JVM-OPTIONALS-FN-006: `Optional<T>.toList()` を追加する
+- [ ] STDLIB-JVM-OPTIONALS-FN-007: `Optional<T>.toSet()` を追加する
+- [ ] STDLIB-JS-TYPE-003: `kotlin.js.Dynamic` external interface を追加する
+- [ ] STDLIB-JS-TYPE-012: `kotlin.js.JsArray` external class を追加する
+- [ ] STDLIB-JS-TYPE-013: `kotlin.js.JsBigInt` external class を追加する
+- [ ] STDLIB-JS-TYPE-014: `kotlin.js.JsBoolean` external class を追加する
+- [ ] STDLIB-JS-TYPE-025: `kotlin.js.JsNumber` external class を追加する
+- [ ] STDLIB-JS-TYPE-027: `kotlin.js.JsReference` external interface を追加する
+- [ ] STDLIB-JS-TYPE-029: `kotlin.js.JsString` external class を追加する
 - [x] STDLIB-JS-PROP-001: `kotlin.js.console` external property を追加する
-- [x] STDLIB-JS-PROP-003: `KClass<T>.js` extension property を追加する
-- [x] STDLIB-JS-PROP-004: `JsClass<T>.kotlin` extension property を追加する
-- [x] STDLIB-JS-FN-001: `Date.Companion.now()` を追加する
-- [x] STDLIB-JS-FN-002: `dateLocaleOptions(init)` を追加する
-- [x] STDLIB-JS-FN-004: `JsReference<T>.get()` を追加する（`kk_js_reference_get` runtime 済み）
+- [ ] STDLIB-JS-PROP-003: `KClass<T>.js` extension property を追加する
+- [ ] STDLIB-JS-PROP-004: `JsClass<T>.kotlin` extension property を追加する
+- [ ] STDLIB-JS-FN-001: `Date.Companion.now()` を追加する
+- [ ] STDLIB-JS-FN-002: `dateLocaleOptions(init)` を追加する
+- [ ] STDLIB-JS-FN-004: `JsReference<T>.get()` を追加する
 - [ ] STDLIB-JS-FN-005: `JsArray<T>.get(index)` を追加する
 - [x] STDLIB-JS-FN-006: `RegExpMatch.get(index)` を追加する
 - [ ] STDLIB-JS-FN-007: `dynamic.iterator()` を追加する
