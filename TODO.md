@@ -117,12 +117,12 @@
 - [x] STDLIB-ATOMIC-NEW-FN-006: `asJavaAtomicArray` 関数の実装（AtomicIntArray版）
 - [x] STDLIB-ATOMIC-NEW-FN-007: `asJavaAtomicArray` 関数の実装（AtomicLongArray版）
 - [x] STDLIB-ATOMIC-NEW-FN-008: `asKotlinAtomic` 関数の実装（各オーバーロード）
-- [x] STDLIB-ATOMIC-NEW-FN-009: `asKotlinAtomicArray` 関数の実装（各オーバーロード）
+- [ ] STDLIB-ATOMIC-NEW-FN-009: `asKotlinAtomicArray` 関数の実装（各オーバーロード）
 - [x] STDLIB-ATOMIC-NEW-FN-012: `AtomicLongArray` 関数の実装（factory版）
 - [x] STDLIB-ATOMIC-NEW-FN-013: `fetchAndUpdate` 拡張関数の実装（AtomicArray版）
 - [x] STDLIB-ATOMIC-NEW-FN-014: `fetchAndUpdate` 拡張関数の実装（AtomicBoolean版）
 - [x] STDLIB-ATOMIC-NEW-FN-015: `fetchAndUpdate` 拡張関数の実装（AtomicIntArray版）
-- [x] STDLIB-ATOMIC-NEW-FN-017: `fetchAndUpdate` 拡張関数の実装（AtomicLongArray版）
+- [ ] STDLIB-ATOMIC-NEW-FN-017: `fetchAndUpdate` 拡張関数の実装（AtomicLongArray版）
 - [x] STDLIB-ATOMIC-NEW-FN-018: `fetchAndUpdate` 拡張関数の実装（AtomicLong版）
 - [x] STDLIB-ATOMIC-NEW-FN-019: `fetchAndUpdate` 拡張関数の実装（AtomicNativePtr版）
 - [x] STDLIB-ATOMIC-NEW-FN-020: `fetchAndUpdate` 拡張関数の実装（AtomicReference版）
@@ -235,7 +235,7 @@
 #### kotlin.random 型の実装
 
 #### kotlin.random 関数の実装
-- [x] STDLIB-RANDOM-FN-001: `asJavaRandom` 関数の実装
+- [ ] STDLIB-RANDOM-FN-001: `asJavaRandom` 関数の実装
 - [ ] STDLIB-RANDOM-FN-002: `asKotlinRandom` 関数の実装
 
 #### kotlin.ranges 関数の実装
@@ -243,9 +243,9 @@
 
 #### kotlin.reflect 型の実装
 - [ ] STDLIB-REFLECT-TYPE-009: `KMutableProperty` インターフェースの実装
-- [x] STDLIB-REFLECT-TYPE-010: `KMutableProperty0` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-011: `KMutableProperty1` インターフェースの実装
-- [x] STDLIB-REFLECT-TYPE-013: `KParameter` インターフェースの実装
+- [ ] STDLIB-REFLECT-TYPE-010: `KMutableProperty0` インターフェースの実装
+- [x] STDLIB-REFLECT-TYPE-011: `KMutableProperty1` インターフェースの実装
+- [ ] STDLIB-REFLECT-TYPE-013: `KParameter` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-015: `KProperty0` インターフェースの実装
 - [x] STDLIB-REFLECT-TYPE-016: `KProperty1` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-022: `KVisibility` enum の実装
@@ -257,7 +257,7 @@
 - [x] STDLIB-REFLECT-FN-002: `createInstance` 拡張関数の実装
 
 #### kotlin.sequences 型の実装
-- [x] STDLIB-SEQ-TYPE-001: `Sequence` インターフェースの実装
+- [ ] STDLIB-SEQ-TYPE-001: `Sequence` インターフェースの実装
 - [ ] STDLIB-SEQ-TYPE-002: `SequenceScope` クラスの実装
 
 #### kotlin.sequences 関数の実装
@@ -268,11 +268,11 @@
 - [x] STDLIB-SEQ-FN-005: `associate` 関数の実装
 - [ ] STDLIB-SEQ-FN-006: `associateBy` 関数の実装
 - [ ] STDLIB-SEQ-FN-007: `associateByTo` 関数の実装
-- [x] STDLIB-SEQ-FN-008: `associateTo` 関数の実装
+- [ ] STDLIB-SEQ-FN-008: `associateTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-009: `associateWith` 関数の実装
-- [x] STDLIB-SEQ-FN-010: `associateWithTo` 関数の実装
+- [ ] STDLIB-SEQ-FN-010: `associateWithTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-011: `averageOf` 関数の実装
-- [x] STDLIB-SEQ-FN-012: `chunked` 関数の実装
+- [ ] STDLIB-SEQ-FN-012: `chunked` 関数の実装
 - [ ] STDLIB-SEQ-FN-013: `constrainOnce` 関数の実装
 - [ ] STDLIB-SEQ-FN-014: `contains` 関数の実装
 - [ ] STDLIB-SEQ-FN-015: `count` 関数の実装
@@ -286,11 +286,11 @@
 - [ ] STDLIB-SEQ-FN-023: `filter` 関数の実装
 - [ ] STDLIB-SEQ-FN-024: `filterIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-025: `filterIndexedTo` 関数の実装
-- [x] STDLIB-SEQ-FN-026: `filterIsInstance` 関数の実装
+- [ ] STDLIB-SEQ-FN-026: `filterIsInstance` 関数の実装
 - [ ] STDLIB-SEQ-FN-027: `filterIsInstanceTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-028: `filterNot` 関数の実装
 - [ ] STDLIB-SEQ-FN-029: `filterNotNull` 関数の実装
-- [x] STDLIB-SEQ-FN-030: `filterNotTo` 関数の実装
+- [ ] STDLIB-SEQ-FN-030: `filterNotTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-031: `filterTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-032: `find` 関数の実装
 - [ ] STDLIB-SEQ-FN-033: `findLast` 関数の実装
