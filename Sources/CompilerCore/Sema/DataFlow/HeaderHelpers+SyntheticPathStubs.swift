@@ -7,7 +7,8 @@
 /// - `toString(): String`
 /// - `resolve(other: String): Path`, `resolve(other: Path): Path`
 /// - `relativize(other: Path): Path`, `normalize(): Path`
-/// - `exists(): Boolean`, `isDirectory(): Boolean`, `isRegularFile(): Boolean`
+/// - `exists(): Boolean`, `isDirectory(): Boolean`
+/// - `Path.isRegularFile(vararg options: LinkOption): Boolean` extension function
 /// - `startsWith(other: Path): Boolean`, `startsWith(other: String): Boolean`
 /// - `endsWith(other: Path): Boolean`, `endsWith(other: String): Boolean`
 /// - `toFile(): File`, `toUri(): URI`, `toAbsolutePath(): Path`
@@ -165,6 +166,22 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(openOptionType, for: openOptionSymbol)
+
+        let linkOptionSymbol = ensureInterfaceSymbol(
+            named: "LinkOption",
+            in: javaNioFilePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaNioFilePkgSymbol {
+            symbols.setParentSymbol(javaNioFilePkgSymbol, for: linkOptionSymbol)
+        }
+        let linkOptionType = types.make(.classType(ClassType(
+            classSymbol: linkOptionSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(linkOptionType, for: linkOptionSymbol)
 
         registerPathCopyActionContextSurface(
             packageFQName: kotlinIOPathPkg,
@@ -749,13 +766,14 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        registerPathMemberFunction(
+        registerPathExtensionFunction(
             named: "isRegularFile",
-            externalLinkName: "kk_path_isRegularFile",
-            ownerSymbol: pathSymbol,
-            ownerType: pathType,
-            parameters: [],
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("options", linkOptionType)],
             returnType: types.booleanType,
+            externalLinkName: "kk_path_isRegularFile",
+            valueParameterIsVararg: [true],
             symbols: symbols,
             interner: interner
         )
@@ -1800,7 +1818,6 @@ extension DataFlowSemaPhase {
         symbols: SymbolTable,
         interner: StringInterner
     ) {
-        let parameterIsVararg = valueParameterIsVararg ?? Array(repeating: false, count: parameters.count)
         let functionName = interner.intern(name)
         let functionFQName = packageFQName + [functionName]
         let parameterTypes = parameters.map(\.type)
