@@ -732,7 +732,7 @@
 - [ ] STDLIB-IO-PATH-FN-073: `Path.visitFileTree(visitor, maxDepth, followLinks)` を追加する
 - [ ] STDLIB-IO-PATH-FN-074: `Path.visitFileTree(maxDepth, followLinks, builderAction)` を追加する
 - [ ] STDLIB-IO-PATH-FN-075: `Path.walk(options)` を追加する
-- [ ] STDLIB-IO-PATH-FN-077: `Path.writeLines(lines: Iterable<CharSequence>, charset, options)` を追加する
+- [x] STDLIB-IO-PATH-FN-077: `Path.writeLines(lines: Iterable<CharSequence>, charset, options)` を追加する
 - [x] STDLIB-IO-PATH-FN-078: `Path.writeLines(lines: Sequence<CharSequence>, charset, options)` を追加する
 - [x] STDLIB-IO-PATH-FN-079: `Path.writer(charset, options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-080: `Path.writeText(text, charset, options)` を既存 `writeText(text)` stub から公式 shape へ広げる
