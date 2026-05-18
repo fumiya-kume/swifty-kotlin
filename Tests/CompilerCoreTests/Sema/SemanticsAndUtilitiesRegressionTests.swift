@@ -501,16 +501,16 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
-    func testPathIsRegularFileOptionsExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
+    func testPathListDirectoryEntriesGlobExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
         let source = """
-        import java.nio.file.LinkOption
+        import kotlin.collections.List
         import kotlin.io.path.Path
-        import kotlin.io.path.isRegularFile
+        import kotlin.io.path.listDirectoryEntries
 
-        fun regularPath(path: Path, option: LinkOption): Boolean {
-            val first = path.isRegularFile()
-            val second = path.isRegularFile(option)
-            return first && second
+        fun entries(path: Path): List<Path> {
+            val first = path.listDirectoryEntries()
+            val second = path.listDirectoryEntries("*.kt")
+            return second
         }
         """
 
@@ -519,7 +519,7 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
             try runSema(ctx)
             XCTAssertFalse(
                 ctx.diagnostics.hasError,
-                "Path.isRegularFile(options) extension function in kotlin.io.path should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+                "Path.listDirectoryEntries(glob) extension function in kotlin.io.path should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
             )
 
             let interner = ctx.interner
@@ -527,28 +527,32 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
             let symbols = sema.symbols
             let types = sema.types
             let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
-            let linkOptionSymbol = try XCTUnwrap(symbols.lookup(fqName: ["java", "nio", "file", "LinkOption"].map(interner.intern)))
+            let listSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "collections", "List"].map(interner.intern)))
             let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
-            let linkOptionType = types.make(.classType(ClassType(classSymbol: linkOptionSymbol, args: [], nullability: .nonNull)))
-            let isRegularFileSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "isRegularFile"].map(interner.intern))
-            let isRegularFile = try XCTUnwrap(isRegularFileSymbols.first { symbolID in
+            let listOfPathType = types.make(.classType(ClassType(
+                classSymbol: listSymbol,
+                args: [.out(pathType)],
+                nullability: .nonNull
+            )))
+            let listDirectoryEntriesSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "listDirectoryEntries"].map(interner.intern))
+            let listDirectoryEntries = try XCTUnwrap(listDirectoryEntriesSymbols.first { symbolID in
                 guard let signature = symbols.functionSignature(for: symbolID) else { return false }
                 return signature.receiverType == pathType
-                    && signature.parameterTypes == [linkOptionType]
-                    && signature.returnType == types.booleanType
+                    && signature.parameterTypes == [types.stringType]
+                    && signature.returnType == listOfPathType
             })
-            XCTAssertEqual(symbols.externalLinkName(for: isRegularFile), "kk_path_isRegularFile")
+            XCTAssertEqual(symbols.externalLinkName(for: listDirectoryEntries), "kk_path_listDirectoryEntries")
 
-            let signature = try XCTUnwrap(symbols.functionSignature(for: isRegularFile))
-            XCTAssertEqual(signature.valueParameterHasDefaultValues, [false])
-            XCTAssertEqual(signature.valueParameterIsVararg, [true])
+            let signature = try XCTUnwrap(symbols.functionSignature(for: listDirectoryEntries))
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [true])
+            XCTAssertEqual(signature.valueParameterIsVararg, [false])
 
             let ast = try XCTUnwrap(ctx.ast)
-            let callExprs = memberCallExprIDs(named: "isRegularFile", in: ast, interner: interner)
+            let callExprs = memberCallExprIDs(named: "listDirectoryEntries", in: ast, interner: interner)
             XCTAssertEqual(callExprs.count, 2)
             for callExpr in callExprs {
-                XCTAssertEqual(sema.bindings.callBinding(for: callExpr)?.chosenCallee, isRegularFile)
-                XCTAssertEqual(sema.bindings.exprTypes[callExpr], types.booleanType)
+                XCTAssertEqual(sema.bindings.callBinding(for: callExpr)?.chosenCallee, listDirectoryEntries)
+                XCTAssertEqual(sema.bindings.exprTypes[callExpr], listOfPathType)
             }
         }
     }
