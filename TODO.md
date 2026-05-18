@@ -406,26 +406,26 @@
 - [ ] STDLIB-SEQ-FN-109: `slice` 関数の実装
 - [x] STDLIB-SEQ-FN-110: `sorted` 関数の実装
 - [ ] STDLIB-SEQ-FN-111: `sortedBy` 関数の実装
-- [x] STDLIB-SEQ-FN-112: `sortedByDescending` 関数の実装
-- [x] STDLIB-SEQ-FN-113: `sortedDescending` 関数の実装
-- [x] STDLIB-SEQ-FN-114: `sortedWith` 関数の実装
-- [x] STDLIB-SEQ-FN-115: `subtract` 関数の実装
-- [x] STDLIB-SEQ-FN-116: `sum` 関数の実装
-- [x] STDLIB-SEQ-FN-118: `sumOf` 関数の実装
-- [x] STDLIB-SEQ-FN-119: `take` 関数の実装
-- [x] STDLIB-SEQ-FN-120: `takeLast` 関数の実装
-- [x] STDLIB-SEQ-FN-121: `takeLastWhile` 関数の実装
-- [x] STDLIB-SEQ-FN-122: `takeWhile` 関数の実装
-- [x] STDLIB-SEQ-FN-123: `toCollection` 関数の実装
-- [x] STDLIB-SEQ-FN-124: `toHashSet` 関数の実装
-- [x] STDLIB-SEQ-FN-125: `toList` 関数の実装
-- [x] STDLIB-SEQ-FN-126: `toMutableList` 関数の実装
-- [x] STDLIB-SEQ-FN-127: `toMutableSet` 関数の実装
-- [x] STDLIB-SEQ-FN-128: `toSet` 関数の実装
+- [ ] STDLIB-SEQ-FN-112: `sortedByDescending` 関数の実装
+- [ ] STDLIB-SEQ-FN-113: `sortedDescending` 関数の実装
+- [ ] STDLIB-SEQ-FN-114: `sortedWith` 関数の実装
+- [ ] STDLIB-SEQ-FN-115: `subtract` 関数の実装
+- [ ] STDLIB-SEQ-FN-116: `sum` 関数の実装
+- [ ] STDLIB-SEQ-FN-118: `sumOf` 関数の実装
+- [ ] STDLIB-SEQ-FN-119: `take` 関数の実装
+- [ ] STDLIB-SEQ-FN-120: `takeLast` 関数の実装
+- [ ] STDLIB-SEQ-FN-121: `takeLastWhile` 関数の実装
+- [ ] STDLIB-SEQ-FN-122: `takeWhile` 関数の実装
+- [ ] STDLIB-SEQ-FN-123: `toCollection` 関数の実装
+- [ ] STDLIB-SEQ-FN-124: `toHashSet` 関数の実装
+- [ ] STDLIB-SEQ-FN-125: `toList` 関数の実装
+- [ ] STDLIB-SEQ-FN-126: `toMutableList` 関数の実装
+- [ ] STDLIB-SEQ-FN-127: `toMutableSet` 関数の実装
+- [ ] STDLIB-SEQ-FN-128: `toSet` 関数の実装
 - [x] STDLIB-SEQ-FN-129: `toSortedSet` 関数の実装
-- [x] STDLIB-SEQ-FN-130: `union` 関数の実装
-- [x] STDLIB-SEQ-FN-131: `windowed` 関数の実装
-- [x] STDLIB-SEQ-FN-132: `withIndex` 関数の実装
+- [ ] STDLIB-SEQ-FN-130: `union` 関数の実装
+- [ ] STDLIB-SEQ-FN-131: `windowed` 関数の実装
+- [ ] STDLIB-SEQ-FN-132: `withIndex` 関数の実装
 - [ ] STDLIB-SEQ-FN-133: `zip` 関数の実装
 - [x] STDLIB-SEQ-FN-134: `zipWithNext` 関数の実装
 
