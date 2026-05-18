@@ -1718,16 +1718,6 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        registerPathTopLevelFunction(
-            named: "fileVisitor",
-            packageFQName: kotlinIOPathPkg,
-            parameters: [("builderAction", fileVisitorBuilderActionType)],
-            returnType: fileVisitorOfPathType,
-            externalLinkName: "kk_path_fileVisitor",
-            symbols: symbols,
-            interner: interner
-        )
-
         // MARK: - Paths.get() (java.nio.file.Paths)
 
         let pathsSymbol = ensureClassSymbol(
