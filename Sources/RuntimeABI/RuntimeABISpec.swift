@@ -783,6 +783,14 @@ public enum RuntimeABISpec {
             section: "System"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_double_toJsNumber",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .double),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_js_map_toMap",
             parameters: [
                 RuntimeABIParameter(name: "jsMapRaw", type: .intptr),

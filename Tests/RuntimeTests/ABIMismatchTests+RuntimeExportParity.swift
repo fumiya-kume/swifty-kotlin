@@ -61,6 +61,7 @@ extension ABIMismatchTests {
             "kk_annotation_simple_class_name",
             "kk_any_javaClass",
             "kk_array_isArrayOf",
+            "kk_double_toJsNumber",
             "kk_future_getState",
             "kk_js_reference_get",
             "kk_js_array_toArray",
