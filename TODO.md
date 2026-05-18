@@ -392,7 +392,7 @@
 - [ ] STDLIB-SEQ-FN-134: `zipWithNext` 関数の実装
 
 #### kotlin.streams 関数の実装
-- [ ] STDLIB-STREAMS-FN-001: `asSequence` 関数の実装（各ストリーム型）
+- [x] STDLIB-STREAMS-FN-001: `asSequence` 関数の実装（各ストリーム型）
 - [ ] STDLIB-STREAMS-FN-002: `asStream` 関数の実装
 - [ ] STDLIB-STREAMS-FN-003: `toList` 関数の実装（各ストリーム型）
 
@@ -795,10 +795,10 @@
 - [ ] STDLIB-JS-COLLECTIONS-FN-004: `JsReadonlyMap<K,V>.toMutableMap()` を追加する
 - [ ] STDLIB-JS-COLLECTIONS-FN-005: `JsReadonlySet<E>.toMutableSet()` を追加する
 - [ ] STDLIB-JS-COLLECTIONS-FN-006: `JsReadonlySet<E>.toSet()` を追加する
-- [ ] STDLIB-STREAMS-FN-001: `DoubleStream.asSequence()` を追加する
-- [ ] STDLIB-STREAMS-FN-002: `IntStream.asSequence()` を追加する
-- [ ] STDLIB-STREAMS-FN-003: `LongStream.asSequence()` を追加する
-- [ ] STDLIB-STREAMS-FN-004: `Stream<T>.asSequence()` を追加する
+- [x] STDLIB-STREAMS-FN-001: `DoubleStream.asSequence()` を追加する
+- [x] STDLIB-STREAMS-FN-002: `IntStream.asSequence()` を追加する
+- [x] STDLIB-STREAMS-FN-003: `LongStream.asSequence()` を追加する
+- [x] STDLIB-STREAMS-FN-004: `Stream<T>.asSequence()` を追加する
 - [ ] STDLIB-STREAMS-FN-005: `Sequence<T>.asStream()` を追加する
 - [ ] STDLIB-STREAMS-FN-006: `DoubleStream.toList()` を追加する
 - [ ] STDLIB-STREAMS-FN-007: `IntStream.toList()` を追加する

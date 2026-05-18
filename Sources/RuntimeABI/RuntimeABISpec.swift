@@ -3397,6 +3397,7 @@ public enum RuntimeABISpec {
             + threadFunctions
             + securityFunctions
             + parallelFunctions
+            + streamFunctions
             + bigIntegerFunctions
             + broadcastChannelFunctions
             + serializationFunctions
