@@ -85,6 +85,10 @@ public extension RuntimeABISpec {
             p("optionalRaw", .intptr),
             p("defaultRaw", .intptr),
         ]),
+        abiParitySpec("kk_optional_toCollection", parameters: [
+            p("optionalRaw", .intptr),
+            p("collectionRaw", .intptr),
+        ]),
 
         // Runtime @_cdecl entries awaiting a dedicated RuntimeABISpec category.
         abiParitySpec("component1", parameters: [
