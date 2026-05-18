@@ -292,7 +292,7 @@
 - [ ] STDLIB-SEQ-FN-029: `filterNotNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-030: `filterNotTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-031: `filterTo` 関数の実装
-- [ ] STDLIB-SEQ-FN-032: `find` 関数の実装
+- [x] STDLIB-SEQ-FN-032: `find` 関数の実装
 - [ ] STDLIB-SEQ-FN-033: `findLast` 関数の実装
 - [ ] STDLIB-SEQ-FN-034: `first` 関数の実装
 - [ ] STDLIB-SEQ-FN-037: `firstOrNull` 関数の実装
