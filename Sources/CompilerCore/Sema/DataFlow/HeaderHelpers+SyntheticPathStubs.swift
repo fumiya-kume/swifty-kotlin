@@ -35,7 +35,7 @@
 /// - `Path.setOwner(value: UserPrincipal): Path` extension function
 /// - `Path.fileSize(): Long` extension function
 /// - `Path.setPosixFilePermissions(value: Set<PosixFilePermission>): Path` extension function
-/// - `listDirectoryEntries(): List<Path>`
+/// - `Path.listDirectoryEntries(glob: String = "*"): List<Path>` extension function
 /// - `Path.isExecutable()`, `isHidden()`, `isReadable()`, `isSameFileAs()`, `isSymbolicLink()`, `isWritable()`
 /// - Top-level `Path(pathString: String)` factory (kotlin.io.path.Path)
 /// - `Paths.get(pathString: String)` factory (java.nio.file.Paths)
@@ -1160,13 +1160,14 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        registerPathMemberFunction(
+        registerPathExtensionFunction(
             named: "listDirectoryEntries",
-            externalLinkName: "kk_path_listDirectoryEntries",
-            ownerSymbol: pathSymbol,
-            ownerType: pathType,
-            parameters: [],
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("glob", types.stringType)],
             returnType: listOfPathType,
+            externalLinkName: "kk_path_listDirectoryEntries",
+            valueParameterHasDefaultValues: [true],
             symbols: symbols,
             interner: interner
         )
