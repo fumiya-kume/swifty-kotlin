@@ -1106,6 +1106,13 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(setElements(copied), [3, 1, 2])
     }
 
+    func testToSortedSetSortsAndDeduplicates() {
+        let seq = makeSequence([3, 1, 2, 1, 3])
+        let copied = kk_sequence_toSortedSet(seq)
+
+        XCTAssertEqual(setElements(copied), [1, 2, 3])
+    }
+
     func testToHashSetDeduplicatesPreservingOrder() {
         let seq = makeSequence([3, 1, 2, 1, 3])
         let copied = kk_sequence_toHashSet(seq)

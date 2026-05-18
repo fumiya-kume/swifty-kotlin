@@ -687,6 +687,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // toSortedSet(): MutableSet<T>
+        registerSequenceMemberStub(
+            named: "toSortedSet",
+            externalLinkName: "kk_sequence_toSortedSet",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: mutableSetReturnType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // toCollection(destination): Collection<T>
         registerSequenceMemberStub(
             named: "toCollection",

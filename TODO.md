@@ -384,7 +384,7 @@
 - [ ] STDLIB-SEQ-FN-126: `toMutableList` 関数の実装
 - [ ] STDLIB-SEQ-FN-127: `toMutableSet` 関数の実装
 - [ ] STDLIB-SEQ-FN-128: `toSet` 関数の実装
-- [ ] STDLIB-SEQ-FN-129: `toSortedSet` 関数の実装
+- [x] STDLIB-SEQ-FN-129: `toSortedSet` 関数の実装
 - [ ] STDLIB-SEQ-FN-130: `union` 関数の実装
 - [ ] STDLIB-SEQ-FN-131: `windowed` 関数の実装
 - [ ] STDLIB-SEQ-FN-132: `withIndex` 関数の実装

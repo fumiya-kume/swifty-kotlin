@@ -967,6 +967,14 @@ public extension RuntimeABISpec {
             section: "Sequence"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_sequence_toSortedSet",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_sequence_toMap",
             parameters: [
                 RuntimeABIParameter(name: "seqRaw", type: .intptr),

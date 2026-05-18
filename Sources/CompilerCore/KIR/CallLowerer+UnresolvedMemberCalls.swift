@@ -732,6 +732,8 @@ extension CallLowerer {
                 return interner.intern(useIterableRuntimeForCollectionFallback
                     ? "kk_iterable_toMutableSet"
                     : "kk_sequence_toMutableSet")
+            case interner.intern("toSortedSet"):
+                return interner.intern("kk_sequence_toSortedSet")
             case interner.intern("toHashSet"):
                 return interner.intern("kk_sequence_toHashSet")
             case interner.intern("partition"):

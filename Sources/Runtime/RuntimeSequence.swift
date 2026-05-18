@@ -2756,6 +2756,27 @@ public func kk_sequence_toSet(_ seqRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(collected)))
 }
 
+@_cdecl("kk_sequence_toSortedSet")
+public func kk_sequence_toSortedSet(_ seqRaw: Int) -> Int {
+    var collected: [Int] = []
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        runtimeTraverseSequence(seq, outThrown: nil) { elem in
+            collected.append(elem)
+            return true
+        }
+    } else {
+        collected = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    }
+    let sorted = collected.enumerated().sorted { lhs, rhs in
+        let comparison = runtimeCompareValues(lhs.element, rhs.element)
+        if comparison != 0 {
+            return comparison < 0
+        }
+        return lhs.offset < rhs.offset
+    }.map(\.element)
+    return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(sorted)))
+}
+
 @_cdecl("kk_sequence_toMap")
 public func kk_sequence_toMap(_ seqRaw: Int) -> Int {
     var collected: [Int] = []
