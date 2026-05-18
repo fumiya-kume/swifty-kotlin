@@ -926,6 +926,14 @@ extension RuntimeSequenceTests {
         XCTAssertEqual(sequenceElements(transformed), [6, 12, 5])
     }
 
+    func testSequenceWindowedProducesPartialWindows() {
+        let seq = makeSequence([1, 2, 3, 4, 5])
+        let windows = kk_sequence_windowed(seq, 3, 2, 1)
+        let nested = sequenceElements(windows).map { listElements($0) }
+
+        XCTAssertEqual(nested, [[1, 2, 3], [3, 4, 5], [5]])
+    }
+
     func testSequenceWindowedTransformPropagatesThrowables() {
         let seq = makeSequence([1, 2, 3, 4])
         var thrown = 0
