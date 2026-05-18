@@ -33,6 +33,7 @@
 /// - `createDirectories(): Path`, `createLinkPointingTo(target): Path`, `deleteIfExists(): Boolean`
 /// - `deleteExisting()`, `deleteRecursively()`
 /// - `Path.fileStore(): FileStore` extension function
+/// - `Path.getLastModifiedTime(vararg options: LinkOption): FileTime` extension function
 /// - `Path.setOwner(value: UserPrincipal): Path` extension function
 /// - `Path.fileSize(): Long` extension function
 /// - `Path.setPosixFilePermissions(value: Set<PosixFilePermission>): Path` extension function
@@ -396,6 +397,20 @@ extension DataFlowSemaPhase {
             classSymbol: userPrincipalSymbol, args: [], nullability: .nonNull
         )))
         symbols.setPropertyType(userPrincipalType, for: userPrincipalSymbol)
+
+        let fileTimeSymbol = ensureClassSymbol(
+            named: "FileTime",
+            in: javaNioFileAttributePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaNioFileAttributePkgSymbol {
+            symbols.setParentSymbol(javaNioFileAttributePkgSymbol, for: fileTimeSymbol)
+        }
+        let fileTimeType = types.make(.classType(ClassType(
+            classSymbol: fileTimeSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(fileTimeType, for: fileTimeSymbol)
 
         let posixFilePermissionName = interner.intern("PosixFilePermission")
         let posixFilePermissionFQName = javaNioFileAttributePkg + [posixFilePermissionName]
@@ -803,6 +818,18 @@ extension DataFlowSemaPhase {
             parameters: [],
             returnType: fileStoreType,
             externalLinkName: "kk_path_fileStore",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "getLastModifiedTime",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("options", linkOptionType)],
+            returnType: fileTimeType,
+            externalLinkName: "kk_path_getLastModifiedTime",
+            valueParameterIsVararg: [true],
             symbols: symbols,
             interner: interner
         )
