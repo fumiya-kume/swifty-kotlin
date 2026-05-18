@@ -86,6 +86,8 @@ extension ABIMismatchTests {
             "kk_path_fileSize",
             "kk_path_fileStore",
             "kk_path_getAttribute",
+            "kk_path_forEachDirectoryEntry",
+            "kk_path_forEachDirectoryEntry_default",
             "kk_path_isExecutable",
             "kk_path_isHidden",
             "kk_path_isReadable",

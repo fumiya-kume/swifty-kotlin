@@ -41,6 +41,7 @@
 /// - `Path.setOwner(value: UserPrincipal): Path` extension function
 /// - `Path.getPosixFilePermissions(vararg options: LinkOption): Set<PosixFilePermission>` extension function
 /// - `Path.fileSize(): Long` extension function
+/// - `Path.forEachDirectoryEntry(glob, action)` extension function
 /// - `Path.setPosixFilePermissions(value: Set<PosixFilePermission>): Path` extension function
 /// - `Path.listDirectoryEntries(glob: String = "*"): List<Path>` extension function
 /// - `Path.isExecutable()`, `isHidden()`, `isReadable()`, `isSameFileAs()`, `isSymbolicLink()`, `isWritable()`
@@ -81,6 +82,12 @@ extension DataFlowSemaPhase {
         symbols.setPropertyType(pathType, for: pathSymbol)
 
         let nullablePathType = types.makeNullable(pathType)
+        let pathActionType = types.make(.functionType(FunctionType(
+            params: [pathType],
+            returnType: types.unitType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
         let kotlinPkg = ensurePackage(path: ["kotlin"], symbols: symbols, interner: interner)
         let kotlinCollectionsPkg = ensurePackage(path: ["kotlin", "collections"], symbols: symbols, interner: interner)
         let kotlinTextPkg = ensurePackage(path: ["kotlin", "text"], symbols: symbols, interner: interner)
@@ -907,6 +914,29 @@ extension DataFlowSemaPhase {
             parameters: [],
             returnType: types.longType,
             externalLinkName: "kk_path_fileSize",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "forEachDirectoryEntry",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("glob", types.stringType), ("action", pathActionType)],
+            returnType: types.unitType,
+            externalLinkName: "kk_path_forEachDirectoryEntry",
+            valueParameterHasDefaultValues: [true, false],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "forEachDirectoryEntry",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("action", pathActionType)],
+            returnType: types.unitType,
+            externalLinkName: "kk_path_forEachDirectoryEntry_default",
             symbols: symbols,
             interner: interner
         )
