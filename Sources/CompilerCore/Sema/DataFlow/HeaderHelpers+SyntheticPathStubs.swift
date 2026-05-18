@@ -33,6 +33,7 @@
 /// - `createDirectories(): Path`, `createLinkPointingTo(target): Path`, `deleteIfExists(): Boolean`
 /// - `deleteExisting()`, `deleteRecursively()`
 /// - `Path.fileStore(): FileStore` extension function
+/// - `Path.fileAttributesView<V : FileAttributeView>(vararg options: LinkOption): V` extension function
 /// - `Path.setOwner(value: UserPrincipal): Path` extension function
 /// - `Path.getPosixFilePermissions(vararg options: LinkOption): Set<PosixFilePermission>` extension function
 /// - `Path.fileSize(): Long` extension function
@@ -397,6 +398,22 @@ extension DataFlowSemaPhase {
             classSymbol: userPrincipalSymbol, args: [], nullability: .nonNull
         )))
         symbols.setPropertyType(userPrincipalType, for: userPrincipalSymbol)
+
+        let fileAttributeViewSymbol = ensureInterfaceSymbol(
+            named: "FileAttributeView",
+            in: javaNioFileAttributePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaNioFileAttributePkgSymbol {
+            symbols.setParentSymbol(javaNioFileAttributePkgSymbol, for: fileAttributeViewSymbol)
+        }
+        let fileAttributeViewType = types.make(.classType(ClassType(
+            classSymbol: fileAttributeViewSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(fileAttributeViewType, for: fileAttributeViewSymbol)
 
         let posixFilePermissionName = interner.intern("PosixFilePermission")
         let posixFilePermissionFQName = javaNioFileAttributePkg + [posixFilePermissionName]
@@ -805,6 +822,16 @@ extension DataFlowSemaPhase {
             returnType: fileStoreType,
             externalLinkName: "kk_path_fileStore",
             symbols: symbols,
+            interner: interner
+        )
+
+        registerPathFileAttributesViewFunction(
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            optionsType: linkOptionType,
+            fileAttributeViewUpperBound: fileAttributeViewType,
+            symbols: symbols,
+            types: types,
             interner: interner
         )
 
@@ -1930,6 +1957,109 @@ extension DataFlowSemaPhase {
                 valueParameterSymbols: valueParameterSymbols,
                 valueParameterHasDefaultValues: defaults,
                 valueParameterIsVararg: varargs
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerPathFileAttributesViewFunction(
+        packageFQName: [InternedString],
+        receiverType: TypeID,
+        optionsType: TypeID,
+        fileAttributeViewUpperBound: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern("fileAttributesView")
+        let functionFQName = packageFQName + [functionName]
+        let parameterTypes = [optionsType]
+
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let existingSignature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return existingSignature.receiverType == receiverType
+                && existingSignature.parameterTypes == parameterTypes
+                && existingSignature.typeParameterSymbols.count == 1
+        }) {
+            symbols.setExternalLinkName("kk_path_fileAttributesView", for: existing)
+            if let existingSignature = symbols.functionSignature(for: existing),
+               let typeParamSymbol = existingSignature.typeParameterSymbols.first {
+                let returnType = types.make(.typeParam(TypeParamType(
+                    symbol: typeParamSymbol,
+                    nullability: .nonNull
+                )))
+                symbols.setTypeParameterUpperBounds([fileAttributeViewUpperBound], for: typeParamSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: parameterTypes,
+                        returnType: returnType,
+                        isSuspend: existingSignature.isSuspend,
+                        valueParameterSymbols: existingSignature.valueParameterSymbols,
+                        valueParameterHasDefaultValues: [false],
+                        valueParameterIsVararg: [true],
+                        typeParameterSymbols: [typeParamSymbol],
+                        typeParameterUpperBoundsList: [[fileAttributeViewUpperBound]]
+                    ),
+                    for: existing
+                )
+            }
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName("kk_path_fileAttributesView", for: functionSymbol)
+
+        let typeParamName = interner.intern("V")
+        let typeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: functionFQName + [interner.intern("$synthetic"), typeParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(functionSymbol, for: typeParamSymbol)
+        symbols.setTypeParameterUpperBounds([fileAttributeViewUpperBound], for: typeParamSymbol)
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+
+        let optionsParamName = interner.intern("options")
+        let optionsParamSymbol = symbols.define(
+            kind: .valueParameter,
+            name: optionsParamName,
+            fqName: functionFQName + [optionsParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(functionSymbol, for: optionsParamSymbol)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameterTypes,
+                returnType: typeParamType,
+                isSuspend: false,
+                valueParameterSymbols: [optionsParamSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [true],
+                typeParameterSymbols: [typeParamSymbol],
+                typeParameterUpperBoundsList: [[fileAttributeViewUpperBound]]
             ),
             for: functionSymbol
         )
