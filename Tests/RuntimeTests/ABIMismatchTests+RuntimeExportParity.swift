@@ -107,6 +107,8 @@ extension ABIMismatchTests {
             "kk_path_useLines",
             "kk_path_useLines_default",
             "kk_path_visitFileTree",
+            "kk_path_useDirectoryEntries",
+            "kk_path_useDirectoryEntries_default",
             "kk_path_writeBytes",
             "kk_path_writeLines_iterable",
             "kk_path_writeLines_sequence",
