@@ -63,6 +63,7 @@ extension ABIMismatchTests {
             "kk_array_isArrayOf",
             "kk_future_getState",
             "kk_js_array_toArray",
+            "kk_js_array_toList",
             "kk_int_to_int",
             "kk_kclass_has_annotation",
             "kk_kclass_java",
