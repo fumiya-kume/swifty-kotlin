@@ -774,6 +774,14 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "System"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_jsclass_kotlin",
+            parameters: [
+                RuntimeABIParameter(name: "jsClassRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
     ]
 
     public static let gcFunctions: [RuntimeABIFunctionSpec] = [
