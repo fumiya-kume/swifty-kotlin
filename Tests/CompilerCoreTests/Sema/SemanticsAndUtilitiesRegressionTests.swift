@@ -683,6 +683,59 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathGetAttributeOptionsExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import java.nio.file.LinkOption
+        import kotlin.io.path.Path
+        import kotlin.io.path.getAttribute
+
+        fun attribute(path: Path, option: LinkOption): Any {
+            val first = path.getAttribute("size")
+            val second = path.getAttribute("lastModifiedTime", option)
+            return second
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnostics = ctx.diagnostics.diagnostics.map(\.message)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.getAttribute(attribute, options) extension function in kotlin.io.path should resolve: \(diagnostics)"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let linkOptionSymbol = try XCTUnwrap(symbols.lookup(fqName: ["java", "nio", "file", "LinkOption"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let linkOptionType = types.make(.classType(ClassType(classSymbol: linkOptionSymbol, args: [], nullability: .nonNull)))
+            let getAttributeSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "getAttribute"].map(interner.intern))
+            let getAttribute = try XCTUnwrap(getAttributeSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [types.stringType, linkOptionType]
+                    && signature.returnType == types.anyType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: getAttribute), "kk_path_getAttribute")
+
+            let signature = try XCTUnwrap(symbols.functionSignature(for: getAttribute))
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [false, false])
+            XCTAssertEqual(signature.valueParameterIsVararg, [false, true])
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let callExprs = memberCallExprIDs(named: "getAttribute", in: ast, interner: interner)
+            XCTAssertEqual(callExprs.count, 2)
+            for callExpr in callExprs {
+                XCTAssertEqual(sema.bindings.callBinding(for: callExpr)?.chosenCallee, getAttribute)
+                XCTAssertEqual(sema.bindings.exprTypes[callExpr], types.anyType)
+            }
+        }
+    }
+
     func testPathIsRegularFileOptionsExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import java.nio.file.LinkOption
