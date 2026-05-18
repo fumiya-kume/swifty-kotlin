@@ -728,6 +728,68 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathGetPosixFilePermissionsOptionsExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import java.nio.file.LinkOption
+        import java.nio.file.attribute.PosixFilePermission
+        import kotlin.collections.Set
+        import kotlin.io.path.Path
+        import kotlin.io.path.getPosixFilePermissions
+
+        fun permissions(path: Path, option: LinkOption): Set<PosixFilePermission> {
+            val first = path.getPosixFilePermissions()
+            val second = path.getPosixFilePermissions(option)
+            return second
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.getPosixFilePermissions(options) extension function in kotlin.io.path should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let linkOptionSymbol = try XCTUnwrap(symbols.lookup(fqName: ["java", "nio", "file", "LinkOption"].map(interner.intern)))
+            let posixFilePermissionSymbol = try XCTUnwrap(symbols.lookup(fqName: ["java", "nio", "file", "attribute", "PosixFilePermission"].map(interner.intern)))
+            let setSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "collections", "Set"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let linkOptionType = types.make(.classType(ClassType(classSymbol: linkOptionSymbol, args: [], nullability: .nonNull)))
+            let posixFilePermissionType = types.make(.classType(ClassType(classSymbol: posixFilePermissionSymbol, args: [], nullability: .nonNull)))
+            let setOfPosixFilePermissionType = types.make(.classType(ClassType(
+                classSymbol: setSymbol,
+                args: [.out(posixFilePermissionType)],
+                nullability: .nonNull
+            )))
+            let getPosixFilePermissionsSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "getPosixFilePermissions"].map(interner.intern))
+            let getPosixFilePermissions = try XCTUnwrap(getPosixFilePermissionsSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [linkOptionType]
+                    && signature.returnType == setOfPosixFilePermissionType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: getPosixFilePermissions), "kk_path_getPosixFilePermissions")
+
+            let signature = try XCTUnwrap(symbols.functionSignature(for: getPosixFilePermissions))
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [false])
+            XCTAssertEqual(signature.valueParameterIsVararg, [true])
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let callExprs = memberCallExprIDs(named: "getPosixFilePermissions", in: ast, interner: interner)
+            XCTAssertEqual(callExprs.count, 2)
+            for callExpr in callExprs {
+                XCTAssertEqual(sema.bindings.callBinding(for: callExpr)?.chosenCallee, getPosixFilePermissions)
+                XCTAssertEqual(sema.bindings.exprTypes[callExpr], setOfPosixFilePermissionType)
+            }
+        }
+    }
+
     func testOnErrorResultInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import kotlin.io.path.OnErrorResult

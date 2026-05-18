@@ -32,6 +32,7 @@
 /// - `deleteExisting()`, `deleteRecursively()`
 /// - `Path.fileStore(): FileStore` extension function
 /// - `Path.setOwner(value: UserPrincipal): Path` extension function
+/// - `Path.getPosixFilePermissions(vararg options: LinkOption): Set<PosixFilePermission>` extension function
 /// - `Path.fileSize(): Long` extension function
 /// - `Path.setPosixFilePermissions(value: Set<PosixFilePermission>): Path` extension function
 /// - `listDirectoryEntries(): List<Path>`
@@ -165,6 +166,22 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(openOptionType, for: openOptionSymbol)
+
+        let linkOptionSymbol = ensureInterfaceSymbol(
+            named: "LinkOption",
+            in: javaNioFilePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaNioFilePkgSymbol {
+            symbols.setParentSymbol(javaNioFilePkgSymbol, for: linkOptionSymbol)
+        }
+        let linkOptionType = types.make(.classType(ClassType(
+            classSymbol: linkOptionSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(linkOptionType, for: linkOptionSymbol)
 
         registerPathCopyActionContextSurface(
             packageFQName: kotlinIOPathPkg,
@@ -1132,6 +1149,18 @@ extension DataFlowSemaPhase {
         )
 
         registerPathExtensionFunction(
+            named: "getPosixFilePermissions",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("options", linkOptionType)],
+            returnType: setOfPosixFilePermissionType,
+            externalLinkName: "kk_path_getPosixFilePermissions",
+            valueParameterIsVararg: [true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
             named: "deleteRecursively",
             packageFQName: kotlinIOPathPkg,
             receiverType: pathType,
@@ -1800,7 +1829,6 @@ extension DataFlowSemaPhase {
         symbols: SymbolTable,
         interner: StringInterner
     ) {
-        let parameterIsVararg = valueParameterIsVararg ?? Array(repeating: false, count: parameters.count)
         let functionName = interner.intern(name)
         let functionFQName = packageFQName + [functionName]
         let parameterTypes = parameters.map(\.type)
