@@ -2321,6 +2321,58 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // zip(other: Sequence<R>): Sequence<Pair<T, R>>
+        do {
+            let zipName = interner.intern("zip")
+            let zipFQName = sequenceFQName + [zipName]
+            let rName = interner.intern("R")
+            let rSymbol = symbols.lookup(fqName: zipFQName + [rName]) ?? symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: zipFQName + [rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let otherSequenceType = types.make(.classType(ClassType(
+                classSymbol: sequenceSymbol,
+                args: [.out(rType)],
+                nullability: .nonNull
+            )))
+            let pairType: TypeID = if let pairSymbol = symbols.lookup(fqName: [
+                interner.intern("kotlin"),
+                interner.intern("Pair"),
+            ]) {
+                types.make(.classType(ClassType(
+                    classSymbol: pairSymbol,
+                    args: [.out(typeParamType), .out(rType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                types.anyType
+            }
+            let zippedSequenceType = types.make(.classType(ClassType(
+                classSymbol: sequenceSymbol,
+                args: [.out(pairType)],
+                nullability: .nonNull
+            )))
+            registerSequenceMemberStub(
+                named: "zip",
+                externalLinkName: "kk_sequence_zip",
+                receiverType: receiverType,
+                parameters: [("other", otherSequenceType)],
+                returnType: zippedSequenceType,
+                sequenceSymbol: sequenceSymbol,
+                sequenceFQName: sequenceFQName,
+                typeParamSymbol: typeParamSymbol,
+                symbols: symbols,
+                interner: interner,
+                additionalTypeParameterSymbols: [rSymbol],
+                additionalTypeParameterUpperBoundsList: [[]]
+            )
+        }
+
         // zipWithNext(): Sequence<Pair<T, T>>
         let zipWithNextName = interner.intern("zipWithNext")
         let zipWithNextFQName = sequenceFQName + [zipWithNextName]

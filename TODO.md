@@ -389,7 +389,7 @@
 - [x] STDLIB-SEQ-FN-130: `union` 関数の実装
 - [x] STDLIB-SEQ-FN-131: `windowed` 関数の実装
 - [ ] STDLIB-SEQ-FN-132: `withIndex` 関数の実装
-- [ ] STDLIB-SEQ-FN-133: `zip` 関数の実装
+- [x] STDLIB-SEQ-FN-133: `zip` 関数の実装
 - [x] STDLIB-SEQ-FN-134: `zipWithNext` 関数の実装
 
 #### kotlin.streams 関数の実装
