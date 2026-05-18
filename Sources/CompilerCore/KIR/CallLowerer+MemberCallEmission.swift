@@ -804,6 +804,7 @@ extension CallLowerer {
             interner.intern("kk_list_elementAt"),
             interner.intern("kk_list_take"),
             interner.intern("kk_list_takeLast"),
+            interner.intern("kk_sequence_takeLast"),
             interner.intern("kk_list_drop"),
             interner.intern("kk_list_max"),
             interner.intern("kk_list_minBy"),

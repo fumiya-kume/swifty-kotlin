@@ -2527,6 +2527,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_filter"
                 } else if calleeName == takeName {
                     runtimeCallee = "kk_sequence_take"
+                } else if calleeName == interner.intern("takeLast") {
+                    runtimeCallee = "kk_sequence_takeLast"
                 } else if calleeName == forEachName {
                     runtimeCallee = "kk_sequence_forEach"
                 } else if calleeName == flatMapName {
@@ -2659,6 +2661,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_groupByTo"
                         || runtimeCallee == "kk_sequence_find"
                         || runtimeCallee == "kk_sequence_findLast"
+                        || runtimeCallee == "kk_sequence_takeLast"
                         || runtimeCallee == "kk_sequence_elementAt"
                         || runtimeCallee == "kk_sequence_last"
                         || runtimeCallee == "kk_iterable_last"
