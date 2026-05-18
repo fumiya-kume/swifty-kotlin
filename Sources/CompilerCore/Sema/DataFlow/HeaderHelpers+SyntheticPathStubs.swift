@@ -34,6 +34,7 @@
 /// - `deleteExisting()`, `deleteRecursively()`
 /// - `Path.fileStore(): FileStore` extension function
 /// - `Path.setOwner(value: UserPrincipal): Path` extension function
+/// - `Path.getPosixFilePermissions(vararg options: LinkOption): Set<PosixFilePermission>` extension function
 /// - `Path.fileSize(): Long` extension function
 /// - `Path.setPosixFilePermissions(value: Set<PosixFilePermission>): Path` extension function
 /// - `listDirectoryEntries(): List<Path>`
@@ -1163,6 +1164,18 @@ extension DataFlowSemaPhase {
             parameters: [("value", setOfPosixFilePermissionType)],
             returnType: pathType,
             externalLinkName: "kk_path_setPosixFilePermissions",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "getPosixFilePermissions",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("options", linkOptionType)],
+            returnType: setOfPosixFilePermissionType,
+            externalLinkName: "kk_path_getPosixFilePermissions",
+            valueParameterIsVararg: [true],
             symbols: symbols,
             interner: interner
         )
