@@ -3404,7 +3404,6 @@ extension CallLowerer {
                 let seqLastCallee = interner.intern("kk_sequence_last")
                 let iterableLastCallee = interner.intern("kk_iterable_last")
                 let seqLastOrNullCallee = interner.intern("kk_sequence_lastOrNull")
-                let seqSingleCallee = interner.intern("kk_sequence_single")
                 let seqSingleOrNullCallee = interner.intern("kk_sequence_singleOrNull")
                 let seqCountCallee = interner.intern("kk_sequence_count")
                 let seqAnyCallee = interner.intern("kk_sequence_any")
@@ -3445,8 +3444,6 @@ extension CallLowerer {
                     useIterableRuntimeForTerminalFallback ? iterableLastCallee : seqLastCallee
                 case lastOrNullID:
                     seqLastOrNullCallee
-                case interner.intern("single"):
-                    seqSingleCallee
                 case interner.intern("singleOrNull"):
                     seqSingleOrNullCallee
                 case countID:
