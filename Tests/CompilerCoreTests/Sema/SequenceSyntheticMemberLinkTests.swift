@@ -238,6 +238,52 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testSequenceWithIndexResolvesInCallExpressions() throws {
+        let source = """
+        fun indexedValuesSize(): Int {
+            val values = sequenceOf(10, 20, 30)
+            return values.withIndex().toList().size
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Sequence.withIndex surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "sequences", "Sequence", "withIndex"]
+                .map { ctx.interner.intern($0) }
+            let links = Set(
+                sema.symbols.lookupAll(fqName: memberFQName)
+                    .compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
+            XCTAssertTrue(links.contains("kk_sequence_withIndex"))
+
+            let withIndexSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: memberFQName))
+            let indexedValueSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("IndexedValue"),
+            ]))
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: withIndexSymbol))
+            guard case let .classType(sequenceType) = sema.types.kind(of: signature.returnType),
+                  let firstArg = sequenceType.args.first,
+                  case let .out(elementType) = firstArg,
+                  case let .classType(indexedValueType) = sema.types.kind(of: elementType)
+            else {
+                return XCTFail("Expected Sequence.withIndex() to return Sequence<IndexedValue<T>>")
+            }
+            XCTAssertEqual(indexedValueType.classSymbol, indexedValueSymbol)
+        }
+    }
+
     func testSequenceChunkedResolvesInCallExpressions() throws {
         let source = """
         fun chunkValues(): Int {
