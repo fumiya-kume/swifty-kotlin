@@ -992,6 +992,28 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(result, 0)
     }
 
+    func testSequenceSingleOrNullReturnsOnlyElement() {
+        let seq = makeSequence([42])
+        var thrown = 0
+
+        let result = kk_sequence_singleOrNull(seq, &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 42)
+    }
+
+    func testSequenceSingleOrNullReturnsNullForEmptyAndMultipleElements() {
+        var emptyThrown = 0
+        let emptyResult = kk_sequence_singleOrNull(makeSequence([]), &emptyThrown)
+        XCTAssertEqual(emptyThrown, 0)
+        XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
+
+        var multipleThrown = 0
+        let multipleResult = kk_sequence_singleOrNull(makeSequence([1, 2]), &multipleThrown)
+        XCTAssertEqual(multipleThrown, 0)
+        XCTAssertEqual(multipleResult, runtimeNullSentinelInt)
+    }
+
     private func makeArray(_ elements: [Int]) -> Int {
         let arrayRaw = kk_array_new(elements.count)
         var thrown = 0
