@@ -29,6 +29,7 @@
 /// - `Path.writeBytes(array: ByteArray, vararg options: OpenOption)` extension function
 /// - `Path.writer(charset, options)` extension function
 /// - `Path.outputStream(vararg options: OpenOption): OutputStream` extension function
+/// - `Path.moveTo(target: Path, vararg options: CopyOption): Path` extension function
 /// - `Path.appendLines(lines: Iterable<CharSequence>, charset)` extension function
 /// - `Path.writeLines(lines: Iterable<CharSequence>, charset, options)` extension function
 /// - `Path.writeLines(lines: Sequence<CharSequence>, charset, options)` extension function
@@ -1402,6 +1403,18 @@ extension DataFlowSemaPhase {
             parameters: [("target", pathType), ("overwrite", types.booleanType)],
             returnType: pathType,
             externalLinkName: "kk_path_moveTo_overwrite",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "moveTo",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("target", pathType), ("options", copyOptionType)],
+            returnType: pathType,
+            externalLinkName: "kk_path_moveTo_options",
+            valueParameterIsVararg: [false, true],
             symbols: symbols,
             interner: interner
         )
