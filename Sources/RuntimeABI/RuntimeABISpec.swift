@@ -775,13 +775,18 @@ public enum RuntimeABISpec {
             section: "System"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_js_bigint_toLong",
+            name: "kk_js_array_get",
             parameters: [
-                RuntimeABIParameter(name: "jsBigIntRaw", type: .intptr),
+                RuntimeABIParameter(name: "jsArrayRaw", type: .intptr),
+                RuntimeABIParameter(name: "indexRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "System"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_js_bigint_toLong",
+            parameters: [
+                RuntimeABIParameter(name: "jsBigIntRaw", type: .intptr),
         RuntimeABIFunctionSpec(
             name: "kk_js_reference_get",
             parameters: [
