@@ -135,6 +135,50 @@ final class JvmKClassJavaSyntheticStubTests: XCTestCase {
         XCTAssertEqual(sema.symbols.extensionPropertyReceiverType(for: propertySymbol), receiverType)
     }
 
+    func testKClassJavaPrimitiveTypePropertySurfaceIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let classSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: ["java", "lang", "Class"].map { interner.intern($0) }),
+            "Expected java.lang.Class<T> synthetic class"
+        )
+
+        let propertyFQName = ["kotlin", "jvm", "javaPrimitiveType"].map { interner.intern($0) }
+        let propertySymbol = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: propertyFQName).first { symbolID in
+                sema.symbols.symbol(symbolID)?.kind == .property
+                    && sema.symbols.extensionPropertyReceiverType(for: symbolID) != nil
+            },
+            "Expected kotlin.jvm.javaPrimitiveType extension property"
+        )
+        XCTAssertEqual(sema.symbols.externalLinkName(for: propertySymbol), "kk_kclass_javaPrimitiveType")
+
+        let getterSymbol = try XCTUnwrap(sema.symbols.extensionPropertyGetterAccessor(for: propertySymbol))
+        XCTAssertEqual(sema.symbols.externalLinkName(for: getterSymbol), "kk_kclass_javaPrimitiveType")
+
+        let getterSignature = try XCTUnwrap(sema.symbols.functionSignature(for: getterSymbol))
+        XCTAssertEqual(getterSignature.parameterTypes, [])
+        XCTAssertEqual(getterSignature.typeParameterSymbols.count, 1)
+        XCTAssertEqual(getterSignature.classTypeParameterCount, 0)
+
+        let receiverType = try XCTUnwrap(getterSignature.receiverType)
+        guard case let .classType(receiverClassType) = sema.types.kind(of: receiverType) else {
+            return XCTFail("Expected KClass<T> receiver, got \(sema.types.renderType(receiverType))")
+        }
+        let kClassSymbol = try XCTUnwrap(sema.types.kClassInterfaceSymbol)
+        XCTAssertEqual(receiverClassType.classSymbol, kClassSymbol)
+        guard case let .classType(classType) = sema.types.kind(of: getterSignature.returnType) else {
+            return XCTFail("Expected nullable Class<T> return type, got \(sema.types.renderType(getterSignature.returnType))")
+        }
+
+        XCTAssertEqual(classType.classSymbol, classSymbol)
+        XCTAssertEqual(classType.nullability, .nullable)
+        XCTAssertEqual(receiverClassType.args.count, 1)
+        XCTAssertEqual(classType.args, receiverClassType.args)
+        XCTAssertEqual(sema.symbols.propertyType(for: propertySymbol), getterSignature.returnType)
+        XCTAssertEqual(sema.symbols.extensionPropertyReceiverType(for: propertySymbol), receiverType)
+    }
+
     func testKClassJavaClassPropertyResolvesFromSource() throws {
         let source = """
         import java.lang.Class
@@ -153,5 +197,23 @@ final class JvmKClassJavaSyntheticStubTests: XCTestCase {
                 return XCTFail("\(functionName) should return java.lang.Class<KClass<T>>, got \(sema.types.renderType(signature.returnType))")
             }
         }
+    }
+
+    func testKClassJavaPrimitiveTypePropertyResolvesFromSource() throws {
+        let source = """
+        import java.lang.Class
+        import kotlin.jvm.javaPrimitiveType
+        import kotlin.reflect.KClass
+
+        fun <T : Any> primitiveClassOf(kclass: KClass<T>): Class<T>? = kclass.javaPrimitiveType
+        """
+        let (sema, interner) = try makeSema(source: source)
+
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: [interner.intern("primitiveClassOf")]))
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbol))
+        guard case let .classType(classType) = sema.types.kind(of: signature.returnType) else {
+            return XCTFail("primitiveClassOf should return java.lang.Class<T>?, got \(sema.types.renderType(signature.returnType))")
+        }
+        XCTAssertEqual(classType.nullability, .nullable)
     }
 }
