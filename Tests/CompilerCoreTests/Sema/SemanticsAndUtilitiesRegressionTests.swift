@@ -631,6 +631,54 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathWriteLinesSequenceExtensionFunctionInIOPathPackageSurfaceIsRegistered() throws {
+        let source = """
+        import java.nio.file.OpenOption
+        import kotlin.io.path.Path
+        import kotlin.io.path.writeLines
+        import kotlin.sequences.Sequence
+        import kotlin.text.Charsets
+
+        fun writePathLines(path: Path, lines: Sequence<CharSequence>, option: OpenOption) {}
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.writeLines Sequence extension function in kotlin.io.path should register: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let charSequenceSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "CharSequence"].map(interner.intern)))
+            let sequenceSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "sequences", "Sequence"].map(interner.intern)))
+            let charsetSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "text", "Charset"].map(interner.intern)))
+            let openOptionSymbol = try XCTUnwrap(symbols.lookup(fqName: ["java", "nio", "file", "OpenOption"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let charSequenceType = types.make(.classType(ClassType(classSymbol: charSequenceSymbol, args: [], nullability: .nonNull)))
+            let sequenceType = types.make(.classType(ClassType(classSymbol: sequenceSymbol, args: [.out(charSequenceType)], nullability: .nonNull)))
+            let charsetType = types.make(.classType(ClassType(classSymbol: charsetSymbol, args: [], nullability: .nonNull)))
+            let openOptionType = types.make(.classType(ClassType(classSymbol: openOptionSymbol, args: [], nullability: .nonNull)))
+            let writeLinesSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "writeLines"].map(interner.intern))
+            let writeLines = try XCTUnwrap(writeLinesSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [sequenceType, charsetType, openOptionType]
+                    && signature.returnType == pathType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: writeLines), "kk_path_writeLines_sequence")
+
+            let signature = try XCTUnwrap(symbols.functionSignature(for: writeLines))
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [false, true, false])
+            XCTAssertEqual(signature.valueParameterIsVararg, [false, false, true])
+        }
+    }
+
     func testPathFileSizeExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import kotlin.io.path.Path
