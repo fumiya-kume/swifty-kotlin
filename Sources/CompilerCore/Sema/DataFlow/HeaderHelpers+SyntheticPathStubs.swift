@@ -34,7 +34,6 @@
 /// - `Path.reader(charset, vararg options: OpenOption): BufferedReader` extension function
 /// - `Path.inputStream(vararg options: OpenOption): InputStream` extension function
 /// - `Path.appendLines(lines: Iterable<CharSequence>, charset)` extension function
-/// - `Path.writeLines(lines: Iterable<CharSequence>, charset, options)` extension function
 /// - `Path.writeLines(lines: Sequence<CharSequence>, charset, options)` extension function
 /// - `Path.absolutePathString(): String` extension function
 /// - `Path.appendBytes(array: ByteArray)` extension function
