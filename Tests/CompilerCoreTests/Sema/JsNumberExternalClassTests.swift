@@ -66,6 +66,36 @@ final class JsNumberExternalClassTests: XCTestCase {
         XCTAssertEqual(sema.symbols.externalLinkName(for: toDouble), "kk_js_number_toDouble")
     }
 
+    func testJsNumberToIntIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let jsNumberFQName = ["kotlin", "js", "JsNumber"].map { interner.intern($0) }
+        let jsNumberSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: jsNumberFQName))
+        let receiverType = try XCTUnwrap(sema.symbols.propertyType(for: jsNumberSymbol))
+
+        let toInt = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: jsNumberFQName + [interner.intern("toInt")]).first { symbolID in
+                guard let symbol = sema.symbols.symbol(symbolID),
+                      symbol.kind == .function,
+                      let signature = sema.symbols.functionSignature(for: symbolID)
+                else {
+                    return false
+                }
+                return signature.receiverType == receiverType
+                    && signature.parameterTypes.isEmpty
+                    && signature.returnType == sema.types.intType
+            },
+            "JsNumber.toInt() must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(toInt))
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: toInt))
+
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+        XCTAssertEqual(signature.valueParameterHasDefaultValues, [])
+        XCTAssertEqual(signature.valueParameterIsVararg, [])
+        XCTAssertEqual(sema.symbols.externalLinkName(for: toInt), "kk_js_number_toInt")
+    }
+
     func testJsNumberToDoubleResolvesFromSource() throws {
         let source = """
         import kotlin.js.JsNumber
@@ -77,5 +107,18 @@ final class JsNumberExternalClassTests: XCTestCase {
         let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbol))
 
         XCTAssertEqual(signature.returnType, sema.types.doubleType)
+    }
+
+    func testJsNumberToIntResolvesFromSource() throws {
+        let source = """
+        import kotlin.js.JsNumber
+
+        fun primitive(value: JsNumber): Int = value.toInt()
+        """
+        let (sema, interner) = try makeSema(source: source)
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: [interner.intern("primitive")]))
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbol))
+
+        XCTAssertEqual(signature.returnType, sema.types.intType)
     }
 }

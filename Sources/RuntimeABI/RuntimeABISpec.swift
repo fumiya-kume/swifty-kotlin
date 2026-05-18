@@ -799,6 +799,14 @@ public enum RuntimeABISpec {
             section: "System"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_js_number_toInt",
+            parameters: [
+                RuntimeABIParameter(name: "jsNumberRaw", type: .intptr),
+            ],
+            returnType: .int32,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_jsclass_kotlin",
             parameters: [
                 RuntimeABIParameter(name: "jsClassRaw", type: .intptr),
