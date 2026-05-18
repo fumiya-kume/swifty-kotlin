@@ -57,6 +57,7 @@ extension ABIMismatchTests {
     private var allowedSpecOnlyRuntimeABINames: Set<String> {
         [
             "kk_annotation_class_name",
+            "kk_class_kotlin",
             "kk_annotation_get_arguments",
             "kk_annotation_simple_class_name",
             "kk_any_javaClass",
