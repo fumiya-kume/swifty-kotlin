@@ -45,6 +45,7 @@
 /// - `CopyActionResult` enum surface
 /// - `ExperimentalPathApi` marker annotation surface
 /// - `FileVisitorBuilder` type surface
+/// - `fileVisitor(builderAction)` top-level function
 /// - `OnErrorResult` enum surface
 /// - `PathWalkOption` enum surface
 ///
@@ -205,6 +206,24 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        let fileVisitorBuilderSymbol = ensureInterfaceSymbol(
+            named: "FileVisitorBuilder",
+            in: kotlinIOPathPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let fileVisitorBuilderType = types.make(.classType(ClassType(
+            classSymbol: fileVisitorBuilderSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let fileVisitorBuilderActionType = types.make(.functionType(FunctionType(
+            receiver: fileVisitorBuilderType,
+            params: [],
+            returnType: types.unitType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
         let onErrorResultSymbol = ensurePathOnErrorResultEnum(
             in: kotlinIOPathPkg,
             packageSymbol: kotlinIOPathPkgSymbol,
@@ -377,6 +396,19 @@ extension DataFlowSemaPhase {
             classSymbol: fileStoreSymbol, args: [], nullability: .nonNull
         )))
         symbols.setPropertyType(fileStoreType, for: fileStoreSymbol)
+
+        let fileVisitorSymbol = ensureGenericPathFileVisitorSymbol(
+            in: javaNioFilePackage,
+            packageSymbol: javaNioFilePackageSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let fileVisitorOfPathType = types.make(.classType(ClassType(
+            classSymbol: fileVisitorSymbol,
+            args: [.invariant(pathType)],
+            nullability: .nonNull
+        )))
 
         let javaNioFileAttributePkg = ensurePackage(
             path: ["java", "nio", "file", "attribute"],
@@ -1250,6 +1282,16 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerPathTopLevelFunction(
+            named: "fileVisitor",
+            packageFQName: kotlinIOPathPkg,
+            parameters: [("builderAction", fileVisitorBuilderActionType)],
+            returnType: fileVisitorOfPathType,
+            externalLinkName: "kk_path_fileVisitor",
+            symbols: symbols,
+            interner: interner
+        )
+
         // MARK: - Paths.get() (java.nio.file.Paths)
 
         let pathsSymbol = ensureClassSymbol(
@@ -1525,6 +1567,51 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(builderType, for: builderSymbol)
+    }
+
+    private func ensureGenericPathFileVisitorSymbol(
+        in packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> SymbolID {
+        let fileVisitorSymbol = ensureInterfaceSymbol(
+            named: "FileVisitor",
+            in: packageFQName,
+            symbols: symbols,
+            interner: interner
+        )
+        if let packageSymbol {
+            symbols.setParentSymbol(packageSymbol, for: fileVisitorSymbol)
+        }
+
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = packageFQName + [interner.intern("FileVisitor"), typeParamName]
+        let typeParamSymbol = symbols.lookup(fqName: typeParamFQName) ?? symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: typeParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(fileVisitorSymbol, for: typeParamSymbol)
+        symbols.setTypeParameterUpperBounds([types.anyType], for: typeParamSymbol)
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: fileVisitorSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: fileVisitorSymbol)
+
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let fileVisitorType = types.make(.classType(ClassType(
+            classSymbol: fileVisitorSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(fileVisitorType, for: fileVisitorSymbol)
+        return fileVisitorSymbol
     }
 
     private func resolvePathListSymbol(
