@@ -94,6 +94,15 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerJsArrayGet(
+            ownerSymbol: jsArraySymbol,
+            ownerType: jsArrayType,
+            returnType: typeParamType,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
     }
 
     private func registerJsArrayToArray(
@@ -145,6 +154,78 @@ extension DataFlowSemaPhase {
                 valueParameterSymbols: [],
                 valueParameterHasDefaultValues: [],
                 valueParameterIsVararg: [],
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: functionSymbol
+        )
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+    }
+
+    private func registerJsArrayGet(
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        returnType: TypeID,
+        typeParamSymbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let functionName = interner.intern("get")
+        let functionFQName = ownerInfo.fqName + [functionName]
+        let parameterTypes = [types.intType]
+        let externalLinkName = "kk_js_array_get"
+
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let symbol = symbols.symbol(symbolID),
+                  symbol.kind == .function,
+                  let signature = symbols.functionSignature(for: symbolID)
+            else {
+                return false
+            }
+            return signature.receiverType == ownerType
+                && signature.parameterTypes == parameterTypes
+                && signature.returnType == returnType
+                && signature.typeParameterSymbols == [typeParamSymbol]
+                && signature.classTypeParameterCount == 1
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
+
+        let indexName = interner.intern("index")
+        let indexParameter = symbols.define(
+            kind: .valueParameter,
+            name: indexName,
+            fqName: functionFQName + [indexName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(functionSymbol, for: indexParameter)
+        symbols.setPropertyType(types.intType, for: indexParameter)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: ownerType,
+                parameterTypes: parameterTypes,
+                returnType: returnType,
+                valueParameterSymbols: [indexParameter],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
                 typeParameterSymbols: [typeParamSymbol],
                 classTypeParameterCount: 1
             ),
