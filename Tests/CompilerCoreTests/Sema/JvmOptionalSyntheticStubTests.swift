@@ -87,4 +87,92 @@ final class JvmOptionalSyntheticStubTests: XCTestCase {
             )
         }
     }
+
+    func testOptionalToCollectionSignature() throws {
+        let (sema, interner) = try makeSema()
+
+        let optionalFQName = ["java", "util", "Optional"].map { interner.intern($0) }
+        let optionalSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: optionalFQName),
+            "Expected java.util.Optional to be registered"
+        )
+        let mutableCollectionSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: ["kotlin", "collections", "MutableCollection"].map { interner.intern($0) }),
+            "Expected kotlin.collections.MutableCollection to be registered"
+        )
+
+        let toCollectionFQName = ["kotlin", "jvm", "optionals", "toCollection"].map { interner.intern($0) }
+        let toCollectionSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: toCollectionFQName),
+            "Expected kotlin.jvm.optionals.toCollection to be registered"
+        )
+        let toCollectionSignature = try XCTUnwrap(sema.symbols.functionSignature(for: toCollectionSymbol))
+        XCTAssertTrue(sema.symbols.symbol(toCollectionSymbol)?.flags.contains(.synthetic) == true)
+        XCTAssertEqual(sema.symbols.externalLinkName(for: toCollectionSymbol), "kk_optional_toCollection")
+
+        XCTAssertEqual(toCollectionSignature.typeParameterSymbols.count, 2)
+        let tParamSymbol = toCollectionSignature.typeParameterSymbols[0]
+        let cParamSymbol = toCollectionSignature.typeParameterSymbols[1]
+        let tType = sema.types.make(.typeParam(TypeParamType(
+            symbol: tParamSymbol,
+            nullability: .nonNull
+        )))
+        let cType = sema.types.make(.typeParam(TypeParamType(
+            symbol: cParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = sema.types.make(.classType(ClassType(
+            classSymbol: optionalSymbol,
+            args: [.out(tType)],
+            nullability: .nonNull
+        )))
+        let cUpperBound = sema.types.make(.classType(ClassType(
+            classSymbol: mutableCollectionSymbol,
+            args: [.in(tType)],
+            nullability: .nonNull
+        )))
+
+        XCTAssertEqual(toCollectionSignature.receiverType, receiverType)
+        XCTAssertEqual(toCollectionSignature.parameterTypes, [cType])
+        XCTAssertEqual(toCollectionSignature.returnType, cType)
+        XCTAssertEqual(toCollectionSignature.typeParameterUpperBoundsList, [[], [cUpperBound]])
+        XCTAssertEqual(toCollectionSignature.classTypeParameterCount, 0)
+    }
+
+    func testOptionalToCollectionResolvesInSource() throws {
+        let source = """
+        import java.util.Optional
+        import kotlin.collections.MutableCollection
+        import kotlin.jvm.optionals.toCollection
+
+        fun probe(optional: Optional<String>, destination: MutableCollection<String>): MutableCollection<String> {
+            return optional.toCollection(destination)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected Optional.toCollection to resolve cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let toCollectionCall = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "toCollection"
+            })
+            let chosenToCollection = try XCTUnwrap(
+                sema.bindings.callBinding(for: toCollectionCall)?.chosenCallee
+            )
+            XCTAssertEqual(
+                sema.symbols.externalLinkName(for: chosenToCollection),
+                "kk_optional_toCollection"
+            )
+        }
+    }
 }
