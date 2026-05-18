@@ -84,6 +84,7 @@ extension ABIMismatchTests {
             "kk_optional_asSequence",
             "kk_optional_getOrDefault",
             "kk_optional_getOrNull",
+            "kk_optional_getOrElse",
             "kk_optional_toCollection",
             "kk_optional_toSet",
             "kk_path_createLinkPointingTo",
