@@ -103,6 +103,7 @@ extension ABIMismatchTests {
             "kk_path_visitFileTree",
             "kk_path_writeBytes",
             "kk_path_writeLines_sequence",
+            "kk_path_get_base_subpaths",
             "kk_result_flatMap",
             "kk_result_flatMapCatching",
             "kk_result_mapCatching",

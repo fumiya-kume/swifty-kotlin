@@ -40,6 +40,7 @@
 /// - `Path.listDirectoryEntries(glob: String = "*"): List<Path>` extension function
 /// - `Path.isExecutable()`, `isHidden()`, `isReadable()`, `isSameFileAs()`, `isSymbolicLink()`, `isWritable()`
 /// - Top-level `Path(pathString: String)` factory (kotlin.io.path.Path)
+/// - Top-level `Path(base: String, vararg subpaths: String)` factory (kotlin.io.path.Path)
 /// - `Paths.get(pathString: String)` factory (java.nio.file.Paths)
 /// - `CopyActionContext` type surface
 /// - `CopyActionResult` enum surface
@@ -1250,6 +1251,17 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerPathTopLevelFunction(
+            named: "Path",
+            packageFQName: kotlinIOPathPkg,
+            parameters: [("base", types.stringType), ("subpaths", types.stringType)],
+            returnType: pathType,
+            externalLinkName: "kk_path_get_base_subpaths",
+            valueParameterIsVararg: [false, true],
+            symbols: symbols,
+            interner: interner
+        )
+
         // MARK: - Paths.get() (java.nio.file.Paths)
 
         let pathsSymbol = ensureClassSymbol(
@@ -1941,19 +1953,46 @@ extension DataFlowSemaPhase {
         parameters: [(name: String, type: TypeID)],
         returnType: TypeID,
         externalLinkName: String,
+        valueParameterHasDefaultValues: [Bool]? = nil,
+        valueParameterIsVararg: [Bool]? = nil,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
         let functionName = interner.intern(name)
         let functionFQName = packageFQName + [functionName]
+        let parameterTypes = parameters.map(\.type)
+        let defaults = valueParameterHasDefaultValues
+            ?? Array(repeating: false, count: parameters.count)
+        let varargs = valueParameterIsVararg
+            ?? Array(repeating: false, count: parameters.count)
         if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
             guard let existingSignature = symbols.functionSignature(for: symbolID) else {
                 return false
             }
-            return existingSignature.parameterTypes == parameters.map(\.type)
+            return existingSignature.parameterTypes == parameterTypes
                 && existingSignature.returnType == returnType
         }) {
             symbols.setExternalLinkName(externalLinkName, for: existing)
+            if let existingSignature = symbols.functionSignature(for: existing) {
+                let shouldUpdateSignature =
+                    existingSignature.valueParameterHasDefaultValues != defaults
+                    || existingSignature.valueParameterIsVararg != varargs
+                guard shouldUpdateSignature else {
+                    return
+                }
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: existingSignature.receiverType,
+                        parameterTypes: existingSignature.parameterTypes,
+                        returnType: existingSignature.returnType,
+                        isSuspend: existingSignature.isSuspend,
+                        valueParameterSymbols: existingSignature.valueParameterSymbols,
+                        valueParameterHasDefaultValues: defaults,
+                        valueParameterIsVararg: varargs
+                    ),
+                    for: existing
+                )
+            }
             return
         }
 
@@ -1987,12 +2026,12 @@ extension DataFlowSemaPhase {
 
         symbols.setFunctionSignature(
             FunctionSignature(
-                parameterTypes: parameters.map(\.type),
+                parameterTypes: parameterTypes,
                 returnType: returnType,
                 isSuspend: false,
                 valueParameterSymbols: valueParameterSymbols,
-                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
-                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+                valueParameterHasDefaultValues: defaults,
+                valueParameterIsVararg: varargs
             ),
             for: functionSymbol
         )
