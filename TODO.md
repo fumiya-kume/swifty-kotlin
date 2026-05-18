@@ -714,7 +714,7 @@
 - [ ] STDLIB-IO-PATH-FN-037: `Path.getLastModifiedTime(options)` を追加する
 - [x] STDLIB-IO-PATH-FN-038: `Path.getOwner(options)` を追加する
 - [x] STDLIB-IO-PATH-FN-039: `Path.getPosixFilePermissions(options)` を追加する
-- [ ] STDLIB-IO-PATH-FN-040: `Path.inputStream(options)` を追加する
+- [x] STDLIB-IO-PATH-FN-040: `Path.inputStream(options)` を追加する
 - [x] STDLIB-IO-PATH-FN-041: `Path.isDirectory(options)` を既存 no-arg stub から公式 vararg shape へ広げる
 - [x] STDLIB-IO-PATH-FN-045: `Path.isRegularFile(options)` を既存 no-arg stub から公式 vararg shape へ広げる
 - [ ] STDLIB-IO-PATH-FN-049: `Path.listDirectoryEntries(glob)` を既存 no-arg stub から公式 glob shape へ広げる
