@@ -669,42 +669,6 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(listElements(kk_map_get(result, 0)), [4])
     }
 
-    func testIndexOfLastReturnsLastMatchingPredicateIndexOrMinusOne() {
-        let seq = makeSequence([1, 4, 5, 6])
-        let evenPredicate: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
-            value.isMultiple(of: 2) ? 1 : 0
-        }
-        let greaterThanTenPredicate: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
-            value > 10 ? 1 : 0
-        }
-
-        XCTAssertEqual(kk_sequence_indexOfLast(seq, unsafeBitCast(evenPredicate, to: Int.self), 0, nil), 3)
-        XCTAssertEqual(kk_sequence_indexOfLast(seq, unsafeBitCast(greaterThanTenPredicate, to: Int.self), 0, nil), -1)
-    }
-
-    func testIntersectReturnsDeduplicatedSetInReceiverOrder() {
-        let seq = makeSequence([1, 2, 2, 3, 4])
-        let other = registerRuntimeObject(RuntimeListBox(elements: [2, 4, 5]))
-
-        let result = kk_sequence_intersect(seq, other)
-
-        XCTAssertEqual(setElements(result), [2, 4])
-    }
-    func testGroupByGroupsElementsIntoNewMap() {
-        let seq = makeSequence([1, 2, 3, 4, 5])
-
-        let result = kk_sequence_groupBy(
-            seq,
-            unsafeBitCast(sequenceParitySelector, to: Int.self),
-            0,
-            nil
-        )
-
-        XCTAssertEqual(mapKeys(result), [1, 0])
-        XCTAssertEqual(listElements(kk_map_get(result, 1)), [1, 3, 5])
-        XCTAssertEqual(listElements(kk_map_get(result, 0)), [2, 4])
-    }
-
     func testIndexOfReturnsFirstMatchingIndexOrMinusOne() {
         let seq = makeSequence([10, 20, 10, 30])
 

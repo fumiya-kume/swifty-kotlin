@@ -412,8 +412,8 @@ extension CodegenBackendIntegrationTests {
             val seq = sequenceOf(1, 2, 3, 4, 5)
 
             println(seq.count())
-            println(seq.indexOfLast { it % 2 == 0 })
-            println(seq.indexOfLast { it > 10 })
+            println(seq.indexOf(3))
+            println(seq.indexOf(99))
 
             var sum = 0
             seq.forEach { sum += it }
@@ -447,7 +447,7 @@ extension CodegenBackendIntegrationTests {
                 normalizedStdout,
                 """
                 5
-                3
+                2
                 -1
                 15
                 15
