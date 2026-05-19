@@ -52,6 +52,7 @@
 /// - `Path.listDirectoryEntries(glob: String = "*"): List<Path>` extension function
 /// - `Path.walk(options)` extension function
 /// - `Path.isExecutable()`, `isHidden()`, `isReadable()`, `isSameFileAs()`, `isSymbolicLink()`, `isWritable()`
+/// - `Path.notExists(vararg options: LinkOption): Boolean`
 /// - Top-level `Path(pathString: String)` factory (kotlin.io.path.Path)
 /// - Top-level `Path(base: String, vararg subpaths: String)` factory (kotlin.io.path.Path)
 /// - `Paths.get(pathString: String)` factory (java.nio.file.Paths)
@@ -947,6 +948,18 @@ extension DataFlowSemaPhase {
             parameters: [("other", pathType)],
             returnType: types.booleanType,
             externalLinkName: "kk_path_isSameFileAs",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "notExists",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("options", linkOptionType)],
+            returnType: types.booleanType,
+            externalLinkName: "kk_path_notExists",
+            valueParameterIsVararg: [true],
             symbols: symbols,
             interner: interner
         )
