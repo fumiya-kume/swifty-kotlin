@@ -205,8 +205,8 @@ extension CollectionLiteralLoweringPass {
                     thrownResult: nil
                 ))
                 if let result {
-                    state.listExprIDs.insert(result.rawValue)
-                    state.listExprIDs.insert(hofResult.rawValue)
+                    state.sequenceExprIDs.insert(result.rawValue)
+                    state.sequenceExprIDs.insert(hofResult.rawValue)
                     loweredBody.append(.copy(from: hofResult, to: result))
                 }
                 return true
@@ -233,8 +233,8 @@ extension CollectionLiteralLoweringPass {
                     thrownResult: thrownResult
                 ))
                 if let result {
-                    state.listExprIDs.insert(result.rawValue)
-                    state.listExprIDs.insert(hofResult.rawValue)
+                    state.sequenceExprIDs.insert(result.rawValue)
+                    state.sequenceExprIDs.insert(hofResult.rawValue)
                     loweredBody.append(.copy(from: hofResult, to: result))
                 }
                 return true

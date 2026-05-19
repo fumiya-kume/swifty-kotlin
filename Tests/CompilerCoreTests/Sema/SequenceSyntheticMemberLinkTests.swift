@@ -422,6 +422,60 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testSequenceZipWithNextResolvesInCallExpressions() throws {
+        let source = """
+        fun adjacentPairCount(): Int {
+            val values = sequenceOf(1, 2, 4, 8)
+            val pairs = values.zipWithNext().take(2).toList()
+            val diffs = values.zipWithNext { left, right -> right - left }.take(2).toList()
+            return pairs.size + diffs.size
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Sequence.zipWithNext surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "sequences", "Sequence", "zipWithNext"]
+                .map { ctx.interner.intern($0) }
+            let transformFQName = memberFQName + [ctx.interner.intern("transform")]
+            let links = Set(
+                (sema.symbols.lookupAll(fqName: memberFQName) + sema.symbols.lookupAll(fqName: transformFQName))
+                    .compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
+            XCTAssertTrue(links.contains("kk_sequence_zipWithNext"))
+            XCTAssertTrue(links.contains("kk_sequence_zipWithNextTransform"))
+
+            let noArgSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: memberFQName))
+            let noArgSignature = try XCTUnwrap(sema.symbols.functionSignature(for: noArgSymbol))
+            guard case let .classType(noArgReturnType) = sema.types.kind(of: noArgSignature.returnType) else {
+                return XCTFail("Expected Sequence.zipWithNext() to return Sequence<Pair<T, T>>")
+            }
+            XCTAssertEqual(
+                try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(noArgReturnType.classSymbol)?.name)),
+                "Sequence"
+            )
+
+            let transformSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: transformFQName))
+            let transformSignature = try XCTUnwrap(sema.symbols.functionSignature(for: transformSymbol))
+            guard case let .classType(transformReturnType) = sema.types.kind(of: transformSignature.returnType) else {
+                return XCTFail("Expected Sequence.zipWithNext(transform) to return Sequence<R>")
+            }
+            XCTAssertEqual(
+                try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(transformReturnType.classSymbol)?.name)),
+                "Sequence"
+            )
+        }
+    }
+
     func testSequenceOnEachResolvesInCallExpressions() throws {
         let source = """
         fun traceValues(): Sequence<Int> {

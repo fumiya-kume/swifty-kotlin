@@ -2235,7 +2235,7 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // zipWithNext(): List<Pair<T, T>>
+        // zipWithNext(): Sequence<Pair<T, T>>
         let zipWithNextName = interner.intern("zipWithNext")
         let zipWithNextFQName = sequenceFQName + [zipWithNextName]
         if symbols.lookup(fqName: zipWithNextFQName) == nil {
@@ -2251,20 +2251,11 @@ extension DataFlowSemaPhase {
             } else {
                 types.anyType
             }
-            let listSymbol = symbols.lookup(fqName: [
-                interner.intern("kotlin"),
-                interner.intern("collections"),
-                interner.intern("List"),
-            ])
-            let zipWithNextListResultType: TypeID = if let listSymbol {
-                types.make(.classType(ClassType(
-                    classSymbol: listSymbol,
-                    args: [.out(zipWithNextResultType)],
-                    nullability: .nonNull
-                )))
-            } else {
-                types.anyType
-            }
+            let zipWithNextSequenceResultType = types.make(.classType(ClassType(
+                classSymbol: sequenceSymbol,
+                args: [.out(zipWithNextResultType)],
+                nullability: .nonNull
+            )))
             let zipWithNextSymbol = symbols.define(
                 kind: .function,
                 name: zipWithNextName,
@@ -2279,7 +2270,7 @@ extension DataFlowSemaPhase {
                 FunctionSignature(
                     receiverType: receiverType,
                     parameterTypes: [],
-                    returnType: zipWithNextListResultType,
+                    returnType: zipWithNextSequenceResultType,
                     valueParameterSymbols: [],
                     valueParameterHasDefaultValues: [],
                     valueParameterIsVararg: [],
@@ -2290,7 +2281,7 @@ extension DataFlowSemaPhase {
             )
         }
 
-        // zipWithNext(transform: (T, T) -> R): List<R>
+        // zipWithNext(transform: (T, T) -> R): Sequence<R>
         let zipWithNextTransformFQName = zipWithNextFQName + [interner.intern("transform")]
         if symbols.lookup(fqName: zipWithNextTransformFQName) == nil {
             let rName = interner.intern("R")
@@ -2304,20 +2295,11 @@ extension DataFlowSemaPhase {
                 flags: []
             )
             let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
-            let listSymbol = symbols.lookup(fqName: [
-                interner.intern("kotlin"),
-                interner.intern("collections"),
-                interner.intern("List"),
-            ])
-            let listRType: TypeID = if let listSymbol {
-                types.make(.classType(ClassType(
-                    classSymbol: listSymbol,
-                    args: [.out(rType)],
-                    nullability: .nonNull
-                )))
-            } else {
-                types.anyType
-            }
+            let sequenceRType = types.make(.classType(ClassType(
+                classSymbol: sequenceSymbol,
+                args: [.out(rType)],
+                nullability: .nonNull
+            )))
             let transformType = types.make(.functionType(FunctionType(
                 params: [typeParamType, typeParamType],
                 returnType: rType,
@@ -2348,7 +2330,7 @@ extension DataFlowSemaPhase {
                 FunctionSignature(
                     receiverType: receiverType,
                     parameterTypes: [transformType],
-                    returnType: listRType,
+                    returnType: sequenceRType,
                     valueParameterSymbols: [transformParamSymbol],
                     valueParameterHasDefaultValues: [false],
                     valueParameterIsVararg: [false],
