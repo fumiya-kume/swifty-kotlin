@@ -1051,6 +1051,69 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathMoveToOptionsExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import java.nio.file.CopyOption
+        import kotlin.io.path.Path
+        import kotlin.io.path.moveTo
+
+        fun movePath(source: Path, target: Path, option: CopyOption): Path {
+            val first = source.moveTo(target)
+            val second = source.moveTo(target, option)
+            val third = source.moveTo(target, true)
+            return second
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnostics = ctx.diagnostics.diagnostics.map(\.message)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.moveTo(target, options) extension function in kotlin.io.path should resolve: \(diagnostics)"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let copyOptionSymbol = try XCTUnwrap(symbols.lookup(fqName: ["java", "nio", "file", "CopyOption"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let copyOptionType = types.make(.classType(ClassType(classSymbol: copyOptionSymbol, args: [], nullability: .nonNull)))
+            let moveToSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "moveTo"].map(interner.intern))
+            let optionsMoveTo = try XCTUnwrap(moveToSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [pathType, copyOptionType]
+                    && signature.returnType == pathType
+            })
+            let overwriteMoveTo = try XCTUnwrap(moveToSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [pathType, types.booleanType]
+                    && signature.returnType == pathType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: optionsMoveTo), "kk_path_moveTo_options")
+            XCTAssertEqual(symbols.externalLinkName(for: overwriteMoveTo), "kk_path_moveTo_overwrite")
+
+            let optionsSignature = try XCTUnwrap(symbols.functionSignature(for: optionsMoveTo))
+            XCTAssertEqual(optionsSignature.valueParameterHasDefaultValues, [false, false])
+            XCTAssertEqual(optionsSignature.valueParameterIsVararg, [false, true])
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let callExprs = memberCallExprIDs(named: "moveTo", in: ast, interner: interner)
+            XCTAssertEqual(callExprs.count, 3)
+            let chosenCallees = callExprs.compactMap { sema.bindings.callBinding(for: $0)?.chosenCallee }
+            XCTAssertEqual(chosenCallees.filter { $0 == optionsMoveTo }.count, 2)
+            XCTAssertEqual(chosenCallees.filter { $0 == overwriteMoveTo }.count, 1)
+            for callExpr in callExprs {
+                XCTAssertEqual(sema.bindings.exprTypes[callExpr], pathType)
+            }
+        }
+    }
+
     func testPathIsRegularFileOptionsExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import java.nio.file.LinkOption
