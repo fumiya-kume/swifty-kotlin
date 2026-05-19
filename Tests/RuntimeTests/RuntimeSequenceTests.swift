@@ -1162,6 +1162,13 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(secondList, runtimeNullSentinelInt)
     }
 
+    func testContainsFindsMatchingElement() {
+        let seq = makeSequence([1, 2, 3])
+
+        XCTAssertEqual(kk_unbox_bool(kk_sequence_contains(seq, 2)), 1)
+        XCTAssertEqual(kk_unbox_bool(kk_sequence_contains(seq, 9)), 0)
+    }
+
     func testFilterIsInstanceKeepsMatchingRuntimeTypes() {
         let seq = makeSequence([1, runtimeTestStringHandle("two"), 3])
         let filtered = kk_sequence_filterIsInstance(seq, 3)
