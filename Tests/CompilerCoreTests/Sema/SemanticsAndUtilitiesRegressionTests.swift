@@ -517,9 +517,10 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         try withTemporaryFile(contents: source) { path in
             let ctx = makeCompilationContext(inputs: [path])
             try runSema(ctx)
+            let diagnostics = ctx.diagnostics.diagnostics.map(\.message)
             XCTAssertFalse(
                 ctx.diagnostics.hasError,
-                "Path.listDirectoryEntries(glob) extension function in kotlin.io.path should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+                "Path.listDirectoryEntries(glob) extension function in kotlin.io.path should resolve: \(diagnostics)"
             )
 
             let interner = ctx.interner
@@ -813,6 +814,62 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
             for callExpr in callExprs {
                 XCTAssertEqual(sema.bindings.callBinding(for: callExpr)?.chosenCallee, getAttribute)
                 XCTAssertEqual(sema.bindings.exprTypes[callExpr], types.anyType)
+            }
+        }
+    }
+
+    func testPathGetOwnerOptionsExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import java.nio.file.LinkOption
+        import java.nio.file.attribute.UserPrincipal
+        import kotlin.io.path.Path
+        import kotlin.io.path.getOwner
+
+        fun owner(path: Path, option: LinkOption): UserPrincipal {
+            val first = path.getOwner()
+            val second = path.getOwner(option)
+            return second
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnostics = ctx.diagnostics.diagnostics.map(\.message)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.getOwner(options) extension function in kotlin.io.path should resolve: \(diagnostics)"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let linkOptionSymbol = try XCTUnwrap(symbols.lookup(fqName: ["java", "nio", "file", "LinkOption"].map(interner.intern)))
+            let userPrincipalSymbol = try XCTUnwrap(symbols.lookup(fqName: ["java", "nio", "file", "attribute", "UserPrincipal"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let linkOptionType = types.make(.classType(ClassType(classSymbol: linkOptionSymbol, args: [], nullability: .nonNull)))
+            let userPrincipalType = types.make(.classType(ClassType(classSymbol: userPrincipalSymbol, args: [], nullability: .nonNull)))
+            let getOwnerSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "getOwner"].map(interner.intern))
+            let getOwner = try XCTUnwrap(getOwnerSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [linkOptionType]
+                    && signature.returnType == userPrincipalType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: getOwner), "kk_path_getOwner")
+
+            let signature = try XCTUnwrap(symbols.functionSignature(for: getOwner))
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [false])
+            XCTAssertEqual(signature.valueParameterIsVararg, [true])
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let callExprs = memberCallExprIDs(named: "getOwner", in: ast, interner: interner)
+            XCTAssertEqual(callExprs.count, 2)
+            for callExpr in callExprs {
+                XCTAssertEqual(sema.bindings.callBinding(for: callExpr)?.chosenCallee, getOwner)
+                XCTAssertEqual(sema.bindings.exprTypes[callExpr], userPrincipalType)
             }
         }
     }
