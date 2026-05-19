@@ -213,6 +213,21 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // takeLast(n: Int): List<T> (STDLIB-SEQ-FN-120)
+        registerSequenceMemberStub(
+            named: "takeLast",
+            externalLinkName: "kk_sequence_takeLast",
+            receiverType: receiverType,
+            parameters: [("n", types.intType)],
+            returnType: listReturnType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner,
+            canThrow: true
+        )
+
         // firstNotNullOf<T, R>(transform: (T) -> R?): R
         // Use a method-local T parameter (independent of Sequence's `out T`)
         // so the projection on the receiver does not block referencing T in
@@ -567,6 +582,19 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         registerSequenceMemberStub(
+            named: "sumOf",
+            externalLinkName: "kk_sequence_sumOf",
+            receiverType: receiverType,
+            parameters: [("selector", sequenceElementToIntType)],
+            returnType: types.intType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner,
+            canThrow: true
+        )
+        registerSequenceMemberStub(
             named: "sumBy",
             externalLinkName: "kk_sequence_sumBy",
             receiverType: receiverType,
@@ -702,6 +730,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // toSortedSet(): MutableSet<T>
+        registerSequenceMemberStub(
+            named: "toSortedSet",
+            externalLinkName: "kk_sequence_toSortedSet",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: mutableSetReturnType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // toCollection(destination): Collection<T>
         registerSequenceMemberStub(
             named: "toCollection",
@@ -720,6 +762,20 @@ extension DataFlowSemaPhase {
         registerSequenceMemberStub(
             named: "filterNot",
             externalLinkName: "kk_sequence_filterNot",
+            receiverType: receiverType,
+            parameters: [("predicate", predicateType)],
+            returnType: receiverType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // takeWhile(predicate): Sequence<T>
+        registerSequenceMemberStub(
+            named: "takeWhile",
+            externalLinkName: "kk_sequence_takeWhile",
             receiverType: receiverType,
             parameters: [("predicate", predicateType)],
             returnType: receiverType,
@@ -1775,6 +1831,84 @@ extension DataFlowSemaPhase {
             parameters: [("size", types.intType)],
             returnType: chunkedReturnType,
             canThrow: true
+        )
+
+        // windowed(size, step, partialWindows, transform): Sequence<R>
+        do {
+            let windowedName = interner.intern("windowed")
+            let windowedFQName = sequenceFQName + [windowedName]
+            let rName = interner.intern("R")
+            let rFQName = windowedFQName + [interner.intern("transform"), rName]
+            let rSymbol: SymbolID = if let existing = symbols.lookup(fqName: rFQName) {
+                existing
+            } else {
+                symbols.define(
+                    kind: .typeParameter,
+                    name: rName,
+                    fqName: rFQName,
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
+            }
+            let rType = types.make(.typeParam(TypeParamType(
+                symbol: rSymbol,
+                nullability: .nonNull
+            )))
+            let invariantWindowListType = nominalCollectionType([
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("List"),
+            ], elementType: typeParamType, invariant: true)
+            let transformType = types.make(.functionType(FunctionType(
+                params: [invariantWindowListType],
+                returnType: rType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let sequenceRType = types.make(.classType(ClassType(
+                classSymbol: sequenceSymbol,
+                args: [.out(rType)],
+                nullability: .nonNull
+            )))
+            registerSequenceMemberStub(
+                named: "windowed",
+                externalLinkName: "kk_sequence_windowed_transform",
+                receiverType: receiverType,
+                parameters: [
+                    ("size", types.intType),
+                    ("step", types.intType),
+                    ("partialWindows", types.booleanType),
+                    ("transform", transformType),
+                ],
+                returnType: sequenceRType,
+                sequenceSymbol: sequenceSymbol,
+                sequenceFQName: sequenceFQName,
+                typeParamSymbol: typeParamSymbol,
+                symbols: symbols,
+                interner: interner,
+                canThrow: true,
+                additionalTypeParameterSymbols: [rSymbol]
+            )
+        }
+
+        // STDLIB-SEQ-FN-131: windowed(size, step, partialWindows): Sequence<List<T>>
+        let windowedReturnType = types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
+            args: [.out(listReturnType)],
+            nullability: .nonNull
+        )))
+        registerSequenceOverloadedMemberStub(
+            named: "windowed",
+            externalLinkName: "kk_sequence_windowed",
+            receiverType: receiverType,
+            parameters: [
+                ("size", types.intType),
+                ("step", types.intType),
+                ("partialWindows", types.booleanType),
+            ],
+            returnType: windowedReturnType,
+            canThrow: false
         )
 
         // forEachIndexed(action: (Int, T) -> Unit): Unit

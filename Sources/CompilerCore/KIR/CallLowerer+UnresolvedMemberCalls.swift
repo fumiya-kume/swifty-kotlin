@@ -590,6 +590,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_filter")
             case takeName:
                 return interner.intern("kk_sequence_take")
+            case interner.intern("takeLast"):
+                return interner.intern("kk_sequence_takeLast")
             case toListName:
                 return interner.intern("kk_sequence_to_list")
             case interner.intern("constrainOnce"):
@@ -665,6 +667,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_find")
             case interner.intern("single"):
                 return interner.intern("kk_sequence_single")
+            case interner.intern("singleOrNull"):
+                return interner.intern("kk_sequence_singleOrNull")
             case interner.intern("any"):
                 return interner.intern(useIterableRuntimeForCollectionFallback ? "kk_iterable_any" : "kk_sequence_any")
             case interner.intern("all"):
@@ -687,6 +691,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_asIterable")
             case interner.intern("mapIndexed"):
                 return interner.intern("kk_sequence_mapIndexed")
+            case interner.intern("filterIndexed"):
+                return interner.intern("kk_sequence_filterIndexed")
             case interner.intern("flatMapIndexed"):
                 return interner.intern("kk_sequence_flatMapIndexed")
             case interner.intern("withIndex"):
@@ -734,6 +740,8 @@ extension CallLowerer {
                 return interner.intern(useIterableRuntimeForCollectionFallback
                     ? "kk_iterable_toMutableSet"
                     : "kk_sequence_toMutableSet")
+            case interner.intern("toSortedSet"):
+                return interner.intern("kk_sequence_toSortedSet")
             case interner.intern("toHashSet"):
                 return interner.intern("kk_sequence_toHashSet")
             case interner.intern("partition"):

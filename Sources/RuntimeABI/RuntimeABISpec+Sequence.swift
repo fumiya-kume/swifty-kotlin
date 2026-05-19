@@ -51,6 +51,16 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Sequence"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_takeLast",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "count", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
         // Terminal operations
         RuntimeABIFunctionSpec(
             name: "kk_sequence_to_list",
@@ -354,6 +364,17 @@ public extension RuntimeABISpec {
         ),
         RuntimeABIFunctionSpec(
             name: stdlibSequenceHOFName("mapIndexed", arity: 1, fallback: "kk_sequence_mapIndexed"),
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
+            name: stdlibSequenceHOFName("filterIndexed", arity: 1, fallback: "kk_sequence_filterIndexed"),
             parameters: [
                 RuntimeABIParameter(name: "seqRaw", type: .intptr),
                 RuntimeABIParameter(name: "fnPtr", type: .intptr),
@@ -695,6 +716,23 @@ public extension RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: StdlibSurfaceSpec.collectionHOFRuntimeLinkName(
                 ownerKind: .sequence,
+                memberName: "mapNotNullTo",
+                arity: 2,
+                fallback: "kk_sequence_mapNotNullTo"
+            ),
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "destRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
+            name: StdlibSurfaceSpec.collectionHOFRuntimeLinkName(
+                ownerKind: .sequence,
                 memberName: "mapIndexedNotNullTo",
                 arity: 2,
                 fallback: "kk_sequence_mapIndexedNotNullTo"
@@ -969,6 +1007,14 @@ public extension RuntimeABISpec {
         // STDLIB-470: toSet, toMap, groupBy, maxOrNull, minOrNull, flatten
         RuntimeABIFunctionSpec(
             name: "kk_sequence_toSet",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_toSortedSet",
             parameters: [
                 RuntimeABIParameter(name: "seqRaw", type: .intptr),
             ],

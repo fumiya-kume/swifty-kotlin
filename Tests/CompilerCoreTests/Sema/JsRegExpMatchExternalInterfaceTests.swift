@@ -58,6 +58,41 @@ final class JsRegExpMatchExternalInterfaceTests: XCTestCase {
         )
     }
 
+    func testRegExpMatchGetMemberIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let ownerFQName = ["kotlin", "js", "RegExpMatch"].map { interner.intern($0) }
+        let ownerSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: ownerFQName))
+        let ownerType = try XCTUnwrap(sema.symbols.propertyType(for: ownerSymbol))
+        let get = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: ownerFQName + [interner.intern("get")]).first { symbol in
+                guard let signature = sema.symbols.functionSignature(for: symbol) else {
+                    return false
+                }
+                return signature.receiverType == ownerType
+                    && signature.parameterTypes == [sema.types.intType]
+                    && signature.returnType == sema.types.makeNullable(sema.types.stringType)
+            },
+            "RegExpMatch.get(index) member must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(get))
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: get))
+
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+        XCTAssertTrue(info.flags.contains(.operatorFunction))
+        XCTAssertEqual(signature.valueParameterHasDefaultValues, [false])
+        XCTAssertEqual(signature.valueParameterIsVararg, [false])
+        XCTAssertNil(sema.symbols.externalLinkName(for: get))
+    }
+
+    func testRegExpMatchGetCanBeUsedAsIndexedAccess() throws {
+        _ = try makeSema(source: """
+        import kotlin.js.RegExpMatch
+
+        fun first(match: RegExpMatch): String? = match[0]
+        """)
+    }
+
     private func assertProperty(
         named name: String,
         hasType expectedType: TypeID,

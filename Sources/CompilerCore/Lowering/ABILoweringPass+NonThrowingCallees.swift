@@ -655,6 +655,10 @@ extension ABILoweringPass {
             interner.intern("kk_array_fill"),
             interner.intern("kk_list_asSequence"),
             interner.intern("kk_array_asSequence"),
+            interner.intern("kk_stream_asSequence"),
+            interner.intern("kk_int_stream_asSequence"),
+            interner.intern("kk_long_stream_asSequence"),
+            interner.intern("kk_double_stream_asSequence"),
             // NOTE: kk_array_map/filter/forEach/any/none are NOT non-throwing
             // — the lambda argument can throw.
             interner.intern("kk_set_of"),
@@ -938,6 +942,7 @@ extension ABILoweringPass {
             interner.intern("kk_sequence_zipWithNext"),
             // Sequence (STDLIB-470)
             interner.intern("kk_sequence_toSet"),
+            interner.intern("kk_sequence_toSortedSet"),
             interner.intern("kk_sequence_toHashSet"),
             interner.intern("kk_sequence_toMap"),
             interner.intern("kk_sequence_toCollection"),

@@ -394,12 +394,24 @@ extension CallLowerer {
                 finalArguments.insert(zeroExpr, at: 3)
             }
         }
-        if loweredCallee == interner.intern("kk_sequence_windowed"),
-           hasHOFLambdaArg
+        if loweredCallee == interner.intern("kk_sequence_windowed_transform")
+            || (loweredCallee == interner.intern("kk_sequence_windowed") && hasHOFLambdaArg)
         {
             loweredCallee = interner.intern("kk_sequence_windowed_transform")
             let originalArgumentCount = finalArguments.count
-            if originalArgumentCount == 4 {
+            if originalArgumentCount >= 3 {
+                let lambdaArgIndex = originalArgumentCount - 1
+                let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                    finalArguments[lambdaArgIndex],
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    instructions: &instructions
+                )
+                finalArguments[lambdaArgIndex] = fnPtrExpr
+                finalArguments.append(envPtrExpr)
+            }
+            if originalArgumentCount == 3 {
                 // `windowed(size, transform)` expands to `windowed(size, 1, false, transform)`.
                 let oneExpr = arena.appendExpr(.intLiteral(1), type: sema.types.intType)
                 instructions.append(.constValue(result: oneExpr, value: .intLiteral(1)))
@@ -407,7 +419,7 @@ extension CallLowerer {
                 instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
                 finalArguments.insert(oneExpr, at: 2)
                 finalArguments.insert(zeroExpr, at: 3)
-            } else if originalArgumentCount == 5 {
+            } else if originalArgumentCount == 4 {
                 // `windowed(size, step, transform)` expands to
                 // `windowed(size, step, false, transform)`.
                 let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
@@ -445,6 +457,7 @@ extension CallLowerer {
         }
         if loweredCallee == interner.intern("kk_sequence_filterTo")
             || loweredCallee == interner.intern("kk_sequence_filterNotTo")
+            || loweredCallee == interner.intern("kk_sequence_mapNotNullTo")
         {
             if finalArguments.count == 2 {
                 let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
@@ -804,6 +817,7 @@ extension CallLowerer {
             interner.intern("kk_list_elementAt"),
             interner.intern("kk_list_take"),
             interner.intern("kk_list_takeLast"),
+            interner.intern("kk_sequence_takeLast"),
             interner.intern("kk_list_drop"),
             interner.intern("kk_list_max"),
             interner.intern("kk_list_minBy"),
@@ -889,6 +903,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_firstNotNullOf"),
             interner.intern("kk_sequence_firstNotNullOfOrNull"),
             interner.intern("kk_sequence_mapIndexed"),
+            interner.intern("kk_sequence_filterIndexed"),
             interner.intern("kk_sequence_findLast"),
             interner.intern("kk_sequence_elementAt"),
             interner.intern("kk_sequence_minByOrNull"),
@@ -907,6 +922,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_last"),
             interner.intern("kk_sequence_firstOrNull"),
             interner.intern("kk_sequence_single"),
+            interner.intern("kk_sequence_singleOrNull"),
             interner.intern("kk_sequence_count"),
             interner.intern("kk_string_firstNotNullOf"),
             interner.intern("kk_string_firstNotNullOfOrNull"),
@@ -922,6 +938,7 @@ extension CallLowerer {
             interner.intern("kk_list_windowed_transform"),
             interner.intern("kk_sequence_chunked_transform"),
             interner.intern("kk_sequence_runningFoldIndexed"),
+            interner.intern("kk_sequence_scanIndexed"),
             interner.intern("kk_array_copyOf_newSize_init"),
             interner.intern("kk_mutable_list_replaceAll"),
             interner.intern("kk_mutable_list_removeIf"),

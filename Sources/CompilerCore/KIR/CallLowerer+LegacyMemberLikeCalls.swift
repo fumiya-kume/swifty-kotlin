@@ -2514,6 +2514,7 @@ extension CallLowerer {
                 let indexOfName = interner.intern("indexOf")
                 let elementAtName = interner.intern("elementAt")
                 let elementAtOrNullName = interner.intern("elementAtOrNull")
+                let filterIndexedName = interner.intern("filterIndexed")
                 let findLastName = interner.intern("findLast")
                 let lastName = interner.intern("last")
                 let partitionName = interner.intern("partition")
@@ -2527,6 +2528,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_filter"
                 } else if calleeName == takeName {
                     runtimeCallee = "kk_sequence_take"
+                } else if calleeName == interner.intern("takeLast") {
+                    runtimeCallee = "kk_sequence_takeLast"
                 } else if calleeName == forEachName {
                     runtimeCallee = "kk_sequence_forEach"
                 } else if calleeName == flatMapName {
@@ -2575,6 +2578,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_elementAt"
                 } else if calleeName == elementAtOrNullName {
                     runtimeCallee = "kk_sequence_elementAtOrNull"
+                } else if calleeName == filterIndexedName {
+                    runtimeCallee = "kk_sequence_filterIndexed"
                 } else if calleeName == lastName {
                     runtimeCallee = useIterableRuntimeForCollectionFallback ? "kk_iterable_last" : "kk_sequence_last"
                 } else if calleeName == findLastName {
@@ -2659,6 +2664,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_groupByTo"
                         || runtimeCallee == "kk_sequence_find"
                         || runtimeCallee == "kk_sequence_findLast"
+                        || runtimeCallee == "kk_sequence_takeLast"
                         || runtimeCallee == "kk_sequence_elementAt"
                         || runtimeCallee == "kk_sequence_last"
                         || runtimeCallee == "kk_iterable_last"
@@ -2676,6 +2682,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_firstNotNullOf"
                         || runtimeCallee == "kk_sequence_firstNotNullOfOrNull"
                         || runtimeCallee == "kk_sequence_mapIndexed"
+                        || runtimeCallee == "kk_sequence_filterIndexed"
                         || runtimeCallee == "kk_sequence_chunked_transform"
                         || runtimeCallee == "kk_sequence_windowed_transform"
                         || runtimeCallee == "kk_sequence_onEach"
@@ -3164,6 +3171,7 @@ extension CallLowerer {
                 let averageID = interner.intern("average")
                 let toMutableListID = interner.intern("toMutableList")
                 let toMutableSetID = interner.intern("toMutableSet")
+                let toSortedSetID = interner.intern("toSortedSet")
                 let toHashSetID = interner.intern("toHashSet")
                 let unzipID = interner.intern("unzip")
                 let anyID = interner.intern("any")
@@ -3175,6 +3183,7 @@ extension CallLowerer {
                 let iterableLastCallee = interner.intern("kk_iterable_last")
                 let seqLastOrNullCallee = interner.intern("kk_sequence_lastOrNull")
                 let seqSingleCallee = interner.intern("kk_sequence_single")
+                let seqSingleOrNullCallee = interner.intern("kk_sequence_singleOrNull")
                 let seqCountCallee = interner.intern("kk_sequence_count")
                 let seqAnyCallee = interner.intern("kk_sequence_any")
                 let iterableAnyCallee = interner.intern("kk_iterable_any")
@@ -3212,6 +3221,8 @@ extension CallLowerer {
                     seqLastOrNullCallee
                 case interner.intern("single"):
                     seqSingleCallee
+                case interner.intern("singleOrNull"):
+                    seqSingleOrNullCallee
                 case countID:
                     seqCountCallee
                 case sumID:
@@ -3229,6 +3240,8 @@ extension CallLowerer {
                     interner.intern(useIterableRuntimeForTerminalFallback
                         ? "kk_iterable_toMutableSet"
                         : "kk_sequence_toMutableSet")
+                case toSortedSetID:
+                    interner.intern("kk_sequence_toSortedSet")
                 case toHashSetID:
                     interner.intern("kk_sequence_toHashSet")
                 case unzipID:
