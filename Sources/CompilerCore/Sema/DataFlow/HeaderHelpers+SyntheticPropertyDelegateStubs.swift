@@ -268,6 +268,13 @@ extension DataFlowSemaPhase {
         let kMutableProperty1Symbol = ensureInterfaceSymbol(
             named: "KMutableProperty1", in: kotlinReflectPkg, symbols: symbols, interner: interner
         )
+        registerSyntheticKMutablePropertyStub(
+            kMutablePropertySymbol: kMutablePropertySymbol,
+            kPropertySymbol: kPropertySymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
         registerSyntheticKMutableProperty0Stub(
             kMutableProperty0Symbol: kMutableProperty0Symbol,
             kMutablePropertySymbol: kMutablePropertySymbol,
@@ -977,6 +984,48 @@ extension DataFlowSemaPhase {
         }
 
         return kDeclarationContainerSymbol
+    }
+
+    // STDLIB-REFLECT-TYPE-009: Register KMutableProperty<V> as a mutable KProperty surface.
+    private func registerSyntheticKMutablePropertyStub(
+        kMutablePropertySymbol: SymbolID,
+        kPropertySymbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        guard let kMutablePropertyInfo = symbols.symbol(kMutablePropertySymbol) else {
+            return
+        }
+
+        let valueName = interner.intern("V")
+        let valueFQ = kMutablePropertyInfo.fqName + [valueName]
+        let valueParamSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: valueFQ) {
+            valueParamSymbol = existing
+        } else {
+            valueParamSymbol = symbols.define(
+                kind: .typeParameter,
+                name: valueName,
+                fqName: valueFQ,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(kMutablePropertySymbol, for: valueParamSymbol)
+        }
+
+        types.setNominalTypeParameterSymbols([valueParamSymbol], for: kMutablePropertySymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: kMutablePropertySymbol)
+
+        let valueType = types.make(.typeParam(TypeParamType(
+            symbol: valueParamSymbol,
+            nullability: .nonNull
+        )))
+        addSyntheticDirectSupertypes([kPropertySymbol], to: kMutablePropertySymbol, symbols: symbols, types: types)
+        let kPropertyArgs: [TypeArg] = [.invariant(valueType)]
+        symbols.setSupertypeTypeArgs(kPropertyArgs, for: kMutablePropertySymbol, supertype: kPropertySymbol)
+        types.setNominalSupertypeTypeArgs(kPropertyArgs, for: kMutablePropertySymbol, supertype: kPropertySymbol)
     }
 
     // STDLIB-REFLECT-TYPE-022: Register KVisibility enum entries.
