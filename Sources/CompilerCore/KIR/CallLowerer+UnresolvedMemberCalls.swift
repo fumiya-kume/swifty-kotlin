@@ -567,6 +567,7 @@ extension CallLowerer {
             let distinctName = interner.intern("distinct")
             let zipName = interner.intern("zip")
             let takeWhileName = interner.intern("takeWhile")
+            let takeLastWhileName = interner.intern("takeLastWhile")
             let dropWhileName = interner.intern("dropWhile")
             let sortedName = interner.intern("sorted")
             let sortedByName = interner.intern("sortedBy")
@@ -611,6 +612,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_zip")
             case takeWhileName:
                 return interner.intern("kk_sequence_takeWhile")
+            case takeLastWhileName:
+                return interner.intern("kk_sequence_takeLastWhile")
             case dropWhileName:
                 return interner.intern("kk_sequence_dropWhile")
             case sortedName:

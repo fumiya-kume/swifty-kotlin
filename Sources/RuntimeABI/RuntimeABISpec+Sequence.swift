@@ -61,6 +61,17 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Sequence"
         ),
+        RuntimeABIFunctionSpec(
+            name: stdlibSequenceHOFName("takeLastWhile", arity: 1, fallback: "kk_sequence_takeLastWhile"),
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
         // Terminal operations
         RuntimeABIFunctionSpec(
             name: "kk_sequence_to_list",
