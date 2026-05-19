@@ -747,7 +747,7 @@
 - [x] STDLIB-JVM-OPTIONALS-FN-004: `Optional<T>.getOrNull()` を追加する
 - [x] STDLIB-JVM-OPTIONALS-FN-005: `Optional<T>.toCollection(destination)` を追加する
 - [ ] STDLIB-JVM-OPTIONALS-FN-006: `Optional<T>.toList()` を追加する
-- [ ] STDLIB-JVM-OPTIONALS-FN-007: `Optional<T>.toSet()` を追加する
+- [x] STDLIB-JVM-OPTIONALS-FN-007: `Optional<T>.toSet()` を追加する
 - [x] STDLIB-JS-TYPE-003: `kotlin.js.Dynamic` external interface を追加する
 - [x] STDLIB-JS-TYPE-012: `kotlin.js.JsArray` external class を追加する
 - [x] STDLIB-JS-TYPE-013: `kotlin.js.JsBigInt` external class を追加する
