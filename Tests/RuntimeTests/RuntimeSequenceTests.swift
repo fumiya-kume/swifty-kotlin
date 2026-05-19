@@ -127,6 +127,10 @@ private let sequenceValueTimesTen: @convention(c) (Int, Int, UnsafeMutablePointe
     value * 10
 }
 
+private let sequenceLessThanFour: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value < 4 ? 1 : 0
+}
+
 let sequenceFirstNullableEvenTimesTen: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     value.isMultiple(of: 2) ? value * 10 : runtimeNullSentinelInt
 }
@@ -332,6 +336,31 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
 
         XCTAssertNotEqual(thrown, 0)
         XCTAssertEqual(listElements(kk_sequence_to_list(sorted, nil)), [])
+    }
+
+    func testTakeWhileKeepsMatchingPrefixLazily() {
+        let source = makeSequence([1, 2, 3, 4, 2])
+        let taken = kk_sequence_takeWhile(
+            source,
+            unsafeBitCast(sequenceLessThanFour, to: Int.self),
+            0
+        )
+
+        XCTAssertEqual(listElements(kk_sequence_to_list(taken, nil)), [1, 2, 3])
+    }
+
+    func testTakeWhilePropagatesPredicateThrowableOnMaterialization() {
+        let source = makeSequence([1, 2, 3])
+        let taken = kk_sequence_takeWhile(
+            source,
+            unsafeBitCast(throwingSequenceDestinationLambda, to: Int.self),
+            0
+        )
+        var thrown = 0
+        let result = kk_sequence_to_list(taken, &thrown)
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(result, runtimeNullSentinelInt)
     }
 
     func testJoinToStringUsesSeparatorPrefixAndPostfix() {

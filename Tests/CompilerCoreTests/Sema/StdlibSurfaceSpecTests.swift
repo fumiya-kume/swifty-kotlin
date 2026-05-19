@@ -128,6 +128,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("forEachIndexed", 1),
             sequence("onEach", 1),
             sequence("onEachIndexed", 1),
+            sequence("takeWhile", 1),
             sequence("mapIndexed", 1),
             sequence("filterIndexed", 1),
             sequence("filterTo", 2),
