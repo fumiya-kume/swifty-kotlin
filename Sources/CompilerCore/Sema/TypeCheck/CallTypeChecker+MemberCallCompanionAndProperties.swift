@@ -76,7 +76,7 @@ extension CallTypeChecker {
         // STDLIB-JVM-PROP-003: Fallback to short-name lookup for JVM reflection
         // properties (e.g. KClass<T>.java). Restricted to known JVM property names
         // to avoid accidentally resolving unrelated experimental APIs.
-        let knownJvmPropertyNames: Set<String> = ["java", "kotlin"]
+        let knownJvmPropertyNames: Set<String> = ["java", "javaPrimitiveType", "kotlin"]
         if getterCandidates.isEmpty,
            knownJvmPropertyNames.contains(ctx.interner.resolve(calleeName))
         {
