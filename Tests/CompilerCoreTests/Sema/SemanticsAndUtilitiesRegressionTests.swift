@@ -655,6 +655,61 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathOutputStreamOptionsExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import java.io.OutputStream
+        import java.nio.file.OpenOption
+        import kotlin.io.path.Path
+        import kotlin.io.path.outputStream
+
+        fun openSink(path: Path, option: OpenOption): OutputStream {
+            val first = path.outputStream()
+            val second = path.outputStream(option)
+            return second
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.outputStream(options) extension function in kotlin.io.path should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let openOptionSymbol = try XCTUnwrap(symbols.lookup(fqName: ["java", "nio", "file", "OpenOption"].map(interner.intern)))
+            let outputStreamSymbol = try XCTUnwrap(symbols.lookup(fqName: ["java", "io", "OutputStream"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let openOptionType = types.make(.classType(ClassType(classSymbol: openOptionSymbol, args: [], nullability: .nonNull)))
+            let outputStreamType = types.make(.classType(ClassType(classSymbol: outputStreamSymbol, args: [], nullability: .nonNull)))
+            let outputStreamSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "outputStream"].map(interner.intern))
+            let outputStream = try XCTUnwrap(outputStreamSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [openOptionType]
+                    && signature.returnType == outputStreamType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: outputStream), "kk_path_outputStream")
+
+            let signature = try XCTUnwrap(symbols.functionSignature(for: outputStream))
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [false])
+            XCTAssertEqual(signature.valueParameterIsVararg, [true])
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let callExprs = memberCallExprIDs(named: "outputStream", in: ast, interner: interner)
+            XCTAssertEqual(callExprs.count, 2)
+            for callExpr in callExprs {
+                XCTAssertEqual(sema.bindings.callBinding(for: callExpr)?.chosenCallee, outputStream)
+                XCTAssertEqual(sema.bindings.exprTypes[callExpr], outputStreamType)
+            }
+        }
+    }
+
     func testPathBaseSubpathsTopLevelFactoryInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import kotlin.io.path.Path

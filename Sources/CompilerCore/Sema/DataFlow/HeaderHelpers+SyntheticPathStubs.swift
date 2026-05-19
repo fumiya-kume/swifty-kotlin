@@ -30,6 +30,7 @@
 /// - `Path.invariantSeparatorsPathString: String` extension property
 /// - `Path.writeBytes(array: ByteArray, vararg options: OpenOption)` extension function
 /// - `Path.writer(charset, options)` extension function
+/// - `Path.outputStream(vararg options: OpenOption): OutputStream` extension function
 /// - `Path.appendLines(lines: Iterable<CharSequence>, charset)` extension function
 /// - `Path.writeLines(lines: Iterable<CharSequence>, charset, options)` extension function
 /// - `Path.writeLines(lines: Sequence<CharSequence>, charset, options)` extension function
@@ -413,22 +414,6 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(outputStreamType, for: outputStreamSymbol)
-
-        let inputStreamSymbol = ensureClassSymbol(
-            named: "InputStream",
-            in: javaIOPkg,
-            symbols: symbols,
-            interner: interner
-        )
-        if let javaIOPkgSymbol {
-            symbols.setParentSymbol(javaIOPkgSymbol, for: inputStreamSymbol)
-        }
-        let inputStreamType = types.make(.classType(ClassType(
-            classSymbol: inputStreamSymbol,
-            args: [],
-            nullability: .nonNull
-        )))
-        symbols.setPropertyType(inputStreamType, for: inputStreamSymbol)
 
         let javaNetPkg = ensurePackage(
             path: ["java", "net"],
@@ -1325,6 +1310,18 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_path_writer",
             valueParameterHasDefaultValues: [true, false],
             valueParameterIsVararg: [false, true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "outputStream",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("options", openOptionType)],
+            returnType: outputStreamType,
+            externalLinkName: "kk_path_outputStream",
+            valueParameterIsVararg: [true],
             symbols: symbols,
             interner: interner
         )
