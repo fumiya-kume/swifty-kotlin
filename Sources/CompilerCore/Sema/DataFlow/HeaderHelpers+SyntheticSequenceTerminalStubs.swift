@@ -61,6 +61,12 @@ extension DataFlowSemaPhase {
             isSuspend: false,
             nullability: .nonNull
         )))
+        let actionType = types.make(.functionType(FunctionType(
+            params: [typeParamType],
+            returnType: types.unitType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
         let foldIndexedOperationType = types.make(.functionType(FunctionType(
             params: [types.intType, types.anyType, typeParamType],
             returnType: types.anyType,
@@ -1923,6 +1929,20 @@ extension DataFlowSemaPhase {
             receiverType: receiverType,
             parameters: [("action", forEachIndexedActionType)],
             returnType: types.unitType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // onEach(action: (T) -> Unit): Sequence<T>
+        registerSequenceMemberStub(
+            named: "onEach",
+            externalLinkName: "kk_sequence_onEach",
+            receiverType: receiverType,
+            parameters: [("action", actionType)],
+            returnType: receiverType,
             sequenceSymbol: sequenceSymbol,
             sequenceFQName: sequenceFQName,
             typeParamSymbol: typeParamSymbol,
