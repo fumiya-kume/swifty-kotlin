@@ -3136,3 +3136,10 @@ public func kk_sequence_minus(_ seqRaw: Int, _ element: Int) -> Int {
     let newSeq = RuntimeSequenceBox(steps: [.source(elements: result)])
     return registerRuntimeObject(newSeq)
 }
+
+@_cdecl("kk_sequence_union")
+public func kk_sequence_union(_ seqRaw: Int, _ otherRaw: Int) -> Int {
+    let selfElements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    let otherElements = runtimeUnboxCollectionElements(otherRaw)
+    return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(selfElements + otherElements)))
+}

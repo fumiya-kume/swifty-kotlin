@@ -1298,6 +1298,14 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(sequenceElements(combined), [1, 2, 3, 4])
     }
 
+    func testUnionCombinesSequenceAndIterableIntoSet() {
+        let seq = makeSequence([1, 2, 3, 2])
+        let other = makeList([3, 4, 1])
+        let unioned = kk_sequence_union(seq, other)
+
+        XCTAssertEqual(setElements(unioned), [1, 2, 3, 4])
+    }
+
     // MARK: - Sequence.minus (STDLIB-562)
 
     func testMinusRemovesFirstOccurrenceOfElement() {

@@ -712,6 +712,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_plus_element")
             case interner.intern("minus"), interner.intern("minusElement"):
                 return interner.intern("kk_sequence_minus")
+            case interner.intern("union"):
+                return interner.intern("kk_sequence_union")
             case interner.intern("ifEmpty"):
                 return interner.intern("kk_sequence_ifEmpty")
             case firstName:

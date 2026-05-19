@@ -2681,6 +2681,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_plus_element"
                 } else if calleeName == interner.intern("minus") || calleeName == interner.intern("minusElement") {
                     runtimeCallee = "kk_sequence_minus"
+                } else if calleeName == interner.intern("union") {
+                    runtimeCallee = "kk_sequence_union"
                 } else if calleeName == interner.intern("runningReduceIndexed") {
                     runtimeCallee = "kk_sequence_runningReduceIndexed"
                 } else if calleeName == interner.intern("shuffled") {
