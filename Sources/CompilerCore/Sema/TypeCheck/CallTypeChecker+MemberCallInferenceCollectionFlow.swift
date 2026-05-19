@@ -123,10 +123,10 @@ extension CallTypeChecker {
             return finalType
         }
 
-        // filterIsInstance<R>() — reified type parameter, returns List<R> (STDLIB-114)
+        // filterIsInstance<R>() — reified type parameter, returns List<R> or Sequence<R>
         if interner.resolve(calleeName) == "filterIsInstance",
            args.isEmpty,
-           isCollectionReceiver
+           isCollectionReceiver || isSequenceReceiver
         {
             let filterType = explicitTypeArgs.first ?? sema.types.anyType
             let receiverElementType = resolvedCollectionElementType(
@@ -137,16 +137,29 @@ extension CallTypeChecker {
                 ctx: ctx,
                 locals: &locals
             )
-            if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
-                let resultType = sema.types.make(.classType(ClassType(
+            let resultType = if isSequenceReceiver {
+                makeSyntheticSequenceType(
+                    symbols: sema.symbols,
+                    types: sema.types,
+                    interner: interner,
+                    elementType: filterType
+                )
+            } else if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
+                sema.types.make(.classType(ClassType(
                     classSymbol: listSymbol,
                     args: [.invariant(filterType)],
                     nullability: .nonNull
                 )))
+            } else {
+                sema.types.anyType
+            }
+            if resultType != sema.types.anyType {
                 let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                 sema.bindings.markCollectionExpr(id)
                 let knownNames = KnownCompilerNames(interner: interner)
-                let memberFQName = knownNames.kotlinCollectionsListFQName + [calleeName]
+                let memberFQName = (isSequenceReceiver
+                    ? [interner.intern("kotlin"), interner.intern("sequences"), interner.intern("Sequence")]
+                    : knownNames.kotlinCollectionsListFQName) + [calleeName]
                 if let chosenCallee = sema.symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
                     sema.symbols.functionSignature(for: symbolID)?.parameterTypes.count == args.count
                 }) {

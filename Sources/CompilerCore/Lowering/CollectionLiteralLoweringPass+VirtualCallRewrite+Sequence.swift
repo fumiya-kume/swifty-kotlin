@@ -890,14 +890,18 @@ extension CollectionLiteralLoweringPass {
         // STDLIB-SEQ-021: Sequence destination-collection filter operations
         // filterTo / filterNotTo on sequence (2 args: destination, lambda)
         if (callee == lookup.filterToName || callee == lookup.filterNotToName),
-           arguments.count == 2 || arguments.count == 3,
+           (2 ... 4).contains(arguments.count),
            sequenceExprIDs.contains(receiver.rawValue)
         {
-            let destID = arguments[0]
-            let lambdaID = arguments[1]
+            let normalizedArguments = arguments.first == receiver ? Array(arguments.dropFirst()) : arguments
+            guard normalizedArguments.count == 2 || normalizedArguments.count == 3 else {
+                return false
+            }
+            let destID = normalizedArguments[0]
+            let lambdaID = normalizedArguments[1]
             let closureRawExpr: KIRExprID
-            if arguments.count == 3 {
-                closureRawExpr = arguments[2]
+            if normalizedArguments.count == 3 {
+                closureRawExpr = normalizedArguments[2]
             } else {
                 let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
                 loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))

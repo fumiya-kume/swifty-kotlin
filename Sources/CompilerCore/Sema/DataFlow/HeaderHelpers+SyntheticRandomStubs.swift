@@ -42,6 +42,14 @@ extension DataFlowSemaPhase {
 
         symbols.setPropertyType(randomType, for: randomSymbol)
 
+        registerSyntheticRandomAsJavaRandom(
+            packageFQName: kotlinRandomPkg,
+            receiverType: randomType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
         registerSyntheticRandomProperty(
             ownerSymbol: randomSymbol,
             name: "Default",
@@ -633,6 +641,94 @@ extension DataFlowSemaPhase {
                 valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
             ),
             for: memberSymbol
+        )
+    }
+
+    private func registerSyntheticRandomAsJavaRandom(
+        packageFQName: [InternedString],
+        receiverType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let javaUtilPkg = ensurePackage(
+            path: ["java", "util"],
+            symbols: symbols,
+            interner: interner
+        )
+        let javaRandomSymbol = ensureClassSymbol(
+            named: "Random",
+            in: javaUtilPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let packageSymbol = symbols.lookup(fqName: javaUtilPkg) {
+            symbols.setParentSymbol(packageSymbol, for: javaRandomSymbol)
+        }
+        let javaRandomType = types.make(.classType(ClassType(
+            classSymbol: javaRandomSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(javaRandomType, for: javaRandomSymbol)
+
+        registerSyntheticRandomExtensionFunction(
+            packageFQName: packageFQName,
+            name: "asJavaRandom",
+            externalLinkName: "kk_random_asJavaRandom",
+            receiverType: receiverType,
+            returnType: javaRandomType,
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    private func registerSyntheticRandomExtensionFunction(
+        packageFQName: [InternedString],
+        name: String,
+        externalLinkName: String,
+        receiverType: TypeID,
+        returnType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return signature.receiverType == receiverType
+                && signature.parameterTypes.isEmpty
+                && signature.returnType == returnType
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: [],
+                valueParameterIsVararg: []
+            ),
+            for: functionSymbol
         )
     }
 

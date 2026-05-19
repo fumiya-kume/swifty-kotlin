@@ -256,6 +256,11 @@ public func kk_random_default() -> Int {
     0
 }
 
+@_cdecl("kk_random_asJavaRandom")
+public func kk_random_asJavaRandom(_ receiver: Int) -> Int {
+    receiver
+}
+
 @_cdecl("kk_random_nextInt")
 public func kk_random_nextInt(_ receiver: Int) -> Int {
     if let box = seededBox(from: receiver) {

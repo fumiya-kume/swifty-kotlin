@@ -1100,11 +1100,11 @@ extension CallLowerer {
             }
         }
 
-        // filterIsInstance<R>() — encode type token from result type (STDLIB-114)
+        // filterIsInstance<R>() — encode type token from result type (STDLIB-114 / STDLIB-SEQ-FN-026)
         if args.isEmpty, interner.resolve(calleeName) == "filterIsInstance" {
             let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
             let nonNullResultType = sema.types.makeNonNullable(resultType)
-            // Extract element type from List<R>
+            // Extract element type from List<R> or Sequence<R>.
             let elementType: TypeID = if case let .classType(classType) = sema.types.kind(of: nonNullResultType),
                                          let firstArg = classType.args.first
             {
@@ -1119,9 +1119,13 @@ extension CallLowerer {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let tokenExpr = arena.appendExpr(.intLiteral(encodedToken), type: intType)
             instructions.append(.constValue(result: tokenExpr, value: .intLiteral(encodedToken)))
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let runtimeCallee = isSequenceLikeType(sema.types.makeNonNullable(receiverType), sema: sema, interner: interner)
+                ? "kk_sequence_filterIsInstance"
+                : "kk_list_filterIsInstance"
             instructions.append(.call(
                 symbol: nil,
-                callee: interner.intern("kk_list_filterIsInstance"),
+                callee: interner.intern(runtimeCallee),
                 arguments: [loweredReceiverID, tokenExpr],
                 result: result,
                 canThrow: false,
@@ -2510,6 +2514,7 @@ extension CallLowerer {
                 let indexOfName = interner.intern("indexOf")
                 let elementAtName = interner.intern("elementAt")
                 let elementAtOrNullName = interner.intern("elementAtOrNull")
+                let filterIndexedName = interner.intern("filterIndexed")
                 let findLastName = interner.intern("findLast")
                 let lastName = interner.intern("last")
                 let partitionName = interner.intern("partition")
@@ -2523,6 +2528,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_filter"
                 } else if calleeName == takeName {
                     runtimeCallee = "kk_sequence_take"
+                } else if calleeName == interner.intern("takeLast") {
+                    runtimeCallee = "kk_sequence_takeLast"
                 } else if calleeName == forEachName {
                     runtimeCallee = "kk_sequence_forEach"
                 } else if calleeName == flatMapName {
@@ -2571,6 +2578,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_elementAt"
                 } else if calleeName == elementAtOrNullName {
                     runtimeCallee = "kk_sequence_elementAtOrNull"
+                } else if calleeName == filterIndexedName {
+                    runtimeCallee = "kk_sequence_filterIndexed"
                 } else if calleeName == lastName {
                     runtimeCallee = useIterableRuntimeForCollectionFallback ? "kk_iterable_last" : "kk_sequence_last"
                 } else if calleeName == findLastName {
@@ -2655,6 +2664,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_groupByTo"
                         || runtimeCallee == "kk_sequence_find"
                         || runtimeCallee == "kk_sequence_findLast"
+                        || runtimeCallee == "kk_sequence_takeLast"
                         || runtimeCallee == "kk_sequence_elementAt"
                         || runtimeCallee == "kk_sequence_last"
                         || runtimeCallee == "kk_iterable_last"
@@ -2672,6 +2682,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_firstNotNullOf"
                         || runtimeCallee == "kk_sequence_firstNotNullOfOrNull"
                         || runtimeCallee == "kk_sequence_mapIndexed"
+                        || runtimeCallee == "kk_sequence_filterIndexed"
                         || runtimeCallee == "kk_sequence_chunked_transform"
                         || runtimeCallee == "kk_sequence_windowed_transform"
                         || runtimeCallee == "kk_sequence_onEach"
@@ -2705,6 +2716,32 @@ extension CallLowerer {
                             instructions: &instructions
                         )
                         runtimeArguments = [loweredReceiverID, fnPtrExpr, envPtrExpr]
+                    }
+                    if (runtimeCallee == "kk_sequence_associateTo"
+                        || runtimeCallee == "kk_sequence_associateByTo"
+                        || runtimeCallee == "kk_sequence_associateWithTo"
+                        || runtimeCallee == "kk_sequence_groupByTo"),
+                       normalizedArgIDs.count == 2
+                    {
+                        let firstArg = normalizedArgIDs[0]
+                        let secondArg = normalizedArgIDs[1]
+                        let lambdaArg: KIRExprID
+                        let destinationArg: KIRExprID
+                        if driver.ctx.callableValueInfo(for: firstArg) != nil {
+                            lambdaArg = firstArg
+                            destinationArg = secondArg
+                        } else {
+                            destinationArg = firstArg
+                            lambdaArg = secondArg
+                        }
+                        let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                            lambdaArg,
+                            sema: sema,
+                            arena: arena,
+                            interner: interner,
+                            instructions: &instructions
+                        )
+                        runtimeArguments = [loweredReceiverID, destinationArg, fnPtrExpr, envPtrExpr]
                     }
                     instructions.append(.call(
                         symbol: nil,
@@ -3134,6 +3171,7 @@ extension CallLowerer {
                 let averageID = interner.intern("average")
                 let toMutableListID = interner.intern("toMutableList")
                 let toMutableSetID = interner.intern("toMutableSet")
+                let toSortedSetID = interner.intern("toSortedSet")
                 let toHashSetID = interner.intern("toHashSet")
                 let unzipID = interner.intern("unzip")
                 let anyID = interner.intern("any")
@@ -3144,6 +3182,7 @@ extension CallLowerer {
                 let seqLastCallee = interner.intern("kk_sequence_last")
                 let iterableLastCallee = interner.intern("kk_iterable_last")
                 let seqLastOrNullCallee = interner.intern("kk_sequence_lastOrNull")
+                let seqSingleOrNullCallee = interner.intern("kk_sequence_singleOrNull")
                 let seqCountCallee = interner.intern("kk_sequence_count")
                 let seqAnyCallee = interner.intern("kk_sequence_any")
                 let iterableAnyCallee = interner.intern("kk_iterable_any")
@@ -3179,6 +3218,8 @@ extension CallLowerer {
                     useIterableRuntimeForTerminalFallback ? iterableLastCallee : seqLastCallee
                 case lastOrNullID:
                     seqLastOrNullCallee
+                case interner.intern("singleOrNull"):
+                    seqSingleOrNullCallee
                 case countID:
                     seqCountCallee
                 case sumID:
@@ -3196,6 +3237,8 @@ extension CallLowerer {
                     interner.intern(useIterableRuntimeForTerminalFallback
                         ? "kk_iterable_toMutableSet"
                         : "kk_sequence_toMutableSet")
+                case toSortedSetID:
+                    interner.intern("kk_sequence_toSortedSet")
                 case toHashSetID:
                     interner.intern("kk_sequence_toHashSet")
                 case unzipID:

@@ -3,19 +3,63 @@ import Foundation
 import XCTest
 
 extension CodegenBackendIntegrationTests {
+    func testSequenceAssociateBuildsMapWithLastWriteWins() throws {
+        let source = """
+        fun main() {
+            val result = sequenceOf(1, 2, 3).associate { (it % 2) to (it * 10) }
+            println(result)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceAssociateRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "{1=30, 0=20}\n")
+        }
+    }
+
     func testSequenceAssociateToPopulatesMutableMapDestination() throws {
         let source = """
         fun main() {
             val src = sequenceOf("a", "bb", "ccc")
             val dest = mutableMapOf<String, Int>()
-            val result = src.associateTo(dest) { it to it.length }
-            println(result === dest)
+            src.associateTo(dest) { it to it.length }
             println(dest["a"])
             println(dest["bb"])
             println(dest["ccc"])
         }
         """
-        try assertKotlinCompilesToKIR(source, moduleName: "STDLIBSEQ023_01")
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceAssociateToRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                1
+                2
+                3
+                """ + "\n"
+            )
+        }
     }
 
     func testSequenceAssociateByToMapsKeysToOriginalElements() throws {
@@ -38,14 +82,34 @@ extension CodegenBackendIntegrationTests {
         fun main() {
             val src = sequenceOf(1, 2, 3)
             val dest = mutableMapOf<Int, Int>()
-            val result = src.associateWithTo(dest) { it * it }
-            println(result === dest)
+            src.associateWithTo(dest) { it * it }
             println(dest[1])
             println(dest[2])
             println(dest[3])
         }
         """
-        try assertKotlinCompilesToKIR(source, moduleName: "STDLIBSEQ023_03")
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceAssociateWithToRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                1
+                4
+                9
+                """ + "\n"
+            )
+        }
     }
 
     func testSequenceGroupByToAppendsIntoMutableListBuckets() throws {

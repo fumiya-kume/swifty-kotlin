@@ -443,6 +443,31 @@ extension CallLowerer {
             )
             finalArguments = [finalArguments[0], fnPtrExpr, envPtrExpr]
         }
+        if loweredCallee == interner.intern("kk_sequence_filterTo")
+            || loweredCallee == interner.intern("kk_sequence_filterNotTo")
+        {
+            if finalArguments.count == 2 {
+                let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                    finalArguments[1],
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    instructions: &instructions
+                )
+                finalArguments = [receiver.loweredID, finalArguments[0], fnPtrExpr, envPtrExpr]
+            } else if finalArguments.count == 3, finalArguments[0] == receiver.loweredID {
+                let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                    finalArguments[2],
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    instructions: &instructions
+                )
+                finalArguments = [finalArguments[0], finalArguments[1], fnPtrExpr, envPtrExpr]
+            } else if finalArguments.count == 3 {
+                finalArguments = [receiver.loweredID] + finalArguments
+            }
+        }
         if (loweredCallee == interner.intern("kk_iterable_firstNotNullOf")
             || loweredCallee == interner.intern("kk_iterable_firstNotNullOfOrNull")
             || loweredCallee == interner.intern("kk_iterable_any")
@@ -473,6 +498,32 @@ extension CallLowerer {
                 instructions: &instructions
             )
             finalArguments = [finalArguments[0], fnPtrExpr, envPtrExpr]
+        }
+        if (loweredCallee == interner.intern("kk_sequence_associateTo")
+            || loweredCallee == interner.intern("kk_sequence_associateByTo")
+            || loweredCallee == interner.intern("kk_sequence_associateWithTo")
+            || loweredCallee == interner.intern("kk_sequence_groupByTo")),
+           finalArguments.count == 3
+        {
+            let firstArg = finalArguments[1]
+            let secondArg = finalArguments[2]
+            let lambdaArg: KIRExprID
+            let destinationArg: KIRExprID
+            if driver.ctx.callableValueInfo(for: firstArg) != nil {
+                lambdaArg = firstArg
+                destinationArg = secondArg
+            } else {
+                destinationArg = firstArg
+                lambdaArg = secondArg
+            }
+            let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                lambdaArg,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            finalArguments = [finalArguments[0], destinationArg, fnPtrExpr, envPtrExpr]
         }
         if loweredCallee == interner.intern("kk_array_copyOf_newSize_init"),
            finalArguments.count == 3
@@ -753,6 +804,7 @@ extension CallLowerer {
             interner.intern("kk_list_elementAt"),
             interner.intern("kk_list_take"),
             interner.intern("kk_list_takeLast"),
+            interner.intern("kk_sequence_takeLast"),
             interner.intern("kk_list_drop"),
             interner.intern("kk_list_max"),
             interner.intern("kk_list_minBy"),
@@ -838,6 +890,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_firstNotNullOf"),
             interner.intern("kk_sequence_firstNotNullOfOrNull"),
             interner.intern("kk_sequence_mapIndexed"),
+            interner.intern("kk_sequence_filterIndexed"),
             interner.intern("kk_sequence_findLast"),
             interner.intern("kk_sequence_elementAt"),
             interner.intern("kk_sequence_minByOrNull"),
@@ -855,6 +908,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_first"),
             interner.intern("kk_sequence_last"),
             interner.intern("kk_sequence_firstOrNull"),
+            interner.intern("kk_sequence_singleOrNull"),
             interner.intern("kk_sequence_count"),
             interner.intern("kk_string_firstNotNullOf"),
             interner.intern("kk_string_firstNotNullOfOrNull"),

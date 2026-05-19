@@ -169,9 +169,7 @@ public extension RuntimeABISpec {
         ),
         RuntimeABIFunctionSpec(
             name: "kk_coroutine_yield",
-            parameters: [
-                RuntimeABIParameter(name: "continuation", type: .intptr),
-            ],
+            parameters: [],
             returnType: .intptr,
             section: "Coroutine"
         ),
@@ -413,6 +411,7 @@ public extension RuntimeABISpec {
                 RuntimeABIParameter(name: "lhsHandle", type: .intptr),
                 RuntimeABIParameter(name: "rhsHandle", type: .intptr),
                 RuntimeABIParameter(name: "transformFnPtr", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -423,6 +422,7 @@ public extension RuntimeABISpec {
                 RuntimeABIParameter(name: "lhsHandle", type: .intptr),
                 RuntimeABIParameter(name: "rhsHandle", type: .intptr),
                 RuntimeABIParameter(name: "transformFnPtr", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -432,6 +432,7 @@ public extension RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "lhsHandle", type: .intptr),
                 RuntimeABIParameter(name: "rhsHandle", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -441,6 +442,7 @@ public extension RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "flowHandle", type: .intptr),
                 RuntimeABIParameter(name: "transformFnPtr", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -450,6 +452,7 @@ public extension RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "flowHandle", type: .intptr),
                 RuntimeABIParameter(name: "transformFnPtr", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -459,6 +462,7 @@ public extension RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "flowHandle", type: .intptr),
                 RuntimeABIParameter(name: "transformFnPtr", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"

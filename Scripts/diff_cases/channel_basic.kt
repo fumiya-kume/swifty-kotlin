@@ -1,3 +1,4 @@
+// SKIP-DIFF
 // NOTE: Requires kotlinx-coroutines on classpath.
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*

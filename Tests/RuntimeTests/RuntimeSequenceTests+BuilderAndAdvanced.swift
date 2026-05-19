@@ -255,6 +255,25 @@ extension RuntimeSequenceTests {
         XCTAssertEqual(sequenceElements(filtered), [1, 3, 5]) // Should keep odd numbers
     }
 
+    func testSequenceFilterNotToAppendsNonMatchingElementsToDestination() {
+        let seq = makeSequence([1, 2, 3, 4, 5])
+        let destination = makeList([99])
+        let filterFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+            value % 2 == 0 ? 1 : 0
+        }
+
+        let result = kk_sequence_filterNotTo(
+            seq,
+            destination,
+            unsafeBitCast(filterFn, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(result, destination)
+        XCTAssertEqual(listElements(destination), [99, 1, 3, 5])
+    }
+
     func testSequenceFind() {
         let seq = makeSequence([1, 2, 3, 4, 5])
         let findFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
@@ -922,6 +941,13 @@ extension RuntimeSequenceTests {
 
         XCTAssertNotEqual(thrown, 0)
         XCTAssertEqual(transformed, 0)
+    }
+
+    func testSequenceChunkedReturnsSequenceOfChunkLists() {
+        let chunked = kk_sequence_chunked(makeSequence([1, 2, 3, 4, 5]), 2)
+        let chunkHandles = sequenceElements(chunked)
+
+        XCTAssertEqual(chunkHandles.map { listElements($0) }, [[1, 2], [3, 4], [5]])
     }
 
     func testSequenceChunkedTransformCorrectness() {
