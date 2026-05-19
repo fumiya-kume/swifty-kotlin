@@ -790,7 +790,7 @@
  - [ ] STDLIB-JS-COLLECTIONS-TYPE-002: `kotlin.js.collections.JsMap<K, V>` external class を追加する
 - [ ] STDLIB-JS-COLLECTIONS-TYPE-003: `kotlin.js.collections.JsReadonlyArray<E>` external interface を追加する
 - [ ] STDLIB-JS-COLLECTIONS-TYPE-004: `kotlin.js.collections.JsReadonlyMap<K, V>` external interface を追加する
-- [ ] STDLIB-JS-COLLECTIONS-TYPE-005: `kotlin.js.collections.JsReadonlySet<E>` external interface を追加する
+- [x] STDLIB-JS-COLLECTIONS-TYPE-005: `kotlin.js.collections.JsReadonlySet<E>` external interface を追加する
 - [x] STDLIB-JS-COLLECTIONS-TYPE-006: `kotlin.js.collections.JsSet<E>` external class を追加する
 - [x] STDLIB-JS-COLLECTIONS-FN-001: `JsReadonlyArray<E>.toList()` を追加する
 - [ ] STDLIB-JS-COLLECTIONS-FN-002: `JsReadonlyMap<K,V>.toMap()` を追加する
