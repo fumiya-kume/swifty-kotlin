@@ -42,6 +42,7 @@
 /// - `Path.getPosixFilePermissions(vararg options: LinkOption): Set<PosixFilePermission>` extension function
 /// - `Path.fileSize(): Long` extension function
 /// - `Path.setPosixFilePermissions(value: Set<PosixFilePermission>): Path` extension function
+/// - `Path.useLines(charset, block)` extension function
 /// - `Path.listDirectoryEntries(glob: String = "*"): List<Path>` extension function
 /// - `Path.isExecutable()`, `isHidden()`, `isReadable()`, `isSameFileAs()`, `isSymbolicLink()`, `isWritable()`
 /// - Top-level `Path(pathString: String)` factory (kotlin.io.path.Path)
@@ -675,6 +676,11 @@ extension DataFlowSemaPhase {
             args: [.out(charSequenceType)],
             nullability: .nonNull
         )))
+        let sequenceOfStringType = types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
+            args: [.out(types.stringType)],
+            nullability: .nonNull
+        )))
 
         registerPathExtensionFunction(
             named: "appendLines",
@@ -1079,6 +1085,16 @@ extension DataFlowSemaPhase {
             returnType: types.stringType,
             externalLinkName: "kk_path_readText_charset",
             symbols: symbols,
+            interner: interner
+        )
+
+        registerPathUseLinesFunction(
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            sequenceOfStringType: sequenceOfStringType,
+            charsetType: charsetType,
+            symbols: symbols,
+            types: types,
             interner: interner
         )
 
@@ -2019,6 +2035,130 @@ extension DataFlowSemaPhase {
                 valueParameterSymbols: valueParameterSymbols,
                 valueParameterHasDefaultValues: defaults,
                 valueParameterIsVararg: varargs
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerPathUseLinesFunction(
+        packageFQName: [InternedString],
+        receiverType: TypeID,
+        sequenceOfStringType: TypeID,
+        charsetType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        registerPathUseLinesFunction(
+            packageFQName: packageFQName,
+            receiverType: receiverType,
+            sequenceOfStringType: sequenceOfStringType,
+            parameters: [("charset", charsetType)],
+            externalLinkName: "kk_path_useLines",
+            valueParameterHasDefaultValuesPrefix: [true],
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerPathUseLinesFunction(
+            packageFQName: packageFQName,
+            receiverType: receiverType,
+            sequenceOfStringType: sequenceOfStringType,
+            parameters: [],
+            externalLinkName: "kk_path_useLines_default",
+            valueParameterHasDefaultValuesPrefix: [],
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+    }
+
+    private func registerPathUseLinesFunction(
+        packageFQName: [InternedString],
+        receiverType: TypeID,
+        sequenceOfStringType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        externalLinkName: String,
+        valueParameterHasDefaultValuesPrefix: [Bool],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern("useLines")
+        let functionFQName = packageFQName + [functionName]
+        let parameterTypesPrefix = parameters.map(\.type)
+
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return signature.receiverType == receiverType
+                && Array(signature.parameterTypes.dropLast()) == parameterTypesPrefix
+                && signature.typeParameterSymbols.count == 1
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        let typeParamName = interner.intern("T")
+        let typeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: functionFQName + [interner.intern("$synthetic"), typeParamName, interner.intern(externalLinkName)],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(functionSymbol, for: typeParamSymbol)
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let blockType = types.make(.functionType(FunctionType(
+            params: [sequenceOfStringType],
+            returnType: typeParamType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        var valueParameterSymbols: [SymbolID] = []
+        for parameterName in parameters.map(\.name) + ["block"] {
+            let name = interner.intern(parameterName)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: name,
+                fqName: functionFQName + [name, interner.intern(externalLinkName)],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            valueParameterSymbols.append(parameterSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameterTypesPrefix + [blockType],
+                returnType: typeParamType,
+                isSuspend: false,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: valueParameterHasDefaultValuesPrefix + [false],
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count),
+                typeParameterSymbols: [typeParamSymbol]
             ),
             for: functionSymbol
         )

@@ -613,6 +613,87 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathUseLinesExtensionFunctionInIOPathPackageSurfaceIsRegistered() throws {
+        let source = """
+        import kotlin.io.path.Path
+        import kotlin.io.path.useLines
+
+        fun collect(path: Path) {}
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnostics = ctx.diagnostics.diagnostics.map(\.message)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.useLines(charset, block) extension function in kotlin.io.path should register: \(diagnostics)"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let sequenceSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "sequences", "Sequence"].map(interner.intern)))
+            let charsetSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "text", "Charset"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let sequenceOfStringType = types.make(.classType(ClassType(
+                classSymbol: sequenceSymbol,
+                args: [.out(types.stringType)],
+                nullability: .nonNull
+            )))
+            let charsetType = types.make(.classType(ClassType(classSymbol: charsetSymbol, args: [], nullability: .nonNull)))
+            let useLinesSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "useLines"].map(interner.intern))
+            let fullUseLines = try XCTUnwrap(useLinesSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID),
+                      let typeParameterSymbol = signature.typeParameterSymbols.first
+                else {
+                    return false
+                }
+                let typeParameterType = types.make(.typeParam(TypeParamType(symbol: typeParameterSymbol, nullability: .nonNull)))
+                let blockType = types.make(.functionType(FunctionType(
+                    params: [sequenceOfStringType],
+                    returnType: typeParameterType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [charsetType, blockType]
+                    && signature.returnType == typeParameterType
+            })
+            let defaultUseLines = try XCTUnwrap(useLinesSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID),
+                      let typeParameterSymbol = signature.typeParameterSymbols.first
+                else {
+                    return false
+                }
+                let typeParameterType = types.make(.typeParam(TypeParamType(symbol: typeParameterSymbol, nullability: .nonNull)))
+                let blockType = types.make(.functionType(FunctionType(
+                    params: [sequenceOfStringType],
+                    returnType: typeParameterType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [blockType]
+                    && signature.returnType == typeParameterType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: fullUseLines), "kk_path_useLines")
+            XCTAssertEqual(symbols.externalLinkName(for: defaultUseLines), "kk_path_useLines_default")
+
+            let fullSignature = try XCTUnwrap(symbols.functionSignature(for: fullUseLines))
+            XCTAssertEqual(fullSignature.valueParameterHasDefaultValues, [true, false])
+            XCTAssertEqual(fullSignature.valueParameterIsVararg, [false, false])
+            let defaultSignature = try XCTUnwrap(symbols.functionSignature(for: defaultUseLines))
+            XCTAssertEqual(defaultSignature.valueParameterHasDefaultValues, [false])
+            XCTAssertEqual(defaultSignature.valueParameterIsVararg, [false])
+
+            XCTAssertEqual(fullSignature.typeParameterSymbols.count, 1)
+            XCTAssertEqual(defaultSignature.typeParameterSymbols.count, 1)
+        }
+    }
+
     func testPathFileAttributesViewOrNullOptionsExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import java.nio.file.LinkOption
