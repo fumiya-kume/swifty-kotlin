@@ -752,7 +752,7 @@
 - [ ] STDLIB-JS-TYPE-012: `kotlin.js.JsArray` external class を追加する
 - [ ] STDLIB-JS-TYPE-013: `kotlin.js.JsBigInt` external class を追加する
 - [ ] STDLIB-JS-TYPE-014: `kotlin.js.JsBoolean` external class を追加する
-- [ ] STDLIB-JS-TYPE-025: `kotlin.js.JsNumber` external class を追加する
+- [x] STDLIB-JS-TYPE-025: `kotlin.js.JsNumber` external class を追加する
 - [ ] STDLIB-JS-TYPE-027: `kotlin.js.JsReference` external interface を追加する
 - [ ] STDLIB-JS-TYPE-029: `kotlin.js.JsString` external class を追加する
 - [x] STDLIB-JS-PROP-001: `kotlin.js.console` external property を追加する
