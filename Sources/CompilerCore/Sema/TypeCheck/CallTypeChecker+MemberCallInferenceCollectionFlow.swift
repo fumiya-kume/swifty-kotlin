@@ -1553,7 +1553,14 @@ extension CallTypeChecker {
                     sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
                 }
                 _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
-                if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
+                if isSequenceReceiver {
+                    resultType = makeSyntheticSequenceType(
+                        symbols: sema.symbols,
+                        types: sema.types,
+                        interner: interner,
+                        elementType: initialType
+                    )
+                } else if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
                     resultType = sema.types.make(.classType(ClassType(
                         classSymbol: listSymbol,
                         args: [.invariant(initialType)],
