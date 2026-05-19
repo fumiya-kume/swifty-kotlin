@@ -91,6 +91,9 @@ public extension RuntimeABISpec {
         abiParitySpec("kk_optional_getOrNull", parameters: [
             p("optionalRaw", .intptr),
         ]),
+        abiParitySpec("kk_optional_asSequence", parameters: [
+            p("optionalRaw", .intptr),
+        ]),
         abiParitySpec("kk_optional_toCollection", parameters: [
             p("optionalRaw", .intptr),
             p("collectionRaw", .intptr),

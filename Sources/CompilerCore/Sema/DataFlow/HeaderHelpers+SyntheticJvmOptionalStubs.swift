@@ -82,6 +82,14 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerOptionalAsSequence(
+            optionalSymbol: optionalSymbol,
+            packageFQName: kotlinJvmOptionalsPkg,
+            packageSymbol: optionalsPkgSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
     }
 
     private func registerOptionalToCollection(
@@ -360,6 +368,97 @@ extension DataFlowSemaPhase {
                 receiverType: receiverType,
                 parameterTypes: [],
                 returnType: nullableTType,
+                isSuspend: false,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: [],
+                valueParameterIsVararg: [],
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 0
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerOptionalAsSequence(
+        optionalSymbol: SymbolID,
+        packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern("asSequence")
+        let functionFQName = packageFQName + [functionName]
+
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = functionFQName + [typeParamName]
+        let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let tType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: optionalSymbol,
+            args: [.out(tType)],
+            nullability: .nonNull
+        )))
+
+        let kotlinCollectionsPkg: [InternedString] = [
+            interner.intern("kotlin"), interner.intern("collections")
+        ]
+        let sequenceSymbol = ensureSyntheticSequenceStub(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg
+        )
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
+            args: [.out(tType)],
+            nullability: .nonNull
+        )))
+
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+            return signature.receiverType == receiverType
+                && signature.parameterTypes.isEmpty
+                && signature.returnType == returnType
+                && signature.typeParameterSymbols == [typeParamSymbol]
+                && signature.classTypeParameterCount == 0
+        }) {
+            symbols.setExternalLinkName("kk_optional_asSequence", for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName("kk_optional_asSequence", for: functionSymbol)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: returnType,
                 isSuspend: false,
                 valueParameterSymbols: [],
                 valueParameterHasDefaultValues: [],
