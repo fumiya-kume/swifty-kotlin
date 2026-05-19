@@ -42,6 +42,32 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenSequenceNoneOverloads() throws {
+        let source = """
+        fun main() {
+            println(emptySequence<Int>().none())
+            println(sequenceOf(1, 2, 3).none())
+            println(sequenceOf(1, 3, 5).none { value -> value % 2 == 0 })
+            println(sequenceOf(1, 2, 3).none { value -> value % 2 == 0 })
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceNoneOverloads",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "true\nfalse\ntrue\nfalse\n")
+        }
+    }
+
     func testCodegenSequenceReduceIndexedOrNull() throws {
         let source = """
         fun main() {
