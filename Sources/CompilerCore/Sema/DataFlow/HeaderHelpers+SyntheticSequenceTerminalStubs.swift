@@ -757,6 +757,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // takeWhile(predicate): Sequence<T>
+        registerSequenceMemberStub(
+            named: "takeWhile",
+            externalLinkName: "kk_sequence_takeWhile",
+            receiverType: receiverType,
+            parameters: [("predicate", predicateType)],
+            returnType: receiverType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSequenceMemberStub(
             named: "filterNotTo",
             externalLinkName: "kk_sequence_filterNotTo",
