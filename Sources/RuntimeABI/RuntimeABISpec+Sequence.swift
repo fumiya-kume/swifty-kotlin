@@ -1203,6 +1203,16 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Sequence"
         ),
+        // STDLIB-SEQ-FN-130: Sequence.union(other)
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_union",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "otherRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
         // STDLIB-SEQ-007: any/all/none/find with short-circuit semantics
         RuntimeABIFunctionSpec(
             name: "kk_sequence_any",

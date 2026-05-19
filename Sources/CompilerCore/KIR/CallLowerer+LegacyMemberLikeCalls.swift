@@ -2683,6 +2683,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_minus"
                 } else if calleeName == interner.intern("reduceOrNull") {
                     runtimeCallee = "kk_sequence_reduceOrNull"
+                } else if calleeName == interner.intern("union") {
+                    runtimeCallee = "kk_sequence_union"
                 } else if calleeName == interner.intern("runningReduceIndexed") {
                     runtimeCallee = "kk_sequence_runningReduceIndexed"
                 } else if calleeName == interner.intern("shuffled") {

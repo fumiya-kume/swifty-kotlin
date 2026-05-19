@@ -1161,6 +1161,48 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // union<T>(other: Iterable<T>): Set<T>
+        do {
+            let memberName = interner.intern("union")
+            let methodTName = interner.intern("T")
+            let methodTSymbol = symbols.lookup(fqName: sequenceFQName + [memberName, methodTName]) ?? symbols.define(
+                kind: .typeParameter,
+                name: methodTName,
+                fqName: sequenceFQName + [memberName, methodTName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let methodTType = types.make(.typeParam(TypeParamType(symbol: methodTSymbol, nullability: .nonNull)))
+            let methodReceiverType = types.make(.classType(ClassType(
+                classSymbol: sequenceSymbol,
+                args: [.out(methodTType)],
+                nullability: .nonNull
+            )))
+            let methodIterableType = nominalCollectionType([
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("Iterable"),
+            ], elementType: methodTType)
+            let methodSetType = nominalCollectionType([
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("Set"),
+            ], elementType: methodTType)
+            registerSequenceMemberStub(
+                named: "union",
+                externalLinkName: "kk_sequence_union",
+                receiverType: methodReceiverType,
+                parameters: [("other", methodIterableType)],
+                returnType: methodSetType,
+                sequenceSymbol: sequenceSymbol,
+                sequenceFQName: sequenceFQName,
+                typeParamSymbol: methodTSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
         // foldIndexed(initial, operation): R
         registerSequenceMemberStub(
             named: "foldIndexed",
