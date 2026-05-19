@@ -788,7 +788,7 @@
 - [ ] STDLIB-JVM-OPTIONALS-FN-007: `Optional<T>.toSet()` を追加する
 - [x] STDLIB-JS-TYPE-003: `kotlin.js.Dynamic` external interface を追加する
 - [ ] STDLIB-JS-TYPE-012: `kotlin.js.JsArray` external class を追加する
-- [ ] STDLIB-JS-TYPE-013: `kotlin.js.JsBigInt` external class を追加する
+- [x] STDLIB-JS-TYPE-013: `kotlin.js.JsBigInt` external class を追加する
 - [ ] STDLIB-JS-TYPE-014: `kotlin.js.JsBoolean` external class を追加する
 - [x] STDLIB-JS-TYPE-025: `kotlin.js.JsNumber` external class を追加する
 - [ ] STDLIB-JS-TYPE-027: `kotlin.js.JsReference` external interface を追加する
