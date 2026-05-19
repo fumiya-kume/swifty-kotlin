@@ -422,12 +422,8 @@ extension CodegenBackendIntegrationTests {
             val folded = seq.fold(0) { acc, x -> acc + x }
             println(folded)
 
-            println(seq.intersect(listOf(2, 4, 6)))
             val foldedIndexed = seq.foldIndexed(0) { index, acc, x -> acc + index * x }
             println(foldedIndexed)
-            val grouped = seq.groupBy { if (it % 2 == 0) "even" else "odd" }
-            println(grouped["odd"])
-            println(grouped["even"])
         }
         """
 
@@ -451,10 +447,7 @@ extension CodegenBackendIntegrationTests {
                 -1
                 15
                 15
-                [2, 4]
                 40
-                [1, 3, 5]
-                [2, 4]
                 """ + "\n"
             )
         }

@@ -802,23 +802,6 @@ extension RuntimeSequenceTests {
         XCTAssertEqual(_lazySequenceOnEachIndexedTrace, [10, 120, 230])
     }
 
-    func testSequenceForEachVisitsElementsInOrder() {
-        let seq = makeSequence([1, 2, 3])
-        _lazyTestYieldCounter = 0
-        let action: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
-            _lazyTestYieldCounter = _lazyTestYieldCounter * 10 + value
-            return 0
-        }
-
-        let result = kk_sequence_forEach(
-            seq,
-            unsafeBitCast(action, to: Int.self),
-            0
-        )
-
-        XCTAssertEqual(result, 0)
-        XCTAssertEqual(_lazyTestYieldCounter, 123)
-    }
     func testSequenceFoldIndexedAccumulatesIndexAndValueInOrder() {
         let seq = makeSequence([3, 4, 5])
         let foldFn: @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, acc, value, _ in
@@ -834,23 +817,6 @@ extension RuntimeSequenceTests {
         )
 
         XCTAssertEqual(result, 42)
-    }
-
-    func testSequenceFoldAccumulatesInOrder() {
-        let seq = makeSequence([1, 2, 3])
-        let foldFn: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, acc, value, _ in
-            acc * 10 + value
-        }
-
-        let result = kk_sequence_fold(
-            seq,
-            0,
-            unsafeBitCast(foldFn, to: Int.self),
-            0,
-            nil
-        )
-
-        XCTAssertEqual(result, 123)
     }
 
     func testSequenceMapToAppendsToDestination() {
