@@ -245,6 +245,20 @@ extension DataFlowSemaPhase {
             typeParamSymbol: typeParamSymbol,
             symbols: symbols,
             interner: interner,
+        )
+
+        // takeLastWhile(predicate: (T) -> Boolean): List<T> (STDLIB-SEQ-FN-121)
+        registerSequenceMemberStub(
+            named: "takeLastWhile",
+            externalLinkName: "kk_sequence_takeLastWhile",
+            receiverType: receiverType,
+            parameters: [("predicate", predicateType)],
+            returnType: listReturnType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner,
             canThrow: true
         )
 
@@ -1711,6 +1725,11 @@ extension DataFlowSemaPhase {
                 )
             }
 
+            registerComparableSelectorMember(
+                name: "maxBy",
+                externalLinkName: "kk_sequence_maxBy",
+                returnTypeBuilder: { _ in typeParamType }
+            )
             registerComparableSelectorMember(
                 name: "maxByOrNull",
                 externalLinkName: "kk_sequence_maxByOrNull",

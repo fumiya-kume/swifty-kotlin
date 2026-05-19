@@ -20,7 +20,7 @@ extension CallTypeChecker {
         let calleeName = request.calleeName
         let args = request.args
 
-        if ["firstNotNullOf", "firstNotNullOfOrNull", "reduceRightIndexed", "reduceRightIndexedOrNull", "reduceRightOrNull", "sumBy", "sumByDouble"]
+        if ["firstNotNullOf", "firstNotNullOfOrNull", "reduceRightIndexed", "reduceRightIndexedOrNull", "reduceRightOrNull", "sumBy", "sumByDouble", "takeLastWhile"]
             .contains(interner.resolve(calleeName)),
             args.count == 1,
             let lambdaExpr = ast.arena.expr(args[0].expr),

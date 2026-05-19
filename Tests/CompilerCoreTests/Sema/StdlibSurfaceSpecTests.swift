@@ -121,6 +121,8 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("associateWith", 1),
             sequence("randomOrNull", 0),
             sequence("chunked", 1),
+            sequence("shuffled", 0),
+            sequence("shuffled", 1),
             sequence("sumOf", 1),
             sequence("sumBy", 1),
             sequence("sumByDouble", 1),
@@ -183,6 +185,8 @@ final class StdlibSurfaceSpecTests: XCTestCase {
                 (.sequence, ["kotlin", "sequences", "Sequence"], "scanIndexed", 2),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "randomOrNull", 0),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "requireNoNulls", 0),
+                (.sequence, ["kotlin", "sequences", "Sequence"], "shuffled", 0),
+                (.sequence, ["kotlin", "sequences", "Sequence"], "shuffled", 1),
             ]
 
             for testCase in cases {

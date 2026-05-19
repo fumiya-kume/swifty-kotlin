@@ -270,6 +270,7 @@
 - [ ] STDLIB-SEQ-FN-007: `associateByTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-008: `associateTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-009: `associateWith` 関数の実装
+- [x] STDLIB-SEQ-FN-009: `associateWith` 関数の実装
 - [ ] STDLIB-SEQ-FN-010: `associateWithTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-011: `averageOf` 関数の実装
 - [ ] STDLIB-SEQ-FN-012: `chunked` 関数の実装
@@ -288,7 +289,7 @@
 - [ ] STDLIB-SEQ-FN-025: `filterIndexedTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-026: `filterIsInstance` 関数の実装
 - [ ] STDLIB-SEQ-FN-027: `filterIsInstanceTo` 関数の実装
-- [ ] STDLIB-SEQ-FN-028: `filterNot` 関数の実装
+- [x] STDLIB-SEQ-FN-028: `filterNot` 関数の実装
 - [ ] STDLIB-SEQ-FN-029: `filterNotNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-030: `filterNotTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-031: `filterTo` 関数の実装
@@ -309,9 +310,9 @@
 - [ ] STDLIB-SEQ-FN-049: `indexOfFirst` 関数の実装
 - [ ] STDLIB-SEQ-FN-050: `indexOfLast` 関数の実装
 - [ ] STDLIB-SEQ-FN-051: `intersect` 関数の実装
-- [x] STDLIB-SEQ-FN-052: `joinTo` 関数の実装
-- [x] STDLIB-SEQ-FN-053: `joinToString` 関数の実装
-- [ ] STDLIB-SEQ-FN-054: `last` 関数の実装
+ - [x] STDLIB-SEQ-FN-052: `joinTo` 関数の実装
+ - [x] STDLIB-SEQ-FN-053: `joinToString` 関数の実装
+ - [x] STDLIB-SEQ-FN-054: `last` 関数の実装
 - [ ] STDLIB-SEQ-FN-055: `lastIndexOf` 関数の実装
 - [ ] STDLIB-SEQ-FN-056: `lastOrNull` 関数の実装
 - [x] STDLIB-SEQ-FN-057: `map` 関数の実装
@@ -323,7 +324,7 @@
 - [x] STDLIB-SEQ-FN-063: `mapNotNullTo` 関数の実装
 - [x] STDLIB-SEQ-FN-064: `mapTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-065: `max` 関数の実装
-- [ ] STDLIB-SEQ-FN-066: `maxBy` 関数の実装
+- [x] STDLIB-SEQ-FN-066: `maxBy` 関数の実装
 - [ ] STDLIB-SEQ-FN-067: `maxByOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-068: `maxOf` 関数の実装
 - [x] STDLIB-SEQ-FN-069: `maxOfOrNull` 関数の実装
@@ -362,7 +363,7 @@
 - [ ] STDLIB-SEQ-FN-103: `runningReduceIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-104: `scan` 関数の実装
 - [x] STDLIB-SEQ-FN-105: `scanIndexed` 関数の実装
-- [ ] STDLIB-SEQ-FN-106: `shuffled` 関数の実装
+- [x] STDLIB-SEQ-FN-106: `shuffled` 関数の実装
 - [ ] STDLIB-SEQ-FN-107: `single` 関数の実装
 - [x] STDLIB-SEQ-FN-108: `singleOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-109: `slice` 関数の実装
@@ -376,12 +377,12 @@
 - [x] STDLIB-SEQ-FN-118: `sumOf` 関数の実装
 - [ ] STDLIB-SEQ-FN-119: `take` 関数の実装
 - [x] STDLIB-SEQ-FN-120: `takeLast` 関数の実装
-- [ ] STDLIB-SEQ-FN-121: `takeLastWhile` 関数の実装
+- [x] STDLIB-SEQ-FN-121: `takeLastWhile` 関数の実装
 - [x] STDLIB-SEQ-FN-122: `takeWhile` 関数の実装
 - [ ] STDLIB-SEQ-FN-123: `toCollection` 関数の実装
-- [ ] STDLIB-SEQ-FN-124: `toHashSet` 関数の実装
+- [x] STDLIB-SEQ-FN-124: `toHashSet` 関数の実装
 - [ ] STDLIB-SEQ-FN-125: `toList` 関数の実装
-- [ ] STDLIB-SEQ-FN-126: `toMutableList` 関数の実装
+- [x] STDLIB-SEQ-FN-126: `toMutableList` 関数の実装
 - [ ] STDLIB-SEQ-FN-127: `toMutableSet` 関数の実装
 - [ ] STDLIB-SEQ-FN-128: `toSet` 関数の実装
 - [x] STDLIB-SEQ-FN-129: `toSortedSet` 関数の実装
@@ -747,14 +748,14 @@
 - [x] STDLIB-JVM-OPTIONALS-FN-004: `Optional<T>.getOrNull()` を追加する
 - [x] STDLIB-JVM-OPTIONALS-FN-005: `Optional<T>.toCollection(destination)` を追加する
 - [ ] STDLIB-JVM-OPTIONALS-FN-006: `Optional<T>.toList()` を追加する
-- [ ] STDLIB-JVM-OPTIONALS-FN-007: `Optional<T>.toSet()` を追加する
+- [x] STDLIB-JVM-OPTIONALS-FN-007: `Optional<T>.toSet()` を追加する
 - [x] STDLIB-JS-TYPE-003: `kotlin.js.Dynamic` external interface を追加する
 - [x] STDLIB-JS-TYPE-012: `kotlin.js.JsArray` external class を追加する
 - [x] STDLIB-JS-TYPE-013: `kotlin.js.JsBigInt` external class を追加する
 - [ ] STDLIB-JS-TYPE-014: `kotlin.js.JsBoolean` external class を追加する
 - [x] STDLIB-JS-TYPE-025: `kotlin.js.JsNumber` external class を追加する
 - [ ] STDLIB-JS-TYPE-027: `kotlin.js.JsReference` external interface を追加する
-- [ ] STDLIB-JS-TYPE-029: `kotlin.js.JsString` external class を追加する
+- [x] STDLIB-JS-TYPE-029: `kotlin.js.JsString` external class を追加する
 - [x] STDLIB-JS-PROP-001: `kotlin.js.console` external property を追加する
 - [x] STDLIB-JS-PROP-003: `KClass<T>.js` extension property を追加する
 - [x] STDLIB-JS-PROP-004: `JsClass<T>.kotlin` extension property を追加する
@@ -771,7 +772,7 @@
 - [x] STDLIB-JS-FN-018: `Promise<T>.then(onFulfilled, onRejected)` を追加する
 - [x] STDLIB-JS-FN-019: `JsArray<T>.toArray()` を追加する
 - [ ] STDLIB-JS-FN-020: `JsBoolean.toBoolean()` を追加する
-- [ ] STDLIB-JS-FN-021: `JsNumber.toDouble()` を追加する
+- [x] STDLIB-JS-FN-021: `JsNumber.toDouble()` を追加する
 - [ ] STDLIB-JS-FN-022: `JsNumber.toInt()` を追加する
 - [ ] STDLIB-JS-FN-023: `Array<T>.toJsArray()` を追加する
 - [ ] STDLIB-JS-FN-024: `List<T>.toJsArray()` を追加する
