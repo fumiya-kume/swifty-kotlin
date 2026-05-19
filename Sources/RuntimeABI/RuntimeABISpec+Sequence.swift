@@ -403,7 +403,19 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Sequence"
         ),
-        // STDLIB-275: joinToString, sumOf, associate, associateBy
+        // STDLIB-275: joinTo/joinToString, sumOf, associate, associateBy
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_joinTo",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "destinationRaw", type: .intptr),
+                RuntimeABIParameter(name: "separatorRaw", type: .intptr),
+                RuntimeABIParameter(name: "prefixRaw", type: .intptr),
+                RuntimeABIParameter(name: "postfixRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_sequence_joinToString",
             parameters: [

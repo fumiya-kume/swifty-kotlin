@@ -375,6 +375,23 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(extractString(from: UnsafeMutableRawPointer(bitPattern: renderedRaw)), "[1:2:3]")
     }
 
+    func testJoinToAppendsToStringBuilderAndReturnsDestination() {
+        let seq = makeSequence([1, 2, 3])
+        let builder = kk_string_builder_new_from_string(runtimeTestStringHandle("seed:"))
+
+        let returned = kk_sequence_joinTo(
+            seq,
+            builder,
+            runtimeTestStringHandle("|"),
+            runtimeTestStringHandle("<"),
+            runtimeTestStringHandle(">")
+        )
+
+        XCTAssertEqual(returned, builder)
+        let renderedRaw = kk_string_builder_toString(builder)
+        XCTAssertEqual(extractString(from: UnsafeMutableRawPointer(bitPattern: renderedRaw)), "seed:<1|2|3>")
+    }
+
     func testAssociateToPopulatesExistingDestinationMap() {
         let seq = makeSequence([1, 2, 3])
         let dest = registerRuntimeObject(RuntimeMapBox(keys: [99], values: [999]))
