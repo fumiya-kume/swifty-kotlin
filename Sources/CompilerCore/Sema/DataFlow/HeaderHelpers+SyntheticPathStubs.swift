@@ -9,6 +9,7 @@
 /// - `relativize(other: Path): Path`, `normalize(): Path`
 /// - `exists(): Boolean`, `isDirectory(): Boolean`
 /// - `Path.isRegularFile(vararg options: LinkOption): Boolean` extension function
+/// - `Path.exists(vararg options: LinkOption): Boolean` extension function
 /// - `startsWith(other: Path): Boolean`, `startsWith(other: String): Boolean`
 /// - `endsWith(other: Path): Boolean`, `endsWith(other: String): Boolean`
 /// - `toFile(): File`, `toUri(): URI`, `toAbsolutePath(): Path`
@@ -801,13 +802,14 @@ extension DataFlowSemaPhase {
 
         // MARK: - Path query methods
 
-        registerPathMemberFunction(
+        registerPathExtensionFunction(
             named: "exists",
-            externalLinkName: "kk_path_exists",
-            ownerSymbol: pathSymbol,
-            ownerType: pathType,
-            parameters: [],
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("options", linkOptionType)],
             returnType: types.booleanType,
+            externalLinkName: "kk_path_exists",
+            valueParameterIsVararg: [true],
             symbols: symbols,
             interner: interner
         )
