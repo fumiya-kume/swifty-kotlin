@@ -785,6 +785,25 @@ extension RuntimeSequenceTests {
         XCTAssertEqual(listElements(result), [99, 10, 20, 30])
     }
 
+    func testSequenceMapNotNullToAppendsOnlyNonNullResults() {
+        let seq = makeSequence([1, 2, 3, 4])
+        let dest = makeList([50])
+        let mapFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+            value.isMultiple(of: 2) ? value * 10 : runtimeNullSentinelInt
+        }
+
+        let result = kk_sequence_mapNotNullTo(
+            seq,
+            dest,
+            unsafeBitCast(mapFn, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(result, dest)
+        XCTAssertEqual(listElements(result), [50, 20, 40])
+    }
+
     func testSequenceMapIndexedNotNullToAppendsOnlyNonNullResults() {
         let seq = makeSequence([1, 2, 3, 4])
         let dest = makeList([50])
