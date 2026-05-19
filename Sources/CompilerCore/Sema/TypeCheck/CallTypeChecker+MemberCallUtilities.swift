@@ -29,8 +29,6 @@ extension CallTypeChecker {
                  "kk_sequence_firstNotNullOf", "kk_sequence_firstNotNullOfOrNull",
                  "kk_sequence_chunked_transform",
                  "kk_sequence_windowed_transform",
-                 "kk_sequence_averageOf",
-                 "kk_sequence_windowed_transform",
                  "kk_sequence_plus_element", "kk_sequence_minus",
                  "kk_array_binarySearch_compare", "kk_array_binarySearch",
                  "kk_list_windowed_transform",
