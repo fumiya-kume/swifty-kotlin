@@ -730,6 +730,30 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testSequenceRandomOrNullReturnsOnlyElementOrNullOnEmpty() throws {
+        let source = """
+        fun main() {
+            println(sequenceOf(42).randomOrNull())
+            println(emptySequence<Int>().randomOrNull() == null)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceRandomOrNull",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "42\ntrue\n")
+        }
+    }
+
     func testSequenceZipWithNextTransformReturnsAdjacentResults() throws {
         let source = """
         fun main() {

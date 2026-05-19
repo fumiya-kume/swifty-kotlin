@@ -1346,6 +1346,18 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(sequenceElements(combined), [1, 2, 3, 42])
     }
 
+    func testRandomOrNullReturnsOnlyElementAndNullOnEmpty() {
+        var thrown = 0
+        let only = kk_sequence_randomOrNull(makeSequence([42]), &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(only, 42)
+
+        thrown = 0
+        let emptyResult = kk_sequence_randomOrNull(makeSequence([]), &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
+    }
+
     // MARK: - Lazy Sequence Builder Tests (STDLIB-563)
 
     private func listElements(_ listRaw: Int) -> [Int] {
