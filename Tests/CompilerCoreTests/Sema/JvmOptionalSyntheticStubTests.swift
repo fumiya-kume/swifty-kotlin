@@ -324,4 +324,85 @@ final class JvmOptionalSyntheticStubTests: XCTestCase {
             )
         }
     }
+
+    func testOptionalToSetSignature() throws {
+        let (sema, interner) = try makeSema()
+
+        let optionalFQName = ["java", "util", "Optional"].map { interner.intern($0) }
+        let optionalSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: optionalFQName),
+            "Expected java.util.Optional to be registered"
+        )
+        let setSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: ["kotlin", "collections", "Set"].map { interner.intern($0) }),
+            "Expected kotlin.collections.Set to be registered"
+        )
+
+        let toSetFQName = ["kotlin", "jvm", "optionals", "toSet"].map { interner.intern($0) }
+        let toSetSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: toSetFQName),
+            "Expected kotlin.jvm.optionals.toSet to be registered"
+        )
+        let toSetSignature = try XCTUnwrap(sema.symbols.functionSignature(for: toSetSymbol))
+        XCTAssertTrue(sema.symbols.symbol(toSetSymbol)?.flags.contains(.synthetic) == true)
+        XCTAssertEqual(sema.symbols.externalLinkName(for: toSetSymbol), "kk_optional_toSet")
+
+        let functionTParamSymbol = try XCTUnwrap(toSetSignature.typeParameterSymbols.first)
+        let functionTType = sema.types.make(.typeParam(TypeParamType(
+            symbol: functionTParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = sema.types.make(.classType(ClassType(
+            classSymbol: optionalSymbol,
+            args: [.out(functionTType)],
+            nullability: .nonNull
+        )))
+        let setType = sema.types.make(.classType(ClassType(
+            classSymbol: setSymbol,
+            args: [.out(functionTType)],
+            nullability: .nonNull
+        )))
+
+        XCTAssertEqual(toSetSignature.receiverType, receiverType)
+        XCTAssertEqual(toSetSignature.parameterTypes, [])
+        XCTAssertEqual(toSetSignature.returnType, setType)
+        XCTAssertEqual(toSetSignature.typeParameterSymbols, [functionTParamSymbol])
+        XCTAssertEqual(toSetSignature.classTypeParameterCount, 0)
+    }
+
+    func testOptionalToSetResolvesInSource() throws {
+        let source = """
+        import java.util.Optional
+        import kotlin.jvm.optionals.toSet
+
+        fun probe(optional: Optional<String>): Set<String> {
+            return optional.toSet()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected Optional.toSet to resolve cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let toSetCall = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "toSet"
+            })
+            let chosenToSet = try XCTUnwrap(
+                sema.bindings.callBinding(for: toSetCall)?.chosenCallee
+            )
+            XCTAssertEqual(
+                sema.symbols.externalLinkName(for: chosenToSet),
+                "kk_optional_toSet"
+            )
+        }
+    }
 }

@@ -930,6 +930,7 @@ extension ABILoweringPass {
             interner.intern("kk_sequence_requireNoNulls"),
             interner.intern("kk_sequence_withIndex"),
             interner.intern("kk_sequence_flatMapIndexed"),
+            interner.intern("kk_sequence_joinTo"),
             interner.intern("kk_sequence_joinToString"),
             interner.intern("kk_sequence_chunked"),
             interner.intern("kk_sequence_windowed"),
@@ -953,6 +954,7 @@ extension ABILoweringPass {
             interner.intern("kk_sequence_plus"),
             interner.intern("kk_sequence_plus_element"),
             interner.intern("kk_sequence_minus"),
+            interner.intern("kk_sequence_union"),
             // Regex (STDLIB-100/101/102/103)
             interner.intern("kk_regex_create"),
             interner.intern("kk_string_matches_regex"),

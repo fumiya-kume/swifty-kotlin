@@ -39,7 +39,7 @@ extension CallTypeChecker {
             "maxOf", "minOf",
             "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",
             "maxOfWith", "maxOfWithOrNull", "minOfWith", "minOfWithOrNull",
-            "sortedByDescending", "sortedWith", "sortedArrayWith", "partition", "takeWhile", "dropWhile", "dropLastWhile", "distinctBy", "zipWithNext",
+            "sortedByDescending", "sortedWith", "sortedArrayWith", "partition", "takeWhile", "takeLastWhile", "dropWhile", "dropLastWhile", "distinctBy", "zipWithNext",
             "flatten",
             "sort", "sortBy", "sortByDescending", "sortWith",
         ]
@@ -799,7 +799,7 @@ extension CallTypeChecker {
             switch calleeStr {
             case "map", "filter", "filterNot", "filterKeys", "filterValues", "mapNotNull", "firstNotNullOf", "firstNotNullOfOrNull", "forEach", "flatMap", "flatMapIndexed", "any", "none", "all",
                  "count", "first", "last", "find", "associateBy", "associateWith", "associate",
-                 "mapValues", "mapKeys", "takeWhile", "dropWhile", "dropLastWhile", "onEach":
+                 "mapValues", "mapKeys", "takeWhile", "takeLastWhile", "dropWhile", "dropLastWhile", "onEach":
                 // any(), none(), count(), first(), last() can be called with no args
                 if args.isEmpty {
                     switch calleeStr {
@@ -810,7 +810,7 @@ extension CallTypeChecker {
                     }
                 } else {
                     let lambdaReturnType: TypeID = switch calleeStr {
-                    case "filter", "filterNot", "filterKeys", "filterValues", "any", "none", "all", "takeWhile", "dropWhile", "dropLastWhile": sema.types.booleanType
+                    case "filter", "filterNot", "filterKeys", "filterValues", "any", "none", "all", "takeWhile", "takeLastWhile", "dropWhile", "dropLastWhile": sema.types.booleanType
                     case "forEach", "onEach": sema.types.unitType
                     case "count": sema.types.booleanType
                     case "mapNotNull", "firstNotNullOf", "firstNotNullOfOrNull": sema.types.nullableAnyType
@@ -870,6 +870,16 @@ extension CallTypeChecker {
                                 interner: interner,
                                 elementType: collectionElementType
                             )
+                        } else {
+                            resultType = receiverType
+                        }
+                    case "takeLastWhile":
+                        if let listSymbol = lookupStdlibSymbol("List", symbols: sema.symbols, interner: interner) {
+                            resultType = sema.types.make(.classType(ClassType(
+                                classSymbol: listSymbol,
+                                args: [.invariant(collectionElementType)],
+                                nullability: .nonNull
+                            )))
                         } else {
                             resultType = receiverType
                         }

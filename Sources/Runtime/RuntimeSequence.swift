@@ -1065,8 +1065,8 @@ private func applyFlatMapStep(_ elements: [Int], fnPtr: Int, closureRaw: Int, ou
             }
             return []
         }
-        if let subList = runtimeListBox(from: subRaw) {
-            result.append(contentsOf: subList.elements)
+        if let subElements = runtimeCollectionElements(from: subRaw) {
+            result.append(contentsOf: subElements)
         } else if let subSeq = runtimeSequenceBox(from: subRaw) {
             result.append(contentsOf: evaluateSequence(subSeq, outThrown: outThrown))
             if let outThrown, outThrown.pointee != 0 { return [] }
@@ -1569,6 +1569,38 @@ public func kk_sequence_takeWhile(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int
     newSteps.append(.takeWhileStep(fnPtr: fnPtr, closureRaw: closureRaw))
     let newSeq = RuntimeSequenceBox(steps: newSteps, constrainOnceState: seq.constrainOnceState)
     return registerRuntimeObject(newSeq)
+}
+
+@_cdecl("kk_sequence_takeLastWhile")
+public func kk_sequence_takeLastWhile(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    var elements: [Int] = []
+    _ = runtimeTraverseSequenceSource(seqRaw, caller: #function, outThrown: outThrown) { elem in
+        elements.append(elem)
+        return true
+    }
+    if let outThrown, outThrown.pointee != 0 {
+        return runtimeExceptionCaughtSentinel
+    }
+    let predicate = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var count = 0
+    for elem in elements.reversed() {
+        var thrown = 0
+        let predicateResult = predicate(closureRaw, elem, &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        if maybeUnbox(predicateResult) == 0 {
+            break
+        }
+        count += 1
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: Array(elements.suffix(count))))
 }
 
 @_cdecl("kk_sequence_filterNot")
@@ -2110,6 +2142,20 @@ public func kk_sequence_firstOrNull(_ seqRaw: Int, _ outThrown: UnsafeMutablePoi
     }
     if let outThrown, outThrown.pointee != 0 { return runtimeNullSentinelInt }
     return found ? result : runtimeNullSentinelInt
+}
+
+@_cdecl("kk_sequence_randomOrNull")
+public func kk_sequence_randomOrNull(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let elements = runtimeSequenceSourceElementsOrThrow(
+        from: seqRaw,
+        caller: #function,
+        outThrown: outThrown
+    ) else {
+        return runtimeNullSentinelInt
+    }
+    if let outThrown, outThrown.pointee != 0 { return runtimeNullSentinelInt }
+    return elements.randomElement() ?? runtimeNullSentinelInt
 }
 
 @_cdecl("kk_sequence_last")
@@ -3121,4 +3167,11 @@ public func kk_sequence_minus(_ seqRaw: Int, _ element: Int) -> Int {
     }
     let newSeq = RuntimeSequenceBox(steps: [.source(elements: result)])
     return registerRuntimeObject(newSeq)
+}
+
+@_cdecl("kk_sequence_union")
+public func kk_sequence_union(_ seqRaw: Int, _ otherRaw: Int) -> Int {
+    let selfElements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    let otherElements = runtimeUnboxCollectionElements(otherRaw)
+    return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(selfElements + otherElements)))
 }

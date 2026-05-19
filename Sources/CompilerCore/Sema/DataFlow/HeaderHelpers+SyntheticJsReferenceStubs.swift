@@ -1,17 +1,12 @@
 import Foundation
 
-/// Synthetic Kotlin/JS `JsArray<T : JsAny?>` external class surface.
+/// Synthetic Kotlin/JS `JsReference<T : Any>` external interface surface.
 extension DataFlowSemaPhase {
-    func registerSyntheticJsArrayStubs(
+    func registerSyntheticJsReferenceStubs(
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner
     ) {
-        let kotlinPkg = ensurePackage(
-            path: ["kotlin"],
-            symbols: symbols,
-            interner: interner
-        )
         let kotlinJsPkg = ensurePackage(
             path: ["kotlin", "js"],
             symbols: symbols,
@@ -19,19 +14,19 @@ extension DataFlowSemaPhase {
         )
         let kotlinJsPkgSymbol = symbols.lookup(fqName: kotlinJsPkg)
 
-        let jsArraySymbol = ensureClassSymbol(
-            named: "JsArray",
+        let jsReferenceSymbol = ensureInterfaceSymbol(
+            named: "JsReference",
             in: kotlinJsPkg,
             symbols: symbols,
             interner: interner
         )
         if let kotlinJsPkgSymbol {
-            symbols.setParentSymbol(kotlinJsPkgSymbol, for: jsArraySymbol)
+            symbols.setParentSymbol(kotlinJsPkgSymbol, for: jsReferenceSymbol)
         }
 
         let typeParamName = interner.intern("T")
-        let jsArrayFQName = kotlinJsPkg + [interner.intern("JsArray")]
-        let typeParamFQName = jsArrayFQName + [typeParamName]
+        let jsReferenceFQName = kotlinJsPkg + [interner.intern("JsReference")]
+        let typeParamFQName = jsReferenceFQName + [typeParamName]
         let typeParamSymbol: SymbolID
         if let existing = symbols.lookup(fqName: typeParamFQName) {
             typeParamSymbol = existing
@@ -45,58 +40,34 @@ extension DataFlowSemaPhase {
                 flags: [.synthetic]
             )
         }
-        symbols.setParentSymbol(jsArraySymbol, for: typeParamSymbol)
-        symbols.setTypeParameterUpperBounds([types.nullableAnyType], for: typeParamSymbol)
+        symbols.setParentSymbol(jsReferenceSymbol, for: typeParamSymbol)
+        symbols.setTypeParameterUpperBounds([types.anyType], for: typeParamSymbol)
 
         let typeParamType = types.make(.typeParam(TypeParamType(
             symbol: typeParamSymbol,
             nullability: .nonNull
         )))
-        let jsArrayType = types.make(.classType(ClassType(
-            classSymbol: jsArraySymbol,
+        let jsReferenceType = types.make(.classType(ClassType(
+            classSymbol: jsReferenceSymbol,
             args: [.invariant(typeParamType)],
             nullability: .nonNull
         )))
 
-        types.setNominalTypeParameterSymbols([typeParamSymbol], for: jsArraySymbol)
-        types.setNominalTypeParameterVariances([.invariant], for: jsArraySymbol)
-        symbols.setPropertyType(jsArrayType, for: jsArraySymbol)
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: jsReferenceSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: jsReferenceSymbol)
+        symbols.setPropertyType(jsReferenceType, for: jsReferenceSymbol)
 
-        let jsAnySymbol = ensureInterfaceSymbol(
-            named: "JsAny",
-            in: kotlinJsPkg,
-            symbols: symbols,
-            interner: interner
-        )
-        if let kotlinJsPkgSymbol {
-            symbols.setParentSymbol(kotlinJsPkgSymbol, for: jsAnySymbol)
-        }
-        symbols.setDirectSupertypes([jsAnySymbol], for: jsArraySymbol)
-        types.setNominalDirectSupertypes([jsAnySymbol], for: jsArraySymbol)
-
-        let arraySymbol = ensureClassSymbol(
-            named: "Array",
-            in: kotlinPkg,
-            symbols: symbols,
-            interner: interner
-        )
-        let arrayReturnType = types.make(.classType(ClassType(
-            classSymbol: arraySymbol,
-            args: [.invariant(typeParamType)],
-            nullability: .nonNull
-        )))
-
-        registerJsArrayToArray(
-            ownerSymbol: jsArraySymbol,
-            ownerType: jsArrayType,
-            returnType: arrayReturnType,
+        registerJsReferenceGet(
+            ownerSymbol: jsReferenceSymbol,
+            ownerType: jsReferenceType,
+            returnType: typeParamType,
             typeParamSymbol: typeParamSymbol,
             symbols: symbols,
             interner: interner
         )
     }
 
-    private func registerJsArrayToArray(
+    private func registerJsReferenceGet(
         ownerSymbol: SymbolID,
         ownerType: TypeID,
         returnType: TypeID,
@@ -107,15 +78,12 @@ extension DataFlowSemaPhase {
         guard let ownerInfo = symbols.symbol(ownerSymbol) else {
             return
         }
-        let functionName = interner.intern("toArray")
+        let functionName = interner.intern("get")
         let functionFQName = ownerInfo.fqName + [functionName]
-        let externalLinkName = "kk_js_array_toArray"
+        let externalLinkName = "kk_js_reference_get"
 
         if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
-            guard let symbol = symbols.symbol(symbolID),
-                  symbol.kind == .function,
-                  let signature = symbols.functionSignature(for: symbolID)
-            else {
+            guard let signature = symbols.functionSignature(for: symbolID) else {
                 return false
             }
             return signature.receiverType == ownerType
@@ -142,9 +110,6 @@ extension DataFlowSemaPhase {
                 receiverType: ownerType,
                 parameterTypes: [],
                 returnType: returnType,
-                valueParameterSymbols: [],
-                valueParameterHasDefaultValues: [],
-                valueParameterIsVararg: [],
                 typeParameterSymbols: [typeParamSymbol],
                 classTypeParameterCount: 1
             ),
