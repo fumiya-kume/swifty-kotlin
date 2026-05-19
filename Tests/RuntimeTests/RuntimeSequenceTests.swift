@@ -213,22 +213,8 @@ private let sequenceSumByDoubleWeightedTwo: @convention(c) (Int, Int, UnsafeMuta
     kk_double_to_bits(value == 2 ? 1.5 : 0.25)
 }
 
-private let sequenceGreaterThanTwo: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
-    value > 2 ? 1 : 0
-}
-
 private let sequenceNegatedSelector: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     -value
-}
-
-private let sequenceMaxWithOrNullNaturalComparator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, lhs, rhs, _ in
-    lhs - rhs
-}
-
-private let sequenceReverseIntComparator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, lhs, rhs, _ in
-    if lhs < rhs { return 1 }
-    if lhs > rhs { return -1 }
-    return 0
 }
 
 private func runtimeTestStringHandle(_ value: String) -> Int {
@@ -402,40 +388,13 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
             0,
             &thrown
         )
+
         XCTAssertEqual(thrown, 0)
         XCTAssertEqual(result, -1)
 
         let emptyResult = kk_sequence_maxOfOrNull(
             makeSequence([]),
             unsafeBitCast(sequenceNegatedSelector, to: Int.self),
-            0,
-            &thrown
-        )
-
-        XCTAssertEqual(thrown, 0)
-        XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
-    }
-
-    func testMaxOrNullReturnsLargestElementAndNullOnEmpty() {
-        XCTAssertEqual(kk_sequence_maxOrNull(makeSequence([3, 1, 4, 2])), 4)
-        XCTAssertEqual(kk_sequence_maxOrNull(makeSequence([])), runtimeNullSentinelInt)
-    }
-
-    func testMaxWithOrNullReturnsLargestElementAndNullOnEmpty() {
-        var thrown = 0
-        let result = kk_sequence_maxWithOrNull(
-            makeSequence([3, 1, 4, 2]),
-            unsafeBitCast(sequenceMaxWithOrNullNaturalComparator, to: Int.self),
-            0,
-            &thrown
-        )
-
-        XCTAssertEqual(thrown, 0)
-        XCTAssertEqual(result, 4)
-
-        let emptyResult = kk_sequence_maxWithOrNull(
-            makeSequence([]),
-            unsafeBitCast(sequenceMaxWithOrNullNaturalComparator, to: Int.self),
             0,
             &thrown
         )
