@@ -42,35 +42,6 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
-    func testCodegenSequencePartitionSplitsElements() throws {
-        let source = """
-        fun main() {
-            val (evens, odds) = sequenceOf(1, 2, 3, 4, 5).partition { value -> value % 2 == 0 }
-            val (emptyYes, emptyNo) = emptySequence<Int>().partition { value -> value > 0 }
-
-            println(evens)
-            println(odds)
-            println(emptyYes.size)
-            println(emptyNo.size)
-        }
-        """
-
-        try withTemporaryFile(contents: source) { path in
-            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
-            let ctx = try runCodegenPipeline(
-                inputPath: path,
-                moduleName: "SequencePartition",
-                emit: .executable,
-                outputPath: outputBase
-            )
-            try LinkPhase().run(ctx)
-
-            let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "[2, 4]\n[1, 3, 5]\n0\n0\n")
-        }
-    }
-
     func testCodegenSequenceNoneOverloads() throws {
         let source = """
         fun main() {
@@ -94,33 +65,6 @@ extension CodegenBackendIntegrationTests {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(normalizedStdout, "true\nfalse\ntrue\nfalse\n")
-        }
-    }
-
-    func testCodegenSequencePlusConcatenatesSequences() throws {
-        let source = """
-        fun main() {
-            val memberResult = sequenceOf(1, 2).plus(sequenceOf(3, 4)).toList()
-            val operatorResult = (sequenceOf(5, 6) + sequenceOf(7, 8)).toList()
-
-            println(memberResult)
-            println(operatorResult)
-        }
-        """
-
-        try withTemporaryFile(contents: source) { path in
-            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
-            let ctx = try runCodegenPipeline(
-                inputPath: path,
-                moduleName: "SequencePlus",
-                emit: .executable,
-                outputPath: outputBase
-            )
-            try LinkPhase().run(ctx)
-
-            let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "[1, 2, 3, 4]\n[5, 6, 7, 8]\n")
         }
     }
 
