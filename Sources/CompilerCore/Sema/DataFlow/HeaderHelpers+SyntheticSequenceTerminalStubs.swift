@@ -356,6 +356,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // randomOrNull(): T?
+        registerSequenceMemberStub(
+            named: "randomOrNull",
+            externalLinkName: "kk_sequence_randomOrNull",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: types.makeNullable(typeParamType),
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // takeLast(n: Int): List<T> (STDLIB-SEQ-FN-120)
         registerSequenceMemberStub(
             named: "takeLast",
