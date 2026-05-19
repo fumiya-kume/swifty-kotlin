@@ -7,7 +7,8 @@
 /// - `toString(): String`
 /// - `resolve(other: String): Path`, `resolve(other: Path): Path`
 /// - `relativize(other: Path): Path`, `normalize(): Path`
-/// - `exists(): Boolean`, `isDirectory(): Boolean`
+/// - `exists(): Boolean`
+/// - `Path.isDirectory(vararg options: LinkOption): Boolean` extension function
 /// - `Path.isRegularFile(vararg options: LinkOption): Boolean` extension function
 /// - `Path.exists(vararg options: LinkOption): Boolean` extension function
 /// - `startsWith(other: Path): Boolean`, `startsWith(other: String): Boolean`
