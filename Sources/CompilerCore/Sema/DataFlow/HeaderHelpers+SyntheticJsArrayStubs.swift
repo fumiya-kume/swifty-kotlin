@@ -62,6 +62,18 @@ extension DataFlowSemaPhase {
         types.setNominalTypeParameterVariances([.invariant], for: jsArraySymbol)
         symbols.setPropertyType(jsArrayType, for: jsArraySymbol)
 
+        let jsAnySymbol = ensureInterfaceSymbol(
+            named: "JsAny",
+            in: kotlinJsPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinJsPkgSymbol {
+            symbols.setParentSymbol(kotlinJsPkgSymbol, for: jsAnySymbol)
+        }
+        symbols.setDirectSupertypes([jsAnySymbol], for: jsArraySymbol)
+        types.setNominalDirectSupertypes([jsAnySymbol], for: jsArraySymbol)
+
         let arraySymbol = ensureClassSymbol(
             named: "Array",
             in: kotlinPkg,
