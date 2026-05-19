@@ -2780,6 +2780,20 @@ extension CallLowerer {
                         )
                         runtimeArguments = [loweredReceiverID, fnPtrExpr, envPtrExpr]
                     }
+                    if (runtimeCallee == "kk_sequence_associate"
+                        || runtimeCallee == "kk_sequence_associateBy"
+                        || runtimeCallee == "kk_sequence_associateWith"),
+                       normalizedArgIDs.count == 1
+                    {
+                        let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                            normalizedArgIDs[0],
+                            sema: sema,
+                            arena: arena,
+                            interner: interner,
+                            instructions: &instructions
+                        )
+                        runtimeArguments = [loweredReceiverID, fnPtrExpr, envPtrExpr]
+                    }
                     if (runtimeCallee == "kk_sequence_associateTo"
                         || runtimeCallee == "kk_sequence_associateByTo"
                         || runtimeCallee == "kk_sequence_associateWithTo"

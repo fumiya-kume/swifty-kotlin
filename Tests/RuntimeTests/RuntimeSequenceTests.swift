@@ -514,6 +514,22 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_map_get(result, 0), 2)
     }
 
+    func testAssociateWithMapsElementsToTransformedValues() {
+        let seq = makeSequence([1, 2, 3])
+
+        let result = kk_sequence_associateWith(
+            seq,
+            unsafeBitCast(sequenceValueTimesTen, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(mapKeys(result), [1, 2, 3])
+        XCTAssertEqual(kk_map_get(result, 1), 10)
+        XCTAssertEqual(kk_map_get(result, 2), 20)
+        XCTAssertEqual(kk_map_get(result, 3), 30)
+    }
+
     func testAssociateWithToUsesElementsAsKeys() {
         let seq = makeSequence([1, 2, 3])
         let dest = registerRuntimeObject(RuntimeMapBox(keys: [50], values: [500]))

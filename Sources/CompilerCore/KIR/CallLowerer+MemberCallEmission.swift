@@ -514,6 +514,20 @@ extension CallLowerer {
             )
             finalArguments = [finalArguments[0], fnPtrExpr, envPtrExpr]
         }
+        if (loweredCallee == interner.intern("kk_sequence_associate")
+            || loweredCallee == interner.intern("kk_sequence_associateBy")
+            || loweredCallee == interner.intern("kk_sequence_associateWith")),
+           finalArguments.count == 2
+        {
+            let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                finalArguments[1],
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            finalArguments = [finalArguments[0], fnPtrExpr, envPtrExpr]
+        }
         if (loweredCallee == interner.intern("kk_sequence_associateTo")
             || loweredCallee == interner.intern("kk_sequence_associateByTo")
             || loweredCallee == interner.intern("kk_sequence_associateWithTo")
