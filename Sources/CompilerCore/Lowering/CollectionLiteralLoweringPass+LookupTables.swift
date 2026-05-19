@@ -335,6 +335,7 @@ struct CollectionLiteralLookupTables {
     let kkSequenceFoldName: InternedString
     let kkSequenceFoldIndexedName: InternedString
     let kkSequenceRunningFoldIndexedName: InternedString
+    let kkSequenceScanIndexedName: InternedString
     let kkSequenceReduceIndexedName: InternedString
     let kkSequenceReduceIndexedOrNullName: InternedString
     let kkSequenceRunningReduceIndexedName: InternedString
@@ -1153,6 +1154,7 @@ struct CollectionLiteralLookupTables {
         kkSequenceFoldName = interner.intern("kk_sequence_fold")
         kkSequenceFoldIndexedName = interner.intern("kk_sequence_foldIndexed")
         kkSequenceRunningFoldIndexedName = interner.intern("kk_sequence_runningFoldIndexed")
+        kkSequenceScanIndexedName = interner.intern("kk_sequence_scanIndexed")
         kkSequenceReduceIndexedName = interner.intern("kk_sequence_reduceIndexed")
         kkSequenceReduceIndexedOrNullName = interner.intern("kk_sequence_reduceIndexedOrNull")
         kkSequenceRunningReduceIndexedName = interner.intern("kk_sequence_runningReduceIndexed")

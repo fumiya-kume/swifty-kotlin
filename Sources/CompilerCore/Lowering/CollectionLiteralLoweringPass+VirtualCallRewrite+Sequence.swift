@@ -717,6 +717,27 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        // scanIndexed on sequence -> kk_sequence_scanIndexed (STDLIB-SEQ-FN-105)
+        // Args: initial, lambda (2 from Kotlin: initial + operation)
+        if callee == lookup.scanIndexedName, arguments.count == 2,
+           sequenceExprIDs.contains(receiver.rawValue)
+        {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            let hofResult = emitHOFCall(
+                kkName: lookup.kkSequenceScanIndexedName,
+                receiver: receiver,
+                arguments: [arguments[0]] + [arguments[1]] + [zeroExpr],
+                result: result,
+                origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult,
+                module: module,
+                loweredBody: &loweredBody
+            )
+            if let result { sequenceExprIDs.insert(result.rawValue); sequenceExprIDs.insert(hofResult.rawValue) }
+            return true
+        }
+
         // reduceIndexed on sequence → kk_sequence_reduceIndexed (STDLIB-556)
         // Args: lambda (1 from Kotlin: operation)
         if callee == lookup.reduceIndexedName, arguments.count == 1,
