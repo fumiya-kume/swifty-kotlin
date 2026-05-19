@@ -1212,6 +1212,84 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathForEachLineExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import kotlin.io.path.Path
+        import kotlin.io.path.forEachLine
+        import kotlin.text.Charsets
+
+        fun readLines(path: Path) {
+            path.forEachLine { line ->
+                val text = line
+            }
+            path.forEachLine(Charsets.UTF_8) { line ->
+                val text = line
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnostics = ctx.diagnostics.diagnostics.map(\.message)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.forEachLine(charset, action) extension function in kotlin.io.path should resolve: \(diagnostics)"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let charsetSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "text", "Charset"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let charsetType = types.make(.classType(ClassType(classSymbol: charsetSymbol, args: [], nullability: .nonNull)))
+            let stringActionType = types.make(.functionType(FunctionType(
+                params: [types.stringType],
+                returnType: types.unitType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let forEachSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "forEachLine"].map(interner.intern))
+            let forEachLine = try XCTUnwrap(forEachSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else {
+                    return false
+                }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [charsetType, stringActionType]
+                    && signature.returnType == types.unitType
+            })
+            let defaultForEachLine = try XCTUnwrap(forEachSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else {
+                    return false
+                }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [stringActionType]
+                    && signature.returnType == types.unitType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: forEachLine), "kk_path_forEachLine")
+            XCTAssertEqual(symbols.externalLinkName(for: defaultForEachLine), "kk_path_forEachLine_default")
+
+            let signature = try XCTUnwrap(symbols.functionSignature(for: forEachLine))
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [true, false])
+            XCTAssertEqual(signature.valueParameterIsVararg, [false, false])
+            let defaultSignature = try XCTUnwrap(symbols.functionSignature(for: defaultForEachLine))
+            XCTAssertEqual(defaultSignature.valueParameterHasDefaultValues, [false])
+            XCTAssertEqual(defaultSignature.valueParameterIsVararg, [false])
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let callExprs = memberCallExprIDs(named: "forEachLine", in: ast, interner: interner)
+            XCTAssertEqual(callExprs.count, 2)
+            let chosenCallees = callExprs.compactMap { sema.bindings.callBinding(for: $0)?.chosenCallee }
+            XCTAssertTrue(chosenCallees.contains(defaultForEachLine))
+            XCTAssertTrue(chosenCallees.contains(forEachLine))
+            for callExpr in callExprs {
+                XCTAssertEqual(sema.bindings.exprTypes[callExpr], types.unitType)
+            }
+        }
+    }
+
     func testPathWriteLinesSequenceExtensionFunctionInIOPathPackageSurfaceIsRegistered() throws {
         let source = """
         import java.nio.file.OpenOption
