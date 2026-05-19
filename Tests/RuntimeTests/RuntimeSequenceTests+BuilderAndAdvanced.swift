@@ -766,6 +766,23 @@ extension RuntimeSequenceTests {
         XCTAssertEqual(_lazySequenceOnEachIndexedTrace, [10, 120, 230])
     }
 
+    func testSequenceFoldIndexedAccumulatesIndexAndValueInOrder() {
+        let seq = makeSequence([3, 4, 5])
+        let foldFn: @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, acc, value, _ in
+            acc + index * 10 + value
+        }
+
+        let result = kk_sequence_foldIndexed(
+            seq,
+            0,
+            unsafeBitCast(foldFn, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(result, 42)
+    }
+
     func testSequenceMapToAppendsToDestination() {
         let seq = makeSequence([1, 2, 3])
         let dest = makeList([99])
