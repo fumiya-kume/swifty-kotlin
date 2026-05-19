@@ -780,7 +780,7 @@
 - [ ] STDLIB-JS-FN-027: `Double.toJsNumber()` を追加する
 - [ ] STDLIB-JS-FN-028: `Int.toJsNumber()` を追加する
 - [ ] STDLIB-JS-FN-029: `T.toJsReference()` を追加する
-- [ ] STDLIB-JS-FN-030: `String.toJsString()` を追加する
+- [x] STDLIB-JS-FN-030: `String.toJsString()` を追加する
 - [x] STDLIB-JS-FN-031: `JsArray<T>.toList()` を追加する
 - [ ] STDLIB-JS-FN-032: `JsBigInt.toLong()` を追加する
 - [x] STDLIB-JS-FN-033: `JsAny.toThrowableOrNull()` を追加する
