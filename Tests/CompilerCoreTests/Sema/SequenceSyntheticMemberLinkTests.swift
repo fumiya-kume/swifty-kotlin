@@ -3,6 +3,36 @@ import Foundation
 import XCTest
 
 final class SequenceSyntheticMemberLinkTests: XCTestCase {
+    func testSequenceFlatMapResolvesInCallExpressions() throws {
+        let source = """
+        fun expand(): Sequence<Int> {
+            val values = sequenceOf(1, 2)
+            return values.flatMap { value -> listOf(value, value * 10) }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Sequence.flatMap surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "sequences", "Sequence", "flatMap"]
+                .map { ctx.interner.intern($0) }
+            let links = Set(
+                sema.symbols.lookupAll(fqName: memberFQName)
+                    .compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
+            XCTAssertTrue(links.contains("kk_sequence_flatMap"))
+        }
+    }
+
     func testSequenceFilterIndexedTypeChecksInCallExpressions() throws {
         let source = """
         fun indexedValues(): Sequence<Int> {
@@ -21,7 +51,6 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
                 ctx.diagnostics.hasError,
                 "Expected Sequence.filterIndexed surface to resolve cleanly, got: \(diagnosticSummary)"
             )
-
         }
     }
 
@@ -119,6 +148,36 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testSequenceRandomOrNullResolvesInCallExpressions() throws {
+        let source = """
+        fun pickValue(): Int? {
+            val values = sequenceOf(7)
+            return values.randomOrNull()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Sequence.randomOrNull surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "sequences", "Sequence", "randomOrNull"]
+                .map { ctx.interner.intern($0) }
+            let links = Set(
+                sema.symbols.lookupAll(fqName: memberFQName)
+                    .compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
+            XCTAssertTrue(links.contains("kk_sequence_randomOrNull"))
+        }
+    }
+
     func testSequenceTakeLastResolvesInCallExpressions() throws {
         let source = """
         fun lastTwo(): List<Int> {
@@ -146,6 +205,36 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
                     .compactMap { sema.symbols.externalLinkName(for: $0) }
             )
             XCTAssertTrue(links.contains("kk_sequence_takeLast"))
+        }
+    }
+
+    func testSequenceTakeWhileResolvesInCallExpressions() throws {
+        let source = """
+        fun leadingSmall(): Sequence<Int> {
+            val values = sequenceOf(1, 2, 3, 4, 2)
+            return values.takeWhile { value -> value < 4 }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Sequence.takeWhile surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "sequences", "Sequence", "takeWhile"]
+                .map { ctx.interner.intern($0) }
+            let links = Set(
+                sema.symbols.lookupAll(fqName: memberFQName)
+                    .compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
+            XCTAssertTrue(links.contains("kk_sequence_takeWhile"))
         }
     }
 
@@ -208,6 +297,72 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testSequenceNoneResolvesInCallExpressions() throws {
+        let source = """
+        fun hasNoValues(): Boolean {
+            val values = emptySequence<Int>()
+            return values.none()
+        }
+
+        fun hasNoEvenValues(): Boolean {
+            val values = sequenceOf(1, 3, 5)
+            return values.none { value -> value % 2 == 0 }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Sequence.none surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "sequences", "Sequence", "none"]
+                .map { ctx.interner.intern($0) }
+            let links = Set(
+                sema.symbols.lookupAll(fqName: memberFQName)
+                    .compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
+            XCTAssertTrue(links.contains("kk_sequence_none"))
+        }
+    }
+
+    func testSequenceOnEachResolvesInCallExpressions() throws {
+        let source = """
+        fun traceValues(): Sequence<Int> {
+            var sum = 0
+            val values = sequenceOf(1, 2, 3)
+            return values.onEach { value -> sum += value }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Sequence.onEach surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "sequences", "Sequence", "onEach"]
+                .map { ctx.interner.intern($0) }
+            let links = Set(
+                sema.symbols.lookupAll(fqName: memberFQName)
+                    .compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
+            XCTAssertTrue(links.contains("kk_sequence_onEach"))
+        }
+    }
+
     func testSequenceToSortedSetResolvesInCallExpressions() throws {
         let source = """
         fun collectSortedValues(): MutableSet<Int> {
@@ -235,6 +390,38 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
                     .compactMap { sema.symbols.externalLinkName(for: $0) }
             )
             XCTAssertTrue(links.contains("kk_sequence_toSortedSet"))
+        }
+    }
+
+    func testSequenceWindowedResolvesInCallExpressions() throws {
+        let source = """
+        fun windows(): Sequence<List<Int>> {
+            val values = sequenceOf(1, 2, 3, 4, 5)
+            val sizes = values.windowed(3, 2, true) { window -> window.size }
+            return values.windowed(3, 2, true)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Sequence.windowed surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "sequences", "Sequence", "windowed"]
+                .map { ctx.interner.intern($0) }
+            let links = Set(
+                sema.symbols.lookupAll(fqName: memberFQName)
+                    .compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
+            XCTAssertTrue(links.contains("kk_sequence_windowed"))
+            XCTAssertTrue(links.contains("kk_sequence_windowed_transform"))
         }
     }
 
@@ -371,6 +558,36 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testSequenceMaxOfOrNullResolvesInCallExpressions() throws {
+        let source = """
+        fun largestSelectorOrNull(): Int? {
+            val values = sequenceOf(1, 3, 2)
+            return values.maxOfOrNull { value -> -value }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Sequence.maxOfOrNull surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "sequences", "Sequence", "maxOfOrNull"]
+                .map { ctx.interner.intern($0) }
+            let links = Set(
+                sema.symbols.lookupAll(fqName: memberFQName)
+                    .compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
+            XCTAssertTrue(links.contains("kk_sequence_maxOfOrNull"))
+        }
+    }
+
     func testSequenceFindResolvesInCallExpressions() throws {
         let source = """
         fun firstEven(): Int? {
@@ -429,6 +646,37 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
                     .compactMap { sema.symbols.externalLinkName(for: $0) }
             )
             XCTAssertTrue(links.contains("kk_sequence_filterNotTo"))
+        }
+    }
+
+    func testSequenceScanIndexedResolvesInCallExpressions() throws {
+        let source = """
+        fun indexedScan() {
+            sequenceOf(1, 2, 3).scanIndexed(10) { index, acc, value ->
+                acc + index + value
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Sequence.scanIndexed surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "sequences", "Sequence", "scanIndexed"]
+                .map { ctx.interner.intern($0) }
+            let links = Set(
+                sema.symbols.lookupAll(fqName: memberFQName)
+                    .compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
+            XCTAssertTrue(links.contains("kk_sequence_scanIndexed"))
         }
     }
 }

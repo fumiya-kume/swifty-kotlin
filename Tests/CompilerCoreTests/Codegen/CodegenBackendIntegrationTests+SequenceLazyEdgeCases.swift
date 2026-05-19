@@ -388,6 +388,8 @@ extension CodegenBackendIntegrationTests {
             val seq = sequenceOf(1, 2, 3, 4, 5)
 
             println(seq.count())
+            println(seq.indexOf(3))
+            println(seq.indexOf(99))
 
             var sum = 0
             seq.forEach { sum += it }
@@ -395,6 +397,9 @@ extension CodegenBackendIntegrationTests {
 
             val folded = seq.fold(0) { acc, x -> acc + x }
             println(folded)
+
+            val foldedIndexed = seq.foldIndexed(0) { index, acc, x -> acc + index * x }
+            println(foldedIndexed)
         }
         """
 
@@ -414,8 +419,11 @@ extension CodegenBackendIntegrationTests {
                 normalizedStdout,
                 """
                 5
+                2
+                -1
                 15
                 15
+                40
                 """ + "\n"
             )
         }
@@ -617,7 +625,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - any/all short-circuit
 
     func testSequenceAnyShortCircuits() throws {
-        throw XCTSkip("Sequence any() short-circuit not yet implemented")
         let source = """
         var counter = 0
 

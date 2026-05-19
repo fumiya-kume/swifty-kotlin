@@ -1065,8 +1065,8 @@ private func applyFlatMapStep(_ elements: [Int], fnPtr: Int, closureRaw: Int, ou
             }
             return []
         }
-        if let subList = runtimeListBox(from: subRaw) {
-            result.append(contentsOf: subList.elements)
+        if let subElements = runtimeCollectionElements(from: subRaw) {
+            result.append(contentsOf: subElements)
         } else if let subSeq = runtimeSequenceBox(from: subRaw) {
             result.append(contentsOf: evaluateSequence(subSeq, outThrown: outThrown))
             if let outThrown, outThrown.pointee != 0 { return [] }
@@ -2110,6 +2110,20 @@ public func kk_sequence_firstOrNull(_ seqRaw: Int, _ outThrown: UnsafeMutablePoi
     }
     if let outThrown, outThrown.pointee != 0 { return runtimeNullSentinelInt }
     return found ? result : runtimeNullSentinelInt
+}
+
+@_cdecl("kk_sequence_randomOrNull")
+public func kk_sequence_randomOrNull(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let elements = runtimeSequenceSourceElementsOrThrow(
+        from: seqRaw,
+        caller: #function,
+        outThrown: outThrown
+    ) else {
+        return runtimeNullSentinelInt
+    }
+    if let outThrown, outThrown.pointee != 0 { return runtimeNullSentinelInt }
+    return elements.randomElement() ?? runtimeNullSentinelInt
 }
 
 @_cdecl("kk_sequence_last")

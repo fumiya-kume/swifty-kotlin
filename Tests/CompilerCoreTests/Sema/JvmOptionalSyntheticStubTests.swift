@@ -175,4 +175,153 @@ final class JvmOptionalSyntheticStubTests: XCTestCase {
             )
         }
     }
+
+    func testOptionalGetOrNullSignature() throws {
+        let (sema, interner) = try makeSema()
+
+        let optionalFQName = ["java", "util", "Optional"].map { interner.intern($0) }
+        let optionalSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: optionalFQName),
+            "Expected java.util.Optional to be registered"
+        )
+
+        let getOrNullFQName = ["kotlin", "jvm", "optionals", "getOrNull"].map { interner.intern($0) }
+        let getOrNullSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: getOrNullFQName),
+            "Expected kotlin.jvm.optionals.getOrNull to be registered"
+        )
+        let getOrNullSignature = try XCTUnwrap(sema.symbols.functionSignature(for: getOrNullSymbol))
+        XCTAssertTrue(sema.symbols.symbol(getOrNullSymbol)?.flags.contains(.synthetic) == true)
+        XCTAssertEqual(sema.symbols.externalLinkName(for: getOrNullSymbol), "kk_optional_getOrNull")
+
+        let functionTParamSymbol = try XCTUnwrap(getOrNullSignature.typeParameterSymbols.first)
+        let functionTType = sema.types.make(.typeParam(TypeParamType(
+            symbol: functionTParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = sema.types.make(.classType(ClassType(
+            classSymbol: optionalSymbol,
+            args: [.out(functionTType)],
+            nullability: .nonNull
+        )))
+
+        XCTAssertEqual(getOrNullSignature.receiverType, receiverType)
+        XCTAssertEqual(getOrNullSignature.parameterTypes, [])
+        XCTAssertEqual(getOrNullSignature.returnType, sema.types.makeNullable(functionTType))
+        XCTAssertEqual(getOrNullSignature.typeParameterSymbols, [functionTParamSymbol])
+        XCTAssertEqual(getOrNullSignature.classTypeParameterCount, 0)
+    }
+
+    func testOptionalGetOrNullResolvesInSource() throws {
+        let source = """
+        import java.util.Optional
+        import kotlin.jvm.optionals.getOrNull
+
+        fun probe(optional: Optional<String>): String? {
+            return optional.getOrNull()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected Optional.getOrNull to resolve cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let getOrNullCall = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "getOrNull"
+            })
+            let chosenGetOrNull = try XCTUnwrap(
+                sema.bindings.callBinding(for: getOrNullCall)?.chosenCallee
+            )
+            XCTAssertEqual(
+                sema.symbols.externalLinkName(for: chosenGetOrNull),
+                "kk_optional_getOrNull"
+            )
+        }
+    }
+
+    func testOptionalAsSequenceSignature() throws {
+        let (sema, interner) = try makeSema()
+
+        let optionalFQName = ["java", "util", "Optional"].map { interner.intern($0) }
+        let optionalSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: optionalFQName),
+            "Expected java.util.Optional to be registered"
+        )
+
+        let asSequenceFQName = ["kotlin", "jvm", "optionals", "asSequence"].map { interner.intern($0) }
+        let asSequenceSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: asSequenceFQName),
+            "Expected kotlin.jvm.optionals.asSequence to be registered"
+        )
+        let asSequenceSignature = try XCTUnwrap(sema.symbols.functionSignature(for: asSequenceSymbol))
+        XCTAssertTrue(sema.symbols.symbol(asSequenceSymbol)?.flags.contains(.synthetic) == true)
+        XCTAssertEqual(sema.symbols.externalLinkName(for: asSequenceSymbol), "kk_optional_asSequence")
+
+        let functionTParamSymbol = try XCTUnwrap(asSequenceSignature.typeParameterSymbols.first)
+        let functionTType = sema.types.make(.typeParam(TypeParamType(
+            symbol: functionTParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = sema.types.make(.classType(ClassType(
+            classSymbol: optionalSymbol,
+            args: [.out(functionTType)],
+            nullability: .nonNull
+        )))
+        let sequenceSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: ["kotlin", "sequences", "Sequence"].map { interner.intern($0) })
+        )
+        let sequenceType = sema.types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
+            args: [.out(functionTType)],
+            nullability: .nonNull
+        )))
+
+        XCTAssertEqual(asSequenceSignature.receiverType, receiverType)
+        XCTAssertEqual(asSequenceSignature.parameterTypes, [])
+        XCTAssertEqual(asSequenceSignature.returnType, sequenceType)
+        XCTAssertEqual(asSequenceSignature.typeParameterSymbols, [functionTParamSymbol])
+        XCTAssertEqual(asSequenceSignature.classTypeParameterCount, 0)
+    }
+
+    func testOptionalAsSequenceResolvesInSource() throws {
+        let source = """
+        import java.util.Optional
+        import kotlin.jvm.optionals.asSequence
+
+        fun probe(optional: Optional<String>): Sequence<String> {
+            return optional.asSequence()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(ctx.diagnostics.diagnostics.isEmpty)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let asSequenceCall = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "asSequence"
+            })
+            let chosenAsSequence = try XCTUnwrap(
+                sema.bindings.callBinding(for: asSequenceCall)?.chosenCallee
+            )
+            XCTAssertEqual(
+                sema.symbols.externalLinkName(for: chosenAsSequence),
+                "kk_optional_asSequence"
+            )
+        }
+    }
 }

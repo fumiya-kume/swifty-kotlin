@@ -571,6 +571,7 @@ extension CallLowerer {
             let sortedName = interner.intern("sorted")
             let sortedByName = interner.intern("sortedBy")
             let sortedDescendingName = interner.intern("sortedDescending")
+            let joinToName = interner.intern("joinTo")
             let joinToStringName = interner.intern("joinToString")
             let sumOfName = interner.intern("sumOf")
             let sumByName = interner.intern("sumBy")
@@ -627,6 +628,8 @@ extension CallLowerer {
                 default:
                     return nil
                 }
+            case joinToName:
+                return interner.intern("kk_sequence_joinTo")
             case joinToStringName:
                 return interner.intern("kk_sequence_joinToString")
             case sumOfName:
@@ -715,6 +718,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_first")
             case firstOrNullName:
                 return interner.intern("kk_sequence_firstOrNull")
+            case interner.intern("randomOrNull"):
+                return interner.intern("kk_sequence_randomOrNull")
             case lastName:
                 return interner.intern(useIterableRuntimeForCollectionFallback ? "kk_iterable_last" : "kk_sequence_last")
             case interner.intern("lastOrNull"):
@@ -750,6 +755,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_maxByOrNull")
             case interner.intern("minOf"):
                 return interner.intern("kk_sequence_minOf")
+            case interner.intern("maxOfOrNull"):
+                return interner.intern("kk_sequence_maxOfOrNull")
             case interner.intern("maxOf"):
                 return interner.intern("kk_sequence_maxOf")
             case interner.intern("unzip"):
