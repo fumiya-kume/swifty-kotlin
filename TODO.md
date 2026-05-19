@@ -246,7 +246,7 @@
 - [ ] STDLIB-REFLECT-TYPE-010: `KMutableProperty0` インターフェースの実装
 - [x] STDLIB-REFLECT-TYPE-011: `KMutableProperty1` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-013: `KParameter` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-015: `KProperty0` インターフェースの実装
+- [x] STDLIB-REFLECT-TYPE-015: `KProperty0` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-016: `KProperty1` インターフェースの実装
 - [x] STDLIB-REFLECT-TYPE-022: `KVisibility` enum の実装
 
@@ -760,7 +760,7 @@
 - [x] STDLIB-JS-PROP-004: `JsClass<T>.kotlin` extension property を追加する
 - [x] STDLIB-JS-FN-001: `Date.Companion.now()` を追加する
 - [x] STDLIB-JS-FN-002: `dateLocaleOptions(init)` を追加する
-- [ ] STDLIB-JS-FN-004: `JsReference<T>.get()` を追加する
+- [x] STDLIB-JS-FN-004: `JsReference<T>.get()` を追加する
 - [ ] STDLIB-JS-FN-005: `JsArray<T>.get(index)` を追加する
 - [x] STDLIB-JS-FN-006: `RegExpMatch.get(index)` を追加する
 - [ ] STDLIB-JS-FN-007: `dynamic.iterator()` を追加する

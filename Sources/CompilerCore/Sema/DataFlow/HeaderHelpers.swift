@@ -1060,8 +1060,8 @@ extension DataFlowSemaPhase {
         registerSyntheticJsJsonStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsTypeOfStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticTODOAndIOStubs(symbols: symbols, types: types, interner: interner)
-        // Function interfaces are registered by TODO/IO stubs, so patch KProperty2's Function2 supertype here.
-        patchKProperty2FunctionSupertype(symbols: symbols, types: types, interner: interner)
+        // Function interfaces are registered by TODO/IO stubs, so patch KProperty function supertypes here.
+        patchKPropertyFunctionSupertypes(symbols: symbols, types: types, interner: interner)
         patchKMutableProperty0FunctionSupertype(symbols: symbols, types: types, interner: interner)
         patchKMutableProperty1FunctionSupertype(symbols: symbols, types: types, interner: interner)
         registerSyntheticCloseableStubs(symbols: symbols, types: types, interner: interner)
@@ -1131,6 +1131,7 @@ extension DataFlowSemaPhase {
         registerSyntheticJsExternalInheritorsOnlyStubs(symbols: symbols, interner: interner)
         registerSyntheticJsArrayStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsClassStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsReferenceStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsSymbolStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsCollectionsMapStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsCollectionsSetStubs(symbols: symbols, types: types, interner: interner)
