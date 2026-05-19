@@ -287,6 +287,7 @@ private extension StdlibSurfaceSpec {
         sequence("associateWith", 1, "kk_sequence_associateWith", returnStrategy: .map, lambdaExpectation: .receiverElement(argumentIndex: 0, returnStrategy: .any)),
         sequence("randomOrNull", 0, "kk_sequence_randomOrNull", returnStrategy: .nullableReceiverElement, lambdaExpectation: .none),
         sequence("chunked", 1, "kk_sequence_chunked", returnStrategy: .sequence, lambdaExpectation: .none),
+        sequence("constrainOnce", 0, "kk_sequence_constrainOnce", returnStrategy: .sequence, lambdaExpectation: .none),
         sequence("shuffled", 0, "kk_sequence_shuffled", returnStrategy: .sequence, lambdaExpectation: .none),
         sequence("shuffled", 1, "kk_sequence_shuffled_random", returnStrategy: .sequence, lambdaExpectation: .none),
         sequence("sumOf", 1, "kk_sequence_sumOf", returnStrategy: .int, lambdaExpectation: .receiverElement(argumentIndex: 0, returnStrategy: .int)),

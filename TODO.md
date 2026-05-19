@@ -274,7 +274,7 @@
 - [ ] STDLIB-SEQ-FN-010: `associateWithTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-011: `averageOf` 関数の実装
 - [ ] STDLIB-SEQ-FN-012: `chunked` 関数の実装
-- [ ] STDLIB-SEQ-FN-013: `constrainOnce` 関数の実装
+- [x] STDLIB-SEQ-FN-013: `constrainOnce` 関数の実装
 - [ ] STDLIB-SEQ-FN-014: `contains` 関数の実装
 - [ ] STDLIB-SEQ-FN-015: `count` 関数の実装
 - [ ] STDLIB-SEQ-FN-016: `distinct` 関数の実装
