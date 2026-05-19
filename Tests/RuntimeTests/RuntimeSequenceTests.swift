@@ -469,6 +469,14 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(listElements(kk_map_get(result, 0)), [4])
     }
 
+    func testIndexOfReturnsFirstMatchingIndexOrMinusOne() {
+        let seq = makeSequence([10, 20, 10, 30])
+
+        XCTAssertEqual(kk_sequence_indexOf(seq, 10), 0)
+        XCTAssertEqual(kk_sequence_indexOf(seq, 20), 1)
+        XCTAssertEqual(kk_sequence_indexOf(seq, 99), -1)
+    }
+
     func testAssociateToThrowingLambdaReturnsSentinelAndSetsOutThrown() {
         let seq = makeSequence([1, 2, 3])
         let dest = registerRuntimeObject(RuntimeMapBox(keys: [], values: []))

@@ -305,7 +305,7 @@
 - [ ] STDLIB-SEQ-FN-044: `forEach` 関数の実装
 - [ ] STDLIB-SEQ-FN-046: `groupBy` 関数の実装
 - [ ] STDLIB-SEQ-FN-047: `groupByTo` 関数の実装
-- [ ] STDLIB-SEQ-FN-048: `indexOf` 関数の実装
+- [x] STDLIB-SEQ-FN-048: `indexOf` 関数の実装
 - [ ] STDLIB-SEQ-FN-049: `indexOfFirst` 関数の実装
 - [ ] STDLIB-SEQ-FN-050: `indexOfLast` 関数の実装
 - [ ] STDLIB-SEQ-FN-051: `intersect` 関数の実装
