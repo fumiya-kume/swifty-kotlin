@@ -1474,6 +1474,53 @@ extension DataFlowSemaPhase {
             }
         }
 
+        // associateBy(keySelector): Map<K, T>
+        if let mapSymbol = symbols.lookup(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("Map"),
+        ]) {
+            let associateByName = interner.intern("associateBy")
+            let associateByFQName = sequenceFQName + [associateByName]
+            if symbols.lookup(fqName: associateByFQName) == nil {
+                let keyTypeParamName = interner.intern("K")
+                let keyTypeParamSymbol = symbols.define(
+                    kind: .typeParameter,
+                    name: keyTypeParamName,
+                    fqName: associateByFQName + [keyTypeParamName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
+                let keyType = types.make(.typeParam(TypeParamType(symbol: keyTypeParamSymbol, nullability: .nonNull)))
+                let keySelectorType = types.make(.functionType(FunctionType(
+                    params: [typeParamType],
+                    returnType: keyType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                let returnType = types.make(.classType(ClassType(
+                    classSymbol: mapSymbol,
+                    args: [.out(keyType), .out(typeParamType)],
+                    nullability: .nonNull
+                )))
+                registerSequenceMemberStub(
+                    named: "associateBy",
+                    externalLinkName: "kk_sequence_associateBy",
+                    receiverType: receiverType,
+                    parameters: [("keySelector", keySelectorType)],
+                    returnType: returnType,
+                    sequenceSymbol: sequenceSymbol,
+                    sequenceFQName: sequenceFQName,
+                    typeParamSymbol: typeParamSymbol,
+                    symbols: symbols,
+                    interner: interner,
+                    canThrow: true,
+                    additionalTypeParameterSymbols: [keyTypeParamSymbol]
+                )
+            }
+        }
+
         // associateWith(valueSelector): Map<T, R>
         if let mapSymbol = symbols.lookup(fqName: [
             interner.intern("kotlin"),
