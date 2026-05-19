@@ -1818,6 +1818,84 @@ extension DataFlowSemaPhase {
             canThrow: true
         )
 
+        // windowed(size, step, partialWindows, transform): Sequence<R>
+        do {
+            let windowedName = interner.intern("windowed")
+            let windowedFQName = sequenceFQName + [windowedName]
+            let rName = interner.intern("R")
+            let rFQName = windowedFQName + [interner.intern("transform"), rName]
+            let rSymbol: SymbolID = if let existing = symbols.lookup(fqName: rFQName) {
+                existing
+            } else {
+                symbols.define(
+                    kind: .typeParameter,
+                    name: rName,
+                    fqName: rFQName,
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
+            }
+            let rType = types.make(.typeParam(TypeParamType(
+                symbol: rSymbol,
+                nullability: .nonNull
+            )))
+            let invariantWindowListType = nominalCollectionType([
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("List"),
+            ], elementType: typeParamType, invariant: true)
+            let transformType = types.make(.functionType(FunctionType(
+                params: [invariantWindowListType],
+                returnType: rType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let sequenceRType = types.make(.classType(ClassType(
+                classSymbol: sequenceSymbol,
+                args: [.out(rType)],
+                nullability: .nonNull
+            )))
+            registerSequenceMemberStub(
+                named: "windowed",
+                externalLinkName: "kk_sequence_windowed_transform",
+                receiverType: receiverType,
+                parameters: [
+                    ("size", types.intType),
+                    ("step", types.intType),
+                    ("partialWindows", types.booleanType),
+                    ("transform", transformType),
+                ],
+                returnType: sequenceRType,
+                sequenceSymbol: sequenceSymbol,
+                sequenceFQName: sequenceFQName,
+                typeParamSymbol: typeParamSymbol,
+                symbols: symbols,
+                interner: interner,
+                canThrow: true,
+                additionalTypeParameterSymbols: [rSymbol]
+            )
+        }
+
+        // STDLIB-SEQ-FN-131: windowed(size, step, partialWindows): Sequence<List<T>>
+        let windowedReturnType = types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
+            args: [.out(listReturnType)],
+            nullability: .nonNull
+        )))
+        registerSequenceOverloadedMemberStub(
+            named: "windowed",
+            externalLinkName: "kk_sequence_windowed",
+            receiverType: receiverType,
+            parameters: [
+                ("size", types.intType),
+                ("step", types.intType),
+                ("partialWindows", types.booleanType),
+            ],
+            returnType: windowedReturnType,
+            canThrow: false
+        )
+
         // forEachIndexed(action: (Int, T) -> Unit): Unit
         let forEachIndexedActionType = types.make(.functionType(FunctionType(
             params: [types.intType, typeParamType],
