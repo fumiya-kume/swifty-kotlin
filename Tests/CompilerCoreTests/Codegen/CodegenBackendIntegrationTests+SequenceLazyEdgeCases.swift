@@ -397,6 +397,9 @@ extension CodegenBackendIntegrationTests {
 
             val folded = seq.fold(0) { acc, x -> acc + x }
             println(folded)
+
+            val foldedIndexed = seq.foldIndexed(0) { index, acc, x -> acc + index * x }
+            println(foldedIndexed)
         }
         """
 
@@ -420,6 +423,7 @@ extension CodegenBackendIntegrationTests {
                 -1
                 15
                 15
+                40
                 """ + "\n"
             )
         }

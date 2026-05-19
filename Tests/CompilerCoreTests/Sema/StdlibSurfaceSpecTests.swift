@@ -127,6 +127,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("none", 1),
             sequence("firstNotNullOf", 1),
             sequence("firstNotNullOfOrNull", 1),
+            sequence("foldIndexed", 2),
             sequence("forEachIndexed", 1),
             sequence("onEach", 1),
             sequence("onEachIndexed", 1),
@@ -174,6 +175,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
                 (.map, ["kotlin", "collections", "Map"], "filterValues", 1),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "groupBy", 1),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "flatMapIndexed", 1),
+                (.sequence, ["kotlin", "sequences", "Sequence"], "foldIndexed", 2),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "firstNotNullOf", 1),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "scanIndexed", 2),
             ]
