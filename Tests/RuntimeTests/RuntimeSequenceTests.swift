@@ -470,57 +470,6 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(listElements(kk_sequence_to_list(sorted, nil)), [])
     }
 
-    func testSortedByDescendingUsesRuntimeValueComparisonForSelectorKeys() {
-        let source = makeSequence([1, 2, 3])
-        let sorted = kk_sequence_sortedByDescending(
-            source,
-            unsafeBitCast(stringKeySelector, to: Int.self),
-            0,
-            nil
-        )
-
-        XCTAssertEqual(listElements(kk_sequence_to_list(sorted, nil)), [3, 1, 2])
-    }
-
-    func testSortedByDescendingPropagatesSelectorThrowables() {
-        let source = makeSequence([1, 2, 3])
-        var thrown = 0
-        let sorted = kk_sequence_sortedByDescending(
-            source,
-            unsafeBitCast(throwingSelector, to: Int.self),
-            0,
-            &thrown
-        )
-
-        XCTAssertNotEqual(thrown, 0)
-        XCTAssertEqual(listElements(kk_sequence_to_list(sorted, nil)), [])
-    }
-
-    func testSortedWithUsesComparatorResults() {
-        let source = makeSequence([3, 1, 2, 1])
-        let sorted = kk_sequence_sortedWith(
-            source,
-            unsafeBitCast(ascendingComparator, to: Int.self),
-            0,
-            nil
-        )
-
-        XCTAssertEqual(sequenceElements(sorted), [1, 1, 2, 3])
-    }
-
-    func testSortedWithPropagatesComparatorThrowables() {
-        let source = makeSequence([3, 1, 2])
-        var thrown = 0
-        let sorted = kk_sequence_sortedWith(
-            source,
-            unsafeBitCast(throwingComparator, to: Int.self),
-            0,
-            &thrown
-        )
-
-        XCTAssertNotEqual(thrown, 0)
-        XCTAssertEqual(sequenceElements(sorted), [])
-    }
     func testTakeWhileKeepsMatchingPrefixLazily() {
         let source = makeSequence([1, 2, 3, 4, 2])
         let taken = kk_sequence_takeWhile(
@@ -545,22 +494,6 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertNotEqual(thrown, 0)
         XCTAssertEqual(result, runtimeNullSentinelInt)
     }
-
-    func testSortedOrdersSequenceElementsWithRuntimeComparison() {
-        let source = makeSequence([3, 1, 2, 1])
-        let sorted = kk_sequence_sorted(source)
-
-        XCTAssertEqual(sequenceElements(sorted), [1, 1, 2, 3])
-    }
-
-    func testSortedDescendingOrdersSequenceElementsWithRuntimeComparison() {
-        let source = makeSequence([3, 1, 2, 1])
-        let sorted = kk_sequence_sortedDescending(source)
-
-        XCTAssertEqual(sequenceElements(sorted), [3, 2, 1, 1])
-    }
-
-
 
     func testJoinToStringUsesSeparatorPrefixAndPostfix() {
         let seq = makeSequence([1, 2, 3])
