@@ -94,6 +94,7 @@ extension ABIMismatchTests {
             "kk_path_isSameFileAs",
             "kk_path_isSymbolicLink",
             "kk_path_isWritable",
+            "kk_path_getOwner",
             "kk_path_getPosixFilePermissions",
             "kk_path_moveTo_overwrite",
             "kk_path_readBytes",
