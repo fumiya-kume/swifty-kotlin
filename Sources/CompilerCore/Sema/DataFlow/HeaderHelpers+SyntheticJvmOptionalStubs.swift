@@ -74,6 +74,14 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerOptionalGetOrNull(
+            optionalSymbol: optionalSymbol,
+            packageFQName: kotlinJvmOptionalsPkg,
+            packageSymbol: optionalsPkgSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
     }
 
     private func registerOptionalToCollection(
@@ -279,6 +287,83 @@ extension DataFlowSemaPhase {
                 valueParameterSymbols: [defaultValueSymbol],
                 valueParameterHasDefaultValues: [false],
                 valueParameterIsVararg: [false],
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 0
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerOptionalGetOrNull(
+        optionalSymbol: SymbolID,
+        packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern("getOrNull")
+        let functionFQName = packageFQName + [functionName]
+
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = functionFQName + [typeParamName]
+        let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let tType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let nullableTType = types.makeNullable(tType)
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: optionalSymbol,
+            args: [.out(tType)],
+            nullability: .nonNull
+        )))
+
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+            return signature.receiverType == receiverType
+                && signature.parameterTypes.isEmpty
+                && signature.returnType == nullableTType
+                && signature.typeParameterSymbols == [typeParamSymbol]
+                && signature.classTypeParameterCount == 0
+        }) {
+            symbols.setExternalLinkName("kk_optional_getOrNull", for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName("kk_optional_getOrNull", for: functionSymbol)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: nullableTType,
+                isSuspend: false,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: [],
+                valueParameterIsVararg: [],
                 typeParameterSymbols: [typeParamSymbol],
                 classTypeParameterCount: 0
             ),
