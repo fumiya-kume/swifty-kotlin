@@ -967,6 +967,42 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        if callee == lookup.mapNotNullToName,
+           arguments.count == 2 || arguments.count == 3,
+           sequenceExprIDs.contains(receiver.rawValue)
+        {
+            let destID = arguments[0]
+            let lambdaID = arguments[1]
+            let closureRawExpr: KIRExprID
+            if arguments.count == 3 {
+                closureRawExpr = arguments[2]
+            } else {
+                let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                closureRawExpr = zeroExpr
+            }
+            let hofResult = emitHOFCall(
+                kkName: lookup.kkSequenceMapNotNullToName,
+                receiver: receiver,
+                arguments: [destID, lambdaID, closureRawExpr],
+                result: result,
+                origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult,
+                module: module,
+                loweredBody: &loweredBody
+            )
+            if let result {
+                if listExprIDs.contains(destID.rawValue) {
+                    listExprIDs.insert(result.rawValue)
+                    listExprIDs.insert(hofResult.rawValue)
+                } else if setExprIDs.contains(destID.rawValue) {
+                    setExprIDs.insert(result.rawValue)
+                    setExprIDs.insert(hofResult.rawValue)
+                }
+            }
+            return true
+        }
+
         // filterIndexedTo on sequence (2 args: destination, indexed-lambda)
         if callee == lookup.filterIndexedToName,
            arguments.count == 2 || arguments.count == 3,
