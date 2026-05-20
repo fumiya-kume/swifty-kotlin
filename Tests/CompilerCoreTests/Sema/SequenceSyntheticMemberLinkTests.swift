@@ -1626,6 +1626,11 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
         fun selectedValue(): Int {
             val values = sequenceOf(1, 2, 3)
             return values.elementAtOrElse(4) { index -> index * 10 }
+    func testSequencePlusElementResolvesInCallExpressions() throws {
+        let source = """
+        fun appendValue(): Sequence<Int> {
+            val values = sequenceOf(1, 2, 3)
+            return values.plusElement(4)
         }
         """
 
@@ -1642,6 +1647,11 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
 
             let sema = try XCTUnwrap(ctx.sema)
             let memberFQName = ["kotlin", "sequences", "Sequence", "elementAtOrElse"]
+                "Expected Sequence.plusElement surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "sequences", "Sequence", "plusElement"]
                 .map { ctx.interner.intern($0) }
             let links = Set(
                 sema.symbols.lookupAll(fqName: memberFQName)
