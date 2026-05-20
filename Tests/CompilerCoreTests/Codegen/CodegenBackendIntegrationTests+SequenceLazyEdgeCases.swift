@@ -271,6 +271,30 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testSequenceDistinctByPreservesFirstKeyOrder() throws {
+        let source = """
+        fun main() {
+            val result = sequenceOf(3, 1, 2, 5, 4, 7).distinctBy { it % 2 }.toList()
+            println(result)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceDistinctBy",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[3, 2]\n")
+        }
+    }
+
     // MARK: - zip stops at shorter sequence
 
     func testSequenceZipStopsAtShorterSequence() throws {
@@ -325,6 +349,35 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    // MARK: - filterIndexed keeps indexed matches
+
+    func testSequenceFilterIndexedKeepsIndexedMatches() throws {
+        let source = """
+        fun main() {
+            val result = sequenceOf(10, 20, 30, 40)
+                .filterIndexed { index, value -> index % 2 == 0 || value > 30 }
+                .toList()
+            println(result)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceFilterIndexed",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[10, 30, 40]\n")
+        }
+    }
+
+
     // MARK: - filterIsInstance keeps matching runtime types
 
     func testSequenceFilterIsInstanceKeepsMatchingTypes() throws {
@@ -359,6 +412,8 @@ extension CodegenBackendIntegrationTests {
             val seq = sequenceOf(1, 2, 3, 4, 5)
 
             println(seq.count())
+            println(seq.indexOf(3))
+            println(seq.indexOf(99))
 
             var sum = 0
             seq.forEach { sum += it }
@@ -366,6 +421,12 @@ extension CodegenBackendIntegrationTests {
 
             val folded = seq.fold(0) { acc, x -> acc + x }
             println(folded)
+
+            val foldedIndexed = seq.foldIndexed(0) { index, acc, x -> acc + index * x }
+            println(foldedIndexed)
+            val grouped = seq.groupBy { if (it % 2 == 0) "even" else "odd" }
+            println(grouped["odd"])
+            println(grouped["even"])
         }
         """
 
@@ -385,8 +446,13 @@ extension CodegenBackendIntegrationTests {
                 normalizedStdout,
                 """
                 5
+                2
+                -1
                 15
                 15
+                40
+                [1, 3, 5]
+                [2, 4]
                 """ + "\n"
             )
         }
@@ -521,6 +587,32 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    // MARK: - asIterable() from sequence
+
+    func testSequenceAsIterableToList() throws {
+        let source = """
+        fun main() {
+            val iterable = sequenceOf(1, 2, 3).asIterable()
+            println(iterable.toList())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceAsIterableToList",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[1, 2, 3]\n")
+        }
+    }
+
     // MARK: - constrainOnce throws on second iteration
 
     func testConstrainOnceThrowsOnSecondIteration() throws {
@@ -562,7 +654,6 @@ extension CodegenBackendIntegrationTests {
     // MARK: - any/all short-circuit
 
     func testSequenceAnyShortCircuits() throws {
-        throw XCTSkip("Sequence any() short-circuit not yet implemented")
         let source = """
         var counter = 0
 
@@ -597,7 +688,6 @@ extension CodegenBackendIntegrationTests {
     }
 
     func testSequenceAllShortCircuits() throws {
-        throw XCTSkip("Sequence all() short-circuit not yet implemented")
         let source = """
         var counter = 0
 
@@ -632,7 +722,6 @@ extension CodegenBackendIntegrationTests {
     }
 
     func testSequenceFindShortCircuits() throws {
-        throw XCTSkip("Sequence find() short-circuit not yet implemented")
         let source = """
         var counter = 0
 
@@ -663,6 +752,30 @@ extension CodegenBackendIntegrationTests {
                 true
                 """ + "\n"
             )
+        }
+    }
+
+    func testSequenceFilterNotKeepsRejectedPredicateValues() throws {
+        let source = """
+        fun main() {
+            val values = sequenceOf(1, 2, 3, 4, 5)
+            println(values.filterNot { value -> value % 2 == 0 }.toList())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceFilterNotRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[1, 3, 5]\n")
         }
     }
 
