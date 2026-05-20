@@ -813,6 +813,13 @@ extension RuntimeSequenceTests {
         }
 
         let result = kk_sequence_foldIndexed(
+            seq,
+            0,
+            unsafeBitCast(foldFn, to: Int.self),
+            0,
+            nil
+        )
+
         XCTAssertEqual(result, 42)
     }
 
