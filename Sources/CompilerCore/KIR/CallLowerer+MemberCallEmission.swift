@@ -394,12 +394,24 @@ extension CallLowerer {
                 finalArguments.insert(zeroExpr, at: 3)
             }
         }
-        if loweredCallee == interner.intern("kk_sequence_windowed"),
-           hasHOFLambdaArg
+        if loweredCallee == interner.intern("kk_sequence_windowed_transform")
+            || (loweredCallee == interner.intern("kk_sequence_windowed") && hasHOFLambdaArg)
         {
             loweredCallee = interner.intern("kk_sequence_windowed_transform")
             let originalArgumentCount = finalArguments.count
-            if originalArgumentCount == 4 {
+            if originalArgumentCount >= 3 {
+                let lambdaArgIndex = originalArgumentCount - 1
+                let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                    finalArguments[lambdaArgIndex],
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    instructions: &instructions
+                )
+                finalArguments[lambdaArgIndex] = fnPtrExpr
+                finalArguments.append(envPtrExpr)
+            }
+            if originalArgumentCount == 3 {
                 // `windowed(size, transform)` expands to `windowed(size, 1, false, transform)`.
                 let oneExpr = arena.appendExpr(.intLiteral(1), type: sema.types.intType)
                 instructions.append(.constValue(result: oneExpr, value: .intLiteral(1)))
@@ -407,7 +419,7 @@ extension CallLowerer {
                 instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
                 finalArguments.insert(oneExpr, at: 2)
                 finalArguments.insert(zeroExpr, at: 3)
-            } else if originalArgumentCount == 5 {
+            } else if originalArgumentCount == 4 {
                 // `windowed(size, step, transform)` expands to
                 // `windowed(size, step, false, transform)`.
                 let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
@@ -431,7 +443,8 @@ extension CallLowerer {
             finalArguments.append(envPtrExpr)
         }
         if (loweredCallee == interner.intern("kk_sequence_firstNotNullOf")
-            || loweredCallee == interner.intern("kk_sequence_firstNotNullOfOrNull")),
+            || loweredCallee == interner.intern("kk_sequence_firstNotNullOfOrNull")
+            || loweredCallee == interner.intern("kk_sequence_takeLastWhile")),
            finalArguments.count == 2
         {
             let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
@@ -445,6 +458,8 @@ extension CallLowerer {
         }
         if loweredCallee == interner.intern("kk_sequence_filterTo")
             || loweredCallee == interner.intern("kk_sequence_filterNotTo")
+            || loweredCallee == interner.intern("kk_sequence_mapNotNullTo")
+            || loweredCallee == interner.intern("kk_sequence_mapTo")
         {
             if finalArguments.count == 2 {
                 let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
@@ -488,6 +503,20 @@ extension CallLowerer {
             || loweredCallee == interner.intern("kk_list_sumByDouble")
             || loweredCallee == interner.intern("kk_sequence_sumBy")
             || loweredCallee == interner.intern("kk_sequence_sumByDouble")),
+           finalArguments.count == 2
+        {
+            let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                finalArguments[1],
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            finalArguments = [finalArguments[0], fnPtrExpr, envPtrExpr]
+        }
+        if (loweredCallee == interner.intern("kk_sequence_associate")
+            || loweredCallee == interner.intern("kk_sequence_associateBy")
+            || loweredCallee == interner.intern("kk_sequence_associateWith")),
            finalArguments.count == 2
         {
             let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
@@ -804,6 +833,7 @@ extension CallLowerer {
             interner.intern("kk_list_elementAt"),
             interner.intern("kk_list_take"),
             interner.intern("kk_list_takeLast"),
+            interner.intern("kk_sequence_takeLast"),
             interner.intern("kk_list_drop"),
             interner.intern("kk_list_max"),
             interner.intern("kk_list_minBy"),
@@ -876,6 +906,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_sumOf"),
             interner.intern("kk_sequence_sumBy"),
             interner.intern("kk_sequence_sumByDouble"),
+            interner.intern("kk_sequence_takeLastWhile"),
             interner.intern("kk_sequence_firstNotNullOf"),
             interner.intern("kk_sequence_firstNotNullOfOrNull"),
             interner.intern("kk_sequence_associate"),
@@ -890,16 +921,22 @@ extension CallLowerer {
             interner.intern("kk_sequence_firstNotNullOf"),
             interner.intern("kk_sequence_firstNotNullOfOrNull"),
             interner.intern("kk_sequence_mapIndexed"),
+            interner.intern("kk_sequence_filterIndexed"),
             interner.intern("kk_sequence_findLast"),
             interner.intern("kk_sequence_elementAt"),
+            interner.intern("kk_sequence_maxBy"),
             interner.intern("kk_sequence_minByOrNull"),
             interner.intern("kk_sequence_maxByOrNull"),
+            interner.intern("kk_sequence_maxWithOrNull"),
             interner.intern("kk_sequence_minOf"),
+            interner.intern("kk_sequence_minOfOrNull"),
+            interner.intern("kk_sequence_maxOfOrNull"),
             interner.intern("kk_sequence_maxOf"),
             interner.intern("kk_sequence_partition"),
             interner.intern("kk_sequence_associateWith"),
             interner.intern("kk_sequence_associateWithTo"),
             interner.intern("kk_sequence_groupByTo"),
+            interner.intern("kk_sequence_flatMapTo"),
             interner.intern("kk_sequence_ifEmpty"),
             interner.intern("kk_string_ifBlank"),
             interner.intern("kk_string_ifEmpty"),
@@ -907,6 +944,8 @@ extension CallLowerer {
             interner.intern("kk_sequence_first"),
             interner.intern("kk_sequence_last"),
             interner.intern("kk_sequence_firstOrNull"),
+            interner.intern("kk_sequence_singleOrNull"),
+            interner.intern("kk_sequence_randomOrNull"),
             interner.intern("kk_sequence_count"),
             interner.intern("kk_string_firstNotNullOf"),
             interner.intern("kk_string_firstNotNullOfOrNull"),
@@ -922,6 +961,7 @@ extension CallLowerer {
             interner.intern("kk_list_windowed_transform"),
             interner.intern("kk_sequence_chunked_transform"),
             interner.intern("kk_sequence_runningFoldIndexed"),
+            interner.intern("kk_sequence_scanIndexed"),
             interner.intern("kk_array_copyOf_newSize_init"),
             interner.intern("kk_mutable_list_replaceAll"),
             interner.intern("kk_mutable_list_removeIf"),

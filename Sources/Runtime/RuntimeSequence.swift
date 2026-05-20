@@ -61,6 +61,7 @@ final class SequenceTraversalState {
     var takeCounts: [Int: Int] = [:]
     var dropCounts: [Int: Int] = [:]
     var distinctSeen: [Int: [Int]] = [:]
+    var distinctBySeen: [Int: [Int]] = [:]
     var zipIndices: [Int: Int] = [:]
     var chunkedBuffers: [Int: [Int]] = [:]
 }
@@ -226,6 +227,29 @@ private func runtimeSequenceTransformElement(
         }
         seen.append(element)
         state.distinctSeen[stepIndex] = seen
+        runtimeSequenceTransformElement(
+            element,
+            steps: steps,
+            stepIndex: stepIndex + 1,
+            state: state,
+            outThrown: outThrown,
+            yield: yield
+        )
+    case let .distinctByStep(fnPtr, closureRaw):
+        let selector = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+        var thrown = 0
+        let key = maybeUnbox(selector(closureRaw, element, &thrown))
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            state.stop = true
+            return
+        }
+        var seen = state.distinctBySeen[stepIndex] ?? []
+        if seen.contains(where: { runtimeValuesEqual($0, key) }) {
+            return
+        }
+        seen.append(key)
+        state.distinctBySeen[stepIndex] = seen
         runtimeSequenceTransformElement(
             element,
             steps: steps,
@@ -413,11 +437,13 @@ private func runtimeSequenceTransformElement(
             yield: yield
         )
     case let .mapIndexedNotNullStep(fnPtr, closureRaw):
+    case let .filterIndexedStep(fnPtr, closureRaw):
         let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
         let index = state.takeCounts[stepIndex, default: 0]
         state.takeCounts[stepIndex] = index + 1
         var thrown = 0
         let mapped = lambda(closureRaw, index, element, &thrown)
+        let keep = lambda(closureRaw, index, element, &thrown) != 0
         if thrown != 0 {
             outThrown?.pointee = thrown
             state.stop = true
@@ -426,6 +452,9 @@ private func runtimeSequenceTransformElement(
         if let unboxed = runtimeMapNotNullResultValue(mapped) {
             runtimeSequenceTransformElement(
                 unboxed,
+        if keep {
+            runtimeSequenceTransformElement(
+                element,
                 steps: steps,
                 stepIndex: stepIndex + 1,
                 state: state,
@@ -784,6 +813,11 @@ func runtimeTraverseSequenceWithState(
             }
             return
         case .mapStep, .filterStep, .filterNotStep, .takeStep, .dropStep, .distinctStep, .zipStep, .takeWhileStep, .dropWhileStep, .onEachStep, .onEachIndexedStep, .mapNotNullStep, .filterNotNullStep, .filterIsInstanceStep, .requireNoNullsStep, .mapIndexedStep, .mapIndexedNotNullStep, .withIndexStep, .flatMapStep, .flatMapIndexedStep, .chunkedTransformStep, .shuffledStep:
+        case .mapStep, .filterStep, .filterNotStep, .takeStep, .dropStep, .distinctStep,
+             .distinctByStep, .zipStep, .takeWhileStep, .dropWhileStep, .onEachStep,
+             .onEachIndexedStep, .mapNotNullStep, .filterNotNullStep, .filterIsInstanceStep,
+             .filterIndexedStep, .requireNoNullsStep, .mapIndexedStep, .withIndexStep, .flatMapStep,
+             .flatMapIndexedStep, .chunkedTransformStep, .shuffledStep:
             continue
         }
     }
@@ -1030,6 +1064,25 @@ private func applyMapIndexedNotNullStep(_ elements: [Int], fnPtr: Int, closureRa
 }
 
 /// Applies an onEachIndexed transformation: runs a side effect with index and value.
+private func applyFilterIndexedStep(_ elements: [Int], fnPtr: Int, closureRaw: Int, outThrown: UnsafeMutablePointer<Int>?) -> [Int] {
+    var filtered: [Int] = []
+    filtered.reserveCapacity(elements.count)
+    for (idx, elem) in elements.enumerated() {
+        var thrown = 0
+        let keep = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: idx, rhs: elem, outThrown: &thrown) != 0
+        if thrown != 0 {
+            if let outThrown = outThrown {
+                outThrown.pointee = thrown
+            }
+            return []
+        }
+        if keep {
+            filtered.append(elem)
+        }
+    }
+    return filtered
+}
+
 private func applyOnEachIndexedStep(_ elements: [Int], fnPtr: Int, closureRaw: Int, outThrown: UnsafeMutablePointer<Int>?) -> [Int] {
     for (idx, elem) in elements.enumerated() {
         var thrown = 0
@@ -1066,8 +1119,8 @@ private func applyFlatMapStep(_ elements: [Int], fnPtr: Int, closureRaw: Int, ou
             }
             return []
         }
-        if let subList = runtimeListBox(from: subRaw) {
-            result.append(contentsOf: subList.elements)
+        if let subElements = runtimeCollectionElements(from: subRaw) {
+            result.append(contentsOf: subElements)
         } else if let subSeq = runtimeSequenceBox(from: subRaw) {
             result.append(contentsOf: evaluateSequence(subSeq, outThrown: outThrown))
             if let outThrown, outThrown.pointee != 0 { return [] }
@@ -1283,6 +1336,23 @@ private func evaluateSequence(
             var seen = Set<RuntimeElementKey>()
             seen.reserveCapacity(elements.count)
             elements = elements.filter { seen.insert(RuntimeElementKey(value: $0)).inserted }
+        case let .distinctByStep(fnPtr, closureRaw):
+            let selector = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+            var seen = Set<RuntimeElementKey>()
+            seen.reserveCapacity(elements.count)
+            var distinct: [Int] = []
+            for elem in elements {
+                var thrown = 0
+                let key = maybeUnbox(selector(closureRaw, elem, &thrown))
+                if thrown != 0 {
+                    outThrown?.pointee = thrown
+                    return []
+                }
+                if seen.insert(RuntimeElementKey(value: key)).inserted {
+                    distinct.append(elem)
+                }
+            }
+            elements = distinct
         case let .zipStep(otherElements):
             let minCount = min(elements.count, otherElements.count)
             var zipped: [Int] = []
@@ -1322,6 +1392,8 @@ private func evaluateSequence(
             elements = applyMapIndexedStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown)
         case let .mapIndexedNotNullStep(fnPtr, closureRaw):
             elements = applyMapIndexedNotNullStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown)
+        case let .filterIndexedStep(fnPtr, closureRaw):
+            elements = applyFilterIndexedStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown)
         case .withIndexStep:
             elements = applyWithIndexStep(elements)
         case let .flatMapStep(fnPtr, closureRaw):
@@ -1486,6 +1558,27 @@ public func kk_sequence_take(_ seqRaw: Int, _ count: Int) -> Int {
     return registerRuntimeObject(newSeq)
 }
 
+@_cdecl("kk_sequence_takeLast")
+public func kk_sequence_takeLast(_ seqRaw: Int, _ count: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    if count < 0 {
+        outThrown?.pointee = runtimeAllocateIllegalArgumentException(
+            message: "Requested element count \(count) is less than zero."
+        )
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    var elements: [Int] = []
+    _ = runtimeTraverseSequenceSource(seqRaw, caller: #function, outThrown: outThrown) { elem in
+        elements.append(elem)
+        return true
+    }
+    if let outThrown, outThrown.pointee != 0 {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    let clamped = max(0, min(count, elements.count))
+    return registerRuntimeObject(RuntimeListBox(elements: Array(elements.suffix(clamped))))
+}
+
 @_cdecl("kk_sequence_drop")
 public func kk_sequence_drop(_ seqRaw: Int, _ count: Int) -> Int {
     guard let seq = runtimeSequenceBox(from: seqRaw) else {
@@ -1514,6 +1607,27 @@ public func kk_sequence_distinct(_ seqRaw: Int) -> Int {
     }
     var newSteps = seq.steps
     newSteps.append(.distinctStep)
+    let newSeq = RuntimeSequenceBox(steps: newSteps, constrainOnceState: seq.constrainOnceState)
+    return registerRuntimeObject(newSeq)
+}
+
+@_cdecl("kk_sequence_distinctBy")
+public func kk_sequence_distinctBy(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let seq = runtimeSequenceBox(from: seqRaw) else {
+        let sourceElements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+        let newSeq = RuntimeSequenceBox(steps: [
+            .source(elements: sourceElements),
+            .distinctByStep(fnPtr: fnPtr, closureRaw: closureRaw),
+        ])
+        return registerRuntimeObject(newSeq)
+    }
+    var newSteps = seq.steps
+    newSteps.append(.distinctByStep(fnPtr: fnPtr, closureRaw: closureRaw))
     let newSeq = RuntimeSequenceBox(steps: newSteps, constrainOnceState: seq.constrainOnceState)
     return registerRuntimeObject(newSeq)
 }
@@ -1549,6 +1663,38 @@ public func kk_sequence_takeWhile(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int
     newSteps.append(.takeWhileStep(fnPtr: fnPtr, closureRaw: closureRaw))
     let newSeq = RuntimeSequenceBox(steps: newSteps, constrainOnceState: seq.constrainOnceState)
     return registerRuntimeObject(newSeq)
+}
+
+@_cdecl("kk_sequence_takeLastWhile")
+public func kk_sequence_takeLastWhile(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    var elements: [Int] = []
+    _ = runtimeTraverseSequenceSource(seqRaw, caller: #function, outThrown: outThrown) { elem in
+        elements.append(elem)
+        return true
+    }
+    if let outThrown, outThrown.pointee != 0 {
+        return runtimeExceptionCaughtSentinel
+    }
+    let predicate = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var count = 0
+    for elem in elements.reversed() {
+        var thrown = 0
+        let predicateResult = predicate(closureRaw, elem, &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        if maybeUnbox(predicateResult) == 0 {
+            break
+        }
+        count += 1
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: Array(elements.suffix(count))))
 }
 
 @_cdecl("kk_sequence_filterNot")
@@ -1753,6 +1899,8 @@ public func kk_sequence_mapIndexed(
 
 @_cdecl("kk_sequence_mapIndexedNotNull")
 public func kk_sequence_mapIndexedNotNull(
+@_cdecl("kk_sequence_filterIndexed")
+public func kk_sequence_filterIndexed(
     _ seqRaw: Int,
     _ fnPtr: Int,
     _ closureRaw: Int,
@@ -1763,11 +1911,13 @@ public func kk_sequence_mapIndexedNotNull(
         let newSeq = RuntimeSequenceBox(steps: [
             .source(elements: sourceElements),
             .mapIndexedNotNullStep(fnPtr: fnPtr, closureRaw: closureRaw),
+            .filterIndexedStep(fnPtr: fnPtr, closureRaw: closureRaw),
         ])
         return registerRuntimeObject(newSeq)
     }
     var newSteps = seq.steps
     newSteps.append(.mapIndexedNotNullStep(fnPtr: fnPtr, closureRaw: closureRaw))
+    newSteps.append(.filterIndexedStep(fnPtr: fnPtr, closureRaw: closureRaw))
     let newSeq = RuntimeSequenceBox(steps: newSteps, constrainOnceState: seq.constrainOnceState)
     return registerRuntimeObject(newSeq)
 }
@@ -2090,6 +2240,20 @@ public func kk_sequence_firstOrNull(_ seqRaw: Int, _ outThrown: UnsafeMutablePoi
     }
     if let outThrown, outThrown.pointee != 0 { return runtimeNullSentinelInt }
     return found ? result : runtimeNullSentinelInt
+}
+
+@_cdecl("kk_sequence_randomOrNull")
+public func kk_sequence_randomOrNull(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let elements = runtimeSequenceSourceElementsOrThrow(
+        from: seqRaw,
+        caller: #function,
+        outThrown: outThrown
+    ) else {
+        return runtimeNullSentinelInt
+    }
+    if let outThrown, outThrown.pointee != 0 { return runtimeNullSentinelInt }
+    return elements.randomElement() ?? runtimeNullSentinelInt
 }
 
 @_cdecl("kk_sequence_last")
@@ -2820,6 +2984,27 @@ public func kk_sequence_toSet(_ seqRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(collected)))
 }
 
+@_cdecl("kk_sequence_toSortedSet")
+public func kk_sequence_toSortedSet(_ seqRaw: Int) -> Int {
+    var collected: [Int] = []
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        runtimeTraverseSequence(seq, outThrown: nil) { elem in
+            collected.append(elem)
+            return true
+        }
+    } else {
+        collected = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    }
+    let sorted = collected.enumerated().sorted { lhs, rhs in
+        let comparison = runtimeCompareValues(lhs.element, rhs.element)
+        if comparison != 0 {
+            return comparison < 0
+        }
+        return lhs.offset < rhs.offset
+    }.map(\.element)
+    return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(sorted)))
+}
+
 @_cdecl("kk_sequence_toMap")
 public func kk_sequence_toMap(_ seqRaw: Int) -> Int {
     var collected: [Int] = []
@@ -3080,4 +3265,11 @@ public func kk_sequence_minus(_ seqRaw: Int, _ element: Int) -> Int {
     }
     let newSeq = RuntimeSequenceBox(steps: [.source(elements: result)])
     return registerRuntimeObject(newSeq)
+}
+
+@_cdecl("kk_sequence_union")
+public func kk_sequence_union(_ seqRaw: Int, _ otherRaw: Int) -> Int {
+    let selfElements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    let otherElements = runtimeUnboxCollectionElements(otherRaw)
+    return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(selfElements + otherElements)))
 }

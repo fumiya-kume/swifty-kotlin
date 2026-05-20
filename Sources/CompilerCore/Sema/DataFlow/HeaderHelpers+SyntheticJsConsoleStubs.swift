@@ -30,6 +30,12 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(consoleType, for: consoleSymbol)
+        registerJsConsoleProperty(
+            packageFQName: kotlinJsPkg,
+            returnType: consoleType,
+            symbols: symbols,
+            interner: interner
+        )
 
         registerJsConsoleMember(
             named: "dir",
@@ -53,6 +59,35 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
         }
+    }
+
+    private func registerJsConsoleProperty(
+        packageFQName: [InternedString],
+        returnType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let propertyName = interner.intern("console")
+        let propertyFQName = packageFQName + [propertyName]
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbol in
+            symbols.symbol(symbol)?.kind == .property
+        }) {
+            symbols.setPropertyType(returnType, for: existing)
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: propertySymbol)
+        }
+        symbols.setPropertyType(returnType, for: propertySymbol)
     }
 
     private func registerJsConsoleMember(

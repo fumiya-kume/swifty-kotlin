@@ -419,6 +419,7 @@ enum SequenceStepKind {
     case nullableGenerator(fnPtr: Int, closureRaw: Int)
     case dropStep(count: Int)
     case distinctStep
+    case distinctByStep(fnPtr: Int, closureRaw: Int)
     case zipStep(otherElements: [Int])
     case takeWhileStep(fnPtr: Int, closureRaw: Int)
     case dropWhileStep(fnPtr: Int, closureRaw: Int)
@@ -431,6 +432,7 @@ enum SequenceStepKind {
     case requireNoNullsStep
     case mapIndexedStep(fnPtr: Int, closureRaw: Int)
     case mapIndexedNotNullStep(fnPtr: Int, closureRaw: Int)
+    case filterIndexedStep(fnPtr: Int, closureRaw: Int)
     case withIndexStep
     case flatMapStep(fnPtr: Int, closureRaw: Int)
     case flatMapIndexedStep(fnPtr: Int, closureRaw: Int)
