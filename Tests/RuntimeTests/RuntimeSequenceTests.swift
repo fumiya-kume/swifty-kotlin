@@ -306,6 +306,11 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertNotEqual(thrown, 0)
     }
 
+    func testSumAccumulatesIntElements() {
+        XCTAssertEqual(kk_sequence_sum(makeSequence([1, 2, 3, 4])), 10)
+        XCTAssertEqual(kk_sequence_sum(makeSequence([])), 0)
+    }
+
     func testSumByAccumulatesSelectorResults() {
         var thrown = 0
         let result = kk_sequence_sumBy(

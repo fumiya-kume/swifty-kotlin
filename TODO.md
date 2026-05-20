@@ -373,7 +373,7 @@
 - [ ] STDLIB-SEQ-FN-113: `sortedDescending` 関数の実装
 - [ ] STDLIB-SEQ-FN-114: `sortedWith` 関数の実装
 - [ ] STDLIB-SEQ-FN-115: `subtract` 関数の実装
-- [ ] STDLIB-SEQ-FN-116: `sum` 関数の実装
+- [x] STDLIB-SEQ-FN-116: `sum` 関数の実装
 - [x] STDLIB-SEQ-FN-118: `sumOf` 関数の実装
 - [ ] STDLIB-SEQ-FN-119: `take` 関数の実装
 - [x] STDLIB-SEQ-FN-120: `takeLast` 関数の実装
