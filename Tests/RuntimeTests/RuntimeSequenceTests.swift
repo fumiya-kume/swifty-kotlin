@@ -210,6 +210,10 @@ private let sequenceNegatedSelector: @convention(c) (Int, Int, UnsafeMutablePoin
     -value
 }
 
+private let sequenceMaxWithOrNullNaturalComparator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, lhs, rhs, _ in
+    lhs - rhs
+}
+
 private func runtimeTestStringHandle(_ value: String) -> Int {
     let bytes = Array(value.utf8)
     return bytes.withUnsafeBufferPointer { buffer in
@@ -249,6 +253,28 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
 
         XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
         XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testMinOfOrNullReturnsSmallestSelectedValueAndNullOnEmpty() {
+        var thrown = 0
+        let result = kk_sequence_minOfOrNull(
+            makeSequence([5, 2, 3]),
+            unsafeBitCast(sequenceValueTimesTen, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 20)
+
+        let emptyResult = kk_sequence_minOfOrNull(
+            makeSequence([]),
+            unsafeBitCast(sequenceValueTimesTen, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
     }
 
     func testFirstNotNullOfOrNullReturnsFirstTransformedValue() {
@@ -361,19 +387,41 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
 
     func testMaxOfOrNullReturnsLargestSelectorResultAndNullOnEmpty() {
         var thrown = 0
-        let result = kk_sequence_maxOfOrNull(
-            makeSequence([3, 1, 4, 2]),
-            unsafeBitCast(sequenceNegatedSelector, to: Int.self),
-            0,
-            &thrown
-        )
-
+    let result = kk_sequence_maxOfOrNull(
+        makeSequence([3, 1, 4, 2]),
+        unsafeBitCast(sequenceNegatedSelector, to: Int.self),
+        0,
+        &thrown
+    )
         XCTAssertEqual(thrown, 0)
         XCTAssertEqual(result, -1)
 
         let emptyResult = kk_sequence_maxOfOrNull(
             makeSequence([]),
             unsafeBitCast(sequenceNegatedSelector, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
+    }
+
+    func testMaxWithOrNullReturnsLargestElementAndNullOnEmpty() {
+        var thrown = 0
+        let result = kk_sequence_maxWithOrNull(
+            makeSequence([3, 1, 4, 2]),
+            unsafeBitCast(sequenceMaxWithOrNullNaturalComparator, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 4)
+
+        let emptyResult = kk_sequence_maxWithOrNull(
+            makeSequence([]),
+            unsafeBitCast(sequenceMaxWithOrNullNaturalComparator, to: Int.self),
             0,
             &thrown
         )
@@ -457,6 +505,13 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
 
         XCTAssertNotEqual(thrown, 0)
         XCTAssertEqual(result, runtimeNullSentinelInt)
+    }
+
+    func testSortedOrdersSequenceElementsWithRuntimeComparison() {
+        let source = makeSequence([3, 1, 2, 1])
+        let sorted = kk_sequence_sorted(source)
+
+        XCTAssertEqual(sequenceElements(sorted), [1, 1, 2, 3])
     }
 
     func testJoinToStringUsesSeparatorPrefixAndPostfix() {
@@ -621,6 +676,21 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(mapKeys(result), [1, 0])
         XCTAssertEqual(listElements(kk_map_get(result, 1)), [100, 1, 3])
         XCTAssertEqual(listElements(kk_map_get(result, 0)), [4])
+    }
+
+    func testGroupByGroupsElementsIntoNewMap() {
+        let seq = makeSequence([1, 2, 3, 4, 5])
+
+        let result = kk_sequence_groupBy(
+            seq,
+            unsafeBitCast(sequenceParitySelector, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(mapKeys(result), [1, 0])
+        XCTAssertEqual(listElements(kk_map_get(result, 1)), [1, 3, 5])
+        XCTAssertEqual(listElements(kk_map_get(result, 0)), [2, 4])
     }
 
     func testIndexOfReturnsFirstMatchingIndexOrMinusOne() {
