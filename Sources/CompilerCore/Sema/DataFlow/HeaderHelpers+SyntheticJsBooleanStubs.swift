@@ -1,8 +1,8 @@
 import Foundation
 
-/// Synthetic Kotlin/JS `JsNumber` external class surface.
+/// Synthetic Kotlin/JS `JsBoolean` external class surface.
 extension DataFlowSemaPhase {
-    func registerSyntheticJsNumberStubs(
+    func registerSyntheticJsBooleanStubs(
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner
@@ -14,69 +14,45 @@ extension DataFlowSemaPhase {
         )
         let kotlinJsPkgSymbol = symbols.lookup(fqName: kotlinJsPkg)
 
-        let jsNumberSymbol = ensureClassSymbol(
-            named: "JsNumber",
+        let jsBooleanSymbol = ensureClassSymbol(
+            named: "JsBoolean",
             in: kotlinJsPkg,
             symbols: symbols,
             interner: interner
         )
         if let kotlinJsPkgSymbol {
-            symbols.setParentSymbol(kotlinJsPkgSymbol, for: jsNumberSymbol)
+            symbols.setParentSymbol(kotlinJsPkgSymbol, for: jsBooleanSymbol)
         }
 
-        let jsNumberType = types.make(.classType(ClassType(
-            classSymbol: jsNumberSymbol,
+        let jsBooleanType = types.make(.classType(ClassType(
+            classSymbol: jsBooleanSymbol,
             args: [],
             nullability: .nonNull
         )))
-        symbols.setPropertyType(jsNumberType, for: jsNumberSymbol)
+        symbols.setPropertyType(jsBooleanType, for: jsBooleanSymbol)
 
-        let jsAnySymbol = ensureInterfaceSymbol(
-            named: "JsAny",
-            in: kotlinJsPkg,
+        registerJsBooleanToBoolean(
+            ownerSymbol: jsBooleanSymbol,
+            ownerType: jsBooleanType,
             symbols: symbols,
-            interner: interner
-        )
-        if let kotlinJsPkgSymbol {
-            symbols.setParentSymbol(kotlinJsPkgSymbol, for: jsAnySymbol)
-        }
-        symbols.setDirectSupertypes([jsAnySymbol], for: jsNumberSymbol)
-        types.setNominalDirectSupertypes([jsAnySymbol], for: jsNumberSymbol)
-
-        registerJsNumberMember(
-            ownerSymbol: jsNumberSymbol,
-            ownerType: jsNumberType,
-            named: "toDouble",
-            returnType: types.doubleType,
-            externalLinkName: "kk_js_number_toDouble",
-            symbols: symbols,
-            interner: interner
-        )
-        registerJsNumberMember(
-            ownerSymbol: jsNumberSymbol,
-            ownerType: jsNumberType,
-            named: "toInt",
-            returnType: types.intType,
-            externalLinkName: "kk_js_number_toInt",
-            symbols: symbols,
+            types: types,
             interner: interner
         )
     }
 
-    private func registerJsNumberMember(
+    private func registerJsBooleanToBoolean(
         ownerSymbol: SymbolID,
         ownerType: TypeID,
-        named name: String,
-        returnType: TypeID,
-        externalLinkName: String,
         symbols: SymbolTable,
+        types: TypeSystem,
         interner: StringInterner
     ) {
         guard let ownerInfo = symbols.symbol(ownerSymbol) else {
             return
         }
-        let functionName = interner.intern(name)
+        let functionName = interner.intern("toBoolean")
         let functionFQName = ownerInfo.fqName + [functionName]
+        let externalLinkName = "kk_js_boolean_toBoolean"
 
         if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
             guard let symbol = symbols.symbol(symbolID),
@@ -87,7 +63,7 @@ extension DataFlowSemaPhase {
             }
             return signature.receiverType == ownerType
                 && signature.parameterTypes.isEmpty
-                && signature.returnType == returnType
+                && signature.returnType == types.booleanType
         }) {
             symbols.setExternalLinkName(externalLinkName, for: existing)
             return
@@ -106,7 +82,7 @@ extension DataFlowSemaPhase {
             FunctionSignature(
                 receiverType: ownerType,
                 parameterTypes: [],
-                returnType: returnType,
+                returnType: types.booleanType,
                 valueParameterSymbols: [],
                 valueParameterHasDefaultValues: [],
                 valueParameterIsVararg: []
