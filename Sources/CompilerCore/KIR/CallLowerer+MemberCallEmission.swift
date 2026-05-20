@@ -443,7 +443,8 @@ extension CallLowerer {
             finalArguments.append(envPtrExpr)
         }
         if (loweredCallee == interner.intern("kk_sequence_firstNotNullOf")
-            || loweredCallee == interner.intern("kk_sequence_firstNotNullOfOrNull")),
+            || loweredCallee == interner.intern("kk_sequence_firstNotNullOfOrNull")
+            || loweredCallee == interner.intern("kk_sequence_takeLastWhile")),
            finalArguments.count == 2
         {
             let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
@@ -502,6 +503,20 @@ extension CallLowerer {
             || loweredCallee == interner.intern("kk_list_sumByDouble")
             || loweredCallee == interner.intern("kk_sequence_sumBy")
             || loweredCallee == interner.intern("kk_sequence_sumByDouble")),
+           finalArguments.count == 2
+        {
+            let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                finalArguments[1],
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            finalArguments = [finalArguments[0], fnPtrExpr, envPtrExpr]
+        }
+        if (loweredCallee == interner.intern("kk_sequence_associate")
+            || loweredCallee == interner.intern("kk_sequence_associateBy")
+            || loweredCallee == interner.intern("kk_sequence_associateWith")),
            finalArguments.count == 2
         {
             let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
@@ -891,6 +906,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_sumOf"),
             interner.intern("kk_sequence_sumBy"),
             interner.intern("kk_sequence_sumByDouble"),
+            interner.intern("kk_sequence_takeLastWhile"),
             interner.intern("kk_sequence_firstNotNullOf"),
             interner.intern("kk_sequence_firstNotNullOfOrNull"),
             interner.intern("kk_sequence_associate"),
@@ -907,8 +923,10 @@ extension CallLowerer {
             interner.intern("kk_sequence_filterIndexed"),
             interner.intern("kk_sequence_findLast"),
             interner.intern("kk_sequence_elementAt"),
+            interner.intern("kk_sequence_maxBy"),
             interner.intern("kk_sequence_minByOrNull"),
             interner.intern("kk_sequence_maxByOrNull"),
+            interner.intern("kk_sequence_maxWithOrNull"),
             interner.intern("kk_sequence_minOf"),
             interner.intern("kk_sequence_maxOfOrNull"),
             interner.intern("kk_sequence_maxOf"),
