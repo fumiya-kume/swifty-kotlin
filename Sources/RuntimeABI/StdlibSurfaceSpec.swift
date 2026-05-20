@@ -289,14 +289,11 @@ private extension StdlibSurfaceSpec {
         sequence("randomOrNull", 0, "kk_sequence_randomOrNull", returnStrategy: .nullableReceiverElement, lambdaExpectation: .none),
         sequence("plusElement", 1, "kk_sequence_plus_element", returnStrategy: .sequence, lambdaExpectation: .none),
         sequence("chunked", 1, "kk_sequence_chunked", returnStrategy: .sequence, lambdaExpectation: .none),
-<<<<<<< HEAD
         sequence("contains", 1, "kk_sequence_contains", returnStrategy: .boolean, lambdaExpectation: .none),
-=======
         sequence("constrainOnce", 0, "kk_sequence_constrainOnce", returnStrategy: .sequence, lambdaExpectation: .none),
         sequence("distinctBy", 1, "kk_sequence_distinctBy", returnStrategy: .sequence, lambdaExpectation: .receiverElement(argumentIndex: 0, returnStrategy: .any)),
         sequence("shuffled", 0, "kk_sequence_shuffled", returnStrategy: .sequence, lambdaExpectation: .none),
         sequence("shuffled", 1, "kk_sequence_shuffled_random", returnStrategy: .sequence, lambdaExpectation: .none),
->>>>>>> origin/master
         sequence("sumOf", 1, "kk_sequence_sumOf", returnStrategy: .int, lambdaExpectation: .receiverElement(argumentIndex: 0, returnStrategy: .int)),
         sequence("sumBy", 1, "kk_sequence_sumBy", returnStrategy: .int, lambdaExpectation: .receiverElement(argumentIndex: 0, returnStrategy: .int)),
         sequence("sumByDouble", 1, "kk_sequence_sumByDouble", returnStrategy: .double, lambdaExpectation: .receiverElement(argumentIndex: 0, returnStrategy: .double)),
@@ -333,5 +330,6 @@ private extension StdlibSurfaceSpec {
         sequence("associateByTo", 2, "kk_sequence_associateByTo", returnStrategy: .destinationArgument, lambdaExpectation: .destinationElement(argumentIndex: 1, returnStrategy: .any)),
         sequence("associateWithTo", 2, "kk_sequence_associateWithTo", returnStrategy: .destinationArgument, lambdaExpectation: .destinationElement(argumentIndex: 1, returnStrategy: .any)),
         sequence("groupByTo", 2, "kk_sequence_groupByTo", returnStrategy: .destinationArgument, lambdaExpectation: .destinationElement(argumentIndex: 1, returnStrategy: .any)),
+        sequence("reduceIndexed", 1, "kk_sequence_reduceIndexed", returnStrategy: .receiverElement, lambdaExpectation: .indexedReceiverElement(argumentIndex: 0, returnStrategy: .any)),
     ]
 }

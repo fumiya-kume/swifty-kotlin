@@ -1159,6 +1159,51 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
 
     // MARK: - Sequence indexed reduction tests (STDLIB-556, STDLIB-SEQ-015)
 
+    func testReduceIndexedEmptySequenceThrows() {
+        let seq = makeSequence([])
+        var thrown = 0
+
+        let result = kk_sequence_reduceIndexed(
+            seq,
+            unsafeBitCast(indexedAccumulatingSum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(result, 0)
+    }
+
+    func testReduceIndexedNonEmptySequenceAccumulatesWithIndex() {
+        let seq = makeSequence([1, 2, 3, 4])
+        var thrown = 0
+
+        let result = kk_sequence_reduceIndexed(
+            seq,
+            unsafeBitCast(indexedAccumulatingSum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 21)
+    }
+
+    func testReduceIndexedReturnsZeroWhenLambdaThrows() {
+        let seq = makeSequence([1, 2, 3])
+        var thrown = 0
+
+        let result = kk_sequence_reduceIndexed(
+            seq,
+            unsafeBitCast(throwingIndexedAccumulator, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(result, 0)
+    }
+
     func testReduceIndexedOrNullEmptySequenceReturnsNullSentinel() {
         let seq = makeSequence([])
         var thrown = 0
@@ -1317,13 +1362,11 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(secondList, runtimeNullSentinelInt)
     }
 
-<<<<<<< HEAD
     func testContainsFindsMatchingElement() {
         let seq = makeSequence([1, 2, 3])
 
         XCTAssertEqual(kk_unbox_bool(kk_sequence_contains(seq, 2)), 1)
         XCTAssertEqual(kk_unbox_bool(kk_sequence_contains(seq, 9)), 0)
-=======
     func testDistinctByPreservesFirstKeyOccurrenceOrder() {
         var thrown = 0
         let result = kk_sequence_distinctBy(
@@ -1335,7 +1378,6 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
 
         XCTAssertEqual(thrown, 0)
         XCTAssertEqual(listElements(kk_sequence_to_list(result, nil)), [3, 2])
->>>>>>> origin/master
     }
 
     func testFilterIsInstanceKeepsMatchingRuntimeTypes() {
