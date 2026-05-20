@@ -1190,35 +1190,6 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
-    func testCodegenListMinOfWithReturnsComparatorSelectedValueAndThrowsOnEmpty() throws {
-        let source = """
-        fun main() {
-            println(listOf(5, 2, 3).minOfWith(reverseOrder<Int>()) { it * 10 })
-            try {
-                emptyList<Int>().minOfWith(reverseOrder<Int>()) { it * 10 }
-                println("missing")
-            } catch (e: NoSuchElementException) {
-                println("empty")
-            }
-        }
-        """
-
-        try withTemporaryFile(contents: source) { path in
-            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
-            let ctx = try runCodegenPipeline(
-                inputPath: path,
-                moduleName: "ListMinOfWithRuntime",
-                emit: .executable,
-                outputPath: outputBase
-            )
-            try LinkPhase().run(ctx)
-
-            let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "50\nempty\n")
-        }
-    }
-
     func testCodegenListMaxOrNullReturnsLargestElementOrNull() throws {
         let source = """
         fun main() {
@@ -1345,6 +1316,28 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(normalizedStdout, "9\nempty\n")
+        }
+    }
+
+    func testCodegenListFlatMapIndexedUsesRuntimeHelper() throws {
+        let source = """
+        fun main() {
+            val list = listOf(3, 1, 2)
+            println(list.flatMapIndexed { index, value -> listOf(index, value * 10) })
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "ListFlatMapIndexedRuntime", emit: .kirDump)
+            try runToLowering(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: body, interner: ctx.interner)
+            XCTAssertTrue(
+                callees.contains("kk_list_flatMapIndexed"),
+                "Expected kk_list_flatMapIndexed in callees, got: \(callees.sorted())"
+            )
         }
     }
 

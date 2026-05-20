@@ -936,6 +936,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_associateWith"),
             interner.intern("kk_sequence_associateWithTo"),
             interner.intern("kk_sequence_groupByTo"),
+            interner.intern("kk_sequence_flatMapTo"),
             interner.intern("kk_sequence_ifEmpty"),
             interner.intern("kk_string_ifBlank"),
             interner.intern("kk_string_ifEmpty"),
