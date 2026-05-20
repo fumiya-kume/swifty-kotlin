@@ -121,6 +121,9 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("associateWith", 1),
             sequence("randomOrNull", 0),
             sequence("chunked", 1),
+            sequence("constrainOnce", 0),
+            sequence("shuffled", 0),
+            sequence("shuffled", 1),
             sequence("sumOf", 1),
             sequence("sumBy", 1),
             sequence("sumByDouble", 1),
@@ -137,6 +140,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("mapIndexed", 1),
             sequence("filterIndexed", 1),
             sequence("scanIndexed", 2),
+            sequence("runningFoldIndexed", 2),
             sequence("filterTo", 2),
             sequence("filterNotTo", 2),
             sequence("mapTo", 2),
@@ -145,6 +149,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("filterNotNullTo", 1),
             sequence("filterIsInstance", 0),
             sequence("filterIsInstanceTo", 1),
+            sequence("requireNoNulls", 0),
             sequence("associateTo", 2),
             sequence("associateByTo", 2),
             sequence("associateWithTo", 2),
@@ -181,7 +186,11 @@ final class StdlibSurfaceSpecTests: XCTestCase {
                 (.sequence, ["kotlin", "sequences", "Sequence"], "foldIndexed", 2),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "firstNotNullOf", 1),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "scanIndexed", 2),
+                (.sequence, ["kotlin", "sequences", "Sequence"], "runningFoldIndexed", 2),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "randomOrNull", 0),
+                (.sequence, ["kotlin", "sequences", "Sequence"], "requireNoNulls", 0),
+                (.sequence, ["kotlin", "sequences", "Sequence"], "shuffled", 0),
+                (.sequence, ["kotlin", "sequences", "Sequence"], "shuffled", 1),
             ]
 
             for testCase in cases {

@@ -448,7 +448,13 @@ private func runtimeSequenceBestValue(
         return runtimeNullSentinelInt
     }
     if returnElement {
-        return bestElement ?? runtimeNullSentinelInt
+        guard let bestElement else {
+            if throwOnEmpty {
+                outThrown?.pointee = runtimeAllocateThrowable(message: kEmptySequenceNoSuchElement)
+            }
+            return runtimeNullSentinelInt
+        }
+        return bestElement
     }
     guard let bestSelector else {
         if throwOnEmpty {
@@ -524,6 +530,19 @@ public func kk_sequence_maxWithOrNull(
     runtimeSequenceExtremumWith(
         seqRaw: seqRaw, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown,
         caller: #function, comparisonSign: 1, throwOnEmpty: false
+    )
+}
+
+@_cdecl("kk_sequence_maxBy")
+public func kk_sequence_maxBy(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    runtimeSequenceBestValue(
+        seqRaw: seqRaw, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown,
+        caller: #function, comparisonSign: 1, returnElement: true, throwOnEmpty: true
     )
 }
 
