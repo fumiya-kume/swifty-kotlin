@@ -73,4 +73,47 @@ final class JsAnySurfaceTests: XCTestCase {
 
         XCTAssertTrue(errors.isEmpty, "Expected JsAny parameter usage to type-check, got \(errors)")
     }
+
+    func testJsAnyToThrowableOrNullIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let jsAnyFQName = ["kotlin", "js", "JsAny"].map { interner.intern($0) }
+        let jsAnySymbol = try XCTUnwrap(sema.symbols.lookup(fqName: jsAnyFQName))
+        let jsAnyType = try XCTUnwrap(sema.symbols.propertyType(for: jsAnySymbol))
+        let throwableSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: ["kotlin", "Throwable"].map { interner.intern($0) })
+        )
+        let throwableType = try XCTUnwrap(sema.symbols.propertyType(for: throwableSymbol))
+        let function = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: jsAnyFQName + [interner.intern("toThrowableOrNull")]).first { symbol in
+                guard let signature = sema.symbols.functionSignature(for: symbol) else {
+                    return false
+                }
+                return signature.receiverType == jsAnyType
+                    && signature.parameterTypes.isEmpty
+                    && signature.returnType == sema.types.makeNullable(throwableType)
+            },
+            "JsAny.toThrowableOrNull() member must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(function))
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: function))
+
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+        XCTAssertEqual(signature.valueParameterHasDefaultValues, [])
+        XCTAssertEqual(signature.valueParameterIsVararg, [])
+        XCTAssertNil(sema.symbols.externalLinkName(for: function))
+    }
+
+    func testJsAnyToThrowableOrNullCanBeCalled() {
+        let source = """
+        import kotlin.Throwable
+        import kotlin.js.JsAny
+
+        fun convert(value: JsAny): Throwable? = value.toThrowableOrNull()
+        """
+        let ctx = runSemaCollectingDiagnostics(source)
+        let errors = ctx.diagnostics.diagnostics.filter { $0.severity == .error }
+
+        XCTAssertTrue(errors.isEmpty, "Expected JsAny.toThrowableOrNull usage to type-check, got \(errors)")
+    }
 }

@@ -199,6 +199,12 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerSyntheticSequenceJoinToMember(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinSequencesPkg: kotlinSequencesPkg
+        )
         registerSyntheticSequenceJoinToStringMember(
             symbols: symbols,
             types: types,

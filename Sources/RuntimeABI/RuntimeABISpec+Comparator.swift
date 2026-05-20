@@ -406,6 +406,7 @@ public extension RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "a", type: .intptr),
                 RuntimeABIParameter(name: "b", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Comparator"

@@ -35,6 +35,46 @@ final class JsConsoleExternalInterfaceTests: XCTestCase {
         XCTAssertTrue(info.flags.contains(.synthetic))
     }
 
+    func testConsolePropertyIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let packageFQName = ["kotlin", "js"].map { interner.intern($0) }
+        let consoleInterface = try XCTUnwrap(
+            sema.symbols.lookup(fqName: packageFQName + [interner.intern("Console")])
+        )
+        let consoleType = try XCTUnwrap(sema.symbols.propertyType(for: consoleInterface))
+        let property = try XCTUnwrap(
+            sema.symbols.lookup(fqName: packageFQName + [interner.intern("console")]),
+            "kotlin.js.console must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(property))
+
+        XCTAssertEqual(info.kind, .property)
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+        XCTAssertEqual(sema.symbols.parentSymbol(for: property), sema.symbols.lookup(fqName: packageFQName))
+        XCTAssertEqual(sema.symbols.propertyType(for: property), consoleType)
+        XCTAssertNil(sema.symbols.externalLinkName(for: property))
+    }
+
+    func testConsolePropertyCanBeImportedAndUsed() {
+        let source = """
+        import kotlin.js.console
+
+        fun writeLog() {
+            console.log("ready")
+        }
+        """
+        let ctx = makeContextFromSource(source)
+        do {
+            try runSema(ctx)
+        } catch {
+            // Diagnostics are asserted below.
+        }
+
+        let errors = ctx.diagnostics.diagnostics.filter { $0.severity == .error }
+        XCTAssertTrue(errors.isEmpty, "Expected console property usage to type-check, got \(errors)")
+    }
+
     func testDirSignatureIsRegistered() throws {
         let (sema, interner) = try makeSema()
 

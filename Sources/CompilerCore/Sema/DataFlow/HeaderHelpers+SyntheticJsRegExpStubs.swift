@@ -41,6 +41,15 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerJsRegExpMember(
+            ownerSymbol: regExpSymbol,
+            ownerType: regExpType,
+            named: "reset",
+            returnType: types.unitType,
+            parameters: [],
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func registerJsRegExpConstructor(
@@ -93,6 +102,66 @@ extension DataFlowSemaPhase {
                 valueParameterIsVararg: Array(repeating: false, count: parameters.count)
             ),
             for: ctorSymbol
+        )
+    }
+
+    private func registerJsRegExpMember(
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        named name: String,
+        returnType: TypeID,
+        parameters: [(name: String, type: TypeID, hasDefault: Bool)],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else { return }
+        let memberName = interner.intern(name)
+        let memberFQName = ownerInfo.fqName + [memberName]
+        let parameterTypes = parameters.map(\.type)
+        let alreadyRegistered = symbols.lookupAll(fqName: memberFQName).contains { symbol in
+            guard let signature = symbols.functionSignature(for: symbol) else {
+                return false
+            }
+            return signature.receiverType == ownerType
+                && signature.parameterTypes == parameterTypes
+                && signature.returnType == returnType
+        }
+        guard !alreadyRegistered else { return }
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
+
+        let valueParameterSymbols = parameters.map { parameter in
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: memberFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: parameterSymbol)
+            return parameterSymbol
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: ownerType,
+                parameterTypes: parameterTypes,
+                returnType: returnType,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: parameters.map(\.hasDefault),
+                valueParameterIsVararg: Array(repeating: false, count: parameters.count)
+            ),
+            for: memberSymbol
         )
     }
 }

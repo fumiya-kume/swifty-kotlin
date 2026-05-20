@@ -3,10 +3,128 @@
 /// Synthetic `kotlin.sequences.Sequence` registration helpers:
 /// stub registration, extension-function helpers, builder/iterator
 /// builder, factory and generic-sequence helpers, and the
-/// `joinToString` member registration.
+/// `joinTo` / `joinToString` member registration.
 ///
 /// Split out from `HeaderHelpers+SyntheticTODOAndIOStubs.swift`.
 extension DataFlowSemaPhase {
+    func registerSyntheticSequenceJoinToMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinSequencesPkg: [InternedString]
+    ) {
+        let sequenceName = interner.intern("Sequence")
+        let sequenceFQName = kotlinSequencesPkg + [sequenceName]
+        let sequenceSymbol: SymbolID = if let existing = symbols.lookup(fqName: sequenceFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .interface,
+                name: sequenceName,
+                fqName: sequenceFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = sequenceFQName + [typeParamName]
+        let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: sequenceSymbol)
+        types.setNominalTypeParameterVariances([.out], for: sequenceSymbol)
+
+        let memberName = interner.intern("joinTo")
+        let memberFQName = sequenceFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let kotlinTextPkg = ensurePackage(path: ["kotlin", "text"], symbols: symbols, interner: interner)
+        let appendableSymbol = ensureInterfaceSymbol(
+            named: "Appendable",
+            in: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinTextPkgSymbol = symbols.lookup(fqName: kotlinTextPkg) {
+            symbols.setParentSymbol(kotlinTextPkgSymbol, for: appendableSymbol)
+        }
+        let appendableType = types.make(.classType(ClassType(
+            classSymbol: appendableSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(sequenceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_sequence_joinTo", for: memberSymbol)
+
+        let parameters: [(name: String, type: TypeID, hasDefault: Bool)] = [
+            ("buffer", appendableType, false),
+            ("separator", types.stringType, true),
+            ("prefix", types.stringType, true),
+            ("postfix", types.stringType, true),
+        ]
+        var parameterTypes: [TypeID] = []
+        var parameterSymbols: [SymbolID] = []
+        var parameterDefaults: [Bool] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: memberFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: parameterSymbol)
+            parameterTypes.append(parameter.type)
+            parameterSymbols.append(parameterSymbol)
+            parameterDefaults.append(parameter.hasDefault)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameterTypes,
+                returnType: appendableType,
+                valueParameterSymbols: parameterSymbols,
+                valueParameterHasDefaultValues: parameterDefaults,
+                valueParameterIsVararg: Array(repeating: false, count: parameters.count),
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
     func registerSyntheticSequenceJoinToStringMember(
         symbols: SymbolTable,
         types: TypeSystem,
