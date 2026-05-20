@@ -518,6 +518,16 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(result, 3)
     }
 
+    func testLastOrNullReturnsLastElementOrNullSentinel() {
+        var thrown = 0
+        let result = kk_sequence_lastOrNull(makeSequence([1, 2, 3]), &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 3)
+        XCTAssertEqual(kk_sequence_lastOrNull(makeSequence([]), &thrown), runtimeNullSentinelInt)
+        XCTAssertEqual(thrown, 0)
+    }
+
     func testAssociateToPopulatesExistingDestinationMap() {
         let seq = makeSequence([1, 2, 3])
         let dest = registerRuntimeObject(RuntimeMapBox(keys: [99], values: [999]))
@@ -1305,6 +1315,19 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         let secondList = kk_sequence_to_list(seq, &secondThrown)
         XCTAssertNotEqual(secondThrown, 0)
         XCTAssertEqual(secondList, runtimeNullSentinelInt)
+    }
+
+    func testDistinctByPreservesFirstKeyOccurrenceOrder() {
+        var thrown = 0
+        let result = kk_sequence_distinctBy(
+            makeSequence([3, 1, 2, 5, 4, 7]),
+            unsafeBitCast(sequenceParitySelector, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(listElements(kk_sequence_to_list(result, nil)), [3, 2])
     }
 
     func testFilterIsInstanceKeepsMatchingRuntimeTypes() {

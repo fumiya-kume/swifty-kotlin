@@ -271,6 +271,30 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testSequenceDistinctByPreservesFirstKeyOrder() throws {
+        let source = """
+        fun main() {
+            val result = sequenceOf(3, 1, 2, 5, 4, 7).distinctBy { it % 2 }.toList()
+            println(result)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceDistinctBy",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[3, 2]\n")
+        }
+    }
+
     // MARK: - zip stops at shorter sequence
 
     func testSequenceZipStopsAtShorterSequence() throws {
