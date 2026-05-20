@@ -289,6 +289,13 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerSyntheticKProperty1Stub(
+            kPropertySymbol: kPropertySymbol,
+            kotlinReflectPkg: kotlinReflectPkg,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
         registerSyntheticKMutableProperty0Stub(
             kMutableProperty0Symbol: kMutableProperty0Symbol,
             kMutablePropertySymbol: kMutablePropertySymbol,
