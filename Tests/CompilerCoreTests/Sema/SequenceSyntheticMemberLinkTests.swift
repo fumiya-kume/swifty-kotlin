@@ -1331,6 +1331,31 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
         fun secondValue(): Int {
             val values = sequenceOf(1, 2, 3)
             return values.elementAt(1)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Sequence.elementAt surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "sequences", "Sequence", "elementAt"]
+                .map { ctx.interner.intern($0) }
+            let links = Set(
+                sema.symbols.lookupAll(fqName: memberFQName)
+                    .compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
+            XCTAssertTrue(links.contains("kk_sequence_elementAt"))
+        }
+    }
+
     func testSequenceMinusResolvesInCallExpressions() throws {
         let source = """
         fun removeValue(): Sequence<Int> {
@@ -1352,11 +1377,6 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
                 .joined(separator: " | ")
             XCTAssertFalse(
                 ctx.diagnostics.hasError,
-                "Expected Sequence.elementAt surface to resolve cleanly, got: \(diagnosticSummary)"
-            )
-
-            let sema = try XCTUnwrap(ctx.sema)
-            let memberFQName = ["kotlin", "sequences", "Sequence", "elementAt"]
                 "Expected Sequence.minus surface to resolve cleanly, got: \(diagnosticSummary)"
             )
 
@@ -1367,10 +1387,10 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
                 sema.symbols.lookupAll(fqName: memberFQName)
                     .compactMap { sema.symbols.externalLinkName(for: $0) }
             )
-            XCTAssertTrue(links.contains("kk_sequence_elementAt"))
             XCTAssertTrue(links.contains("kk_sequence_minus"))
         }
     }
+
 
     func testSequenceChunkedResolvesInCallExpressions() throws {
         let source = """
