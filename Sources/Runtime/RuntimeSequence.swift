@@ -1571,6 +1571,38 @@ public func kk_sequence_takeWhile(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int
     return registerRuntimeObject(newSeq)
 }
 
+@_cdecl("kk_sequence_takeLastWhile")
+public func kk_sequence_takeLastWhile(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    var elements: [Int] = []
+    _ = runtimeTraverseSequenceSource(seqRaw, caller: #function, outThrown: outThrown) { elem in
+        elements.append(elem)
+        return true
+    }
+    if let outThrown, outThrown.pointee != 0 {
+        return runtimeExceptionCaughtSentinel
+    }
+    let predicate = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var count = 0
+    for elem in elements.reversed() {
+        var thrown = 0
+        let predicateResult = predicate(closureRaw, elem, &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        if maybeUnbox(predicateResult) == 0 {
+            break
+        }
+        count += 1
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: Array(elements.suffix(count))))
+}
+
 @_cdecl("kk_sequence_filterNot")
 public func kk_sequence_filterNot(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int) -> Int {
     guard let seq = runtimeSequenceBox(from: seqRaw) else {
@@ -3135,4 +3167,11 @@ public func kk_sequence_minus(_ seqRaw: Int, _ element: Int) -> Int {
     }
     let newSeq = RuntimeSequenceBox(steps: [.source(elements: result)])
     return registerRuntimeObject(newSeq)
+}
+
+@_cdecl("kk_sequence_union")
+public func kk_sequence_union(_ seqRaw: Int, _ otherRaw: Int) -> Int {
+    let selfElements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    let otherElements = runtimeUnboxCollectionElements(otherRaw)
+    return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(selfElements + otherElements)))
 }
