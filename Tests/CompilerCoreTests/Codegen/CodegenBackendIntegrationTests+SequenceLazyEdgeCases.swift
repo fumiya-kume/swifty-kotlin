@@ -400,6 +400,9 @@ extension CodegenBackendIntegrationTests {
 
             val foldedIndexed = seq.foldIndexed(0) { index, acc, x -> acc + index * x }
             println(foldedIndexed)
+            val grouped = seq.groupBy { if (it % 2 == 0) "even" else "odd" }
+            println(grouped["odd"])
+            println(grouped["even"])
         }
         """
 
@@ -424,6 +427,8 @@ extension CodegenBackendIntegrationTests {
                 15
                 15
                 40
+                [1, 3, 5]
+                [2, 4]
                 """ + "\n"
             )
         }
@@ -723,6 +728,30 @@ extension CodegenBackendIntegrationTests {
                 true
                 """ + "\n"
             )
+        }
+    }
+
+    func testSequenceFilterNotKeepsRejectedPredicateValues() throws {
+        let source = """
+        fun main() {
+            val values = sequenceOf(1, 2, 3, 4, 5)
+            println(values.filterNot { value -> value % 2 == 0 }.toList())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceFilterNotRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[1, 3, 5]\n")
         }
     }
 

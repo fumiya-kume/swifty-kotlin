@@ -448,7 +448,13 @@ private func runtimeSequenceBestValue(
         return runtimeNullSentinelInt
     }
     if returnElement {
-        return bestElement ?? runtimeNullSentinelInt
+        guard let bestElement else {
+            if throwOnEmpty {
+                outThrown?.pointee = runtimeAllocateThrowable(message: kEmptySequenceNoSuchElement)
+            }
+            return runtimeNullSentinelInt
+        }
+        return bestElement
     }
     guard let bestSelector else {
         if throwOnEmpty {
@@ -457,6 +463,87 @@ private func runtimeSequenceBestValue(
         return runtimeNullSentinelInt
     }
     return bestSelector
+}
+
+private func runtimeSequenceExtremumWith(
+    seqRaw: Int,
+    fnPtr: Int,
+    closureRaw: Int,
+    outThrown: UnsafeMutablePointer<Int>?,
+    caller: StaticString,
+    comparisonSign: Int,
+    throwOnEmpty: Bool
+) -> Int {
+    var bestElement: Int?
+    var didThrow = false
+    let traversalState = runtimeTraverseSequenceSource(seqRaw, caller: caller, outThrown: outThrown) { elem in
+        guard let current = bestElement else {
+            bestElement = elem
+            return true
+        }
+        var thrown = 0
+        let comparison = runtimeInvokeCollectionLambda2(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            lhs: elem,
+            rhs: current,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            _ = handleCollectionLambdaThrow(thrown, outThrown)
+            didThrow = true
+            return false
+        }
+        if (comparisonSign < 0 && comparison < 0) || (comparisonSign > 0 && comparison > 0) {
+            bestElement = elem
+        }
+        return true
+    }
+    if didThrow || (outThrown?.pointee ?? 0) != 0 {
+        return runtimeExceptionCaughtSentinel
+    }
+    if let traversalState, traversalState.limitReached {
+        return handleCollectionLambdaThrow(
+            runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached),
+            outThrown
+        )
+    }
+    guard let bestElement else {
+        if throwOnEmpty {
+            return handleCollectionLambdaThrow(
+                runtimeAllocateThrowable(message: kEmptySequenceNoSuchElement),
+                outThrown
+            )
+        }
+        return runtimeNullSentinelInt
+    }
+    return bestElement
+}
+
+@_cdecl("kk_sequence_maxWithOrNull")
+public func kk_sequence_maxWithOrNull(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    runtimeSequenceExtremumWith(
+        seqRaw: seqRaw, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown,
+        caller: #function, comparisonSign: 1, throwOnEmpty: false
+    )
+}
+
+@_cdecl("kk_sequence_maxBy")
+public func kk_sequence_maxBy(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    runtimeSequenceBestValue(
+        seqRaw: seqRaw, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown,
+        caller: #function, comparisonSign: 1, returnElement: true, throwOnEmpty: true
+    )
 }
 
 @_cdecl("kk_sequence_minByOrNull")

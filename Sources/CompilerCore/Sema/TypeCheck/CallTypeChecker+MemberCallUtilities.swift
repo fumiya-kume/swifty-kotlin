@@ -100,6 +100,7 @@ extension CallTypeChecker {
              (knownNames.kotlinCollectionsCollectionFQName, knownNames.isEmpty),
              (knownNames.kotlinSequenceFQName, interner.intern("firstNotNullOf")),
              (knownNames.kotlinSequenceFQName, interner.intern("firstNotNullOfOrNull")),
+             (knownNames.kotlinSequenceFQName, interner.intern("takeLastWhile")),
              (knownNames.kotlinCollectionsMapFQName, interner.intern("get")),
              (knownNames.kotlinCollectionsMapFQName, interner.intern("containsKey")),
              (knownNames.kotlinCollectionsMapFQName, interner.intern("containsValue")),
