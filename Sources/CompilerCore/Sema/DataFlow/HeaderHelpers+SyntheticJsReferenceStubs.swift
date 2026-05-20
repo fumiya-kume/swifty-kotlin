@@ -1,6 +1,6 @@
 import Foundation
 
-/// Synthetic Kotlin/JS `JsReference<T>` external interface surface.
+/// Synthetic Kotlin/JS `JsReference<T : Any>` external interface surface.
 extension DataFlowSemaPhase {
     func registerSyntheticJsReferenceStubs(
         symbols: SymbolTable,
@@ -14,39 +14,107 @@ extension DataFlowSemaPhase {
         )
         let kotlinJsPkgSymbol = symbols.lookup(fqName: kotlinJsPkg)
 
-        let referenceSymbol = ensureInterfaceSymbol(
+        let jsReferenceSymbol = ensureInterfaceSymbol(
             named: "JsReference",
             in: kotlinJsPkg,
             symbols: symbols,
             interner: interner
         )
         if let kotlinJsPkgSymbol {
-            symbols.setParentSymbol(kotlinJsPkgSymbol, for: referenceSymbol)
+            symbols.setParentSymbol(kotlinJsPkgSymbol, for: jsReferenceSymbol)
         }
 
-        let referenceFQName = kotlinJsPkg + [interner.intern("JsReference")]
         let typeParamName = interner.intern("T")
-        let typeParamSymbol = symbols.lookup(fqName: referenceFQName + [typeParamName]) ?? symbols.define(
-            kind: .typeParameter,
-            name: typeParamName,
-            fqName: referenceFQName + [typeParamName],
-            declSite: nil,
-            visibility: .private,
-            flags: []
-        )
-        symbols.setParentSymbol(referenceSymbol, for: typeParamSymbol)
-        types.setNominalTypeParameterSymbols([typeParamSymbol], for: referenceSymbol)
-        types.setNominalTypeParameterVariances([.invariant], for: referenceSymbol)
+        let jsReferenceFQName = kotlinJsPkg + [interner.intern("JsReference")]
+        let typeParamFQName = jsReferenceFQName + [typeParamName]
+        let typeParamSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: typeParamFQName) {
+            typeParamSymbol = existing
+        } else {
+            typeParamSymbol = symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+        }
+        symbols.setParentSymbol(jsReferenceSymbol, for: typeParamSymbol)
+        symbols.setTypeParameterUpperBounds([types.anyType], for: typeParamSymbol)
 
         let typeParamType = types.make(.typeParam(TypeParamType(
             symbol: typeParamSymbol,
             nullability: .nonNull
         )))
-        let referenceType = types.make(.classType(ClassType(
-            classSymbol: referenceSymbol,
+        let jsReferenceType = types.make(.classType(ClassType(
+            classSymbol: jsReferenceSymbol,
             args: [.invariant(typeParamType)],
             nullability: .nonNull
         )))
-        symbols.setPropertyType(referenceType, for: referenceSymbol)
+
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: jsReferenceSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: jsReferenceSymbol)
+        symbols.setPropertyType(jsReferenceType, for: jsReferenceSymbol)
+
+        registerJsReferenceGet(
+            ownerSymbol: jsReferenceSymbol,
+            ownerType: jsReferenceType,
+            returnType: typeParamType,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    private func registerJsReferenceGet(
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        returnType: TypeID,
+        typeParamSymbol: SymbolID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let functionName = interner.intern("get")
+        let functionFQName = ownerInfo.fqName + [functionName]
+        let externalLinkName = "kk_js_reference_get"
+
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return signature.receiverType == ownerType
+                && signature.parameterTypes.isEmpty
+                && signature.returnType == returnType
+                && signature.typeParameterSymbols == [typeParamSymbol]
+                && signature.classTypeParameterCount == 1
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: ownerType,
+                parameterTypes: [],
+                returnType: returnType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: functionSymbol
+        )
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
     }
 }

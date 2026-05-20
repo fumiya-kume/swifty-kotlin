@@ -366,7 +366,8 @@ extension CollectionLiteralLoweringPass {
         || callee == lookup.scanIndexedName
         || callee == lookup.kkListRunningFoldIndexedName
         || callee == lookup.kkListScanIndexedName
-        || callee == lookup.kkSequenceRunningFoldIndexedName),
+        || callee == lookup.kkSequenceRunningFoldIndexedName
+        || callee == lookup.kkSequenceScanIndexedName),
        (3 ... 4).contains(arguments.count) {
         let receiverID = arguments[0]; let initialID = arguments[1]; let lambdaID = arguments[2]
         if state.listExprIDs.contains(receiverID.rawValue) {
@@ -378,6 +379,15 @@ extension CollectionLiteralLoweringPass {
             loweredBody.append(.call(symbol: nil, callee: kkName, arguments: [receiverID, initialID, lambdaID, closureRawID], result: hofResult, canThrow: canThrow, thrownResult: thrownResult))
             if let result { loweredBody.append(.copy(from: hofResult, to: result)); state.listExprIDs.insert(result.rawValue) }
             state.listExprIDs.insert(hofResult.rawValue); return true
+        } else if state.sequenceExprIDs.contains(receiverID.rawValue) {
+            let closureRawID: KIRExprID
+            if arguments.count == 4 { closureRawID = arguments[3] }
+            else { let z = module.arena.appendExpr(.intLiteral(0), type: nil); loweredBody.append(.constValue(result: z, value: .intLiteral(0))); closureRawID = z }
+            let kkName = (callee == lookup.scanIndexedName || callee == lookup.kkSequenceScanIndexedName) ? lookup.kkSequenceScanIndexedName : lookup.kkSequenceRunningFoldIndexedName
+            let hofResult = module.arena.appendExpr(.temporary(Int32(module.arena.expressions.count)), type: nil)
+            loweredBody.append(.call(symbol: nil, callee: kkName, arguments: [receiverID, initialID, lambdaID, closureRawID], result: hofResult, canThrow: canThrow, thrownResult: thrownResult))
+            if let result { loweredBody.append(.copy(from: hofResult, to: result)); state.sequenceExprIDs.insert(result.rawValue) }
+            state.sequenceExprIDs.insert(hofResult.rawValue); return true
         }
     }
     // runningReduceIndexed: args = [receiver, lambda, closureRaw?]

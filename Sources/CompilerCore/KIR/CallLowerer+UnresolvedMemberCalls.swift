@@ -567,10 +567,12 @@ extension CallLowerer {
             let distinctName = interner.intern("distinct")
             let zipName = interner.intern("zip")
             let takeWhileName = interner.intern("takeWhile")
+            let takeLastWhileName = interner.intern("takeLastWhile")
             let dropWhileName = interner.intern("dropWhile")
             let sortedName = interner.intern("sorted")
             let sortedByName = interner.intern("sortedBy")
             let sortedDescendingName = interner.intern("sortedDescending")
+            let joinToName = interner.intern("joinTo")
             let joinToStringName = interner.intern("joinToString")
             let sumOfName = interner.intern("sumOf")
             let sumByName = interner.intern("sumBy")
@@ -610,6 +612,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_zip")
             case takeWhileName:
                 return interner.intern("kk_sequence_takeWhile")
+            case takeLastWhileName:
+                return interner.intern("kk_sequence_takeLastWhile")
             case dropWhileName:
                 return interner.intern("kk_sequence_dropWhile")
             case sortedName:
@@ -627,6 +631,8 @@ extension CallLowerer {
                 default:
                     return nil
                 }
+            case joinToName:
+                return interner.intern("kk_sequence_joinTo")
             case joinToStringName:
                 return interner.intern("kk_sequence_joinToString")
             case sumOfName:
@@ -665,6 +671,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_findLast")
             case interner.intern("find"):
                 return interner.intern("kk_sequence_find")
+            case interner.intern("singleOrNull"):
+                return interner.intern("kk_sequence_singleOrNull")
             case interner.intern("any"):
                 return interner.intern(useIterableRuntimeForCollectionFallback ? "kk_iterable_any" : "kk_sequence_any")
             case interner.intern("all"):
@@ -687,6 +695,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_asIterable")
             case interner.intern("mapIndexed"):
                 return interner.intern("kk_sequence_mapIndexed")
+            case interner.intern("filterIndexed"):
+                return interner.intern("kk_sequence_filterIndexed")
             case interner.intern("flatMapIndexed"):
                 return interner.intern("kk_sequence_flatMapIndexed")
             case interner.intern("withIndex"):
@@ -705,12 +715,16 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_plus_element")
             case interner.intern("minus"), interner.intern("minusElement"):
                 return interner.intern("kk_sequence_minus")
+            case interner.intern("union"):
+                return interner.intern("kk_sequence_union")
             case interner.intern("ifEmpty"):
                 return interner.intern("kk_sequence_ifEmpty")
             case firstName:
                 return interner.intern("kk_sequence_first")
             case firstOrNullName:
                 return interner.intern("kk_sequence_firstOrNull")
+            case interner.intern("randomOrNull"):
+                return interner.intern("kk_sequence_randomOrNull")
             case lastName:
                 return interner.intern(useIterableRuntimeForCollectionFallback ? "kk_iterable_last" : "kk_sequence_last")
             case interner.intern("lastOrNull"):
@@ -740,12 +754,18 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_toHashSet")
             case interner.intern("partition"):
                 return interner.intern("kk_sequence_partition")
+            case interner.intern("maxBy"):
+                return interner.intern("kk_sequence_maxBy")
             case interner.intern("minByOrNull"):
                 return interner.intern("kk_sequence_minByOrNull")
             case interner.intern("maxByOrNull"):
                 return interner.intern("kk_sequence_maxByOrNull")
+            case interner.intern("maxWithOrNull"):
+                return interner.intern("kk_sequence_maxWithOrNull")
             case interner.intern("minOf"):
                 return interner.intern("kk_sequence_minOf")
+            case interner.intern("maxOfOrNull"):
+                return interner.intern("kk_sequence_maxOfOrNull")
             case interner.intern("maxOf"):
                 return interner.intern("kk_sequence_maxOf")
             case interner.intern("unzip"):

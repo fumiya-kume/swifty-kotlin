@@ -84,6 +84,78 @@ final class JsDateExternalClassTests: XCTestCase {
         }
     }
 
+    func testDateNowCompanionFunctionIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let companionFQName = ["kotlin", "js", "Date", "Companion"].map { interner.intern($0) }
+        let companion = try XCTUnwrap(sema.symbols.lookup(fqName: companionFQName))
+        let companionType = try XCTUnwrap(sema.symbols.propertyType(for: companion))
+        let nowFQName = companionFQName + [interner.intern("now")]
+        let now = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: nowFQName).first { symbol in
+                guard let signature = sema.symbols.functionSignature(for: symbol) else {
+                    return false
+                }
+                return signature.receiverType == companionType
+                    && signature.parameterTypes.isEmpty
+                    && signature.returnType == sema.types.doubleType
+            },
+            "Date.Companion.now must be registered"
+        )
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: now))
+
+        XCTAssertEqual(sema.symbols.symbol(now)?.visibility, .public)
+        XCTAssertTrue(sema.symbols.symbol(now)?.flags.contains(.synthetic) == true)
+        XCTAssertTrue(sema.symbols.symbol(now)?.flags.contains(.static) == true)
+        XCTAssertEqual(signature.valueParameterHasDefaultValues, [])
+        XCTAssertEqual(signature.valueParameterIsVararg, [])
+        XCTAssertNil(sema.symbols.externalLinkName(for: now))
+    }
+
+    func testDateNowCanBeCalledThroughCompanionShortcut() throws {
+        _ = try makeSema(source: """
+        import kotlin.js.Date
+
+        fun currentMillis(): Double = Date.now()
+        """)
+    }
+
+    func testDateLocaleOptionsBuilderIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let localeOptionsType = try dateNestedType(named: "LocaleOptions", sema: sema, interner: interner)
+        let functionFQName = ["kotlin", "js", "dateLocaleOptions"].map { interner.intern($0) }
+        let function = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: functionFQName).first { symbol in
+                guard let signature = sema.symbols.functionSignature(for: symbol),
+                      signature.returnType == localeOptionsType,
+                      let initType = signature.parameterTypes.first,
+                      case let .functionType(functionType) = sema.types.kind(of: initType)
+                else {
+                    return false
+                }
+                return functionType.receiver == localeOptionsType
+                    && functionType.params.isEmpty
+                    && functionType.returnType == sema.types.unitType
+            },
+            "kotlin.js.dateLocaleOptions must be registered"
+        )
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: function))
+
+        XCTAssertEqual(sema.symbols.symbol(function)?.visibility, .public)
+        XCTAssertTrue(sema.symbols.symbol(function)?.flags.contains(.synthetic) == true)
+        XCTAssertEqual(signature.valueParameterHasDefaultValues, [false])
+        XCTAssertEqual(signature.valueParameterIsVararg, [false])
+        XCTAssertNil(sema.symbols.externalLinkName(for: function))
+    }
+
+    func testDateLocaleOptionsCanBeImportedAndCalled() throws {
+        _ = try makeSema(source: """
+        import kotlin.js.Date
+        import kotlin.js.dateLocaleOptions
+
+        fun options() = dateLocaleOptions { }
+        """)
+    }
+
     func testDateMemberFunctionsAreRegistered() throws {
         let (sema, interner) = try makeSema()
         let intMembers = [
