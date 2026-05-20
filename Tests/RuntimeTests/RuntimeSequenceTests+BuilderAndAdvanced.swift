@@ -810,6 +810,29 @@ extension RuntimeSequenceTests {
         XCTAssertEqual(listElements(result), [99, 10, 20, 30])
     }
 
+    func testSequenceFlatMapToAppendsFlattenedResults() {
+        let seq = makeSequence([1, 2])
+        let dest = makeList([50])
+        let flatMapFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+            let arr = kk_array_new(2)
+            var thrown = 0
+            _ = kk_array_set(arr, 0, value, &thrown)
+            _ = kk_array_set(arr, 1, value * 10, &thrown)
+            return kk_list_of(arr, 2)
+        }
+
+        let result = kk_sequence_flatMapTo(
+            seq,
+            dest,
+            unsafeBitCast(flatMapFn, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(result, dest)
+        XCTAssertEqual(listElements(result), [50, 1, 10, 2, 20])
+    }
+
     func testSequenceMapNotNullToAppendsOnlyNonNullResults() {
         let seq = makeSequence([1, 2, 3, 4])
         let dest = makeList([50])

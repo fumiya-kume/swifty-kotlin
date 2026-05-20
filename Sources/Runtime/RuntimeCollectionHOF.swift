@@ -853,6 +853,24 @@ public func kk_list_flatMap(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ o
     return registerRuntimeObject(RuntimeListBox(elements: result))
 }
 
+@_cdecl("kk_list_flatMapIndexed")
+public func kk_list_flatMapIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    var result: [Int] = []
+    for (index, elem) in list.elements.enumerated() {
+        var thrown = 0
+        let flattened = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: index, rhs: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        guard let flattenedElements = runtimeCollectionElements(from: flattened) else {
+            invalidContainerPanic(#function, "collection")
+        }
+        result.append(contentsOf: flattenedElements)
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: result))
+}
+
 @_cdecl("kk_list_any")
 public func kk_list_any(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
@@ -3130,26 +3148,6 @@ public func kk_set_count_predicate(_ setRaw: Int, _ fnPtr: Int, _ closureRaw: In
         if maybeUnbox(result) != 0 { count += 1 }
     }
     return count
-}
-
-
-/// Collection<T>.flatMapIndexed((index: Int, T) -> Iterable<R>): List<R>
-@_cdecl("kk_list_flatMapIndexed")
-public func kk_list_flatMapIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let list = runtimeListBox(from: listRaw) else {
-        invalidContainerPanic(#function, "list")
-    }
-    var result: [Int] = []
-    for (index, elem) in list.elements.enumerated() {
-        var thrown = 0
-        let flattened = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: index, rhs: elem, outThrown: &thrown)
-        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
-        guard let flattenedElements = runtimeCollectionElements(from: flattened) else {
-            invalidContainerPanic(#function, "collection")
-        }
-        result.append(contentsOf: flattenedElements)
-    }
-    return registerRuntimeObject(RuntimeListBox(elements: result))
 }
 
 /// Collection<T>.filterIndexedTo(dest, predicate: (index: Int, T) -> Boolean): MutableCollection<T>
