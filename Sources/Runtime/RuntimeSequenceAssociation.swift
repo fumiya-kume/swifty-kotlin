@@ -1,12 +1,33 @@
 import Foundation
 
-/// `Sequence.joinToString` / `sumOf` / `associate` /
+/// `Sequence.joinTo` / `joinToString` / `sumOf` / `associate` /
 /// `associateBy` / `associateWith` plus their `*To` destination-map
 /// variants (STDLIB-275, STDLIB-SEQ-023).
 ///
 /// Split out from `RuntimeSequence.swift`.
 
 // MARK: - Sequence Terminal Operations: joinToString/sumOf/associate/associateBy (STDLIB-275)
+
+@_cdecl("kk_sequence_joinTo")
+public func kk_sequence_joinTo(
+    _ seqRaw: Int,
+    _ destinationRaw: Int,
+    _ separatorRaw: Int,
+    _ prefixRaw: Int,
+    _ postfixRaw: Int
+) -> Int {
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    let separator = extractString(from: UnsafeMutableRawPointer(bitPattern: separatorRaw)) ?? ", "
+    let prefix = extractString(from: UnsafeMutableRawPointer(bitPattern: prefixRaw)) ?? ""
+    let postfix = extractString(from: UnsafeMutableRawPointer(bitPattern: postfixRaw)) ?? ""
+    let rendered = elements.map(runtimeElementToString).joined(separator: separator)
+    let stringValue = prefix + rendered + postfix
+    let utf8 = Array(stringValue.utf8)
+    let stringRaw = Int(bitPattern: utf8.withUnsafeBufferPointer { buf in
+        kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
+    })
+    return kk_string_builder_append_obj(destinationRaw, stringRaw)
+}
 
 @_cdecl("kk_sequence_joinToString")
 public func kk_sequence_joinToString(_ seqRaw: Int, _ separatorRaw: Int, _ prefixRaw: Int, _ postfixRaw: Int) -> Int {
@@ -427,7 +448,13 @@ private func runtimeSequenceBestValue(
         return runtimeNullSentinelInt
     }
     if returnElement {
-        return bestElement ?? runtimeNullSentinelInt
+        guard let bestElement else {
+            if throwOnEmpty {
+                outThrown?.pointee = runtimeAllocateThrowable(message: kEmptySequenceNoSuchElement)
+            }
+            return runtimeNullSentinelInt
+        }
+        return bestElement
     }
     guard let bestSelector else {
         if throwOnEmpty {
@@ -436,6 +463,19 @@ private func runtimeSequenceBestValue(
         return runtimeNullSentinelInt
     }
     return bestSelector
+}
+
+@_cdecl("kk_sequence_maxBy")
+public func kk_sequence_maxBy(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    runtimeSequenceBestValue(
+        seqRaw: seqRaw, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown,
+        caller: #function, comparisonSign: 1, returnElement: true, throwOnEmpty: true
+    )
 }
 
 @_cdecl("kk_sequence_minByOrNull")
@@ -500,5 +540,18 @@ public func kk_sequence_maxOf(
     runtimeSequenceBestValue(
         seqRaw: seqRaw, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown,
         caller: #function, comparisonSign: 1, returnElement: false, throwOnEmpty: true
+    )
+}
+
+@_cdecl("kk_sequence_maxOfOrNull")
+public func kk_sequence_maxOfOrNull(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    runtimeSequenceBestValue(
+        seqRaw: seqRaw, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown,
+        caller: #function, comparisonSign: 1, returnElement: false, throwOnEmpty: false
     )
 }
