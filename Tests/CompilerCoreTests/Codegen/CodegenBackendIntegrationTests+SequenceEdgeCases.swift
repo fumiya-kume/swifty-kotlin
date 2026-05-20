@@ -100,6 +100,42 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenSequenceReduceIndexedReturnsAccumulatedValueOrThrowsOnEmpty() throws {
+        let source = """
+        fun main() {
+            val reduced = sequenceOf(1, 2, 3, 4)
+                .reduceIndexed { index, acc, value -> acc + index * value }
+            val single = sequenceOf(42)
+                .reduceIndexed { index, acc, value -> acc + index * value }
+
+            println(reduced)
+            println(single)
+
+            try {
+                emptySequence<Int>().reduceIndexed { index, acc, value -> acc + index * value }
+                println("missing")
+            } catch (e: Throwable) {
+                println("empty")
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceReduceIndexed",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "21\n42\nempty\n")
+        }
+    }
+
     func testCodegenSequenceFlatMapIndexedUsesCanonicalDiffCase() throws {
         let root = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent() // Codegen/
@@ -240,6 +276,30 @@ extension CodegenBackendIntegrationTests {
                 """
                 + "\n"
             )
+        }
+    }
+
+    func testCodegenSequenceMinusRemovesSingleElement() throws {
+        let source = """
+        fun main() {
+            println((sequenceOf(1, 2, 3, 2) - 2).toList())
+            println(sequenceOf(1, 2, 3).minus(99).toList())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceMinus",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[1, 3, 2]\n[1, 2, 3]\n")
         }
     }
 
