@@ -68,6 +68,11 @@
 - [x] STDLIB-COL-FN-048: `dropLastWhile` 関数の実装
 - [x] STDLIB-COL-FN-060: `filterIsInstance` 関数の実装
 - [x] STDLIB-COL-FN-071: `first` 関数の実装
+- [ ] STDLIB-COL-FN-072: `firstNotNullOf` 関数の実装
+- [ ] STDLIB-COL-FN-073: `firstNotNullOfOrNull` 関数の実装
+- [ ] STDLIB-COL-FN-074: `firstOrNull` 関数の実装
+- [ ] STDLIB-COL-FN-075: `flatMap` 関数の実装
+- [x] STDLIB-COL-FN-076: `flatMapIndexed` 関数の実装
 - [x] STDLIB-COL-FN-077: `flatMapIndexedTo` 関数の実装
 - [x] STDLIB-COL-FN-078: `flatMapTo` 関数の実装
 - [x] STDLIB-COL-FN-079: `flatten` 関数の実装
@@ -321,7 +326,7 @@
 - [ ] STDLIB-SEQ-FN-059: `mapIndexedNotNull` 関数の実装
 - [x] STDLIB-SEQ-FN-060: `mapIndexedNotNullTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-061: `mapIndexedTo` 関数の実装
-- [ ] STDLIB-SEQ-FN-062: `mapNotNull` 関数の実装
+- [x] STDLIB-SEQ-FN-062: `mapNotNull` 関数の実装
 - [x] STDLIB-SEQ-FN-063: `mapNotNullTo` 関数の実装
 - [x] STDLIB-SEQ-FN-064: `mapTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-065: `max` 関数の実装
@@ -350,7 +355,7 @@
 - [ ] STDLIB-SEQ-FN-089: `random` 関数の実装
 - [x] STDLIB-SEQ-FN-090: `randomOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-091: `reduce` 関数の実装
-- [ ] STDLIB-SEQ-FN-092: `reduceIndexed` 関数の実装
+- [x] STDLIB-SEQ-FN-092: `reduceIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-093: `reduceOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-094: `reduceRight` 関数の実装
 - [ ] STDLIB-SEQ-FN-095: `reduceRightIndexed` 関数の実装
@@ -772,7 +777,7 @@
 - [x] STDLIB-JS-FN-017: `Promise<T>.then(onFulfilled)` を追加する
 - [x] STDLIB-JS-FN-018: `Promise<T>.then(onFulfilled, onRejected)` を追加する
 - [x] STDLIB-JS-FN-019: `JsArray<T>.toArray()` を追加する
-- [ ] STDLIB-JS-FN-020: `JsBoolean.toBoolean()` を追加する
+- [x] STDLIB-JS-FN-020: `JsBoolean.toBoolean()` を追加する
 - [x] STDLIB-JS-FN-021: `JsNumber.toDouble()` を追加する
 - [x] STDLIB-JS-FN-022: `JsNumber.toInt()` を追加する
 - [ ] STDLIB-JS-FN-023: `Array<T>.toJsArray()` を追加する
