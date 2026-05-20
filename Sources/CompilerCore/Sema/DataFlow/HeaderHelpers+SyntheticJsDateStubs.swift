@@ -65,6 +65,13 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(localeOptionsType, for: localeOptionsSymbol)
+        registerJsDateLocaleOptionsBuilder(
+            packageFQName: kotlinJsPkg,
+            localeOptionsType: localeOptionsType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
 
         if let dateCompanionSymbol = registerJsDateCompanion(
             ownerSymbol: dateSymbol,
@@ -266,6 +273,79 @@ extension DataFlowSemaPhase {
             propertyType: types.makeNullable(types.booleanType),
             symbols: symbols,
             interner: interner
+        )
+    }
+
+    private func registerJsDateLocaleOptionsBuilder(
+        packageFQName: [InternedString],
+        localeOptionsType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern("dateLocaleOptions")
+        let functionFQName = packageFQName + [functionName]
+        let initType = types.make(.functionType(FunctionType(
+            receiver: localeOptionsType,
+            params: [],
+            returnType: types.unitType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbol in
+            guard let signature = symbols.functionSignature(for: symbol) else {
+                return false
+            }
+            return signature.parameterTypes == [initType]
+                && signature.returnType == localeOptionsType
+        }) {
+            let valueParameterSymbols = symbols.functionSignature(for: existing)?.valueParameterSymbols ?? []
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    parameterTypes: [initType],
+                    returnType: localeOptionsType,
+                    valueParameterSymbols: valueParameterSymbols,
+                    valueParameterHasDefaultValues: [false],
+                    valueParameterIsVararg: [false]
+                ),
+                for: existing
+            )
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+
+        let initName = interner.intern("init")
+        let initSymbol = symbols.define(
+            kind: .valueParameter,
+            name: initName,
+            fqName: functionFQName + [initName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(functionSymbol, for: initSymbol)
+        symbols.setPropertyType(initType, for: initSymbol)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [initType],
+                returnType: localeOptionsType,
+                valueParameterSymbols: [initSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false]
+            ),
+            for: functionSymbol
         )
     }
 
