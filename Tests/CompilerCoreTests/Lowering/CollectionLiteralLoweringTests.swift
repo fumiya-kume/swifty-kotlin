@@ -1328,6 +1328,16 @@ final class CollectionLiteralLoweringTests: XCTestCase {
         )
     }
 
+    func testVirtualCallOnSequenceTypedParameterRewritesToKkSequenceMapNotNullTo() throws {
+        let callees = try buildAndLowerVirtualCallWithArgs(
+            receiverTypeName: "Sequence", callee: "mapNotNullTo", argCount: 2
+        )
+        XCTAssertTrue(
+            callees.contains("kk_sequence_mapNotNullTo"),
+            "virtualCall(mapNotNullTo) on Sequence-typed parameter should be rewritten to kk_sequence_mapNotNullTo, got: \(callees)"
+        )
+    }
+
     func testVirtualCallOnSequenceTypedParameterRewritesToKkSequenceMapIndexedNotNullTo() throws {
         let callees = try buildAndLowerVirtualCallWithArgs(
             receiverTypeName: "Sequence", callee: "mapIndexedNotNullTo", argCount: 2

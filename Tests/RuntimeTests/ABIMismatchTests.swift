@@ -271,6 +271,7 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.serializationFunctions,
             RuntimeABISpec.networkFunctions,
             RuntimeABISpec.abiParityFunctions,
+            RuntimeABISpec.streamFunctions,
         ]
         let sectionNames = sections.flatMap { $0.map(\.name) }
         let duplicateNames = Dictionary(grouping: sectionNames, by: { $0 })

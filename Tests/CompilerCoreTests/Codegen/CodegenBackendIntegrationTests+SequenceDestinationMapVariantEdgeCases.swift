@@ -3,6 +3,54 @@ import Foundation
 import XCTest
 
 extension CodegenBackendIntegrationTests {
+    func testSequenceAssociateBuildsMapWithLastWriteWins() throws {
+        let source = """
+        fun main() {
+            val result = sequenceOf(1, 2, 3).associate { (it % 2) to (it * 10) }
+            println(result)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceAssociateRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "{1=30, 0=20}\n")
+        }
+    }
+
+    func testSequenceAssociateByBuildsMapWithLastWriteWins() throws {
+        let source = """
+        fun main() {
+            val result = sequenceOf(1, 2, 3).associateBy { it % 2 }
+            println(result)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceAssociateByRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "{1=3, 0=2}\n")
+        }
+    }
+
     func testSequenceAssociateToPopulatesMutableMapDestination() throws {
         let source = """
         fun main() {

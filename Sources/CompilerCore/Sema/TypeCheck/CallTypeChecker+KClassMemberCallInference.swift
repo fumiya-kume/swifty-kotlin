@@ -51,6 +51,32 @@ extension CallTypeChecker {
                 interner: interner
             )
         }
+        if calleeName == interner.intern("js"), args.isEmpty {
+            let jsTypeArgument = javaClassTypeArgument(
+                from: classRefTargetType,
+                sema: sema,
+                interner: interner
+            )
+            return bindKClassJsPropertyAccess(
+                id,
+                typeArgument: jsTypeArgument,
+                sema: sema,
+                interner: interner
+            )
+        }
+        if calleeName == interner.intern("javaClass"), args.isEmpty {
+            let javaTypeArgument = javaClassTypeArgument(
+                from: classRefTargetType,
+                sema: sema,
+                interner: interner
+            )
+            return bindKClassJavaClassPropertyAccess(
+                id,
+                typeArgument: javaTypeArgument,
+                sema: sema,
+                interner: interner
+            )
+        }
         if calleeName == knownNames.simpleName || calleeName == knownNames.qualifiedName {
             _ = args.map { driver.inferExpr($0.expr, ctx: ctx, locals: &locals) }
             let nullableStringType = sema.types.makeNullable(
@@ -164,6 +190,22 @@ extension CallTypeChecker {
 
         if calleeName == interner.intern("java"), args.isEmpty {
             return bindKClassJavaPropertyAccess(
+                id,
+                typeArgument: kClassArgumentType,
+                sema: sema,
+                interner: interner
+            )
+        }
+        if calleeName == interner.intern("js"), args.isEmpty {
+            return bindKClassJsPropertyAccess(
+                id,
+                typeArgument: kClassArgumentType,
+                sema: sema,
+                interner: interner
+            )
+        }
+        if calleeName == interner.intern("javaClass"), args.isEmpty {
+            return bindKClassJavaClassPropertyAccess(
                 id,
                 typeArgument: kClassArgumentType,
                 sema: sema,
@@ -294,6 +336,105 @@ extension CallTypeChecker {
             interner.intern("kotlin"),
             interner.intern("jvm"),
             interner.intern("java"),
+        ]
+        if let propertySymbol = sema.symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
+            sema.symbols.symbol(symbolID)?.kind == .property
+                && sema.symbols.extensionPropertyReceiverType(for: symbolID) != nil
+        }) {
+            sema.bindings.bindIdentifier(id, symbol: propertySymbol)
+            if let getterSymbol = sema.symbols.extensionPropertyGetterAccessor(for: propertySymbol) {
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: getterSymbol,
+                        substitutedTypeArguments: [typeArgument],
+                        parameterMapping: [:]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(getterSymbol))
+            }
+        }
+        sema.bindings.bindExprType(id, type: returnType)
+        return returnType
+    }
+
+    private func bindKClassJsPropertyAccess(
+        _ id: ExprID,
+        typeArgument: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID? {
+        let jsClassFQName = [
+            interner.intern("kotlin"),
+            interner.intern("js"),
+            interner.intern("JsClass"),
+        ]
+        guard let jsClassSymbol = sema.symbols.lookup(fqName: jsClassFQName) else {
+            return nil
+        }
+
+        let returnType = sema.types.make(.classType(ClassType(
+            classSymbol: jsClassSymbol,
+            args: [.invariant(typeArgument)],
+            nullability: .nonNull
+        )))
+        let propertyFQName = [
+            interner.intern("kotlin"),
+            interner.intern("js"),
+            interner.intern("js"),
+        ]
+        if let propertySymbol = sema.symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
+            sema.symbols.symbol(symbolID)?.kind == .property
+                && sema.symbols.extensionPropertyReceiverType(for: symbolID) != nil
+        }) {
+            sema.bindings.bindIdentifier(id, symbol: propertySymbol)
+            if let getterSymbol = sema.symbols.extensionPropertyGetterAccessor(for: propertySymbol) {
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: getterSymbol,
+                        substitutedTypeArguments: [typeArgument],
+                        parameterMapping: [:]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(getterSymbol))
+            }
+        }
+        sema.bindings.bindExprType(id, type: returnType)
+        return returnType
+    }
+
+    private func bindKClassJavaClassPropertyAccess(
+        _ id: ExprID,
+        typeArgument: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID? {
+        let classFQName = [
+            interner.intern("java"),
+            interner.intern("lang"),
+            interner.intern("Class"),
+        ]
+        guard let classSymbol = sema.symbols.lookup(fqName: classFQName),
+              let kClassSymbol = sema.types.kClassInterfaceSymbol
+        else {
+            return nil
+        }
+
+        let kClassType = sema.types.make(.classType(ClassType(
+            classSymbol: kClassSymbol,
+            args: [.invariant(typeArgument)],
+            nullability: .nonNull
+        )))
+        let returnType = sema.types.make(.classType(ClassType(
+            classSymbol: classSymbol,
+            args: [.invariant(kClassType)],
+            nullability: .nonNull
+        )))
+        let propertyFQName = [
+            interner.intern("kotlin"),
+            interner.intern("jvm"),
+            interner.intern("javaClass"),
         ]
         if let propertySymbol = sema.symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
             sema.symbols.symbol(symbolID)?.kind == .property
