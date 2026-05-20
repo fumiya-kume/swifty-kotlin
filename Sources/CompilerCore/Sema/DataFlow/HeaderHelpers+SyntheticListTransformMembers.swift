@@ -300,6 +300,44 @@ extension DataFlowSemaPhase {
             typeParameterSymbols: [listTypeParamSymbol, flatMapTypeParamSymbol]
         )
 
+        let flatMapIndexedTypeParamName = interner.intern("R")
+        let flatMapIndexedTypeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: flatMapIndexedTypeParamName,
+            fqName: listFQName + [interner.intern("flatMapIndexed"), flatMapIndexedTypeParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let flatMapIndexedTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: flatMapIndexedTypeParamSymbol, nullability: .nonNull
+        )))
+        let flatMapIndexedReturnType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(flatMapIndexedTypeParamType)],
+            nullability: .nonNull
+        )))
+        let flatMapIndexedLambdaReturnType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(flatMapIndexedTypeParamType)],
+            nullability: .nonNull
+        )))
+        registerMemberOverload(
+            memberName: interner.intern("flatMapIndexed"),
+            memberFQName: listFQName + [interner.intern("flatMapIndexed")],
+            parameterTypes: [
+                types.make(.functionType(FunctionType(
+                    params: [types.intType, listTypeParamType],
+                    returnType: flatMapIndexedLambdaReturnType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+            ],
+            externalLinkName: "kk_list_flatMapIndexed",
+            returnTypeOverride: flatMapIndexedReturnType,
+            typeParameterSymbols: [listTypeParamSymbol, flatMapIndexedTypeParamSymbol]
+        )
+
         let flatMapToTypeParamName = interner.intern("R")
         let flatMapToTypeParamSymbol = symbols.define(
             kind: .typeParameter,
