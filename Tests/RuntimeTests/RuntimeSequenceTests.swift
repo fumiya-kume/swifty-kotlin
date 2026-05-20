@@ -246,6 +246,28 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertNotEqual(thrown, 0)
     }
 
+    func testMinOfOrNullReturnsSmallestSelectedValueAndNullOnEmpty() {
+        var thrown = 0
+        let result = kk_sequence_minOfOrNull(
+            makeSequence([5, 2, 3]),
+            unsafeBitCast(sequenceValueTimesTen, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 20)
+
+        let emptyResult = kk_sequence_minOfOrNull(
+            makeSequence([]),
+            unsafeBitCast(sequenceValueTimesTen, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
+    }
+
     func testFirstNotNullOfOrNullReturnsFirstTransformedValue() {
         var thrown = 0
         let result = kk_sequence_firstNotNullOfOrNull(
@@ -619,6 +641,21 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(mapKeys(result), [1, 0])
         XCTAssertEqual(listElements(kk_map_get(result, 1)), [100, 1, 3])
         XCTAssertEqual(listElements(kk_map_get(result, 0)), [4])
+    }
+
+    func testGroupByGroupsElementsIntoNewMap() {
+        let seq = makeSequence([1, 2, 3, 4, 5])
+
+        let result = kk_sequence_groupBy(
+            seq,
+            unsafeBitCast(sequenceParitySelector, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(mapKeys(result), [1, 0])
+        XCTAssertEqual(listElements(kk_map_get(result, 1)), [1, 3, 5])
+        XCTAssertEqual(listElements(kk_map_get(result, 0)), [2, 4])
     }
 
     func testIndexOfReturnsFirstMatchingIndexOrMinusOne() {

@@ -654,6 +654,19 @@ public func kk_sequence_minOf(
     )
 }
 
+@_cdecl("kk_sequence_minOfOrNull")
+public func kk_sequence_minOfOrNull(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    runtimeSequenceBestValue(
+        seqRaw: seqRaw, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown,
+        caller: #function, comparisonSign: -1, returnElement: false, throwOnEmpty: false
+    )
+}
+
 @_cdecl("kk_sequence_maxOf")
 public func kk_sequence_maxOf(
     _ seqRaw: Int,

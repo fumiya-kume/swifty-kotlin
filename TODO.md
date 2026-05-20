@@ -304,7 +304,7 @@
 - [ ] STDLIB-SEQ-FN-042: `fold` 関数の実装
 - [x] STDLIB-SEQ-FN-043: `foldIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-044: `forEach` 関数の実装
-- [ ] STDLIB-SEQ-FN-046: `groupBy` 関数の実装
+- [x] STDLIB-SEQ-FN-046: `groupBy` 関数の実装
 - [ ] STDLIB-SEQ-FN-047: `groupByTo` 関数の実装
 - [x] STDLIB-SEQ-FN-048: `indexOf` 関数の実装
 - [ ] STDLIB-SEQ-FN-049: `indexOfFirst` 関数の実装
@@ -335,7 +335,7 @@
 - [ ] STDLIB-SEQ-FN-074: `minBy` 関数の実装
 - [ ] STDLIB-SEQ-FN-075: `minByOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-076: `minOf` 関数の実装
-- [ ] STDLIB-SEQ-FN-077: `minOfOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-077: `minOfOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-078: `minOrNull` 関数の実装
 - [x] STDLIB-SEQ-FN-079: `minWith` 関数の実装
 - [ ] STDLIB-SEQ-FN-080: `minWithOrNull` 関数の実装
