@@ -207,6 +207,7 @@ private extension StdlibSurfaceSpec {
         list("filterNot", 1, "kk_list_filterNot", returnStrategy: .list, lambdaExpectation: .receiverElement(argumentIndex: 0, returnStrategy: .boolean)),
         list("mapNotNull", 1, "kk_list_mapNotNull", returnStrategy: .list, lambdaExpectation: .receiverElement(argumentIndex: 0, returnStrategy: .nullableAny)),
         list("flatMap", 1, "kk_list_flatMap", returnStrategy: .list, lambdaExpectation: .receiverElement(argumentIndex: 0, returnStrategy: .any)),
+        list("flatMapIndexed", 1, "kk_list_flatMapIndexed", returnStrategy: .list, lambdaExpectation: .indexedReceiverElement(argumentIndex: 0, returnStrategy: .any)),
         list("forEach", 1, "kk_list_forEach", returnStrategy: .unit, lambdaExpectation: .receiverElement(argumentIndex: 0, returnStrategy: .unit)),
         list("groupBy", 1, "kk_list_groupBy", returnStrategy: .map, lambdaExpectation: .receiverElement(argumentIndex: 0, returnStrategy: .any)),
         list("groupingBy", 1, "kk_list_groupingBy", returnStrategy: .any, lambdaExpectation: .receiverElement(argumentIndex: 0, returnStrategy: .any)),
@@ -316,6 +317,7 @@ private extension StdlibSurfaceSpec {
         sequence("filterNotTo", 2, "kk_sequence_filterNotTo", returnStrategy: .destinationArgument, lambdaExpectation: .destinationElement(argumentIndex: 1, returnStrategy: .boolean)),
         sequence("mapTo", 2, "kk_sequence_mapTo", returnStrategy: .destinationArgument, lambdaExpectation: .destinationElement(argumentIndex: 1, returnStrategy: .destinationElement)),
         sequence("mapNotNullTo", 2, "kk_sequence_mapNotNullTo", returnStrategy: .destinationArgument, lambdaExpectation: .destinationElement(argumentIndex: 1, returnStrategy: .nullableAny)),
+        sequence("flatMapTo", 2, "kk_sequence_flatMapTo", returnStrategy: .destinationArgument, lambdaExpectation: .destinationElement(argumentIndex: 1, returnStrategy: .collectionOfDestinationElement)),
         sequence("mapIndexedNotNullTo", 2, "kk_sequence_mapIndexedNotNullTo", returnStrategy: .destinationArgument, lambdaExpectation: .indexedDestinationElement(argumentIndex: 1, returnStrategy: .nullableAny)),
         sequence("filterIndexedTo", 2, "kk_sequence_filterIndexedTo", returnStrategy: .destinationArgument, lambdaExpectation: .indexedDestinationElement(argumentIndex: 1, returnStrategy: .boolean)),
         sequence("filterNotNullTo", 1, "kk_sequence_filterNotNullTo", returnStrategy: .destinationArgument, lambdaExpectation: .none),
@@ -327,5 +329,6 @@ private extension StdlibSurfaceSpec {
         sequence("associateByTo", 2, "kk_sequence_associateByTo", returnStrategy: .destinationArgument, lambdaExpectation: .destinationElement(argumentIndex: 1, returnStrategy: .any)),
         sequence("associateWithTo", 2, "kk_sequence_associateWithTo", returnStrategy: .destinationArgument, lambdaExpectation: .destinationElement(argumentIndex: 1, returnStrategy: .any)),
         sequence("groupByTo", 2, "kk_sequence_groupByTo", returnStrategy: .destinationArgument, lambdaExpectation: .destinationElement(argumentIndex: 1, returnStrategy: .any)),
+        sequence("reduceIndexed", 1, "kk_sequence_reduceIndexed", returnStrategy: .receiverElement, lambdaExpectation: .indexedReceiverElement(argumentIndex: 0, returnStrategy: .any)),
     ]
 }

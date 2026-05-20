@@ -2539,6 +2539,7 @@ extension CallLowerer {
                 let takeName = interner.intern("take")
                 let forEachName = interner.intern("forEach")
                 let flatMapName = interner.intern("flatMap")
+                let flatMapToName = interner.intern("flatMapTo")
                 let flatMapIndexedName = interner.intern("flatMapIndexed")
                 let dropName = interner.intern("drop")
                 let zipName = interner.intern("zip")
@@ -2584,6 +2585,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_forEach"
                 } else if calleeName == flatMapName {
                     runtimeCallee = "kk_sequence_flatMap"
+                } else if calleeName == flatMapToName {
+                    runtimeCallee = "kk_sequence_flatMapTo"
                 } else if calleeName == flatMapIndexedName {
                     runtimeCallee = "kk_sequence_flatMapIndexed"
                 } else if calleeName == dropName {
@@ -2732,6 +2735,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_associateWithTo"
                         || runtimeCallee == "kk_sequence_associateWith"
                         || runtimeCallee == "kk_sequence_groupByTo"
+                        || runtimeCallee == "kk_sequence_flatMapTo"
                         || runtimeCallee == "kk_sequence_find"
                         || runtimeCallee == "kk_sequence_findLast"
                         || runtimeCallee == "kk_sequence_takeLast"

@@ -777,6 +777,23 @@ public extension RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: StdlibSurfaceSpec.collectionHOFRuntimeLinkName(
                 ownerKind: .sequence,
+                memberName: "flatMapTo",
+                arity: 2,
+                fallback: "kk_sequence_flatMapTo"
+            ),
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "destRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
+            name: StdlibSurfaceSpec.collectionHOFRuntimeLinkName(
+                ownerKind: .sequence,
                 memberName: "filterIndexedTo",
                 arity: 2,
                 fallback: "kk_sequence_filterIndexedTo"
