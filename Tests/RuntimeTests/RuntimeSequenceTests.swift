@@ -1347,6 +1347,16 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         kk_sequence_from_list(makeList(elements))
     }
 
+    func testFilterIsInstanceToAppendsMatchingRuntimeTypesToDestination() {
+        let seq = makeSequence([1, runtimeTestStringHandle("two"), 3])
+        let destination = makeList([0])
+
+        let result = kk_sequence_filterIsInstanceTo(seq, destination, 3)
+
+        XCTAssertEqual(result, destination)
+        XCTAssertEqual(listElements(destination), [0, 1, 3])
+    }
+
     // MARK: - Sequence.constrainOnce (STDLIB-SEQ-006)
 
     func testConstrainOnceReportsIllegalStateOnSecondToList() {
