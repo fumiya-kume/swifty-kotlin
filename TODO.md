@@ -356,6 +356,8 @@
 - [ ] STDLIB-SEQ-FN-091: `reduce` 関数の実装
 - [ ] STDLIB-SEQ-FN-092: `reduceIndexed` 関数の実装
 - [x] STDLIB-SEQ-FN-093: `reduceOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-092: `reduceIndexed` 関数の実装
+- [ ] STDLIB-SEQ-FN-093: `reduceOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-094: `reduceRight` 関数の実装
 - [ ] STDLIB-SEQ-FN-095: `reduceRightIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-096: `reduceRightIndexedOrNull` 関数の実装
@@ -776,7 +778,7 @@
 - [x] STDLIB-JS-FN-017: `Promise<T>.then(onFulfilled)` を追加する
 - [x] STDLIB-JS-FN-018: `Promise<T>.then(onFulfilled, onRejected)` を追加する
 - [x] STDLIB-JS-FN-019: `JsArray<T>.toArray()` を追加する
-- [ ] STDLIB-JS-FN-020: `JsBoolean.toBoolean()` を追加する
+- [x] STDLIB-JS-FN-020: `JsBoolean.toBoolean()` を追加する
 - [x] STDLIB-JS-FN-021: `JsNumber.toDouble()` を追加する
 - [x] STDLIB-JS-FN-022: `JsNumber.toInt()` を追加する
 - [ ] STDLIB-JS-FN-023: `Array<T>.toJsArray()` を追加する

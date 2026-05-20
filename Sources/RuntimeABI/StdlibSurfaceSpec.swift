@@ -330,5 +330,6 @@ private extension StdlibSurfaceSpec {
         sequence("associateWithTo", 2, "kk_sequence_associateWithTo", returnStrategy: .destinationArgument, lambdaExpectation: .destinationElement(argumentIndex: 1, returnStrategy: .any)),
         sequence("groupByTo", 2, "kk_sequence_groupByTo", returnStrategy: .destinationArgument, lambdaExpectation: .destinationElement(argumentIndex: 1, returnStrategy: .any)),
         sequence("reduceOrNull", 1, "kk_sequence_reduceOrNull", returnStrategy: .nullableReceiverElement, lambdaExpectation: .receiverElement(argumentIndex: 0, returnStrategy: .any)),
+        sequence("reduceIndexed", 1, "kk_sequence_reduceIndexed", returnStrategy: .receiverElement, lambdaExpectation: .indexedReceiverElement(argumentIndex: 0, returnStrategy: .any)),
     ]
 }

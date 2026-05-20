@@ -110,6 +110,23 @@ extension CodegenBackendIntegrationTests {
             println(reduced)
             println(empty)
             println(single)
+    func testCodegenSequenceReduceIndexedReturnsAccumulatedValueOrThrowsOnEmpty() throws {
+        let source = """
+        fun main() {
+            val reduced = sequenceOf(1, 2, 3, 4)
+                .reduceIndexed { index, acc, value -> acc + index * value }
+            val single = sequenceOf(42)
+                .reduceIndexed { index, acc, value -> acc + index * value }
+
+            println(reduced)
+            println(single)
+
+            try {
+                emptySequence<Int>().reduceIndexed { index, acc, value -> acc + index * value }
+                println("missing")
+            } catch (e: Throwable) {
+                println("empty")
+            }
         }
         """
 
@@ -118,6 +135,7 @@ extension CodegenBackendIntegrationTests {
             let ctx = try runCodegenPipeline(
                 inputPath: path,
                 moduleName: "SequenceReduceOrNull",
+                moduleName: "SequenceReduceIndexed",
                 emit: .executable,
                 outputPath: outputBase
             )
@@ -126,6 +144,7 @@ extension CodegenBackendIntegrationTests {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(normalizedStdout, "10\nnull\n42\n")
+            XCTAssertEqual(normalizedStdout, "21\n42\nempty\n")
         }
     }
 
