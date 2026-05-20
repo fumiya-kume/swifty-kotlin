@@ -782,6 +782,7 @@ extension RuntimeSequenceTests {
 
         XCTAssertEqual(result, 0)
         XCTAssertEqual(_lazyTestYieldCounter, 123)
+    }
     func testSequenceFoldIndexedAccumulatesIndexAndValueInOrder() {
         let seq = makeSequence([3, 4, 5])
         let foldFn: @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, acc, value, _ in
