@@ -967,6 +967,16 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
         fun countValues(): Int {
             val values = sequenceOf(1, 2, 3)
             return values.count()
+    func testSequenceMinusResolvesInCallExpressions() throws {
+        let source = """
+        fun removeValue(): Sequence<Int> {
+            val values = sequenceOf(1, 2, 3)
+            return values.minus(2)
+        }
+
+        fun removeWithOperator(): Sequence<Int> {
+            val values = sequenceOf(1, 2, 3)
+            return values - 2
         }
         """
 
@@ -983,12 +993,181 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
 
             let sema = try XCTUnwrap(ctx.sema)
             let memberFQName = ["kotlin", "sequences", "Sequence", "count"]
+                "Expected Sequence.minus surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "sequences", "Sequence", "minus"]
                 .map { ctx.interner.intern($0) }
             let links = Set(
                 sema.symbols.lookupAll(fqName: memberFQName)
                     .compactMap { sema.symbols.externalLinkName(for: $0) }
             )
             XCTAssertTrue(links.contains("kk_sequence_count"))
+            XCTAssertTrue(links.contains("kk_sequence_minus"))
+        }
+    }
+
+    func testSequenceChunkedResolvesInCallExpressions() throws {
+        let source = """
+        fun chunkValues(): Int {
+            val values = sequenceOf(1, 2, 3, 4, 5)
+            val chunks = values.chunked(2)
+            return chunks.toList().size
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Sequence.chunked surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "sequences", "Sequence", "chunked"]
+                .map { ctx.interner.intern($0) }
+            let links = Set(
+                sema.symbols.lookupAll(fqName: memberFQName)
+                    .compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
+            XCTAssertTrue(links.contains("kk_sequence_chunked"))
+        }
+    }
+
+    func testSequenceSumByResolvesInCallExpressions() throws {
+        let source = """
+        fun weighted(): Int {
+            val values = sequenceOf(1, 2, 3)
+            return values.sumBy { value ->
+                if (value == 2) 10 else value
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Sequence.sumBy surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "sequences", "Sequence", "sumBy"]
+                .map { ctx.interner.intern($0) }
+            let sumBySymbols = sema.symbols.lookupAll(fqName: memberFQName)
+            let links = Set(sumBySymbols.compactMap { sema.symbols.externalLinkName(for: $0) })
+            XCTAssertTrue(links.contains("kk_sequence_sumBy"))
+            let sumBySymbol = try XCTUnwrap(sumBySymbols.first)
+            XCTAssertTrue(
+                sema.symbols.annotations(for: sumBySymbol).contains { $0.annotationFQName == "kotlin.Deprecated" },
+                "Sequence.sumBy should carry Deprecated metadata"
+            )
+        }
+    }
+
+    func testSequenceSumOfResolvesInCallExpressions() throws {
+        let source = """
+        fun weighted(): Int {
+            val values = sequenceOf(1, 2, 3)
+            return values.sumOf { value ->
+                if (value == 2) 10 else value
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Sequence.sumOf surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "sequences", "Sequence", "sumOf"]
+                .map { ctx.interner.intern($0) }
+            let links = Set(
+                sema.symbols.lookupAll(fqName: memberFQName)
+                    .compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
+            XCTAssertTrue(links.contains("kk_sequence_sumOf"))
+        }
+    }
+
+    func testSequenceSumResolvesInCallExpressions() throws {
+        let source = """
+        fun total(): Int {
+            val values = sequenceOf(1, 2, 3)
+            return values.sum()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Sequence.sum surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "sequences", "Sequence", "sum"]
+                .map { ctx.interner.intern($0) }
+            let links = Set(
+                sema.symbols.lookupAll(fqName: memberFQName)
+                    .compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
+            XCTAssertTrue(links.contains("kk_sequence_sum"))
+        }
+    }
+
+    func testSequenceSumByDoubleResolvesInCallExpressions() throws {
+        let source = """
+        fun weighted(): Double {
+            val values = sequenceOf(1, 2, 3)
+            return values.sumByDouble { value ->
+                if (value == 2) 1.5 else 0.25
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Sequence.sumByDouble surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "sequences", "Sequence", "sumByDouble"]
+                .map { ctx.interner.intern($0) }
+            let sumByDoubleSymbols = sema.symbols.lookupAll(fqName: memberFQName)
+            let links = Set(sumByDoubleSymbols.compactMap { sema.symbols.externalLinkName(for: $0) })
+            XCTAssertTrue(links.contains("kk_sequence_sumByDouble"))
+            let sumByDoubleSymbol = try XCTUnwrap(sumByDoubleSymbols.first)
+            XCTAssertTrue(
+                sema.symbols.annotations(for: sumByDoubleSymbol).contains { $0.annotationFQName == "kotlin.Deprecated" },
+                "Sequence.sumByDouble should carry Deprecated metadata"
+            )
         }
     }
 
