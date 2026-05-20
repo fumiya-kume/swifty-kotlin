@@ -102,6 +102,9 @@ public extension RuntimeABISpec {
             p("optionalRaw", .intptr),
             p("collectionRaw", .intptr),
         ]),
+        abiParitySpec("kk_optional_toList", parameters: [
+            p("optionalRaw", .intptr),
+        ]),
         abiParitySpec("kk_kclass_javaClass", parameters: [
             p("kclassRaw", .intptr),
         ]),
