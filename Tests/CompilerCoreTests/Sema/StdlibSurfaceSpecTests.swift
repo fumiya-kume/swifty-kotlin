@@ -147,6 +147,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("filterTo", 2),
             sequence("filterNotTo", 2),
             sequence("mapTo", 2),
+            sequence("flatMapTo", 2),
             sequence("mapIndexedNotNullTo", 2),
             sequence("filterIndexedTo", 2),
             sequence("filterNotNullTo", 1),
@@ -158,6 +159,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("associateByTo", 2),
             sequence("associateWithTo", 2),
             sequence("groupByTo", 2),
+            sequence("reduceIndexed", 1),
         ]
 
         let actual = Set(StdlibSurfaceSpec.collectionHOFMembers.map(SpecKey.init(spec:)))
@@ -188,9 +190,11 @@ final class StdlibSurfaceSpecTests: XCTestCase {
                 (.sequence, ["kotlin", "sequences", "Sequence"], "flatMap", 1),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "flatMapIndexed", 1),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "foldIndexed", 2),
+                (.sequence, ["kotlin", "sequences", "Sequence"], "flatMapTo", 2),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "firstNotNullOf", 1),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "scanIndexed", 2),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "runningFoldIndexed", 2),
+                (.sequence, ["kotlin", "sequences", "Sequence"], "reduceIndexed", 1),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "randomOrNull", 0),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "plusElement", 1),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "requireNoNulls", 0),
