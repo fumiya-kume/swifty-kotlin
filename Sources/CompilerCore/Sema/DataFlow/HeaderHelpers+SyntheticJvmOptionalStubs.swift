@@ -82,6 +82,30 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerOptionalAsSequence(
+            optionalSymbol: optionalSymbol,
+            packageFQName: kotlinJvmOptionalsPkg,
+            packageSymbol: optionalsPkgSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerOptionalToSet(
+            optionalSymbol: optionalSymbol,
+            packageFQName: kotlinJvmOptionalsPkg,
+            packageSymbol: optionalsPkgSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerOptionalGetOrElse(
+            optionalSymbol: optionalSymbol,
+            packageFQName: kotlinJvmOptionalsPkg,
+            packageSymbol: optionalsPkgSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
     }
 
     private func registerOptionalToCollection(
@@ -364,6 +388,278 @@ extension DataFlowSemaPhase {
                 valueParameterSymbols: [],
                 valueParameterHasDefaultValues: [],
                 valueParameterIsVararg: [],
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 0
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerOptionalAsSequence(
+        optionalSymbol: SymbolID,
+        packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern("asSequence")
+        let functionFQName = packageFQName + [functionName]
+
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = functionFQName + [typeParamName]
+        let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let tType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: optionalSymbol,
+            args: [.out(tType)],
+            nullability: .nonNull
+        )))
+
+        let kotlinCollectionsPkg: [InternedString] = [
+            interner.intern("kotlin"), interner.intern("collections")
+        ]
+        let sequenceSymbol = ensureSyntheticSequenceStub(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg
+        )
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
+            args: [.out(tType)],
+            nullability: .nonNull
+        )))
+
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+            return signature.receiverType == receiverType
+                && signature.parameterTypes.isEmpty
+                && signature.returnType == returnType
+                && signature.typeParameterSymbols == [typeParamSymbol]
+                && signature.classTypeParameterCount == 0
+        }) {
+            symbols.setExternalLinkName("kk_optional_asSequence", for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName("kk_optional_asSequence", for: functionSymbol)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: [],
+                valueParameterIsVararg: [],
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 0
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerOptionalToSet(
+        optionalSymbol: SymbolID,
+        packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern("toSet")
+        let functionFQName = packageFQName + [functionName]
+
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = functionFQName + [typeParamName]
+        let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let tType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: optionalSymbol,
+            args: [.out(tType)],
+            nullability: .nonNull
+        )))
+
+        let setFQName = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("Set")
+        ]
+        guard let setSymbol = symbols.lookup(fqName: setFQName) else {
+            return
+        }
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: setSymbol,
+            args: [.out(tType)],
+            nullability: .nonNull
+        )))
+
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+            return signature.receiverType == receiverType
+                && signature.parameterTypes.isEmpty
+                && signature.returnType == returnType
+                && signature.typeParameterSymbols == [typeParamSymbol]
+                && signature.classTypeParameterCount == 0
+        }) {
+            symbols.setExternalLinkName("kk_optional_toSet", for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName("kk_optional_toSet", for: functionSymbol)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: [],
+                valueParameterIsVararg: [],
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 0
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerOptionalGetOrElse(
+        optionalSymbol: SymbolID,
+        packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern("getOrElse")
+        let functionFQName = packageFQName + [functionName]
+
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = functionFQName + [typeParamName]
+        let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let tType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: optionalSymbol,
+            args: [.out(tType)],
+            nullability: .nonNull
+        )))
+        let defaultValueType = types.make(.functionType(FunctionType(
+            params: [],
+            returnType: tType
+        )))
+
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+            return signature.receiverType == receiverType
+                && signature.parameterTypes == [defaultValueType]
+                && signature.returnType == tType
+                && signature.typeParameterSymbols == [typeParamSymbol]
+                && signature.classTypeParameterCount == 0
+        }) {
+            symbols.setExternalLinkName("kk_optional_getOrElse", for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName("kk_optional_getOrElse", for: functionSymbol)
+
+        let defaultValueName = interner.intern("defaultValue")
+        let defaultValueSymbol = symbols.define(
+            kind: .valueParameter,
+            name: defaultValueName,
+            fqName: functionFQName + [defaultValueName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(functionSymbol, for: defaultValueSymbol)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [defaultValueType],
+                returnType: tType,
+                isSuspend: false,
+                valueParameterSymbols: [defaultValueSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
                 typeParameterSymbols: [typeParamSymbol],
                 classTypeParameterCount: 0
             ),
