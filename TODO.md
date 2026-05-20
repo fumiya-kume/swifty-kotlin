@@ -330,7 +330,7 @@
 - [x] STDLIB-SEQ-FN-069: `maxOfOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-070: `maxOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-071: `maxWith` 関数の実装
-- [ ] STDLIB-SEQ-FN-072: `maxWithOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-072: `maxWithOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-073: `min` 関数の実装
 - [ ] STDLIB-SEQ-FN-074: `minBy` 関数の実装
 - [ ] STDLIB-SEQ-FN-075: `minByOrNull` 関数の実装
