@@ -201,6 +201,10 @@ private let sequenceNegatedSelector: @convention(c) (Int, Int, UnsafeMutablePoin
     -value
 }
 
+private let sequenceMaxWithOrNullNaturalComparator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, lhs, rhs, _ in
+    lhs - rhs
+}
+
 private func runtimeTestStringHandle(_ value: String) -> Int {
     let bytes = Array(value.utf8)
     return bytes.withUnsafeBufferPointer { buffer in
@@ -352,19 +356,41 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
 
     func testMaxOfOrNullReturnsLargestSelectorResultAndNullOnEmpty() {
         var thrown = 0
-        let result = kk_sequence_maxOfOrNull(
-            makeSequence([3, 1, 4, 2]),
-            unsafeBitCast(sequenceNegatedSelector, to: Int.self),
-            0,
-            &thrown
-        )
-
+    let result = kk_sequence_maxOfOrNull(
+        makeSequence([3, 1, 4, 2]),
+        unsafeBitCast(sequenceNegatedSelector, to: Int.self),
+        0,
+        &thrown
+    )
         XCTAssertEqual(thrown, 0)
         XCTAssertEqual(result, -1)
 
         let emptyResult = kk_sequence_maxOfOrNull(
             makeSequence([]),
             unsafeBitCast(sequenceNegatedSelector, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
+    }
+
+    func testMaxWithOrNullReturnsLargestElementAndNullOnEmpty() {
+        var thrown = 0
+        let result = kk_sequence_maxWithOrNull(
+            makeSequence([3, 1, 4, 2]),
+            unsafeBitCast(sequenceMaxWithOrNullNaturalComparator, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 4)
+
+        let emptyResult = kk_sequence_maxWithOrNull(
+            makeSequence([]),
+            unsafeBitCast(sequenceMaxWithOrNullNaturalComparator, to: Int.self),
             0,
             &thrown
         )
@@ -422,6 +448,13 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
 
         XCTAssertNotEqual(thrown, 0)
         XCTAssertEqual(result, runtimeNullSentinelInt)
+    }
+
+    func testSortedOrdersSequenceElementsWithRuntimeComparison() {
+        let source = makeSequence([3, 1, 2, 1])
+        let sorted = kk_sequence_sorted(source)
+
+        XCTAssertEqual(sequenceElements(sorted), [1, 1, 2, 3])
     }
 
     func testJoinToStringUsesSeparatorPrefixAndPostfix() {

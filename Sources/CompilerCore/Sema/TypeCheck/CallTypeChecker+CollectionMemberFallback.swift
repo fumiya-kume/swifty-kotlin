@@ -1784,6 +1784,16 @@ extension CallTypeChecker {
                 elementType: receiverElementType
             )
         }
+        if (memberName == interner.intern("sorted") || memberName == interner.intern("sortedDescending")),
+           isSequenceReceiver
+        {
+            return makeSyntheticSequenceType(
+                symbols: sema.symbols,
+                types: sema.types,
+                interner: interner,
+                elementType: receiverElementType
+            )
+        }
         if listPreservingMembers.contains(memberName),
            let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first
         {
