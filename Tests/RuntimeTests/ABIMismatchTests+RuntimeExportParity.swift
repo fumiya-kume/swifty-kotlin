@@ -82,8 +82,6 @@ extension ABIMismatchTests {
             "kk_kclass_javaObjectType",
             "kk_kclass_js",
             "kk_kclass_register_annotation",
-            "kk_long_range_firstOrNull",
-            "kk_long_range_lastOrNull",
             "kk_native_atomic_ref_compareAndSet",
             "kk_native_atomic_ref_compareAndSwap",
             "kk_native_atomic_ref_create",
