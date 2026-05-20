@@ -90,6 +90,8 @@ extension CallLowerer {
 
         if isConcreteListLikeType(nonNullReceiverType, sema: sema, interner: interner) {
             switch memberName {
+            case "flatMapIndexed":
+                return interner.intern("kk_list_flatMapIndexed")
             case "sorted":
                 if collectionElementPrimitiveCompareKind(of: nonNullReceiverType, sema: sema) != nil {
                     return interner.intern("kk_list_sorted_primitive")
@@ -413,6 +415,11 @@ extension CallLowerer {
             }
         }
 
+        if memberName == "flatMapIndexed",
+           isConcreteListLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+            return interner.intern("kk_list_flatMapIndexed")
+        }
+
         switch memberName {
         case "sorted":
             return interner.intern("kk_list_sorted")
@@ -659,6 +666,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_associateWithTo")
             case interner.intern("groupByTo"):
                 return interner.intern("kk_sequence_groupByTo")
+            case interner.intern("flatMapTo"):
+                return interner.intern("kk_sequence_flatMapTo")
             case interner.intern("contains"):
                 return interner.intern("kk_sequence_contains")
             case interner.intern("indexOf"):
