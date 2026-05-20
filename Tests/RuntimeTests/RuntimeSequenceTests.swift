@@ -1654,7 +1654,6 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertNotEqual(thrown, 0)
         XCTAssertEqual(result, runtimeNullSentinelInt)
     }
-    
 
     func testFilterIsInstanceKeepsMatchingRuntimeTypes() {
         let seq = makeSequence([1, runtimeTestStringHandle("two"), 3])
