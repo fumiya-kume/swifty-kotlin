@@ -2152,4 +2152,166 @@ extension ListSyntheticMemberLinkTests {
             assertHasDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
         }
     }
+
+    func testListFlatMapIndexedRegistersRuntimeExternalLink() throws {
+        let source = """
+        fun render(values: List<String>) {
+            val result: List<Int> = values.flatMapIndexed { index, value -> listOf(index + value.length) }
+            println(result)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("List"),
+                ctx.interner.intern("flatMapIndexed"),
+            ]
+            let symbols = sema.symbols.lookupAll(fqName: memberFQName)
+            XCTAssertEqual(symbols.count, 1, "Expected one synthetic List.flatMapIndexed overload")
+
+            let symbol = try XCTUnwrap(symbols.first)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: symbol), "kk_list_flatMapIndexed")
+
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbol))
+            guard case let .classType(returnClassType) = sema.types.kind(of: signature.returnType),
+                  let returnSymbol = sema.symbols.symbol(returnClassType.classSymbol)
+            else {
+                return XCTFail("Expected List.flatMapIndexed to return List<R>")
+            }
+            XCTAssertEqual(ctx.interner.resolve(returnSymbol.name), "List")
+
+            let transformType = try XCTUnwrap(signature.parameterTypes.first)
+            guard case let .functionType(functionType) = sema.types.kind(of: transformType),
+                  case let .classType(transformReturnClassType) = sema.types.kind(of: sema.types.makeNonNullable(functionType.returnType)),
+                  let transformReturnSymbol = sema.symbols.symbol(transformReturnClassType.classSymbol)
+            else {
+                return XCTFail("Expected List.flatMapIndexed transform to return Collection<R>")
+            }
+            XCTAssertEqual(functionType.params.count, 2, "Expected flatMapIndexed transform to take (index, element)")
+            XCTAssertEqual(functionType.params.first, sema.types.intType)
+            XCTAssertNotEqual(functionType.params.last, sema.types.intType, "Second transform parameter should be the list element type, not Int")
+            XCTAssertEqual(ctx.interner.resolve(transformReturnSymbol.name), "Collection")
+        }
+    }
+
+    func testListToBooleanArrayUsesRuntimeExternalLink() throws {
+        let source = """
+        fun convert(values: List<Boolean>) {
+            values.toBooleanArray()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "toBooleanArray"
+            })
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_list_toBooleanArray")
+            let resultType = try XCTUnwrap(sema.bindings.exprTypes[callExpr])
+            guard case let .classType(classType) = sema.types.kind(of: resultType),
+                  let symbol = sema.symbols.symbol(classType.classSymbol)
+            else {
+                return XCTFail("Expected toBooleanArray to return BooleanArray")
+            }
+            XCTAssertEqual(ctx.interner.resolve(symbol.name), "BooleanArray")
+        }
+    }
+
+    func testListToShortArrayUsesRuntimeExternalLink() throws {
+        let source = """
+        fun convert(values: List<Short>) {
+            values.toShortArray()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "toShortArray"
+            })
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_list_toShortArray")
+            let resultType = try XCTUnwrap(sema.bindings.exprTypes[callExpr])
+            guard case let .classType(classType) = sema.types.kind(of: resultType),
+                  let symbol = sema.symbols.symbol(classType.classSymbol)
+            else {
+                return XCTFail("Expected toShortArray to return ShortArray")
+            }
+            XCTAssertEqual(ctx.interner.resolve(symbol.name), "ShortArray")
+        }
+    }
+
+    func testListToDoubleArrayUsesRuntimeExternalLink() throws {
+        let source = """
+        fun convert(values: List<Double>) {
+            values.toDoubleArray()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "toDoubleArray"
+            })
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_list_toDoubleArray")
+            let resultType = try XCTUnwrap(sema.bindings.exprTypes[callExpr])
+            guard case let .classType(classType) = sema.types.kind(of: resultType),
+                  let symbol = sema.symbols.symbol(classType.classSymbol)
+            else {
+                return XCTFail("Expected toDoubleArray to return DoubleArray")
+            }
+            XCTAssertEqual(ctx.interner.resolve(symbol.name), "DoubleArray")
+        }
+    }
+
+    func testListToFloatArrayUsesRuntimeExternalLink() throws {
+        let source = """
+        fun convert(values: List<Float>) {
+            values.toFloatArray()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "toFloatArray"
+            })
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_list_toFloatArray")
+            let resultType = try XCTUnwrap(sema.bindings.exprTypes[callExpr])
+            guard case let .classType(classType) = sema.types.kind(of: resultType),
+                  let symbol = sema.symbols.symbol(classType.classSymbol)
+            else {
+                return XCTFail("Expected toFloatArray to return FloatArray")
+            }
+            XCTAssertEqual(ctx.interner.resolve(symbol.name), "FloatArray")
+        }
+    }
 }

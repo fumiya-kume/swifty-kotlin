@@ -57,6 +57,39 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testSequenceFlatMapToAppendsFlattenedTransforms() throws {
+        let source = """
+        fun main() {
+            val src = sequenceOf("a", "bc")
+            val dest = mutableListOf("seed")
+            val result = src.flatMapTo(dest) { value ->
+                listOf(value, value + value)
+            }
+            println(result)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceFlatMapToRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                [seed, a, aa, bc, bcbc]
+                """ + "\n"
+            )
+        }
+    }
+
     func testSequenceMapIndexedNotNullToAppendsNonNullIndexedTransforms() throws {
         let source = """
         fun main() {
