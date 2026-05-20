@@ -754,6 +754,31 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
         fun hasValue(): Boolean {
             val values = sequenceOf(1, 2, 3)
             return values.contains(2)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Sequence.contains surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "sequences", "Sequence", "contains"]
+                .map { ctx.interner.intern($0) }
+            let links = Set(
+                sema.symbols.lookupAll(fqName: memberFQName)
+                    .compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
+            XCTAssertTrue(links.contains("kk_sequence_contains"))
+        }
+    }
+
     func testSequenceOnEachIndexedResolvesInCallExpressions() throws {
         let source = """
         fun traceIndexedValues(): Sequence<Int> {
@@ -771,11 +796,6 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
                 .joined(separator: " | ")
             XCTAssertFalse(
                 ctx.diagnostics.hasError,
-                "Expected Sequence.contains surface to resolve cleanly, got: \(diagnosticSummary)"
-            )
-
-            let sema = try XCTUnwrap(ctx.sema)
-            let memberFQName = ["kotlin", "sequences", "Sequence", "contains"]
                 "Expected Sequence.onEachIndexed surface to resolve cleanly, got: \(diagnosticSummary)"
             )
 
@@ -786,10 +806,10 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
                 sema.symbols.lookupAll(fqName: memberFQName)
                     .compactMap { sema.symbols.externalLinkName(for: $0) }
             )
-            XCTAssertTrue(links.contains("kk_sequence_contains"))
             XCTAssertTrue(links.contains("kk_sequence_onEachIndexed"))
         }
     }
+
 
     func testSequenceUnionResolvesInCallExpressions() throws {
         let source = """
