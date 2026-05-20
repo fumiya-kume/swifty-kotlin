@@ -1158,6 +1158,50 @@ extension DataFlowSemaPhase {
             registerFlatMapIndexedOverload(transformReturnType: sequenceRType)
         }
 
+        // flatMapIndexedTo(destination, transform): Collection<R>
+        do {
+            let memberName = interner.intern("flatMapIndexedTo")
+            let memberFQName = sequenceFQName + [memberName]
+            let rName = interner.intern("R")
+            let rSymbol = symbols.lookup(fqName: memberFQName + [rName]) ?? symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: memberFQName + [rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let destinationType = nominalCollectionType([
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("Collection"),
+            ], elementType: rType)
+            let transformReturnType = nominalCollectionType([
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("Iterable"),
+            ], elementType: rType)
+            let transformType = types.make(.functionType(FunctionType(
+                params: [types.intType, typeParamType],
+                returnType: transformReturnType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            registerSequenceOverloadedMemberStub(
+                named: "flatMapIndexedTo",
+                externalLinkName: "kk_sequence_flatMapIndexedTo",
+                receiverType: receiverType,
+                parameters: [
+                    ("destination", destinationType),
+                    ("transform", transformType),
+                ],
+                returnType: destinationType,
+                additionalTypeParameterSymbols: [rSymbol],
+                canThrow: true
+            )
+        }
+
         // shuffled() / shuffled(random): Sequence<T> (STDLIB-SEQ-019)
         do {
             let shuffledName = interner.intern("shuffled")
