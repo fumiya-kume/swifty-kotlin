@@ -277,6 +277,61 @@ public func kk_sequence_mapTo(
     return destRaw
 }
 
+/// `mapNotNullTo`: Evaluate the sequence and append non-null transformed elements to the destination.
+@_cdecl("kk_sequence_mapNotNullTo")
+public func kk_sequence_mapNotNullTo(
+    _ seqRaw: Int,
+    _ destRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    for elem in elements {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        if let normalized = runtimeMapNotNullResultValue(result) {
+            runtimeAppendToMutableCollection(destRaw, normalized)
+        }
+    }
+    return destRaw
+}
+
+/// `flatMapTo`: Evaluate the sequence, flatten transform results, and append them.
+@_cdecl("kk_sequence_flatMapTo")
+public func kk_sequence_flatMapTo(
+    _ seqRaw: Int,
+    _ destRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    for elem in elements {
+        var thrown = 0
+        let flattened = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        guard let flattenedElements = runtimeIterableElements(from: flattened) else {
+            invalidContainerPanic(#function, "iterable")
+        }
+        for flattenedElement in flattenedElements {
+            runtimeAppendToMutableCollection(destRaw, flattenedElement)
+        }
+    }
+    return destRaw
+}
+
 /// `filterIndexedTo`: Evaluate the sequence and append elements matching the indexed predicate to the destination.
 @_cdecl("kk_sequence_filterIndexedTo")
 public func kk_sequence_filterIndexedTo(

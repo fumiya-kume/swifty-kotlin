@@ -335,6 +335,7 @@ struct CollectionLiteralLookupTables {
     let kkSequenceFoldName: InternedString
     let kkSequenceFoldIndexedName: InternedString
     let kkSequenceRunningFoldIndexedName: InternedString
+    let kkSequenceScanIndexedName: InternedString
     let kkSequenceReduceIndexedName: InternedString
     let kkSequenceReduceIndexedOrNullName: InternedString
     let kkSequenceRunningReduceIndexedName: InternedString
@@ -352,6 +353,8 @@ struct CollectionLiteralLookupTables {
     let kkSequenceFilterNotToName: InternedString
     // STDLIB-SEQ-022: Sequence destination-collection mapping operations
     let kkSequenceMapToName: InternedString
+    let kkSequenceMapNotNullToName: InternedString
+    let kkSequenceFlatMapToName: InternedString
     let kkSequenceMapIndexedNotNullToName: InternedString
     let kkSequenceFlatMapIndexedToName: InternedString
     let kkSequenceFilterIndexedToName: InternedString
@@ -1153,6 +1156,7 @@ struct CollectionLiteralLookupTables {
         kkSequenceFoldName = interner.intern("kk_sequence_fold")
         kkSequenceFoldIndexedName = interner.intern("kk_sequence_foldIndexed")
         kkSequenceRunningFoldIndexedName = interner.intern("kk_sequence_runningFoldIndexed")
+        kkSequenceScanIndexedName = interner.intern("kk_sequence_scanIndexed")
         kkSequenceReduceIndexedName = interner.intern("kk_sequence_reduceIndexed")
         kkSequenceReduceIndexedOrNullName = interner.intern("kk_sequence_reduceIndexedOrNull")
         kkSequenceRunningReduceIndexedName = interner.intern("kk_sequence_runningReduceIndexed")
@@ -1167,6 +1171,8 @@ struct CollectionLiteralLookupTables {
         kkSequenceFilterToName = interner.intern("kk_sequence_filterTo")
         kkSequenceFilterNotToName = interner.intern("kk_sequence_filterNotTo")
         kkSequenceMapToName = interner.intern("kk_sequence_mapTo")
+        kkSequenceMapNotNullToName = interner.intern("kk_sequence_mapNotNullTo")
+        kkSequenceFlatMapToName = interner.intern("kk_sequence_flatMapTo")
         kkSequenceMapIndexedNotNullToName = interner.intern("kk_sequence_mapIndexedNotNullTo")
         kkSequenceFlatMapIndexedToName = interner.intern("kk_sequence_flatMapIndexedTo")
         kkSequenceFilterIndexedToName = interner.intern("kk_sequence_filterIndexedTo")

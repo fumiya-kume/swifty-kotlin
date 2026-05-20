@@ -717,6 +717,27 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        // scanIndexed on sequence -> kk_sequence_scanIndexed (STDLIB-SEQ-FN-105)
+        // Args: initial, lambda (2 from Kotlin: initial + operation)
+        if callee == lookup.scanIndexedName, arguments.count == 2,
+           sequenceExprIDs.contains(receiver.rawValue)
+        {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            let hofResult = emitHOFCall(
+                kkName: lookup.kkSequenceScanIndexedName,
+                receiver: receiver,
+                arguments: [arguments[0]] + [arguments[1]] + [zeroExpr],
+                result: result,
+                origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult,
+                module: module,
+                loweredBody: &loweredBody
+            )
+            if let result { sequenceExprIDs.insert(result.rawValue); sequenceExprIDs.insert(hofResult.rawValue) }
+            return true
+        }
+
         // reduceIndexed on sequence → kk_sequence_reduceIndexed (STDLIB-556)
         // Args: lambda (1 from Kotlin: operation)
         if callee == lookup.reduceIndexedName, arguments.count == 1,
@@ -947,6 +968,78 @@ extension CollectionLiteralLoweringPass {
             }
             let hofResult = emitHOFCall(
                 kkName: lookup.kkSequenceMapToName,
+                receiver: receiver,
+                arguments: [destID, lambdaID, closureRawExpr],
+                result: result,
+                origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult,
+                module: module,
+                loweredBody: &loweredBody
+            )
+            if let result {
+                if listExprIDs.contains(destID.rawValue) {
+                    listExprIDs.insert(result.rawValue)
+                    listExprIDs.insert(hofResult.rawValue)
+                } else if setExprIDs.contains(destID.rawValue) {
+                    setExprIDs.insert(result.rawValue)
+                    setExprIDs.insert(hofResult.rawValue)
+                }
+            }
+            return true
+        }
+
+        if callee == lookup.mapNotNullToName,
+           arguments.count == 2 || arguments.count == 3,
+           sequenceExprIDs.contains(receiver.rawValue)
+        {
+            let destID = arguments[0]
+            let lambdaID = arguments[1]
+            let closureRawExpr: KIRExprID
+            if arguments.count == 3 {
+                closureRawExpr = arguments[2]
+            } else {
+                let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                closureRawExpr = zeroExpr
+            }
+            let hofResult = emitHOFCall(
+                kkName: lookup.kkSequenceMapNotNullToName,
+                receiver: receiver,
+                arguments: [destID, lambdaID, closureRawExpr],
+                result: result,
+                origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult,
+                module: module,
+                loweredBody: &loweredBody
+            )
+            if let result {
+                if listExprIDs.contains(destID.rawValue) {
+                    listExprIDs.insert(result.rawValue)
+                    listExprIDs.insert(hofResult.rawValue)
+                } else if setExprIDs.contains(destID.rawValue) {
+                    setExprIDs.insert(result.rawValue)
+                    setExprIDs.insert(hofResult.rawValue)
+                }
+            }
+            return true
+        }
+
+        if callee == lookup.flatMapToName,
+           arguments.count == 2 || arguments.count == 3,
+           sequenceExprIDs.contains(receiver.rawValue)
+        {
+            let destID = arguments[0]
+            let lambdaID = arguments[1]
+            let closureRawExpr: KIRExprID
+            if arguments.count == 3 {
+                closureRawExpr = arguments[2]
+            } else {
+                let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                closureRawExpr = zeroExpr
+            }
+            let hofResult = emitHOFCall(
+                kkName: lookup.kkSequenceFlatMapToName,
                 receiver: receiver,
                 arguments: [destID, lambdaID, closureRawExpr],
                 result: result,

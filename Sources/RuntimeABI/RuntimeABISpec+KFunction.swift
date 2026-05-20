@@ -347,6 +347,7 @@ public extension RuntimeABISpec {
                 RuntimeABIParameter(name: "callable", type: .intptr),
                 RuntimeABIParameter(name: "name", type: .intptr),
                 RuntimeABIParameter(name: "arity", type: .intptr),
+                RuntimeABIParameter(name: "isSuspend", type: .intptr),
             ],
             returnType: .intptr,
             section: "Reflection"
