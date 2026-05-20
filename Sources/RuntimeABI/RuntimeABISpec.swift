@@ -791,6 +791,14 @@ public enum RuntimeABISpec {
             section: "System"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_toJsReference",
+            parameters: [
+                RuntimeABIParameter(name: "valueRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_double_toJsNumber",
             parameters: [
                 RuntimeABIParameter(name: "value", type: .double),
