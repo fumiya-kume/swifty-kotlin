@@ -405,4 +405,82 @@ final class JvmOptionalSyntheticStubTests: XCTestCase {
             )
         }
     }
+
+    func testOptionalGetOrElseSignature() throws {
+        let (sema, interner) = try makeSema()
+
+        let optionalFQName = ["java", "util", "Optional"].map { interner.intern($0) }
+        let optionalSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: optionalFQName),
+            "Expected java.util.Optional to be registered"
+        )
+
+        let getOrElseFQName = ["kotlin", "jvm", "optionals", "getOrElse"].map { interner.intern($0) }
+        let getOrElseSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: getOrElseFQName),
+            "Expected kotlin.jvm.optionals.getOrElse to be registered"
+        )
+        let getOrElseSignature = try XCTUnwrap(sema.symbols.functionSignature(for: getOrElseSymbol))
+        XCTAssertTrue(sema.symbols.symbol(getOrElseSymbol)?.flags.contains(.synthetic) == true)
+        XCTAssertEqual(sema.symbols.externalLinkName(for: getOrElseSymbol), "kk_optional_getOrElse")
+
+        let functionTParamSymbol = try XCTUnwrap(getOrElseSignature.typeParameterSymbols.first)
+        let functionTType = sema.types.make(.typeParam(TypeParamType(
+            symbol: functionTParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = sema.types.make(.classType(ClassType(
+            classSymbol: optionalSymbol,
+            args: [.out(functionTType)],
+            nullability: .nonNull
+        )))
+
+        XCTAssertEqual(getOrElseSignature.receiverType, receiverType)
+        XCTAssertEqual(getOrElseSignature.parameterTypes.count, 1)
+        guard case let .functionType(defaultValueType) = sema.types.kind(of: getOrElseSignature.parameterTypes[0]) else {
+            return XCTFail("Expected defaultValue to be a function type")
+        }
+        XCTAssertEqual(defaultValueType.params, [])
+        XCTAssertEqual(defaultValueType.returnType, functionTType)
+        XCTAssertEqual(getOrElseSignature.returnType, functionTType)
+        XCTAssertEqual(getOrElseSignature.typeParameterSymbols, [functionTParamSymbol])
+        XCTAssertEqual(getOrElseSignature.classTypeParameterCount, 0)
+    }
+
+    func testOptionalGetOrElseResolvesInSource() throws {
+        let source = """
+        import java.util.Optional
+        import kotlin.jvm.optionals.getOrElse
+
+        fun probe(optional: Optional<String>): String {
+            val fallback: () -> String = { "fallback" }
+            return optional.getOrElse(fallback)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected Optional.getOrElse to resolve cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let getOrElseCall = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "getOrElse"
+            })
+            let chosenGetOrElse = try XCTUnwrap(
+                sema.bindings.callBinding(for: getOrElseCall)?.chosenCallee
+            )
+            XCTAssertEqual(
+                sema.symbols.externalLinkName(for: chosenGetOrElse),
+                "kk_optional_getOrElse"
+            )
+        }
+    }
 }
