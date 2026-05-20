@@ -110,6 +110,30 @@ extension CodegenBackendIntegrationTests {
             println(reduced)
             println(empty)
             println(single)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceReduceOrNull",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "
+", with: "
+")
+            XCTAssertEqual(normalizedStdout, "10
+null
+42
+")
+        }
+    }
+
     func testCodegenSequenceReduceIndexedReturnsAccumulatedValueOrThrowsOnEmpty() throws {
         let source = """
         fun main() {
@@ -134,7 +158,6 @@ extension CodegenBackendIntegrationTests {
             let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
             let ctx = try runCodegenPipeline(
                 inputPath: path,
-                moduleName: "SequenceReduceOrNull",
                 moduleName: "SequenceReduceIndexed",
                 emit: .executable,
                 outputPath: outputBase
@@ -142,11 +165,16 @@ extension CodegenBackendIntegrationTests {
             try LinkPhase().run(ctx)
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "10\nnull\n42\n")
-            XCTAssertEqual(normalizedStdout, "21\n42\nempty\n")
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "
+", with: "
+")
+            XCTAssertEqual(normalizedStdout, "21
+42
+empty
+")
         }
     }
+
 
     func testCodegenSequenceFlatMapIndexedUsesCanonicalDiffCase() throws {
         let root = URL(fileURLWithPath: #filePath)
