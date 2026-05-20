@@ -94,6 +94,10 @@ public extension RuntimeABISpec {
         abiParitySpec("kk_optional_asSequence", parameters: [
             p("optionalRaw", .intptr),
         ]),
+        abiParitySpec("kk_optional_getOrElse", parameters: [
+            p("optionalRaw", .intptr),
+            p("defaultValueRaw", .intptr),
+        ]),
         abiParitySpec("kk_optional_toCollection", parameters: [
             p("optionalRaw", .intptr),
             p("collectionRaw", .intptr),
@@ -103,6 +107,12 @@ public extension RuntimeABISpec {
         ]),
         abiParitySpec("kk_kclass_javaPrimitiveType", parameters: [
             p("kclassRaw", .intptr),
+        ]),
+        abiParitySpec("kk_kclass_javaObjectType", parameters: [
+            p("kclassRaw", .intptr),
+        ]),
+        abiParitySpec("kk_optional_toSet", parameters: [
+            p("optionalRaw", .intptr),
         ]),
 
         // Runtime @_cdecl entries awaiting a dedicated RuntimeABISpec category.

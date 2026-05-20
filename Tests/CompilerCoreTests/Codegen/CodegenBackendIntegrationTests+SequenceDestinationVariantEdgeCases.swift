@@ -9,11 +9,24 @@ extension CodegenBackendIntegrationTests {
             val src = sequenceOf(1, 2, 3)
             val dest = mutableListOf("seed")
             val result = src.mapTo(dest) { it.toString() }
-            println(result === dest)
             println(result)
+            println(dest)
         }
         """
-        try assertKotlinCompilesToKIR(source, moduleName: "STDLIBSEQ022_01")
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "STDLIBSEQ022_MAP_TO",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[seed, 1, 2, 3]\n[seed, 1, 2, 3]\n")
+        }
     }
 
     func testSequenceMapNotNullToAppendsNonNullTransforms() throws {
@@ -56,6 +69,19 @@ extension CodegenBackendIntegrationTests {
             println(result)
         }
         """
-        try assertKotlinCompilesToKIR(source, moduleName: "STDLIBSEQ022_02")
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "STDLIBSEQ022_02",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[seed, 0:10, 2:30]\n[seed, 0:10, 2:30]\n")
+        }
     }
 }
