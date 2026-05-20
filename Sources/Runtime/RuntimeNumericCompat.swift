@@ -7,7 +7,8 @@ import Foundation
 #endif
 
 @_cdecl("kk_any_to_string")
-public func kk_any_to_string(_ value: Int, _ tag: Int32) -> UnsafeMutableRawPointer {
+public func kk_any_to_string(_ value: Int, _ tag: Int) -> UnsafeMutableRawPointer {
+    let tag = Int32(truncatingIfNeeded: tag)
     if value == runtimeNullSentinelInt {
         return runtimeMakeStringPointer("null")
     }
@@ -174,13 +175,15 @@ private func runtimeAnyKind(_ value: Int, _ tag: Int32) -> Int32 {
 
 /// Any.hashCode() — uses runtime-aware hashing for boxed values and raw primitives.
 @_cdecl("kk_any_hashCode")
-public func kk_any_hashCode(_ value: Int, _ tag: Int32) -> Int {
-    runtimeAnyHashCode(value, tag)
+public func kk_any_hashCode(_ value: Int, _ tag: Int) -> Int {
+    runtimeAnyHashCode(value, Int32(truncatingIfNeeded: tag))
 }
 
 /// Any.equals(other) — uses runtime-aware equality for boxed values and tagged primitives.
 @_cdecl("kk_any_equals")
-public func kk_any_equals(_ lhs: Int, _ lhsTag: Int32, _ rhs: Int, _ rhsTag: Int32) -> Int {
+public func kk_any_equals(_ lhs: Int, _ lhsTag: Int, _ rhs: Int, _ rhsTag: Int) -> Int {
+    let lhsTag = Int32(truncatingIfNeeded: lhsTag)
+    let rhsTag = Int32(truncatingIfNeeded: rhsTag)
     if runtimeAnyKind(lhs, lhsTag) != runtimeAnyKind(rhs, rhsTag) {
         return kk_box_bool(0)
     }
