@@ -59,6 +59,17 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerKClassJavaProperty(
+            name: "javaObjectType",
+            externalLinkName: "kk_kclass_javaObjectType",
+            returnsNullable: false,
+            classSymbol: classSymbol,
+            kClassSymbol: kClassSymbol,
+            packageFQName: kotlinJvmPkg,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
         registerKClassJavaClassProperty(
             classSymbol: classSymbol,
             kClassSymbol: kClassSymbol,
@@ -164,7 +175,6 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         let returnType = returnsNullable ? types.makeNullable(nonNullReturnType) : nonNullReturnType
-
         if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
             symbols.symbol(symbolID)?.kind == .property
                 && symbols.extensionPropertyReceiverType(for: symbolID) == receiverType

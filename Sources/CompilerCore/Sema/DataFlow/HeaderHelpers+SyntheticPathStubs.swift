@@ -25,6 +25,7 @@
 /// - `Path.relativeTo(base: Path): Path` extension function
 /// - `Path.relativeToOrNull(base: Path): Path?` extension function
 /// - `Path.readSymbolicLink(): Path` extension function
+/// - `Path.readAttributes<A : BasicFileAttributes>(vararg options: LinkOption): A` extension function
 /// - `Path.invariantSeparatorsPathString: String` extension property
 /// - `Path.writeBytes(array: ByteArray, vararg options: OpenOption)` extension function
 /// - `Path.writer(charset, options)` extension function
@@ -450,6 +451,22 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(fileAttributeViewType, for: fileAttributeViewSymbol)
+
+        let basicFileAttributesSymbol = ensureInterfaceSymbol(
+            named: "BasicFileAttributes",
+            in: javaNioFileAttributePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaNioFileAttributePkgSymbol {
+            symbols.setParentSymbol(javaNioFileAttributePkgSymbol, for: basicFileAttributesSymbol)
+        }
+        let basicFileAttributesType = types.make(.classType(ClassType(
+            classSymbol: basicFileAttributesSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(basicFileAttributesType, for: basicFileAttributesSymbol)
 
         let posixFilePermissionName = interner.intern("PosixFilePermission")
         let posixFilePermissionFQName = javaNioFileAttributePkg + [posixFilePermissionName]
@@ -887,6 +904,16 @@ extension DataFlowSemaPhase {
             returnType: fileStoreType,
             externalLinkName: "kk_path_fileStore",
             symbols: symbols,
+            interner: interner
+        )
+
+        registerPathReadAttributesFunction(
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            optionsType: linkOptionType,
+            basicFileAttributesUpperBound: basicFileAttributesType,
+            symbols: symbols,
+            types: types,
             interner: interner
         )
 
@@ -2288,6 +2315,112 @@ extension DataFlowSemaPhase {
                 valueParameterHasDefaultValues: valueParameterHasDefaultValuesPrefix + [false],
                 valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count),
                 typeParameterSymbols: [typeParamSymbol]
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerPathReadAttributesFunction(
+        packageFQName: [InternedString],
+        receiverType: TypeID,
+        optionsType: TypeID,
+        basicFileAttributesUpperBound: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern("readAttributes")
+        let functionFQName = packageFQName + [functionName]
+        let parameterTypes = [optionsType]
+
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let existingSignature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return existingSignature.receiverType == receiverType
+                && existingSignature.parameterTypes == parameterTypes
+                && existingSignature.typeParameterSymbols.count == 1
+        }) {
+            symbols.setExternalLinkName("kk_path_readAttributes", for: existing)
+            if let existingSignature = symbols.functionSignature(for: existing),
+               let typeParamSymbol = existingSignature.typeParameterSymbols.first {
+                let returnType = types.make(.typeParam(TypeParamType(
+                    symbol: typeParamSymbol,
+                    nullability: .nonNull
+                )))
+                symbols.setTypeParameterUpperBounds([basicFileAttributesUpperBound], for: typeParamSymbol)
+                symbols.insertFlags([.reifiedTypeParameter], for: typeParamSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: parameterTypes,
+                        returnType: returnType,
+                        isSuspend: existingSignature.isSuspend,
+                        valueParameterSymbols: existingSignature.valueParameterSymbols,
+                        valueParameterHasDefaultValues: [false],
+                        valueParameterIsVararg: [true],
+                        typeParameterSymbols: [typeParamSymbol],
+                        reifiedTypeParameterIndices: [0],
+                        typeParameterUpperBoundsList: [[basicFileAttributesUpperBound]]
+                    ),
+                    for: existing
+                )
+            }
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName("kk_path_readAttributes", for: functionSymbol)
+
+        let typeParamName = interner.intern("A")
+        let typeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: functionFQName + [interner.intern("$synthetic"), typeParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic, .reifiedTypeParameter]
+        )
+        symbols.setParentSymbol(functionSymbol, for: typeParamSymbol)
+        symbols.setTypeParameterUpperBounds([basicFileAttributesUpperBound], for: typeParamSymbol)
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+
+        let optionsParamName = interner.intern("options")
+        let optionsParamSymbol = symbols.define(
+            kind: .valueParameter,
+            name: optionsParamName,
+            fqName: functionFQName + [optionsParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(functionSymbol, for: optionsParamSymbol)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameterTypes,
+                returnType: typeParamType,
+                isSuspend: false,
+                valueParameterSymbols: [optionsParamSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [true],
+                typeParameterSymbols: [typeParamSymbol],
+                reifiedTypeParameterIndices: [0],
+                typeParameterUpperBoundsList: [[basicFileAttributesUpperBound]]
             ),
             for: functionSymbol
         )

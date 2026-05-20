@@ -108,6 +108,9 @@ public extension RuntimeABISpec {
         abiParitySpec("kk_kclass_javaPrimitiveType", parameters: [
             p("kclassRaw", .intptr),
         ]),
+        abiParitySpec("kk_kclass_javaObjectType", parameters: [
+            p("kclassRaw", .intptr),
+        ]),
         abiParitySpec("kk_enum_declaringJavaClass", parameters: [
             p("enumRaw", .intptr),
         ]),
