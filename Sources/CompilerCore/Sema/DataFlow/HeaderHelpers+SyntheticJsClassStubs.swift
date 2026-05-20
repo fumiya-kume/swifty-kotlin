@@ -84,6 +84,14 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerJsClassKotlinProperty(
+            jsClassSymbol: jsClassSymbol,
+            kClassSymbol: kClassSymbol,
+            packageFQName: kotlinJsPkg,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
     }
 
     private func registerJsClassNameProperty(
@@ -120,9 +128,50 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner
     ) {
-        let propertyName = interner.intern("js")
-        let propertyFQName = packageFQName + [propertyName]
+        registerJsClassBridgeProperty(
+            propertyNameText: "js",
+            receiverClassSymbol: kClassSymbol,
+            returnClassSymbol: jsClassSymbol,
+            externalLinkName: "kk_kclass_js",
+            packageFQName: packageFQName,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+    }
 
+    private func registerJsClassKotlinProperty(
+        jsClassSymbol: SymbolID,
+        kClassSymbol: SymbolID,
+        packageFQName: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        registerJsClassBridgeProperty(
+            propertyNameText: "kotlin",
+            receiverClassSymbol: jsClassSymbol,
+            returnClassSymbol: kClassSymbol,
+            externalLinkName: "kk_jsclass_kotlin",
+            packageFQName: packageFQName,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+    }
+
+    private func registerJsClassBridgeProperty(
+        propertyNameText: String,
+        receiverClassSymbol: SymbolID,
+        returnClassSymbol: SymbolID,
+        externalLinkName: String,
+        packageFQName: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let propertyName = interner.intern(propertyNameText)
+        let propertyFQName = packageFQName + [propertyName]
         let typeParamName = interner.intern("T")
         let typeParamFQName = propertyFQName + [typeParamName]
         let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
@@ -141,16 +190,15 @@ extension DataFlowSemaPhase {
 
         let typeParamType = types.make(.typeParam(TypeParamType(symbol: typeParamSymbol)))
         let receiverType = types.make(.classType(ClassType(
-            classSymbol: kClassSymbol,
+            classSymbol: receiverClassSymbol,
             args: [.invariant(typeParamType)],
             nullability: .nonNull
         )))
         let returnType = types.make(.classType(ClassType(
-            classSymbol: jsClassSymbol,
+            classSymbol: returnClassSymbol,
             args: [.invariant(typeParamType)],
             nullability: .nonNull
         )))
-        let externalLinkName = "kk_kclass_js"
 
         if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
             symbols.symbol(symbolID)?.kind == .property

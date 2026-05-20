@@ -2,6 +2,28 @@ import Foundation
 
 /// Synthetic Kotlin/JS `JsAny` external interface surface.
 extension DataFlowSemaPhase {
+    func registerSyntheticJsDynamicStubs(
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let jsPkg = ensurePackage(
+            path: ["kotlin", "js"],
+            symbols: symbols,
+            interner: interner
+        )
+        let jsPkgSymbol = symbols.lookup(fqName: jsPkg)
+
+        let interfaceSymbol = ensureInterfaceSymbol(
+            named: "Dynamic",
+            in: jsPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let jsPkgSymbol {
+            symbols.setParentSymbol(jsPkgSymbol, for: interfaceSymbol)
+        }
+    }
+
     func registerSyntheticJsAnyStubs(
         symbols: SymbolTable,
         types: TypeSystem,
