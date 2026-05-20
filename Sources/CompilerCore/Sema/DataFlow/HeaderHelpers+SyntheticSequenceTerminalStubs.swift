@@ -191,6 +191,15 @@ extension DataFlowSemaPhase {
             interner.intern("MutableSet"),
         ], elementType: typeParamType, invariant: true)
 
+        // sorted(): Sequence<T>
+        registerSequenceOverloadedMemberStub(
+            named: "sorted",
+            externalLinkName: "kk_sequence_sorted",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: receiverType
+        )
+
         // sortedBy(selector: (T) -> R): Sequence<T>, where R : Comparable<R>
         do {
             let memberName = interner.intern("sortedBy")
@@ -1870,6 +1879,38 @@ extension DataFlowSemaPhase {
                 name: "minOf",
                 externalLinkName: "kk_sequence_minOf",
                 returnTypeBuilder: { selectorResultType in selectorResultType }
+            )
+        }
+
+        // maxWithOrNull(comparator): T?
+        do {
+            let comparatorType = if let comparatorSymbol = symbols.lookupByShortName(interner.intern("Comparator")).first {
+                types.make(.classType(ClassType(
+                    classSymbol: comparatorSymbol,
+                    args: [.invariant(typeParamType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                types.make(.functionType(FunctionType(
+                    params: [typeParamType, typeParamType],
+                    returnType: types.intType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+            }
+            registerSequenceMemberStub(
+                named: "maxWithOrNull",
+                externalLinkName: "kk_sequence_maxWithOrNull",
+                receiverType: receiverType,
+                parameters: [("comparator", comparatorType)],
+                returnType: types.makeNullable(typeParamType),
+                sequenceSymbol: sequenceSymbol,
+                sequenceFQName: sequenceFQName,
+                typeParamSymbol: typeParamSymbol,
+                symbols: symbols,
+                interner: interner,
+                canThrow: true,
+                flags: [.synthetic, .inlineFunction]
             )
         }
 

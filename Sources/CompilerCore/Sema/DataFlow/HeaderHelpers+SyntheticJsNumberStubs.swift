@@ -52,6 +52,15 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerJsNumberMember(
+            ownerSymbol: jsNumberSymbol,
+            ownerType: jsNumberType,
+            named: "toInt",
+            returnType: types.intType,
+            externalLinkName: "kk_js_number_toInt",
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func registerJsNumberMember(
