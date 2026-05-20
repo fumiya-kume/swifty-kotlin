@@ -660,6 +660,7 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         let result = kk_sequence_intersect(seq, other)
 
         XCTAssertEqual(setElements(result), [2, 4])
+    }
     func testGroupByGroupsElementsIntoNewMap() {
         let seq = makeSequence([1, 2, 3, 4, 5])
 
