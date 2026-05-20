@@ -86,6 +86,14 @@ private let flatMapPair: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -
     return kk_list_of(array, 2)
 }
 
+private let flatMapIndexedPair: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, value, _ in
+    let array = kk_array_new(2)
+    var thrown = 0
+    _ = kk_array_set(array, 0, index, &thrown)
+    _ = kk_array_set(array, 1, value * 10, &thrown)
+    return kk_list_of(array, 2)
+}
+
 private let windowSum: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, windowRaw, _ in
     guard let windowBox = runtimeListBox(from: windowRaw) else { return 0 }
     return windowBox.elements.reduce(0, +)
@@ -423,6 +431,9 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(kk_list_flatten(makeList([makeList([1, 2]), makeList([3])]))), [1, 2, 3])
         let nestedCollections = makeList([makeList([1]), kk_set_of(makeArray([2, 3]), 2)])
         XCTAssertEqual(listElements(kk_list_flatten(nestedCollections)), [1, 2, 3])
+
+        let flatMappedIndexed = kk_list_flatMapIndexed(source, unsafeBitCast(flatMapIndexedPair, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
+        XCTAssertEqual(listElements(flatMappedIndexed), [0, 10, 1, 20, 2, 30])
 
         XCTAssertEqual(kk_list_fold(source, 0, unsafeBitCast(foldOrder, to: Int.self), 0, nil), 123)
         let setSource = kk_set_of(makeArray([1, 2, 3]), 3)
