@@ -496,6 +496,30 @@ extension CodegenBackendIntegrationTests {
 
     // MARK: - first() on empty throws NoSuchElementException
 
+    func testSequenceFirstReturnsFirstValue() throws {
+        let source = """
+        fun main() {
+            val result = sequenceOf(4, 5, 6).first()
+            println(result)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceFirstRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "4\n")
+        }
+    }
+
     func testSequenceFirstOnEmptyThrows() throws {
         let source = """
         fun main() {
