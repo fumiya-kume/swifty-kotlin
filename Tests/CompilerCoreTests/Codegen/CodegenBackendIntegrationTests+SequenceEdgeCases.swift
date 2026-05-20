@@ -1005,6 +1005,30 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenSequenceMaxWithOrNullReturnsLargestElementOrNull() throws {
+        let source = """
+        fun main() {
+            println(sequenceOf(3, 1, 4, 2).maxWithOrNull { left, right -> left - right })
+            println(emptySequence<Int>().maxWithOrNull { left, right -> left - right } == null)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceMaxWithOrNull",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "4\ntrue\n")
+        }
+    }
+
     func testCodegenSequenceMaxByReturnsLargestSelectorValueAndThrowsOnEmpty() throws {
         let source = """
         fun main() {
