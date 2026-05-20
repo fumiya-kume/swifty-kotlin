@@ -661,6 +661,11 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         let greaterThanTenPredicate: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
             value > 10 ? 1 : 0
         }
+
+        XCTAssertEqual(kk_sequence_indexOfLast(seq, unsafeBitCast(evenPredicate, to: Int.self), 0, nil), 3)
+        XCTAssertEqual(kk_sequence_indexOfLast(seq, unsafeBitCast(greaterThanTenPredicate, to: Int.self), 0, nil), -1)
+    }
+
     func testGroupByGroupsElementsIntoNewMap() {
         let seq = makeSequence([1, 2, 3, 4, 5])
 
