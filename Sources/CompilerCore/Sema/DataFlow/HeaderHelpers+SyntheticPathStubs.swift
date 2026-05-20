@@ -1225,6 +1225,23 @@ extension DataFlowSemaPhase {
         )
 
         registerPathExtensionFunction(
+            named: "writeText",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [
+                ("text", charSequenceType),
+                ("charset", charsetType),
+                ("options", openOptionType),
+            ],
+            returnType: pathType,
+            externalLinkName: "kk_path_writeText_options",
+            valueParameterHasDefaultValues: [false, true, false],
+            valueParameterIsVararg: [false, false, true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
             named: "appendText",
             packageFQName: kotlinIOPathPkg,
             receiverType: pathType,
