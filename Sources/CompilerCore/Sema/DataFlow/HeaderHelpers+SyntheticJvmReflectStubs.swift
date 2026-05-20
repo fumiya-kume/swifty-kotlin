@@ -38,6 +38,31 @@ extension DataFlowSemaPhase {
         types.kClassInterfaceSymbol = kClassSymbol
 
         registerKClassJavaProperty(
+            name: "java",
+            externalLinkName: "kk_kclass_java",
+            returnsNullable: false,
+            classSymbol: classSymbol,
+            kClassSymbol: kClassSymbol,
+            packageFQName: kotlinJvmPkg,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerKClassJavaProperty(
+            name: "javaPrimitiveType",
+            externalLinkName: "kk_kclass_javaPrimitiveType",
+            returnsNullable: true,
+            classSymbol: classSymbol,
+            kClassSymbol: kClassSymbol,
+            packageFQName: kotlinJvmPkg,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerKClassJavaProperty(
+            name: "javaObjectType",
+            externalLinkName: "kk_kclass_javaObjectType",
+            returnsNullable: false,
             classSymbol: classSymbol,
             kClassSymbol: kClassSymbol,
             packageFQName: kotlinJvmPkg,
@@ -110,6 +135,9 @@ extension DataFlowSemaPhase {
     }
 
     private func registerKClassJavaProperty(
+        name: String,
+        externalLinkName: String,
+        returnsNullable: Bool,
         classSymbol: SymbolID,
         kClassSymbol: SymbolID,
         packageFQName: [InternedString],
@@ -117,7 +145,7 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner
     ) {
-        let propertyName = interner.intern("java")
+        let propertyName = interner.intern(name)
         let propertyFQName = packageFQName + [propertyName]
 
         let typeParamName = interner.intern("T")
@@ -142,13 +170,12 @@ extension DataFlowSemaPhase {
             args: [.invariant(typeParamType)],
             nullability: .nonNull
         )))
-        let returnType = types.make(.classType(ClassType(
+        let nonNullReturnType = types.make(.classType(ClassType(
             classSymbol: classSymbol,
             args: [.invariant(typeParamType)],
             nullability: .nonNull
         )))
-        let externalLinkName = "kk_kclass_java"
-
+        let returnType = returnsNullable ? types.makeNullable(nonNullReturnType) : nonNullReturnType
         if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
             symbols.symbol(symbolID)?.kind == .property
                 && symbols.extensionPropertyReceiverType(for: symbolID) == receiverType
