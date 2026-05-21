@@ -1417,6 +1417,26 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        // plus(other: Sequence<Any>): Sequence<T>
+        let sequenceAnyType = types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
+            args: [.out(types.anyType)],
+            nullability: .nonNull
+        )))
+        registerSequenceMemberStub(
+            named: "plus",
+            externalLinkName: "kk_sequence_plus",
+            receiverType: receiverType,
+            parameters: [("other", sequenceAnyType)],
+            returnType: receiverType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner,
+            flags: [.synthetic]
+        )
+
         // plusElement(element: T): Sequence<T> (STDLIB-SEQ-013)
         registerSequenceMemberStub(
             named: "plusElement",
