@@ -363,7 +363,7 @@
 - [x] STDLIB-SEQ-FN-065: `max` 関数の実装
 - [x] STDLIB-SEQ-FN-067: `maxByOrNull` 関数の実装
 - [x] STDLIB-SEQ-FN-066: `maxBy` 関数の実装
-- [ ] STDLIB-SEQ-FN-068: `maxOf` 関数の実装
+- [x] STDLIB-SEQ-FN-068: `maxOf` 関数の実装
 - [x] STDLIB-SEQ-FN-069: `maxOfOrNull` 関数の実装
 - [x] STDLIB-SEQ-FN-070: `maxOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-071: `maxWith` 関数の実装
@@ -403,7 +403,7 @@
 - [x] STDLIB-SEQ-FN-099: `reversed` 関数の実装
 - [x] STDLIB-SEQ-FN-098: `requireNoNulls` 関数の実装
 - [ ] STDLIB-SEQ-FN-099: `reversed` 関数の実装
-- [ ] STDLIB-SEQ-FN-100: `runningFold` 関数の実装
+- [x] STDLIB-SEQ-FN-100: `runningFold` 関数の実装
 - [x] STDLIB-SEQ-FN-101: `runningFoldIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-102: `runningReduce` 関数の実装
 - [ ] STDLIB-SEQ-FN-103: `runningReduceIndexed` 関数の実装

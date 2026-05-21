@@ -837,6 +837,37 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenSequenceRunningFoldIncludesInitialAccumulator() throws {
+        let source = """
+        fun main() {
+            val values = sequenceOf(1, 2, 3)
+                .runningFold(10) { acc, value -> acc + value }
+                .toList()
+            val empty = emptySequence<Int>()
+                .runningFold(7) { acc, value -> acc + value }
+                .toList()
+
+            println(values)
+            println(empty)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceRunningFoldEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[10, 11, 13, 16]\n[7]\n")
+        }
+    }
+
     func testCodegenSequenceRequireNoNullsThrowsOnNullElement() throws {
         let source = """
         fun main() {
@@ -1125,6 +1156,35 @@ extension CodegenBackendIntegrationTests {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(normalizedStdout, "[1, 2, 3, 4]\n")
+        }
+    }
+
+    func testCodegenSequenceMaxOfReturnsLargestSelectorValueAndThrowsOnEmpty() throws {
+        let source = """
+        fun main() {
+            println(sequenceOf(3, 1, 4, 2).maxOf { -it })
+            try {
+                emptySequence<Int>().maxOf { it }
+                println("unexpected")
+            } catch (e: Throwable) {
+                println("empty")
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceMaxOfRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "-1\nempty\n")
         }
     }
 

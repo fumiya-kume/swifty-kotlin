@@ -1626,6 +1626,49 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // runningFold(initial, operation): Sequence<R> (STDLIB-SEQ-FN-100)
+        let runningFoldName = interner.intern("runningFold")
+        let runningFoldFQName = sequenceFQName + [runningFoldName]
+        if symbols.lookup(fqName: runningFoldFQName) == nil {
+            let rName = interner.intern("R")
+            let rSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: runningFoldFQName + [rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let operationType = types.make(.functionType(FunctionType(
+                params: [rType, typeParamType],
+                returnType: rType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let sequenceRType = types.make(.classType(ClassType(
+                classSymbol: sequenceSymbol,
+                args: [.out(rType)],
+                nullability: .nonNull
+            )))
+            registerSequenceMemberStub(
+                named: "runningFold",
+                externalLinkName: "kk_sequence_runningFold",
+                receiverType: receiverType,
+                parameters: [("initial", rType), ("operation", operationType)],
+                returnType: sequenceRType,
+                sequenceSymbol: sequenceSymbol,
+                sequenceFQName: sequenceFQName,
+                typeParamSymbol: typeParamSymbol,
+                symbols: symbols,
+                interner: interner,
+                canThrow: true,
+                additionalTypeParameterSymbols: [rSymbol],
+                additionalTypeParameterUpperBoundsList: [[]],
+                flags: [.synthetic, .inlineFunction]
+            )
+        }
+
         // runningFoldIndexed(initial, operation): Sequence<R>
         let runningFoldIndexedName = interner.intern("runningFoldIndexed")
         let runningFoldIndexedFQName = sequenceFQName + [runningFoldIndexedName]

@@ -397,12 +397,12 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
 
     func testMaxOfOrNullReturnsLargestSelectorResultAndNullOnEmpty() {
         var thrown = 0
-    let result = kk_sequence_maxOfOrNull(
-        makeSequence([3, 1, 4, 2]),
-        unsafeBitCast(sequenceNegatedSelector, to: Int.self),
-        0,
-        &thrown
-    )
+        let result = kk_sequence_maxOfOrNull(
+            makeSequence([3, 1, 4, 2]),
+            unsafeBitCast(sequenceNegatedSelector, to: Int.self),
+            0,
+            &thrown
+        )
         XCTAssertEqual(thrown, 0)
         XCTAssertEqual(result, -1)
 
@@ -1814,6 +1814,25 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         let seq = makeSequence([1, 2, 3])
         let combined = kk_sequence_plus_element(seq, 42)
         XCTAssertEqual(sequenceElements(combined), [1, 2, 3, 42])
+    }
+
+    func testSequenceMaxOfReturnsLargestSelectorAndThrowsOnEmpty() throws {
+        let selector: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, outThrown in
+            outThrown?.pointee = 0
+            return -value
+        }
+
+        var thrown = 0
+        let result = kk_sequence_maxOf(makeSequence([3, 1, 4, 2]), unsafeBitCast(selector, to: Int.self), 0, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, -1)
+
+        thrown = 0
+        let emptyResult = kk_sequence_maxOf(makeSequence([]), unsafeBitCast(selector, to: Int.self), 0, &thrown)
+        XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
+        XCTAssertNotEqual(thrown, 0)
+        let box = try XCTUnwrap(throwableBox(from: thrown))
+        XCTAssertEqual(box.message, kEmptySequenceNoSuchElement)
     }
 
     func testRandomOrNullReturnsOnlyElementAndNullOnEmpty() {

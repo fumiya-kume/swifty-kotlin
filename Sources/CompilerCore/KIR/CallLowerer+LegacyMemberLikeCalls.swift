@@ -2735,6 +2735,8 @@ extension CallLowerer {
                     runtimeCallee = useIterableRuntimeForCollectionFallback
                         ? "kk_list_reduceRight"
                         : "kk_sequence_reduceRight"
+                } else if calleeName == interner.intern("runningFold") {
+                    runtimeCallee = "kk_sequence_runningFold"
                 } else if calleeName == interner.intern("runningReduceIndexed") {
                     runtimeCallee = "kk_sequence_runningReduceIndexed"
                 } else if calleeName == interner.intern("shuffled") {
@@ -2804,6 +2806,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_onEach"
                         || runtimeCallee == "kk_sequence_onEachIndexed"
                         || runtimeCallee == "kk_sequence_reduceRight"
+                        || runtimeCallee == "kk_sequence_runningFold"
                         || runtimeCallee == "kk_sequence_runningReduceIndexed"
                         || runtimeCallee == "kk_sequence_ifEmpty"
                         || runtimeCallee == "kk_sequence_zipWithNextTransform"
