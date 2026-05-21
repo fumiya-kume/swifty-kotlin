@@ -1358,7 +1358,6 @@ final class CollectionLiteralLoweringTests: XCTestCase {
         )
     }
 
-    }
 
     func testWithoutSemaContextVirtualCallIsNotRewritten() throws {
         let interner = StringInterner()
