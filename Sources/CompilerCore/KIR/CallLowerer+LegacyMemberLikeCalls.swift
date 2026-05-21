@@ -2711,7 +2711,9 @@ extension CallLowerer {
                 } else if calleeName == interner.intern("union") {
                     runtimeCallee = "kk_sequence_union"
                 } else if calleeName == interner.intern("reduceRight") {
-                    runtimeCallee = "kk_sequence_reduceRight"
+                    runtimeCallee = useIterableRuntimeForCollectionFallback
+                        ? "kk_list_reduceRight"
+                        : "kk_sequence_reduceRight"
                 } else if calleeName == interner.intern("runningReduceIndexed") {
                     runtimeCallee = "kk_sequence_runningReduceIndexed"
                 } else if calleeName == interner.intern("shuffled") {
@@ -2829,7 +2831,9 @@ extension CallLowerer {
                         )
                         runtimeArguments = [loweredReceiverID, fnPtrExpr, envPtrExpr]
                     }
-                    if runtimeCallee == "kk_sequence_reduceRight", normalizedArgIDs.count == 1 {
+                    if (runtimeCallee == "kk_sequence_reduceRight" || runtimeCallee == "kk_list_reduceRight"),
+                       normalizedArgIDs.count == 1
+                    {
                         let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
                             normalizedArgIDs[0],
                             sema: sema,
