@@ -1580,10 +1580,6 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
         fun checksum(): Int {
             val values = sequenceOf(1, 2, 3, 4)
             return values.reduceRightIndexed { index, value, acc -> index * 100 + value * 10 + acc }
-    func testSequenceRequireNoNullsResolvesNullableReceiverInCallExpressions() throws {
-        fun checked(values: Sequence<Int?>) {
-            val result = values.requireNoNulls()
-            println(result.toList())
         }
         """
 
@@ -1600,23 +1596,51 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
 
             let sema = try XCTUnwrap(ctx.sema)
             let memberFQName = ["kotlin", "sequences", "Sequence", "reduceRightIndexed"]
-                "Expected Sequence.requireNoNulls surface to resolve cleanly, got: \(diagnosticSummary)"
-
-            let memberFQName = ["kotlin", "sequences", "Sequence", "requireNoNulls"]
                 .map { ctx.interner.intern($0) }
             let links = Set(
                 sema.symbols.lookupAll(fqName: memberFQName)
                     .compactMap { sema.symbols.externalLinkName(for: $0) }
             )
             XCTAssertTrue(links.contains("kk_sequence_reduceRightIndexed"))
+        }
+    }
+
+    func testSequenceRequireNoNullsResolvesNullableReceiverInCallExpressions() throws {
+        let source = """
+        fun checked(values: Sequence<Int?>) {
+            val result = values.requireNoNulls()
+            println(result.toList())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Sequence.requireNoNulls surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "sequences", "Sequence", "requireNoNulls"]
+                .map { ctx.interner.intern($0) }
+            let links = Set(
+                sema.symbols.lookupAll(fqName: memberFQName)
+                    .compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
             XCTAssertTrue(links.contains("kk_sequence_requireNoNulls"))
         }
+    }
 
     func testSequenceMaxByResolvesInCallExpressions() throws {
         let source = """
         fun largestByNegative(): Int {
             val values = sequenceOf(1, 3, 2)
             return values.maxBy { value -> -value }
+        }
         """
 
         try withTemporaryFile(contents: source) { path in
@@ -1636,6 +1660,7 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
             let links = Set(
                 sema.symbols.lookupAll(fqName: memberFQName)
                     .compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
             XCTAssertTrue(links.contains("kk_sequence_maxBy"))
         }
     }
