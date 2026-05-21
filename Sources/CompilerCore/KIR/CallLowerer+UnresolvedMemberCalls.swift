@@ -795,6 +795,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_runningFoldIndexed")
             case interner.intern("scanIndexed"):
                 return interner.intern("kk_sequence_scanIndexed")
+            case interner.intern("reduceRight"):
+                return interner.intern("kk_sequence_reduceRight")
             case interner.intern("reduceIndexed"):
                 return interner.intern("kk_sequence_reduceIndexed")
             case interner.intern("reduceIndexedOrNull"):

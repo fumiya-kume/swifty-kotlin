@@ -127,6 +127,42 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenSequenceReduceRightReturnsRightFoldedValueOrThrowsOnEmpty() throws {
+        let source = """
+        fun main() {
+            val reduced = sequenceOf(1, 2, 3, 4)
+                .reduceRight { value, acc -> value * 10 + acc }
+            val single = sequenceOf(42)
+                .reduceRight { value, acc -> value * 10 + acc }
+
+            println(reduced)
+            println(single)
+
+            try {
+                emptySequence<Int>().reduceRight { value, acc -> value + acc }
+                println("missing")
+            } catch (e: Throwable) {
+                println("empty")
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceReduceRight",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "64\n42\nempty\n")
+        }
+    }
+
     func testCodegenSequenceReduceIndexedReturnsAccumulatedValueOrThrowsOnEmpty() throws {
         let source = """
         fun main() {

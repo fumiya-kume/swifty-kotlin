@@ -2822,6 +2822,48 @@ public func kk_sequence_reduce(
     return acc
 }
 
+@_cdecl("kk_sequence_reduceRight")
+public func kk_sequence_reduceRight(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    var elements: [Int] = []
+    let traversalState = runtimeTraverseSequenceSource(seqRaw, caller: #function, outThrown: outThrown) { elem in
+        elements.append(elem)
+        return true
+    }
+    if let outThrown, outThrown.pointee != 0 { return 0 }
+    if let traversalState, traversalState.limitReached {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached)
+        return 0
+    }
+    guard let last = elements.last else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kEmptySequenceCannotReduce)
+        return 0
+    }
+    var acc = maybeUnbox(last)
+    guard elements.count > 1 else { return acc }
+
+    for index in stride(from: elements.count - 2, through: 0, by: -1) {
+        var thrown = 0
+        let nextAcc = runtimeInvokeCollectionLambda2(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            lhs: elements[index],
+            rhs: acc,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return 0
+        }
+        acc = maybeUnbox(nextAcc)
+    }
+    return acc
+}
+
 
 
 // MARK: - Sequence Operations: chunked/windowed/onEach (STDLIB-276)

@@ -79,6 +79,12 @@ extension DataFlowSemaPhase {
             isSuspend: false,
             nullability: .nonNull
         )))
+        let reduceRightOperationType = types.make(.functionType(FunctionType(
+            params: [typeParamType, typeParamType],
+            returnType: typeParamType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
         func nominalCollectionType(_ fqName: [InternedString], elementType: TypeID, invariant: Bool = false) -> TypeID {
             guard let symbol = symbols.lookup(fqName: fqName) else {
                 return types.anyType
@@ -1528,6 +1534,20 @@ extension DataFlowSemaPhase {
             receiverType: receiverType,
             parameters: [("initial", types.anyType), ("operation", foldIndexedOperationType)],
             returnType: types.anyType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // reduceRight(operation): T
+        registerSequenceMemberStub(
+            named: "reduceRight",
+            externalLinkName: "kk_sequence_reduceRight",
+            receiverType: receiverType,
+            parameters: [("operation", reduceRightOperationType)],
+            returnType: typeParamType,
             sequenceSymbol: sequenceSymbol,
             sequenceFQName: sequenceFQName,
             typeParamSymbol: typeParamSymbol,

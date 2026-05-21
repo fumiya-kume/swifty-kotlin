@@ -95,6 +95,10 @@ private let indexedAccumulatingSum: @convention(c) (Int, Int, Int, Int, UnsafeMu
     acc + index * value
 }
 
+private let reduceRightChecksum: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, acc, _ in
+    value * 10 + acc
+}
+
 private let throwingAccumulator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, _, outThrown in
     outThrown?.pointee = runtimeAllocateThrowable(message: "sequence accumulator failed")
     return 0
@@ -1169,7 +1173,52 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(result, 0)
     }
 
-    // MARK: - Sequence indexed reduction tests (STDLIB-556, STDLIB-SEQ-015)
+    // MARK: - Sequence reduction tests (STDLIB-SEQ-FN-094, STDLIB-556, STDLIB-SEQ-015)
+
+    func testReduceRightEmptySequenceThrows() {
+        let seq = makeSequence([])
+        var thrown = 0
+
+        let result = kk_sequence_reduceRight(
+            seq,
+            unsafeBitCast(reduceRightChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(result, 0)
+    }
+
+    func testReduceRightNonEmptySequenceAccumulatesFromRight() {
+        let seq = makeSequence([1, 2, 3, 4])
+        var thrown = 0
+
+        let result = kk_sequence_reduceRight(
+            seq,
+            unsafeBitCast(reduceRightChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 64)
+    }
+
+    func testReduceRightReturnsZeroWhenLambdaThrows() {
+        let seq = makeSequence([1, 2, 3])
+        var thrown = 0
+
+        let result = kk_sequence_reduceRight(
+            seq,
+            unsafeBitCast(throwingAccumulator, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(result, 0)
+    }
 
     func testReduceIndexedEmptySequenceThrows() {
         let seq = makeSequence([])
