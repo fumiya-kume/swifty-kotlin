@@ -1065,11 +1065,6 @@ extension CodegenBackendIntegrationTests {
         fun main() {
             println(sequenceOf(5, 2, 3).minWithOrNull(reverseOrder<Int>()))
             println(emptySequence<Int>().minWithOrNull(reverseOrder<Int>()) == null)
-    func testCodegenSequenceMaxWithOrNullReturnsLargestElementOrNull() throws {
-        let source = """
-        fun main() {
-            println(sequenceOf(3, 1, 4, 2).maxWithOrNull { left, right -> left - right })
-            println(emptySequence<Int>().maxWithOrNull { left, right -> left - right } == null)
         }
         """
 
@@ -1078,7 +1073,6 @@ extension CodegenBackendIntegrationTests {
             let ctx = try runCodegenPipeline(
                 inputPath: path,
                 moduleName: "SequenceMinWithOrNull",
-                moduleName: "SequenceMaxWithOrNull",
                 emit: .executable,
                 outputPath: outputBase
             )
@@ -1087,7 +1081,6 @@ extension CodegenBackendIntegrationTests {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(normalizedStdout, "5\ntrue\n")
-            XCTAssertEqual(normalizedStdout, "4\ntrue\n")
         }
     }
 
