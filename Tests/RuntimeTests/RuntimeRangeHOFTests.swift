@@ -57,6 +57,16 @@ final class RuntimeRangeHOFTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(listElements(mapped), [1, 3, 5, 7])
     }
 
+    func testLongRangeFirstAndLastOrNullWithoutPredicate() {
+        let range = kk_long_rangeTo(1, 4)
+        XCTAssertEqual(kk_long_range_firstOrNull(range), 1)
+        XCTAssertEqual(kk_long_range_lastOrNull(range), 4)
+
+        let empty = kk_long_rangeTo(5, 1)
+        XCTAssertEqual(kk_long_range_firstOrNull(empty), runtimeNullSentinelInt)
+        XCTAssertEqual(kk_long_range_lastOrNull(empty), runtimeNullSentinelInt)
+    }
+
     func testRangeWindowedBuildsNestedLists() {
         let range = kk_op_rangeTo(1, 5)
         let windows = kk_range_windowed(range, 3, 2, 0)
