@@ -726,7 +726,28 @@ extension CodegenBackendIntegrationTests {
         fun main() {
             println(sequenceOf(1, 2, 3, 4).reversed().toList())
             println(emptySequence<Int>().reversed().toList())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceReversedEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[4, 3, 2, 1]\n[]\n")
+        }
+    }
+
     func testCodegenSequenceRequireNoNullsThrowsOnNullElement() throws {
+        let source = """
+        fun main() {
             try {
                 println(sequenceOf(1, null, 3).requireNoNulls().toList())
                 println("unexpected")
@@ -740,7 +761,6 @@ extension CodegenBackendIntegrationTests {
             let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
             let ctx = try runCodegenPipeline(
                 inputPath: path,
-                moduleName: "SequenceReversedEdgeCases",
                 moduleName: "SequenceRequireNoNullsThrows",
                 emit: .executable,
                 outputPath: outputBase
@@ -749,7 +769,6 @@ extension CodegenBackendIntegrationTests {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "[4, 3, 2, 1]\n[]\n")
             XCTAssertEqual(normalizedStdout, "null\n")
         }
     }
@@ -1065,6 +1084,30 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenSequenceMaxByOrNullReturnsLargestSelectorValueOrNull() throws {
+        let source = """
+        fun main() {
+            println(sequenceOf(3, 1, 4, 2).maxByOrNull { -it })
+            println(emptySequence<Int>().maxByOrNull { it } == null)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceMaxByOrNullRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "1\ntrue\n")
+        }
+    }
+
     func testCodegenSequenceMaxWithOrNullReturnsLargestElementOrNull() throws {
         let source = """
         fun main() {
@@ -1115,6 +1158,30 @@ extension CodegenBackendIntegrationTests {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(normalizedStdout, "1\nempty\n")
+        }
+    }
+
+    func testCodegenSequenceMaxOrNullReturnsLargestElementOrNull() throws {
+        let source = """
+        fun main() {
+            println(sequenceOf(3, 1, 4, 2).maxOrNull())
+            println(emptySequence<Int>().maxOrNull() == null)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceMaxOrNull",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "4\ntrue\n")
         }
     }
 }
