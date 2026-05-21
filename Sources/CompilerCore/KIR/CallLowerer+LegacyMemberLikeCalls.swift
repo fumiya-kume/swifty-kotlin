@@ -2688,6 +2688,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_randomOrNull"
                 } else if calleeName == interner.intern("requireNoNulls") {
                     runtimeCallee = "kk_sequence_requireNoNulls"
+                } else if calleeName == interner.intern("reversed") {
+                    runtimeCallee = "kk_sequence_reversed"
                 } else if calleeName == interner.intern("mapIndexed") {
                     runtimeCallee = "kk_sequence_mapIndexed"
                 } else if calleeName == interner.intern("flatMapIndexed") {

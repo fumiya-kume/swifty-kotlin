@@ -721,6 +721,30 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenSequenceReversedReturnsElementsInReverseOrder() throws {
+        let source = """
+        fun main() {
+            println(sequenceOf(1, 2, 3, 4).reversed().toList())
+            println(emptySequence<Int>().reversed().toList())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceReversedEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[4, 3, 2, 1]\n[]\n")
+        }
+    }
+
     func testCodegenSequenceRequireNoNullsThrowsOnNullElement() throws {
         let source = """
         fun main() {

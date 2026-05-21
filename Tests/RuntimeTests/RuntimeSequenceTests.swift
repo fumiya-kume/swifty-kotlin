@@ -1476,6 +1476,27 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(box.exceptionFQName, "kotlin.IllegalArgumentException")
     }
 
+    // MARK: - STDLIB-SEQ-FN-099: Sequence.reversed()
+
+    func testSequenceReversedMaterializesInReverseOrder() {
+        let seq = makeSequence([1, 2, 3, 4])
+        let reversed = kk_sequence_reversed(seq)
+        var thrown = 0
+        let list = kk_sequence_to_list(reversed, &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(listElements(list), [4, 3, 2, 1])
+    }
+
+    func testSequenceReversedEmptySequenceReturnsEmptySequence() {
+        let reversed = kk_sequence_reversed(makeSequence([]))
+        var thrown = 0
+        let list = kk_sequence_to_list(reversed, &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(listElements(list), [])
+    }
+
     // MARK: - Sequence mutable conversions (STDLIB-SEQ-025)
 
     func testToMutableListReturnsIndependentCopy() {
