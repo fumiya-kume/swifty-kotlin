@@ -413,7 +413,7 @@
 - [x] STDLIB-SEQ-FN-101: `runningFoldIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-102: `runningReduce` 関数の実装
 - [ ] STDLIB-SEQ-FN-103: `runningReduceIndexed` 関数の実装
-- [ ] STDLIB-SEQ-FN-104: `scan` 関数の実装
+- [x] STDLIB-SEQ-FN-104: `scan` 関数の実装
 - [x] STDLIB-SEQ-FN-105: `scanIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-106: `shuffled` 関数の実装
 - [x] STDLIB-SEQ-FN-107: `single` 関数の実装
