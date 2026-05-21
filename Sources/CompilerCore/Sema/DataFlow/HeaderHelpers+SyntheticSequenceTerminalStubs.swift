@@ -1346,9 +1346,18 @@ extension DataFlowSemaPhase {
             receiverType: receiverType,
             parameters: [("other", iterableReturnType)],
             returnType: setReturnType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // minus(element: T): Sequence<T>
+        registerSequenceMemberStub(
             named: "minus",
             externalLinkName: "kk_sequence_minus",
+            receiverType: receiverType,
             parameters: [("element", typeParamType)],
             returnType: receiverType,
             sequenceSymbol: sequenceSymbol,

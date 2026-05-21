@@ -988,9 +988,11 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
             let links = Set(
                 sema.symbols.lookupAll(fqName: memberFQName)
                     .compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
             XCTAssertTrue(links.contains("kk_sequence_subtract"))
+        }
+    }
 
-    func testSequenceToSortedSetResolvesInCallExpressions() throws {
     func testSequenceConstrainOnceResolvesInCallExpressions() throws {
         let source = """
         fun singleUse(): Sequence<Int> {
