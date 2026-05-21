@@ -384,8 +384,7 @@ public func kk_shared_immutable_init(_ objectRaw: Int) -> Int {
 /// Schedule a closure to run on a Worker after `delayNs` nanoseconds.
 ///
 /// Uses `DispatchQueue.asyncAfter` on the Worker's underlying serial queue.
-/// The closure is represented by the same `(fnPtr, closureRaw)` ABI used by
-/// `kk_worker_execute`.
+/// The closure is represented by the legacy delayed-worker `(fnPtr, closureRaw)` ABI.
 ///
 /// - Parameters:
 ///   - workerHandle: handle produced by `kk_worker_new`.

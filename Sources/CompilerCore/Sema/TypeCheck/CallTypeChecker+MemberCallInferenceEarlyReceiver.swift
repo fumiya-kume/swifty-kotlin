@@ -20,6 +20,125 @@ extension CallTypeChecker {
         let sema = ctx.sema
         let interner = ctx.interner
         let effectiveCallRecursiveReceiverType = recoveredReceiverType ?? receiverType
+        if interner.resolve(calleeName) == "execute",
+           args.count == 3,
+           explicitTypeArgs.count <= 2,
+           let workerSymbol = driver.helpers.nominalSymbol(
+               of: sema.types.makeNonNullable(receiverType),
+               types: sema.types
+           ),
+           let workerInfo = sema.symbols.symbol(workerSymbol),
+           workerInfo.fqName.map({ interner.resolve($0) }) == ["kotlin", "native", "concurrent", "Worker"]
+        {
+            let transferModeType = sema.symbols.lookup(fqName: [
+                interner.intern("kotlin"),
+                interner.intern("native"),
+                interner.intern("concurrent"),
+                interner.intern("TransferMode"),
+            ]).map { symbol in
+                sema.types.make(.classType(ClassType(
+                    classSymbol: symbol,
+                    args: [],
+                    nullability: .nonNull
+                )))
+            } ?? sema.types.anyType
+            let modeType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: transferModeType)
+            driver.emitSubtypeConstraint(
+                left: modeType,
+                right: transferModeType,
+                range: ast.arena.exprRange(args[0].expr) ?? range,
+                solver: ConstraintSolver(),
+                sema: sema,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+            let explicitProducedType = explicitTypeArgs.first
+            let initialProducerExpectedType = explicitProducedType.map { producedType in
+                sema.types.make(.functionType(FunctionType(
+                    params: [],
+                    returnType: producedType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+            }
+            let producerType = driver.inferExpr(
+                args[1].expr,
+                ctx: ctx,
+                locals: &locals,
+                expectedType: initialProducerExpectedType
+            )
+            let producedType = explicitTypeArgs.first ?? inferredLambdaReturnType(
+                argExpr: args[1].expr,
+                ast: ast,
+                sema: sema
+            )
+            let producerExpectedType = initialProducerExpectedType ?? sema.types.make(.functionType(FunctionType(
+                params: [],
+                returnType: producedType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            driver.emitSubtypeConstraint(
+                left: producerType,
+                right: producerExpectedType,
+                range: ast.arena.exprRange(args[1].expr) ?? range,
+                solver: ConstraintSolver(),
+                sema: sema,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+            let jobReturnExpectation = explicitTypeArgs.dropFirst().first ?? sema.types.anyType
+            let jobExpectedType = sema.types.make(.functionType(FunctionType(
+                params: [producedType],
+                returnType: jobReturnExpectation,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            if let jobExpr = ast.arena.expr(args[2].expr), jobExpr.isLambdaOrCallableRef {
+                sema.bindings.markCollectionHOFLambdaExpr(args[2].expr)
+            }
+            let jobType = driver.inferExpr(args[2].expr, ctx: ctx, locals: &locals, expectedType: jobExpectedType)
+            driver.emitSubtypeConstraint(
+                left: jobType,
+                right: jobExpectedType,
+                range: ast.arena.exprRange(args[2].expr) ?? range,
+                solver: ConstraintSolver(),
+                sema: sema,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+            let jobReturnType = explicitTypeArgs.dropFirst().first ?? inferredLambdaReturnType(
+                argExpr: args[2].expr,
+                ast: ast,
+                sema: sema
+            )
+            let futureFQName = ["kotlin", "native", "concurrent", "Future"].map { interner.intern($0) }
+            let resultType: TypeID
+            if let futureSymbol = sema.symbols.lookup(fqName: futureFQName) {
+                resultType = sema.types.make(.classType(ClassType(
+                    classSymbol: futureSymbol,
+                    args: [.invariant(jobReturnType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                resultType = sema.types.anyType
+            }
+            let executeFQName = workerInfo.fqName + [calleeName]
+            if let executeSymbol = sema.symbols.lookupAll(fqName: executeFQName).first(where: { symbolID in
+                sema.symbols.externalLinkName(for: symbolID) == "kk_worker_execute"
+            }) {
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: executeSymbol,
+                        substitutedTypeArguments: [producedType, jobReturnType],
+                        parameterMapping: [0: 0, 1: 1, 2: 2]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(executeSymbol))
+            }
+            let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+        }
+
         if interner.resolve(calleeName) == "flatMapIndexed",
            args.count == 1,
            isSequenceLikeType(receiverType, sema: sema, interner: interner)

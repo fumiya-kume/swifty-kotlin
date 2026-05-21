@@ -166,6 +166,34 @@ public func kk_long_range_randomOrNull_random(_ rangeRaw: Int, _ randomRaw: Int)
     return runtimeSignedRangeRandomOrNull(range, randomRaw: randomRaw)
 }
 
+@_cdecl("kk_long_range_firstOrNull")
+public func kk_long_range_firstOrNull(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_long_range_firstOrNull")
+    }
+    if range.step == 0 {
+        return runtimeNullSentinelInt
+    }
+    if range.step > 0 {
+        return range.first <= range.last ? range.first : runtimeNullSentinelInt
+    }
+    return range.first >= range.last ? range.first : runtimeNullSentinelInt
+}
+
+@_cdecl("kk_long_range_lastOrNull")
+public func kk_long_range_lastOrNull(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_long_range_lastOrNull")
+    }
+    if range.step == 0 {
+        return runtimeNullSentinelInt
+    }
+    if range.step > 0 {
+        return range.first <= range.last ? range.last : runtimeNullSentinelInt
+    }
+    return range.first >= range.last ? range.last : runtimeNullSentinelInt
+}
+
 @_cdecl("kk_long_range_forEach")
 public func kk_long_range_forEach(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
                                   _ outThrown: UnsafeMutablePointer<Int>?) -> Int

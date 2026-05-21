@@ -424,7 +424,7 @@ final class RuntimeKClassIntrospectionEdgeCaseTests: XCTestCase {
         XCTAssertEqual(kk_kclass_members_count(kclass), 7)
     }
 
-    func testFieldCountFromMetadata() {
+    func testMetadataOnlyMemberPropertiesAreEmpty() {
         let token = 9002
         let kclass = registerClass(
             typeToken: token,
@@ -435,10 +435,28 @@ final class RuntimeKClassIntrospectionEdgeCaseTests: XCTestCase {
             memberCount: 4
         )
         let props = runtimeListElements(from: kk_kclass_member_properties(kclass))
-        XCTAssertEqual(props.count, 2, "member properties count should match fieldCount")
+        XCTAssertTrue(props.isEmpty, "metadata fieldCount must not create property placeholders")
     }
 
-    func testConstructorCountFromMetadata() {
+    func testRegisteredMemberPropertiesReturnRealHandles() {
+        let token = 9004
+        let kclass = registerClass(
+            typeToken: token,
+            qualifiedName: "test.RealPoint",
+            simpleName: "RealPoint",
+            flags: 1 << 0,
+            fieldCount: 2,
+            memberCount: 4
+        )
+        let prop = kk_kproperty_stub_create(makeStr("x"), makeStr("kotlin.Int"))
+        _ = kk_kclass_register_member(kclass, prop)
+
+        XCTAssertEqual(runtimeListElements(from: kk_kclass_properties(kclass)), [prop])
+        XCTAssertEqual(runtimeListElements(from: kk_kclass_member_properties(kclass)), [prop])
+        XCTAssertEqual(runtimeListElements(from: kk_kclass_declared_member_properties(kclass)), [prop])
+    }
+
+    func testMetadataOnlyConstructorsAreEmpty() {
         let token = 9003
         let kclass = registerClass(
             typeToken: token,
@@ -448,9 +466,31 @@ final class RuntimeKClassIntrospectionEdgeCaseTests: XCTestCase {
             memberCount: 3,
             constructorCount: 1
         )
-        // No KConstructorBox registered → count-based placeholder list
         let constructors = runtimeListElements(from: kk_kclass_constructors(kclass))
-        XCTAssertEqual(constructors.count, 1, "constructor count should match registered constructorCount")
+        XCTAssertTrue(constructors.isEmpty, "metadata constructorCount must not create constructor placeholders")
+    }
+
+    func testRegisteredConstructorsReturnRealHandles() {
+        let token = 9005
+        let kclass = registerClass(
+            typeToken: token,
+            qualifiedName: "test.RealWidget",
+            simpleName: "RealWidget",
+            fieldCount: 1,
+            memberCount: 3,
+            constructorCount: 1
+        )
+        let constructor = kk_kconstructor_create(
+            makeStr("<init>"),
+            0,
+            makeStr("test.RealWidget"),
+            0,
+            1,
+            makeStr("PUBLIC"),
+            kclass
+        )
+
+        XCTAssertEqual(runtimeListElements(from: kk_kclass_constructors(kclass)), [constructor])
     }
 
     func testMembersCountMinusOneWhenNoMetadata() {
@@ -565,9 +605,9 @@ final class RuntimeKClassIntrospectionEdgeCaseTests: XCTestCase {
         XCTAssertEqual(tpList.count, 0)
     }
 
-    // MARK: - Declared member functions count (derived from memberCount - fieldCount)
+    // MARK: - Declared member functions
 
-    func testDeclaredMemberFunctionsCount() {
+    func testMetadataOnlyDeclaredMemberFunctionsAreEmpty() {
         let token = 13001
         let kclass = registerClass(
             typeToken: token,
@@ -576,8 +616,24 @@ final class RuntimeKClassIntrospectionEdgeCaseTests: XCTestCase {
             fieldCount: 1,
             memberCount: 5
         )
-        // Functions = memberCount - fieldCount = 4
         let fns = runtimeListElements(from: kk_kclass_declared_member_functions(kclass))
-        XCTAssertEqual(fns.count, 4)
+        XCTAssertTrue(fns.isEmpty, "metadata memberCount must not create function placeholders")
+    }
+
+    func testRegisteredDeclaredMemberFunctionsReturnRealHandles() {
+        let token = 13002
+        let kclass = registerClass(
+            typeToken: token,
+            qualifiedName: "test.RealService",
+            simpleName: "RealService",
+            fieldCount: 1,
+            memberCount: 5
+        )
+        let fn = kk_kfunction_create(makeStr("run"), 0, makeStr("kotlin.Unit"), 0, 0, 0)
+        _ = kk_kclass_register_member(kclass, fn)
+
+        XCTAssertEqual(runtimeListElements(from: kk_kclass_functions(kclass)), [fn])
+        XCTAssertEqual(runtimeListElements(from: kk_kclass_member_functions(kclass)), [fn])
+        XCTAssertEqual(runtimeListElements(from: kk_kclass_declared_member_functions(kclass)), [fn])
     }
 }

@@ -123,6 +123,48 @@ extension BuildKIRRegressionTests {
         }
     }
 
+    func testBuildKIRWorkerExecuteExpandsProducerAndJobLambdas() throws {
+        let source = """
+        import kotlin.native.concurrent.TransferMode
+        import kotlin.native.concurrent.Worker
+
+        fun probe(worker: Worker): Int {
+            val future = worker.execute(TransferMode.SAFE, { 21 }) { it * 2 }
+            return future.result
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let probeBody = try findKIRFunctionBody(named: "probe", in: module, interner: ctx.interner)
+            let callSummaries = probeBody.compactMap { instruction -> String? in
+                guard case let .call(_, callee, arguments, _, _, _, _, _) = instruction else {
+                    return nil
+                }
+                return "\(ctx.interner.resolve(callee)):\(arguments.count)"
+            }.joined(separator: ", ")
+            let executeCall = try XCTUnwrap(probeBody.first { instruction in
+                guard case let .call(_, callee, arguments, _, _, _, _, _) = instruction else {
+                    return false
+                }
+                return ctx.interner.resolve(callee) == "kk_worker_execute" && arguments.count == 6
+            }, "Expected kk_worker_execute with 6 args; calls: \(callSummaries)")
+
+            guard case let .call(_, _, arguments, _, _, _, _, _) = executeCall else {
+                XCTFail("Expected Worker.execute to lower to kk_worker_execute.")
+                return
+            }
+            XCTAssertEqual(
+                arguments.count,
+                6,
+                "Worker.execute ABI should be worker, mode, producer fn/closure, job fn/closure."
+            )
+        }
+    }
+
     func testBuildKIRCallableValueCallRespectsParameterMappingBeforePrependingCaptures() throws {
         let source = """
         fun main(): Int {

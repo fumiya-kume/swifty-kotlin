@@ -6,6 +6,48 @@ import XCTest
 /// tests, split out from `CodegenBackendIntegrationTests` to keep
 /// each test source focused.
 extension CodegenBackendIntegrationTests {
+    func testCodegenCollectionConstructorsCopySourceElements() throws {
+        let source = """
+        fun main() {
+            val source: Collection<Int> = listOf(1, 2)
+            val copiedList = ArrayList(source)
+            copiedList.add(3)
+            println(source.size)
+            println(copiedList.size)
+            println(copiedList.contains(3))
+            println(source.contains(3))
+
+            val duplicated: Collection<Int> = listOf(1, 2, 2)
+            val hashCopy = HashSet(duplicated)
+            hashCopy.add(4)
+            println(hashCopy.size)
+            println(hashCopy.contains(1))
+            println(duplicated.size)
+
+            val sourceSet: Set<Int> = setOf(2, 1)
+            val linkedCopy = LinkedHashSet(sourceSet)
+            linkedCopy.add(5)
+            println(linkedCopy.contains(2))
+            println(sourceSet.contains(5))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "CollectionConstructorCopyRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "2\n3\ntrue\nfalse\n3\ntrue\n3\ntrue\nfalse\n")
+        }
+    }
+
     func testCodegenCollectionCopiesProduceIndependentMutableAndSetViews() throws {
         let source = """
         fun main() {
@@ -1295,5 +1337,30 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
-    // MARK: - Private Helpers
+    func testCodegenListToTypeArrayUsesTypedArrayRuntime() throws {
+        let source = """
+        fun main() {
+            val array = listOf(3, 1, 2).toTypeArray()
+            println(array.size)
+            println(array[0])
+            println(array[2])
+            println(array.toList())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListToTypeArrayRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "3\n3\n2\n[3, 1, 2]\n")
+        }
+    }
 }

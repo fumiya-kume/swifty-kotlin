@@ -39,6 +39,12 @@ Update SwiftLint baseline intentionally after reviewing violations:
 bash Scripts/swift_lint.sh --update-baseline
 ```
 
+Validate compiler runtime link names against `RuntimeABISpec`:
+
+```bash
+bash Scripts/validate_runtime_abi_links.sh
+```
+
 ## Golden update workflow
 
 1. Run golden tests without updating fixtures:

@@ -47,6 +47,19 @@ final class RuntimeKClassCastAndMembersTests: XCTestCase {
         return kk_kclass_create(typeToken, sn)
     }
 
+    private func runtimeListElements(
+        from raw: Int,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) -> [Int] {
+        guard let listPtr = UnsafeMutableRawPointer(bitPattern: raw),
+              let list = tryCast(listPtr, to: RuntimeListBox.self) else {
+            XCTFail("Expected RuntimeListBox", file: file, line: line)
+            return []
+        }
+        return list.elements
+    }
+
     // MARK: - ABI-002: kk_kclass_register_member / kk_kclass_members
 
     func testMembersEmptyWhenNoMembersRegistered() {
@@ -58,8 +71,8 @@ final class RuntimeKClassCastAndMembersTests: XCTestCase {
             XCTFail("Expected RuntimeListBox")
             return
         }
-        // No members registered yet — falls back to metadata-count placeholders.
-        XCTAssertEqual(list.elements.count, 3)
+        // No members registered yet, so metadata counts must not create placeholders.
+        XCTAssertTrue(list.elements.isEmpty)
     }
 
     func testRegisterMemberReturnsZero() {
@@ -110,13 +123,32 @@ final class RuntimeKClassCastAndMembersTests: XCTestCase {
         XCTAssertTrue(list.elements.contains(fn1))
         XCTAssertTrue(list.elements.contains(fn2))
         XCTAssertTrue(list.elements.contains(prop))
+        XCTAssertFalse(list.elements.contains(0))
+    }
+
+    func testFunctionAndPropertyAccessorsFilterRegisteredMembers() {
+        let kclass = registerKClass(typeToken: 1010, qualifiedName: "pkg.Filtered", simpleName: "Filtered")
+        let fn = kk_kfunction_create(makeRuntimeString("compute"), 0, makeRuntimeString("kotlin.Int"), 0, 0, 0)
+        let prop = kk_kproperty_stub_create(makeRuntimeString("value"), makeRuntimeString("kotlin.Int"))
+
+        _ = kk_kclass_register_member(kclass, fn)
+        _ = kk_kclass_register_member(kclass, prop)
+
+        XCTAssertEqual(runtimeListElements(from: kk_kclass_members(kclass)), [fn, prop])
+        XCTAssertEqual(runtimeListElements(from: kk_kclass_functions(kclass)), [fn])
+        XCTAssertEqual(runtimeListElements(from: kk_kclass_member_functions(kclass)), [fn])
+        XCTAssertEqual(runtimeListElements(from: kk_kclass_declared_member_functions(kclass)), [fn])
+        XCTAssertEqual(runtimeListElements(from: kk_kclass_properties(kclass)), [prop])
+        XCTAssertEqual(runtimeListElements(from: kk_kclass_member_properties(kclass)), [prop])
+        XCTAssertEqual(runtimeListElements(from: kk_kclass_declared_member_properties(kclass)), [prop])
     }
 
     func testRegisterMemberIgnoresInvalidHandles() {
         let kclass = registerKClass(typeToken: 1005, qualifiedName: "pkg.E", simpleName: "E")
-        // Invalid handles (0 and runtimeNullSentinelInt) should be ignored.
+        // Invalid handles should be ignored.
         _ = kk_kclass_register_member(kclass, 0)
         _ = kk_kclass_register_member(kclass, runtimeNullSentinelInt)
+        _ = kk_kclass_register_member(kclass, 0xDEAD_BEEF)
 
         let listRaw = kk_kclass_members(kclass)
         guard let listPtr = UnsafeMutableRawPointer(bitPattern: listRaw),
@@ -124,8 +156,7 @@ final class RuntimeKClassCastAndMembersTests: XCTestCase {
             XCTFail("Expected RuntimeListBox")
             return
         }
-        // Falls back to metadata memberCount = 3 since no valid members registered.
-        XCTAssertEqual(list.elements.count, 3)
+        XCTAssertTrue(list.elements.isEmpty)
     }
 
     func testMembersIsolatedPerClass() {

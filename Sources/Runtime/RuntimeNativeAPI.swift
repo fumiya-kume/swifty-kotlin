@@ -970,31 +970,67 @@ public func kk_worker_new(_ nameRaw: Int) -> Int {
 }
 
 @_cdecl("kk_worker_execute")
-public func kk_worker_execute(_ workerHandle: Int, _ fnPtr: Int, _ closureRaw: Int) -> Int {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: workerHandle) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_worker_execute received invalid worker handle")
-    }
-    let worker = Unmanaged<RuntimeWorkerBox>.fromOpaque(ptr).takeUnretainedValue()
-    guard fnPtr != 0 else {
+public func kk_worker_execute(
+    _ workerHandle: Int,
+    _ modeRaw: Int,
+    _ producerFnPtr: Int,
+    _ producerClosureRaw: Int,
+    _ jobFnPtr: Int,
+    _ jobClosureRaw: Int
+) -> Int {
+    _ = modeRaw
+    guard workerHandle != 0,
+          let ptr = UnsafeMutableRawPointer(bitPattern: workerHandle),
+          let worker = tryCast(ptr, to: RuntimeWorkerBox.self)
+    else {
         return 0
     }
-    typealias WorkFn = @convention(c) (Int) -> Int
-    let fn = unsafeBitCast(UnsafeRawPointer(bitPattern: fnPtr)!, to: WorkFn.self)
-    let capturedClosureRaw = closureRaw
-    let submitted = worker.execute {
-        _ = fn(capturedClosureRaw)
+    guard producerFnPtr != 0, jobFnPtr != 0 else {
+        return 0
     }
-    return submitted ? 1 : 0
+
+    var producerThrown = 0
+    let producedRaw = runtimeInvokeClosureThunk(
+        fnPtr: producerFnPtr,
+        closureRaw: producerClosureRaw,
+        outThrown: &producerThrown
+    )
+    guard producerThrown == 0 else {
+        return 0
+    }
+
+    let futureHandle = kk_future_new()
+    guard futureHandle != 0 else {
+        return 0
+    }
+    let submitted = worker.execute {
+        var jobThrown = 0
+        let resultRaw = runtimeInvokeCollectionLambda1(
+            fnPtr: jobFnPtr,
+            closureRaw: jobClosureRaw,
+            value: producedRaw,
+            outThrown: &jobThrown
+        )
+        _ = kk_future_complete(futureHandle, jobThrown == 0 ? resultRaw : 0)
+    }
+    return submitted ? futureHandle : 0
 }
 
 @_cdecl("kk_worker_request_termination")
 public func kk_worker_request_termination(_ workerHandle: Int, _ processScheduledRaw: Int) -> Int {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: workerHandle) else {
+    guard workerHandle != 0,
+          let ptr = UnsafeMutableRawPointer(bitPattern: workerHandle),
+          let worker = tryCast(ptr, to: RuntimeWorkerBox.self)
+    else {
         return 0
     }
-    let worker = Unmanaged<RuntimeWorkerBox>.fromOpaque(ptr).takeUnretainedValue()
     worker.requestTermination(processScheduled: processScheduledRaw != 0)
-    return 0
+    let futureHandle = kk_future_new()
+    guard futureHandle != 0 else {
+        return 0
+    }
+    _ = kk_future_complete(futureHandle, 1)
+    return futureHandle
 }
 
 @_cdecl("kk_worker_is_terminated")

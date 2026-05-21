@@ -315,31 +315,52 @@ extension DataFlowSemaPhase {
         symbols.setSupertypeTypeArgs(mutableSetArgs, for: linkedHashSetSymbol, supertype: mutableSetSymbol)
         types.setNominalSupertypeTypeArgs(mutableSetArgs, for: linkedHashSetSymbol, supertype: mutableSetSymbol)
 
-        let initName = interner.intern("<init>")
-        let constructorSymbol = symbols.define(
-            kind: .constructor,
-            name: initName,
-            fqName: linkedHashSetFQName + [initName],
-            declSite: nil,
-            visibility: .public,
-            flags: [.synthetic]
-        )
-        symbols.setParentSymbol(linkedHashSetSymbol, for: constructorSymbol)
-        symbols.setExternalLinkName("kk_emptySet", for: constructorSymbol)
         let returnType = types.make(.classType(ClassType(
             classSymbol: linkedHashSetSymbol,
             args: [.invariant(typeParamType)],
             nullability: .nonNull
         )))
-        symbols.setFunctionSignature(
-            FunctionSignature(
-                receiverType: nil,
-                parameterTypes: [],
-                returnType: returnType,
-                typeParameterSymbols: [typeParamSymbol],
-                classTypeParameterCount: 1
-            ),
-            for: constructorSymbol
-        )
+
+        let collectionName = interner.intern("Collection")
+        let collectionType: TypeID = if let collectionSymbol = symbols.lookup(
+            fqName: kotlinCollectionsPkg + [collectionName]
+        ) {
+            types.make(.classType(ClassType(
+                classSymbol: collectionSymbol,
+                args: [.out(typeParamType)],
+                nullability: .nonNull
+            )))
+        } else {
+            types.anyType
+        }
+
+        let initName = interner.intern("<init>")
+        let initFQName = linkedHashSetFQName + [initName]
+        func registerConstructor(parameterTypes: [TypeID], externalLinkName: String) {
+            let constructorSymbol = symbols.define(
+                kind: .constructor,
+                name: initName,
+                fqName: initFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(linkedHashSetSymbol, for: constructorSymbol)
+            symbols.setExternalLinkName(externalLinkName, for: constructorSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: parameterTypes,
+                    returnType: returnType,
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: constructorSymbol
+            )
+        }
+
+        registerConstructor(parameterTypes: [], externalLinkName: "kk_emptySet")
+        registerConstructor(parameterTypes: [types.intType], externalLinkName: "kk_emptySet")
+        registerConstructor(parameterTypes: [collectionType], externalLinkName: "kk_iterable_toMutableSet")
     }
 }

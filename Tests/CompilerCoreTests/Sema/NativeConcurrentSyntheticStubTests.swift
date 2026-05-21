@@ -895,6 +895,56 @@ final class NativeConcurrentSyntheticStubTests: XCTestCase {
         XCTAssertEqual(sema.symbols.symbol(symbol)?.kind, .class)
     }
 
+    func testWorkerExecuteIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let workerFQName = ["kotlin", "native", "concurrent", "Worker"].map { interner.intern($0) }
+        let workerSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: workerFQName))
+        let workerType = try XCTUnwrap(sema.symbols.propertyType(for: workerSymbol))
+        let transferModeType = try classType(
+            ["kotlin", "native", "concurrent", "TransferMode"],
+            sema: sema,
+            interner: interner
+        )
+
+        let methodFQName = workerFQName + [interner.intern("execute")]
+        let methods = sema.symbols.lookupAll(fqName: methodFQName)
+        XCTAssertFalse(methods.isEmpty, "Expected Worker.execute to be registered")
+
+        let method = try XCTUnwrap(methods.first)
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: method))
+        XCTAssertEqual(signature.typeParameterSymbols.count, 2)
+
+        let t1 = sema.types.make(.typeParam(TypeParamType(
+            symbol: signature.typeParameterSymbols[0],
+            nullability: .nonNull
+        )))
+        let t2 = sema.types.make(.typeParam(TypeParamType(
+            symbol: signature.typeParameterSymbols[1],
+            nullability: .nonNull
+        )))
+        let producerType = sema.types.make(.functionType(FunctionType(
+            params: [],
+            returnType: t1
+        )))
+        let jobType = sema.types.make(.functionType(FunctionType(
+            params: [t1],
+            returnType: t2
+        )))
+        let futureT2Type = try classType(
+            ["kotlin", "native", "concurrent", "Future"],
+            sema: sema,
+            interner: interner,
+            args: [.invariant(t2)]
+        )
+
+        XCTAssertEqual(signature.receiverType, workerType)
+        XCTAssertEqual(signature.parameterTypes, [transferModeType, producerType, jobType])
+        XCTAssertEqual(signature.returnType, futureT2Type)
+        XCTAssertEqual(signature.valueParameterHasDefaultValues, [false, false, false])
+        XCTAssertEqual(sema.symbols.externalLinkName(for: method), "kk_worker_execute")
+    }
+
     func testWorkerRequestTerminationIsRegistered() throws {
         let (sema, interner) = try makeSema()
 
@@ -908,11 +958,37 @@ final class NativeConcurrentSyntheticStubTests: XCTestCase {
         let method = try XCTUnwrap(methods.first)
         let sig = try XCTUnwrap(sema.symbols.functionSignature(for: method))
         XCTAssertEqual(sig.parameterTypes, [sema.types.booleanType])
-        XCTAssertEqual(sig.returnType, sema.types.unitType)
+        let futureBooleanType = try classType(
+            ["kotlin", "native", "concurrent", "Future"],
+            sema: sema,
+            interner: interner,
+            args: [.invariant(sema.types.booleanType)]
+        )
+        XCTAssertEqual(sig.returnType, futureBooleanType)
+        XCTAssertEqual(sig.valueParameterHasDefaultValues, [true])
 
         let workerType = try XCTUnwrap(sema.symbols.propertyType(for: workerSymbol))
         XCTAssertEqual(sig.receiverType, workerType)
         XCTAssertEqual(sema.symbols.externalLinkName(for: method), "kk_worker_request_termination")
+    }
+
+    func testWorkerExecuteAndRequestTerminationResolveInSource() {
+        let source = """
+        import kotlin.native.concurrent.TransferMode
+        import kotlin.native.concurrent.Worker
+
+        fun probe(worker: Worker): Int {
+            val future = worker.execute(TransferMode.SAFE, { 21 }) { it * 2 }
+            val stopped: Boolean = worker.requestTermination(false).result
+            return if (stopped) future.result else 0
+        }
+        """
+
+        let ctx = runSemaCollectingDiagnostics(source)
+        XCTAssertFalse(
+            ctx.diagnostics.hasError,
+            "Expected Worker.execute and requestTermination to resolve cleanly, got: \(ctx.diagnostics.diagnostics.map(\.message))"
+        )
     }
 
     func testWorkerIsTerminatedPropertyIsRegistered() throws {

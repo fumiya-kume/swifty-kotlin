@@ -536,40 +536,36 @@ public func kk_longArray_asULongArray(_ arrayRaw: Int) -> Int {
     return arrayRaw
 }
 
+@inline(__always)
+private func kk_uarray_asList(_ arrayRaw: Int, functionName: String) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in \(functionName)")
+    }
+    return registerRuntimeObject(RuntimeListBox(arrayViewOf: array))
+}
+
 /// UByteArray.asList(): List<UByte>
 @_cdecl("kk_uByteArray_asList")
 public func kk_uByteArray_asList(_ arrayRaw: Int) -> Int {
-    guard let array = runtimeArrayBox(from: arrayRaw) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_uByteArray_asList")
-    }
-    return registerRuntimeObject(RuntimeListBox(arrayViewOf: array))
+    kk_uarray_asList(arrayRaw, functionName: "kk_uByteArray_asList")
 }
 
 /// UShortArray.asList(): List<UShort>
 @_cdecl("kk_uShortArray_asList")
 public func kk_uShortArray_asList(_ arrayRaw: Int) -> Int {
-    guard let array = runtimeArrayBox(from: arrayRaw) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_uShortArray_asList")
-    }
-    return registerRuntimeObject(RuntimeListBox(arrayViewOf: array))
+    kk_uarray_asList(arrayRaw, functionName: "kk_uShortArray_asList")
 }
 
 /// UIntArray.asList(): List<UInt>
 @_cdecl("kk_uIntArray_asList")
 public func kk_uIntArray_asList(_ arrayRaw: Int) -> Int {
-    guard let array = runtimeArrayBox(from: arrayRaw) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_uIntArray_asList")
-    }
-    return registerRuntimeObject(RuntimeListBox(arrayViewOf: array))
+    kk_uarray_asList(arrayRaw, functionName: "kk_uIntArray_asList")
 }
 
 /// ULongArray.asList(): List<ULong>
 @_cdecl("kk_uLongArray_asList")
 public func kk_uLongArray_asList(_ arrayRaw: Int) -> Int {
-    guard let array = runtimeArrayBox(from: arrayRaw) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_uLongArray_asList")
-    }
-    return registerRuntimeObject(RuntimeListBox(arrayViewOf: array))
+    kk_uarray_asList(arrayRaw, functionName: "kk_uLongArray_asList")
 }
 
 // MARK: - Unsigned primitive array to signed primitive array views
@@ -578,40 +574,36 @@ public func kk_uLongArray_asList(_ arrayRaw: Int) -> Int {
 // *views* on the same storage: the signed and unsigned array types re-use the same
 // underlying runtime array; mutations are shared and bit patterns are not reencoded.
 
+@inline(__always)
+private func kk_unsignedArray_asSignedArrayView(_ arrayRaw: Int, functionName: String) -> Int {
+    guard runtimeArrayBox(from: arrayRaw) != nil else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in \(functionName)")
+    }
+    return arrayRaw
+}
+
 /// UByteArray.asByteArray(): ByteArray
 @_cdecl("kk_uByteArray_asByteArray")
 public func kk_uByteArray_asByteArray(_ arrayRaw: Int) -> Int {
-    guard runtimeArrayBox(from: arrayRaw) != nil else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_uByteArray_asByteArray")
-    }
-    return arrayRaw
+    kk_unsignedArray_asSignedArrayView(arrayRaw, functionName: "kk_uByteArray_asByteArray")
 }
 
 /// UShortArray.asShortArray(): ShortArray
 @_cdecl("kk_uShortArray_asShortArray")
 public func kk_uShortArray_asShortArray(_ arrayRaw: Int) -> Int {
-    guard runtimeArrayBox(from: arrayRaw) != nil else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_uShortArray_asShortArray")
-    }
-    return arrayRaw
+    kk_unsignedArray_asSignedArrayView(arrayRaw, functionName: "kk_uShortArray_asShortArray")
 }
 
 /// UIntArray.asIntArray(): IntArray view
 @_cdecl("kk_uIntArray_asIntArray")
 public func kk_uIntArray_asIntArray(_ arrayRaw: Int) -> Int {
-    guard runtimeArrayBox(from: arrayRaw) != nil else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_uIntArray_asIntArray")
-    }
-    return arrayRaw
+    kk_unsignedArray_asSignedArrayView(arrayRaw, functionName: "kk_uIntArray_asIntArray")
 }
 
 /// ULongArray.asLongArray(): LongArray view
 @_cdecl("kk_uLongArray_asLongArray")
 public func kk_uLongArray_asLongArray(_ arrayRaw: Int) -> Int {
-    guard runtimeArrayBox(from: arrayRaw) != nil else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_uLongArray_asLongArray")
-    }
-    return arrayRaw
+    kk_unsignedArray_asSignedArrayView(arrayRaw, functionName: "kk_uLongArray_asLongArray")
 }
 
 // MARK: - Primitive array size property
@@ -902,4 +894,3 @@ public func kk_uShortArray_binarySearch(_ arrayRaw: Int, _ element: Int, _ fromI
         functionName: "kk_uShortArray_binarySearch"
     )
 }
-

@@ -82,4 +82,117 @@ final class JsClassExternalInterfaceTests: XCTestCase {
         XCTAssertEqual(sema.symbols.propertyType(for: property), sema.types.stringType)
         XCTAssertNil(sema.symbols.externalLinkName(for: property))
     }
+
+    func testKClassJsPropertyIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let jsClassSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: ["kotlin", "js", "JsClass"].map { interner.intern($0) })
+        )
+        let propertySymbol = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: ["kotlin", "js", "js"].map { interner.intern($0) }).first { symbolID in
+                sema.symbols.symbol(symbolID)?.kind == .property
+                    && sema.symbols.extensionPropertyReceiverType(for: symbolID) != nil
+            },
+            "KClass<T>.js property must be registered"
+        )
+        XCTAssertEqual(sema.symbols.externalLinkName(for: propertySymbol), "kk_kclass_js")
+
+        let getterSymbol = try XCTUnwrap(sema.symbols.extensionPropertyGetterAccessor(for: propertySymbol))
+        XCTAssertEqual(sema.symbols.externalLinkName(for: getterSymbol), "kk_kclass_js")
+
+        let getterSignature = try XCTUnwrap(sema.symbols.functionSignature(for: getterSymbol))
+        XCTAssertEqual(getterSignature.parameterTypes, [])
+        XCTAssertEqual(getterSignature.typeParameterSymbols.count, 1)
+        XCTAssertEqual(getterSignature.classTypeParameterCount, 0)
+
+        let receiverType = try XCTUnwrap(getterSignature.receiverType)
+        guard case let .classType(receiverClassType) = sema.types.kind(of: receiverType) else {
+            return XCTFail("Expected KClass<T> receiver, got \(sema.types.renderType(receiverType))")
+        }
+        XCTAssertEqual(receiverClassType.classSymbol, try XCTUnwrap(sema.types.kClassInterfaceSymbol))
+
+        guard case let .classType(returnClassType) = sema.types.kind(of: getterSignature.returnType) else {
+            return XCTFail("Expected JsClass<T> return type, got \(sema.types.renderType(getterSignature.returnType))")
+        }
+        XCTAssertEqual(returnClassType.classSymbol, jsClassSymbol)
+        XCTAssertEqual(returnClassType.args, receiverClassType.args)
+        XCTAssertEqual(sema.symbols.propertyType(for: propertySymbol), getterSignature.returnType)
+        XCTAssertEqual(sema.symbols.extensionPropertyReceiverType(for: propertySymbol), receiverType)
+    }
+
+    func testJsClassKotlinPropertyIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let jsClassSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: ["kotlin", "js", "JsClass"].map { interner.intern($0) })
+        )
+        let propertySymbol = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: ["kotlin", "js", "kotlin"].map { interner.intern($0) }).first { symbolID in
+                sema.symbols.symbol(symbolID)?.kind == .property
+                    && sema.symbols.extensionPropertyReceiverType(for: symbolID) != nil
+            },
+            "JsClass<T>.kotlin property must be registered"
+        )
+        XCTAssertEqual(sema.symbols.externalLinkName(for: propertySymbol), "kk_jsclass_kotlin")
+
+        let getterSymbol = try XCTUnwrap(sema.symbols.extensionPropertyGetterAccessor(for: propertySymbol))
+        XCTAssertEqual(sema.symbols.externalLinkName(for: getterSymbol), "kk_jsclass_kotlin")
+
+        let getterSignature = try XCTUnwrap(sema.symbols.functionSignature(for: getterSymbol))
+        XCTAssertEqual(getterSignature.parameterTypes, [])
+        XCTAssertEqual(getterSignature.typeParameterSymbols.count, 1)
+        XCTAssertEqual(getterSignature.classTypeParameterCount, 0)
+
+        let receiverType = try XCTUnwrap(getterSignature.receiverType)
+        guard case let .classType(receiverClassType) = sema.types.kind(of: receiverType) else {
+            return XCTFail("Expected JsClass<T> receiver, got \(sema.types.renderType(receiverType))")
+        }
+        XCTAssertEqual(receiverClassType.classSymbol, jsClassSymbol)
+
+        guard case let .classType(returnClassType) = sema.types.kind(of: getterSignature.returnType) else {
+            return XCTFail("Expected KClass<T> return type, got \(sema.types.renderType(getterSignature.returnType))")
+        }
+        XCTAssertEqual(returnClassType.classSymbol, try XCTUnwrap(sema.types.kClassInterfaceSymbol))
+        XCTAssertEqual(returnClassType.args, receiverClassType.args)
+        XCTAssertEqual(sema.symbols.propertyType(for: propertySymbol), getterSignature.returnType)
+        XCTAssertEqual(sema.symbols.extensionPropertyReceiverType(for: propertySymbol), receiverType)
+    }
+
+    func testKClassJsPropertyResolvesFromSource() throws {
+        let source = """
+        import kotlin.js.JsClass
+        import kotlin.js.*
+        import kotlin.reflect.KClass
+
+        fun stringJsClass(): JsClass<String> = String::class.js
+        fun <T : Any> jsClassOf(kclass: KClass<T>): JsClass<T> = kclass.js
+        """
+        let (sema, interner) = try makeSema(source: source)
+
+        for functionName in ["stringJsClass", "jsClassOf"] {
+            let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: [interner.intern(functionName)]))
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbol))
+            guard case .classType = sema.types.kind(of: signature.returnType) else {
+                return XCTFail("\(functionName) should return JsClass<T>, got \(sema.types.renderType(signature.returnType))")
+            }
+        }
+    }
+
+    func testJsClassKotlinPropertyResolvesFromSource() throws {
+        let source = """
+        import kotlin.js.JsClass
+        import kotlin.js.*
+        import kotlin.reflect.KClass
+
+        fun <T : Any> kotlinClassOf(jsClass: JsClass<T>): KClass<T> = jsClass.kotlin
+        """
+        let (sema, interner) = try makeSema(source: source)
+
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: [interner.intern("kotlinClassOf")]))
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbol))
+        guard case .classType = sema.types.kind(of: signature.returnType) else {
+            return XCTFail("kotlinClassOf should return KClass<T>, got \(sema.types.renderType(signature.returnType))")
+        }
+    }
 }

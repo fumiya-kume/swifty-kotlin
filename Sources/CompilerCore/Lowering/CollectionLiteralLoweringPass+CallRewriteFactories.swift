@@ -146,9 +146,22 @@ extension CollectionLiteralLoweringPass {
 
         // --- Rewrite ArrayList()/HashSet()/LinkedHashSet()/HashMap()/LinkedHashMap() constructors ---
         // 0 args → empty collection; 1 int arg (capacity) → empty collection;
-        // 1 collection arg → copy (treated as empty for now since runtime uses Swift collections)
+        // 1 collection arg → copy.
         if lookup.mutableListConstructorNames.contains(callee) {
-            // All forms produce an empty mutable list
+            if arguments.count == 1,
+               isCollectionCopyConstructorArgument(arguments[0], module: module, ctx: ctx) {
+                loweredBody.append(.call(
+                    symbol: nil,
+                    callee: lookup.kkCollectionToMutableListName,
+                    arguments: [arguments[0]],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                if let result { state.listExprIDs.insert(result.rawValue) }
+                return true
+            }
+
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             let nullExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
@@ -165,6 +178,20 @@ extension CollectionLiteralLoweringPass {
         }
 
         if lookup.mutableSetConstructorNames.contains(callee) {
+            if arguments.count == 1,
+               isCollectionCopyConstructorArgument(arguments[0], module: module, ctx: ctx) {
+                loweredBody.append(.call(
+                    symbol: nil,
+                    callee: lookup.kkIterableToMutableSetName,
+                    arguments: [arguments[0]],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                if let result { state.setExprIDs.insert(result.rawValue) }
+                return true
+            }
+
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             let nullExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
@@ -189,8 +216,8 @@ extension CollectionLiteralLoweringPass {
             let nullExpr2 = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: nullExpr2, value: .intLiteral(0)))
 
-            if arguments.count == 1 {
-                // Copy constructor: HashMap(otherMap)
+            if arguments.count == 1, state.mapExprIDs.contains(arguments[0].rawValue) {
+                // Copy constructor: HashMap(otherMap) — only when arg is map-typed
                 // 1. Create empty map into the result
                 loweredBody.append(.call(
                     symbol: nil,
@@ -213,7 +240,7 @@ extension CollectionLiteralLoweringPass {
                     thrownResult: nil
                 ))
             } else {
-                // 0 args or capacity arg → empty map
+                // 0 args, capacity arg (Int), or unknown arg type → empty map
                 loweredBody.append(.call(
                     symbol: nil,
                     callee: lookup.kkMapOfName,

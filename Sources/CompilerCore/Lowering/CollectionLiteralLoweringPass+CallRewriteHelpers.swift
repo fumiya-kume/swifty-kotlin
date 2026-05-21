@@ -79,6 +79,45 @@ extension CollectionLiteralLoweringPass {
         return isStdlibCollectionFactory(symbol: symbol, callee: callee, lookup: lookup, ctx: ctx)
     }
 
+    func isCollectionCopyConstructorArgument(
+        _ argument: KIRExprID,
+        module: KIRModule,
+        ctx: KIRContext
+    ) -> Bool {
+        guard let sema = ctx.sema,
+              let argumentType = module.arena.exprType(argument)
+        else {
+            return false
+        }
+
+        let nonNullType = sema.types.makeNonNullable(argumentType)
+        guard case let .classType(classType) = sema.types.kind(of: nonNullType),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+
+        let kotlinCollectionsFQName = [ctx.interner.intern("kotlin"), ctx.interner.intern("collections")]
+        guard symbol.fqName.count >= 3,
+              Array(symbol.fqName.dropLast()) == kotlinCollectionsFQName
+        else {
+            return false
+        }
+
+        let simpleName = symbol.fqName.last ?? symbol.name
+        switch ctx.interner.resolve(simpleName) {
+        case "List", "MutableList", "ArrayList",
+             "AbstractList", "AbstractMutableList",
+             "Set", "MutableSet", "HashSet", "LinkedHashSet",
+             "AbstractSet", "AbstractMutableSet",
+             "Collection", "MutableCollection",
+             "AbstractCollection", "AbstractMutableCollection":
+            return true
+        default:
+            return false
+        }
+    }
+
     func isJavaIOFileMember(
         symbol: SymbolID?,
         ctx: KIRContext,

@@ -79,20 +79,71 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // Worker.execute(mode: TransferMode, producer: () -> T): Future<T>
-        // Since Future<T> is registered later (no type param yet), register a simpler version
-        // returning Any for now (the full generic version requires Future to exist first).
-        // We register the execute signature with the intType placeholder in tests.
-        // Instead, omit the full generic execute and register the simpler transfer-mode-free version.
+        // Worker.execute(mode: TransferMode, producer: () -> T1, job: (T1) -> T2): Future<T2>
+        let executeName = interner.intern("execute")
+        let executeFQName = workerFQName + [executeName]
+        let executeT1Symbol = nativeConcurrentSyntheticTypeParameter(
+            named: "T1",
+            ownerFQName: executeFQName,
+            symbols: symbols,
+            interner: interner
+        )
+        let executeT2Symbol = nativeConcurrentSyntheticTypeParameter(
+            named: "T2",
+            ownerFQName: executeFQName,
+            symbols: symbols,
+            interner: interner
+        )
+        let executeT1Type = types.make(.typeParam(TypeParamType(
+            symbol: executeT1Symbol,
+            nullability: .nonNull
+        )))
+        let executeT2Type = types.make(.typeParam(TypeParamType(
+            symbol: executeT2Symbol,
+            nullability: .nonNull
+        )))
+        let executeProducerType = types.make(.functionType(FunctionType(
+            params: [],
+            returnType: executeT1Type
+        )))
+        let executeJobType = types.make(.functionType(FunctionType(
+            params: [executeT1Type],
+            returnType: executeT2Type
+        )))
+        registerNativeConcurrentMemberFunction(
+            ownerSymbol: workerSymbol,
+            ownerType: workerType,
+            name: "execute",
+            externalLinkName: "kk_worker_execute",
+            returnType: nativeConcurrentFutureType(
+                elementType: executeT2Type,
+                symbols: symbols,
+                types: types,
+                interner: interner
+            ),
+            parameters: [
+                (name: "mode", type: transferModeType),
+                (name: "producer", type: executeProducerType),
+                (name: "job", type: executeJobType),
+            ],
+            defaultValues: [false, false, false],
+            typeParameterSymbols: [executeT1Symbol, executeT2Symbol],
+            symbols: symbols,
+            interner: interner
+        )
 
         // Worker.requestTermination(processScheduled: Boolean = true): Future<Boolean>
-        // Simplified: returns unitType (we do not have Future yet here)
         registerNativeConcurrentMemberFunction(
             ownerSymbol: workerSymbol,
             ownerType: workerType,
             name: "requestTermination",
             externalLinkName: "kk_worker_request_termination",
-            returnType: types.unitType,
+            returnType: nativeConcurrentFutureType(
+                elementType: types.booleanType,
+                symbols: symbols,
+                types: types,
+                interner: interner
+            ),
             parameters: [(name: "processScheduled", type: types.booleanType)],
             defaultValues: [true],
             symbols: symbols,

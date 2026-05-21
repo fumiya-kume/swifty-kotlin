@@ -1,8 +1,42 @@
 import Foundation
 
-/// Synthetic Kotlin/JS `nativeGetter` annotation surface.
+/// Synthetic Kotlin/JS native function annotation surfaces.
 extension DataFlowSemaPhase {
     func registerSyntheticNativeGetterStubs(
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        registerSyntheticNativeFunctionAnnotationStub(
+            named: "nativeGetter",
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    func registerSyntheticNativeSetterStubs(
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        registerSyntheticNativeFunctionAnnotationStub(
+            named: "nativeSetter",
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    func registerSyntheticNativeInvokeStubs(
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        registerSyntheticNativeFunctionAnnotationStub(
+            named: "nativeInvoke",
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    private func registerSyntheticNativeFunctionAnnotationStub(
+        named name: String,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -14,7 +48,7 @@ extension DataFlowSemaPhase {
         let kotlinJsPkgSymbol = symbols.lookup(fqName: kotlinJsPkg)
 
         let annotationSymbol = ensureAnnotationClassSymbol(
-            named: "nativeGetter",
+            named: name,
             in: kotlinJsPkg,
             symbols: symbols,
             interner: interner
@@ -23,10 +57,10 @@ extension DataFlowSemaPhase {
             symbols.setParentSymbol(kotlinJsPkgSymbol, for: annotationSymbol)
         }
 
-        appendNativeGetterAnnotationMetadata(to: annotationSymbol, symbols: symbols)
+        appendSyntheticNativeFunctionAnnotationMetadata(to: annotationSymbol, symbols: symbols)
     }
 
-    private func appendNativeGetterAnnotationMetadata(
+    private func appendSyntheticNativeFunctionAnnotationMetadata(
         to symbol: SymbolID,
         symbols: SymbolTable
     ) {

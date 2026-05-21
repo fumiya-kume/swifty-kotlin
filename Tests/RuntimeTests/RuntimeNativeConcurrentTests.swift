@@ -61,6 +61,16 @@ private func makeRawHandleForFreezeTest() -> Int {
     return kk_atomic_int_create(42)
 }
 
+private let workerExecuteProducerThunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { _, outThrown in
+    outThrown?.pointee = 0
+    return 21
+}
+
+private let workerExecuteJobThunk: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, outThrown in
+    outThrown?.pointee = 0
+    return value * 2
+}
+
 // ---------------------------------------------------------------------------
 // MARK: - Worker Tests
 // ---------------------------------------------------------------------------
@@ -98,13 +108,21 @@ final class RuntimeWorkerTests: IsolatedRuntimeXCTestCase {
 
     func testWorkerIsTerminatedAfterRequestTermination() {
         let handle = kk_worker_new(0)
-        kk_worker_request_termination(handle, 1) // processScheduled = true
+        _ = kk_worker_request_termination(handle, 1) // processScheduled = true
         XCTAssertEqual(kk_worker_is_terminated(handle), 1)
     }
 
     func testWorkerRequestTerminationWithoutDraining() {
         let handle = kk_worker_new(0)
-        kk_worker_request_termination(handle, 0) // processScheduled = false
+        _ = kk_worker_request_termination(handle, 0) // processScheduled = false
+        XCTAssertEqual(kk_worker_is_terminated(handle), 1)
+    }
+
+    func testWorkerRequestTerminationReturnsCompletedFuture() {
+        let handle = kk_worker_new(0)
+        let futureHandle = kk_worker_request_termination(handle, 1)
+        XCTAssertNotEqual(futureHandle, 0)
+        XCTAssertEqual(kk_future_result(futureHandle), 1)
         XCTAssertEqual(kk_worker_is_terminated(handle), 1)
     }
 
@@ -115,31 +133,31 @@ final class RuntimeWorkerTests: IsolatedRuntimeXCTestCase {
 
     // MARK: Worker.execute
 
-    func testWorkerExecuteReturnsOneWhenActive() {
-        let counter = NativeConcurrentSharedValue()
+    func testWorkerExecuteReturnsFutureResultWhenActive() {
         let workerHandle = kk_worker_new(0)
+        defer { _ = kk_worker_request_termination(workerHandle, 1) }
 
-        // kk_worker_execute requires a C function pointer; we test the return value
-        // via a synthetic work item. Because we cannot easily synthesize a C function
-        // pointer in Swift tests, we verify the "declined after termination" invariant
-        // which does not require an actual function pointer.
-        kk_worker_request_termination(workerHandle, 1)
-        let result = kk_worker_execute(workerHandle, 0, 0)
-        XCTAssertEqual(result, 0, "Terminated worker must decline new work (return 0)")
-        _ = counter // suppress unused warning
+        let producerFnPtr = unsafeBitCast(workerExecuteProducerThunk, to: Int.self)
+        let jobFnPtr = unsafeBitCast(workerExecuteJobThunk, to: Int.self)
+        let futureHandle = kk_worker_execute(workerHandle, 0, producerFnPtr, 0, jobFnPtr, 0)
+
+        XCTAssertNotEqual(futureHandle, 0)
+        if futureHandle != 0 {
+            XCTAssertEqual(kk_future_result(futureHandle), 42)
+        }
     }
 
     func testWorkerExecuteDeclinedAfterTermination() {
         let workerHandle = kk_worker_new(0)
-        kk_worker_request_termination(workerHandle, 1)
+        _ = kk_worker_request_termination(workerHandle, 1)
         // Submitting with a null function pointer to a terminated worker should return 0.
-        XCTAssertEqual(kk_worker_execute(workerHandle, 0, 0), 0)
+        XCTAssertEqual(kk_worker_execute(workerHandle, 0, 0, 0, 0, 0), 0)
     }
 
     func testMultipleDistinctWorkersHaveIndependentTerminationState() {
         let workerA = kk_worker_new(0)
         let workerB = kk_worker_new(0)
-        kk_worker_request_termination(workerA, 1)
+        _ = kk_worker_request_termination(workerA, 1)
         XCTAssertEqual(kk_worker_is_terminated(workerA), 1)
         XCTAssertEqual(kk_worker_is_terminated(workerB), 0,
                        "Terminating worker A must not affect worker B")
@@ -150,7 +168,7 @@ final class RuntimeWorkerTests: IsolatedRuntimeXCTestCase {
         // side-effects through a DispatchSemaphore barrier pattern.
         let workerHandle = kk_worker_new(0)
         // Drain any pending work and confirm it terminates cleanly.
-        kk_worker_request_termination(workerHandle, 1)
+        _ = kk_worker_request_termination(workerHandle, 1)
         XCTAssertEqual(kk_worker_is_terminated(workerHandle), 1)
     }
 }
@@ -443,8 +461,8 @@ final class RuntimeFutureTests: IsolatedRuntimeXCTestCase {
         // kk_worker_execute now returns a Future handle, not 1.
         let workerHandle = kk_worker_new(0)
         // Terminate immediately; execute must decline (return 0).
-        kk_worker_request_termination(workerHandle, 1)
-        let result = kk_worker_execute(workerHandle, 0, 0)
+        _ = kk_worker_request_termination(workerHandle, 1)
+        let result = kk_worker_execute(workerHandle, 0, 0, 0, 0, 0)
         XCTAssertEqual(result, 0, "Terminated worker returns 0 (no future)")
     }
 }
@@ -595,7 +613,7 @@ final class RuntimeWorkerExecuteAfterTests: IsolatedRuntimeXCTestCase {
 
     func testExecuteAfterReturnsZeroForTerminatedWorker() {
         let handle = kk_worker_new(0)
-        kk_worker_request_termination(handle, 1)
+        _ = kk_worker_request_termination(handle, 1)
         let result = kk_worker_execute_after(handle, 0, 0, 0)
         XCTAssertEqual(result, 0, "Terminated worker must decline executeAfter")
     }
@@ -607,7 +625,7 @@ final class RuntimeWorkerExecuteAfterTests: IsolatedRuntimeXCTestCase {
 
     func testExecuteAfterReturnsZeroForNullFnPtr() {
         let handle = kk_worker_new(0)
-        defer { kk_worker_request_termination(handle, 1) }
+        defer { _ = kk_worker_request_termination(handle, 1) }
         let result = kk_worker_execute_after(handle, 0, 0, 0)
         XCTAssertEqual(result, 0, "Null function pointer must be rejected")
     }
