@@ -374,7 +374,7 @@ extension DataFlowSemaPhase {
         }
     }
 
-    private func registerSyntheticIndexedValueStub(
+    func registerSyntheticIndexedValueStub(
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,

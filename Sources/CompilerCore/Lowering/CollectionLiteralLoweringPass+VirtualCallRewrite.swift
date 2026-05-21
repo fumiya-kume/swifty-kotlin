@@ -132,8 +132,11 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
-        // toTypedArray() on list → kk_list_toTypedArray (result is Array)
-        if callee == lookup.toTypedArrayName, arguments.isEmpty, listExprIDs.contains(receiver.rawValue) {
+        // toTypedArray()/toTypeArray() on list -> kk_list_toTypedArray (result is Array)
+        if callee == lookup.toTypedArrayName || callee == lookup.toTypeArrayName,
+           arguments.isEmpty,
+           listExprIDs.contains(receiver.rawValue)
+        {
             let toArrayResult = module.arena.appendExpr(
                 .temporary(Int32(module.arena.expressions.count)), type: nil
             )

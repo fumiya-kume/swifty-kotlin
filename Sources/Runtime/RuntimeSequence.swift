@@ -1848,6 +1848,15 @@ public func kk_sequence_requireNoNulls(_ seqRaw: Int) -> Int {
     return registerRuntimeObject(newSeq)
 }
 
+@_cdecl("kk_sequence_reversed")
+public func kk_sequence_reversed(_ seqRaw: Int) -> Int {
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    let newSeq = RuntimeSequenceBox(steps: [
+        .source(elements: Array(elements.reversed())),
+    ])
+    return registerRuntimeObject(newSeq)
+}
+
 @_cdecl("kk_sequence_mapIndexed")
 public func kk_sequence_mapIndexed(
     _ seqRaw: Int,
@@ -2449,6 +2458,44 @@ public func kk_sequence_singleOrNull(_ seqRaw: Int, _ outThrown: UnsafeMutablePo
     return count == 1 ? result : runtimeNullSentinelInt
 }
 
+@_cdecl("kk_sequence_single")
+public func kk_sequence_single(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    var result = 0
+    var count = 0
+    var traversalState: SequenceTraversalState?
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        let st = SequenceTraversalState()
+        traversalState = st
+        runtimeTraverseSequenceWithState(seq, state: st, outThrown: outThrown) { elem in
+            count += 1
+            if count == 1 {
+                result = elem
+                return true
+            }
+            return false
+        }
+    } else {
+        let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+        count = elements.count
+        if count == 1 {
+            result = elements[0]
+        }
+    }
+    if let outThrown, outThrown.pointee != 0 { return 0 }
+    if let traversalState, traversalState.limitReached {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached)
+        return 0
+    }
+    guard count == 1 else {
+        let message = count == 0
+            ? kEmptySequenceNoSuchElement
+            : "NoSuchElementException: Sequence has more than one element."
+        outThrown?.pointee = runtimeAllocateThrowable(message: message)
+        return 0
+    }
+    return result
+}
+
 @_cdecl("kk_sequence_count")
 public func kk_sequence_count(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     var count = 0
@@ -2515,6 +2562,33 @@ public func kk_sequence_indexOf(_ seqRaw: Int, _ element: Int) -> Int {
         }
     }
     return index
+}
+
+@_cdecl("kk_sequence_intersect")
+public func kk_sequence_intersect(_ seqRaw: Int, _ otherRaw: Int) -> Int {
+    guard let otherElements = runtimeIterableElements(from: otherRaw) else {
+        invalidContainerPanic(#function, "iterable")
+    }
+    var otherKeys = Set<RuntimeElementKey>()
+    otherKeys.reserveCapacity(otherElements.count)
+    for elem in otherElements {
+        otherKeys.insert(RuntimeElementKey(value: elem))
+    }
+
+    var sourceElements: [Int] = []
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        runtimeTraverseSequence(seq, outThrown: nil) { elem in
+            sourceElements.append(elem)
+            return true
+        }
+    } else {
+        sourceElements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    }
+
+    let result = runtimeDeduplicatePreservingOrder(sourceElements).filter { elem in
+        otherKeys.contains(RuntimeElementKey(value: elem))
+    }
+    return registerRuntimeObject(RuntimeSetBox(elements: result))
 }
 
 @_cdecl("kk_sequence_elementAtOrNull")
@@ -2803,6 +2877,48 @@ public func kk_sequence_reduce(
     if !hasAccumulator {
         outThrown?.pointee = runtimeAllocateThrowable(message: kEmptySequenceCannotReduce)
         return 0
+    }
+    return acc
+}
+
+@_cdecl("kk_sequence_reduceRight")
+public func kk_sequence_reduceRight(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    var elements: [Int] = []
+    let traversalState = runtimeTraverseSequenceSource(seqRaw, caller: #function, outThrown: outThrown) { elem in
+        elements.append(elem)
+        return true
+    }
+    if let outThrown, outThrown.pointee != 0 { return 0 }
+    if let traversalState, traversalState.limitReached {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached)
+        return 0
+    }
+    guard let last = elements.last else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kEmptySequenceCannotReduce)
+        return 0
+    }
+    var acc = maybeUnbox(last)
+    guard elements.count > 1 else { return acc }
+
+    for index in stride(from: elements.count - 2, through: 0, by: -1) {
+        var thrown = 0
+        let nextAcc = runtimeInvokeCollectionLambda2(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            lhs: elements[index],
+            rhs: acc,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return 0
+        }
+        acc = maybeUnbox(nextAcc)
     }
     return acc
 }
@@ -3126,6 +3242,16 @@ public func kk_sequence_maxOrNull(_ seqRaw: Int) -> Int {
         }
     }
     return best ?? runtimeNullSentinelInt
+}
+
+/// Sequence<T : Comparable>.max(): T (throws NoSuchElementException if empty)
+@_cdecl("kk_sequence_max")
+public func kk_sequence_max(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    let result = kk_sequence_maxOrNull(seqRaw)
+    guard result != runtimeNullSentinelInt else {
+        return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: kEmptySequenceNoSuchElement), outThrown)
+    }
+    return result
 }
 
 @_cdecl("kk_sequence_minOrNull")
