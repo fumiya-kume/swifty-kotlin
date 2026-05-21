@@ -298,6 +298,12 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(result, runtimeNullSentinelInt)
     }
 
+    func testTakeLimitsSequenceElements() {
+        XCTAssertEqual(sequenceElements(kk_sequence_take(makeSequence([1, 2, 3, 4]), 2)), [1, 2])
+        XCTAssertEqual(sequenceElements(kk_sequence_take(makeSequence([1, 2]), 5)), [1, 2])
+        XCTAssertEqual(sequenceElements(kk_sequence_take(makeSequence([1, 2]), 0)), [])
+    }
+
     func testTakeLastReturnsTrailingElementsAsList() {
         XCTAssertEqual(listElements(kk_sequence_takeLast(makeSequence([1, 2, 3, 4]), 2, nil)), [3, 4])
         XCTAssertEqual(listElements(kk_sequence_takeLast(makeSequence([1, 2]), 5, nil)), [1, 2])
