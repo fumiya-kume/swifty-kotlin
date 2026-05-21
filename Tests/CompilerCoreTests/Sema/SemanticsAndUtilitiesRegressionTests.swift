@@ -449,6 +449,51 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathWriteTextOptionsExtensionFunctionInIOPathPackageSurfaceIsRegistered() throws {
+        let source = """
+        import java.nio.file.OpenOption
+        import kotlin.io.path.Path
+        import kotlin.io.path.writeText
+        import kotlin.text.Charsets
+
+        fun writePathText(path: Path, text: CharSequence, option: OpenOption) {}
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.writeText(text, charset, options) extension function in kotlin.io.path should register: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let charSequenceSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "CharSequence"].map(interner.intern)))
+            let charsetSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "text", "Charset"].map(interner.intern)))
+            let openOptionSymbol = try XCTUnwrap(symbols.lookup(fqName: ["java", "nio", "file", "OpenOption"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let charSequenceType = types.make(.classType(ClassType(classSymbol: charSequenceSymbol, args: [], nullability: .nonNull)))
+            let charsetType = types.make(.classType(ClassType(classSymbol: charsetSymbol, args: [], nullability: .nonNull)))
+            let openOptionType = types.make(.classType(ClassType(classSymbol: openOptionSymbol, args: [], nullability: .nonNull)))
+            let writeTextSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "writeText"].map(interner.intern))
+            let writeText = try XCTUnwrap(writeTextSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [charSequenceType, charsetType, openOptionType]
+                    && signature.returnType == pathType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: writeText), "kk_path_writeText_options")
+
+            let signature = try XCTUnwrap(symbols.functionSignature(for: writeText))
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [false, true, false])
+            XCTAssertEqual(signature.valueParameterIsVararg, [false, false, true])
+        }
+    }
+
     func testPathCopyToOptionsExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import java.nio.file.CopyOption
