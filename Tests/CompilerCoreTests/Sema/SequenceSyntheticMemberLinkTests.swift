@@ -2103,6 +2103,10 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
         fun smallestProjection(): Int {
             val values = sequenceOf(5, 2, 3)
             return values.minOf { value -> value * 10 }
+        fun totals(): List<Int> {
+            return sequenceOf(1, 2, 3).runningReduce { acc, value ->
+                acc + value
+            }
         }
         """
 

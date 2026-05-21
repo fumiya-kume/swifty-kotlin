@@ -1811,13 +1811,13 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
 
-        // runningReduce(operation): Sequence<T>
+        // runningReduce(operation): List<T>
         registerSequenceMemberStub(
             named: "runningReduce",
             externalLinkName: "kk_sequence_runningReduce",
             receiverType: receiverType,
             parameters: [("operation", reduceOperationType)],
-            returnType: receiverType,
+            returnType: listReturnType,
             sequenceSymbol: sequenceSymbol,
             sequenceFQName: sequenceFQName,
             typeParamSymbol: typeParamSymbol,
