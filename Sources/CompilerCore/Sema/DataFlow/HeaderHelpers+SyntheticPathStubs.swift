@@ -31,6 +31,7 @@
 /// - `Path.writer(charset, options)` extension function
 /// - `Path.outputStream(vararg options: OpenOption): OutputStream` extension function
 /// - `Path.moveTo(target: Path, vararg options: CopyOption): Path` extension function
+/// - `Path.inputStream(vararg options: OpenOption): InputStream` extension function
 /// - `Path.appendLines(lines: Iterable<CharSequence>, charset)` extension function
 /// - `Path.writeLines(lines: Iterable<CharSequence>, charset, options)` extension function
 /// - `Path.writeLines(lines: Sequence<CharSequence>, charset, options)` extension function
@@ -397,6 +398,22 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(outputStreamType, for: outputStreamSymbol)
+
+        let inputStreamSymbol = ensureClassSymbol(
+            named: "InputStream",
+            in: javaIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaIOPkgSymbol {
+            symbols.setParentSymbol(javaIOPkgSymbol, for: inputStreamSymbol)
+        }
+        let inputStreamType = types.make(.classType(ClassType(
+            classSymbol: inputStreamSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(inputStreamType, for: inputStreamSymbol)
 
         let javaNetPkg = ensurePackage(
             path: ["java", "net"],
@@ -1370,6 +1387,18 @@ extension DataFlowSemaPhase {
             parameters: [("options", openOptionType)],
             returnType: outputStreamType,
             externalLinkName: "kk_path_outputStream",
+            valueParameterIsVararg: [true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "inputStream",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("options", openOptionType)],
+            returnType: inputStreamType,
+            externalLinkName: "kk_path_inputStream",
             valueParameterIsVararg: [true],
             symbols: symbols,
             interner: interner
