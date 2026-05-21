@@ -1698,6 +1698,48 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // scan(initial, operation): Sequence<R>
+        let scanName = interner.intern("scan")
+        let scanFQName = sequenceFQName + [scanName]
+        if symbols.lookup(fqName: scanFQName) == nil {
+            let rName = interner.intern("R")
+            let rSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: scanFQName + [rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let operationType = types.make(.functionType(FunctionType(
+                params: [rType, typeParamType],
+                returnType: rType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let sequenceRType = types.make(.classType(ClassType(
+                classSymbol: sequenceSymbol,
+                args: [.out(rType)],
+                nullability: .nonNull
+            )))
+            registerSequenceMemberStub(
+                named: "scan",
+                externalLinkName: "kk_sequence_scan",
+                receiverType: receiverType,
+                parameters: [("initial", rType), ("operation", operationType)],
+                returnType: sequenceRType,
+                sequenceSymbol: sequenceSymbol,
+                sequenceFQName: sequenceFQName,
+                typeParamSymbol: typeParamSymbol,
+                symbols: symbols,
+                interner: interner,
+                canThrow: true,
+                additionalTypeParameterSymbols: [rSymbol],
+                additionalTypeParameterUpperBoundsList: [[]]
+            )
+        }
+
         // runningFoldIndexed(initial, operation): Sequence<R>
         let runningFoldIndexedName = interner.intern("runningFoldIndexed")
         let runningFoldIndexedFQName = sequenceFQName + [runningFoldIndexedName]
