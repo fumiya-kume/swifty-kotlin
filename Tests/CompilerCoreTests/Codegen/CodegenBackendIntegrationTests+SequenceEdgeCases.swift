@@ -124,13 +124,8 @@ extension CodegenBackendIntegrationTests {
             try LinkPhase().run(ctx)
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            let normalizedStdout = result.stdout.replacingOccurrences(of: "
-", with: "
-")
-            XCTAssertEqual(normalizedStdout, "10
-null
-42
-")
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "10\nnull\n42\n")
         }
     }
 
@@ -165,16 +160,10 @@ null
             try LinkPhase().run(ctx)
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            let normalizedStdout = result.stdout.replacingOccurrences(of: "
-", with: "
-")
-            XCTAssertEqual(normalizedStdout, "21
-42
-empty
-")
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "21\n42\nempty\n")
         }
     }
-
 
     func testCodegenSequenceFlatMapIndexedUsesCanonicalDiffCase() throws {
         let root = URL(fileURLWithPath: #filePath)
