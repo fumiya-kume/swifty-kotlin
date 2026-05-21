@@ -569,6 +569,19 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testSequenceRandomResolvesInCallExpressions() throws {
+        let source = "fun pickValue(): Int { return sequenceOf(7).random() }"
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(ctx.diagnostics.hasError)
+            let sema = try XCTUnwrap(ctx.sema)
+            let fq = ["kotlin", "sequences", "Sequence", "random"].map { ctx.interner.intern($0) }
+            let links = Set(sema.symbols.lookupAll(fqName: fq).compactMap { sema.symbols.externalLinkName(for: $0) })
+            XCTAssertTrue(links.contains("kk_sequence_random"))
+        }
+    }
+
     func testSequenceMinusElementResolvesInCallExpressions() throws {
         let source = """
         fun removeValue(): Sequence<Int> {

@@ -734,6 +734,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_first")
             case firstOrNullName:
                 return interner.intern("kk_sequence_firstOrNull")
+            case interner.intern("random"):
+                return interner.intern("kk_sequence_random")
             case interner.intern("randomOrNull"):
                 return interner.intern("kk_sequence_randomOrNull")
             case lastName:

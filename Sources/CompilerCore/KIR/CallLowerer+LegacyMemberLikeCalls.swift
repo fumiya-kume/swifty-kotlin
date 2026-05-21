@@ -2684,6 +2684,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_firstNotNullOf"
                 } else if calleeName == interner.intern("firstNotNullOfOrNull") {
                     runtimeCallee = "kk_sequence_firstNotNullOfOrNull"
+                } else if calleeName == interner.intern("random") {
+                    runtimeCallee = "kk_sequence_random"
                 } else if calleeName == interner.intern("randomOrNull") {
                     runtimeCallee = "kk_sequence_randomOrNull"
                 } else if calleeName == interner.intern("requireNoNulls") {
@@ -2767,6 +2769,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_mapNotNull"
                         || runtimeCallee == "kk_sequence_firstNotNullOf"
                         || runtimeCallee == "kk_sequence_firstNotNullOfOrNull"
+                        || runtimeCallee == "kk_sequence_random"
                         || runtimeCallee == "kk_sequence_randomOrNull"
                         || runtimeCallee == "kk_sequence_mapIndexed"
                         || runtimeCallee == "kk_sequence_filterIndexed"

@@ -198,6 +198,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
                 (.sequence, ["kotlin", "sequences", "Sequence"], "first", 0),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "flatMapTo", 2),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "firstNotNullOf", 1),
+                (.sequence, ["kotlin", "sequences", "Sequence"], "random", 0),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "scanIndexed", 2),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "runningFoldIndexed", 2),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "reduceIndexed", 1),
