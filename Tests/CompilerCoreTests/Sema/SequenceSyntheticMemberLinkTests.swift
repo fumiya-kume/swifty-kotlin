@@ -1415,6 +1415,38 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testSequenceMinWithOrNullResolvesInCallExpressions() throws {
+        let source = """
+        fun smallestByReverseOrder(): Int? {
+            val values = sequenceOf(5, 2, 3)
+            return values.minWithOrNull(reverseOrder<Int>())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Sequence.minWithOrNull surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "sequences", "Sequence", "minWithOrNull"]
+                .map { ctx.interner.intern($0) }
+            let symbols = sema.symbols.lookupAll(fqName: memberFQName)
+            let links = Set(symbols.compactMap { sema.symbols.externalLinkName(for: $0) })
+            XCTAssertTrue(links.contains("kk_sequence_minWithOrNull"))
+
+            let symbol = try XCTUnwrap(symbols.first)
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbol))
+            XCTAssertEqual(signature.parameterTypes.count, 1)
+        }
+    }
+
     func testSequenceFilterNotResolvesInCallExpressions() throws {
         let source = """
         fun odds(): Sequence<Int> {
@@ -1662,37 +1694,6 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
                     .compactMap { sema.symbols.externalLinkName(for: $0) }
             )
             XCTAssertTrue(links.contains("kk_sequence_maxByOrNull"))
-        }
-    }
-    func testSequenceMinWithOrNullResolvesInCallExpressions() throws {
-        let source = """
-        fun smallestByReverseOrder(): Int? {
-            val values = sequenceOf(5, 2, 3)
-            return values.minWithOrNull(reverseOrder<Int>())
-        }
-        """
-
-        try withTemporaryFile(contents: source) { path in
-            let ctx = makeCompilationContext(inputs: [path])
-            try runSema(ctx)
-            let diagnosticSummary = ctx.diagnostics.diagnostics
-                .map { "\($0.code): \($0.message)" }
-                .joined(separator: " | ")
-            XCTAssertFalse(
-                ctx.diagnostics.hasError,
-                "Expected Sequence.minWithOrNull surface to resolve cleanly, got: \(diagnosticSummary)"
-            )
-
-            let sema = try XCTUnwrap(ctx.sema)
-            let memberFQName = ["kotlin", "sequences", "Sequence", "minWithOrNull"]
-                .map { ctx.interner.intern($0) }
-            let symbols = sema.symbols.lookupAll(fqName: memberFQName)
-            let links = Set(symbols.compactMap { sema.symbols.externalLinkName(for: $0) })
-            XCTAssertTrue(links.contains("kk_sequence_minWithOrNull"))
-
-            let symbol = try XCTUnwrap(symbols.first)
-            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbol))
-            XCTAssertEqual(signature.parameterTypes.count, 1)
         }
     }
 }
