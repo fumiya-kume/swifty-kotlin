@@ -31,6 +31,7 @@
 /// - `Path.writer(charset, options)` extension function
 /// - `Path.outputStream(vararg options: OpenOption): OutputStream` extension function
 /// - `Path.moveTo(target: Path, vararg options: CopyOption): Path` extension function
+/// - `Path.inputStream(vararg options: OpenOption): InputStream` extension function
 /// - `Path.appendLines(lines: Iterable<CharSequence>, charset)` extension function
 /// - `Path.writeLines(lines: Iterable<CharSequence>, charset, options)` extension function
 /// - `Path.writeLines(lines: Sequence<CharSequence>, charset, options)` extension function
@@ -49,6 +50,7 @@
 /// - `Path.setOwner(value: UserPrincipal): Path` extension function
 /// - `Path.getPosixFilePermissions(vararg options: LinkOption): Set<PosixFilePermission>` extension function
 /// - `Path.fileSize(): Long` extension function
+/// - `Path.forEachDirectoryEntry(glob, action)` extension function
 /// - `Path.forEachLine(charset, action)` extension function
 /// - `Path.setPosixFilePermissions(value: Set<PosixFilePermission>): Path` extension function
 /// - `Path.useLines(charset, block)` extension function
@@ -95,6 +97,12 @@ extension DataFlowSemaPhase {
         symbols.setPropertyType(pathType, for: pathSymbol)
 
         let nullablePathType = types.makeNullable(pathType)
+        let pathActionType = types.make(.functionType(FunctionType(
+            params: [pathType],
+            returnType: types.unitType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
         let kotlinPkg = ensurePackage(path: ["kotlin"], symbols: symbols, interner: interner)
         let kotlinCollectionsPkg = ensurePackage(path: ["kotlin", "collections"], symbols: symbols, interner: interner)
         let kotlinTextPkg = ensurePackage(path: ["kotlin", "text"], symbols: symbols, interner: interner)
@@ -397,6 +405,22 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(outputStreamType, for: outputStreamSymbol)
+
+        let inputStreamSymbol = ensureClassSymbol(
+            named: "InputStream",
+            in: javaIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaIOPkgSymbol {
+            symbols.setParentSymbol(javaIOPkgSymbol, for: inputStreamSymbol)
+        }
+        let inputStreamType = types.make(.classType(ClassType(
+            classSymbol: inputStreamSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(inputStreamType, for: inputStreamSymbol)
 
         let javaNetPkg = ensurePackage(
             path: ["java", "net"],
@@ -1064,6 +1088,29 @@ extension DataFlowSemaPhase {
         )
 
         registerPathExtensionFunction(
+            named: "forEachDirectoryEntry",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("glob", types.stringType), ("action", pathActionType)],
+            returnType: types.unitType,
+            externalLinkName: "kk_path_forEachDirectoryEntry",
+            valueParameterHasDefaultValues: [true, false],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "forEachDirectoryEntry",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("action", pathActionType)],
+            returnType: types.unitType,
+            externalLinkName: "kk_path_forEachDirectoryEntry_default",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
             named: "forEachLine",
             packageFQName: kotlinIOPathPkg,
             receiverType: pathType,
@@ -1370,6 +1417,18 @@ extension DataFlowSemaPhase {
             parameters: [("options", openOptionType)],
             returnType: outputStreamType,
             externalLinkName: "kk_path_outputStream",
+            valueParameterIsVararg: [true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "inputStream",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("options", openOptionType)],
+            returnType: inputStreamType,
+            externalLinkName: "kk_path_inputStream",
             valueParameterIsVararg: [true],
             symbols: symbols,
             interner: interner

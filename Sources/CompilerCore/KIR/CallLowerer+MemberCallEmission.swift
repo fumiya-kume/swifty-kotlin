@@ -458,8 +458,11 @@ extension CallLowerer {
         }
         if loweredCallee == interner.intern("kk_sequence_filterTo")
             || loweredCallee == interner.intern("kk_sequence_filterNotTo")
+            || loweredCallee == interner.intern("kk_sequence_filterIndexedTo")
             || loweredCallee == interner.intern("kk_sequence_mapNotNullTo")
             || loweredCallee == interner.intern("kk_sequence_mapTo")
+            || loweredCallee == interner.intern("kk_sequence_mapIndexedTo")
+            || loweredCallee == interner.intern("kk_sequence_mapIndexedNotNullTo")
         {
             if finalArguments.count == 2 {
                 let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
@@ -906,6 +909,7 @@ extension CallLowerer {
             interner.intern("kk_uint_progression_fromClosedRange"),
             interner.intern("kk_ulong_progression_fromClosedRange"),
             interner.intern("kk_sequence_foldIndexed"),
+            interner.intern("kk_sequence_reduceRight"),
             interner.intern("kk_sequence_reduceIndexed"),
             interner.intern("kk_sequence_reduceIndexedOrNull"),
             interner.intern("kk_long_range_random"),
@@ -955,7 +959,9 @@ extension CallLowerer {
             interner.intern("kk_sequence_first"),
             interner.intern("kk_sequence_random"),
             interner.intern("kk_sequence_last"),
+            interner.intern("kk_sequence_max"),
             interner.intern("kk_sequence_firstOrNull"),
+            interner.intern("kk_sequence_single"),
             interner.intern("kk_sequence_singleOrNull"),
             interner.intern("kk_sequence_randomOrNull"),
             interner.intern("kk_sequence_count"),
