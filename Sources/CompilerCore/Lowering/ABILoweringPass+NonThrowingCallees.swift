@@ -1226,6 +1226,8 @@ extension ABILoweringPass {
             interner.intern("kk_ivparameterspec_new"),
             interner.intern("kk_keypair_public"),
             interner.intern("kk_keypair_private"),
+            // kotlin.js JsReference (STDLIB-JS-FN-004)
+            interner.intern("kk_js_reference_get"),
             // Kotlin/Native reference helpers — no outThrown parameter
             interner.intern("kk_weak_ref_create"),
             interner.intern("kk_weak_ref_get"),
