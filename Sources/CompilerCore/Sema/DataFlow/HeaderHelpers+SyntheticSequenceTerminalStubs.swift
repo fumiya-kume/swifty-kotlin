@@ -2222,18 +2222,33 @@ extension DataFlowSemaPhase {
         }
 
         // maxOrNull(): T?
-        registerSequenceMemberStub(
-            named: "maxOrNull",
-            externalLinkName: "kk_sequence_maxOrNull",
-            receiverType: receiverType,
-            parameters: [],
-            returnType: types.makeNullable(types.anyType),
-            sequenceSymbol: sequenceSymbol,
-            sequenceFQName: sequenceFQName,
-            typeParamSymbol: typeParamSymbol,
-            symbols: symbols,
-            interner: interner
-        )
+        do {
+            if types.comparableInterfaceSymbol == nil {
+                registerSyntheticComparableStub(symbols: symbols, types: types, interner: interner)
+            }
+            let comparableElementBounds: [TypeID] = if let comparableSymbol = types.comparableInterfaceSymbol {
+                [types.make(.classType(ClassType(
+                    classSymbol: comparableSymbol,
+                    args: [.invariant(typeParamType)],
+                    nullability: .nonNull
+                )))]
+            } else {
+                []
+            }
+            registerSequenceMemberStub(
+                named: "maxOrNull",
+                externalLinkName: "kk_sequence_maxOrNull",
+                receiverType: receiverType,
+                parameters: [],
+                returnType: types.makeNullable(typeParamType),
+                sequenceSymbol: sequenceSymbol,
+                sequenceFQName: sequenceFQName,
+                typeParamSymbol: typeParamSymbol,
+                symbols: symbols,
+                interner: interner,
+                typeParameterUpperBounds: comparableElementBounds
+            )
+        }
 
         // minOrNull(): T?
         registerSequenceMemberStub(
