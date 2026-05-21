@@ -1072,6 +1072,61 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathTopLevelPathStringFactoryShapeInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import kotlin.io.path.Path
+
+        fun makePath(): Path {
+            return Path("src/main.kt")
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnostics = ctx.diagnostics.diagnostics.map(\.message)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path(pathString) top-level factory in kotlin.io.path should resolve: \(diagnostics)"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let pathFactorySymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern))
+            let pathFactory = try XCTUnwrap(pathFactorySymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else {
+                    return false
+                }
+                return signature.receiverType == nil
+                    && signature.parameterTypes == [types.stringType]
+                    && signature.returnType == pathType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: pathFactory), "kk_path_get")
+
+            let signature = try XCTUnwrap(symbols.functionSignature(for: pathFactory))
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [false])
+            XCTAssertEqual(signature.valueParameterIsVararg, [false])
+            let parameterSymbol = try XCTUnwrap(signature.valueParameterSymbols.first)
+            XCTAssertEqual(interner.resolve(try XCTUnwrap(symbols.symbol(parameterSymbol)?.name)), "pathString")
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .call(calleeExpr, _, _, _) = expr,
+                      case let .nameRef(calleeName, _) = ast.arena.expr(calleeExpr)
+                else {
+                    return false
+                }
+                return interner.resolve(calleeName) == "Path"
+            })
+            XCTAssertEqual(sema.bindings.callBinding(for: callExpr)?.chosenCallee, pathFactory)
+            XCTAssertEqual(sema.bindings.exprTypes[callExpr], pathType)
+        }
+    }
+
     func testPathFileAttributesViewOrNullOptionsExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import java.nio.file.LinkOption
