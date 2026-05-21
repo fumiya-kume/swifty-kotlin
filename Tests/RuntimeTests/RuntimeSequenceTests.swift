@@ -684,8 +684,9 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
     func testIndexOfReturnsFirstMatchingIndexOrMinusOne() {
         let seq = makeSequence([10, 20, 10, 30])
 
-        XCTAssertEqual(kk_sequence_indexOfLast(seq, unsafeBitCast(evenPredicate, to: Int.self), 0, nil), 3)
-        XCTAssertEqual(kk_sequence_indexOfLast(seq, unsafeBitCast(greaterThanTenPredicate, to: Int.self), 0, nil), -1)
+        XCTAssertEqual(kk_sequence_indexOf(seq, 10), 0)
+        XCTAssertEqual(kk_sequence_indexOf(seq, 20), 1)
+        XCTAssertEqual(kk_sequence_indexOf(seq, 99), -1)
     }
 
     func testAssociateToThrowingLambdaReturnsSentinelAndSetsOutThrown() {
