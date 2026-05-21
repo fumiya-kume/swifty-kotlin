@@ -444,7 +444,7 @@ extension CallLowerer {
         }
         if (loweredCallee == interner.intern("kk_sequence_firstNotNullOf")
             || loweredCallee == interner.intern("kk_sequence_firstNotNullOfOrNull")
-            || loweredCallee == interner.intern("kk_sequence_takeLastWhile")),
+            || loweredCallee == interner.intern("kk_sequence_indexOfLast")),
            finalArguments.count == 2
         {
             let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
@@ -929,6 +929,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_takeLastWhile"),
             interner.intern("kk_sequence_firstNotNullOf"),
             interner.intern("kk_sequence_firstNotNullOfOrNull"),
+            interner.intern("kk_sequence_indexOfLast"),
             interner.intern("kk_sequence_associate"),
             interner.intern("kk_sequence_associateBy"),
             interner.intern("kk_sequence_associateTo"),
