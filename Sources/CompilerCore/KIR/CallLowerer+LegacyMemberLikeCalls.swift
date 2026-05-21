@@ -2668,6 +2668,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_maxOfOrNull"
                 } else if calleeName == maxOfName {
                     runtimeCallee = "kk_sequence_maxOf"
+                } else if calleeName == interner.intern("max") {
+                    runtimeCallee = "kk_sequence_max"
                 } else if calleeName == interner.intern("find") {
                     runtimeCallee = "kk_sequence_find"
                 } else if calleeName == interner.intern("findLast") {
@@ -2774,6 +2776,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_minOfOrNull"
                         || runtimeCallee == "kk_sequence_maxOfOrNull"
                         || runtimeCallee == "kk_sequence_maxOf"
+                        || runtimeCallee == "kk_sequence_max"
                         || runtimeCallee == "kk_sequence_partition"
                         || runtimeCallee == "kk_sequence_any"
                         || runtimeCallee == "kk_iterable_any"

@@ -1452,6 +1452,19 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(sequenceElements(kk_sequence_shuffled_random(makeSequence([42]), 0)), [42])
     }
 
+    func testSequenceMaxReturnsLargestElementAndThrowsOnEmpty() throws {
+        var thrown = 0
+        let result = kk_sequence_max(makeSequence([3, 1, 4, 2]), &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 4)
+
+        let emptyResult = kk_sequence_max(makeSequence([]), &thrown)
+        XCTAssertEqual(emptyResult, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
+        let box = try XCTUnwrap(throwableBox(from: thrown))
+        XCTAssertEqual(box.message, kEmptySequenceNoSuchElement)
+    }
+
     // MARK: - STDLIB-SEQ-014: Sequence.requireNoNulls()
 
     func testSequenceRequireNoNullsPreservesNonNullElements() {

@@ -3143,6 +3143,16 @@ public func kk_sequence_maxOrNull(_ seqRaw: Int) -> Int {
     return best ?? runtimeNullSentinelInt
 }
 
+/// Sequence<T : Comparable>.max(): T (throws NoSuchElementException if empty)
+@_cdecl("kk_sequence_max")
+public func kk_sequence_max(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    let result = kk_sequence_maxOrNull(seqRaw)
+    guard result != runtimeNullSentinelInt else {
+        return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: kEmptySequenceNoSuchElement), outThrown)
+    }
+    return result
+}
+
 @_cdecl("kk_sequence_minOrNull")
 public func kk_sequence_minOrNull(_ seqRaw: Int) -> Int {
     var best: Int? = nil

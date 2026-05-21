@@ -329,6 +329,7 @@ struct CollectionLiteralLookupTables {
     let kkSequenceToCollectionName: InternedString
     let kkSequenceGroupByName: InternedString
     let kkSequenceGroupByToName: InternedString
+    let kkSequenceMaxName: InternedString
     let kkSequenceMaxOrNullName: InternedString
     let kkSequenceMinOrNullName: InternedString
     let kkSequenceFlattenName: InternedString
@@ -596,6 +597,7 @@ struct CollectionLiteralLookupTables {
     let sumOfName: InternedString
     let sumByName: InternedString
     let sumByDoubleName: InternedString
+    let maxName: InternedString
     let maxOrNullName: InternedString
     let minOrNullName: InternedString
     let maxByName: InternedString
@@ -1151,6 +1153,7 @@ struct CollectionLiteralLookupTables {
         kkSequenceToCollectionName = interner.intern("kk_sequence_toCollection")
         kkSequenceGroupByName = interner.intern("kk_sequence_groupBy")
         kkSequenceGroupByToName = interner.intern("kk_sequence_groupByTo")
+        kkSequenceMaxName = interner.intern("kk_sequence_max")
         kkSequenceMaxOrNullName = interner.intern("kk_sequence_maxOrNull")
         kkSequenceMinOrNullName = interner.intern("kk_sequence_minOrNull")
         kkSequenceFlattenName = interner.intern("kk_sequence_flatten")
@@ -1409,6 +1412,7 @@ struct CollectionLiteralLookupTables {
         sumOfName = interner.intern("sumOf")
         sumByName = interner.intern("sumBy")
         sumByDoubleName = interner.intern("sumByDouble")
+        maxName = interner.intern("max")
         maxOrNullName = interner.intern("maxOrNull")
         minOrNullName = interner.intern("minOrNull")
         maxByName = interner.intern("maxBy")
