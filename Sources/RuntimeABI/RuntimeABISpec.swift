@@ -791,9 +791,25 @@ public enum RuntimeABISpec {
             section: "System"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_toJsReference",
+            parameters: [
+                RuntimeABIParameter(name: "valueRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_double_toJsNumber",
             parameters: [
                 RuntimeABIParameter(name: "value", type: .double),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_list_toJsArray",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "System"
@@ -2897,6 +2913,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(name: "kk_path_forEachLine_default", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "actionRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_readAttributes", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "optionsRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_moveTo_overwrite", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "targetRaw", type: .intptr), RuntimeABIParameter(name: "overwriteRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_fileVisitor", parameters: [RuntimeABIParameter(name: "builderActionRaw", type: .intptr)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_getPosixFilePermissions", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "optionsRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_notExists", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "optionsRaw", type: .intptr)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_outputStream", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "optionsRaw", type: .intptr)], returnType: .intptr, section: "Path"),
@@ -2904,6 +2921,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(name: "kk_path_fileAttributesView", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "typeRaw", type: .intptr), RuntimeABIParameter(name: "optionsRaw", type: .intptr)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_getOwner", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "optionsRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_moveTo_options", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "targetRaw", type: .intptr), RuntimeABIParameter(name: "optionsRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_getLastModifiedTime", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "optionsRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
     ]
 
     // MARK: - Duration / measureTime (STDLIB-230/231)

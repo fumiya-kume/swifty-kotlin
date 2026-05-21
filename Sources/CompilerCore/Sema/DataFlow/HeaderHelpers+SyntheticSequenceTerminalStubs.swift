@@ -805,6 +805,36 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // withIndex(): Sequence<IndexedValue<T>>
+        let indexedValueSymbol = registerSyntheticIndexedValueStub(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinCollectionsPkg: [interner.intern("kotlin"), interner.intern("collections")]
+        )
+        let indexedValueReturnType = types.make(.classType(ClassType(
+            classSymbol: indexedValueSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let sequenceIndexedValueReturnType = types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
+            args: [.out(indexedValueReturnType)],
+            nullability: .nonNull
+        )))
+        registerSequenceMemberStub(
+            named: "withIndex",
+            externalLinkName: "kk_sequence_withIndex",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: sequenceIndexedValueReturnType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // toMutableSet(): MutableSet<T>
         registerSequenceMemberStub(
             named: "toMutableSet",
@@ -860,6 +890,42 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        do {
+            let memberName = interner.intern("filterIsInstanceTo")
+            let memberFQName = sequenceFQName + [memberName]
+            let resultTypeParamName = interner.intern("R")
+            let resultTypeParamSymbol = symbols.lookup(fqName: memberFQName + [resultTypeParamName]) ?? symbols.define(
+                kind: .typeParameter,
+                name: resultTypeParamName,
+                fqName: memberFQName + [resultTypeParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.reifiedTypeParameter]
+            )
+            let resultTypeParamType = types.make(.typeParam(TypeParamType(
+                symbol: resultTypeParamSymbol,
+                nullability: .nonNull
+            )))
+            let destinationType = nominalCollectionType([
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("MutableCollection"),
+            ], elementType: resultTypeParamType, invariant: true)
+            registerSequenceMemberStub(
+                named: "filterIsInstanceTo",
+                externalLinkName: "kk_sequence_filterIsInstanceTo",
+                receiverType: receiverType,
+                parameters: [("destination", destinationType)],
+                returnType: destinationType,
+                sequenceSymbol: sequenceSymbol,
+                sequenceFQName: sequenceFQName,
+                typeParamSymbol: typeParamSymbol,
+                symbols: symbols,
+                interner: interner,
+                additionalTypeParameterSymbols: [resultTypeParamSymbol]
+            )
+        }
 
         // filterNot(predicate): Sequence<T>
         registerSequenceMemberStub(
@@ -1120,6 +1186,50 @@ extension DataFlowSemaPhase {
                 registerFlatMapIndexedOverload(transformReturnType: iterableRType)
             }
             registerFlatMapIndexedOverload(transformReturnType: sequenceRType)
+        }
+
+        // flatMapIndexedTo(destination, transform): Collection<R>
+        do {
+            let memberName = interner.intern("flatMapIndexedTo")
+            let memberFQName = sequenceFQName + [memberName]
+            let rName = interner.intern("R")
+            let rSymbol = symbols.lookup(fqName: memberFQName + [rName]) ?? symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: memberFQName + [rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let destinationType = nominalCollectionType([
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("Collection"),
+            ], elementType: rType)
+            let transformReturnType = nominalCollectionType([
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("Iterable"),
+            ], elementType: rType)
+            let transformType = types.make(.functionType(FunctionType(
+                params: [types.intType, typeParamType],
+                returnType: transformReturnType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            registerSequenceOverloadedMemberStub(
+                named: "flatMapIndexedTo",
+                externalLinkName: "kk_sequence_flatMapIndexedTo",
+                receiverType: receiverType,
+                parameters: [
+                    ("destination", destinationType),
+                    ("transform", transformType),
+                ],
+                returnType: destinationType,
+                additionalTypeParameterSymbols: [rSymbol],
+                canThrow: true
+            )
         }
 
         // shuffled() / shuffled(random): Sequence<T> (STDLIB-SEQ-019)
@@ -2156,18 +2266,33 @@ extension DataFlowSemaPhase {
         }
 
         // maxOrNull(): T?
-        registerSequenceMemberStub(
-            named: "maxOrNull",
-            externalLinkName: "kk_sequence_maxOrNull",
-            receiverType: receiverType,
-            parameters: [],
-            returnType: types.makeNullable(types.anyType),
-            sequenceSymbol: sequenceSymbol,
-            sequenceFQName: sequenceFQName,
-            typeParamSymbol: typeParamSymbol,
-            symbols: symbols,
-            interner: interner
-        )
+        do {
+            if types.comparableInterfaceSymbol == nil {
+                registerSyntheticComparableStub(symbols: symbols, types: types, interner: interner)
+            }
+            let comparableElementBounds: [TypeID] = if let comparableSymbol = types.comparableInterfaceSymbol {
+                [types.make(.classType(ClassType(
+                    classSymbol: comparableSymbol,
+                    args: [.invariant(typeParamType)],
+                    nullability: .nonNull
+                )))]
+            } else {
+                []
+            }
+            registerSequenceMemberStub(
+                named: "maxOrNull",
+                externalLinkName: "kk_sequence_maxOrNull",
+                receiverType: receiverType,
+                parameters: [],
+                returnType: types.makeNullable(typeParamType),
+                sequenceSymbol: sequenceSymbol,
+                sequenceFQName: sequenceFQName,
+                typeParamSymbol: typeParamSymbol,
+                symbols: symbols,
+                interner: interner,
+                typeParameterUpperBounds: comparableElementBounds
+            )
+        }
 
         // minOrNull(): T?
         registerSequenceMemberStub(

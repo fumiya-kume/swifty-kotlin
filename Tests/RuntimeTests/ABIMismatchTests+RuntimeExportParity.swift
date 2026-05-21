@@ -57,6 +57,7 @@ extension ABIMismatchTests {
     private var allowedSpecOnlyRuntimeABINames: Set<String> {
         [
             "kk_annotation_class_name",
+            "kk_class_kotlin",
             "kk_annotation_get_arguments",
             "kk_annotation_simple_class_name",
             "kk_any_javaClass",
@@ -73,6 +74,7 @@ extension ABIMismatchTests {
             "kk_jsclass_kotlin",
             "kk_js_number_toInt",
             "kk_int_to_int",
+            "kk_list_toJsArray",
             "kk_kclass_has_annotation",
             "kk_kclass_java",
             "kk_kclass_javaClass",
@@ -92,6 +94,7 @@ extension ABIMismatchTests {
             "kk_optional_getOrElse",
             "kk_optional_toCollection",
             "kk_optional_toSet",
+            "kk_optional_toList",
             "kk_path_createLinkPointingTo",
             "kk_path_deleteExisting",
             "kk_path_deleteRecursively",
@@ -99,6 +102,7 @@ extension ABIMismatchTests {
             "kk_path_div_string",
             "kk_path_fileSize",
             "kk_path_fileStore",
+            "kk_path_fileVisitor",
             "kk_path_getAttribute",
             "kk_path_fileAttributesView",
             "kk_path_isExecutable",
@@ -108,6 +112,7 @@ extension ABIMismatchTests {
             "kk_path_isSymbolicLink",
             "kk_path_isWritable",
             "kk_path_getOwner",
+            "kk_path_getLastModifiedTime",
             "kk_path_getPosixFilePermissions",
             "kk_path_moveTo_options",
             "kk_path_notExists",
@@ -140,6 +145,7 @@ extension ABIMismatchTests {
             "kk_result_flatMapCatching",
             "kk_result_mapCatching",
             "kk_string_toJsString",
+            "kk_toJsReference",
             "kk_uri_toPath",
         ]
     }
