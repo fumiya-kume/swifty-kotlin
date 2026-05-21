@@ -805,6 +805,36 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // withIndex(): Sequence<IndexedValue<T>>
+        let indexedValueSymbol = registerSyntheticIndexedValueStub(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinCollectionsPkg: [interner.intern("kotlin"), interner.intern("collections")]
+        )
+        let indexedValueReturnType = types.make(.classType(ClassType(
+            classSymbol: indexedValueSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let sequenceIndexedValueReturnType = types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
+            args: [.out(indexedValueReturnType)],
+            nullability: .nonNull
+        )))
+        registerSequenceMemberStub(
+            named: "withIndex",
+            externalLinkName: "kk_sequence_withIndex",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: sequenceIndexedValueReturnType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // toMutableSet(): MutableSet<T>
         registerSequenceMemberStub(
             named: "toMutableSet",
