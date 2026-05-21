@@ -675,6 +675,14 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(listElements(kk_map_get(result, 0)), [4])
     }
 
+    func testIntersectReturnsDeduplicatedSetInReceiverOrder() {
+        let seq = makeSequence([1, 2, 2, 3, 4])
+        let other = registerRuntimeObject(RuntimeListBox(elements: [2, 4, 5]))
+
+        let result = kk_sequence_intersect(seq, other)
+
+        XCTAssertEqual(setElements(result), [2, 4])
+    }
     func testGroupByGroupsElementsIntoNewMap() {
         let seq = makeSequence([1, 2, 3, 4, 5])
 

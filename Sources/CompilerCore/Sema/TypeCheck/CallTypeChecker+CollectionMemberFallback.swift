@@ -704,7 +704,7 @@ extension CallTypeChecker {
 
     private func stdlibSurfaceCollectionReturning(_ spec: StdlibSurfaceSpec) -> Bool {
         switch spec.returnStrategy {
-        case .destinationArgument, .list, .map, .sequence, .receiver:
+        case .destinationArgument, .list, .set, .map, .sequence, .receiver:
             return true
         case .any, .nullableAny, .receiverElement, .nullableReceiverElement,
              .unit, .boolean, .int, .double:
@@ -1129,6 +1129,13 @@ extension CallTypeChecker {
                 return nil
             }
             return makeSyntheticListType(
+                symbols: sema.symbols,
+                types: sema.types,
+                interner: interner,
+                elementType: receiverElementType
+            )
+        case .set:
+            return makeSyntheticSetType(
                 symbols: sema.symbols,
                 types: sema.types,
                 interner: interner,
