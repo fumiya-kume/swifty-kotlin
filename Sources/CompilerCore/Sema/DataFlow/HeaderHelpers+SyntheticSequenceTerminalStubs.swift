@@ -205,9 +205,13 @@ extension DataFlowSemaPhase {
             parameters: [("comparator", comparatorType)],
             returnType: receiverType,
             canThrow: true
+        )
+
         // sorted(): Sequence<T>
+        registerSequenceOverloadedMemberStub(
             named: "sorted",
             externalLinkName: "kk_sequence_sorted",
+            receiverType: receiverType,
             parameters: [],
             returnType: receiverType
         )
