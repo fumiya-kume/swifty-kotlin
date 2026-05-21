@@ -484,6 +484,13 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(sequenceElements(sorted), [1, 1, 2, 3])
     }
 
+    func testSortedDescendingOrdersSequenceElementsWithRuntimeComparison() {
+        let source = makeSequence([3, 1, 2, 1])
+        let sorted = kk_sequence_sortedDescending(source)
+
+        XCTAssertEqual(sequenceElements(sorted), [3, 2, 1, 1])
+    }
+
     func testJoinToStringUsesSeparatorPrefixAndPostfix() {
         let seq = makeSequence([1, 2, 3])
         let renderedRaw = kk_sequence_joinToString(
