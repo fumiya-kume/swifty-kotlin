@@ -102,7 +102,6 @@ extension CodegenBackendIntegrationTests {
             let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
             let ctx = try runCodegenPipeline(
                 inputPath: path,
-                moduleName: "STDLIBSEQ022_MAP_INDEXED_TO",
                 moduleName: "SequenceFlatMapToRuntime",
                 emit: .executable,
                 outputPath: outputBase
@@ -111,7 +110,6 @@ extension CodegenBackendIntegrationTests {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "[seed, 0:10, 1:20, 2:30]\n[seed, 0:10, 1:20, 2:30]\n")
             XCTAssertEqual(
                 normalizedStdout,
                 """
