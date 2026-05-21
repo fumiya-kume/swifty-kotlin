@@ -136,6 +136,10 @@ private let sequenceParitySelector: @convention(c) (Int, Int, UnsafeMutablePoint
     value % 2
 }
 
+private let sequenceModuloThreeSelector: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value % 3
+}
+
 private let sequenceValueTimesTen: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     value * 10
 }
@@ -257,6 +261,28 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
 
         XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
         XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testMinByOrNullReturnsElementWithSmallestSelectorAndNullOnEmpty() {
+        var thrown = 0
+        let result = kk_sequence_minByOrNull(
+            makeSequence([5, 2, 3]),
+            unsafeBitCast(sequenceModuloThreeSelector, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 3)
+
+        let emptyResult = kk_sequence_minByOrNull(
+            makeSequence([]),
+            unsafeBitCast(sequenceModuloThreeSelector, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
     }
 
     func testMinOfOrNullReturnsSmallestSelectedValueAndNullOnEmpty() {
