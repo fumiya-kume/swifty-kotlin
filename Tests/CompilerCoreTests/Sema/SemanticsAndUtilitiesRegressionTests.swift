@@ -1300,14 +1300,8 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
                 val text = entry.toString()
             }
             path.forEachDirectoryEntry("*.kt") { entry ->
-    func testPathNotExistsOptionsExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
-        import java.nio.file.LinkOption
-        import kotlin.io.path.notExists
-
-        fun missingPath(path: Path, option: LinkOption): Boolean {
-            val first = path.notExists()
-            val second = path.notExists(option)
-            return first && second
+                val text2 = entry.toString()
+            }
         }
         """
 
@@ -1317,8 +1311,7 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
             let diagnostics = ctx.diagnostics.diagnostics.map(\.message)
             XCTAssertFalse(
                 ctx.diagnostics.hasError,
-                "Path.forEachDirectoryEntry(glob, action) extension function in kotlin.io.path should resolve: \(diagnostics)"
-                "Path.notExists(options) extension function in kotlin.io.path should resolve: \(diagnostics)"
+                "Path.forEachDirectoryEntry extension functions in kotlin.io.path should resolve: \(diagnostics)"
             )
 
             let interner = ctx.interner
@@ -1334,7 +1327,7 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
                 nullability: .nonNull
             )))
             let forEachSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "forEachDirectoryEntry"].map(interner.intern))
-            let forEachDirectoryEntry = try XCTUnwrap(forEachSymbols.first { symbolID in
+            let globForEachDirectoryEntry = try XCTUnwrap(forEachSymbols.first { symbolID in
                 guard let signature = symbols.functionSignature(for: symbolID) else {
                     return false
                 }
@@ -1343,13 +1336,19 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
                     && signature.returnType == types.unitType
             })
             let defaultForEachDirectoryEntry = try XCTUnwrap(forEachSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else {
+                    return false
+                }
+                return signature.receiverType == pathType
                     && signature.parameterTypes == [pathActionType]
-            XCTAssertEqual(symbols.externalLinkName(for: forEachDirectoryEntry), "kk_path_forEachDirectoryEntry")
+                    && signature.returnType == types.unitType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: globForEachDirectoryEntry), "kk_path_forEachDirectoryEntry")
             XCTAssertEqual(symbols.externalLinkName(for: defaultForEachDirectoryEntry), "kk_path_forEachDirectoryEntry_default")
 
-            let signature = try XCTUnwrap(symbols.functionSignature(for: forEachDirectoryEntry))
-            XCTAssertEqual(signature.valueParameterHasDefaultValues, [true, false])
-            XCTAssertEqual(signature.valueParameterIsVararg, [false, false])
+            let globSignature = try XCTUnwrap(symbols.functionSignature(for: globForEachDirectoryEntry))
+            XCTAssertEqual(globSignature.valueParameterHasDefaultValues, [true, false])
+            XCTAssertEqual(globSignature.valueParameterIsVararg, [false, false])
             let defaultSignature = try XCTUnwrap(symbols.functionSignature(for: defaultForEachDirectoryEntry))
             XCTAssertEqual(defaultSignature.valueParameterHasDefaultValues, [false])
             XCTAssertEqual(defaultSignature.valueParameterIsVararg, [false])
@@ -1359,23 +1358,60 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
             XCTAssertEqual(callExprs.count, 2)
             let chosenCallees = callExprs.compactMap { sema.bindings.callBinding(for: $0)?.chosenCallee }
             XCTAssertTrue(chosenCallees.contains(defaultForEachDirectoryEntry))
-            XCTAssertTrue(chosenCallees.contains(forEachDirectoryEntry))
+            XCTAssertTrue(chosenCallees.contains(globForEachDirectoryEntry))
             for callExpr in callExprs {
                 XCTAssertEqual(sema.bindings.exprTypes[callExpr], types.unitType)
+            }
+        }
+    }
+
+    func testPathNotExistsOptionsExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import java.nio.file.LinkOption
+        import kotlin.io.path.Path
+        import kotlin.io.path.notExists
+
+        fun missingPath(path: Path, option: LinkOption): Boolean {
+            val first = path.notExists()
+            val second = path.notExists(option)
+            return first && second
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnostics = ctx.diagnostics.diagnostics.map(\.message)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.notExists(options) extension function in kotlin.io.path should resolve: \(diagnostics)"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
             let linkOptionSymbol = try XCTUnwrap(symbols.lookup(fqName: ["java", "nio", "file", "LinkOption"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
             let linkOptionType = types.make(.classType(ClassType(classSymbol: linkOptionSymbol, args: [], nullability: .nonNull)))
             let notExistsSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "notExists"].map(interner.intern))
             let notExists = try XCTUnwrap(notExistsSymbols.first { symbolID in
                 guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == pathType
                     && signature.parameterTypes == [linkOptionType]
                     && signature.returnType == types.booleanType
+            })
             XCTAssertEqual(symbols.externalLinkName(for: notExists), "kk_path_notExists")
 
             let signature = try XCTUnwrap(symbols.functionSignature(for: notExists))
             XCTAssertEqual(signature.valueParameterHasDefaultValues, [false])
             XCTAssertEqual(signature.valueParameterIsVararg, [true])
 
+            let ast = try XCTUnwrap(ctx.ast)
             let callExprs = memberCallExprIDs(named: "notExists", in: ast, interner: interner)
+            XCTAssertEqual(callExprs.count, 2)
+            for callExpr in callExprs {
                 XCTAssertEqual(sema.bindings.callBinding(for: callExpr)?.chosenCallee, notExists)
                 XCTAssertEqual(sema.bindings.exprTypes[callExpr], types.booleanType)
             }
