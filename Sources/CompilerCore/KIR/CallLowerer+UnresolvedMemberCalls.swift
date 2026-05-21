@@ -699,6 +699,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_none")
             case interner.intern("mapNotNull"):
                 return interner.intern("kk_sequence_mapNotNull")
+            case interner.intern("mapIndexedNotNull"):
+                return interner.intern("kk_sequence_mapIndexedNotNull")
             case interner.intern("firstNotNullOf"):
                 return interner.intern("kk_sequence_firstNotNullOf")
             case interner.intern("firstNotNullOfOrNull"):
