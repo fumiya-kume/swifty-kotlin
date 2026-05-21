@@ -2495,8 +2495,11 @@ public func kk_sequence_indexOfLast(
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var matchIndex = -1
     var currentIndex = 0
+    var traversalState: SequenceTraversalState?
     if let seq = runtimeSequenceBox(from: seqRaw) {
-        runtimeTraverseSequence(seq, outThrown: outThrown) { elem in
+        let state = SequenceTraversalState()
+        traversalState = state
+        runtimeTraverseSequenceWithState(seq, state: state, outThrown: outThrown) { elem in
             var thrown = 0
             let result = lambda(closureRaw, elem, &thrown)
             if thrown != 0 {
@@ -2523,6 +2526,10 @@ public func kk_sequence_indexOfLast(
         }
     }
     if let outThrown, outThrown.pointee != 0 {
+        return runtimeExceptionCaughtSentinel
+    }
+    if let traversalState, traversalState.limitReached {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached)
         return runtimeExceptionCaughtSentinel
     }
     return matchIndex
