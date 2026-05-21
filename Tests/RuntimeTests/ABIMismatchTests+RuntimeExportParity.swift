@@ -111,6 +111,7 @@ extension ABIMismatchTests {
             "kk_path_isSymbolicLink",
             "kk_path_isWritable",
             "kk_path_getOwner",
+            "kk_path_getLastModifiedTime",
             "kk_path_getPosixFilePermissions",
             "kk_path_moveTo_options",
             "kk_path_notExists",

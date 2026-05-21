@@ -44,6 +44,7 @@
 /// - `Path.getAttribute(attribute: String, vararg options: LinkOption): Any` extension function
 /// - `Path.fileAttributesView<V : FileAttributeView>(vararg options: LinkOption): V` extension function
 /// - `Path.getOwner(vararg options: LinkOption): UserPrincipal` extension function
+/// - `Path.getLastModifiedTime(vararg options: LinkOption): FileTime` extension function
 /// - `Path.setOwner(value: UserPrincipal): Path` extension function
 /// - `Path.getPosixFilePermissions(vararg options: LinkOption): Set<PosixFilePermission>` extension function
 /// - `Path.fileSize(): Long` extension function
@@ -467,6 +468,20 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(basicFileAttributesType, for: basicFileAttributesSymbol)
+
+        let fileTimeSymbol = ensureClassSymbol(
+            named: "FileTime",
+            in: javaNioFileAttributePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaNioFileAttributePkgSymbol {
+            symbols.setParentSymbol(javaNioFileAttributePkgSymbol, for: fileTimeSymbol)
+        }
+        let fileTimeType = types.make(.classType(ClassType(
+            classSymbol: fileTimeSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(fileTimeType, for: fileTimeSymbol)
 
         let posixFilePermissionName = interner.intern("PosixFilePermission")
         let posixFilePermissionFQName = javaNioFileAttributePkg + [posixFilePermissionName]
@@ -945,6 +960,18 @@ extension DataFlowSemaPhase {
             returnType: types.anyType,
             externalLinkName: "kk_path_getAttribute",
             valueParameterIsVararg: [false, true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "getLastModifiedTime",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("options", linkOptionType)],
+            returnType: fileTimeType,
+            externalLinkName: "kk_path_getLastModifiedTime",
+            valueParameterIsVararg: [true],
             symbols: symbols,
             interner: interner
         )
