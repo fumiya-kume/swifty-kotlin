@@ -2729,6 +2729,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_plus_element"
                 } else if calleeName == interner.intern("minus") || calleeName == interner.intern("minusElement") {
                     runtimeCallee = "kk_sequence_minus"
+                } else if calleeName == interner.intern("reduceOrNull") {
+                    runtimeCallee = "kk_sequence_reduceOrNull"
                 } else if calleeName == interner.intern("union") {
                     runtimeCallee = "kk_sequence_union"
                 } else if calleeName == interner.intern("reduceRight") {
@@ -2803,6 +2805,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_windowed_transform"
                         || runtimeCallee == "kk_sequence_onEach"
                         || runtimeCallee == "kk_sequence_onEachIndexed"
+                        || runtimeCallee == "kk_sequence_reduceOrNull"
                         || runtimeCallee == "kk_sequence_reduceRight"
                         || runtimeCallee == "kk_sequence_runningReduceIndexed"
                         || runtimeCallee == "kk_sequence_ifEmpty"
@@ -2840,7 +2843,8 @@ extension CallLowerer {
                         )
                         runtimeArguments = [loweredReceiverID, fnPtrExpr, envPtrExpr]
                     }
-                    if (runtimeCallee == "kk_sequence_associate"
+                    if (runtimeCallee == "kk_sequence_reduceOrNull"
+                        || runtimeCallee == "kk_sequence_associate"
                         || runtimeCallee == "kk_sequence_associateBy"
                         || runtimeCallee == "kk_sequence_associateWith"),
                        normalizedArgIDs.count == 1

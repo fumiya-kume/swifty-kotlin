@@ -2881,6 +2881,46 @@ public func kk_sequence_reduce(
     return acc
 }
 
+@_cdecl("kk_sequence_reduceOrNull")
+public func kk_sequence_reduceOrNull(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    var hasAccumulator = false
+    var acc = 0
+    let visit: (Int) -> Bool = { elem in
+        if !hasAccumulator {
+            hasAccumulator = true
+            acc = maybeUnbox(elem)
+            return true
+        }
+        var thrown = 0
+        let nextAcc = runtimeInvokeCollectionLambda2(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            lhs: acc,
+            rhs: elem,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
+        }
+        acc = maybeUnbox(nextAcc)
+        return true
+    }
+
+    let traversalState = runtimeTraverseSequenceSource(seqRaw, caller: #function, outThrown: outThrown, yield: visit)
+    if let outThrown, outThrown.pointee != 0 { return 0 }
+    if let traversalState, traversalState.limitReached {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached)
+        return 0
+    }
+    return hasAccumulator ? acc : runtimeNullSentinelInt
+}
+
 @_cdecl("kk_sequence_reduceRight")
 public func kk_sequence_reduceRight(
     _ seqRaw: Int,
