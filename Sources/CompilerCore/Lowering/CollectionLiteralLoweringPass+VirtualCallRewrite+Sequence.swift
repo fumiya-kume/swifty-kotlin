@@ -639,12 +639,17 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
-        // maxOrNull / minOrNull on sequence (STDLIB-470)
-        if (callee == lookup.maxOrNullName || callee == lookup.minOrNullName),
+        // max / maxOrNull / minOrNull on sequence (STDLIB-SEQ-FN-065, STDLIB-470)
+        if (callee == lookup.maxName || callee == lookup.maxOrNullName || callee == lookup.minOrNullName),
            arguments.isEmpty, sequenceExprIDs.contains(receiver.rawValue)
         {
-            let kkName = callee == lookup.maxOrNullName
-                ? lookup.kkSequenceMaxOrNullName : lookup.kkSequenceMinOrNullName
+            let kkName: InternedString
+            if callee == lookup.maxName {
+                kkName = lookup.kkSequenceMaxName
+            } else {
+                kkName = callee == lookup.maxOrNullName
+                    ? lookup.kkSequenceMaxOrNullName : lookup.kkSequenceMinOrNullName
+            }
             let hofResult = module.arena.appendExpr(
                 .temporary(Int32(module.arena.expressions.count)), type: nil
             )
@@ -653,8 +658,8 @@ extension CollectionLiteralLoweringPass {
                 callee: kkName,
                 arguments: [receiver],
                 result: hofResult,
-                canThrow: false,
-                thrownResult: nil
+                canThrow: origCanThrow,
+                thrownResult: origThrownResult
             ))
             if let result {
                 loweredBody.append(.copy(from: hofResult, to: result))
@@ -1115,6 +1120,59 @@ extension CollectionLiteralLoweringPass {
             }
             let hofResult = emitHOFCall(
                 kkName: lookup.kkSequenceMapIndexedNotNullToName,
+                receiver: receiver,
+                arguments: [destID, lambdaID, closureRawExpr],
+                result: result,
+                origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult,
+                module: module,
+                loweredBody: &loweredBody
+            )
+            if let result {
+                if listExprIDs.contains(destID.rawValue) {
+                    listExprIDs.insert(result.rawValue)
+                    listExprIDs.insert(hofResult.rawValue)
+                } else if setExprIDs.contains(destID.rawValue) {
+                    setExprIDs.insert(result.rawValue)
+                    setExprIDs.insert(hofResult.rawValue)
+                }
+            }
+            return true
+        }
+
+        if callee == lookup.flatMapIndexedToName,
+           arguments.count == 2 || arguments.count == 3,
+           sequenceExprIDs.contains(receiver.rawValue)
+        {
+            let destinationIndex = arguments.firstIndex { arg in
+                listExprIDs.contains(arg.rawValue) || setExprIDs.contains(arg.rawValue)
+            }
+            let destID: KIRExprID
+            let lambdaID: KIRExprID
+            let closureRawExpr: KIRExprID
+            if arguments.count == 3, destinationIndex == 2 {
+                destID = arguments[2]
+                lambdaID = arguments[0]
+                closureRawExpr = arguments[1]
+            } else if arguments.count == 2, destinationIndex == 1 {
+                destID = arguments[1]
+                lambdaID = arguments[0]
+                let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                closureRawExpr = zeroExpr
+            } else {
+                destID = arguments[0]
+                lambdaID = arguments[1]
+                if arguments.count == 3 {
+                    closureRawExpr = arguments[2]
+                } else {
+                    let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                    loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                    closureRawExpr = zeroExpr
+                }
+            }
+            let hofResult = emitHOFCall(
+                kkName: lookup.kkSequenceFlatMapIndexedToName,
                 receiver: receiver,
                 arguments: [destID, lambdaID, closureRawExpr],
                 result: result,

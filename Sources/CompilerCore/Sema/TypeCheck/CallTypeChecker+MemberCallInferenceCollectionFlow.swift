@@ -188,7 +188,7 @@ extension CallTypeChecker {
 
         if interner.resolve(calleeName) == "filterIsInstanceTo",
            args.count == 1,
-           isCollectionReceiver
+           isCollectionReceiver || isSequenceReceiver
         {
             let destinationType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
             let nonNullableDestinationType = sema.types.makeNonNullable(destinationType)
@@ -210,14 +210,17 @@ extension CallTypeChecker {
                 ctx: ctx,
                 locals: &locals
             )
+            let ownerPackage = isSequenceReceiver ? "sequences" : "collections"
+            let ownerName = isSequenceReceiver ? "Sequence" : "List"
+            let externalLinkName = isSequenceReceiver ? "kk_sequence_filterIsInstanceTo" : "kk_list_filterIsInstanceTo"
             let memberFQName = [
                 interner.intern("kotlin"),
-                interner.intern("collections"),
-                interner.intern("List"),
+                interner.intern(ownerPackage),
+                interner.intern(ownerName),
                 calleeName,
             ]
             if let chosenCallee = sema.symbols.lookupAll(fqName: memberFQName).first(where: { candidate in
-                sema.symbols.externalLinkName(for: candidate) == "kk_list_filterIsInstanceTo"
+                sema.symbols.externalLinkName(for: candidate) == externalLinkName
             }) {
                 sema.bindings.bindCall(id, binding: CallBinding(
                     chosenCallee: chosenCallee,
