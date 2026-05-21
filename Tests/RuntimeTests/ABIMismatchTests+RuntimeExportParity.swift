@@ -102,6 +102,7 @@ extension ABIMismatchTests {
             "kk_path_div_string",
             "kk_path_fileSize",
             "kk_path_fileStore",
+            "kk_path_fileVisitor",
             "kk_path_getAttribute",
             "kk_path_fileAttributesView",
             "kk_path_isExecutable",
