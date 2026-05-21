@@ -318,11 +318,7 @@
 - [x] STDLIB-SEQ-FN-032: `find` 関数の実装
 - [ ] STDLIB-SEQ-FN-033: `findLast` 関数の実装
 - [x] STDLIB-SEQ-FN-034: `first` 関数の実装
-- [ ] STDLIB-SEQ-FN-037: `firstOrNull` 関数の実装
-- [ ] STDLIB-SEQ-FN-038: `flatMap` 関数の実装
-- [ ] STDLIB-SEQ-FN-039: `flatMapIndexed` 関数の実装
-- [x] STDLIB-SEQ-FN-040: `flatMapIndexedTo` 関数の実装
-- [ ] STDLIB-SEQ-FN-041: `flatMapTo` 関数の実装
+- [x] STDLIB-SEQ-FN-037: `firstOrNull` 関数の実装
 - [x] STDLIB-SEQ-FN-038: `flatMap` 関数の実装
 - [x] STDLIB-SEQ-FN-039: `flatMapIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-040: `flatMapIndexedTo` 関数の実装
@@ -777,7 +773,7 @@
 - [x] STDLIB-IO-PATH-FN-056: `Path.readAttributes<A>(options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-057: `Path.readAttributes(attributes, options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-059: `Path.reader(charset, options)` を追加する
-- [ ] STDLIB-IO-PATH-FN-066: `Path.setAttribute(attribute, value, options)` を追加する
+- [x] STDLIB-IO-PATH-FN-066: `Path.setAttribute(attribute, value, options)` を追加する
 - [x] STDLIB-IO-PATH-FN-071: `Path.useDirectoryEntries(glob, block)` を追加する
 - [x] STDLIB-IO-PATH-FN-072: `Path.useLines(charset, block)` を追加する
 - [ ] STDLIB-IO-PATH-FN-073: `Path.visitFileTree(visitor, maxDepth, followLinks)` を追加する
