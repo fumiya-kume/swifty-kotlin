@@ -248,6 +248,14 @@ extension RuntimeSequenceTests {
         XCTAssertEqual(thrown, 0)
     }
 
+    func testSequenceFirstOrNullReturnsFirstElement() {
+        let seq = makeSequence([7, 8, 9])
+        var thrown = 0
+        let first = kk_sequence_firstOrNull(seq, &thrown)
+        XCTAssertEqual(first, 7)
+        XCTAssertEqual(thrown, 0)
+    }
+
     // MARK: - STDLIB-HOF-022: Additional Higher-Order Functions
 
     func testSequenceFilterNot() {
