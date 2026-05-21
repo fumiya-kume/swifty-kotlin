@@ -1639,6 +1639,23 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(listElements(kk_sequence_to_list(result, nil)), [3, 2])
     }
 
+    func testElementAtReturnsIndexedValue() {
+        var thrown = 0
+        let result = kk_sequence_elementAt(makeSequence([10, 20, 30]), 1, &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 20)
+    }
+
+    func testElementAtReportsOutOfBounds() {
+        var thrown = 0
+        let result = kk_sequence_elementAt(makeSequence([10]), 3, &thrown)
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(result, runtimeNullSentinelInt)
+    }
+    
+
     func testFilterIsInstanceKeepsMatchingRuntimeTypes() {
         let seq = makeSequence([1, runtimeTestStringHandle("two"), 3])
         let filtered = kk_sequence_filterIsInstance(seq, 3)
