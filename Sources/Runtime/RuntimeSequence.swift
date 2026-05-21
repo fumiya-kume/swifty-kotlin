@@ -2426,6 +2426,44 @@ public func kk_sequence_singleOrNull(_ seqRaw: Int, _ outThrown: UnsafeMutablePo
     return count == 1 ? result : runtimeNullSentinelInt
 }
 
+@_cdecl("kk_sequence_single")
+public func kk_sequence_single(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    var result = 0
+    var count = 0
+    var traversalState: SequenceTraversalState?
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        let st = SequenceTraversalState()
+        traversalState = st
+        runtimeTraverseSequenceWithState(seq, state: st, outThrown: outThrown) { elem in
+            count += 1
+            if count == 1 {
+                result = elem
+                return true
+            }
+            return false
+        }
+    } else {
+        let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+        count = elements.count
+        if count == 1 {
+            result = elements[0]
+        }
+    }
+    if let outThrown, outThrown.pointee != 0 { return 0 }
+    if let traversalState, traversalState.limitReached {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached)
+        return 0
+    }
+    guard count == 1 else {
+        let message = count == 0
+            ? kEmptySequenceNoSuchElement
+            : "NoSuchElementException: Sequence has more than one element."
+        outThrown?.pointee = runtimeAllocateThrowable(message: message)
+        return 0
+    }
+    return result
+}
+
 @_cdecl("kk_sequence_count")
 public func kk_sequence_count(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     var count = 0
