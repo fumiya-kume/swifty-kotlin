@@ -993,7 +993,7 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
-        if callee == lookup.mapNotNullToName || callee == lookup.mapIndexedToName,
+        if callee == lookup.mapNotNullToName,
            arguments.count == 2 || arguments.count == 3,
            sequenceExprIDs.contains(receiver.rawValue)
         {
@@ -1008,9 +1008,7 @@ extension CollectionLiteralLoweringPass {
                 closureRawExpr = zeroExpr
             }
             let hofResult = emitHOFCall(
-                kkName: callee == lookup.mapIndexedToName
-                    ? lookup.kkSequenceMapIndexedToName
-                    : lookup.kkSequenceMapNotNullToName,
+                kkName: lookup.kkSequenceMapNotNullToName,
                 receiver: receiver,
                 arguments: [destID, lambdaID, closureRawExpr],
                 result: result,

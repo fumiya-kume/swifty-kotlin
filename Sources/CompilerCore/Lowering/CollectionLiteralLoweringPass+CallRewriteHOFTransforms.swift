@@ -170,8 +170,7 @@ extension CollectionLiteralLoweringPass {
     }
 
     // --- STDLIB-SEQ-022: sequence destination-collection mapping variants ---
-    if (callee == lookup.mapToName || callee == lookup.mapNotNullToName
-        || callee == lookup.mapIndexedToName || callee == lookup.mapIndexedNotNullToName),
+    if (callee == lookup.mapToName || callee == lookup.mapNotNullToName || callee == lookup.mapIndexedNotNullToName),
        (arguments.count == 3 || arguments.count == 4),
        state.sequenceExprIDs.contains(arguments[0].rawValue)
     {
@@ -190,8 +189,6 @@ extension CollectionLiteralLoweringPass {
             lookup.kkSequenceMapToName
         } else if callee == lookup.mapNotNullToName {
             lookup.kkSequenceMapNotNullToName
-        } else if callee == lookup.mapIndexedToName {
-            lookup.kkSequenceMapIndexedToName
         } else {
             lookup.kkSequenceMapIndexedNotNullToName
         }

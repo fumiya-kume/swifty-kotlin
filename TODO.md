@@ -304,7 +304,7 @@
 - [x] STDLIB-SEQ-FN-017: `distinctBy` 関数の実装
 - [ ] STDLIB-SEQ-FN-018: `drop` 関数の実装
 - [ ] STDLIB-SEQ-FN-019: `dropWhile` 関数の実装
-- [ ] STDLIB-SEQ-FN-020: `elementAt` 関数の実装
+- [x] STDLIB-SEQ-FN-020: `elementAt` 関数の実装
 - [ ] STDLIB-SEQ-FN-021: `elementAtOrElse` 関数の実装
 - [x] STDLIB-SEQ-FN-022: `elementAtOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-023: `filter` 関数の実装
@@ -380,10 +380,8 @@
 - [x] STDLIB-SEQ-FN-083: `none` 関数の実装
 - [x] STDLIB-SEQ-FN-084: `onEach` 関数の実装
 - [x] STDLIB-SEQ-FN-085: `onEachIndexed` 関数の実装
-- [ ] STDLIB-SEQ-FN-086: `partition` 関数の実装
+- [x] STDLIB-SEQ-FN-086: `partition` 関数の実装
 - [x] STDLIB-SEQ-FN-087: `plus` 関数の実装
-- [ ] STDLIB-SEQ-FN-088: `plusElement` 関数の実装
-- [ ] STDLIB-SEQ-FN-087: `plus` 関数の実装
 - [x] STDLIB-SEQ-FN-088: `plusElement` 関数の実装
 - [ ] STDLIB-SEQ-FN-089: `random` 関数の実装
 - [x] STDLIB-SEQ-FN-090: `randomOrNull` 関数の実装
@@ -394,10 +392,8 @@
 - [ ] STDLIB-SEQ-FN-095: `reduceRightIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-096: `reduceRightIndexedOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-097: `reduceRightOrNull` 関数の実装
-- [ ] STDLIB-SEQ-FN-098: `requireNoNulls` 関数の実装
-- [x] STDLIB-SEQ-FN-099: `reversed` 関数の実装
 - [x] STDLIB-SEQ-FN-098: `requireNoNulls` 関数の実装
-- [ ] STDLIB-SEQ-FN-099: `reversed` 関数の実装
+- [x] STDLIB-SEQ-FN-099: `reversed` 関数の実装
 - [ ] STDLIB-SEQ-FN-100: `runningFold` 関数の実装
 - [x] STDLIB-SEQ-FN-101: `runningFoldIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-102: `runningReduce` 関数の実装
@@ -747,15 +743,14 @@
 - [ ] STDLIB-IO-PATH-FN-021: `createTempFile(prefix, suffix, attributes)` を追加する
 - [ ] STDLIB-IO-PATH-FN-022: `createTempFile(directory, prefix, suffix, attributes)` を追加する
 - [ ] STDLIB-IO-PATH-FN-024: `Path.deleteIfExists()` の公式 return/annotation shape を既存 stub と整合させる
- - [x] STDLIB-IO-PATH-FN-028: `Path.exists(options)` を既存 no-arg stub から公式 vararg shape へ広げる
- - [x] STDLIB-IO-PATH-FN-029: `Path.fileAttributesView<V>(options)` を追加する
- - [x] STDLIB-IO-PATH-FN-030: `Path.fileAttributesViewOrNull<V>(options)` を追加する
- - [x] STDLIB-IO-PATH-FN-033: `fileVisitor(builderAction)` を追加する
-- [ ] STDLIB-IO-PATH-FN-034: `Path.forEachDirectoryEntry(glob, action)` を追加する
+- [x] STDLIB-IO-PATH-FN-028: `Path.exists(options)` を既存 no-arg stub から公式 vararg shape へ広げる
+- [x] STDLIB-IO-PATH-FN-029: `Path.fileAttributesView<V>(options)` を追加する
+- [x] STDLIB-IO-PATH-FN-030: `Path.fileAttributesViewOrNull<V>(options)` を追加する
+- [x] STDLIB-IO-PATH-FN-033: `fileVisitor(builderAction)` を追加する
+- [x] STDLIB-IO-PATH-FN-034: `Path.forEachDirectoryEntry(glob, action)` を追加する
 - [x] STDLIB-IO-PATH-FN-035: `Path.forEachLine(charset, action)` を追加する
 - [x] STDLIB-IO-PATH-FN-036: `Path.getAttribute(attribute, options)` を追加する
 - [x] STDLIB-IO-PATH-FN-037: `Path.getLastModifiedTime(options)` を追加する
-- [ ] STDLIB-IO-PATH-FN-038: `Path.getOwner(options)` を追加する
 - [x] STDLIB-IO-PATH-FN-038: `Path.getOwner(options)` を追加する
 - [x] STDLIB-IO-PATH-FN-039: `Path.getPosixFilePermissions(options)` を追加する
 - [x] STDLIB-IO-PATH-FN-040: `Path.inputStream(options)` を追加する

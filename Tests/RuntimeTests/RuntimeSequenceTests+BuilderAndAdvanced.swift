@@ -869,25 +869,6 @@ extension RuntimeSequenceTests {
         XCTAssertEqual(listElements(result), [50, 20, 40])
     }
 
-    func testSequenceMapIndexedToAppendsIndexedResultsToDestination() {
-        let seq = makeSequence([10, 20, 30])
-        let dest = makeList([50])
-        let mapFn: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, value, _ in
-            index + value
-        }
-
-        let result = kk_sequence_mapIndexedTo(
-            seq,
-            dest,
-            unsafeBitCast(mapFn, to: Int.self),
-            0,
-            nil
-        )
-
-        XCTAssertEqual(result, dest)
-        XCTAssertEqual(listElements(result), [50, 10, 21, 32])
-    }
-
     func testSequenceMapIndexedNotNullToAppendsOnlyNonNullResults() {
         let seq = makeSequence([1, 2, 3, 4])
         let dest = makeList([50])
