@@ -1848,6 +1848,15 @@ public func kk_sequence_requireNoNulls(_ seqRaw: Int) -> Int {
     return registerRuntimeObject(newSeq)
 }
 
+@_cdecl("kk_sequence_reversed")
+public func kk_sequence_reversed(_ seqRaw: Int) -> Int {
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    let newSeq = RuntimeSequenceBox(steps: [
+        .source(elements: Array(elements.reversed())),
+    ])
+    return registerRuntimeObject(newSeq)
+}
+
 @_cdecl("kk_sequence_mapIndexed")
 public func kk_sequence_mapIndexed(
     _ seqRaw: Int,

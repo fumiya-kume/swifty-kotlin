@@ -385,6 +385,14 @@ public extension RuntimeABISpec {
             section: "Sequence"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_sequence_reversed",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
             name: stdlibSequenceHOFName("mapIndexed", arity: 1, fallback: "kk_sequence_mapIndexed"),
             parameters: [
                 RuntimeABIParameter(name: "seqRaw", type: .intptr),
@@ -848,6 +856,23 @@ public extension RuntimeABISpec {
                 memberName: "mapIndexedNotNullTo",
                 arity: 2,
                 fallback: "kk_sequence_mapIndexedNotNullTo"
+            ),
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "destRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
+            name: StdlibSurfaceSpec.collectionHOFRuntimeLinkName(
+                ownerKind: .sequence,
+                memberName: "flatMapIndexedTo",
+                arity: 2,
+                fallback: "kk_sequence_flatMapIndexedTo"
             ),
             parameters: [
                 RuntimeABIParameter(name: "seqRaw", type: .intptr),

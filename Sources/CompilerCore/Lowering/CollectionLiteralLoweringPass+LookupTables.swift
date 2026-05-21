@@ -357,6 +357,7 @@ struct CollectionLiteralLookupTables {
     let kkSequenceMapIndexedToName: InternedString
     let kkSequenceFlatMapToName: InternedString
     let kkSequenceMapIndexedNotNullToName: InternedString
+    let kkSequenceFlatMapIndexedToName: InternedString
     let kkSequenceFilterIndexedToName: InternedString
     let kkSequenceFilterNotNullToName: InternedString
     let kkSequenceFilterIsInstanceToName: InternedString
@@ -1175,6 +1176,7 @@ struct CollectionLiteralLookupTables {
         kkSequenceMapIndexedToName = interner.intern("kk_sequence_mapIndexedTo")
         kkSequenceFlatMapToName = interner.intern("kk_sequence_flatMapTo")
         kkSequenceMapIndexedNotNullToName = interner.intern("kk_sequence_mapIndexedNotNullTo")
+        kkSequenceFlatMapIndexedToName = interner.intern("kk_sequence_flatMapIndexedTo")
         kkSequenceFilterIndexedToName = interner.intern("kk_sequence_filterIndexedTo")
         kkSequenceFilterNotNullToName = interner.intern("kk_sequence_filterNotNullTo")
         kkSequenceFilterIsInstanceToName = interner.intern("kk_sequence_filterIsInstanceTo")

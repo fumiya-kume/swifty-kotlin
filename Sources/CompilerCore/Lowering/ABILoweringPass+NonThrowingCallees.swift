@@ -866,6 +866,7 @@ extension ABILoweringPass {
             interner.intern("kk_list_sortedDescending"),
             interner.intern("kk_list_filterIsInstance"),
             interner.intern("kk_list_filterIsInstanceTo"),
+            interner.intern("kk_sequence_filterIsInstanceTo"),
             interner.intern("kk_list_filterNotNullTo"),
             interner.intern("kk_list_subList"),
             interner.intern("kk_list_slice"),
@@ -928,6 +929,7 @@ extension ABILoweringPass {
             interner.intern("kk_sequence_filterIsInstance"),
             interner.intern("kk_sequence_filterNotNull"),
             interner.intern("kk_sequence_requireNoNulls"),
+            interner.intern("kk_sequence_reversed"),
             interner.intern("kk_sequence_withIndex"),
             interner.intern("kk_sequence_flatMapIndexed"),
             interner.intern("kk_sequence_joinTo"),
@@ -1225,6 +1227,8 @@ extension ABILoweringPass {
             interner.intern("kk_ivparameterspec_new"),
             interner.intern("kk_keypair_public"),
             interner.intern("kk_keypair_private"),
+            // kotlin.js JsReference (STDLIB-JS-FN-004)
+            interner.intern("kk_js_reference_get"),
             // Kotlin/Native reference helpers — no outThrown parameter
             interner.intern("kk_weak_ref_create"),
             interner.intern("kk_weak_ref_get"),
