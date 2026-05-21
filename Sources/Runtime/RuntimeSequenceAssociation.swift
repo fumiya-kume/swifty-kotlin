@@ -533,62 +533,6 @@ public func kk_sequence_maxWithOrNull(
     )
 }
 
-@_cdecl("kk_sequence_maxBy")
-public func kk_sequence_maxBy(
-    _ seqRaw: Int,
-    _ fnPtr: Int,
-    _ closureRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-        runtimeSequenceBestValue(
-            seqRaw: seqRaw, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown,
-            caller: #function, comparisonSign: 1, returnElement: true, throwOnEmpty: true
-        )
-    )
-}
-
-private func runtimeSequenceExtremumWith(
-    seqRaw: Int,
-    fnPtr: Int,
-    closureRaw: Int,
-    outThrown: UnsafeMutablePointer<Int>?,
-    caller: StaticString,
-    comparisonSign: Int
-) -> Int {
-    let compare = runtimeSortedWithComparatorInvoke(fnPtr: fnPtr, closureRaw: closureRaw)
-    var bestElement: Int?
-    var didThrow = false
-    let traversalState = runtimeTraverseSequenceSource(seqRaw, caller: caller, outThrown: outThrown) { elem in
-        if let current = bestElement {
-            var thrown = 0
-            let comparison = compare(elem, current, &thrown)
-            if thrown != 0 {
-                _ = handleCollectionLambdaThrow(thrown, outThrown)
-                didThrow = true
-                return false
-            }
-            if (comparisonSign < 0 && comparison < 0) || (comparisonSign > 0 && comparison > 0) {
-                bestElement = elem
-            }
-        } else {
-            bestElement = elem
-        }
-        return true
-    }
-    if didThrow { return runtimeExceptionCaughtSentinel }
-    if let outThrown, outThrown.pointee != 0 { return runtimeExceptionCaughtSentinel }
-    if let traversalState, traversalState.limitReached {
-        return handleCollectionLambdaThrow(
-            runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached),
-            outThrown
-        )
-    }
-    guard let bestElement else {
-        return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: kEmptySequenceNoSuchElement), outThrown)
-    }
-    return bestElement
-}
-
 @_cdecl("kk_sequence_minWith")
 public func kk_sequence_minWith(
     _ seqRaw: Int,
@@ -598,7 +542,20 @@ public func kk_sequence_minWith(
 ) -> Int {
     runtimeSequenceExtremumWith(
         seqRaw: seqRaw, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown,
-        caller: #function, comparisonSign: -1
+        caller: #function, comparisonSign: -1, throwOnEmpty: true
+    )
+}
+
+@_cdecl("kk_sequence_maxBy")
+public func kk_sequence_maxBy(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    runtimeSequenceBestValue(
+        seqRaw: seqRaw, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown,
+        caller: #function, comparisonSign: 1, returnElement: true, throwOnEmpty: true
     )
 }
 
@@ -625,19 +582,6 @@ public func kk_sequence_maxByOrNull(
     runtimeSequenceBestValue(
         seqRaw: seqRaw, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown,
         caller: #function, comparisonSign: 1, returnElement: true, throwOnEmpty: false
-    )
-}
-
-@_cdecl("kk_sequence_minWith")
-public func kk_sequence_minWith(
-    _ seqRaw: Int,
-    _ fnPtr: Int,
-    _ closureRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    runtimeSequenceExtremumWith(
-        seqRaw: seqRaw, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown,
-        caller: #function, comparisonSign: -1
     )
 }
 
