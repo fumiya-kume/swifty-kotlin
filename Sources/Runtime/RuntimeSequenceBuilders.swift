@@ -340,13 +340,6 @@ public func kk_sequence_flatMapTo(
         invalidContainerPanic(#function, "mutable collection")
     }
     let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
-    for (idx, elem) in elements.enumerated() {
-        var thrown = 0
-        let result = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: idx, rhs: elem, outThrown: &thrown)
-        if thrown != 0 {
-            return handleCollectionLambdaThrow(thrown, outThrown)
-        }
-        runtimeAppendToMutableCollection(destRaw, maybeUnbox(result))
     for elem in elements {
         var thrown = 0
         let flattened = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
