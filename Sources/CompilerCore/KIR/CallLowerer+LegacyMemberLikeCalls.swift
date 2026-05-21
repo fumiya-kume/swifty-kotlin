@@ -2784,8 +2784,8 @@ extension CallLowerer {
                         )
                         runtimeArguments = [loweredReceiverID, fnPtrExpr, envPtrExpr]
                     }
-                    if runtimeCallee == "kk_sequence_maxWith",
-                    if runtimeCallee == "kk_sequence_maxWithOrNull",
+                    if (runtimeCallee == "kk_sequence_maxWith"
+                        || runtimeCallee == "kk_sequence_maxWithOrNull"),
                        normalizedArgIDs.count == 2
                     {
                         runtimeArguments = [loweredReceiverID] + normalizedArgIDs

@@ -522,6 +522,17 @@ private func runtimeSequenceExtremumWith(
 
 @_cdecl("kk_sequence_maxWith")
 public func kk_sequence_maxWith(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    runtimeSequenceExtremumWith(
+        seqRaw: seqRaw, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown,
+        caller: #function, comparisonSign: 1, throwOnEmpty: true
+    )
+}
+
 @_cdecl("kk_sequence_maxWithOrNull")
 public func kk_sequence_maxWithOrNull(
     _ seqRaw: Int,
@@ -531,7 +542,6 @@ public func kk_sequence_maxWithOrNull(
 ) -> Int {
     runtimeSequenceExtremumWith(
         seqRaw: seqRaw, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown,
-        caller: #function, comparisonSign: 1, throwOnEmpty: true
         caller: #function, comparisonSign: 1, throwOnEmpty: false
     )
 }
