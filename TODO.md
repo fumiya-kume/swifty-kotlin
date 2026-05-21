@@ -241,7 +241,7 @@
 
 #### kotlin.random 関数の実装
 - [ ] STDLIB-RANDOM-FN-001: `asJavaRandom` 関数の実装
-- [ ] STDLIB-RANDOM-FN-002: `asKotlinRandom` 関数の実装
+- [x] STDLIB-RANDOM-FN-002: `asKotlinRandom` 関数の実装
 
 #### kotlin.ranges 関数の実装
 - [x] STDLIB-RANGES-FN-004: `coerceValueIn` 関数の実装
@@ -331,6 +331,9 @@
 - [ ] STDLIB-SEQ-FN-043: `foldIndexed` 関数の実装
 - [x] STDLIB-SEQ-FN-044: `forEach` 関数の実装
 - [ ] STDLIB-SEQ-FN-046: `groupBy` 関数の実装
+- [x] STDLIB-SEQ-FN-043: `foldIndexed` 関数の実装
+- [x] STDLIB-SEQ-FN-042: `fold` 関数の実装
+- [ ] STDLIB-SEQ-FN-043: `foldIndexed` 関数の実装
 - [x] STDLIB-SEQ-FN-043: `foldIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-044: `forEach` 関数の実装
 - [ ] STDLIB-SEQ-FN-046: `groupBy` 関数の実装

@@ -813,6 +813,16 @@ extension RuntimeSequenceTests {
         }
 
         let result = kk_sequence_foldIndexed(
+        XCTAssertEqual(result, 42)
+    }
+
+    func testSequenceFoldAccumulatesInOrder() {
+        let seq = makeSequence([1, 2, 3])
+        let foldFn: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, acc, value, _ in
+            acc * 10 + value
+        }
+
+        let result = kk_sequence_fold(
             seq,
             0,
             unsafeBitCast(foldFn, to: Int.self),
@@ -820,7 +830,7 @@ extension RuntimeSequenceTests {
             nil
         )
 
-        XCTAssertEqual(result, 42)
+        XCTAssertEqual(result, 123)
     }
 
     func testSequenceMapToAppendsToDestination() {
