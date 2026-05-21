@@ -579,6 +579,7 @@ extension CallLowerer {
             let sortedName = interner.intern("sorted")
             let sortedByName = interner.intern("sortedBy")
             let sortedWithName = interner.intern("sortedWith")
+            let sortedByDescendingName = interner.intern("sortedByDescending")
             let sortedDescendingName = interner.intern("sortedDescending")
             let joinToName = interner.intern("joinTo")
             let joinToStringName = interner.intern("joinToString")
@@ -630,6 +631,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_sortedBy")
             case sortedWithName:
                 return interner.intern("kk_sequence_sortedWith")
+            case sortedByDescendingName:
+                return interner.intern("kk_sequence_sortedByDescending")
             case sortedDescendingName:
                 return interner.intern("kk_sequence_sortedDescending")
             case interner.intern("shuffled"):
