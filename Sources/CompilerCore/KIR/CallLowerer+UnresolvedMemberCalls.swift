@@ -666,12 +666,16 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_associateWithTo")
             case interner.intern("groupByTo"):
                 return interner.intern("kk_sequence_groupByTo")
+            case interner.intern("flatMapIndexedTo"):
+                return interner.intern("kk_sequence_flatMapIndexedTo")
             case interner.intern("flatMapTo"):
                 return interner.intern("kk_sequence_flatMapTo")
             case interner.intern("contains"):
                 return interner.intern("kk_sequence_contains")
             case interner.intern("indexOf"):
                 return interner.intern("kk_sequence_indexOf")
+            case interner.intern("intersect"):
+                return interner.intern("kk_sequence_intersect")
             case interner.intern("elementAt"):
                 return interner.intern("kk_sequence_elementAt")
             case interner.intern("elementAtOrNull"):
@@ -680,6 +684,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_findLast")
             case interner.intern("find"):
                 return interner.intern("kk_sequence_find")
+            case interner.intern("single"):
+                return interner.intern("kk_sequence_single")
             case interner.intern("singleOrNull"):
                 return interner.intern("kk_sequence_singleOrNull")
             case interner.intern("any"):
@@ -700,6 +706,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_filterNotNull")
             case interner.intern("requireNoNulls"):
                 return interner.intern("kk_sequence_requireNoNulls")
+            case interner.intern("reversed"):
+                return interner.intern("kk_sequence_reversed")
             case interner.intern("asIterable"):
                 return interner.intern("kk_sequence_asIterable")
             case interner.intern("mapIndexed"):
@@ -740,6 +748,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_lastOrNull")
             case countName:
                 return interner.intern("kk_sequence_count")
+            case interner.intern("max"):
+                return interner.intern("kk_sequence_max")
             case interner.intern("sum"):
                 return interner.intern("kk_sequence_sum")
             case interner.intern("average"):
@@ -789,6 +799,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_runningFoldIndexed")
             case interner.intern("scanIndexed"):
                 return interner.intern("kk_sequence_scanIndexed")
+            case interner.intern("reduceRight"):
+                return interner.intern("kk_sequence_reduceRight")
             case interner.intern("reduceIndexed"):
                 return interner.intern("kk_sequence_reduceIndexed")
             case interner.intern("reduceIndexedOrNull"):

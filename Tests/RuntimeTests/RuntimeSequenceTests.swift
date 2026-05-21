@@ -95,6 +95,10 @@ private let indexedAccumulatingSum: @convention(c) (Int, Int, Int, Int, UnsafeMu
     acc + index * value
 }
 
+private let reduceRightChecksum: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, acc, _ in
+    value * 10 + acc
+}
+
 private let throwingAccumulator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, _, outThrown in
     outThrown?.pointee = runtimeAllocateThrowable(message: "sequence accumulator failed")
     return 0
@@ -300,6 +304,12 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(result, runtimeNullSentinelInt)
     }
 
+    func testTakeLimitsSequenceElements() {
+        XCTAssertEqual(sequenceElements(kk_sequence_take(makeSequence([1, 2, 3, 4]), 2)), [1, 2])
+        XCTAssertEqual(sequenceElements(kk_sequence_take(makeSequence([1, 2]), 5)), [1, 2])
+        XCTAssertEqual(sequenceElements(kk_sequence_take(makeSequence([1, 2]), 0)), [])
+    }
+
     func testTakeLastReturnsTrailingElementsAsList() {
         XCTAssertEqual(listElements(kk_sequence_takeLast(makeSequence([1, 2, 3, 4]), 2, nil)), [3, 4])
         XCTAssertEqual(listElements(kk_sequence_takeLast(makeSequence([1, 2]), 5, nil)), [1, 2])
@@ -404,6 +414,11 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
     }
 
+    func testMaxOrNullReturnsLargestElementAndNullOnEmpty() {
+        XCTAssertEqual(kk_sequence_maxOrNull(makeSequence([3, 1, 4, 2])), 4)
+        XCTAssertEqual(kk_sequence_maxOrNull(makeSequence([])), runtimeNullSentinelInt)
+    }
+
     func testMaxWithOrNullReturnsLargestElementAndNullOnEmpty() {
         var thrown = 0
         let result = kk_sequence_maxWithOrNull(
@@ -483,6 +498,13 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         let sorted = kk_sequence_sorted(source)
 
         XCTAssertEqual(sequenceElements(sorted), [1, 1, 2, 3])
+    }
+
+    func testSortedDescendingOrdersSequenceElementsWithRuntimeComparison() {
+        let source = makeSequence([3, 1, 2, 1])
+        let sorted = kk_sequence_sortedDescending(source)
+
+        XCTAssertEqual(sequenceElements(sorted), [3, 2, 1, 1])
     }
 
     func testJoinToStringUsesSeparatorPrefixAndPostfix() {
@@ -659,6 +681,14 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(listElements(kk_map_get(result, 0)), [4])
     }
 
+    func testIntersectReturnsDeduplicatedSetInReceiverOrder() {
+        let seq = makeSequence([1, 2, 2, 3, 4])
+        let other = registerRuntimeObject(RuntimeListBox(elements: [2, 4, 5]))
+
+        let result = kk_sequence_intersect(seq, other)
+
+        XCTAssertEqual(setElements(result), [2, 4])
+    }
     func testGroupByGroupsElementsIntoNewMap() {
         let seq = makeSequence([1, 2, 3, 4, 5])
 
@@ -1163,7 +1193,52 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(result, 0)
     }
 
-    // MARK: - Sequence indexed reduction tests (STDLIB-556, STDLIB-SEQ-015)
+    // MARK: - Sequence reduction tests (STDLIB-SEQ-FN-094, STDLIB-556, STDLIB-SEQ-015)
+
+    func testReduceRightEmptySequenceThrows() {
+        let seq = makeSequence([])
+        var thrown = 0
+
+        let result = kk_sequence_reduceRight(
+            seq,
+            unsafeBitCast(reduceRightChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(result, 0)
+    }
+
+    func testReduceRightNonEmptySequenceAccumulatesFromRight() {
+        let seq = makeSequence([1, 2, 3, 4])
+        var thrown = 0
+
+        let result = kk_sequence_reduceRight(
+            seq,
+            unsafeBitCast(reduceRightChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 64)
+    }
+
+    func testReduceRightReturnsZeroWhenLambdaThrows() {
+        let seq = makeSequence([1, 2, 3])
+        var thrown = 0
+
+        let result = kk_sequence_reduceRight(
+            seq,
+            unsafeBitCast(throwingAccumulator, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(result, 0)
+    }
 
     func testReduceIndexedEmptySequenceThrows() {
         let seq = makeSequence([])
@@ -1312,6 +1387,28 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(result, 0)
     }
 
+    func testSequenceSingleReturnsOnlyElement() {
+        let seq = makeSequence([42])
+        var thrown = 0
+
+        let result = kk_sequence_single(seq, &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 42)
+    }
+
+    func testSequenceSingleThrowsForEmptyAndMultipleElements() {
+        var emptyThrown = 0
+        let emptyResult = kk_sequence_single(makeSequence([]), &emptyThrown)
+        XCTAssertNotEqual(emptyThrown, 0)
+        XCTAssertEqual(emptyResult, 0)
+
+        var multipleThrown = 0
+        let multipleResult = kk_sequence_single(makeSequence([1, 2]), &multipleThrown)
+        XCTAssertNotEqual(multipleThrown, 0)
+        XCTAssertEqual(multipleResult, 0)
+    }
+
     func testSequenceSingleOrNullReturnsOnlyElement() {
         let seq = makeSequence([42])
         var thrown = 0
@@ -1353,6 +1450,16 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         kk_sequence_from_list(makeList(elements))
     }
 
+    func testFilterIsInstanceToAppendsMatchingRuntimeTypesToDestination() {
+        let seq = makeSequence([1, runtimeTestStringHandle("two"), 3])
+        let destination = makeList([0])
+
+        let result = kk_sequence_filterIsInstanceTo(seq, destination, 3)
+
+        XCTAssertEqual(result, destination)
+        XCTAssertEqual(listElements(destination), [0, 1, 3])
+    }
+
     // MARK: - Sequence.constrainOnce (STDLIB-SEQ-006)
 
     func testConstrainOnceReportsIllegalStateOnSecondToList() {
@@ -1368,6 +1475,10 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(secondList, runtimeNullSentinelInt)
     }
 
+    func testElementAtOrNullReturnsIndexedValueOrNullSentinel() {
+        XCTAssertEqual(kk_sequence_elementAtOrNull(makeSequence([10, 20, 30]), 1), 20)
+        XCTAssertEqual(kk_sequence_elementAtOrNull(makeSequence([10]), 3), runtimeNullSentinelInt)
+    }
     func testDistinctByPreservesFirstKeyOccurrenceOrder() {
         var thrown = 0
         let result = kk_sequence_distinctBy(
@@ -1408,6 +1519,19 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
 
         XCTAssertEqual(sequenceElements(kk_sequence_shuffled_random(makeSequence([]), 0)), [])
         XCTAssertEqual(sequenceElements(kk_sequence_shuffled_random(makeSequence([42]), 0)), [42])
+    }
+
+    func testSequenceMaxReturnsLargestElementAndThrowsOnEmpty() throws {
+        var thrown = 0
+        let result = kk_sequence_max(makeSequence([3, 1, 4, 2]), &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 4)
+
+        let emptyResult = kk_sequence_max(makeSequence([]), &thrown)
+        XCTAssertEqual(emptyResult, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
+        let box = try XCTUnwrap(throwableBox(from: thrown))
+        XCTAssertEqual(box.message, kEmptySequenceNoSuchElement)
     }
 
     // MARK: - STDLIB-SEQ-014: Sequence.requireNoNulls()
@@ -1461,6 +1585,27 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertNotEqual(thrown, 0)
         let box = try XCTUnwrap(throwableBox(from: thrown))
         XCTAssertEqual(box.exceptionFQName, "kotlin.IllegalArgumentException")
+    }
+
+    // MARK: - STDLIB-SEQ-FN-099: Sequence.reversed()
+
+    func testSequenceReversedMaterializesInReverseOrder() {
+        let seq = makeSequence([1, 2, 3, 4])
+        let reversed = kk_sequence_reversed(seq)
+        var thrown = 0
+        let list = kk_sequence_to_list(reversed, &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(listElements(list), [4, 3, 2, 1])
+    }
+
+    func testSequenceReversedEmptySequenceReturnsEmptySequence() {
+        let reversed = kk_sequence_reversed(makeSequence([]))
+        var thrown = 0
+        let list = kk_sequence_to_list(reversed, &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(listElements(list), [])
     }
 
     // MARK: - Sequence mutable conversions (STDLIB-SEQ-025)
@@ -1670,6 +1815,22 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertNotEqual(thrown, 0)
         let box = try XCTUnwrap(throwableBox(from: thrown))
         XCTAssertEqual(box.message, kEmptySequenceNoSuchElement)
+    }
+
+    func testSequenceMaxByOrNullReturnsElementWithLargestSelectorAndNullOnEmpty() {
+        let selector: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, outThrown in
+            outThrown?.pointee = 0
+            return -value
+        }
+
+        var thrown = 0
+        let result = kk_sequence_maxByOrNull(makeSequence([3, 1, 4, 2]), unsafeBitCast(selector, to: Int.self), 0, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 1)
+
+        let emptyResult = kk_sequence_maxByOrNull(makeSequence([]), unsafeBitCast(selector, to: Int.self), 0, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
     }
 
     // MARK: - Lazy Sequence Builder Tests (STDLIB-563)
