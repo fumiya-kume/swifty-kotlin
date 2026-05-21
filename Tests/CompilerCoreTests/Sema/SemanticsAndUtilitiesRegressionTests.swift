@@ -1047,6 +1047,85 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathUseDirectoryEntriesExtensionFunctionInIOPathPackageSurfaceIsRegistered() throws {
+        let source = """
+        import kotlin.io.path.Path
+        import kotlin.io.path.useDirectoryEntries
+
+        fun collect(path: Path) {}
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnostics = ctx.diagnostics.diagnostics.map(\.message)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.useDirectoryEntries(glob, block) extension function in kotlin.io.path should register: \(diagnostics)"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let sequenceSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "sequences", "Sequence"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let sequenceOfPathType = types.make(.classType(ClassType(
+                classSymbol: sequenceSymbol,
+                args: [.out(pathType)],
+                nullability: .nonNull
+            )))
+            let useDirectoryEntriesSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "useDirectoryEntries"].map(interner.intern))
+            let fullUseDirectoryEntries = try XCTUnwrap(useDirectoryEntriesSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID),
+                      let typeParameterSymbol = signature.typeParameterSymbols.first
+                else {
+                    return false
+                }
+                let typeParameterType = types.make(.typeParam(TypeParamType(symbol: typeParameterSymbol, nullability: .nonNull)))
+                let blockType = types.make(.functionType(FunctionType(
+                    params: [sequenceOfPathType],
+                    returnType: typeParameterType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [types.stringType, blockType]
+                    && signature.returnType == typeParameterType
+            })
+            let defaultUseDirectoryEntries = try XCTUnwrap(useDirectoryEntriesSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID),
+                      let typeParameterSymbol = signature.typeParameterSymbols.first
+                else {
+                    return false
+                }
+                let typeParameterType = types.make(.typeParam(TypeParamType(symbol: typeParameterSymbol, nullability: .nonNull)))
+                let blockType = types.make(.functionType(FunctionType(
+                    params: [sequenceOfPathType],
+                    returnType: typeParameterType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [blockType]
+                    && signature.returnType == typeParameterType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: fullUseDirectoryEntries), "kk_path_useDirectoryEntries")
+            XCTAssertEqual(symbols.externalLinkName(for: defaultUseDirectoryEntries), "kk_path_useDirectoryEntries_default")
+
+            let fullSignature = try XCTUnwrap(symbols.functionSignature(for: fullUseDirectoryEntries))
+            XCTAssertEqual(fullSignature.valueParameterHasDefaultValues, [true, false])
+            XCTAssertEqual(fullSignature.valueParameterIsVararg, [false, false])
+            let defaultSignature = try XCTUnwrap(symbols.functionSignature(for: defaultUseDirectoryEntries))
+            XCTAssertEqual(defaultSignature.valueParameterHasDefaultValues, [false])
+            XCTAssertEqual(defaultSignature.valueParameterIsVararg, [false])
+
+            XCTAssertEqual(fullSignature.typeParameterSymbols.count, 1)
+            XCTAssertEqual(defaultSignature.typeParameterSymbols.count, 1)
+        }
+    }
+
     func testPathReadAttributesGenericOptionsExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import java.nio.file.LinkOption
