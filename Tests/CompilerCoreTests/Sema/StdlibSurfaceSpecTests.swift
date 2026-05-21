@@ -167,6 +167,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("associateByTo", 2),
             sequence("associateWithTo", 2),
             sequence("groupByTo", 2),
+            sequence("reduceOrNull", 1),
             sequence("reduceRight", 1),
             sequence("reduceIndexed", 1),
         ]
@@ -212,6 +213,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
                 (.sequence, ["kotlin", "sequences", "Sequence"], "randomOrNull", 0),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "plusElement", 1),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "requireNoNulls", 0),
+                (.sequence, ["kotlin", "sequences", "Sequence"], "reduceOrNull", 1),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "shuffled", 0),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "shuffled", 1),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "reduceRight", 1),

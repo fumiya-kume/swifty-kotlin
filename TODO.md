@@ -257,7 +257,6 @@
 - [x] STDLIB-REFLECT-TYPE-011: `KMutableProperty1` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-013: `KParameter` インターフェースの実装
 - [x] STDLIB-REFLECT-TYPE-015: `KProperty0` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-016: `KProperty1` インターフェースの実装
 - [x] STDLIB-REFLECT-TYPE-016: `KProperty1` インターフェースの実装
 - [x] STDLIB-REFLECT-TYPE-022: `KVisibility` enum の実装
 
@@ -393,6 +392,8 @@
 - [ ] STDLIB-SEQ-FN-089: `random` 関数の実装
 - [x] STDLIB-SEQ-FN-090: `randomOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-091: `reduce` 関数の実装
+- [ ] STDLIB-SEQ-FN-092: `reduceIndexed` 関数の実装
+- [x] STDLIB-SEQ-FN-093: `reduceOrNull` 関数の実装
 - [x] STDLIB-SEQ-FN-092: `reduceIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-093: `reduceOrNull` 関数の実装
 - [x] STDLIB-SEQ-FN-094: `reduceRight` 関数の実装
