@@ -255,11 +255,6 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         let result = kk_sequence_minByOrNull(
             makeSequence([5, 2, 3]),
             unsafeBitCast(sequenceModuloThreeSelector, to: Int.self),
-    func testMinOfOrNullReturnsSmallestSelectedValueAndNullOnEmpty() {
-        var thrown = 0
-        let result = kk_sequence_minOfOrNull(
-            makeSequence([5, 2, 3]),
-            unsafeBitCast(sequenceValueTimesTen, to: Int.self),
             0,
             &thrown
         )
@@ -270,6 +265,23 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         let emptyResult = kk_sequence_minByOrNull(
             makeSequence([]),
             unsafeBitCast(sequenceModuloThreeSelector, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
+    }
+
+    func testMinOfOrNullReturnsSmallestSelectedValueAndNullOnEmpty() {
+        var thrown = 0
+        let result = kk_sequence_minOfOrNull(
+            makeSequence([5, 2, 3]),
+            unsafeBitCast(sequenceValueTimesTen, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
         XCTAssertEqual(result, 20)
 
         let emptyResult = kk_sequence_minOfOrNull(
