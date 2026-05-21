@@ -44,6 +44,7 @@ extension DataFlowSemaPhase {
             symbols.setParentSymbol(packageSymbol, for: classSymbol)
         }
         symbols.insertFlags([.synthetic, .openType], for: classSymbol)
+        appendJsBigIntInteropAnnotation(to: classSymbol, symbols: symbols)
 
         let classType = types.make(.classType(ClassType(
             classSymbol: classSymbol,
@@ -73,6 +74,7 @@ extension DataFlowSemaPhase {
                 && signature.returnType == returnType
         }) {
             symbols.setExternalLinkName("kk_long_toJsBigInt", for: existing)
+            appendJsBigIntInteropAnnotation(to: existing, symbols: symbols)
             return
         }
 
@@ -88,6 +90,7 @@ extension DataFlowSemaPhase {
             symbols.setParentSymbol(packageSymbol, for: functionSymbol)
         }
         symbols.setExternalLinkName("kk_long_toJsBigInt", for: functionSymbol)
+        appendJsBigIntInteropAnnotation(to: functionSymbol, symbols: symbols)
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: types.longType,
@@ -96,5 +99,19 @@ extension DataFlowSemaPhase {
             ),
             for: functionSymbol
         )
+    }
+
+    private func appendJsBigIntInteropAnnotation(
+        to symbol: SymbolID,
+        symbols: SymbolTable
+    ) {
+        let experimentalRecord = MetadataAnnotationRecord(
+            annotationFQName: "kotlin.js.ExperimentalWasmJsInterop"
+        )
+        var annotations = symbols.annotations(for: symbol)
+        if !annotations.contains(experimentalRecord) {
+            annotations.append(experimentalRecord)
+            symbols.setAnnotations(annotations, for: symbol)
+        }
     }
 }

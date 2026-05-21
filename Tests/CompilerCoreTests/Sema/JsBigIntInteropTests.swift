@@ -47,10 +47,15 @@ final class JsBigIntInteropTests: XCTestCase {
         XCTAssertEqual(signature.valueParameterHasDefaultValues, [])
         XCTAssertEqual(signature.valueParameterIsVararg, [])
         XCTAssertEqual(sema.symbols.externalLinkName(for: function), "kk_long_toJsBigInt")
+        XCTAssertTrue(sema.symbols.annotations(for: function).contains {
+            $0.annotationFQName == "kotlin.js.ExperimentalWasmJsInterop"
+        })
     }
 
     func testLongToJsBigIntResolvesFromSource() throws {
         let source = """
+        @file:OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
+
         import kotlin.js.JsBigInt
         import kotlin.js.toJsBigInt
 
