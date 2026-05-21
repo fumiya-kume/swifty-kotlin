@@ -934,6 +934,7 @@ extension CallLowerer {
             interner.intern("kk_map_mapKeysTo"),
             interner.intern("kk_map_mapValuesTo"),
             interner.intern("kk_sequence_mapNotNull"),
+            interner.intern("kk_sequence_mapIndexedNotNull"),
             interner.intern("kk_sequence_firstNotNullOf"),
             interner.intern("kk_sequence_firstNotNullOfOrNull"),
             interner.intern("kk_sequence_mapIndexed"),

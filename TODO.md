@@ -350,10 +350,15 @@
  - [x] STDLIB-SEQ-FN-053: `joinToString` 関数の実装
  - [x] STDLIB-SEQ-FN-054: `last` 関数の実装
 - [ ] STDLIB-SEQ-FN-055: `lastIndexOf` 関数の実装
+- [ ] STDLIB-SEQ-FN-056: `lastOrNull` 関数の実装
+- [ ] STDLIB-SEQ-FN-057: `map` 関数の実装
+- [ ] STDLIB-SEQ-FN-058: `mapIndexed` 関数の実装
+- [x] STDLIB-SEQ-FN-059: `mapIndexedNotNull` 関数の実装
+- [ ] STDLIB-SEQ-FN-060: `mapIndexedNotNullTo` 関数の実装
 - [x] STDLIB-SEQ-FN-056: `lastOrNull` 関数の実装
 - [x] STDLIB-SEQ-FN-057: `map` 関数の実装
 - [x] STDLIB-SEQ-FN-058: `mapIndexed` 関数の実装
-- [ ] STDLIB-SEQ-FN-059: `mapIndexedNotNull` 関数の実装
+- [x] STDLIB-SEQ-FN-059: `mapIndexedNotNull` 関数の実装
 - [x] STDLIB-SEQ-FN-060: `mapIndexedNotNullTo` 関数の実装
 - [x] STDLIB-SEQ-FN-061: `mapIndexedTo` 関数の実装
 - [x] STDLIB-SEQ-FN-062: `mapNotNull` 関数の実装
