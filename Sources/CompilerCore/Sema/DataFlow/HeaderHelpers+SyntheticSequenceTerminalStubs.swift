@@ -200,6 +200,15 @@ extension DataFlowSemaPhase {
             returnType: receiverType
         )
 
+        // sortedDescending(): Sequence<T>
+        registerSequenceOverloadedMemberStub(
+            named: "sortedDescending",
+            externalLinkName: "kk_sequence_sortedDescending",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: receiverType
+        )
+
         // sortedBy(selector: (T) -> R): Sequence<T>, where R : Comparable<R>
         do {
             let memberName = interner.intern("sortedBy")
