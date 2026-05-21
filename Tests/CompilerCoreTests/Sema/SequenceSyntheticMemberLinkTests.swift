@@ -574,11 +574,6 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
         fun splitValues(): Pair<List<Int>, List<Int>> {
             val values = sequenceOf(1, 2, 3, 4)
             return values.partition { value -> value % 2 == 0 }
-    func testSequencePlusElementResolvesInCallExpressions() throws {
-        let source = """
-        fun appendValue(): Sequence<Int> {
-            val values = sequenceOf(1, 2, 3)
-            return values.plusElement(4)
         }
         """
 
@@ -595,6 +590,31 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
 
             let sema = try XCTUnwrap(ctx.sema)
             let memberFQName = ["kotlin", "sequences", "Sequence", "partition"]
+                .map { ctx.interner.intern($0) }
+            let links = Set(
+                sema.symbols.lookupAll(fqName: memberFQName)
+                    .compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
+            XCTAssertTrue(links.contains("kk_sequence_partition"))
+        }
+    }
+
+    func testSequencePlusElementResolvesInCallExpressions() throws {
+        let source = """
+        fun appendValue(): Sequence<Int> {
+            val values = sequenceOf(1, 2, 3)
+            return values.plusElement(4)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
                 "Expected Sequence.plusElement surface to resolve cleanly, got: \(diagnosticSummary)"
             )
 
@@ -605,7 +625,6 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
                 sema.symbols.lookupAll(fqName: memberFQName)
                     .compactMap { sema.symbols.externalLinkName(for: $0) }
             )
-            XCTAssertTrue(links.contains("kk_sequence_partition"))
             XCTAssertTrue(links.contains("kk_sequence_plus_element"))
         }
     }

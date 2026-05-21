@@ -52,6 +52,25 @@ extension CodegenBackendIntegrationTests {
             println(odds)
             println(emptyYes.size)
             println(emptyNo.size)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequencePartition",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[2, 4]\n[1, 3, 5]\n0\n0\n")
+        }
+    }
+
     func testCodegenSequenceNoneOverloads() throws {
         let source = """
         fun main() {
@@ -66,7 +85,6 @@ extension CodegenBackendIntegrationTests {
             let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
             let ctx = try runCodegenPipeline(
                 inputPath: path,
-                moduleName: "SequencePartition",
                 moduleName: "SequenceNoneOverloads",
                 emit: .executable,
                 outputPath: outputBase
@@ -75,7 +93,6 @@ extension CodegenBackendIntegrationTests {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "[2, 4]\n[1, 3, 5]\n0\n0\n")
             XCTAssertEqual(normalizedStdout, "true\nfalse\ntrue\nfalse\n")
         }
     }
