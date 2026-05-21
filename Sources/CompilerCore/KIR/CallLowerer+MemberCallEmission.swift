@@ -629,6 +629,7 @@ extension CallLowerer {
             interner.intern("kk_list_maxWithOrNull"),
             interner.intern("kk_list_minWith"),
             interner.intern("kk_list_minWithOrNull"),
+            interner.intern("kk_sequence_minWith"),
             interner.intern("kk_list_sortedWith"),
             interner.intern("kk_array_sortedArrayWith"),
         ]
@@ -948,6 +949,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_minOf"),
             interner.intern("kk_sequence_minOfOrNull"),
             interner.intern("kk_sequence_maxOfOrNull"),
+            interner.intern("kk_sequence_minWith"),
             interner.intern("kk_sequence_maxOf"),
             interner.intern("kk_sequence_partition"),
             interner.intern("kk_sequence_associateWith"),

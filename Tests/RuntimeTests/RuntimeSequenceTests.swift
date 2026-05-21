@@ -222,6 +222,12 @@ private let sequenceMaxWithOrNullNaturalComparator: @convention(c) (Int, Int, In
     lhs - rhs
 }
 
+private let sequenceReverseIntComparator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, lhs, rhs, _ in
+    if lhs < rhs { return 1 }
+    if lhs > rhs { return -1 }
+    return 0
+}
+
 private func runtimeTestStringHandle(_ value: String) -> Int {
     let bytes = Array(value.utf8)
     return bytes.withUnsafeBufferPointer { buffer in
@@ -1997,4 +2003,23 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         return keys
     }
 
+
+    func testMinWithReturnsComparatorMinimumAndThrowsOnEmpty() {
+        var thrown = 0
+        let result = kk_sequence_minWith(
+            makeSequence([5, 2, 3]),
+            unsafeBitCast(sequenceReverseIntComparator, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(result, 5)
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        XCTAssertEqual(
+            kk_sequence_minWith(makeSequence([]), unsafeBitCast(sequenceReverseIntComparator, to: Int.self), 0, &thrown),
+            runtimeExceptionCaughtSentinel
+        )
+        XCTAssertNotEqual(thrown, 0)
+    }
 }
