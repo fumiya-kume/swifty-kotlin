@@ -1,4 +1,4 @@
-/// `List<E>.toList` / `toMutableList` / `toIntArray` / `toDoubleArray` /
+/// `List<E>.toList` / `toMutableList` / `toTypeArray` / `toIntArray` / `toDoubleArray` /
 /// `toBooleanArray` / etc. conversion members extracted from
 /// `HeaderHelpers+SyntheticListStubs.swift`.
 extension DataFlowSemaPhase {
@@ -81,6 +81,14 @@ extension DataFlowSemaPhase {
             listInterfaceSymbol: listInterfaceSymbol,
             listTypeParamSymbol: listTypeParamSymbol,
             listTypeParamType: listTypeParamType
+        )
+        registerListToGenericArrayMember(
+            symbols: symbols, types: types, interner: interner,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            listTypeParamType: listTypeParamType,
+            memberName: "toTypeArray",
+            externalLinkName: "kk_list_toTypedArray"
         )
         let kotlinPkg = [interner.intern("kotlin")]
         registerListToPrimitiveArrayMember(
@@ -190,6 +198,64 @@ extension DataFlowSemaPhase {
             arrayTypeName: "ULongArray",
             arrayPackage: kotlinPkg,
             externalLinkName: "kk_list_toULongArray"
+        )
+    }
+
+    /// Register a `List<E>.toTypeArray(): Array<E>` conversion member stub.
+    private func registerListToGenericArrayMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        listInterfaceSymbol: SymbolID,
+        listTypeParamSymbol: SymbolID,
+        listTypeParamType: TypeID,
+        memberName: String,
+        externalLinkName: String
+    ) {
+        guard let listFQName = symbols.symbol(listInterfaceSymbol)?.fqName else {
+            return
+        }
+        let arraySymbol = ensureClassSymbol(
+            named: "Array",
+            in: [interner.intern("kotlin")],
+            symbols: symbols,
+            interner: interner
+        )
+
+        let internedMemberName = interner.intern(memberName)
+        let memberFQName = listFQName + [internedMemberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: arraySymbol,
+            args: [.invariant(listTypeParamType)],
+            nullability: .nonNull
+        )))
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: internedMemberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: returnType,
+                typeParameterSymbols: [listTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
         )
     }
 

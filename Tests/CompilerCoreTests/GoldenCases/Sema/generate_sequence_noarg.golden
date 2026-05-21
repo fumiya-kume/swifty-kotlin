@@ -2,52 +2,53 @@ symbol s0 kind=interface fq=kotlin.sequences.Sequence vis=public flags=synthetic
 symbol s1 kind=typeParameter fq=kotlin.sequences.Sequence.T vis=private flags=_
 symbol s2 kind=interface fq=kotlin.collections.List vis=public flags=synthetic
 symbol s3 kind=function fq=kotlin.io.println vis=public flags=synthetic sig=recv=_ params=[Any?] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s4 kind=function fq=kotlin.sequences.Sequence.toList vis=public flags=synthetic|operatorFunction sig=recv=Class#0<out T#1> params=[] ret=Class#2<out T#1> suspend=0 defaults=[] vararg=[]
-symbol s5 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s6 kind=local fq=__local_0.count vis=private flags=mutable type=Int
-symbol s7 kind=local fq=__local_1.gen vis=private flags=_ type=Class#0<out Int>
-symbol s8 kind=local fq=__local_2.result vis=private flags=_ type=Class#2<Int>
-symbol s9 kind=local fq=__local_3.n vis=private flags=mutable type=Int
-symbol s10 kind=local fq=__local_4.naturals vis=private flags=_ type=Class#0<out Unit>
-symbol s11 kind=local fq=__local_5.first5 vis=private flags=_ type=Class#2<Unit>
+symbol s4 kind=function fq=kotlin.sequences.Sequence.take vis=public flags=synthetic|operatorFunction sig=recv=Class#0<out T#1> params=[Int] ret=Class#0<out T#1> suspend=0 defaults=[0] vararg=[0]
+symbol s5 kind=function fq=kotlin.sequences.Sequence.toList vis=public flags=synthetic|operatorFunction sig=recv=Class#0<out T#1> params=[] ret=Class#2<out T#1> suspend=0 defaults=[] vararg=[]
+symbol s6 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s7 kind=local fq=__local_0.count vis=private flags=mutable type=Int
+symbol s8 kind=local fq=__local_1.gen vis=private flags=_ type=Class#0<out Int>
+symbol s9 kind=local fq=__local_2.result vis=private flags=_ type=Class#2<Int>
+symbol s10 kind=local fq=__local_3.n vis=private flags=mutable type=Int
+symbol s11 kind=local fq=__local_4.naturals vis=private flags=_ type=Class#0<out Unit>
+symbol s12 kind=local fq=__local_5.first5 vis=private flags=_ type=Class#2<Unit>
 file f0 package=_
-  decl d0 fun main suspend=0 inline=0 sym=s5
+  decl d0 fun main suspend=0 inline=0 sym=s6
 expr e0 int(0) type=Int
-expr e1 localDecl count mutable=1 type=_ init=e0 type=Unit ref=s6
+expr e1 localDecl count mutable=1 type=_ init=e0 type=Unit ref=s7
 expr e2 name(generateSequence) type=_
 expr e3 name(count) type=_
 expr e4 int(1) type=Int
-expr e5 compoundAssign(plusAssign) name=count value=e4 type=Unit ref=s6
-expr e6 name(count) type=Int ref=s6
+expr e5 compoundAssign(plusAssign) name=count value=e4 type=Unit ref=s7
+expr e6 name(count) type=Int ref=s7
 expr e7 int(5) type=Int
 expr e8 binary(lessOrEqual) lhs=e6 rhs=e7 type=Boolean
-expr e9 name(count) type=Int ref=s6
+expr e9 name(count) type=Int ref=s7
 expr e10 name(null) type=Nothing?
 expr e11 if cond=e8 then=e9 else=e10 type=Int?
 expr e12 blockExpr stmts=[e5] trailing=e11 type=Int?
 expr e13 lambda params=[] body=e12 label=generateSequence type=() -> Int?
 expr e14 call callee=e2 args=[_:e13] type=Class#0<out Int>
-expr e15 localDecl gen mutable=0 type=_ init=e14 type=Unit ref=s7
-expr e16 name(gen) type=Class#0<out Int> ref=s7
+expr e15 localDecl gen mutable=0 type=_ init=e14 type=Unit ref=s8
+expr e16 name(gen) type=Class#0<out Int> ref=s8
 expr e17 int(3) type=Int
-expr e18 memberCall recv=e16 callee=take args=[_:e17] type=Class#0<out Int>
-expr e19 memberCall recv=e18 callee=toList args=[] type=Class#2<Int> call=s4 map=[] targs=[]
-expr e20 localDecl result mutable=0 type=_ init=e19 type=Unit ref=s8
+expr e18 memberCall recv=e16 callee=take args=[_:e17] type=Class#0<out Int> call=s4 map=[0->0] targs=[]
+expr e19 memberCall recv=e18 callee=toList args=[] type=Class#2<Int> call=s5 map=[] targs=[]
+expr e20 localDecl result mutable=0 type=_ init=e19 type=Unit ref=s9
 expr e21 name(println) type=_
-expr e22 name(result) type=Class#2<Int> ref=s8
+expr e22 name(result) type=Class#2<Int> ref=s9
 expr e23 call callee=e21 args=[_:e22] type=Unit call=s3 map=[0->0] targs=[]
 expr e24 int(0) type=Int
-expr e25 localDecl n mutable=1 type=_ init=e24 type=Unit ref=s9
+expr e25 localDecl n mutable=1 type=_ init=e24 type=Unit ref=s10
 expr e26 name(generateSequence) type=_
 expr e27 blockExpr stmts=[] trailing=_ type=Unit
 expr e28 lambda params=[] body=e27 label=generateSequence type=() -> Unit
 expr e29 call callee=e26 args=[_:e28] type=Class#0<out Unit>
-expr e30 localDecl naturals mutable=0 type=_ init=e29 type=Unit ref=s10
-expr e31 name(naturals) type=Class#0<out Unit> ref=s10
+expr e30 localDecl naturals mutable=0 type=_ init=e29 type=Unit ref=s11
+expr e31 name(naturals) type=Class#0<out Unit> ref=s11
 expr e32 int(5) type=Int
-expr e33 memberCall recv=e31 callee=take args=[_:e32] type=Class#0<out Unit>
-expr e34 memberCall recv=e33 callee=toList args=[] type=Class#2<Unit> call=s4 map=[] targs=[]
-expr e35 localDecl first5 mutable=0 type=_ init=e34 type=Unit ref=s11
+expr e33 memberCall recv=e31 callee=take args=[_:e32] type=Class#0<out Unit> call=s4 map=[0->0] targs=[]
+expr e34 memberCall recv=e33 callee=toList args=[] type=Class#2<Unit> call=s5 map=[] targs=[]
+expr e35 localDecl first5 mutable=0 type=_ init=e34 type=Unit ref=s12
 expr e36 name(println) type=_
-expr e37 name(first5) type=Class#2<Unit> ref=s11
+expr e37 name(first5) type=Class#2<Unit> ref=s12
 expr e38 call callee=e36 args=[_:e37] type=Unit call=s3 map=[0->0] targs=[]
