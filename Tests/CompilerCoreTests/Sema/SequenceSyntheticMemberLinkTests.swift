@@ -644,11 +644,6 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
         fun appendWithOperator(): Sequence<Int> {
             val values = sequenceOf(1, 2)
             return values + sequenceOf(3, 4)
-    func testSequenceDistinctByResolvesInCallExpressions() throws {
-        let source = """
-        fun uniqueByParity(): Sequence<Int> {
-            val values = sequenceOf(1, 2, 3, 4)
-            return values.distinctBy { value -> value % 2 }
         }
         """
 
@@ -665,6 +660,31 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
 
             let sema = try XCTUnwrap(ctx.sema)
             let memberFQName = ["kotlin", "sequences", "Sequence", "plus"]
+                .map { ctx.interner.intern($0) }
+            let links = Set(
+                sema.symbols.lookupAll(fqName: memberFQName)
+                    .compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
+            XCTAssertTrue(links.contains("kk_sequence_plus"))
+        }
+    }
+
+    func testSequenceDistinctByResolvesInCallExpressions() throws {
+        let source = """
+        fun uniqueByParity(): Sequence<Int> {
+            val values = sequenceOf(1, 2, 3, 4)
+            return values.distinctBy { value -> value % 2 }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
                 "Expected Sequence.distinctBy surface to resolve cleanly, got: \(diagnosticSummary)"
             )
 
@@ -675,7 +695,6 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
                 sema.symbols.lookupAll(fqName: memberFQName)
                     .compactMap { sema.symbols.externalLinkName(for: $0) }
             )
-            XCTAssertTrue(links.contains("kk_sequence_plus"))
             XCTAssertTrue(links.contains("kk_sequence_distinctBy"))
         }
     }
