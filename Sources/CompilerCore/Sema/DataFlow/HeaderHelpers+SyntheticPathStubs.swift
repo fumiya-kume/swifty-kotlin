@@ -32,6 +32,8 @@
 /// - `Path.outputStream(vararg options: OpenOption): OutputStream` extension function
 /// - `Path.moveTo(target: Path, vararg options: CopyOption): Path` extension function
 /// - `Path.inputStream(vararg options: OpenOption): InputStream` extension function
+/// - `Path.reader(charset, vararg options: OpenOption): BufferedReader` extension function
+/// - `Path.inputStream(vararg options: OpenOption): InputStream` extension function
 /// - `Path.appendLines(lines: Iterable<CharSequence>, charset)` extension function
 /// - `Path.writeLines(lines: Iterable<CharSequence>, charset, options)` extension function
 /// - `Path.writeLines(lines: Sequence<CharSequence>, charset, options)` extension function
@@ -49,7 +51,9 @@
 /// - `Path.getLastModifiedTime(vararg options: LinkOption): FileTime` extension function
 /// - `Path.setOwner(value: UserPrincipal): Path` extension function
 /// - `Path.getPosixFilePermissions(vararg options: LinkOption): Set<PosixFilePermission>` extension function
+/// - `Path.setAttribute(attribute, value, vararg options: LinkOption): Path` extension function
 /// - `Path.fileSize(): Long` extension function
+/// - `Path.forEachDirectoryEntry(glob, action)` extension function
 /// - `Path.forEachLine(charset, action)` extension function
 /// - `Path.setPosixFilePermissions(value: Set<PosixFilePermission>): Path` extension function
 /// - `Path.useLines(charset, block)` extension function
@@ -96,6 +100,12 @@ extension DataFlowSemaPhase {
         symbols.setPropertyType(pathType, for: pathSymbol)
 
         let nullablePathType = types.makeNullable(pathType)
+        let pathActionType = types.make(.functionType(FunctionType(
+            params: [pathType],
+            returnType: types.unitType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
         let kotlinPkg = ensurePackage(path: ["kotlin"], symbols: symbols, interner: interner)
         let kotlinCollectionsPkg = ensurePackage(path: ["kotlin", "collections"], symbols: symbols, interner: interner)
         let kotlinTextPkg = ensurePackage(path: ["kotlin", "text"], symbols: symbols, interner: interner)
@@ -1081,6 +1091,29 @@ extension DataFlowSemaPhase {
         )
 
         registerPathExtensionFunction(
+            named: "forEachDirectoryEntry",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("glob", types.stringType), ("action", pathActionType)],
+            returnType: types.unitType,
+            externalLinkName: "kk_path_forEachDirectoryEntry",
+            valueParameterHasDefaultValues: [true, false],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "forEachDirectoryEntry",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("action", pathActionType)],
+            returnType: types.unitType,
+            externalLinkName: "kk_path_forEachDirectoryEntry_default",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
             named: "forEachLine",
             packageFQName: kotlinIOPathPkg,
             receiverType: pathType,
@@ -1422,6 +1455,33 @@ extension DataFlowSemaPhase {
         )
 
         registerPathExtensionFunction(
+            named: "reader",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [
+                ("charset", charsetType),
+                ("options", openOptionType),
+            ],
+            returnType: bufferedReaderType,
+            externalLinkName: "kk_path_reader",
+            valueParameterHasDefaultValues: [true, false],
+            valueParameterIsVararg: [false, true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "reader",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [],
+            returnType: bufferedReaderType,
+            externalLinkName: "kk_path_reader_default",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
             named: "bufferedWriter",
             packageFQName: kotlinIOPathPkg,
             receiverType: pathType,
@@ -1503,6 +1563,21 @@ extension DataFlowSemaPhase {
             returnType: userPrincipalType,
             externalLinkName: "kk_path_getOwner",
             valueParameterIsVararg: [true],
+            symbols: symbols,
+            interner: interner
+        )
+        registerPathExtensionFunction(
+            named: "setAttribute",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [
+                ("attribute", types.stringType),
+                ("value", types.stringType),
+                ("options", linkOptionType),
+            ],
+            returnType: pathType,
+            externalLinkName: "kk_path_setAttribute",
+            valueParameterIsVararg: [false, false, true],
             symbols: symbols,
             interner: interner
         )
