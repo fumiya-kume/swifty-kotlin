@@ -392,6 +392,8 @@ extension ABILoweringPass {
             interner.intern("kk_long_range_drop"),
             interner.intern("kk_long_range_average"),
             interner.intern("kk_long_range_sorted"),
+            interner.intern("kk_long_range_firstOrNull"),
+            interner.intern("kk_long_range_lastOrNull"),
             // CharRange take/drop/sorted (STDLIB-RANGE-TDS)
             interner.intern("kk_char_range_take"),
             interner.intern("kk_char_range_drop"),
@@ -655,6 +657,10 @@ extension ABILoweringPass {
             interner.intern("kk_array_fill"),
             interner.intern("kk_list_asSequence"),
             interner.intern("kk_array_asSequence"),
+            interner.intern("kk_stream_asSequence"),
+            interner.intern("kk_int_stream_asSequence"),
+            interner.intern("kk_long_stream_asSequence"),
+            interner.intern("kk_double_stream_asSequence"),
             // NOTE: kk_array_map/filter/forEach/any/none are NOT non-throwing
             // — the lambda argument can throw.
             interner.intern("kk_set_of"),
@@ -862,6 +868,7 @@ extension ABILoweringPass {
             interner.intern("kk_list_sortedDescending"),
             interner.intern("kk_list_filterIsInstance"),
             interner.intern("kk_list_filterIsInstanceTo"),
+            interner.intern("kk_sequence_filterIsInstanceTo"),
             interner.intern("kk_list_filterNotNullTo"),
             interner.intern("kk_list_subList"),
             interner.intern("kk_list_slice"),
@@ -916,15 +923,19 @@ extension ABILoweringPass {
             interner.intern("kk_sequence_forEach"),
             interner.intern("kk_sequence_flatMap"),
             interner.intern("kk_sequence_flatMapIndexed"),
+            interner.intern("kk_sequence_intersect"),
             interner.intern("kk_sequence_drop"),
             interner.intern("kk_sequence_distinct"),
             interner.intern("kk_sequence_zip"),
             interner.intern("kk_sequence_sorted"),
             interner.intern("kk_sequence_sortedDescending"),
+            interner.intern("kk_sequence_filterIsInstance"),
             interner.intern("kk_sequence_filterNotNull"),
             interner.intern("kk_sequence_requireNoNulls"),
+            interner.intern("kk_sequence_reversed"),
             interner.intern("kk_sequence_withIndex"),
             interner.intern("kk_sequence_flatMapIndexed"),
+            interner.intern("kk_sequence_joinTo"),
             interner.intern("kk_sequence_joinToString"),
             interner.intern("kk_sequence_chunked"),
             interner.intern("kk_sequence_windowed"),
@@ -937,6 +948,7 @@ extension ABILoweringPass {
             interner.intern("kk_sequence_zipWithNext"),
             // Sequence (STDLIB-470)
             interner.intern("kk_sequence_toSet"),
+            interner.intern("kk_sequence_toSortedSet"),
             interner.intern("kk_sequence_toHashSet"),
             interner.intern("kk_sequence_toMap"),
             interner.intern("kk_sequence_toCollection"),
@@ -947,6 +959,7 @@ extension ABILoweringPass {
             interner.intern("kk_sequence_plus"),
             interner.intern("kk_sequence_plus_element"),
             interner.intern("kk_sequence_minus"),
+            interner.intern("kk_sequence_union"),
             // Regex (STDLIB-100/101/102/103)
             interner.intern("kk_regex_create"),
             interner.intern("kk_string_matches_regex"),
@@ -1217,6 +1230,8 @@ extension ABILoweringPass {
             interner.intern("kk_ivparameterspec_new"),
             interner.intern("kk_keypair_public"),
             interner.intern("kk_keypair_private"),
+            // kotlin.js JsReference (STDLIB-JS-FN-004)
+            interner.intern("kk_js_reference_get"),
             // Kotlin/Native reference helpers — no outThrown parameter
             interner.intern("kk_weak_ref_create"),
             interner.intern("kk_weak_ref_get"),

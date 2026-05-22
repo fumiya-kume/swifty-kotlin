@@ -28,6 +28,7 @@ extension CallTypeChecker {
                  "kk_list_minus_element",
                  "kk_sequence_firstNotNullOf", "kk_sequence_firstNotNullOfOrNull",
                  "kk_sequence_chunked_transform",
+                 "kk_sequence_windowed_transform",
                  "kk_sequence_plus_element", "kk_sequence_minus",
                  "kk_array_binarySearch_compare", "kk_array_binarySearch",
                  "kk_list_windowed_transform",
@@ -99,6 +100,7 @@ extension CallTypeChecker {
              (knownNames.kotlinCollectionsCollectionFQName, knownNames.isEmpty),
              (knownNames.kotlinSequenceFQName, interner.intern("firstNotNullOf")),
              (knownNames.kotlinSequenceFQName, interner.intern("firstNotNullOfOrNull")),
+             (knownNames.kotlinSequenceFQName, interner.intern("takeLastWhile")),
              (knownNames.kotlinCollectionsMapFQName, interner.intern("get")),
              (knownNames.kotlinCollectionsMapFQName, interner.intern("containsKey")),
              (knownNames.kotlinCollectionsMapFQName, interner.intern("containsValue")),
@@ -164,5 +166,26 @@ extension CallTypeChecker {
             primaryRange: range,
             secondaryRanges: []
         )
+    }
+
+    func isListCollectionFactoryReceiver(
+        receiverID: ExprID,
+        ast: ASTModule,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard sema.bindings.isCollectionExpr(receiverID),
+              let expr = ast.arena.expr(receiverID),
+              case .call(let calleeID, _, _, _) = expr,
+              let calleeExpr = ast.arena.expr(calleeID),
+              case .nameRef(let name, _) = calleeExpr
+        else {
+            return false
+        }
+        return name == interner.intern("listOf")
+            || name == interner.intern("listOfNotNull")
+            || name == interner.intern("emptyList")
+            || name == interner.intern("mutableListOf")
+            || name == interner.intern("arrayListOf")
     }
 }

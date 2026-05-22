@@ -467,40 +467,11 @@ public func kk_channel_create(_ capacity: Int) -> Int {
     return Int(bitPattern: ptr)
 }
 
-@_cdecl("kk_channel_send")
 public func kk_channel_send(_ handle: Int, _ value: Int) -> Int {
-    func isRegisteredChannelHandle(_ raw: Int) -> Bool {
-        guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
-            return false
-        }
-        let isRegistered = runtimeStorage.withLock { state in
-            state.objectPointers.contains(UInt(bitPattern: ptr))
-        }
-        guard isRegistered else {
-            return false
-        }
-        return tryCast(ptr, to: RuntimeChannelHandle.self) != nil
-    }
-
-    let resolvedHandle: Int
-    let resolvedValue: Int
-    if !isRegisteredChannelHandle(handle), isRegisteredChannelHandle(value) {
-        resolvedHandle = value
-        resolvedValue = handle
-    } else {
-        resolvedHandle = handle
-        resolvedValue = value
-    }
-
-    guard let resolvedPtr = UnsafeMutableRawPointer(bitPattern: resolvedHandle) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_channel_send received invalid channel handle")
-    }
-    let channel = Unmanaged<RuntimeChannelHandle>.fromOpaque(resolvedPtr).takeUnretainedValue()
-    return channel.send(resolvedValue, continuation: 0)
+    kk_channel_send(handle, value, 0)
 }
 
-/// Swift-only convenience overload that preserves the legacy 3-argument call
-/// sites used by runtime tests.
+@_cdecl("kk_channel_send")
 public func kk_channel_send(_ handle: Int, _ value: Int, _ continuation: Int) -> Int {
     func isRegisteredChannelHandle(_ raw: Int) -> Bool {
         guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
@@ -900,4 +871,3 @@ func runtimeReadArrayElement(arrayRaw: Int, index: Int) -> Int {
     }
     return arrayBox.elements[index]
 }
-

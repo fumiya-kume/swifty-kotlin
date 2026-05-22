@@ -52,4 +52,40 @@ final class JsRegExpExternalClassTests: XCTestCase {
         ])
         XCTAssertEqual(signature.valueParameterHasDefaultValues, [false, true])
     }
+
+    func testRegExpResetMemberIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let regExpFQName = ["kotlin", "js", "RegExp"].map { interner.intern($0) }
+        let regExpSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: regExpFQName))
+        let regExpType = try XCTUnwrap(sema.symbols.propertyType(for: regExpSymbol))
+        let reset = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: regExpFQName + [interner.intern("reset")]).first { symbol in
+                guard let signature = sema.symbols.functionSignature(for: symbol) else {
+                    return false
+                }
+                return signature.receiverType == regExpType
+                    && signature.parameterTypes.isEmpty
+                    && signature.returnType == sema.types.unitType
+            },
+            "RegExp.reset() member must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(reset))
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: reset))
+
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+        XCTAssertEqual(signature.valueParameterHasDefaultValues, [])
+        XCTAssertEqual(signature.valueParameterIsVararg, [])
+        XCTAssertNil(sema.symbols.externalLinkName(for: reset))
+    }
+
+    func testRegExpResetCanBeCalled() throws {
+        _ = try makeSema(source: """
+        import kotlin.js.RegExp
+
+        fun resetRegex() {
+            RegExp("a").reset()
+        }
+        """)
+    }
 }

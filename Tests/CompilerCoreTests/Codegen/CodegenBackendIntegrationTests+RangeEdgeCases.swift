@@ -3,6 +3,45 @@ import Foundation
 import XCTest
 
 extension CodegenBackendIntegrationTests {
+    func testCodegenCoerceValueInTopLevel() throws {
+        let source = """
+        import kotlin.ranges.coerceValueIn
+
+        fun main() {
+            println(coerceValueIn(3, 1, 5))
+            println(coerceValueIn(0, 1, 5))
+            println(coerceValueIn(9, 1, 5))
+            println(coerceValueIn(7L, 10L, 20L))
+            println(coerceValueIn(2.5, 1.0, 2.0))
+            println(coerceValueIn(5u, 1u, 10u))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "CoerceValueInTopLevel",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            XCTAssertEqual(
+                result.stdout.replacingOccurrences(of: "\r\n", with: "\n"),
+                """
+                3
+                1
+                5
+                10
+                2.0
+                5
+                """ + "\n"
+            )
+        }
+    }
+
     func testCodegenCompilesRangeEdgeCases() throws {
         #if os(Linux)
         throw XCTSkip("Range edge cases test temporarily disabled on Linux")
@@ -263,6 +302,39 @@ extension CodegenBackendIntegrationTests {
                 5
                 5
                 5
+                """ + "\n"
+            )
+        }
+    }
+
+    func testCodegenLongRangeFirstAndLastOrNull() throws {
+        let source = """
+        fun main() {
+            println((1L..5L).firstOrNull())
+            println((1L..5L).lastOrNull())
+            println((10L..1L).firstOrNull())
+            println((10L..1L).lastOrNull())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "LongRangeFirstLastOrNull",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            XCTAssertEqual(
+                result.stdout.replacingOccurrences(of: "\r\n", with: "\n"),
+                """
+                1
+                5
+                null
+                null
                 """ + "\n"
             )
         }

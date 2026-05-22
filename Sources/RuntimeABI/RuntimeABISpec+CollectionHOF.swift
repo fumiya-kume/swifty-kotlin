@@ -1,16 +1,15 @@
 // swiftlint:disable file_length
 
-/// `RuntimeABISpec.collectionHOFFunctions` extracted from
-/// `RuntimeABISpec+Collection.swift`.
+/// Shared helpers for collection higher-order function ABI specs.
 public extension RuntimeABISpec {
-    private static let hofLambdaParams: [RuntimeABIParameter] = [
+    static let hofLambdaParams: [RuntimeABIParameter] = [
         RuntimeABIParameter(name: "listRaw", type: .intptr),
         RuntimeABIParameter(name: "fnPtr", type: .intptr),
         RuntimeABIParameter(name: "closureRaw", type: .intptr),
         RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
     ]
 
-    private static func hofSpec(_ name: String) -> RuntimeABIFunctionSpec {
+    static func hofSpec(_ name: String) -> RuntimeABIFunctionSpec {
         RuntimeABIFunctionSpec(
             name: name, parameters: hofLambdaParams,
             returnType: .intptr, section: "Collection"
@@ -439,6 +438,7 @@ public extension RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "listRaw", type: .intptr),
                 RuntimeABIParameter(name: "count", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Collection"
