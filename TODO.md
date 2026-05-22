@@ -328,6 +328,9 @@
 - [x] STDLIB-SEQ-FN-044: `forEach` 関数の実装
 - [ ] STDLIB-SEQ-FN-046: `groupBy` 関数の実装
 - [x] STDLIB-SEQ-FN-043: `foldIndexed` 関数の実装
+- [x] STDLIB-SEQ-FN-042: `fold` 関数の実装
+- [ ] STDLIB-SEQ-FN-043: `foldIndexed` 関数の実装
+- [x] STDLIB-SEQ-FN-043: `foldIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-044: `forEach` 関数の実装
 - [ ] STDLIB-SEQ-FN-046: `groupBy` 関数の実装
 - [x] STDLIB-SEQ-FN-047: `groupByTo` 関数の実装
