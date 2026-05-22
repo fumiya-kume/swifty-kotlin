@@ -167,4 +167,25 @@ extension CallTypeChecker {
             secondaryRanges: []
         )
     }
+
+    func isListCollectionFactoryReceiver(
+        receiverID: ExprID,
+        ast: ASTModule,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard sema.bindings.isCollectionExpr(receiverID),
+              let expr = ast.arena.expr(receiverID),
+              case .call(let calleeID, _, _, _) = expr,
+              let calleeExpr = ast.arena.expr(calleeID),
+              case .nameRef(let name, _) = calleeExpr
+        else {
+            return false
+        }
+        return name == interner.intern("listOf")
+            || name == interner.intern("listOfNotNull")
+            || name == interner.intern("emptyList")
+            || name == interner.intern("mutableListOf")
+            || name == interner.intern("arrayListOf")
+    }
 }
