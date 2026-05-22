@@ -72,9 +72,16 @@ extension CallTypeChecker {
         let isArrayReceiver = isArrayLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isMapReceiver = isMapLikeCollectionType(receiverType, sema: sema, interner: interner)
         let isMutableListReceiver = isMutableListType(receiverType, sema: sema, interner: interner)
+        let isListFactoryReceiver = isListCollectionFactoryReceiver(
+            receiverID: receiverID,
+            ast: ast,
+            sema: sema,
+            interner: interner
+        )
         let isSyntheticSequenceReceiver = sema.bindings.isCollectionExpr(receiverID)
             && !isCollectionLikeType(receiverType, sema: sema, interner: interner)
             && !isMapReceiver
+            && !isListFactoryReceiver
         let isSequenceReceiver = isSequenceLikeType(receiverType, sema: sema, interner: interner)
             || isSyntheticSequenceReceiver
         var activeCollectionHOFNames = collectionHOFNames
@@ -2607,6 +2614,22 @@ extension CallTypeChecker {
                         chosenCallee: chosenCallee,
                         substitutedTypeArguments: [collectionElementType],
                         parameterMapping: [0: 0]
+                    ))
+                    sema.bindings.bindCallableTarget(id, target: .symbol(chosenCallee))
+                }
+            }
+
+            if (calleeStr == "scan" || calleeStr == "runningFold"), !isSequenceReceiver {
+                let knownNames = KnownCompilerNames(interner: interner)
+                let memberFQName = knownNames.kotlinCollectionsListFQName + [calleeName]
+                if let chosenCallee = sema.symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+                    sema.symbols.functionSignature(for: symbolID)?.parameterTypes.count == args.count
+                }) {
+                    let initialType = args.isEmpty ? sema.types.anyType : (sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType)
+                    sema.bindings.bindCall(id, binding: CallBinding(
+                        chosenCallee: chosenCallee,
+                        substitutedTypeArguments: [collectionElementType, initialType],
+                        parameterMapping: Dictionary(uniqueKeysWithValues: args.indices.map { ($0, $0) })
                     ))
                     sema.bindings.bindCallableTarget(id, target: .symbol(chosenCallee))
                 }

@@ -176,6 +176,7 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         let returnType = returnsNullable ? types.makeNullable(nonNullReturnType) : nonNullReturnType
+
         if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
             symbols.symbol(symbolID)?.kind == .property
                 && symbols.extensionPropertyReceiverType(for: symbolID) == receiverType

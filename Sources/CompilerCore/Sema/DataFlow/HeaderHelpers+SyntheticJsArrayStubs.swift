@@ -103,6 +103,13 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerJsArrayConstructor(
+            ownerSymbol: jsArraySymbol,
+            ownerType: jsArrayType,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func registerJsArrayToArray(
@@ -232,5 +239,59 @@ extension DataFlowSemaPhase {
             for: functionSymbol
         )
         symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+    }
+
+    private func registerJsArrayConstructor(
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        typeParamSymbol: SymbolID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let initName = interner.intern("<init>")
+        let constructorFQName = ownerInfo.fqName + [initName]
+        let externalLinkName = "kk_js_array_create"
+
+        if let existing = symbols.lookupAll(fqName: constructorFQName).first(where: { symbolID in
+            guard let symbol = symbols.symbol(symbolID),
+                  symbol.kind == .constructor,
+                  let signature = symbols.functionSignature(for: symbolID)
+            else {
+                return false
+            }
+            return signature.parameterTypes.isEmpty
+                && signature.returnType == ownerType
+                && signature.typeParameterSymbols == [typeParamSymbol]
+                && signature.classTypeParameterCount == 1
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let constructorSymbol = symbols.define(
+            kind: .constructor,
+            name: initName,
+            fqName: constructorFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: constructorSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [],
+                returnType: ownerType,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: [],
+                valueParameterIsVararg: [],
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: constructorSymbol
+        )
+        symbols.setExternalLinkName(externalLinkName, for: constructorSymbol)
     }
 }
