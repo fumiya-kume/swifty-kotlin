@@ -3660,3 +3660,18 @@ public func kk_sequence_union(_ seqRaw: Int, _ otherRaw: Int) -> Int {
     let otherElements = runtimeUnboxCollectionElements(otherRaw)
     return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(selfElements + otherElements)))
 }
+
+@_cdecl("kk_sequence_subtract")
+public func kk_sequence_subtract(_ seqRaw: Int, _ otherRaw: Int) -> Int {
+    let selfElements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    let otherElements = runtimeUnboxCollectionElements(otherRaw)
+    var otherKeys = Set<RuntimeElementKey>()
+    otherKeys.reserveCapacity(otherElements.count)
+    for elem in otherElements {
+        otherKeys.insert(RuntimeElementKey(value: elem))
+    }
+    let result = runtimeDeduplicatePreservingOrder(selfElements).filter { elem in
+        !otherKeys.contains(RuntimeElementKey(value: elem))
+    }
+    return registerRuntimeObject(RuntimeSetBox(elements: result))
+}

@@ -1656,6 +1656,20 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // subtract(other: Iterable<T>): Set<T> (STDLIB-SEQ-FN-115)
+        registerSequenceMemberStub(
+            named: "subtract",
+            externalLinkName: "kk_sequence_subtract",
+            receiverType: receiverType,
+            parameters: [("other", iterableReturnType)],
+            returnType: setReturnType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // minus(element: T): Sequence<T>
         registerSequenceMemberStub(
             named: "minus",
