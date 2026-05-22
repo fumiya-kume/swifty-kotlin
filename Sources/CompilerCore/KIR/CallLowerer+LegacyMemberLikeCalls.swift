@@ -2571,6 +2571,7 @@ extension CallLowerer {
                 let flatMapIndexedToName = interner.intern("flatMapIndexedTo")
                 let containsName = interner.intern("contains")
                 let indexOfName = interner.intern("indexOf")
+                let lastIndexOfName = interner.intern("lastIndexOf")
                 let indexOfLastName = interner.intern("indexOfLast")
                 let elementAtName = interner.intern("elementAt")
                 let elementAtOrNullName = interner.intern("elementAtOrNull")
@@ -2652,6 +2653,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_contains"
                 } else if calleeName == indexOfName {
                     runtimeCallee = "kk_sequence_indexOf"
+                } else if calleeName == lastIndexOfName {
+                    runtimeCallee = "kk_sequence_lastIndexOf"
                 } else if calleeName == indexOfLastName {
                     runtimeCallee = "kk_sequence_indexOfLast"
                 } else if calleeName == elementAtName {
