@@ -400,6 +400,30 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testSequenceDropWhileSkipsLeadingMatchesOnly() throws {
+        let source = """
+        fun main() {
+            val result = sequenceOf(1, 2, 3, 1, 4).dropWhile { it < 3 }.toList()
+            println(result)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceDropWhile",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[3, 1, 4]\n")
+        }
+    }
+
     func testSequenceElementAtOrNullReturnsValueOrNull() throws {
         let source = """
         fun main() {
@@ -600,6 +624,30 @@ extension CodegenBackendIntegrationTests {
 
     // MARK: - firstOrNull returns null on empty
 
+    func testSequenceFirstOrNullReturnsFirstValue() throws {
+        let source = """
+        fun main() {
+            val result = sequenceOf(4, 5, 6).firstOrNull()
+            println(result)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceFirstOrNullRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "4\n")
+        }
+    }
+
     func testSequenceFirstOrNullOnEmpty() throws {
         let source = """
         fun main() {
@@ -660,7 +708,6 @@ extension CodegenBackendIntegrationTests {
             XCTAssertEqual(normalizedStdout, "[11, 21, 31]\n")
         }
     }
-
     // MARK: - asIterable() from sequence
 
     func testSequenceAsIterableToList() throws {
@@ -684,6 +731,32 @@ extension CodegenBackendIntegrationTests {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(normalizedStdout, "[1, 2, 3]\n")
+        }
+    }
+
+    // MARK: - asSequence() from sequence
+
+    func testSequenceAsSequenceReturnsSameSequenceSurface() throws {
+        let source = """
+        fun main() {
+            val seq = sequenceOf(1, 2, 3).asSequence()
+            println(seq.map { it + 1 }.toList())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceAsSequence",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[2, 3, 4]\n")
         }
     }
 
