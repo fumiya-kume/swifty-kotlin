@@ -135,6 +135,50 @@ final class JvmKClassJavaSyntheticStubTests: XCTestCase {
         XCTAssertEqual(sema.symbols.extensionPropertyReceiverType(for: propertySymbol), receiverType)
     }
 
+    func testClassKotlinPropertySurfaceIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let classFQName = ["java", "lang", "Class"].map { interner.intern($0) }
+        let classSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: classFQName),
+            "Expected java.lang.Class<T> synthetic class"
+        )
+        let kClassSymbol = try XCTUnwrap(sema.types.kClassInterfaceSymbol)
+
+        let propertyFQName = ["kotlin", "jvm", "kotlin"].map { interner.intern($0) }
+        let propertySymbol = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: propertyFQName).first { symbolID in
+                sema.symbols.symbol(symbolID)?.kind == .property
+                    && sema.symbols.extensionPropertyReceiverType(for: symbolID) != nil
+            },
+            "Expected kotlin.jvm.kotlin extension property"
+        )
+        XCTAssertEqual(sema.symbols.externalLinkName(for: propertySymbol), "kk_class_kotlin")
+
+        let getterSymbol = try XCTUnwrap(sema.symbols.extensionPropertyGetterAccessor(for: propertySymbol))
+        XCTAssertEqual(sema.symbols.externalLinkName(for: getterSymbol), "kk_class_kotlin")
+
+        let getterSignature = try XCTUnwrap(sema.symbols.functionSignature(for: getterSymbol))
+        XCTAssertEqual(getterSignature.parameterTypes, [])
+        XCTAssertEqual(getterSignature.typeParameterSymbols.count, 1)
+        XCTAssertEqual(getterSignature.classTypeParameterCount, 0)
+
+        let receiverType = try XCTUnwrap(getterSignature.receiverType)
+        guard case let .classType(receiverClassType) = sema.types.kind(of: receiverType) else {
+            return XCTFail("Expected Class<T> receiver, got \(sema.types.renderType(receiverType))")
+        }
+        guard case let .classType(kClassType) = sema.types.kind(of: getterSignature.returnType) else {
+            return XCTFail("Expected KClass<T> return type, got \(sema.types.renderType(getterSignature.returnType))")
+        }
+
+        XCTAssertEqual(receiverClassType.classSymbol, classSymbol)
+        XCTAssertEqual(kClassType.classSymbol, kClassSymbol)
+        XCTAssertEqual(receiverClassType.args.count, 1)
+        XCTAssertEqual(kClassType.args, receiverClassType.args)
+        XCTAssertEqual(sema.symbols.propertyType(for: propertySymbol), getterSignature.returnType)
+        XCTAssertEqual(sema.symbols.extensionPropertyReceiverType(for: propertySymbol), receiverType)
+    }
+
     func testKClassJavaPrimitiveTypePropertySurfaceIsRegistered() throws {
         let (sema, interner) = try makeSema()
 
@@ -238,6 +282,26 @@ final class JvmKClassJavaSyntheticStubTests: XCTestCase {
             let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbol))
             guard case .classType = sema.types.kind(of: signature.returnType) else {
                 return XCTFail("\(functionName) should return java.lang.Class<KClass<T>>, got \(sema.types.renderType(signature.returnType))")
+            }
+        }
+    }
+
+    func testClassKotlinPropertyResolvesFromSource() throws {
+        let source = """
+        import java.lang.Class
+        import kotlin.jvm.*
+        import kotlin.reflect.KClass
+
+        fun stringKClass(clazz: Class<String>): KClass<String> = clazz.kotlin
+        fun <T : Any> kotlinClassOf(clazz: Class<T>): KClass<T> = clazz.kotlin
+        """
+        let (sema, interner) = try makeSema(source: source)
+
+        for functionName in ["stringKClass", "kotlinClassOf"] {
+            let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: [interner.intern(functionName)]))
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbol))
+            guard case .classType = sema.types.kind(of: signature.returnType) else {
+                return XCTFail("\(functionName) should return kotlin.reflect.KClass<T>, got \(sema.types.renderType(signature.returnType))")
             }
         }
     }

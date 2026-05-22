@@ -400,40 +400,19 @@ extension DataFlowSemaPhase {
                 )
             }
             if declaration.flags.contains(.dataType) {
-                collectSyntheticDataClassComponentN(
+                collectSyntheticDataClassMethods(
                     classDecl: classDecl,
                     ast: ast,
                     ownerSymbol: symbol,
                     ownerFQName: fqName,
                     ownerType: classType,
+                    phase: .beforeMemberHeaders,
                     symbols: symbols,
                     types: types,
                     scope: classScope,
                     interner: interner,
                     diagnostics: diagnostics,
                     localTypeParameters: classLocalTypeParameters
-                )
-                collectSyntheticDataClassCopy(
-                    classDecl: classDecl,
-                    ast: ast,
-                    ownerSymbol: symbol,
-                    ownerFQName: fqName,
-                    ownerType: classType,
-                    symbols: symbols,
-                    types: types,
-                    scope: classScope,
-                    interner: interner,
-                    diagnostics: diagnostics,
-                    localTypeParameters: classLocalTypeParameters
-                )
-                collectSyntheticDataClassHashCode(
-                    ownerSymbol: symbol,
-                    ownerFQName: fqName,
-                    ownerType: classType,
-                    symbols: symbols,
-                    types: types,
-                    scope: classScope,
-                    interner: interner
                 )
             }
             collectMemberHeaders(
@@ -456,23 +435,19 @@ extension DataFlowSemaPhase {
                 classLocalTypeParameters: classLocalTypeParameters
             )
             if declaration.flags.contains(.dataType) {
-                collectSyntheticDataClassToString(
+                collectSyntheticDataClassMethods(
+                    classDecl: classDecl,
+                    ast: ast,
                     ownerSymbol: symbol,
                     ownerFQName: fqName,
                     ownerType: classType,
+                    phase: .afterMemberHeaders,
                     symbols: symbols,
                     types: types,
                     scope: classScope,
-                    interner: interner
-                )
-                collectSyntheticDataClassEquals(
-                    ownerSymbol: symbol,
-                    ownerFQName: fqName,
-                    ownerType: classType,
-                    symbols: symbols,
-                    types: types,
-                    scope: classScope,
-                    interner: interner
+                    interner: interner,
+                    diagnostics: diagnostics,
+                    localTypeParameters: classLocalTypeParameters
                 )
             }
             // Process companion object: register as nested object and link to owner class
@@ -634,19 +609,21 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
             if objectDecl.modifiers.contains(.data) {
-                collectSyntheticDataObjectToString(
+                collectSyntheticToString(
                     ownerSymbol: symbol,
                     ownerFQName: fqName,
-                    objectType: objectType,
+                    ownerType: objectType,
+                    requireDataTypeFlag: false,
                     symbols: symbols,
                     types: types,
                     scope: objectScope,
                     interner: interner
                 )
-                collectSyntheticDataObjectEquals(
+                collectSyntheticEquals(
                     ownerSymbol: symbol,
                     ownerFQName: fqName,
-                    objectType: objectType,
+                    ownerType: objectType,
+                    requireDataTypeFlag: false,
                     symbols: symbols,
                     types: types,
                     scope: objectScope,
