@@ -1208,7 +1208,7 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         )
 
         XCTAssertEqual(thrown, 0)
-        XCTAssertEqual(listElements(result), [1, 3, 9, 21])
+        XCTAssertEqual(sequenceElements(result), [1, 3, 9, 21])
     }
 
     func testRunningReduceIndexedReturnsEmptyListForEmptySequence() {
@@ -1223,7 +1223,7 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         )
 
         XCTAssertEqual(thrown, 0)
-        XCTAssertEqual(listElements(result), [])
+        XCTAssertEqual(sequenceElements(result), [])
     }
 
     func testRunningReduceIndexedReturnsZeroWhenLambdaThrows() {

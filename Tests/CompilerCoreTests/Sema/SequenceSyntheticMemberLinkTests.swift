@@ -1990,6 +1990,38 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testSequenceRunningReduceIndexedResolvesInCallExpressions() throws {
+        let source = """
+        fun indexedTotals() {
+            val totals = sequenceOf(1, 2, 3).runningReduceIndexed { index, acc, value ->
+                acc + index + value
+            }
+            println(totals)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Sequence.runningReduceIndexed surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "sequences", "Sequence", "runningReduceIndexed"]
+                .map { ctx.interner.intern($0) }
+            let links = Set(
+                sema.symbols.lookupAll(fqName: memberFQName)
+                    .compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
+            XCTAssertTrue(links.contains("kk_sequence_runningReduceIndexed"))
+        }
+    }
+
     func testSequenceMaxOfResolvesInCallExpressions() throws {
         let source = """
         fun largestSelector(): Int {
@@ -2079,7 +2111,6 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
             XCTAssertTrue(links.contains("kk_sequence_max"))
         }
     }
-
 
     func testSequenceMinOfOrNullResolvesInCallExpressions() throws {
         let source = """
@@ -2263,6 +2294,7 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+
     func testSequenceMinWithResolvesInCallExpressions() throws {
         let source = """
         fun smallestByReverseOrder(): Int {
@@ -2294,6 +2326,7 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
             XCTAssertEqual(signature.parameterTypes.count, 1)
         }
     }
+
 
     func testSequenceMaxByOrNullResolvesInCallExpressions() throws {
         let source = """

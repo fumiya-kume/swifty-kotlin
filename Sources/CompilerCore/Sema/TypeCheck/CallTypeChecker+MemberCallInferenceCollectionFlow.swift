@@ -1642,7 +1642,14 @@ extension CallTypeChecker {
                     sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
                 }
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
-                if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
+                if isSequenceReceiver {
+                    resultType = makeSyntheticSequenceType(
+                        symbols: sema.symbols,
+                        types: sema.types,
+                        interner: interner,
+                        elementType: collectionElementType
+                    )
+                } else if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
                     resultType = sema.types.make(.classType(ClassType(
                         classSymbol: listSymbol,
                         args: [.invariant(collectionElementType)],
@@ -1669,7 +1676,14 @@ extension CallTypeChecker {
                     sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
                 }
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
-                if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
+                if isSequenceReceiver {
+                    resultType = makeSyntheticSequenceType(
+                        symbols: sema.symbols,
+                        types: sema.types,
+                        interner: interner,
+                        elementType: collectionElementType
+                    )
+                } else if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
                     resultType = sema.types.make(.classType(ClassType(
                         classSymbol: listSymbol,
                         args: [.invariant(collectionElementType)],
