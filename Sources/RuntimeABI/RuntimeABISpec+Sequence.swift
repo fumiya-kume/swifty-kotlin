@@ -1453,6 +1453,16 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Sequence"
         ),
+        // STDLIB-SEQ-FN-115: Sequence.subtract(other)
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_subtract",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "otherRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
         // STDLIB-SEQ-007: any/all/none/find with short-circuit semantics
         RuntimeABIFunctionSpec(
             name: "kk_sequence_any",

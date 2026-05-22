@@ -609,6 +609,8 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(sequenceElements(sorted), [3, 2, 1, 1])
     }
 
+
+
     func testJoinToStringUsesSeparatorPrefixAndPostfix() {
         let seq = makeSequence([1, 2, 3])
         let renderedRaw = kk_sequence_joinToString(
@@ -1967,6 +1969,15 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         let reduced = kk_sequence_minus(seq, 2)
         let asList = kk_sequence_to_list(reduced, nil)
         XCTAssertEqual(listElements(asList), [1, 3])
+    }
+
+    // MARK: - Sequence.subtract (STDLIB-SEQ-FN-115)
+
+    func testSubtractReturnsSetRemovingIterableElements() {
+        let seq = makeSequence([1, 2, 2, 3, 4])
+        let other = makeList([2, 4, 2])
+        let result = kk_sequence_subtract(seq, other)
+        XCTAssertEqual(setElements(result), [1, 3])
     }
 
     // MARK: - Eager Materialization (Intentional Simplification)

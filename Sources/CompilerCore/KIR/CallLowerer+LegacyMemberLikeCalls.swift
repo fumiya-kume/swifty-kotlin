@@ -2750,6 +2750,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_reduceOrNull"
                 } else if calleeName == interner.intern("union") {
                     runtimeCallee = "kk_sequence_union"
+                } else if calleeName == interner.intern("subtract") {
+                    runtimeCallee = "kk_sequence_subtract"
                 } else if calleeName == interner.intern("reduceRight") {
                     runtimeCallee = useIterableRuntimeForCollectionFallback
                         ? "kk_list_reduceRight"
