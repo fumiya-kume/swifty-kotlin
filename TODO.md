@@ -343,12 +343,8 @@
 - [ ] STDLIB-SEQ-FN-047: `groupByTo` 関数の実装
 - [x] STDLIB-SEQ-FN-048: `indexOf` 関数の実装
 - [ ] STDLIB-SEQ-FN-049: `indexOfFirst` 関数の実装
-- [ ] STDLIB-SEQ-FN-050: `indexOfLast` 関数の実装
+- [x] STDLIB-SEQ-FN-050: `indexOfLast` 関数の実装
 - [x] STDLIB-SEQ-FN-051: `intersect` 関数の実装
-- [ ] STDLIB-SEQ-FN-052: `joinTo` 関数の実装
-- [ ] STDLIB-SEQ-FN-053: `joinToString` 関数の実装
-- [ ] STDLIB-SEQ-FN-054: `last` 関数の実装
-- [ ] STDLIB-SEQ-FN-051: `intersect` 関数の実装
  - [x] STDLIB-SEQ-FN-052: `joinTo` 関数の実装
  - [x] STDLIB-SEQ-FN-053: `joinToString` 関数の実装
  - [x] STDLIB-SEQ-FN-054: `last` 関数の実装
@@ -416,7 +412,7 @@
 - [x] STDLIB-SEQ-FN-101: `runningFoldIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-102: `runningReduce` 関数の実装
 - [ ] STDLIB-SEQ-FN-103: `runningReduceIndexed` 関数の実装
-- [ ] STDLIB-SEQ-FN-104: `scan` 関数の実装
+- [x] STDLIB-SEQ-FN-104: `scan` 関数の実装
 - [x] STDLIB-SEQ-FN-105: `scanIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-106: `shuffled` 関数の実装
 - [x] STDLIB-SEQ-FN-107: `single` 関数の実装
@@ -426,7 +422,7 @@
 - [ ] STDLIB-SEQ-FN-109: `slice` 関数の実装
 - [x] STDLIB-SEQ-FN-110: `sorted` 関数の実装
 - [ ] STDLIB-SEQ-FN-111: `sortedBy` 関数の実装
-- [ ] STDLIB-SEQ-FN-112: `sortedByDescending` 関数の実装
+- [x] STDLIB-SEQ-FN-112: `sortedByDescending` 関数の実装
 - [x] STDLIB-SEQ-FN-113: `sortedDescending` 関数の実装
 - [x] STDLIB-SEQ-FN-114: `sortedWith` 関数の実装
 - [ ] STDLIB-SEQ-FN-115: `subtract` 関数の実装
@@ -783,8 +779,8 @@
 - [x] STDLIB-IO-PATH-FN-055: `Path(base, subpaths)` top-level factory overload を追加する
 - [x] STDLIB-IO-PATH-FN-056: `Path.readAttributes<A>(options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-057: `Path.readAttributes(attributes, options)` を追加する
-- [ ] STDLIB-IO-PATH-FN-059: `Path.reader(charset, options)` を追加する
-- [ ] STDLIB-IO-PATH-FN-066: `Path.setAttribute(attribute, value, options)` を追加する
+- [x] STDLIB-IO-PATH-FN-059: `Path.reader(charset, options)` を追加する
+- [x] STDLIB-IO-PATH-FN-066: `Path.setAttribute(attribute, value, options)` を追加する
 - [x] STDLIB-IO-PATH-FN-071: `Path.useDirectoryEntries(glob, block)` を追加する
 - [x] STDLIB-IO-PATH-FN-072: `Path.useLines(charset, block)` を追加する
 - [ ] STDLIB-IO-PATH-FN-073: `Path.visitFileTree(visitor, maxDepth, followLinks)` を追加する

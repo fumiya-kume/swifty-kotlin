@@ -2222,6 +2222,40 @@ public func kk_sequence_sortedWith(
     return registerRuntimeObject(seq)
 }
 
+@_cdecl("kk_sequence_sortedByDescending")
+public func kk_sequence_sortedByDescending(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var elems: [Int] = []
+    var keys: [Int] = []
+    elems.reserveCapacity(elements.count)
+    keys.reserveCapacity(elements.count)
+    for elem in elements {
+        var thrown = 0
+        let key = lambda(closureRaw, elem, &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: [])]))
+        }
+        elems.append(elem)
+        keys.append(maybeUnbox(key))
+    }
+    let sorted = elems.indices.sorted { lhs, rhs in
+        let comparison = runtimeCompareValues(keys[lhs], keys[rhs])
+        if comparison != 0 {
+            return comparison > 0
+        }
+        return lhs < rhs
+    }
+    let seq = RuntimeSequenceBox(steps: [.source(elements: sorted.map { elems[$0] })])
+    return registerRuntimeObject(seq)
+}
+
 @_cdecl("kk_sequence_sortedDescending")
 public func kk_sequence_sortedDescending(_ seqRaw: Int) -> Int {
     let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
@@ -2626,6 +2660,56 @@ public func kk_sequence_indexOf(_ seqRaw: Int, _ element: Int) -> Int {
         }
     }
     return index
+}
+
+@_cdecl("kk_sequence_indexOfLast")
+public func kk_sequence_indexOfLast(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var matchIndex = -1
+    var currentIndex = 0
+    var traversalState: SequenceTraversalState?
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        let state = SequenceTraversalState()
+        traversalState = state
+        runtimeTraverseSequenceWithState(seq, state: state, outThrown: outThrown) { elem in
+            var thrown = 0
+            let result = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return false
+            }
+            if maybeUnbox(result) != 0 {
+                matchIndex = currentIndex
+            }
+            currentIndex += 1
+            return true
+        }
+    } else {
+        for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
+            var thrown = 0
+            let result = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                return handleCollectionLambdaThrow(thrown, outThrown)
+            }
+            if maybeUnbox(result) != 0 {
+                matchIndex = currentIndex
+            }
+            currentIndex += 1
+        }
+    }
+    if let outThrown, outThrown.pointee != 0 {
+        return runtimeExceptionCaughtSentinel
+    }
+    if let traversalState, traversalState.limitReached {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached)
+        return runtimeExceptionCaughtSentinel
+    }
+    return matchIndex
 }
 
 @_cdecl("kk_sequence_intersect")

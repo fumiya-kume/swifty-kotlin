@@ -2554,6 +2554,7 @@ extension CallLowerer {
                 let dropWhileName = interner.intern("dropWhile")
                 let sortedByName = interner.intern("sortedBy")
                 let sortedWithName = interner.intern("sortedWith")
+                let sortedByDescendingName = interner.intern("sortedByDescending")
                 let sumOfName = interner.intern("sumOf")
                 let sumByName = interner.intern("sumBy")
                 let sumByDoubleName = interner.intern("sumByDouble")
@@ -2569,6 +2570,7 @@ extension CallLowerer {
                 let flatMapIndexedToName = interner.intern("flatMapIndexedTo")
                 let containsName = interner.intern("contains")
                 let indexOfName = interner.intern("indexOf")
+                let indexOfLastName = interner.intern("indexOfLast")
                 let elementAtName = interner.intern("elementAt")
                 let elementAtOrNullName = interner.intern("elementAtOrNull")
                 let filterIndexedName = interner.intern("filterIndexed")
@@ -2612,6 +2614,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_sortedBy"
                 } else if calleeName == sortedWithName {
                     runtimeCallee = "kk_sequence_sortedWith"
+                } else if calleeName == sortedByDescendingName {
+                    runtimeCallee = "kk_sequence_sortedByDescending"
                 } else if calleeName == distinctByName {
                     runtimeCallee = "kk_sequence_distinctBy"
                 } else if calleeName == sumOfName {
@@ -2644,6 +2648,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_contains"
                 } else if calleeName == indexOfName {
                     runtimeCallee = "kk_sequence_indexOf"
+                } else if calleeName == indexOfLastName {
+                    runtimeCallee = "kk_sequence_indexOfLast"
                 } else if calleeName == elementAtName {
                     runtimeCallee = "kk_sequence_elementAt"
                 } else if calleeName == elementAtOrNullName {
@@ -2763,6 +2769,7 @@ extension CallLowerer {
                 if let runtimeCallee {
                     let canThrow = runtimeCallee == "kk_sequence_sortedBy"
                         || runtimeCallee == "kk_sequence_sortedWith"
+                        || runtimeCallee == "kk_sequence_sortedByDescending"
                         || runtimeCallee == "kk_sequence_distinctBy"
                         || runtimeCallee == "kk_sequence_sumOf"
                         || runtimeCallee == "kk_sequence_sumBy"
@@ -2801,6 +2808,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_all"
                         || runtimeCallee == "kk_iterable_all"
                         || runtimeCallee == "kk_sequence_none"
+                        || runtimeCallee == "kk_sequence_indexOfLast"
                         || runtimeCallee == "kk_sequence_mapNotNull"
                         || runtimeCallee == "kk_sequence_mapIndexedNotNull"
                         || runtimeCallee == "kk_sequence_firstNotNullOf"
@@ -2854,6 +2862,18 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_associate"
                         || runtimeCallee == "kk_sequence_associateBy"
                         || runtimeCallee == "kk_sequence_associateWith"),
+                       normalizedArgIDs.count == 1
+                    {
+                        let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                            normalizedArgIDs[0],
+                            sema: sema,
+                            arena: arena,
+                            interner: interner,
+                            instructions: &instructions
+                        )
+                        runtimeArguments = [loweredReceiverID, fnPtrExpr, envPtrExpr]
+                    }
+                    if runtimeCallee == "kk_sequence_indexOfLast",
                        normalizedArgIDs.count == 1
                     {
                         let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(

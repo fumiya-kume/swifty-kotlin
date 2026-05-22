@@ -141,6 +141,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("minWith", 1),
             sequence("firstNotNullOf", 1),
             sequence("firstNotNullOfOrNull", 1),
+            sequence("indexOfLast", 1),
             sequence("intersect", 1),
             sequence("maxOrNull", 0),
             sequence("fold", 2),
@@ -155,6 +156,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("filterIndexed", 1),
             sequence("scanIndexed", 2),
             sequence("runningFoldIndexed", 2),
+            sequence("scan", 2),
             sequence("filterTo", 2),
             sequence("filterNotTo", 2),
             sequence("mapTo", 2),
@@ -222,6 +224,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
                 (.sequence, ["kotlin", "sequences", "Sequence"], "shuffled", 0),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "shuffled", 1),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "reduceRight", 1),
+                (.sequence, ["kotlin", "sequences", "Sequence"], "scan", 2),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "maxOrNull", 0),
             ]
 
