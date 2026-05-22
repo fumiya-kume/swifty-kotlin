@@ -329,6 +329,7 @@ struct CollectionLiteralLookupTables {
     let kkSequenceToCollectionName: InternedString
     let kkSequenceGroupByName: InternedString
     let kkSequenceGroupByToName: InternedString
+    let kkSequenceMaxName: InternedString
     let kkSequenceMaxOrNullName: InternedString
     let kkSequenceMinOrNullName: InternedString
     let kkSequenceFlattenName: InternedString
@@ -354,6 +355,7 @@ struct CollectionLiteralLookupTables {
     // STDLIB-SEQ-022: Sequence destination-collection mapping operations
     let kkSequenceMapToName: InternedString
     let kkSequenceMapNotNullToName: InternedString
+    let kkSequenceMapIndexedToName: InternedString
     let kkSequenceFlatMapToName: InternedString
     let kkSequenceMapIndexedNotNullToName: InternedString
     let kkSequenceFlatMapIndexedToName: InternedString
@@ -596,6 +598,7 @@ struct CollectionLiteralLookupTables {
     let sumOfName: InternedString
     let sumByName: InternedString
     let sumByDoubleName: InternedString
+    let maxName: InternedString
     let maxOrNullName: InternedString
     let minOrNullName: InternedString
     let maxByName: InternedString
@@ -643,6 +646,7 @@ struct CollectionLiteralLookupTables {
 
     // Array member names (STDLIB-087/088/089)
     let toMutableListName: InternedString
+    let toTypeArrayName: InternedString
     let toTypedArrayName: InternedString
     let copyOfName: InternedString
     let copyOfRangeName: InternedString
@@ -1150,6 +1154,7 @@ struct CollectionLiteralLookupTables {
         kkSequenceToCollectionName = interner.intern("kk_sequence_toCollection")
         kkSequenceGroupByName = interner.intern("kk_sequence_groupBy")
         kkSequenceGroupByToName = interner.intern("kk_sequence_groupByTo")
+        kkSequenceMaxName = interner.intern("kk_sequence_max")
         kkSequenceMaxOrNullName = interner.intern("kk_sequence_maxOrNull")
         kkSequenceMinOrNullName = interner.intern("kk_sequence_minOrNull")
         kkSequenceFlattenName = interner.intern("kk_sequence_flatten")
@@ -1172,6 +1177,7 @@ struct CollectionLiteralLookupTables {
         kkSequenceFilterNotToName = interner.intern("kk_sequence_filterNotTo")
         kkSequenceMapToName = interner.intern("kk_sequence_mapTo")
         kkSequenceMapNotNullToName = interner.intern("kk_sequence_mapNotNullTo")
+        kkSequenceMapIndexedToName = interner.intern("kk_sequence_mapIndexedTo")
         kkSequenceFlatMapToName = interner.intern("kk_sequence_flatMapTo")
         kkSequenceMapIndexedNotNullToName = interner.intern("kk_sequence_mapIndexedNotNullTo")
         kkSequenceFlatMapIndexedToName = interner.intern("kk_sequence_flatMapIndexedTo")
@@ -1408,6 +1414,7 @@ struct CollectionLiteralLookupTables {
         sumOfName = interner.intern("sumOf")
         sumByName = interner.intern("sumBy")
         sumByDoubleName = interner.intern("sumByDouble")
+        maxName = interner.intern("max")
         maxOrNullName = interner.intern("maxOrNull")
         minOrNullName = interner.intern("minOrNull")
         maxByName = interner.intern("maxBy")
@@ -1454,6 +1461,7 @@ struct CollectionLiteralLookupTables {
         lastOrNullName = interner.intern("lastOrNull")
 
         toMutableListName = interner.intern("toMutableList")
+        toTypeArrayName = interner.intern("toTypeArray")
         toTypedArrayName = interner.intern("toTypedArray")
         copyOfName = interner.intern("copyOf")
         copyOfRangeName = interner.intern("copyOfRange")

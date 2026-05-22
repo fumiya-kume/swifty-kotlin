@@ -639,12 +639,17 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
-        // maxOrNull / minOrNull on sequence (STDLIB-470)
-        if (callee == lookup.maxOrNullName || callee == lookup.minOrNullName),
+        // max / maxOrNull / minOrNull on sequence (STDLIB-SEQ-FN-065, STDLIB-470)
+        if (callee == lookup.maxName || callee == lookup.maxOrNullName || callee == lookup.minOrNullName),
            arguments.isEmpty, sequenceExprIDs.contains(receiver.rawValue)
         {
-            let kkName = callee == lookup.maxOrNullName
-                ? lookup.kkSequenceMaxOrNullName : lookup.kkSequenceMinOrNullName
+            let kkName: InternedString
+            if callee == lookup.maxName {
+                kkName = lookup.kkSequenceMaxName
+            } else {
+                kkName = callee == lookup.maxOrNullName
+                    ? lookup.kkSequenceMaxOrNullName : lookup.kkSequenceMinOrNullName
+            }
             let hofResult = module.arena.appendExpr(
                 .temporary(Int32(module.arena.expressions.count)), type: nil
             )
@@ -653,8 +658,8 @@ extension CollectionLiteralLoweringPass {
                 callee: kkName,
                 arguments: [receiver],
                 result: hofResult,
-                canThrow: false,
-                thrownResult: nil
+                canThrow: origCanThrow,
+                thrownResult: origThrownResult
             ))
             if let result {
                 loweredBody.append(.copy(from: hofResult, to: result))
@@ -988,7 +993,7 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
-        if callee == lookup.mapNotNullToName,
+        if callee == lookup.mapNotNullToName || callee == lookup.mapIndexedToName,
            arguments.count == 2 || arguments.count == 3,
            sequenceExprIDs.contains(receiver.rawValue)
         {
@@ -1003,7 +1008,9 @@ extension CollectionLiteralLoweringPass {
                 closureRawExpr = zeroExpr
             }
             let hofResult = emitHOFCall(
-                kkName: lookup.kkSequenceMapNotNullToName,
+                kkName: callee == lookup.mapIndexedToName
+                    ? lookup.kkSequenceMapIndexedToName
+                    : lookup.kkSequenceMapNotNullToName,
                 receiver: receiver,
                 arguments: [destID, lambdaID, closureRawExpr],
                 result: result,

@@ -760,6 +760,21 @@ extension RuntimeSequenceTests {
         XCTAssertEqual(result, [10, 21, 32]) // [0+10, 1+20, 2+30]
     }
 
+    func testSequenceMapIndexedNotNullCorrectness() {
+        let seq = makeSequence([10, 20, 30, 40])
+        let mapFn: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, value, _ in
+            index.isMultiple(of: 2) ? index + value : runtimeNullSentinelInt
+        }
+        let mapped = kk_sequence_mapIndexedNotNull(
+            seq,
+            unsafeBitCast(mapFn, to: Int.self),
+            0,
+            nil
+        )
+        let result = sequenceElements(mapped)
+        XCTAssertEqual(result, [10, 32])
+    }
+
     func testSequenceOnEachIndexedCorrectness() {
         let seq = makeSequence([10, 20, 30])
         _lazySequenceOnEachIndexedTrace = []
@@ -774,6 +789,23 @@ extension RuntimeSequenceTests {
         XCTAssertEqual(_lazySequenceOnEachIndexedTrace, [10, 120, 230])
     }
 
+    func testSequenceForEachVisitsElementsInOrder() {
+        let seq = makeSequence([1, 2, 3])
+        _lazyTestYieldCounter = 0
+        let action: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+            _lazyTestYieldCounter = _lazyTestYieldCounter * 10 + value
+            return 0
+        }
+
+        let result = kk_sequence_forEach(
+            seq,
+            unsafeBitCast(action, to: Int.self),
+            0
+        )
+
+        XCTAssertEqual(result, 0)
+        XCTAssertEqual(_lazyTestYieldCounter, 123)
+    }
     func testSequenceFoldIndexedAccumulatesIndexAndValueInOrder() {
         let seq = makeSequence([3, 4, 5])
         let foldFn: @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, acc, value, _ in
@@ -850,6 +882,25 @@ extension RuntimeSequenceTests {
 
         XCTAssertEqual(result, dest)
         XCTAssertEqual(listElements(result), [50, 20, 40])
+    }
+
+    func testSequenceMapIndexedToAppendsIndexedResultsToDestination() {
+        let seq = makeSequence([10, 20, 30])
+        let dest = makeList([50])
+        let mapFn: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, value, _ in
+            index + value
+        }
+
+        let result = kk_sequence_mapIndexedTo(
+            seq,
+            dest,
+            unsafeBitCast(mapFn, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(result, dest)
+        XCTAssertEqual(listElements(result), [50, 10, 21, 32])
     }
 
     func testSequenceMapIndexedNotNullToAppendsOnlyNonNullResults() {

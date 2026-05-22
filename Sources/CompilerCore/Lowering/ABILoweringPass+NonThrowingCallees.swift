@@ -392,6 +392,8 @@ extension ABILoweringPass {
             interner.intern("kk_long_range_drop"),
             interner.intern("kk_long_range_average"),
             interner.intern("kk_long_range_sorted"),
+            interner.intern("kk_long_range_firstOrNull"),
+            interner.intern("kk_long_range_lastOrNull"),
             // CharRange take/drop/sorted (STDLIB-RANGE-TDS)
             interner.intern("kk_char_range_take"),
             interner.intern("kk_char_range_drop"),
@@ -921,6 +923,7 @@ extension ABILoweringPass {
             interner.intern("kk_sequence_forEach"),
             interner.intern("kk_sequence_flatMap"),
             interner.intern("kk_sequence_flatMapIndexed"),
+            interner.intern("kk_sequence_intersect"),
             interner.intern("kk_sequence_drop"),
             interner.intern("kk_sequence_distinct"),
             interner.intern("kk_sequence_zip"),

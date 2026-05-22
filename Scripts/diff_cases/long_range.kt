@@ -14,6 +14,12 @@ fun main() {
     println((10L..1L).isEmpty())
     println((1L..10L).isEmpty())
 
+    // firstOrNull / lastOrNull
+    println((1L..5L).firstOrNull())
+    println((1L..5L).lastOrNull())
+    println((10L..1L).firstOrNull())
+    println((10L..1L).lastOrNull())
+
     // Properties
     println((1L..5L).first)
     println((1L..5L).last)
