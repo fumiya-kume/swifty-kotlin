@@ -107,6 +107,9 @@ private let indexedAccumulatingSum: @convention(c) (Int, Int, Int, Int, UnsafeMu
 private let reduceRightChecksum: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, acc, _ in
     value * 10 + acc
 }
+private let reduceRightIndexedChecksum: @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, value, acc, _ in
+    index * 100 + value * 10 + acc
+}
 
 private let throwingAccumulator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, _, outThrown in
     outThrown?.pointee = runtimeAllocateThrowable(message: "sequence accumulator failed")
@@ -1477,6 +1480,53 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         var thrown = 0
 
         let result = kk_sequence_reduceIndexedOrNull(
+            seq,
+            unsafeBitCast(throwingIndexedAccumulator, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(result, 0)
+    }
+
+    // MARK: - Sequence right-indexed reduction tests (STDLIB-SEQ-FN-095)
+
+    func testReduceRightIndexedEmptySequenceThrows() {
+        let seq = makeSequence([])
+        var thrown = 0
+
+        let result = kk_sequence_reduceRightIndexed(
+            seq,
+            unsafeBitCast(reduceRightIndexedChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(result, 0)
+    }
+
+    func testReduceRightIndexedNonEmptySequenceAccumulatesFromRight() {
+        let seq = makeSequence([1, 2, 3, 4])
+        var thrown = 0
+
+        let result = kk_sequence_reduceRightIndexed(
+            seq,
+            unsafeBitCast(reduceRightIndexedChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 364)
+    }
+
+    func testReduceRightIndexedReturnsZeroWhenLambdaThrows() {
+        let seq = makeSequence([1, 2, 3])
+        var thrown = 0
+
+        let result = kk_sequence_reduceRightIndexed(
             seq,
             unsafeBitCast(throwingIndexedAccumulator, to: Int.self),
             0,
