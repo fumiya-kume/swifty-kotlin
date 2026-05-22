@@ -312,6 +312,33 @@ extension DataFlowSemaPhase {
             symbols.setFunctionSignature(FunctionSignature(receiverType: receiverType, parameterTypes: [operationType], returnType: listSType, typeParameterSymbols: [listTypeParamSymbol, sSymbol], classTypeParameterCount: 1), for: memberSymbol)
         }
 
+        // scan(initial: R, operation: (R, T) -> R): List<R>
+        let scanName = interner.intern("scan")
+        let scanFQName = listFQName + [scanName]
+        if symbols.lookup(fqName: scanFQName) == nil {
+            let rName = interner.intern("R")
+            let rFQName = scanFQName + [rName]
+            let rSymbol = symbols.define(kind: .typeParameter, name: rName, fqName: rFQName, declSite: nil, visibility: .private, flags: [])
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let operationType = types.make(.functionType(FunctionType(
+                params: [rType, listTypeParamType],
+                returnType: rType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let listRType = types.make(.classType(ClassType(classSymbol: listSymbol, args: [.out(rType)], nullability: .nonNull)))
+            let memberSymbol = symbols.define(kind: .function, name: scanName, fqName: scanFQName, declSite: nil, visibility: .public, flags: [.synthetic, .inlineFunction])
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_scan", for: memberSymbol)
+            symbols.setFunctionSignature(FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [rType, operationType],
+                returnType: listRType,
+                typeParameterSymbols: [listTypeParamSymbol, rSymbol],
+                classTypeParameterCount: 1
+            ), for: memberSymbol)
+        }
+
         // scanIndexed(initial: R, operation: (Int, R, T) -> R): List<R>
         let scanIndexedName = interner.intern("scanIndexed")
         let scanIndexedFQName = listFQName + [scanIndexedName]
@@ -374,7 +401,7 @@ extension DataFlowSemaPhase {
         }
     }
 
-    private func registerSyntheticIndexedValueStub(
+    func registerSyntheticIndexedValueStub(
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,

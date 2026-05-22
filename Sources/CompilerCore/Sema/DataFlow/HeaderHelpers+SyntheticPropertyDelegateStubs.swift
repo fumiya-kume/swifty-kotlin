@@ -268,6 +268,13 @@ extension DataFlowSemaPhase {
         let kMutableProperty1Symbol = ensureInterfaceSymbol(
             named: "KMutableProperty1", in: kotlinReflectPkg, symbols: symbols, interner: interner
         )
+        registerSyntheticKProperty1Stub(
+            kPropertySymbol: kPropertySymbol,
+            kotlinReflectPkg: kotlinReflectPkg,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
         registerSyntheticKMutablePropertyStub(
             kMutablePropertySymbol: kMutablePropertySymbol,
             kPropertySymbol: kPropertySymbol,
