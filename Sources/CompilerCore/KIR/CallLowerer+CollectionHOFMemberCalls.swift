@@ -14,7 +14,7 @@ extension CallLowerer {
             "aggregate", "aggregateTo",
             "sortedBy", "count", "first", "last", "find", "distinctBy",
             "associateBy", "associateWith", "associate",
-            "forEachIndexed", "mapIndexed", "mapIndexedNotNull", "filterIndexed", "sumOf", "sumBy", "sumByDouble", "mapValues", "mapValuesTo", "mapKeys", "mapKeysTo", "filterKeys", "filterValues",
+            "forEachIndexed", "mapIndexed", "mapIndexedNotNull", "filterIndexed", "averageOf", "sumOf", "sumBy", "sumByDouble", "mapValues", "mapValuesTo", "mapKeys", "mapKeysTo", "filterKeys", "filterValues",
             "getOrElse", "elementAtOrElse", "getOrPut",
             "maxBy", "minBy", "min", "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
             "maxOf", "minOf",

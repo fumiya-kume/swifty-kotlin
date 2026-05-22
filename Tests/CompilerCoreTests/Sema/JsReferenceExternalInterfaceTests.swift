@@ -83,4 +83,32 @@ final class JsReferenceExternalInterfaceTests: XCTestCase {
             return XCTFail("unwrap should return T, got \(sema.types.renderType(signature.returnType))")
         }
     }
+
+    func testJsReferenceGetResolvesCallBinding() throws {
+        let source = """
+        @file:OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
+
+        import kotlin.js.JsReference
+
+        fun <T : Any> unwrap(ref: JsReference<T>): T = ref.get()
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected JsReference.get usage to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "get"
+            })
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_js_reference_get")
+        }
+    }
 }
