@@ -1306,6 +1306,82 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathReaderCharsetOptionsExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import java.io.BufferedReader
+        import java.nio.file.OpenOption
+        import kotlin.io.path.Path
+        import kotlin.io.path.reader
+        import kotlin.text.Charsets
+
+        fun readers(path: Path, option: OpenOption): BufferedReader {
+            val first: BufferedReader = path.reader()
+            val second: BufferedReader = path.reader(Charsets.UTF_8, option)
+            return second
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnostics = ctx.diagnostics.diagnostics.map(\.message)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.reader(charset, options) extension function in kotlin.io.path should resolve: \(diagnostics)"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let charsetSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "text", "Charset"].map(interner.intern)))
+            let openOptionSymbol = try XCTUnwrap(symbols.lookup(fqName: ["java", "nio", "file", "OpenOption"].map(interner.intern)))
+            let bufferedReaderSymbol = try XCTUnwrap(symbols.lookup(fqName: ["java", "io", "BufferedReader"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let charsetType = types.make(.classType(ClassType(classSymbol: charsetSymbol, args: [], nullability: .nonNull)))
+            let openOptionType = types.make(.classType(ClassType(classSymbol: openOptionSymbol, args: [], nullability: .nonNull)))
+            let bufferedReaderType = types.make(.classType(ClassType(classSymbol: bufferedReaderSymbol, args: [], nullability: .nonNull)))
+            let readerSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "reader"].map(interner.intern))
+            let reader = try XCTUnwrap(readerSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else {
+                    return false
+                }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [charsetType, openOptionType]
+                    && signature.returnType == bufferedReaderType
+            })
+            let defaultReader = try XCTUnwrap(readerSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else {
+                    return false
+                }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == []
+                    && signature.returnType == bufferedReaderType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: reader), "kk_path_reader")
+            XCTAssertEqual(symbols.externalLinkName(for: defaultReader), "kk_path_reader_default")
+
+            let signature = try XCTUnwrap(symbols.functionSignature(for: reader))
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [true, false])
+            XCTAssertEqual(signature.valueParameterIsVararg, [false, true])
+            let defaultSignature = try XCTUnwrap(symbols.functionSignature(for: defaultReader))
+            XCTAssertEqual(defaultSignature.valueParameterHasDefaultValues, [])
+            XCTAssertEqual(defaultSignature.valueParameterIsVararg, [])
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let callExprs = memberCallExprIDs(named: "reader", in: ast, interner: interner)
+            XCTAssertEqual(callExprs.count, 2)
+            let chosenCallees = callExprs.compactMap { sema.bindings.callBinding(for: $0)?.chosenCallee }
+            XCTAssertTrue(chosenCallees.contains(defaultReader))
+            XCTAssertTrue(chosenCallees.contains(reader))
+            for callExpr in callExprs {
+                XCTAssertEqual(sema.bindings.exprTypes[callExpr], bufferedReaderType)
+            }
+        }
+    }
+
+
     func testPathSetAttributeOptionsExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import java.nio.file.LinkOption
