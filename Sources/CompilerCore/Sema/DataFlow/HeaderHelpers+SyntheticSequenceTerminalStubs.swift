@@ -73,6 +73,20 @@ extension DataFlowSemaPhase {
             isSuspend: false,
             nullability: .nonNull
         )))
+        let comparatorTypeForSequence = if let comparatorSymbol = symbols.lookupByShortName(interner.intern("Comparator")).first {
+            types.make(.classType(ClassType(
+                classSymbol: comparatorSymbol,
+                args: [.invariant(typeParamType)],
+                nullability: .nonNull
+            )))
+        } else {
+            types.make(.functionType(FunctionType(
+                params: [typeParamType, typeParamType],
+                returnType: types.intType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+        }
         let reduceIndexedOperationType = types.make(.functionType(FunctionType(
             params: [types.intType, typeParamType, typeParamType],
             returnType: typeParamType,
@@ -2188,7 +2202,7 @@ extension DataFlowSemaPhase {
 
         // maxWithOrNull(comparator): T?
         do {
-            let comparatorType = if let comparatorSymbol = symbols.lookupByShortName(interner.intern("Comparator")).first {
+            let comparatorTypeForSequence = if let comparatorSymbol = symbols.lookupByShortName(interner.intern("Comparator")).first {
                 types.make(.classType(ClassType(
                     classSymbol: comparatorSymbol,
                     args: [.invariant(typeParamType)],
@@ -2206,7 +2220,7 @@ extension DataFlowSemaPhase {
                 named: "maxWithOrNull",
                 externalLinkName: "kk_sequence_maxWithOrNull",
                 receiverType: receiverType,
-                parameters: [("comparator", comparatorType)],
+                parameters: [("comparator", comparatorTypeForSequence)],
                 returnType: types.makeNullable(typeParamType),
                 sequenceSymbol: sequenceSymbol,
                 sequenceFQName: sequenceFQName,
@@ -2217,6 +2231,22 @@ extension DataFlowSemaPhase {
                 flags: [.synthetic, .inlineFunction]
             )
         }
+
+        // minWith(comparator: Comparator<in T>): T
+        registerSequenceMemberStub(
+            named: "minWith",
+            externalLinkName: "kk_sequence_minWith",
+            receiverType: receiverType,
+            parameters: [("comparator", comparatorTypeForSequence)],
+            returnType: typeParamType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner,
+            canThrow: true,
+            flags: [.synthetic, .inlineFunction]
+        )
 
         // unzip(): Pair<List<A>, List<B>> for Sequence<Pair<A, B>>
         let unzipName = interner.intern("unzip")
