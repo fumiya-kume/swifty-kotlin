@@ -719,6 +719,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_filterNotNull")
             case interner.intern("requireNoNulls"):
                 return interner.intern("kk_sequence_requireNoNulls")
+            case interner.intern("asSequence"):
+                return interner.intern("kk_sequence_asSequence")
             case interner.intern("reversed"):
                 return interner.intern("kk_sequence_reversed")
             case interner.intern("asIterable"):

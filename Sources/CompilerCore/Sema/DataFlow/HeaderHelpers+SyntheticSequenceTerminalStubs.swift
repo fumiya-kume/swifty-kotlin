@@ -950,6 +950,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // asSequence(): Sequence<T>
+        registerSequenceMemberStub(
+            named: "asSequence",
+            externalLinkName: "kk_sequence_asSequence",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: receiverType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // asIterable(): Iterable<T>
         registerSequenceMemberStub(
             named: "asIterable",

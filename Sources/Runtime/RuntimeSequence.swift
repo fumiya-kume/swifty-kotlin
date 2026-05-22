@@ -2494,6 +2494,11 @@ public func kk_sequence_asIterable(_ seqRaw: Int) -> Int {
     return seqRaw
 }
 
+@_cdecl("kk_sequence_asSequence")
+public func kk_sequence_asSequence(_ seqRaw: Int) -> Int {
+    return seqRaw
+}
+
 @_cdecl("kk_sequence_lastOrNull")
 public func kk_sequence_lastOrNull(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     var found = false
