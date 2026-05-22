@@ -738,6 +738,26 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerProgressionMethod(
+            named: "firstOrNull",
+            ownerSymbol: classSymbol,
+            receiverType: longRangeType,
+            parameterTypes: [],
+            returnType: types.makeNullable(types.longType),
+            externalLinkName: "kk_long_range_firstOrNull",
+            symbols: symbols,
+            interner: interner
+        )
+        registerProgressionMethod(
+            named: "lastOrNull",
+            ownerSymbol: classSymbol,
+            receiverType: longRangeType,
+            parameterTypes: [],
+            returnType: types.makeNullable(types.longType),
+            externalLinkName: "kk_long_range_lastOrNull",
+            symbols: symbols,
+            interner: interner
+        )
 
         registerProgressionMethod(
             named: "take",
