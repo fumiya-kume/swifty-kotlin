@@ -240,6 +240,22 @@ extension RuntimeSequenceTests {
             "STDLIB-563: first() should not force evaluation of all 3 elements; got \(_lazyTestYieldCounter) yields")
     }
 
+    func testSequenceFirstReturnsFirstElement() {
+        let seq = makeSequence([7, 8, 9])
+        var thrown = 0
+        let first = kk_sequence_first(seq, &thrown)
+        XCTAssertEqual(first, 7)
+        XCTAssertEqual(thrown, 0)
+    }
+
+    func testSequenceFirstOrNullReturnsFirstElement() {
+        let seq = makeSequence([7, 8, 9])
+        var thrown = 0
+        let first = kk_sequence_firstOrNull(seq, &thrown)
+        XCTAssertEqual(first, 7)
+        XCTAssertEqual(thrown, 0)
+    }
+
     // MARK: - STDLIB-HOF-022: Additional Higher-Order Functions
 
     func testSequenceFilterNot() {
@@ -752,6 +768,21 @@ extension RuntimeSequenceTests {
         XCTAssertEqual(result, [10, 21, 32]) // [0+10, 1+20, 2+30]
     }
 
+    func testSequenceMapIndexedNotNullCorrectness() {
+        let seq = makeSequence([10, 20, 30, 40])
+        let mapFn: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, value, _ in
+            index.isMultiple(of: 2) ? index + value : runtimeNullSentinelInt
+        }
+        let mapped = kk_sequence_mapIndexedNotNull(
+            seq,
+            unsafeBitCast(mapFn, to: Int.self),
+            0,
+            nil
+        )
+        let result = sequenceElements(mapped)
+        XCTAssertEqual(result, [10, 32])
+    }
+
     func testSequenceOnEachIndexedCorrectness() {
         let seq = makeSequence([10, 20, 30])
         _lazySequenceOnEachIndexedTrace = []
@@ -766,6 +797,23 @@ extension RuntimeSequenceTests {
         XCTAssertEqual(_lazySequenceOnEachIndexedTrace, [10, 120, 230])
     }
 
+    func testSequenceForEachVisitsElementsInOrder() {
+        let seq = makeSequence([1, 2, 3])
+        _lazyTestYieldCounter = 0
+        let action: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+            _lazyTestYieldCounter = _lazyTestYieldCounter * 10 + value
+            return 0
+        }
+
+        let result = kk_sequence_forEach(
+            seq,
+            unsafeBitCast(action, to: Int.self),
+            0
+        )
+
+        XCTAssertEqual(result, 0)
+        XCTAssertEqual(_lazyTestYieldCounter, 123)
+    }
     func testSequenceFoldIndexedAccumulatesIndexAndValueInOrder() {
         let seq = makeSequence([3, 4, 5])
         let foldFn: @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, acc, value, _ in
@@ -844,6 +892,25 @@ extension RuntimeSequenceTests {
         XCTAssertEqual(listElements(result), [50, 20, 40])
     }
 
+    func testSequenceMapIndexedToAppendsIndexedResultsToDestination() {
+        let seq = makeSequence([10, 20, 30])
+        let dest = makeList([50])
+        let mapFn: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, value, _ in
+            index + value
+        }
+
+        let result = kk_sequence_mapIndexedTo(
+            seq,
+            dest,
+            unsafeBitCast(mapFn, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(result, dest)
+        XCTAssertEqual(listElements(result), [50, 10, 21, 32])
+    }
+
     func testSequenceMapIndexedNotNullToAppendsOnlyNonNullResults() {
         let seq = makeSequence([1, 2, 3, 4])
         let dest = makeList([50])
@@ -861,6 +928,29 @@ extension RuntimeSequenceTests {
 
         XCTAssertEqual(result, dest)
         XCTAssertEqual(listElements(result), [50, 1, 5])
+    }
+
+    func testSequenceFlatMapIndexedToAppendsFlattenedResults() {
+        let seq = makeSequence([1, 2])
+        let dest = makeList([50])
+        let flatMapFn: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, value, _ in
+            let arr = kk_array_new(2)
+            var thrown = 0
+            _ = kk_array_set(arr, 0, index, &thrown)
+            _ = kk_array_set(arr, 1, value * 10, &thrown)
+            return kk_list_of(arr, 2)
+        }
+
+        let result = kk_sequence_flatMapIndexedTo(
+            seq,
+            dest,
+            unsafeBitCast(flatMapFn, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(result, dest)
+        XCTAssertEqual(listElements(result), [50, 0, 10, 1, 20])
     }
 
     func testSequenceWithIndexCorrectness() {
