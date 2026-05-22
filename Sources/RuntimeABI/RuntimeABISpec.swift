@@ -847,6 +847,14 @@ public enum RuntimeABISpec {
             section: "System"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_int_toJsNumber",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .int32),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_js_boolean_toBoolean",
             parameters: [
                 RuntimeABIParameter(name: "jsBooleanRaw", type: .intptr),
