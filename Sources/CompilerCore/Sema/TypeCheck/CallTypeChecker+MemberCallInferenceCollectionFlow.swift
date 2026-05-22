@@ -72,9 +72,16 @@ extension CallTypeChecker {
         let isArrayReceiver = isArrayLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isMapReceiver = isMapLikeCollectionType(receiverType, sema: sema, interner: interner)
         let isMutableListReceiver = isMutableListType(receiverType, sema: sema, interner: interner)
+        let isListFactoryReceiver = isListCollectionFactoryReceiver(
+            receiverID: receiverID,
+            ast: ast,
+            sema: sema,
+            interner: interner
+        )
         let isSyntheticSequenceReceiver = sema.bindings.isCollectionExpr(receiverID)
             && !isCollectionLikeType(receiverType, sema: sema, interner: interner)
             && !isMapReceiver
+            && !isListFactoryReceiver
         let isSequenceReceiver = isSequenceLikeType(receiverType, sema: sema, interner: interner)
             || isSyntheticSequenceReceiver
         var activeCollectionHOFNames = collectionHOFNames
@@ -188,7 +195,7 @@ extension CallTypeChecker {
 
         if interner.resolve(calleeName) == "filterIsInstanceTo",
            args.count == 1,
-           isCollectionReceiver
+           isCollectionReceiver || isSequenceReceiver
         {
             let destinationType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
             let nonNullableDestinationType = sema.types.makeNonNullable(destinationType)
@@ -210,14 +217,17 @@ extension CallTypeChecker {
                 ctx: ctx,
                 locals: &locals
             )
+            let ownerPackage = isSequenceReceiver ? "sequences" : "collections"
+            let ownerName = isSequenceReceiver ? "Sequence" : "List"
+            let externalLinkName = isSequenceReceiver ? "kk_sequence_filterIsInstanceTo" : "kk_list_filterIsInstanceTo"
             let memberFQName = [
                 interner.intern("kotlin"),
-                interner.intern("collections"),
-                interner.intern("List"),
+                interner.intern(ownerPackage),
+                interner.intern(ownerName),
                 calleeName,
             ]
             if let chosenCallee = sema.symbols.lookupAll(fqName: memberFQName).first(where: { candidate in
-                sema.symbols.externalLinkName(for: candidate) == "kk_list_filterIsInstanceTo"
+                sema.symbols.externalLinkName(for: candidate) == externalLinkName
             }) {
                 sema.bindings.bindCall(id, binding: CallBinding(
                     chosenCallee: chosenCallee,
@@ -2209,7 +2219,7 @@ extension CallTypeChecker {
                     resultType = sema.types.anyType
                 }
 
-            case "sumOf", "sumBy":
+            case "averageOf", "sumOf", "sumBy":
                 guard args.count == 1 else {
                     sema.bindings.bindExprType(id, type: sema.types.anyType)
                     return sema.types.anyType
@@ -2222,7 +2232,7 @@ extension CallTypeChecker {
                     sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
                 }
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
-                resultType = sema.types.intType
+                resultType = calleeStr == "averageOf" ? sema.types.doubleType : sema.types.intType
                 if calleeStr == "sumBy" {
                     let memberFQName = [
                         interner.intern("kotlin"),
@@ -2604,6 +2614,22 @@ extension CallTypeChecker {
                         chosenCallee: chosenCallee,
                         substitutedTypeArguments: [collectionElementType],
                         parameterMapping: [0: 0]
+                    ))
+                    sema.bindings.bindCallableTarget(id, target: .symbol(chosenCallee))
+                }
+            }
+
+            if (calleeStr == "scan" || calleeStr == "runningFold"), !isSequenceReceiver {
+                let knownNames = KnownCompilerNames(interner: interner)
+                let memberFQName = knownNames.kotlinCollectionsListFQName + [calleeName]
+                if let chosenCallee = sema.symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+                    sema.symbols.functionSignature(for: symbolID)?.parameterTypes.count == args.count
+                }) {
+                    let initialType = args.isEmpty ? sema.types.anyType : (sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType)
+                    sema.bindings.bindCall(id, binding: CallBinding(
+                        chosenCallee: chosenCallee,
+                        substitutedTypeArguments: [collectionElementType, initialType],
+                        parameterMapping: Dictionary(uniqueKeysWithValues: args.indices.map { ($0, $0) })
                     ))
                     sema.bindings.bindCallableTarget(id, target: .symbol(chosenCallee))
                 }

@@ -98,6 +98,14 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerOptionalToList(
+            optionalSymbol: optionalSymbol,
+            packageFQName: kotlinJvmOptionalsPkg,
+            packageSymbol: optionalsPkgSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
         registerOptionalGetOrElse(
             optionalSymbol: optionalSymbol,
             packageFQName: kotlinJvmOptionalsPkg,
@@ -559,6 +567,96 @@ extension DataFlowSemaPhase {
             symbols.setParentSymbol(packageSymbol, for: functionSymbol)
         }
         symbols.setExternalLinkName("kk_optional_toSet", for: functionSymbol)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: [],
+                valueParameterIsVararg: [],
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 0
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerOptionalToList(
+        optionalSymbol: SymbolID,
+        packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern("toList")
+        let functionFQName = packageFQName + [functionName]
+
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = functionFQName + [typeParamName]
+        let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let tType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: optionalSymbol,
+            args: [.out(tType)],
+            nullability: .nonNull
+        )))
+
+        let listFQName = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("List")
+        ]
+        guard let listSymbol = symbols.lookup(fqName: listFQName) else {
+            return
+        }
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: listSymbol,
+            args: [.out(tType)],
+            nullability: .nonNull
+        )))
+
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+            return signature.receiverType == receiverType
+                && signature.parameterTypes.isEmpty
+                && signature.returnType == returnType
+                && signature.typeParameterSymbols == [typeParamSymbol]
+                && signature.classTypeParameterCount == 0
+        }) {
+            symbols.setExternalLinkName("kk_optional_toList", for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName("kk_optional_toList", for: functionSymbol)
 
         symbols.setFunctionSignature(
             FunctionSignature(
