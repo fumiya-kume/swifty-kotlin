@@ -760,6 +760,21 @@ extension RuntimeSequenceTests {
         XCTAssertEqual(result, [10, 21, 32]) // [0+10, 1+20, 2+30]
     }
 
+    func testSequenceMapIndexedNotNullCorrectness() {
+        let seq = makeSequence([10, 20, 30, 40])
+        let mapFn: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, value, _ in
+            index.isMultiple(of: 2) ? index + value : runtimeNullSentinelInt
+        }
+        let mapped = kk_sequence_mapIndexedNotNull(
+            seq,
+            unsafeBitCast(mapFn, to: Int.self),
+            0,
+            nil
+        )
+        let result = sequenceElements(mapped)
+        XCTAssertEqual(result, [10, 32])
+    }
+
     func testSequenceOnEachIndexedCorrectness() {
         let seq = makeSequence([10, 20, 30])
         _lazySequenceOnEachIndexedTrace = []
