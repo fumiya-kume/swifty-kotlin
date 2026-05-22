@@ -2215,7 +2215,7 @@ extension CallTypeChecker {
         if oneParamMembers.contains(memberName), argCount == 1 {
             let lambdaReturnType = boolOneParamMembers.contains(memberName)
                 ? sema.types.make(.primitive(.boolean, .nonNull))
-                : memberName == interner.intern("sumOf") || memberName == interner.intern("sumBy")
+                : memberName == interner.intern("averageOf") || memberName == interner.intern("sumOf") || memberName == interner.intern("sumBy")
                 ? sema.types.intType
                 : memberName == interner.intern("sumByDouble")
                 ? sema.types.doubleType
