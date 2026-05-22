@@ -377,6 +377,30 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testSequenceDropWhileSkipsLeadingMatchesOnly() throws {
+        let source = """
+        fun main() {
+            val result = sequenceOf(1, 2, 3, 1, 4).dropWhile { it < 3 }.toList()
+            println(result)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceDropWhile",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[3, 1, 4]\n")
+        }
+    }
+
     func testSequenceElementAtOrNullReturnsValueOrNull() throws {
         let source = """
         fun main() {
@@ -401,6 +425,7 @@ extension CodegenBackendIntegrationTests {
             XCTAssertEqual(normalizedStdout, "20\n-1\n")
         }
     }
+
 
     // MARK: - filterIsInstance keeps matching runtime types
 

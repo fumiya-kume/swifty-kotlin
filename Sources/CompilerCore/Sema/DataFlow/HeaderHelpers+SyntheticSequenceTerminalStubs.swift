@@ -1129,6 +1129,19 @@ extension DataFlowSemaPhase {
         )
 
         registerSequenceMemberStub(
+            named: "dropWhile",
+            externalLinkName: "kk_sequence_dropWhile",
+            receiverType: receiverType,
+            parameters: [("predicate", predicateType)],
+            returnType: receiverType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSequenceMemberStub(
             named: "filterNotTo",
             externalLinkName: "kk_sequence_filterNotTo",
             receiverType: receiverType,
