@@ -66,6 +66,36 @@ public func kk_sequence_sumOf(
     return total
 }
 
+@_cdecl("kk_sequence_averageOf")
+public func kk_sequence_averageOf(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    var total = 0.0
+    var count = 0
+    runtimeTraverseSequenceSource(seqRaw, caller: #function, outThrown: outThrown) { elem in
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: elem,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
+        }
+        total += Double(maybeUnbox(result))
+        count += 1
+        return true
+    }
+    if let outThrown, outThrown.pointee != 0 { return kk_double_to_bits(0.0) }
+    guard count > 0 else { return kk_double_to_bits(Double.nan) }
+    return kk_double_to_bits(total / Double(count))
+}
+
 @_cdecl("kk_sequence_sumBy")
 public func kk_sequence_sumBy(
     _ seqRaw: Int,
@@ -533,6 +563,19 @@ public func kk_sequence_maxWithOrNull(
     )
 }
 
+@_cdecl("kk_sequence_minWith")
+public func kk_sequence_minWith(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    runtimeSequenceExtremumWith(
+        seqRaw: seqRaw, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown,
+        caller: #function, comparisonSign: -1, throwOnEmpty: true
+    )
+}
+
 @_cdecl("kk_sequence_maxBy")
 public func kk_sequence_maxBy(
     _ seqRaw: Int,
@@ -582,6 +625,19 @@ public func kk_sequence_minOf(
     runtimeSequenceBestValue(
         seqRaw: seqRaw, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown,
         caller: #function, comparisonSign: -1, returnElement: false, throwOnEmpty: true
+    )
+}
+
+@_cdecl("kk_sequence_minOfOrNull")
+public func kk_sequence_minOfOrNull(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    runtimeSequenceBestValue(
+        seqRaw: seqRaw, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown,
+        caller: #function, comparisonSign: -1, returnElement: false, throwOnEmpty: false
     )
 }
 

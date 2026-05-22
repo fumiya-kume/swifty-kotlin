@@ -36,7 +36,7 @@ public func kk_sequence_scan(
         outThrown?.pointee = runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached)
         return 0
     }
-    return registerRuntimeObject(RuntimeListBox(elements: results))
+    return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: results)]))
 }
 
 @_cdecl("kk_sequence_runningFold")

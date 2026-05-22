@@ -444,7 +444,7 @@ extension CallLowerer {
         }
         if (loweredCallee == interner.intern("kk_sequence_firstNotNullOf")
             || loweredCallee == interner.intern("kk_sequence_firstNotNullOfOrNull")
-            || loweredCallee == interner.intern("kk_sequence_takeLastWhile")),
+            || loweredCallee == interner.intern("kk_sequence_indexOfLast")),
            finalArguments.count == 2
         {
             let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
@@ -458,8 +458,11 @@ extension CallLowerer {
         }
         if loweredCallee == interner.intern("kk_sequence_filterTo")
             || loweredCallee == interner.intern("kk_sequence_filterNotTo")
+            || loweredCallee == interner.intern("kk_sequence_filterIndexedTo")
             || loweredCallee == interner.intern("kk_sequence_mapNotNullTo")
             || loweredCallee == interner.intern("kk_sequence_mapTo")
+            || loweredCallee == interner.intern("kk_sequence_mapIndexedTo")
+            || loweredCallee == interner.intern("kk_sequence_mapIndexedNotNullTo")
         {
             if finalArguments.count == 2 {
                 let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
@@ -499,6 +502,8 @@ extension CallLowerer {
             finalArguments = [finalArguments[0], fnPtrExpr, envPtrExpr]
         }
         if (loweredCallee == interner.intern("kk_list_sumOf")
+            || loweredCallee == interner.intern("kk_sequence_averageOf")
+            || loweredCallee == interner.intern("kk_sequence_sumOf")
             || loweredCallee == interner.intern("kk_list_sumBy")
             || loweredCallee == interner.intern("kk_list_sumByDouble")
             || loweredCallee == interner.intern("kk_sequence_sumBy")
@@ -531,14 +536,25 @@ extension CallLowerer {
         if (loweredCallee == interner.intern("kk_sequence_associateTo")
             || loweredCallee == interner.intern("kk_sequence_associateByTo")
             || loweredCallee == interner.intern("kk_sequence_associateWithTo")
-            || loweredCallee == interner.intern("kk_sequence_groupByTo")),
+            || loweredCallee == interner.intern("kk_sequence_groupByTo")
+            || loweredCallee == interner.intern("kk_sequence_flatMapIndexedTo")),
            finalArguments.count == 3
         {
             let firstArg = finalArguments[1]
             let secondArg = finalArguments[2]
             let lambdaArg: KIRExprID
             let destinationArg: KIRExprID
-            if driver.ctx.callableValueInfo(for: firstArg) != nil {
+            if sourceArgExprs.count >= 2,
+               sema.bindings.isCollectionHOFLambdaExpr(sourceArgExprs[0])
+            {
+                lambdaArg = firstArg
+                destinationArg = secondArg
+            } else if sourceArgExprs.count >= 2,
+                      sema.bindings.isCollectionHOFLambdaExpr(sourceArgExprs[1])
+            {
+                destinationArg = firstArg
+                lambdaArg = secondArg
+            } else if driver.ctx.callableValueInfo(for: firstArg) != nil {
                 lambdaArg = firstArg
                 destinationArg = secondArg
             } else {
@@ -615,6 +631,7 @@ extension CallLowerer {
             interner.intern("kk_list_maxWithOrNull"),
             interner.intern("kk_list_minWith"),
             interner.intern("kk_list_minWithOrNull"),
+            interner.intern("kk_sequence_minWith"),
             interner.intern("kk_list_sortedWith"),
             interner.intern("kk_array_sortedArrayWith"),
         ]
@@ -895,20 +912,27 @@ extension CallLowerer {
             interner.intern("kk_uint_progression_fromClosedRange"),
             interner.intern("kk_ulong_progression_fromClosedRange"),
             interner.intern("kk_sequence_foldIndexed"),
+            interner.intern("kk_sequence_reduceOrNull"),
+            interner.intern("kk_sequence_reduceRight"),
+            interner.intern("kk_sequence_scan"),
             interner.intern("kk_sequence_reduceIndexed"),
             interner.intern("kk_sequence_reduceIndexedOrNull"),
+            interner.intern("kk_sequence_reduceRightIndexed"),
             interner.intern("kk_long_range_random"),
             interner.intern("kk_random_nextLong_rangeObject"),
             interner.intern("kk_uint_range_random"),
             interner.intern("kk_ulong_range_random"),
             interner.intern("kk_sequence_runningReduceIndexed"),
             interner.intern("kk_sequence_sortedBy"),
+            interner.intern("kk_sequence_sortedWith"),
+            interner.intern("kk_sequence_sortedByDescending"),
             interner.intern("kk_sequence_sumOf"),
             interner.intern("kk_sequence_sumBy"),
             interner.intern("kk_sequence_sumByDouble"),
             interner.intern("kk_sequence_takeLastWhile"),
             interner.intern("kk_sequence_firstNotNullOf"),
             interner.intern("kk_sequence_firstNotNullOfOrNull"),
+            interner.intern("kk_sequence_indexOfLast"),
             interner.intern("kk_sequence_associate"),
             interner.intern("kk_sequence_associateBy"),
             interner.intern("kk_sequence_associateTo"),
@@ -917,30 +941,38 @@ extension CallLowerer {
             interner.intern("kk_map_mapKeysTo"),
             interner.intern("kk_map_mapValuesTo"),
             interner.intern("kk_sequence_mapNotNull"),
+            interner.intern("kk_sequence_mapIndexedNotNull"),
             interner.intern("kk_sequence_firstNotNullOf"),
             interner.intern("kk_sequence_firstNotNullOfOrNull"),
             interner.intern("kk_sequence_mapIndexed"),
             interner.intern("kk_sequence_filterIndexed"),
             interner.intern("kk_sequence_findLast"),
             interner.intern("kk_sequence_elementAt"),
+            interner.intern("kk_sequence_min"),
             interner.intern("kk_sequence_maxBy"),
             interner.intern("kk_sequence_minByOrNull"),
             interner.intern("kk_sequence_maxByOrNull"),
             interner.intern("kk_sequence_maxWithOrNull"),
             interner.intern("kk_sequence_minOf"),
+            interner.intern("kk_sequence_minOfOrNull"),
             interner.intern("kk_sequence_maxOfOrNull"),
+            interner.intern("kk_sequence_minWith"),
             interner.intern("kk_sequence_maxOf"),
             interner.intern("kk_sequence_partition"),
             interner.intern("kk_sequence_associateWith"),
             interner.intern("kk_sequence_associateWithTo"),
             interner.intern("kk_sequence_groupByTo"),
+            interner.intern("kk_sequence_flatMapIndexedTo"),
+            interner.intern("kk_sequence_flatMapTo"),
             interner.intern("kk_sequence_ifEmpty"),
             interner.intern("kk_string_ifBlank"),
             interner.intern("kk_string_ifEmpty"),
             interner.intern("kk_string_chunked_sequence_transform"),
             interner.intern("kk_sequence_first"),
             interner.intern("kk_sequence_last"),
+            interner.intern("kk_sequence_max"),
             interner.intern("kk_sequence_firstOrNull"),
+            interner.intern("kk_sequence_single"),
             interner.intern("kk_sequence_singleOrNull"),
             interner.intern("kk_sequence_randomOrNull"),
             interner.intern("kk_sequence_count"),
