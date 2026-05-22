@@ -446,6 +446,53 @@ extension DataFlowSemaPhase {
         }
     }
 
+    private func collectNestedDeclarationHeader(
+        kind: SymbolKind,
+        name: InternedString,
+        fqName: [InternedString],
+        declSite: SourceRange,
+        visibility: Visibility,
+        flags: SymbolFlags,
+        duplicateCheckFlags: SymbolFlags,
+        ownerSymbol: SymbolID,
+        sourceFileID: FileID,
+        declID: DeclID,
+        decl: Decl,
+        symbols: SymbolTable,
+        diagnostics: DiagnosticEngine,
+        bindings: BindingTable,
+        scope: Scope
+    ) -> SymbolID {
+        checkAndReportDuplicateDeclaration(
+            newKind: kind,
+            fqName: fqName,
+            range: declSite,
+            symbols: symbols,
+            diagnostics: diagnostics,
+            newFlags: duplicateCheckFlags
+        )
+        let nestedSymbol = symbols.define(
+            kind: kind,
+            name: name,
+            fqName: fqName,
+            declSite: declSite,
+            visibility: visibility,
+            flags: flags
+        )
+        symbols.setSourceFileID(sourceFileID, for: nestedSymbol)
+        registerAnnotations(
+            for: decl,
+            symbol: nestedSymbol,
+            declRange: declSite,
+            symbols: symbols,
+            diagnostics: diagnostics
+        )
+        bindings.bindDecl(declID, symbol: nestedSymbol)
+        symbols.setParentSymbol(ownerSymbol, for: nestedSymbol)
+        scope.insert(nestedSymbol)
+        return nestedSymbol
+    }
+
     private func collectNestedClassOrInterfaceHeader(
         declID: DeclID,
         ownerFQName: [InternedString],
@@ -470,33 +517,24 @@ extension DataFlowSemaPhase {
         case let .classDecl(nestedClass):
             let nestedFQName = ownerFQName + [nestedClass.name]
             let nestedClassKind = classSymbolKind(for: nestedClass)
-            checkAndReportDuplicateDeclaration(
-                newKind: nestedClassKind,
-                fqName: nestedFQName,
-                range: nestedClass.range,
-                symbols: symbols,
-                diagnostics: diagnostics,
-                newFlags: flags(from: nestedClass.modifiers)
-            )
-            let nestedSymbol = symbols.define(
+            let nestedClassFlags = flags(from: nestedClass.modifiers)
+            let nestedSymbol = collectNestedDeclarationHeader(
                 kind: nestedClassKind,
                 name: nestedClass.name,
                 fqName: nestedFQName,
                 declSite: nestedClass.range,
                 visibility: visibility(from: nestedClass.modifiers),
-                flags: flags(from: nestedClass.modifiers)
-            )
-            symbols.setSourceFileID(sourceFileID, for: nestedSymbol)
-            registerAnnotations(
-                for: decl,
-                symbol: nestedSymbol,
-                declRange: nestedClass.range,
+                flags: nestedClassFlags,
+                duplicateCheckFlags: nestedClassFlags,
+                ownerSymbol: ownerSymbol,
+                sourceFileID: sourceFileID,
+                declID: declID,
+                decl: decl,
                 symbols: symbols,
-                diagnostics: diagnostics
+                diagnostics: diagnostics,
+                bindings: bindings,
+                scope: scope
             )
-            bindings.bindDecl(declID, symbol: nestedSymbol)
-            symbols.setParentSymbol(ownerSymbol, for: nestedSymbol)
-            scope.insert(nestedSymbol)
 
             if !nestedClass.typeParams.isEmpty {
                 types.setNominalTypeParameterVariances(
@@ -633,40 +671,19 @@ extension DataFlowSemaPhase {
                 }
             }
             if nestedClass.modifiers.contains(.data) {
-                collectSyntheticDataClassComponentN(
+                collectSyntheticDataClassMethods(
                     classDecl: nestedClass,
                     ast: ast,
                     ownerSymbol: nestedSymbol,
                     ownerFQName: nestedFQName,
                     ownerType: nestedType,
+                    phase: .beforeMemberHeaders,
                     symbols: symbols,
                     types: types,
                     scope: nestedScope,
                     interner: interner,
                     diagnostics: diagnostics,
                     localTypeParameters: nestedLocalTypeParameters
-                )
-                collectSyntheticDataClassCopy(
-                    classDecl: nestedClass,
-                    ast: ast,
-                    ownerSymbol: nestedSymbol,
-                    ownerFQName: nestedFQName,
-                    ownerType: nestedType,
-                    symbols: symbols,
-                    types: types,
-                    scope: nestedScope,
-                    interner: interner,
-                    diagnostics: diagnostics,
-                    localTypeParameters: nestedLocalTypeParameters
-                )
-                collectSyntheticDataClassHashCode(
-                    ownerSymbol: nestedSymbol,
-                    ownerFQName: nestedFQName,
-                    ownerType: nestedType,
-                    symbols: symbols,
-                    types: types,
-                    scope: nestedScope,
-                    interner: interner
                 )
             }
             collectNestedTypeAliases(
@@ -697,23 +714,19 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
             if nestedClass.modifiers.contains(.data) {
-                collectSyntheticDataClassToString(
+                collectSyntheticDataClassMethods(
+                    classDecl: nestedClass,
+                    ast: ast,
                     ownerSymbol: nestedSymbol,
                     ownerFQName: nestedFQName,
                     ownerType: nestedType,
+                    phase: .afterMemberHeaders,
                     symbols: symbols,
                     types: types,
                     scope: nestedScope,
-                    interner: interner
-                )
-                collectSyntheticDataClassEquals(
-                    ownerSymbol: nestedSymbol,
-                    ownerFQName: nestedFQName,
-                    ownerType: nestedType,
-                    symbols: symbols,
-                    types: types,
-                    scope: nestedScope,
-                    interner: interner
+                    interner: interner,
+                    diagnostics: diagnostics,
+                    localTypeParameters: nestedLocalTypeParameters
                 )
             }
             if let companionDeclID = nestedClass.companionObject {
@@ -734,37 +747,27 @@ extension DataFlowSemaPhase {
             }
         case let .interfaceDecl(nestedInterface):
             let nestedFQName = ownerFQName + [nestedInterface.name]
-            checkAndReportDuplicateDeclaration(
-                newKind: .interface,
-                fqName: nestedFQName,
-                range: nestedInterface.range,
-                symbols: symbols,
-                diagnostics: diagnostics,
-                newFlags: flags(from: nestedInterface.modifiers)
-            )
             var nestedFlags = flags(from: nestedInterface.modifiers)
             if nestedInterface.isFunInterface {
                 nestedFlags.insert(.funInterface)
             }
-            let nestedSymbol = symbols.define(
+            let nestedSymbol = collectNestedDeclarationHeader(
                 kind: .interface,
                 name: nestedInterface.name,
                 fqName: nestedFQName,
                 declSite: nestedInterface.range,
                 visibility: visibility(from: nestedInterface.modifiers),
-                flags: nestedFlags
-            )
-            symbols.setSourceFileID(sourceFileID, for: nestedSymbol)
-            registerAnnotations(
-                for: decl,
-                symbol: nestedSymbol,
-                declRange: nestedInterface.range,
+                flags: nestedFlags,
+                duplicateCheckFlags: flags(from: nestedInterface.modifiers),
+                ownerSymbol: ownerSymbol,
+                sourceFileID: sourceFileID,
+                declID: declID,
+                decl: decl,
                 symbols: symbols,
-                diagnostics: diagnostics
+                diagnostics: diagnostics,
+                bindings: bindings,
+                scope: scope
             )
-            bindings.bindDecl(declID, symbol: nestedSymbol)
-            symbols.setParentSymbol(ownerSymbol, for: nestedSymbol)
-            scope.insert(nestedSymbol)
 
             let nestedType = types.make(.classType(ClassType(classSymbol: nestedSymbol, args: [], nullability: .nonNull)))
             let nestedScope = ClassMemberScope(
@@ -846,33 +849,24 @@ extension DataFlowSemaPhase {
             return
         }
         let nestedFQName = ownerFQName + [nestedObject.name]
-        checkAndReportDuplicateDeclaration(
-            newKind: .object,
-            fqName: nestedFQName,
-            range: nestedObject.range,
-            symbols: symbols,
-            diagnostics: diagnostics,
-            newFlags: flags(from: nestedObject.modifiers)
-        )
-        let nestedSymbol = symbols.define(
+        let nestedObjectFlags = flags(from: nestedObject.modifiers)
+        let nestedSymbol = collectNestedDeclarationHeader(
             kind: .object,
             name: nestedObject.name,
             fqName: nestedFQName,
             declSite: nestedObject.range,
             visibility: visibility(from: nestedObject.modifiers),
-            flags: flags(from: nestedObject.modifiers)
-        )
-        symbols.setSourceFileID(sourceFileID, for: nestedSymbol)
-        registerAnnotations(
-            for: decl,
-            symbol: nestedSymbol,
-            declRange: nestedObject.range,
+            flags: nestedObjectFlags,
+            duplicateCheckFlags: nestedObjectFlags,
+            ownerSymbol: ownerSymbol,
+            sourceFileID: sourceFileID,
+            declID: declID,
+            decl: decl,
             symbols: symbols,
-            diagnostics: diagnostics
+            diagnostics: diagnostics,
+            bindings: bindings,
+            scope: scope
         )
-        bindings.bindDecl(declID, symbol: nestedSymbol)
-        symbols.setParentSymbol(ownerSymbol, for: nestedSymbol)
-        scope.insert(nestedSymbol)
 
         let nestedType = types.make(.classType(ClassType(classSymbol: nestedSymbol, args: [], nullability: .nonNull)))
         let nestedScope = ClassMemberScope(
@@ -909,19 +903,21 @@ extension DataFlowSemaPhase {
             interner: interner
         )
         if nestedObject.modifiers.contains(.data) {
-            collectSyntheticDataObjectToString(
+            collectSyntheticToString(
                 ownerSymbol: nestedSymbol,
                 ownerFQName: nestedFQName,
-                objectType: nestedType,
+                ownerType: nestedType,
+                requireDataTypeFlag: false,
                 symbols: symbols,
                 types: types,
                 scope: nestedScope,
                 interner: interner
             )
-            collectSyntheticDataObjectEquals(
+            collectSyntheticEquals(
                 ownerSymbol: nestedSymbol,
                 ownerFQName: nestedFQName,
-                objectType: nestedType,
+                ownerType: nestedType,
+                requireDataTypeFlag: false,
                 symbols: symbols,
                 types: types,
                 scope: nestedScope,

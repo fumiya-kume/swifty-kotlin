@@ -105,6 +105,41 @@ final class RangeSyntheticMemberLinkTests: XCTestCase {
             ("ULongRange", "kk_ulong_range_random"),
         ]
 
+        let orNullExpected: [(owner: String, link: String)] = [
+            ("IntRange", "kk_range_firstOrNull"),
+            ("LongRange", "kk_long_range_firstOrNull"),
+            ("ULongRange", "kk_ulong_range_firstOrNull"),
+        ]
+        for expectation in orNullExpected {
+            XCTAssertEqual(
+                externalLink(
+                    for: expectation.owner,
+                    member: "firstOrNull",
+                    sema: sema,
+                    interner: interner
+                ),
+                expectation.link,
+                "\(expectation.owner).firstOrNull should link to \(expectation.link)"
+            )
+        }
+        let lastOrNullExpected: [(owner: String, link: String)] = [
+            ("IntRange", "kk_range_lastOrNull"),
+            ("LongRange", "kk_long_range_lastOrNull"),
+            ("ULongRange", "kk_ulong_range_lastOrNull"),
+        ]
+        for expectation in lastOrNullExpected {
+            XCTAssertEqual(
+                externalLink(
+                    for: expectation.owner,
+                    member: "lastOrNull",
+                    sema: sema,
+                    interner: interner
+                ),
+                expectation.link,
+                "\(expectation.owner).lastOrNull should link to \(expectation.link)"
+            )
+        }
+
         for expectation in expected {
             XCTAssertEqual(
                 externalLink(

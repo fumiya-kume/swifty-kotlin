@@ -1233,6 +1233,7 @@ extension DataFlowSemaPhase {
         interner: StringInterner,
         annotations: [MetadataAnnotationRecord] = [],
         canThrow: Bool = false,
+        typeParameterUpperBounds: [TypeID] = [],
         additionalTypeParameterSymbols: [SymbolID] = [],
         additionalTypeParameterUpperBoundsList: [[TypeID]] = [],
         flags: SymbolFlags = [.synthetic, .operatorFunction]
@@ -1288,7 +1289,7 @@ extension DataFlowSemaPhase {
                 valueParameterHasDefaultValues: Array(repeating: false, count: parameters.count),
                 valueParameterIsVararg: Array(repeating: false, count: parameters.count),
                 typeParameterSymbols: [typeParamSymbol] + additionalTypeParameterSymbols,
-                typeParameterUpperBoundsList: [[]] + additionalTypeParameterUpperBoundsList,
+                typeParameterUpperBoundsList: [typeParameterUpperBounds] + additionalTypeParameterUpperBoundsList,
                 classTypeParameterCount: 1
             ),
             for: memberSymbol
