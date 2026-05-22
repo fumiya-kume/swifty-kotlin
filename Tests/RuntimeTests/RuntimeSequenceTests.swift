@@ -1544,6 +1544,16 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(result, 0)
     }
 
+    func testMinReturnsSmallestElementAndThrowsOnEmpty() {
+        var thrown = 0
+        XCTAssertEqual(kk_sequence_min(makeSequence([3, 1, 4, 2]), &thrown), 1)
+        XCTAssertEqual(thrown, 0)
+
+        let emptyResult = kk_sequence_min(makeSequence([]), &thrown)
+        XCTAssertEqual(emptyResult, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
     func testSequenceSingleReturnsOnlyElement() {
         let seq = makeSequence([42])
         var thrown = 0
@@ -1565,6 +1575,7 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertNotEqual(multipleThrown, 0)
         XCTAssertEqual(multipleResult, 0)
     }
+
 
     func testSequenceSingleOrNullReturnsOnlyElement() {
         let seq = makeSequence([42])
