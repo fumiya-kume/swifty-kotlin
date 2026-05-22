@@ -32,6 +32,8 @@
 /// - `Path.outputStream(vararg options: OpenOption): OutputStream` extension function
 /// - `Path.moveTo(target: Path, vararg options: CopyOption): Path` extension function
 /// - `Path.inputStream(vararg options: OpenOption): InputStream` extension function
+/// - `Path.reader(charset, vararg options: OpenOption): BufferedReader` extension function
+/// - `Path.inputStream(vararg options: OpenOption): InputStream` extension function
 /// - `Path.appendLines(lines: Iterable<CharSequence>, charset)` extension function
 /// - `Path.writeLines(lines: Iterable<CharSequence>, charset, options)` extension function
 /// - `Path.writeLines(lines: Sequence<CharSequence>, charset, options)` extension function
@@ -1448,6 +1450,33 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_path_bufferedReader",
             valueParameterHasDefaultValues: [true, true, false],
             valueParameterIsVararg: [false, false, true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "reader",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [
+                ("charset", charsetType),
+                ("options", openOptionType),
+            ],
+            returnType: bufferedReaderType,
+            externalLinkName: "kk_path_reader",
+            valueParameterHasDefaultValues: [true, false],
+            valueParameterIsVararg: [false, true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "reader",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [],
+            returnType: bufferedReaderType,
+            externalLinkName: "kk_path_reader_default",
             symbols: symbols,
             interner: interner
         )
