@@ -806,7 +806,7 @@
 - [x] STDLIB-JS-FN-004: `JsReference<T>.get()` を追加する（`kk_js_reference_get` runtime 済み）
 - [ ] STDLIB-JS-FN-005: `JsArray<T>.get(index)` を追加する
 - [x] STDLIB-JS-FN-006: `RegExpMatch.get(index)` を追加する
-- [ ] STDLIB-JS-FN-007: `dynamic.iterator()` を追加する
+- [x] STDLIB-JS-FN-007: `dynamic.iterator()` を追加する
 - [x] STDLIB-JS-FN-009: `JsArray<T>()` factory を追加する
 - [x] STDLIB-JS-FN-015: `RegExp.reset()` を追加する
 - [x] STDLIB-JS-FN-016: `JsArray<T>.set(index, value)` を追加する
