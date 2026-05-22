@@ -1338,6 +1338,16 @@ final class CollectionLiteralLoweringTests: XCTestCase {
         )
     }
 
+    func testVirtualCallOnSequenceTypedParameterRewritesToKkSequenceMapIndexedTo() throws {
+        let callees = try buildAndLowerVirtualCallWithArgs(
+            receiverTypeName: "Sequence", callee: "mapIndexedTo", argCount: 2
+        )
+        XCTAssertTrue(
+            callees.contains("kk_sequence_mapIndexedTo"),
+            "virtualCall(mapIndexedTo) on Sequence-typed parameter should be rewritten to kk_sequence_mapIndexedTo, got: \(callees)"
+        )
+    }
+
     func testVirtualCallOnSequenceTypedParameterRewritesToKkSequenceMapIndexedNotNullTo() throws {
         let callees = try buildAndLowerVirtualCallWithArgs(
             receiverTypeName: "Sequence", callee: "mapIndexedNotNullTo", argCount: 2
@@ -1345,6 +1355,14 @@ final class CollectionLiteralLoweringTests: XCTestCase {
         XCTAssertTrue(
             callees.contains("kk_sequence_mapIndexedNotNullTo"),
             "virtualCall(mapIndexedNotNullTo) on Sequence-typed parameter should be rewritten to kk_sequence_mapIndexedNotNullTo, got: \(callees)"
+        )
+    }
+
+    func testVirtualCallOnSequenceTypedParameterRewritesToKkSequenceMax() throws {
+        let callees = try buildAndLowerVirtualCall(receiverTypeName: "Sequence", callee: "max")
+        XCTAssertTrue(
+            callees.contains("kk_sequence_max"),
+            "virtualCall(max) on Sequence-typed parameter should be rewritten to kk_sequence_max, got: \(callees)"
         )
     }
 

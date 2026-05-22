@@ -328,6 +328,30 @@ public func kk_sequence_mapNotNullTo(
     return destRaw
 }
 
+/// `mapIndexedTo`: Evaluate the sequence and append indexed transformed elements to the destination.
+@_cdecl("kk_sequence_mapIndexedTo")
+public func kk_sequence_mapIndexedTo(
+    _ seqRaw: Int,
+    _ destRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    for (idx, elem) in elements.enumerated() {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: idx, rhs: elem, outThrown: &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        runtimeAppendToMutableCollection(destRaw, maybeUnbox(result))
+    }
+    return destRaw
+}
+
 /// `flatMapTo`: Evaluate the sequence, flatten transform results, and append them.
 @_cdecl("kk_sequence_flatMapTo")
 public func kk_sequence_flatMapTo(
@@ -404,6 +428,35 @@ public func kk_sequence_mapIndexedNotNullTo(
         }
         if result != runtimeNullSentinelInt {
             runtimeAppendToMutableCollection(destRaw, maybeUnbox(result))
+        }
+    }
+    return destRaw
+}
+
+/// `flatMapIndexedTo`: Evaluate the sequence, flatten indexed transform results, and append them.
+@_cdecl("kk_sequence_flatMapIndexedTo")
+public func kk_sequence_flatMapIndexedTo(
+    _ seqRaw: Int,
+    _ destRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard runtimeMutableCollectionExists(destRaw) else {
+        invalidContainerPanic(#function, "mutable collection")
+    }
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    for (idx, elem) in elements.enumerated() {
+        var thrown = 0
+        let flattened = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: idx, rhs: elem, outThrown: &thrown)
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+        guard let flattenedElements = runtimeIterableElements(from: flattened) else {
+            invalidContainerPanic(#function, "iterable")
+        }
+        for flattenedElement in flattenedElements {
+            runtimeAppendToMutableCollection(destRaw, flattenedElement)
         }
     }
     return destRaw

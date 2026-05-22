@@ -60,6 +60,7 @@ extension ABIMismatchTests {
             "kk_list_intersect",
             "kk_list_union",
             "kk_list_subtract",
+            "kk_list_toTypedArray",
             "kk_list_toBooleanArray",
             "kk_list_toShortArray",
             "kk_list_toIntArray",
