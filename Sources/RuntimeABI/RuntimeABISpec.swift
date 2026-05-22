@@ -871,6 +871,14 @@ public enum RuntimeABISpec {
             section: "System"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_long_toJsBigInt",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .int64),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_dynamic_iterator",
             parameters: [
                 RuntimeABIParameter(name: "value", type: .intptr),
