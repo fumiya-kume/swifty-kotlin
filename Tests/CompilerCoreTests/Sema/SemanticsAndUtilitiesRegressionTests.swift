@@ -1381,6 +1381,7 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+
     func testPathSetAttributeOptionsExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import java.nio.file.LinkOption

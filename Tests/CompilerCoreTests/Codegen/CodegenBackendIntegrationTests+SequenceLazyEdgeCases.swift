@@ -576,6 +576,30 @@ extension CodegenBackendIntegrationTests {
 
     // MARK: - firstOrNull returns null on empty
 
+    func testSequenceFirstOrNullReturnsFirstValue() throws {
+        let source = """
+        fun main() {
+            val result = sequenceOf(4, 5, 6).firstOrNull()
+            println(result)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceFirstOrNullRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "4\n")
+        }
+    }
+
     func testSequenceFirstOrNullOnEmpty() throws {
         let source = """
         fun main() {
