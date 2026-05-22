@@ -228,7 +228,7 @@ extension DataFlowSemaPhase {
             named: "sortedWith",
             externalLinkName: "kk_sequence_sortedWith",
             receiverType: receiverType,
-            parameters: [("comparator", comparatorType)],
+            parameters: [("comparator", comparatorTypeForSequence)],
             returnType: receiverType,
             canThrow: true
         )
@@ -2223,7 +2223,7 @@ extension DataFlowSemaPhase {
 
         // maxWithOrNull(comparator): T?
         do {
-            let comparatorType = if let comparatorSymbol = symbols.lookupByShortName(interner.intern("Comparator")).first {
+            let comparatorTypeForSequence = if let comparatorSymbol = symbols.lookupByShortName(interner.intern("Comparator")).first {
                 types.make(.classType(ClassType(
                     classSymbol: comparatorSymbol,
                     args: [.invariant(typeParamType)],
