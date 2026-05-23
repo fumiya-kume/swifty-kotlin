@@ -804,6 +804,10 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_minOf")
             case interner.intern("maxOfOrNull"):
                 return interner.intern("kk_sequence_maxOfOrNull")
+            case interner.intern("minWithOrNull"):
+                return interner.intern("kk_sequence_minWithOrNull")
+            case interner.intern("minWith"):
+                return interner.intern("kk_sequence_minWith")
             case interner.intern("maxOf"):
                 return interner.intern("kk_sequence_maxOf")
             case interner.intern("unzip"):

@@ -2300,6 +2300,22 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // minWithOrNull(comparator: Comparator<in T>): T?
+        registerSequenceMemberStub(
+            named: "minWithOrNull",
+            externalLinkName: "kk_sequence_minWithOrNull",
+            receiverType: receiverType,
+            parameters: [("comparator", comparatorType)],
+            returnType: types.makeNullable(typeParamType),
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner,
+            canThrow: true,
+            flags: [.synthetic, .inlineFunction]
+        )
+
         // minWith(comparator: Comparator<in T>): T
         registerSequenceMemberStub(
             named: "minWith",

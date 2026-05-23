@@ -1185,4 +1185,157 @@ extension CodegenBackendIntegrationTests {
             XCTAssertEqual(normalizedStdout, "-1\ntrue\n")
         }
     }
+
+    func testCodegenSequenceMaxByOrNullReturnsLargestSelectorValueOrNull() throws {
+        let source = """
+        fun main() {
+            println(sequenceOf(3, 1, 4, 2).maxByOrNull { -it })
+            println(emptySequence<Int>().maxByOrNull { it } == null)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceMaxByOrNullRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "1\ntrue\n")
+        }
+    }
+
+    func testCodegenSequenceMinWithOrNullReturnsComparatorMinimumAndNullOnEmpty() throws {
+        let source = """
+        fun main() {
+            println(sequenceOf(5, 2, 3).minWithOrNull(reverseOrder<Int>()))
+            println(emptySequence<Int>().minWithOrNull(reverseOrder<Int>()) == null)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceMinWithOrNull",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "5\ntrue\n")
+        }
+    }
+
+    func testCodegenSequenceMaxByReturnsLargestSelectorValueAndThrowsOnEmpty() throws {
+        let source = """
+        fun main() {
+            println(sequenceOf(3, 1, 4, 2).maxBy { -it })
+            try {
+                emptySequence<Int>().maxBy { it }
+                println("unexpected")
+            } catch (e: Throwable) {
+                println("empty")
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceMaxByRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "1\nempty\n")
+        }
+    }
+
+    func testCodegenSequenceMinWithReturnsComparatorMinimumAndThrowsOnEmpty() throws {
+        let source = """
+        fun main() {
+            println(sequenceOf(5, 2, 3).minWith(reverseOrder<Int>()))
+            try {
+                emptySequence<Int>().minWith(reverseOrder<Int>())
+            } catch (e: NoSuchElementException) {
+                println("empty")
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceMinWith",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "5\nempty\n")
+        }
+    }
+
+    func testCodegenSequenceMaxOrNullReturnsLargestElementOrNull() throws {
+        let source = """
+        fun main() {
+            println(sequenceOf(3, 1, 4, 2).maxOrNull())
+            println(emptySequence<Int>().maxOrNull() == null)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceMaxOrNull",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "4\ntrue\n")
+        }
+    }
+
+    func testCodegenSequenceMinByOrNullReturnsSmallestSelectedElementAndNullOnEmpty() throws {
+        let source = """
+        fun main() {
+            println(sequenceOf(5, 2, 3).minByOrNull { it % 3 })
+            println(emptySequence<Int>().minByOrNull { it } == null)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceMinByOrNull",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "3\ntrue\n")
+        }
+    }
 }
