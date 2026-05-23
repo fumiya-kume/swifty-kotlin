@@ -156,6 +156,41 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenSequenceReduceRightIndexedReturnsRightFoldedValueOrThrowsOnEmpty() throws {
+        let source = """
+        fun main() {
+            val reduced = sequenceOf(1, 2, 3, 4)
+                .reduceRightIndexed { index, value, acc -> index * 100 + value * 10 + acc }
+            val single = sequenceOf(42)
+                .reduceRightIndexed { index, value, acc -> index + value + acc }
+
+            println(reduced)
+            println(single)
+            try {
+                emptySequence<Int>().reduceRightIndexed { index, value, acc -> index + value + acc }
+                println("unexpected")
+            } catch (t: Throwable) {
+                println("empty")
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceReduceRightIndexed",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "364\n42\nempty\n")
+        }
+    }
+
     func testCodegenSequenceReduceOrNullReturnsAccumulatedValueOrNullOnEmpty() throws {
         let source = """
         fun main() {
@@ -254,6 +289,32 @@ extension CodegenBackendIntegrationTests {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(normalizedStdout, "21\n42\nempty\n")
+        }
+    }
+
+    func testCodegenSequenceAverageOfAveragesSelectorResults() throws {
+        let source = """
+        fun main() {
+            val result = sequenceOf(1, 2, 3).averageOf { value ->
+                value * 2
+            }
+            println(result)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceAverageOf",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "4.0\n")
         }
     }
 
@@ -1183,6 +1244,35 @@ extension CodegenBackendIntegrationTests {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(normalizedStdout, "20\ncaught\n")
+        }
+    }
+
+    func testCodegenSequenceMinReturnsSmallestElementAndThrowsOnEmpty() throws {
+        let source = """
+        fun main() {
+            println(sequenceOf(3, 1, 4, 2).min())
+            try {
+                emptySequence<Int>().min()
+                println("missing")
+            } catch (t: Throwable) {
+                println("caught")
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceMin",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "1\ncaught\n")
         }
     }
 
