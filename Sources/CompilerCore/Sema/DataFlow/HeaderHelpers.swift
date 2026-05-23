@@ -1,5 +1,10 @@
 import Foundation
 
+enum DataClassSyntheticMethodPhase {
+    case beforeMemberHeaders
+    case afterMemberHeaders
+}
+
 extension DataFlowSemaPhase {
     func declarationAnnotations(for decl: Decl) -> [AnnotationNode] {
         switch decl {
@@ -417,20 +422,14 @@ extension DataFlowSemaPhase {
         }
     }
 
-    /// Registers synthetic `toString(): String` for data object so member resolution finds it.
-    func collectSyntheticDataObjectToString(
-        ownerSymbol: SymbolID,
-        ownerFQName: [InternedString],
-        objectType: TypeID,
-        symbols: SymbolTable,
-        types: TypeSystem,
-        scope: Scope,
-        interner: StringInterner
-    ) {
-        let toStringName = interner.intern("toString")
-        let toStringFQName = ownerFQName + [toStringName]
-        let stringType = types.make(.primitive(.string, .nonNull))
-        let hasUserDeclaredToString = symbols.lookupAll(fqName: toStringFQName).contains { id in
+    private func hasUserDeclaredFunction(
+        fqName: [InternedString],
+        receiverType: TypeID,
+        parameterTypes: [TypeID],
+        returnType: TypeID,
+        symbols: SymbolTable
+    ) -> Bool {
+        symbols.lookupAll(fqName: fqName).contains { id in
             guard let symbol = symbols.symbol(id),
                   symbol.kind == .function,
                   !symbol.flags.contains(.synthetic),
@@ -438,11 +437,38 @@ extension DataFlowSemaPhase {
             else {
                 return false
             }
-            return signature.receiverType == objectType
-                && signature.parameterTypes.isEmpty
-                && signature.returnType == stringType
+            return signature.receiverType == receiverType
+                && signature.parameterTypes == parameterTypes
+                && signature.returnType == returnType
         }
-        guard !hasUserDeclaredToString else {
+    }
+
+    /// Registers synthetic `toString(): String` for data types so member resolution finds it.
+    func collectSyntheticToString(
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        ownerType: TypeID,
+        requireDataTypeFlag: Bool,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        scope: Scope,
+        interner: StringInterner
+    ) {
+        if requireDataTypeFlag {
+            guard symbols.symbol(ownerSymbol)?.flags.contains(.dataType) == true else {
+                return
+            }
+        }
+        let toStringName = interner.intern("toString")
+        let toStringFQName = ownerFQName + [toStringName]
+        let stringType = types.make(.primitive(.string, .nonNull))
+        guard !hasUserDeclaredFunction(
+            fqName: toStringFQName,
+            receiverType: ownerType,
+            parameterTypes: [],
+            returnType: stringType,
+            symbols: symbols
+        ) else {
             return
         }
         let funcSymbol = symbols.define(
@@ -456,7 +482,7 @@ extension DataFlowSemaPhase {
         symbols.setParentSymbol(ownerSymbol, for: funcSymbol)
         symbols.setFunctionSignature(
             FunctionSignature(
-                receiverType: objectType,
+                receiverType: ownerType,
                 parameterTypes: [],
                 returnType: stringType,
                 isSuspend: false,
@@ -470,33 +496,33 @@ extension DataFlowSemaPhase {
         scope.insert(funcSymbol)
     }
 
-    /// Registers synthetic `equals(other: Any?): Boolean` for data object (identity comparison).
-    func collectSyntheticDataObjectEquals(
+    /// Registers synthetic `equals(other: Any?): Boolean` for data types.
+    func collectSyntheticEquals(
         ownerSymbol: SymbolID,
         ownerFQName: [InternedString],
-        objectType: TypeID,
+        ownerType: TypeID,
+        requireDataTypeFlag: Bool,
         symbols: SymbolTable,
         types: TypeSystem,
         scope: Scope,
         interner: StringInterner
     ) {
+        if requireDataTypeFlag {
+            guard symbols.symbol(ownerSymbol)?.flags.contains(.dataType) == true else {
+                return
+            }
+        }
         let equalsName = interner.intern("equals")
         let equalsFQName = ownerFQName + [equalsName]
         let boolType = types.make(.primitive(.boolean, .nonNull))
         let nullableAnyType = types.nullableAnyType
-        let hasUserDeclaredEquals = symbols.lookupAll(fqName: equalsFQName).contains { id in
-            guard let symbol = symbols.symbol(id),
-                  symbol.kind == .function,
-                  !symbol.flags.contains(.synthetic),
-                  let signature = symbols.functionSignature(for: id)
-            else {
-                return false
-            }
-            return signature.receiverType == objectType
-                && signature.parameterTypes == [nullableAnyType]
-                && signature.returnType == boolType
-        }
-        guard !hasUserDeclaredEquals else {
+        guard !hasUserDeclaredFunction(
+            fqName: equalsFQName,
+            receiverType: ownerType,
+            parameterTypes: [nullableAnyType],
+            returnType: boolType,
+            symbols: symbols
+        ) else {
             return
         }
         let funcSymbol = symbols.define(
@@ -519,7 +545,7 @@ extension DataFlowSemaPhase {
         )
         symbols.setFunctionSignature(
             FunctionSignature(
-                receiverType: objectType,
+                receiverType: ownerType,
                 parameterTypes: [nullableAnyType],
                 returnType: boolType,
                 isSuspend: false,
@@ -534,34 +560,31 @@ extension DataFlowSemaPhase {
     }
 
     /// Registers synthetic `hashCode(): Int` for data class so member resolution finds it.
-    func collectSyntheticDataClassHashCode(
+    func collectSyntheticHashCode(
         ownerSymbol: SymbolID,
         ownerFQName: [InternedString],
         ownerType: TypeID,
+        requireDataTypeFlag: Bool,
         symbols: SymbolTable,
         types: TypeSystem,
         scope: Scope,
         interner: StringInterner
     ) {
-        guard symbols.symbol(ownerSymbol)?.flags.contains(.dataType) == true else {
-            return
+        if requireDataTypeFlag {
+            guard symbols.symbol(ownerSymbol)?.flags.contains(.dataType) == true else {
+                return
+            }
         }
         let hashCodeName = interner.intern("hashCode")
         let hashCodeFQName = ownerFQName + [hashCodeName]
         let intType = types.make(.primitive(.int, .nonNull))
-        let hasUserDeclaredHashCode = symbols.lookupAll(fqName: hashCodeFQName).contains { id in
-            guard let symbol = symbols.symbol(id),
-                  symbol.kind == .function,
-                  !symbol.flags.contains(.synthetic),
-                  let signature = symbols.functionSignature(for: id)
-            else {
-                return false
-            }
-            return signature.receiverType == ownerType
-                && signature.parameterTypes.isEmpty
-                && signature.returnType == intType
-        }
-        guard !hasUserDeclaredHashCode else {
+        guard !hasUserDeclaredFunction(
+            fqName: hashCodeFQName,
+            receiverType: ownerType,
+            parameterTypes: [],
+            returnType: intType,
+            symbols: symbols
+        ) else {
             return
         }
         let funcSymbol = symbols.define(
@@ -656,127 +679,6 @@ extension DataFlowSemaPhase {
         }
     }
 
-    /// Registers synthetic `toString(): String` for data class so member resolution finds it.
-    func collectSyntheticDataClassToString(
-        ownerSymbol: SymbolID,
-        ownerFQName: [InternedString],
-        ownerType: TypeID,
-        symbols: SymbolTable,
-        types: TypeSystem,
-        scope: Scope,
-        interner: StringInterner
-    ) {
-        guard symbols.symbol(ownerSymbol)?.flags.contains(.dataType) == true else {
-            return
-        }
-        let toStringName = interner.intern("toString")
-        let toStringFQName = ownerFQName + [toStringName]
-        let stringType = types.make(.primitive(.string, .nonNull))
-        let hasUserDeclaredToString = symbols.lookupAll(fqName: toStringFQName).contains { id in
-            guard let symbol = symbols.symbol(id),
-                  symbol.kind == .function,
-                  !symbol.flags.contains(.synthetic),
-                  let signature = symbols.functionSignature(for: id)
-            else {
-                return false
-            }
-            return signature.receiverType == ownerType
-                && signature.parameterTypes.isEmpty
-                && signature.returnType == stringType
-        }
-        guard !hasUserDeclaredToString else {
-            return
-        }
-        let funcSymbol = symbols.define(
-            kind: .function,
-            name: toStringName,
-            fqName: toStringFQName,
-            declSite: nil,
-            visibility: .public,
-            flags: [.synthetic]
-        )
-        symbols.setParentSymbol(ownerSymbol, for: funcSymbol)
-        symbols.setFunctionSignature(
-            FunctionSignature(
-                receiverType: ownerType,
-                parameterTypes: [],
-                returnType: stringType,
-                isSuspend: false,
-                valueParameterSymbols: [],
-                valueParameterHasDefaultValues: [],
-                valueParameterIsVararg: [],
-                typeParameterSymbols: []
-            ),
-            for: funcSymbol
-        )
-        scope.insert(funcSymbol)
-    }
-
-    /// Registers synthetic `equals(other: Any?): Boolean` for data class (structural comparison).
-    func collectSyntheticDataClassEquals(
-        ownerSymbol: SymbolID,
-        ownerFQName: [InternedString],
-        ownerType: TypeID,
-        symbols: SymbolTable,
-        types: TypeSystem,
-        scope: Scope,
-        interner: StringInterner
-    ) {
-        guard symbols.symbol(ownerSymbol)?.flags.contains(.dataType) == true else {
-            return
-        }
-        let equalsName = interner.intern("equals")
-        let equalsFQName = ownerFQName + [equalsName]
-        let boolType = types.make(.primitive(.boolean, .nonNull))
-        let nullableAnyType = types.nullableAnyType
-        let hasUserDeclaredEquals = symbols.lookupAll(fqName: equalsFQName).contains { id in
-            guard let symbol = symbols.symbol(id),
-                  symbol.kind == .function,
-                  !symbol.flags.contains(.synthetic),
-                  let signature = symbols.functionSignature(for: id)
-            else {
-                return false
-            }
-            return signature.receiverType == ownerType
-                && signature.parameterTypes == [nullableAnyType]
-                && signature.returnType == boolType
-        }
-        guard !hasUserDeclaredEquals else {
-            return
-        }
-        let funcSymbol = symbols.define(
-            kind: .function,
-            name: equalsName,
-            fqName: equalsFQName,
-            declSite: nil,
-            visibility: .public,
-            flags: [.synthetic]
-        )
-        symbols.setParentSymbol(ownerSymbol, for: funcSymbol)
-        let otherParamName = interner.intern("other")
-        let otherParamSymbol = symbols.define(
-            kind: .valueParameter,
-            name: otherParamName,
-            fqName: equalsFQName + [otherParamName],
-            declSite: nil,
-            visibility: .private,
-            flags: [.synthetic]
-        )
-        symbols.setFunctionSignature(
-            FunctionSignature(
-                receiverType: ownerType,
-                parameterTypes: [nullableAnyType],
-                returnType: boolType,
-                isSuspend: false,
-                valueParameterSymbols: [otherParamSymbol],
-                valueParameterHasDefaultValues: [false],
-                valueParameterIsVararg: [false],
-                typeParameterSymbols: []
-            ),
-            for: funcSymbol
-        )
-        scope.insert(funcSymbol)
-    }
     func collectSyntheticDataClassCopy(
         classDecl: ClassDecl,
         ast: ASTModule,
@@ -837,6 +739,82 @@ extension DataFlowSemaPhase {
             for: copySymbol
         )
         scope.insert(copySymbol)
+    }
+
+    func collectSyntheticDataClassMethods(
+        classDecl: ClassDecl,
+        ast: ASTModule,
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        ownerType: TypeID,
+        phase: DataClassSyntheticMethodPhase,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        scope: Scope,
+        interner: StringInterner,
+        diagnostics: DiagnosticEngine,
+        localTypeParameters: [InternedString: SymbolID] = [:]
+    ) {
+        switch phase {
+        case .beforeMemberHeaders:
+            collectSyntheticDataClassComponentN(
+                classDecl: classDecl,
+                ast: ast,
+                ownerSymbol: ownerSymbol,
+                ownerFQName: ownerFQName,
+                ownerType: ownerType,
+                symbols: symbols,
+                types: types,
+                scope: scope,
+                interner: interner,
+                diagnostics: diagnostics,
+                localTypeParameters: localTypeParameters
+            )
+            collectSyntheticDataClassCopy(
+                classDecl: classDecl,
+                ast: ast,
+                ownerSymbol: ownerSymbol,
+                ownerFQName: ownerFQName,
+                ownerType: ownerType,
+                symbols: symbols,
+                types: types,
+                scope: scope,
+                interner: interner,
+                diagnostics: diagnostics,
+                localTypeParameters: localTypeParameters
+            )
+            collectSyntheticHashCode(
+                ownerSymbol: ownerSymbol,
+                ownerFQName: ownerFQName,
+                ownerType: ownerType,
+                requireDataTypeFlag: true,
+                symbols: symbols,
+                types: types,
+                scope: scope,
+                interner: interner
+            )
+        case .afterMemberHeaders:
+            collectSyntheticToString(
+                ownerSymbol: ownerSymbol,
+                ownerFQName: ownerFQName,
+                ownerType: ownerType,
+                requireDataTypeFlag: true,
+                symbols: symbols,
+                types: types,
+                scope: scope,
+                interner: interner
+            )
+            collectSyntheticEquals(
+                ownerSymbol: ownerSymbol,
+                ownerFQName: ownerFQName,
+                ownerType: ownerType,
+                requireDataTypeFlag: true,
+                symbols: symbols,
+                types: types,
+                scope: scope,
+                interner: interner
+            )
+        }
     }
 
     /// Collects value parameters into parallel arrays of types, symbols, default-value flags,
@@ -1126,6 +1104,7 @@ extension DataFlowSemaPhase {
         registerSyntheticNativeConcurrentStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsDateStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsCollectionsReadonlyMapToMapStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsBigIntInteropStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticNativeGetterStubs(symbols: symbols, interner: interner)
         registerSyntheticJsNameStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticExperimentalMarkerStubs(symbols: symbols, types: types, interner: interner)
@@ -1135,6 +1114,7 @@ extension DataFlowSemaPhase {
         registerSyntheticCoroutinesABIStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsExternalInheritorsOnlyStubs(symbols: symbols, interner: interner)
         registerSyntheticJsArrayStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticDynamicStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsClassStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsReferenceStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsBooleanStubs(symbols: symbols, types: types, interner: interner)
@@ -1144,6 +1124,7 @@ extension DataFlowSemaPhase {
         registerSyntheticJsCollectionsReadonlyArrayToListStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsCollectionsReadonlySetStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsNumberInteropStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsIntNumberInteropStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsArrayInteropStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticKPropertyIsInitializedStub(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsStaticStubs(symbols: symbols, interner: interner)
