@@ -444,6 +444,8 @@ extension CallLowerer {
         }
         if (loweredCallee == interner.intern("kk_sequence_firstNotNullOf")
             || loweredCallee == interner.intern("kk_sequence_firstNotNullOfOrNull")
+            || loweredCallee == interner.intern("kk_sequence_indexOfFirst")
+            || loweredCallee == interner.intern("kk_sequence_takeLastWhile")
             || loweredCallee == interner.intern("kk_sequence_indexOfLast")),
            finalArguments.count == 2
         {
@@ -932,6 +934,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_takeLastWhile"),
             interner.intern("kk_sequence_firstNotNullOf"),
             interner.intern("kk_sequence_firstNotNullOfOrNull"),
+            interner.intern("kk_sequence_indexOfFirst"),
             interner.intern("kk_sequence_indexOfLast"),
             interner.intern("kk_sequence_associate"),
             interner.intern("kk_sequence_associateBy"),

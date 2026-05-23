@@ -840,6 +840,19 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_sequence_indexOf(seq, 99), -1)
     }
 
+    func testIndexOfFirstReturnsFirstMatchingPredicateIndexOrMinusOne() {
+        let seq = makeSequence([1, 3, 4, 6])
+        let evenPredicate: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+            value.isMultiple(of: 2) ? 1 : 0
+        }
+        let greaterThanTenPredicate: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+            value > 10 ? 1 : 0
+        }
+
+        XCTAssertEqual(kk_sequence_indexOfFirst(seq, unsafeBitCast(evenPredicate, to: Int.self), 0, nil), 2)
+        XCTAssertEqual(kk_sequence_indexOfFirst(seq, unsafeBitCast(greaterThanTenPredicate, to: Int.self), 0, nil), -1)
+    }
+
     func testAssociateToThrowingLambdaReturnsSentinelAndSetsOutThrown() {
         let seq = makeSequence([1, 2, 3])
         let dest = registerRuntimeObject(RuntimeMapBox(keys: [], values: []))

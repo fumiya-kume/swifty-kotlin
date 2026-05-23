@@ -683,6 +683,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_contains")
             case interner.intern("indexOf"):
                 return interner.intern("kk_sequence_indexOf")
+            case interner.intern("indexOfFirst"):
+                return interner.intern("kk_sequence_indexOfFirst")
             case interner.intern("lastIndexOf"):
                 return interner.intern("kk_sequence_lastIndexOf")
             case interner.intern("indexOfLast"):

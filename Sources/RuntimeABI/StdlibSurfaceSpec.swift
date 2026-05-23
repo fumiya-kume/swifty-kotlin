@@ -322,6 +322,7 @@ private extension StdlibSurfaceSpec {
         sequence("intersect", 1, "kk_sequence_intersect", returnStrategy: .set, lambdaExpectation: .none),
         sequence("fold", 2, "kk_sequence_fold", returnStrategy: .any, lambdaExpectation: .receiverElement(argumentIndex: 1, returnStrategy: .any)),
         sequence("foldIndexed", 2, "kk_sequence_foldIndexed", returnStrategy: .any, lambdaExpectation: .indexedReceiverElement(argumentIndex: 1, returnStrategy: .any)),
+        sequence("indexOfFirst", 1, "kk_sequence_indexOfFirst", returnStrategy: .int, lambdaExpectation: .receiverElement(argumentIndex: 0, returnStrategy: .boolean)),
         sequence("minByOrNull", 1, "kk_sequence_minByOrNull", returnStrategy: .nullableReceiverElement, lambdaExpectation: .receiverElement(argumentIndex: 0, returnStrategy: .any)),
         sequence("min", 0, "kk_sequence_min", returnStrategy: .any, lambdaExpectation: .none),
         sequence("forEachIndexed", 1, "kk_sequence_forEachIndexed", returnStrategy: .unit, lambdaExpectation: .indexedReceiverElement(argumentIndex: 0, returnStrategy: .unit)),
