@@ -488,12 +488,9 @@ private func runtimeSequenceBestValue(
     }
     guard let bestSelector else {
         if throwOnEmpty {
-            return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: kEmptySequenceNoSuchElement), outThrown)
+            outThrown?.pointee = runtimeAllocateThrowable(message: kEmptySequenceNoSuchElement)
         }
         return runtimeNullSentinelInt
-    }
-    if returnElement {
-        return bestElement ?? runtimeNullSentinelInt
     }
     return bestSelector
 }
