@@ -57,6 +57,7 @@ extension ABIMismatchTests {
     private var allowedSpecOnlyRuntimeABINames: Set<String> {
         [
             "kk_annotation_class_name",
+            "kk_enum_declaringJavaClass",
             "kk_class_kotlin",
             "kk_annotation_get_arguments",
             "kk_annotation_simple_class_name",
@@ -68,8 +69,10 @@ extension ABIMismatchTests {
             "kk_future_getState",
             "kk_int_toJsNumber",
             "kk_int_to_int",
+            "kk_js_array_get",
             "kk_js_array_set",
             "kk_js_array_create",
+            "kk_js_reference_get",
             "kk_js_array_toArray",
             "kk_js_array_toList",
             "kk_js_bigint_toLong",
@@ -87,6 +90,9 @@ extension ABIMismatchTests {
             "kk_kclass_javaPrimitiveType",
             "kk_kclass_js",
             "kk_kclass_register_annotation",
+            "kk_long_range_firstOrNull",
+            "kk_long_range_lastOrNull",
+            "kk_long_toJsBigInt",
             "kk_native_atomic_ref_compareAndSet",
             "kk_native_atomic_ref_compareAndSwap",
             "kk_native_atomic_ref_create",

@@ -627,6 +627,13 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(extractString(from: UnsafeMutableRawPointer(bitPattern: renderedRaw)), "[1:2:3]")
     }
 
+    func testLastIndexOfReturnsFinalMatchingIndexOrMinusOne() {
+        let seq = makeSequence([1, 2, 3, 2])
+
+        XCTAssertEqual(kk_sequence_lastIndexOf(seq, 2), 3)
+        XCTAssertEqual(kk_sequence_lastIndexOf(seq, 4), -1)
+    }
+
     func testJoinToAppendsToStringBuilderAndReturnsDestination() {
         let seq = makeSequence([1, 2, 3])
         let builder = kk_string_builder_new_from_string(runtimeTestStringHandle("seed:"))
