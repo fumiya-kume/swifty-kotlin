@@ -341,10 +341,10 @@
 - [ ] STDLIB-SEQ-FN-049: `indexOfFirst` 関数の実装
 - [x] STDLIB-SEQ-FN-050: `indexOfLast` 関数の実装
 - [x] STDLIB-SEQ-FN-051: `intersect` 関数の実装
- - [x] STDLIB-SEQ-FN-052: `joinTo` 関数の実装
- - [x] STDLIB-SEQ-FN-053: `joinToString` 関数の実装
- - [x] STDLIB-SEQ-FN-054: `last` 関数の実装
-- [ ] STDLIB-SEQ-FN-055: `lastIndexOf` 関数の実装
+- [x] STDLIB-SEQ-FN-052: `joinTo` 関数の実装
+- [x] STDLIB-SEQ-FN-053: `joinToString` 関数の実装
+- [x] STDLIB-SEQ-FN-054: `last` 関数の実装
+- [x] STDLIB-SEQ-FN-055: `lastIndexOf` 関数の実装
 - [ ] STDLIB-SEQ-FN-056: `lastOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-057: `map` 関数の実装
 - [ ] STDLIB-SEQ-FN-058: `mapIndexed` 関数の実装
@@ -788,7 +788,7 @@
 - [x] STDLIB-IO-PATH-FN-078: `Path.writeLines(lines: Sequence<CharSequence>, charset, options)` を追加する
 - [x] STDLIB-IO-PATH-FN-079: `Path.writer(charset, options)` を追加する
 - [x] STDLIB-IO-PATH-FN-080: `Path.writeText(text, charset, options)` を既存 `writeText(text)` stub から公式 shape へ広げる
-- [ ] STDLIB-JVM-PROP-002: `Enum.declaringJavaClass` extension property を追加する
+- [x] STDLIB-JVM-PROP-002: `Enum.declaringJavaClass` extension property を追加する
 - [x] STDLIB-JVM-PROP-003: `KClass<T>.java` extension property を追加する
 - [x] STDLIB-JVM-PROP-005: `KClass<T>.javaClass` extension property を追加する
 - [x] STDLIB-JVM-PROP-006: `KClass<T>.javaObjectType` extension property を追加する
@@ -812,8 +812,8 @@
 - [x] STDLIB-JS-PROP-004: `JsClass<T>.kotlin` extension property を追加する
 - [x] STDLIB-JS-FN-001: `Date.Companion.now()` を追加する
 - [x] STDLIB-JS-FN-002: `dateLocaleOptions(init)` を追加する
-- [x] STDLIB-JS-FN-004: `JsReference<T>.get()` を追加する（`kk_js_reference_get` runtime 済み）
-- [ ] STDLIB-JS-FN-005: `JsArray<T>.get(index)` を追加する
+- [x] STDLIB-JS-FN-004: `JsReference<T>.get()` を追加する
+- [x] STDLIB-JS-FN-005: `JsArray<T>.get(index)` を追加する
 - [x] STDLIB-JS-FN-006: `RegExpMatch.get(index)` を追加する
 - [x] STDLIB-JS-FN-007: `dynamic.iterator()` を追加する
 - [x] STDLIB-JS-FN-009: `JsArray<T>()` factory を追加する
@@ -827,7 +827,7 @@
 - [x] STDLIB-JS-FN-022: `JsNumber.toInt()` を追加する
 - [ ] STDLIB-JS-FN-023: `Array<T>.toJsArray()` を追加する
 - [x] STDLIB-JS-FN-024: `List<T>.toJsArray()` を追加する
-- [ ] STDLIB-JS-FN-025: `Long.toJsBigInt()` を追加する
+- [x] STDLIB-JS-FN-025: `Long.toJsBigInt()` を追加する
 - [ ] STDLIB-JS-FN-026: `Boolean.toJsBoolean()` を追加する
 - [x] STDLIB-JS-FN-027: `Double.toJsNumber()` を追加する
 - [x] STDLIB-JS-FN-028: `Int.toJsNumber()` を追加する

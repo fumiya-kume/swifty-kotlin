@@ -78,6 +78,13 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerEnumDeclaringJavaClassProperty(
+            classSymbol: classSymbol,
+            packageFQName: kotlinJvmPkg,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
         registerClassKotlinProperty(
             classSymbol: classSymbol,
             kClassSymbol: kClassSymbol,
@@ -348,6 +355,141 @@ extension DataFlowSemaPhase {
         symbols.setExtensionPropertyGetterAccessor(getterSymbol, for: propertySymbol)
         symbols.setAccessorOwnerProperty(propertySymbol, for: getterSymbol)
         symbols.setExternalLinkName(externalLinkName, for: getterSymbol)
+    }
+
+    private func registerEnumDeclaringJavaClassProperty(
+        classSymbol: SymbolID,
+        packageFQName: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let enumFQName = [interner.intern("kotlin"), interner.intern("Enum")]
+        guard let enumSymbol = symbols.lookup(fqName: enumFQName) else {
+            return
+        }
+
+        let propertyName = interner.intern("declaringJavaClass")
+        let propertyFQName = packageFQName + [propertyName]
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = propertyFQName + [typeParamName]
+        let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+        }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: enumSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: classSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        let externalLinkName = "kk_enum_declaringJavaClass"
+
+        let propertySymbol: SymbolID
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
+            symbols.symbol(symbolID)?.kind == .property
+                && symbols.extensionPropertyReceiverType(for: symbolID) == receiverType
+        }) {
+            propertySymbol = existing
+        } else {
+            propertySymbol = symbols.define(
+                kind: .property,
+                name: propertyName,
+                fqName: propertyFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+                symbols.setParentSymbol(packageSymbol, for: propertySymbol)
+            }
+            symbols.setParentSymbol(propertySymbol, for: typeParamSymbol)
+            symbols.setExtensionPropertyReceiverType(receiverType, for: propertySymbol)
+        }
+
+        symbols.setTypeParameterUpperBounds([types.anyType], for: typeParamSymbol)
+        symbols.setPropertyType(returnType, for: propertySymbol)
+        symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
+
+        let getterSymbol: SymbolID
+        if let existingGetter = symbols.extensionPropertyGetterAccessor(for: propertySymbol) {
+            getterSymbol = existingGetter
+        } else {
+            getterSymbol = symbols.define(
+                kind: .function,
+                name: interner.intern("get"),
+                fqName: propertyFQName + [interner.intern("$get")],
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(propertySymbol, for: getterSymbol)
+            symbols.setExtensionPropertyGetterAccessor(getterSymbol, for: propertySymbol)
+            symbols.setAccessorOwnerProperty(propertySymbol, for: getterSymbol)
+        }
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: returnType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 0
+            ),
+            for: getterSymbol
+        )
+        symbols.setExternalLinkName(externalLinkName, for: getterSymbol)
+
+        if let existingFunction = symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
+            guard symbols.symbol(symbolID)?.kind == .function,
+                  let signature = symbols.functionSignature(for: symbolID)
+            else { return false }
+            return signature.receiverType == receiverType
+                && signature.parameterTypes.isEmpty
+                && signature.returnType == returnType
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existingFunction)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: returnType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 0
+            ),
+            for: functionSymbol
+        )
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
     }
 
     private func registerClassKotlinProperty(
