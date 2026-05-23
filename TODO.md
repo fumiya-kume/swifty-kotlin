@@ -824,7 +824,7 @@
 - [ ] STDLIB-JS-FN-023: `Array<T>.toJsArray()` を追加する
 - [x] STDLIB-JS-FN-024: `List<T>.toJsArray()` を追加する
 - [x] STDLIB-JS-FN-025: `Long.toJsBigInt()` を追加する
-- [ ] STDLIB-JS-FN-026: `Boolean.toJsBoolean()` を追加する
+- [x] STDLIB-JS-FN-026: `Boolean.toJsBoolean()` を追加する
 - [x] STDLIB-JS-FN-027: `Double.toJsNumber()` を追加する
 - [x] STDLIB-JS-FN-028: `Int.toJsNumber()` を追加する
 - [x] STDLIB-JS-FN-029: `T.toJsReference()` を追加する
