@@ -239,12 +239,6 @@ private let sequenceMaxWithOrNullNaturalComparator: @convention(c) (Int, Int, In
     lhs - rhs
 }
 
-private let sequenceReverseIntComparator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, lhs, rhs, _ in
-    if lhs < rhs { return 1 }
-    if lhs > rhs { return -1 }
-    return 0
-}
-
 private func runtimeTestStringHandle(_ value: String) -> Int {
     let bytes = Array(value.utf8)
     return bytes.withUnsafeBufferPointer { buffer in
