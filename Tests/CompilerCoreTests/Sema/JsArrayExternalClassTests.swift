@@ -90,6 +90,113 @@ final class JsArrayExternalClassTests: XCTestCase {
         XCTAssertEqual(signature.returnType, expected)
     }
 
+    func testJsArrayGetIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let jsArrayFQName = ["kotlin", "js", "JsArray"].map { interner.intern($0) }
+        let jsArraySymbol = try XCTUnwrap(sema.symbols.lookup(fqName: jsArrayFQName))
+        let typeParamSymbol = try XCTUnwrap(
+            sema.types.nominalTypeParameterSymbols(for: jsArraySymbol).first
+        )
+        let typeParamType = sema.types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = try XCTUnwrap(sema.symbols.propertyType(for: jsArraySymbol))
+
+        let get = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: jsArrayFQName + [interner.intern("get")]).first { symbolID in
+                guard let signature = sema.symbols.functionSignature(for: symbolID) else {
+                    return false
+                }
+                return signature.receiverType == receiverType
+                    && signature.parameterTypes == [sema.types.intType]
+                    && signature.returnType == typeParamType
+                    && signature.typeParameterSymbols == [typeParamSymbol]
+                    && signature.classTypeParameterCount == 1
+            },
+            "JsArray<T>.get(index) member must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(get))
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: get))
+
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+        XCTAssertEqual(signature.valueParameterHasDefaultValues, [false])
+        XCTAssertEqual(signature.valueParameterIsVararg, [false])
+        XCTAssertEqual(sema.symbols.externalLinkName(for: get), "kk_js_array_get")
+    }
+
+    func testJsArrayGetResolvesFromSource() throws {
+        let source = """
+        import kotlin.js.JsArray
+
+        fun <T> first(array: JsArray<T>): T = array.get(0)
+        """
+        let (sema, interner) = try makeSema(source: source)
+
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: [interner.intern("first")]))
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbol))
+        guard case .typeParam = sema.types.kind(of: signature.returnType) else {
+            return XCTFail("first should return T, got \(sema.types.renderType(signature.returnType))")
+        }
+    }
+
+    func testJsArraySetIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let jsArrayFQName = ["kotlin", "js", "JsArray"].map { interner.intern($0) }
+        let jsArraySymbol = try XCTUnwrap(sema.symbols.lookup(fqName: jsArrayFQName))
+        let typeParamSymbol = try XCTUnwrap(
+            sema.types.nominalTypeParameterSymbols(for: jsArraySymbol).first
+        )
+        let receiverType = try XCTUnwrap(sema.symbols.propertyType(for: jsArraySymbol))
+        let elementType = sema.types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+
+        let set = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: jsArrayFQName + [interner.intern("set")]).first { symbolID in
+                guard let symbol = sema.symbols.symbol(symbolID),
+                      symbol.kind == .function,
+                      let signature = sema.symbols.functionSignature(for: symbolID)
+                else {
+                    return false
+                }
+                return signature.receiverType == receiverType
+                    && signature.parameterTypes == [sema.types.intType, elementType]
+                    && signature.returnType == sema.types.unitType
+                    && signature.typeParameterSymbols == [typeParamSymbol]
+                    && signature.classTypeParameterCount == 1
+            },
+            "JsArray<T>.set(index, value) must be registered"
+        )
+        let info = try XCTUnwrap(sema.symbols.symbol(set))
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: set))
+
+        XCTAssertEqual(info.visibility, .public)
+        XCTAssertTrue(info.flags.contains(.synthetic))
+        XCTAssertTrue(info.flags.contains(.operatorFunction))
+        XCTAssertEqual(signature.valueParameterHasDefaultValues, [false, false])
+        XCTAssertEqual(signature.valueParameterIsVararg, [false, false])
+        XCTAssertEqual(sema.symbols.externalLinkName(for: set), "kk_js_array_set")
+    }
+
+    func testJsArraySetResolvesFromSource() throws {
+        let source = """
+        import kotlin.js.JsArray
+
+        fun assignString(array: JsArray<String>, value: String) {
+            array.set(0, value)
+            array[1] = value
+        }
+        """
+        let (sema, interner) = try makeSema(source: source)
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: [interner.intern("assignString")]))
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbol))
+
+        XCTAssertEqual(signature.returnType, sema.types.unitType)
+    }
+
     func testJsArrayConstructorIsRegistered() throws {
         let (sema, interner) = try makeSema()
         let jsArrayFQName = ["kotlin", "js", "JsArray"].map { interner.intern($0) }
