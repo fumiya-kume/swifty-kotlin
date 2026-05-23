@@ -686,6 +686,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // lastIndexOf(element: T): Int
+        registerSequenceMemberStub(
+            named: "lastIndexOf",
+            externalLinkName: "kk_sequence_lastIndexOf",
+            receiverType: receiverType,
+            parameters: [("element", typeParamType)],
+            returnType: types.intType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // indexOfLast(predicate: (T) -> Boolean): Int
         registerSequenceMemberStub(
             named: "indexOfLast",
@@ -854,6 +868,19 @@ extension DataFlowSemaPhase {
             canThrow: true
         )
         registerSequenceMemberStub(
+            named: "averageOf",
+            externalLinkName: "kk_sequence_averageOf",
+            receiverType: receiverType,
+            parameters: [("selector", sequenceElementToIntType)],
+            returnType: types.doubleType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner,
+            canThrow: true
+        )
+        registerSequenceMemberStub(
             named: "sumBy",
             externalLinkName: "kk_sequence_sumBy",
             receiverType: receiverType,
@@ -940,6 +967,20 @@ extension DataFlowSemaPhase {
             receiverType: receiverType,
             parameters: [],
             returnType: mutableListReturnType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // asSequence(): Sequence<T>
+        registerSequenceMemberStub(
+            named: "asSequence",
+            externalLinkName: "kk_sequence_asSequence",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: receiverType,
             sequenceSymbol: sequenceSymbol,
             sequenceFQName: sequenceFQName,
             typeParamSymbol: typeParamSymbol,
@@ -1101,6 +1142,19 @@ extension DataFlowSemaPhase {
         registerSequenceMemberStub(
             named: "takeWhile",
             externalLinkName: "kk_sequence_takeWhile",
+            receiverType: receiverType,
+            parameters: [("predicate", predicateType)],
+            returnType: receiverType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSequenceMemberStub(
+            named: "dropWhile",
+            externalLinkName: "kk_sequence_dropWhile",
             receiverType: receiverType,
             parameters: [("predicate", predicateType)],
             returnType: receiverType,
@@ -1639,6 +1693,20 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // subtract(other: Iterable<T>): Set<T> (STDLIB-SEQ-FN-115)
+        registerSequenceMemberStub(
+            named: "subtract",
+            externalLinkName: "kk_sequence_subtract",
+            receiverType: receiverType,
+            parameters: [("other", iterableReturnType)],
+            returnType: setReturnType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // minus(element: T): Sequence<T>
         registerSequenceMemberStub(
             named: "minus",
@@ -1716,6 +1784,20 @@ extension DataFlowSemaPhase {
             receiverType: receiverType,
             parameters: [("operation", reduceIndexedOperationType)],
             returnType: types.makeNullable(typeParamType),
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // reduceRightIndexed(operation): T
+        registerSequenceMemberStub(
+            named: "reduceRightIndexed",
+            externalLinkName: "kk_sequence_reduceRightIndexed",
+            receiverType: receiverType,
+            parameters: [("operation", reduceIndexedOperationType)],
+            returnType: typeParamType,
             sequenceSymbol: sequenceSymbol,
             sequenceFQName: sequenceFQName,
             typeParamSymbol: typeParamSymbol,
@@ -1849,20 +1931,47 @@ extension DataFlowSemaPhase {
             )
         }
 
-        // runningReduceIndexed(operation): List<T>
-        registerSequenceMemberStub(
-            named: "runningReduceIndexed",
-            externalLinkName: "kk_sequence_runningReduceIndexed",
-            receiverType: receiverType,
-            parameters: [("operation", reduceIndexedOperationType)],
-            returnType: listReturnType,
-            sequenceSymbol: sequenceSymbol,
-            sequenceFQName: sequenceFQName,
-            typeParamSymbol: typeParamSymbol,
-            symbols: symbols,
-            interner: interner,
-            canThrow: true
-        )
+        // runningReduceIndexed(operation): Sequence<S>
+        let runningReduceIndexedName = interner.intern("runningReduceIndexed")
+        let runningReduceIndexedFQName = sequenceFQName + [runningReduceIndexedName]
+        if symbols.lookup(fqName: runningReduceIndexedFQName) == nil {
+            let sName = interner.intern("S")
+            let sSymbol = symbols.define(
+                kind: .typeParameter,
+                name: sName,
+                fqName: runningReduceIndexedFQName + [sName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let sType = types.make(.typeParam(TypeParamType(symbol: sSymbol, nullability: .nonNull)))
+            let operationType = types.make(.functionType(FunctionType(
+                params: [types.intType, sType, typeParamType],
+                returnType: sType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let sequenceSType = types.make(.classType(ClassType(
+                classSymbol: sequenceSymbol,
+                args: [.out(sType)],
+                nullability: .nonNull
+            )))
+            registerSequenceMemberStub(
+                named: "runningReduceIndexed",
+                externalLinkName: "kk_sequence_runningReduceIndexed",
+                receiverType: receiverType,
+                parameters: [("operation", operationType)],
+                returnType: sequenceSType,
+                sequenceSymbol: sequenceSymbol,
+                sequenceFQName: sequenceFQName,
+                typeParamSymbol: typeParamSymbol,
+                symbols: symbols,
+                interner: interner,
+                canThrow: true,
+                additionalTypeParameterSymbols: [sSymbol],
+                additionalTypeParameterUpperBoundsList: [[]]
+            )
+        }
 
         // partition(predicate): Pair<List<T>, List<T>>
         if let pairSymbol = symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Pair")]) {
@@ -2584,6 +2693,35 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner,
             typeParameterUpperBoundsList: [comparableElementBounds]
+        )
+
+        if types.comparableInterfaceSymbol == nil {
+            registerSyntheticComparableStub(symbols: symbols, types: types, interner: interner)
+        }
+        let comparableElementBounds: [TypeID] = if let comparableSymbol = types.comparableInterfaceSymbol {
+            [types.make(.classType(ClassType(
+                classSymbol: comparableSymbol,
+                args: [.invariant(typeParamType)],
+                nullability: .nonNull
+            )))]
+        } else {
+            []
+        }
+
+        // min(): T
+        registerSequenceMemberStub(
+            named: "min",
+            externalLinkName: "kk_sequence_min",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: typeParamType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner,
+            canThrow: true,
+            typeParameterUpperBounds: comparableElementBounds
         )
 
         // flatten(): Sequence<T>
