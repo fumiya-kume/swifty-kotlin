@@ -2571,6 +2571,7 @@ extension CallLowerer {
                 let flatMapIndexedToName = interner.intern("flatMapIndexedTo")
                 let containsName = interner.intern("contains")
                 let indexOfName = interner.intern("indexOf")
+                let lastIndexOfName = interner.intern("lastIndexOf")
                 let indexOfLastName = interner.intern("indexOfLast")
                 let elementAtName = interner.intern("elementAt")
                 let elementAtOrNullName = interner.intern("elementAtOrNull")
@@ -2653,6 +2654,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_contains"
                 } else if calleeName == indexOfName {
                     runtimeCallee = "kk_sequence_indexOf"
+                } else if calleeName == lastIndexOfName {
+                    runtimeCallee = "kk_sequence_lastIndexOf"
                 } else if calleeName == indexOfLastName {
                     runtimeCallee = "kk_sequence_indexOfLast"
                 } else if calleeName == elementAtName {
@@ -2753,12 +2756,18 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_reduceOrNull"
                 } else if calleeName == interner.intern("union") {
                     runtimeCallee = "kk_sequence_union"
+                } else if calleeName == interner.intern("subtract") {
+                    runtimeCallee = "kk_sequence_subtract"
                 } else if calleeName == interner.intern("reduceRight") {
                     runtimeCallee = useIterableRuntimeForCollectionFallback
                         ? "kk_list_reduceRight"
                         : "kk_sequence_reduceRight"
                 } else if calleeName == interner.intern("runningReduceIndexed") {
                     runtimeCallee = "kk_sequence_runningReduceIndexed"
+                } else if calleeName == interner.intern("reduceRightIndexed") {
+                    runtimeCallee = useIterableRuntimeForCollectionFallback
+                        ? "kk_list_reduceRightIndexed"
+                        : "kk_sequence_reduceRightIndexed"
                 } else if calleeName == interner.intern("shuffled") {
                     switch normalizedArgIDs.count {
                     case 0: runtimeCallee = "kk_sequence_shuffled"
@@ -2835,6 +2844,8 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_reduceOrNull"
                         || runtimeCallee == "kk_sequence_reduceRight"
                         || runtimeCallee == "kk_sequence_runningReduceIndexed"
+                        || runtimeCallee == "kk_sequence_reduceRightIndexed"
+                        || runtimeCallee == "kk_list_reduceRightIndexed"
                         || runtimeCallee == "kk_sequence_ifEmpty"
                         || runtimeCallee == "kk_sequence_zipWithNextTransform"
                     var runtimeArguments = [loweredReceiverID] + normalizedArgIDs
@@ -2876,6 +2887,19 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_associate"
                         || runtimeCallee == "kk_sequence_associateBy"
                         || runtimeCallee == "kk_sequence_associateWith"),
+                       normalizedArgIDs.count == 1
+                    {
+                        let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                            normalizedArgIDs[0],
+                            sema: sema,
+                            arena: arena,
+                            interner: interner,
+                            instructions: &instructions
+                        )
+                        runtimeArguments = [loweredReceiverID, fnPtrExpr, envPtrExpr]
+                    }
+                    if (runtimeCallee == "kk_sequence_reduceRightIndexed"
+                        || runtimeCallee == "kk_list_reduceRightIndexed"),
                        normalizedArgIDs.count == 1
                     {
                         let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
@@ -3412,6 +3436,10 @@ extension CallLowerer {
                     interner.intern("kk_sequence_filterNotNull")
                 case requireNoNullsID:
                     interner.intern("kk_sequence_requireNoNulls")
+                case interner.intern("asSequence"):
+                    useIterableRuntimeForTerminalFallback
+                        ? interner.intern("kk_iterable_asSequence")
+                        : interner.intern("kk_sequence_asSequence")
                 case asIterableID:
                     interner.intern("kk_sequence_asIterable")
                 case withIndexID:
