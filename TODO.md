@@ -204,7 +204,7 @@
 
 #### kotlin.io.path プロパティの実装
 - [ ] STDLIB-IO-PATH-PROP-001: `extension` 拡張プロパティの実装
-- [ ] STDLIB-IO-PATH-PROP-006: `pathString` 拡張プロパティの実装
+- [x] STDLIB-IO-PATH-PROP-006: `pathString` 拡張プロパティの実装
 
 #### kotlin.io.path 関数の実装
 - [ ] STDLIB-IO-PATH-FN-007: `bufferedReader` 関数の実装
@@ -736,7 +736,7 @@
 
 ### Phase 5: 非スコープ/高度領域
 - [x] STDLIB-IO-PATH-PROP-005: `Path.nameWithoutExtension` extension property を追加する
-- [ ] STDLIB-IO-PATH-PROP-006: `Path.pathString` extension property を追加する
+- [x] STDLIB-IO-PATH-PROP-006: `Path.pathString` extension property を追加する
 - [ ] STDLIB-IO-PATH-FN-008: `Path.bufferedWriter(charset, bufferSize, options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-010: `Path.copyTo(target, overwrite)` を追加する
 - [ ] STDLIB-IO-PATH-FN-011: `Path.copyToRecursively(target, onError, followLinks, overwrite)` を追加する
