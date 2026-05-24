@@ -68,7 +68,7 @@
 - [x] STDLIB-COL-FN-048: `dropLastWhile` 関数の実装
 - [x] STDLIB-COL-FN-060: `filterIsInstance` 関数の実装
 - [x] STDLIB-COL-FN-071: `first` 関数の実装
-- [ ] STDLIB-COL-FN-072: `firstNotNullOf` 関数の実装
+- [x] STDLIB-COL-FN-072: `firstNotNullOf` 関数の実装
 - [ ] STDLIB-COL-FN-073: `firstNotNullOfOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-074: `firstOrNull` 関数の実装
 - [ ] STDLIB-COL-FN-075: `flatMap` 関数の実装
