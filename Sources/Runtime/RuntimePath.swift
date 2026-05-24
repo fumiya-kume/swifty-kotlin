@@ -52,6 +52,21 @@ private func pathCreateTempDirectoryRaw(
     return registerRuntimeObject(RuntimePathBox(fullPath))
 }
 
+private func pathCreateTempFileRaw(
+    directoryPath: String,
+    prefix: String,
+    suffix: String,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let name = "\(prefix)\(UUID().uuidString)\(suffix)"
+    let fullPath = (directoryPath as NSString).appendingPathComponent(name)
+    let created = FileManager.default.createFile(atPath: fullPath, contents: nil)
+    if !created {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: Failed to create temp file \(fullPath)")
+    }
+    return registerRuntimeObject(RuntimePathBox(fullPath))
+}
+
 private func pathLineElements(from raw: Int) -> [Int]? {
     if let list = runtimeListBox(from: raw) {
         return list.elements
@@ -552,6 +567,27 @@ public func kk_path_createTempDirectory_directory_prefix_attributes(
     return pathCreateTempDirectoryRaw(
         directoryPath: directoryPath,
         prefix: prefix,
+        outThrown: outThrown
+    )
+}
+
+@_cdecl("kk_path_createTempFile_directory_prefix_suffix_attributes")
+public func kk_path_createTempFile_directory_prefix_suffix_attributes(
+    _ directoryRaw: Int,
+    _ prefixRaw: Int,
+    _ suffixRaw: Int,
+    _ attributesRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    _ = attributesRaw
+    let directoryPath = runtimePathBox(from: directoryRaw)?.pathString ?? FileManager.default.temporaryDirectory.path
+    let prefix = pathStringValue(from: prefixRaw) ?? "tmp"
+    let suffix = pathStringValue(from: suffixRaw) ?? ".tmp"
+    return pathCreateTempFileRaw(
+        directoryPath: directoryPath,
+        prefix: prefix,
+        suffix: suffix,
         outThrown: outThrown
     )
 }

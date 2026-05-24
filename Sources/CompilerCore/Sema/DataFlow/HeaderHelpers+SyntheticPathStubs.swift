@@ -43,6 +43,7 @@
 /// - `Path.createDirectories(vararg attributes: FileAttribute<*>): Path` extension function
 /// - `Path.createSymbolicLinkPointingTo(target: Path, vararg attributes: FileAttribute<*>): Path` extension function
 /// - `createTempDirectory(directory: Path?, prefix: String?, vararg attributes: FileAttribute<*>): Path` top-level function
+/// - `createTempFile(directory: Path?, prefix: String?, suffix: String?, vararg attributes: FileAttribute<*>): Path` top-level function
 /// - `deleteExisting()`, `deleteRecursively()`
 /// - `Path.fileStore(): FileStore` extension function
 /// - `Path.fileAttributesViewOrNull<V : FileAttributeView>(vararg options: LinkOption): V?` extension function
@@ -1697,6 +1698,33 @@ extension DataFlowSemaPhase {
             returnType: pathType,
             externalLinkName: "kk_path_get_base_subpaths",
             valueParameterIsVararg: [false, true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathTopLevelFunction(
+            named: "fileVisitor",
+            packageFQName: kotlinIOPathPkg,
+            parameters: [("builderAction", fileVisitorBuilderActionType)],
+            returnType: fileVisitorOfPathType,
+            externalLinkName: "kk_path_fileVisitor",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathTopLevelFunction(
+            named: "createTempFile",
+            packageFQName: kotlinIOPathPkg,
+            parameters: [
+                ("directory", nullablePathType),
+                ("prefix", nullableStringType),
+                ("suffix", nullableStringType),
+                ("attributes", fileAttributeStarType),
+            ],
+            returnType: pathType,
+            externalLinkName: "kk_path_createTempFile_directory_prefix_suffix_attributes",
+            valueParameterHasDefaultValues: [false, true, true, false],
+            valueParameterIsVararg: [false, false, false, true],
             symbols: symbols,
             interner: interner
         )
