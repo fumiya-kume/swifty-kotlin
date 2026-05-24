@@ -742,7 +742,7 @@
 - [x] STDLIB-IO-PATH-FN-011: `Path.copyToRecursively(target, onError, followLinks, overwrite)` を追加する
 - [x] STDLIB-IO-PATH-FN-012: `Path.copyToRecursively(target, onError, followLinks, copyAction)` を追加する
 - [x] STDLIB-IO-PATH-FN-013: `Path.createDirectories(attributes)` を追加する
-- [ ] STDLIB-IO-PATH-FN-014: `Path.createDirectory(attributes)` を追加する
+- [x] STDLIB-IO-PATH-FN-014: `Path.createDirectory(attributes)` を追加する
 - [ ] STDLIB-IO-PATH-FN-015: `Path.createFile(attributes)` を追加する
 - [ ] STDLIB-IO-PATH-FN-017: `Path.createParentDirectories(attributes)` を追加する
 - [x] STDLIB-IO-PATH-FN-018: `Path.createSymbolicLinkPointingTo(target, attributes)` を追加する
