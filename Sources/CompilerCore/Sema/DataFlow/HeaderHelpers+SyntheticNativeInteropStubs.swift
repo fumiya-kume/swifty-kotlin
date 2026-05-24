@@ -1287,6 +1287,12 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let arenaSymbol = ensureClassSymbol(
+            named: "Arena",
+            in: cinteropPkg,
+            symbols: symbols,
+            interner: interner
+        )
         let memScopeSymbol = ensureClassSymbol(
             named: "MemScope",
             in: cinteropPkg,
@@ -1321,6 +1327,7 @@ extension DataFlowSemaPhase {
             deferScopeSymbol,
             autofreeScopeSymbol,
             arenaBaseSymbol,
+            arenaSymbol,
             memScopeSymbol,
             cValuesRefSymbol,
             cPointerSymbol,
@@ -1400,6 +1407,15 @@ extension DataFlowSemaPhase {
         symbols.setDirectSupertypes([autofreeScopeSymbol], for: arenaBaseSymbol)
         types.setNominalDirectSupertypes([autofreeScopeSymbol], for: arenaBaseSymbol)
 
+        let arenaType = types.make(.classType(ClassType(
+            classSymbol: arenaSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(arenaType, for: arenaSymbol)
+        symbols.setDirectSupertypes([arenaBaseSymbol], for: arenaSymbol)
+        types.setNominalDirectSupertypes([arenaBaseSymbol], for: arenaSymbol)
+
         let memScopeType = types.make(.classType(ClassType(
             classSymbol: memScopeSymbol,
             args: [],
@@ -1434,6 +1450,41 @@ extension DataFlowSemaPhase {
             named: "alloc",
             ownerSymbol: arenaBaseSymbol,
             receiverType: arenaBaseType,
+            parameters: [
+                (name: "size", type: types.intType),
+                (name: "align", type: types.intType),
+            ],
+            returnType: nativePointedType,
+            flags: [.synthetic, .openType],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticNativeBitSetConstructor(
+            ownerSymbol: arenaSymbol,
+            ownerType: arenaType,
+            parameters: [(name: "parent", type: nativeFreeablePlacementType)],
+            defaultValues: [true],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "alloc",
+            ownerSymbol: arenaSymbol,
+            receiverType: arenaType,
+            parameters: [
+                (name: "size", type: types.longType),
+                (name: "align", type: types.intType),
+            ],
+            returnType: nativePointedType,
+            flags: [.synthetic, .overrideMember],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "alloc",
+            ownerSymbol: arenaSymbol,
+            receiverType: arenaType,
             parameters: [
                 (name: "size", type: types.intType),
                 (name: "align", type: types.intType),
