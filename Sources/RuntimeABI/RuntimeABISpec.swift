@@ -840,6 +840,46 @@ public enum RuntimeABISpec {
             section: "System"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_js_map_toMutableMap",
+            parameters: [
+                RuntimeABIParameter(name: "jsMapRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_js_number_toDouble",
+            parameters: [
+                RuntimeABIParameter(name: "jsNumberRaw", type: .intptr),
+            ],
+            returnType: .double,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_js_number_toInt",
+            parameters: [
+                RuntimeABIParameter(name: "jsNumberRaw", type: .intptr),
+            ],
+            returnType: .int32,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_int_toJsNumber",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .int32),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_js_boolean_toBoolean",
+            parameters: [
+                RuntimeABIParameter(name: "jsBooleanRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_jsclass_kotlin",
             parameters: [
                 RuntimeABIParameter(name: "jsClassRaw", type: .intptr),
