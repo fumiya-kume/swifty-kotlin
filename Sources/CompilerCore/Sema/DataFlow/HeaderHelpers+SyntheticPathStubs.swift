@@ -19,14 +19,17 @@
 /// - `Path.name: String` extension property
 /// - `Path.appendText(text: CharSequence, charset)` extension function
 /// - `Path.copyTo(target: Path, options)` extension function
+/// - `Path.copyTo(target: Path, overwrite: Boolean)` extension function
 /// - `Path.invariantSeparatorsPath: String` extension property
 /// - `Path.absolute(): Path` extension function
 /// - `Path.relativeToOrSelf(base: Path): Path` extension function
 /// - `Path.relativeTo(base: Path): Path` extension function
 /// - `Path.relativeToOrNull(base: Path): Path?` extension function
 /// - `Path.readSymbolicLink(): Path` extension function
+/// - `Path.readAttributes(attributes, vararg options: LinkOption): Map<String, Any?>` extension function
 /// - `Path.readAttributes<A : BasicFileAttributes>(vararg options: LinkOption): A` extension function
 /// - `Path.invariantSeparatorsPathString: String` extension property
+/// - `Path.pathString: String` extension property
 /// - `Path.writeBytes(array: ByteArray, vararg options: OpenOption)` extension function
 /// - `Path.writer(charset, options)` extension function
 /// - `Path.outputStream(vararg options: OpenOption): OutputStream` extension function
@@ -42,11 +45,19 @@
 /// - `readBytes(): ByteArray`, `readText(): String`, `writeText(text: String)`, `readLines(): List<String>`
 /// - `Path.writeText(text, charset, options)` extension function
 /// - `createDirectories(): Path`, `createLinkPointingTo(target): Path`, `deleteIfExists(): Boolean`
+/// - `Path.createDirectories(vararg attributes: FileAttribute<*>): Path` extension function
+/// - `Path.createDirectory(vararg attributes: FileAttribute<*>): Path` extension function
+/// - `Path.createSymbolicLinkPointingTo(target: Path, vararg attributes: FileAttribute<*>): Path` extension function
+/// - `createTempDirectory(directory: Path?, prefix: String?, vararg attributes: FileAttribute<*>): Path` top-level function
+/// - `createTempDirectory(prefix: String?, vararg attributes: FileAttribute<*>): Path` top-level function
+/// - `createTempFile(directory: Path?, prefix: String?, suffix: String?, vararg attributes: FileAttribute<*>): Path` top-level function
 /// - `deleteExisting()`, `deleteRecursively()`
 /// - `Path.fileStore(): FileStore` extension function
 /// - `Path.fileAttributesViewOrNull<V : FileAttributeView>(vararg options: LinkOption): V?` extension function
 /// - `Path.getAttribute(attribute: String, vararg options: LinkOption): Any` extension function
 /// - `Path.fileAttributesView<V : FileAttributeView>(vararg options: LinkOption): V` extension function
+/// - `Path.copyToRecursively(target, onError, followLinks, overwrite): Path` extension function
+/// - `Path.copyToRecursively(target, onError, followLinks, copyAction): Path` extension function
 /// - `Path.getOwner(vararg options: LinkOption): UserPrincipal` extension function
 /// - `Path.getLastModifiedTime(vararg options: LinkOption): FileTime` extension function
 /// - `Path.setOwner(value: UserPrincipal): Path` extension function
@@ -171,6 +182,7 @@ extension DataFlowSemaPhase {
             isSuspend: false,
             nullability: .nonNull
         )))
+        let nullableStringType = types.makeNullable(types.stringType)
 
         let copyOptionPkg = ensurePackage(path: ["java", "nio", "file"], symbols: symbols, interner: interner)
         let copyOptionPkgSymbol = symbols.lookup(fqName: copyOptionPkg)
@@ -311,6 +323,38 @@ extension DataFlowSemaPhase {
             symbols: symbols
         )
 
+        let exceptionSymbol = ensureClassSymbol(
+            named: "Exception",
+            in: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinPkgSymbol {
+            symbols.setParentSymbol(kotlinPkgSymbol, for: exceptionSymbol)
+        }
+        let exceptionType = types.make(.classType(ClassType(
+            classSymbol: exceptionSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(exceptionType, for: exceptionSymbol)
+
+        let copyActionContextSymbol = ensureInterfaceSymbol(
+            named: "CopyActionContext",
+            in: kotlinIOPathPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinIOPathPkgSymbol {
+            symbols.setParentSymbol(kotlinIOPathPkgSymbol, for: copyActionContextSymbol)
+        }
+        let copyActionContextType = types.make(.classType(ClassType(
+            classSymbol: copyActionContextSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(copyActionContextType, for: copyActionContextSymbol)
+
         // List<Path> type for listDirectoryEntries return
         let listSymbol = resolvePathListSymbol(symbols: symbols, interner: interner)
         if listSymbol == nil {
@@ -336,6 +380,20 @@ extension DataFlowSemaPhase {
         let iterableOfCharSequenceType = types.make(.classType(ClassType(
             classSymbol: iterableSymbol,
             args: [.invariant(charSequenceType)],
+            nullability: .nonNull
+        )))
+
+        let mapSymbol = symbols.lookup(
+            fqName: kotlinCollectionsPkg + [interner.intern("Map")]
+        ) ?? registerSyntheticMapStub(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg
+        ).mapSymbol
+        let mapOfStringToNullableAnyType = types.make(.classType(ClassType(
+            classSymbol: mapSymbol,
+            args: [.invariant(types.stringType), .out(types.nullableAnyType)],
             nullability: .nonNull
         )))
 
@@ -513,6 +571,19 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(fileAttributeViewType, for: fileAttributeViewSymbol)
+
+        let fileAttributeSymbol = ensureGenericFileAttributeSymbol(
+            in: javaNioFileAttributePkg,
+            packageSymbol: javaNioFileAttributePkgSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let fileAttributeStarType = types.make(.classType(ClassType(
+            classSymbol: fileAttributeSymbol,
+            args: [.star],
+            nullability: .nonNull
+        )))
 
         let basicFileAttributesSymbol = ensureInterfaceSymbol(
             named: "BasicFileAttributes",
@@ -724,6 +795,18 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerPathExtensionFunction(
+            named: "readAttributes",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("attributes", types.stringType), ("options", linkOptionType)],
+            returnType: mapOfStringToNullableAnyType,
+            externalLinkName: "kk_path_readAttributes_string",
+            valueParameterIsVararg: [false, true],
+            symbols: symbols,
+            interner: interner
+        )
+
         registerPathExtensionProperty(
             named: "invariantSeparatorsPath",
             packageFQName: kotlinIOPathPkg,
@@ -740,6 +823,16 @@ extension DataFlowSemaPhase {
             receiverType: pathType,
             returnType: types.stringType,
             externalLinkName: "kk_path_invariantSeparatorsPathString",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionProperty(
+            named: "pathString",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            returnType: types.stringType,
+            externalLinkName: "kk_path_pathString",
             symbols: symbols,
             interner: interner
         )
@@ -1386,6 +1479,17 @@ extension DataFlowSemaPhase {
         )
 
         registerPathExtensionFunction(
+            named: "copyTo",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("target", pathType), ("overwrite", types.booleanType)],
+            returnType: pathType,
+            externalLinkName: "kk_path_copyTo_overwrite",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
             named: "writeBytes",
             packageFQName: kotlinIOPathPkg,
             receiverType: pathType,
@@ -1511,6 +1615,57 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerPathMemberFunction(
+            named: "createDirectories",
+            externalLinkName: "kk_path_createDirectories_attributes",
+            ownerSymbol: pathSymbol,
+            ownerType: pathType,
+            parameters: [("attributes", fileAttributeStarType)],
+            returnType: pathType,
+            valueParameterIsVararg: [true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "createDirectories",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("attributes", fileAttributeStarType)],
+            returnType: pathType,
+            externalLinkName: "kk_path_createDirectories_attributes",
+            valueParameterIsVararg: [true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "createSymbolicLinkPointingTo",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [
+                ("target", pathType),
+                ("attributes", fileAttributeStarType),
+            ],
+            returnType: pathType,
+            externalLinkName: "kk_path_createSymbolicLinkPointingTo_attributes",
+            valueParameterIsVararg: [false, true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "createDirectory",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("attributes", fileAttributeStarType)],
+            returnType: pathType,
+            externalLinkName: "kk_path_createDirectory_attributes",
+            valueParameterIsVararg: [true],
+            symbols: symbols,
+            interner: interner
+        )
+
         registerPathExtensionFunction(
             named: "createLinkPointingTo",
             packageFQName: kotlinIOPathPkg,
@@ -1616,6 +1771,51 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        let copyToRecursivelyOnErrorType = types.make(.functionType(FunctionType(
+            params: [pathType, pathType, exceptionType],
+            returnType: onErrorResultType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let copyToRecursivelyCopyActionType = types.make(.functionType(FunctionType(
+            receiver: copyActionContextType,
+            params: [pathType, pathType],
+            returnType: copyActionResultType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        registerPathExtensionFunction(
+            named: "copyToRecursively",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [
+                ("target", pathType),
+                ("onError", copyToRecursivelyOnErrorType),
+                ("followLinks", types.booleanType),
+                ("overwrite", types.booleanType),
+            ],
+            returnType: pathType,
+            externalLinkName: "kk_path_copyToRecursively_overwrite",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "copyToRecursively",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [
+                ("target", pathType),
+                ("onError", copyToRecursivelyOnErrorType),
+                ("followLinks", types.booleanType),
+                ("copyAction", copyToRecursivelyCopyActionType),
+            ],
+            returnType: pathType,
+            externalLinkName: "kk_path_copyToRecursively_copyAction",
+            symbols: symbols,
+            interner: interner
+        )
+
         registerPathExtensionFunction(
             named: "listDirectoryEntries",
             packageFQName: kotlinIOPathPkg,
@@ -1697,6 +1897,37 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerPathTopLevelFunction(
+            named: "createTempDirectory",
+            packageFQName: kotlinIOPathPkg,
+            parameters: [
+                ("directory", nullablePathType),
+                ("prefix", nullableStringType),
+                ("attributes", fileAttributeStarType),
+            ],
+            returnType: pathType,
+            externalLinkName: "kk_path_createTempDirectory_directory_prefix_attributes",
+            valueParameterHasDefaultValues: [false, true, false],
+            valueParameterIsVararg: [false, false, true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathTopLevelFunction(
+            named: "createTempDirectory",
+            packageFQName: kotlinIOPathPkg,
+            parameters: [
+                ("prefix", nullableStringType),
+                ("attributes", fileAttributeStarType),
+            ],
+            returnType: pathType,
+            externalLinkName: "kk_path_createTempDirectory_prefix_attributes",
+            valueParameterHasDefaultValues: [true, false],
+            valueParameterIsVararg: [false, true],
+            symbols: symbols,
+            interner: interner
+        )
+
         // MARK: - Top-level Path() factory (kotlin.io.path.Path)
 
         registerPathTopLevelFunction(
@@ -1726,6 +1957,23 @@ extension DataFlowSemaPhase {
             parameters: [("builderAction", fileVisitorBuilderActionType)],
             returnType: fileVisitorOfPathType,
             externalLinkName: "kk_path_fileVisitor",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathTopLevelFunction(
+            named: "createTempFile",
+            packageFQName: kotlinIOPathPkg,
+            parameters: [
+                ("directory", nullablePathType),
+                ("prefix", nullableStringType),
+                ("suffix", nullableStringType),
+                ("attributes", fileAttributeStarType),
+            ],
+            returnType: pathType,
+            externalLinkName: "kk_path_createTempFile_directory_prefix_suffix_attributes",
+            valueParameterHasDefaultValues: [false, true, true, false],
+            valueParameterIsVararg: [false, false, false, true],
             symbols: symbols,
             interner: interner
         )
@@ -2052,6 +2300,51 @@ extension DataFlowSemaPhase {
         return fileVisitorSymbol
     }
 
+    private func ensureGenericFileAttributeSymbol(
+        in packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> SymbolID {
+        let fileAttributeSymbol = ensureInterfaceSymbol(
+            named: "FileAttribute",
+            in: packageFQName,
+            symbols: symbols,
+            interner: interner
+        )
+        if let packageSymbol {
+            symbols.setParentSymbol(packageSymbol, for: fileAttributeSymbol)
+        }
+
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = packageFQName + [interner.intern("FileAttribute"), typeParamName]
+        let typeParamSymbol = symbols.lookup(fqName: typeParamFQName) ?? symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: typeParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(fileAttributeSymbol, for: typeParamSymbol)
+        symbols.setTypeParameterUpperBounds([types.anyType], for: typeParamSymbol)
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: fileAttributeSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: fileAttributeSymbol)
+
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let fileAttributeType = types.make(.classType(ClassType(
+            classSymbol: fileAttributeSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(fileAttributeType, for: fileAttributeSymbol)
+        return fileAttributeSymbol
+    }
+
     private func resolvePathListSymbol(
         symbols: SymbolTable,
         interner: StringInterner
@@ -2175,6 +2468,7 @@ extension DataFlowSemaPhase {
         ownerType: TypeID,
         parameters: [(name: String, type: TypeID)],
         returnType: TypeID,
+        valueParameterIsVararg: [Bool]? = nil,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -2250,7 +2544,7 @@ extension DataFlowSemaPhase {
                 isSuspend: false,
                 valueParameterSymbols: parameterSymbols,
                 valueParameterHasDefaultValues: Array(repeating: false, count: parameterSymbols.count),
-                valueParameterIsVararg: Array(repeating: false, count: parameterSymbols.count)
+                valueParameterIsVararg: valueParameterIsVararg ?? Array(repeating: false, count: parameterSymbols.count)
             ),
             for: functionSymbol
         )

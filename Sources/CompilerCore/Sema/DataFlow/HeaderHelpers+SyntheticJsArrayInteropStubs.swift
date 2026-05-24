@@ -12,6 +12,11 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let kotlinPkg = ensurePackage(
+            path: ["kotlin"],
+            symbols: symbols,
+            interner: interner
+        )
         let kotlinCollectionsPkg = ensurePackage(
             path: ["kotlin", "collections"],
             symbols: symbols,
@@ -54,6 +59,34 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+
+        if let arraySymbol = symbols.lookup(fqName: kotlinPkg + [interner.intern("Array")]),
+           let arrayTypeParamSymbol = types.nominalTypeParameterSymbols(for: arraySymbol).first {
+            let arrayTypeParamType = types.make(.typeParam(TypeParamType(
+                symbol: arrayTypeParamSymbol,
+                nullability: .nonNull
+            )))
+            let arrayType = types.make(.classType(ClassType(
+                classSymbol: arraySymbol,
+                args: [.invariant(arrayTypeParamType)],
+                nullability: .nonNull
+            )))
+            let arrayJsArrayReturnType = types.make(.classType(ClassType(
+                classSymbol: jsArray.symbol,
+                args: [.invariant(arrayTypeParamType)],
+                nullability: .nonNull
+            )))
+
+            registerArrayToJsArrayMember(
+                arraySymbol: arraySymbol,
+                arrayType: arrayType,
+                arrayTypeParamSymbol: arrayTypeParamSymbol,
+                returnType: arrayJsArrayReturnType,
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
+        }
     }
 
     private func ensureJsArrayType(
@@ -160,6 +193,56 @@ extension DataFlowSemaPhase {
                 parameterTypes: [],
                 returnType: returnType,
                 typeParameterSymbols: [listTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerArrayToJsArrayMember(
+        arraySymbol: SymbolID,
+        arrayType: TypeID,
+        arrayTypeParamSymbol: SymbolID,
+        returnType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        guard let arrayInfo = symbols.symbol(arraySymbol) else {
+            return
+        }
+        let functionName = interner.intern("toJsArray")
+        let functionFQName = arrayInfo.fqName + [functionName]
+
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbol in
+            guard let signature = symbols.functionSignature(for: symbol) else {
+                return false
+            }
+            return signature.receiverType == arrayType
+                && signature.parameterTypes.isEmpty
+                && signature.returnType == returnType
+                && signature.typeParameterSymbols == [arrayTypeParamSymbol]
+        }) {
+            symbols.setExternalLinkName("kk_array_toJsArray", for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(arraySymbol, for: functionSymbol)
+        symbols.setExternalLinkName("kk_array_toJsArray", for: functionSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: arrayType,
+                parameterTypes: [],
+                returnType: returnType,
+                typeParameterSymbols: [arrayTypeParamSymbol],
                 classTypeParameterCount: 1
             ),
             for: functionSymbol
