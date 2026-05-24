@@ -17,6 +17,11 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let kotlinCollectionsPkg = ensurePackage(
+            path: ["kotlin", "collections"],
+            symbols: symbols,
+            interner: interner
+        )
         let javaStreamPkgSymbol = symbols.lookup(fqName: javaStreamPkg)
         let kotlinStreamsPkgSymbol = symbols.lookup(fqName: kotlinStreamsPkg)
 
@@ -56,14 +61,20 @@ extension DataFlowSemaPhase {
             ))),
             for: streamSymbol
         )
+        let sequenceSymbol = ensureSyntheticSequenceStub(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg
+        )
 
         registerStreamAsSequence(
             receiverSymbol: streamSymbol,
             receiverElementType: streamElementType,
             receiverTypeParameterSymbol: streamTypeParameterSymbol,
             externalLinkName: "kk_stream_asSequence",
-        kotlinStreamsPkg: kotlinStreamsPkg,
-        kotlinStreamsPkgSymbol: kotlinStreamsPkgSymbol,
+            kotlinStreamsPkg: kotlinStreamsPkg,
+            kotlinStreamsPkgSymbol: kotlinStreamsPkgSymbol,
             symbols: symbols,
             types: types,
             interner: interner
@@ -93,6 +104,16 @@ extension DataFlowSemaPhase {
             receiverSymbol: doubleStreamSymbol,
             receiverElementType: types.doubleType,
             externalLinkName: "kk_double_stream_asSequence",
+            kotlinStreamsPkg: kotlinStreamsPkg,
+            kotlinStreamsPkgSymbol: kotlinStreamsPkgSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerSequenceAsStream(
+            sequenceSymbol: sequenceSymbol,
+            streamSymbol: streamSymbol,
+            externalLinkName: "kk_sequence_asStream",
             kotlinStreamsPkg: kotlinStreamsPkg,
             kotlinStreamsPkgSymbol: kotlinStreamsPkgSymbol,
             symbols: symbols,
@@ -155,6 +176,88 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             types: types,
             interner: interner
+        )
+    }
+
+    private func registerSequenceAsStream(
+        sequenceSymbol: SymbolID,
+        streamSymbol: SymbolID,
+        externalLinkName: String,
+        kotlinStreamsPkg: [InternedString],
+        kotlinStreamsPkgSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern("asStream")
+        let functionFQName = kotlinStreamsPkg + [functionName]
+        let typeParameterName = interner.intern("T")
+        let typeParameterFQName = functionFQName + [typeParameterName]
+        let typeParameterSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParameterFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParameterName,
+                fqName: typeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let elementType = types.make(.typeParam(TypeParamType(
+            symbol: typeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: streamSymbol,
+            args: [.invariant(elementType)],
+            nullability: .nonNull
+        )))
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return signature.receiverType == receiverType
+                && signature.parameterTypes.isEmpty
+                && signature.returnType == returnType
+                && signature.typeParameterSymbols == [typeParameterSymbol]
+                && signature.classTypeParameterCount == 0
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let kotlinStreamsPkgSymbol {
+            symbols.setParentSymbol(kotlinStreamsPkgSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: [],
+                valueParameterIsVararg: [],
+                typeParameterSymbols: [typeParameterSymbol],
+                classTypeParameterCount: 0
+            ),
+            for: functionSymbol
         )
     }
 
