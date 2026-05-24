@@ -114,6 +114,7 @@ extension ABIMismatchTests {
             "kk_system_measureTimeMillis",
             "kk_system_measureTimeMicros",
             "kk_system_measureNanoTime",
+            "kk_double_stream_toList",
             // UUID
             "kk_uuid_random",
             "kk_uuid_nil",

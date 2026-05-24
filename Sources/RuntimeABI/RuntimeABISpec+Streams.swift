@@ -42,5 +42,13 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Streams"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_double_stream_toList",
+            parameters: [
+                RuntimeABIParameter(name: "streamRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Streams"
+        ),
     ]
 }
