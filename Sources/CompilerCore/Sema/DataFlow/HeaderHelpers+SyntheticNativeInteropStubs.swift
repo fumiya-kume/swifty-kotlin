@@ -1234,8 +1234,24 @@ extension DataFlowSemaPhase {
         }
         appendStandardAnnotationMetadata(
             to: betaInteropApiSymbol,
-            targets: ["AnnotationTarget.ANNOTATION_CLASS"],
+            targets: [
+                "AnnotationTarget.TYPEALIAS",
+                "AnnotationTarget.FUNCTION",
+                "AnnotationTarget.PROPERTY",
+                "AnnotationTarget.ANNOTATION_CLASS",
+                "AnnotationTarget.CLASS",
+            ],
             retention: "AnnotationRetention.BINARY",
+            symbols: symbols
+        )
+        appendMetadataAnnotations(
+            [
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.RequiresOptIn",
+                    arguments: ["level=RequiresOptIn.Level.WARNING"]
+                ),
+            ],
+            to: betaInteropApiSymbol,
             symbols: symbols
         )
 
