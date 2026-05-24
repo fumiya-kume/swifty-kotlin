@@ -1333,6 +1333,12 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let booleanVarOfSymbol = ensureClassSymbol(
+            named: "BooleanVarOf",
+            in: cinteropPkg,
+            symbols: symbols,
+            interner: interner
+        )
 
         for symbol in [
             nativePointedSymbol,
@@ -1348,6 +1354,7 @@ extension DataFlowSemaPhase {
             cValuesRefSymbol,
             cPointerSymbol,
             cPointerVarSymbol,
+            booleanVarOfSymbol,
         ] {
             if let cinteropPkgSymbol {
                 symbols.setParentSymbol(cinteropPkgSymbol, for: symbol)
@@ -1574,6 +1581,46 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        configureSingleTypeParameterNominal(
+            ownerSymbol: booleanVarOfSymbol,
+            fqName: cinteropPkg + [interner.intern("BooleanVarOf")],
+            parameterName: "T",
+            supertype: nil,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let booleanVarType = types.make(.classType(ClassType(
+            classSymbol: booleanVarOfSymbol,
+            args: [.invariant(types.booleanType)],
+            nullability: .nonNull
+        )))
+        let booleanVarAliasName = interner.intern("BooleanVar")
+        let booleanVarAliasFQName = cinteropPkg + [booleanVarAliasName]
+        let booleanVarAliasSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: booleanVarAliasFQName),
+           symbols.symbol(existing)?.kind == .typeAlias
+        {
+            booleanVarAliasSymbol = existing
+            symbols.insertFlags([.synthetic], for: existing)
+        } else if symbols.lookup(fqName: booleanVarAliasFQName) == nil {
+            booleanVarAliasSymbol = symbols.define(
+                kind: .typeAlias,
+                name: booleanVarAliasName,
+                fqName: booleanVarAliasFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        } else {
+            booleanVarAliasSymbol = .invalid
+        }
+        if booleanVarAliasSymbol.rawValue >= 0 {
+            if let cinteropPkgSymbol {
+                symbols.setParentSymbol(cinteropPkgSymbol, for: booleanVarAliasSymbol)
+            }
+            symbols.setTypeAliasUnderlyingType(booleanVarType, for: booleanVarAliasSymbol)
+        }
 
         for primitiveVar in [
             "ByteVar",
