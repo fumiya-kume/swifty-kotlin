@@ -28,6 +28,7 @@
 /// - `Path.readAttributes(attributes, vararg options: LinkOption): Map<String, Any?>` extension function
 /// - `Path.readAttributes<A : BasicFileAttributes>(vararg options: LinkOption): A` extension function
 /// - `Path.invariantSeparatorsPathString: String` extension property
+/// - `Path.pathString: String` extension property
 /// - `Path.writeBytes(array: ByteArray, vararg options: OpenOption)` extension function
 /// - `Path.writer(charset, options)` extension function
 /// - `Path.outputStream(vararg options: OpenOption): OutputStream` extension function
@@ -711,6 +712,16 @@ extension DataFlowSemaPhase {
             receiverType: pathType,
             returnType: types.stringType,
             externalLinkName: "kk_path_invariantSeparatorsPathString",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionProperty(
+            named: "pathString",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            returnType: types.stringType,
+            externalLinkName: "kk_path_pathString",
             symbols: symbols,
             interner: interner
         )

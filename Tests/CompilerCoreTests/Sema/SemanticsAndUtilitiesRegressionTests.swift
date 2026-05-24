@@ -382,6 +382,27 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathStringExtensionPropertyInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import kotlin.io.path.Path
+        import kotlin.io.path.pathString
+
+        fun rawPath(path: Path): String {
+            val value: String = path.pathString
+            return value
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.pathString extension property in kotlin.io.path should resolve as String: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     func testCopyActionResultInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import kotlin.io.path.CopyActionResult
