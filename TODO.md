@@ -737,7 +737,7 @@
 ### Phase 5: 非スコープ/高度領域
 - [x] STDLIB-IO-PATH-PROP-005: `Path.nameWithoutExtension` extension property を追加する
 - [ ] STDLIB-IO-PATH-PROP-006: `Path.pathString` extension property を追加する
-- [ ] STDLIB-IO-PATH-FN-008: `Path.bufferedWriter(charset, bufferSize, options)` を追加する
+- [x] STDLIB-IO-PATH-FN-008: `Path.bufferedWriter(charset, bufferSize, options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-010: `Path.copyTo(target, overwrite)` を追加する
 - [ ] STDLIB-IO-PATH-FN-011: `Path.copyToRecursively(target, onError, followLinks, overwrite)` を追加する
 - [ ] STDLIB-IO-PATH-FN-012: `Path.copyToRecursively(target, onError, followLinks, copyAction)` を追加する
