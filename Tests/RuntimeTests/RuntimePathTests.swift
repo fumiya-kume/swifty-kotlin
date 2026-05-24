@@ -36,6 +36,17 @@ final class RuntimePathTests: XCTestCase {
         )
     }
 
+    func testPathStringReturnsRawPathString() {
+        XCTAssertEqual(
+            extractStringRaw(kk_path_pathString(makePathRaw(#"C:\tmp\archive.tar.gz"#))),
+            #"C:\tmp\archive.tar.gz"#
+        )
+        XCTAssertEqual(
+            extractStringRaw(kk_path_pathString(makePathRaw("/tmp/archive.tar.gz"))),
+            "/tmp/archive.tar.gz"
+        )
+    }
+
     func testPathNameReturnsLastComponent() {
         XCTAssertEqual(
             extractStringRaw(kk_path_name(makePathRaw("/tmp/archive.tar.gz"))),
