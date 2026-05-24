@@ -361,6 +361,27 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathNameWithoutExtensionPropertyInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import kotlin.io.path.Path
+        import kotlin.io.path.nameWithoutExtension
+
+        fun pathStem(path: Path): String {
+            val name: String = path.nameWithoutExtension
+            return name
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.nameWithoutExtension extension property in kotlin.io.path should resolve as String: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     func testCopyActionResultInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import kotlin.io.path.CopyActionResult

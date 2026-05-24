@@ -712,7 +712,7 @@
 - [ ] STDLIB-NATIVE-PLATFORM-002: common から見える Native bridge を整理
 
 ### Phase 5: 非スコープ/高度領域
-- [ ] STDLIB-IO-PATH-PROP-005: `Path.nameWithoutExtension` extension property を追加する
+- [x] STDLIB-IO-PATH-PROP-005: `Path.nameWithoutExtension` extension property を追加する
 - [ ] STDLIB-IO-PATH-PROP-006: `Path.pathString` extension property を追加する
 - [ ] STDLIB-IO-PATH-FN-008: `Path.bufferedWriter(charset, bufferSize, options)` を追加する
 - [ ] STDLIB-IO-PATH-FN-010: `Path.copyTo(target, overwrite)` を追加する
