@@ -34,5 +34,13 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Streams"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_asStream",
+            parameters: [
+                RuntimeABIParameter(name: "sequenceRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Streams"
+        ),
     ]
 }
