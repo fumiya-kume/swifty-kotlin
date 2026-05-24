@@ -490,6 +490,16 @@ public func kk_path_createDirectories(_ pathRaw: Int, _ outThrown: UnsafeMutable
     return pathRaw
 }
 
+@_cdecl("kk_path_createDirectories_attributes")
+public func kk_path_createDirectories_attributes(
+    _ pathRaw: Int,
+    _ attributesRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    _ = attributesRaw
+    return kk_path_createDirectories(pathRaw, outThrown)
+}
+
 @_cdecl("kk_path_deleteIfExists")
 public func kk_path_deleteIfExists(_ pathRaw: Int) -> Int {
     guard let path = runtimePathBox(from: pathRaw) else {

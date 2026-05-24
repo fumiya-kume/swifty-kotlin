@@ -44,6 +44,7 @@
 /// - `readBytes(): ByteArray`, `readText(): String`, `writeText(text: String)`, `readLines(): List<String>`
 /// - `Path.writeText(text, charset, options)` extension function
 /// - `createDirectories(): Path`, `createLinkPointingTo(target): Path`, `deleteIfExists(): Boolean`
+/// - `Path.createDirectories(vararg attributes: FileAttribute<*>): Path` extension function
 /// - `deleteExisting()`, `deleteRecursively()`
 /// - `Path.fileStore(): FileStore` extension function
 /// - `Path.fileAttributesViewOrNull<V : FileAttributeView>(vararg options: LinkOption): V?` extension function
@@ -546,6 +547,19 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(fileAttributeViewType, for: fileAttributeViewSymbol)
+
+        let fileAttributeSymbol = ensureGenericFileAttributeSymbol(
+            in: javaNioFileAttributePkg,
+            packageSymbol: javaNioFileAttributePkgSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let fileAttributeStarType = types.make(.classType(ClassType(
+            classSymbol: fileAttributeSymbol,
+            args: [.star],
+            nullability: .nonNull
+        )))
 
         let basicFileAttributesSymbol = ensureInterfaceSymbol(
             named: "BasicFileAttributes",
@@ -1566,6 +1580,30 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerPathMemberFunction(
+            named: "createDirectories",
+            externalLinkName: "kk_path_createDirectories_attributes",
+            ownerSymbol: pathSymbol,
+            ownerType: pathType,
+            parameters: [("attributes", fileAttributeStarType)],
+            returnType: pathType,
+            valueParameterIsVararg: [true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "createDirectories",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("attributes", fileAttributeStarType)],
+            returnType: pathType,
+            externalLinkName: "kk_path_createDirectories_attributes",
+            valueParameterIsVararg: [true],
+            symbols: symbols,
+            interner: interner
+        )
+
         registerPathExtensionFunction(
             named: "createLinkPointingTo",
             packageFQName: kotlinIOPathPkg,
@@ -2129,6 +2167,51 @@ extension DataFlowSemaPhase {
         return fileVisitorSymbol
     }
 
+    private func ensureGenericFileAttributeSymbol(
+        in packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> SymbolID {
+        let fileAttributeSymbol = ensureInterfaceSymbol(
+            named: "FileAttribute",
+            in: packageFQName,
+            symbols: symbols,
+            interner: interner
+        )
+        if let packageSymbol {
+            symbols.setParentSymbol(packageSymbol, for: fileAttributeSymbol)
+        }
+
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = packageFQName + [interner.intern("FileAttribute"), typeParamName]
+        let typeParamSymbol = symbols.lookup(fqName: typeParamFQName) ?? symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: typeParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(fileAttributeSymbol, for: typeParamSymbol)
+        symbols.setTypeParameterUpperBounds([types.anyType], for: typeParamSymbol)
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: fileAttributeSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: fileAttributeSymbol)
+
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let fileAttributeType = types.make(.classType(ClassType(
+            classSymbol: fileAttributeSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(fileAttributeType, for: fileAttributeSymbol)
+        return fileAttributeSymbol
+    }
+
     private func resolvePathListSymbol(
         symbols: SymbolTable,
         interner: StringInterner
@@ -2252,6 +2335,7 @@ extension DataFlowSemaPhase {
         ownerType: TypeID,
         parameters: [(name: String, type: TypeID)],
         returnType: TypeID,
+        valueParameterIsVararg: [Bool]? = nil,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -2327,7 +2411,7 @@ extension DataFlowSemaPhase {
                 isSuspend: false,
                 valueParameterSymbols: parameterSymbols,
                 valueParameterHasDefaultValues: Array(repeating: false, count: parameterSymbols.count),
-                valueParameterIsVararg: Array(repeating: false, count: parameterSymbols.count)
+                valueParameterIsVararg: valueParameterIsVararg ?? Array(repeating: false, count: parameterSymbols.count)
             ),
             for: functionSymbol
         )
