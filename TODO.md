@@ -418,7 +418,7 @@
 
 #### kotlin.streams 関数の実装
 - [x] STDLIB-STREAMS-FN-001: `asSequence` 関数の実装（各ストリーム型）
-- [ ] STDLIB-STREAMS-FN-002: `asStream` 関数の実装
+- [x] STDLIB-STREAMS-FN-002: `asStream` 関数の実装
 - [ ] STDLIB-STREAMS-FN-003: `toList` 関数の実装（各ストリーム型）
 
 #### kotlin.system 関数の実装
@@ -827,7 +827,7 @@
 - [x] STDLIB-STREAMS-FN-002: `IntStream.asSequence()` を追加する
 - [x] STDLIB-STREAMS-FN-003: `LongStream.asSequence()` を追加する
 - [x] STDLIB-STREAMS-FN-004: `Stream<T>.asSequence()` を追加する
-- [ ] STDLIB-STREAMS-FN-005: `Sequence<T>.asStream()` を追加する
+- [x] STDLIB-STREAMS-FN-005: `Sequence<T>.asStream()` を追加する
 - [ ] STDLIB-STREAMS-FN-006: `DoubleStream.toList()` を追加する
 - [ ] STDLIB-STREAMS-FN-007: `IntStream.toList()` を追加する
 - [ ] STDLIB-STREAMS-FN-008: `LongStream.toList()` を追加する

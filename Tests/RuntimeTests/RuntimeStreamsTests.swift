@@ -16,12 +16,21 @@ final class RuntimeStreamsTests: IsolatedRuntimeXCTestCase {
         kk_list_of(makeArray(elements), elements.count)
     }
 
+    private func makeSequence(_ elements: [Int]) -> Int {
+        kk_sequence_from_list(makeList(elements))
+    }
+
     private func makeParallelStream(_ elements: [Int]) -> Int {
-        kk_parallel_stream_from_collection(kk_sequence_from_list(makeList(elements)), kk_parallel_pool_new(2))
+        kk_parallel_stream_from_collection(makeSequence(elements), kk_parallel_pool_new(2))
     }
 
     private func sequenceElements(_ sequenceRaw: Int) -> [Int] {
         let listRaw = kk_sequence_to_list(sequenceRaw, nil)
+        return runtimeListBox(from: listRaw)?.elements ?? []
+    }
+
+    private func streamElements(_ streamRaw: Int) -> [Int] {
+        let listRaw = kk_parallel_stream_to_list(streamRaw)
         return runtimeListBox(from: listRaw)?.elements ?? []
     }
 
@@ -30,5 +39,12 @@ final class RuntimeStreamsTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(sequenceElements(kk_int_stream_asSequence(makeParallelStream([4, 5]))), [4, 5])
         XCTAssertEqual(sequenceElements(kk_long_stream_asSequence(makeParallelStream([6, 7]))), [6, 7])
         XCTAssertEqual(sequenceElements(kk_double_stream_asSequence(makeParallelStream([8, 9]))), [8, 9])
+    }
+
+    func testSequenceAsStreamConvertsSequenceHandles() {
+        let streamRaw = kk_sequence_asStream(makeSequence([10, 20, 30]))
+
+        XCTAssertEqual(streamElements(streamRaw), [10, 20, 30])
+        XCTAssertEqual(sequenceElements(kk_stream_asSequence(streamRaw)), [10, 20, 30])
     }
 }
