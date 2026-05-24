@@ -55,6 +55,7 @@
 /// - `Path.getAttribute(attribute: String, vararg options: LinkOption): Any` extension function
 /// - `Path.fileAttributesView<V : FileAttributeView>(vararg options: LinkOption): V` extension function
 /// - `Path.copyToRecursively(target, onError, followLinks, overwrite): Path` extension function
+/// - `Path.copyToRecursively(target, onError, followLinks, copyAction): Path` extension function
 /// - `Path.getOwner(vararg options: LinkOption): UserPrincipal` extension function
 /// - `Path.getLastModifiedTime(vararg options: LinkOption): FileTime` extension function
 /// - `Path.setOwner(value: UserPrincipal): Path` extension function
@@ -335,6 +336,22 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(exceptionType, for: exceptionSymbol)
+
+        let copyActionContextSymbol = ensureInterfaceSymbol(
+            named: "CopyActionContext",
+            in: kotlinIOPathPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinIOPathPkgSymbol {
+            symbols.setParentSymbol(kotlinIOPathPkgSymbol, for: copyActionContextSymbol)
+        }
+        let copyActionContextType = types.make(.classType(ClassType(
+            classSymbol: copyActionContextSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(copyActionContextType, for: copyActionContextSymbol)
 
         // List<Path> type for listDirectoryEntries return
         let listSymbol = resolvePathListSymbol(symbols: symbols, interner: interner)
@@ -1746,6 +1763,13 @@ extension DataFlowSemaPhase {
             isSuspend: false,
             nullability: .nonNull
         )))
+        let copyToRecursivelyCopyActionType = types.make(.functionType(FunctionType(
+            receiver: copyActionContextType,
+            params: [pathType, pathType],
+            returnType: copyActionResultType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
         registerPathExtensionFunction(
             named: "copyToRecursively",
             packageFQName: kotlinIOPathPkg,
@@ -1758,6 +1782,22 @@ extension DataFlowSemaPhase {
             ],
             returnType: pathType,
             externalLinkName: "kk_path_copyToRecursively_overwrite",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "copyToRecursively",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [
+                ("target", pathType),
+                ("onError", copyToRecursivelyOnErrorType),
+                ("followLinks", types.booleanType),
+                ("copyAction", copyToRecursivelyCopyActionType),
+            ],
+            returnType: pathType,
+            externalLinkName: "kk_path_copyToRecursively_copyAction",
             symbols: symbols,
             interner: interner
         )

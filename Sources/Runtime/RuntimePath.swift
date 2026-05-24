@@ -105,6 +105,115 @@ private func pathComponents(_ pathString: String) -> [String] {
     pathString.split(separator: "/", omittingEmptySubsequences: true).map(String.init)
 }
 
+private enum PathCopyActionResult: Int {
+    case continueCopying = 0
+    case skipSubtree = 1
+    case terminate = 2
+}
+
+private enum PathRecursiveCopyControl: Error {
+    case terminated
+    case thrown(Int)
+}
+
+private func pathDefaultCopyAction(sourceURL: URL, targetURL: URL) throws {
+    let fileManager = FileManager.default
+    var isSourceDirectory: ObjCBool = false
+    guard fileManager.fileExists(atPath: sourceURL.path, isDirectory: &isSourceDirectory) else {
+        throw NSError(
+            domain: "KSwiftKRuntimePath",
+            code: 1,
+            userInfo: [NSLocalizedDescriptionKey: "Source path does not exist: \(sourceURL.path)"]
+        )
+    }
+
+    if isSourceDirectory.boolValue {
+        var isTargetDirectory: ObjCBool = false
+        if fileManager.fileExists(atPath: targetURL.path, isDirectory: &isTargetDirectory) {
+            if isTargetDirectory.boolValue {
+                return
+            }
+            throw NSError(
+                domain: "KSwiftKRuntimePath",
+                code: 2,
+                userInfo: [NSLocalizedDescriptionKey: "Target path already exists: \(targetURL.path)"]
+            )
+        }
+        try fileManager.createDirectory(at: targetURL, withIntermediateDirectories: false)
+    } else {
+        if fileManager.fileExists(atPath: targetURL.path) {
+            throw NSError(
+                domain: "KSwiftKRuntimePath",
+                code: 2,
+                userInfo: [NSLocalizedDescriptionKey: "Target path already exists: \(targetURL.path)"]
+            )
+        }
+        try fileManager.copyItem(at: sourceURL, to: targetURL)
+    }
+}
+
+private func pathInvokeCopyAction(
+    _ copyActionRaw: Int,
+    sourceURL: URL,
+    targetURL: URL
+) throws -> PathCopyActionResult {
+    if copyActionRaw == 0 {
+        try pathDefaultCopyAction(sourceURL: sourceURL, targetURL: targetURL)
+        return .continueCopying
+    }
+
+    let sourceRaw = registerRuntimeObject(RuntimePathBox(sourceURL.path))
+    let targetRaw = registerRuntimeObject(RuntimePathBox(targetURL.path))
+    var thrown = 0
+    let resultRaw = kk_function_invoke_3(copyActionRaw, 0, sourceRaw, targetRaw, &thrown)
+    if thrown != 0 {
+        throw PathRecursiveCopyControl.thrown(thrown)
+    }
+    return PathCopyActionResult(rawValue: resultRaw) ?? .continueCopying
+}
+
+private func pathCopyItemRecursivelyWithAction(
+    sourceURL: URL,
+    targetURL: URL,
+    copyActionRaw: Int
+) throws {
+    let fileManager = FileManager.default
+    var isDirectory: ObjCBool = false
+    guard fileManager.fileExists(atPath: sourceURL.path, isDirectory: &isDirectory) else {
+        throw NSError(
+            domain: "KSwiftKRuntimePath",
+            code: 1,
+            userInfo: [NSLocalizedDescriptionKey: "Source path does not exist: \(sourceURL.path)"]
+        )
+    }
+
+    let actionResult = try pathInvokeCopyAction(copyActionRaw, sourceURL: sourceURL, targetURL: targetURL)
+    switch actionResult {
+    case .continueCopying:
+        break
+    case .skipSubtree:
+        return
+    case .terminate:
+        throw PathRecursiveCopyControl.terminated
+    }
+
+    guard isDirectory.boolValue else {
+        return
+    }
+    let children = try fileManager.contentsOfDirectory(
+        at: sourceURL,
+        includingPropertiesForKeys: nil,
+        options: []
+    )
+    for child in children {
+        try pathCopyItemRecursivelyWithAction(
+            sourceURL: child,
+            targetURL: targetURL.appendingPathComponent(child.lastPathComponent),
+            copyActionRaw: copyActionRaw
+        )
+    }
+}
+
 private func pathCopyItemRecursively(sourceURL: URL, targetURL: URL, overwrite: Bool) throws {
     let fileManager = FileManager.default
     var isDirectory: ObjCBool = false
@@ -654,6 +763,44 @@ public func kk_path_copyToRecursively_overwrite(
             targetURL: URL(fileURLWithPath: target.pathString),
             overwrite: kk_unbox_bool(overwriteRaw) != 0
         )
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return targetRaw
+}
+
+@_cdecl("kk_path_copyToRecursively_copyAction")
+public func kk_path_copyToRecursively_copyAction(
+    _ pathRaw: Int,
+    _ targetRaw: Int,
+    _ onErrorRaw: Int,
+    _ followLinksRaw: Int,
+    _ copyActionRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    _ = onErrorRaw
+    _ = followLinksRaw
+    guard let source = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_copyToRecursively_copyAction received invalid source Path handle")
+    }
+    guard let target = runtimePathBox(from: targetRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_copyToRecursively_copyAction received invalid target Path handle")
+    }
+
+    do {
+        try pathCopyItemRecursivelyWithAction(
+            sourceURL: URL(fileURLWithPath: source.pathString),
+            targetURL: URL(fileURLWithPath: target.pathString),
+            copyActionRaw: copyActionRaw
+        )
+    } catch let control as PathRecursiveCopyControl {
+        switch control {
+        case .terminated:
+            break
+        case let .thrown(thrownRaw):
+            outThrown?.pointee = thrownRaw
+        }
     } catch {
         outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
     }
