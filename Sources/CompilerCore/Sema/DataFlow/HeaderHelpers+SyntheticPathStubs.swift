@@ -46,6 +46,7 @@
 /// - `Path.writeText(text, charset, options)` extension function
 /// - `createDirectories(): Path`, `createLinkPointingTo(target): Path`, `deleteIfExists(): Boolean`
 /// - `Path.createDirectories(vararg attributes: FileAttribute<*>): Path` extension function
+/// - `Path.createDirectory(vararg attributes: FileAttribute<*>): Path` extension function
 /// - `Path.createSymbolicLinkPointingTo(target: Path, vararg attributes: FileAttribute<*>): Path` extension function
 /// - `createTempDirectory(directory: Path?, prefix: String?, vararg attributes: FileAttribute<*>): Path` top-level function
 /// - `createTempFile(directory: Path?, prefix: String?, suffix: String?, vararg attributes: FileAttribute<*>): Path` top-level function
@@ -1631,6 +1632,18 @@ extension DataFlowSemaPhase {
             returnType: pathType,
             externalLinkName: "kk_path_createSymbolicLinkPointingTo_attributes",
             valueParameterIsVararg: [false, true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "createDirectory",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("attributes", fileAttributeStarType)],
+            returnType: pathType,
+            externalLinkName: "kk_path_createDirectory_attributes",
+            valueParameterIsVararg: [true],
             symbols: symbols,
             interner: interner
         )

@@ -2645,6 +2645,55 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathCreateDirectoryAttributesExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import java.nio.file.attribute.FileAttribute
+        import kotlin.io.path.Path
+        import kotlin.io.path.createDirectory
+
+        fun create(path: Path, attribute: FileAttribute<*>): Path {
+            return path.createDirectory(attribute)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnostics = ctx.diagnostics.diagnostics.map(\.message)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.createDirectory(attributes) extension function in kotlin.io.path should resolve: \(diagnostics)"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let fileAttributeSymbol = try XCTUnwrap(symbols.lookup(fqName: ["java", "nio", "file", "attribute", "FileAttribute"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let fileAttributeStarType = types.make(.classType(ClassType(
+                classSymbol: fileAttributeSymbol,
+                args: [.star],
+                nullability: .nonNull
+            )))
+            let createDirectorySymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "createDirectory"].map(interner.intern))
+            let createDirectory = try XCTUnwrap(createDirectorySymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else {
+                    return false
+                }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [fileAttributeStarType]
+                    && signature.returnType == pathType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: createDirectory), "kk_path_createDirectory_attributes")
+
+            let signature = try XCTUnwrap(symbols.functionSignature(for: createDirectory))
+            XCTAssertEqual(signature.valueParameterIsVararg, [true])
+            XCTAssertEqual(types.nominalTypeParameterSymbols(for: fileAttributeSymbol).count, 1)
+        }
+    }
+
     func testPathCreateSymbolicLinkPointingToAttributesExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import java.nio.file.attribute.FileAttribute
