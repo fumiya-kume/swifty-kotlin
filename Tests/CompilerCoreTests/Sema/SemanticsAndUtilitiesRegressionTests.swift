@@ -2943,6 +2943,56 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testCreateTempFilePrefixSuffixAttributesTopLevelFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import java.nio.file.attribute.FileAttribute
+        import kotlin.io.path.Path
+        import kotlin.io.path.createTempFile
+
+        fun create(attribute: FileAttribute<*>): Path {
+            return createTempFile("kswiftk-", ".data", attribute)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnostics = ctx.diagnostics.diagnostics.map(\.message)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "createTempFile(prefix, suffix, attributes) top-level function in kotlin.io.path should resolve: \(diagnostics)"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let fileAttributeSymbol = try XCTUnwrap(symbols.lookup(fqName: ["java", "nio", "file", "attribute", "FileAttribute"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let nullableStringType = types.makeNullable(types.stringType)
+            let fileAttributeStarType = types.make(.classType(ClassType(
+                classSymbol: fileAttributeSymbol,
+                args: [.star],
+                nullability: .nonNull
+            )))
+            let createTempFileSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "createTempFile"].map(interner.intern))
+            let createTempFile = try XCTUnwrap(createTempFileSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else {
+                    return false
+                }
+                return signature.receiverType == nil
+                    && signature.parameterTypes == [nullableStringType, nullableStringType, fileAttributeStarType]
+                    && signature.returnType == pathType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: createTempFile), "kk_path_createTempFile_prefix_suffix_attributes")
+
+            let signature = try XCTUnwrap(symbols.functionSignature(for: createTempFile))
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [true, true, false])
+            XCTAssertEqual(signature.valueParameterIsVararg, [false, false, true])
+        }
+    }
+
     func testPathCopyToRecursivelyOverwriteExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import kotlin.Exception
