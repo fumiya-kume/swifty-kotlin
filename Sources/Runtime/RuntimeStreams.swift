@@ -46,6 +46,12 @@ public func kk_long_stream_asSequence(_ streamRaw: Int) -> Int {
     runtimeStreamAsSequence(streamRaw, caller: #function)
 }
 
+@_cdecl("kk_long_stream_toList")
+public func kk_long_stream_toList(_ streamRaw: Int) -> Int {
+    let elements = runtimeStreamElementsOrPanic(from: streamRaw, caller: #function)
+    return registerRuntimeObject(RuntimeListBox(elements: elements))
+}
+
 @_cdecl("kk_double_stream_asSequence")
 public func kk_double_stream_asSequence(_ streamRaw: Int) -> Int {
     runtimeStreamAsSequence(streamRaw, caller: #function)

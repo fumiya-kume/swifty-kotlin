@@ -590,7 +590,7 @@
 - [ ] STDLIB-JS-COLLECTIONS-FN-006: `JsReadonlySet<E>.toSet()` を追加する
 - [x] STDLIB-STREAMS-FN-006: `DoubleStream.toList()` を追加する
 - [ ] STDLIB-STREAMS-FN-007: `IntStream.toList()` を追加する
-- [ ] STDLIB-STREAMS-FN-008: `LongStream.toList()` を追加する
+- [x] STDLIB-STREAMS-FN-008: `LongStream.toList()` を追加する
 - [ ] STDLIB-STREAMS-FN-009: `Stream<T>.toList()` を追加する
 - [ ] STDLIB-WASM-TYPE-002: `kotlin.wasm.WasmExport` annotation を追加する
 - [ ] STDLIB-WASM-TYPE-003: `kotlin.wasm.WasmImport` annotation を追加する

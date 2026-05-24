@@ -79,6 +79,7 @@ extension ABIMismatchTests {
             "kk_list_zip",
             "kk_map_withDefault",
             "kk_list_windowed_default",
+            "kk_long_stream_toList",
             "kk_list_windowed",
             "kk_list_windowed_partial",
             "kk_list_windowed_transform",
