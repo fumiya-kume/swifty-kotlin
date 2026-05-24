@@ -71,6 +71,55 @@ final class StreamsSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testJvmLongStreamToListSurfaceResolvesInSource() throws {
+        let source = """
+        import java.util.stream.LongStream
+        import kotlin.streams.toList
+
+        fun longValues(values: LongStream) = values.toList()
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected LongStream.toList surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let functionSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [ctx.interner.intern("longValues")]))
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: functionSymbol))
+            let listSymbol = try XCTUnwrap(sema.symbols.lookup(
+                fqName: ["kotlin", "collections", "List"].map { ctx.interner.intern($0) }
+            ))
+
+            guard case let .classType(returnClassType) = sema.types.kind(of: signature.returnType) else {
+                return XCTFail("Expected longValues() to return List<Long>")
+            }
+            XCTAssertEqual(returnClassType.classSymbol, listSymbol)
+            let returnArg: TypeID
+            switch try XCTUnwrap(returnClassType.args.first) {
+            case let .invariant(arg), let .out(arg):
+                returnArg = arg
+            case .in, .star:
+                return XCTFail("Expected longValues() to return List<Long>")
+            }
+            XCTAssertEqual(returnArg, sema.types.longType)
+
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "toList"
+            })
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_long_stream_toList")
+        }
+    }
+
     func testJvmStreamsAsSequenceReturnShapes() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])
