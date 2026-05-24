@@ -113,6 +113,14 @@ public func kk_path_invariantSeparatorsPathString(_ pathRaw: Int) -> Int {
     return pathMakeStringRaw(path.pathString.replacingOccurrences(of: "\\", with: "/"))
 }
 
+@_cdecl("kk_path_pathString")
+public func kk_path_pathString(_ pathRaw: Int) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_pathString received invalid Path handle")
+    }
+    return pathMakeStringRaw(path.pathString)
+}
+
 @_cdecl("kk_path_fileName")
 public func kk_path_fileName(_ pathRaw: Int) -> Int {
     guard let path = runtimePathBox(from: pathRaw) else {
