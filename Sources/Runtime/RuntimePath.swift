@@ -37,6 +37,21 @@ private func pathStringValue(from raw: Int) -> String? {
     return extractString(from: ptr)
 }
 
+private func pathCreateTempDirectoryRaw(
+    directoryPath: String,
+    prefix: String,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let name = "\(prefix)\(UUID().uuidString)"
+    let fullPath = (directoryPath as NSString).appendingPathComponent(name)
+    do {
+        try FileManager.default.createDirectory(atPath: fullPath, withIntermediateDirectories: false)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return registerRuntimeObject(RuntimePathBox(fullPath))
+}
+
 private func pathLineElements(from raw: Int) -> [Int]? {
     if let list = runtimeListBox(from: raw) {
         return list.elements
@@ -521,6 +536,24 @@ public func kk_path_createSymbolicLinkPointingTo_attributes(
         outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
     }
     return pathRaw
+}
+
+@_cdecl("kk_path_createTempDirectory_directory_prefix_attributes")
+public func kk_path_createTempDirectory_directory_prefix_attributes(
+    _ directoryRaw: Int,
+    _ prefixRaw: Int,
+    _ attributesRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    _ = attributesRaw
+    let directoryPath = runtimePathBox(from: directoryRaw)?.pathString ?? FileManager.default.temporaryDirectory.path
+    let prefix = pathStringValue(from: prefixRaw) ?? "tmp"
+    return pathCreateTempDirectoryRaw(
+        directoryPath: directoryPath,
+        prefix: prefix,
+        outThrown: outThrown
+    )
 }
 
 @_cdecl("kk_path_deleteIfExists")

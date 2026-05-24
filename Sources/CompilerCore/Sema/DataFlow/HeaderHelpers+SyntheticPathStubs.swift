@@ -46,6 +46,7 @@
 /// - `createDirectories(): Path`, `createLinkPointingTo(target): Path`, `deleteIfExists(): Boolean`
 /// - `Path.createDirectories(vararg attributes: FileAttribute<*>): Path` extension function
 /// - `Path.createSymbolicLinkPointingTo(target: Path, vararg attributes: FileAttribute<*>): Path` extension function
+/// - `createTempDirectory(directory: Path?, prefix: String?, vararg attributes: FileAttribute<*>): Path` top-level function
 /// - `deleteExisting()`, `deleteRecursively()`
 /// - `Path.fileStore(): FileStore` extension function
 /// - `Path.fileAttributesViewOrNull<V : FileAttributeView>(vararg options: LinkOption): V?` extension function
@@ -176,6 +177,7 @@ extension DataFlowSemaPhase {
             isSuspend: false,
             nullability: .nonNull
         )))
+        let nullableStringType = types.makeNullable(types.stringType)
 
         let copyOptionPkg = ensurePackage(path: ["java", "nio", "file"], symbols: symbols, interner: interner)
         let copyOptionPkgSymbol = symbols.lookup(fqName: copyOptionPkg)
@@ -1824,6 +1826,22 @@ extension DataFlowSemaPhase {
             returnType: pathType,
             externalLinkName: "kk_path_moveTo_options",
             valueParameterIsVararg: [false, true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathTopLevelFunction(
+            named: "createTempDirectory",
+            packageFQName: kotlinIOPathPkg,
+            parameters: [
+                ("directory", nullablePathType),
+                ("prefix", nullableStringType),
+                ("attributes", fileAttributeStarType),
+            ],
+            returnType: pathType,
+            externalLinkName: "kk_path_createTempDirectory_directory_prefix_attributes",
+            valueParameterHasDefaultValues: [false, true, false],
+            valueParameterIsVararg: [false, false, true],
             symbols: symbols,
             interner: interner
         )
