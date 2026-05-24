@@ -1378,11 +1378,11 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
-    func testCodegenSequenceMaxWithOrNullReturnsLargestElementOrNull() throws {
+    func testCodegenSequenceMinWithOrNullReturnsComparatorMinimumAndNullOnEmpty() throws {
         let source = """
         fun main() {
-            println(sequenceOf(3, 1, 4, 2).maxWithOrNull { left, right -> left - right })
-            println(emptySequence<Int>().maxWithOrNull { left, right -> left - right } == null)
+            println(sequenceOf(5, 2, 3).minWithOrNull(reverseOrder<Int>()))
+            println(emptySequence<Int>().minWithOrNull(reverseOrder<Int>()) == null)
         }
         """
 
@@ -1390,7 +1390,7 @@ extension CodegenBackendIntegrationTests {
             let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
             let ctx = try runCodegenPipeline(
                 inputPath: path,
-                moduleName: "SequenceMaxWithOrNull",
+                moduleName: "SequenceMinWithOrNull",
                 emit: .executable,
                 outputPath: outputBase
             )
@@ -1398,7 +1398,7 @@ extension CodegenBackendIntegrationTests {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "4\ntrue\n")
+            XCTAssertEqual(normalizedStdout, "5\ntrue\n")
         }
     }
 
