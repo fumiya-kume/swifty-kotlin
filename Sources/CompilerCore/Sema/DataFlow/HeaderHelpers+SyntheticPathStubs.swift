@@ -44,6 +44,8 @@
 /// - `Path.fileStore(): FileStore` extension function
 /// - `Path.fileAttributesViewOrNull<V : FileAttributeView>(vararg options: LinkOption): V?` extension function
 /// - `Path.getAttribute(attribute: String, vararg options: LinkOption): Any` extension function
+/// - `Path.fileAttributesView<V : FileAttributeView>(vararg options: LinkOption): V` extension function
+/// - `Path.copyToRecursively(target, onError, followLinks, overwrite): Path` extension function
 /// - `Path.getOwner(vararg options: LinkOption): UserPrincipal` extension function
 /// - `Path.setOwner(value: UserPrincipal): Path` extension function
 /// - `Path.getPosixFilePermissions(vararg options: LinkOption): Set<PosixFilePermission>` extension function
@@ -302,6 +304,22 @@ extension DataFlowSemaPhase {
             enumType: copyActionResultType,
             symbols: symbols
         )
+
+        let exceptionSymbol = ensureClassSymbol(
+            named: "Exception",
+            in: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinPkgSymbol {
+            symbols.setParentSymbol(kotlinPkgSymbol, for: exceptionSymbol)
+        }
+        let exceptionType = types.make(.classType(ClassType(
+            classSymbol: exceptionSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(exceptionType, for: exceptionSymbol)
 
         // List<Path> type for listDirectoryEntries return
         let listSymbol = resolvePathListSymbol(symbols: symbols, interner: interner)
@@ -1473,6 +1491,28 @@ extension DataFlowSemaPhase {
             parameters: [],
             returnType: types.unitType,
             externalLinkName: "kk_path_deleteRecursively",
+            symbols: symbols,
+            interner: interner
+        )
+
+        let copyToRecursivelyOnErrorType = types.make(.functionType(FunctionType(
+            params: [pathType, pathType, exceptionType],
+            returnType: onErrorResultType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        registerPathExtensionFunction(
+            named: "copyToRecursively",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [
+                ("target", pathType),
+                ("onError", copyToRecursivelyOnErrorType),
+                ("followLinks", types.booleanType),
+                ("overwrite", types.booleanType),
+            ],
+            returnType: pathType,
+            externalLinkName: "kk_path_copyToRecursively_overwrite",
             symbols: symbols,
             interner: interner
         )
