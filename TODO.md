@@ -554,7 +554,7 @@
 - [ ] STDLIB-NATIVE-PLATFORM-002: common から見える Native bridge を整理
 
 ### Phase 5: 非スコープ/高度領域
-- [ ] STDLIB-IO-PATH-FN-015: `Path.createFile(attributes)` を追加する
+- [x] STDLIB-IO-PATH-FN-015: `Path.createFile(attributes)` を追加する
 - [ ] STDLIB-IO-PATH-FN-017: `Path.createParentDirectories(attributes)` を追加する
 - [ ] STDLIB-IO-PATH-FN-021: `createTempFile(prefix, suffix, attributes)` を追加する
 - [ ] STDLIB-IO-PATH-FN-024: `Path.deleteIfExists()` の公式 return/annotation shape を既存 stub と整合させる
