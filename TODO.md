@@ -574,7 +574,7 @@
 ### Phase 5: 非スコープ/高度領域
 - [x] STDLIB-IO-PATH-FN-015: `Path.createFile(attributes)` を追加する
 - [ ] STDLIB-IO-PATH-FN-017: `Path.createParentDirectories(attributes)` を追加する
-- [ ] STDLIB-IO-PATH-FN-021: `createTempFile(prefix, suffix, attributes)` を追加する
+- [x] STDLIB-IO-PATH-FN-021: `createTempFile(prefix, suffix, attributes)` を追加する
 - [ ] STDLIB-IO-PATH-FN-024: `Path.deleteIfExists()` の公式 return/annotation shape を既存 stub と整合させる
 - [ ] STDLIB-IO-PATH-FN-073: `Path.visitFileTree(visitor, maxDepth, followLinks)` を追加する
 - [ ] STDLIB-IO-PATH-FN-074: `Path.visitFileTree(maxDepth, followLinks, builderAction)` を追加する

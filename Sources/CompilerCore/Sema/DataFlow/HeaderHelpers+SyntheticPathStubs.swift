@@ -52,6 +52,7 @@
 /// - `createTempDirectory(directory: Path?, prefix: String?, vararg attributes: FileAttribute<*>): Path` top-level function
 /// - `createTempDirectory(prefix: String?, vararg attributes: FileAttribute<*>): Path` top-level function
 /// - `createTempFile(directory: Path?, prefix: String?, suffix: String?, vararg attributes: FileAttribute<*>): Path` top-level function
+/// - `createTempFile(prefix: String?, suffix: String?, vararg attributes: FileAttribute<*>): Path` top-level function
 /// - `deleteExisting()`, `deleteRecursively()`
 /// - `Path.fileStore(): FileStore` extension function
 /// - `Path.fileAttributesViewOrNull<V : FileAttributeView>(vararg options: LinkOption): V?` extension function
@@ -1987,6 +1988,22 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_path_createTempFile_directory_prefix_suffix_attributes",
             valueParameterHasDefaultValues: [false, true, true, false],
             valueParameterIsVararg: [false, false, false, true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathTopLevelFunction(
+            named: "createTempFile",
+            packageFQName: kotlinIOPathPkg,
+            parameters: [
+                ("prefix", nullableStringType),
+                ("suffix", nullableStringType),
+                ("attributes", fileAttributeStarType),
+            ],
+            returnType: pathType,
+            externalLinkName: "kk_path_createTempFile_prefix_suffix_attributes",
+            valueParameterHasDefaultValues: [true, true, false],
+            valueParameterIsVararg: [false, false, true],
             symbols: symbols,
             interner: interner
         )
