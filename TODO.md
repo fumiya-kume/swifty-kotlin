@@ -749,7 +749,7 @@
 - [ ] STDLIB-IO-PATH-FN-019: `createTempDirectory(prefix, attributes)` を追加する
 - [x] STDLIB-IO-PATH-FN-020: `createTempDirectory(directory, prefix, attributes)` を追加する
 - [ ] STDLIB-IO-PATH-FN-021: `createTempFile(prefix, suffix, attributes)` を追加する
-- [ ] STDLIB-IO-PATH-FN-022: `createTempFile(directory, prefix, suffix, attributes)` を追加する
+- [x] STDLIB-IO-PATH-FN-022: `createTempFile(directory, prefix, suffix, attributes)` を追加する
 - [ ] STDLIB-IO-PATH-FN-024: `Path.deleteIfExists()` の公式 return/annotation shape を既存 stub と整合させる
 - [x] STDLIB-IO-PATH-FN-028: `Path.exists(options)` を既存 no-arg stub から公式 vararg shape へ広げる
 - [x] STDLIB-IO-PATH-FN-029: `Path.fileAttributesView<V>(options)` を追加する
