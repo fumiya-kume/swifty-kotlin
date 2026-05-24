@@ -1962,6 +1962,56 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testCreateTempDirectoryPrefixAttributesTopLevelFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import java.nio.file.attribute.FileAttribute
+        import kotlin.io.path.Path
+        import kotlin.io.path.createTempDirectory
+
+        fun create(attribute: FileAttribute<*>): Path {
+            return createTempDirectory("kswiftk-", attribute)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnostics = ctx.diagnostics.diagnostics.map(\.message)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "createTempDirectory(prefix, attributes) top-level function in kotlin.io.path should resolve: \(diagnostics)"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let fileAttributeSymbol = try XCTUnwrap(symbols.lookup(fqName: ["java", "nio", "file", "attribute", "FileAttribute"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let nullableStringType = types.makeNullable(types.stringType)
+            let fileAttributeStarType = types.make(.classType(ClassType(
+                classSymbol: fileAttributeSymbol,
+                args: [.star],
+                nullability: .nonNull
+            )))
+            let createTempDirectorySymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "createTempDirectory"].map(interner.intern))
+            let createTempDirectory = try XCTUnwrap(createTempDirectorySymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else {
+                    return false
+                }
+                return signature.receiverType == nil
+                    && signature.parameterTypes == [nullableStringType, fileAttributeStarType]
+                    && signature.returnType == pathType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: createTempDirectory), "kk_path_createTempDirectory_prefix_attributes")
+
+            let signature = try XCTUnwrap(symbols.functionSignature(for: createTempDirectory))
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [true, false])
+            XCTAssertEqual(signature.valueParameterIsVararg, [false, true])
+        }
+    }
+
     func testCreateTempFileDirectoryPrefixSuffixAttributesTopLevelFunctionInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import java.nio.file.attribute.FileAttribute

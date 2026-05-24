@@ -725,6 +725,22 @@ public func kk_path_createTempDirectory_directory_prefix_attributes(
     )
 }
 
+@_cdecl("kk_path_createTempDirectory_prefix_attributes")
+public func kk_path_createTempDirectory_prefix_attributes(
+    _ prefixRaw: Int,
+    _ attributesRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    _ = attributesRaw
+    let prefix = pathStringValue(from: prefixRaw) ?? "tmp"
+    return pathCreateTempDirectoryRaw(
+        directoryPath: FileManager.default.temporaryDirectory.path,
+        prefix: prefix,
+        outThrown: outThrown
+    )
+}
+
 @_cdecl("kk_path_createTempFile_directory_prefix_suffix_attributes")
 public func kk_path_createTempFile_directory_prefix_suffix_attributes(
     _ directoryRaw: Int,
