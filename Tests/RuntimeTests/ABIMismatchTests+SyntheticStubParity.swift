@@ -70,6 +70,7 @@ extension ABIMismatchTests {
             "kk_collection_toMutableList",
             "kk_collection_toTypedArray",
             "kk_iterable_toMutableList",
+            "kk_js_map_toMutableMap",
             "kk_list_toHashSet",
             "kk_list_unzip",
             "kk_list_zipWithNext",
