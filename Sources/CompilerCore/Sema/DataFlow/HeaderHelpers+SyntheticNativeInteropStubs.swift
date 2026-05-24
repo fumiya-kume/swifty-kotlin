@@ -1263,6 +1263,30 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let nativeFreeablePlacementSymbol = ensureInterfaceSymbol(
+            named: "NativeFreeablePlacement",
+            in: cinteropPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let deferScopeSymbol = ensureClassSymbol(
+            named: "DeferScope",
+            in: cinteropPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let autofreeScopeSymbol = ensureClassSymbol(
+            named: "AutofreeScope",
+            in: cinteropPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let arenaBaseSymbol = ensureClassSymbol(
+            named: "ArenaBase",
+            in: cinteropPkg,
+            symbols: symbols,
+            interner: interner
+        )
         let memScopeSymbol = ensureClassSymbol(
             named: "MemScope",
             in: cinteropPkg,
@@ -1293,6 +1317,10 @@ extension DataFlowSemaPhase {
             cPointedSymbol,
             cOpaquePointerSymbol,
             nativePlacementSymbol,
+            nativeFreeablePlacementSymbol,
+            deferScopeSymbol,
+            autofreeScopeSymbol,
+            arenaBaseSymbol,
             memScopeSymbol,
             cValuesRefSymbol,
             cPointerSymbol,
@@ -1335,14 +1363,86 @@ extension DataFlowSemaPhase {
         )))
         symbols.setPropertyType(nativePlacementType, for: nativePlacementSymbol)
 
+        let nativeFreeablePlacementType = types.make(.classType(ClassType(
+            classSymbol: nativeFreeablePlacementSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(nativeFreeablePlacementType, for: nativeFreeablePlacementSymbol)
+        symbols.setDirectSupertypes([nativePlacementSymbol], for: nativeFreeablePlacementSymbol)
+        types.setNominalDirectSupertypes([nativePlacementSymbol], for: nativeFreeablePlacementSymbol)
+
+        let deferScopeType = types.make(.classType(ClassType(
+            classSymbol: deferScopeSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(deferScopeType, for: deferScopeSymbol)
+        symbols.insertFlags([.openType], for: deferScopeSymbol)
+
+        let autofreeScopeType = types.make(.classType(ClassType(
+            classSymbol: autofreeScopeSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(autofreeScopeType, for: autofreeScopeSymbol)
+        symbols.insertFlags([.abstractType], for: autofreeScopeSymbol)
+        symbols.setDirectSupertypes([deferScopeSymbol, nativePlacementSymbol], for: autofreeScopeSymbol)
+        types.setNominalDirectSupertypes([deferScopeSymbol, nativePlacementSymbol], for: autofreeScopeSymbol)
+
+        let arenaBaseType = types.make(.classType(ClassType(
+            classSymbol: arenaBaseSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(arenaBaseType, for: arenaBaseSymbol)
+        symbols.insertFlags([.openType], for: arenaBaseSymbol)
+        symbols.setDirectSupertypes([autofreeScopeSymbol], for: arenaBaseSymbol)
+        types.setNominalDirectSupertypes([autofreeScopeSymbol], for: arenaBaseSymbol)
+
         let memScopeType = types.make(.classType(ClassType(
             classSymbol: memScopeSymbol,
             args: [],
             nullability: .nonNull
         )))
         symbols.setPropertyType(memScopeType, for: memScopeSymbol)
-        symbols.setDirectSupertypes([nativePlacementSymbol], for: memScopeSymbol)
-        types.setNominalDirectSupertypes([nativePlacementSymbol], for: memScopeSymbol)
+        symbols.setDirectSupertypes([arenaBaseSymbol], for: memScopeSymbol)
+        types.setNominalDirectSupertypes([arenaBaseSymbol], for: memScopeSymbol)
+
+        registerSyntheticNativeBitSetConstructor(
+            ownerSymbol: arenaBaseSymbol,
+            ownerType: arenaBaseType,
+            parameters: [(name: "parent", type: nativeFreeablePlacementType)],
+            defaultValues: [true],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "alloc",
+            ownerSymbol: arenaBaseSymbol,
+            receiverType: arenaBaseType,
+            parameters: [
+                (name: "size", type: types.longType),
+                (name: "align", type: types.intType),
+            ],
+            returnType: nativePointedType,
+            flags: [.synthetic, .overrideMember],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "alloc",
+            ownerSymbol: arenaBaseSymbol,
+            receiverType: arenaBaseType,
+            parameters: [
+                (name: "size", type: types.intType),
+                (name: "align", type: types.intType),
+            ],
+            returnType: nativePointedType,
+            flags: [.synthetic, .openType],
+            symbols: symbols,
+            interner: interner
+        )
 
         configureSingleTypeParameterNominal(
             ownerSymbol: cValuesRefSymbol,
