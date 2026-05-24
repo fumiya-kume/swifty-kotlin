@@ -75,6 +75,48 @@ private func pathComponents(_ pathString: String) -> [String] {
     pathString.split(separator: "/", omittingEmptySubsequences: true).map(String.init)
 }
 
+private func pathCopyItemRecursively(sourceURL: URL, targetURL: URL, overwrite: Bool) throws {
+    let fileManager = FileManager.default
+    var isDirectory: ObjCBool = false
+    guard fileManager.fileExists(atPath: sourceURL.path, isDirectory: &isDirectory) else {
+        throw NSError(
+            domain: "KSwiftKRuntimePath",
+            code: 1,
+            userInfo: [NSLocalizedDescriptionKey: "Source path does not exist: \(sourceURL.path)"]
+        )
+    }
+
+    if fileManager.fileExists(atPath: targetURL.path) {
+        if overwrite {
+            try fileManager.removeItem(at: targetURL)
+        } else {
+            throw NSError(
+                domain: "KSwiftKRuntimePath",
+                code: 2,
+                userInfo: [NSLocalizedDescriptionKey: "Target path already exists: \(targetURL.path)"]
+            )
+        }
+    }
+
+    if isDirectory.boolValue {
+        try fileManager.createDirectory(at: targetURL, withIntermediateDirectories: true)
+        let children = try fileManager.contentsOfDirectory(
+            at: sourceURL,
+            includingPropertiesForKeys: nil,
+            options: []
+        )
+        for child in children {
+            try pathCopyItemRecursively(
+                sourceURL: child,
+                targetURL: targetURL.appendingPathComponent(child.lastPathComponent),
+                overwrite: overwrite
+            )
+        }
+    } else {
+        try fileManager.copyItem(at: sourceURL, to: targetURL)
+    }
+}
+
 // MARK: - Path(pathString: String) constructor
 
 @_cdecl("kk_path_new")
@@ -467,6 +509,37 @@ public func kk_path_deleteIfExists(_ pathRaw: Int) -> Int {
         return kk_box_bool(0)
     }
     return kk_box_bool((try? FileManager.default.removeItem(atPath: path.pathString)) != nil ? 1 : 0)
+}
+
+@_cdecl("kk_path_copyToRecursively_overwrite")
+public func kk_path_copyToRecursively_overwrite(
+    _ pathRaw: Int,
+    _ targetRaw: Int,
+    _ onErrorRaw: Int,
+    _ followLinksRaw: Int,
+    _ overwriteRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    _ = onErrorRaw
+    _ = followLinksRaw
+    guard let source = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_copyToRecursively_overwrite received invalid source Path handle")
+    }
+    guard let target = runtimePathBox(from: targetRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_copyToRecursively_overwrite received invalid target Path handle")
+    }
+
+    do {
+        try pathCopyItemRecursively(
+            sourceURL: URL(fileURLWithPath: source.pathString),
+            targetURL: URL(fileURLWithPath: target.pathString),
+            overwrite: kk_unbox_bool(overwriteRaw) != 0
+        )
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return targetRaw
 }
 
 @_cdecl("kk_path_listDirectoryEntries")

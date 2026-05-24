@@ -2635,6 +2635,56 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathCopyToRecursivelyOverwriteExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import kotlin.Exception
+        import kotlin.io.path.OnErrorResult
+        import kotlin.io.path.Path
+        import kotlin.io.path.copyToRecursively
+
+        fun copyTree(source: Path, target: Path, onError: (Path, Path, Exception) -> OnErrorResult): Path {
+            return source.copyToRecursively(target, onError, true, true)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnostics = ctx.diagnostics.diagnostics.map(\.message)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.copyToRecursively(target, onError, followLinks, overwrite) extension function in kotlin.io.path should resolve: \(diagnostics)"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let exceptionSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "Exception"].map(interner.intern)))
+            let onErrorResultSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "OnErrorResult"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let exceptionType = types.make(.classType(ClassType(classSymbol: exceptionSymbol, args: [], nullability: .nonNull)))
+            let onErrorResultType = types.make(.classType(ClassType(classSymbol: onErrorResultSymbol, args: [], nullability: .nonNull)))
+            let onErrorType = types.make(.functionType(FunctionType(
+                params: [pathType, pathType, exceptionType],
+                returnType: onErrorResultType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let copySymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "copyToRecursively"].map(interner.intern))
+            let copyToRecursively = try XCTUnwrap(copySymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else {
+                    return false
+                }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [pathType, onErrorType, types.booleanType, types.booleanType]
+                    && signature.returnType == pathType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: copyToRecursively), "kk_path_copyToRecursively_overwrite")
+        }
+    }
+
     func testPathReadSymbolicLinkExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import kotlin.io.path.Path
