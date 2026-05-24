@@ -234,31 +234,49 @@
 - [ ] STDLIB-SEQ-FN-057: `map` 関数の実装
 - [ ] STDLIB-SEQ-FN-058: `mapIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-060: `mapIndexedNotNullTo` 関数の実装
-- [ ] STDLIB-SEQ-FN-071: `maxWith` 関数の実装
-- [ ] STDLIB-SEQ-FN-072: `maxWithOrNull` 関数の実装
-- [ ] STDLIB-SEQ-FN-073: `min` 関数の実装
-- [ ] STDLIB-SEQ-FN-074: `minBy` 関数の実装
-- [ ] STDLIB-SEQ-FN-076: `minOf` 関数の実装
-- [ ] STDLIB-SEQ-FN-078: `minOrNull` 関数の実装
-- [ ] STDLIB-SEQ-FN-081: `minus` 関数の実装
-- [ ] STDLIB-SEQ-FN-086: `partition` 関数の実装
-- [ ] STDLIB-SEQ-FN-088: `plusElement` 関数の実装
+- [x] STDLIB-SEQ-FN-056: `lastOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-057: `map` 関数の実装
+- [x] STDLIB-SEQ-FN-058: `mapIndexed` 関数の実装
+- [x] STDLIB-SEQ-FN-059: `mapIndexedNotNull` 関数の実装
+- [x] STDLIB-SEQ-FN-060: `mapIndexedNotNullTo` 関数の実装
+- [x] STDLIB-SEQ-FN-061: `mapIndexedTo` 関数の実装
+- [x] STDLIB-SEQ-FN-062: `mapNotNull` 関数の実装
+- [x] STDLIB-SEQ-FN-063: `mapNotNullTo` 関数の実装
+- [x] STDLIB-SEQ-FN-064: `mapTo` 関数の実装
+- [x] STDLIB-SEQ-FN-065: `max` 関数の実装
+- [x] STDLIB-SEQ-FN-067: `maxByOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-066: `maxBy` 関数の実装
+- [x] STDLIB-SEQ-FN-068: `maxOf` 関数の実装
+- [x] STDLIB-SEQ-FN-069: `maxOfOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-070: `maxOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-071: `maxWith` 関数の実装
+- [x] STDLIB-SEQ-FN-072: `maxWithOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-073: `min` 関数の実装
+- [x] STDLIB-SEQ-FN-074: `minBy` 関数の実装
+- [x] STDLIB-SEQ-FN-075: `minByOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-076: `minOf` 関数の実装
+- [x] STDLIB-SEQ-FN-077: `minOfOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-078: `minOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-088: `plusElement` 関数の実装
 - [ ] STDLIB-SEQ-FN-087: `plus` 関数の実装
-- [ ] STDLIB-SEQ-FN-089: `random` 関数の実装
+- [x] STDLIB-SEQ-FN-089: `random` 関数の実装
+- [x] STDLIB-SEQ-FN-090: `randomOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-091: `reduce` 関数の実装
 - [ ] STDLIB-SEQ-FN-092: `reduceIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-093: `reduceOrNull` 関数の実装
-- [ ] STDLIB-SEQ-FN-096: `reduceRightIndexedOrNull` 関数の実装
-- [ ] STDLIB-SEQ-FN-097: `reduceRightOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-094: `reduceRight` 関数の実装
+- [ ] STDLIB-SEQ-FN-095: `reduceRightIndexed` 関数の実装
+- [x] STDLIB-SEQ-FN-096: `reduceRightIndexedOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-097: `reduceRightOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-098: `requireNoNulls` 関数の実装
 - [ ] STDLIB-SEQ-FN-099: `reversed` 関数の実装
-- [ ] STDLIB-SEQ-FN-100: `runningFold` 関数の実装
-- [ ] STDLIB-SEQ-FN-102: `runningReduce` 関数の実装
+- [x] STDLIB-SEQ-FN-100: `runningFold` 関数の実装
+- [x] STDLIB-SEQ-FN-102: `runningReduce` 関数の実装
 - [ ] STDLIB-SEQ-FN-106: `shuffled` 関数の実装
 - [ ] STDLIB-SEQ-FN-107: `single` 関数の実装
-- [ ] STDLIB-SEQ-FN-109: `slice` 関数の実装
+- [x] STDLIB-SEQ-FN-109: `slice` 関数の実装
 - [ ] STDLIB-SEQ-FN-111: `sortedBy` 関数の実装
-- [ ] STDLIB-SEQ-FN-133: `zip` 関数の実装
+- [x] STDLIB-SEQ-FN-133: `zip` 関数の実装
 
 #### kotlin.streams 関数の実装
 - [ ] STDLIB-STREAMS-FN-003: `toList` 関数の実装（各ストリーム型）
