@@ -2681,6 +2681,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_minByOrNull"
                 } else if calleeName == maxByOrNullName {
                     runtimeCallee = "kk_sequence_maxByOrNull"
+                } else if calleeName == interner.intern("maxWith") {
+                    runtimeCallee = "kk_sequence_maxWith"
                 } else if calleeName == interner.intern("maxWithOrNull") {
                     runtimeCallee = "kk_sequence_maxWithOrNull"
                 } else if calleeName == minOfName {
@@ -2820,6 +2822,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_maxBy"
                         || runtimeCallee == "kk_sequence_minByOrNull"
                         || runtimeCallee == "kk_sequence_maxByOrNull"
+                        || runtimeCallee == "kk_sequence_maxWith"
                         || runtimeCallee == "kk_sequence_maxWithOrNull"
                         || runtimeCallee == "kk_sequence_minOf"
                         || runtimeCallee == "kk_sequence_minOfOrNull"
@@ -2871,7 +2874,8 @@ extension CallLowerer {
                         )
                         runtimeArguments = [loweredReceiverID, fnPtrExpr, envPtrExpr]
                     }
-                    if runtimeCallee == "kk_sequence_maxWithOrNull",
+                    if (runtimeCallee == "kk_sequence_maxWith"
+                        || runtimeCallee == "kk_sequence_maxWithOrNull"),
                        normalizedArgIDs.count == 2
                     {
                         runtimeArguments = [loweredReceiverID] + normalizedArgIDs

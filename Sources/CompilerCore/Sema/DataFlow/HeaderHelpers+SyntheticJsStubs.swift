@@ -33,7 +33,7 @@ extension DataFlowSemaPhase {
             symbols.setParentSymbol(packageSymbol, for: symbol)
         }
 
-        appendJsAnnotationMetadata(
+        appendSyntheticMetadataAnnotations(
             [
                 MetadataAnnotationRecord(
                     annotationFQName: "kotlin.annotation.Target",
@@ -54,21 +54,5 @@ extension DataFlowSemaPhase {
             to: symbol,
             symbols: symbols
         )
-    }
-
-    private func appendJsAnnotationMetadata(
-        _ records: [MetadataAnnotationRecord],
-        to symbol: SymbolID,
-        symbols: SymbolTable
-    ) {
-        var annotations = symbols.annotations(for: symbol)
-        var didAppend = false
-        for record in records where !annotations.contains(record) {
-            annotations.append(record)
-            didAppend = true
-        }
-        if didAppend {
-            symbols.setAnnotations(annotations, for: symbol)
-        }
     }
 }
