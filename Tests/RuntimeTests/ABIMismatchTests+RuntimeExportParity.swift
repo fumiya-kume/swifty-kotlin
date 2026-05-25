@@ -89,6 +89,7 @@ extension ABIMismatchTests {
             "kk_kclass_javaObjectType",
             "kk_kclass_javaPrimitiveType",
             "kk_kclass_js",
+            "kk_ktype_javaType",
             "kk_kclass_register_annotation",
             "kk_long_range_firstOrNull",
             "kk_long_range_lastOrNull",
