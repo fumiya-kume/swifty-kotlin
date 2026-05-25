@@ -2806,6 +2806,69 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathDeleteIfExistsExtensionFunctionInIOPathPackageSurfaceMatchesOfficialShape() throws {
+        let source = """
+        import kotlin.io.path.Path
+        import kotlin.io.path.deleteIfExists
+
+        fun delete(path: Path): Boolean {
+            return path.deleteIfExists()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnostics = ctx.diagnostics.diagnostics.map(\.message)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.deleteIfExists() extension function in kotlin.io.path should resolve: \(diagnostics)"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let deleteIfExistsSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "deleteIfExists"].map(interner.intern))
+            let deleteIfExists = try XCTUnwrap(deleteIfExistsSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else {
+                    return false
+                }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == []
+                    && signature.returnType == types.booleanType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: deleteIfExists), "kk_path_deleteIfExists")
+
+            let annotations = symbols.annotations(for: deleteIfExists)
+            XCTAssertTrue(
+                annotations.contains { $0.annotationFQName == "kotlin.IgnorableReturnValue" },
+                "Path.deleteIfExists should carry @IgnorableReturnValue, got: \(annotations)"
+            )
+            XCTAssertTrue(
+                annotations.contains { $0.annotationFQName == "kotlin.SinceKotlin" && $0.arguments == ["1.5"] },
+                "Path.deleteIfExists should carry @SinceKotlin(\"1.5\"), got: \(annotations)"
+            )
+            XCTAssertTrue(
+                annotations.contains { $0.annotationFQName == "kotlin.Throws" && $0.arguments == ["java.io.IOException::class"] },
+                "Path.deleteIfExists should carry @Throws(IOException::class), got: \(annotations)"
+            )
+
+            let memberSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "Path", "deleteIfExists"].map(interner.intern))
+            XCTAssertFalse(
+                memberSymbols.contains { symbolID in
+                    guard let signature = symbols.functionSignature(for: symbolID) else {
+                        return false
+                    }
+                    return signature.receiverType == pathType && signature.parameterTypes.isEmpty
+                },
+                "Path.deleteIfExists should be registered as a kotlin.io.path extension function, not a Path member"
+            )
+        }
+    }
+
     func testPathCreateSymbolicLinkPointingToAttributesExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import java.nio.file.attribute.FileAttribute
