@@ -60,6 +60,27 @@ final class NativeConcurrentSyntheticStubTests: XCTestCase {
         )))
     }
 
+    private func cOpaquePointerType(
+        sema: SemaModule,
+        interner: StringInterner,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) throws -> TypeID {
+        let aliasSymbol = try symbol(
+            ["kotlinx", "cinterop", "COpaquePointer"],
+            sema: sema,
+            interner: interner,
+            file: file,
+            line: line
+        )
+        return try XCTUnwrap(
+            sema.symbols.typeAliasUnderlyingType(for: aliasSymbol),
+            "Expected kotlinx.cinterop.COpaquePointer to have an underlying typealias type",
+            file: file,
+            line: line
+        )
+    }
+
     private func memberFunction(
         ownerPath: [String],
         named name: String,
@@ -109,8 +130,7 @@ final class NativeConcurrentSyntheticStubTests: XCTestCase {
         file: StaticString = #filePath,
         line: UInt = #line
     ) throws -> TypeID {
-        let nullableCOpaquePointerType = sema.types.makeNullable(try classType(
-            ["kotlinx", "cinterop", "COpaquePointer"],
+        let nullableCOpaquePointerType = sema.types.makeNullable(try cOpaquePointerType(
             sema: sema,
             interner: interner,
             file: file,
@@ -365,8 +385,7 @@ final class NativeConcurrentSyntheticStubTests: XCTestCase {
 
     func testCallContinuationFunctionsAreRegistered() throws {
         let (sema, interner) = try makeSema()
-        let receiverType = try classType(
-            ["kotlinx", "cinterop", "COpaquePointer"],
+        let receiverType = try cOpaquePointerType(
             sema: sema,
             interner: interner
         )
@@ -665,8 +684,7 @@ final class NativeConcurrentSyntheticStubTests: XCTestCase {
             args: [.invariant(typeParameterType)],
             nullability: .nonNull
         )))
-        let nullableCOpaquePointerType = sema.types.makeNullable(try classType(
-            ["kotlinx", "cinterop", "COpaquePointer"],
+        let nullableCOpaquePointerType = sema.types.makeNullable(try cOpaquePointerType(
             sema: sema,
             interner: interner
         ))
@@ -702,8 +720,7 @@ final class NativeConcurrentSyntheticStubTests: XCTestCase {
             args: [.invariant(typeParameterType)],
             nullability: .nonNull
         )))
-        let nullableCOpaquePointerType = sema.types.makeNullable(try classType(
-            ["kotlinx", "cinterop", "COpaquePointer"],
+        let nullableCOpaquePointerType = sema.types.makeNullable(try cOpaquePointerType(
             sema: sema,
             interner: interner
         ))
@@ -1513,8 +1530,8 @@ final class NativeConcurrentSyntheticStubTests: XCTestCase {
         let ownerSymbol = try symbol(ownerPath, sema: sema, interner: interner)
         let ownerType = try classType(ownerPath, sema: sema, interner: interner)
         let byteArrayType = try classType(["kotlin", "ByteArray"], sema: sema, interner: interner)
-        let cOpaquePointerType = try classType(["kotlinx", "cinterop", "COpaquePointer"], sema: sema, interner: interner)
-        let nullableCOpaquePointerType = sema.types.makeNullable(cOpaquePointerType)
+        let opaquePointerType = try cOpaquePointerType(sema: sema, interner: interner)
+        let nullableCOpaquePointerType = sema.types.makeNullable(opaquePointerType)
 
         XCTAssertEqual(sema.symbols.symbol(ownerSymbol)?.kind, .class)
         XCTAssertTrue(
@@ -1612,7 +1629,7 @@ final class NativeConcurrentSyntheticStubTests: XCTestCase {
             named: "withPointerLocked",
             ownerPath: ownerPath,
             ownerType: ownerType,
-            blockParameterTypes: [cOpaquePointerType, sema.types.intType],
+            blockParameterTypes: [opaquePointerType, sema.types.intType],
             sema: sema,
             interner: interner
         )

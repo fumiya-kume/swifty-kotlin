@@ -577,7 +577,7 @@
 - [ ] STDLIB-JS-COLLECTIONS-TYPE-004: `kotlin.js.collections.JsReadonlyMap<K, V>` external interface を追加する
 - [x] STDLIB-JS-COLLECTIONS-FN-003: `JsReadonlyArray<E>.toMutableList()` を追加する
 - [x] STDLIB-JS-COLLECTIONS-FN-004: `JsReadonlyMap<K,V>.toMutableMap()` を追加する
-- [ ] STDLIB-JS-COLLECTIONS-FN-005: `JsReadonlySet<E>.toMutableSet()` を追加する
+- [x] STDLIB-JS-COLLECTIONS-FN-005: `JsReadonlySet<E>.toMutableSet()` を追加する
 - [ ] STDLIB-JS-COLLECTIONS-FN-006: `JsReadonlySet<E>.toSet()` を追加する
 - [x] STDLIB-STREAMS-FN-006: `DoubleStream.toList()` を追加する
 - [x] STDLIB-STREAMS-FN-007: `IntStream.toList()` を追加する
@@ -602,9 +602,9 @@
 - [x] STDLIB-CINTEROP-TYPE-011: `kotlinx.cinterop.CEnum` interface surface を追加する
 - [x] STDLIB-CINTEROP-TYPE-012: `kotlinx.cinterop.CEnumVar` class surface を追加する
 - [x] STDLIB-CINTEROP-TYPE-013: `kotlinx.cinterop.CFunction<T>` class surface を追加する
-- [ ] STDLIB-CINTEROP-TYPE-014: `kotlinx.cinterop.COpaque` class surface を追加する
-- [ ] STDLIB-CINTEROP-TYPE-015: `kotlinx.cinterop.COpaquePointer` typealias shape を既存 class stub と整合させる
-- [ ] STDLIB-CINTEROP-TYPE-016: `kotlinx.cinterop.COpaquePointerVar` typealias を追加する
+- [x] STDLIB-CINTEROP-TYPE-014: `kotlinx.cinterop.COpaque` class surface を追加する
+- [x] STDLIB-CINTEROP-TYPE-015: `kotlinx.cinterop.COpaquePointer` typealias shape を既存 class stub と整合させる
+- [x] STDLIB-CINTEROP-TYPE-016: `kotlinx.cinterop.COpaquePointerVar` typealias を追加する
 - [ ] STDLIB-CINTEROP-TYPE-017: `kotlinx.cinterop.CPointed` class shape を公式 surface と整合させる
 - [ ] STDLIB-CINTEROP-TYPE-018: `kotlinx.cinterop.CPointer<T>` class shape を公式 surface と整合させる
 - [ ] STDLIB-CINTEROP-TYPE-019: `kotlinx.cinterop.CPointerVar<T>` typealias shape を公式 surface と整合させる
