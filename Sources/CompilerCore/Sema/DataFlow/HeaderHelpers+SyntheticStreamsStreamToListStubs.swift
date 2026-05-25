@@ -1,26 +1,8 @@
 import Foundation
 
-/// Synthetic JVM stream `LongStream.toList()` extension surface.
+/// Synthetic JVM stream `Stream<T>.toList()` extension surface.
 extension DataFlowSemaPhase {
-    func registerSyntheticLongStreamToListStubs(
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner
-    ) {
-        registerSyntheticPrimitiveStreamToListStubs(
-            streamClassName: "LongStream",
-            elementType: types.longType,
-            externalLinkName: "kk_long_stream_toList",
-            symbols: symbols,
-            types: types,
-            interner: interner
-        )
-    }
-
-    func registerSyntheticPrimitiveStreamToListStubs(
-        streamClassName: String,
-        elementType: TypeID,
-        externalLinkName: String,
+    func registerSyntheticStreamToListStubs(
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner
@@ -41,7 +23,7 @@ extension DataFlowSemaPhase {
             interner: interner
         )
         let streamSymbol = ensureClassSymbol(
-            named: streamClassName,
+            named: "Stream",
             in: javaStreamPkg,
             symbols: symbols,
             interner: interner
@@ -53,9 +35,36 @@ extension DataFlowSemaPhase {
             return
         }
 
+        let streamTypeParameterName = interner.intern("T")
+        let streamFQName = javaStreamPkg + [interner.intern("Stream")]
+        let streamTypeParameterSymbol = symbols.lookup(fqName: streamFQName + [streamTypeParameterName])
+            ?? symbols.define(
+                kind: .typeParameter,
+                name: streamTypeParameterName,
+                fqName: streamFQName + [streamTypeParameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        symbols.setParentSymbol(streamSymbol, for: streamTypeParameterSymbol)
+        let elementType = types.make(.typeParam(TypeParamType(
+            symbol: streamTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([streamTypeParameterSymbol], for: streamSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: streamSymbol)
+        symbols.setPropertyType(
+            types.make(.classType(ClassType(
+                classSymbol: streamSymbol,
+                args: [.invariant(elementType)],
+                nullability: .nonNull
+            ))),
+            for: streamSymbol
+        )
+
         let receiverType = types.make(.classType(ClassType(
             classSymbol: streamSymbol,
-            args: [],
+            args: [.out(elementType)],
             nullability: .nonNull
         )))
         let returnType = types.make(.classType(ClassType(
@@ -65,6 +74,7 @@ extension DataFlowSemaPhase {
         )))
         let functionName = interner.intern("toList")
         let functionFQName = kotlinStreamsPkg + [functionName]
+        let externalLinkName = "kk_stream_toList"
 
         if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbol in
             guard let signature = symbols.functionSignature(for: symbol) else {
@@ -73,7 +83,7 @@ extension DataFlowSemaPhase {
             return signature.receiverType == receiverType
                 && signature.parameterTypes.isEmpty
                 && signature.returnType == returnType
-                && signature.typeParameterSymbols.isEmpty
+                && signature.typeParameterSymbols == [streamTypeParameterSymbol]
                 && signature.classTypeParameterCount == 0
         }) {
             symbols.setExternalLinkName(externalLinkName, for: existing)
@@ -98,7 +108,7 @@ extension DataFlowSemaPhase {
                 parameterTypes: [],
                 returnType: returnType,
                 isSuspend: false,
-                typeParameterSymbols: [],
+                typeParameterSymbols: [streamTypeParameterSymbol],
                 classTypeParameterCount: 0
             ),
             for: functionSymbol
