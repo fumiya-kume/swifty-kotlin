@@ -1072,6 +1072,7 @@ extension DataFlowSemaPhase {
         registerSyntheticBigIntegerStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticNativeInvokeStubs(symbols: symbols, interner: interner)
         registerSyntheticJvmOptionalStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticIntStreamToListStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticStreamsStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticDoubleStreamToListStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJvmReflectStubs(symbols: symbols, types: types, interner: interner)
