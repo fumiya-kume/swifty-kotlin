@@ -1792,6 +1792,13 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(secondList, runtimeNullSentinelInt)
     }
 
+    func testContainsFindsMatchingElement() {
+        let seq = makeSequence([1, 2, 3])
+
+        XCTAssertEqual(kk_unbox_bool(kk_sequence_contains(seq, 2)), 1)
+        XCTAssertEqual(kk_unbox_bool(kk_sequence_contains(seq, 9)), 0)
+    }
+
     func testDropWhileSkipsLeadingMatchesOnly() {
         let result = kk_sequence_dropWhile(
             makeSequence([1, 2, 3, 1, 4]),

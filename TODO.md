@@ -199,17 +199,11 @@
 - [ ] STDLIB-SEQ-FN-010: `associateWithTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-011: `averageOf` 関数の実装
 - [ ] STDLIB-SEQ-FN-012: `chunked` 関数の実装
-- [ ] STDLIB-SEQ-FN-013: `constrainOnce` 関数の実装
-- [ ] STDLIB-SEQ-FN-007: `associateByTo` 関数の実装
-- [ ] STDLIB-SEQ-FN-008: `associateTo` 関数の実装
-- [ ] STDLIB-SEQ-FN-010: `associateWithTo` 関数の実装
-- [ ] STDLIB-SEQ-FN-012: `chunked` 関数の実装
- - [ ] STDLIB-SEQ-FN-014: `contains` 関数の実装
- - [ ] STDLIB-SEQ-FN-015: `count` 関数の実装
- - [ ] STDLIB-SEQ-FN-016: `distinct` 関数の実装
-- [ ] STDLIB-SEQ-FN-017: `distinctBy` 関数の実装
-- [ ] STDLIB-SEQ-FN-014: `contains` 関数の実装
+- [x] STDLIB-SEQ-FN-013: `constrainOnce` 関数の実装
+- [x] STDLIB-SEQ-FN-014: `contains` 関数の実装
+- [ ] STDLIB-SEQ-FN-015: `count` 関数の実装
 - [ ] STDLIB-SEQ-FN-016: `distinct` 関数の実装
+- [ ] STDLIB-SEQ-FN-017: `distinctBy` 関数の実装
 - [ ] STDLIB-SEQ-FN-018: `drop` 関数の実装
 - [x] STDLIB-SEQ-FN-020: `elementAt` 関数の実装
 - [ ] STDLIB-SEQ-FN-021: `elementAtOrElse` 関数の実装
@@ -224,16 +218,10 @@
 - [ ] STDLIB-SEQ-FN-040: `flatMapIndexedTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-042: `fold` 関数の実装
 - [ ] STDLIB-SEQ-FN-043: `foldIndexed` 関数の実装
-- [ ] STDLIB-SEQ-FN-046: `groupBy` 関数の実装
-- [ ] STDLIB-SEQ-FN-043: `foldIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-044: `forEach` 関数の実装
 - [ ] STDLIB-SEQ-FN-046: `groupBy` 関数の実装
-- [ ] STDLIB-SEQ-FN-048: `indexOf` 関数の実装
 - [ ] STDLIB-SEQ-FN-047: `groupByTo` 関数の実装
-- [ ] STDLIB-SEQ-FN-056: `lastOrNull` 関数の実装
-- [ ] STDLIB-SEQ-FN-057: `map` 関数の実装
-- [ ] STDLIB-SEQ-FN-058: `mapIndexed` 関数の実装
-- [ ] STDLIB-SEQ-FN-060: `mapIndexedNotNullTo` 関数の実装
+- [ ] STDLIB-SEQ-FN-048: `indexOf` 関数の実装
 - [x] STDLIB-SEQ-FN-056: `lastOrNull` 関数の実装
 - [x] STDLIB-SEQ-FN-057: `map` 関数の実装
 - [x] STDLIB-SEQ-FN-058: `mapIndexed` 関数の実装
