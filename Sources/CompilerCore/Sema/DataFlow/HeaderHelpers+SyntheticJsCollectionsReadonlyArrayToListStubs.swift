@@ -165,48 +165,15 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner
     ) {
-        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
-            return
-        }
-        let functionName = interner.intern("toList")
-        let functionFQName = ownerInfo.fqName + [functionName]
-        let externalLinkName = "kk_js_array_toList"
-
-        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbol in
-            guard let signature = symbols.functionSignature(for: symbol) else {
-                return false
-            }
-            return signature.receiverType == ownerType
-                && signature.parameterTypes.isEmpty
-                && signature.returnType == returnType
-                && signature.typeParameterSymbols == [typeParamSymbol]
-                && signature.classTypeParameterCount == 1
-        }) {
-            symbols.setExternalLinkName(externalLinkName, for: existing)
-            appendJsCollectionsReadonlyArrayToListAnnotation(to: existing, symbols: symbols)
-            return
-        }
-
-        let functionSymbol = symbols.define(
-            kind: .function,
-            name: functionName,
-            fqName: functionFQName,
-            declSite: nil,
-            visibility: .public,
-            flags: [.synthetic]
-        )
-        symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
-        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
-        appendJsCollectionsReadonlyArrayToListAnnotation(to: functionSymbol, symbols: symbols)
-        symbols.setFunctionSignature(
-            FunctionSignature(
-                receiverType: ownerType,
-                parameterTypes: [],
-                returnType: returnType,
-                typeParameterSymbols: [typeParamSymbol],
-                classTypeParameterCount: 1
-            ),
-            for: functionSymbol
+        registerJsReadonlyArrayConversionMember(
+            functionNameLiteral: "toList",
+            externalLinkName: "kk_js_array_toList",
+            ownerSymbol: ownerSymbol,
+            ownerType: ownerType,
+            returnType: returnType,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
         )
     }
 
@@ -218,12 +185,33 @@ extension DataFlowSemaPhase {
         symbols: SymbolTable,
         interner: StringInterner
     ) {
+        registerJsReadonlyArrayConversionMember(
+            functionNameLiteral: "toMutableList",
+            externalLinkName: "kk_js_array_toMutableList",
+            ownerSymbol: ownerSymbol,
+            ownerType: ownerType,
+            returnType: returnType,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    private func registerJsReadonlyArrayConversionMember(
+        functionNameLiteral: String,
+        externalLinkName: String,
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        returnType: TypeID,
+        typeParamSymbol: SymbolID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
         guard let ownerInfo = symbols.symbol(ownerSymbol) else {
             return
         }
-        let functionName = interner.intern("toMutableList")
+        let functionName = interner.intern(functionNameLiteral)
         let functionFQName = ownerInfo.fqName + [functionName]
-        let externalLinkName = "kk_js_array_toMutableList"
 
         if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbol in
             guard let signature = symbols.functionSignature(for: symbol) else {
