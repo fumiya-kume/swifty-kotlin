@@ -1297,6 +1297,12 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let cOpaqueSymbol = ensureClassSymbol(
+            named: "COpaque",
+            in: cinteropPkg,
+            symbols: symbols,
+            interner: interner
+        )
         let cOpaquePointerSymbol = ensureClassSymbol(
             named: "COpaquePointer",
             in: cinteropPkg,
@@ -1390,6 +1396,7 @@ extension DataFlowSemaPhase {
             cEnumSymbol,
             cEnumVarSymbol,
             cFunctionSymbol,
+            cOpaqueSymbol,
             cOpaquePointerSymbol,
             nativePtrSymbol,
             nativePlacementSymbol,
@@ -1470,6 +1477,16 @@ extension DataFlowSemaPhase {
         symbols.setDirectSupertypes([cPrimitiveVarSymbol], for: cEnumVarSymbol)
         types.setNominalDirectSupertypes([cPrimitiveVarSymbol], for: cEnumVarSymbol)
 
+        let cOpaqueType = types.make(.classType(ClassType(
+            classSymbol: cOpaqueSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(cOpaqueType, for: cOpaqueSymbol)
+        symbols.insertFlags([.abstractType], for: cOpaqueSymbol)
+        symbols.setDirectSupertypes([cPointedSymbol], for: cOpaqueSymbol)
+        types.setNominalDirectSupertypes([cPointedSymbol], for: cOpaqueSymbol)
+
         let cOpaquePointerType = types.make(.classType(ClassType(
             classSymbol: cOpaquePointerSymbol,
             args: [],
@@ -1489,6 +1506,14 @@ extension DataFlowSemaPhase {
         registerSyntheticNativeBitSetConstructor(
             ownerSymbol: cEnumVarSymbol,
             ownerType: cEnumVarType,
+            parameters: [(name: "rawPtr", type: nativePtrType)],
+            defaultValues: [false],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetConstructor(
+            ownerSymbol: cOpaqueSymbol,
+            ownerType: cOpaqueType,
             parameters: [(name: "rawPtr", type: nativePtrType)],
             defaultValues: [false],
             symbols: symbols,
