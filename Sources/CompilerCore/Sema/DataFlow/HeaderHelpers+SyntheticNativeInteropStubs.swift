@@ -1534,6 +1534,28 @@ extension DataFlowSemaPhase {
         )))
         symbols.setPropertyType(deferScopeType, for: deferScopeSymbol)
         symbols.insertFlags([.openType], for: deferScopeSymbol)
+        registerSyntheticNativeBitSetConstructor(
+            ownerSymbol: deferScopeSymbol,
+            ownerType: deferScopeType,
+            parameters: [],
+            defaultValues: [],
+            symbols: symbols,
+            interner: interner
+        )
+        let deferBlockType = types.make(.functionType(FunctionType(
+            params: [],
+            returnType: types.unitType
+        )))
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "defer",
+            ownerSymbol: deferScopeSymbol,
+            receiverType: deferScopeType,
+            parameters: [(name: "block", type: deferBlockType)],
+            returnType: types.unitType,
+            flags: [.synthetic, .inlineFunction],
+            symbols: symbols,
+            interner: interner
+        )
 
         let autofreeScopeType = types.make(.classType(ClassType(
             classSymbol: autofreeScopeSymbol,
@@ -2509,6 +2531,9 @@ extension DataFlowSemaPhase {
         parameters: [(name: String, type: TypeID)],
         returnType: TypeID,
         defaultValues: [Bool]? = nil,
+        typeParameterSymbols: [SymbolID] = [],
+        typeParameterUpperBoundsList: [[TypeID]] = [],
+        classTypeParameterCount: Int = 0,
         flags: SymbolFlags = [.synthetic],
         symbols: SymbolTable,
         interner: StringInterner
@@ -2526,6 +2551,8 @@ extension DataFlowSemaPhase {
             return signature.receiverType == receiverType
                 && signature.parameterTypes == parameterTypes
                 && signature.returnType == returnType
+                && signature.typeParameterSymbols == typeParameterSymbols
+                && signature.classTypeParameterCount == classTypeParameterCount
         }) {
             symbols.insertFlags(flags, for: existing)
             return
@@ -2540,6 +2567,9 @@ extension DataFlowSemaPhase {
             flags: flags
         )
         symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
+        for typeParameterSymbol in typeParameterSymbols {
+            symbols.setParentSymbol(functionSymbol, for: typeParameterSymbol)
+        }
 
         let valueParameterSymbols = parameters.map { parameter in
             let parameterName = interner.intern(parameter.name)
@@ -2564,7 +2594,10 @@ extension DataFlowSemaPhase {
                 isSuspend: false,
                 valueParameterSymbols: valueParameterSymbols,
                 valueParameterHasDefaultValues: defaultValues ?? Array(repeating: false, count: valueParameterSymbols.count),
-                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count),
+                typeParameterSymbols: typeParameterSymbols,
+                typeParameterUpperBoundsList: typeParameterUpperBoundsList,
+                classTypeParameterCount: classTypeParameterCount
             ),
             for: functionSymbol
         )
