@@ -1297,8 +1297,8 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
-        let cOpaquePointerSymbol = ensureClassSymbol(
-            named: "COpaquePointer",
+        let cOpaqueSymbol = ensureClassSymbol(
+            named: "COpaque",
             in: cinteropPkg,
             symbols: symbols,
             interner: interner
@@ -1369,6 +1369,12 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let cPointerVarOfSymbol = ensureClassSymbol(
+            named: "CPointerVarOf",
+            in: cinteropPkg,
+            symbols: symbols,
+            interner: interner
+        )
         let booleanVarOfSymbol = ensureClassSymbol(
             named: "BooleanVarOf",
             in: cinteropPkg,
@@ -1390,7 +1396,7 @@ extension DataFlowSemaPhase {
             cEnumSymbol,
             cEnumVarSymbol,
             cFunctionSymbol,
-            cOpaquePointerSymbol,
+            cOpaqueSymbol,
             nativePtrSymbol,
             nativePlacementSymbol,
             nativeFreeablePlacementSymbol,
@@ -1402,6 +1408,7 @@ extension DataFlowSemaPhase {
             cValuesRefSymbol,
             cPointerSymbol,
             cPointerVarSymbol,
+            cPointerVarOfSymbol,
             booleanVarOfSymbol,
             byteVarOfSymbol,
         ] {
@@ -1470,14 +1477,15 @@ extension DataFlowSemaPhase {
         symbols.setDirectSupertypes([cPrimitiveVarSymbol], for: cEnumVarSymbol)
         types.setNominalDirectSupertypes([cPrimitiveVarSymbol], for: cEnumVarSymbol)
 
-        let cOpaquePointerType = types.make(.classType(ClassType(
-            classSymbol: cOpaquePointerSymbol,
+        let cOpaqueType = types.make(.classType(ClassType(
+            classSymbol: cOpaqueSymbol,
             args: [],
             nullability: .nonNull
         )))
-        symbols.setPropertyType(cOpaquePointerType, for: cOpaquePointerSymbol)
-        symbols.setDirectSupertypes([nativePointedSymbol], for: cOpaquePointerSymbol)
-        types.setNominalDirectSupertypes([nativePointedSymbol], for: cOpaquePointerSymbol)
+        symbols.setPropertyType(cOpaqueType, for: cOpaqueSymbol)
+        symbols.insertFlags([.abstractType], for: cOpaqueSymbol)
+        symbols.setDirectSupertypes([cPointedSymbol], for: cOpaqueSymbol)
+        types.setNominalDirectSupertypes([cPointedSymbol], for: cOpaqueSymbol)
 
         let nativePtrType = types.make(.classType(ClassType(
             classSymbol: nativePtrSymbol,
@@ -1489,6 +1497,14 @@ extension DataFlowSemaPhase {
         registerSyntheticNativeBitSetConstructor(
             ownerSymbol: cEnumVarSymbol,
             ownerType: cEnumVarType,
+            parameters: [(name: "rawPtr", type: nativePtrType)],
+            defaultValues: [false],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetConstructor(
+            ownerSymbol: cOpaqueSymbol,
+            ownerType: cOpaqueType,
             parameters: [(name: "rawPtr", type: nativePtrType)],
             defaultValues: [false],
             symbols: symbols,
@@ -1691,6 +1707,16 @@ extension DataFlowSemaPhase {
             interner: interner
         )
         configureSingleTypeParameterNominal(
+            ownerSymbol: cPointerVarOfSymbol,
+            fqName: cinteropPkg + [interner.intern("CPointerVarOf")],
+            parameterName: "T",
+            supertype: cVariableSymbol,
+            supertypeIsGeneric: false,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        configureSingleTypeParameterNominal(
             ownerSymbol: cFunctionSymbol,
             fqName: cinteropPkg + [interner.intern("CFunction")],
             parameterName: "T",
@@ -1823,6 +1849,32 @@ extension DataFlowSemaPhase {
             in: cinteropPkg,
             packageSymbol: cinteropPkgSymbol,
             underlyingType: byteVarType,
+            symbols: symbols,
+            interner: interner
+        )
+        let cOpaquePointerUnderlyingType = types.make(.classType(ClassType(
+            classSymbol: cPointerSymbol,
+            args: [.out(cPointedType)],
+            nullability: .nonNull
+        )))
+        registerSyntheticCInteropTypeAlias(
+            named: "COpaquePointer",
+            in: cinteropPkg,
+            packageSymbol: cinteropPkgSymbol,
+            underlyingType: cOpaquePointerUnderlyingType,
+            symbols: symbols,
+            interner: interner
+        )
+        let cOpaquePointerVarUnderlyingType = types.make(.classType(ClassType(
+            classSymbol: cPointerVarOfSymbol,
+            args: [.invariant(cOpaquePointerUnderlyingType)],
+            nullability: .nonNull
+        )))
+        registerSyntheticCInteropTypeAlias(
+            named: "COpaquePointerVar",
+            in: cinteropPkg,
+            packageSymbol: cinteropPkgSymbol,
+            underlyingType: cOpaquePointerVarUnderlyingType,
             symbols: symbols,
             interner: interner
         )
