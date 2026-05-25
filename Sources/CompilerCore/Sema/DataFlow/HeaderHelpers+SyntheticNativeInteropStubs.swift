@@ -1748,6 +1748,16 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerSyntheticCInteropSingleTypeParameterTypeAlias(
+            named: "CArrayPointerVar",
+            in: cinteropPkg,
+            packageSymbol: cinteropPkgSymbol,
+            parameterName: "T",
+            targetSymbol: cPointerVarSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
 
         for primitiveVar in [
             "UByteVar",
