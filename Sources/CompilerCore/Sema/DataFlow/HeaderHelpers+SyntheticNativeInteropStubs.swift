@@ -1852,13 +1852,31 @@ extension DataFlowSemaPhase {
             ownerSymbol: cValueSymbol,
             fqName: cinteropPkg + [interner.intern("CValue")],
             parameterName: "T",
-            supertype: nil,
+            supertype: cValuesSymbol,
             symbols: symbols,
             types: types,
             interner: interner
         )
+        symbols.insertFlags([.abstractType], for: cValueSymbol)
         if let cValueTypeParameterSymbol = types.nominalTypeParameterSymbols(for: cValueSymbol).first {
             symbols.setTypeParameterUpperBounds([cVariableType], for: cValueTypeParameterSymbol)
+            let cValueTypeParameterType = types.make(.typeParam(TypeParamType(
+                symbol: cValueTypeParameterSymbol,
+                nullability: .nonNull
+            )))
+            let cValueType = types.make(.classType(ClassType(
+                classSymbol: cValueSymbol,
+                args: [.invariant(cValueTypeParameterType)],
+                nullability: .nonNull
+            )))
+            registerSyntheticNativeBitSetConstructor(
+                ownerSymbol: cValueSymbol,
+                ownerType: cValueType,
+                parameters: [],
+                defaultValues: [],
+                symbols: symbols,
+                interner: interner
+            )
         }
         configureSingleTypeParameterNominal(
             ownerSymbol: cValuesSymbol,
