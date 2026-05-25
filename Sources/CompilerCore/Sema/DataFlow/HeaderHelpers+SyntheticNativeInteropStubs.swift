@@ -1369,6 +1369,12 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let cPointerVarOfSymbol = ensureClassSymbol(
+            named: "CPointerVarOf",
+            in: cinteropPkg,
+            symbols: symbols,
+            interner: interner
+        )
         let booleanVarOfSymbol = ensureClassSymbol(
             named: "BooleanVarOf",
             in: cinteropPkg,
@@ -1402,6 +1408,7 @@ extension DataFlowSemaPhase {
             cValuesRefSymbol,
             cPointerSymbol,
             cPointerVarSymbol,
+            cPointerVarOfSymbol,
             booleanVarOfSymbol,
             byteVarOfSymbol,
         ] {
@@ -1700,6 +1707,16 @@ extension DataFlowSemaPhase {
             interner: interner
         )
         configureSingleTypeParameterNominal(
+            ownerSymbol: cPointerVarOfSymbol,
+            fqName: cinteropPkg + [interner.intern("CPointerVarOf")],
+            parameterName: "T",
+            supertype: cVariableSymbol,
+            supertypeIsGeneric: false,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        configureSingleTypeParameterNominal(
             ownerSymbol: cFunctionSymbol,
             fqName: cinteropPkg + [interner.intern("CFunction")],
             parameterName: "T",
@@ -1845,6 +1862,19 @@ extension DataFlowSemaPhase {
             in: cinteropPkg,
             packageSymbol: cinteropPkgSymbol,
             underlyingType: cOpaquePointerUnderlyingType,
+            symbols: symbols,
+            interner: interner
+        )
+        let cOpaquePointerVarUnderlyingType = types.make(.classType(ClassType(
+            classSymbol: cPointerVarOfSymbol,
+            args: [.invariant(cOpaquePointerUnderlyingType)],
+            nullability: .nonNull
+        )))
+        registerSyntheticCInteropTypeAlias(
+            named: "COpaquePointerVar",
+            in: cinteropPkg,
+            packageSymbol: cinteropPkgSymbol,
+            underlyingType: cOpaquePointerVarUnderlyingType,
             symbols: symbols,
             interner: interner
         )
