@@ -591,7 +591,7 @@
 - [x] STDLIB-CINTEROP-TYPE-003: `kotlinx.cinterop.AutofreeScope` class surface を追加する
 - [x] STDLIB-CINTEROP-TYPE-004: `kotlinx.cinterop.BetaInteropApi` annotation shape を公式 surface と整合させる
 - [x] STDLIB-CINTEROP-TYPE-005: `kotlinx.cinterop.BooleanVar` typealias を追加する
-- [ ] STDLIB-CINTEROP-TYPE-006: `kotlinx.cinterop.BooleanVarOf<T>` class surface を追加する
+- [x] STDLIB-CINTEROP-TYPE-006: `kotlinx.cinterop.BooleanVarOf<T>` class surface を追加する
 - [ ] STDLIB-CINTEROP-TYPE-007: `kotlinx.cinterop.ByteVar` typealias を追加する
 - [ ] STDLIB-CINTEROP-TYPE-008: `kotlinx.cinterop.ByteVarOf<T>` class surface を追加する
 - [ ] STDLIB-CINTEROP-TYPE-009: `kotlinx.cinterop.CArrayPointer<T>` typealias を追加する

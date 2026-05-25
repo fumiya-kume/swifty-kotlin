@@ -1267,8 +1267,26 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let cVariableSymbol = ensureClassSymbol(
+            named: "CVariable",
+            in: cinteropPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let cPrimitiveVarSymbol = ensureClassSymbol(
+            named: "CPrimitiveVar",
+            in: cinteropPkg,
+            symbols: symbols,
+            interner: interner
+        )
         let cOpaquePointerSymbol = ensureClassSymbol(
             named: "COpaquePointer",
+            in: cinteropPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let nativePtrSymbol = ensureClassSymbol(
+            named: "NativePtr",
             in: cinteropPkg,
             symbols: symbols,
             interner: interner
@@ -1343,7 +1361,10 @@ extension DataFlowSemaPhase {
         for symbol in [
             nativePointedSymbol,
             cPointedSymbol,
+            cVariableSymbol,
+            cPrimitiveVarSymbol,
             cOpaquePointerSymbol,
+            nativePtrSymbol,
             nativePlacementSymbol,
             nativeFreeablePlacementSymbol,
             deferScopeSymbol,
@@ -1377,6 +1398,24 @@ extension DataFlowSemaPhase {
         symbols.setDirectSupertypes([nativePointedSymbol], for: cPointedSymbol)
         types.setNominalDirectSupertypes([nativePointedSymbol], for: cPointedSymbol)
 
+        let cVariableType = types.make(.classType(ClassType(
+            classSymbol: cVariableSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(cVariableType, for: cVariableSymbol)
+        symbols.setDirectSupertypes([cPointedSymbol], for: cVariableSymbol)
+        types.setNominalDirectSupertypes([cPointedSymbol], for: cVariableSymbol)
+
+        let cPrimitiveVarType = types.make(.classType(ClassType(
+            classSymbol: cPrimitiveVarSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(cPrimitiveVarType, for: cPrimitiveVarSymbol)
+        symbols.setDirectSupertypes([cVariableSymbol], for: cPrimitiveVarSymbol)
+        types.setNominalDirectSupertypes([cVariableSymbol], for: cPrimitiveVarSymbol)
+
         let cOpaquePointerType = types.make(.classType(ClassType(
             classSymbol: cOpaquePointerSymbol,
             args: [],
@@ -1385,6 +1424,13 @@ extension DataFlowSemaPhase {
         symbols.setPropertyType(cOpaquePointerType, for: cOpaquePointerSymbol)
         symbols.setDirectSupertypes([nativePointedSymbol], for: cOpaquePointerSymbol)
         types.setNominalDirectSupertypes([nativePointedSymbol], for: cOpaquePointerSymbol)
+
+        let nativePtrType = types.make(.classType(ClassType(
+            classSymbol: nativePtrSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(nativePtrType, for: nativePtrSymbol)
 
         let nativePlacementType = types.make(.classType(ClassType(
             classSymbol: nativePlacementSymbol,
@@ -1585,11 +1631,41 @@ extension DataFlowSemaPhase {
             ownerSymbol: booleanVarOfSymbol,
             fqName: cinteropPkg + [interner.intern("BooleanVarOf")],
             parameterName: "T",
-            supertype: nil,
+            supertype: cPrimitiveVarSymbol,
+            supertypeIsGeneric: false,
             symbols: symbols,
             types: types,
             interner: interner
         )
+        if let booleanVarOfTypeParameterSymbol = types.nominalTypeParameterSymbols(for: booleanVarOfSymbol).first {
+            symbols.setTypeParameterUpperBounds([types.booleanType], for: booleanVarOfTypeParameterSymbol)
+            let booleanVarOfTypeParameterType = types.make(.typeParam(TypeParamType(
+                symbol: booleanVarOfTypeParameterSymbol,
+                nullability: .nonNull
+            )))
+            let booleanVarOfType = types.make(.classType(ClassType(
+                classSymbol: booleanVarOfSymbol,
+                args: [.invariant(booleanVarOfTypeParameterType)],
+                nullability: .nonNull
+            )))
+            registerNativeConcurrentConstructor(
+                ownerSymbol: booleanVarOfSymbol,
+                ownerType: booleanVarOfType,
+                parameters: [(name: "rawPtr", type: nativePtrType)],
+                defaultValues: [false],
+                typeParameterSymbols: [booleanVarOfTypeParameterSymbol],
+                classTypeParameterCount: 1,
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticNativeBitSetProperty(
+                named: "value",
+                ownerSymbol: booleanVarOfSymbol,
+                propertyType: booleanVarOfTypeParameterType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
         let booleanVarType = types.make(.classType(ClassType(
             classSymbol: booleanVarOfSymbol,
             args: [.invariant(types.booleanType)],
