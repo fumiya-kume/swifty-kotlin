@@ -1291,6 +1291,12 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let cFunctionSymbol = ensureClassSymbol(
+            named: "CFunction",
+            in: cinteropPkg,
+            symbols: symbols,
+            interner: interner
+        )
         let cOpaquePointerSymbol = ensureClassSymbol(
             named: "COpaquePointer",
             in: cinteropPkg,
@@ -1383,6 +1389,7 @@ extension DataFlowSemaPhase {
             cPrimitiveVarSymbol,
             cEnumSymbol,
             cEnumVarSymbol,
+            cFunctionSymbol,
             cOpaquePointerSymbol,
             nativePtrSymbol,
             nativePlacementSymbol,
@@ -1683,6 +1690,38 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        configureSingleTypeParameterNominal(
+            ownerSymbol: cFunctionSymbol,
+            fqName: cinteropPkg + [interner.intern("CFunction")],
+            parameterName: "T",
+            supertype: cPointedSymbol,
+            supertypeIsGeneric: false,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        if let cFunctionTypeParameterSymbol = types.nominalTypeParameterSymbols(for: cFunctionSymbol).first {
+            symbols.setTypeParameterUpperBounds([types.anyType], for: cFunctionTypeParameterSymbol)
+            let cFunctionTypeParameterType = types.make(.typeParam(TypeParamType(
+                symbol: cFunctionTypeParameterSymbol,
+                nullability: .nonNull
+            )))
+            let cFunctionType = types.make(.classType(ClassType(
+                classSymbol: cFunctionSymbol,
+                args: [.invariant(cFunctionTypeParameterType)],
+                nullability: .nonNull
+            )))
+            registerNativeConcurrentConstructor(
+                ownerSymbol: cFunctionSymbol,
+                ownerType: cFunctionType,
+                parameters: [(name: "rawPtr", type: nativePtrType)],
+                defaultValues: [false],
+                typeParameterSymbols: [cFunctionTypeParameterSymbol],
+                classTypeParameterCount: 1,
+                symbols: symbols,
+                interner: interner
+            )
+        }
         configureSingleTypeParameterNominal(
             ownerSymbol: booleanVarOfSymbol,
             fqName: cinteropPkg + [interner.intern("BooleanVarOf")],
