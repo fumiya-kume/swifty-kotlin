@@ -574,7 +574,7 @@
 - [ ] STDLIB-JS-COLLECTIONS-TYPE-004: `kotlin.js.collections.JsReadonlyMap<K, V>` external interface を追加する
 - [x] STDLIB-JS-COLLECTIONS-FN-003: `JsReadonlyArray<E>.toMutableList()` を追加する
 - [x] STDLIB-JS-COLLECTIONS-FN-004: `JsReadonlyMap<K,V>.toMutableMap()` を追加する
-- [ ] STDLIB-JS-COLLECTIONS-FN-005: `JsReadonlySet<E>.toMutableSet()` を追加する
+- [x] STDLIB-JS-COLLECTIONS-FN-005: `JsReadonlySet<E>.toMutableSet()` を追加する
 - [ ] STDLIB-JS-COLLECTIONS-FN-006: `JsReadonlySet<E>.toSet()` を追加する
 - [x] STDLIB-STREAMS-FN-006: `DoubleStream.toList()` を追加する
 - [x] STDLIB-STREAMS-FN-007: `IntStream.toList()` を追加する
