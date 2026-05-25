@@ -1291,6 +1291,18 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let cStructVarSymbol = ensureClassSymbol(
+            named: "CStructVar",
+            in: cinteropPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let cStructVarTypeSymbol = ensureClassSymbol(
+            named: "Type",
+            in: cinteropPkg + [interner.intern("CStructVar")],
+            symbols: symbols,
+            interner: interner
+        )
         let cEnumSymbol = ensureInterfaceSymbol(
             named: "CEnum",
             in: cinteropPkg,
@@ -1423,6 +1435,7 @@ extension DataFlowSemaPhase {
             cPointedSymbol,
             cVariableSymbol,
             cPrimitiveVarSymbol,
+            cStructVarSymbol,
             cEnumSymbol,
             cEnumVarSymbol,
             cFunctionSymbol,
@@ -1450,6 +1463,7 @@ extension DataFlowSemaPhase {
         }
         symbols.setParentSymbol(cVariableSymbol, for: cVariableTypeSymbol)
         symbols.setParentSymbol(cPrimitiveVarSymbol, for: cPrimitiveVarTypeSymbol)
+        symbols.setParentSymbol(cStructVarSymbol, for: cStructVarTypeSymbol)
 
         let nativePointedType = types.make(.classType(ClassType(
             classSymbol: nativePointedSymbol,
@@ -1503,6 +1517,26 @@ extension DataFlowSemaPhase {
         symbols.insertFlags([.openType], for: cPrimitiveVarTypeSymbol)
         symbols.setDirectSupertypes([cVariableTypeSymbol], for: cPrimitiveVarTypeSymbol)
         types.setNominalDirectSupertypes([cVariableTypeSymbol], for: cPrimitiveVarTypeSymbol)
+
+        let cStructVarType = types.make(.classType(ClassType(
+            classSymbol: cStructVarSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(cStructVarType, for: cStructVarSymbol)
+        symbols.insertFlags([.abstractType, .openType], for: cStructVarSymbol)
+        symbols.setDirectSupertypes([cVariableSymbol], for: cStructVarSymbol)
+        types.setNominalDirectSupertypes([cVariableSymbol], for: cStructVarSymbol)
+
+        let cStructVarTypeClassType = types.make(.classType(ClassType(
+            classSymbol: cStructVarTypeSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(cStructVarTypeClassType, for: cStructVarTypeSymbol)
+        symbols.insertFlags([.openType], for: cStructVarTypeSymbol)
+        symbols.setDirectSupertypes([cVariableTypeSymbol], for: cStructVarTypeSymbol)
+        types.setNominalDirectSupertypes([cVariableTypeSymbol], for: cStructVarTypeSymbol)
 
         let cEnumType = types.make(.classType(ClassType(
             classSymbol: cEnumSymbol,
@@ -1577,6 +1611,25 @@ extension DataFlowSemaPhase {
             ownerType: cPrimitiveVarTypeClassType,
             parameters: [(name: "size", type: types.intType)],
             defaultValues: [false],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetConstructor(
+            ownerSymbol: cStructVarSymbol,
+            ownerType: cStructVarType,
+            parameters: [(name: "rawPtr", type: nativePtrType)],
+            defaultValues: [false],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetConstructor(
+            ownerSymbol: cStructVarTypeSymbol,
+            ownerType: cStructVarTypeClassType,
+            parameters: [
+                (name: "size", type: types.longType),
+                (name: "align", type: types.intType),
+            ],
+            defaultValues: [false, false],
             symbols: symbols,
             interner: interner
         )
