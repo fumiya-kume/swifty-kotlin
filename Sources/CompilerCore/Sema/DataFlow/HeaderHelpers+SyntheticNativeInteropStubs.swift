@@ -1738,6 +1738,16 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerSyntheticCInteropSingleTypeParameterTypeAlias(
+            named: "CArrayPointer",
+            in: cinteropPkg,
+            packageSymbol: cinteropPkgSymbol,
+            parameterName: "T",
+            targetSymbol: cPointerSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
 
         for primitiveVar in [
             "UByteVar",
@@ -2030,6 +2040,74 @@ extension DataFlowSemaPhase {
         symbols: SymbolTable,
         interner: StringInterner
     ) {
+        guard let aliasSymbol = ensureSyntheticCInteropTypeAliasSymbol(
+            named: aliasName,
+            in: packageFQName,
+            packageSymbol: packageSymbol,
+            symbols: symbols,
+            interner: interner
+        ) else {
+            return
+        }
+        symbols.setTypeAliasUnderlyingType(underlyingType, for: aliasSymbol)
+    }
+
+    private func registerSyntheticCInteropSingleTypeParameterTypeAlias(
+        named aliasName: String,
+        in packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        parameterName: String,
+        targetSymbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        guard let aliasSymbol = ensureSyntheticCInteropTypeAliasSymbol(
+            named: aliasName,
+            in: packageFQName,
+            packageSymbol: packageSymbol,
+            symbols: symbols,
+            interner: interner
+        ) else {
+            return
+        }
+
+        let aliasFQName = packageFQName + [interner.intern(aliasName)]
+        let parameterInternedName = interner.intern(parameterName)
+        let typeParameterFQName = aliasFQName + [parameterInternedName]
+        let typeParameterSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParameterFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: parameterInternedName,
+                fqName: typeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        symbols.setTypeAliasTypeParameters([typeParameterSymbol], for: aliasSymbol)
+
+        let typeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: typeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let underlyingType = types.make(.classType(ClassType(
+            classSymbol: targetSymbol,
+            args: [.invariant(typeParameterType)],
+            nullability: .nonNull
+        )))
+        symbols.setTypeAliasUnderlyingType(underlyingType, for: aliasSymbol)
+    }
+
+    private func ensureSyntheticCInteropTypeAliasSymbol(
+        named aliasName: String,
+        in packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> SymbolID? {
         let aliasInternedName = interner.intern(aliasName)
         let aliasFQName = packageFQName + [aliasInternedName]
         let aliasSymbol: SymbolID
@@ -2048,13 +2126,13 @@ extension DataFlowSemaPhase {
                 flags: [.synthetic]
             )
         } else {
-            return
+            return nil
         }
 
         if let packageSymbol {
             symbols.setParentSymbol(packageSymbol, for: aliasSymbol)
         }
-        symbols.setTypeAliasUnderlyingType(underlyingType, for: aliasSymbol)
+        return aliasSymbol
     }
 
     private func deprecatedImmutableBlobAnnotations() -> [MetadataAnnotationRecord] {
