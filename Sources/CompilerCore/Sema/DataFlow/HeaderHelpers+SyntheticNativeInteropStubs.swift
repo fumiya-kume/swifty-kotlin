@@ -1882,13 +1882,79 @@ extension DataFlowSemaPhase {
             ownerSymbol: cValuesSymbol,
             fqName: cinteropPkg + [interner.intern("CValues")],
             parameterName: "T",
-            supertype: nil,
+            supertype: cValuesRefSymbol,
             symbols: symbols,
             types: types,
             interner: interner
         )
+        symbols.insertFlags([.abstractType], for: cValuesSymbol)
         if let cValuesTypeParameterSymbol = types.nominalTypeParameterSymbols(for: cValuesSymbol).first {
             symbols.setTypeParameterUpperBounds([cVariableType], for: cValuesTypeParameterSymbol)
+            let cValuesTypeParameterType = types.make(.typeParam(TypeParamType(
+                symbol: cValuesTypeParameterSymbol,
+                nullability: .nonNull
+            )))
+            let cValuesType = types.make(.classType(ClassType(
+                classSymbol: cValuesSymbol,
+                args: [.invariant(cValuesTypeParameterType)],
+                nullability: .nonNull
+            )))
+            let cPointerToCValuesTypeParameterType = types.make(.classType(ClassType(
+                classSymbol: cPointerSymbol,
+                args: [.invariant(cValuesTypeParameterType)],
+                nullability: .nonNull
+            )))
+            registerSyntheticNativeBitSetConstructor(
+                ownerSymbol: cValuesSymbol,
+                ownerType: cValuesType,
+                parameters: [],
+                defaultValues: [],
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticNativeBitSetProperty(
+                named: "align",
+                ownerSymbol: cValuesSymbol,
+                propertyType: types.intType,
+                flags: [.synthetic, .abstractType],
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticNativeBitSetProperty(
+                named: "size",
+                ownerSymbol: cValuesSymbol,
+                propertyType: types.intType,
+                flags: [.synthetic, .abstractType],
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticNativeBitSetMemberFunction(
+                named: "getPointer",
+                ownerSymbol: cValuesSymbol,
+                receiverType: cValuesType,
+                parameters: [(name: "scope", type: autofreeScopeType)],
+                returnType: cPointerToCValuesTypeParameterType,
+                typeParameterSymbols: [cValuesTypeParameterSymbol],
+                typeParameterUpperBoundsList: [[cVariableType]],
+                classTypeParameterCount: 1,
+                flags: [.synthetic, .openType, .overrideMember],
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticNativeBitSetMemberFunction(
+                named: "place",
+                ownerSymbol: cValuesSymbol,
+                receiverType: cValuesType,
+                parameters: [(name: "placement", type: cPointerToCValuesTypeParameterType)],
+                returnType: cPointerToCValuesTypeParameterType,
+                typeParameterSymbols: [cValuesTypeParameterSymbol],
+                typeParameterUpperBoundsList: [[cVariableType]],
+                classTypeParameterCount: 1,
+                flags: [.synthetic, .abstractType],
+                annotations: [MetadataAnnotationRecord(annotationFQName: "kotlin.IgnorableReturnValue")],
+                symbols: symbols,
+                interner: interner
+            )
         }
         registerSyntheticCPointedReadFunction(
             named: "readValue",
@@ -2900,6 +2966,7 @@ extension DataFlowSemaPhase {
         typeParameterUpperBoundsList: [[TypeID]] = [],
         classTypeParameterCount: Int = 0,
         flags: SymbolFlags = [.synthetic],
+        annotations: [MetadataAnnotationRecord] = [],
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -2920,6 +2987,7 @@ extension DataFlowSemaPhase {
                 && signature.classTypeParameterCount == classTypeParameterCount
         }) {
             symbols.insertFlags(flags, for: existing)
+            appendMetadataAnnotations(annotations, to: existing, symbols: symbols)
             return
         }
 
@@ -2966,6 +3034,7 @@ extension DataFlowSemaPhase {
             ),
             for: functionSymbol
         )
+        appendMetadataAnnotations(annotations, to: functionSymbol, symbols: symbols)
     }
 
     private func registerSyntheticNativeTopLevelFunction(
