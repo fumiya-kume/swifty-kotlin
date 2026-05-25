@@ -596,7 +596,7 @@
 - [x] STDLIB-CINTEROP-TYPE-008: `kotlinx.cinterop.ByteVarOf<T>` class surface を追加する
 - [x] STDLIB-CINTEROP-TYPE-009: `kotlinx.cinterop.CArrayPointer<T>` typealias を追加する
 - [x] STDLIB-CINTEROP-TYPE-010: `kotlinx.cinterop.CArrayPointerVar<T>` typealias を追加する
-- [ ] STDLIB-CINTEROP-TYPE-011: `kotlinx.cinterop.CEnum` interface surface を追加する
+- [x] STDLIB-CINTEROP-TYPE-011: `kotlinx.cinterop.CEnum` interface surface を追加する
 - [ ] STDLIB-CINTEROP-TYPE-012: `kotlinx.cinterop.CEnumVar` class surface を追加する
 - [ ] STDLIB-CINTEROP-TYPE-013: `kotlinx.cinterop.CFunction<T>` class surface を追加する
 - [ ] STDLIB-CINTEROP-TYPE-014: `kotlinx.cinterop.COpaque` class surface を追加する

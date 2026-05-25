@@ -1279,6 +1279,12 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let cEnumSymbol = ensureInterfaceSymbol(
+            named: "CEnum",
+            in: cinteropPkg,
+            symbols: symbols,
+            interner: interner
+        )
         let cOpaquePointerSymbol = ensureClassSymbol(
             named: "COpaquePointer",
             in: cinteropPkg,
@@ -1369,6 +1375,7 @@ extension DataFlowSemaPhase {
             cPointedSymbol,
             cVariableSymbol,
             cPrimitiveVarSymbol,
+            cEnumSymbol,
             cOpaquePointerSymbol,
             nativePtrSymbol,
             nativePlacementSymbol,
@@ -1422,6 +1429,22 @@ extension DataFlowSemaPhase {
         symbols.setPropertyType(cPrimitiveVarType, for: cPrimitiveVarSymbol)
         symbols.setDirectSupertypes([cVariableSymbol], for: cPrimitiveVarSymbol)
         types.setNominalDirectSupertypes([cVariableSymbol], for: cPrimitiveVarSymbol)
+
+        let cEnumType = types.make(.classType(ClassType(
+            classSymbol: cEnumSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(cEnumType, for: cEnumSymbol)
+        appendMetadataAnnotations(deprecatedCEnumAnnotations(), to: cEnumSymbol, symbols: symbols)
+        registerSyntheticNativeBitSetProperty(
+            named: "value",
+            ownerSymbol: cEnumSymbol,
+            propertyType: types.anyType,
+            flags: [.synthetic, .abstractType],
+            symbols: symbols,
+            interner: interner
+        )
 
         let cOpaquePointerType = types.make(.classType(ClassType(
             classSymbol: cOpaquePointerSymbol,
@@ -2215,6 +2238,15 @@ extension DataFlowSemaPhase {
                 ]
             ),
             MetadataAnnotationRecord(annotationFQName: "kotlinx.cinterop.ExperimentalForeignApi"),
+        ]
+    }
+
+    private func deprecatedCEnumAnnotations() -> [MetadataAnnotationRecord] {
+        [
+            MetadataAnnotationRecord(
+                annotationFQName: "kotlin.Deprecated",
+                arguments: ["message = \"Will be removed.\""]
+            ),
         ]
     }
 
