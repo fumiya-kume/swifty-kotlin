@@ -81,7 +81,6 @@ extension ABIMismatchTests {
             "kk_js_number_toDouble",
             "kk_js_number_toInt",
             "kk_list_toJsArray",
-            "kk_js_reference_get",
             "kk_jsclass_kotlin",
             "kk_kclass_has_annotation",
             "kk_kclass_java",
