@@ -7,7 +7,7 @@ import XCTest
 /// These implement Kotlin `Int.countOneBits`, `Int.countLeadingZeroBits`, and
 /// `Int.countTrailingZeroBits` with Kotlin Int (32-bit signed) semantics:
 /// the Swift Int argument is truncated to Int32 before querying bit properties.
-final class RuntimeBitCountTests: IsolatedRuntimeXCTestCase {
+final class RuntimeBitCountTests: XCTestCase {
 
     // MARK: - Shared constants
 

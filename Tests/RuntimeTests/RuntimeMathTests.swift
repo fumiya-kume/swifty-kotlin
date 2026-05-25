@@ -1,7 +1,7 @@
 @testable import Runtime
 import XCTest
 
-final class RuntimeMathTests: IsolatedRuntimeXCTestCase {
+final class RuntimeMathTests: XCTestCase {
     // MARK: - Int
 
     func testAbsInt() {

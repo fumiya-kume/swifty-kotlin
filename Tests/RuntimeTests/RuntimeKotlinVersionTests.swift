@@ -1,7 +1,7 @@
 @testable import Runtime
 import XCTest
 
-final class RuntimeKotlinVersionTests: IsolatedRuntimeXCTestCase {
+final class RuntimeKotlinVersionTests: XCTestCase {
     func testTwoArgumentConstructorDefaultsPatchToZero() {
         let version = kk_kotlin_version_new(2, 1)
 

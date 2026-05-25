@@ -1,7 +1,7 @@
 @testable import Runtime
 import XCTest
 
-final class RuntimeArrayBoundsTests: IsolatedRuntimeXCTestCase {
+final class RuntimeArrayBoundsTests: XCTestCase {
     private func makeMutableList(_ elements: [Int]) -> Int {
         let array = kk_array_new(elements.count)
         var thrown = 0

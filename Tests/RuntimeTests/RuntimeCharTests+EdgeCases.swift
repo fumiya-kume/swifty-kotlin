@@ -5,7 +5,7 @@
 @testable import Runtime
 import XCTest
 
-final class RuntimeCharEdgeCaseTests: IsolatedRuntimeXCTestCase {
+final class RuntimeCharEdgeCaseTests: XCTestCase {
 
     // MARK: - Helpers
 

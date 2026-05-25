@@ -32,7 +32,7 @@ private func fnPtrInt(_ fn: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> 
     Int(bitPattern: unsafeBitCast(fn, to: UnsafeRawPointer.self))
 }
 
-final class RuntimePreconditionLazyTests: IsolatedRuntimeXCTestCase {
+final class RuntimePreconditionLazyTests: XCTestCase {
 
     // MARK: - kk_require (non-lazy)
 

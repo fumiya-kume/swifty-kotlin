@@ -1,7 +1,7 @@
 @testable import Runtime
 import XCTest
 
-final class RuntimeRandomTests: IsolatedRuntimeXCTestCase {
+final class RuntimeRandomTests: XCTestCase {
     // MARK: - Default
 
     func testRandomDefaultReturnsDefaultReceiver() {

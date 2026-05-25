@@ -1,7 +1,7 @@
 @testable import Runtime
 import XCTest
 
-final class RuntimeNumericModTests: IsolatedRuntimeXCTestCase {
+final class RuntimeNumericModTests: XCTestCase {
     func testSignedFloorModUsesKotlinRemainderSemantics() {
         XCTAssertEqual(kk_op_floor_mod(-7, 3), 2)
         XCTAssertEqual(kk_op_floor_mod(7, -3), -2)

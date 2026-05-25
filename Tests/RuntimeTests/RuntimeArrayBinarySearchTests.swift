@@ -1,7 +1,7 @@
 @testable import Runtime
 import XCTest
 
-final class RuntimeArrayBinarySearchTests: IsolatedRuntimeXCTestCase {
+final class RuntimeArrayBinarySearchTests: XCTestCase {
     private func makeArray(_ elements: [Int]) -> Int {
         let array = kk_array_new(elements.count)
         var thrown = -1

@@ -17,7 +17,7 @@ private let rangeMapIndexedSum: @convention(c) (Int, Int, Int, UnsafeMutablePoin
     index + value
 }
 
-final class RuntimeRangeHOFTests: IsolatedRuntimeXCTestCase {
+final class RuntimeRangeHOFTests: XCTestCase {
     func testRangeMapProducesMappedList() {
         let range = kk_op_rangeTo(1, 4)
         let mapped = kk_range_map(range, unsafeBitCast(rangeMapDouble, to: Int.self), 0, nil)
