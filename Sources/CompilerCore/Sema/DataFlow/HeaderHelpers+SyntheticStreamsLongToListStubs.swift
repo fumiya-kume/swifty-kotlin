@@ -7,6 +7,24 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner
     ) {
+        registerSyntheticPrimitiveStreamToListStubs(
+            streamClassName: "LongStream",
+            elementType: types.longType,
+            externalLinkName: "kk_long_stream_toList",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+    }
+
+    func registerSyntheticPrimitiveStreamToListStubs(
+        streamClassName: String,
+        elementType: TypeID,
+        externalLinkName: String,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
         let javaStreamPkg = ensurePackage(
             path: ["java", "util", "stream"],
             symbols: symbols,
@@ -22,32 +40,31 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
-        let longStreamSymbol = ensureClassSymbol(
-            named: "LongStream",
+        let streamSymbol = ensureClassSymbol(
+            named: streamClassName,
             in: javaStreamPkg,
             symbols: symbols,
             interner: interner
         )
         if let javaStreamPkgSymbol = symbols.lookup(fqName: javaStreamPkg) {
-            symbols.setParentSymbol(javaStreamPkgSymbol, for: longStreamSymbol)
+            symbols.setParentSymbol(javaStreamPkgSymbol, for: streamSymbol)
         }
         guard let listSymbol = symbols.lookup(fqName: kotlinCollectionsPkg + [interner.intern("List")]) else {
             return
         }
 
         let receiverType = types.make(.classType(ClassType(
-            classSymbol: longStreamSymbol,
+            classSymbol: streamSymbol,
             args: [],
             nullability: .nonNull
         )))
         let returnType = types.make(.classType(ClassType(
             classSymbol: listSymbol,
-            args: [.out(types.longType)],
+            args: [.out(elementType)],
             nullability: .nonNull
         )))
         let functionName = interner.intern("toList")
         let functionFQName = kotlinStreamsPkg + [functionName]
-        let externalLinkName = "kk_long_stream_toList"
 
         if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbol in
             guard let signature = symbols.functionSignature(for: symbol) else {
