@@ -1,6 +1,6 @@
 import Foundation
 
-/// Synthetic Kotlin/JS collections `JsReadonlyMap<K, V>.toMap()` conversion surface.
+/// Synthetic Kotlin/JS collections `JsReadonlyMap<K, V>` conversion surfaces.
 extension DataFlowSemaPhase {
     func registerSyntheticJsCollectionsReadonlyMapToMapStubs(
         symbols: SymbolTable,
@@ -47,6 +47,61 @@ extension DataFlowSemaPhase {
         )))
 
         registerJsReadonlyMapToMapMember(
+            ownerSymbol: readonlyMap.symbol,
+            ownerType: receiverType,
+            returnType: returnType,
+            keyTypeParamSymbol: readonlyMap.keyTypeParameterSymbol,
+            valueTypeParamSymbol: readonlyMap.valueTypeParameterSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    func registerSyntheticJsCollectionsReadonlyMapToMutableMapStubs(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let pkg = ensurePackage(
+            path: ["kotlin", "js", "collections"],
+            symbols: symbols,
+            interner: interner
+        )
+        let collectionsPkg = ensurePackage(
+            path: ["kotlin", "collections"],
+            symbols: symbols,
+            interner: interner
+        )
+        let readonlyMap = ensureJsReadonlyMapForToMap(
+            packageFQName: pkg,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        guard let mutableMapSymbol = symbols.lookup(fqName: collectionsPkg + [interner.intern("MutableMap")]) else {
+            return
+        }
+
+        let keyType = types.make(.typeParam(TypeParamType(
+            symbol: readonlyMap.keyTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let valueType = types.make(.typeParam(TypeParamType(
+            symbol: readonlyMap.valueTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: readonlyMap.symbol,
+            args: [.invariant(keyType), .out(valueType)],
+            nullability: .nonNull
+        )))
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: mutableMapSymbol,
+            args: [.invariant(keyType), .invariant(valueType)],
+            nullability: .nonNull
+        )))
+
+        registerJsReadonlyMapToMutableMapMember(
             ownerSymbol: readonlyMap.symbol,
             ownerType: receiverType,
             returnType: returnType,
@@ -153,6 +208,61 @@ extension DataFlowSemaPhase {
         let functionName = interner.intern("toMap")
         let functionFQName = ownerInfo.fqName + [functionName]
         let externalLinkName = "kk_js_map_toMap"
+        let typeParameterSymbols = [keyTypeParamSymbol, valueTypeParamSymbol]
+
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbol in
+            guard let signature = symbols.functionSignature(for: symbol) else {
+                return false
+            }
+            return signature.receiverType == ownerType
+                && signature.parameterTypes.isEmpty
+                && signature.returnType == returnType
+                && signature.typeParameterSymbols == typeParameterSymbols
+                && signature.classTypeParameterCount == 2
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            appendJsCollectionsReadonlyMapToMapAnnotation(to: existing, symbols: symbols)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+        appendJsCollectionsReadonlyMapToMapAnnotation(to: functionSymbol, symbols: symbols)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: ownerType,
+                parameterTypes: [],
+                returnType: returnType,
+                typeParameterSymbols: typeParameterSymbols,
+                classTypeParameterCount: 2
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerJsReadonlyMapToMutableMapMember(
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        returnType: TypeID,
+        keyTypeParamSymbol: SymbolID,
+        valueTypeParamSymbol: SymbolID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let functionName = interner.intern("toMutableMap")
+        let functionFQName = ownerInfo.fqName + [functionName]
+        let externalLinkName = "kk_js_map_toMutableMap"
         let typeParameterSymbols = [keyTypeParamSymbol, valueTypeParamSymbol]
 
         if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbol in
