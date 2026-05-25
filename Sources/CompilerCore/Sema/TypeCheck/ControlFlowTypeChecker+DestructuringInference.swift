@@ -272,7 +272,7 @@ extension ControlFlowTypeChecker {
             switch arg {
             case let .invariant(t): substitution[typeVar] = t
             case let .out(t):       substitution[typeVar] = t
-            case let .in(t):        substitution[typeVar] = effectiveUpperBound(for: tpSymbol, sema: sema)
+            case .in:               substitution[typeVar] = effectiveUpperBound(for: tpSymbol, sema: sema)
             case .star:             substitution[typeVar] = effectiveUpperBound(for: tpSymbol, sema: sema)
             }
         }
