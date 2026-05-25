@@ -1357,6 +1357,12 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let byteVarOfSymbol = ensureClassSymbol(
+            named: "ByteVarOf",
+            in: cinteropPkg,
+            symbols: symbols,
+            interner: interner
+        )
 
         for symbol in [
             nativePointedSymbol,
@@ -1376,6 +1382,7 @@ extension DataFlowSemaPhase {
             cPointerSymbol,
             cPointerVarSymbol,
             booleanVarOfSymbol,
+            byteVarOfSymbol,
         ] {
             if let cinteropPkgSymbol {
                 symbols.setParentSymbol(cinteropPkgSymbol, for: symbol)
@@ -1666,40 +1673,43 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
         }
+        configureSingleTypeParameterNominal(
+            ownerSymbol: byteVarOfSymbol,
+            fqName: cinteropPkg + [interner.intern("ByteVarOf")],
+            parameterName: "T",
+            supertype: nil,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
         let booleanVarType = types.make(.classType(ClassType(
             classSymbol: booleanVarOfSymbol,
             args: [.invariant(types.booleanType)],
             nullability: .nonNull
         )))
-        let booleanVarAliasName = interner.intern("BooleanVar")
-        let booleanVarAliasFQName = cinteropPkg + [booleanVarAliasName]
-        let booleanVarAliasSymbol: SymbolID
-        if let existing = symbols.lookup(fqName: booleanVarAliasFQName),
-           symbols.symbol(existing)?.kind == .typeAlias
-        {
-            booleanVarAliasSymbol = existing
-            symbols.insertFlags([.synthetic], for: existing)
-        } else if symbols.lookup(fqName: booleanVarAliasFQName) == nil {
-            booleanVarAliasSymbol = symbols.define(
-                kind: .typeAlias,
-                name: booleanVarAliasName,
-                fqName: booleanVarAliasFQName,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic]
-            )
-        } else {
-            booleanVarAliasSymbol = .invalid
-        }
-        if booleanVarAliasSymbol.rawValue >= 0 {
-            if let cinteropPkgSymbol {
-                symbols.setParentSymbol(cinteropPkgSymbol, for: booleanVarAliasSymbol)
-            }
-            symbols.setTypeAliasUnderlyingType(booleanVarType, for: booleanVarAliasSymbol)
-        }
+        registerSyntheticCInteropTypeAlias(
+            named: "BooleanVar",
+            in: cinteropPkg,
+            packageSymbol: cinteropPkgSymbol,
+            underlyingType: booleanVarType,
+            symbols: symbols,
+            interner: interner
+        )
+        let byteVarType = types.make(.classType(ClassType(
+            classSymbol: byteVarOfSymbol,
+            args: [.invariant(types.intType)],
+            nullability: .nonNull
+        )))
+        registerSyntheticCInteropTypeAlias(
+            named: "ByteVar",
+            in: cinteropPkg,
+            packageSymbol: cinteropPkgSymbol,
+            underlyingType: byteVarType,
+            symbols: symbols,
+            interner: interner
+        )
 
         for primitiveVar in [
-            "ByteVar",
             "UByteVar",
             "ShortVar",
             "UShortVar",
@@ -1980,6 +1990,41 @@ extension DataFlowSemaPhase {
             args: [.invariant(pointedType)],
             nullability: .nonNull
         )))
+    }
+
+    private func registerSyntheticCInteropTypeAlias(
+        named aliasName: String,
+        in packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        underlyingType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let aliasInternedName = interner.intern(aliasName)
+        let aliasFQName = packageFQName + [aliasInternedName]
+        let aliasSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: aliasFQName),
+           symbols.symbol(existing)?.kind == .typeAlias
+        {
+            aliasSymbol = existing
+            symbols.insertFlags([.synthetic], for: existing)
+        } else if symbols.lookup(fqName: aliasFQName) == nil {
+            aliasSymbol = symbols.define(
+                kind: .typeAlias,
+                name: aliasInternedName,
+                fqName: aliasFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        } else {
+            return
+        }
+
+        if let packageSymbol {
+            symbols.setParentSymbol(packageSymbol, for: aliasSymbol)
+        }
+        symbols.setTypeAliasUnderlyingType(underlyingType, for: aliasSymbol)
     }
 
     private func deprecatedImmutableBlobAnnotations() -> [MetadataAnnotationRecord] {
