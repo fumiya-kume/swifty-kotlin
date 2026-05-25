@@ -848,15 +848,17 @@ public enum RuntimeABISpec {
             section: "System"
         ),
         RuntimeABIFunctionSpec(
-<<<<<<< HEAD
             name: "kk_js_map_toMutableMap",
             parameters: [
                 RuntimeABIParameter(name: "jsMapRaw", type: .intptr),
-=======
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_js_set_toMutableSet",
             parameters: [
                 RuntimeABIParameter(name: "jsSetRaw", type: .intptr),
->>>>>>> 9527b962d (Add JsReadonlySet toMutableSet surface)
             ],
             returnType: .intptr,
             section: "System"
