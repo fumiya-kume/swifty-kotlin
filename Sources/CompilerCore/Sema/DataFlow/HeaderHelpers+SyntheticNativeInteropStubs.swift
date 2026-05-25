@@ -1488,6 +1488,7 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(cVariableType, for: cVariableSymbol)
+        symbols.insertFlags([.abstractType], for: cVariableSymbol)
         symbols.setDirectSupertypes([cPointedSymbol], for: cVariableSymbol)
         types.setNominalDirectSupertypes([cPointedSymbol], for: cVariableSymbol)
 
@@ -1497,6 +1498,17 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(cVariableTypeClassType, for: cVariableTypeSymbol)
+        symbols.insertFlags([.openType], for: cVariableTypeSymbol)
+        appendMetadataAnnotations(
+            [
+                MetadataAnnotationRecord(
+                    annotationFQName: "kotlin.Deprecated",
+                    arguments: ["message = \"Use sizeOf<T>() or alignOf<T>() instead.\""]
+                ),
+            ],
+            to: cVariableTypeSymbol,
+            symbols: symbols
+        )
 
         let cPrimitiveVarType = types.make(.classType(ClassType(
             classSymbol: cPrimitiveVarSymbol,
@@ -1597,6 +1609,40 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerSyntheticNativeBitSetConstructor(
+            ownerSymbol: cVariableSymbol,
+            ownerType: cVariableType,
+            parameters: [(name: "rawPtr", type: nativePtrType)],
+            defaultValues: [false],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetConstructor(
+            ownerSymbol: cVariableTypeSymbol,
+            ownerType: cVariableTypeClassType,
+            parameters: [
+                (name: "size", type: types.longType),
+                (name: "align", type: types.intType),
+            ],
+            defaultValues: [false, false],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetProperty(
+            named: "size",
+            ownerSymbol: cVariableTypeSymbol,
+            propertyType: types.longType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetProperty(
+            named: "align",
+            ownerSymbol: cVariableTypeSymbol,
+            propertyType: types.intType,
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticNativeBitSetConstructor(
             ownerSymbol: cPrimitiveVarSymbol,
             ownerType: cPrimitiveVarType,
