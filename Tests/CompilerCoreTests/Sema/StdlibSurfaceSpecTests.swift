@@ -135,6 +135,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("sumOf", 1),
             sequence("sumBy", 1),
             sequence("sumByDouble", 1),
+            sequence("minOf", 1),
             sequence("maxWith", 1),
             sequence("minWithOrNull", 1),
             sequence("minOfOrNull", 1),

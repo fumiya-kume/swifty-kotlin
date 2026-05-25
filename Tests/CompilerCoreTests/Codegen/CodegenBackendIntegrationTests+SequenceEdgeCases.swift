@@ -1218,6 +1218,35 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testCodegenSequenceMinOfReturnsSmallestSelectedValueAndThrowsOnEmpty() throws {
+        let source = """
+        fun main() {
+            println(sequenceOf(5, 2, 3).minOf { it * 10 })
+            try {
+                emptySequence<Int>().minOf { it * 10 }
+                println("missing")
+            } catch (t: Throwable) {
+                println("caught")
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceMinOf",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "20\ncaught\n")
+        }
+    }
+
     func testCodegenSequenceMinReturnsSmallestElementAndThrowsOnEmpty() throws {
         let source = """
         fun main() {
