@@ -1808,6 +1808,31 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        if let cPointerTypeParameterSymbol = types.nominalTypeParameterSymbols(for: cPointerSymbol).first {
+            symbols.setTypeParameterUpperBounds([cPointedType], for: cPointerTypeParameterSymbol)
+            let cPointerTypeParameterType = types.make(.typeParam(TypeParamType(
+                symbol: cPointerTypeParameterSymbol,
+                nullability: .nonNull
+            )))
+            let cPointerType = types.make(.classType(ClassType(
+                classSymbol: cPointerSymbol,
+                args: [.invariant(cPointerTypeParameterType)],
+                nullability: .nonNull
+            )))
+            registerSyntheticNativeBitSetMemberFunction(
+                named: "getPointer",
+                ownerSymbol: cPointerSymbol,
+                receiverType: cPointerType,
+                parameters: [(name: "scope", type: autofreeScopeType)],
+                returnType: cPointerType,
+                typeParameterSymbols: [cPointerTypeParameterSymbol],
+                typeParameterUpperBoundsList: [[cPointedType]],
+                classTypeParameterCount: 1,
+                flags: [.synthetic, .openType, .overrideMember],
+                symbols: symbols,
+                interner: interner
+            )
+        }
         configureSingleTypeParameterNominal(
             ownerSymbol: cPointerVarOfSymbol,
             fqName: cinteropPkg + [interner.intern("CPointerVarOf")],
