@@ -1357,6 +1357,18 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let cValueSymbol = ensureClassSymbol(
+            named: "CValue",
+            in: cinteropPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let cValuesSymbol = ensureClassSymbol(
+            named: "CValues",
+            in: cinteropPkg,
+            symbols: symbols,
+            interner: interner
+        )
         let cPointerSymbol = ensureClassSymbol(
             named: "CPointer",
             in: cinteropPkg,
@@ -1406,6 +1418,8 @@ extension DataFlowSemaPhase {
             arenaSymbol,
             memScopeSymbol,
             cValuesRefSymbol,
+            cValueSymbol,
+            cValuesSymbol,
             cPointerSymbol,
             cPointerVarSymbol,
             cPointerVarOfSymbol,
@@ -1430,6 +1444,7 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(cPointedType, for: cPointedSymbol)
+        symbols.insertFlags([.abstractType], for: cPointedSymbol)
         symbols.setDirectSupertypes([nativePointedSymbol], for: cPointedSymbol)
         types.setNominalDirectSupertypes([nativePointedSymbol], for: cPointedSymbol)
 
@@ -1493,6 +1508,23 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(nativePtrType, for: nativePtrSymbol)
+
+        registerSyntheticNativeBitSetConstructor(
+            ownerSymbol: cPointedSymbol,
+            ownerType: cPointedType,
+            parameters: [(name: "rawPtr", type: nativePtrType)],
+            defaultValues: [false],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetProperty(
+            named: "rawPtr",
+            ownerSymbol: cPointedSymbol,
+            propertyType: nativePtrType,
+            flags: [.synthetic, .mutable],
+            symbols: symbols,
+            interner: interner
+        )
 
         registerSyntheticNativeBitSetConstructor(
             ownerSymbol: cEnumVarSymbol,
@@ -1683,6 +1715,58 @@ extension DataFlowSemaPhase {
             fqName: cinteropPkg + [interner.intern("CValuesRef")],
             parameterName: "T",
             supertype: nil,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        configureSingleTypeParameterNominal(
+            ownerSymbol: cValueSymbol,
+            fqName: cinteropPkg + [interner.intern("CValue")],
+            parameterName: "T",
+            supertype: nil,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        if let cValueTypeParameterSymbol = types.nominalTypeParameterSymbols(for: cValueSymbol).first {
+            symbols.setTypeParameterUpperBounds([cVariableType], for: cValueTypeParameterSymbol)
+        }
+        configureSingleTypeParameterNominal(
+            ownerSymbol: cValuesSymbol,
+            fqName: cinteropPkg + [interner.intern("CValues")],
+            parameterName: "T",
+            supertype: nil,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        if let cValuesTypeParameterSymbol = types.nominalTypeParameterSymbols(for: cValuesSymbol).first {
+            symbols.setTypeParameterUpperBounds([cVariableType], for: cValuesTypeParameterSymbol)
+        }
+        registerSyntheticCPointedReadFunction(
+            named: "readValue",
+            ownerSymbol: cPointedSymbol,
+            ownerType: cPointedType,
+            typeParameterUpperBound: cVariableType,
+            returnClassSymbol: cValueSymbol,
+            parameters: [
+                (name: "size", type: types.longType),
+                (name: "align", type: types.intType),
+            ],
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerSyntheticCPointedReadFunction(
+            named: "readValues",
+            ownerSymbol: cPointedSymbol,
+            ownerType: cPointedType,
+            typeParameterUpperBound: cVariableType,
+            returnClassSymbol: cValuesSymbol,
+            parameters: [
+                (name: "size", type: types.intType),
+                (name: "align", type: types.intType),
+            ],
             symbols: symbols,
             types: types,
             interner: interner
@@ -2408,6 +2492,61 @@ extension DataFlowSemaPhase {
         }
     }
 
+    private func registerSyntheticCPointedReadFunction(
+        named name: String,
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        typeParameterUpperBound: TypeID,
+        returnClassSymbol: SymbolID,
+        parameters: [(name: String, type: TypeID)],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let functionName = interner.intern(name)
+        let functionFQName = ownerInfo.fqName + [functionName]
+        let typeParameterName = interner.intern("T")
+        let typeParameterFQName = functionFQName + [typeParameterName]
+        let typeParameterSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParameterFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParameterName,
+                fqName: typeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+        }
+        symbols.setTypeParameterUpperBounds([typeParameterUpperBound], for: typeParameterSymbol)
+
+        let typeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: typeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: returnClassSymbol,
+            args: [.invariant(typeParameterType)],
+            nullability: .nonNull
+        )))
+
+        registerSyntheticNativeBitSetMemberFunction(
+            named: name,
+            ownerSymbol: ownerSymbol,
+            receiverType: ownerType,
+            parameters: parameters,
+            returnType: returnType,
+            typeParameterSymbols: [typeParameterSymbol],
+            typeParameterUpperBoundsList: [[typeParameterUpperBound]],
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
     private func registerSyntheticNativeBitSetConstructor(
         ownerSymbol: SymbolID,
         ownerType: TypeID,
@@ -2509,6 +2648,9 @@ extension DataFlowSemaPhase {
         parameters: [(name: String, type: TypeID)],
         returnType: TypeID,
         defaultValues: [Bool]? = nil,
+        typeParameterSymbols: [SymbolID] = [],
+        typeParameterUpperBoundsList: [[TypeID]] = [],
+        classTypeParameterCount: Int = 0,
         flags: SymbolFlags = [.synthetic],
         symbols: SymbolTable,
         interner: StringInterner
@@ -2526,6 +2668,8 @@ extension DataFlowSemaPhase {
             return signature.receiverType == receiverType
                 && signature.parameterTypes == parameterTypes
                 && signature.returnType == returnType
+                && signature.typeParameterSymbols == typeParameterSymbols
+                && signature.classTypeParameterCount == classTypeParameterCount
         }) {
             symbols.insertFlags(flags, for: existing)
             return
@@ -2540,6 +2684,9 @@ extension DataFlowSemaPhase {
             flags: flags
         )
         symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
+        for typeParameterSymbol in typeParameterSymbols {
+            symbols.setParentSymbol(functionSymbol, for: typeParameterSymbol)
+        }
 
         let valueParameterSymbols = parameters.map { parameter in
             let parameterName = interner.intern(parameter.name)
@@ -2564,7 +2711,10 @@ extension DataFlowSemaPhase {
                 isSuspend: false,
                 valueParameterSymbols: valueParameterSymbols,
                 valueParameterHasDefaultValues: defaultValues ?? Array(repeating: false, count: valueParameterSymbols.count),
-                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count),
+                typeParameterSymbols: typeParameterSymbols,
+                typeParameterUpperBoundsList: typeParameterUpperBoundsList,
+                classTypeParameterCount: classTypeParameterCount
             ),
             for: functionSymbol
         )
