@@ -1285,6 +1285,12 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let cEnumVarSymbol = ensureClassSymbol(
+            named: "CEnumVar",
+            in: cinteropPkg,
+            symbols: symbols,
+            interner: interner
+        )
         let cOpaquePointerSymbol = ensureClassSymbol(
             named: "COpaquePointer",
             in: cinteropPkg,
@@ -1376,6 +1382,7 @@ extension DataFlowSemaPhase {
             cVariableSymbol,
             cPrimitiveVarSymbol,
             cEnumSymbol,
+            cEnumVarSymbol,
             cOpaquePointerSymbol,
             nativePtrSymbol,
             nativePlacementSymbol,
@@ -1446,6 +1453,16 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        let cEnumVarType = types.make(.classType(ClassType(
+            classSymbol: cEnumVarSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(cEnumVarType, for: cEnumVarSymbol)
+        symbols.insertFlags([.abstractType], for: cEnumVarSymbol)
+        symbols.setDirectSupertypes([cPrimitiveVarSymbol], for: cEnumVarSymbol)
+        types.setNominalDirectSupertypes([cPrimitiveVarSymbol], for: cEnumVarSymbol)
+
         let cOpaquePointerType = types.make(.classType(ClassType(
             classSymbol: cOpaquePointerSymbol,
             args: [],
@@ -1461,6 +1478,15 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(nativePtrType, for: nativePtrSymbol)
+
+        registerSyntheticNativeBitSetConstructor(
+            ownerSymbol: cEnumVarSymbol,
+            ownerType: cEnumVarType,
+            parameters: [(name: "rawPtr", type: nativePtrType)],
+            defaultValues: [false],
+            symbols: symbols,
+            interner: interner
+        )
 
         let nativePlacementType = types.make(.classType(ClassType(
             classSymbol: nativePlacementSymbol,
