@@ -303,7 +303,7 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
             &thrown
         )
         XCTAssertEqual(thrown, 0)
-        XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
+        XCTAssertEqual(emptyResult, runtimeExceptionCaughtSentinel)
     }
 
     func testMinByReturnsElementWithSmallestSelectorAndThrowsOnEmpty() {
