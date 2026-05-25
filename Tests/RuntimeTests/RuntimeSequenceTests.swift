@@ -2137,6 +2137,15 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(box.message, kEmptySequenceNoSuchElement)
     }
 
+    func testRandomReturnsOnlyElementAndThrowsOnEmpty() {
+        var thrown = 0
+        XCTAssertEqual(kk_sequence_random(makeSequence([42]), &thrown), 42)
+        XCTAssertEqual(thrown, 0)
+        thrown = 0
+        XCTAssertEqual(kk_sequence_random(makeSequence([]), &thrown), 0)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
     func testRandomOrNullReturnsOnlyElementAndNullOnEmpty() {
         var thrown = 0
         let only = kk_sequence_randomOrNull(makeSequence([42]), &thrown)
