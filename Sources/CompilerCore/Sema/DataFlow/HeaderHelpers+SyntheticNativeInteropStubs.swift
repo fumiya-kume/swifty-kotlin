@@ -1910,6 +1910,45 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        symbols.insertFlags([.abstractType], for: cValuesRefSymbol)
+        if let cValuesRefTypeParameterSymbol = types.nominalTypeParameterSymbols(for: cValuesRefSymbol).first {
+            symbols.setTypeParameterUpperBounds([cPointedType], for: cValuesRefTypeParameterSymbol)
+            let cValuesRefTypeParameterType = types.make(.typeParam(TypeParamType(
+                symbol: cValuesRefTypeParameterSymbol,
+                nullability: .nonNull
+            )))
+            let cValuesRefType = types.make(.classType(ClassType(
+                classSymbol: cValuesRefSymbol,
+                args: [.invariant(cValuesRefTypeParameterType)],
+                nullability: .nonNull
+            )))
+            let cPointerToCValuesRefTypeParameterType = types.make(.classType(ClassType(
+                classSymbol: cPointerSymbol,
+                args: [.invariant(cValuesRefTypeParameterType)],
+                nullability: .nonNull
+            )))
+            registerSyntheticNativeBitSetConstructor(
+                ownerSymbol: cValuesRefSymbol,
+                ownerType: cValuesRefType,
+                parameters: [],
+                defaultValues: [],
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticNativeBitSetMemberFunction(
+                named: "getPointer",
+                ownerSymbol: cValuesRefSymbol,
+                receiverType: cValuesRefType,
+                parameters: [(name: "scope", type: autofreeScopeType)],
+                returnType: cPointerToCValuesRefTypeParameterType,
+                typeParameterSymbols: [cValuesRefTypeParameterSymbol],
+                typeParameterUpperBoundsList: [[cPointedType]],
+                classTypeParameterCount: 1,
+                flags: [.synthetic, .abstractType],
+                symbols: symbols,
+                interner: interner
+            )
+        }
         configureSingleTypeParameterNominal(
             ownerSymbol: cValueSymbol,
             fqName: cinteropPkg + [interner.intern("CValue")],
