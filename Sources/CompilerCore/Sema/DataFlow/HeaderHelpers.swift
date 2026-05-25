@@ -1121,6 +1121,7 @@ extension DataFlowSemaPhase {
         registerSyntheticCoroutinesABIStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticWasmUnsafeAnnotationStubs(symbols: symbols, interner: interner)
         registerSyntheticWasmUnsafeMemoryAllocatorStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticWasmUnsafePointerStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsExternalInheritorsOnlyStubs(symbols: symbols, interner: interner)
         registerSyntheticJsArrayStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticDynamicStubs(symbols: symbols, types: types, interner: interner)
