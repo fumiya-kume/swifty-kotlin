@@ -676,6 +676,21 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // indexOfFirst(predicate: (T) -> Boolean): Int
+        registerSequenceMemberStub(
+            named: "indexOfFirst",
+            externalLinkName: "kk_sequence_indexOfFirst",
+            receiverType: receiverType,
+            parameters: [("predicate", predicateType)],
+            returnType: types.intType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner,
+            canThrow: true
+        )
+
         // lastIndexOf(element: T): Int
         registerSequenceMemberStub(
             named: "lastIndexOf",
@@ -718,6 +733,7 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
 
         // elementAtOrNull(index: Int): T?
         registerSequenceMemberStub(
@@ -2451,6 +2467,54 @@ extension DataFlowSemaPhase {
                 flags: [.synthetic, .inlineFunction]
             )
         }
+
+        // maxWith(comparator): T
+        do {
+            let comparatorType = if let comparatorSymbol = symbols.lookupByShortName(interner.intern("Comparator")).first {
+                types.make(.classType(ClassType(
+                    classSymbol: comparatorSymbol,
+                    args: [.invariant(typeParamType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                types.make(.functionType(FunctionType(
+                    params: [typeParamType, typeParamType],
+                    returnType: types.intType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+            }
+            registerSequenceMemberStub(
+                named: "maxWith",
+                externalLinkName: "kk_sequence_maxWith",
+                receiverType: receiverType,
+                parameters: [("comparator", comparatorType)],
+                returnType: typeParamType,
+                sequenceSymbol: sequenceSymbol,
+                sequenceFQName: sequenceFQName,
+                typeParamSymbol: typeParamSymbol,
+                symbols: symbols,
+                interner: interner,
+                canThrow: true,
+                flags: [.synthetic, .inlineFunction]
+            )
+        }
+
+        // minWithOrNull(comparator: Comparator<in T>): T?
+        registerSequenceMemberStub(
+            named: "minWithOrNull",
+            externalLinkName: "kk_sequence_minWithOrNull",
+            receiverType: receiverType,
+            parameters: [("comparator", comparatorType)],
+            returnType: types.makeNullable(typeParamType),
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner,
+            canThrow: true,
+            flags: [.synthetic, .inlineFunction]
+        )
 
         // minWith(comparator: Comparator<in T>): T
         registerSequenceMemberStub(

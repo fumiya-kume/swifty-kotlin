@@ -37,6 +37,36 @@ private func pathStringValue(from raw: Int) -> String? {
     return extractString(from: ptr)
 }
 
+private func pathCreateTempDirectoryRaw(
+    directoryPath: String,
+    prefix: String,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let name = "\(prefix)\(UUID().uuidString)"
+    let fullPath = (directoryPath as NSString).appendingPathComponent(name)
+    do {
+        try FileManager.default.createDirectory(atPath: fullPath, withIntermediateDirectories: false)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return registerRuntimeObject(RuntimePathBox(fullPath))
+}
+
+private func pathCreateTempFileRaw(
+    directoryPath: String,
+    prefix: String,
+    suffix: String,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let name = "\(prefix)\(UUID().uuidString)\(suffix)"
+    let fullPath = (directoryPath as NSString).appendingPathComponent(name)
+    let created = FileManager.default.createFile(atPath: fullPath, contents: nil)
+    if !created {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: Failed to create temp file \(fullPath)")
+    }
+    return registerRuntimeObject(RuntimePathBox(fullPath))
+}
+
 private func pathLineElements(from raw: Int) -> [Int]? {
     if let list = runtimeListBox(from: raw) {
         return list.elements
@@ -75,6 +105,157 @@ private func pathComponents(_ pathString: String) -> [String] {
     pathString.split(separator: "/", omittingEmptySubsequences: true).map(String.init)
 }
 
+private enum PathCopyActionResult: Int {
+    case continueCopying = 0
+    case skipSubtree = 1
+    case terminate = 2
+}
+
+private enum PathRecursiveCopyControl: Error {
+    case terminated
+    case thrown(Int)
+}
+
+private func pathDefaultCopyAction(sourceURL: URL, targetURL: URL) throws {
+    let fileManager = FileManager.default
+    var isSourceDirectory: ObjCBool = false
+    guard fileManager.fileExists(atPath: sourceURL.path, isDirectory: &isSourceDirectory) else {
+        throw NSError(
+            domain: "KSwiftKRuntimePath",
+            code: 1,
+            userInfo: [NSLocalizedDescriptionKey: "Source path does not exist: \(sourceURL.path)"]
+        )
+    }
+
+    if isSourceDirectory.boolValue {
+        var isTargetDirectory: ObjCBool = false
+        if fileManager.fileExists(atPath: targetURL.path, isDirectory: &isTargetDirectory) {
+            if isTargetDirectory.boolValue {
+                return
+            }
+            throw NSError(
+                domain: "KSwiftKRuntimePath",
+                code: 2,
+                userInfo: [NSLocalizedDescriptionKey: "Target path already exists: \(targetURL.path)"]
+            )
+        }
+        try fileManager.createDirectory(at: targetURL, withIntermediateDirectories: false)
+    } else {
+        if fileManager.fileExists(atPath: targetURL.path) {
+            throw NSError(
+                domain: "KSwiftKRuntimePath",
+                code: 2,
+                userInfo: [NSLocalizedDescriptionKey: "Target path already exists: \(targetURL.path)"]
+            )
+        }
+        try fileManager.copyItem(at: sourceURL, to: targetURL)
+    }
+}
+
+private func pathInvokeCopyAction(
+    _ copyActionRaw: Int,
+    sourceURL: URL,
+    targetURL: URL
+) throws -> PathCopyActionResult {
+    if copyActionRaw == 0 {
+        try pathDefaultCopyAction(sourceURL: sourceURL, targetURL: targetURL)
+        return .continueCopying
+    }
+
+    let sourceRaw = registerRuntimeObject(RuntimePathBox(sourceURL.path))
+    let targetRaw = registerRuntimeObject(RuntimePathBox(targetURL.path))
+    var thrown = 0
+    let resultRaw = kk_function_invoke_3(copyActionRaw, 0, sourceRaw, targetRaw, &thrown)
+    if thrown != 0 {
+        throw PathRecursiveCopyControl.thrown(thrown)
+    }
+    return PathCopyActionResult(rawValue: resultRaw) ?? .continueCopying
+}
+
+private func pathCopyItemRecursivelyWithAction(
+    sourceURL: URL,
+    targetURL: URL,
+    copyActionRaw: Int
+) throws {
+    let fileManager = FileManager.default
+    var isDirectory: ObjCBool = false
+    guard fileManager.fileExists(atPath: sourceURL.path, isDirectory: &isDirectory) else {
+        throw NSError(
+            domain: "KSwiftKRuntimePath",
+            code: 1,
+            userInfo: [NSLocalizedDescriptionKey: "Source path does not exist: \(sourceURL.path)"]
+        )
+    }
+
+    let actionResult = try pathInvokeCopyAction(copyActionRaw, sourceURL: sourceURL, targetURL: targetURL)
+    switch actionResult {
+    case .continueCopying:
+        break
+    case .skipSubtree:
+        return
+    case .terminate:
+        throw PathRecursiveCopyControl.terminated
+    }
+
+    guard isDirectory.boolValue else {
+        return
+    }
+    let children = try fileManager.contentsOfDirectory(
+        at: sourceURL,
+        includingPropertiesForKeys: nil,
+        options: []
+    )
+    for child in children {
+        try pathCopyItemRecursivelyWithAction(
+            sourceURL: child,
+            targetURL: targetURL.appendingPathComponent(child.lastPathComponent),
+            copyActionRaw: copyActionRaw
+        )
+    }
+}
+
+private func pathCopyItemRecursively(sourceURL: URL, targetURL: URL, overwrite: Bool) throws {
+    let fileManager = FileManager.default
+    var isDirectory: ObjCBool = false
+    guard fileManager.fileExists(atPath: sourceURL.path, isDirectory: &isDirectory) else {
+        throw NSError(
+            domain: "KSwiftKRuntimePath",
+            code: 1,
+            userInfo: [NSLocalizedDescriptionKey: "Source path does not exist: \(sourceURL.path)"]
+        )
+    }
+
+    if fileManager.fileExists(atPath: targetURL.path) {
+        if overwrite {
+            try fileManager.removeItem(at: targetURL)
+        } else {
+            throw NSError(
+                domain: "KSwiftKRuntimePath",
+                code: 2,
+                userInfo: [NSLocalizedDescriptionKey: "Target path already exists: \(targetURL.path)"]
+            )
+        }
+    }
+
+    if isDirectory.boolValue {
+        try fileManager.createDirectory(at: targetURL, withIntermediateDirectories: true)
+        let children = try fileManager.contentsOfDirectory(
+            at: sourceURL,
+            includingPropertiesForKeys: nil,
+            options: []
+        )
+        for child in children {
+            try pathCopyItemRecursively(
+                sourceURL: child,
+                targetURL: targetURL.appendingPathComponent(child.lastPathComponent),
+                overwrite: overwrite
+            )
+        }
+    } else {
+        try fileManager.copyItem(at: sourceURL, to: targetURL)
+    }
+}
+
 // MARK: - Path(pathString: String) constructor
 
 @_cdecl("kk_path_new")
@@ -111,6 +292,14 @@ public func kk_path_invariantSeparatorsPathString(_ pathRaw: Int) -> Int {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_invariantSeparatorsPathString received invalid Path handle")
     }
     return pathMakeStringRaw(path.pathString.replacingOccurrences(of: "\\", with: "/"))
+}
+
+@_cdecl("kk_path_pathString")
+public func kk_path_pathString(_ pathRaw: Int) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_pathString received invalid Path handle")
+    }
+    return pathMakeStringRaw(path.pathString)
 }
 
 @_cdecl("kk_path_fileName")
@@ -323,6 +512,32 @@ public func kk_path_copyTo_options(
     return targetRaw
 }
 
+@_cdecl("kk_path_copyTo_overwrite")
+public func kk_path_copyTo_overwrite(
+    _ pathRaw: Int,
+    _ targetRaw: Int,
+    _ overwriteRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let source = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_copyTo_overwrite received invalid source Path handle")
+    }
+    guard let target = runtimePathBox(from: targetRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_copyTo_overwrite received invalid target Path handle")
+    }
+    do {
+        if kk_unbox_bool(overwriteRaw) != 0,
+           FileManager.default.fileExists(atPath: target.pathString) {
+            try FileManager.default.removeItem(atPath: target.pathString)
+        }
+        try FileManager.default.copyItem(atPath: source.pathString, toPath: target.pathString)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return targetRaw
+}
+
 @_cdecl("kk_path_appendLines_iterable_default")
 public func kk_path_appendLines_iterable_default(_ pathRaw: Int, _ linesRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     kk_path_appendLines_iterable(pathRaw, linesRaw, 0, outThrown)
@@ -440,6 +655,154 @@ public func kk_path_createDirectories(_ pathRaw: Int, _ outThrown: UnsafeMutable
     return pathRaw
 }
 
+@_cdecl("kk_path_createDirectories_attributes")
+public func kk_path_createDirectories_attributes(
+    _ pathRaw: Int,
+    _ attributesRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    _ = attributesRaw
+    return kk_path_createDirectories(pathRaw, outThrown)
+}
+
+@_cdecl("kk_path_createDirectory_attributes")
+public func kk_path_createDirectory_attributes(
+    _ pathRaw: Int,
+    _ attributesRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_createDirectory_attributes received invalid Path handle")
+    }
+    _ = attributesRaw
+    do {
+        _ = try FileManager.default.createDirectory(atPath: path.pathString, withIntermediateDirectories: false)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return pathRaw
+}
+
+@_cdecl("kk_path_createFile_attributes")
+public func kk_path_createFile_attributes(
+    _ pathRaw: Int,
+    _ attributesRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_createFile_attributes received invalid Path handle")
+    }
+    _ = attributesRaw
+    if FileManager.default.fileExists(atPath: path.pathString) {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: file already exists")
+        return pathRaw
+    }
+    let created = FileManager.default.createFile(atPath: path.pathString, contents: Data())
+    if !created {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: failed to create file")
+    }
+    return pathRaw
+}
+
+@_cdecl("kk_path_createSymbolicLinkPointingTo_attributes")
+public func kk_path_createSymbolicLinkPointingTo_attributes(
+    _ pathRaw: Int,
+    _ targetRaw: Int,
+    _ attributesRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_createSymbolicLinkPointingTo_attributes received invalid Path handle")
+    }
+    guard let target = runtimePathBox(from: targetRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_createSymbolicLinkPointingTo_attributes received invalid target Path handle")
+    }
+    _ = attributesRaw
+    do {
+        try FileManager.default.createSymbolicLink(atPath: path.pathString, withDestinationPath: target.pathString)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return pathRaw
+}
+
+@_cdecl("kk_path_createTempDirectory_directory_prefix_attributes")
+public func kk_path_createTempDirectory_directory_prefix_attributes(
+    _ directoryRaw: Int,
+    _ prefixRaw: Int,
+    _ attributesRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    _ = attributesRaw
+    let directoryPath = runtimePathBox(from: directoryRaw)?.pathString ?? FileManager.default.temporaryDirectory.path
+    let prefix = pathStringValue(from: prefixRaw) ?? "tmp"
+    return pathCreateTempDirectoryRaw(
+        directoryPath: directoryPath,
+        prefix: prefix,
+        outThrown: outThrown
+    )
+}
+
+@_cdecl("kk_path_createTempDirectory_prefix_attributes")
+public func kk_path_createTempDirectory_prefix_attributes(
+    _ prefixRaw: Int,
+    _ attributesRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    _ = attributesRaw
+    let prefix = pathStringValue(from: prefixRaw) ?? "tmp"
+    return pathCreateTempDirectoryRaw(
+        directoryPath: FileManager.default.temporaryDirectory.path,
+        prefix: prefix,
+        outThrown: outThrown
+    )
+}
+
+@_cdecl("kk_path_createTempFile_directory_prefix_suffix_attributes")
+public func kk_path_createTempFile_directory_prefix_suffix_attributes(
+    _ directoryRaw: Int,
+    _ prefixRaw: Int,
+    _ suffixRaw: Int,
+    _ attributesRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    _ = attributesRaw
+    let directoryPath = runtimePathBox(from: directoryRaw)?.pathString ?? FileManager.default.temporaryDirectory.path
+    let prefix = pathStringValue(from: prefixRaw) ?? "tmp"
+    let suffix = pathStringValue(from: suffixRaw) ?? ".tmp"
+    return pathCreateTempFileRaw(
+        directoryPath: directoryPath,
+        prefix: prefix,
+        suffix: suffix,
+        outThrown: outThrown
+    )
+}
+
+@_cdecl("kk_path_createTempFile_prefix_suffix_attributes")
+public func kk_path_createTempFile_prefix_suffix_attributes(
+    _ prefixRaw: Int,
+    _ suffixRaw: Int,
+    _ attributesRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    _ = attributesRaw
+    let prefix = pathStringValue(from: prefixRaw) ?? "tmp"
+    let suffix = pathStringValue(from: suffixRaw) ?? ".tmp"
+    return pathCreateTempFileRaw(
+        directoryPath: FileManager.default.temporaryDirectory.path,
+        prefix: prefix,
+        suffix: suffix,
+        outThrown: outThrown
+    )
+}
+
 @_cdecl("kk_path_deleteIfExists")
 public func kk_path_deleteIfExists(_ pathRaw: Int) -> Int {
     guard let path = runtimePathBox(from: pathRaw) else {
@@ -449,6 +812,75 @@ public func kk_path_deleteIfExists(_ pathRaw: Int) -> Int {
         return kk_box_bool(0)
     }
     return kk_box_bool((try? FileManager.default.removeItem(atPath: path.pathString)) != nil ? 1 : 0)
+}
+
+@_cdecl("kk_path_copyToRecursively_overwrite")
+public func kk_path_copyToRecursively_overwrite(
+    _ pathRaw: Int,
+    _ targetRaw: Int,
+    _ onErrorRaw: Int,
+    _ followLinksRaw: Int,
+    _ overwriteRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    _ = onErrorRaw
+    _ = followLinksRaw
+    guard let source = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_copyToRecursively_overwrite received invalid source Path handle")
+    }
+    guard let target = runtimePathBox(from: targetRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_copyToRecursively_overwrite received invalid target Path handle")
+    }
+
+    do {
+        try pathCopyItemRecursively(
+            sourceURL: URL(fileURLWithPath: source.pathString),
+            targetURL: URL(fileURLWithPath: target.pathString),
+            overwrite: kk_unbox_bool(overwriteRaw) != 0
+        )
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return targetRaw
+}
+
+@_cdecl("kk_path_copyToRecursively_copyAction")
+public func kk_path_copyToRecursively_copyAction(
+    _ pathRaw: Int,
+    _ targetRaw: Int,
+    _ onErrorRaw: Int,
+    _ followLinksRaw: Int,
+    _ copyActionRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    _ = onErrorRaw
+    _ = followLinksRaw
+    guard let source = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_copyToRecursively_copyAction received invalid source Path handle")
+    }
+    guard let target = runtimePathBox(from: targetRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_copyToRecursively_copyAction received invalid target Path handle")
+    }
+
+    do {
+        try pathCopyItemRecursivelyWithAction(
+            sourceURL: URL(fileURLWithPath: source.pathString),
+            targetURL: URL(fileURLWithPath: target.pathString),
+            copyActionRaw: copyActionRaw
+        )
+    } catch let control as PathRecursiveCopyControl {
+        switch control {
+        case .terminated:
+            break
+        case let .thrown(thrownRaw):
+            outThrown?.pointee = thrownRaw
+        }
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return targetRaw
 }
 
 @_cdecl("kk_path_listDirectoryEntries")
