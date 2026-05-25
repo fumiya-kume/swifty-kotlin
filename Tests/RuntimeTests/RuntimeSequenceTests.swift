@@ -155,6 +155,16 @@ private let sequenceLessThanFour: @convention(c) (Int, Int, UnsafeMutablePointer
     value < 4 ? 1 : 0
 }
 
+private let sequenceReverseIntComparator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, lhs, rhs, _ in
+    if lhs > rhs {
+        return -1
+    }
+    if lhs < rhs {
+        return 1
+    }
+    return 0
+}
+
 let sequenceFirstNullableEvenTimesTen: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     value.isMultiple(of: 2) ? value * 10 : runtimeNullSentinelInt
 }
@@ -225,14 +235,12 @@ private let sequenceNegatedSelector: @convention(c) (Int, Int, UnsafeMutablePoin
     -value
 }
 
-private let sequenceMaxWithOrNullNaturalComparator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, lhs, rhs, _ in
+private let sequenceMaxWithNaturalComparator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, lhs, rhs, _ in
     lhs - rhs
 }
 
-private let sequenceReverseIntComparator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, lhs, rhs, _ in
-    if lhs < rhs { return 1 }
-    if lhs > rhs { return -1 }
-    return 0
+private let sequenceMaxWithOrNullNaturalComparator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, lhs, rhs, _ in
+    lhs - rhs
 }
 
 private func runtimeTestStringHandle(_ value: String) -> Int {
@@ -469,9 +477,52 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
     }
 
+    func testMinWithOrNullReturnsComparatorMinimumAndNullOnEmpty() {
+        var thrown = 0
+        let result = kk_sequence_minWithOrNull(
+            makeSequence([5, 2, 3]),
+            unsafeBitCast(sequenceReverseIntComparator, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(result, 5)
+        XCTAssertEqual(thrown, 0)
+
+        thrown = 0
+        XCTAssertEqual(
+            kk_sequence_minWithOrNull(makeSequence([]), unsafeBitCast(sequenceReverseIntComparator, to: Int.self), 0, &thrown),
+            runtimeNullSentinelInt
+        )
+        XCTAssertEqual(thrown, 0)
+    }
+
     func testMaxOrNullReturnsLargestElementAndNullOnEmpty() {
         XCTAssertEqual(kk_sequence_maxOrNull(makeSequence([3, 1, 4, 2])), 4)
         XCTAssertEqual(kk_sequence_maxOrNull(makeSequence([])), runtimeNullSentinelInt)
+    }
+
+    func testMaxWithReturnsLargestElementAndThrowsOnEmpty() {
+        var thrown = 0
+        let result = kk_sequence_maxWith(
+            makeSequence([3, 1, 4, 2]),
+            unsafeBitCast(sequenceMaxWithNaturalComparator, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 4)
+
+        thrown = 0
+        let emptyResult = kk_sequence_maxWith(
+            makeSequence([]),
+            unsafeBitCast(sequenceMaxWithNaturalComparator, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(emptyResult, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
     }
 
     func testMaxWithOrNullReturnsLargestElementAndNullOnEmpty() {
@@ -838,6 +889,19 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_sequence_indexOf(seq, 10), 0)
         XCTAssertEqual(kk_sequence_indexOf(seq, 20), 1)
         XCTAssertEqual(kk_sequence_indexOf(seq, 99), -1)
+    }
+
+    func testIndexOfFirstReturnsFirstMatchingPredicateIndexOrMinusOne() {
+        let seq = makeSequence([1, 3, 4, 6])
+        let evenPredicate: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+            value.isMultiple(of: 2) ? 1 : 0
+        }
+        let greaterThanTenPredicate: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+            value > 10 ? 1 : 0
+        }
+
+        XCTAssertEqual(kk_sequence_indexOfFirst(seq, unsafeBitCast(evenPredicate, to: Int.self), 0, nil), 2)
+        XCTAssertEqual(kk_sequence_indexOfFirst(seq, unsafeBitCast(greaterThanTenPredicate, to: Int.self), 0, nil), -1)
     }
 
     func testAssociateToThrowingLambdaReturnsSentinelAndSetsOutThrown() {

@@ -444,6 +444,8 @@ extension CallLowerer {
         }
         if (loweredCallee == interner.intern("kk_sequence_firstNotNullOf")
             || loweredCallee == interner.intern("kk_sequence_firstNotNullOfOrNull")
+            || loweredCallee == interner.intern("kk_sequence_indexOfFirst")
+            || loweredCallee == interner.intern("kk_sequence_takeLastWhile")
             || loweredCallee == interner.intern("kk_sequence_indexOfLast")),
            finalArguments.count == 2
         {
@@ -631,6 +633,7 @@ extension CallLowerer {
             interner.intern("kk_list_maxWithOrNull"),
             interner.intern("kk_list_minWith"),
             interner.intern("kk_list_minWithOrNull"),
+            interner.intern("kk_sequence_minWithOrNull"),
             interner.intern("kk_sequence_minWith"),
             interner.intern("kk_list_sortedWith"),
             interner.intern("kk_array_sortedArrayWith"),
@@ -932,6 +935,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_takeLastWhile"),
             interner.intern("kk_sequence_firstNotNullOf"),
             interner.intern("kk_sequence_firstNotNullOfOrNull"),
+            interner.intern("kk_sequence_indexOfFirst"),
             interner.intern("kk_sequence_indexOfLast"),
             interner.intern("kk_sequence_associate"),
             interner.intern("kk_sequence_associateBy"),
@@ -952,10 +956,12 @@ extension CallLowerer {
             interner.intern("kk_sequence_maxBy"),
             interner.intern("kk_sequence_minByOrNull"),
             interner.intern("kk_sequence_maxByOrNull"),
+            interner.intern("kk_sequence_maxWith"),
             interner.intern("kk_sequence_maxWithOrNull"),
             interner.intern("kk_sequence_minOf"),
             interner.intern("kk_sequence_minOfOrNull"),
             interner.intern("kk_sequence_maxOfOrNull"),
+            interner.intern("kk_sequence_minWithOrNull"),
             interner.intern("kk_sequence_minWith"),
             interner.intern("kk_sequence_maxOf"),
             interner.intern("kk_sequence_partition"),
