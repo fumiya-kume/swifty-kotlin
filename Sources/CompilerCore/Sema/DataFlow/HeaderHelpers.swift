@@ -1133,6 +1133,7 @@ extension DataFlowSemaPhase {
         registerSyntheticJsCollectionsMapStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsCollectionsSetStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsCollectionsReadonlyArrayToListStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticJsCollectionsReadonlyArrayToMutableListStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsCollectionsReadonlySetStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsNumberInteropStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsIntNumberInteropStubs(symbols: symbols, types: types, interner: interner)

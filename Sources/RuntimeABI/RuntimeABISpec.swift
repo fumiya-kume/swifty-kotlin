@@ -775,6 +775,14 @@ public enum RuntimeABISpec {
             section: "System"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_js_array_toMutableList",
+            parameters: [
+                RuntimeABIParameter(name: "jsArrayRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_js_array_get",
             parameters: [
                 RuntimeABIParameter(name: "jsArrayRaw", type: .intptr),
