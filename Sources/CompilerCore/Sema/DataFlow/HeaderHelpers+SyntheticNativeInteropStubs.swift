@@ -1511,6 +1511,41 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerSyntheticNativeBitSetConstructor(
+            ownerSymbol: autofreeScopeSymbol,
+            ownerType: autofreeScopeType,
+            parameters: [],
+            defaultValues: [],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "alloc",
+            ownerSymbol: autofreeScopeSymbol,
+            receiverType: autofreeScopeType,
+            parameters: [
+                (name: "size", type: types.longType),
+                (name: "align", type: types.intType),
+            ],
+            returnType: nativePointedType,
+            flags: [.synthetic, .abstractType, .overrideMember],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "alloc",
+            ownerSymbol: autofreeScopeSymbol,
+            receiverType: autofreeScopeType,
+            parameters: [
+                (name: "size", type: types.intType),
+                (name: "align", type: types.intType),
+            ],
+            returnType: nativePointedType,
+            flags: [.synthetic, .openType],
+            symbols: symbols,
+            interner: interner
+        )
+
         configureSingleTypeParameterNominal(
             ownerSymbol: cValuesRefSymbol,
             fqName: cinteropPkg + [interner.intern("CValuesRef")],
