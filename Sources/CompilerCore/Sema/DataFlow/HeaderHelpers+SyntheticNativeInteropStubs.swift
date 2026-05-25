@@ -1677,11 +1677,41 @@ extension DataFlowSemaPhase {
             ownerSymbol: byteVarOfSymbol,
             fqName: cinteropPkg + [interner.intern("ByteVarOf")],
             parameterName: "T",
-            supertype: nil,
+            supertype: cPrimitiveVarSymbol,
+            supertypeIsGeneric: false,
             symbols: symbols,
             types: types,
             interner: interner
         )
+        if let byteVarOfTypeParameterSymbol = types.nominalTypeParameterSymbols(for: byteVarOfSymbol).first {
+            symbols.setTypeParameterUpperBounds([types.intType], for: byteVarOfTypeParameterSymbol)
+            let byteVarOfTypeParameterType = types.make(.typeParam(TypeParamType(
+                symbol: byteVarOfTypeParameterSymbol,
+                nullability: .nonNull
+            )))
+            let byteVarOfType = types.make(.classType(ClassType(
+                classSymbol: byteVarOfSymbol,
+                args: [.invariant(byteVarOfTypeParameterType)],
+                nullability: .nonNull
+            )))
+            registerNativeConcurrentConstructor(
+                ownerSymbol: byteVarOfSymbol,
+                ownerType: byteVarOfType,
+                parameters: [(name: "rawPtr", type: nativePtrType)],
+                defaultValues: [false],
+                typeParameterSymbols: [byteVarOfTypeParameterSymbol],
+                classTypeParameterCount: 1,
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticNativeBitSetProperty(
+                named: "value",
+                ownerSymbol: byteVarOfSymbol,
+                propertyType: byteVarOfTypeParameterType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
         let booleanVarType = types.make(.classType(ClassType(
             classSymbol: booleanVarOfSymbol,
             args: [.invariant(types.booleanType)],
