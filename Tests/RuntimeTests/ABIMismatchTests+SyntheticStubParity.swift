@@ -71,6 +71,7 @@ extension ABIMismatchTests {
             "kk_collection_toTypedArray",
             "kk_iterable_toMutableList",
             "kk_js_array_toMutableList",
+            "kk_js_map_toMutableMap",
             "kk_list_toHashSet",
             "kk_list_unzip",
             "kk_list_zipWithNext",
@@ -79,6 +80,7 @@ extension ABIMismatchTests {
             "kk_list_zip",
             "kk_map_withDefault",
             "kk_list_windowed_default",
+            "kk_long_stream_toList",
             "kk_list_windowed",
             "kk_list_windowed_partial",
             "kk_list_windowed_transform",
@@ -114,6 +116,7 @@ extension ABIMismatchTests {
             "kk_system_measureTimeMillis",
             "kk_system_measureTimeMicros",
             "kk_system_measureNanoTime",
+            "kk_double_stream_toList",
             // UUID
             "kk_uuid_random",
             "kk_uuid_nil",

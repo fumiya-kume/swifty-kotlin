@@ -234,31 +234,49 @@
 - [ ] STDLIB-SEQ-FN-057: `map` 関数の実装
 - [ ] STDLIB-SEQ-FN-058: `mapIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-060: `mapIndexedNotNullTo` 関数の実装
-- [ ] STDLIB-SEQ-FN-071: `maxWith` 関数の実装
-- [ ] STDLIB-SEQ-FN-072: `maxWithOrNull` 関数の実装
-- [ ] STDLIB-SEQ-FN-073: `min` 関数の実装
-- [ ] STDLIB-SEQ-FN-074: `minBy` 関数の実装
-- [ ] STDLIB-SEQ-FN-076: `minOf` 関数の実装
-- [ ] STDLIB-SEQ-FN-078: `minOrNull` 関数の実装
-- [ ] STDLIB-SEQ-FN-081: `minus` 関数の実装
-- [ ] STDLIB-SEQ-FN-086: `partition` 関数の実装
-- [ ] STDLIB-SEQ-FN-088: `plusElement` 関数の実装
+- [x] STDLIB-SEQ-FN-056: `lastOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-057: `map` 関数の実装
+- [x] STDLIB-SEQ-FN-058: `mapIndexed` 関数の実装
+- [x] STDLIB-SEQ-FN-059: `mapIndexedNotNull` 関数の実装
+- [x] STDLIB-SEQ-FN-060: `mapIndexedNotNullTo` 関数の実装
+- [x] STDLIB-SEQ-FN-061: `mapIndexedTo` 関数の実装
+- [x] STDLIB-SEQ-FN-062: `mapNotNull` 関数の実装
+- [x] STDLIB-SEQ-FN-063: `mapNotNullTo` 関数の実装
+- [x] STDLIB-SEQ-FN-064: `mapTo` 関数の実装
+- [x] STDLIB-SEQ-FN-065: `max` 関数の実装
+- [x] STDLIB-SEQ-FN-067: `maxByOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-066: `maxBy` 関数の実装
+- [x] STDLIB-SEQ-FN-068: `maxOf` 関数の実装
+- [x] STDLIB-SEQ-FN-069: `maxOfOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-070: `maxOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-071: `maxWith` 関数の実装
+- [x] STDLIB-SEQ-FN-072: `maxWithOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-073: `min` 関数の実装
+- [x] STDLIB-SEQ-FN-074: `minBy` 関数の実装
+- [x] STDLIB-SEQ-FN-075: `minByOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-076: `minOf` 関数の実装
+- [x] STDLIB-SEQ-FN-077: `minOfOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-078: `minOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-088: `plusElement` 関数の実装
 - [ ] STDLIB-SEQ-FN-087: `plus` 関数の実装
-- [ ] STDLIB-SEQ-FN-089: `random` 関数の実装
+- [x] STDLIB-SEQ-FN-089: `random` 関数の実装
+- [x] STDLIB-SEQ-FN-090: `randomOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-091: `reduce` 関数の実装
 - [ ] STDLIB-SEQ-FN-092: `reduceIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-093: `reduceOrNull` 関数の実装
-- [ ] STDLIB-SEQ-FN-096: `reduceRightIndexedOrNull` 関数の実装
-- [ ] STDLIB-SEQ-FN-097: `reduceRightOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-094: `reduceRight` 関数の実装
+- [ ] STDLIB-SEQ-FN-095: `reduceRightIndexed` 関数の実装
+- [x] STDLIB-SEQ-FN-096: `reduceRightIndexedOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-097: `reduceRightOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-098: `requireNoNulls` 関数の実装
 - [ ] STDLIB-SEQ-FN-099: `reversed` 関数の実装
-- [ ] STDLIB-SEQ-FN-100: `runningFold` 関数の実装
-- [ ] STDLIB-SEQ-FN-102: `runningReduce` 関数の実装
+- [x] STDLIB-SEQ-FN-100: `runningFold` 関数の実装
+- [x] STDLIB-SEQ-FN-102: `runningReduce` 関数の実装
 - [ ] STDLIB-SEQ-FN-106: `shuffled` 関数の実装
 - [ ] STDLIB-SEQ-FN-107: `single` 関数の実装
-- [ ] STDLIB-SEQ-FN-109: `slice` 関数の実装
+- [x] STDLIB-SEQ-FN-109: `slice` 関数の実装
 - [ ] STDLIB-SEQ-FN-111: `sortedBy` 関数の実装
-- [ ] STDLIB-SEQ-FN-133: `zip` 関数の実装
+- [x] STDLIB-SEQ-FN-133: `zip` 関数の実装
 
 #### kotlin.streams 関数の実装
 - [ ] STDLIB-STREAMS-FN-003: `toList` 関数の実装（各ストリーム型）
@@ -556,9 +574,9 @@
 ### Phase 5: 非スコープ/高度領域
 - [x] STDLIB-IO-PATH-FN-015: `Path.createFile(attributes)` を追加する
 - [ ] STDLIB-IO-PATH-FN-017: `Path.createParentDirectories(attributes)` を追加する
-- [ ] STDLIB-IO-PATH-FN-021: `createTempFile(prefix, suffix, attributes)` を追加する
+- [x] STDLIB-IO-PATH-FN-021: `createTempFile(prefix, suffix, attributes)` を追加する
 - [ ] STDLIB-IO-PATH-FN-024: `Path.deleteIfExists()` の公式 return/annotation shape を既存 stub と整合させる
-- [ ] STDLIB-IO-PATH-FN-073: `Path.visitFileTree(visitor, maxDepth, followLinks)` を追加する
+- [x] STDLIB-IO-PATH-FN-073: `Path.visitFileTree(visitor, maxDepth, followLinks)` を追加する
 - [ ] STDLIB-IO-PATH-FN-074: `Path.visitFileTree(maxDepth, followLinks, builderAction)` を追加する
  - [ ] STDLIB-JS-COLLECTIONS-TYPE-001: `kotlin.js.collections.JsArray<E>` external class を追加する
  - [x] STDLIB-JS-COLLECTIONS-TYPE-002: `kotlin.js.collections.JsMap<K, V>` external class を追加する
@@ -567,24 +585,24 @@
 - [ ] STDLIB-JS-COLLECTIONS-TYPE-003: `kotlin.js.collections.JsReadonlyArray<E>` external interface を追加する
 - [ ] STDLIB-JS-COLLECTIONS-TYPE-004: `kotlin.js.collections.JsReadonlyMap<K, V>` external interface を追加する
 - [x] STDLIB-JS-COLLECTIONS-FN-003: `JsReadonlyArray<E>.toMutableList()` を追加する
-- [ ] STDLIB-JS-COLLECTIONS-FN-004: `JsReadonlyMap<K,V>.toMutableMap()` を追加する
+- [x] STDLIB-JS-COLLECTIONS-FN-004: `JsReadonlyMap<K,V>.toMutableMap()` を追加する
 - [ ] STDLIB-JS-COLLECTIONS-FN-005: `JsReadonlySet<E>.toMutableSet()` を追加する
 - [ ] STDLIB-JS-COLLECTIONS-FN-006: `JsReadonlySet<E>.toSet()` を追加する
-- [ ] STDLIB-STREAMS-FN-006: `DoubleStream.toList()` を追加する
+- [x] STDLIB-STREAMS-FN-006: `DoubleStream.toList()` を追加する
 - [ ] STDLIB-STREAMS-FN-007: `IntStream.toList()` を追加する
-- [ ] STDLIB-STREAMS-FN-008: `LongStream.toList()` を追加する
+- [x] STDLIB-STREAMS-FN-008: `LongStream.toList()` を追加する
 - [ ] STDLIB-STREAMS-FN-009: `Stream<T>.toList()` を追加する
-- [ ] STDLIB-WASM-TYPE-002: `kotlin.wasm.WasmExport` annotation を追加する
+- [x] STDLIB-WASM-TYPE-002: `kotlin.wasm.WasmExport` annotation を追加する
 - [ ] STDLIB-WASM-TYPE-003: `kotlin.wasm.WasmImport` annotation を追加する
-- [ ] STDLIB-WASM-UNSAFE-TYPE-001: `kotlin.wasm.unsafe.MemoryAllocator` abstract class を追加する
+- [x] STDLIB-WASM-UNSAFE-TYPE-001: `kotlin.wasm.unsafe.MemoryAllocator` abstract class を追加する
 - [ ] STDLIB-WASM-UNSAFE-TYPE-002: `kotlin.wasm.unsafe.Pointer` value class を追加する
-- [ ] STDLIB-WASM-UNSAFE-TYPE-003: `kotlin.wasm.unsafe.UnsafeWasmMemoryApi` marker annotation を追加する
+- [x] STDLIB-WASM-UNSAFE-TYPE-003: `kotlin.wasm.unsafe.UnsafeWasmMemoryApi` marker annotation を追加する
 - [ ] STDLIB-WASM-UNSAFE-FN-001: `withScopedMemoryAllocator(block)` を追加する
-- [ ] STDLIB-CINTEROP-TYPE-001: `kotlinx.cinterop.Arena` class surface を追加する
-- [ ] STDLIB-CINTEROP-TYPE-002: `kotlinx.cinterop.ArenaBase` class surface を追加する
-- [ ] STDLIB-CINTEROP-TYPE-003: `kotlinx.cinterop.AutofreeScope` class surface を追加する
-- [ ] STDLIB-CINTEROP-TYPE-004: `kotlinx.cinterop.BetaInteropApi` annotation shape を公式 surface と整合させる
-- [ ] STDLIB-CINTEROP-TYPE-005: `kotlinx.cinterop.BooleanVar` typealias を追加する
+- [x] STDLIB-CINTEROP-TYPE-001: `kotlinx.cinterop.Arena` class surface を追加する
+- [x] STDLIB-CINTEROP-TYPE-002: `kotlinx.cinterop.ArenaBase` class surface を追加する
+- [x] STDLIB-CINTEROP-TYPE-003: `kotlinx.cinterop.AutofreeScope` class surface を追加する
+- [x] STDLIB-CINTEROP-TYPE-004: `kotlinx.cinterop.BetaInteropApi` annotation shape を公式 surface と整合させる
+- [x] STDLIB-CINTEROP-TYPE-005: `kotlinx.cinterop.BooleanVar` typealias を追加する
 - [ ] STDLIB-CINTEROP-TYPE-006: `kotlinx.cinterop.BooleanVarOf<T>` class surface を追加する
 - [ ] STDLIB-CINTEROP-TYPE-007: `kotlinx.cinterop.ByteVar` typealias を追加する
 - [ ] STDLIB-CINTEROP-TYPE-008: `kotlinx.cinterop.ByteVarOf<T>` class surface を追加する

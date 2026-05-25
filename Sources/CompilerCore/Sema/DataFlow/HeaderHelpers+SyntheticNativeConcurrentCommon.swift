@@ -594,15 +594,7 @@ extension DataFlowSemaPhase {
         to symbol: SymbolID,
         symbols: SymbolTable
     ) {
-        var annotations = symbols.annotations(for: symbol)
-        var didAppend = false
-        for record in records where !annotations.contains(record) {
-            annotations.append(record)
-            didAppend = true
-        }
-        if didAppend {
-            symbols.setAnnotations(annotations, for: symbol)
-        }
+        appendSyntheticMetadataAnnotations(records, to: symbol, symbols: symbols)
     }
 
     func nativeConcurrentDeprecatedErrorAnnotation(

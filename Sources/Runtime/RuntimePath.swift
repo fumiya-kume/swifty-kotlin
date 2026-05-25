@@ -784,6 +784,25 @@ public func kk_path_createTempFile_directory_prefix_suffix_attributes(
     )
 }
 
+@_cdecl("kk_path_createTempFile_prefix_suffix_attributes")
+public func kk_path_createTempFile_prefix_suffix_attributes(
+    _ prefixRaw: Int,
+    _ suffixRaw: Int,
+    _ attributesRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    _ = attributesRaw
+    let prefix = pathStringValue(from: prefixRaw) ?? "tmp"
+    let suffix = pathStringValue(from: suffixRaw) ?? ".tmp"
+    return pathCreateTempFileRaw(
+        directoryPath: FileManager.default.temporaryDirectory.path,
+        prefix: prefix,
+        suffix: suffix,
+        outThrown: outThrown
+    )
+}
+
 @_cdecl("kk_path_deleteIfExists")
 public func kk_path_deleteIfExists(_ pathRaw: Int) -> Int {
     guard let path = runtimePathBox(from: pathRaw) else {
