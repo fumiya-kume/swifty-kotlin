@@ -1,4 +1,4 @@
-public struct ASTNodeID: Hashable, Sendable {
+public struct ASTNodeID: Hashable, Sendable, Codable {
     public let rawValue: Int32
 
     public static let invalid = ASTNodeID(rawValue: -1)
@@ -8,7 +8,7 @@ public struct ASTNodeID: Hashable, Sendable {
     }
 }
 
-public struct ExprID: Hashable, Sendable {
+public struct ExprID: Hashable, Sendable, Codable {
     public let rawValue: Int32
 
     public static let invalid = ExprID(rawValue: -1)
@@ -18,7 +18,7 @@ public struct ExprID: Hashable, Sendable {
     }
 }
 
-public struct TypeRefID: Hashable, Sendable {
+public struct TypeRefID: Hashable, Sendable, Codable {
     public let rawValue: Int32
 
     public static let invalid = TypeRefID(rawValue: -1)
@@ -28,14 +28,14 @@ public struct TypeRefID: Hashable, Sendable {
     }
 }
 
-public enum Visibility: Int, Sendable {
+public enum Visibility: Int, Sendable, Codable {
     case `public`
     case `private`
     case `internal`
     case protected
 }
 
-public struct Modifiers: OptionSet, Sendable {
+public struct Modifiers: OptionSet, Sendable, Codable {
     public let rawValue: Int32
 
     public init(rawValue: Int32) {
@@ -73,7 +73,7 @@ public struct Modifiers: OptionSet, Sendable {
     public static let lateinit = Modifiers(rawValue: Int32(1) << 28)
 }
 
-public enum Decl {
+public enum Decl: Codable {
     case classDecl(ClassDecl)
     case interfaceDecl(InterfaceDecl)
     case funDecl(FunDecl)

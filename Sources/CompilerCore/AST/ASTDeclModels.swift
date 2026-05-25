@@ -1,5 +1,5 @@
 /// Represents a single annotation usage in Kotlin source code, e.g. `@Suppress("UNCHECKED_CAST")`.
-public struct AnnotationNode: Equatable {
+public struct AnnotationNode: Equatable, Codable {
     /// The simple or qualified name of the annotation (e.g. "Suppress", "kotlin.Deprecated").
     public let name: String
     /// Serialized argument values extracted from the annotation's parenthesized argument list.
@@ -14,7 +14,7 @@ public struct AnnotationNode: Equatable {
     }
 }
 
-public struct ASTFile {
+public struct ASTFile: Codable {
     public let fileID: FileID
     public let packageFQName: [InternedString]
     public let imports: [ImportDecl]
@@ -42,12 +42,12 @@ public struct ASTFile {
     }
 }
 
-public enum ConstructorDelegationKind: Equatable {
+public enum ConstructorDelegationKind: Equatable, Codable {
     case this
     case super_
 }
 
-public struct ConstructorDelegationCall: Equatable {
+public struct ConstructorDelegationCall: Equatable, Codable {
     public let kind: ConstructorDelegationKind
     public let args: [CallArgument]
     public let range: SourceRange
@@ -59,7 +59,7 @@ public struct ConstructorDelegationCall: Equatable {
     }
 }
 
-public struct ConstructorDecl {
+public struct ConstructorDecl: Codable {
     public let range: SourceRange
     public let modifiers: Modifiers
     public let valueParams: [ValueParamDecl]
@@ -84,7 +84,7 @@ public struct ConstructorDecl {
 /// A single supertype entry in a class declaration, optionally with delegation.
 /// Used for `class Foo(impl: Printer) : Printer by impl` — the `by expr` part
 /// delegates interface implementation to the given expression.
-public struct SuperTypeEntry: Equatable {
+public struct SuperTypeEntry: Equatable, Codable {
     public let typeRef: TypeRefID
     /// When present, this supertype (must be an interface) is implemented by
     /// delegating to the given expression. Absent for non-delegated supertypes.
@@ -99,7 +99,7 @@ public struct SuperTypeEntry: Equatable {
 /// Represents a member in the class body initialization sequence.
 /// Used to guarantee Kotlin's declaration-order execution of property
 /// initializers and `init` blocks.
-public enum ClassBodyInitMember: Equatable {
+public enum ClassBodyInitMember: Equatable, Codable {
     /// A property initializer; the associated value is the index into
     /// `ClassDecl.memberProperties`.
     case property(Int)
@@ -108,7 +108,7 @@ public enum ClassBodyInitMember: Equatable {
     case initBlock(Int)
 }
 
-public struct ClassDecl {
+public struct ClassDecl: Codable {
     public let range: SourceRange
     public let name: InternedString
     public let modifiers: Modifiers
@@ -185,7 +185,7 @@ public struct ClassDecl {
     }
 }
 
-public struct InterfaceDecl {
+public struct InterfaceDecl: Codable {
     public let range: SourceRange
     public let name: InternedString
     public let modifiers: Modifiers
@@ -234,7 +234,7 @@ public struct InterfaceDecl {
     }
 }
 
-public struct ObjectDecl {
+public struct ObjectDecl: Codable {
     public let range: SourceRange
     public let name: InternedString
     public let modifiers: Modifiers
@@ -279,7 +279,7 @@ public struct ObjectDecl {
 
 /// AST-layer type names mirror Kotlin syntax keywords (e.g. `fun`),
 /// while semantic/KIR layers use full English names (e.g. `Function`).
-public struct FunDecl {
+public struct FunDecl: Codable {
     public let range: SourceRange
     public let name: InternedString
     public let modifiers: Modifiers
@@ -322,18 +322,18 @@ public struct FunDecl {
     }
 }
 
-public enum FunctionBody: Equatable {
+public enum FunctionBody: Equatable, Codable {
     case block([ExprID], SourceRange)
     case expr(ExprID, SourceRange)
     case unit
 }
 
-public enum PropertyAccessorKind: Equatable {
+public enum PropertyAccessorKind: Equatable, Codable {
     case getter
     case setter
 }
 
-public struct PropertyAccessorDecl: Equatable {
+public struct PropertyAccessorDecl: Equatable, Codable {
     public let range: SourceRange
     public let kind: PropertyAccessorKind
     public let parameterName: InternedString?
@@ -355,7 +355,7 @@ public struct PropertyAccessorDecl: Equatable {
 /// Kotlin 2.0 explicit backing field declaration for a property.
 /// Example: `val fullName: String  field = ""  get() = field.uppercase()`
 /// The backing field may have a type that differs from the property type.
-public struct ExplicitBackingField {
+public struct ExplicitBackingField: Codable {
     /// Optional explicit type annotation for the backing field.
     /// When `nil`, the type is inferred from the initializer expression.
     public let type: TypeRefID?
@@ -368,7 +368,7 @@ public struct ExplicitBackingField {
     }
 }
 
-public struct PropertyDecl {
+public struct PropertyDecl: Codable {
     public let range: SourceRange
     public let name: InternedString
     public let modifiers: Modifiers
@@ -427,7 +427,7 @@ public struct PropertyDecl {
     }
 }
 
-public struct TypeAliasDecl {
+public struct TypeAliasDecl: Codable {
     public let range: SourceRange
     public let name: InternedString
     public let modifiers: Modifiers
@@ -452,18 +452,18 @@ public struct TypeAliasDecl {
     }
 }
 
-public struct EnumEntryDecl {
+public struct EnumEntryDecl: Codable {
     public let range: SourceRange
     public let name: InternedString
 }
 
-public struct ImportDecl: Sendable {
+public struct ImportDecl: Sendable, Codable {
     public let range: SourceRange
     public let path: [InternedString]
     public let alias: InternedString?
 }
 
-public struct TypeParamDecl {
+public struct TypeParamDecl: Codable {
     public let name: InternedString
     public let variance: TypeVariance
     public let isReified: Bool
@@ -498,7 +498,7 @@ public struct TypeParamDecl {
     }
 }
 
-public struct ValueParamDecl: Equatable {
+public struct ValueParamDecl: Equatable, Codable {
     public let name: InternedString
     public let type: TypeRefID?
     /// `true` when the primary constructor parameter is declared as a property

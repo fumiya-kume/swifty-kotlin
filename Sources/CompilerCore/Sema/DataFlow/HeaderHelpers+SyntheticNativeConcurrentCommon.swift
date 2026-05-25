@@ -231,6 +231,46 @@ extension DataFlowSemaPhase {
         return classType
     }
 
+    func nativeConcurrentCOpaquePointerType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID {
+        let packageFQName = ensurePackage(
+            path: ["kotlinx", "cinterop"],
+            symbols: symbols,
+            interner: interner
+        )
+        if let aliasSymbol = symbols.lookup(fqName: packageFQName + [interner.intern("COpaquePointer")]),
+           let underlyingType = symbols.typeAliasUnderlyingType(for: aliasSymbol)
+        {
+            return underlyingType
+        }
+
+        let cPointerSymbol = nativeConcurrentClassSymbol(
+            packagePath: ["kotlinx", "cinterop"],
+            name: "CPointer",
+            symbols: symbols,
+            interner: interner
+        )
+        let cPointedSymbol = nativeConcurrentClassSymbol(
+            packagePath: ["kotlinx", "cinterop"],
+            name: "CPointed",
+            symbols: symbols,
+            interner: interner
+        )
+        let cPointedType = types.make(.classType(ClassType(
+            classSymbol: cPointedSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        return types.make(.classType(ClassType(
+            classSymbol: cPointerSymbol,
+            args: [.out(cPointedType)],
+            nullability: .nonNull
+        )))
+    }
+
     func nativeConcurrentClassSymbol(
         packagePath: [String],
         name: String,
@@ -594,15 +634,7 @@ extension DataFlowSemaPhase {
         to symbol: SymbolID,
         symbols: SymbolTable
     ) {
-        var annotations = symbols.annotations(for: symbol)
-        var didAppend = false
-        for record in records where !annotations.contains(record) {
-            annotations.append(record)
-            didAppend = true
-        }
-        if didAppend {
-            symbols.setAnnotations(annotations, for: symbol)
-        }
+        appendSyntheticMetadataAnnotations(records, to: symbol, symbols: symbols)
     }
 
     func nativeConcurrentDeprecatedErrorAnnotation(

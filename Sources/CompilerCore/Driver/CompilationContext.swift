@@ -26,6 +26,10 @@ public final class CompilationContext: @unchecked Sendable {
     /// `nil` means full build (all files).
     public internal(set) var incrementalRecompileSet: Set<String>?
 
+    /// Frontend state restored from the previous successful incremental build.
+    /// Present only when file-level frontend reuse is safe for this invocation.
+    public internal(set) var incrementalFrontendState: IncrementalFrontendState?
+
     /// True when the driver restored the requested output from the incremental
     /// cache and intentionally skipped the remaining pipeline phases.
     public internal(set) var incrementalOutputRestored = false
@@ -58,6 +62,14 @@ public final class CompilationContext: @unchecked Sendable {
             return true
         }
         return recompileSet.contains(path)
+    }
+
+    public func needsRecompilation(fileID: FileID) -> Bool {
+        needsRecompilation(path: sourceManager.path(of: fileID))
+    }
+
+    public var hasIncrementalFrontendState: Bool {
+        incrementalRecompileSet != nil && incrementalFrontendState != nil
     }
 
     /// The number of frontend parallel jobs parsed from `-Xfrontend jobs=N`.
@@ -114,6 +126,10 @@ public final class CompilationContext: @unchecked Sendable {
 
     public func setIncrementalRecompileSet(_ recompileSet: Set<String>?) {
         incrementalRecompileSet = recompileSet
+    }
+
+    public func installIncrementalFrontendState(_ state: IncrementalFrontendState) {
+        incrementalFrontendState = state
     }
 
     public func markIncrementalOutputRestored() {

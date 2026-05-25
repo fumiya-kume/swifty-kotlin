@@ -775,6 +775,14 @@ public enum RuntimeABISpec {
             section: "System"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_js_array_toMutableList",
+            parameters: [
+                RuntimeABIParameter(name: "jsArrayRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_js_array_get",
             parameters: [
                 RuntimeABIParameter(name: "jsArrayRaw", type: .intptr),
@@ -835,6 +843,22 @@ public enum RuntimeABISpec {
             name: "kk_js_map_toMap",
             parameters: [
                 RuntimeABIParameter(name: "jsMapRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_js_map_toMutableMap",
+            parameters: [
+                RuntimeABIParameter(name: "jsMapRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_js_set_toMutableSet",
+            parameters: [
+                RuntimeABIParameter(name: "jsSetRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "System"
@@ -2931,6 +2955,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(name: "kk_path_createDirectories", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_createDirectories_attributes", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "attributesRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_createDirectory_attributes", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "attributesRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_createFile_attributes", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "attributesRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_createTempDirectory_directory_prefix_attributes", parameters: [RuntimeABIParameter(name: "directoryRaw", type: .intptr), RuntimeABIParameter(name: "prefixRaw", type: .intptr), RuntimeABIParameter(name: "attributesRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_createTempDirectory_prefix_attributes", parameters: [RuntimeABIParameter(name: "prefixRaw", type: .intptr), RuntimeABIParameter(name: "attributesRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_deleteIfExists", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr)], returnType: .intptr, section: "Path"),
@@ -2966,6 +2991,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(name: "kk_path_createLinkPointingTo", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "targetRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_createSymbolicLinkPointingTo_attributes", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "targetRaw", type: .intptr), RuntimeABIParameter(name: "attributesRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_createTempFile_directory_prefix_suffix_attributes", parameters: [RuntimeABIParameter(name: "directoryRaw", type: .intptr), RuntimeABIParameter(name: "prefixRaw", type: .intptr), RuntimeABIParameter(name: "suffixRaw", type: .intptr), RuntimeABIParameter(name: "attributesRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_createTempFile_prefix_suffix_attributes", parameters: [RuntimeABIParameter(name: "prefixRaw", type: .intptr), RuntimeABIParameter(name: "suffixRaw", type: .intptr), RuntimeABIParameter(name: "attributesRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_deleteExisting", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_setOwner", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "ownerRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_setPosixFilePermissions", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "permissionsRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),

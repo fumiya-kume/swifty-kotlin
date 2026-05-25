@@ -235,6 +235,10 @@ private let sequenceNegatedSelector: @convention(c) (Int, Int, UnsafeMutablePoin
     -value
 }
 
+private let sequenceMaxWithNaturalComparator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, lhs, rhs, _ in
+    lhs - rhs
+}
+
 private let sequenceMaxWithOrNullNaturalComparator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, lhs, rhs, _ in
     lhs - rhs
 }
@@ -277,6 +281,28 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         )
 
         XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testMinOfReturnsSmallestSelectedValueAndThrowsOnEmpty() {
+        var thrown = 0
+        let result = kk_sequence_minOf(
+            makeSequence([5, 2, 3]),
+            unsafeBitCast(sequenceValueTimesTen, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 20)
+
+        thrown = 0
+        let emptyResult = kk_sequence_minOf(
+            makeSequence([]),
+            unsafeBitCast(sequenceValueTimesTen, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
         XCTAssertNotEqual(thrown, 0)
     }
 
@@ -495,6 +521,30 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
     func testMaxOrNullReturnsLargestElementAndNullOnEmpty() {
         XCTAssertEqual(kk_sequence_maxOrNull(makeSequence([3, 1, 4, 2])), 4)
         XCTAssertEqual(kk_sequence_maxOrNull(makeSequence([])), runtimeNullSentinelInt)
+    }
+
+    func testMaxWithReturnsLargestElementAndThrowsOnEmpty() {
+        var thrown = 0
+        let result = kk_sequence_maxWith(
+            makeSequence([3, 1, 4, 2]),
+            unsafeBitCast(sequenceMaxWithNaturalComparator, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 4)
+
+        thrown = 0
+        let emptyResult = kk_sequence_maxWith(
+            makeSequence([]),
+            unsafeBitCast(sequenceMaxWithNaturalComparator, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(emptyResult, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
     }
 
     func testMaxWithOrNullReturnsLargestElementAndNullOnEmpty() {
@@ -1742,6 +1792,13 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(secondList, runtimeNullSentinelInt)
     }
 
+    func testContainsFindsMatchingElement() {
+        let seq = makeSequence([1, 2, 3])
+
+        XCTAssertEqual(kk_unbox_bool(kk_sequence_contains(seq, 2)), 1)
+        XCTAssertEqual(kk_unbox_bool(kk_sequence_contains(seq, 9)), 0)
+    }
+
     func testDropWhileSkipsLeadingMatchesOnly() {
         let result = kk_sequence_dropWhile(
             makeSequence([1, 2, 3, 1, 4]),
@@ -1775,6 +1832,22 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
 
         XCTAssertEqual(thrown, 0)
         XCTAssertEqual(listElements(kk_sequence_to_list(result, nil)), [3, 2])
+    }
+
+    func testElementAtReturnsIndexedValue() {
+        var thrown = 0
+        let result = kk_sequence_elementAt(makeSequence([10, 20, 30]), 1, &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 20)
+    }
+
+    func testElementAtReportsOutOfBounds() {
+        var thrown = 0
+        let result = kk_sequence_elementAt(makeSequence([10]), 3, &thrown)
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(result, runtimeNullSentinelInt)
     }
 
     func testFilterIsInstanceKeepsMatchingRuntimeTypes() {

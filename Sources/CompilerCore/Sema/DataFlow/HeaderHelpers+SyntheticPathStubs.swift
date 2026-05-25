@@ -44,13 +44,15 @@
 /// - `Path.appendBytes(array: ByteArray)` extension function
 /// - `readBytes(): ByteArray`, `readText(): String`, `writeText(text: String)`, `readLines(): List<String>`
 /// - `Path.writeText(text, charset, options)` extension function
-/// - `createDirectories(): Path`, `createLinkPointingTo(target): Path`, `deleteIfExists(): Boolean`
+/// - `createDirectories(): Path`, `createLinkPointingTo(target): Path`, `Path.deleteIfExists(): Boolean`
 /// - `Path.createDirectories(vararg attributes: FileAttribute<*>): Path` extension function
 /// - `Path.createDirectory(vararg attributes: FileAttribute<*>): Path` extension function
+/// - `Path.createFile(vararg attributes: FileAttribute<*>): Path` extension function
 /// - `Path.createSymbolicLinkPointingTo(target: Path, vararg attributes: FileAttribute<*>): Path` extension function
 /// - `createTempDirectory(directory: Path?, prefix: String?, vararg attributes: FileAttribute<*>): Path` top-level function
 /// - `createTempDirectory(prefix: String?, vararg attributes: FileAttribute<*>): Path` top-level function
 /// - `createTempFile(directory: Path?, prefix: String?, suffix: String?, vararg attributes: FileAttribute<*>): Path` top-level function
+/// - `createTempFile(prefix: String?, suffix: String?, vararg attributes: FileAttribute<*>): Path` top-level function
 /// - `deleteExisting()`, `deleteRecursively()`
 /// - `Path.fileStore(): FileStore` extension function
 /// - `Path.fileAttributesViewOrNull<V : FileAttributeView>(vararg options: LinkOption): V?` extension function
@@ -81,6 +83,7 @@
 /// - `ExperimentalPathApi` marker annotation surface
 /// - `FileVisitorBuilder` type surface
 /// - `fileVisitor(builderAction)` top-level function
+/// - `Path.visitFileTree(visitor, maxDepth, followLinks)` extension function
 /// - `OnErrorResult` enum surface
 /// - `PathWalkOption` enum surface
 ///
@@ -1667,6 +1670,18 @@ extension DataFlowSemaPhase {
         )
 
         registerPathExtensionFunction(
+            named: "createFile",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("attributes", fileAttributeStarType)],
+            returnType: pathType,
+            externalLinkName: "kk_path_createFile_attributes",
+            valueParameterIsVararg: [true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
             named: "createLinkPointingTo",
             packageFQName: kotlinIOPathPkg,
             receiverType: pathType,
@@ -1688,13 +1703,22 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        registerPathMemberFunction(
+        registerPathExtensionFunction(
             named: "deleteIfExists",
-            externalLinkName: "kk_path_deleteIfExists",
-            ownerSymbol: pathSymbol,
-            ownerType: pathType,
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
             parameters: [],
             returnType: types.booleanType,
+            externalLinkName: "kk_path_deleteIfExists",
+            symbols: symbols,
+            interner: interner
+        )
+        annotatePathExtensionFunction(
+            named: "deleteIfExists",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [],
+            annotations: pathDeleteIfExistsAnnotations(),
             symbols: symbols,
             interner: interner
         )
@@ -1961,6 +1985,22 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerPathExtensionFunction(
+            named: "visitFileTree",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [
+                ("visitor", fileVisitorOfPathType),
+                ("maxDepth", types.intType),
+                ("followLinks", types.booleanType),
+            ],
+            returnType: types.unitType,
+            externalLinkName: "kk_path_visitFileTree",
+            valueParameterHasDefaultValues: [false, true, true],
+            symbols: symbols,
+            interner: interner
+        )
+
         registerPathTopLevelFunction(
             named: "createTempFile",
             packageFQName: kotlinIOPathPkg,
@@ -1974,6 +2014,22 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_path_createTempFile_directory_prefix_suffix_attributes",
             valueParameterHasDefaultValues: [false, true, true, false],
             valueParameterIsVararg: [false, false, false, true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathTopLevelFunction(
+            named: "createTempFile",
+            packageFQName: kotlinIOPathPkg,
+            parameters: [
+                ("prefix", nullableStringType),
+                ("suffix", nullableStringType),
+                ("attributes", fileAttributeStarType),
+            ],
+            returnType: pathType,
+            externalLinkName: "kk_path_createTempFile_prefix_suffix_attributes",
+            valueParameterHasDefaultValues: [true, true, false],
+            valueParameterIsVararg: [false, false, true],
             symbols: symbols,
             interner: interner
         )
@@ -2752,6 +2808,46 @@ extension DataFlowSemaPhase {
             ),
             for: functionSymbol
         )
+    }
+
+    private func annotatePathExtensionFunction(
+        named name: String,
+        packageFQName: [InternedString],
+        receiverType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        annotations: [MetadataAnnotationRecord],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionFQName = packageFQName + [interner.intern(name)]
+        let parameterTypes = parameters.map(\.type)
+        guard let functionSymbol = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return signature.receiverType == receiverType
+                && signature.parameterTypes == parameterTypes
+        }) else {
+            return
+        }
+
+        for annotation in annotations {
+            appendSyntheticAnnotation(annotation, to: functionSymbol, symbols: symbols)
+        }
+    }
+
+    private func pathDeleteIfExistsAnnotations() -> [MetadataAnnotationRecord] {
+        [
+            MetadataAnnotationRecord(annotationFQName: "kotlin.IgnorableReturnValue"),
+            MetadataAnnotationRecord(
+                annotationFQName: KnownCompilerAnnotation.sinceKotlin.qualifiedName,
+                arguments: ["1.5"]
+            ),
+            MetadataAnnotationRecord(
+                annotationFQName: KnownCompilerAnnotation.rootThrows.qualifiedName,
+                arguments: ["java.io.IOException::class"]
+            )
+        ]
     }
 
     private func registerPathUseLinesFunction(

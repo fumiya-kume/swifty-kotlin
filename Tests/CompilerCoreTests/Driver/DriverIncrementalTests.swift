@@ -82,6 +82,7 @@ final class DriverIncrementalTests: XCTestCase {
             // Cache files should have been written
             XCTAssertTrue(FileManager.default.fileExists(atPath: cachePath + "/manifest.json"))
             XCTAssertTrue(FileManager.default.fileExists(atPath: cachePath + "/deps.json"))
+            XCTAssertTrue(FileManager.default.fileExists(atPath: cachePath + "/frontend.json"))
         }
     }
 
@@ -164,6 +165,40 @@ final class DriverIncrementalTests: XCTestCase {
             XCTAssertEqual(second.exitCode, 0,
                            "Changed input should fall back to a full build. Diagnostics: \(second.diagnostics.map(\.message))")
             XCTAssertNotEqual(try String(contentsOfFile: kirOutputPath(), encoding: .utf8), sentinel)
+        }
+    }
+
+    func testIncrementalChangedInputReusesUnchangedFrontendStateForFullOutput() throws {
+        try withTemporaryFiles(contents: [
+            "fun kept(): String = \"kept\"",
+            "fun changed(): String = kept()",
+        ]) { paths in
+            let driver = makeDriver()
+            let cachePath = tempDir + "/cache"
+            let options = CompilerOptions(
+                moduleName: "Test",
+                inputs: paths,
+                outputPath: outputPath,
+                emit: .kirDump,
+                target: defaultTargetTriple(),
+                frontendFlags: ["incremental"],
+                incrementalCachePath: cachePath
+            )
+
+            let first = driver.runForTesting(options: options)
+            XCTAssertEqual(first.exitCode, 0,
+                           "Initial incremental build should succeed. Diagnostics: \(first.diagnostics.map(\.message))")
+
+            try "fun changedAgain(): String = kept()".write(toFile: paths[1], atomically: true, encoding: .utf8)
+
+            let second = driver.runForTesting(options: options)
+            XCTAssertEqual(second.exitCode, 0,
+                           "Changed input should compile using cached unchanged frontend state. Diagnostics: \(second.diagnostics.map(\.message))")
+
+            let kir = try String(contentsOfFile: kirOutputPath(), encoding: .utf8)
+            XCTAssertTrue(kir.contains(" kept params="), "Output should retain declarations from the unchanged file")
+            XCTAssertTrue(kir.contains(" changedAgain params="), "Output should include declarations rebuilt from the changed file")
+            XCTAssertFalse(kir.contains(" changed params="), "Output should not retain stale declarations from the old changed file")
         }
     }
 
