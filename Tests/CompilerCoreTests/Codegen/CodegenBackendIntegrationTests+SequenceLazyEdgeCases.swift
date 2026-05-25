@@ -909,6 +909,30 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    func testSequenceFindLastReturnsLastMatchingValue() throws {
+        let source = """
+        fun main() {
+            val lastEven = sequenceOf(1, 2, 3, 4, 5).findLast { value -> value % 2 == 0 }
+            println(lastEven)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceFindLastRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "4\n")
+        }
+    }
+
     func testSequenceFilterNotKeepsRejectedPredicateValues() throws {
         let source = """
         fun main() {
