@@ -1848,6 +1848,8 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
 
         XCTAssertNotEqual(thrown, 0)
         XCTAssertEqual(result, runtimeNullSentinelInt)
+    }
+
     func testFilterIndexedToAppendsMatchingElementsToDestination() {
         let destination = makeList([1])
         let fn = unsafeBitCast(keepEvenIndexOrLargeValue, to: Int.self)
