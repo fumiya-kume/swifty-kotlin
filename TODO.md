@@ -646,6 +646,8 @@
 - [ ] STDLIB-CINTEROP-FN-019: `DoubleArray.toCValues()` を追加する
 - [ ] STDLIB-CINTEROP-FN-020: `FloatArray.toCValues()` を追加する
 - [x] STDLIB-CINTEROP-FN-021: `IntArray.toCValues()` を追加する
+- [x] STDLIB-CINTEROP-FN-020: `FloatArray.toCValues()` を追加する
+- [ ] STDLIB-CINTEROP-FN-021: `IntArray.toCValues()` を追加する
 - [ ] STDLIB-CINTEROP-FN-022: `LongArray.toCValues()` を追加する
 - [ ] STDLIB-CINTEROP-FN-023: `ShortArray.toCValues()` を追加する
 - [ ] STDLIB-CINTEROP-FN-024: `UByteArray.toCValues()` を追加する
