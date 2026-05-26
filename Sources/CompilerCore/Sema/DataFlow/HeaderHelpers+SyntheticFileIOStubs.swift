@@ -1025,6 +1025,26 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerFilePackageExtensionFunction(
+            named: "bufferedReader",
+            packageFQName: kotlinIOPkg,
+            receiverType: inputStreamType,
+            parameters: [],
+            returnType: bufferedReaderType,
+            externalLinkName: "kk_input_stream_bufferedReader_default",
+            symbols: symbols,
+            interner: interner
+        )
+        registerFilePackageExtensionFunction(
+            named: "bufferedReader",
+            packageFQName: kotlinIOPkg,
+            receiverType: inputStreamType,
+            parameters: [("charset", charsetType)],
+            returnType: bufferedReaderType,
+            externalLinkName: "kk_input_stream_bufferedReader",
+            symbols: symbols,
+            interner: interner
+        )
 
         registerFileMemberFunction(
             named: "mark",

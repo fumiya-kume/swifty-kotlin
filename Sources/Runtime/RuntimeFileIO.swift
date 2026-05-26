@@ -1185,6 +1185,26 @@ public func kk_input_stream_buffered(
     return streamRaw
 }
 
+@_cdecl("kk_input_stream_bufferedReader_default")
+public func kk_input_stream_bufferedReader_default(_ streamRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    kk_input_stream_bufferedReader(streamRaw, kk_charset_utf_8(), outThrown)
+}
+
+@_cdecl("kk_input_stream_bufferedReader")
+public func kk_input_stream_bufferedReader(
+    _ streamRaw: Int,
+    _ charsetRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let stream = runtimeInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_bufferedReader received invalid InputStream handle")
+    }
+    _ = charsetRaw
+    let bytes = stream.readRemainingBytes().map { UInt8(truncatingIfNeeded: $0) }
+    return registerRuntimeObject(RuntimeBufferedReaderBox(data: Data(bytes)))
+}
+
 @_cdecl("kk_input_stream_mark")
 public func kk_input_stream_mark(_ streamRaw: Int, _ readLimitRaw: Int) -> Int {
     guard let stream = runtimeInputStreamBox(from: streamRaw) else {

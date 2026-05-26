@@ -1303,6 +1303,14 @@ final class RuntimeBufferedReaderBox {
         self.chunkSize = max(1, chunkSize)
     }
 
+    init(data: Data, chunkSize: Int = 4096) {
+        self.fileHandle = nil
+        self.pendingData = data
+        self.closed = false
+        self.reachedEOF = true
+        self.chunkSize = max(1, chunkSize)
+    }
+
     /// Returns the next line, or `nil` when all lines have been consumed.
     func readLine() -> String? {
         guard !closed else { return nil }

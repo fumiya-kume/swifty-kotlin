@@ -49,6 +49,8 @@ extension ABIMismatchTests {
             "kk_input_stream_copyTo",
             "kk_input_stream_buffered_default",
             "kk_input_stream_buffered",
+            "kk_input_stream_bufferedReader_default",
+            "kk_input_stream_bufferedReader",
             "kk_output_stream_buffered_default",
             "kk_output_stream_buffered",
             "kk_string_byteInputStream_default",
