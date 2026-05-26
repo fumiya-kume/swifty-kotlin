@@ -93,6 +93,14 @@ final class RuntimeFileIOTests: IsolatedRuntimeXCTestCase {
         )
     }
 
+    func testFileNormalizeResolvesDotsAndDotDots() {
+        let normalized = kk_file_normalize(runtimeTestFileHandle("/tmp/alpha/./beta/../gamma.txt"))
+        XCTAssertEqual(readString(kk_file_path(normalized)), "/tmp/alpha/gamma.txt")
+
+        let relative = kk_file_normalize(runtimeTestFileHandle("alpha/../beta/./gamma.txt"))
+        XCTAssertEqual(readString(kk_file_path(relative)), "beta/gamma.txt")
+    }
+
     private func makeTempFile(contents: String) throws -> URL {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try contents.write(to: url, atomically: true, encoding: .utf8)

@@ -69,6 +69,40 @@ private func runtimeFileRootLength(_ path: String) -> Int {
     return normalized[afterDrive] == "/" ? 3 : 0
 }
 
+private func runtimeNormalizeFilePath(_ path: String) -> String {
+    let normalizedSeparators = path.replacingOccurrences(of: "\\", with: "/")
+    let rootLength = runtimeFileRootLength(normalizedSeparators)
+    let rootEnd = normalizedSeparators.index(normalizedSeparators.startIndex, offsetBy: rootLength)
+    let root = String(normalizedSeparators[..<rootEnd])
+    let rest = String(normalizedSeparators[rootEnd...])
+
+    var components: [String] = []
+    for part in rest.split(separator: "/", omittingEmptySubsequences: true) {
+        let component = String(part)
+        if component == "." {
+            continue
+        }
+        if component == ".." {
+            if !components.isEmpty && components.last != ".." {
+                components.removeLast()
+            } else if rootLength == 0 {
+                components.append(component)
+            }
+            continue
+        }
+        components.append(component)
+    }
+
+    let joined = components.joined(separator: "/")
+    if root.isEmpty {
+        return joined.isEmpty ? "." : joined
+    }
+    if joined.isEmpty {
+        return root
+    }
+    return root.hasSuffix("/") ? "\(root)\(joined)" : "\(root)/\(joined)"
+}
+
 private func fileMakeStringRaw(_ value: String) -> Int {
     Int(bitPattern: value.withCString { cstr in
         cstr.withMemoryRebound(to: UInt8.self, capacity: value.utf8.count) { pointer in
@@ -433,6 +467,14 @@ public func kk_file_nameWithoutExtension(_ fileRaw: Int) -> Int {
         return fileMakeStringRaw(name)
     }
     return fileMakeStringRaw(String(name[..<dotIndex]))
+}
+
+@_cdecl("kk_file_normalize")
+public func kk_file_normalize(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_normalize received invalid File handle")
+    }
+    return registerRuntimeObject(RuntimeFileBox(runtimeNormalizeFilePath(file.path)))
 }
 
 @_cdecl("kk_file_path")
