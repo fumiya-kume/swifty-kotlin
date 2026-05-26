@@ -403,13 +403,16 @@ extension CallTypeChecker {
             }
         }
 
-        // --- File lambda-accepting methods: forEachLine, useLines (STDLIB-322) ---
+        // --- File/Reader lambda-accepting methods: forEachLine, useLines (STDLIB-322) ---
         // These require the lambda to use the collection HOF closure ABI (closureRaw
         // prepended), and the lambda's implicit `it` must be correctly resolved.
         if args.count == 1 {
             let calleeStr = interner.resolve(calleeName)
             let isFileReceiver = isFileType(receiverType, sema: sema, interner: interner)
-            if isFileReceiver, calleeStr == "forEachLine" || calleeStr == "useLines" {
+            let isReaderReceiver = isReaderType(receiverType, sema: sema, interner: interner)
+            let isSupportedIOReceiver = isFileReceiver
+                || (isReaderReceiver && calleeStr == "forEachLine")
+            if isSupportedIOReceiver, calleeStr == "forEachLine" || calleeStr == "useLines" {
                 if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
                     sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
                 }

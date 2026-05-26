@@ -452,6 +452,26 @@ extension CallTypeChecker {
             && interner.resolve(symbol.fqName[symbol.fqName.count - 2]) == "io"
     }
 
+    /// Returns true when the receiver type is java.io.Reader or java.io.BufferedReader.
+    func isReaderType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let nonNullType = sema.types.makeNonNullable(receiverType)
+        guard case let .classType(classType) = sema.types.kind(of: nonNullType),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        guard symbol.fqName.count >= 2 else {
+            return false
+        }
+        let name = interner.resolve(symbol.fqName.last!)
+        return (name == "Reader" || name == "BufferedReader")
+            && interner.resolve(symbol.fqName[symbol.fqName.count - 2]) == "io"
+    }
+
     func isChannelReceiverType(
         _ receiverType: TypeID,
         sema: SemaModule,

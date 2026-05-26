@@ -64,6 +64,7 @@ extension ABIMismatchTests {
             "kk_reader_buffered_default",
             "kk_reader_buffered",
             "kk_reader_readText",
+            "kk_reader_forEachLine",
             "kk_writer_buffered_default",
             "kk_writer_buffered",
             "kk_string_hexToUInt",

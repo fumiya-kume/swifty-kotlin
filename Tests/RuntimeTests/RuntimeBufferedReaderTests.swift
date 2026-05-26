@@ -2,6 +2,12 @@ import Foundation
 @testable import Runtime
 import XCTest
 
+private var capturedReaderForEachLines: [String] = []
+private let captureReaderForEachLine: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, lineRaw, _ in
+    capturedReaderForEachLines.append(extractString(from: UnsafeMutableRawPointer(bitPattern: lineRaw)) ?? "")
+    return 0
+}
+
 final class RuntimeBufferedReaderTests: IsolatedRuntimeXCTestCase {
     override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     func testBufferedReaderHandlesMixedLineEndingsAndNoTrailingEmptyLine() throws {
@@ -79,6 +85,24 @@ final class RuntimeBufferedReaderTests: IsolatedRuntimeXCTestCase {
 
         XCTAssertEqual(thrown, 0)
         XCTAssertEqual(readString(textRaw), "beta\ngamma")
+    }
+
+    func testReaderForEachLineInvokesActionForRemainingLines() throws {
+        let fileURL = try makeTempFile(contents: "alpha\nbeta\ngamma")
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        let fileRaw = runtimeTestFileHandle(fileURL.path)
+        var thrown = 0
+        let readerRaw = kk_file_bufferedReader(fileRaw, &thrown)
+
+        XCTAssertEqual(readString(kk_buffered_reader_readLine(readerRaw)), "alpha")
+        capturedReaderForEachLines.removeAll()
+        let fnPtr = unsafeBitCast(captureReaderForEachLine, to: Int.self)
+        let result = kk_reader_forEachLine(readerRaw, fnPtr, 0, &thrown)
+
+        XCTAssertEqual(result, 0)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(capturedReaderForEachLines, ["beta", "gamma"])
     }
 
     func testBufferedReaderOpenFailureReturnsNoReaderObject() {
