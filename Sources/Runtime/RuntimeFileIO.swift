@@ -1126,6 +1126,43 @@ public func kk_input_stream_readBytes(_ streamRaw: Int, _ outThrown: UnsafeMutab
     return registerRuntimeObject(RuntimeListBox(elements: stream.readRemainingBytes()))
 }
 
+@_cdecl("kk_input_stream_copyTo_default")
+public func kk_input_stream_copyTo_default(
+    _ inputRaw: Int,
+    _ outputRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    kk_input_stream_copyTo(inputRaw, outputRaw, 8192, outThrown)
+}
+
+@_cdecl("kk_input_stream_copyTo")
+public func kk_input_stream_copyTo(
+    _ inputRaw: Int,
+    _ outputRaw: Int,
+    _ bufferSizeRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard bufferSizeRaw > 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: bufferSize must be positive")
+        return 0
+    }
+    guard let input = runtimeInputStreamBox(from: inputRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_copyTo received invalid InputStream handle")
+    }
+    guard let output = runtimeOutputStreamBox(from: outputRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_copyTo received invalid OutputStream handle")
+    }
+    let bytes = input.readRemainingBytes()
+    do {
+        try output.writeBytes(bytes)
+        return bytes.count
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+        return 0
+    }
+}
+
 @_cdecl("kk_input_stream_mark")
 public func kk_input_stream_mark(_ streamRaw: Int, _ readLimitRaw: Int) -> Int {
     guard let stream = runtimeInputStreamBox(from: streamRaw) else {

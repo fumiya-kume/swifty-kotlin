@@ -959,6 +959,26 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerFilePackageExtensionFunction(
+            named: "copyTo",
+            packageFQName: kotlinIOPkg,
+            receiverType: inputStreamType,
+            parameters: [("out", outputStreamType)],
+            returnType: types.longType,
+            externalLinkName: "kk_input_stream_copyTo_default",
+            symbols: symbols,
+            interner: interner
+        )
+        registerFilePackageExtensionFunction(
+            named: "copyTo",
+            packageFQName: kotlinIOPkg,
+            receiverType: inputStreamType,
+            parameters: [("out", outputStreamType), ("bufferSize", intType)],
+            returnType: types.longType,
+            externalLinkName: "kk_input_stream_copyTo",
+            symbols: symbols,
+            interner: interner
+        )
 
         registerFileMemberFunction(
             named: "mark",

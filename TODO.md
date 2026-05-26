@@ -108,7 +108,7 @@
 - [ ] STDLIB-IO-FN-010: `bufferedWriter` 関数の実装（File版）
 - [x] STDLIB-IO-FN-011: `byteInputStream` 関数の実装
 - [ ] STDLIB-IO-FN-012: `copyRecursively` 関数の実装
-- [ ] STDLIB-IO-FN-013: `copyTo` 関数の実装（InputStream版）
+- [x] STDLIB-IO-FN-013: `copyTo` 関数の実装（InputStream版）
 - [ ] STDLIB-IO-FN-014: `copyTo` 関数の実装（Reader版）
 - [ ] STDLIB-IO-FN-015: `copyTo` 関数の実装（File版）
 - [ ] STDLIB-IO-FN-016: `forEachBlock` 関数の実装

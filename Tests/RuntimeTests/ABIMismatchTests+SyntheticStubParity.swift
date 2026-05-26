@@ -45,6 +45,8 @@ extension ABIMismatchTests {
             "kk_bytearray_inputStream",
             "kk_bytearray_inputStream_range",
             "kk_input_stream_readBytes",
+            "kk_input_stream_copyTo_default",
+            "kk_input_stream_copyTo",
             "kk_string_byteInputStream_default",
             "kk_string_byteInputStream",
             "kk_string_hexToUInt",
