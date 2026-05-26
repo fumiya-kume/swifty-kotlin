@@ -2080,6 +2080,15 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
         }
+        registerSyntheticCPointerPointedProperty(
+            cPointerSymbol: cPointerSymbol,
+            cPointedType: cPointedType,
+            packageFQName: cinteropPkg,
+            packageSymbol: cinteropPkgSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
         configureSingleTypeParameterNominal(
             ownerSymbol: cPointerVarOfSymbol,
             fqName: cinteropPkg + [interner.intern("CPointerVarOf")],
@@ -3293,6 +3302,93 @@ extension DataFlowSemaPhase {
             for: functionSymbol
         )
         appendMetadataAnnotations(annotations, to: functionSymbol, symbols: symbols)
+    }
+
+    private func registerSyntheticCPointerPointedProperty(
+        cPointerSymbol: SymbolID,
+        cPointedType: TypeID,
+        packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let propertyName = interner.intern("pointed")
+        let propertyFQName = packageFQName + [propertyName]
+        let typeParameterName = interner.intern("T")
+        let typeParameterFQName = propertyFQName + [typeParameterName]
+        let typeParameterSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParameterFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParameterName,
+                fqName: typeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+        }
+        symbols.setTypeParameterUpperBounds([cPointedType], for: typeParameterSymbol)
+
+        let typeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: typeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: cPointerSymbol,
+            args: [.invariant(typeParameterType)],
+            nullability: .nonNull
+        )))
+        let getterSignature = FunctionSignature(
+            receiverType: receiverType,
+            parameterTypes: [],
+            returnType: typeParameterType,
+            typeParameterSymbols: [typeParameterSymbol],
+            typeParameterUpperBoundsList: [[cPointedType]],
+            classTypeParameterCount: 0
+        )
+
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
+            symbols.symbol(symbolID)?.kind == .property
+                && symbols.extensionPropertyReceiverType(for: symbolID) == receiverType
+        }) {
+            symbols.setParentSymbol(existing, for: typeParameterSymbol)
+            symbols.setPropertyType(typeParameterType, for: existing)
+            symbols.setExtensionPropertyReceiverType(receiverType, for: existing)
+            if let getterSymbol = symbols.extensionPropertyGetterAccessor(for: existing) {
+                symbols.setFunctionSignature(getterSignature, for: getterSymbol)
+            }
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol {
+            symbols.setParentSymbol(packageSymbol, for: propertySymbol)
+        }
+        symbols.setParentSymbol(propertySymbol, for: typeParameterSymbol)
+        symbols.setPropertyType(typeParameterType, for: propertySymbol)
+        symbols.setExtensionPropertyReceiverType(receiverType, for: propertySymbol)
+
+        let getterSymbol = symbols.define(
+            kind: .function,
+            name: interner.intern("get"),
+            fqName: propertyFQName + [interner.intern("$get")],
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(propertySymbol, for: getterSymbol)
+        symbols.setFunctionSignature(getterSignature, for: getterSymbol)
+        symbols.setExtensionPropertyGetterAccessor(getterSymbol, for: propertySymbol)
+        symbols.setAccessorOwnerProperty(propertySymbol, for: getterSymbol)
     }
 
     private func registerSyntheticNativeTopLevelFunction(
