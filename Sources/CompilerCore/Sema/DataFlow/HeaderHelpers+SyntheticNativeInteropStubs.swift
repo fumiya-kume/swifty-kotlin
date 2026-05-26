@@ -1719,6 +1719,15 @@ extension DataFlowSemaPhase {
         symbols.setDirectSupertypes([nativePlacementSymbol], for: nativeFreeablePlacementSymbol)
         types.setNominalDirectSupertypes([nativePlacementSymbol], for: nativeFreeablePlacementSymbol)
 
+        registerSyntheticNativeTopLevelProperty(
+            named: "nativeHeap",
+            packageFQName: cinteropPkg,
+            packageSymbol: cinteropPkgSymbol,
+            propertyType: nativeFreeablePlacementType,
+            symbols: symbols,
+            interner: interner
+        )
+
         let deferScopeType = types.make(.classType(ClassType(
             classSymbol: deferScopeSymbol,
             args: [],
@@ -3168,6 +3177,39 @@ extension DataFlowSemaPhase {
             flags: flags
         )
         symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
+        symbols.setPropertyType(propertyType, for: propertySymbol)
+    }
+
+    private func registerSyntheticNativeTopLevelProperty(
+        named name: String,
+        packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        propertyType: TypeID,
+        flags: SymbolFlags = [.synthetic],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let propertyName = interner.intern(name)
+        let propertyFQName = packageFQName + [propertyName]
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
+            symbols.symbol(symbolID)?.kind == .property
+        }) {
+            symbols.setPropertyType(propertyType, for: existing)
+            symbols.insertFlags(flags, for: existing)
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: flags
+        )
+        if let packageSymbol {
+            symbols.setParentSymbol(packageSymbol, for: propertySymbol)
+        }
         symbols.setPropertyType(propertyType, for: propertySymbol)
     }
 

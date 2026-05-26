@@ -627,7 +627,7 @@
 - [x] STDLIB-CINTEROP-TYPE-030: `kotlinx.cinterop.StableRef<T>` class surface を追加する
 - [ ] STDLIB-CINTEROP-PROP-001: `CPointer<T>.pointed` property を追加する
 - [ ] STDLIB-CINTEROP-PROP-002: `CPointer<T>.rawValue` property を追加する
-- [ ] STDLIB-CINTEROP-PROP-003: `nativeHeap` property を追加する
+- [x] STDLIB-CINTEROP-PROP-003: `nativeHeap` property を追加する
 - [ ] STDLIB-CINTEROP-FN-001: `alloc<T>()` を追加する
 - [ ] STDLIB-CINTEROP-FN-002: `allocArray<T>(length)` を追加する
 - [ ] STDLIB-CINTEROP-FN-003: `asStableRef<T>()` を追加する
