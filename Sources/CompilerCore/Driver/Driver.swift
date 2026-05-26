@@ -107,6 +107,14 @@ public final class CompilerDriver {
                 // Old caches did not persist output artifacts. Fall back to a
                 // full build so the requested output is always produced.
                 ctx.setIncrementalRecompileSet(nil)
+            } else if let frontendState = cache.loadFrontendState(for: ctx.options) {
+                ctx.interner.preload(frontendState.internerValues)
+                ctx.installIncrementalFrontendState(frontendState)
+            } else {
+                // Old caches can compute a recompilation set from deps.json, but
+                // cannot safely skip unchanged files without reusable frontend
+                // state. Fall back to a full build and refresh the cache.
+                ctx.setIncrementalRecompileSet(nil)
             }
         } else {
             // No compatible previous cache — full build.
@@ -188,7 +196,9 @@ public final class CompilerDriver {
     ) -> (exitCode: Int, diagnostics: [Diagnostic]) {
         if !ctx.diagnostics.hasError, let cache = ctx.incrementalCache, !ctx.incrementalOutputRestored {
             let depGraph = buildDependencyGraph(ctx: ctx)
-            cache.saveState(dependencyGraph: depGraph, options: ctx.options)
+            let buildHash = cache.buildConfigurationHash(for: ctx.options)
+            let frontendState = IncrementalFrontendState(context: ctx, buildConfigurationHash: buildHash)
+            cache.saveState(dependencyGraph: depGraph, options: ctx.options, frontendState: frontendState)
         }
 
         if printDiagnostics {

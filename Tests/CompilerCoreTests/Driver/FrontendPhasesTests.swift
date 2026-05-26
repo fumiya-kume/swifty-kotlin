@@ -65,6 +65,51 @@ final class FrontendPhasesTests: XCTestCase {
         XCTAssertEqual(fileTokens?.last?.kind, .eof, "Last token in file should be EOF")
     }
 
+    func testIncrementalFrontendLexesParsesAndBuildsOnlyRecompiledFiles() throws {
+        try withTemporaryFiles(contents: [
+            "fun kept(): String = \"kept\"",
+            "fun oldChanged(): String = kept()",
+        ]) { paths in
+            let initialCtx = makeCompilationContext(inputs: paths)
+            try runFrontend(initialCtx)
+            let cachedState = try XCTUnwrap(
+                IncrementalFrontendState(context: initialCtx, buildConfigurationHash: "test")
+            )
+
+            try "fun newChanged(): String = kept()".write(toFile: paths[1], atomically: true, encoding: .utf8)
+
+            let incrementalCtx = makeCompilationContext(inputs: paths)
+            try LoadSourcesPhase().run(incrementalCtx)
+            incrementalCtx.interner.preload(cachedState.internerValues)
+            incrementalCtx.setIncrementalRecompileSet([paths[1]])
+            incrementalCtx.installIncrementalFrontendState(cachedState)
+
+            try LexPhase().run(incrementalCtx)
+            XCTAssertEqual(incrementalCtx.tokensByFile.map(\.0), [FileID(rawValue: 1)])
+
+            try ParsePhase().run(incrementalCtx)
+            XCTAssertEqual(incrementalCtx.syntaxTrees.map(\.0), [FileID(rawValue: 1)])
+
+            try BuildASTPhase().run(incrementalCtx)
+            let ast = try XCTUnwrap(incrementalCtx.ast)
+            XCTAssertEqual(ast.files.map(\.fileID), [FileID(rawValue: 0), FileID(rawValue: 1)])
+            XCTAssertEqual(Set(ast.activeDeclsByFileRawID.keys), Set([0, 1]))
+
+            let topLevelNames = ast.files.flatMap(\.topLevelDecls).compactMap { declID -> String? in
+                guard let decl = ast.arena.decl(declID), case let .funDecl(funDecl) = decl else {
+                    return nil
+                }
+                return incrementalCtx.interner.resolve(funDecl.name)
+            }
+            XCTAssertTrue(topLevelNames.contains("kept"))
+            XCTAssertTrue(topLevelNames.contains("newChanged"))
+            XCTAssertFalse(topLevelNames.contains("oldChanged"))
+
+            try SemaPhase().run(incrementalCtx)
+            XCTAssertFalse(incrementalCtx.diagnostics.hasError)
+        }
+    }
+
     // MARK: - ParsePhase
 
     func testParsePhasePopulatesSyntaxTrees() throws {

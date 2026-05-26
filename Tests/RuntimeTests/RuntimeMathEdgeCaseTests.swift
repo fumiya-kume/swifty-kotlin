@@ -6,7 +6,7 @@ import XCTest
 /// This file tests IEEE 754 special inputs (NaN, ±Infinity, ±0.0, subnormals)
 /// and saturation / overflow behaviour for every kotlin.math entry point that
 /// is not already exhaustively exercised in RuntimeMathTests.swift.
-final class RuntimeMathEdgeCaseTests: IsolatedRuntimeXCTestCase {
+final class RuntimeMathEdgeCaseTests: XCTestCase {
 
     // MARK: - Helpers
 

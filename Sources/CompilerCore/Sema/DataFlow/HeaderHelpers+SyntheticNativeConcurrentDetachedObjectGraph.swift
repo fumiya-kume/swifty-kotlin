@@ -64,9 +64,7 @@ extension DataFlowSemaPhase {
         types.setNominalTypeParameterVariances([.invariant], for: graphSymbol)
         symbols.setPropertyType(graphType, for: graphSymbol)
 
-        let cOpaquePointerType = nativeConcurrentClassType(
-            packagePath: ["kotlinx", "cinterop"],
-            name: "COpaquePointer",
+        let cOpaquePointerType = nativeConcurrentCOpaquePointerType(
             symbols: symbols,
             types: types,
             interner: interner

@@ -3,7 +3,7 @@ import Foundation
 import XCTest
 
 /// Tests for STDLIB-031-ABI-002: HexFormat number prefix/suffix encode/decode.
-final class RuntimeHexFormatNumberPrefixSuffixTests: IsolatedRuntimeXCTestCase {
+final class RuntimeHexFormatNumberPrefixSuffixTests: XCTestCase {
 
     // MARK: - Helpers
 

@@ -13,15 +13,7 @@ import XCTest
 ///   "foobar" → "Zm9vYmFy"
 final class RuntimeBase64Tests: XCTestCase {
 
-    override func setUp() {
-        super.setUp()
-        kk_runtime_force_reset()
-    }
 
-    override func tearDown() {
-        kk_runtime_force_reset()
-        super.tearDown()
-    }
 
     // MARK: - Helpers
 

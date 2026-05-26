@@ -1,7 +1,7 @@
 @testable import Runtime
 import XCTest
 
-final class RuntimeNativeIdentityHashCodeTests: IsolatedRuntimeXCTestCase {
+final class RuntimeNativeIdentityHashCodeTests: XCTestCase {
     func testIdentityHashCodeIsStableForRuntimeObject() {
         let objectRaw = kk_array_new(0)
         let first = kk_native_identityHashCode(objectRaw)

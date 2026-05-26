@@ -80,9 +80,10 @@ private let lazyStringThunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) ->
     }
 }
 
-final class RuntimeAssertionEdgeCaseTests: IsolatedRuntimeXCTestCase {
+final class RuntimeAssertionEdgeCaseTests: XCTestCase {
 
-    override func resetIsolatedRuntimeTestState() {
+    override func setUp() {
+        super.setUp()
         lazyNotInvoked_Counter = 0
         _ = kk_assertions_reset()
     }

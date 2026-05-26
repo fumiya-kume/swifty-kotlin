@@ -1,7 +1,7 @@
 @testable import Runtime
 import XCTest
 
-final class RuntimeCacheTests: IsolatedRuntimeXCTestCase {
+final class RuntimeCacheTests: XCTestCase {
     func testCacheEvictsLeastRecentlyUsedEntry() {
         let cache = kk_cache_new(2)
         _ = kk_cache_put(cache, 1, 10)

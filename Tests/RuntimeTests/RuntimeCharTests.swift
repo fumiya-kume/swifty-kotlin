@@ -1,7 +1,7 @@
 @testable import Runtime
 import XCTest
 
-final class RuntimeCharTests: IsolatedRuntimeXCTestCase {
+final class RuntimeCharTests: XCTestCase {
     func testCharCaseConversionPreservesUnicodeMappings() {
         XCTAssertEqual(runtimeStringValue(kk_char_uppercase(scalarValue(of: "ß"))), "SS")
         XCTAssertEqual(runtimeStringValue(kk_char_titlecase(scalarValue(of: "ǆ"))), "ǅ")

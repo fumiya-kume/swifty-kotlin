@@ -2,7 +2,7 @@ import Dispatch
 @testable import Runtime
 import XCTest
 
-final class RuntimeHelpersTests: IsolatedRuntimeXCTestCase {
+final class RuntimeHelpersTests: XCTestCase {
     // MARK: - Null sentinel constants
 
     func testNullSentinelInt64EqualsInt64Min() {

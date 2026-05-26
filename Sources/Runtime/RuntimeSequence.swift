@@ -2834,6 +2834,28 @@ public func kk_sequence_elementAt(_ seqRaw: Int, _ index: Int, _ outThrown: Unsa
     return elements[index]
 }
 
+@_cdecl("kk_sequence_elementAtOrElse")
+public func kk_sequence_elementAtOrElse(
+    _ seqRaw: Int,
+    _ index: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    if elements.indices.contains(index) {
+        return elements[index]
+    }
+    let defaultValue = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var thrown = 0
+    let result = defaultValue(closureRaw, index, &thrown)
+    if thrown != 0 {
+        outThrown?.pointee = thrown
+        return runtimeNullSentinelInt
+    }
+    return result
+}
+
 @_cdecl("kk_sequence_sum")
 public func kk_sequence_sum(_ seqRaw: Int) -> Int {
     let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
@@ -3185,6 +3207,45 @@ public func kk_sequence_reduceRight(
     return acc
 }
 
+@_cdecl("kk_sequence_reduceRightOrNull")
+public func kk_sequence_reduceRightOrNull(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    var elements: [Int] = []
+    let traversalState = runtimeTraverseSequenceSource(seqRaw, caller: #function, outThrown: outThrown) { elem in
+        elements.append(elem)
+        return true
+    }
+    if let outThrown, outThrown.pointee != 0 { return 0 }
+    if let traversalState, traversalState.limitReached {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached)
+        return 0
+    }
+    guard let last = elements.last else { return runtimeNullSentinelInt }
+    var acc = maybeUnbox(last)
+    guard elements.count > 1 else { return acc }
+
+    for index in stride(from: elements.count - 2, through: 0, by: -1) {
+        var thrown = 0
+        let nextAcc = runtimeInvokeCollectionLambda2(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            lhs: elements[index],
+            rhs: acc,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return 0
+        }
+        acc = maybeUnbox(nextAcc)
+    }
+    return acc
+}
+
 @_cdecl("kk_sequence_reduceRightIndexed")
 public func kk_sequence_reduceRightIndexed(
     _ seqRaw: Int,
@@ -3227,7 +3288,6 @@ public func kk_sequence_reduceRightIndexed(
     }
     return acc
 }
-
 
 
 // MARK: - Sequence Operations: chunked/windowed/onEach (STDLIB-276)

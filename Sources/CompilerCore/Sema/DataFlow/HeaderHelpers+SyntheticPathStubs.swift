@@ -44,10 +44,11 @@
 /// - `Path.appendBytes(array: ByteArray)` extension function
 /// - `readBytes(): ByteArray`, `readText(): String`, `writeText(text: String)`, `readLines(): List<String>`
 /// - `Path.writeText(text, charset, options)` extension function
-/// - `createDirectories(): Path`, `createLinkPointingTo(target): Path`, `deleteIfExists(): Boolean`
+/// - `createDirectories(): Path`, `createLinkPointingTo(target): Path`, `Path.deleteIfExists(): Boolean`
 /// - `Path.createDirectories(vararg attributes: FileAttribute<*>): Path` extension function
 /// - `Path.createDirectory(vararg attributes: FileAttribute<*>): Path` extension function
 /// - `Path.createFile(vararg attributes: FileAttribute<*>): Path` extension function
+/// - `Path.createParentDirectories(vararg attributes: FileAttribute<*>): Path` extension function
 /// - `Path.createSymbolicLinkPointingTo(target: Path, vararg attributes: FileAttribute<*>): Path` extension function
 /// - `createTempDirectory(directory: Path?, prefix: String?, vararg attributes: FileAttribute<*>): Path` top-level function
 /// - `createTempDirectory(prefix: String?, vararg attributes: FileAttribute<*>): Path` top-level function
@@ -1682,6 +1683,18 @@ extension DataFlowSemaPhase {
         )
 
         registerPathExtensionFunction(
+            named: "createParentDirectories",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("attributes", fileAttributeStarType)],
+            returnType: pathType,
+            externalLinkName: "kk_path_createParentDirectories_attributes",
+            valueParameterIsVararg: [true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
             named: "createLinkPointingTo",
             packageFQName: kotlinIOPathPkg,
             receiverType: pathType,
@@ -1703,13 +1716,22 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        registerPathMemberFunction(
+        registerPathExtensionFunction(
             named: "deleteIfExists",
-            externalLinkName: "kk_path_deleteIfExists",
-            ownerSymbol: pathSymbol,
-            ownerType: pathType,
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
             parameters: [],
             returnType: types.booleanType,
+            externalLinkName: "kk_path_deleteIfExists",
+            symbols: symbols,
+            interner: interner
+        )
+        annotatePathExtensionFunction(
+            named: "deleteIfExists",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [],
+            annotations: pathDeleteIfExistsAnnotations(),
             symbols: symbols,
             interner: interner
         )
@@ -2799,6 +2821,46 @@ extension DataFlowSemaPhase {
             ),
             for: functionSymbol
         )
+    }
+
+    private func annotatePathExtensionFunction(
+        named name: String,
+        packageFQName: [InternedString],
+        receiverType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        annotations: [MetadataAnnotationRecord],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionFQName = packageFQName + [interner.intern(name)]
+        let parameterTypes = parameters.map(\.type)
+        guard let functionSymbol = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return signature.receiverType == receiverType
+                && signature.parameterTypes == parameterTypes
+        }) else {
+            return
+        }
+
+        for annotation in annotations {
+            appendSyntheticAnnotation(annotation, to: functionSymbol, symbols: symbols)
+        }
+    }
+
+    private func pathDeleteIfExistsAnnotations() -> [MetadataAnnotationRecord] {
+        [
+            MetadataAnnotationRecord(annotationFQName: "kotlin.IgnorableReturnValue"),
+            MetadataAnnotationRecord(
+                annotationFQName: KnownCompilerAnnotation.sinceKotlin.qualifiedName,
+                arguments: ["1.5"]
+            ),
+            MetadataAnnotationRecord(
+                annotationFQName: KnownCompilerAnnotation.rootThrows.qualifiedName,
+                arguments: ["java.io.IOException::class"]
+            )
+        ]
     }
 
     private func registerPathUseLinesFunction(

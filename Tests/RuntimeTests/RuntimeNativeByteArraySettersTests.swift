@@ -1,7 +1,7 @@
 @testable import Runtime
 import XCTest
 
-final class RuntimeNativeByteArraySettersTests: IsolatedRuntimeXCTestCase {
+final class RuntimeNativeByteArraySettersTests: XCTestCase {
     private func makeByteArray(length: Int) -> Int {
         kk_array_new(length)
     }

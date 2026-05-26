@@ -794,6 +794,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_toHashSet")
             case interner.intern("partition"):
                 return interner.intern("kk_sequence_partition")
+            case interner.intern("minBy"):
+                return interner.intern("kk_sequence_minBy")
             case interner.intern("min"):
                 return interner.intern("kk_sequence_min")
             case interner.intern("maxBy"):
@@ -840,6 +842,10 @@ extension CallLowerer {
                 return interner.intern(useIterableRuntimeForCollectionFallback
                     ? "kk_list_reduceRightIndexed"
                     : "kk_sequence_reduceRightIndexed")
+            case interner.intern("reduceRightOrNull"):
+                return interner.intern(useIterableRuntimeForCollectionFallback
+                    ? "kk_list_reduceRightOrNull"
+                    : "kk_sequence_reduceRightOrNull")
             case interner.intern("runningReduceIndexed"):
                 return interner.intern("kk_sequence_runningReduceIndexed")
             default:
@@ -871,7 +877,8 @@ extension CallLowerer {
               || memberName == "reduce"
               || memberName == "reduceRight"
               || memberName == "reduceIndexed"
-              || memberName == "reduceRightIndexed",
+              || memberName == "reduceRightIndexed"
+              || memberName == "reduceRightOrNull",
               case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
               let symbol = sema.symbols.symbol(classType.classSymbol)
         else {

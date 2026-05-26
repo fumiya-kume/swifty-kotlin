@@ -70,7 +70,7 @@ public struct ClassType: Hashable, Sendable {
     }
 }
 
-public enum TypeVariance: Hashable, Sendable {
+public enum TypeVariance: Hashable, Sendable, Codable {
     case invariant
     case out
     case `in`

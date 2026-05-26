@@ -15,9 +15,7 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner
     ) {
-        let nullableCOpaquePointerType = types.makeNullable(nativeConcurrentClassType(
-            packagePath: ["kotlinx", "cinterop"],
-            name: "COpaquePointer",
+        let nullableCOpaquePointerType = types.makeNullable(nativeConcurrentCOpaquePointerType(
             symbols: symbols,
             types: types,
             interner: interner
@@ -203,9 +201,7 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner
     ) {
-        let receiverType = nativeConcurrentClassType(
-            packagePath: ["kotlinx", "cinterop"],
-            name: "COpaquePointer",
+        let receiverType = nativeConcurrentCOpaquePointerType(
             symbols: symbols,
             types: types,
             interner: interner

@@ -62,9 +62,7 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
-        let cOpaquePointerType = nativeConcurrentClassType(
-            packagePath: ["kotlinx", "cinterop"],
-            name: "COpaquePointer",
+        let cOpaquePointerType = nativeConcurrentCOpaquePointerType(
             symbols: symbols,
             types: types,
             interner: interner

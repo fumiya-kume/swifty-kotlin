@@ -77,7 +77,9 @@ public final class LexPhase: CompilerPhase {
     public init() {}
 
     public func run(_ ctx: CompilationContext) throws {
-        let fileIDs = ctx.sourceManager.fileIDs().sorted(by: { $0.rawValue < $1.rawValue })
+        let fileIDs = ctx.sourceManager.fileIDs()
+            .filter { ctx.needsRecompilation(fileID: $0) }
+            .sorted(by: { $0.rawValue < $1.rawValue })
         let interner = ctx.interner
         let diagnostics = ctx.diagnostics
         let sourceManager = ctx.sourceManager
@@ -186,7 +188,7 @@ public final class BuildASTPhase: CompilerPhase {
     // MARK: - Sequential path
 
     private func runSequential(_ ctx: CompilationContext) {
-        let arena = ASTArena()
+        let arena = makeArena(ctx)
         let phase = BuildASTPhase(diagnostics: ctx.diagnostics)
         let perFileResults: [PerFileASTResult] = ctx.syntaxTrees.map { fileID, cst, root in
             phase.tokenCache.removeAll(keepingCapacity: true)
@@ -210,14 +212,15 @@ public final class BuildASTPhase: CompilerPhase {
             declarationsByFile: merged.declarationsByFile,
             scriptExprsByFile: merged.scriptExprsByFile,
             annotationsByFile: merged.annotationsByFile,
-            fileRangesByFile: merged.fileRangesByFile
+            fileRangesByFile: merged.fileRangesByFile,
+            allDeclsByFile: merged.allDeclsByFile
         )
     }
 
     // MARK: - Parallel path
 
     private func runParallel(_ ctx: CompilationContext, jobs: Int) throws {
-        let arena = ASTArena() // thread-safe with locks
+        let arena = makeArena(ctx) // thread-safe with locks
         let interner = ctx.interner
         let syntaxTrees = ctx.syntaxTrees
         let count = syntaxTrees.count
@@ -260,8 +263,16 @@ public final class BuildASTPhase: CompilerPhase {
             declarationsByFile: merged.declarationsByFile,
             scriptExprsByFile: merged.scriptExprsByFile,
             annotationsByFile: merged.annotationsByFile,
-            fileRangesByFile: merged.fileRangesByFile
+            fileRangesByFile: merged.fileRangesByFile,
+            allDeclsByFile: merged.allDeclsByFile
         )
+    }
+
+    private func makeArena(_ ctx: CompilationContext) -> ASTArena {
+        if let state = ctx.incrementalFrontendState {
+            return ASTArena(snapshot: state.arenaSnapshot)
+        }
+        return ASTArena()
     }
 
     // MARK: - Per-file AST building (shared between sequential and parallel)
@@ -397,7 +408,8 @@ public final class BuildASTPhase: CompilerPhase {
         declarationsByFile: [Int32: [DeclID]],
         scriptExprsByFile: [Int32: [ExprID]],
         annotationsByFile: [Int32: [AnnotationNode]],
-        fileRangesByFile: [Int32: SourceRange?]
+        fileRangesByFile: [Int32: SourceRange?],
+        allDeclsByFile: [Int32: [DeclID]]
     ) {
         var declarations: [DeclID] = []
         var packageByFile: [Int32: [InternedString]] = [:]
@@ -406,6 +418,7 @@ public final class BuildASTPhase: CompilerPhase {
         var scriptExprsByFile: [Int32: [ExprID]] = [:]
         var annotationsByFile: [Int32: [AnnotationNode]] = [:]
         var fileRangesByFile: [Int32: SourceRange?] = [:]
+        var allDeclsByFile: [Int32: [DeclID]] = [:]
 
         for result in results.sorted(by: { $0.fileRawID < $1.fileRawID }) {
             declarations.append(contentsOf: result.allDecls)
@@ -414,6 +427,7 @@ public final class BuildASTPhase: CompilerPhase {
             declarationsByFile[result.fileRawID] = result.topLevelDecls
             annotationsByFile[result.fileRawID] = result.annotations
             fileRangesByFile[result.fileRawID] = result.range
+            allDeclsByFile[result.fileRawID] = result.allDecls
             if !result.scriptBody.isEmpty {
                 scriptExprsByFile[result.fileRawID] = result.scriptBody
             }
@@ -426,7 +440,8 @@ public final class BuildASTPhase: CompilerPhase {
             declarationsByFile: declarationsByFile,
             scriptExprsByFile: scriptExprsByFile,
             annotationsByFile: annotationsByFile,
-            fileRangesByFile: fileRangesByFile
+            fileRangesByFile: fileRangesByFile,
+            allDeclsByFile: allDeclsByFile
         )
     }
 
@@ -441,8 +456,25 @@ public final class BuildASTPhase: CompilerPhase {
         declarationsByFile: [Int32: [DeclID]],
         scriptExprsByFile: [Int32: [ExprID]],
         annotationsByFile: [Int32: [AnnotationNode]],
-        fileRangesByFile: [Int32: SourceRange?]
+        fileRangesByFile: [Int32: SourceRange?],
+        allDeclsByFile: [Int32: [DeclID]]
     ) {
+        if let state = ctx.incrementalFrontendState {
+            finalizeIncrementalAST(
+                ctx: ctx,
+                state: state,
+                arena: arena,
+                packageByFile: packageByFile,
+                importsByFile: importsByFile,
+                declarationsByFile: declarationsByFile,
+                scriptExprsByFile: scriptExprsByFile,
+                annotationsByFile: annotationsByFile,
+                fileRangesByFile: fileRangesByFile,
+                allDeclsByFile: allDeclsByFile
+            )
+            return
+        }
+
         let fileIDs = ctx.syntaxTrees.map(\.0.rawValue).filter { $0 != FileID.invalid.rawValue }
         let uniqueFileIDs = Array(Set(fileIDs)).sorted()
         let files: [ASTFile] = uniqueFileIDs.map { rawID in
@@ -463,6 +495,62 @@ public final class BuildASTPhase: CompilerPhase {
             ctx.tokens.count
         }
 
-        ctx.storeAST(ASTModule(files: files, arena: arena, declarationCount: declarations.count, tokenCount: totalTokenCount))
+        ctx.storeAST(ASTModule(
+            files: files,
+            arena: arena,
+            declarationCount: declarations.count,
+            tokenCount: totalTokenCount,
+            activeDeclsByFileRawID: allDeclsByFile
+        ))
+    }
+
+    private func finalizeIncrementalAST(
+        ctx: CompilationContext,
+        state: IncrementalFrontendState,
+        arena: ASTArena,
+        packageByFile: [Int32: [InternedString]],
+        importsByFile: [Int32: [ImportDecl]],
+        declarationsByFile: [Int32: [DeclID]],
+        scriptExprsByFile: [Int32: [ExprID]],
+        annotationsByFile: [Int32: [AnnotationNode]],
+        fileRangesByFile: [Int32: SourceRange?],
+        allDeclsByFile: [Int32: [DeclID]]
+    ) {
+        let changedRawIDs = Set(ctx.syntaxTrees.map(\.0.rawValue))
+        var activeDeclsByFile = state.activeDeclsByFileRawID
+        var tokenCountsByFile = state.tokenCountsByFileRawID
+
+        let changedFiles: [ASTFile] = changedRawIDs.sorted().map { rawID in
+            activeDeclsByFile[rawID] = allDeclsByFile[rawID] ?? []
+            let fileID = FileID(rawValue: rawID)
+            if let tokens = ctx.tokensByFile.first(where: { $0.0 == fileID })?.1 {
+                tokenCountsByFile[rawID] = tokens.count
+            }
+            return ASTFile(
+                fileID: fileID,
+                packageFQName: packageByFile[rawID] ?? [],
+                imports: importsByFile[rawID] ?? [],
+                topLevelDecls: declarationsByFile[rawID] ?? [],
+                scriptBody: scriptExprsByFile[rawID] ?? [],
+                annotations: annotationsByFile[rawID] ?? [],
+                range: fileRangesByFile[rawID] ?? nil
+            )
+        }
+
+        let reusedFiles = state.files.filter { !changedRawIDs.contains($0.fileID.rawValue) }
+        let files = (reusedFiles + changedFiles).sorted(by: { $0.fileID.rawValue < $1.fileID.rawValue })
+        let currentRawIDs = Set(ctx.sourceManager.fileIDs().map(\.rawValue))
+        activeDeclsByFile = activeDeclsByFile.filter { currentRawIDs.contains($0.key) }
+        tokenCountsByFile = tokenCountsByFile.filter { currentRawIDs.contains($0.key) }
+        let declarationCount = activeDeclsByFile.values.reduce(0) { $0 + $1.count }
+        let totalTokenCount = tokenCountsByFile.values.reduce(0, +)
+
+        ctx.storeAST(ASTModule(
+            files: files,
+            arena: arena,
+            declarationCount: declarationCount,
+            tokenCount: totalTokenCount,
+            activeDeclsByFileRawID: activeDeclsByFile
+        ))
     }
 }

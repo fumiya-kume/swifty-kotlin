@@ -84,6 +84,10 @@ jobs:
             test-filter: '^RuntimeTests\\.'
             workers: "1"
             build-jobs: "4"
+          - test-target: RuntimeTestsParallel
+            test-filter: '^RuntimeTestsParallel\\.'
+            workers: "4"
+            build-jobs: "4"
           - test-target: KSwiftKCLITests
             test-filter: '^KSwiftKCLITests\\.'
             workers: "4"

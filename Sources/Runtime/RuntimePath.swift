@@ -706,6 +706,36 @@ public func kk_path_createFile_attributes(
     return pathRaw
 }
 
+@_cdecl("kk_path_createParentDirectories_attributes")
+public func kk_path_createParentDirectories_attributes(
+    _ pathRaw: Int,
+    _ attributesRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_createParentDirectories_attributes received invalid Path handle")
+    }
+    _ = attributesRaw
+    let parentPath = (path.pathString as NSString).deletingLastPathComponent
+    guard !parentPath.isEmpty, parentPath != path.pathString else {
+        return pathRaw
+    }
+    var isDirectory: ObjCBool = false
+    if FileManager.default.fileExists(atPath: parentPath, isDirectory: &isDirectory) {
+        if !isDirectory.boolValue {
+            outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: parent exists and is not a directory")
+        }
+        return pathRaw
+    }
+    do {
+        _ = try FileManager.default.createDirectory(atPath: parentPath, withIntermediateDirectories: true)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return pathRaw
+}
+
 @_cdecl("kk_path_createSymbolicLinkPointingTo_attributes")
 public func kk_path_createSymbolicLinkPointingTo_attributes(
     _ pathRaw: Int,

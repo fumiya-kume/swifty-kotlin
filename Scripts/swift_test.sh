@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-parallel_mode="${SWIFT_TEST_PARALLEL:-1}"
+parallel_mode="${SWIFT_TEST_PARALLEL:-}"
 workers_override="${SWIFT_TEST_WORKERS:-}"
 build_jobs_override="${SWIFT_TEST_BUILD_JOBS:-}"
 junit_xml_path="${SWIFT_TEST_JUNIT_XML:-}"

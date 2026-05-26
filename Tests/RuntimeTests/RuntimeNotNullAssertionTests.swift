@@ -59,9 +59,10 @@ private let notNullStringThunk: @convention(c) (Int, UnsafeMutablePointer<Int>?)
     }
 }
 
-final class RuntimeNotNullAssertionTests: IsolatedRuntimeXCTestCase {
+final class RuntimeNotNullAssertionTests: XCTestCase {
 
-    override func resetIsolatedRuntimeTestState() {
+    override func setUp() {
+        super.setUp()
         notNullLazyCounter = 0
     }
 

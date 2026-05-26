@@ -11,7 +11,23 @@ public extension RuntimeABISpec {
             section: "Streams"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_stream_toList",
+            parameters: [
+                RuntimeABIParameter(name: "streamRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Streams"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_int_stream_asSequence",
+            parameters: [
+                RuntimeABIParameter(name: "streamRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Streams"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_int_stream_toList",
             parameters: [
                 RuntimeABIParameter(name: "streamRaw", type: .intptr),
             ],

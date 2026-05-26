@@ -2,7 +2,7 @@
 import Foundation
 import XCTest
 
-final class RuntimeSerializationTests: IsolatedRuntimeXCTestCase {
+final class RuntimeSerializationTests: XCTestCase {
     private func makeString(_ text: String) -> Int {
         text.withCString { cstr in
             cstr.withMemoryRebound(to: UInt8.self, capacity: text.utf8.count) { ptr in

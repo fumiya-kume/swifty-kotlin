@@ -2,7 +2,7 @@
 import XCTest
 
 /// Tests for STDLIB-REFLECT-ABI-001: Unit::class token encoding and runtime KClass handle.
-final class RuntimeUnitClassTests: IsolatedRuntimeXCTestCase {
+final class RuntimeUnitClassTests: XCTestCase {
 
     // MARK: - Helpers
 
