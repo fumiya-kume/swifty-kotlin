@@ -58,6 +58,7 @@ extension ABIMismatchTests {
             "kk_output_stream_bufferedWriter",
             "kk_string_byteInputStream_default",
             "kk_string_byteInputStream",
+            "kk_url_readBytes",
             "kk_string_hexToUInt",
             "kk_string_chunked_sequence_transform",
             // Exception constructors

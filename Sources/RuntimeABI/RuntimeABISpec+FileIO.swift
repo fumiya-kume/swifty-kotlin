@@ -747,6 +747,15 @@ public extension RuntimeABISpec {
         RuntimeABIFunctionSpec(name: "kk_url_hashCode", parameters: [RuntimeABIParameter(name: "urlRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
         RuntimeABIFunctionSpec(name: "kk_url_encode", parameters: [RuntimeABIParameter(name: "valueRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
         RuntimeABIFunctionSpec(name: "kk_url_decode", parameters: [RuntimeABIParameter(name: "valueRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
+        RuntimeABIFunctionSpec(
+            name: "kk_url_readBytes",
+            parameters: [
+                RuntimeABIParameter(name: "urlRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
         // STDLIB-IO-087: Additional File operations
         RuntimeABIFunctionSpec(
             name: "kk_file_new_parent_child",

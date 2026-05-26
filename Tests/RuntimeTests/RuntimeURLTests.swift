@@ -55,4 +55,17 @@ final class RuntimeURLTests: XCTestCase {
         XCTAssertEqual(stringValue(kk_url_encode(runtimeString("a b+c"))), "a%20b%2Bc")
         XCTAssertEqual(stringValue(kk_url_decode(runtimeString("a%20b%2Bc"))), "a b+c")
     }
+
+    func testURLReadBytesReturnsSignedByteValues() throws {
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try Data([0, 127, 128, 255]).write(to: fileURL)
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        var thrown = 0
+        let urlRaw = kk_url_new(runtimeString(fileURL.absoluteString), &thrown)
+        let bytesRaw = kk_url_readBytes(urlRaw, &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(runtimeListBox(from: bytesRaw)?.elements, [0, 127, -128, -1])
+    }
 }

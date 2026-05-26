@@ -32,10 +32,27 @@ extension DataFlowSemaPhase {
         let uriType = types.make(.classType(ClassType(
             classSymbol: uriSymbol, args: [], nullability: .nonNull
         )))
+        let kotlinPkg = ensurePackage(path: ["kotlin"], symbols: symbols, interner: interner)
+        let kotlinPkgSymbol = symbols.lookup(fqName: kotlinPkg)
+        let byteArraySymbol = ensureClassSymbol(
+            named: "ByteArray",
+            in: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinPkgSymbol {
+            symbols.setParentSymbol(kotlinPkgSymbol, for: byteArraySymbol)
+        }
+        let byteArrayType = types.make(.classType(ClassType(
+            classSymbol: byteArraySymbol,
+            args: [],
+            nullability: .nonNull
+        )))
         let boolType = types.make(.primitive(.boolean, .nonNull))
         let nullableStringType = types.makeNullable(types.stringType)
         let nullableAnyType = types.makeNullable(types.anyType)
         symbols.setPropertyType(urlType, for: urlSymbol)
+        symbols.setPropertyType(byteArrayType, for: byteArraySymbol)
 
         registerURLConstructor(
             ownerSymbol: urlSymbol,
@@ -119,6 +136,18 @@ extension DataFlowSemaPhase {
             ownerType: urlType,
             parameters: [],
             returnType: types.intType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        let kotlinIOPkg = ensurePackage(path: ["kotlin", "io"], symbols: symbols, interner: interner)
+        registerURLPackageExtensionFunction(
+            named: "readBytes",
+            packageFQName: kotlinIOPkg,
+            receiverType: urlType,
+            parameters: [],
+            returnType: byteArrayType,
+            externalLinkName: "kk_url_readBytes",
             symbols: symbols,
             interner: interner
         )
@@ -213,6 +242,67 @@ extension DataFlowSemaPhase {
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: ownerType,
+                parameterTypes: parameters.map(\.type),
+                returnType: returnType,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerURLPackageExtensionFunction(
+        named name: String,
+        packageFQName: [InternedString],
+        receiverType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        externalLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        let existing = symbols.lookupAll(fqName: functionFQName).contains { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+            return signature.receiverType == receiverType
+                && signature.parameterTypes == parameters.map(\.type)
+                && signature.returnType == returnType
+        }
+        guard !existing else { return }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        var valueParameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: functionFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            valueParameterSymbols.append(parameterSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
                 parameterTypes: parameters.map(\.type),
                 returnType: returnType,
                 valueParameterSymbols: valueParameterSymbols,
