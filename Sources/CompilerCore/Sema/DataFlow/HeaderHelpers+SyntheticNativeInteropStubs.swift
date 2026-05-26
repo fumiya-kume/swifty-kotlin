@@ -2840,6 +2840,15 @@ extension DataFlowSemaPhase {
                 symbols: symbols,
                 interner: interner
             )
+            registerSyntheticNativeTopLevelFunction(
+                named: "toKStringFromUtf16",
+                packageFQName: cinteropPkg,
+                receiverType: cPointerUShortVarType,
+                parameters: [],
+                returnType: types.stringType,
+                symbols: symbols,
+                interner: interner
+            )
             let wcstrReturnType = types.make(.classType(ClassType(
                 classSymbol: cValuesSymbol,
                 args: [.invariant(uShortVarType)],
