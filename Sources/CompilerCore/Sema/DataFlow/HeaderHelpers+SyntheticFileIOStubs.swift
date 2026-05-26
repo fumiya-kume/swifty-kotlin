@@ -845,6 +845,16 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerFilePackageExtensionFunction(
+            named: "inputStream",
+            packageFQName: kotlinIOPkg,
+            receiverType: byteArrayType,
+            parameters: [],
+            returnType: byteArrayInputStreamType,
+            externalLinkName: "kk_bytearray_inputStream",
+            symbols: symbols,
+            interner: interner
+        )
 
         registerFileMemberFunction(
             named: "inputStream",
