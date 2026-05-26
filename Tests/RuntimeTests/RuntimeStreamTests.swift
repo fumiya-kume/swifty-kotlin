@@ -114,6 +114,21 @@ final class RuntimeStreamTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(contents, "ABC")
     }
 
+    func testOutputStreamBufferedReturnsWritableStream() throws {
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        let fileRaw = runtimeTestFileHandle(fileURL.path)
+        var thrown = 0
+        let streamRaw = kk_file_outputStream(fileRaw, &thrown)
+        let bufferedRaw = kk_output_stream_buffered_default(streamRaw, &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        _ = kk_output_stream_write_bytes(bufferedRaw, registerRuntimeObject(RuntimeListBox(elements: [65, 66])), &thrown)
+        _ = kk_output_stream_close(bufferedRaw)
+        XCTAssertEqual(try Data(contentsOf: fileURL), Data([65, 66]))
+    }
+
     private func makeTempFile(contents: String) throws -> URL {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try contents.write(to: url, atomically: true, encoding: .utf8)

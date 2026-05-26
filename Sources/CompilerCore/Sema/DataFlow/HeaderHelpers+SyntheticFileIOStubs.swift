@@ -767,12 +767,19 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let bufferedOutputStreamSymbol = ensureClassSymbol(
+            named: "BufferedOutputStream",
+            in: javaIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
         if let javaIOPkgSymbol {
             symbols.setParentSymbol(javaIOPkgSymbol, for: inputStreamSymbol)
             symbols.setParentSymbol(javaIOPkgSymbol, for: bufferedInputStreamSymbol)
             symbols.setParentSymbol(javaIOPkgSymbol, for: byteArrayInputStreamSymbol)
             symbols.setParentSymbol(javaIOPkgSymbol, for: sequenceInputStreamSymbol)
             symbols.setParentSymbol(javaIOPkgSymbol, for: outputStreamSymbol)
+            symbols.setParentSymbol(javaIOPkgSymbol, for: bufferedOutputStreamSymbol)
         }
 
         let inputStreamType = types.make(.classType(ClassType(
@@ -790,11 +797,15 @@ extension DataFlowSemaPhase {
         let outputStreamType = types.make(.classType(ClassType(
             classSymbol: outputStreamSymbol, args: [], nullability: .nonNull
         )))
+        let bufferedOutputStreamType = types.make(.classType(ClassType(
+            classSymbol: bufferedOutputStreamSymbol, args: [], nullability: .nonNull
+        )))
         symbols.setPropertyType(inputStreamType, for: inputStreamSymbol)
         symbols.setPropertyType(bufferedInputStreamType, for: bufferedInputStreamSymbol)
         symbols.setPropertyType(byteArrayInputStreamType, for: byteArrayInputStreamSymbol)
         symbols.setPropertyType(sequenceInputStreamType, for: sequenceInputStreamSymbol)
         symbols.setPropertyType(outputStreamType, for: outputStreamSymbol)
+        symbols.setPropertyType(bufferedOutputStreamType, for: bufferedOutputStreamSymbol)
 
         // Register InputStream/OutputStream as Closeable subtypes (STDLIB-IO-093)
         // so that .use {} works with stream resources.
@@ -810,6 +821,8 @@ extension DataFlowSemaPhase {
         types.setNominalDirectSupertypes([inputStreamSymbol], for: sequenceInputStreamSymbol)
         symbols.setDirectSupertypes([inputStreamSymbol], for: byteArrayInputStreamSymbol)
         types.setNominalDirectSupertypes([inputStreamSymbol], for: byteArrayInputStreamSymbol)
+        symbols.setDirectSupertypes([outputStreamSymbol], for: bufferedOutputStreamSymbol)
+        types.setNominalDirectSupertypes([outputStreamSymbol], for: bufferedOutputStreamSymbol)
         let nullableInputStreamType = types.makeNullable(inputStreamType)
         let listIntType: TypeID = if let listSym = listSymbol {
             types.make(.classType(ClassType(
@@ -1130,6 +1143,26 @@ extension DataFlowSemaPhase {
             ownerType: outputStreamType,
             parameters: [],
             returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerFilePackageExtensionFunction(
+            named: "buffered",
+            packageFQName: kotlinIOPkg,
+            receiverType: outputStreamType,
+            parameters: [],
+            returnType: bufferedOutputStreamType,
+            externalLinkName: "kk_output_stream_buffered_default",
+            symbols: symbols,
+            interner: interner
+        )
+        registerFilePackageExtensionFunction(
+            named: "buffered",
+            packageFQName: kotlinIOPkg,
+            receiverType: outputStreamType,
+            parameters: [("bufferSize", intType)],
+            returnType: bufferedOutputStreamType,
+            externalLinkName: "kk_output_stream_buffered",
             symbols: symbols,
             interner: interner
         )

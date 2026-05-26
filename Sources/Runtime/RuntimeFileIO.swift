@@ -1313,6 +1313,28 @@ public func kk_output_stream_flush(_ streamRaw: Int, _ outThrown: UnsafeMutableP
     return 0
 }
 
+@_cdecl("kk_output_stream_buffered_default")
+public func kk_output_stream_buffered_default(_ streamRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    kk_output_stream_buffered(streamRaw, 8192, outThrown)
+}
+
+@_cdecl("kk_output_stream_buffered")
+public func kk_output_stream_buffered(
+    _ streamRaw: Int,
+    _ bufferSizeRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard bufferSizeRaw > 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: bufferSize must be positive")
+        return 0
+    }
+    guard runtimeOutputStreamBox(from: streamRaw) != nil else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_output_stream_buffered received invalid OutputStream handle")
+    }
+    return streamRaw
+}
+
 @_cdecl("kk_output_stream_close")
 public func kk_output_stream_close(_ streamRaw: Int) -> Int {
     guard let stream = runtimeOutputStreamBox(from: streamRaw) else {
