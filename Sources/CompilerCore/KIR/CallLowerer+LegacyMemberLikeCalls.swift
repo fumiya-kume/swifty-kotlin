@@ -2775,6 +2775,8 @@ extension CallLowerer {
                     runtimeCallee = useIterableRuntimeForCollectionFallback
                         ? "kk_list_reduceRight"
                         : "kk_sequence_reduceRight"
+                } else if calleeName == interner.intern("reduce") {
+                    runtimeCallee = "kk_sequence_reduce"
                 } else if calleeName == interner.intern("runningReduceIndexed") {
                     runtimeCallee = "kk_sequence_runningReduceIndexed"
                 } else if calleeName == interner.intern("reduceRightIndexed") {
@@ -2863,6 +2865,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_onEach"
                         || runtimeCallee == "kk_sequence_onEachIndexed"
                         || runtimeCallee == "kk_sequence_reduceOrNull"
+                        || runtimeCallee == "kk_sequence_reduce"
                         || runtimeCallee == "kk_sequence_reduceRightIndexed"
                         || runtimeCallee == "kk_list_reduceRightIndexed"
                         || runtimeCallee == "kk_sequence_reduceRight"
@@ -2965,6 +2968,16 @@ extension CallLowerer {
                     if runtimeCallee == "kk_sequence_reduceRightOrNull",
                        normalizedArgIDs.count == 1
                     {
+                        let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                            normalizedArgIDs[0],
+                            sema: sema,
+                            arena: arena,
+                            interner: interner,
+                            instructions: &instructions
+                        )
+                        runtimeArguments = [loweredReceiverID, fnPtrExpr, envPtrExpr]
+                    }
+                    if runtimeCallee == "kk_sequence_reduce", normalizedArgIDs.count == 1 {
                         let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
                             normalizedArgIDs[0],
                             sema: sema,

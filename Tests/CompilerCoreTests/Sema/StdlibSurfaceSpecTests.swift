@@ -193,6 +193,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("reduceOrNull", 1),
             sequence("reduceRight", 1),
             sequence("reduceIndexed", 1),
+            sequence("reduce", 1),
         ]
 
         let actual = Set(StdlibSurfaceSpec.collectionHOFMembers.map(SpecKey.init(spec:)))
@@ -249,6 +250,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
                 (.sequence, ["kotlin", "sequences", "Sequence"], "reduceRight", 1),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "scan", 2),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "maxOrNull", 0),
+                (.sequence, ["kotlin", "sequences", "Sequence"], "reduce", 1),
             ]
 
             for testCase in cases {

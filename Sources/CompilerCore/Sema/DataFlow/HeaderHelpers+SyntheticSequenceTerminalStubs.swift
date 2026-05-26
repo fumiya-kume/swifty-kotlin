@@ -1831,6 +1831,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // reduce(operation): T
+        registerSequenceMemberStub(
+            named: "reduce",
+            externalLinkName: "kk_sequence_reduce",
+            receiverType: receiverType,
+            parameters: [("operation", reduceOperationType)],
+            returnType: typeParamType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // reduceRight(operation): T
         registerSequenceMemberStub(
             named: "reduceRight",

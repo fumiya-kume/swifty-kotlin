@@ -109,6 +109,20 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testSequenceReduceResolvesInCallExpressions() throws {
+        try assertSequenceMemberResolves(
+            source: """
+            fun reduceValues(): Int {
+                val values = sequenceOf(1, 2, 3, 4)
+                return values.reduce { acc, value -> acc + value }
+            }
+            """,
+            memberName: "reduce",
+            expectedLinkName: "kk_sequence_reduce",
+            diagnosticContext: "Sequence.reduce"
+        )
+    }
+
     func testSequenceFlatMapResolvesInCallExpressions() throws {
         let source = """
         fun expand(): Sequence<Int> {
