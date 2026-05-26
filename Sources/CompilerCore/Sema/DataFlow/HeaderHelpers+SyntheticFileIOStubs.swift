@@ -54,6 +54,15 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerFilePackageExtensionProperty(
+            named: "isRooted",
+            packageFQName: kotlinIOPkg,
+            receiverType: fileType,
+            returnType: types.booleanType,
+            externalLinkName: "kk_file_isRooted",
+            symbols: symbols,
+            interner: interner
+        )
 
         // List<File> type for listFiles return
         let listSymbol = resolveListSymbol(symbols: symbols, interner: interner)

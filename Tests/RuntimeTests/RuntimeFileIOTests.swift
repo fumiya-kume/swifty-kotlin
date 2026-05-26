@@ -71,6 +71,13 @@ final class RuntimeFileIOTests: IsolatedRuntimeXCTestCase {
         )
     }
 
+    func testFileIsRootedDetectsAbsoluteAndDriveRoots() {
+        XCTAssertEqual(kk_unbox_bool(kk_file_isRooted(runtimeTestFileHandle("/tmp/archive.tar.gz"))), 1)
+        XCTAssertEqual(kk_unbox_bool(kk_file_isRooted(runtimeTestFileHandle("relative/archive.tar.gz"))), 0)
+        XCTAssertEqual(kk_unbox_bool(kk_file_isRooted(runtimeTestFileHandle(#"C:\tmp\archive.tar.gz"#))), 1)
+        XCTAssertEqual(kk_unbox_bool(kk_file_isRooted(runtimeTestFileHandle("C:"))), 1)
+    }
+
     private func makeTempFile(contents: String) throws -> URL {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try contents.write(to: url, atomically: true, encoding: .utf8)

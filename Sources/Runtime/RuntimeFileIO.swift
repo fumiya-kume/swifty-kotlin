@@ -36,6 +36,39 @@ private func fileSplitLines(_ content: String) -> [String] {
     return lines
 }
 
+private func runtimeFileRootLength(_ path: String) -> Int {
+    let normalized = path.replacingOccurrences(of: "\\", with: "/")
+    guard !normalized.isEmpty else { return 0 }
+
+    if normalized.hasPrefix("//") {
+        let hostStart = normalized.index(normalized.startIndex, offsetBy: 2)
+        guard let hostEnd = normalized[hostStart...].firstIndex(of: "/") else {
+            return normalized.count
+        }
+        let shareStart = normalized.index(after: hostEnd)
+        guard shareStart < normalized.endIndex else {
+            return normalized.count
+        }
+        guard let shareEnd = normalized[shareStart...].firstIndex(of: "/") else {
+            return normalized.count
+        }
+        return normalized.distance(from: normalized.startIndex, to: normalized.index(after: shareEnd))
+    }
+
+    if normalized.hasPrefix("/") {
+        return 1
+    }
+
+    guard normalized.count >= 2 else { return 0 }
+    let driveEnd = normalized.index(after: normalized.startIndex)
+    guard normalized[driveEnd] == ":" else { return 0 }
+    let afterDrive = normalized.index(after: driveEnd)
+    if afterDrive == normalized.endIndex {
+        return normalized.count
+    }
+    return normalized[afterDrive] == "/" ? 3 : 0
+}
+
 private func fileMakeStringRaw(_ value: String) -> Int {
     Int(bitPattern: value.withCString { cstr in
         cstr.withMemoryRebound(to: UInt8.self, capacity: value.utf8.count) { pointer in
@@ -380,6 +413,14 @@ public func kk_file_invariantSeparatorsPath(_ fileRaw: Int) -> Int {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_invariantSeparatorsPath received invalid File handle")
     }
     return fileMakeStringRaw(file.path.replacingOccurrences(of: "\\", with: "/"))
+}
+
+@_cdecl("kk_file_isRooted")
+public func kk_file_isRooted(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_isRooted received invalid File handle")
+    }
+    return kk_box_bool(runtimeFileRootLength(file.path) > 0 ? 1 : 0)
 }
 
 @_cdecl("kk_file_path")
