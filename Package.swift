@@ -75,6 +75,11 @@ let package = Package(
             path: "Tests/RuntimeTests"
         ),
         .testTarget(
+            name: "RuntimeTestsParallel",
+            dependencies: ["Runtime", "RuntimeABI"],
+            path: "Tests/RuntimeTestsParallel"
+        ),
+        .testTarget(
             name: "KSwiftKCLITests",
             dependencies: ["KSwiftKCLI", "CompilerCore"],
             path: "Tests/KSwiftKCLITests"
