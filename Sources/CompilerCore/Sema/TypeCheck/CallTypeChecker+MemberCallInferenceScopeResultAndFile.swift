@@ -410,8 +410,7 @@ extension CallTypeChecker {
             let calleeStr = interner.resolve(calleeName)
             let isFileReceiver = isFileType(receiverType, sema: sema, interner: interner)
             let isReaderReceiver = isReaderType(receiverType, sema: sema, interner: interner)
-            let isSupportedIOReceiver = isFileReceiver
-                || (isReaderReceiver && calleeStr == "forEachLine")
+            let isSupportedIOReceiver = isFileReceiver || isReaderReceiver
             if isSupportedIOReceiver, calleeStr == "forEachLine" || calleeStr == "useLines" {
                 if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
                     sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)

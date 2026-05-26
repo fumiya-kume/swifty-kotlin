@@ -686,6 +686,16 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerFilePackageExtensionFunction(
+            named: "useLines",
+            packageFQName: kotlinIOPkg,
+            receiverType: readerType,
+            parameters: [("block", listOfStringToAnyType)],
+            returnType: types.anyType,
+            externalLinkName: "kk_reader_useLines",
+            symbols: symbols,
+            interner: interner
+        )
 
         // MARK: - BufferedWriter type and File.bufferedWriter() (STDLIB-IO-091/093)
 

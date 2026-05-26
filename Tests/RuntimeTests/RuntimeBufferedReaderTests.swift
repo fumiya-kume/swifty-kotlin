@@ -7,6 +7,12 @@ private let captureReaderForEachLine: @convention(c) (Int, Int, UnsafeMutablePoi
     capturedReaderForEachLines.append(extractString(from: UnsafeMutableRawPointer(bitPattern: lineRaw)) ?? "")
     return 0
 }
+private var capturedReaderUseLines: [String] = []
+private let captureReaderUseLines: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, linesRaw, _ in
+    let lines = runtimeListBox(from: linesRaw)?.elements ?? []
+    capturedReaderUseLines = lines.map { extractString(from: UnsafeMutableRawPointer(bitPattern: $0)) ?? "" }
+    return lines.count
+}
 
 final class RuntimeBufferedReaderTests: IsolatedRuntimeXCTestCase {
     override class var requiredLockSet: RuntimeLockSet { .gcOnly }
@@ -103,6 +109,25 @@ final class RuntimeBufferedReaderTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(result, 0)
         XCTAssertEqual(thrown, 0)
         XCTAssertEqual(capturedReaderForEachLines, ["beta", "gamma"])
+    }
+
+    func testReaderUseLinesInvokesBlockAndClosesReader() throws {
+        let fileURL = try makeTempFile(contents: "alpha\nbeta\ngamma")
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        let fileRaw = runtimeTestFileHandle(fileURL.path)
+        var thrown = 0
+        let readerRaw = kk_file_bufferedReader(fileRaw, &thrown)
+
+        XCTAssertEqual(readString(kk_buffered_reader_readLine(readerRaw)), "alpha")
+        capturedReaderUseLines.removeAll()
+        let fnPtr = unsafeBitCast(captureReaderUseLines, to: Int.self)
+        let result = kk_reader_useLines(readerRaw, fnPtr, 0, &thrown)
+
+        XCTAssertEqual(result, 2)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(capturedReaderUseLines, ["beta", "gamma"])
+        XCTAssertEqual(kk_buffered_reader_readLine(readerRaw), runtimeNullSentinelInt)
     }
 
     func testReaderCopyToWritesRemainingContentsToWriter() throws {

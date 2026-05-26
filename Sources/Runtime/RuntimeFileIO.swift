@@ -969,6 +969,25 @@ public func kk_reader_forEachLine(
     return 0
 }
 
+@_cdecl("kk_reader_useLines")
+public func kk_reader_useLines(_ readerRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let reader = runtimeBufferedReaderBox(from: readerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_reader_useLines received invalid Reader handle")
+    }
+    defer { reader.close() }
+    let lines = reader.readLines()
+    let linesList = RuntimeListBox(elements: lines.map { fileMakeStringRaw($0) })
+    let linesListRaw = registerRuntimeObject(linesList)
+    var thrown = 0
+    let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: linesListRaw, outThrown: &thrown)
+    if thrown != 0 {
+        outThrown?.pointee = thrown
+        return 0
+    }
+    return result
+}
+
 // MARK: - STDLIB-IO-091: BufferedWriter
 
 private func runtimeBufferedWriterBox(from raw: Int) -> RuntimeBufferedWriterBox? {
