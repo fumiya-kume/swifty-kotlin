@@ -842,6 +842,18 @@ private func runtimeByteArrayBytes(from raw: Int) -> [UInt8]? {
     return nil
 }
 
+private func runtimeByteArraySliceBytes(from raw: Int, offset: Int, length: Int) -> [UInt8]? {
+    guard let bytes = runtimeByteArrayBytes(from: raw),
+          offset >= 0,
+          length >= 0,
+          offset <= bytes.count,
+          length <= bytes.count - offset
+    else {
+        return nil
+    }
+    return Array(bytes[offset ..< offset + length])
+}
+
 private func runtimeOutputStreamBox(from raw: Int) -> RuntimeOutputStreamBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
     return tryCast(ptr, to: RuntimeOutputStreamBox.self)
@@ -1018,6 +1030,21 @@ public func kk_bytearrayinputstream_new(_ bufferRaw: Int, _ outThrown: UnsafeMut
 @_cdecl("kk_bytearray_inputStream")
 public func kk_bytearray_inputStream(_ arrayRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     kk_bytearrayinputstream_new(arrayRaw, outThrown)
+}
+
+@_cdecl("kk_bytearray_inputStream_range")
+public func kk_bytearray_inputStream_range(
+    _ arrayRaw: Int,
+    _ offsetRaw: Int,
+    _ lengthRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let bytes = runtimeByteArraySliceBytes(from: arrayRaw, offset: offsetRaw, length: lengthRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: invalid ByteArray inputStream range")
+        return 0
+    }
+    return registerRuntimeObject(RuntimeInputStreamBox(data: Data(bytes)))
 }
 
 @_cdecl("kk_string_byteInputStream_default")

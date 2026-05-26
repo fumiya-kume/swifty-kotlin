@@ -46,6 +46,17 @@ final class RuntimeStreamTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_input_stream_read(streamRaw, &thrown), -1)
     }
 
+    func testByteArrayInputStreamRangeExtensionReadsSlice() {
+        let bytesRaw = registerRuntimeObject(RuntimeListBox(elements: [65, 66, 67, 68]))
+        var thrown = 0
+        let streamRaw = kk_bytearray_inputStream_range(bytesRaw, 1, 2, &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_input_stream_read(streamRaw, &thrown), 66)
+        XCTAssertEqual(kk_input_stream_read(streamRaw, &thrown), 67)
+        XCTAssertEqual(kk_input_stream_read(streamRaw, &thrown), -1)
+    }
+
     func testOutputStreamWriteByteAndBytesPersistToFile() throws {
         let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: fileURL) }

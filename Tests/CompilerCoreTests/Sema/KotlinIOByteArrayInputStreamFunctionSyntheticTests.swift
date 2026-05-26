@@ -16,7 +16,7 @@ final class KotlinIOByteArrayInputStreamFunctionSyntheticTests: XCTestCase {
         return try XCTUnwrap(result)
     }
 
-    func testByteArrayInputStreamFunctionIsRegistered() throws {
+    func testByteArrayInputStreamFunctionsAreRegistered() throws {
         let (sema, interner) = try makeSema()
         let byteArraySymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [
             interner.intern("kotlin"),
@@ -42,22 +42,32 @@ final class KotlinIOByteArrayInputStreamFunctionSyntheticTests: XCTestCase {
             interner.intern("io"),
             interner.intern("inputStream"),
         ]
+        let functions = sema.symbols.lookupAll(fqName: functionFQName)
 
-        let functionSymbol = try XCTUnwrap(sema.symbols.lookupAll(fqName: functionFQName).first { symbolID in
+        let defaultOverload = try XCTUnwrap(functions.first { symbolID in
             guard let signature = sema.symbols.functionSignature(for: symbolID) else { return false }
             return signature.receiverType == byteArrayType
                 && signature.parameterTypes.isEmpty
                 && signature.returnType == byteArrayInputStreamType
         })
-        XCTAssertEqual(sema.symbols.externalLinkName(for: functionSymbol), "kk_bytearray_inputStream")
+        XCTAssertEqual(sema.symbols.externalLinkName(for: defaultOverload), "kk_bytearray_inputStream")
+
+        let rangeOverload = try XCTUnwrap(functions.first { symbolID in
+            guard let signature = sema.symbols.functionSignature(for: symbolID) else { return false }
+            return signature.receiverType == byteArrayType
+                && signature.parameterTypes == [sema.types.intType, sema.types.intType]
+                && signature.returnType == byteArrayInputStreamType
+        })
+        XCTAssertEqual(sema.symbols.externalLinkName(for: rangeOverload), "kk_bytearray_inputStream_range")
     }
 
-    func testByteArrayInputStreamFunctionResolvesInSource() throws {
+    func testByteArrayInputStreamFunctionsResolveInSource() throws {
         let source = """
         import java.io.ByteArrayInputStream
         import kotlin.io.inputStream
 
         fun stream(bytes: ByteArray): ByteArrayInputStream = bytes.inputStream()
+        fun streamRange(bytes: ByteArray): ByteArrayInputStream = bytes.inputStream(1, 2)
         """
 
         _ = try makeSema(source: source)

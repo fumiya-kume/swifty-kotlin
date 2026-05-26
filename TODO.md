@@ -114,7 +114,7 @@
 - [ ] STDLIB-IO-FN-016: `forEachBlock` 関数の実装
 - [ ] STDLIB-IO-FN-017: `forEachLine` 関数の実装（Reader版）
 - [x] STDLIB-IO-FN-020: `inputStream` 関数の実装（ByteArray版）
-- [ ] STDLIB-IO-FN-021: `inputStream` 関数の実装（ByteArray範囲版）
+- [x] STDLIB-IO-FN-021: `inputStream` 関数の実装（ByteArray範囲版）
 - [ ] STDLIB-IO-FN-022: `iterator` 関数の実装
 - [x] STDLIB-IO-FN-024: `normalize` 関数の実装
 - [ ] STDLIB-IO-FN-027: `printWriter` 関数の実装
