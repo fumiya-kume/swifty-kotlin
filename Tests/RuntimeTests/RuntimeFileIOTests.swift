@@ -101,6 +101,19 @@ final class RuntimeFileIOTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(readString(kk_file_path(relative)), "beta/gamma.txt")
     }
 
+    func testFileResolveSiblingUsesParentDirectory() {
+        let source = runtimeTestFileHandle("/tmp/alpha/source.txt")
+
+        let stringSibling = kk_file_resolveSibling_string(source, runtimeStringRaw("other.txt"))
+        XCTAssertEqual(readString(kk_file_path(stringSibling)), "/tmp/alpha/other.txt")
+
+        let fileSibling = kk_file_resolveSibling_file(source, runtimeTestFileHandle("nested/other.txt"))
+        XCTAssertEqual(readString(kk_file_path(fileSibling)), "/tmp/alpha/nested/other.txt")
+
+        let noParentSibling = kk_file_resolveSibling_string(runtimeTestFileHandle("source.txt"), runtimeStringRaw("other.txt"))
+        XCTAssertEqual(readString(kk_file_path(noParentSibling)), "other.txt")
+    }
+
     private func makeTempFile(contents: String) throws -> URL {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try contents.write(to: url, atomically: true, encoding: .utf8)

@@ -103,6 +103,17 @@ private func runtimeNormalizeFilePath(_ path: String) -> String {
     return root.hasSuffix("/") ? "\(root)\(joined)" : "\(root)/\(joined)"
 }
 
+private func runtimeResolveSiblingPath(basePath: String, relativePath: String) -> String {
+    if runtimeFileRootLength(relativePath) > 0 {
+        return relativePath
+    }
+    let parent = (basePath as NSString).deletingLastPathComponent
+    if parent.isEmpty || parent == basePath {
+        return relativePath
+    }
+    return (parent as NSString).appendingPathComponent(relativePath)
+}
+
 private func fileMakeStringRaw(_ value: String) -> Int {
     Int(bitPattern: value.withCString { cstr in
         cstr.withMemoryRebound(to: UInt8.self, capacity: value.utf8.count) { pointer in
@@ -475,6 +486,34 @@ public func kk_file_normalize(_ fileRaw: Int) -> Int {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_normalize received invalid File handle")
     }
     return registerRuntimeObject(RuntimeFileBox(runtimeNormalizeFilePath(file.path)))
+}
+
+@_cdecl("kk_file_resolveSibling_file")
+public func kk_file_resolveSibling_file(_ fileRaw: Int, _ relativeRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_resolveSibling_file received invalid File handle")
+    }
+    guard let relative = runtimeFileBox(from: relativeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_resolveSibling_file received invalid relative File handle")
+    }
+    return registerRuntimeObject(RuntimeFileBox(
+        runtimeResolveSiblingPath(basePath: file.path, relativePath: relative.path)
+    ))
+}
+
+@_cdecl("kk_file_resolveSibling_string")
+public func kk_file_resolveSibling_string(_ fileRaw: Int, _ relativeRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_resolveSibling_string received invalid File handle")
+    }
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: relativeRaw),
+          let relative = extractString(from: ptr)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_resolveSibling_string received invalid relative path")
+    }
+    return registerRuntimeObject(RuntimeFileBox(
+        runtimeResolveSiblingPath(basePath: file.path, relativePath: relative)
+    ))
 }
 
 @_cdecl("kk_file_path")
