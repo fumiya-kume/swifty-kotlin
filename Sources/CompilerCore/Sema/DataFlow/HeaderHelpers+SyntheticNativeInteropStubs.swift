@@ -1393,6 +1393,12 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let stableRefSymbol = ensureClassSymbol(
+            named: "StableRef",
+            in: cinteropPkg,
+            symbols: symbols,
+            interner: interner
+        )
         let cPointerSymbol = ensureClassSymbol(
             named: "CPointer",
             in: cinteropPkg,
@@ -1451,6 +1457,7 @@ extension DataFlowSemaPhase {
             cValuesRefSymbol,
             cValueSymbol,
             cValuesSymbol,
+            stableRefSymbol,
             cPointerSymbol,
             cPointerVarSymbol,
             cPointerVarOfSymbol,
@@ -2285,6 +2292,144 @@ extension DataFlowSemaPhase {
             in: cinteropPkg,
             packageSymbol: cinteropPkgSymbol,
             underlyingType: cOpaquePointerUnderlyingType,
+            symbols: symbols,
+            interner: interner
+        )
+        let stableRefFQName = cinteropPkg + [interner.intern("StableRef")]
+        let stableRefTypeParameterName = interner.intern("T")
+        let stableRefTypeParameterFQName = stableRefFQName + [stableRefTypeParameterName]
+        let stableRefTypeParameterSymbol: SymbolID = if let existing = symbols.lookup(fqName: stableRefTypeParameterFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: stableRefTypeParameterName,
+                fqName: stableRefTypeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        symbols.setTypeParameterUpperBounds([types.anyType], for: stableRefTypeParameterSymbol)
+        let stableRefTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: stableRefTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let stableRefType = types.make(.classType(ClassType(
+            classSymbol: stableRefSymbol,
+            args: [.out(stableRefTypeParameterType)],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(stableRefType, for: stableRefSymbol)
+        symbols.insertFlags([.valueType], for: stableRefSymbol)
+        symbols.setValueClassUnderlyingType(cOpaquePointerUnderlyingType, for: stableRefSymbol)
+        types.setNominalTypeParameterSymbols([stableRefTypeParameterSymbol], for: stableRefSymbol)
+        types.setNominalTypeParameterVariances([.out], for: stableRefSymbol)
+        registerSyntheticNativeBitSetConstructor(
+            ownerSymbol: stableRefSymbol,
+            ownerType: stableRefType,
+            parameters: [(name: "source", type: cOpaquePointerUnderlyingType)],
+            defaultValues: [false],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "asCPointer",
+            ownerSymbol: stableRefSymbol,
+            receiverType: stableRefType,
+            parameters: [],
+            returnType: cOpaquePointerUnderlyingType,
+            typeParameterSymbols: [stableRefTypeParameterSymbol],
+            typeParameterUpperBoundsList: [[types.anyType]],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "dispose",
+            ownerSymbol: stableRefSymbol,
+            receiverType: stableRefType,
+            parameters: [],
+            returnType: types.unitType,
+            typeParameterSymbols: [stableRefTypeParameterSymbol],
+            typeParameterUpperBoundsList: [[types.anyType]],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "get",
+            ownerSymbol: stableRefSymbol,
+            receiverType: stableRefType,
+            parameters: [],
+            returnType: stableRefTypeParameterType,
+            typeParameterSymbols: [stableRefTypeParameterSymbol],
+            typeParameterUpperBoundsList: [[types.anyType]],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
+        let stableRefCompanionName = interner.intern("Companion")
+        let stableRefCompanionFQName = stableRefFQName + [stableRefCompanionName]
+        let stableRefCompanionSymbol: SymbolID
+        if let existingCompanion = symbols.companionObjectSymbol(for: stableRefSymbol) {
+            stableRefCompanionSymbol = existingCompanion
+        } else if let existing = symbols.lookup(fqName: stableRefCompanionFQName),
+                  symbols.symbol(existing)?.kind == .object
+        {
+            stableRefCompanionSymbol = existing
+        } else {
+            stableRefCompanionSymbol = symbols.define(
+                kind: .object,
+                name: stableRefCompanionName,
+                fqName: stableRefCompanionFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .static]
+            )
+        }
+        symbols.setParentSymbol(stableRefSymbol, for: stableRefCompanionSymbol)
+        symbols.setCompanionObjectSymbol(stableRefCompanionSymbol, for: stableRefSymbol)
+        let stableRefCompanionType = types.make(.classType(ClassType(
+            classSymbol: stableRefCompanionSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(stableRefCompanionType, for: stableRefCompanionSymbol)
+        let createTypeParameterName = interner.intern("T")
+        let createFunctionName = interner.intern("create")
+        let createTypeParameterFQName = stableRefCompanionFQName + [createFunctionName, createTypeParameterName]
+        let createTypeParameterSymbol: SymbolID = if let existing = symbols.lookup(fqName: createTypeParameterFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: createTypeParameterName,
+                fqName: createTypeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        symbols.setTypeParameterUpperBounds([types.anyType], for: createTypeParameterSymbol)
+        let createTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: createTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let createReturnType = types.make(.classType(ClassType(
+            classSymbol: stableRefSymbol,
+            args: [.out(createTypeParameterType)],
+            nullability: .nonNull
+        )))
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "create",
+            ownerSymbol: stableRefCompanionSymbol,
+            receiverType: stableRefCompanionType,
+            parameters: [(name: "any", type: createTypeParameterType)],
+            returnType: createReturnType,
+            typeParameterSymbols: [createTypeParameterSymbol],
+            typeParameterUpperBoundsList: [[types.anyType]],
+            flags: [.synthetic, .static],
             symbols: symbols,
             interner: interner
         )
