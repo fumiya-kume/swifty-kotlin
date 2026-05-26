@@ -1291,6 +1291,18 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let cStructVarSymbol = ensureClassSymbol(
+            named: "CStructVar",
+            in: cinteropPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let cStructVarTypeSymbol = ensureClassSymbol(
+            named: "Type",
+            in: cinteropPkg + [interner.intern("CStructVar")],
+            symbols: symbols,
+            interner: interner
+        )
         let cEnumSymbol = ensureInterfaceSymbol(
             named: "CEnum",
             in: cinteropPkg,
@@ -1423,6 +1435,7 @@ extension DataFlowSemaPhase {
             cPointedSymbol,
             cVariableSymbol,
             cPrimitiveVarSymbol,
+            cStructVarSymbol,
             cEnumSymbol,
             cEnumVarSymbol,
             cFunctionSymbol,
@@ -1450,6 +1463,7 @@ extension DataFlowSemaPhase {
         }
         symbols.setParentSymbol(cVariableSymbol, for: cVariableTypeSymbol)
         symbols.setParentSymbol(cPrimitiveVarSymbol, for: cPrimitiveVarTypeSymbol)
+        symbols.setParentSymbol(cStructVarSymbol, for: cStructVarTypeSymbol)
 
         let nativePointedType = types.make(.classType(ClassType(
             classSymbol: nativePointedSymbol,
@@ -1503,6 +1517,26 @@ extension DataFlowSemaPhase {
         symbols.insertFlags([.openType], for: cPrimitiveVarTypeSymbol)
         symbols.setDirectSupertypes([cVariableTypeSymbol], for: cPrimitiveVarTypeSymbol)
         types.setNominalDirectSupertypes([cVariableTypeSymbol], for: cPrimitiveVarTypeSymbol)
+
+        let cStructVarType = types.make(.classType(ClassType(
+            classSymbol: cStructVarSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(cStructVarType, for: cStructVarSymbol)
+        symbols.insertFlags([.abstractType, .openType], for: cStructVarSymbol)
+        symbols.setDirectSupertypes([cVariableSymbol], for: cStructVarSymbol)
+        types.setNominalDirectSupertypes([cVariableSymbol], for: cStructVarSymbol)
+
+        let cStructVarTypeClassType = types.make(.classType(ClassType(
+            classSymbol: cStructVarTypeSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(cStructVarTypeClassType, for: cStructVarTypeSymbol)
+        symbols.insertFlags([.openType], for: cStructVarTypeSymbol)
+        symbols.setDirectSupertypes([cVariableTypeSymbol], for: cStructVarTypeSymbol)
+        types.setNominalDirectSupertypes([cVariableTypeSymbol], for: cStructVarTypeSymbol)
 
         let cEnumType = types.make(.classType(ClassType(
             classSymbol: cEnumSymbol,
@@ -1577,6 +1611,25 @@ extension DataFlowSemaPhase {
             ownerType: cPrimitiveVarTypeClassType,
             parameters: [(name: "size", type: types.intType)],
             defaultValues: [false],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetConstructor(
+            ownerSymbol: cStructVarSymbol,
+            ownerType: cStructVarType,
+            parameters: [(name: "rawPtr", type: nativePtrType)],
+            defaultValues: [false],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetConstructor(
+            ownerSymbol: cStructVarTypeSymbol,
+            ownerType: cStructVarTypeClassType,
+            parameters: [
+                (name: "size", type: types.longType),
+                (name: "align", type: types.intType),
+            ],
+            defaultValues: [false, false],
             symbols: symbols,
             interner: interner
         )
@@ -1799,25 +1852,109 @@ extension DataFlowSemaPhase {
             ownerSymbol: cValueSymbol,
             fqName: cinteropPkg + [interner.intern("CValue")],
             parameterName: "T",
-            supertype: nil,
+            supertype: cValuesSymbol,
             symbols: symbols,
             types: types,
             interner: interner
         )
+        symbols.insertFlags([.abstractType], for: cValueSymbol)
         if let cValueTypeParameterSymbol = types.nominalTypeParameterSymbols(for: cValueSymbol).first {
             symbols.setTypeParameterUpperBounds([cVariableType], for: cValueTypeParameterSymbol)
+            let cValueTypeParameterType = types.make(.typeParam(TypeParamType(
+                symbol: cValueTypeParameterSymbol,
+                nullability: .nonNull
+            )))
+            let cValueType = types.make(.classType(ClassType(
+                classSymbol: cValueSymbol,
+                args: [.invariant(cValueTypeParameterType)],
+                nullability: .nonNull
+            )))
+            registerSyntheticNativeBitSetConstructor(
+                ownerSymbol: cValueSymbol,
+                ownerType: cValueType,
+                parameters: [],
+                defaultValues: [],
+                symbols: symbols,
+                interner: interner
+            )
         }
         configureSingleTypeParameterNominal(
             ownerSymbol: cValuesSymbol,
             fqName: cinteropPkg + [interner.intern("CValues")],
             parameterName: "T",
-            supertype: nil,
+            supertype: cValuesRefSymbol,
             symbols: symbols,
             types: types,
             interner: interner
         )
+        symbols.insertFlags([.abstractType], for: cValuesSymbol)
         if let cValuesTypeParameterSymbol = types.nominalTypeParameterSymbols(for: cValuesSymbol).first {
             symbols.setTypeParameterUpperBounds([cVariableType], for: cValuesTypeParameterSymbol)
+            let cValuesTypeParameterType = types.make(.typeParam(TypeParamType(
+                symbol: cValuesTypeParameterSymbol,
+                nullability: .nonNull
+            )))
+            let cValuesType = types.make(.classType(ClassType(
+                classSymbol: cValuesSymbol,
+                args: [.invariant(cValuesTypeParameterType)],
+                nullability: .nonNull
+            )))
+            let cPointerToCValuesTypeParameterType = types.make(.classType(ClassType(
+                classSymbol: cPointerSymbol,
+                args: [.invariant(cValuesTypeParameterType)],
+                nullability: .nonNull
+            )))
+            registerSyntheticNativeBitSetConstructor(
+                ownerSymbol: cValuesSymbol,
+                ownerType: cValuesType,
+                parameters: [],
+                defaultValues: [],
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticNativeBitSetProperty(
+                named: "align",
+                ownerSymbol: cValuesSymbol,
+                propertyType: types.intType,
+                flags: [.synthetic, .abstractType],
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticNativeBitSetProperty(
+                named: "size",
+                ownerSymbol: cValuesSymbol,
+                propertyType: types.intType,
+                flags: [.synthetic, .abstractType],
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticNativeBitSetMemberFunction(
+                named: "getPointer",
+                ownerSymbol: cValuesSymbol,
+                receiverType: cValuesType,
+                parameters: [(name: "scope", type: autofreeScopeType)],
+                returnType: cPointerToCValuesTypeParameterType,
+                typeParameterSymbols: [cValuesTypeParameterSymbol],
+                typeParameterUpperBoundsList: [[cVariableType]],
+                classTypeParameterCount: 1,
+                flags: [.synthetic, .openType, .overrideMember],
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticNativeBitSetMemberFunction(
+                named: "place",
+                ownerSymbol: cValuesSymbol,
+                receiverType: cValuesType,
+                parameters: [(name: "placement", type: cPointerToCValuesTypeParameterType)],
+                returnType: cPointerToCValuesTypeParameterType,
+                typeParameterSymbols: [cValuesTypeParameterSymbol],
+                typeParameterUpperBoundsList: [[cVariableType]],
+                classTypeParameterCount: 1,
+                flags: [.synthetic, .abstractType],
+                annotations: [MetadataAnnotationRecord(annotationFQName: "kotlin.IgnorableReturnValue")],
+                symbols: symbols,
+                interner: interner
+            )
         }
         registerSyntheticCPointedReadFunction(
             named: "readValue",
@@ -2829,6 +2966,7 @@ extension DataFlowSemaPhase {
         typeParameterUpperBoundsList: [[TypeID]] = [],
         classTypeParameterCount: Int = 0,
         flags: SymbolFlags = [.synthetic],
+        annotations: [MetadataAnnotationRecord] = [],
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -2849,6 +2987,7 @@ extension DataFlowSemaPhase {
                 && signature.classTypeParameterCount == classTypeParameterCount
         }) {
             symbols.insertFlags(flags, for: existing)
+            appendMetadataAnnotations(annotations, to: existing, symbols: symbols)
             return
         }
 
@@ -2895,6 +3034,7 @@ extension DataFlowSemaPhase {
             ),
             for: functionSymbol
         )
+        appendMetadataAnnotations(annotations, to: functionSymbol, symbols: symbols)
     }
 
     private func registerSyntheticNativeTopLevelFunction(
