@@ -2451,6 +2451,53 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let asStableRefName = interner.intern("asStableRef")
+        let asStableRefFQName = cinteropPkg + [asStableRefName]
+        let asStableRefTypeParameterName = interner.intern("T")
+        let asStableRefTypeParameterFQName = asStableRefFQName + [asStableRefTypeParameterName]
+        let asStableRefTypeParameterSymbol: SymbolID = if let existing = symbols.lookup(
+            fqName: asStableRefTypeParameterFQName
+        ) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: asStableRefTypeParameterName,
+                fqName: asStableRefTypeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic, .reifiedTypeParameter]
+            )
+        }
+        symbols.insertFlags([.synthetic, .reifiedTypeParameter], for: asStableRefTypeParameterSymbol)
+        symbols.setTypeParameterUpperBounds([types.anyType], for: asStableRefTypeParameterSymbol)
+        let asStableRefTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: asStableRefTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let cPointerStarType = types.make(.classType(ClassType(
+            classSymbol: cPointerSymbol,
+            args: [.star],
+            nullability: .nonNull
+        )))
+        let asStableRefReturnType = types.make(.classType(ClassType(
+            classSymbol: stableRefSymbol,
+            args: [.out(asStableRefTypeParameterType)],
+            nullability: .nonNull
+        )))
+        registerSyntheticNativeTopLevelFunction(
+            named: "asStableRef",
+            packageFQName: cinteropPkg,
+            receiverType: cPointerStarType,
+            parameters: [],
+            returnType: asStableRefReturnType,
+            typeParameterSymbols: [asStableRefTypeParameterSymbol],
+            typeParameterUpperBoundsList: [[types.anyType]],
+            reifiedTypeParameterIndices: [0],
+            flags: [.synthetic, .inlineFunction],
+            symbols: symbols,
+            interner: interner
+        )
         let cOpaquePointerVarUnderlyingType = types.make(.classType(ClassType(
             classSymbol: cPointerVarOfSymbol,
             args: [.invariant(cOpaquePointerUnderlyingType)],
@@ -3399,6 +3446,9 @@ extension DataFlowSemaPhase {
         returnType: TypeID,
         defaultValues: [Bool]? = nil,
         varargs: [Bool]? = nil,
+        typeParameterSymbols: [SymbolID] = [],
+        typeParameterUpperBoundsList: [[TypeID]] = [],
+        reifiedTypeParameterIndices: Set<Int> = [],
         annotations: [MetadataAnnotationRecord] = [],
         externalLinkName: String? = nil,
         flags: SymbolFlags = [.synthetic],
@@ -3421,9 +3471,15 @@ extension DataFlowSemaPhase {
             return signature.receiverType == receiverType
                 && signature.parameterTypes == parameterTypes
                 && signature.returnType == returnType
+                && signature.typeParameterSymbols == typeParameterSymbols
+                && signature.typeParameterUpperBoundsList == typeParameterUpperBoundsList
+                && signature.reifiedTypeParameterIndices == reifiedTypeParameterIndices
         }) {
             functionSymbol = existing
             symbols.insertFlags(functionFlags, for: existing)
+            for typeParameterSymbol in typeParameterSymbols {
+                symbols.setParentSymbol(existing, for: typeParameterSymbol)
+            }
             if let externalLinkName {
                 symbols.setExternalLinkName(externalLinkName, for: existing)
             }
@@ -3438,6 +3494,9 @@ extension DataFlowSemaPhase {
             )
             if let packageSymbol = symbols.lookup(fqName: packageFQName) {
                 symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+            }
+            for typeParameterSymbol in typeParameterSymbols {
+                symbols.setParentSymbol(functionSymbol, for: typeParameterSymbol)
             }
 
             let valueParameterSymbols = parameters.map { parameter in
@@ -3464,7 +3523,10 @@ extension DataFlowSemaPhase {
                     canThrow: canThrow,
                     valueParameterSymbols: valueParameterSymbols,
                     valueParameterHasDefaultValues: defaultValues ?? Array(repeating: false, count: valueParameterSymbols.count),
-                    valueParameterIsVararg: varargs ?? Array(repeating: false, count: valueParameterSymbols.count)
+                    valueParameterIsVararg: varargs ?? Array(repeating: false, count: valueParameterSymbols.count),
+                    typeParameterSymbols: typeParameterSymbols,
+                    reifiedTypeParameterIndices: reifiedTypeParameterIndices,
+                    typeParameterUpperBoundsList: typeParameterUpperBoundsList
                 ),
                 for: functionSymbol
             )
