@@ -838,6 +838,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_scanIndexed")
             case interner.intern("reduceOrNull"):
                 return interner.intern("kk_sequence_reduceOrNull")
+            case interner.intern("reduce"):
+                return interner.intern("kk_sequence_reduce")
             case interner.intern("reduceRight"):
                 return interner.intern("kk_sequence_reduceRight")
             case interner.intern("reduceIndexed"):

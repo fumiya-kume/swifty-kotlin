@@ -20,6 +20,9 @@ func runtimeSequenceSourceElements(from rawValue: Int) -> [Int]? {
     if let array = runtimeArrayBox(from: rawValue) {
         return array.elements
     }
+    if let set = runtimeSetBox(from: rawValue) {
+        return set.elements
+    }
     return nil
 }
 
