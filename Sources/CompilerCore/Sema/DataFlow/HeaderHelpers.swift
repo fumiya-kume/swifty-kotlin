@@ -1115,34 +1115,11 @@ extension DataFlowSemaPhase {
         registerSyntheticNativeGetterStubs(symbols: symbols, interner: interner)
         registerSyntheticJsNameStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticExperimentalMarkerStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticWasmExportStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticJsNonModuleStubs(symbols: symbols, interner: interner)
-        registerSyntheticJsConsoleStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticWasmImportStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticJsExportStubs(symbols: symbols, interner: interner)
-        registerSyntheticCoroutinesABIStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticWasmUnsafeAnnotationStubs(symbols: symbols, interner: interner)
-        registerSyntheticWasmUnsafeMemoryAllocatorStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticWasmUnsafePointerStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticJsExternalInheritorsOnlyStubs(symbols: symbols, interner: interner)
-        registerSyntheticJsArrayStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticDynamicStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticJsClassStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticJsReferenceStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticJsBooleanStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticJsSymbolStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticJsCollectionsMapStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticJsCollectionsSetStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticJsCollectionsReadonlyArrayToListStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticJsCollectionsReadonlyArrayToMutableListStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticJsCollectionsReadonlySetStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticJsCollectionsReadonlySetToMutableSetStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticJsNumberInteropStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticJsIntNumberInteropStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticJsArrayInteropStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticKPropertyIsInitializedStub(symbols: symbols, types: types, interner: interner)
-        registerSyntheticJsStaticStubs(symbols: symbols, interner: interner)
-        registerSyntheticJsExternalArgumentStubs(symbols: symbols, interner: interner)
+        // Trailing platform-interop batch (Wasm + Js + late Reflect stubs).
+        // To add a new Js/Wasm interop stub, edit
+        // HeaderHelpers+SyntheticPhase_PlatformAndJS.swift instead of this file.
+        // The Phase file preserves the exact original call order.
+        registerSyntheticPhase_PlatformAndJS(symbols: symbols, types: types, interner: interner)
     }
 
     /// Register the synthetic `kotlin.Any` and `kotlin.Annotation` built-in stubs.
