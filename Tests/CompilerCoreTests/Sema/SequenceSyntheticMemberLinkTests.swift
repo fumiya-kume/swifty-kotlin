@@ -1912,6 +1912,31 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
         fun firstEven(): Int? {
             val values = sequenceOf(1, 2, 3, 4, 5)
             return values.find { value -> value % 2 == 0 }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics
+                .map { "\($0.code): \($0.message)" }
+                .joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected Sequence.find surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let memberFQName = ["kotlin", "sequences", "Sequence", "find"]
+                .map { ctx.interner.intern($0) }
+            let links = Set(
+                sema.symbols.lookupAll(fqName: memberFQName)
+                    .compactMap { sema.symbols.externalLinkName(for: $0) }
+            )
+            XCTAssertTrue(links.contains("kk_sequence_find"))
+        }
+    }
+
     func testSequenceFilterToResolvesInCallExpressions() throws {
         let source = """
         fun evens(): MutableList<Int> {
@@ -1929,11 +1954,6 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
                 .joined(separator: " | ")
             XCTAssertFalse(
                 ctx.diagnostics.hasError,
-                "Expected Sequence.find surface to resolve cleanly, got: \(diagnosticSummary)"
-            )
-
-            let sema = try XCTUnwrap(ctx.sema)
-            let memberFQName = ["kotlin", "sequences", "Sequence", "find"]
                 "Expected Sequence.filterTo surface to resolve cleanly, got: \(diagnosticSummary)"
             )
 
@@ -1944,7 +1964,7 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
                 sema.symbols.lookupAll(fqName: memberFQName)
                     .compactMap { sema.symbols.externalLinkName(for: $0) }
             )
-            XCTAssertTrue(links.contains("kk_sequence_find"))
+            XCTAssertTrue(links.contains("kk_sequence_filterTo"))
         }
     }
 

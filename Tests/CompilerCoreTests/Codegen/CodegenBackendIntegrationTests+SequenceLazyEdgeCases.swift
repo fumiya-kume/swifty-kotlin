@@ -963,6 +963,27 @@ extension CodegenBackendIntegrationTests {
             val values: Sequence<Any> = sequenceOf(1, "two", 3)
             val destination = mutableListOf<Int>(0)
             val result = values.filterIsInstanceTo(destination)
+            println(result)
+            println(destination)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceFilterIsInstanceToRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[0, 1, 3]\n[0, 1, 3]\n")
+        }
+    }
+
     func testSequenceFilterToAppendsMatchingValues() throws {
         let source = """
         fun main() {
@@ -978,7 +999,6 @@ extension CodegenBackendIntegrationTests {
             let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
             let ctx = try runCodegenPipeline(
                 inputPath: path,
-                moduleName: "SequenceFilterIsInstanceToRuntime",
                 moduleName: "SequenceFilterToRuntime",
                 emit: .executable,
                 outputPath: outputBase
@@ -987,7 +1007,6 @@ extension CodegenBackendIntegrationTests {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "[0, 1, 3]\n[0, 1, 3]\n")
             XCTAssertEqual(normalizedStdout, "[99, 2, 4]\n[99, 2, 4]\n")
         }
     }
