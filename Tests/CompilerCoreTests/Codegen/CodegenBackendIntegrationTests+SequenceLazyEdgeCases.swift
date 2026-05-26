@@ -498,11 +498,8 @@ extension CodegenBackendIntegrationTests {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(normalizedStdout, "20\n")
-            XCTAssertEqual(normalizedStdout, "[1, 10, 30, 40]\n[1, 10, 30, 40]\n")
         }
     }
-
-
 
     // MARK: - filterIsInstance keeps matching runtime types
 
