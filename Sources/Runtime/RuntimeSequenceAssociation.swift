@@ -480,7 +480,10 @@ private func runtimeSequenceBestValue(
     if returnElement {
         guard let bestElement else {
             if throwOnEmpty {
-                outThrown?.pointee = runtimeAllocateThrowable(message: kEmptySequenceNoSuchElement)
+                return handleCollectionLambdaThrow(
+                    runtimeAllocateThrowable(message: kEmptySequenceNoSuchElement),
+                    outThrown
+                )
             }
             return runtimeNullSentinelInt
         }
@@ -586,6 +589,19 @@ public func kk_sequence_minWith(
     runtimeSequenceExtremumWith(
         seqRaw: seqRaw, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown,
         caller: #function, comparisonSign: -1, throwOnEmpty: true
+    )
+}
+
+@_cdecl("kk_sequence_minBy")
+public func kk_sequence_minBy(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    runtimeSequenceBestValue(
+        seqRaw: seqRaw, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown,
+        caller: #function, comparisonSign: -1, returnElement: true, throwOnEmpty: true
     )
 }
 

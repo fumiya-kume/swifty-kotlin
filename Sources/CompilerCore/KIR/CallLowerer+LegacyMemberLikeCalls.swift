@@ -2581,6 +2581,7 @@ extension CallLowerer {
                 let findLastName = interner.intern("findLast")
                 let lastName = interner.intern("last")
                 let partitionName = interner.intern("partition")
+                let minByName = interner.intern("minBy")
                 let minName = interner.intern("min")
                 let minByOrNullName = interner.intern("minByOrNull")
                 let maxByOrNullName = interner.intern("maxByOrNull")
@@ -2676,6 +2677,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_findLast"
                 } else if calleeName == partitionName {
                     runtimeCallee = "kk_sequence_partition"
+                } else if calleeName == minByName {
+                    runtimeCallee = "kk_sequence_minBy"
                 } else if calleeName == minName {
                     runtimeCallee = "kk_sequence_min"
                 } else if calleeName == interner.intern("maxBy") {
@@ -2824,6 +2827,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_elementAtOrElse"
                         || runtimeCallee == "kk_sequence_last"
                         || runtimeCallee == "kk_iterable_last"
+                        || runtimeCallee == "kk_sequence_minBy"
                         || runtimeCallee == "kk_sequence_min"
                         || runtimeCallee == "kk_sequence_maxBy"
                         || runtimeCallee == "kk_sequence_minByOrNull"
