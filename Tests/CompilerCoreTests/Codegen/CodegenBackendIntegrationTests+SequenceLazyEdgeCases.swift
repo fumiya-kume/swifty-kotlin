@@ -1005,7 +1005,6 @@ extension CodegenBackendIntegrationTests {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(normalizedStdout, "[0, 1, 3]\n[0, 1, 3]\n")
-            XCTAssertEqual(normalizedStdout, "[1, 3]\n")
         }
     }
 
