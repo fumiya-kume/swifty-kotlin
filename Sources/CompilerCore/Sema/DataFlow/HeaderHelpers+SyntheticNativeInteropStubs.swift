@@ -1375,7 +1375,13 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
-        let cPointerVarSymbol = ensureClassSymbol(
+        let cPointerVarSymbol = ensureSyntheticCInteropTypeAliasSymbol(
+            named: "CPointerVar",
+            in: cinteropPkg,
+            packageSymbol: cinteropPkgSymbol,
+            symbols: symbols,
+            interner: interner
+        ) ?? ensureClassSymbol(
             named: "CPointerVar",
             in: cinteropPkg,
             symbols: symbols,
@@ -1803,21 +1809,21 @@ extension DataFlowSemaPhase {
             interner: interner
         )
         configureSingleTypeParameterNominal(
-            ownerSymbol: cPointerVarSymbol,
-            fqName: cinteropPkg + [interner.intern("CPointerVar")],
-            parameterName: "T",
-            supertype: cPointedSymbol,
-            supertypeIsGeneric: false,
-            symbols: symbols,
-            types: types,
-            interner: interner
-        )
-        configureSingleTypeParameterNominal(
             ownerSymbol: cPointerVarOfSymbol,
             fqName: cinteropPkg + [interner.intern("CPointerVarOf")],
             parameterName: "T",
             supertype: cVariableSymbol,
             supertypeIsGeneric: false,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerSyntheticCPointerVarTypeAlias(
+            aliasSymbol: cPointerVarSymbol,
+            aliasFQName: cinteropPkg + [interner.intern("CPointerVar")],
+            typeParameterUpperBound: cPointedType,
+            cPointerSymbol: cPointerSymbol,
+            cPointerVarOfSymbol: cPointerVarOfSymbol,
             symbols: symbols,
             types: types,
             interner: interner
@@ -2352,6 +2358,51 @@ extension DataFlowSemaPhase {
         let underlyingType = types.make(.classType(ClassType(
             classSymbol: targetSymbol,
             args: [.invariant(typeParameterType)],
+            nullability: .nonNull
+        )))
+        symbols.setTypeAliasUnderlyingType(underlyingType, for: aliasSymbol)
+    }
+
+    private func registerSyntheticCPointerVarTypeAlias(
+        aliasSymbol: SymbolID,
+        aliasFQName: [InternedString],
+        typeParameterUpperBound: TypeID,
+        cPointerSymbol: SymbolID,
+        cPointerVarOfSymbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let parameterInternedName = interner.intern("T")
+        let typeParameterFQName = aliasFQName + [parameterInternedName]
+        let typeParameterSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParameterFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: parameterInternedName,
+                fqName: typeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        symbols.setParentSymbol(aliasSymbol, for: typeParameterSymbol)
+        symbols.setTypeAliasTypeParameters([typeParameterSymbol], for: aliasSymbol)
+        symbols.setTypeParameterUpperBounds([typeParameterUpperBound], for: typeParameterSymbol)
+
+        let typeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: typeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let pointerType = types.make(.classType(ClassType(
+            classSymbol: cPointerSymbol,
+            args: [.invariant(typeParameterType)],
+            nullability: .nonNull
+        )))
+        let underlyingType = types.make(.classType(ClassType(
+            classSymbol: cPointerVarOfSymbol,
+            args: [.invariant(pointerType)],
             nullability: .nonNull
         )))
         symbols.setTypeAliasUnderlyingType(underlyingType, for: aliasSymbol)
