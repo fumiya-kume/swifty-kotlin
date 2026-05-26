@@ -248,6 +248,14 @@ extension RuntimeSequenceTests {
         XCTAssertEqual(thrown, 0)
     }
 
+    func testSequenceFirstOrNullReturnsFirstElement() {
+        let seq = makeSequence([7, 8, 9])
+        var thrown = 0
+        let first = kk_sequence_firstOrNull(seq, &thrown)
+        XCTAssertEqual(first, 7)
+        XCTAssertEqual(thrown, 0)
+    }
+
     // MARK: - STDLIB-HOF-022: Additional Higher-Order Functions
 
     func testSequenceFilterNot() {
@@ -319,6 +327,11 @@ extension RuntimeSequenceTests {
         let iterable = kk_sequence_asIterable(seq)
         // Should return the same handle
         XCTAssertEqual(iterable, seq)
+    }
+
+    func testSequenceAsSequence() {
+        let seq = makeSequence([1, 2, 3])
+        XCTAssertEqual(kk_sequence_asSequence(seq), seq)
     }
 
     func testSequenceOrEmptyReturnsEmptySequenceForNull() {
@@ -760,6 +773,21 @@ extension RuntimeSequenceTests {
         XCTAssertEqual(result, [10, 21, 32]) // [0+10, 1+20, 2+30]
     }
 
+    func testSequenceMapIndexedNotNullCorrectness() {
+        let seq = makeSequence([10, 20, 30, 40])
+        let mapFn: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, value, _ in
+            index.isMultiple(of: 2) ? index + value : runtimeNullSentinelInt
+        }
+        let mapped = kk_sequence_mapIndexedNotNull(
+            seq,
+            unsafeBitCast(mapFn, to: Int.self),
+            0,
+            nil
+        )
+        let result = sequenceElements(mapped)
+        XCTAssertEqual(result, [10, 32])
+    }
+
     func testSequenceOnEachIndexedCorrectness() {
         let seq = makeSequence([10, 20, 30])
         _lazySequenceOnEachIndexedTrace = []
@@ -806,6 +834,23 @@ extension RuntimeSequenceTests {
         )
 
         XCTAssertEqual(result, 42)
+    }
+
+    func testSequenceFoldAccumulatesInOrder() {
+        let seq = makeSequence([1, 2, 3])
+        let foldFn: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, acc, value, _ in
+            acc * 10 + value
+        }
+
+        let result = kk_sequence_fold(
+            seq,
+            0,
+            unsafeBitCast(foldFn, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(result, 123)
     }
 
     func testSequenceMapToAppendsToDestination() {

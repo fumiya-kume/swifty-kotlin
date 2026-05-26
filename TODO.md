@@ -241,7 +241,7 @@
 
 #### kotlin.random 関数の実装
 - [ ] STDLIB-RANDOM-FN-001: `asJavaRandom` 関数の実装
-- [ ] STDLIB-RANDOM-FN-002: `asKotlinRandom` 関数の実装
+- [x] STDLIB-RANDOM-FN-002: `asKotlinRandom` 関数の実装
 
 #### kotlin.ranges 関数の実装
 - [x] STDLIB-RANGES-FN-004: `coerceValueIn` 関数の実装
@@ -257,7 +257,6 @@
 - [x] STDLIB-REFLECT-TYPE-011: `KMutableProperty1` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-013: `KParameter` インターフェースの実装
 - [x] STDLIB-REFLECT-TYPE-015: `KProperty0` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-016: `KProperty1` インターフェースの実装
 - [x] STDLIB-REFLECT-TYPE-016: `KProperty1` インターフェースの実装
 - [x] STDLIB-REFLECT-TYPE-022: `KVisibility` enum の実装
 
@@ -275,7 +274,7 @@
 - [x] STDLIB-SEQ-FN-001: `all` 関数の実装
 - [x] STDLIB-SEQ-FN-002: `any` 関数の実装
 - [x] STDLIB-SEQ-FN-003: `asIterable` 関数の実装
-- [ ] STDLIB-SEQ-FN-004: `asSequence` 関数の実装
+- [x] STDLIB-SEQ-FN-004: `asSequence` 関数の実装
 - [ ] STDLIB-SEQ-FN-005: `associate` 関数の実装
 - [ ] STDLIB-SEQ-FN-006: `associateBy` 関数の実装
 - [x] STDLIB-SEQ-FN-007: `associateByTo` 関数の実装
@@ -291,7 +290,7 @@
 - [ ] STDLIB-SEQ-FN-008: `associateTo` 関数の実装
 - [x] STDLIB-SEQ-FN-009: `associateWith` 関数の実装
 - [ ] STDLIB-SEQ-FN-010: `associateWithTo` 関数の実装
-- [ ] STDLIB-SEQ-FN-011: `averageOf` 関数の実装
+- [x] STDLIB-SEQ-FN-011: `averageOf` 関数の実装
 - [ ] STDLIB-SEQ-FN-012: `chunked` 関数の実装
 - [x] STDLIB-SEQ-FN-013: `constrainOnce` 関数の実装
  - [ ] STDLIB-SEQ-FN-014: `contains` 関数の実装
@@ -299,11 +298,11 @@
  - [ ] STDLIB-SEQ-FN-016: `distinct` 関数の実装
 - [ ] STDLIB-SEQ-FN-017: `distinctBy` 関数の実装
 - [ ] STDLIB-SEQ-FN-014: `contains` 関数の実装
-- [ ] STDLIB-SEQ-FN-015: `count` 関数の実装
+- [x] STDLIB-SEQ-FN-015: `count` 関数の実装
 - [ ] STDLIB-SEQ-FN-016: `distinct` 関数の実装
 - [x] STDLIB-SEQ-FN-017: `distinctBy` 関数の実装
 - [ ] STDLIB-SEQ-FN-018: `drop` 関数の実装
-- [ ] STDLIB-SEQ-FN-019: `dropWhile` 関数の実装
+- [x] STDLIB-SEQ-FN-019: `dropWhile` 関数の実装
 - [ ] STDLIB-SEQ-FN-020: `elementAt` 関数の実装
 - [ ] STDLIB-SEQ-FN-021: `elementAtOrElse` 関数の実装
 - [x] STDLIB-SEQ-FN-022: `elementAtOrNull` 関数の実装
@@ -319,11 +318,7 @@
 - [x] STDLIB-SEQ-FN-032: `find` 関数の実装
 - [ ] STDLIB-SEQ-FN-033: `findLast` 関数の実装
 - [x] STDLIB-SEQ-FN-034: `first` 関数の実装
-- [ ] STDLIB-SEQ-FN-037: `firstOrNull` 関数の実装
-- [ ] STDLIB-SEQ-FN-038: `flatMap` 関数の実装
-- [ ] STDLIB-SEQ-FN-039: `flatMapIndexed` 関数の実装
-- [x] STDLIB-SEQ-FN-040: `flatMapIndexedTo` 関数の実装
-- [ ] STDLIB-SEQ-FN-041: `flatMapTo` 関数の実装
+- [x] STDLIB-SEQ-FN-037: `firstOrNull` 関数の実装
 - [x] STDLIB-SEQ-FN-038: `flatMap` 関数の実装
 - [x] STDLIB-SEQ-FN-039: `flatMapIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-040: `flatMapIndexedTo` 関数の実装
@@ -333,6 +328,9 @@
 - [x] STDLIB-SEQ-FN-044: `forEach` 関数の実装
 - [ ] STDLIB-SEQ-FN-046: `groupBy` 関数の実装
 - [x] STDLIB-SEQ-FN-043: `foldIndexed` 関数の実装
+- [x] STDLIB-SEQ-FN-042: `fold` 関数の実装
+- [ ] STDLIB-SEQ-FN-043: `foldIndexed` 関数の実装
+- [x] STDLIB-SEQ-FN-043: `foldIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-044: `forEach` 関数の実装
 - [ ] STDLIB-SEQ-FN-046: `groupBy` 関数の実装
 - [x] STDLIB-SEQ-FN-047: `groupByTo` 関数の実装
@@ -341,20 +339,21 @@
 - [ ] STDLIB-SEQ-FN-047: `groupByTo` 関数の実装
 - [x] STDLIB-SEQ-FN-048: `indexOf` 関数の実装
 - [ ] STDLIB-SEQ-FN-049: `indexOfFirst` 関数の実装
-- [ ] STDLIB-SEQ-FN-050: `indexOfLast` 関数の実装
+- [x] STDLIB-SEQ-FN-050: `indexOfLast` 関数の実装
 - [x] STDLIB-SEQ-FN-051: `intersect` 関数の実装
-- [ ] STDLIB-SEQ-FN-052: `joinTo` 関数の実装
-- [ ] STDLIB-SEQ-FN-053: `joinToString` 関数の実装
-- [ ] STDLIB-SEQ-FN-054: `last` 関数の実装
-- [ ] STDLIB-SEQ-FN-051: `intersect` 関数の実装
  - [x] STDLIB-SEQ-FN-052: `joinTo` 関数の実装
  - [x] STDLIB-SEQ-FN-053: `joinToString` 関数の実装
  - [x] STDLIB-SEQ-FN-054: `last` 関数の実装
 - [ ] STDLIB-SEQ-FN-055: `lastIndexOf` 関数の実装
+- [ ] STDLIB-SEQ-FN-056: `lastOrNull` 関数の実装
+- [ ] STDLIB-SEQ-FN-057: `map` 関数の実装
+- [ ] STDLIB-SEQ-FN-058: `mapIndexed` 関数の実装
+- [x] STDLIB-SEQ-FN-059: `mapIndexedNotNull` 関数の実装
+- [ ] STDLIB-SEQ-FN-060: `mapIndexedNotNullTo` 関数の実装
 - [x] STDLIB-SEQ-FN-056: `lastOrNull` 関数の実装
 - [x] STDLIB-SEQ-FN-057: `map` 関数の実装
 - [x] STDLIB-SEQ-FN-058: `mapIndexed` 関数の実装
-- [ ] STDLIB-SEQ-FN-059: `mapIndexedNotNull` 関数の実装
+- [x] STDLIB-SEQ-FN-059: `mapIndexedNotNull` 関数の実装
 - [x] STDLIB-SEQ-FN-060: `mapIndexedNotNullTo` 関数の実装
 - [x] STDLIB-SEQ-FN-061: `mapIndexedTo` 関数の実装
 - [x] STDLIB-SEQ-FN-062: `mapNotNull` 関数の実装
@@ -363,19 +362,26 @@
 - [x] STDLIB-SEQ-FN-065: `max` 関数の実装
 - [x] STDLIB-SEQ-FN-067: `maxByOrNull` 関数の実装
 - [x] STDLIB-SEQ-FN-066: `maxBy` 関数の実装
-- [ ] STDLIB-SEQ-FN-068: `maxOf` 関数の実装
+- [x] STDLIB-SEQ-FN-068: `maxOf` 関数の実装
 - [x] STDLIB-SEQ-FN-069: `maxOfOrNull` 関数の実装
 - [x] STDLIB-SEQ-FN-070: `maxOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-071: `maxWith` 関数の実装
+- [ ] STDLIB-SEQ-FN-072: `maxWithOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-073: `min` 関数の実装
 - [x] STDLIB-SEQ-FN-072: `maxWithOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-073: `min` 関数の実装
 - [ ] STDLIB-SEQ-FN-074: `minBy` 関数の実装
-- [ ] STDLIB-SEQ-FN-075: `minByOrNull` 関数の実装
+- [x] STDLIB-SEQ-FN-075: `minByOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-076: `minOf` 関数の実装
 - [x] STDLIB-SEQ-FN-077: `minOfOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-078: `minOrNull` 関数の実装
-- [ ] STDLIB-SEQ-FN-079: `minWith` 関数の実装
+- [x] STDLIB-SEQ-FN-079: `minWith` 関数の実装
 - [ ] STDLIB-SEQ-FN-080: `minWithOrNull` 関数の実装
+- [ ] STDLIB-SEQ-FN-081: `minus` 関数の実装
+- [ ] STDLIB-SEQ-FN-083: `none` 関数の実装
+- [ ] STDLIB-SEQ-FN-084: `onEach` 関数の実装
+- [ ] STDLIB-SEQ-FN-085: `onEachIndexed` 関数の実装
+- [x] STDLIB-SEQ-FN-086: `partition` 関数の実装
 - [x] STDLIB-SEQ-FN-081: `minus` 関数の実装
 - [x] STDLIB-SEQ-FN-083: `none` 関数の実装
 - [x] STDLIB-SEQ-FN-084: `onEach` 関数の実装
@@ -388,10 +394,12 @@
 - [ ] STDLIB-SEQ-FN-089: `random` 関数の実装
 - [x] STDLIB-SEQ-FN-090: `randomOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-091: `reduce` 関数の実装
+- [ ] STDLIB-SEQ-FN-092: `reduceIndexed` 関数の実装
+- [x] STDLIB-SEQ-FN-093: `reduceOrNull` 関数の実装
 - [x] STDLIB-SEQ-FN-092: `reduceIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-093: `reduceOrNull` 関数の実装
 - [x] STDLIB-SEQ-FN-094: `reduceRight` 関数の実装
-- [ ] STDLIB-SEQ-FN-095: `reduceRightIndexed` 関数の実装
+- [x] STDLIB-SEQ-FN-095: `reduceRightIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-096: `reduceRightIndexedOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-097: `reduceRightOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-098: `requireNoNulls` 関数の実装
@@ -401,8 +409,8 @@
 - [ ] STDLIB-SEQ-FN-100: `runningFold` 関数の実装
 - [x] STDLIB-SEQ-FN-101: `runningFoldIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-102: `runningReduce` 関数の実装
-- [ ] STDLIB-SEQ-FN-103: `runningReduceIndexed` 関数の実装
-- [ ] STDLIB-SEQ-FN-104: `scan` 関数の実装
+- [x] STDLIB-SEQ-FN-103: `runningReduceIndexed` 関数の実装
+- [x] STDLIB-SEQ-FN-104: `scan` 関数の実装
 - [x] STDLIB-SEQ-FN-105: `scanIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-106: `shuffled` 関数の実装
 - [x] STDLIB-SEQ-FN-107: `single` 関数の実装
@@ -412,10 +420,10 @@
 - [ ] STDLIB-SEQ-FN-109: `slice` 関数の実装
 - [x] STDLIB-SEQ-FN-110: `sorted` 関数の実装
 - [ ] STDLIB-SEQ-FN-111: `sortedBy` 関数の実装
-- [ ] STDLIB-SEQ-FN-112: `sortedByDescending` 関数の実装
+- [x] STDLIB-SEQ-FN-112: `sortedByDescending` 関数の実装
 - [x] STDLIB-SEQ-FN-113: `sortedDescending` 関数の実装
-- [ ] STDLIB-SEQ-FN-114: `sortedWith` 関数の実装
-- [ ] STDLIB-SEQ-FN-115: `subtract` 関数の実装
+- [x] STDLIB-SEQ-FN-114: `sortedWith` 関数の実装
+- [x] STDLIB-SEQ-FN-115: `subtract` 関数の実装
 - [x] STDLIB-SEQ-FN-116: `sum` 関数の実装
 - [x] STDLIB-SEQ-FN-118: `sumOf` 関数の実装
 - [x] STDLIB-SEQ-FN-119: `take` 関数の実装
@@ -747,15 +755,14 @@
 - [ ] STDLIB-IO-PATH-FN-021: `createTempFile(prefix, suffix, attributes)` を追加する
 - [ ] STDLIB-IO-PATH-FN-022: `createTempFile(directory, prefix, suffix, attributes)` を追加する
 - [ ] STDLIB-IO-PATH-FN-024: `Path.deleteIfExists()` の公式 return/annotation shape を既存 stub と整合させる
- - [x] STDLIB-IO-PATH-FN-028: `Path.exists(options)` を既存 no-arg stub から公式 vararg shape へ広げる
- - [x] STDLIB-IO-PATH-FN-029: `Path.fileAttributesView<V>(options)` を追加する
- - [x] STDLIB-IO-PATH-FN-030: `Path.fileAttributesViewOrNull<V>(options)` を追加する
- - [x] STDLIB-IO-PATH-FN-033: `fileVisitor(builderAction)` を追加する
-- [ ] STDLIB-IO-PATH-FN-034: `Path.forEachDirectoryEntry(glob, action)` を追加する
+- [x] STDLIB-IO-PATH-FN-028: `Path.exists(options)` を既存 no-arg stub から公式 vararg shape へ広げる
+- [x] STDLIB-IO-PATH-FN-029: `Path.fileAttributesView<V>(options)` を追加する
+- [x] STDLIB-IO-PATH-FN-030: `Path.fileAttributesViewOrNull<V>(options)` を追加する
+- [x] STDLIB-IO-PATH-FN-033: `fileVisitor(builderAction)` を追加する
+- [x] STDLIB-IO-PATH-FN-034: `Path.forEachDirectoryEntry(glob, action)` を追加する
 - [x] STDLIB-IO-PATH-FN-035: `Path.forEachLine(charset, action)` を追加する
 - [x] STDLIB-IO-PATH-FN-036: `Path.getAttribute(attribute, options)` を追加する
 - [x] STDLIB-IO-PATH-FN-037: `Path.getLastModifiedTime(options)` を追加する
-- [ ] STDLIB-IO-PATH-FN-038: `Path.getOwner(options)` を追加する
 - [x] STDLIB-IO-PATH-FN-038: `Path.getOwner(options)` を追加する
 - [x] STDLIB-IO-PATH-FN-039: `Path.getPosixFilePermissions(options)` を追加する
 - [x] STDLIB-IO-PATH-FN-040: `Path.inputStream(options)` を追加する
@@ -769,9 +776,9 @@
 - [x] STDLIB-IO-PATH-FN-054: `Path(pathString)` の公式 top-level factory shape を既存 stub と整合させる
 - [x] STDLIB-IO-PATH-FN-055: `Path(base, subpaths)` top-level factory overload を追加する
 - [x] STDLIB-IO-PATH-FN-056: `Path.readAttributes<A>(options)` を追加する
-- [ ] STDLIB-IO-PATH-FN-057: `Path.readAttributes(attributes, options)` を追加する
-- [ ] STDLIB-IO-PATH-FN-059: `Path.reader(charset, options)` を追加する
-- [ ] STDLIB-IO-PATH-FN-066: `Path.setAttribute(attribute, value, options)` を追加する
+- [x] STDLIB-IO-PATH-FN-057: `Path.readAttributes(attributes, options)` を追加する
+- [x] STDLIB-IO-PATH-FN-059: `Path.reader(charset, options)` を追加する
+- [x] STDLIB-IO-PATH-FN-066: `Path.setAttribute(attribute, value, options)` を追加する
 - [x] STDLIB-IO-PATH-FN-071: `Path.useDirectoryEntries(glob, block)` を追加する
 - [x] STDLIB-IO-PATH-FN-072: `Path.useLines(charset, block)` を追加する
 - [ ] STDLIB-IO-PATH-FN-073: `Path.visitFileTree(visitor, maxDepth, followLinks)` を追加する
@@ -808,10 +815,10 @@
 - [x] STDLIB-JS-FN-004: `JsReference<T>.get()` を追加する（`kk_js_reference_get` runtime 済み）
 - [ ] STDLIB-JS-FN-005: `JsArray<T>.get(index)` を追加する
 - [x] STDLIB-JS-FN-006: `RegExpMatch.get(index)` を追加する
-- [ ] STDLIB-JS-FN-007: `dynamic.iterator()` を追加する
-- [ ] STDLIB-JS-FN-009: `JsArray<T>()` factory を追加する
+- [x] STDLIB-JS-FN-007: `dynamic.iterator()` を追加する
+- [x] STDLIB-JS-FN-009: `JsArray<T>()` factory を追加する
 - [x] STDLIB-JS-FN-015: `RegExp.reset()` を追加する
-- [ ] STDLIB-JS-FN-016: `JsArray<T>.set(index, value)` を追加する
+- [x] STDLIB-JS-FN-016: `JsArray<T>.set(index, value)` を追加する
 - [x] STDLIB-JS-FN-017: `Promise<T>.then(onFulfilled)` を追加する
 - [x] STDLIB-JS-FN-018: `Promise<T>.then(onFulfilled, onRejected)` を追加する
 - [x] STDLIB-JS-FN-019: `JsArray<T>.toArray()` を追加する
@@ -823,7 +830,7 @@
 - [ ] STDLIB-JS-FN-025: `Long.toJsBigInt()` を追加する
 - [ ] STDLIB-JS-FN-026: `Boolean.toJsBoolean()` を追加する
 - [x] STDLIB-JS-FN-027: `Double.toJsNumber()` を追加する
-- [ ] STDLIB-JS-FN-028: `Int.toJsNumber()` を追加する
+- [x] STDLIB-JS-FN-028: `Int.toJsNumber()` を追加する
 - [x] STDLIB-JS-FN-029: `T.toJsReference()` を追加する
 - [x] STDLIB-JS-FN-030: `String.toJsString()` を追加する
 - [x] STDLIB-JS-FN-031: `JsArray<T>.toList()` を追加する
