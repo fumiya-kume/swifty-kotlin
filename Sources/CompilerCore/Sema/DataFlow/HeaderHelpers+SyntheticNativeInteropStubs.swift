@@ -2820,6 +2820,34 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
         }
+        if let floatArraySymbol = symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("FloatArray")]),
+           let floatVarSymbol = symbols.lookup(fqName: cinteropPkg + [interner.intern("FloatVar")])
+        {
+            let floatArrayType = types.make(.classType(ClassType(
+                classSymbol: floatArraySymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            let floatVarType = types.make(.classType(ClassType(
+                classSymbol: floatVarSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            let floatArrayToCValuesReturnType = types.make(.classType(ClassType(
+                classSymbol: cValuesSymbol,
+                args: [.invariant(floatVarType)],
+                nullability: .nonNull
+            )))
+            registerSyntheticNativeTopLevelFunction(
+                named: "toCValues",
+                packageFQName: cinteropPkg,
+                receiverType: floatArrayType,
+                parameters: [],
+                returnType: floatArrayToCValuesReturnType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
         if let uShortVarSymbol = symbols.lookup(fqName: cinteropPkg + [interner.intern("UShortVar")]) {
             let uShortVarType = types.make(.classType(ClassType(
                 classSymbol: uShortVarSymbol,
