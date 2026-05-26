@@ -64,21 +64,31 @@ public func kk_sequence_builder_yieldAll(_ builderRaw: Int, _ collectionRaw: Int
             for elem in set.elements {
                 proxy.coroutine.yieldValue(elem)
             }
+        } else if runtimeIteratorBuilderBox(from: collectionRaw) != nil
+               || runtimeListIteratorBox(from: collectionRaw) != nil {
+            while kk_iterator_builder_hasNext(collectionRaw) != 0 {
+                proxy.coroutine.yieldValue(kk_iterator_builder_next(collectionRaw))
+            }
         } else {
-            fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_builder_yieldAll received invalid collection handle (expected List, Array, Set, or Sequence)")
+            fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_builder_yieldAll received invalid collection handle (expected List, Array, Set, Sequence, or Iterator)")
         }
         return 0
     }
     guard let builder = runtimeSequenceBuilderBox(from: builderRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_builder_yieldAll received invalid builder handle")
     }
-    // Accept List, Array, Set, or Sequence as the iterable source.
+    // Accept List, Array, Set, Sequence, or Iterator as the iterable source.
     if let elements = runtimeSequenceSourceElements(from: collectionRaw) {
         builder.elements.append(contentsOf: elements)
     } else if let set = runtimeSetBox(from: collectionRaw) {
         builder.elements.append(contentsOf: set.elements)
+    } else if runtimeIteratorBuilderBox(from: collectionRaw) != nil
+           || runtimeListIteratorBox(from: collectionRaw) != nil {
+        while kk_iterator_builder_hasNext(collectionRaw) != 0 {
+            builder.elements.append(kk_iterator_builder_next(collectionRaw))
+        }
     } else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_builder_yieldAll received invalid collection handle (expected List, Array, Set, or Sequence)")
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_builder_yieldAll received invalid collection handle (expected List, Array, Set, Sequence, or Iterator)")
     }
     return 0
 }

@@ -1273,7 +1273,7 @@ extension DataFlowSemaPhase {
             receiverType: scopeReceiverType,
             parameters: [(name: "iterator", type: iteratorType)],
             returnType: types.unitType,
-            externalLinkName: "kk_sequence_builder_yieldAll_iterator",
+            externalLinkName: "kk_sequence_builder_yieldAll",
             symbols: symbols,
             interner: interner
         )
