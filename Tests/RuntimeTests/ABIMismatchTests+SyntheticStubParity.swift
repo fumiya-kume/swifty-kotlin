@@ -63,6 +63,8 @@ extension ABIMismatchTests {
             "kk_url_readText",
             "kk_reader_buffered_default",
             "kk_reader_buffered",
+            "kk_writer_buffered_default",
+            "kk_writer_buffered",
             "kk_string_hexToUInt",
             "kk_string_chunked_sequence_transform",
             // Exception constructors

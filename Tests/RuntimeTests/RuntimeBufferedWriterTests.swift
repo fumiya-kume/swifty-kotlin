@@ -73,6 +73,23 @@ final class RuntimeBufferedWriterTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_buffered_writer_close(writerRaw), 0)
     }
 
+    func testWriterBufferedReturnsWritableWriter() throws {
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        var thrown = 0
+        let writerRaw = kk_file_bufferedWriter(runtimeTestFileHandle(fileURL.path), &thrown)
+        let bufferedRaw = kk_writer_buffered_default(writerRaw, &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_buffered_writer_write(bufferedRaw, makeStringRaw("writer"), &thrown), 0)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_buffered_writer_flush(bufferedRaw, &thrown), 0)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(try String(contentsOf: fileURL, encoding: .utf8), "writer")
+        XCTAssertEqual(kk_buffered_writer_close(bufferedRaw), 0)
+    }
+
     private func makeStringRaw(_ value: String) -> Int {
         let bytes = Array(value.utf8)
         return bytes.withUnsafeBufferPointer { buffer in

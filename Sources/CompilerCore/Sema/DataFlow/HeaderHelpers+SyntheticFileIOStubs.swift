@@ -669,6 +669,12 @@ extension DataFlowSemaPhase {
 
         // MARK: - BufferedWriter type and File.bufferedWriter() (STDLIB-IO-091/093)
 
+        let writerSymbol = ensureClassSymbol(
+            named: "Writer",
+            in: javaIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
         let bufferedWriterSymbol = ensureClassSymbol(
             named: "BufferedWriter",
             in: javaIOPkg,
@@ -676,17 +682,27 @@ extension DataFlowSemaPhase {
             interner: interner
         )
         if let javaIOPkgSymbol {
+            symbols.setParentSymbol(javaIOPkgSymbol, for: writerSymbol)
             symbols.setParentSymbol(javaIOPkgSymbol, for: bufferedWriterSymbol)
         }
+        let writerType = types.make(.classType(ClassType(
+            classSymbol: writerSymbol, args: [], nullability: .nonNull
+        )))
         let bufferedWriterType = types.make(.classType(ClassType(
             classSymbol: bufferedWriterSymbol, args: [], nullability: .nonNull
         )))
+        symbols.setPropertyType(writerType, for: writerSymbol)
         symbols.setPropertyType(bufferedWriterType, for: bufferedWriterSymbol)
 
         // Register BufferedWriter as a Closeable subtype (STDLIB-IO-093)
         if let closeableSymbol = types.closeableInterfaceSymbol {
-            symbols.setDirectSupertypes([closeableSymbol], for: bufferedWriterSymbol)
-            types.setNominalDirectSupertypes([closeableSymbol], for: bufferedWriterSymbol)
+            symbols.setDirectSupertypes([closeableSymbol], for: writerSymbol)
+            types.setNominalDirectSupertypes([closeableSymbol], for: writerSymbol)
+            symbols.setDirectSupertypes([writerSymbol, closeableSymbol], for: bufferedWriterSymbol)
+            types.setNominalDirectSupertypes([writerSymbol, closeableSymbol], for: bufferedWriterSymbol)
+        } else {
+            symbols.setDirectSupertypes([writerSymbol], for: bufferedWriterSymbol)
+            types.setNominalDirectSupertypes([writerSymbol], for: bufferedWriterSymbol)
         }
 
         // File.bufferedWriter() -> BufferedWriter
@@ -745,6 +761,26 @@ extension DataFlowSemaPhase {
             ownerType: bufferedWriterType,
             parameters: [],
             returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerFilePackageExtensionFunction(
+            named: "buffered",
+            packageFQName: kotlinIOPkg,
+            receiverType: writerType,
+            parameters: [],
+            returnType: bufferedWriterType,
+            externalLinkName: "kk_writer_buffered_default",
+            symbols: symbols,
+            interner: interner
+        )
+        registerFilePackageExtensionFunction(
+            named: "buffered",
+            packageFQName: kotlinIOPkg,
+            receiverType: writerType,
+            parameters: [("bufferSize", intType)],
+            returnType: bufferedWriterType,
+            externalLinkName: "kk_writer_buffered",
             symbols: symbols,
             interner: interner
         )
