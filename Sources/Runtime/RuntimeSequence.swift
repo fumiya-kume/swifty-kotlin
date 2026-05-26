@@ -3145,8 +3145,6 @@ public func kk_sequence_reduceOrNull(
 
 @_cdecl("kk_sequence_reduceRight")
 public func kk_sequence_reduceRight(
-@_cdecl("kk_sequence_reduceRightOrNull")
-public func kk_sequence_reduceRightOrNull(
     _ seqRaw: Int,
     _ fnPtr: Int,
     _ closureRaw: Int,
