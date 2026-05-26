@@ -51,6 +51,21 @@ final class RuntimeBufferedReaderTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(runtimeListBox(from: linesRaw)?.elements.count, 0)
     }
 
+    func testReaderBufferedReturnsReadableReader() throws {
+        let fileURL = try makeTempFile(contents: "alpha\nbeta")
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        let fileRaw = runtimeTestFileHandle(fileURL.path)
+        var thrown = 0
+        let readerRaw = kk_file_bufferedReader(fileRaw, &thrown)
+        let bufferedRaw = kk_reader_buffered_default(readerRaw, &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(readString(kk_buffered_reader_readLine(bufferedRaw)), "alpha")
+        XCTAssertEqual(readString(kk_buffered_reader_readLine(bufferedRaw)), "beta")
+        XCTAssertEqual(kk_buffered_reader_readLine(bufferedRaw), runtimeNullSentinelInt)
+    }
+
     func testBufferedReaderOpenFailureReturnsNoReaderObject() {
         let missingPath = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)

@@ -537,6 +537,12 @@ extension DataFlowSemaPhase {
 
         // MARK: - BufferedReader type and File.bufferedReader() (STDLIB-567)
 
+        let readerSymbol = ensureClassSymbol(
+            named: "Reader",
+            in: javaIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
         let bufferedReaderSymbol = ensureClassSymbol(
             named: "BufferedReader",
             in: javaIOPkg,
@@ -544,11 +550,16 @@ extension DataFlowSemaPhase {
             interner: interner
         )
         if let javaIOPkgSymbol {
+            symbols.setParentSymbol(javaIOPkgSymbol, for: readerSymbol)
             symbols.setParentSymbol(javaIOPkgSymbol, for: bufferedReaderSymbol)
         }
+        let readerType = types.make(.classType(ClassType(
+            classSymbol: readerSymbol, args: [], nullability: .nonNull
+        )))
         let bufferedReaderType = types.make(.classType(ClassType(
             classSymbol: bufferedReaderSymbol, args: [], nullability: .nonNull
         )))
+        symbols.setPropertyType(readerType, for: readerSymbol)
         symbols.setPropertyType(bufferedReaderType, for: bufferedReaderSymbol)
 
         // File.bufferedReader() -> BufferedReader
@@ -602,8 +613,13 @@ extension DataFlowSemaPhase {
         // Register BufferedReader as a Closeable subtype (STDLIB-IO-093)
         // so that .use {} pattern works: `file.bufferedReader().use { reader -> ... }`
         if let closeableSymbol = types.closeableInterfaceSymbol {
-            symbols.setDirectSupertypes([closeableSymbol], for: bufferedReaderSymbol)
-            types.setNominalDirectSupertypes([closeableSymbol], for: bufferedReaderSymbol)
+            symbols.setDirectSupertypes([closeableSymbol], for: readerSymbol)
+            types.setNominalDirectSupertypes([closeableSymbol], for: readerSymbol)
+            symbols.setDirectSupertypes([readerSymbol, closeableSymbol], for: bufferedReaderSymbol)
+            types.setNominalDirectSupertypes([readerSymbol, closeableSymbol], for: bufferedReaderSymbol)
+        } else {
+            symbols.setDirectSupertypes([readerSymbol], for: bufferedReaderSymbol)
+            types.setNominalDirectSupertypes([readerSymbol], for: bufferedReaderSymbol)
         }
         // MARK: - BufferedWriter type and File.bufferedWriter() (STDLIB-IO-091)
 
@@ -627,6 +643,26 @@ extension DataFlowSemaPhase {
             ownerType: bufferedReaderType,
             parameters: [],
             returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerFilePackageExtensionFunction(
+            named: "buffered",
+            packageFQName: kotlinIOPkg,
+            receiverType: readerType,
+            parameters: [],
+            returnType: bufferedReaderType,
+            externalLinkName: "kk_reader_buffered_default",
+            symbols: symbols,
+            interner: interner
+        )
+        registerFilePackageExtensionFunction(
+            named: "buffered",
+            packageFQName: kotlinIOPkg,
+            receiverType: readerType,
+            parameters: [("bufferSize", intType)],
+            returnType: bufferedReaderType,
+            externalLinkName: "kk_reader_buffered",
             symbols: symbols,
             interner: interner
         )

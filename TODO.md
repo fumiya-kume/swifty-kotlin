@@ -101,7 +101,7 @@
 - [x] STDLIB-IO-FN-001: `appendBytes` 関数の実装
 - [x] STDLIB-IO-FN-003: `buffered` 関数の実装（InputStream版）
 - [x] STDLIB-IO-FN-004: `buffered` 関数の実装（OutputStream版）
-- [ ] STDLIB-IO-FN-005: `buffered` 関数の実装（Reader版）
+- [x] STDLIB-IO-FN-005: `buffered` 関数の実装（Reader版）
 - [ ] STDLIB-IO-FN-006: `buffered` 関数の実装（Writer版）
 - [x] STDLIB-IO-FN-007: `bufferedReader` 関数の実装（InputStream版）
 - [x] STDLIB-IO-FN-009: `bufferedWriter` 関数の実装（OutputStream版）

@@ -919,6 +919,24 @@ public func kk_buffered_reader_ready(_ readerRaw: Int) -> Int {
     return kk_box_bool(reader.ready() ? 1 : 0)
 }
 
+@_cdecl("kk_reader_buffered_default")
+public func kk_reader_buffered_default(_ readerRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    kk_reader_buffered(readerRaw, 8192, outThrown)
+}
+
+@_cdecl("kk_reader_buffered")
+public func kk_reader_buffered(_ readerRaw: Int, _ bufferSizeRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard bufferSizeRaw > 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: bufferSize must be positive")
+        return 0
+    }
+    guard runtimeBufferedReaderBox(from: readerRaw) != nil else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_reader_buffered received invalid Reader handle")
+    }
+    return readerRaw
+}
+
 // MARK: - STDLIB-IO-091: BufferedWriter
 
 private func runtimeBufferedWriterBox(from raw: Int) -> RuntimeBufferedWriterBox? {
