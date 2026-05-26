@@ -357,10 +357,12 @@ extension CollectionLiteralLoweringPass {
         } else if callee == lookup.takeName || callee == lookup.dropName
             || callee == lookup.reversedName || callee == lookup.asReversedName || callee == lookup.sortedName || callee == lookup.distinctName
             || callee == lookup.shuffledName
+            || callee == lookup.scanName || callee == lookup.runningFoldName
             || callee == lookup.kkListTakeName || callee == lookup.kkListDropName
             || callee == lookup.kkListReversedName || callee == lookup.kkListSortedName
             || callee == lookup.kkListDistinctName || callee == lookup.kkListShuffledName
-            || callee == lookup.kkListShuffledRandomName,
+            || callee == lookup.kkListShuffledRandomName
+            || callee == lookup.kkListScanName || callee == lookup.kkListRunningFoldName,
             listExprIDs.contains(src)
         {
             listExprIDs.insert(result.rawValue)
@@ -439,10 +441,12 @@ extension CollectionLiteralLoweringPass {
             } else if callee == lookup.takeName || callee == lookup.dropName
                 || callee == lookup.reversedName || callee == lookup.asReversedName || callee == lookup.sortedName || callee == lookup.distinctName
                 || callee == lookup.shuffledName
+                || callee == lookup.scanName || callee == lookup.runningFoldName
                 || callee == lookup.kkListTakeName || callee == lookup.kkListDropName
                 || callee == lookup.kkListReversedName || callee == lookup.kkListSortedName
                 || callee == lookup.kkListDistinctName || callee == lookup.kkListShuffledName
                 || callee == lookup.kkListShuffledRandomName
+                || callee == lookup.kkListScanName || callee == lookup.kkListRunningFoldName
             {
                 if let result { listExprIDs.insert(result.rawValue) }
             }

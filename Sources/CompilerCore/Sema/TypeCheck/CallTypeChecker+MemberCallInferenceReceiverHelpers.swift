@@ -79,6 +79,24 @@ extension CallTypeChecker {
         }
         if case let .classType(declaredCt) = sema.types.kind(of: declared),
            case let .classType(actualCt) = sema.types.kind(of: actual),
+           actualCt.classSymbol != declaredCt.classSymbol,
+           sema.types.isNominalSubtypeSymbol(actualCt.classSymbol, of: declaredCt.classSymbol),
+           declaredCt.args.contains(where: { arg in
+               switch arg {
+               case let .invariant(t), let .out(t), let .in(t):
+                   if case .typeParam = sema.types.kind(of: sema.types.makeNonNullable(t)) {
+                       return true
+                   }
+                   return false
+               case .star:
+                   return false
+               }
+           })
+        {
+            return true
+        }
+        if case let .classType(declaredCt) = sema.types.kind(of: declared),
+           case let .classType(actualCt) = sema.types.kind(of: actual),
            actualCt.classSymbol == declaredCt.classSymbol,
            declaredCt.args.contains(where: { arg in
                switch arg {

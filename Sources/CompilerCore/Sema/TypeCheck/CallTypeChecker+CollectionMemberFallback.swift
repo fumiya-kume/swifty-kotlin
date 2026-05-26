@@ -704,7 +704,7 @@ extension CallTypeChecker {
 
     private func stdlibSurfaceCollectionReturning(_ spec: StdlibSurfaceSpec) -> Bool {
         switch spec.returnStrategy {
-        case .destinationArgument, .list, .map, .sequence, .receiver:
+        case .destinationArgument, .list, .set, .map, .sequence, .receiver:
             return true
         case .any, .nullableAny, .receiverElement, .nullableReceiverElement,
              .unit, .boolean, .int, .double:
@@ -805,6 +805,7 @@ extension CallTypeChecker {
             interner.intern("asIterable"),
             interner.intern("toList"),
             interner.intern("toCollection"),
+            interner.intern("toTypeArray"),
             interner.intern("toTypedArray"),
             interner.intern("toCharArray"),
             interner.intern("toBooleanArray"),
@@ -942,7 +943,7 @@ extension CallTypeChecker {
         let collectionReturningMembers: Set = [
             interner.intern("asSequence"), interner.intern("asIterable"), interner.intern("filterNotNull"), interner.intern("requireNoNulls"),
             interner.intern("filterIsInstanceTo"), interner.intern("reduceTo"),
-            interner.intern("zip"), interner.intern("toList"), interner.intern("toTypedArray"), interner.intern("take"), interner.intern("drop"), interner.intern("reversed"), interner.intern("asReversed"),
+            interner.intern("zip"), interner.intern("toList"), interner.intern("toTypeArray"), interner.intern("toTypedArray"), interner.intern("take"), interner.intern("drop"), interner.intern("reversed"), interner.intern("asReversed"),
             interner.intern("sorted"), interner.intern("distinct"), interner.intern("distinctBy"), interner.intern("flatten"), interner.intern("chunked"), interner.intern("windowed"), interner.intern("withIndex"),
             interner.intern("shuffled"),
             interner.intern("sortedDescending"), interner.intern("sortedByDescending"), interner.intern("sortedWith"),
@@ -1005,7 +1006,7 @@ extension CallTypeChecker {
         switch memberName {
         case knownNames.size, knownNames.isEmpty, interner.intern("iterator"), interner.intern("asSequence"),
              interner.intern("asIterable"),
-             interner.intern("toList"), interner.intern("toTypedArray"), interner.intern("reversed"),
+             interner.intern("toList"), interner.intern("toTypeArray"), interner.intern("toTypedArray"), interner.intern("reversed"),
             interner.intern("asReversed"), interner.intern("sorted"),
              interner.intern("distinct"), interner.intern("flatten"), interner.intern("withIndex"),
              interner.intern("min"), interner.intern("maxOrNull"), interner.intern("minOrNull"), interner.intern("sortedDescending"), interner.intern("filterIsInstance"),
@@ -1133,6 +1134,13 @@ extension CallTypeChecker {
                 interner: interner,
                 elementType: receiverElementType
             )
+        case .set:
+            return makeSyntheticSetType(
+                symbols: sema.symbols,
+                types: sema.types,
+                interner: interner,
+                elementType: receiverElementType
+            )
         case .map:
             return makeSyntheticMapType(
                 symbols: sema.symbols,
@@ -1213,6 +1221,22 @@ extension CallTypeChecker {
 
         if memberName == interner.intern("average") {
             return sema.types.doubleType
+        }
+
+        if memberName == interner.intern("toTypeArray"),
+           !isMapReceiver,
+           !isSetReceiver,
+           !isSequenceReceiver,
+           let arraySymbol = sema.symbols.lookup(fqName: [
+               interner.intern("kotlin"),
+               interner.intern("Array"),
+           ])
+        {
+            return sema.types.make(.classType(ClassType(
+                classSymbol: arraySymbol,
+                args: [.invariant(receiverElementType)],
+                nullability: .nonNull
+            )))
         }
 
         if memberName == interner.intern("chunked") && args.count == 2 {
@@ -1784,6 +1808,16 @@ extension CallTypeChecker {
                 elementType: receiverElementType
             )
         }
+        if (memberName == interner.intern("sorted") || memberName == interner.intern("sortedDescending")),
+           isSequenceReceiver
+        {
+            return makeSyntheticSequenceType(
+                symbols: sema.symbols,
+                types: sema.types,
+                interner: interner,
+                elementType: receiverElementType
+            )
+        }
         if listPreservingMembers.contains(memberName),
            let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first
         {
@@ -2181,7 +2215,7 @@ extension CallTypeChecker {
         if oneParamMembers.contains(memberName), argCount == 1 {
             let lambdaReturnType = boolOneParamMembers.contains(memberName)
                 ? sema.types.make(.primitive(.boolean, .nonNull))
-                : memberName == interner.intern("sumOf") || memberName == interner.intern("sumBy")
+                : memberName == interner.intern("averageOf") || memberName == interner.intern("sumOf") || memberName == interner.intern("sumBy")
                 ? sema.types.intType
                 : memberName == interner.intern("sumByDouble")
                 ? sema.types.doubleType

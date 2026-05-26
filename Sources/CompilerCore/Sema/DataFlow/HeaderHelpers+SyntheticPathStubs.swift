@@ -25,17 +25,23 @@
 /// - `Path.relativeTo(base: Path): Path` extension function
 /// - `Path.relativeToOrNull(base: Path): Path?` extension function
 /// - `Path.readSymbolicLink(): Path` extension function
+/// - `Path.readAttributes(attributes, vararg options: LinkOption): Map<String, Any?>` extension function
+/// - `Path.readAttributes<A : BasicFileAttributes>(vararg options: LinkOption): A` extension function
 /// - `Path.invariantSeparatorsPathString: String` extension property
 /// - `Path.writeBytes(array: ByteArray, vararg options: OpenOption)` extension function
 /// - `Path.writer(charset, options)` extension function
 /// - `Path.outputStream(vararg options: OpenOption): OutputStream` extension function
 /// - `Path.moveTo(target: Path, vararg options: CopyOption): Path` extension function
+/// - `Path.inputStream(vararg options: OpenOption): InputStream` extension function
+/// - `Path.reader(charset, vararg options: OpenOption): BufferedReader` extension function
+/// - `Path.inputStream(vararg options: OpenOption): InputStream` extension function
 /// - `Path.appendLines(lines: Iterable<CharSequence>, charset)` extension function
 /// - `Path.writeLines(lines: Iterable<CharSequence>, charset, options)` extension function
 /// - `Path.writeLines(lines: Sequence<CharSequence>, charset, options)` extension function
 /// - `Path.absolutePathString(): String` extension function
 /// - `Path.appendBytes(array: ByteArray)` extension function
 /// - `readBytes(): ByteArray`, `readText(): String`, `writeText(text: String)`, `readLines(): List<String>`
+/// - `Path.writeText(text, charset, options)` extension function
 /// - `createDirectories(): Path`, `createLinkPointingTo(target): Path`, `deleteIfExists(): Boolean`
 /// - `deleteExisting()`, `deleteRecursively()`
 /// - `Path.fileStore(): FileStore` extension function
@@ -43,14 +49,18 @@
 /// - `Path.getAttribute(attribute: String, vararg options: LinkOption): Any` extension function
 /// - `Path.fileAttributesView<V : FileAttributeView>(vararg options: LinkOption): V` extension function
 /// - `Path.getOwner(vararg options: LinkOption): UserPrincipal` extension function
+/// - `Path.getLastModifiedTime(vararg options: LinkOption): FileTime` extension function
 /// - `Path.setOwner(value: UserPrincipal): Path` extension function
 /// - `Path.getPosixFilePermissions(vararg options: LinkOption): Set<PosixFilePermission>` extension function
+/// - `Path.setAttribute(attribute, value, vararg options: LinkOption): Path` extension function
 /// - `Path.fileSize(): Long` extension function
+/// - `Path.forEachDirectoryEntry(glob, action)` extension function
 /// - `Path.forEachLine(charset, action)` extension function
 /// - `Path.setPosixFilePermissions(value: Set<PosixFilePermission>): Path` extension function
 /// - `Path.useLines(charset, block)` extension function
 /// - `Path.listDirectoryEntries(glob: String = "*"): List<Path>` extension function
 /// - `Path.walk(options)` extension function
+/// - `Path.useDirectoryEntries(glob, block)` extension function
 /// - `Path.isExecutable()`, `isHidden()`, `isReadable()`, `isSameFileAs()`, `isSymbolicLink()`, `isWritable()`
 /// - `Path.notExists(vararg options: LinkOption): Boolean`
 /// - Top-level `Path(pathString: String)` factory (kotlin.io.path.Path)
@@ -60,6 +70,7 @@
 /// - `CopyActionResult` enum surface
 /// - `ExperimentalPathApi` marker annotation surface
 /// - `FileVisitorBuilder` type surface
+/// - `fileVisitor(builderAction)` top-level function
 /// - `OnErrorResult` enum surface
 /// - `PathWalkOption` enum surface
 ///
@@ -90,6 +101,12 @@ extension DataFlowSemaPhase {
         symbols.setPropertyType(pathType, for: pathSymbol)
 
         let nullablePathType = types.makeNullable(pathType)
+        let pathActionType = types.make(.functionType(FunctionType(
+            params: [pathType],
+            returnType: types.unitType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
         let kotlinPkg = ensurePackage(path: ["kotlin"], symbols: symbols, interner: interner)
         let kotlinCollectionsPkg = ensurePackage(path: ["kotlin", "collections"], symbols: symbols, interner: interner)
         let kotlinTextPkg = ensurePackage(path: ["kotlin", "text"], symbols: symbols, interner: interner)
@@ -226,6 +243,24 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        let fileVisitorBuilderSymbol = ensureInterfaceSymbol(
+            named: "FileVisitorBuilder",
+            in: kotlinIOPathPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let fileVisitorBuilderType = types.make(.classType(ClassType(
+            classSymbol: fileVisitorBuilderSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let fileVisitorBuilderActionType = types.make(.functionType(FunctionType(
+            receiver: fileVisitorBuilderType,
+            params: [],
+            returnType: types.unitType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
         let onErrorResultSymbol = ensurePathOnErrorResultEnum(
             in: kotlinIOPathPkg,
             packageSymbol: kotlinIOPathPkgSymbol,
@@ -305,6 +340,20 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
 
+        let mapSymbol = symbols.lookup(
+            fqName: kotlinCollectionsPkg + [interner.intern("Map")]
+        ) ?? registerSyntheticMapStub(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg
+        ).mapSymbol
+        let mapOfStringToNullableAnyType = types.make(.classType(ClassType(
+            classSymbol: mapSymbol,
+            args: [.invariant(types.stringType), .out(types.nullableAnyType)],
+            nullability: .nonNull
+        )))
+
         // List<String> type for readLines return
         let listOfStringType: TypeID = if let listSym = listSymbol {
             types.make(.classType(ClassType(
@@ -375,6 +424,22 @@ extension DataFlowSemaPhase {
         )))
         symbols.setPropertyType(outputStreamType, for: outputStreamSymbol)
 
+        let inputStreamSymbol = ensureClassSymbol(
+            named: "InputStream",
+            in: javaIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaIOPkgSymbol {
+            symbols.setParentSymbol(javaIOPkgSymbol, for: inputStreamSymbol)
+        }
+        let inputStreamType = types.make(.classType(ClassType(
+            classSymbol: inputStreamSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(inputStreamType, for: inputStreamSymbol)
+
         let javaNetPkg = ensurePackage(
             path: ["java", "net"],
             symbols: symbols,
@@ -415,6 +480,19 @@ extension DataFlowSemaPhase {
         )))
         symbols.setPropertyType(fileStoreType, for: fileStoreSymbol)
 
+        let fileVisitorSymbol = ensureGenericPathFileVisitorSymbol(
+            in: javaNioFilePackage,
+            packageSymbol: javaNioFilePackageSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let fileVisitorOfPathType = types.make(.classType(ClassType(
+            classSymbol: fileVisitorSymbol,
+            args: [.invariant(pathType)],
+            nullability: .nonNull
+        )))
+
         let javaNioFileAttributePkg = ensurePackage(
             path: ["java", "nio", "file", "attribute"],
             symbols: symbols,
@@ -450,6 +528,36 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(fileAttributeViewType, for: fileAttributeViewSymbol)
+
+        let basicFileAttributesSymbol = ensureInterfaceSymbol(
+            named: "BasicFileAttributes",
+            in: javaNioFileAttributePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaNioFileAttributePkgSymbol {
+            symbols.setParentSymbol(javaNioFileAttributePkgSymbol, for: basicFileAttributesSymbol)
+        }
+        let basicFileAttributesType = types.make(.classType(ClassType(
+            classSymbol: basicFileAttributesSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(basicFileAttributesType, for: basicFileAttributesSymbol)
+
+        let fileTimeSymbol = ensureClassSymbol(
+            named: "FileTime",
+            in: javaNioFileAttributePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaNioFileAttributePkgSymbol {
+            symbols.setParentSymbol(javaNioFileAttributePkgSymbol, for: fileTimeSymbol)
+        }
+        let fileTimeType = types.make(.classType(ClassType(
+            classSymbol: fileTimeSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(fileTimeType, for: fileTimeSymbol)
 
         let posixFilePermissionName = interner.intern("PosixFilePermission")
         let posixFilePermissionFQName = javaNioFileAttributePkg + [posixFilePermissionName]
@@ -627,6 +735,18 @@ extension DataFlowSemaPhase {
             parameters: [],
             returnType: pathType,
             externalLinkName: "kk_path_readSymbolicLink",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "readAttributes",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("attributes", types.stringType), ("options", linkOptionType)],
+            returnType: mapOfStringToNullableAnyType,
+            externalLinkName: "kk_path_readAttributes_string",
+            valueParameterIsVararg: [false, true],
             symbols: symbols,
             interner: interner
         )
@@ -890,6 +1010,16 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerPathReadAttributesFunction(
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            optionsType: linkOptionType,
+            basicFileAttributesUpperBound: basicFileAttributesType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
         registerPathFileAttributesViewFunction(
             packageFQName: kotlinIOPathPkg,
             receiverType: pathType,
@@ -918,6 +1048,18 @@ extension DataFlowSemaPhase {
             returnType: types.anyType,
             externalLinkName: "kk_path_getAttribute",
             valueParameterIsVararg: [false, true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "getLastModifiedTime",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("options", linkOptionType)],
+            returnType: fileTimeType,
+            externalLinkName: "kk_path_getLastModifiedTime",
+            valueParameterIsVararg: [true],
             symbols: symbols,
             interner: interner
         )
@@ -971,6 +1113,29 @@ extension DataFlowSemaPhase {
             parameters: [],
             returnType: types.longType,
             externalLinkName: "kk_path_fileSize",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "forEachDirectoryEntry",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("glob", types.stringType), ("action", pathActionType)],
+            returnType: types.unitType,
+            externalLinkName: "kk_path_forEachDirectoryEntry",
+            valueParameterHasDefaultValues: [true, false],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "forEachDirectoryEntry",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("action", pathActionType)],
+            returnType: types.unitType,
+            externalLinkName: "kk_path_forEachDirectoryEntry_default",
             symbols: symbols,
             interner: interner
         )
@@ -1180,6 +1345,40 @@ extension DataFlowSemaPhase {
         )
 
         registerPathExtensionFunction(
+            named: "writeText",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [
+                ("text", charSequenceType),
+                ("charset", charsetType),
+                ("options", openOptionType),
+            ],
+            returnType: pathType,
+            externalLinkName: "kk_path_writeText_options",
+            valueParameterHasDefaultValues: [false, true, false],
+            valueParameterIsVararg: [false, false, true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "writeText",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [
+                ("text", charSequenceType),
+                ("charset", charsetType),
+                ("options", openOptionType),
+            ],
+            returnType: pathType,
+            externalLinkName: "kk_path_writeText_options",
+            valueParameterHasDefaultValues: [false, true, false],
+            valueParameterIsVararg: [false, false, true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
             named: "appendText",
             packageFQName: kotlinIOPathPkg,
             receiverType: pathType,
@@ -1254,6 +1453,18 @@ extension DataFlowSemaPhase {
         )
 
         registerPathExtensionFunction(
+            named: "inputStream",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [("options", openOptionType)],
+            returnType: inputStreamType,
+            externalLinkName: "kk_path_inputStream",
+            valueParameterIsVararg: [true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
             named: "bufferedReader",
             packageFQName: kotlinIOPathPkg,
             receiverType: pathType,
@@ -1266,6 +1477,33 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_path_bufferedReader",
             valueParameterHasDefaultValues: [true, true, false],
             valueParameterIsVararg: [false, false, true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "reader",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [
+                ("charset", charsetType),
+                ("options", openOptionType),
+            ],
+            returnType: bufferedReaderType,
+            externalLinkName: "kk_path_reader",
+            valueParameterHasDefaultValues: [true, false],
+            valueParameterIsVararg: [false, true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionFunction(
+            named: "reader",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [],
+            returnType: bufferedReaderType,
+            externalLinkName: "kk_path_reader_default",
             symbols: symbols,
             interner: interner
         )
@@ -1355,6 +1593,21 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerPathExtensionFunction(
+            named: "setAttribute",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            parameters: [
+                ("attribute", types.stringType),
+                ("value", types.stringType),
+                ("options", linkOptionType),
+            ],
+            returnType: pathType,
+            externalLinkName: "kk_path_setAttribute",
+            valueParameterIsVararg: [false, false, true],
+            symbols: symbols,
+            interner: interner
+        )
 
         registerPathExtensionFunction(
             named: "setPosixFilePermissions",
@@ -1399,6 +1652,16 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_path_listDirectoryEntries",
             valueParameterHasDefaultValues: [true],
             symbols: symbols,
+            interner: interner
+        )
+
+        registerPathUseDirectoryEntriesFunction(
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            sequenceOfPathType: sequenceOfPathType,
+            globType: types.stringType,
+            symbols: symbols,
+            types: types,
             interner: interner
         )
 
@@ -1480,6 +1743,16 @@ extension DataFlowSemaPhase {
             returnType: pathType,
             externalLinkName: "kk_path_get_base_subpaths",
             valueParameterIsVararg: [false, true],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathTopLevelFunction(
+            named: "fileVisitor",
+            packageFQName: kotlinIOPathPkg,
+            parameters: [("builderAction", fileVisitorBuilderActionType)],
+            returnType: fileVisitorOfPathType,
+            externalLinkName: "kk_path_fileVisitor",
             symbols: symbols,
             interner: interner
         )
@@ -1759,6 +2032,51 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(builderType, for: builderSymbol)
+    }
+
+    private func ensureGenericPathFileVisitorSymbol(
+        in packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> SymbolID {
+        let fileVisitorSymbol = ensureInterfaceSymbol(
+            named: "FileVisitor",
+            in: packageFQName,
+            symbols: symbols,
+            interner: interner
+        )
+        if let packageSymbol {
+            symbols.setParentSymbol(packageSymbol, for: fileVisitorSymbol)
+        }
+
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = packageFQName + [interner.intern("FileVisitor"), typeParamName]
+        let typeParamSymbol = symbols.lookup(fqName: typeParamFQName) ?? symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: typeParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(fileVisitorSymbol, for: typeParamSymbol)
+        symbols.setTypeParameterUpperBounds([types.anyType], for: typeParamSymbol)
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: fileVisitorSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: fileVisitorSymbol)
+
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let fileVisitorType = types.make(.classType(ClassType(
+            classSymbol: fileVisitorSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(fileVisitorType, for: fileVisitorSymbol)
+        return fileVisitorSymbol
     }
 
     private func resolvePathListSymbol(
@@ -2288,6 +2606,236 @@ extension DataFlowSemaPhase {
                 valueParameterHasDefaultValues: valueParameterHasDefaultValuesPrefix + [false],
                 valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count),
                 typeParameterSymbols: [typeParamSymbol]
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerPathUseDirectoryEntriesFunction(
+        packageFQName: [InternedString],
+        receiverType: TypeID,
+        sequenceOfPathType: TypeID,
+        globType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        registerPathUseDirectoryEntriesFunction(
+            packageFQName: packageFQName,
+            receiverType: receiverType,
+            sequenceOfPathType: sequenceOfPathType,
+            parameters: [("glob", globType)],
+            externalLinkName: "kk_path_useDirectoryEntries",
+            valueParameterHasDefaultValuesPrefix: [true],
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerPathUseDirectoryEntriesFunction(
+            packageFQName: packageFQName,
+            receiverType: receiverType,
+            sequenceOfPathType: sequenceOfPathType,
+            parameters: [],
+            externalLinkName: "kk_path_useDirectoryEntries_default",
+            valueParameterHasDefaultValuesPrefix: [],
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+    }
+
+    private func registerPathUseDirectoryEntriesFunction(
+        packageFQName: [InternedString],
+        receiverType: TypeID,
+        sequenceOfPathType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        externalLinkName: String,
+        valueParameterHasDefaultValuesPrefix: [Bool],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern("useDirectoryEntries")
+        let functionFQName = packageFQName + [functionName]
+        let parameterTypesPrefix = parameters.map(\.type)
+
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return signature.receiverType == receiverType
+                && Array(signature.parameterTypes.dropLast()) == parameterTypesPrefix
+                && signature.typeParameterSymbols.count == 1
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        let typeParamName = interner.intern("T")
+        let typeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: functionFQName + [interner.intern("$synthetic"), typeParamName, interner.intern(externalLinkName)],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(functionSymbol, for: typeParamSymbol)
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        let blockType = types.make(.functionType(FunctionType(
+            params: [sequenceOfPathType],
+            returnType: typeParamType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        var valueParameterSymbols: [SymbolID] = []
+        for parameterName in parameters.map(\.name) + ["block"] {
+            let name = interner.intern(parameterName)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: name,
+                fqName: functionFQName + [name, interner.intern(externalLinkName)],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            valueParameterSymbols.append(parameterSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameterTypesPrefix + [blockType],
+                returnType: typeParamType,
+                isSuspend: false,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: valueParameterHasDefaultValuesPrefix + [false],
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count),
+                typeParameterSymbols: [typeParamSymbol]
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerPathReadAttributesFunction(
+        packageFQName: [InternedString],
+        receiverType: TypeID,
+        optionsType: TypeID,
+        basicFileAttributesUpperBound: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern("readAttributes")
+        let functionFQName = packageFQName + [functionName]
+        let parameterTypes = [optionsType]
+
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let existingSignature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return existingSignature.receiverType == receiverType
+                && existingSignature.parameterTypes == parameterTypes
+                && existingSignature.typeParameterSymbols.count == 1
+        }) {
+            symbols.setExternalLinkName("kk_path_readAttributes", for: existing)
+            if let existingSignature = symbols.functionSignature(for: existing),
+               let typeParamSymbol = existingSignature.typeParameterSymbols.first {
+                let returnType = types.make(.typeParam(TypeParamType(
+                    symbol: typeParamSymbol,
+                    nullability: .nonNull
+                )))
+                symbols.setTypeParameterUpperBounds([basicFileAttributesUpperBound], for: typeParamSymbol)
+                symbols.insertFlags([.reifiedTypeParameter], for: typeParamSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: parameterTypes,
+                        returnType: returnType,
+                        isSuspend: existingSignature.isSuspend,
+                        valueParameterSymbols: existingSignature.valueParameterSymbols,
+                        valueParameterHasDefaultValues: [false],
+                        valueParameterIsVararg: [true],
+                        typeParameterSymbols: [typeParamSymbol],
+                        reifiedTypeParameterIndices: [0],
+                        typeParameterUpperBoundsList: [[basicFileAttributesUpperBound]]
+                    ),
+                    for: existing
+                )
+            }
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName("kk_path_readAttributes", for: functionSymbol)
+
+        let typeParamName = interner.intern("A")
+        let typeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: functionFQName + [interner.intern("$synthetic"), typeParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic, .reifiedTypeParameter]
+        )
+        symbols.setParentSymbol(functionSymbol, for: typeParamSymbol)
+        symbols.setTypeParameterUpperBounds([basicFileAttributesUpperBound], for: typeParamSymbol)
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+
+        let optionsParamName = interner.intern("options")
+        let optionsParamSymbol = symbols.define(
+            kind: .valueParameter,
+            name: optionsParamName,
+            fqName: functionFQName + [optionsParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(functionSymbol, for: optionsParamSymbol)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameterTypes,
+                returnType: typeParamType,
+                isSuspend: false,
+                valueParameterSymbols: [optionsParamSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [true],
+                typeParameterSymbols: [typeParamSymbol],
+                reifiedTypeParameterIndices: [0],
+                typeParameterUpperBoundsList: [[basicFileAttributesUpperBound]]
             ),
             for: functionSymbol
         )
