@@ -1709,6 +1709,43 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(nativePlacementType, for: nativePlacementSymbol)
+        let nativePlacementAllocName = interner.intern("alloc")
+        let nativePlacementAllocFQName = cinteropPkg + [nativePlacementAllocName]
+        let nativePlacementAllocTypeParameterName = interner.intern("T")
+        let nativePlacementAllocTypeParameterFQName = nativePlacementAllocFQName + [nativePlacementAllocTypeParameterName]
+        let nativePlacementAllocTypeParameterSymbol: SymbolID = if let existing = symbols.lookup(
+            fqName: nativePlacementAllocTypeParameterFQName
+        ) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: nativePlacementAllocTypeParameterName,
+                fqName: nativePlacementAllocTypeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic, .reifiedTypeParameter]
+            )
+        }
+        symbols.insertFlags([.synthetic, .reifiedTypeParameter], for: nativePlacementAllocTypeParameterSymbol)
+        symbols.setTypeParameterUpperBounds([cVariableType], for: nativePlacementAllocTypeParameterSymbol)
+        let nativePlacementAllocTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: nativePlacementAllocTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        registerSyntheticNativeTopLevelFunction(
+            named: "alloc",
+            packageFQName: cinteropPkg,
+            receiverType: nativePlacementType,
+            parameters: [],
+            returnType: nativePlacementAllocTypeParameterType,
+            typeParameterSymbols: [nativePlacementAllocTypeParameterSymbol],
+            typeParameterUpperBoundsList: [[cVariableType]],
+            reifiedTypeParameterIndices: [0],
+            flags: [.synthetic, .inlineFunction],
+            symbols: symbols,
+            interner: interner
+        )
 
         let nativeFreeablePlacementType = types.make(.classType(ClassType(
             classSymbol: nativeFreeablePlacementSymbol,
