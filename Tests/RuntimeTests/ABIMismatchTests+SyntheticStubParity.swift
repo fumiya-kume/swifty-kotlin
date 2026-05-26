@@ -54,6 +54,8 @@ extension ABIMismatchTests {
             "kk_input_stream_bufferedReader",
             "kk_output_stream_buffered_default",
             "kk_output_stream_buffered",
+            "kk_output_stream_bufferedWriter_default",
+            "kk_output_stream_bufferedWriter",
             "kk_string_byteInputStream_default",
             "kk_string_byteInputStream",
             "kk_string_hexToUInt",

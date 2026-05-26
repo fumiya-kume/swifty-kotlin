@@ -1167,6 +1167,26 @@ extension DataFlowSemaPhase {
             interner: interner
         )
         registerFilePackageExtensionFunction(
+            named: "bufferedWriter",
+            packageFQName: kotlinIOPkg,
+            receiverType: outputStreamType,
+            parameters: [],
+            returnType: bufferedWriterType,
+            externalLinkName: "kk_output_stream_bufferedWriter_default",
+            symbols: symbols,
+            interner: interner
+        )
+        registerFilePackageExtensionFunction(
+            named: "bufferedWriter",
+            packageFQName: kotlinIOPkg,
+            receiverType: outputStreamType,
+            parameters: [("charset", charsetType)],
+            returnType: bufferedWriterType,
+            externalLinkName: "kk_output_stream_bufferedWriter",
+            symbols: symbols,
+            interner: interner
+        )
+        registerFilePackageExtensionFunction(
             named: "buffered",
             packageFQName: kotlinIOPkg,
             receiverType: outputStreamType,

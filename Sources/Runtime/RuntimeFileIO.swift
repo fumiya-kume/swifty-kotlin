@@ -1333,6 +1333,29 @@ public func kk_output_stream_flush(_ streamRaw: Int, _ outThrown: UnsafeMutableP
     return 0
 }
 
+@_cdecl("kk_output_stream_bufferedWriter_default")
+public func kk_output_stream_bufferedWriter_default(_ streamRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    kk_output_stream_bufferedWriter(streamRaw, kk_charset_utf_8(), outThrown)
+}
+
+@_cdecl("kk_output_stream_bufferedWriter")
+public func kk_output_stream_bufferedWriter(
+    _ streamRaw: Int,
+    _ charsetRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let stream = runtimeOutputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_output_stream_bufferedWriter received invalid OutputStream handle")
+    }
+    _ = charsetRaw
+    guard let writer = stream.makeBufferedWriter(bufferSize: 8192) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: OutputStream is closed")
+        return 0
+    }
+    return registerRuntimeObject(writer)
+}
+
 @_cdecl("kk_output_stream_buffered_default")
 public func kk_output_stream_buffered_default(_ streamRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     kk_output_stream_buffered(streamRaw, 8192, outThrown)

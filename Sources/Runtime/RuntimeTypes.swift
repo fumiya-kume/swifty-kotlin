@@ -1577,6 +1577,11 @@ final class RuntimeOutputStreamBox {
         try fileHandle.synchronize()
     }
 
+    func makeBufferedWriter(bufferSize: Int) -> RuntimeBufferedWriterBox? {
+        guard !closed else { return nil }
+        return RuntimeBufferedWriterBox(fileHandle: fileHandle, bufferSize: bufferSize)
+    }
+
     func close() {
         guard !closed else { return }
         try? fileHandle.close()
