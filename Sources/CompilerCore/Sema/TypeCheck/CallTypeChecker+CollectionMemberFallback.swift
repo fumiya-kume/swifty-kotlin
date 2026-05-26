@@ -1128,11 +1128,14 @@ extension CallTypeChecker {
             if memberName == interner.intern("flatMapIndexed") {
                 return nil
             }
+            let elementType = memberName == interner.intern("filterNotNull")
+                ? sema.types.makeNonNullable(receiverElementType)
+                : receiverElementType
             return makeSyntheticListType(
                 symbols: sema.symbols,
                 types: sema.types,
                 interner: interner,
-                elementType: receiverElementType
+                elementType: elementType
             )
         case .set:
             return makeSyntheticSetType(
@@ -1153,11 +1156,14 @@ extension CallTypeChecker {
             if memberName == interner.intern("flatMapIndexed") {
                 return nil
             }
+            let elementType = memberName == interner.intern("filterNotNull")
+                ? sema.types.makeNonNullable(receiverElementType)
+                : receiverElementType
             return makeSyntheticSequenceType(
                 symbols: sema.symbols,
                 types: sema.types,
                 interner: interner,
-                elementType: receiverElementType
+                elementType: elementType
             )
         }
     }

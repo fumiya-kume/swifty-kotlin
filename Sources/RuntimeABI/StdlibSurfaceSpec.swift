@@ -345,6 +345,7 @@ private extension StdlibSurfaceSpec {
         sequence("runningFoldIndexed", 2, "kk_sequence_runningFoldIndexed", returnStrategy: .sequence, lambdaExpectation: .none),
         sequence("runningFold", 2, "kk_sequence_runningFold", returnStrategy: .sequence, lambdaExpectation: .none),
         sequence("scan", 2, "kk_sequence_scan", returnStrategy: .sequence, lambdaExpectation: .none),
+        sequence("filterNotNull", 0, "kk_sequence_filterNotNull", returnStrategy: .sequence, lambdaExpectation: .none),
         sequence("filterTo", 2, "kk_sequence_filterTo", returnStrategy: .destinationArgument, lambdaExpectation: .destinationElement(argumentIndex: 1, returnStrategy: .boolean)),
         sequence("filterNotTo", 2, "kk_sequence_filterNotTo", returnStrategy: .destinationArgument, lambdaExpectation: .destinationElement(argumentIndex: 1, returnStrategy: .boolean)),
         sequence("mapTo", 2, "kk_sequence_mapTo", returnStrategy: .destinationArgument, lambdaExpectation: .destinationElement(argumentIndex: 1, returnStrategy: .destinationElement)),

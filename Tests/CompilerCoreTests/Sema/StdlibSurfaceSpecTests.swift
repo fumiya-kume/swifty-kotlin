@@ -171,6 +171,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("runningFoldIndexed", 2),
             sequence("runningFold", 2),
             sequence("scan", 2),
+            sequence("filterNotNull", 0),
             sequence("filterTo", 2),
             sequence("filterNotTo", 2),
             sequence("mapTo", 2),
