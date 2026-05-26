@@ -34,6 +34,7 @@ extension ABIMismatchTests {
             "kk_file_extension",
             "kk_file_invariantSeparatorsPath",
             "kk_file_isRooted",
+            "kk_file_nameWithoutExtension",
             "kk_string_hexToUInt",
             "kk_string_chunked_sequence_transform",
             // Exception constructors

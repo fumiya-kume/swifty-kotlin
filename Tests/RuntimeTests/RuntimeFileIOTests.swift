@@ -78,6 +78,21 @@ final class RuntimeFileIOTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_unbox_bool(kk_file_isRooted(runtimeTestFileHandle("C:"))), 1)
     }
 
+    func testFileNameWithoutExtensionReturnsLastComponentStem() {
+        XCTAssertEqual(
+            readString(kk_file_nameWithoutExtension(runtimeTestFileHandle("/tmp/archive.tar.gz"))),
+            "archive.tar"
+        )
+        XCTAssertEqual(
+            readString(kk_file_nameWithoutExtension(runtimeTestFileHandle("/tmp/README"))),
+            "README"
+        )
+        XCTAssertEqual(
+            readString(kk_file_nameWithoutExtension(runtimeTestFileHandle("/tmp/.gitignore"))),
+            ""
+        )
+    }
+
     private func makeTempFile(contents: String) throws -> URL {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try contents.write(to: url, atomically: true, encoding: .utf8)

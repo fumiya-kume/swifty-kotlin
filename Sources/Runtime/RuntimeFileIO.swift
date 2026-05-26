@@ -423,6 +423,18 @@ public func kk_file_isRooted(_ fileRaw: Int) -> Int {
     return kk_box_bool(runtimeFileRootLength(file.path) > 0 ? 1 : 0)
 }
 
+@_cdecl("kk_file_nameWithoutExtension")
+public func kk_file_nameWithoutExtension(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_nameWithoutExtension received invalid File handle")
+    }
+    let name = (file.path as NSString).lastPathComponent
+    guard let dotIndex = name.lastIndex(of: ".") else {
+        return fileMakeStringRaw(name)
+    }
+    return fileMakeStringRaw(String(name[..<dotIndex]))
+}
+
 @_cdecl("kk_file_path")
 public func kk_file_path(_ fileRaw: Int) -> Int {
     guard let file = runtimeFileBox(from: fileRaw) else {
