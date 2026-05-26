@@ -1285,6 +1285,12 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let cPrimitiveVarTypeSymbol = ensureClassSymbol(
+            named: "Type",
+            in: cinteropPkg + [interner.intern("CPrimitiveVar")],
+            symbols: symbols,
+            interner: interner
+        )
         let cEnumSymbol = ensureInterfaceSymbol(
             named: "CEnum",
             in: cinteropPkg,
@@ -1443,6 +1449,7 @@ extension DataFlowSemaPhase {
             }
         }
         symbols.setParentSymbol(cVariableSymbol, for: cVariableTypeSymbol)
+        symbols.setParentSymbol(cPrimitiveVarSymbol, for: cPrimitiveVarTypeSymbol)
 
         let nativePointedType = types.make(.classType(ClassType(
             classSymbol: nativePointedSymbol,
@@ -1483,8 +1490,19 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(cPrimitiveVarType, for: cPrimitiveVarSymbol)
+        symbols.insertFlags([.sealedType, .abstractType, .openType], for: cPrimitiveVarSymbol)
         symbols.setDirectSupertypes([cVariableSymbol], for: cPrimitiveVarSymbol)
         types.setNominalDirectSupertypes([cVariableSymbol], for: cPrimitiveVarSymbol)
+
+        let cPrimitiveVarTypeClassType = types.make(.classType(ClassType(
+            classSymbol: cPrimitiveVarTypeSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(cPrimitiveVarTypeClassType, for: cPrimitiveVarTypeSymbol)
+        symbols.insertFlags([.openType], for: cPrimitiveVarTypeSymbol)
+        symbols.setDirectSupertypes([cVariableTypeSymbol], for: cPrimitiveVarTypeSymbol)
+        types.setNominalDirectSupertypes([cVariableTypeSymbol], for: cPrimitiveVarTypeSymbol)
 
         let cEnumType = types.make(.classType(ClassType(
             classSymbol: cEnumSymbol,
@@ -1545,7 +1563,23 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
-
+        registerSyntheticNativeBitSetConstructor(
+            ownerSymbol: cPrimitiveVarSymbol,
+            ownerType: cPrimitiveVarType,
+            parameters: [(name: "rawPtr", type: nativePtrType)],
+            defaultValues: [false],
+            visibility: .protected,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetConstructor(
+            ownerSymbol: cPrimitiveVarTypeSymbol,
+            ownerType: cPrimitiveVarTypeClassType,
+            parameters: [(name: "size", type: types.intType)],
+            defaultValues: [false],
+            symbols: symbols,
+            interner: interner
+        )
         registerSyntheticNativeBitSetConstructor(
             ownerSymbol: cEnumVarSymbol,
             ownerType: cEnumVarType,
@@ -2694,6 +2728,7 @@ extension DataFlowSemaPhase {
         ownerType: TypeID,
         parameters: [(name: String, type: TypeID)],
         defaultValues: [Bool],
+        visibility: Visibility = .public,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -2720,7 +2755,7 @@ extension DataFlowSemaPhase {
             name: initName,
             fqName: constructorFQName,
             declSite: nil,
-            visibility: .public,
+            visibility: visibility,
             flags: [.synthetic]
         )
         symbols.setParentSymbol(ownerSymbol, for: constructorSymbol)
