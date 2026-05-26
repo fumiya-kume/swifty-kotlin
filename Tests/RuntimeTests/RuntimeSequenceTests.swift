@@ -325,7 +325,7 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
             &thrown
         )
         XCTAssertEqual(thrown, 0)
-        XCTAssertEqual(emptyResult, runtimeExceptionCaughtSentinel)
+        XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
     }
 
     func testMinByReturnsElementWithSmallestSelectorAndThrowsOnEmpty() {
@@ -2219,7 +2219,7 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(result, 1)
 
         let emptyResult = kk_sequence_maxBy(makeSequence([]), unsafeBitCast(selector, to: Int.self), 0, &thrown)
-        XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
+        XCTAssertEqual(emptyResult, runtimeExceptionCaughtSentinel)
         XCTAssertNotEqual(thrown, 0)
         let box = try XCTUnwrap(throwableBox(from: thrown))
         XCTAssertEqual(box.message, kEmptySequenceNoSuchElement)
