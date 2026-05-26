@@ -2443,6 +2443,15 @@ extension DataFlowSemaPhase {
                 symbols: symbols,
                 interner: interner
             )
+            registerSyntheticNativeTopLevelFunction(
+                named: "toKString",
+                packageFQName: cinteropPkg,
+                receiverType: cPointerByteVarType,
+                parameters: [],
+                returnType: types.stringType,
+                symbols: symbols,
+                interner: interner
+            )
         }
         let cOpaquePointerUnderlyingType = types.make(.classType(ClassType(
             classSymbol: cPointerSymbol,
