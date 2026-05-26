@@ -1112,7 +1112,12 @@ extension DataFlowSemaPhase {
     ) {
         let memberName = interner.intern(name)
         let memberFQName = sequenceScopeFQName + [memberName]
-        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let parameterTypes = parameters.map(\.type)
+        if symbols.lookupAll(fqName: memberFQName).contains(where: { symbolID in
+            symbols.functionSignature(for: symbolID)?.parameterTypes == parameterTypes
+        }) {
+            return
+        }
 
         let memberSymbol = symbols.define(
             kind: .function,
@@ -1125,7 +1130,6 @@ extension DataFlowSemaPhase {
         symbols.setParentSymbol(sequenceScopeSymbol, for: memberSymbol)
         symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
 
-        var parameterTypes: [TypeID] = []
         var parameterSymbols: [SymbolID] = []
         for parameter in parameters {
             let parameterName = interner.intern(parameter.name)
@@ -1138,7 +1142,6 @@ extension DataFlowSemaPhase {
                 flags: [.synthetic]
             )
             symbols.setParentSymbol(memberSymbol, for: parameterSymbol)
-            parameterTypes.append(parameter.type)
             parameterSymbols.append(parameterSymbol)
         }
 
