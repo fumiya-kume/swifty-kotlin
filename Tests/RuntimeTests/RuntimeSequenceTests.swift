@@ -257,6 +257,7 @@ private func runtimeTestStringHandle(_ value: String) -> Int {
 }
 
 final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     override func resetIsolatedRuntimeTestState() {
         _lazyTestYieldCounter = 0
         _lazySequenceOnEachIndexedTrace = []

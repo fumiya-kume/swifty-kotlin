@@ -82,7 +82,7 @@ jobs:
             build-jobs: "8"
           - test-target: RuntimeTests
             test-filter: '^RuntimeTests\\.'
-            workers: "1"
+            workers: "4"
             build-jobs: "4"
           - test-target: RuntimeTestsParallel
             test-filter: '^RuntimeTestsParallel\\.'

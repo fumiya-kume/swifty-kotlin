@@ -466,6 +466,7 @@ final class RuntimePinnedTests: XCTestCase {
 // ---------------------------------------------------------------------------
 
 final class RuntimeCNameRegistryTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
 
     func testRegisterAndLookupRoundTrip() {
         let nameHandle = registerRuntimeObject(RuntimeStringBox("myExportedFn"))

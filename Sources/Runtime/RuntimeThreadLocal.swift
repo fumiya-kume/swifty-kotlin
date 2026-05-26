@@ -6,7 +6,7 @@ private func runtimeThreadLocalBox(from rawValue: Int) -> RuntimeThreadLocalBox?
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
     }
-    let isThreadLocalBox = runtimeStorage.withLock { state in
+    let isThreadLocalBox = runtimeStorage.withThreadLocalLock { state in
         state.threadLocalBoxes.contains(UInt(bitPattern: ptr))
     }
     guard isThreadLocalBox else {
@@ -27,8 +27,10 @@ private func handleThreadLocalLambdaThrow(_ thrown: Int, _ outThrown: UnsafeMuta
 public func kk_thread_local_new() -> Int {
     let box = RuntimeThreadLocalBox()
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withThreadLocalLock { state in
         state.threadLocalBoxes.insert(UInt(bitPattern: ptr))
+    }
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -49,7 +51,7 @@ public func kk_thread_local_getOrSet(
     let threadKey = ObjectIdentifier(Thread.current)
     let receiverKey = UInt(bitPattern: receiver)
 
-    if let cachedValue = runtimeStorage.withLock({ state -> Int? in
+    if let cachedValue = runtimeStorage.withThreadLocalLock({ state -> Int? in
         state.threadLocalValues[receiverKey]?[threadKey]
     }) {
         return cachedValue
@@ -64,7 +66,7 @@ public func kk_thread_local_getOrSet(
         return result
     }
 
-    runtimeStorage.withLock { state in
+    runtimeStorage.withThreadLocalLock { state in
         var threadValues = state.threadLocalValues[receiverKey] ?? [:]
         threadValues[threadKey] = result
         state.threadLocalValues[receiverKey] = threadValues

@@ -3,6 +3,7 @@ import Foundation
 import XCTest
 
 final class RuntimePathCreateTempFileInDirectoryTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     func testPathCreateTempFileDirectoryPrefixSuffixAttributesCreatesFileInParent() throws {
         let parentURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer {

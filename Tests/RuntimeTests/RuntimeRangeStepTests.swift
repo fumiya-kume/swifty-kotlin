@@ -4,6 +4,7 @@ import XCTest
 /// Runtime-level tests for range step alignment, empty progressions,
 /// and non-trapping behavior on extreme Int ranges.
 final class RuntimeRangeStepTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
 
     // MARK: - Step alignment (positive step)
 

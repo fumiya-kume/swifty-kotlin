@@ -88,7 +88,7 @@ private func runtimeTagCallableRef(
     kind: RuntimeCallableRefKind,
     isSuspend: Bool = false
 ) -> Int {
-    runtimeStorage.withLock { state in
+    runtimeStorage.withDelegateLock { state in
         state.callableRefMetadataByValue[callable] = RuntimeCallableRefMetadata(
             nameRaw: name,
             arity: arity,
@@ -111,7 +111,7 @@ public func kk_callable_ref_tag_kproperty(_ callable: Int, _ name: Int, _ arity:
 
 @_cdecl("kk_callable_ref_name")
 public func kk_callable_ref_name(_ tagged: Int) -> Int {
-    runtimeStorage.withLock { state in
+    runtimeStorage.withDelegateLock { state in
         state.callableRefMetadataByValue[tagged]?.nameRaw ?? runtimeNullSentinelInt
     }
 }
@@ -120,21 +120,21 @@ public func kk_callable_ref_name(_ tagged: Int) -> Int {
 
 @_cdecl("kk_callable_ref_arity")
 public func kk_callable_ref_arity(_ tagged: Int) -> Int {
-    runtimeStorage.withLock { state in
+    runtimeStorage.withDelegateLock { state in
         state.callableRefMetadataByValue[tagged]?.arity ?? 0
     }
 }
 
 @_cdecl("kk_callable_ref_is_suspend")
 public func kk_callable_ref_is_suspend(_ tagged: Int) -> Int {
-    runtimeStorage.withLock { state in
+    runtimeStorage.withDelegateLock { state in
         state.callableRefMetadataByValue[tagged]?.isSuspend == true ? 1 : 0
     }
 }
 
 @_cdecl("kk_callable_ref_parameters")
 public func kk_callable_ref_parameters(_ tagged: Int) -> Int {
-    let arity = runtimeStorage.withLock { state in
+    let arity = runtimeStorage.withDelegateLock { state in
         state.callableRefMetadataByValue[tagged]?.arity ?? 0
     }
     // Return a runtime List of placeholder ints (one element per parameter).
@@ -153,7 +153,7 @@ public func kk_callable_ref_call_0(
         outThrown?.pointee = runtimeAllocateThrowable(message: "KFunction call: null function reference")
         return 0
     }
-    let expectedArity = runtimeStorage.withLock { state in
+    let expectedArity = runtimeStorage.withDelegateLock { state in
         state.callableRefMetadataByValue[tagged]?.arity
     }
     if let expectedArity {
@@ -184,7 +184,7 @@ public func kk_callable_ref_call_1(
         outThrown?.pointee = runtimeAllocateThrowable(message: "KFunction call: null function reference")
         return 0
     }
-    let expectedArity = runtimeStorage.withLock { state in
+    let expectedArity = runtimeStorage.withDelegateLock { state in
         state.callableRefMetadataByValue[tagged]?.arity
     }
     if let expectedArity {
@@ -216,7 +216,7 @@ public func kk_callable_ref_call_2(
         outThrown?.pointee = runtimeAllocateThrowable(message: "KFunction call: null function reference")
         return 0
     }
-    let expectedArity = runtimeStorage.withLock { state in
+    let expectedArity = runtimeStorage.withDelegateLock { state in
         state.callableRefMetadataByValue[tagged]?.arity
     }
     if let expectedArity {
@@ -249,7 +249,7 @@ public func kk_callable_ref_call_3(
         outThrown?.pointee = runtimeAllocateThrowable(message: "KFunction call: null function reference")
         return 0
     }
-    let expectedArity = runtimeStorage.withLock { state in
+    let expectedArity = runtimeStorage.withDelegateLock { state in
         state.callableRefMetadataByValue[tagged]?.arity
     }
     if let expectedArity {
@@ -272,7 +272,7 @@ public func kk_callable_ref_call_3(
 public func kk_kproperty_stub_create(_ nameStr: Int, _ returnTypeStr: Int) -> Int {
     let stub = RuntimeKPropertyStub(name: nameStr, returnType: returnTypeStr)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(stub).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return Int(bitPattern: opaque)
@@ -295,7 +295,7 @@ public func kk_kproperty_stub_create_full(
         isConst: isConst != 0
     )
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(stub).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return Int(bitPattern: opaque)
@@ -304,7 +304,7 @@ public func kk_kproperty_stub_create_full(
 @_cdecl("kk_kproperty_stub_name")
 public func kk_kproperty_stub_name(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle),
-          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          runtimeStorage.withGCLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let stub = tryCast(ptr, to: RuntimeKPropertyStub.self)
     else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid KProperty handle in kk_kproperty_stub_name")
@@ -315,7 +315,7 @@ public func kk_kproperty_stub_name(_ handle: Int) -> Int {
 @_cdecl("kk_kproperty_stub_return_type")
 public func kk_kproperty_stub_return_type(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle),
-          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          runtimeStorage.withGCLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let stub = tryCast(ptr, to: RuntimeKPropertyStub.self)
     else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid KProperty handle in kk_kproperty_stub_return_type")
@@ -327,7 +327,7 @@ public func kk_kproperty_stub_return_type(_ handle: Int) -> Int {
 @_cdecl("kk_kproperty_stub_visibility")
 public func kk_kproperty_stub_visibility(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle),
-          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          runtimeStorage.withGCLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let stub = tryCast(ptr, to: RuntimeKPropertyStub.self)
     else {
         return runtimeNullSentinelInt
@@ -345,7 +345,7 @@ public func kk_kproperty_stub_visibility(_ handle: Int) -> Int {
 @_cdecl("kk_kproperty_stub_is_lateinit")
 public func kk_kproperty_stub_is_lateinit(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle),
-          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          runtimeStorage.withGCLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let stub = tryCast(ptr, to: RuntimeKPropertyStub.self)
     else {
         return 0
@@ -357,7 +357,7 @@ public func kk_kproperty_stub_is_lateinit(_ handle: Int) -> Int {
 @_cdecl("kk_kproperty_stub_is_const")
 public func kk_kproperty_stub_is_const(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle),
-          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          runtimeStorage.withGCLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let stub = tryCast(ptr, to: RuntimeKPropertyStub.self)
     else {
         return 0
@@ -369,7 +369,7 @@ public func kk_kproperty_stub_is_const(_ handle: Int) -> Int {
 @_cdecl("kk_kproperty_stub_set_getter")
 public func kk_kproperty_stub_set_getter(_ handle: Int, _ fnPtr: Int, _ receiver: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle),
-          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          runtimeStorage.withGCLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let stub = tryCast(ptr, to: RuntimeKPropertyStub.self)
     else {
         return 0
@@ -383,7 +383,7 @@ public func kk_kproperty_stub_set_getter(_ handle: Int, _ fnPtr: Int, _ receiver
 @_cdecl("kk_kproperty_stub_set_setter")
 public func kk_kproperty_stub_set_setter(_ handle: Int, _ fnPtr: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle),
-          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          runtimeStorage.withGCLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let stub = tryCast(ptr, to: RuntimeKPropertyStub.self)
     else {
         return 0
@@ -396,7 +396,7 @@ public func kk_kproperty_stub_set_setter(_ handle: Int, _ fnPtr: Int) -> Int {
 @_cdecl("kk_kproperty_stub_getter")
 public func kk_kproperty_stub_getter(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle),
-          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          runtimeStorage.withGCLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let stub = tryCast(ptr, to: RuntimeKPropertyStub.self)
     else {
         return 0
@@ -408,7 +408,7 @@ public func kk_kproperty_stub_getter(_ handle: Int) -> Int {
 @_cdecl("kk_kproperty_stub_setter")
 public func kk_kproperty_stub_setter(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle),
-          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          runtimeStorage.withGCLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let stub = tryCast(ptr, to: RuntimeKPropertyStub.self)
     else {
         return 0
@@ -420,7 +420,7 @@ public func kk_kproperty_stub_setter(_ handle: Int) -> Int {
 @_cdecl("kk_kproperty_stub_get_value")
 public func kk_kproperty_stub_get_value(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle),
-          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          runtimeStorage.withGCLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let stub = tryCast(ptr, to: RuntimeKPropertyStub.self),
           stub.getterFnPtr != 0
     else {
@@ -435,7 +435,7 @@ public func kk_kproperty_stub_get_value(_ handle: Int) -> Int {
 @_cdecl("kk_kproperty_stub_set_value")
 public func kk_kproperty_stub_set_value(_ handle: Int, _ value: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle),
-          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          runtimeStorage.withGCLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let stub = tryCast(ptr, to: RuntimeKPropertyStub.self),
           stub.setterFnPtr != 0
     else {
@@ -466,7 +466,7 @@ public func kk_lazy_create(_ initFnPtr: Int, _ mode: Int) -> Int {
     let safetyMode = LazyThreadSafetyMode(rawValue: mode) ?? .synchronized
     let box = RuntimeLazyBox(initializerFnPtr: initFnPtr, mode: safetyMode)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return Int(bitPattern: opaque)
@@ -482,7 +482,7 @@ public func kk_lazy_get_value(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         return 0
     }
-    let isObj = runtimeStorage.withLock { state in
+    let isObj = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObj, let box = tryCast(ptr, to: RuntimeLazyBox.self) else {
@@ -496,7 +496,7 @@ public func kk_lazy_is_initialized(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         return 0
     }
-    let isObj = runtimeStorage.withLock { state in
+    let isObj = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObj, let box = tryCast(ptr, to: RuntimeLazyBox.self) else {
@@ -511,7 +511,7 @@ public func kk_lazy_is_initialized(_ handle: Int) -> Int {
 public func kk_observable_create(_ initialValue: Int, _ callbackFnPtr: Int) -> Int {
     let box = RuntimeObservableBox(initialValue: initialValue, callbackFnPtr: callbackFnPtr)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return Int(bitPattern: opaque)
@@ -522,7 +522,7 @@ public func kk_observable_get_value(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         return 0
     }
-    let isObj = runtimeStorage.withLock { state in
+    let isObj = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObj, let box = tryCast(ptr, to: RuntimeObservableBox.self) else {
@@ -537,7 +537,7 @@ public func kk_observable_set_value(_ handle: Int, _ newValue: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         return 0
     }
-    let isObj = runtimeStorage.withLock { state in
+    let isObj = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObj, let box = tryCast(ptr, to: RuntimeObservableBox.self) else {
@@ -564,7 +564,7 @@ public func kk_observable_set_value(_ handle: Int, _ newValue: Int) -> Int {
 public func kk_vetoable_create(_ initialValue: Int, _ callbackFnPtr: Int) -> Int {
     let box = RuntimeVetoableBox(initialValue: initialValue, callbackFnPtr: callbackFnPtr)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return Int(bitPattern: opaque)
@@ -575,7 +575,7 @@ public func kk_vetoable_get_value(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         return 0
     }
-    let isObj = runtimeStorage.withLock { state in
+    let isObj = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObj, let box = tryCast(ptr, to: RuntimeVetoableBox.self) else {
@@ -590,7 +590,7 @@ public func kk_vetoable_set_value(_ handle: Int, _ newValue: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         return 0
     }
-    let isObj = runtimeStorage.withLock { state in
+    let isObj = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObj, let box = tryCast(ptr, to: RuntimeVetoableBox.self) else {
@@ -621,7 +621,7 @@ public func kk_vetoable_set_value(_ handle: Int, _ newValue: Int) -> Int {
 public func kk_notNull_create() -> Int {
     let box = RuntimeNotNullBox()
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return Int(bitPattern: opaque)
@@ -636,7 +636,7 @@ public func kk_notNull_get_value(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         fatalError(runtimeNotNullUninitializedMessage)
     }
-    let isObj = runtimeStorage.withLock { state in
+    let isObj = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObj, let box = tryCast(ptr, to: RuntimeNotNullBox.self) else {
@@ -653,7 +653,7 @@ public func kk_notNull_set_value(_ handle: Int, _ newValue: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_notNull_set_value called with null handle")
     }
-    let isObj = runtimeStorage.withLock { state in
+    let isObj = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObj, let box = tryCast(ptr, to: RuntimeNotNullBox.self) else {
@@ -677,8 +677,10 @@ public func kk_custom_delegate_create(
         setValueFnPtr: setValueFnPtr
     )
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))
+    }
+    runtimeStorage.withDelegateLock { state in
         state.customDelegateBoxes[UInt(bitPattern: opaque)] = box
     }
     return Int(bitPattern: opaque)
@@ -690,7 +692,7 @@ public func kk_custom_delegate_get_value(_ handle: Int, _ thisRef: Int, _ proper
         return 0
     }
     let key = UInt(bitPattern: ptr)
-    let box = runtimeStorage.withLock { state in
+    let box = runtimeStorage.withDelegateLock { state in
         state.customDelegateBoxes[key]
     }
     guard let box, box.getValueFnPtr != 0 else {
@@ -711,7 +713,7 @@ public func kk_custom_delegate_set_value(_ handle: Int, _ thisRef: Int, _ proper
         return newValue
     }
     let key = UInt(bitPattern: ptr)
-    let box = runtimeStorage.withLock { state in
+    let box = runtimeStorage.withDelegateLock { state in
         state.customDelegateBoxes[key]
     }
     guard let box else {
@@ -739,7 +741,7 @@ public func kk_delegate_get_value(_ handle: Int, _: Int, _ property: Int, _ outT
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         return 0
     }
-    let isObj = runtimeStorage.withLock { state in
+    let isObj = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObj else {
@@ -787,7 +789,7 @@ public func kk_delegate_set_value(
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         return 0
     }
-    let isObj = runtimeStorage.withLock { state in
+    let isObj = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObj else {

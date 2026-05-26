@@ -137,8 +137,10 @@ private final class RuntimeFlowHandle {
 private func runtimeRegisterFlowHandle(_ flow: RuntimeFlowHandle) -> Int {
     let ptr = UnsafeMutableRawPointer(Unmanaged.passUnretained(flow).toOpaque())
     let key = UInt(bitPattern: ptr)
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(key)
+    }
+    runtimeStorage.withFlowLock { state in
         state.flowHandles[key] = flow
         state.flowRetainCounts[key] = 1
     }
@@ -150,7 +152,7 @@ private func runtimeFlowHandle(from rawValue: Int) -> RuntimeFlowHandle? {
         return nil
     }
     let key = UInt(bitPattern: ptr)
-    return runtimeStorage.withLock { state in
+    return runtimeStorage.withFlowLock { state in
         state.flowHandles[key] as? RuntimeFlowHandle
     }
 }
@@ -339,7 +341,7 @@ private func runtimeFlowMaybeUnbox(_ value: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
         return value
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObjectPointer else {
@@ -1239,7 +1241,7 @@ public func kk_flow_create(_ emitterFnPtr: Int, _: Int) -> Int {
 @_cdecl("kk_flow_stopped")
 public func kk_flow_stopped() -> Int {
     let ptr = UnsafeMutableRawPointer(Unmanaged.passUnretained(runtimeStorage.flowStopSentinelBox).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -1318,7 +1320,7 @@ public func kk_flow_retain(_ flowHandle: Int) -> Int {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_flow_retain received invalid flow handle")
     }
     let key = UInt(bitPattern: ptr)
-    return runtimeStorage.withLock { state in
+    return runtimeStorage.withFlowLock { state in
         guard state.flowHandles[key] != nil else {
             fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_flow_retain received unregistered flow handle")
         }
@@ -1333,17 +1335,23 @@ public func kk_flow_release(_ flowHandle: Int) -> Int {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_flow_release received invalid flow handle")
     }
     let key = UInt(bitPattern: ptr)
-    runtimeStorage.withLock { state in
+    let shouldRemoveFromGC = runtimeStorage.withFlowLock { state -> Bool in
         guard let count = state.flowRetainCounts[key] else {
-            return
+            return false
         }
         let nextCount = count - 1
         if nextCount <= 0 {
             state.flowRetainCounts.removeValue(forKey: key)
             state.flowHandles.removeValue(forKey: key)
-            state.objectPointers.remove(key)
+            return true
         } else {
             state.flowRetainCounts[key] = nextCount
+            return false
+        }
+    }
+    if shouldRemoveFromGC {
+        runtimeStorage.withGCLock { state in
+            state.objectPointers.remove(key)
         }
     }
     return 0

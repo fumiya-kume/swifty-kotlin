@@ -87,7 +87,7 @@ private func jsonExtractString(from rawValue: Int) -> String? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObjectPointer else {
@@ -143,7 +143,7 @@ private func runtimeKClassBoxLocal(from rawValue: Int) -> RuntimeKClassBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObjectPointer else {
@@ -157,7 +157,7 @@ private func runtimeRegisteredInterfaceSlot(objectRaw: Int, interfaceTypeID: Int
         return nil
     }
     let objectKey = UInt(bitPattern: ptr)
-    return runtimeStorage.withLock { state in
+    return runtimeStorage.withMetadataLock { state in
         state.objectInterfaceSlots[objectKey]?[interfaceTypeID]
     }
 }
@@ -257,7 +257,7 @@ private func runtimeValueToJSON(_ rawValue: Int) -> Any {
         return rawValue
     }
 
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
 

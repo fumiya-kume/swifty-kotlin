@@ -461,7 +461,7 @@ final class RuntimeChannelHandle: @unchecked Sendable {
 public func kk_channel_create(_ capacity: Int) -> Int {
     let channel = RuntimeChannelHandle(capacity: capacity)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(channel).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -477,7 +477,7 @@ public func kk_channel_send(_ handle: Int, _ value: Int, _ continuation: Int) ->
         guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
             return false
         }
-        let isRegistered = runtimeStorage.withLock { state in
+        let isRegistered = runtimeStorage.withGCLock { state in
             state.objectPointers.contains(UInt(bitPattern: ptr))
         }
         guard isRegistered else {
@@ -629,7 +629,7 @@ public func kk_channel_iterator(_ handle: Int) -> Int {
     let channel = Unmanaged<RuntimeChannelHandle>.fromOpaque(ptr).takeUnretainedValue()
     let iter = RuntimeChannelIterator(channel: channel)
     let iterPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(iter).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: iterPtr))
     }
     return Int(bitPattern: iterPtr)
@@ -743,7 +743,7 @@ final class RuntimeBroadcastChannelHandle: @unchecked Sendable {
 public func kk_broadcast_channel_create(_ subscriberCapacity: Int) -> Int {
     let bc = RuntimeBroadcastChannelHandle(subscriberCapacity: subscriberCapacity)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(bc).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -757,7 +757,7 @@ public func kk_broadcast_channel_subscribe(_ handle: Int) -> Int {
     let bc = Unmanaged<RuntimeBroadcastChannelHandle>.fromOpaque(ptr).takeUnretainedValue()
     let sub = bc.subscribe()
     let subPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(sub).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: subPtr))
     }
     return Int(bitPattern: subPtr)
@@ -857,7 +857,7 @@ func runtimeReadArrayElement(arrayRaw: Int, index: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: arrayRaw) else {
         return 0
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObjectPointer else {

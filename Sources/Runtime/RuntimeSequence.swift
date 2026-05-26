@@ -3506,7 +3506,7 @@ public func kk_sequence_toMap(_ seqRaw: Int) -> Int {
         guard let pointer = UnsafeMutableRawPointer(bitPattern: element) else {
             fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_toMap element is not a valid Pair handle")
         }
-        let isObjectPointer = runtimeStorage.withLock { state in
+        let isObjectPointer = runtimeStorage.withGCLock { state in
             state.objectPointers.contains(UInt(bitPattern: pointer))
         }
         guard isObjectPointer, let pair = tryCast(pointer, to: RuntimePairBox.self) else {

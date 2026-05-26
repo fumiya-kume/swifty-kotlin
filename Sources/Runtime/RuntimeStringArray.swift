@@ -7,7 +7,7 @@ private func runtimeThrowableBox(from raw: Int) -> RuntimeThrowableBox? {
     else {
         return nil
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObjectPointer else {
@@ -35,7 +35,7 @@ private func runtimeThrowableStackTraceText(from throwableRaw: Int) -> String {
 private func runtimeAllocateArrayBox(length: Int) -> Int {
     let arrayBox = RuntimeArrayBox(length: length)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(arrayBox).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return Int(bitPattern: opaque)
@@ -96,7 +96,7 @@ public func kk_throwable_message(_ throwableRaw: Int) -> Int {
     }
     let box = RuntimeStringBox(message)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return Int(bitPattern: opaque)
@@ -121,7 +121,7 @@ public func kk_throwable_stackTraceToString(_ throwableRaw: Int) -> Int {
     let message = runtimeThrowableStackTraceText(from: throwableRaw)
     let box = RuntimeStringBox(message)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return Int(bitPattern: opaque)
@@ -183,7 +183,7 @@ public func kk_throwable_getSuppressed(_ throwableRaw: Int) -> Int {
         arrayBox.elements[i] = elem
     }
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(arrayBox).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return Int(bitPattern: opaque)
@@ -247,7 +247,7 @@ public func kk_string_from_utf8(_ ptr: UnsafePointer<UInt8>, _ len: Int32) -> Un
     let string = String(decoding: buffer, as: UTF8.self)
     let box = RuntimeStringBox(string)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return opaque
@@ -269,7 +269,7 @@ public func kk_string_concat(_ a: UnsafeMutableRawPointer?, _ b: UnsafeMutableRa
     let rhs = extractString(from: normalizeNullableRuntimePointer(b)) ?? ""
     let box = RuntimeStringBox(lhs + rhs)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return opaque
@@ -292,7 +292,7 @@ public func kk_string_length(_ strRaw: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: strRaw) else {
         return runtimeNullSentinelInt
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObjectPointer, let stringBox = tryCast(ptr, to: RuntimeStringBox.self) else {
@@ -323,7 +323,7 @@ public func kk_op_is(_ value: Int, _ typeToken: Int) -> Int {
         guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
             return 0
         }
-        let isObjectPointer = runtimeStorage.withLock { state in
+        let isObjectPointer = runtimeStorage.withGCLock { state in
             state.objectPointers.contains(UInt(bitPattern: ptr))
         }
         guard isObjectPointer else {
@@ -339,7 +339,7 @@ public func kk_op_is(_ value: Int, _ typeToken: Int) -> Int {
         guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
             return 1
         }
-        let isObjectPointer = runtimeStorage.withLock { state in
+        let isObjectPointer = runtimeStorage.withGCLock { state in
             state.objectPointers.contains(UInt(bitPattern: ptr))
         }
         if !isObjectPointer {
@@ -351,7 +351,7 @@ public func kk_op_is(_ value: Int, _ typeToken: Int) -> Int {
         guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
             return 1
         }
-        let isObjPtr = runtimeStorage.withLock { state in
+        let isObjPtr = runtimeStorage.withGCLock { state in
             state.objectPointers.contains(UInt(bitPattern: ptr))
         }
         if !isObjPtr { return 1 }
@@ -361,7 +361,7 @@ public func kk_op_is(_ value: Int, _ typeToken: Int) -> Int {
         guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
             return 1
         }
-        let isObjPtr = runtimeStorage.withLock { state in
+        let isObjPtr = runtimeStorage.withGCLock { state in
             state.objectPointers.contains(UInt(bitPattern: ptr))
         }
         if !isObjPtr { return 1 }
@@ -371,7 +371,7 @@ public func kk_op_is(_ value: Int, _ typeToken: Int) -> Int {
         guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
             return 1
         }
-        let isObjPtr = runtimeStorage.withLock { state in
+        let isObjPtr = runtimeStorage.withGCLock { state in
             state.objectPointers.contains(UInt(bitPattern: ptr))
         }
         if !isObjPtr { return 1 }
@@ -381,7 +381,7 @@ public func kk_op_is(_ value: Int, _ typeToken: Int) -> Int {
         guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
             return 1
         }
-        let isObjPtr = runtimeStorage.withLock { state in
+        let isObjPtr = runtimeStorage.withGCLock { state in
             state.objectPointers.contains(UInt(bitPattern: ptr))
         }
         if !isObjPtr { return 1 }
@@ -391,7 +391,7 @@ public func kk_op_is(_ value: Int, _ typeToken: Int) -> Int {
         guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
             return (value == 0 || value == 1) ? 1 : 0
         }
-        let isObjectPointer = runtimeStorage.withLock { state in
+        let isObjectPointer = runtimeStorage.withGCLock { state in
             state.objectPointers.contains(UInt(bitPattern: ptr))
         }
         if !isObjectPointer {
@@ -413,7 +413,7 @@ public func kk_op_is(_ value: Int, _ typeToken: Int) -> Int {
         guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
             return 0
         }
-        let throwable = runtimeStorage.withLock { state in
+        let throwable = runtimeStorage.withGCLock { state in
             state.objectPointers.contains(UInt(bitPattern: ptr))
                 ? tryCast(ptr, to: RuntimeThrowableBox.self)
                 : nil
@@ -481,7 +481,7 @@ public func kk_op_contains(_ container: Int, _ element: Int) -> Int {
 public func kk_array_new(_ length: Int) -> Int {
     let box = RuntimeArrayBox(length: length)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return Int(bitPattern: opaque)
@@ -491,9 +491,11 @@ public func kk_array_new(_ length: Int) -> Int {
 public func kk_object_new(_ length: Int, _ classId: Int) -> Int {
     let box = RuntimeObjectBox(length: length, classID: Int64(classId))
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
-        let key = UInt(bitPattern: opaque)
+    let key = UInt(bitPattern: opaque)
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(key)
+    }
+    runtimeStorage.withMetadataLock { state in
         state.objectTypeByPointer[key] = Int64(classId)
     }
     return Int(bitPattern: opaque)
@@ -599,7 +601,7 @@ func runtimeKClassBox(from raw: Int) -> RuntimeKClassBox? {
     else {
         return nil
     }
-    return runtimeStorage.withLock { state in
+    return runtimeStorage.withGCLock { state in
         guard state.objectPointers.contains(UInt(bitPattern: ptr)) else {
             return nil
         }
@@ -618,17 +620,29 @@ func runtimeKClassBox(from raw: Int) -> RuntimeKClassBox? {
 @_cdecl("kk_kclass_create")
 public func kk_kclass_create(_ typeToken: Int, _ nameHint: Int) -> Int {
     let cacheKey = KClassCacheKey(typeToken: typeToken)
-    return runtimeStorage.withLock { state in
-        if let cached = state.kClassBoxCache[cacheKey] {
-            return cached
-        }
-        let box = RuntimeKClassBox(typeToken: typeToken, nameHint: nameHint)
-        let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+    if let cached = runtimeStorage.withMetadataLock({ state in state.kClassBoxCache[cacheKey] }) {
+        return cached
+    }
+    let box = RuntimeKClassBox(typeToken: typeToken, nameHint: nameHint)
+    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))
-        let result = Int(bitPattern: opaque)
+    }
+    let result = Int(bitPattern: opaque)
+    let winner = runtimeStorage.withMetadataLock { state -> Int in
+        if let existing = state.kClassBoxCache[cacheKey] {
+            return existing
+        }
         state.kClassBoxCache[cacheKey] = result
         return result
     }
+    if winner != result {
+        runtimeStorage.withGCLock { state in
+            state.objectPointers.remove(UInt(bitPattern: opaque))
+        }
+        Unmanaged<RuntimeKClassBox>.fromOpaque(opaque).release()
+    }
+    return winner
 }
 
 /// Returns the `simpleName` of a `KClass<T>` metadata object.
@@ -1105,7 +1119,7 @@ public func kk_ktype_create(_ classifierRaw: Int, _ argsRaw: Int, _ isNullable: 
     var argumentRaws: [Int] = []
     if argsRaw != 0 && argsRaw != runtimeNullSentinelInt,
        let ptr = UnsafeMutableRawPointer(bitPattern: argsRaw) {
-        let isObj = runtimeStorage.withLock { state in
+        let isObj = runtimeStorage.withGCLock { state in
             state.objectPointers.contains(UInt(bitPattern: ptr))
         }
         if isObj, let listBox = tryCast(ptr, to: RuntimeListBox.self) {
@@ -1204,7 +1218,7 @@ private func runtimeKTypeBox(from raw: Int) -> RuntimeKTypeBox? {
     else {
         return nil
     }
-    return runtimeStorage.withLock { state in
+    return runtimeStorage.withGCLock { state in
         guard state.objectPointers.contains(UInt(bitPattern: ptr)) else {
             return nil
         }
@@ -1218,7 +1232,7 @@ private func runtimeKTypeProjectionBox(from raw: Int) -> RuntimeKTypeProjectionB
     else {
         return nil
     }
-    return runtimeStorage.withLock { state in
+    return runtimeStorage.withGCLock { state in
         guard state.objectPointers.contains(UInt(bitPattern: ptr)) else {
             return nil
         }
@@ -1251,7 +1265,7 @@ public func kk_object_register_itable_iface(
         return 0
     }
     let objectKey = UInt(bitPattern: objectPtr)
-    runtimeStorage.withLock { state in
+    runtimeStorage.withMetadataLock { state in
         var slots = state.objectInterfaceSlots[objectKey] ?? [:]
         slots[Int64(ifaceTypeId)] = ifaceSlot
         state.objectInterfaceSlots[objectKey] = slots
@@ -1275,7 +1289,7 @@ public func kk_object_register_itable_method(
     }
     let objectKey = UInt(bitPattern: objectPtr)
     let dispatchKey = (UInt64(UInt32(ifaceSlot)) << 32) | UInt64(UInt32(methodSlot))
-    runtimeStorage.withLock { state in
+    runtimeStorage.withMetadataLock { state in
         var methods = state.objectItableMethods[objectKey] ?? [:]
         methods[dispatchKey] = functionRaw
         state.objectItableMethods[objectKey] = methods
@@ -1376,7 +1390,7 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
         Swift.print(intValue)
         return
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: raw))
     }
     if !isObjectPointer {
@@ -1577,7 +1591,7 @@ func runtimeRenderAnyForPrint(_ value: Int) -> String {
     guard let raw = UnsafeMutableRawPointer(bitPattern: value) else {
         return String(value)
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: raw))
     }
     guard isObjectPointer else {

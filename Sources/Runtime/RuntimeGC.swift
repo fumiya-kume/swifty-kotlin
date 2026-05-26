@@ -22,20 +22,9 @@ struct KClassCacheKey: Hashable {
     let typeToken: Int
 }
 
-struct RuntimeStorageState {
+struct GCState {
     var heapObjects: [UInt: HeapObjectRecord] = [:]
     var objectPointers: Set<UInt> = []
-    var flowHandles: [UInt: AnyObject] = [:]
-    var flowRetainCounts: [UInt: Int] = [:]
-    var customDelegateBoxes: [UInt: RuntimeCustomDelegateBox] = [:]
-    var callableRefMetadataByValue: [Int: RuntimeCallableRefMetadata] = [:]
-    var objectTypeByPointer: [UInt: Int64] = [:]
-    var objectItableMethods: [UInt: [UInt64: Int]] = [:]
-    var objectInterfaceSlots: [UInt: [Int64: Int]] = [:]
-    var kClassBoxCache: [KClassCacheKey: Int] = [:]
-    var threadLocalBoxes: Set<UInt> = []
-    var threadLocalValues: [UInt: [ObjectIdentifier: Int]] = [:]
-    var typeParents: [Int64: Set<Int64>] = [:]
     var globalRootSlots: Set<UInt> = []
     var frameMaps: [UInt32: [Int32]] = [:]
     var activeFrames: [ActiveFrameRecord] = []
@@ -43,18 +32,83 @@ struct RuntimeStorageState {
     var pinnedObjects: Set<UInt> = []
 }
 
+struct MetadataState {
+    var kClassBoxCache: [KClassCacheKey: Int] = [:]
+    var objectTypeByPointer: [UInt: Int64] = [:]
+    var typeParents: [Int64: Set<Int64>] = [:]
+    var objectItableMethods: [UInt: [UInt64: Int]] = [:]
+    var objectInterfaceSlots: [UInt: [Int64: Int]] = [:]
+}
+
+struct FlowState {
+    var flowHandles: [UInt: AnyObject] = [:]
+    var flowRetainCounts: [UInt: Int] = [:]
+}
+
+struct ThreadLocalState {
+    var threadLocalBoxes: Set<UInt> = []
+    var threadLocalValues: [UInt: [ObjectIdentifier: Int]] = [:]
+}
+
+struct DelegateState {
+    var customDelegateBoxes: [UInt: RuntimeCustomDelegateBox] = [:]
+    var callableRefMetadataByValue: [Int: RuntimeCallableRefMetadata] = [:]
+}
+
 final class RuntimeStorageBox: @unchecked Sendable {
-    private let lock = NSLock()
-    private var state = RuntimeStorageState()
+    private let gcLock = NSLock()
+    private let metadataLock = NSLock()
+    private let flowLock = NSLock()
+    private let threadLocalLock = NSLock()
+    private let delegateLock = NSLock()
+
+    private var gcState = GCState()
+    private var metadataState = MetadataState()
+    private var flowState = FlowState()
+    private var threadLocalState = ThreadLocalState()
+    private var delegateState = DelegateState()
+
     let coroutineSuspendedBox = RuntimeStringBox("COROUTINE_SUSPENDED")
     let flowStopSentinelBox = RuntimeStringBox("FLOW_STOP_SENTINEL")
 
     @discardableResult
     @inline(__always)
-    func withLock<R>(_ body: (inout RuntimeStorageState) -> R) -> R {
-        lock.lock()
-        defer { lock.unlock() }
-        return body(&state)
+    func withGCLock<R>(_ body: (inout GCState) -> R) -> R {
+        gcLock.lock()
+        defer { gcLock.unlock() }
+        return body(&gcState)
+    }
+
+    @discardableResult
+    @inline(__always)
+    func withMetadataLock<R>(_ body: (inout MetadataState) -> R) -> R {
+        metadataLock.lock()
+        defer { metadataLock.unlock() }
+        return body(&metadataState)
+    }
+
+    @discardableResult
+    @inline(__always)
+    func withFlowLock<R>(_ body: (inout FlowState) -> R) -> R {
+        flowLock.lock()
+        defer { flowLock.unlock() }
+        return body(&flowState)
+    }
+
+    @discardableResult
+    @inline(__always)
+    func withThreadLocalLock<R>(_ body: (inout ThreadLocalState) -> R) -> R {
+        threadLocalLock.lock()
+        defer { threadLocalLock.unlock() }
+        return body(&threadLocalState)
+    }
+
+    @discardableResult
+    @inline(__always)
+    func withDelegateLock<R>(_ body: (inout DelegateState) -> R) -> R {
+        delegateLock.lock()
+        defer { delegateLock.unlock() }
+        return body(&delegateState)
     }
 }
 
@@ -107,7 +161,7 @@ public func kk_alloc(_ size: UInt32, _ typeInfo: UnsafeRawPointer) -> UnsafeMuta
         flags: 0,
         size: UInt32(allocationSize)
     )
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.heapObjects[UInt(bitPattern: ptr)] = HeapObjectRecord(
             pointer: ptr,
             byteCount: allocationSize
@@ -118,8 +172,11 @@ public func kk_alloc(_ size: UInt32, _ typeInfo: UnsafeRawPointer) -> UnsafeMuta
 
 @_cdecl("kk_gc_collect")
 public func kk_gc_collect() {
-    runtimeStorage.withLock { state in
-        performMarkAndSweepLocked(state: &state)
+    let threadLocalRoots = runtimeStorage.withThreadLocalLock { state in
+        state.threadLocalValues
+    }
+    runtimeStorage.withGCLock { state in
+        performMarkAndSweepLocked(state: &state, threadLocalValues: threadLocalRoots)
     }
 }
 
@@ -156,7 +213,7 @@ public func kk_register_global_root(_ slot: UnsafeMutablePointer<UnsafeMutableRa
     guard let slot else {
         return
     }
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.globalRootSlots.insert(UInt(bitPattern: slot))
     }
 }
@@ -166,14 +223,14 @@ public func kk_unregister_global_root(_ slot: UnsafeMutablePointer<UnsafeMutable
     guard let slot else {
         return
     }
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.globalRootSlots.remove(UInt(bitPattern: slot))
     }
 }
 
 @_cdecl("kk_register_frame_map")
 public func kk_register_frame_map(_ functionID: UInt32, _ mapPtr: UnsafeRawPointer?) {
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         guard let mapPtr else {
             state.frameMaps.removeValue(forKey: functionID)
             return
@@ -191,14 +248,14 @@ public func kk_register_frame_map(_ functionID: UInt32, _ mapPtr: UnsafeRawPoint
 
 @_cdecl("kk_push_frame")
 public func kk_push_frame(_ functionID: UInt32, _ frameBase: UnsafeMutableRawPointer?) {
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.activeFrames.append(ActiveFrameRecord(functionID: functionID, frameBase: frameBase))
     }
 }
 
 @_cdecl("kk_pop_frame")
 public func kk_pop_frame() {
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         if !state.activeFrames.isEmpty {
             _ = state.activeFrames.removeLast()
         }
@@ -210,7 +267,7 @@ public func kk_register_coroutine_root(_ value: UnsafeMutableRawPointer?) {
     guard let value else {
         return
     }
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.coroutineRoots.insert(UInt(bitPattern: value))
     }
 }
@@ -220,34 +277,95 @@ public func kk_unregister_coroutine_root(_ value: UnsafeMutableRawPointer?) {
     guard let value else {
         return
     }
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.coroutineRoots.remove(UInt(bitPattern: value))
     }
 }
 
 @_cdecl("kk_runtime_heap_object_count")
 public func kk_runtime_heap_object_count() -> UInt32 {
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         UInt32(state.heapObjects.count)
     }
 }
 
 @_cdecl("kk_runtime_force_reset")
 public func kk_runtime_force_reset() {
-    runtimeStorage.withLock { state in
-        resetRuntimeLocked(state: &state)
-    }
+    kk_runtime_reset_gc()
+    kk_runtime_reset_metadata()
+    kk_runtime_reset_flow()
+    kk_runtime_reset_thread_local()
+    kk_runtime_reset_delegate()
     runtimeResetDebugState()
 }
 
-func performMarkAndSweepLocked(state: inout RuntimeStorageState) {
+func kk_runtime_reset_gc() {
+    runtimeStorage.withGCLock { state in
+        for (_, object) in state.heapObjects {
+            object.pointer.deallocate()
+        }
+        state.heapObjects.removeAll(keepingCapacity: false)
+        state.objectPointers.removeAll(keepingCapacity: false)
+        state.globalRootSlots.removeAll(keepingCapacity: false)
+        state.frameMaps.removeAll(keepingCapacity: false)
+        state.activeFrames.removeAll(keepingCapacity: false)
+        state.coroutineRoots.removeAll(keepingCapacity: false)
+        state.pinnedObjects.removeAll(keepingCapacity: false)
+    }
+}
+
+func kk_runtime_reset_metadata() {
+    runtimeStorage.withMetadataLock { state in
+        for (_, kclassRaw) in state.kClassBoxCache {
+            if let ptr = UnsafeMutableRawPointer(bitPattern: kclassRaw) {
+                Unmanaged<RuntimeKClassBox>.fromOpaque(ptr).release()
+            }
+        }
+        state.kClassBoxCache.removeAll(keepingCapacity: false)
+        state.objectTypeByPointer.removeAll(keepingCapacity: false)
+        state.typeParents.removeAll(keepingCapacity: false)
+        state.objectItableMethods.removeAll(keepingCapacity: false)
+        state.objectInterfaceSlots.removeAll(keepingCapacity: false)
+    }
+    runtimeKClassMetadataRegistry.reset()
+    runtimeKConstructorRegistry.reset()
+    runtimeKMemberRegistry.reset()
+}
+
+func kk_runtime_reset_flow() {
+    runtimeStorage.withFlowLock { state in
+        state.flowHandles.removeAll(keepingCapacity: false)
+        state.flowRetainCounts.removeAll(keepingCapacity: false)
+    }
+}
+
+func kk_runtime_reset_thread_local() {
+    runtimeStorage.withThreadLocalLock { state in
+        for threadLocalRaw in state.threadLocalBoxes {
+            if let ptr = UnsafeMutableRawPointer(bitPattern: threadLocalRaw) {
+                Unmanaged<AnyObject>.fromOpaque(ptr).release()
+            }
+        }
+        state.threadLocalBoxes.removeAll(keepingCapacity: false)
+        state.threadLocalValues.removeAll(keepingCapacity: false)
+    }
+}
+
+func kk_runtime_reset_delegate() {
+    runtimeStorage.withDelegateLock { state in
+        state.customDelegateBoxes.removeAll(keepingCapacity: false)
+        state.callableRefMetadataByValue.removeAll(keepingCapacity: false)
+    }
+}
+
+func performMarkAndSweepLocked(state: inout GCState, threadLocalValues: [UInt: [ObjectIdentifier: Int]] = [:]) {
     guard !state.heapObjects.isEmpty else {
         return
     }
 
     var worklist: [UnsafeMutableRawPointer] = []
     worklist.reserveCapacity(state.heapObjects.count)
-    collectRootPointersLocked(state: state, into: &worklist)
+    collectRootPointersLocked(state: state, threadLocalValues: threadLocalValues, into: &worklist)
 
     while let current = worklist.popLast() {
         let key = UInt(bitPattern: current)
@@ -276,7 +394,7 @@ func performMarkAndSweepLocked(state: inout RuntimeStorageState) {
     state.heapObjects = survivors
 }
 
-func collectRootPointersLocked(state: RuntimeStorageState, into worklist: inout [UnsafeMutableRawPointer]) {
+func collectRootPointersLocked(state: GCState, threadLocalValues: [UInt: [ObjectIdentifier: Int]], into worklist: inout [UnsafeMutableRawPointer]) {
     for slotAddress in state.globalRootSlots {
         guard let slot = UnsafeMutablePointer<UnsafeMutableRawPointer?>(bitPattern: slotAddress),
               let value = slot.pointee
@@ -314,7 +432,7 @@ func collectRootPointersLocked(state: RuntimeStorageState, into worklist: inout 
         worklist.append(ptr)
     }
 
-    for threadValues in state.threadLocalValues.values {
+    for threadValues in threadLocalValues.values {
         for raw in threadValues.values {
             guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
                 continue
@@ -347,40 +465,4 @@ func appendObjectChildrenLocked(of object: HeapObjectRecord, into worklist: inou
     }
 }
 
-func resetRuntimeLocked(state: inout RuntimeStorageState) {
-    for (_, object) in state.heapObjects {
-        object.pointer.deallocate()
-    }
-    for (_, kclassRaw) in state.kClassBoxCache {
-        if let ptr = UnsafeMutableRawPointer(bitPattern: kclassRaw) {
-            Unmanaged<RuntimeKClassBox>.fromOpaque(ptr).release()
-        }
-    }
-    for threadLocalRaw in state.threadLocalBoxes {
-        if let ptr = UnsafeMutableRawPointer(bitPattern: threadLocalRaw) {
-            Unmanaged<AnyObject>.fromOpaque(ptr).release()
-        }
-    }
-    state.heapObjects.removeAll(keepingCapacity: false)
-    state.objectPointers.removeAll(keepingCapacity: false)
-    state.flowHandles.removeAll(keepingCapacity: false)
-    state.flowRetainCounts.removeAll(keepingCapacity: false)
-    state.callableRefMetadataByValue.removeAll(keepingCapacity: false)
-    state.objectTypeByPointer.removeAll(keepingCapacity: false)
-    state.objectItableMethods.removeAll(keepingCapacity: false)
-    state.objectInterfaceSlots.removeAll(keepingCapacity: false)
-    state.typeParents.removeAll(keepingCapacity: false)
-    state.globalRootSlots.removeAll(keepingCapacity: false)
-    state.frameMaps.removeAll(keepingCapacity: false)
-    state.activeFrames.removeAll(keepingCapacity: false)
-    state.coroutineRoots.removeAll(keepingCapacity: false)
-    state.pinnedObjects.removeAll(keepingCapacity: false)
-    state.kClassBoxCache.removeAll(keepingCapacity: false)
-    state.threadLocalBoxes.removeAll(keepingCapacity: false)
-    state.threadLocalValues.removeAll(keepingCapacity: false)
-    // REFL-004: Clear the KClass metadata registry on reset.
-    runtimeKClassMetadataRegistry.reset()
-    runtimeKConstructorRegistry.reset()
-    // STDLIB-REFLECT-ABI-002: Clear member registry.
-    runtimeKMemberRegistry.reset()
-}
+
