@@ -48,11 +48,28 @@ extension DataFlowSemaPhase {
             args: [],
             nullability: .nonNull
         )))
+        let kotlinTextPkg = ensurePackage(path: ["kotlin", "text"], symbols: symbols, interner: interner)
+        let kotlinTextPkgSymbol = symbols.lookup(fqName: kotlinTextPkg)
+        let charsetSymbol = ensureClassSymbol(
+            named: "Charset",
+            in: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinTextPkgSymbol {
+            symbols.setParentSymbol(kotlinTextPkgSymbol, for: charsetSymbol)
+        }
+        let charsetType = types.make(.classType(ClassType(
+            classSymbol: charsetSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
         let boolType = types.make(.primitive(.boolean, .nonNull))
         let nullableStringType = types.makeNullable(types.stringType)
         let nullableAnyType = types.makeNullable(types.anyType)
         symbols.setPropertyType(urlType, for: urlSymbol)
         symbols.setPropertyType(byteArrayType, for: byteArraySymbol)
+        symbols.setPropertyType(charsetType, for: charsetSymbol)
 
         registerURLConstructor(
             ownerSymbol: urlSymbol,
@@ -148,6 +165,26 @@ extension DataFlowSemaPhase {
             parameters: [],
             returnType: byteArrayType,
             externalLinkName: "kk_url_readBytes",
+            symbols: symbols,
+            interner: interner
+        )
+        registerURLPackageExtensionFunction(
+            named: "readText",
+            packageFQName: kotlinIOPkg,
+            receiverType: urlType,
+            parameters: [],
+            returnType: types.stringType,
+            externalLinkName: "kk_url_readText_default",
+            symbols: symbols,
+            interner: interner
+        )
+        registerURLPackageExtensionFunction(
+            named: "readText",
+            packageFQName: kotlinIOPkg,
+            receiverType: urlType,
+            parameters: [("charset", charsetType)],
+            returnType: types.stringType,
+            externalLinkName: "kk_url_readText",
             symbols: symbols,
             interner: interner
         )

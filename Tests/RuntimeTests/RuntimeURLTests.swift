@@ -68,4 +68,17 @@ final class RuntimeURLTests: XCTestCase {
         XCTAssertEqual(thrown, 0)
         XCTAssertEqual(runtimeListBox(from: bytesRaw)?.elements, [0, 127, -128, -1])
     }
+
+    func testURLReadTextReturnsUtf8Contents() throws {
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try "alpha\nbeta".write(to: fileURL, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        var thrown = 0
+        let urlRaw = kk_url_new(runtimeString(fileURL.absoluteString), &thrown)
+        let textRaw = kk_url_readText_default(urlRaw, &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(stringValue(textRaw), "alpha\nbeta")
+    }
 }

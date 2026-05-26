@@ -680,6 +680,25 @@ public func kk_url_readBytes(_ urlRaw: Int, _ outThrown: UnsafeMutablePointer<In
     }
 }
 
+@_cdecl("kk_url_readText_default")
+public func kk_url_readText_default(_ urlRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    kk_url_readText(urlRaw, kk_charset_utf_8(), outThrown)
+}
+
+@_cdecl("kk_url_readText")
+public func kk_url_readText(_ urlRaw: Int, _ charsetRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let box = runtimeURLComponents(from: urlRaw, caller: #function)
+    _ = charsetRaw
+    do {
+        let data = try Data(contentsOf: box.url)
+        return networkStringRaw(String(decoding: data, as: UTF8.self))
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+        return networkStringRaw("")
+    }
+}
+
 private func networkURL(from uriRaw: Int) -> URL? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: uriRaw),
           let uriBox = tryCast(ptr, to: RuntimeURIBox.self)

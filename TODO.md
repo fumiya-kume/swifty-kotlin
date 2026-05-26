@@ -121,7 +121,7 @@
 - [x] STDLIB-IO-FN-029: `readBytes` 関数の実装（InputStream版）
 - [x] STDLIB-IO-FN-030: `readBytes` 関数の実装（URL版）
 - [ ] STDLIB-IO-FN-033: `readText` 関数の実装（Reader版）
-- [ ] STDLIB-IO-FN-035: `readText` 関数の実装（URL版）
+- [x] STDLIB-IO-FN-035: `readText` 関数の実装（URL版）
 - [x] STDLIB-IO-FN-036: `resolveSibling` 関数の実装
 - [x] STDLIB-IO-FN-037: `startsWith` 関数の実装
 - [x] STDLIB-IO-FN-038: `toRelativeString` 関数の実装

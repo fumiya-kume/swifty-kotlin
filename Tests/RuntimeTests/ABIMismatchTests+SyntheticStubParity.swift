@@ -59,6 +59,8 @@ extension ABIMismatchTests {
             "kk_string_byteInputStream_default",
             "kk_string_byteInputStream",
             "kk_url_readBytes",
+            "kk_url_readText_default",
+            "kk_url_readText",
             "kk_string_hexToUInt",
             "kk_string_chunked_sequence_transform",
             // Exception constructors
