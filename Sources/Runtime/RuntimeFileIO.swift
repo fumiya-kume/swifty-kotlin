@@ -1163,6 +1163,28 @@ public func kk_input_stream_copyTo(
     }
 }
 
+@_cdecl("kk_input_stream_buffered_default")
+public func kk_input_stream_buffered_default(_ streamRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    kk_input_stream_buffered(streamRaw, 8192, outThrown)
+}
+
+@_cdecl("kk_input_stream_buffered")
+public func kk_input_stream_buffered(
+    _ streamRaw: Int,
+    _ bufferSizeRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard bufferSizeRaw > 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: bufferSize must be positive")
+        return 0
+    }
+    guard runtimeInputStreamBox(from: streamRaw) != nil else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_buffered received invalid InputStream handle")
+    }
+    return streamRaw
+}
+
 @_cdecl("kk_input_stream_mark")
 public func kk_input_stream_mark(_ streamRaw: Int, _ readLimitRaw: Int) -> Int {
     guard let stream = runtimeInputStreamBox(from: streamRaw) else {

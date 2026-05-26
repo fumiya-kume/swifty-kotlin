@@ -61,6 +61,17 @@ final class RuntimeStreamTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(try Data(contentsOf: fileURL), Data([66, 67, 68]))
     }
 
+    func testInputStreamBufferedReturnsReadableStream() {
+        let inputRaw = registerRuntimeObject(RuntimeInputStreamBox(data: Data([65, 66])))
+        var thrown = 0
+        let bufferedRaw = kk_input_stream_buffered_default(inputRaw, &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_input_stream_read(bufferedRaw, &thrown), 65)
+        XCTAssertEqual(kk_input_stream_read(bufferedRaw, &thrown), 66)
+        XCTAssertEqual(kk_input_stream_read(bufferedRaw, &thrown), -1)
+    }
+
     func testByteArrayInputStreamExtensionReadsBytes() {
         let bytesRaw = registerRuntimeObject(RuntimeListBox(elements: [65, 66, 67]))
         var thrown = 0
