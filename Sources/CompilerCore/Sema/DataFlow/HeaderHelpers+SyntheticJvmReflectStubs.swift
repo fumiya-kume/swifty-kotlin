@@ -17,8 +17,18 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let kotlinReflectJvmPkg = ensurePackage(
+            path: ["kotlin", "reflect", "jvm"],
+            symbols: symbols,
+            interner: interner
+        )
         let kotlinReflectPkg = ensurePackage(
             path: ["kotlin", "reflect"],
+            symbols: symbols,
+            interner: interner
+        )
+        let javaLangReflectPkg = ensurePackage(
+            path: ["java", "lang", "reflect"],
             symbols: symbols,
             interner: interner
         )
@@ -27,6 +37,11 @@ extension DataFlowSemaPhase {
             packageFQName: javaLangPkg,
             symbols: symbols,
             types: types,
+            interner: interner
+        )
+        let javaReflectTypeSymbol = registerJavaLangReflectTypeStub(
+            packageFQName: javaLangReflectPkg,
+            symbols: symbols,
             interner: interner
         )
         let kClassSymbol = ensureInterfaceSymbol(
@@ -93,6 +108,14 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerKTypeJavaTypeProperty(
+            javaReflectTypeSymbol: javaReflectTypeSymbol,
+            packageFQName: kotlinReflectJvmPkg,
+            kotlinReflectPkg: kotlinReflectPkg,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
     }
 
     private func registerJavaLangClassStub(
@@ -139,6 +162,23 @@ extension DataFlowSemaPhase {
         symbols.setPropertyType(classType, for: classSymbol)
 
         return classSymbol
+    }
+
+    private func registerJavaLangReflectTypeStub(
+        packageFQName: [InternedString],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> SymbolID {
+        let typeSymbol = ensureInterfaceSymbol(
+            named: "Type",
+            in: packageFQName,
+            symbols: symbols,
+            interner: interner
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: typeSymbol)
+        }
+        return typeSymbol
     }
 
     private func registerKClassJavaProperty(
@@ -594,5 +634,84 @@ extension DataFlowSemaPhase {
         symbols.setExtensionPropertyGetterAccessor(getterSymbol, for: propertySymbol)
         symbols.setAccessorOwnerProperty(propertySymbol, for: getterSymbol)
         symbols.setExternalLinkName(externalLinkName, for: getterSymbol)
+    }
+
+    private func registerKTypeJavaTypeProperty(
+        javaReflectTypeSymbol: SymbolID,
+        packageFQName: [InternedString],
+        kotlinReflectPkg: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let propertyName = interner.intern("javaType")
+        let propertyFQName = packageFQName + [propertyName]
+        let kTypeSymbol = ensureInterfaceSymbol(
+            named: "KType",
+            in: kotlinReflectPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: kTypeSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: javaReflectTypeSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        let propertySymbol: SymbolID
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
+            symbols.symbol(symbolID)?.kind == .property
+                && symbols.extensionPropertyReceiverType(for: symbolID) == receiverType
+        }) {
+            propertySymbol = existing
+        } else {
+            propertySymbol = symbols.define(
+                kind: .property,
+                name: propertyName,
+                fqName: propertyFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+                symbols.setParentSymbol(packageSymbol, for: propertySymbol)
+            }
+            symbols.setExtensionPropertyReceiverType(receiverType, for: propertySymbol)
+        }
+
+        let javaTypeExternalLinkName = "kk_ktype_javaType"
+        symbols.setPropertyType(returnType, for: propertySymbol)
+        symbols.setExternalLinkName(javaTypeExternalLinkName, for: propertySymbol)
+
+        let getterSymbol: SymbolID
+        if let existingGetter = symbols.extensionPropertyGetterAccessor(for: propertySymbol) {
+            getterSymbol = existingGetter
+        } else {
+            getterSymbol = symbols.define(
+                kind: .function,
+                name: interner.intern("get"),
+                fqName: propertyFQName + [interner.intern("$get")],
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(propertySymbol, for: getterSymbol)
+            symbols.setExtensionPropertyGetterAccessor(getterSymbol, for: propertySymbol)
+            symbols.setAccessorOwnerProperty(propertySymbol, for: getterSymbol)
+        }
+        symbols.setExternalLinkName(javaTypeExternalLinkName, for: getterSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: returnType
+            ),
+            for: getterSymbol
+        )
     }
 }

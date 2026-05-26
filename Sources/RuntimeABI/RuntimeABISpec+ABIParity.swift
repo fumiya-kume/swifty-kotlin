@@ -1201,6 +1201,9 @@ public extension RuntimeABISpec {
             p("workerHandle", .intptr),
             p("processScheduledRaw", .intptr),
         ]),
+        abiParitySpec("kk_ktype_javaType", parameters: [
+            p("ktypeRaw", .intptr),
+        ]),
     ]
 }
 

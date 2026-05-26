@@ -185,7 +185,7 @@
 - [ ] STDLIB-REFLECT-TYPE-013: `KParameter` インターフェースの実装
 
 #### kotlin.reflect プロパティの実装
-- [ ] STDLIB-REFLECT-PROP-001: `javaType` 拡張プロパティの実装
+- [x] STDLIB-REFLECT-PROP-001: `javaType` 拡張プロパティの実装
 
 #### kotlin.reflect 関数の実装
 
