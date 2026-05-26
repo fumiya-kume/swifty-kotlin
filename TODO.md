@@ -209,7 +209,7 @@
 - [x] STDLIB-SEQ-FN-020: `elementAt` 関数の実装
 - [x] STDLIB-SEQ-FN-021: `elementAtOrElse` 関数の実装
 - [ ] STDLIB-SEQ-FN-022: `elementAtOrNull` 関数の実装
-- [ ] STDLIB-SEQ-FN-023: `filter` 関数の実装
+- [x] STDLIB-SEQ-FN-023: `filter` 関数の実装
 - [ ] STDLIB-SEQ-FN-025: `filterIndexedTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-026: `filterIsInstance` 関数の実装
 - [ ] STDLIB-SEQ-FN-027: `filterIsInstanceTo` 関数の実装
@@ -563,17 +563,10 @@
 
 ### Phase 5: 非スコープ/高度領域
 - [x] STDLIB-IO-PATH-FN-015: `Path.createFile(attributes)` を追加する
-<<<<<<< HEAD
-- [ ] STDLIB-IO-PATH-FN-017: `Path.createParentDirectories(attributes)` を追加する
+- [x] STDLIB-IO-PATH-FN-017: `Path.createParentDirectories(attributes)` を追加する
 - [x] STDLIB-IO-PATH-FN-021: `createTempFile(prefix, suffix, attributes)` を追加する
 - [x] STDLIB-IO-PATH-FN-024: `Path.deleteIfExists()` の公式 return/annotation shape を既存 stub と整合させる
 - [x] STDLIB-IO-PATH-FN-073: `Path.visitFileTree(visitor, maxDepth, followLinks)` を追加する
-=======
-- [x] STDLIB-IO-PATH-FN-017: `Path.createParentDirectories(attributes)` を追加する
-- [ ] STDLIB-IO-PATH-FN-021: `createTempFile(prefix, suffix, attributes)` を追加する
-- [ ] STDLIB-IO-PATH-FN-024: `Path.deleteIfExists()` の公式 return/annotation shape を既存 stub と整合させる
-- [ ] STDLIB-IO-PATH-FN-073: `Path.visitFileTree(visitor, maxDepth, followLinks)` を追加する
->>>>>>> c2823023b (Implement Path.createParentDirectories attributes surface)
 - [ ] STDLIB-IO-PATH-FN-074: `Path.visitFileTree(maxDepth, followLinks, builderAction)` を追加する
  - [ ] STDLIB-JS-COLLECTIONS-TYPE-001: `kotlin.js.collections.JsArray<E>` external class を追加する
  - [x] STDLIB-JS-COLLECTIONS-TYPE-002: `kotlin.js.collections.JsMap<K, V>` external class を追加する
