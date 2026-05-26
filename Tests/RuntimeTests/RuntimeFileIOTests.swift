@@ -61,6 +61,17 @@ final class RuntimeFileIOTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(try Data(contentsOf: fileURL), Data([65, 66, 67]))
     }
 
+    func testStringByteInputStreamReadsEncodedBytes() {
+        var thrown = 0
+        let streamRaw = kk_string_byteInputStream_default(runtimeStringRaw("ABC"), &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_input_stream_read(streamRaw, &thrown), 65)
+        XCTAssertEqual(kk_input_stream_read(streamRaw, &thrown), 66)
+        XCTAssertEqual(kk_input_stream_read(streamRaw, &thrown), 67)
+        XCTAssertEqual(kk_input_stream_read(streamRaw, &thrown), -1)
+    }
+
     func testFileExtensionReturnsLastComponentSuffix() {
         XCTAssertEqual(
             readString(kk_file_extension(runtimeTestFileHandle("/tmp/archive.tar.gz"))),

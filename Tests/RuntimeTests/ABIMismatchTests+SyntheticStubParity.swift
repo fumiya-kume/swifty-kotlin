@@ -42,6 +42,8 @@ extension ABIMismatchTests {
             "kk_file_startsWith_file",
             "kk_file_startsWith_string",
             "kk_file_toRelativeString",
+            "kk_string_byteInputStream_default",
+            "kk_string_byteInputStream",
             "kk_string_hexToUInt",
             "kk_string_chunked_sequence_transform",
             // Exception constructors

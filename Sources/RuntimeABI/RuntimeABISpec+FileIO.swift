@@ -362,6 +362,25 @@ public extension RuntimeABISpec {
             section: "FileIO"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_string_byteInputStream_default",
+            parameters: [
+                RuntimeABIParameter(name: "stringRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_byteInputStream",
+            parameters: [
+                RuntimeABIParameter(name: "stringRaw", type: .intptr),
+                RuntimeABIParameter(name: "charsetRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_input_stream_read",
             parameters: [
                 RuntimeABIParameter(name: "streamRaw", type: .intptr),

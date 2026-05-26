@@ -1015,6 +1015,17 @@ public func kk_bytearrayinputstream_new(_ bufferRaw: Int, _ outThrown: UnsafeMut
     return registerRuntimeObject(RuntimeInputStreamBox(data: Data(bytes)))
 }
 
+@_cdecl("kk_string_byteInputStream_default")
+public func kk_string_byteInputStream_default(_ stringRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    kk_string_byteInputStream(stringRaw, kk_charset_utf_8(), outThrown)
+}
+
+@_cdecl("kk_string_byteInputStream")
+public func kk_string_byteInputStream(_ stringRaw: Int, _ charsetRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    let bytesRaw = kk_string_toByteArray_charset(stringRaw, charsetRaw)
+    return kk_bytearrayinputstream_new(bytesRaw, outThrown)
+}
+
 @_cdecl("kk_file_outputStream")
 public func kk_file_outputStream(_ fileRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0

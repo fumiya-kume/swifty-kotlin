@@ -807,6 +807,44 @@ extension DataFlowSemaPhase {
         } else {
             types.anyType
         }
+        let kotlinTextPkg = ensurePackage(path: ["kotlin", "text"], symbols: symbols, interner: interner)
+        let kotlinTextPkgSymbol = symbols.lookup(fqName: kotlinTextPkg)
+        let charsetSymbol = ensureClassSymbol(
+            named: "Charset",
+            in: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinTextPkgSymbol {
+            symbols.setParentSymbol(kotlinTextPkgSymbol, for: charsetSymbol)
+        }
+        let charsetType = types.make(.classType(ClassType(
+            classSymbol: charsetSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(charsetType, for: charsetSymbol)
+
+        registerFilePackageExtensionFunction(
+            named: "byteInputStream",
+            packageFQName: kotlinIOPkg,
+            receiverType: types.stringType,
+            parameters: [],
+            returnType: byteArrayInputStreamType,
+            externalLinkName: "kk_string_byteInputStream_default",
+            symbols: symbols,
+            interner: interner
+        )
+        registerFilePackageExtensionFunction(
+            named: "byteInputStream",
+            packageFQName: kotlinIOPkg,
+            receiverType: types.stringType,
+            parameters: [("charset", charsetType)],
+            returnType: byteArrayInputStreamType,
+            externalLinkName: "kk_string_byteInputStream",
+            symbols: symbols,
+            interner: interner
+        )
 
         registerFileMemberFunction(
             named: "inputStream",
