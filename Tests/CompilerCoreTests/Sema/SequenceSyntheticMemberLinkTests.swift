@@ -47,7 +47,7 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
                 .joined(separator: " | ")
             XCTAssertFalse(
                 ctx.diagnostics.hasError,
-                "Expected Sequence.runningFold surface to resolve cleanly, got: \($diagnosticSummary)"
+                "Expected Sequence.runningFold surface to resolve cleanly, got: \(diagnosticSummary)"
             )
 
             let sema = try XCTUnwrap(ctx.sema)
