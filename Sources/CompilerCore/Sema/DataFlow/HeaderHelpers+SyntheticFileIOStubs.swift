@@ -36,12 +36,21 @@ extension DataFlowSemaPhase {
         symbols.setPropertyType(fileType, for: fileSymbol)
 
         let kotlinIOPkg = ensurePackage(path: ["kotlin", "io"], symbols: symbols, interner: interner)
-        registerFileExtensionProperty(
+        registerFilePackageExtensionProperty(
             named: "extension",
             packageFQName: kotlinIOPkg,
             receiverType: fileType,
             returnType: types.stringType,
             externalLinkName: "kk_file_extension",
+            symbols: symbols,
+            interner: interner
+        )
+        registerFilePackageExtensionProperty(
+            named: "invariantSeparatorsPath",
+            packageFQName: kotlinIOPkg,
+            receiverType: fileType,
+            returnType: types.stringType,
+            externalLinkName: "kk_file_invariantSeparatorsPath",
             symbols: symbols,
             interner: interner
         )
@@ -1248,7 +1257,7 @@ extension DataFlowSemaPhase {
         symbols.setPropertyType(returnType, for: propertySymbol)
     }
 
-    private func registerFileExtensionProperty(
+    private func registerFilePackageExtensionProperty(
         named name: String,
         packageFQName: [InternedString],
         receiverType: TypeID,

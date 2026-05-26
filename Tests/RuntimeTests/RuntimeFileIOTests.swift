@@ -60,6 +60,17 @@ final class RuntimeFileIOTests: IsolatedRuntimeXCTestCase {
         )
     }
 
+    func testFileInvariantSeparatorsPathRewritesBackslashes() {
+        XCTAssertEqual(
+            readString(kk_file_invariantSeparatorsPath(runtimeTestFileHandle(#"C:\tmp\archive.tar.gz"#))),
+            "C:/tmp/archive.tar.gz"
+        )
+        XCTAssertEqual(
+            readString(kk_file_invariantSeparatorsPath(runtimeTestFileHandle("/tmp/archive.tar.gz"))),
+            "/tmp/archive.tar.gz"
+        )
+    }
+
     private func makeTempFile(contents: String) throws -> URL {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try contents.write(to: url, atomically: true, encoding: .utf8)

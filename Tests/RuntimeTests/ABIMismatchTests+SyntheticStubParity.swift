@@ -32,6 +32,7 @@ extension ABIMismatchTests {
             "kk_readln",
             "kk_readlnOrNull",
             "kk_file_extension",
+            "kk_file_invariantSeparatorsPath",
             "kk_string_hexToUInt",
             "kk_string_chunked_sequence_transform",
             // Exception constructors

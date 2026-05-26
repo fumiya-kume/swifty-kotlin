@@ -374,6 +374,14 @@ public func kk_file_extension(_ fileRaw: Int) -> Int {
     return fileMakeStringRaw(String(name[name.index(after: dotIndex)...]))
 }
 
+@_cdecl("kk_file_invariantSeparatorsPath")
+public func kk_file_invariantSeparatorsPath(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_invariantSeparatorsPath received invalid File handle")
+    }
+    return fileMakeStringRaw(file.path.replacingOccurrences(of: "\\", with: "/"))
+}
+
 @_cdecl("kk_file_path")
 public func kk_file_path(_ fileRaw: Int) -> Int {
     guard let file = runtimeFileBox(from: fileRaw) else {
