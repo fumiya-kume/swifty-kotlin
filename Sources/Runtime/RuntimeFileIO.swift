@@ -976,6 +976,43 @@ private func runtimeBufferedWriterBox(from raw: Int) -> RuntimeBufferedWriterBox
     return tryCast(ptr, to: RuntimeBufferedWriterBox.self)
 }
 
+@_cdecl("kk_reader_copyTo_default")
+public func kk_reader_copyTo_default(
+    _ readerRaw: Int,
+    _ writerRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    kk_reader_copyTo(readerRaw, writerRaw, 8192, outThrown)
+}
+
+@_cdecl("kk_reader_copyTo")
+public func kk_reader_copyTo(
+    _ readerRaw: Int,
+    _ writerRaw: Int,
+    _ bufferSizeRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard bufferSizeRaw > 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: bufferSize must be positive")
+        return 0
+    }
+    guard let reader = runtimeBufferedReaderBox(from: readerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_reader_copyTo received invalid Reader handle")
+    }
+    guard let writer = runtimeBufferedWriterBox(from: writerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_reader_copyTo received invalid Writer handle")
+    }
+    let text = reader.readText()
+    do {
+        try writer.write(text)
+        return text.utf8.count
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+        return 0
+    }
+}
+
 @_cdecl("kk_file_bufferedWriter")
 public func kk_file_bufferedWriter(_ fileRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
