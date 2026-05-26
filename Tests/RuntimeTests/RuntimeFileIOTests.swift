@@ -45,6 +45,21 @@ final class RuntimeFileIOTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(runtimeListBox(from: bytesRaw)?.elements, [0, 127, -128, -1])
     }
 
+    func testFileExtensionReturnsLastComponentSuffix() {
+        XCTAssertEqual(
+            readString(kk_file_extension(runtimeTestFileHandle("/tmp/archive.tar.gz"))),
+            "gz"
+        )
+        XCTAssertEqual(
+            readString(kk_file_extension(runtimeTestFileHandle("/tmp/README"))),
+            ""
+        )
+        XCTAssertEqual(
+            readString(kk_file_extension(runtimeTestFileHandle("/tmp/.gitignore"))),
+            "gitignore"
+        )
+    }
+
     private func makeTempFile(contents: String) throws -> URL {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try contents.write(to: url, atomically: true, encoding: .utf8)
