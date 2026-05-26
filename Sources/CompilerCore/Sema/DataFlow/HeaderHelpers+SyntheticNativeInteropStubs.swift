@@ -2614,6 +2614,27 @@ extension DataFlowSemaPhase {
             symbols.setDirectSupertypes([cPointedSymbol], for: symbol)
             types.setNominalDirectSupertypes([cPointedSymbol], for: symbol)
         }
+        if let uShortVarSymbol = symbols.lookup(fqName: cinteropPkg + [interner.intern("UShortVar")]) {
+            let uShortVarType = types.make(.classType(ClassType(
+                classSymbol: uShortVarSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            let wcstrReturnType = types.make(.classType(ClassType(
+                classSymbol: cValuesSymbol,
+                args: [.invariant(uShortVarType)],
+                nullability: .nonNull
+            )))
+            registerSyntheticNativeExtensionProperty(
+                named: "wcstr",
+                packageFQName: cinteropPkg,
+                packageSymbol: cinteropPkgSymbol,
+                receiverType: types.stringType,
+                propertyType: wcstrReturnType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
 
         registerSyntheticCInteropVector128Stubs(
             cinteropPkg: cinteropPkg,
@@ -3484,6 +3505,65 @@ extension DataFlowSemaPhase {
             declSite: nil,
             visibility: .public,
             flags: [.synthetic]
+        )
+        symbols.setParentSymbol(propertySymbol, for: getterSymbol)
+        symbols.setFunctionSignature(getterSignature, for: getterSymbol)
+        symbols.setExtensionPropertyGetterAccessor(getterSymbol, for: propertySymbol)
+        symbols.setAccessorOwnerProperty(propertySymbol, for: getterSymbol)
+    }
+
+    private func registerSyntheticNativeExtensionProperty(
+        named name: String,
+        packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        receiverType: TypeID,
+        propertyType: TypeID,
+        flags: SymbolFlags = [.synthetic],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let propertyName = interner.intern(name)
+        let propertyFQName = packageFQName + [propertyName]
+        let getterSignature = FunctionSignature(
+            receiverType: receiverType,
+            parameterTypes: [],
+            returnType: propertyType
+        )
+
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
+            symbols.symbol(symbolID)?.kind == .property
+                && symbols.extensionPropertyReceiverType(for: symbolID) == receiverType
+        }) {
+            symbols.insertFlags(flags, for: existing)
+            symbols.setPropertyType(propertyType, for: existing)
+            symbols.setExtensionPropertyReceiverType(receiverType, for: existing)
+            if let getterSymbol = symbols.extensionPropertyGetterAccessor(for: existing) {
+                symbols.setFunctionSignature(getterSignature, for: getterSymbol)
+            }
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: flags
+        )
+        if let packageSymbol {
+            symbols.setParentSymbol(packageSymbol, for: propertySymbol)
+        }
+        symbols.setPropertyType(propertyType, for: propertySymbol)
+        symbols.setExtensionPropertyReceiverType(receiverType, for: propertySymbol)
+
+        let getterSymbol = symbols.define(
+            kind: .function,
+            name: interner.intern("get"),
+            fqName: propertyFQName + [interner.intern("$get")],
+            declSite: nil,
+            visibility: .public,
+            flags: flags
         )
         symbols.setParentSymbol(propertySymbol, for: getterSymbol)
         symbols.setFunctionSignature(getterSignature, for: getterSymbol)
