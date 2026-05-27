@@ -446,7 +446,7 @@
 - [ ] STDLIB-TIME-TYPE-002: `AbstractLongTimeSource` 抽象クラスの実装
 - [ ] STDLIB-TIME-TYPE-003: `Clock` インターフェースの実装
 - [ ] STDLIB-TIME-TYPE-004: `ComparableTimeMark` クラスの実装
-- [ ] STDLIB-TIME-TYPE-005: `Duration` クラスの実装
+- [x] STDLIB-TIME-TYPE-005: `Duration` クラスの実装
 - [ ] STDLIB-TIME-TYPE-006: `DurationUnit` enum の実装
 - [ ] STDLIB-TIME-TYPE-007: `ExperimentalTime` アノテーションの実装
 - [ ] STDLIB-TIME-TYPE-008: `Instant` クラスの実装
