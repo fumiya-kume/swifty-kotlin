@@ -27,6 +27,29 @@ final class RuntimeBufferedWriterTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_buffered_writer_close(writerRaw), 0)
     }
 
+    func testFilePrintWriterWritesAndTruncatesFile() throws {
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try "old-content".write(to: fileURL, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        var thrown = 0
+        let writerRaw = kk_file_printWriter(runtimeTestFileHandle(fileURL.path), &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertNotEqual(writerRaw, 0)
+
+        XCTAssertEqual(kk_buffered_writer_write(writerRaw, makeStringRaw("print"), &thrown), 0)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_buffered_writer_new_line(writerRaw, &thrown), 0)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_buffered_writer_write(writerRaw, makeStringRaw("writer"), &thrown), 0)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_buffered_writer_flush(writerRaw, &thrown), 0)
+        XCTAssertEqual(thrown, 0)
+
+        XCTAssertEqual(try String(contentsOf: fileURL, encoding: .utf8), "print\nwriter")
+        XCTAssertEqual(kk_buffered_writer_close(writerRaw), 0)
+    }
+
     func testPathBufferedWriterWritesAndTruncatesFile() throws {
         let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try "old-content".write(to: fileURL, atomically: true, encoding: .utf8)

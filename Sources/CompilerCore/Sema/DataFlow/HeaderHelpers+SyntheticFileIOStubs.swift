@@ -790,9 +790,16 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let printWriterSymbol = ensureClassSymbol(
+            named: "PrintWriter",
+            in: javaIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
         if let javaIOPkgSymbol {
             symbols.setParentSymbol(javaIOPkgSymbol, for: writerSymbol)
             symbols.setParentSymbol(javaIOPkgSymbol, for: bufferedWriterSymbol)
+            symbols.setParentSymbol(javaIOPkgSymbol, for: printWriterSymbol)
         }
         let writerType = types.make(.classType(ClassType(
             classSymbol: writerSymbol, args: [], nullability: .nonNull
@@ -800,8 +807,12 @@ extension DataFlowSemaPhase {
         let bufferedWriterType = types.make(.classType(ClassType(
             classSymbol: bufferedWriterSymbol, args: [], nullability: .nonNull
         )))
+        let printWriterType = types.make(.classType(ClassType(
+            classSymbol: printWriterSymbol, args: [], nullability: .nonNull
+        )))
         symbols.setPropertyType(writerType, for: writerSymbol)
         symbols.setPropertyType(bufferedWriterType, for: bufferedWriterSymbol)
+        symbols.setPropertyType(printWriterType, for: printWriterSymbol)
 
         // Register BufferedWriter as a Closeable subtype (STDLIB-IO-093)
         if let closeableSymbol = types.closeableInterfaceSymbol {
@@ -809,9 +820,13 @@ extension DataFlowSemaPhase {
             types.setNominalDirectSupertypes([closeableSymbol], for: writerSymbol)
             symbols.setDirectSupertypes([writerSymbol, closeableSymbol], for: bufferedWriterSymbol)
             types.setNominalDirectSupertypes([writerSymbol, closeableSymbol], for: bufferedWriterSymbol)
+            symbols.setDirectSupertypes([writerSymbol, closeableSymbol], for: printWriterSymbol)
+            types.setNominalDirectSupertypes([writerSymbol, closeableSymbol], for: printWriterSymbol)
         } else {
             symbols.setDirectSupertypes([writerSymbol], for: bufferedWriterSymbol)
             types.setNominalDirectSupertypes([writerSymbol], for: bufferedWriterSymbol)
+            symbols.setDirectSupertypes([writerSymbol], for: printWriterSymbol)
+            types.setNominalDirectSupertypes([writerSymbol], for: printWriterSymbol)
         }
         registerFilePackageExtensionFunction(
             named: "copyTo",
@@ -846,12 +861,36 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // File.printWriter() -> PrintWriter
+        registerFileMemberFunction(
+            named: "printWriter",
+            externalLinkName: "kk_file_printWriter",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: printWriterType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // BufferedWriter.write(text: String) -> Unit
         registerFileMemberFunction(
             named: "write",
             externalLinkName: "kk_buffered_writer_write",
             ownerSymbol: bufferedWriterSymbol,
             ownerType: bufferedWriterType,
+            parameters: [("text", types.stringType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // PrintWriter.write(text: String) -> Unit
+        registerFileMemberFunction(
+            named: "write",
+            externalLinkName: "kk_buffered_writer_write",
+            ownerSymbol: printWriterSymbol,
+            ownerType: printWriterType,
             parameters: [("text", types.stringType)],
             returnType: types.unitType,
             symbols: symbols,
@@ -870,6 +909,18 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // PrintWriter.println() -> Unit
+        registerFileMemberFunction(
+            named: "println",
+            externalLinkName: "kk_buffered_writer_new_line",
+            ownerSymbol: printWriterSymbol,
+            ownerType: printWriterType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // BufferedWriter.flush() -> Unit
         registerFileMemberFunction(
             named: "flush",
@@ -882,12 +933,34 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // PrintWriter.flush() -> Unit
+        registerFileMemberFunction(
+            named: "flush",
+            externalLinkName: "kk_buffered_writer_flush",
+            ownerSymbol: printWriterSymbol,
+            ownerType: printWriterType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // BufferedWriter.close() -> Unit
         registerFileMemberFunction(
             named: "close",
             externalLinkName: "kk_buffered_writer_close",
             ownerSymbol: bufferedWriterSymbol,
             ownerType: bufferedWriterType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerFileMemberFunction(
+            named: "close",
+            externalLinkName: "kk_buffered_writer_close",
+            ownerSymbol: printWriterSymbol,
+            ownerType: printWriterType,
             parameters: [],
             returnType: types.unitType,
             symbols: symbols,

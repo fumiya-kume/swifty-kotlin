@@ -137,6 +137,8 @@ extension CollectionLiteralLoweringPass {
             case lookup.bufferedWriterName:
                 // Only rewrite argument-less bufferedWriter()
                 kkCallee = arguments.count == 1 ? lookup.kkFileBufferedWriterName : nil
+            case lookup.printWriterName:
+                kkCallee = arguments.count == 1 ? lookup.kkFilePrintWriterName : nil
             case lookup.walkName:
                 kkCallee = lookup.kkFileWalkName
             case lookup.listFilesName:
@@ -218,7 +220,7 @@ extension CollectionLiteralLoweringPass {
                 }
                 // Track bufferedReader()/bufferedWriter() results as file-like exprs for chained member calls
                 if let result,
-                   callee == lookup.bufferedReaderName || callee == lookup.bufferedWriterName
+                   callee == lookup.bufferedReaderName || callee == lookup.bufferedWriterName || callee == lookup.printWriterName
                 {
                     state.fileExprIDs.insert(result.rawValue)
                 }

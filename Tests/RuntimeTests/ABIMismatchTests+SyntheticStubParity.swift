@@ -50,6 +50,7 @@ extension ABIMismatchTests {
             "kk_file_startsWith_string",
             "kk_file_toRelativeString",
             "kk_file_bufferedWriter",
+            "kk_file_printWriter",
             "kk_bytearray_inputStream",
             "kk_bytearray_inputStream_range",
             "kk_input_stream_readBytes",

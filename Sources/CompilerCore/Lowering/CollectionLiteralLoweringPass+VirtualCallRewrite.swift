@@ -330,6 +330,8 @@ extension CollectionLiteralLoweringPass {
             // Only rewrite argument-less bufferedWriter(); the runtime function
             // kk_file_bufferedWriter does not accept charset/bufferSize args.
             kkCallee = arguments.isEmpty ? lookup.kkFileBufferedWriterName : nil
+        case lookup.printWriterName:
+            kkCallee = arguments.isEmpty ? lookup.kkFilePrintWriterName : nil
         case lookup.walkName:
             kkCallee = lookup.kkFileWalkName
         case lookup.listFilesName:

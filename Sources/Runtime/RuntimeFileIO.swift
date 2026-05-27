@@ -1171,11 +1171,14 @@ public func kk_reader_copyTo(
     }
 }
 
-@_cdecl("kk_file_bufferedWriter")
-public func kk_file_bufferedWriter(_ fileRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+private func runtimeOpenTruncatingBufferedWriter(
+    fileRaw: Int,
+    outThrown: UnsafeMutablePointer<Int>?,
+    diagnosticName: String
+) -> Int {
     outThrown?.pointee = 0
     guard let file = runtimeFileBox(from: fileRaw) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_bufferedWriter received invalid File handle")
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: \(diagnosticName) received invalid File handle")
     }
     let url = URL(fileURLWithPath: file.path)
     if !FileManager.default.fileExists(atPath: file.path) {
@@ -1189,6 +1192,24 @@ public func kk_file_bufferedWriter(_ fileRaw: Int, _ outThrown: UnsafeMutablePoi
         outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
         return 0
     }
+}
+
+@_cdecl("kk_file_bufferedWriter")
+public func kk_file_bufferedWriter(_ fileRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    runtimeOpenTruncatingBufferedWriter(
+        fileRaw: fileRaw,
+        outThrown: outThrown,
+        diagnosticName: "kk_file_bufferedWriter"
+    )
+}
+
+@_cdecl("kk_file_printWriter")
+public func kk_file_printWriter(_ fileRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    runtimeOpenTruncatingBufferedWriter(
+        fileRaw: fileRaw,
+        outThrown: outThrown,
+        diagnosticName: "kk_file_printWriter"
+    )
 }
 
 @_cdecl("kk_buffered_writer_write")

@@ -447,6 +447,15 @@ public extension RuntimeABISpec {
             section: "FileIO"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_file_printWriter",
+            parameters: [
+                RuntimeABIParameter(name: "fileRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_buffered_writer_write",
             parameters: [
                 RuntimeABIParameter(name: "writerRaw", type: .intptr),
