@@ -1875,6 +1875,12 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_unbox_bool(kk_sequence_contains(seq, 9)), 0)
     }
 
+    func testDistinctPreservesFirstOccurrenceOrder() {
+        let result = kk_sequence_distinct(makeSequence([3, 1, 2, 1, 3, 4]))
+
+        XCTAssertEqual(listElements(kk_sequence_to_list(result, nil)), [3, 1, 2, 4])
+    }
+
     func testDropSkipsRequestedPrefix() {
         let result = kk_sequence_drop(makeSequence([1, 2, 3, 4, 5]), 2)
 

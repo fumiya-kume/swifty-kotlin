@@ -29,6 +29,7 @@ extension StdlibSurfaceSpec {
         sequence("averageOf", 1, "kk_sequence_averageOf", returnStrategy: .double, lambdaExpectation: .receiverElement(argumentIndex: 0, returnStrategy: .int)),
         sequence("constrainOnce", 0, "kk_sequence_constrainOnce", returnStrategy: .sequence, lambdaExpectation: .none),
         sequence("count", 0, "kk_sequence_count", returnStrategy: .int, lambdaExpectation: .none),
+        sequence("distinct", 0, "kk_sequence_distinct", returnStrategy: .sequence, lambdaExpectation: .none),
         sequence("distinctBy", 1, "kk_sequence_distinctBy", returnStrategy: .sequence, lambdaExpectation: .receiverElement(argumentIndex: 0, returnStrategy: .any)),
         sequence("elementAt", 1, "kk_sequence_elementAt", returnStrategy: .receiver, lambdaExpectation: .none),
         sequence("elementAtOrElse", 2, "kk_sequence_elementAtOrElse", returnStrategy: .receiver, lambdaExpectation: .none),

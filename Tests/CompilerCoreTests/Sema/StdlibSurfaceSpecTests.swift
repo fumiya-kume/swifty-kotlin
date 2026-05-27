@@ -127,6 +127,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("contains", 1),
             sequence("drop", 1),
             sequence("dropWhile", 1),
+            sequence("distinct", 0),
             sequence("distinctBy", 1),
             sequence("constrainOnce", 0),
             sequence("count", 0),
