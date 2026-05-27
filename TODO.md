@@ -280,7 +280,7 @@
 - [x] STDLIB-SYSTEM-FN-002: `getTimeMicros` 関数の実装
 - [x] STDLIB-SYSTEM-FN-003: `getTimeMillis` 関数の実装
 - [x] STDLIB-SYSTEM-FN-004: `getTimeNanos` 関数の実装
-- [ ] STDLIB-SYSTEM-FN-005: `measureNanoTime` 関数の実装
+- [x] STDLIB-SYSTEM-FN-005: `measureNanoTime` 関数の実装
 - [ ] STDLIB-SYSTEM-FN-006: `measureTimeMicros` 関数の実装
 - [ ] STDLIB-SYSTEM-FN-007: `measureTimeMillis` 関数の実装
 
