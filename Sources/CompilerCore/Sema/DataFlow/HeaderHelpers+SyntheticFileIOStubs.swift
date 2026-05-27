@@ -521,6 +521,26 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerFileMemberFunction(
+            named: "copyRecursively",
+            externalLinkName: "kk_file_copyRecursively_default",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [("target", fileType)],
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerFileMemberFunction(
+            named: "copyRecursively",
+            externalLinkName: "kk_file_copyRecursively_overwrite",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [("target", fileType), ("overwrite", types.booleanType)],
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
 
         // MARK: - File filesystem operations (STDLIB-323)
 

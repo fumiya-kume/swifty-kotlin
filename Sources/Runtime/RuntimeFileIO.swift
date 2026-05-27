@@ -519,6 +519,42 @@ public func kk_file_copyTo(
     return targetRaw
 }
 
+@_cdecl("kk_file_copyRecursively_default")
+public func kk_file_copyRecursively_default(_ sourceRaw: Int, _ targetRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    kk_file_copyRecursively_overwrite(sourceRaw, targetRaw, kk_box_bool(0), outThrown)
+}
+
+@_cdecl("kk_file_copyRecursively_overwrite")
+public func kk_file_copyRecursively_overwrite(
+    _ sourceRaw: Int,
+    _ targetRaw: Int,
+    _ overwriteRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let source = runtimeFileBox(from: sourceRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_copyRecursively_overwrite received invalid source File handle")
+    }
+    guard let target = runtimeFileBox(from: targetRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_copyRecursively_overwrite received invalid target File handle")
+    }
+    do {
+        let fileManager = FileManager.default
+        if fileManager.fileExists(atPath: target.path) {
+            guard kk_unbox_bool(overwriteRaw) != 0 else {
+                outThrown?.pointee = runtimeAllocateThrowable(message: "FileAlreadyExistsException: \(target.path)")
+                return kk_box_bool(0)
+            }
+            try fileManager.removeItem(atPath: target.path)
+        }
+        try fileManager.copyItem(atPath: source.path, toPath: target.path)
+        return kk_box_bool(1)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+        return kk_box_bool(0)
+    }
+}
+
 // MARK: - STDLIB-321: File properties and existence checks
 
 @_cdecl("kk_file_exists")
