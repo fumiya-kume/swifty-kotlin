@@ -195,7 +195,7 @@
 - [x] STDLIB-SEQ-TYPE-002: `SequenceScope` クラスの実装
 
 #### kotlin.sequences 関数の実装
-- [ ] STDLIB-SEQ-FN-005: `associate` 関数の実装
+- [x] STDLIB-SEQ-FN-005: `associate` 関数の実装
 - [ ] STDLIB-SEQ-FN-006: `associateBy` 関数の実装
 - [ ] STDLIB-SEQ-FN-007: `associateByTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-008: `associateTo` 関数の実装
