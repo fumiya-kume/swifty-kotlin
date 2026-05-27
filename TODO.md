@@ -318,6 +318,24 @@
 - [x] STDLIB-TEXT-PROP-016: `isTitleCase` 拡張プロパティの実装
 - [x] STDLIB-TEXT-PROP-017: `isUnicodeIdentifierPart` 拡張プロパティの実装
 - [x] STDLIB-TEXT-PROP-018: `isUpperCase` 拡張プロパティの実装
+- [ ] STDLIB-TEXT-PROP-001: `CASE_INSENSITIVE_ORDER` プロパティの実装
+- [ ] STDLIB-TEXT-PROP-002: `category` 拡張プロパティの実装
+- [ ] STDLIB-TEXT-PROP-003: `directionality` 拡張プロパティの実装
+- [ ] STDLIB-TEXT-PROP-004: `isDefined` 拡張プロパティの実装
+- [ ] STDLIB-TEXT-PROP-005: `isDigit` 拡張プロパティの実装
+- [ ] STDLIB-TEXT-PROP-006: `isHighSurrogate` 拡張プロパティの実装
+- [ ] STDLIB-TEXT-PROP-007: `isISOControl` 拡張プロパティの実装
+- [ ] STDLIB-TEXT-PROP-008: `isIdentifierIgnorable` 拡張プロパティの実装
+- [ ] STDLIB-TEXT-PROP-009: `isJavaIdentifierPart` 拡張プロパティの実装
+- [ ] STDLIB-TEXT-PROP-010: `isJavaIdentifierStart` 拡張プロパティの実装
+- [ ] STDLIB-TEXT-PROP-011: `isLetter` 拡張プロパティの実装
+- [x] STDLIB-TEXT-PROP-012: `isLetterOrDigit` 拡張プロパティの実装
+- [ ] STDLIB-TEXT-PROP-013: `isLowerCase` 拡張プロパティの実装
+- [ ] STDLIB-TEXT-PROP-014: `isLowSurrogate` 拡張プロパティの実装
+- [ ] STDLIB-TEXT-PROP-015: `isSurrogate` 拡張プロパティの実装
+- [ ] STDLIB-TEXT-PROP-016: `isTitleCase` 拡張プロパティの実装
+- [ ] STDLIB-TEXT-PROP-017: `isUnicodeIdentifierPart` 拡張プロパティの実装
+- [ ] STDLIB-TEXT-PROP-018: `isUpperCase` 拡張プロパティの実装
 - [ ] STDLIB-TEXT-PROP-019: `isWhitespace` 拡張プロパティの実装
 - [x] STDLIB-TEXT-PROP-020: `lowercase` 拡張プロパティの実装
 - [x] STDLIB-TEXT-PROP-021: `titlecase` 拡張プロパティの実装
