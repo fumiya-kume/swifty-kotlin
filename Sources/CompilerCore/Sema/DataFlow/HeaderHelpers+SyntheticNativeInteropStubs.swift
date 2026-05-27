@@ -2203,6 +2203,54 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        // inline fun <reified T : CPointed> CPointer<*>.reinterpret(): CPointer<T>
+        let reinterpretStarReceiverType = types.make(.classType(ClassType(
+            classSymbol: cPointerSymbol,
+            args: [.star],
+            nullability: .nonNull
+        )))
+        let reinterpretFunctionName = interner.intern("reinterpret")
+        let reinterpretFunctionFQName = cinteropPkg + [reinterpretFunctionName]
+        let reinterpretTypeParameterName = interner.intern("T")
+        let reinterpretTypeParameterFQName = reinterpretFunctionFQName + [reinterpretTypeParameterName]
+        let reinterpretTypeParameterSymbol: SymbolID = if let existing = symbols.lookup(
+            fqName: reinterpretTypeParameterFQName
+        ) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: reinterpretTypeParameterName,
+                fqName: reinterpretTypeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic, .reifiedTypeParameter]
+            )
+        }
+        symbols.insertFlags([.synthetic, .reifiedTypeParameter], for: reinterpretTypeParameterSymbol)
+        symbols.setTypeParameterUpperBounds([cPointedType], for: reinterpretTypeParameterSymbol)
+        let reinterpretTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: reinterpretTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let reinterpretReturnType = types.make(.classType(ClassType(
+            classSymbol: cPointerSymbol,
+            args: [.invariant(reinterpretTypeParameterType)],
+            nullability: .nonNull
+        )))
+        registerSyntheticNativeTopLevelFunction(
+            named: "reinterpret",
+            packageFQName: cinteropPkg,
+            receiverType: reinterpretStarReceiverType,
+            parameters: [],
+            returnType: reinterpretReturnType,
+            typeParameterSymbols: [reinterpretTypeParameterSymbol],
+            typeParameterUpperBoundsList: [[cPointedType]],
+            reifiedTypeParameterIndices: [0],
+            flags: [.synthetic, .inlineFunction],
+            symbols: symbols,
+            interner: interner
+        )
         configureSingleTypeParameterNominal(
             ownerSymbol: cPointerVarOfSymbol,
             fqName: cinteropPkg + [interner.intern("CPointerVarOf")],
