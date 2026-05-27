@@ -416,7 +416,7 @@
 - [x] STDLIB-TEXT-FN-090: `toByte` 関数の実装
 - [x] STDLIB-TEXT-FN-091: `toByteOrNull` 関数の実装
 - [x] STDLIB-TEXT-FN-092: `toByteArray` 関数の実装
-- [ ] STDLIB-TEXT-FN-093: `toCharArray` 関数の実装
+- [x] STDLIB-TEXT-FN-093: `toCharArray` 関数の実装
 - [ ] STDLIB-TEXT-FN-094: `toCollection` 関数の実装
 - [x] STDLIB-TEXT-FN-095: `toDouble` 関数の実装
 - [x] STDLIB-TEXT-FN-096: `toDoubleOrNull` 関数の実装
