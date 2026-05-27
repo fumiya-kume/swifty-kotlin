@@ -630,7 +630,7 @@
 - [x] STDLIB-CINTEROP-FN-001: `alloc<T>()` を追加する
 - [ ] STDLIB-CINTEROP-FN-002: `allocArray<T>(length)` を追加する
 - [x] STDLIB-CINTEROP-FN-003: `asStableRef<T>()` を追加する
-- [ ] STDLIB-CINTEROP-FN-004: `cstr` helper を追加する
+- [x] STDLIB-CINTEROP-FN-004: `cstr` helper を追加する
 - [x] STDLIB-CINTEROP-FN-005: `wcstr` helper を追加する
 - [ ] STDLIB-CINTEROP-FN-006: `defer(block)` を追加する
 - [x] STDLIB-CINTEROP-FN-007: `free(pointed)` を追加する

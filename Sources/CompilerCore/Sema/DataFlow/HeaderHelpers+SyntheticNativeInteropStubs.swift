@@ -2353,6 +2353,20 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let cstrReturnType = types.make(.classType(ClassType(
+            classSymbol: cValuesSymbol,
+            args: [.invariant(byteVarType)],
+            nullability: .nonNull
+        )))
+        registerSyntheticNativeExtensionProperty(
+            named: "cstr",
+            packageFQName: cinteropPkg,
+            packageSymbol: cinteropPkgSymbol,
+            receiverType: types.stringType,
+            propertyType: cstrReturnType,
+            symbols: symbols,
+            interner: interner
+        )
         let cOpaquePointerUnderlyingType = types.make(.classType(ClassType(
             classSymbol: cPointerSymbol,
             args: [.out(cPointedType)],
