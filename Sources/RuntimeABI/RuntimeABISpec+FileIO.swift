@@ -504,6 +504,17 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "FileIO"
         ),
+        // STDLIB-IO-FN-007: kotlin.io.InputStream.bufferedReader(charset)
+        RuntimeABIFunctionSpec(
+            name: "kk_input_stream_bufferedReader",
+            parameters: [
+                RuntimeABIParameter(name: "streamRaw", type: .intptr),
+                RuntimeABIParameter(name: "charsetRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_output_stream_write_byte",
             parameters: [

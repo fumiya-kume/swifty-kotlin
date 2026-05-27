@@ -1303,6 +1303,18 @@ final class RuntimeBufferedReaderBox {
         self.chunkSize = max(1, chunkSize)
     }
 
+    /// Creates a `BufferedReader` backed by an already-loaded `Data` buffer.
+    /// Used by `InputStream.bufferedReader()` (STDLIB-IO-FN-007) where the
+    /// underlying `InputStream` is in-memory (`ByteArrayInputStream`) — no
+    /// `FileHandle` is involved, so the buffer is treated as already at EOF.
+    init(data: Data, chunkSize: Int = 4096) {
+        self.fileHandle = nil
+        self.pendingData = data
+        self.closed = false
+        self.reachedEOF = true
+        self.chunkSize = max(1, chunkSize)
+    }
+
     /// Returns the next line, or `nil` when all lines have been consumed.
     func readLine() -> String? {
         guard !closed else { return nil }
@@ -1516,6 +1528,19 @@ final class RuntimeInputStreamBox {
 
     func close() {
         closed = true
+    }
+
+    /// Drain remaining bytes (after the current `offset`) so they can be
+    /// handed to a `BufferedReader` constructed by
+    /// `InputStream.bufferedReader()` (STDLIB-IO-FN-007). Mirrors what the
+    /// JVM does: wrapping an `InputStream` in an `InputStreamReader` reads
+    /// from the *current* position onwards. Advances the offset to the end
+    /// because callers should treat the stream as fully consumed.
+    func drainRemaining() -> Data {
+        guard !closed else { return Data() }
+        let remaining = data.suffix(from: data.startIndex.advanced(by: offset))
+        offset = data.count
+        return Data(remaining)
     }
 }
 
