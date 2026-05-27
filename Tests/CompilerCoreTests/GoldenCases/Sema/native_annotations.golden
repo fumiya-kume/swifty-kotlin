@@ -1,5 +1,5 @@
 symbol s0 kind=class fq=kotlinx.cinterop.CPointed vis=public flags=synthetic|abstractType type=Class#0
-symbol s1 kind=class fq=kotlinx.cinterop.CValuesRef vis=public flags=synthetic type=Class#1<T#3>
+symbol s1 kind=class fq=kotlinx.cinterop.CValuesRef vis=public flags=synthetic|abstractType type=Class#1<T#3>
 symbol s2 kind=class fq=kotlinx.cinterop.CPointer vis=public flags=synthetic type=Class#2<T#4>
 symbol s3 kind=typeParameter fq=kotlinx.cinterop.CValuesRef.T vis=private flags=_
 symbol s4 kind=typeParameter fq=kotlinx.cinterop.CPointer.T vis=private flags=_

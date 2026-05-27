@@ -297,6 +297,7 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
             0,
             &thrown
         )
+
         XCTAssertEqual(thrown, 0)
         XCTAssertEqual(result, 20)
 
@@ -307,7 +308,7 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
             0,
             &thrown
         )
-        XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
+        XCTAssertEqual(emptyResult, runtimeExceptionCaughtSentinel)
         XCTAssertNotEqual(thrown, 0)
     }
 
@@ -1937,6 +1938,15 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(result, runtimeNullSentinelInt)
     }
 
+    func testFilterIndexedToAppendsMatchingElementsToDestination() {
+        let destination = makeList([1])
+        let fn = unsafeBitCast(keepEvenIndexOrLargeValue, to: Int.self)
+        let result = kk_sequence_filterIndexedTo(makeSequence([10, 20, 30, 40]), destination, fn, 0, nil)
+
+        XCTAssertEqual(result, destination)
+        XCTAssertEqual(listElements(destination), [1, 10, 30, 40])
+    }
+
     func testFilterIsInstanceKeepsMatchingRuntimeTypes() {
         let seq = makeSequence([1, runtimeTestStringHandle("two"), 3])
         let filtered = kk_sequence_filterIsInstance(seq, 3)
@@ -2291,7 +2301,7 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
 
         thrown = 0
         let emptyResult = kk_sequence_maxOf(makeSequence([]), unsafeBitCast(selector, to: Int.self), 0, &thrown)
-        XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
+        XCTAssertEqual(emptyResult, runtimeExceptionCaughtSentinel)
         XCTAssertNotEqual(thrown, 0)
         let box = try XCTUnwrap(throwableBox(from: thrown))
         XCTAssertEqual(box.message, kEmptySequenceNoSuchElement)
