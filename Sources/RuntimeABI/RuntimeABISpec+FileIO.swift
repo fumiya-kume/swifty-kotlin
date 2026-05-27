@@ -311,6 +311,26 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "FileIO"
         ),
+        // STDLIB-IO-FN-003: InputStream.buffered(bufferSize) returning BufferedInputStream
+        RuntimeABIFunctionSpec(
+            name: "kk_input_stream_buffered_default",
+            parameters: [
+                RuntimeABIParameter(name: "streamRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_input_stream_buffered",
+            parameters: [
+                RuntimeABIParameter(name: "streamRaw", type: .intptr),
+                RuntimeABIParameter(name: "bufferSizeRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_output_stream_write_byte",
             parameters: [
