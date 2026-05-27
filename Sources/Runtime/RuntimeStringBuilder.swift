@@ -9,7 +9,7 @@ final class RuntimeStringBuilderBox {
 
 private func runtimeStringBuilderBox(from raw: Int) -> RuntimeStringBuilderBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
-    let isObject = runtimeStorage.withLock { state in
+    let isObject = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObject else { return nil }

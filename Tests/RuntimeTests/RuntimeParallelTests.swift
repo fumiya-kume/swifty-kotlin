@@ -41,6 +41,7 @@ private let parallelReduceAddThunk: @convention(c) (Int, Int, Int, UnsafeMutable
 }
 
 final class RuntimeParallelTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     override func resetIsolatedRuntimeTestState() {
         parallelVisitState.reset()
     }

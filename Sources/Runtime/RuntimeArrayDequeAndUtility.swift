@@ -466,7 +466,7 @@ private func runtimePlainArrayBox(from rawValue: Int) -> RuntimeArrayBox? {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: pointer))
     }
     guard isObjectPointer,

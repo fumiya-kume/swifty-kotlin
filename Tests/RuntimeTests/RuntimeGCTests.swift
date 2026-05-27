@@ -46,6 +46,7 @@ private func withDummyTypeInfo(_ body: (UnsafeRawPointer) -> Void) {
 }
 
 final class RuntimeGCTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     func testGCCollectsUnreachableAllocation() {
         withDummyTypeInfo { ti in
             _ = kk_alloc(16, ti)

@@ -271,6 +271,25 @@ extension RuntimeSequenceTests {
         XCTAssertEqual(sequenceElements(filtered), [1, 3, 5]) // Should keep odd numbers
     }
 
+    func testSequenceFilterToAppendsMatchingElementsToDestination() {
+        let seq = makeSequence([1, 2, 3, 4, 5])
+        let destination = makeList([99])
+        let filterFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+            value % 2 == 0 ? 1 : 0
+        }
+
+        let result = kk_sequence_filterTo(
+            seq,
+            destination,
+            unsafeBitCast(filterFn, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(result, destination)
+        XCTAssertEqual(listElements(destination), [99, 2, 4])
+    }
+
     func testSequenceFilterNotToAppendsNonMatchingElementsToDestination() {
         let seq = makeSequence([1, 2, 3, 4, 5])
         let destination = makeList([99])

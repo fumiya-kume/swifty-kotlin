@@ -6,6 +6,7 @@ import XCTest
 /// Tests for STDLIB-NATIVE-REF-ABI-004 (recursive freeze) and
 /// ABI-005 (idempotent kk_unpin_object).
 final class RuntimeNativeABIEdgeCaseTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     override func resetIsolatedRuntimeTestState() {
         // kk_runtime_force_reset() is called by the base class setUp/tearDown.
     }

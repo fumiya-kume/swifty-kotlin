@@ -3,6 +3,7 @@ import Foundation
 import XCTest
 
 final class RuntimePathCopyToRecursivelyTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     func testPathCopyToRecursivelyCopiesDirectoryTree() throws {
         let sourceURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let nestedURL = sourceURL.appendingPathComponent("nested")

@@ -8,6 +8,7 @@ import XCTest
 #endif
 
 final class RuntimeLateinitExceptionTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     private func makeRuntimeString(_ value: String) -> Int {
         value.withCString { cstr in
             cstr.withMemoryRebound(to: UInt8.self, capacity: max(1, value.utf8.count)) { ptr in

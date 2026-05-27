@@ -2,6 +2,7 @@
 import XCTest
 
 final class RuntimeKTypeReflectionTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcAndMetadata }
     private func capturePrintln(_ block: () -> Void) -> String {
         let pipe = Pipe()
         let savedFD = dup(STDOUT_FILENO)

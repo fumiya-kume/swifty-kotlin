@@ -55,7 +55,7 @@ public func kk_comparator_from_selector_trampoline(
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw),
-          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          runtimeStorage.withGCLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let pairBox = tryCast(ptr, to: RuntimePairBox.self)
     else {
         // Return 0 instead of panic for invalid/null comparator closure
@@ -110,7 +110,7 @@ public func kk_comparator_from_selector_primitive_trampoline(
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw),
-          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          runtimeStorage.withGCLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let box = tryCast(ptr, to: RuntimePrimitiveComparatorBox.self)
     else {
         outThrown?.pointee = runtimeAllocateThrowable(message: "Invalid comparator closure")
@@ -229,7 +229,7 @@ private func comparatorFromComparatorSelectorCompare(
     invalidClosureMessage: String
 ) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw),
-          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          runtimeStorage.withGCLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let box = tryCast(ptr, to: RuntimeTripleBox.self)
     else {
         outThrown?.pointee = runtimeAllocateThrowable(message: invalidClosureMessage)
@@ -304,7 +304,7 @@ public func kk_comparator_from_multi_selectors_trampoline(
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw),
-          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          runtimeStorage.withGCLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let listBox = tryCast(ptr, to: RuntimeListBox.self)
     else {
         // Return 0 instead of panic for invalid/null comparator closure
@@ -461,7 +461,7 @@ public func kk_comparator_then_by_trampoline(
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw),
-          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          runtimeStorage.withGCLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let outerBox = tryCast(ptr, to: RuntimePairBox.self)
     else {
         // Return 0 instead of panic for invalid/null comparator closure
@@ -497,7 +497,7 @@ public func kk_comparator_then_comparator_trampoline(
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw),
-          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          runtimeStorage.withGCLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let outerBox = tryCast(ptr, to: RuntimePairBox.self)
     else {
         // Return 0 instead of panic for invalid/null comparator closure
@@ -542,7 +542,7 @@ public func kk_comparator_then_by_comparator_selector_trampoline(
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw),
-          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          runtimeStorage.withGCLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let box = tryCast(ptr, to: RuntimeListBox.self),
           box.elements.count == 5
     else {
@@ -598,7 +598,7 @@ public func kk_comparator_then_by_descending_trampoline(
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw),
-          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          runtimeStorage.withGCLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let outerBox = tryCast(ptr, to: RuntimePairBox.self)
     else {
         // Return 0 instead of panic for invalid/null comparator closure
@@ -650,7 +650,7 @@ public func kk_comparator_then_by_descending_comparator_selector_trampoline(
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw),
-          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          runtimeStorage.withGCLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let box = tryCast(ptr, to: RuntimeListBox.self),
           box.elements.count == 5
     else {
@@ -706,7 +706,7 @@ public func kk_comparator_then_descending_trampoline(
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw),
-          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          runtimeStorage.withGCLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let outerBox = tryCast(ptr, to: RuntimePairBox.self)
     else {
         // Return 0 instead of panic for invalid/null comparator closure
@@ -781,7 +781,7 @@ public func kk_comparator_nulls_first_trampoline(
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw),
-          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          runtimeStorage.withGCLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let pairBox = tryCast(ptr, to: RuntimePairBox.self)
     else {
         // Return 0 instead of panic for invalid/null comparator closure
@@ -814,7 +814,7 @@ public func kk_comparator_nulls_last_trampoline(
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw),
-          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          runtimeStorage.withGCLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
           let pairBox = tryCast(ptr, to: RuntimePairBox.self)
     else {
         // Return 0 instead of panic for invalid/null comparator closure
@@ -856,7 +856,7 @@ public func kk_comparator_reversed_trampoline(
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw),
-          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) })
+          runtimeStorage.withGCLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) })
     else {
         // Return 0 instead of panic for invalid/null comparator closure
         outThrown?.pointee = runtimeAllocateThrowable(message: "Invalid comparator closure")
@@ -895,7 +895,7 @@ public func kk_comparator_reversed_trampoline(
     }
 
     if let primitivePtr = UnsafeMutableRawPointer(bitPattern: pairBox.second),
-       runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: primitivePtr)) }),
+       runtimeStorage.withGCLock({ state in state.objectPointers.contains(UInt(bitPattern: primitivePtr)) }),
        let primitiveBox = tryCast(primitivePtr, to: RuntimePrimitiveComparatorBox.self)
     {
         var thrown = 0

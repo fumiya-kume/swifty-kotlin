@@ -3,6 +3,7 @@ import Foundation
 import XCTest
 
 final class RuntimePathCreateFileTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     func testPathCreateFileAttributesCreatesEmptyFile() throws {
         let rootURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let fileURL = rootURL.appendingPathComponent("created.txt")

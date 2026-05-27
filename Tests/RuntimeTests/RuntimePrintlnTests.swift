@@ -8,6 +8,7 @@ import XCTest
 #endif
 
 final class RuntimePrintlnTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     private func capturePrintln(_ block: () -> Void) -> String {
         let pipe = Pipe()
         let savedFD = dup(STDOUT_FILENO)

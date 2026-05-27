@@ -1,0 +1,13 @@
+# Merge strategies for files where parallel branches frequently both add entries.
+#
+# `merge=union` keeps both sides' lines when both branches modified the same file,
+# instead of producing conflict markers. This is safe for *append-only* checklists
+# where the order of entries is not semantically significant. Do NOT use it for
+# files where ordering matters (e.g. registry arrays in Swift) or where duplicate
+# rows would corrupt structure (JSON/YAML/tabular Markdown).
+#
+# Caveat: if two branches mark the same checklist item, both lines will be kept
+# and you may end up with a duplicate entry. Hand-fix during review when this
+# happens — it is rare and trivial compared to the textual conflicts it prevents.
+
+TODO.md merge=union

@@ -60,6 +60,7 @@ import XCTest
 //   - kotlin.native.runtime.Debugging.globalObjectCount
 
 final class RuntimeNativeRefGCTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
 
     // MARK: - GC.collect() (kk_gc_collect)
 

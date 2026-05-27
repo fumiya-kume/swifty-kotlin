@@ -22,6 +22,7 @@ import XCTest
 // ---------------------------------------------------------------------------
 
 final class RuntimeNativeRefGCStabilityTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
 
     func testGCCollectOnEmptyHeapIsIdempotent() {
         // After reset, heap is empty; multiple collects must not crash.
@@ -142,6 +143,7 @@ final class RuntimeNativeRefMemoryTests: XCTestCase {
 // ---------------------------------------------------------------------------
 
 final class RuntimeNativeRefWeakReferenceTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
 
     func testWeakReferenceCreateReturnsNonZeroHandle() {
         let objectRaw = registerRuntimeObject(RuntimeStringBox("weak"))
@@ -204,6 +206,7 @@ private let nativeRefCleanerThrowingBlock: @convention(c) (Int, UnsafeMutablePoi
 }
 
 final class RuntimeNativeRefCleanerTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
 
     override func resetIsolatedRuntimeTestState() {
         nativeRefCleanerCallCount = 0
@@ -263,6 +266,7 @@ final class RuntimeNativeRefCleanerTests: IsolatedRuntimeXCTestCase {
 // ---------------------------------------------------------------------------
 
 final class RuntimeNativeRefPinnedTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
 
     func testPinObjectReturnsNonZeroHandle() {
         withDummyNativeRefTypeInfo { ti in
@@ -375,6 +379,7 @@ final class RuntimeNativeRefPinnedTests: IsolatedRuntimeXCTestCase {
 // ---------------------------------------------------------------------------
 
 final class RuntimeNativeRefFreezeTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
 
     func testFreezeObjectReturnsPositiveHandleForNonZeroInput() {
         let handle = makeNativeRefFreezeHandle()
@@ -479,6 +484,7 @@ final class RuntimeNativeRefFreezeTests: IsolatedRuntimeXCTestCase {
 // ---------------------------------------------------------------------------
 
 final class RuntimeNativeRefDebuggingTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
 
     func testAssertionsEnabledReturnsBooleanValue() {
         let result = kk_assertions_enabled()

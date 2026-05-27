@@ -98,6 +98,7 @@ private let vetoableEdgeAcceptIfGreater: KKDelegateObserverEntryPoint = { _, old
 }
 
 final class RuntimeDelegateEdgeCaseTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcAndDelegate }
     override func resetIsolatedRuntimeTestState() {
         gEdgeState.reset()
     }
