@@ -519,6 +519,105 @@ extension CallTypeChecker {
         return finalType
     }
 
+    /// Resolves `value.readValue()` to the synthetic
+    /// `<T : CStructVar> T.readValue(): CValue<T>` extension when the
+    /// member-first lookup picks up `CPointed.readValue(size, align)` (an
+    /// inherited member that any `CStructVar`-bounded receiver exposes) and
+    /// the resolver rejects it on arity mismatch with no extension fallback.
+    ///
+    /// Returns `CValue<receiverType>` after binding the chosen callee.
+    func tryNativeCInteropReadValueExtensionFallback(
+        _ id: ExprID,
+        calleeName: InternedString,
+        isClassNameReceiver: Bool,
+        safeCall: Bool,
+        receiverID: ExprID,
+        args: [CallArgument],
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
+    ) -> TypeID? {
+        let sema = ctx.sema
+        let interner = ctx.interner
+        guard !isClassNameReceiver,
+              args.isEmpty,
+              interner.resolve(calleeName) == "readValue"
+        else {
+            return nil
+        }
+
+        let cinteropPkg = [interner.intern("kotlinx"), interner.intern("cinterop")]
+        guard let cStructVarSymbol = sema.symbols.lookup(
+            fqName: cinteropPkg + [interner.intern("CStructVar")]
+        ),
+              let cValueSymbol = sema.symbols.lookup(
+                  fqName: cinteropPkg + [interner.intern("CValue")]
+              )
+        else {
+            return nil
+        }
+        let cStructVarType = sema.types.make(.classType(ClassType(
+            classSymbol: cStructVarSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
+        let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+        // Accept any receiver that is a CStructVar subtype, including a type
+        // parameter whose upper bound is CStructVar (or one of its descendants).
+        let receiverSatisfiesCStructVar: Bool = {
+            if sema.types.isSubtype(nonNullReceiverType, cStructVarType) {
+                return true
+            }
+            if case let .typeParam(typeParam) = sema.types.kind(of: nonNullReceiverType) {
+                let upperBounds = sema.symbols.typeParameterUpperBounds(for: typeParam.symbol)
+                return upperBounds.contains { sema.types.isSubtype($0, cStructVarType) }
+            }
+            return false
+        }()
+        guard receiverSatisfiesCStructVar else {
+            return nil
+        }
+
+        let readValueFQName = cinteropPkg + [interner.intern("readValue")]
+        guard let chosen = sema.symbols.lookupAll(fqName: readValueFQName).first(where: { candidate in
+            guard let signature = sema.symbols.functionSignature(for: candidate),
+                  let recv = signature.receiverType,
+                  signature.parameterTypes.isEmpty,
+                  signature.typeParameterSymbols.count == 1
+            else {
+                return false
+            }
+            // The synthetic extension's declared receiver is its own type
+            // parameter; reject `CPointed.readValue(size, align)` (concrete
+            // receiver + 2 params) and any other unrelated overload.
+            return sema.types.kind(of: recv) == .typeParam(TypeParamType(
+                symbol: signature.typeParameterSymbols[0],
+                nullability: .nonNull
+            ))
+        }) else {
+            return nil
+        }
+
+        let returnType = sema.types.make(.classType(ClassType(
+            classSymbol: cValueSymbol,
+            args: [.invariant(nonNullReceiverType)],
+            nullability: .nonNull
+        )))
+        sema.bindings.bindCall(
+            id,
+            binding: CallBinding(
+                chosenCallee: chosen,
+                substitutedTypeArguments: [nonNullReceiverType],
+                parameterMapping: [:]
+            )
+        )
+        sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+        let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
+        sema.bindings.bindExprType(id, type: finalType)
+        return finalType
+    }
+
     func tryPathCharsetReadExtensionFallback(
         _ id: ExprID,
         calleeName: InternedString,
