@@ -321,7 +321,7 @@
 - [ ] STDLIB-TEXT-PROP-019: `isWhitespace` 拡張プロパティの実装
 - [x] STDLIB-TEXT-PROP-020: `lowercase` 拡張プロパティの実装
 - [x] STDLIB-TEXT-PROP-021: `titlecase` 拡張プロパティの実装
-- [ ] STDLIB-TEXT-PROP-022: `uppercase` 拡張プロパティの実装
+- [x] STDLIB-TEXT-PROP-022: `uppercase` 拡張プロパティの実装
 
 #### kotlin.text 関数の実装
 - [x] STDLIB-TEXT-FN-001: `all` 関数の実装
