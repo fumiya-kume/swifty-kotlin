@@ -474,7 +474,7 @@
 - [ ] STDLIB-TIME-FN-012: `toTimeUnit` 関数の実装
 
 #### kotlin.uuid 型の実装
-- [ ] STDLIB-UUID-TYPE-002: `Uuid` クラスの実装
+- [x] STDLIB-UUID-TYPE-002: `Uuid` クラスの実装
 
 #### kotlin.uuid 関数の実装
 - [ ] STDLIB-UUID-FN-001: `getUuid` 関数の実装
