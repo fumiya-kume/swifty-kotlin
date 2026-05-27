@@ -433,7 +433,7 @@
 - [x] STDLIB-TEXT-FN-107: `toShortOrNull` 関数の実装
 - [ ] STDLIB-TEXT-FN-108: `toSortedSet` 関数の実装
 - [ ] STDLIB-TEXT-FN-109: `toTypedArray` 関数の実装
-- [ ] STDLIB-TEXT-FN-110: `trim` 関数の実装
+- [x] STDLIB-TEXT-FN-110: `trim` 関数の実装
 - [x] STDLIB-TEXT-FN-111: `trimEnd` 関数の実装
 - [x] STDLIB-TEXT-FN-112: `trimIndent` 関数の実装
 - [x] STDLIB-TEXT-FN-113: `trimMargin` 関数の実装
