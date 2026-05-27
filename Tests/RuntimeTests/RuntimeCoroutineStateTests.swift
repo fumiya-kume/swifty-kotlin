@@ -14,7 +14,7 @@ private let runtimeCoroutineTestState = RuntimeCoroutineTestState()
 private func makeRuntimeString(_ value: String) -> Int {
     let box = RuntimeStringBox(value)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -103,6 +103,7 @@ func runtime_test_with_context_delay(_ continuation: Int, _ outThrown: UnsafeMut
 }
 
 final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     override func resetIsolatedRuntimeTestState() {
         runtimeCoroutineTestState.reset()
     }

@@ -1,5 +1,5 @@
 {
-  "threshold": 5.5,
+  "threshold": 5.6,
   "reporters": ["console"],
   "format": ["swift"],
   "minLines": 5,

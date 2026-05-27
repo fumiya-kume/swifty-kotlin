@@ -7,7 +7,7 @@ public func kk_box_int(_ value: Int) -> Int {
     // produced by kk_op_rangeTo, or an already-boxed RuntimeIntBox), pass it
     // through without double-boxing.
     if let objPointer = UnsafeMutableRawPointer(bitPattern: value) {
-        let isObjectPointer = runtimeStorage.withLock { state in
+        let isObjectPointer = runtimeStorage.withGCLock { state in
             state.objectPointers.contains(UInt(bitPattern: objPointer))
         }
         if isObjectPointer {
@@ -16,7 +16,7 @@ public func kk_box_int(_ value: Int) -> Int {
     }
     let box = RuntimeIntBox(value)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return Int(bitPattern: opaque)
@@ -27,7 +27,7 @@ public func kk_box_bool(_ value: Int) -> Int {
     if value == runtimeNullSentinelInt { return value }
     let box = RuntimeBoolBox(value != 0)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return Int(bitPattern: opaque)
@@ -63,7 +63,7 @@ public func kk_unbox_int(_ obj: Int) -> Int {
     guard let objPointer = UnsafeMutableRawPointer(bitPattern: obj) else {
         return obj
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: objPointer))
     }
     guard isObjectPointer else {
@@ -83,7 +83,7 @@ public func kk_unbox_bool(_ obj: Int) -> Int {
     guard let objPointer = UnsafeMutableRawPointer(bitPattern: obj) else {
         return obj != 0 ? 1 : 0
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: objPointer))
     }
     guard isObjectPointer else {
@@ -103,7 +103,7 @@ public func kk_box_long(_ value: Int) -> Int {
     // double-boxing so that kk_println_any / runtimeElementToString can
     // recognise the original object type.
     if let objPointer = UnsafeMutableRawPointer(bitPattern: value) {
-        let isObjectPointer = runtimeStorage.withLock { state in
+        let isObjectPointer = runtimeStorage.withGCLock { state in
             state.objectPointers.contains(UInt(bitPattern: objPointer))
         }
         if isObjectPointer {
@@ -112,7 +112,7 @@ public func kk_box_long(_ value: Int) -> Int {
     }
     let box = RuntimeLongBox(value)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return Int(bitPattern: opaque)
@@ -122,7 +122,7 @@ public func kk_box_long(_ value: Int) -> Int {
 public func kk_unbox_long(_ obj: Int) -> Int {
     if obj == runtimeNullSentinelInt { return 0 }
     guard let objPointer = UnsafeMutableRawPointer(bitPattern: obj) else { return obj }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: objPointer))
     }
     // Passthrough: value is not a heap object — treat as raw int (implicit widening)
@@ -143,7 +143,7 @@ public func kk_box_float(_ value: Int) -> Int {
     let floatBits = Float(bitPattern: UInt32(truncatingIfNeeded: value))
     let box = RuntimeFloatBox(floatBits)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return Int(bitPattern: opaque)
@@ -153,7 +153,7 @@ public func kk_box_float(_ value: Int) -> Int {
 public func kk_unbox_float(_ obj: Int) -> Int {
     if obj == runtimeNullSentinelInt { return 0 }
     guard let objPointer = UnsafeMutableRawPointer(bitPattern: obj) else { return obj }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: objPointer))
     }
     guard isObjectPointer else { return obj }
@@ -172,7 +172,7 @@ public func kk_box_double(_ value: Int) -> Int {
     let doubleBits = Double(bitPattern: UInt64(bitPattern: Int64(value)))
     let box = RuntimeDoubleBox(doubleBits)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return Int(bitPattern: opaque)
@@ -182,7 +182,7 @@ public func kk_box_double(_ value: Int) -> Int {
 public func kk_unbox_double(_ obj: Int) -> Int {
     if obj == runtimeNullSentinelInt { return 0 }
     guard let objPointer = UnsafeMutableRawPointer(bitPattern: obj) else { return obj }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: objPointer))
     }
     guard isObjectPointer else { return obj }
@@ -202,7 +202,7 @@ public func kk_box_char(_ value: Int) -> Int {
     // RuntimeCharBox returned by kk_string_singleOrNull), pass it through
     // without double-boxing.
     if let objPointer = UnsafeMutableRawPointer(bitPattern: value) {
-        let isObjectPointer = runtimeStorage.withLock { state in
+        let isObjectPointer = runtimeStorage.withGCLock { state in
             state.objectPointers.contains(UInt(bitPattern: objPointer))
         }
         if isObjectPointer {
@@ -211,7 +211,7 @@ public func kk_box_char(_ value: Int) -> Int {
     }
     let box = RuntimeCharBox(value)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return Int(bitPattern: opaque)
@@ -221,7 +221,7 @@ public func kk_box_char(_ value: Int) -> Int {
 public func kk_unbox_char(_ obj: Int) -> Int {
     if obj == runtimeNullSentinelInt { return 0 }
     guard let objPointer = UnsafeMutableRawPointer(bitPattern: obj) else { return obj }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: objPointer))
     }
     guard isObjectPointer else { return obj }

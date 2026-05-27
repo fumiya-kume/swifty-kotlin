@@ -1,7 +1,7 @@
 @testable import Runtime
 import XCTest
 
-final class RuntimeNativePrimitiveByteArrayAccessorsTests: IsolatedRuntimeXCTestCase {
+final class RuntimeNativePrimitiveByteArrayAccessorsTests: XCTestCase {
     private func makeByteArray(_ bytes: [Int]) -> Int {
         let array = kk_array_new(bytes.count)
         for (index, byte) in bytes.enumerated() {

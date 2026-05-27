@@ -775,6 +775,14 @@ public enum RuntimeABISpec {
             section: "System"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_js_array_toMutableList",
+            parameters: [
+                RuntimeABIParameter(name: "jsArrayRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_js_array_get",
             parameters: [
                 RuntimeABIParameter(name: "jsArrayRaw", type: .intptr),
@@ -843,6 +851,22 @@ public enum RuntimeABISpec {
             name: "kk_js_map_toMutableMap",
             parameters: [
                 RuntimeABIParameter(name: "jsMapRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_js_set_toMutableSet",
+            parameters: [
+                RuntimeABIParameter(name: "jsSetRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_js_set_toSet",
+            parameters: [
+                RuntimeABIParameter(name: "jsSetRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "System"
@@ -2940,6 +2964,7 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(name: "kk_path_createDirectories_attributes", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "attributesRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_createDirectory_attributes", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "attributesRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_createFile_attributes", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "attributesRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
+        RuntimeABIFunctionSpec(name: "kk_path_createParentDirectories_attributes", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr), RuntimeABIParameter(name: "attributesRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_createTempDirectory_directory_prefix_attributes", parameters: [RuntimeABIParameter(name: "directoryRaw", type: .intptr), RuntimeABIParameter(name: "prefixRaw", type: .intptr), RuntimeABIParameter(name: "attributesRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_createTempDirectory_prefix_attributes", parameters: [RuntimeABIParameter(name: "prefixRaw", type: .intptr), RuntimeABIParameter(name: "attributesRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Path"),
         RuntimeABIFunctionSpec(name: "kk_path_deleteIfExists", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr)], returnType: .intptr, section: "Path"),
@@ -3570,60 +3595,75 @@ public enum RuntimeABISpec {
         ),
     ]
 
-    public static let allFunctions: [RuntimeABIFunctionSpec] =
-        memoryFunctions
-            + exceptionFunctions
-            + testFunctions
-            + stringFunctions
-            + stringBridgeFunctions
-            + consolePrintFunctions
-            + ioFunctions
-            + systemFunctions
-            + gcFunctions
-            + coroutineFunctions
-            + boxingFunctions
-            + arrayFunctions
-            + operatorFunctions
-            + primitiveNumericConversionFunctions
-            + numericRuntimeBridgeFunctions
-            + rangeFunctions
-            + kPropertyStubFunctions + kParameterFunctions + kFunctionFunctions + callableRefFunctions + delegateFunctions
-            + dispatchBridgeFunctions
-            + bitwiseFunctions
-            + booleanFunctions
-            + charFunctions
-            + mathFunctions
-            + randomFunctions
-            + collectionFunctions
-            + collectionBridgeFunctions
-            + runtimeOnlyBridgeFunctions
-            + sequenceFunctions
-            + regexFunctions
-            + base64Functions
-            + hexFormatFunctions
-            + comparatorFunctions
-            + resultFunctions
-            + kotlinVersionFunctions
-            + deepRecursiveFunctions
-            + stringBuilderFunctions
-            + fileIOFunctions
-            + pathFunctions
-            + i18nFunctions
-            + uuidFunctions
-            + durationFunctions
-            + timeAndPathBridgeFunctions
-            + atomicFunctions
-            + nativeRefFunctions
-            + threadLocalFunctions
-            + threadFunctions
-            + securityFunctions
-            + parallelFunctions
-            + streamFunctions
-            + bigIntegerFunctions
-            + broadcastChannelFunctions
-            + serializationFunctions
-            + networkFunctions
-            + abiParityFunctions
+    /// Concatenation of every sub-array of `RuntimeABIFunctionSpec` defined in this module.
+    ///
+    /// The sub-arrays are listed in alphabetical order, one entry per line, so that
+    /// parallel branches adding a new category insert their entry at a unique
+    /// alphabetic position rather than all appending to the same trailing line.
+    /// This is purely a merge-conflict-prevention layout: the resulting element
+    /// set is unchanged from any other ordering.
+    ///
+    /// When adding a new sub-array, insert its name in alphabetical position.
+    /// Do NOT append at the end — that re-introduces the trailing-line conflict pattern.
+    public static let allFunctions: [RuntimeABIFunctionSpec] = ([
+        abiParityFunctions,
+        arrayFunctions,
+        atomicFunctions,
+        base64Functions,
+        bigIntegerFunctions,
+        bitwiseFunctions,
+        booleanFunctions,
+        boxingFunctions,
+        broadcastChannelFunctions,
+        callableRefFunctions,
+        charFunctions,
+        collectionBridgeFunctions,
+        collectionFunctions,
+        comparatorFunctions,
+        consolePrintFunctions,
+        coroutineFunctions,
+        deepRecursiveFunctions,
+        delegateFunctions,
+        dispatchBridgeFunctions,
+        durationFunctions,
+        exceptionFunctions,
+        fileIOFunctions,
+        gcFunctions,
+        hexFormatFunctions,
+        i18nFunctions,
+        ioFunctions,
+        kFunctionFunctions,
+        kParameterFunctions,
+        kPropertyStubFunctions,
+        kotlinVersionFunctions,
+        mathFunctions,
+        memoryFunctions,
+        nativeRefFunctions,
+        networkFunctions,
+        numericRuntimeBridgeFunctions,
+        operatorFunctions,
+        parallelFunctions,
+        pathFunctions,
+        primitiveNumericConversionFunctions,
+        randomFunctions,
+        rangeFunctions,
+        regexFunctions,
+        resultFunctions,
+        runtimeOnlyBridgeFunctions,
+        securityFunctions,
+        sequenceFunctions,
+        serializationFunctions,
+        streamFunctions,
+        stringBridgeFunctions,
+        stringBuilderFunctions,
+        stringFunctions,
+        systemFunctions,
+        testFunctions,
+        threadFunctions,
+        threadLocalFunctions,
+        timeAndPathBridgeFunctions,
+        uuidFunctions,
+    ] as [[RuntimeABIFunctionSpec]]).flatMap { $0 }
 
     public static func generateCHeader() -> String {
         var lines: [String] = []

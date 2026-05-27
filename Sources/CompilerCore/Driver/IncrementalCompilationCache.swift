@@ -7,6 +7,7 @@ import Foundation
 /// <cachePath>/
 ///   manifest.json       — file fingerprints from the previous build
 ///   deps.json           — dependency graph (symbol ↔ file relationships)
+///   frontend.json       — reusable AST/interner state for file-level frontend work
 ///   artifacts/          — final output artifacts keyed by build configuration
 /// ```
 public final class IncrementalCompilationCache {
@@ -190,10 +191,38 @@ public final class IncrementalCompilationCache {
         previousDependencyGraph
     }
 
+    public func buildConfigurationHash(for options: CompilerOptions) -> String {
+        Self.buildConfigurationHash(for: options)
+    }
+
+    public func loadFrontendState(for options: CompilerOptions) -> IncrementalFrontendState? {
+        let buildHash = Self.buildConfigurationHash(for: options)
+        guard previousBuildConfigurationHash == buildHash else {
+            return nil
+        }
+        let frontendPath = cachePath + "/frontend.json"
+        guard FileManager.default.fileExists(atPath: frontendPath),
+              let data = try? Data(contentsOf: URL(fileURLWithPath: frontendPath))
+        else {
+            return nil
+        }
+        guard let state = try? JSONDecoder().decode(IncrementalFrontendState.self, from: data),
+              state.version == IncrementalFrontendState.supportedVersion,
+              state.buildConfigurationHash == buildHash
+        else {
+            return nil
+        }
+        return state
+    }
+
     // MARK: - Saving state
 
     /// Saves the current fingerprints and the updated dependency graph to disk.
-    public func saveState(dependencyGraph: DependencyGraph, options: CompilerOptions? = nil) {
+    public func saveState(
+        dependencyGraph: DependencyGraph,
+        options: CompilerOptions? = nil,
+        frontendState: IncrementalFrontendState? = nil
+    ) {
         let fm = FileManager.default
 
         do {
@@ -221,6 +250,18 @@ public final class IncrementalCompilationCache {
                 to: URL(fileURLWithPath: cachePath + "/deps.json"),
                 options: .atomic
             )
+
+            if let frontendState {
+                let frontendEncoder = JSONEncoder()
+                frontendEncoder.outputFormatting = [.sortedKeys, .prettyPrinted]
+                let frontendData = try frontendEncoder.encode(frontendState)
+                try frontendData.write(
+                    to: URL(fileURLWithPath: cachePath + "/frontend.json"),
+                    options: .atomic
+                )
+            } else {
+                try? fm.removeItem(atPath: cachePath + "/frontend.json")
+            }
 
             previousFingerprints = currentFingerprints
             previousBuildConfigurationHash = manifest.buildConfigurationHash

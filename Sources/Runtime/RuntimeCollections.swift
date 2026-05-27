@@ -13,7 +13,7 @@ internal struct RuntimeElementKey: Hashable {
         // identical hashes, keeping the Hashable contract intact.
         var h = kk_any_hashCode(value, 0)
         if let ptr = UnsafeMutableRawPointer(bitPattern: value) {
-            let isObj = runtimeStorage.withLock { $0.objectPointers.contains(UInt(bitPattern: ptr)) }
+            let isObj = runtimeStorage.withGCLock { $0.objectPointers.contains(UInt(bitPattern: ptr)) }
             if isObj {
                 if let fb = tryCast(ptr, to: RuntimeFloatBox.self), fb.value == 0 {
                     h = kk_float_to_bits(Float(0))
@@ -353,7 +353,7 @@ public func kk_list_toMap(_ listRaw: Int) -> Int {
         guard let pointer = UnsafeMutableRawPointer(bitPattern: element) else {
             continue
         }
-        let isObjectPointer = runtimeStorage.withLock { state in
+        let isObjectPointer = runtimeStorage.withGCLock { state in
             state.objectPointers.contains(UInt(bitPattern: pointer))
         }
         guard isObjectPointer, let pair = tryCast(pointer, to: RuntimePairBox.self) else {

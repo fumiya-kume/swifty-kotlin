@@ -3,6 +3,7 @@ import Foundation
 import XCTest
 
 final class RuntimeBufferedWriterTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     func testPathBufferedWriterWritesAndTruncatesFile() throws {
         let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try "old-content".write(to: fileURL, atomically: true, encoding: .utf8)

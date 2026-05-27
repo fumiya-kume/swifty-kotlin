@@ -3,6 +3,7 @@ import Foundation
 import XCTest
 
 final class RuntimePathCopyToTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     func testPathCopyToOptionsCopiesFileAndReturnsTargetPath() throws {
         let sourceURL = try makeTempFile(contents: "copy me")
         let targetURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)

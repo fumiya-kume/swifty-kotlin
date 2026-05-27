@@ -3,7 +3,7 @@ import XCTest
 
 // STDLIB-573/574: Tests for String.encodeToByteArray() and ByteArray.decodeToString()
 
-final class RuntimeEncodeDecodeTests: IsolatedRuntimeXCTestCase {
+final class RuntimeEncodeDecodeTests: XCTestCase {
 
     // MARK: - Helpers
 

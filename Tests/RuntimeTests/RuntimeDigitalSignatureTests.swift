@@ -3,7 +3,7 @@ import Foundation
 import XCTest
 
 #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
-final class RuntimeDigitalSignatureTests: IsolatedRuntimeXCTestCase {
+final class RuntimeDigitalSignatureTests: XCTestCase {
     #if canImport(CommonCrypto)
     private func runtimeString(_ text: String) -> Int {
         text.withCString { cstr in

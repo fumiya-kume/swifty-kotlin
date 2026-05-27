@@ -1,7 +1,7 @@
 @testable import Runtime
 import XCTest
 
-final class RuntimeBoxingTests: IsolatedRuntimeXCTestCase {
+final class RuntimeBoxingTests: XCTestCase {
     // MARK: - kk_box_int / kk_unbox_int
 
     func testBoxAndUnboxIntRoundTrip() {

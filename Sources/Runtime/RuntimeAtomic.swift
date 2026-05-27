@@ -91,7 +91,7 @@ private func atomicIntBox(from raw: Int) -> AtomicIntBox? {
 public func kk_atomic_int_create(_ initial: Int) -> Int {
     let box = AtomicIntBox(initial: initial)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -291,7 +291,7 @@ private func atomicLongBox(from raw: Int) -> AtomicLongBox? {
 public func kk_atomic_long_create(_ initial: Int) -> Int {
     let box = AtomicLongBox(initial: initial)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -478,7 +478,7 @@ private func atomicBoolBox(from raw: Int) -> AtomicBooleanBox? {
 public func kk_atomic_bool_create(_ initial: Int) -> Int {
     let box = AtomicBooleanBox(initial: initial != 0)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -630,7 +630,7 @@ private func atomicRefBox(from raw: Int) -> AtomicRefBox? {
 public func kk_atomic_ref_create(_ initial: Int) -> Int {
     let box = AtomicRefBox(initial: initial)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -809,7 +809,7 @@ private func atomicIntArrayBox(from raw: Int) -> AtomicIntArrayBox? {
 public func kk_atomic_int_array_create(_ size: Int) -> Int {
     let box = AtomicIntArrayBox(size: size)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -1134,7 +1134,7 @@ private func atomicLongArrayBox(from raw: Int) -> AtomicLongArrayBox? {
 public func kk_atomic_long_array_create(_ size: Int) -> Int {
     let box = AtomicLongArrayBox(size: size)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -1446,7 +1446,7 @@ private func atomicRefArrayBox(from raw: Int) -> AtomicRefArrayBox? {
 
 private func registerAtomicRefArrayBox(_ box: AtomicRefArrayBox) -> Int {
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)

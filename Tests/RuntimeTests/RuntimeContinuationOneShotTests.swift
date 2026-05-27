@@ -11,6 +11,7 @@ import XCTest
 // concurrent callers on separate threads are correctly serialised.
 
 final class RuntimeContinuationOneShotTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
 
     // MARK: - Helpers
 

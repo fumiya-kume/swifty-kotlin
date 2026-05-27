@@ -1,18 +1,18 @@
-public enum TypeArgRef: Equatable {
+public enum TypeArgRef: Equatable, Codable {
     case invariant(TypeRefID)
     case out(TypeRefID)
     case `in`(TypeRefID)
     case star
 }
 
-public enum TypeRef: Equatable {
+public enum TypeRef: Equatable, Codable {
     case named(path: [InternedString], args: [TypeArgRef], nullable: Bool)
     case functionType(contextReceivers: [TypeRefID], receiver: TypeRefID?, params: [TypeRefID], returnType: TypeRefID, isSuspend: Bool, nullable: Bool)
     case intersection(parts: [TypeRefID])
     case annotated(base: TypeRefID, annotations: [AnnotationNode])
 }
 
-public enum BinaryOp: Equatable {
+public enum BinaryOp: Equatable, Codable {
     case add
     case subtract
     case multiply
@@ -66,7 +66,7 @@ public enum BinaryOp: Equatable {
     }
 }
 
-public enum UnaryOp: Equatable {
+public enum UnaryOp: Equatable, Codable {
     case not
     case unaryPlus
     case unaryMinus
@@ -80,7 +80,7 @@ public enum UnaryOp: Equatable {
     }
 }
 
-public enum CompoundAssignOp: Equatable {
+public enum CompoundAssignOp: Equatable, Codable {
     case plusAssign
     case minusAssign
     case timesAssign
@@ -99,7 +99,7 @@ public enum CompoundAssignOp: Equatable {
     }
 }
 
-public struct WhenBranch: Equatable {
+public struct WhenBranch: Equatable, Codable {
     public let conditions: [ExprID]
     public let guard_: ExprID?
     public let body: ExprID
@@ -113,7 +113,7 @@ public struct WhenBranch: Equatable {
     }
 }
 
-public struct CallArgument: Equatable {
+public struct CallArgument: Equatable, Codable {
     public let label: InternedString?
     public let isSpread: Bool
     public let expr: ExprID
@@ -125,7 +125,7 @@ public struct CallArgument: Equatable {
     }
 }
 
-public struct CatchClause: Equatable {
+public struct CatchClause: Equatable, Codable {
     public let paramName: InternedString?
     public let paramTypeName: InternedString?
     public let body: ExprID
@@ -139,12 +139,12 @@ public struct CatchClause: Equatable {
     }
 }
 
-public enum StringTemplatePart: Equatable {
+public enum StringTemplatePart: Equatable, Codable {
     case literal(InternedString)
     case expression(ExprID)
 }
 
-public enum Expr: Equatable {
+public enum Expr: Equatable, Codable {
     case intLiteral(Int64, SourceRange)
     case longLiteral(Int64, SourceRange)
     case uintLiteral(UInt64, SourceRange)

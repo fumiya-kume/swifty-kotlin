@@ -43,7 +43,7 @@ func runtimeCaptureMemorySnapshot(nowNanos: UInt64 = DispatchTime.now().uptimeNa
     let maxBytes = runtimeMaximumMemoryBytes()
     let totalBytes = min(max(usedBytes, 0), maxBytes)
     let freeBytes = max(maxBytes - totalBytes, 0)
-    let heapObjectCount = runtimeStorage.withLock { state in
+    let heapObjectCount = runtimeStorage.withGCLock { state in
         state.heapObjects.count
     }
     return RuntimeMemorySnapshot(

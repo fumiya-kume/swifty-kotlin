@@ -28,7 +28,7 @@ private func makeRuntimeString(_ value: String) -> Int {
 private func makeRuntimeIntBox(_ value: Int) -> Int {
     let box = RuntimeIntBox(value)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -37,7 +37,7 @@ private func makeRuntimeIntBox(_ value: Int) -> Int {
 private func makeRuntimeBoolBox(_ value: Bool) -> Int {
     let box = RuntimeBoolBox(value)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -80,9 +80,10 @@ private let lazyStringThunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) ->
     }
 }
 
-final class RuntimeAssertionEdgeCaseTests: IsolatedRuntimeXCTestCase {
+final class RuntimeAssertionEdgeCaseTests: XCTestCase {
 
-    override func resetIsolatedRuntimeTestState() {
+    override func setUp() {
+        super.setUp()
         lazyNotInvoked_Counter = 0
         _ = kk_assertions_reset()
     }

@@ -75,7 +75,7 @@ public func kk_debugging_thread_count() -> Int {
 
 @_cdecl("kk_debugging_global_object_count")
 public func kk_debugging_global_object_count() -> Int {
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.count + state.heapObjects.count
     }
 }

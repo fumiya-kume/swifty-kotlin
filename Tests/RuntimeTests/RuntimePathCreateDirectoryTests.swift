@@ -3,6 +3,7 @@ import Foundation
 import XCTest
 
 final class RuntimePathCreateDirectoryTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     func testPathCreateDirectoryAttributesCreatesSingleDirectory() throws {
         let rootURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let directoryURL = rootURL.appendingPathComponent("leaf")

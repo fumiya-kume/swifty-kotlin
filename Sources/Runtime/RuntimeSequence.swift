@@ -20,6 +20,9 @@ func runtimeSequenceSourceElements(from rawValue: Int) -> [Int]? {
     if let array = runtimeArrayBox(from: rawValue) {
         return array.elements
     }
+    if let set = runtimeSetBox(from: rawValue) {
+        return set.elements
+    }
     return nil
 }
 
@@ -2349,6 +2352,24 @@ public func kk_sequence_firstOrNull(_ seqRaw: Int, _ outThrown: UnsafeMutablePoi
     return found ? result : runtimeNullSentinelInt
 }
 
+@_cdecl("kk_sequence_random")
+public func kk_sequence_random(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let elements = runtimeSequenceSourceElementsOrThrow(
+        from: seqRaw,
+        caller: #function,
+        outThrown: outThrown
+    ) else {
+        return 0
+    }
+    if let outThrown, outThrown.pointee != 0 { return 0 }
+    guard let element = elements.randomElement() else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kEmptySequenceNoSuchElement)
+        return 0
+    }
+    return element
+}
+
 @_cdecl("kk_sequence_randomOrNull")
 public func kk_sequence_randomOrNull(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
@@ -2834,6 +2855,28 @@ public func kk_sequence_elementAt(_ seqRaw: Int, _ index: Int, _ outThrown: Unsa
     return elements[index]
 }
 
+@_cdecl("kk_sequence_elementAtOrElse")
+public func kk_sequence_elementAtOrElse(
+    _ seqRaw: Int,
+    _ index: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
+    if elements.indices.contains(index) {
+        return elements[index]
+    }
+    let defaultValue = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var thrown = 0
+    let result = defaultValue(closureRaw, index, &thrown)
+    if thrown != 0 {
+        outThrown?.pointee = thrown
+        return runtimeNullSentinelInt
+    }
+    return result
+}
+
 @_cdecl("kk_sequence_sum")
 public func kk_sequence_sum(_ seqRaw: Int) -> Int {
     let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
@@ -3185,6 +3228,45 @@ public func kk_sequence_reduceRight(
     return acc
 }
 
+@_cdecl("kk_sequence_reduceRightOrNull")
+public func kk_sequence_reduceRightOrNull(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    var elements: [Int] = []
+    let traversalState = runtimeTraverseSequenceSource(seqRaw, caller: #function, outThrown: outThrown) { elem in
+        elements.append(elem)
+        return true
+    }
+    if let outThrown, outThrown.pointee != 0 { return 0 }
+    if let traversalState, traversalState.limitReached {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached)
+        return 0
+    }
+    guard let last = elements.last else { return runtimeNullSentinelInt }
+    var acc = maybeUnbox(last)
+    guard elements.count > 1 else { return acc }
+
+    for index in stride(from: elements.count - 2, through: 0, by: -1) {
+        var thrown = 0
+        let nextAcc = runtimeInvokeCollectionLambda2(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            lhs: elements[index],
+            rhs: acc,
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return 0
+        }
+        acc = maybeUnbox(nextAcc)
+    }
+    return acc
+}
+
 @_cdecl("kk_sequence_reduceRightIndexed")
 public func kk_sequence_reduceRightIndexed(
     _ seqRaw: Int,
@@ -3227,7 +3309,6 @@ public func kk_sequence_reduceRightIndexed(
     }
     return acc
 }
-
 
 
 // MARK: - Sequence Operations: chunked/windowed/onEach (STDLIB-276)
@@ -3446,7 +3527,7 @@ public func kk_sequence_toMap(_ seqRaw: Int) -> Int {
         guard let pointer = UnsafeMutableRawPointer(bitPattern: element) else {
             fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_toMap element is not a valid Pair handle")
         }
-        let isObjectPointer = runtimeStorage.withLock { state in
+        let isObjectPointer = runtimeStorage.withGCLock { state in
             state.objectPointers.contains(UInt(bitPattern: pointer))
         }
         guard isObjectPointer, let pair = tryCast(pointer, to: RuntimePairBox.self) else {

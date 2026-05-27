@@ -2575,11 +2575,13 @@ extension CallLowerer {
                 let lastIndexOfName = interner.intern("lastIndexOf")
                 let indexOfLastName = interner.intern("indexOfLast")
                 let elementAtName = interner.intern("elementAt")
+                let elementAtOrElseName = interner.intern("elementAtOrElse")
                 let elementAtOrNullName = interner.intern("elementAtOrNull")
                 let filterIndexedName = interner.intern("filterIndexed")
                 let findLastName = interner.intern("findLast")
                 let lastName = interner.intern("last")
                 let partitionName = interner.intern("partition")
+                let minByName = interner.intern("minBy")
                 let minName = interner.intern("min")
                 let minByOrNullName = interner.intern("minByOrNull")
                 let maxByOrNullName = interner.intern("maxByOrNull")
@@ -2663,8 +2665,12 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_indexOfLast"
                 } else if calleeName == elementAtName {
                     runtimeCallee = "kk_sequence_elementAt"
+                } else if calleeName == elementAtOrElseName {
+                    runtimeCallee = "kk_sequence_elementAtOrElse"
                 } else if calleeName == elementAtOrNullName {
                     runtimeCallee = "kk_sequence_elementAtOrNull"
+                } else if calleeName == interner.intern("elementAtOrElse") {
+                    runtimeCallee = "kk_sequence_elementAtOrElse"
                 } else if calleeName == filterIndexedName {
                     runtimeCallee = "kk_sequence_filterIndexed"
                 } else if calleeName == lastName {
@@ -2673,6 +2679,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_findLast"
                 } else if calleeName == partitionName {
                     runtimeCallee = "kk_sequence_partition"
+                } else if calleeName == minByName {
+                    runtimeCallee = "kk_sequence_minBy"
                 } else if calleeName == minName {
                     runtimeCallee = "kk_sequence_min"
                 } else if calleeName == interner.intern("maxBy") {
@@ -2719,6 +2727,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_firstNotNullOf"
                 } else if calleeName == interner.intern("firstNotNullOfOrNull") {
                     runtimeCallee = "kk_sequence_firstNotNullOfOrNull"
+                } else if calleeName == interner.intern("random") {
+                    runtimeCallee = "kk_sequence_random"
                 } else if calleeName == interner.intern("randomOrNull") {
                     runtimeCallee = "kk_sequence_randomOrNull"
                 } else if calleeName == interner.intern("requireNoNulls") {
@@ -2767,12 +2777,18 @@ extension CallLowerer {
                     runtimeCallee = useIterableRuntimeForCollectionFallback
                         ? "kk_list_reduceRight"
                         : "kk_sequence_reduceRight"
+                } else if calleeName == interner.intern("reduce") {
+                    runtimeCallee = "kk_sequence_reduce"
                 } else if calleeName == interner.intern("runningReduceIndexed") {
                     runtimeCallee = "kk_sequence_runningReduceIndexed"
                 } else if calleeName == interner.intern("reduceRightIndexed") {
                     runtimeCallee = useIterableRuntimeForCollectionFallback
                         ? "kk_list_reduceRightIndexed"
                         : "kk_sequence_reduceRightIndexed"
+                } else if calleeName == interner.intern("reduceRightOrNull") {
+                    runtimeCallee = useIterableRuntimeForCollectionFallback
+                        ? "kk_list_reduceRightOrNull"
+                        : "kk_sequence_reduceRightOrNull"
                 } else if calleeName == interner.intern("shuffled") {
                     switch normalizedArgIDs.count {
                     case 0: runtimeCallee = "kk_sequence_shuffled"
@@ -2814,8 +2830,10 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_findLast"
                         || runtimeCallee == "kk_sequence_takeLast"
                         || runtimeCallee == "kk_sequence_elementAt"
+                        || runtimeCallee == "kk_sequence_elementAtOrElse"
                         || runtimeCallee == "kk_sequence_last"
                         || runtimeCallee == "kk_iterable_last"
+                        || runtimeCallee == "kk_sequence_minBy"
                         || runtimeCallee == "kk_sequence_min"
                         || runtimeCallee == "kk_sequence_maxBy"
                         || runtimeCallee == "kk_sequence_minByOrNull"
@@ -2841,6 +2859,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_mapIndexedNotNull"
                         || runtimeCallee == "kk_sequence_firstNotNullOf"
                         || runtimeCallee == "kk_sequence_firstNotNullOfOrNull"
+                        || runtimeCallee == "kk_sequence_random"
                         || runtimeCallee == "kk_sequence_randomOrNull"
                         || runtimeCallee == "kk_sequence_mapIndexed"
                         || runtimeCallee == "kk_sequence_filterIndexed"
@@ -2849,10 +2868,13 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_onEach"
                         || runtimeCallee == "kk_sequence_onEachIndexed"
                         || runtimeCallee == "kk_sequence_reduceOrNull"
-                        || runtimeCallee == "kk_sequence_reduceRight"
-                        || runtimeCallee == "kk_sequence_runningReduceIndexed"
+                        || runtimeCallee == "kk_sequence_reduce"
                         || runtimeCallee == "kk_sequence_reduceRightIndexed"
                         || runtimeCallee == "kk_list_reduceRightIndexed"
+                        || runtimeCallee == "kk_sequence_reduceRight"
+                        || runtimeCallee == "kk_sequence_reduceRightOrNull"
+                        || runtimeCallee == "kk_list_reduceRightOrNull"
+                        || runtimeCallee == "kk_sequence_runningReduceIndexed"
                         || runtimeCallee == "kk_sequence_ifEmpty"
                         || runtimeCallee == "kk_sequence_zipWithNextTransform"
                     var runtimeArguments = [loweredReceiverID] + normalizedArgIDs
@@ -2908,7 +2930,9 @@ extension CallLowerer {
                     }
                     if (runtimeCallee == "kk_sequence_indexOfFirst"
                         || runtimeCallee == "kk_sequence_reduceRightIndexed"
-                        || runtimeCallee == "kk_list_reduceRightIndexed"),
+                        || runtimeCallee == "kk_list_reduceRightIndexed"
+                        || runtimeCallee == "kk_sequence_reduceRightOrNull"
+                        || runtimeCallee == "kk_list_reduceRightOrNull"),
                        normalizedArgIDs.count == 1
                     {
                         let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
@@ -2935,6 +2959,28 @@ extension CallLowerer {
                     if (runtimeCallee == "kk_sequence_reduceRight" || runtimeCallee == "kk_list_reduceRight"),
                        normalizedArgIDs.count == 1
                     {
+                        let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                            normalizedArgIDs[0],
+                            sema: sema,
+                            arena: arena,
+                            interner: interner,
+                            instructions: &instructions
+                        )
+                        runtimeArguments = [loweredReceiverID, fnPtrExpr, envPtrExpr]
+                    }
+                    if runtimeCallee == "kk_sequence_reduceRightOrNull",
+                       normalizedArgIDs.count == 1
+                    {
+                        let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                            normalizedArgIDs[0],
+                            sema: sema,
+                            arena: arena,
+                            interner: interner,
+                            instructions: &instructions
+                        )
+                        runtimeArguments = [loweredReceiverID, fnPtrExpr, envPtrExpr]
+                    }
+                    if runtimeCallee == "kk_sequence_reduce", normalizedArgIDs.count == 1 {
                         let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
                             normalizedArgIDs[0],
                             sema: sema,
@@ -2980,6 +3026,18 @@ extension CallLowerer {
                             instructions: &instructions
                         )
                         runtimeArguments = [loweredReceiverID, destinationArg, fnPtrExpr, envPtrExpr]
+                    }
+                    if runtimeCallee == "kk_sequence_elementAtOrElse",
+                       normalizedArgIDs.count == 2
+                    {
+                        let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                            normalizedArgIDs[1],
+                            sema: sema,
+                            arena: arena,
+                            interner: interner,
+                            instructions: &instructions
+                        )
+                        runtimeArguments = [loweredReceiverID, normalizedArgIDs[0], fnPtrExpr, envPtrExpr]
                     }
                     instructions.append(.call(
                         symbol: nil,

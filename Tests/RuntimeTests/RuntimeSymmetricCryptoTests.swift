@@ -2,7 +2,7 @@ import Foundation
 @testable import Runtime
 import XCTest
 
-final class RuntimeSymmetricCryptoTests: IsolatedRuntimeXCTestCase {
+final class RuntimeSymmetricCryptoTests: XCTestCase {
     #if canImport(CommonCrypto)
     private func runtimeString(_ text: String) -> Int {
         text.withCString { cstr in

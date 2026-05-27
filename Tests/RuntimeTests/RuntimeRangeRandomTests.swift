@@ -1,7 +1,7 @@
 @testable import Runtime
 import XCTest
 
-final class RuntimeRangeRandomTests: IsolatedRuntimeXCTestCase {
+final class RuntimeRangeRandomTests: XCTestCase {
     func testIntRangeRandomReturnsValueInsideBounds() {
         let range = kk_op_rangeTo(1, 5)
         var thrown = 0

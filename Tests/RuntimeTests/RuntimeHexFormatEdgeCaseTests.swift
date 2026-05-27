@@ -14,7 +14,7 @@ import XCTest
 // - String.hexToInt(format) – basic parse
 // - String.hexToLong(format) – basic parse
 
-final class RuntimeHexFormatEdgeCaseTests: IsolatedRuntimeXCTestCase {
+final class RuntimeHexFormatEdgeCaseTests: XCTestCase {
 
     // MARK: - Helpers
 

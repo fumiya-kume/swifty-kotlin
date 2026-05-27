@@ -1,7 +1,7 @@
 @testable import Runtime
 import XCTest
 
-final class RuntimeBigDecimalTests: IsolatedRuntimeXCTestCase {
+final class RuntimeBigDecimalTests: XCTestCase {
     private func runtimeString(_ text: String) -> Int {
         text.withCString { cstr in
             cstr.withMemoryRebound(to: UInt8.self, capacity: text.utf8.count) { ptr in

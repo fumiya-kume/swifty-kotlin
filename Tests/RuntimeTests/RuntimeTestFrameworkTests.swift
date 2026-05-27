@@ -1,7 +1,7 @@
 @testable import Runtime
 import XCTest
 
-final class RuntimeTestFrameworkTests: IsolatedRuntimeXCTestCase {
+final class RuntimeTestFrameworkTests: XCTestCase {
     private func makeRuntimeString(_ value: String) -> Int {
         value.withCString { cstr in
             cstr.withMemoryRebound(to: UInt8.self, capacity: value.utf8.count) { ptr in

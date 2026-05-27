@@ -64,6 +64,7 @@ private func runtime_mutex_with_lock_action(_ envRaw: Int) -> Int {
 }
 
 final class RuntimeMutexTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     override func resetIsolatedRuntimeTestState() {
         runtimeMutexTestState.reset()
         runtimeMutexWithLockObservedLockedInside = false

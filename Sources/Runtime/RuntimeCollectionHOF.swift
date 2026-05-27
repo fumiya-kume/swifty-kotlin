@@ -39,7 +39,7 @@ func runtimeSortedWithComparatorInvoke(
 ) -> (Int, Int, UnsafeMutablePointer<Int>?) -> Int {
     if closureRaw == 0,
        let rawPointer = UnsafeMutableRawPointer(bitPattern: fnPtr),
-       runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: rawPointer)) })
+       runtimeStorage.withGCLock({ state in state.objectPointers.contains(UInt(bitPattern: rawPointer)) })
     {
         let compareFnPtr = kk_itable_lookup(fnPtr, 0, 0)
         if compareFnPtr != 0 {
@@ -2286,11 +2286,11 @@ public func kk_list_windowed_transform(
 @_cdecl("kk_list_indexOf")
 public func kk_list_indexOf(_ listRaw: Int, _ element: Int) -> Int {
     if let ptr = UnsafeMutableRawPointer(bitPattern: listRaw),
-       runtimeStorage.withLock({ $0.objectPointers.contains(UInt(bitPattern: ptr)) }),
+       runtimeStorage.withGCLock({ $0.objectPointers.contains(UInt(bitPattern: ptr)) }),
        tryCast(ptr, to: RuntimeStringBox.self) != nil
     {
         if let elementPtr = UnsafeMutableRawPointer(bitPattern: element),
-           runtimeStorage.withLock({ $0.objectPointers.contains(UInt(bitPattern: elementPtr)) }),
+           runtimeStorage.withGCLock({ $0.objectPointers.contains(UInt(bitPattern: elementPtr)) }),
            tryCast(elementPtr, to: RuntimeStringBox.self) != nil
         {
             return kk_string_indexOf(listRaw, element)
@@ -2307,11 +2307,11 @@ public func kk_list_indexOf(_ listRaw: Int, _ element: Int) -> Int {
 @_cdecl("kk_list_lastIndexOf")
 public func kk_list_lastIndexOf(_ listRaw: Int, _ element: Int) -> Int {
     if let ptr = UnsafeMutableRawPointer(bitPattern: listRaw),
-       runtimeStorage.withLock({ $0.objectPointers.contains(UInt(bitPattern: ptr)) }),
+       runtimeStorage.withGCLock({ $0.objectPointers.contains(UInt(bitPattern: ptr)) }),
        tryCast(ptr, to: RuntimeStringBox.self) != nil
     {
         if let elementPtr = UnsafeMutableRawPointer(bitPattern: element),
-           runtimeStorage.withLock({ $0.objectPointers.contains(UInt(bitPattern: elementPtr)) }),
+           runtimeStorage.withGCLock({ $0.objectPointers.contains(UInt(bitPattern: elementPtr)) }),
            tryCast(elementPtr, to: RuntimeStringBox.self) != nil
         {
             return kk_string_lastIndexOf(listRaw, element)
@@ -2329,7 +2329,7 @@ public func kk_list_lastIndexOf(_ listRaw: Int, _ element: Int) -> Int {
 @_cdecl("kk_list_indexOfFirst")
 public func kk_list_indexOfFirst(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     if let ptr = UnsafeMutableRawPointer(bitPattern: listRaw),
-       runtimeStorage.withLock({ $0.objectPointers.contains(UInt(bitPattern: ptr)) }),
+       runtimeStorage.withGCLock({ $0.objectPointers.contains(UInt(bitPattern: ptr)) }),
        tryCast(ptr, to: RuntimeStringBox.self) != nil
     {
         return kk_string_indexOfFirst(listRaw, fnPtr, closureRaw, outThrown)
@@ -2347,7 +2347,7 @@ public func kk_list_indexOfFirst(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int
 @_cdecl("kk_list_indexOfLast")
 public func kk_list_indexOfLast(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     if let ptr = UnsafeMutableRawPointer(bitPattern: listRaw),
-       runtimeStorage.withLock({ $0.objectPointers.contains(UInt(bitPattern: ptr)) }),
+       runtimeStorage.withGCLock({ $0.objectPointers.contains(UInt(bitPattern: ptr)) }),
        tryCast(ptr, to: RuntimeStringBox.self) != nil
     {
         return kk_string_indexOfLast(listRaw, fnPtr, closureRaw, outThrown)

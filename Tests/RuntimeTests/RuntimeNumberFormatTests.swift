@@ -2,7 +2,7 @@ import Foundation
 @testable import Runtime
 import XCTest
 
-final class RuntimeNumberFormatTests: IsolatedRuntimeXCTestCase {
+final class RuntimeNumberFormatTests: XCTestCase {
     func testIntegerFormatUsesLocaleGrouping() {
         let locale = kk_locale_new(runtimeString("de_DE"))
         let formatter = kk_numberformat_getIntegerInstance(locale)

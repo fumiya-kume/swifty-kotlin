@@ -9,10 +9,7 @@ private func makeRuntimeString(_ value: String) -> Int {
     }
 }
 
-final class RuntimeAssertionsTests: IsolatedRuntimeXCTestCase {
-    override func resetIsolatedRuntimeTestState() {
-        // No global state to reset for these typed exception box tests
-    }
+final class RuntimeAssertionsTests: XCTestCase {
 
     // MARK: - RuntimeAssertionErrorBox
 

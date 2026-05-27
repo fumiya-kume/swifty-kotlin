@@ -1,7 +1,7 @@
 @testable import Runtime
 import XCTest
 
-final class RuntimeInstantTests: IsolatedRuntimeXCTestCase {
+final class RuntimeInstantTests: XCTestCase {
     func testInstantFromEpochMillisecondsUsesValueEquality() {
         let first = kk_instant_from_epoch_millis(0)
         let second = kk_instant_from_epoch_millis(0)

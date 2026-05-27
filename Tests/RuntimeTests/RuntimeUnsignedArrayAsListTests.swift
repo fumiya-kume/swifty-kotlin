@@ -11,6 +11,7 @@ private func collectionLambdaPointer(_ fn: @convention(c) (Int, Int, UnsafeMutab
 }
 
 final class RuntimeUnsignedArrayAsListTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     private func makeRuntimeArray(_ elements: [Int]) -> Int {
         let box = RuntimeArrayBox(length: elements.count)
         box.elements = elements
