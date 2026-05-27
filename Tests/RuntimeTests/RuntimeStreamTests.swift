@@ -3,6 +3,7 @@ import Foundation
 import XCTest
 
 final class RuntimeStreamTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     func testInputStreamReadAvailableSkipAndClose() throws {
         let fileURL = try makeTempFile(contents: "abcd")
         defer { try? FileManager.default.removeItem(at: fileURL) }

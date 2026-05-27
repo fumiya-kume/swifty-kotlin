@@ -1709,6 +1709,43 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(nativePlacementType, for: nativePlacementSymbol)
+        let nativePlacementAllocName = interner.intern("alloc")
+        let nativePlacementAllocFQName = cinteropPkg + [nativePlacementAllocName]
+        let nativePlacementAllocTypeParameterName = interner.intern("T")
+        let nativePlacementAllocTypeParameterFQName = nativePlacementAllocFQName + [nativePlacementAllocTypeParameterName]
+        let nativePlacementAllocTypeParameterSymbol: SymbolID = if let existing = symbols.lookup(
+            fqName: nativePlacementAllocTypeParameterFQName
+        ) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: nativePlacementAllocTypeParameterName,
+                fqName: nativePlacementAllocTypeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic, .reifiedTypeParameter]
+            )
+        }
+        symbols.insertFlags([.synthetic, .reifiedTypeParameter], for: nativePlacementAllocTypeParameterSymbol)
+        symbols.setTypeParameterUpperBounds([cVariableType], for: nativePlacementAllocTypeParameterSymbol)
+        let nativePlacementAllocTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: nativePlacementAllocTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        registerSyntheticNativeTopLevelFunction(
+            named: "alloc",
+            packageFQName: cinteropPkg,
+            receiverType: nativePlacementType,
+            parameters: [],
+            returnType: nativePlacementAllocTypeParameterType,
+            typeParameterSymbols: [nativePlacementAllocTypeParameterSymbol],
+            typeParameterUpperBoundsList: [[cVariableType]],
+            reifiedTypeParameterIndices: [0],
+            flags: [.synthetic, .inlineFunction],
+            symbols: symbols,
+            interner: interner
+        )
 
         let nativeFreeablePlacementType = types.make(.classType(ClassType(
             classSymbol: nativeFreeablePlacementSymbol,
@@ -1718,6 +1755,24 @@ extension DataFlowSemaPhase {
         symbols.setPropertyType(nativeFreeablePlacementType, for: nativeFreeablePlacementSymbol)
         symbols.setDirectSupertypes([nativePlacementSymbol], for: nativeFreeablePlacementSymbol)
         types.setNominalDirectSupertypes([nativePlacementSymbol], for: nativeFreeablePlacementSymbol)
+
+        registerSyntheticNativeTopLevelProperty(
+            named: "nativeHeap",
+            packageFQName: cinteropPkg,
+            packageSymbol: cinteropPkgSymbol,
+            propertyType: nativeFreeablePlacementType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeTopLevelFunction(
+            named: "free",
+            packageFQName: cinteropPkg,
+            receiverType: nativeFreeablePlacementType,
+            parameters: [(name: "pointed", type: nativePointedType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
 
         let deferScopeType = types.make(.classType(ClassType(
             classSymbol: deferScopeSymbol,
@@ -2071,6 +2126,22 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
         }
+        registerSyntheticCPointerPointedProperty(
+            cPointerSymbol: cPointerSymbol,
+            cPointedType: cPointedType,
+            packageFQName: cinteropPkg,
+            packageSymbol: cinteropPkgSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetProperty(
+            named: "rawValue",
+            ownerSymbol: cPointerSymbol,
+            propertyType: nativePtrType,
+            symbols: symbols,
+            interner: interner
+        )
         configureSingleTypeParameterNominal(
             ownerSymbol: cPointerVarOfSymbol,
             fqName: cinteropPkg + [interner.intern("CPointerVarOf")],
@@ -2433,6 +2504,53 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let asStableRefName = interner.intern("asStableRef")
+        let asStableRefFQName = cinteropPkg + [asStableRefName]
+        let asStableRefTypeParameterName = interner.intern("T")
+        let asStableRefTypeParameterFQName = asStableRefFQName + [asStableRefTypeParameterName]
+        let asStableRefTypeParameterSymbol: SymbolID = if let existing = symbols.lookup(
+            fqName: asStableRefTypeParameterFQName
+        ) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: asStableRefTypeParameterName,
+                fqName: asStableRefTypeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic, .reifiedTypeParameter]
+            )
+        }
+        symbols.insertFlags([.synthetic, .reifiedTypeParameter], for: asStableRefTypeParameterSymbol)
+        symbols.setTypeParameterUpperBounds([types.anyType], for: asStableRefTypeParameterSymbol)
+        let asStableRefTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: asStableRefTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let cPointerStarType = types.make(.classType(ClassType(
+            classSymbol: cPointerSymbol,
+            args: [.star],
+            nullability: .nonNull
+        )))
+        let asStableRefReturnType = types.make(.classType(ClassType(
+            classSymbol: stableRefSymbol,
+            args: [.out(asStableRefTypeParameterType)],
+            nullability: .nonNull
+        )))
+        registerSyntheticNativeTopLevelFunction(
+            named: "asStableRef",
+            packageFQName: cinteropPkg,
+            receiverType: cPointerStarType,
+            parameters: [],
+            returnType: asStableRefReturnType,
+            typeParameterSymbols: [asStableRefTypeParameterSymbol],
+            typeParameterUpperBoundsList: [[types.anyType]],
+            reifiedTypeParameterIndices: [0],
+            flags: [.synthetic, .inlineFunction],
+            symbols: symbols,
+            interner: interner
+        )
         let cOpaquePointerVarUnderlyingType = types.make(.classType(ClassType(
             classSymbol: cPointerVarOfSymbol,
             args: [.invariant(cOpaquePointerUnderlyingType)],
@@ -2495,6 +2613,27 @@ extension DataFlowSemaPhase {
             symbols.setPropertyType(type, for: symbol)
             symbols.setDirectSupertypes([cPointedSymbol], for: symbol)
             types.setNominalDirectSupertypes([cPointedSymbol], for: symbol)
+        }
+        if let uShortVarSymbol = symbols.lookup(fqName: cinteropPkg + [interner.intern("UShortVar")]) {
+            let uShortVarType = types.make(.classType(ClassType(
+                classSymbol: uShortVarSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            let wcstrReturnType = types.make(.classType(ClassType(
+                classSymbol: cValuesSymbol,
+                args: [.invariant(uShortVarType)],
+                nullability: .nonNull
+            )))
+            registerSyntheticNativeExtensionProperty(
+                named: "wcstr",
+                packageFQName: cinteropPkg,
+                packageSymbol: cinteropPkgSymbol,
+                receiverType: types.stringType,
+                propertyType: wcstrReturnType,
+                symbols: symbols,
+                interner: interner
+            )
         }
 
         registerSyntheticCInteropVector128Stubs(
@@ -3171,6 +3310,39 @@ extension DataFlowSemaPhase {
         symbols.setPropertyType(propertyType, for: propertySymbol)
     }
 
+    private func registerSyntheticNativeTopLevelProperty(
+        named name: String,
+        packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        propertyType: TypeID,
+        flags: SymbolFlags = [.synthetic],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let propertyName = interner.intern(name)
+        let propertyFQName = packageFQName + [propertyName]
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
+            symbols.symbol(symbolID)?.kind == .property
+        }) {
+            symbols.setPropertyType(propertyType, for: existing)
+            symbols.insertFlags(flags, for: existing)
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: flags
+        )
+        if let packageSymbol {
+            symbols.setParentSymbol(packageSymbol, for: propertySymbol)
+        }
+        symbols.setPropertyType(propertyType, for: propertySymbol)
+    }
+
     private func registerSyntheticNativeBitSetMemberFunction(
         named name: String,
         ownerSymbol: SymbolID,
@@ -3253,6 +3425,152 @@ extension DataFlowSemaPhase {
         appendMetadataAnnotations(annotations, to: functionSymbol, symbols: symbols)
     }
 
+    private func registerSyntheticCPointerPointedProperty(
+        cPointerSymbol: SymbolID,
+        cPointedType: TypeID,
+        packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let propertyName = interner.intern("pointed")
+        let propertyFQName = packageFQName + [propertyName]
+        let typeParameterName = interner.intern("T")
+        let typeParameterFQName = propertyFQName + [typeParameterName]
+        let typeParameterSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParameterFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParameterName,
+                fqName: typeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+        }
+        symbols.setTypeParameterUpperBounds([cPointedType], for: typeParameterSymbol)
+
+        let typeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: typeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: cPointerSymbol,
+            args: [.invariant(typeParameterType)],
+            nullability: .nonNull
+        )))
+        let getterSignature = FunctionSignature(
+            receiverType: receiverType,
+            parameterTypes: [],
+            returnType: typeParameterType,
+            typeParameterSymbols: [typeParameterSymbol],
+            typeParameterUpperBoundsList: [[cPointedType]],
+            classTypeParameterCount: 0
+        )
+
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
+            symbols.symbol(symbolID)?.kind == .property
+                && symbols.extensionPropertyReceiverType(for: symbolID) == receiverType
+        }) {
+            symbols.setParentSymbol(existing, for: typeParameterSymbol)
+            symbols.setPropertyType(typeParameterType, for: existing)
+            symbols.setExtensionPropertyReceiverType(receiverType, for: existing)
+            if let getterSymbol = symbols.extensionPropertyGetterAccessor(for: existing) {
+                symbols.setFunctionSignature(getterSignature, for: getterSymbol)
+            }
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol {
+            symbols.setParentSymbol(packageSymbol, for: propertySymbol)
+        }
+        symbols.setParentSymbol(propertySymbol, for: typeParameterSymbol)
+        symbols.setPropertyType(typeParameterType, for: propertySymbol)
+        symbols.setExtensionPropertyReceiverType(receiverType, for: propertySymbol)
+
+        let getterSymbol = symbols.define(
+            kind: .function,
+            name: interner.intern("get"),
+            fqName: propertyFQName + [interner.intern("$get")],
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(propertySymbol, for: getterSymbol)
+        symbols.setFunctionSignature(getterSignature, for: getterSymbol)
+        symbols.setExtensionPropertyGetterAccessor(getterSymbol, for: propertySymbol)
+        symbols.setAccessorOwnerProperty(propertySymbol, for: getterSymbol)
+    }
+
+    private func registerSyntheticNativeExtensionProperty(
+        named name: String,
+        packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        receiverType: TypeID,
+        propertyType: TypeID,
+        flags: SymbolFlags = [.synthetic],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let propertyName = interner.intern(name)
+        let propertyFQName = packageFQName + [propertyName]
+        let getterSignature = FunctionSignature(
+            receiverType: receiverType,
+            parameterTypes: [],
+            returnType: propertyType
+        )
+
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
+            symbols.symbol(symbolID)?.kind == .property
+                && symbols.extensionPropertyReceiverType(for: symbolID) == receiverType
+        }) {
+            symbols.insertFlags(flags, for: existing)
+            symbols.setPropertyType(propertyType, for: existing)
+            symbols.setExtensionPropertyReceiverType(receiverType, for: existing)
+            if let getterSymbol = symbols.extensionPropertyGetterAccessor(for: existing) {
+                symbols.setFunctionSignature(getterSignature, for: getterSymbol)
+            }
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: flags
+        )
+        if let packageSymbol {
+            symbols.setParentSymbol(packageSymbol, for: propertySymbol)
+        }
+        symbols.setPropertyType(propertyType, for: propertySymbol)
+        symbols.setExtensionPropertyReceiverType(receiverType, for: propertySymbol)
+
+        let getterSymbol = symbols.define(
+            kind: .function,
+            name: interner.intern("get"),
+            fqName: propertyFQName + [interner.intern("$get")],
+            declSite: nil,
+            visibility: .public,
+            flags: flags
+        )
+        symbols.setParentSymbol(propertySymbol, for: getterSymbol)
+        symbols.setFunctionSignature(getterSignature, for: getterSymbol)
+        symbols.setExtensionPropertyGetterAccessor(getterSymbol, for: propertySymbol)
+        symbols.setAccessorOwnerProperty(propertySymbol, for: getterSymbol)
+    }
+
     private func registerSyntheticNativeTopLevelFunction(
         named name: String,
         packageFQName: [InternedString],
@@ -3261,6 +3579,9 @@ extension DataFlowSemaPhase {
         returnType: TypeID,
         defaultValues: [Bool]? = nil,
         varargs: [Bool]? = nil,
+        typeParameterSymbols: [SymbolID] = [],
+        typeParameterUpperBoundsList: [[TypeID]] = [],
+        reifiedTypeParameterIndices: Set<Int> = [],
         annotations: [MetadataAnnotationRecord] = [],
         externalLinkName: String? = nil,
         flags: SymbolFlags = [.synthetic],
@@ -3283,9 +3604,15 @@ extension DataFlowSemaPhase {
             return signature.receiverType == receiverType
                 && signature.parameterTypes == parameterTypes
                 && signature.returnType == returnType
+                && signature.typeParameterSymbols == typeParameterSymbols
+                && signature.typeParameterUpperBoundsList == typeParameterUpperBoundsList
+                && signature.reifiedTypeParameterIndices == reifiedTypeParameterIndices
         }) {
             functionSymbol = existing
             symbols.insertFlags(functionFlags, for: existing)
+            for typeParameterSymbol in typeParameterSymbols {
+                symbols.setParentSymbol(existing, for: typeParameterSymbol)
+            }
             if let externalLinkName {
                 symbols.setExternalLinkName(externalLinkName, for: existing)
             }
@@ -3300,6 +3627,9 @@ extension DataFlowSemaPhase {
             )
             if let packageSymbol = symbols.lookup(fqName: packageFQName) {
                 symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+            }
+            for typeParameterSymbol in typeParameterSymbols {
+                symbols.setParentSymbol(functionSymbol, for: typeParameterSymbol)
             }
 
             let valueParameterSymbols = parameters.map { parameter in
@@ -3326,7 +3656,10 @@ extension DataFlowSemaPhase {
                     canThrow: canThrow,
                     valueParameterSymbols: valueParameterSymbols,
                     valueParameterHasDefaultValues: defaultValues ?? Array(repeating: false, count: valueParameterSymbols.count),
-                    valueParameterIsVararg: varargs ?? Array(repeating: false, count: valueParameterSymbols.count)
+                    valueParameterIsVararg: varargs ?? Array(repeating: false, count: valueParameterSymbols.count),
+                    typeParameterSymbols: typeParameterSymbols,
+                    reifiedTypeParameterIndices: reifiedTypeParameterIndices,
+                    typeParameterUpperBoundsList: typeParameterUpperBoundsList
                 ),
                 for: functionSymbol
             )

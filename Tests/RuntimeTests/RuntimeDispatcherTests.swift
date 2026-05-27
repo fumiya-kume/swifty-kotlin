@@ -39,6 +39,7 @@ func runtime_test_dispatcher_observe_entry(
 }
 
 final class RuntimeDispatcherTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     // MARK: - Dispatcher tag identity
 
     func testDefaultDispatcherReturnsKnownTag() {

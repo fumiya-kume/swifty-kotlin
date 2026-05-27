@@ -287,7 +287,7 @@ private func runtimeSyncContinuationIsCancelled(_ continuation: Int) -> Bool {
 public func kk_mutex_create() -> Int {
     let mutex = RuntimeMutexHandle()
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(mutex).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -297,7 +297,7 @@ public func kk_mutex_create() -> Int {
 public func kk_reentrant_read_write_lock_new() -> Int {
     let handle = RuntimeReentrantReadWriteLockHandle()
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(handle).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -344,7 +344,7 @@ public func kk_mutex_isLocked(_ handle: Int) -> Int {
 public func kk_semaphore_create(_ permits: Int) -> Int {
     let semaphore = RuntimeSemaphoreHandle(permits: permits)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(semaphore).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -391,7 +391,7 @@ public func kk_semaphore_availablePermits(_ handle: Int) -> Int {
 public func kk_read_write_lock_create() -> Int {
     let lock = RuntimeReadWriteLockHandle()
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(lock).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)

@@ -3,6 +3,7 @@ import Foundation
 import XCTest
 
 final class RuntimeResourceBundleTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     override func resetIsolatedRuntimeTestState() {
         unsetenv("KSWIFTK_RESOURCE_ROOT")
     }

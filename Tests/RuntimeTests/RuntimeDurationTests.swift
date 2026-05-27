@@ -77,6 +77,7 @@ private let durationComponentsDaysTopOnlyThunk:
     }
 
 final class RuntimeDurationTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     override func resetIsolatedRuntimeTestState() {
         capturedClosureRaw = 0
     }

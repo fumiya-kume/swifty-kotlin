@@ -38,6 +38,7 @@ private func fnPtrInt(_ fn: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> 
 }
 
 final class RuntimeAssertTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     override func resetIsolatedRuntimeTestState() {
         assertLazyMessageEvaluations = 0
         _ = kk_assertions_reset()

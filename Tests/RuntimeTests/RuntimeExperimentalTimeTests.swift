@@ -4,6 +4,7 @@ import Foundation
 import XCTest
 
 final class RuntimeExperimentalTimeTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     func testMonotonicMarkElapsedNowIsNonNegative() {
         let mark = kk_time_source_monotonic_mark_now(0)
         let elapsed = kk_time_mark_elapsed_now(mark)

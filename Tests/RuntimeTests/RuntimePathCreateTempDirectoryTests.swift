@@ -3,6 +3,7 @@ import Foundation
 import XCTest
 
 final class RuntimePathCreateTempDirectoryTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     func testPathCreateTempDirectoryPrefixAttributesCreatesDirectory() throws {
         var thrown = 0
         let resultRaw = kk_path_createTempDirectory_prefix_attributes(makeRuntimeString("kswiftk-"), 0, &thrown)

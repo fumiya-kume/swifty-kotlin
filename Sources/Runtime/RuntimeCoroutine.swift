@@ -1133,7 +1133,7 @@ final class RuntimeCoroutineScope: @unchecked Sendable {
                 if !consumed {
                     Unmanaged<AnyObject>.fromOpaque(ptr).release()
                     // Clean up from RuntimeStorage
-                    runtimeStorage.withLock { state in
+                    runtimeStorage.withGCLock { state in
                         state.objectPointers.remove(UInt(bitPattern: ptr))
                     }
                 }
@@ -1150,7 +1150,7 @@ private func runtimeCoroutineIsThrowableResult(_ result: Int) -> Bool {
     // Only attempt the dynamic cast if the pointer is a known runtime object.
     // Raw integer results (e.g. 3 from `async { 1 + 2 }`) are not valid
     // object pointers and would crash swift_retain inside tryCast.
-    let isRegistered = runtimeStorage.withLock { state in
+    let isRegistered = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: pointer))
     }
     guard isRegistered else {
@@ -1163,7 +1163,7 @@ private func runtimeCoroutineIsCancellationResult(_ result: Int) -> Bool {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: result) else {
         return false
     }
-    let isRegistered = runtimeStorage.withLock { state in
+    let isRegistered = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: pointer))
     }
     guard isRegistered else {
@@ -1216,7 +1216,7 @@ enum RuntimeCoroutineScopeTaskKey {
 @_cdecl("kk_coroutine_suspended")
 public func kk_coroutine_suspended() -> UnsafeMutableRawPointer {
     let ptr = UnsafeMutableRawPointer(Unmanaged.passUnretained(runtimeStorage.coroutineSuspendedBox).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return ptr
@@ -1226,7 +1226,7 @@ public func kk_coroutine_suspended() -> UnsafeMutableRawPointer {
 public func kk_coroutine_continuation_new(_ functionID: Int) -> Int {
     let state = RuntimeContinuationState(functionID: Int64(functionID))
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(state).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -1385,7 +1385,7 @@ public func kk_coroutine_state_set_label(_ continuation: Int, _ label: Int) -> I
 public func kk_coroutine_state_exit(_ continuation: Int, _ value: Int) -> Int {
     if let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) {
         var shouldRelease = false
-        runtimeStorage.withLock { state in
+        runtimeStorage.withGCLock { state in
             let key = UInt(bitPattern: continuationPtr)
             if state.objectPointers.contains(key) {
                 state.objectPointers.remove(key)
@@ -1590,7 +1590,7 @@ public func kk_kxmini_run_blocking(
 public func kk_kxmini_launch(_ entryPointRaw: Int, _ functionID: Int) -> Int {
     let job = RuntimeJobHandle()
     let jobPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(job).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: jobPtr))
     }
     job.markStarted()
@@ -1711,7 +1711,7 @@ public func kk_suspend_coroutine(_ fnPtr: Int, _ closureRaw: Int, _ continuation
 public func kk_kxmini_launch_with_cont(_ entryPointRaw: Int, _ continuation: Int) -> Int {
     let job = RuntimeJobHandle()
     let jobPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(job).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: jobPtr))
     }
     job.markStarted()
@@ -1789,7 +1789,7 @@ public func kk_kxmini_produce_with_cont(_ entryPointRaw: Int, _ continuation: In
     let channelHandle = kk_channel_create(0)
     let job = RuntimeJobHandle()
     let jobPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(job).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: jobPtr))
     }
 
@@ -1829,7 +1829,7 @@ public func kk_kxmini_produce_with_cont(_ entryPointRaw: Int, _ continuation: In
 public func kk_kxmini_launch_with_dispatcher(_ entryPointRaw: Int, _ functionID: Int, _ dispatcherRaw: Int) -> Int {
     let job = RuntimeJobHandle()
     let jobPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(job).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: jobPtr))
     }
     job.markStarted()
@@ -1872,7 +1872,7 @@ public func kk_kxmini_launch_with_dispatcher(_ entryPointRaw: Int, _ functionID:
 public func kk_kxmini_launch_with_dispatcher_and_cont(_ entryPointRaw: Int, _ continuation: Int, _ dispatcherRaw: Int) -> Int {
     let job = RuntimeJobHandle()
     let jobPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(job).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: jobPtr))
     }
     job.markStarted()
@@ -1938,7 +1938,7 @@ public func kk_exception_handler_new() -> Int {
         FileHandle.standardError.write(Data("CoroutineExceptionHandler: \(message)\n".utf8))
     }
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -1951,7 +1951,7 @@ public func kk_exception_handler_new() -> Int {
 public func kk_kxmini_launch_with_exception_handler(_ entryPointRaw: Int, _ functionID: Int, _ handlerRaw: Int) -> Int {
     let job = RuntimeJobHandle()
     let jobPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(job).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: jobPtr))
     }
     job.markStarted()
@@ -1977,7 +1977,7 @@ public func kk_kxmini_launch_with_exception_handler(_ entryPointRaw: Int, _ func
     // Resolve exception handler
     var exceptionHandler: RuntimeExceptionHandlerBox?
     if handlerRaw != 0, let ptr = UnsafeMutableRawPointer(bitPattern: handlerRaw) {
-        let isObjPointer = runtimeStorage.withLock { state in
+        let isObjPointer = runtimeStorage.withGCLock { state in
             state.objectPointers.contains(UInt(bitPattern: ptr))
         }
         if isObjPointer {
@@ -2108,7 +2108,7 @@ public func kk_kxmini_delay(_ milliseconds: Int, _ continuation: Int) -> Int {
 public func kk_coroutine_scope_new() -> Int {
     let scope = RuntimeCoroutineScope()
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(scope).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
 
@@ -2123,7 +2123,7 @@ public func kk_coroutine_scope_new() -> Int {
 public func kk_supervisor_scope_new() -> Int {
     let scope = RuntimeCoroutineScope(isSupervisor: true)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(scope).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
 
@@ -2158,7 +2158,7 @@ public func kk_coroutine_scope_wait(_ scopeHandle: Int) -> Int {
     RuntimeCoroutineScope.current = scope.parent
 
     // Release the scope
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.remove(UInt(bitPattern: ptr))
     }
     Unmanaged<RuntimeCoroutineScope>.fromOpaque(ptr).release()
@@ -2258,7 +2258,7 @@ public func kk_job_join(_ jobHandle: Int) -> Int {
     // Release the original passRetained from launch
     Unmanaged<AnyObject>.fromOpaque(ptr).release()
     // Clean up from RuntimeStorage
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.remove(UInt(bitPattern: ptr))
     }
     return result
@@ -2700,7 +2700,7 @@ public func kk_is_cancellation_exception(_ throwableRaw: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: throwableRaw) else {
         return 0
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObjectPointer else {
@@ -2995,7 +2995,7 @@ public func kk_suspend_function_invoke(
 public func kk_channel_send_suspending(_ handle: Int, _ value: Int, _ continuation: Int) -> Int {
     func isRegisteredChannelHandle(_ raw: Int) -> Bool {
         guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return false }
-        let isRegistered = runtimeStorage.withLock { state in
+        let isRegistered = runtimeStorage.withGCLock { state in
             state.objectPointers.contains(UInt(bitPattern: ptr))
         }
         guard isRegistered else { return false }
