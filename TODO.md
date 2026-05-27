@@ -219,7 +219,7 @@
 - [ ] STDLIB-SEQ-FN-026: `filterIsInstance` 関数の実装
 - [ ] STDLIB-SEQ-FN-027: `filterIsInstanceTo` 関数の実装
  - [x] STDLIB-SEQ-FN-029: `filterNotNull` 関数の実装
- - [ ] STDLIB-SEQ-FN-030: `filterNotTo` 関数の実装
+ - [x] STDLIB-SEQ-FN-030: `filterNotTo` 関数の実装
 - [x] STDLIB-SEQ-FN-031: `filterTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-033: `findLast` 関数の実装
 - [ ] STDLIB-SEQ-FN-040: `flatMapIndexedTo` 関数の実装
