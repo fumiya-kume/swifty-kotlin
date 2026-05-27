@@ -207,8 +207,6 @@
 - [x] STDLIB-SEQ-FN-014: `contains` 関数の実装
 - [x] STDLIB-SEQ-FN-015: `count` 関数の実装
 - [x] STDLIB-SEQ-FN-016: `distinct` 関数の実装
-- [ ] STDLIB-SEQ-FN-017: `distinctBy` 関数の実装
-- [ ] STDLIB-SEQ-FN-016: `distinct` 関数の実装
 - [x] STDLIB-SEQ-FN-017: `distinctBy` 関数の実装
 - [x] STDLIB-SEQ-FN-018: `drop` 関数の実装
 - [x] STDLIB-SEQ-FN-019: `dropWhile` 関数の実装
@@ -432,8 +430,6 @@
 - [ ] STDLIB-TEXT-FN-104: `toMutableList` 関数の実装
 - [x] STDLIB-TEXT-FN-105: `toRegex` 関数の実装
 - [x] STDLIB-TEXT-FN-106: `toShort` 関数の実装
-- [ ] STDLIB-TEXT-FN-107: `toShortOrNull` 関数の実装
-- [ ] STDLIB-TEXT-FN-106: `toShort` 関数の実装
 - [x] STDLIB-TEXT-FN-107: `toShortOrNull` 関数の実装
 - [ ] STDLIB-TEXT-FN-108: `toSortedSet` 関数の実装
 - [ ] STDLIB-TEXT-FN-109: `toTypedArray` 関数の実装
