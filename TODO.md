@@ -406,7 +406,7 @@
 - [x] STDLIB-TEXT-FN-080: `takeLast` 関数の実装
 - [ ] STDLIB-TEXT-FN-081: `takeLastWhile` 関数の実装
 - [x] STDLIB-TEXT-FN-082: `takeWhile` 関数の実装
-- [ ] STDLIB-TEXT-FN-083: `toBigDecimal` 関数の実装
+- [x] STDLIB-TEXT-FN-083: `toBigDecimal` 関数の実装
 - [ ] STDLIB-TEXT-FN-084: `toBigDecimalOrNull` 関数の実装
 - [ ] STDLIB-TEXT-FN-085: `toBigInteger` 関数の実装
 - [ ] STDLIB-TEXT-FN-086: `toBigIntegerOrNull` 関数の実装
