@@ -2941,6 +2941,29 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // fun CPointer<ShortVar>.toKString(): String
+        if let shortVarSymbolForToKString = symbols.lookup(fqName: cinteropPkg + [interner.intern("ShortVar")]) {
+            let shortVarTypeForToKString = types.make(.classType(ClassType(
+                classSymbol: shortVarSymbolForToKString,
+                args: [],
+                nullability: .nonNull
+            )))
+            let toKStringShortVarReceiverType = types.make(.classType(ClassType(
+                classSymbol: cPointerSymbol,
+                args: [.invariant(shortVarTypeForToKString)],
+                nullability: .nonNull
+            )))
+            registerSyntheticNativeTopLevelFunction(
+                named: "toKString",
+                packageFQName: cinteropPkg,
+                receiverType: toKStringShortVarReceiverType,
+                parameters: [],
+                returnType: types.stringType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
         registerSyntheticCInteropVector128Stubs(
             cinteropPkg: cinteropPkg,
             cinteropPkgSymbol: cinteropPkgSymbol,
