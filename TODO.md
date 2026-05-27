@@ -377,7 +377,7 @@
 - [ ] STDLIB-TEXT-FN-051: `removeRange` 関数の実装
 - [x] STDLIB-TEXT-FN-052: `removeSuffix` 関数の実装
 - [x] STDLIB-TEXT-FN-053: `removeSurrounding` 関数の実装
-- [ ] STDLIB-TEXT-FN-054: `repeat` 関数の実装
+- [x] STDLIB-TEXT-FN-054: `repeat` 関数の実装
 - [ ] STDLIB-TEXT-FN-055: `replace` 関数の実装
 - [ ] STDLIB-TEXT-FN-056: `replaceAfter` 関数の実装
 - [ ] STDLIB-TEXT-FN-057: `replaceAfterLast` 関数の実装
