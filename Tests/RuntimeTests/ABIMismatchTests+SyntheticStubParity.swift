@@ -35,6 +35,8 @@ extension ABIMismatchTests {
             "kk_file_copyTo_default",
             "kk_file_copyTo_overwrite",
             "kk_file_copyTo",
+            "kk_file_copyRecursively_default",
+            "kk_file_copyRecursively_overwrite",
             "kk_file_extension",
             "kk_file_invariantSeparatorsPath",
             "kk_file_isRooted",

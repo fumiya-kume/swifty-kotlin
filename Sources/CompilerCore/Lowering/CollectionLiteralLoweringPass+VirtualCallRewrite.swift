@@ -353,6 +353,15 @@ extension CollectionLiteralLoweringPass {
             default:
                 nil
             }
+        case lookup.copyRecursivelyName:
+            kkCallee = switch arguments.count {
+            case 1:
+                lookup.kkFileCopyRecursivelyDefaultName
+            case 2:
+                lookup.kkFileCopyRecursivelyOverwriteName
+            default:
+                nil
+            }
         default:
             kkCallee = nil
         }
@@ -365,6 +374,7 @@ extension CollectionLiteralLoweringPass {
             || callee == lookup.writeTextName
             || callee == lookup.appendTextName
             || callee == lookup.copyToName
+            || callee == lookup.copyRecursivelyName
         let memberArgs = needsExtraArgs ?
             [receiver] + arguments :
             [receiver]

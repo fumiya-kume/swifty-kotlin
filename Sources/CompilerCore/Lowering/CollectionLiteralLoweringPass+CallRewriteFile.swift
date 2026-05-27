@@ -160,6 +160,15 @@ extension CollectionLiteralLoweringPass {
                 default:
                     nil
                 }
+            case lookup.copyRecursivelyName:
+                kkCallee = switch arguments.count {
+                case 2:
+                    lookup.kkFileCopyRecursivelyDefaultName
+                case 3:
+                    lookup.kkFileCopyRecursivelyOverwriteName
+                default:
+                    nil
+                }
             // STDLIB-IO-087: Additional File operations
             case lookup.absolutePathName:
                 kkCallee = lookup.kkFileAbsolutePathName
@@ -190,6 +199,7 @@ extension CollectionLiteralLoweringPass {
                         || callee == lookup.writeTextName
                         || callee == lookup.appendTextName
                         || callee == lookup.copyToName
+                        || callee == lookup.copyRecursivelyName
                 ) ? [receiverID] + arguments.dropFirst() : [receiverID]
                 loweredBody.append(.call(
                     symbol: nil,

@@ -89,6 +89,48 @@ final class RuntimeFileIOTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(try String(contentsOf: targetURL, encoding: .utf8), "updated")
     }
 
+    func testFileCopyRecursivelyCopiesDirectoryAndHonorsOverwrite() throws {
+        let rootURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let sourceURL = rootURL.appendingPathComponent("source")
+        let nestedURL = sourceURL.appendingPathComponent("nested")
+        let copiedFileURL = nestedURL.appendingPathComponent("value.txt")
+        let targetURL = rootURL.appendingPathComponent("target")
+        defer { try? FileManager.default.removeItem(at: rootURL) }
+
+        try FileManager.default.createDirectory(at: nestedURL, withIntermediateDirectories: true)
+        try "first".write(to: copiedFileURL, atomically: true, encoding: .utf8)
+
+        let sourceRaw = runtimeTestFileHandle(sourceURL.path)
+        let targetRaw = runtimeTestFileHandle(targetURL.path)
+        var thrown = 0
+
+        XCTAssertEqual(kk_unbox_bool(kk_file_copyRecursively_default(sourceRaw, targetRaw, &thrown)), 1)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(
+            try String(
+                contentsOf: targetURL.appendingPathComponent("nested").appendingPathComponent("value.txt"),
+                encoding: .utf8
+            ),
+            "first"
+        )
+
+        thrown = 0
+        XCTAssertEqual(kk_unbox_bool(kk_file_copyRecursively_overwrite(sourceRaw, targetRaw, kk_box_bool(0), &thrown)), 0)
+        XCTAssertNotEqual(thrown, 0)
+
+        try "second".write(to: copiedFileURL, atomically: true, encoding: .utf8)
+        thrown = 0
+        XCTAssertEqual(kk_unbox_bool(kk_file_copyRecursively_overwrite(sourceRaw, targetRaw, kk_box_bool(1), &thrown)), 1)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(
+            try String(
+                contentsOf: targetURL.appendingPathComponent("nested").appendingPathComponent("value.txt"),
+                encoding: .utf8
+            ),
+            "second"
+        )
+    }
+
     func testStringByteInputStreamReadsEncodedBytes() {
         var thrown = 0
         let streamRaw = kk_string_byteInputStream_default(runtimeStringRaw("ABC"), &thrown)

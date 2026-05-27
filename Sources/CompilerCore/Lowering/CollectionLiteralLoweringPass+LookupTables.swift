@@ -777,6 +777,9 @@ struct CollectionLiteralLookupTables {
     let kkFileCopyToDefaultName: InternedString
     let kkFileCopyToOverwriteName: InternedString
     let kkFileCopyToName: InternedString
+    let copyRecursivelyName: InternedString
+    let kkFileCopyRecursivelyDefaultName: InternedString
+    let kkFileCopyRecursivelyOverwriteName: InternedString
     let readLinesName: InternedString
     let kkFileReadLinesName: InternedString
     let existsName: InternedString
@@ -1588,6 +1591,9 @@ struct CollectionLiteralLookupTables {
         kkFileCopyToDefaultName = interner.intern("kk_file_copyTo_default")
         kkFileCopyToOverwriteName = interner.intern("kk_file_copyTo_overwrite")
         kkFileCopyToName = interner.intern("kk_file_copyTo")
+        copyRecursivelyName = interner.intern("copyRecursively")
+        kkFileCopyRecursivelyDefaultName = interner.intern("kk_file_copyRecursively_default")
+        kkFileCopyRecursivelyOverwriteName = interner.intern("kk_file_copyRecursively_overwrite")
         readLinesName = interner.intern("readLines")
         kkFileReadLinesName = interner.intern("kk_file_readLines")
         existsName = interner.intern("exists")

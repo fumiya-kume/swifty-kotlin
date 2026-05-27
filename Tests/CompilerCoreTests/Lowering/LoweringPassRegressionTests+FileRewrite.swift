@@ -148,6 +148,29 @@ extension LoweringPassRegressionTests {
         }
     }
 
+    func testFileCopyRecursivelyRewriteSelectsOverwriteRuntimeCallee() throws {
+        let source = """
+        import java.io.File
+
+        fun main() {
+            File("source").copyRecursively(File("target"), true)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "FileCopyRecursivelyRewrite", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: mainBody, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_file_copyRecursively_overwrite"))
+            XCTAssertFalse(callees.contains("copyRecursively"))
+        }
+    }
+
     func testFileReadTextRewrite() throws {
         let source = """
         import java.io.File
