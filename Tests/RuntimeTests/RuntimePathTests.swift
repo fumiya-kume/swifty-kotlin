@@ -97,4 +97,22 @@ final class RuntimePathTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: fileURL.path))
         XCTAssertEqual(kk_unbox_bool(kk_path_deleteIfExists(pathRaw)), 0)
     }
+
+    func testPathNotExistsReturnsTrueForMissingPath() throws {
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        // Sanity: path must not exist before the assertion.
+        XCTAssertFalse(FileManager.default.fileExists(atPath: fileURL.path))
+
+        let pathRaw = makePathRaw(fileURL.path)
+        XCTAssertEqual(kk_unbox_bool(kk_path_notExists(pathRaw, 0)), 1)
+    }
+
+    func testPathNotExistsReturnsFalseForExistingPath() throws {
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try "data".write(to: fileURL, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        let pathRaw = makePathRaw(fileURL.path)
+        XCTAssertEqual(kk_unbox_bool(kk_path_notExists(pathRaw, 0)), 0)
+    }
 }

@@ -151,7 +151,7 @@
 - [ ] STDLIB-IO-PATH-FN-024: `getPosixFilePermissions` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-025: `inputStream` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-026: `moveTo` 関数の実装
-- [ ] STDLIB-IO-PATH-FN-027: `notExists` 関数の実装
+- [x] STDLIB-IO-PATH-FN-027: `notExists` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-028: `outputStream` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-030: `readAttributes` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-032: `setAttribute` 関数の実装

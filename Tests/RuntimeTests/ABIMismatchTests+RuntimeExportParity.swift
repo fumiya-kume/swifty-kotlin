@@ -137,7 +137,6 @@ extension ABIMismatchTests {
             "kk_path_isWritable",
             "kk_path_moveTo_options",
             "kk_path_moveTo_overwrite",
-            "kk_path_notExists",
             "kk_path_outputStream",
             "kk_path_inputStream",
             "kk_path_readAttributes",

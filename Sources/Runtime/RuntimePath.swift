@@ -395,6 +395,24 @@ public func kk_path_exists(_ pathRaw: Int) -> Int {
     return kk_box_bool(FileManager.default.fileExists(atPath: path.pathString) ? 1 : 0)
 }
 
+/// Path.notExists(vararg options: LinkOption): Boolean
+///
+/// Returns `true` only when the runtime can positively determine that the
+/// file system entry at `path` does **not** exist. If the existence check
+/// itself cannot be performed (which Kotlin/JVM reports by returning
+/// `false`), this entry mirrors that behaviour. The `optionsRaw` parameter
+/// matches the Sema-declared `vararg options: LinkOption` shape and is
+/// accepted for ABI symmetry with `kk_path_exists` (link options have no
+/// effect on the macOS Foundation-backed runtime today).
+@_cdecl("kk_path_notExists")
+public func kk_path_notExists(_ pathRaw: Int, _ optionsRaw: Int) -> Int {
+    _ = optionsRaw
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_notExists received invalid Path handle")
+    }
+    return kk_box_bool(FileManager.default.fileExists(atPath: path.pathString) ? 0 : 1)
+}
+
 @_cdecl("kk_path_isDirectory")
 public func kk_path_isDirectory(_ pathRaw: Int) -> Int {
     guard let path = runtimePathBox(from: pathRaw) else {
