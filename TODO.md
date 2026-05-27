@@ -468,7 +468,7 @@
 - [ ] STDLIB-TIME-FN-006: `toDurationUnit` 関数の実装
 - [x] STDLIB-TIME-FN-007: `toJavaDuration` 関数の実装
 - [x] STDLIB-TIME-FN-008: `toJavaInstant` 関数の実装
-- [ ] STDLIB-TIME-FN-009: `toJSDate` 関数の実装
+- [x] STDLIB-TIME-FN-009: `toJSDate` 関数の実装
 - [ ] STDLIB-TIME-FN-010: `toKotlinDuration` 関数の実装
 - [ ] STDLIB-TIME-FN-011: `toKotlinInstant` 関数の実装
 - [ ] STDLIB-TIME-FN-012: `toTimeUnit` 関数の実装
