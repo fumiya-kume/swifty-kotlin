@@ -97,4 +97,32 @@ final class RuntimePathTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: fileURL.path))
         XCTAssertEqual(kk_unbox_bool(kk_path_deleteIfExists(pathRaw)), 0)
     }
+
+    func testPathGetLastModifiedTimeReturnsModificationMillisForExistingFile() throws {
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try "data".write(to: fileURL, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        let expectedDate = Date(timeIntervalSince1970: 1_700_000_000)
+        try FileManager.default.setAttributes([.modificationDate: expectedDate], ofItemAtPath: fileURL.path)
+
+        let pathRaw = makePathRaw(fileURL.path)
+        var thrown = 0
+        let fileTimeRaw = kk_path_getLastModifiedTime(pathRaw, 0, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertNotEqual(fileTimeRaw, 0)
+
+        let actualMillis = kk_fileTime_toMillis(fileTimeRaw)
+        XCTAssertEqual(actualMillis, Int(expectedDate.timeIntervalSince1970 * 1000))
+    }
+
+    func testPathGetLastModifiedTimeReportsIOExceptionForMissingFile() throws {
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: fileURL.path))
+
+        let pathRaw = makePathRaw(fileURL.path)
+        var thrown = 0
+        _ = kk_path_getLastModifiedTime(pathRaw, 0, &thrown)
+        XCTAssertNotEqual(thrown, 0, "missing file should populate outThrown with an IOException")
+    }
 }
