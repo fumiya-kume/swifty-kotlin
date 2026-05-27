@@ -456,7 +456,7 @@
 - [x] STDLIB-TIME-TYPE-012: `TimeSource` インターフェースの実装
 
 #### kotlin.time プロパティの実装
-- [ ] STDLIB-TIME-PROP-001: `isDistantFuture` 拡張プロパティの実装
+- [x] STDLIB-TIME-PROP-001: `isDistantFuture` 拡張プロパティの実装
 - [ ] STDLIB-TIME-PROP-002: `isDistantPast` 拡張プロパティの実装
 
 #### kotlin.time 関数の実装
