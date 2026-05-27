@@ -306,7 +306,7 @@
 - [x] STDLIB-TEXT-PROP-004: `isDefined` 拡張プロパティの実装
 - [x] STDLIB-TEXT-PROP-005: `isDigit` 拡張プロパティの実装
 - [x] STDLIB-TEXT-PROP-006: `isHighSurrogate` 拡張プロパティの実装
-- [ ] STDLIB-TEXT-PROP-007: `isISOControl` 拡張プロパティの実装
+- [x] STDLIB-TEXT-PROP-007: `isISOControl` 拡張プロパティの実装
 - [ ] STDLIB-TEXT-PROP-008: `isIdentifierIgnorable` 拡張プロパティの実装
 - [ ] STDLIB-TEXT-PROP-009: `isJavaIdentifierPart` 拡張プロパティの実装
 - [ ] STDLIB-TEXT-PROP-010: `isJavaIdentifierStart` 拡張プロパティの実装
