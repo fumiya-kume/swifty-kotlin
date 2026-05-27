@@ -193,6 +193,15 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "FileIO"
         ),
+        // STDLIB-IO-FN-022: BufferedReader.iterator() -> Iterator<String>
+        RuntimeABIFunctionSpec(
+            name: "kk_buffered_reader_iterator",
+            parameters: [
+                RuntimeABIParameter(name: "readerRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
         // STDLIB-IO-091/093: BufferedWriter
         RuntimeABIFunctionSpec(
             name: "kk_file_bufferedWriter",

@@ -505,6 +505,46 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // BufferedReader.iterator() -> Iterator<String>  (STDLIB-IO-FN-022)
+        //
+        // The standard library declares `iterator()` as an `operator` extension on
+        // `BufferedReader` so that `for (line in reader) { ... }` is a shorthand
+        // for iterating over the reader's lines. We register the function as a
+        // synthetic *operator* member here so it can be picked up both by
+        // explicit calls (`reader.iterator()`) and by the for-loop lowering
+        // (which requires the `.operatorFunction` flag).
+        let iteratorOfStringType = syntheticIteratorType(
+            elementType: types.stringType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerFileMemberFunction(
+            named: "iterator",
+            externalLinkName: "kk_buffered_reader_iterator",
+            ownerSymbol: bufferedReaderSymbol,
+            ownerType: bufferedReaderType,
+            parameters: [],
+            returnType: iteratorOfStringType,
+            symbols: symbols,
+            interner: interner
+        )
+        // Promote the synthetic iterator member to an operator function so that
+        // implicit `for (line in reader)` resolution succeeds. We look up the
+        // symbol after registration because `registerFileMemberFunction` does
+        // not surface the newly defined SymbolID.
+        let iteratorFQName: [InternedString] = (symbols.symbol(bufferedReaderSymbol)?.fqName ?? [])
+            + [interner.intern("iterator")]
+        for candidate in symbols.lookupAll(fqName: iteratorFQName) {
+            guard let info = symbols.symbol(candidate),
+                  info.flags.contains(.synthetic),
+                  let signature = symbols.functionSignature(for: candidate),
+                  signature.receiverType == bufferedReaderType,
+                  signature.parameterTypes.isEmpty
+            else { continue }
+            symbols.insertFlags(.operatorFunction, for: candidate)
+        }
+
         // MARK: - BufferedWriter type and File.bufferedWriter() (STDLIB-IO-091/093)
 
         let bufferedWriterSymbol = ensureClassSymbol(

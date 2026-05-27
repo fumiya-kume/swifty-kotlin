@@ -651,6 +651,25 @@ public func kk_buffered_reader_ready(_ readerRaw: Int) -> Int {
     return kk_box_bool(reader.ready() ? 1 : 0)
 }
 
+// MARK: - STDLIB-IO-FN-022: BufferedReader.iterator()
+//
+// Kotlin's `kotlin.io.BufferedReader.iterator()` operator extension returns an
+// `Iterator<String>` that yields successive lines from the receiver. The
+// underlying line buffering and termination semantics are inherited from
+// `BufferedReader.readLine()`. Our implementation materialises all remaining
+// lines eagerly into a list iterator so it can plug into the existing
+// `RuntimeListIteratorBox` dispatch in `kk_iterator_hasNext` / `kk_iterator_next`.
+// The observable behaviour (iteration order, blank line handling, EOF) matches
+// `readLine()` because we delegate to it.
+@_cdecl("kk_buffered_reader_iterator")
+public func kk_buffered_reader_iterator(_ readerRaw: Int) -> Int {
+    guard let reader = runtimeBufferedReaderBox(from: readerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_buffered_reader_iterator received invalid BufferedReader handle")
+    }
+    let lineRaws = reader.readLines().map { fileMakeStringRaw($0) }
+    return registerRuntimeObject(RuntimeListIteratorBox(elements: lineRaws))
+}
+
 // MARK: - STDLIB-IO-091: BufferedWriter
 
 private func runtimeBufferedWriterBox(from raw: Int) -> RuntimeBufferedWriterBox? {
