@@ -32,6 +32,8 @@ extension ABIMismatchTests {
             "kk_readln",
             "kk_readlnOrNull",
             "kk_file_appendBytes",
+            "kk_file_forEachBlock_default",
+            "kk_file_forEachBlock",
             "kk_file_copyTo_default",
             "kk_file_copyTo_overwrite",
             "kk_file_copyTo",

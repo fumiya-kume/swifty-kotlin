@@ -2,6 +2,14 @@ import Foundation
 @testable import Runtime
 import XCTest
 
+private var capturedFileBlocks: [[Int]] = []
+private var capturedFileBlockSizes: [Int] = []
+private let captureFileBlock: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, bufferRaw, bytesRead, _ in
+    capturedFileBlocks.append(runtimeListBox(from: bufferRaw)?.elements ?? [])
+    capturedFileBlockSizes.append(bytesRead)
+    return 0
+}
+
 final class RuntimeFileIOTests: IsolatedRuntimeXCTestCase {
     override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     func testReadTextReturnsUtf8Contents() throws {
@@ -87,6 +95,23 @@ final class RuntimeFileIOTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_file_copyTo_overwrite(sourceRaw, targetRaw, kk_box_bool(1), &thrown), targetRaw)
         XCTAssertEqual(thrown, 0)
         XCTAssertEqual(try String(contentsOf: targetURL, encoding: .utf8), "updated")
+    }
+
+    func testFileForEachBlockInvokesActionForChunks() throws {
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try Data([1, 2, 3, 4, 5]).write(to: fileURL)
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        capturedFileBlocks.removeAll()
+        capturedFileBlockSizes.removeAll()
+        let fileRaw = runtimeTestFileHandle(fileURL.path)
+        let fnPtr = unsafeBitCast(captureFileBlock, to: Int.self)
+        var thrown = 0
+
+        XCTAssertEqual(kk_file_forEachBlock(fileRaw, 2, fnPtr, 0, &thrown), 0)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(capturedFileBlocks, [[1, 2], [3, 4], [5]])
+        XCTAssertEqual(capturedFileBlockSizes, [2, 2, 1])
     }
 
     func testFileCopyRecursivelyCopiesDirectoryAndHonorsOverwrite() throws {

@@ -403,6 +403,43 @@ extension CallTypeChecker {
             }
         }
 
+        // --- File.forEachBlock(action) / forEachBlock(blockSize, action) ---
+        if args.count == 1 || args.count == 2 {
+            let calleeStr = interner.resolve(calleeName)
+            let isFileReceiver = isFileType(receiverType, sema: sema, interner: interner)
+            if isFileReceiver, calleeStr == "forEachBlock" {
+                let lambdaIndex = args.count - 1
+                if args.count == 2 {
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
+                }
+                if let lambdaExpr = ast.arena.expr(args[lambdaIndex].expr), case .lambdaLiteral = lambdaExpr {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[lambdaIndex].expr)
+                }
+                let byteArrayType: TypeID = if let byteArraySymbol = sema.symbols.lookup(fqName: [
+                    interner.intern("kotlin"),
+                    interner.intern("ByteArray"),
+                ]) {
+                    sema.types.make(.classType(ClassType(
+                        classSymbol: byteArraySymbol,
+                        args: [],
+                        nullability: .nonNull
+                    )))
+                } else {
+                    sema.types.anyType
+                }
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [byteArrayType, sema.types.intType],
+                    returnType: sema.types.unitType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                _ = driver.inferExpr(args[lambdaIndex].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                let finalType = safeCall ? sema.types.makeNullable(sema.types.unitType) : sema.types.unitType
+                sema.bindings.bindExprType(id, type: finalType)
+                return finalType
+            }
+        }
+
         // --- File/Reader lambda-accepting methods: forEachLine, useLines (STDLIB-322) ---
         // These require the lambda to use the collection HOF closure ABI (closureRaw
         // prepended), and the lambda's implicit `it` must be correctly resolved.

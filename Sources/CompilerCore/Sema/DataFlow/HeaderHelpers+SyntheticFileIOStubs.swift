@@ -454,6 +454,32 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let byteArrayIntToUnitType = types.make(.functionType(FunctionType(
+            params: [byteArrayType, intType],
+            returnType: types.unitType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        registerFileMemberFunction(
+            named: "forEachBlock",
+            externalLinkName: "kk_file_forEachBlock_default",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [("action", byteArrayIntToUnitType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerFileMemberFunction(
+            named: "forEachBlock",
+            externalLinkName: "kk_file_forEachBlock",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [("blockSize", intType), ("action", byteArrayIntToUnitType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
 
         // MARK: - File line-by-line operations (STDLIB-322)
 

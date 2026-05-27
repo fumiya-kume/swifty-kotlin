@@ -230,7 +230,11 @@ extension CollectionLiteralLoweringPass {
         // When the KIR callee is already rewritten via externalLinkName,
         // the lambda argument must be supplemented with closureRaw (0)
         // so the runtime receives (fileRaw, fnPtr, closureRaw, outThrown).
-        if callee == lookup.kkFileForEachLineName || callee == lookup.kkFileUseLinesName {
+        if callee == lookup.kkFileForEachLineName
+            || callee == lookup.kkFileUseLinesName
+            || ctx.interner.resolve(callee) == "kk_file_forEachBlock_default"
+            || ctx.interner.resolve(callee) == "kk_file_forEachBlock"
+        {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             loweredBody.append(.call(

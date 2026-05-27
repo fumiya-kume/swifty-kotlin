@@ -111,7 +111,7 @@
 - [x] STDLIB-IO-FN-013: `copyTo` 関数の実装（InputStream版）
 - [x] STDLIB-IO-FN-014: `copyTo` 関数の実装（Reader版）
 - [x] STDLIB-IO-FN-015: `copyTo` 関数の実装（File版）
-- [ ] STDLIB-IO-FN-016: `forEachBlock` 関数の実装
+- [x] STDLIB-IO-FN-016: `forEachBlock` 関数の実装
 - [x] STDLIB-IO-FN-017: `forEachLine` 関数の実装（Reader版）
 - [x] STDLIB-IO-FN-020: `inputStream` 関数の実装（ByteArray版）
 - [x] STDLIB-IO-FN-021: `inputStream` 関数の実装（ByteArray範囲版）

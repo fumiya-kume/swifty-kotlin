@@ -469,6 +469,59 @@ public func kk_file_appendBytes(_ fileRaw: Int, _ arrayRaw: Int, _ outThrown: Un
     return 0
 }
 
+@_cdecl("kk_file_forEachBlock_default")
+public func kk_file_forEachBlock_default(
+    _ fileRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    kk_file_forEachBlock(fileRaw, 4096, fnPtr, closureRaw, outThrown)
+}
+
+@_cdecl("kk_file_forEachBlock")
+public func kk_file_forEachBlock(
+    _ fileRaw: Int,
+    _ blockSizeRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard blockSizeRaw > 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: blockSize must be positive")
+        return 0
+    }
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_forEachBlock received invalid File handle")
+    }
+    do {
+        let data = try Data(contentsOf: URL(fileURLWithPath: file.path))
+        var offset = 0
+        while offset < data.count {
+            let end = min(offset + blockSizeRaw, data.count)
+            let chunk = data[offset ..< end].map { Int(Int8(bitPattern: $0)) }
+            let chunkRaw = registerRuntimeObject(RuntimeListBox(elements: chunk))
+            var thrown = 0
+            _ = runtimeInvokeCollectionLambda2(
+                fnPtr: fnPtr,
+                closureRaw: closureRaw,
+                lhs: chunkRaw,
+                rhs: end - offset,
+                outThrown: &thrown
+            )
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return 0
+            }
+            offset = end
+        }
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return 0
+}
+
 @_cdecl("kk_file_copyTo_default")
 public func kk_file_copyTo_default(_ sourceRaw: Int, _ targetRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     kk_file_copyTo(sourceRaw, targetRaw, kk_box_bool(0), 8192, outThrown)
