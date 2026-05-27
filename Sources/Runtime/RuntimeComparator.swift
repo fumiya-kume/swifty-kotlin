@@ -751,6 +751,16 @@ public func kk_comparator_nulls_first(_ cFn: Int, _ cClosure: Int) -> Int {
     return raw
 }
 
+/// Top-level nullsFirst(comparator): wraps a provided comparator so that nulls compare first.
+/// Used by kotlin.comparisons.nullsFirst(Comparator<in T>) (STDLIB-COMP-FN-060).
+@_cdecl("kk_comparator_nulls_first_of")
+public func kk_comparator_nulls_first_of(_ cFn: Int, _ cClosure: Int) -> Int {
+    let pair = RuntimePairBox(first: cFn, second: cClosure)
+    let raw = registerRuntimeObject(pair)
+    runtimeRegisterComparatorCompareMethod(raw, kk_comparator_nulls_first_trampoline)
+    return raw
+}
+
 @_cdecl("kk_comparator_nulls_last")
 public func kk_comparator_nulls_last(_ cFn: Int, _ cClosure: Int) -> Int {
     let pair = RuntimePairBox(first: cFn, second: cClosure)

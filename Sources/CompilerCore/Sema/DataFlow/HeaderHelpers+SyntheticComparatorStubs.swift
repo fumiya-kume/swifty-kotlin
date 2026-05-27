@@ -62,6 +62,15 @@ extension DataFlowSemaPhase {
             comparatorSymbol: comparatorSymbol
         )
 
+        registerNullsFirstTopLevelWithComparator(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            comparisonsPkg: comparisonsPkg,
+            comparisonsPackageSymbol: comparisonsPackageSymbol,
+            comparatorSymbol: comparatorSymbol
+        )
+
         registerArrayBinarySearchComparator(
             symbols: symbols,
             types: types,
@@ -955,6 +964,102 @@ extension DataFlowSemaPhase {
                 for: funcSymbol
             )
         }
+    }
+
+    /// Register `kotlin.comparisons.nullsFirst(comparator: Comparator<in T>): Comparator<T?>`
+    /// (STDLIB-COMP-FN-060). Wraps the provided comparator so that nulls compare first.
+    private func registerNullsFirstTopLevelWithComparator(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        comparisonsPkg: [InternedString],
+        comparisonsPackageSymbol: SymbolID,
+        comparatorSymbol: SymbolID
+    ) {
+        let functionName = interner.intern("nullsFirst")
+        let functionFQName = comparisonsPkg + [functionName]
+        let extLink = "kk_comparator_nulls_first_of"
+
+        let tParamName = interner.intern("T")
+        let tParamFQName = functionFQName + [tParamName]
+        let tParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: tParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: tParamName,
+                fqName: tParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let tParamTypeNonNull = types.make(.typeParam(TypeParamType(
+            symbol: tParamSymbol, nullability: .nonNull
+        )))
+        let tParamTypeNullable = types.make(.typeParam(TypeParamType(
+            symbol: tParamSymbol, nullability: .nullable
+        )))
+
+        let comparatorInType = types.make(.classType(ClassType(
+            classSymbol: comparatorSymbol,
+            args: [.in(tParamTypeNonNull)],
+            nullability: .nonNull
+        )))
+        let comparatorReturnType = types.make(.classType(ClassType(
+            classSymbol: comparatorSymbol,
+            args: [.invariant(tParamTypeNullable)],
+            nullability: .nonNull
+        )))
+
+        if symbols.lookupAll(fqName: functionFQName).contains(where: { symbolID in
+            guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+            return sig.parameterTypes == [comparatorInType] && sig.returnType == comparatorReturnType
+        }) {
+            if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+                guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+                return sig.parameterTypes == [comparatorInType] && sig.returnType == comparatorReturnType
+            }) {
+                symbols.setExternalLinkName(extLink, for: existing)
+            }
+            return
+        }
+
+        let funcSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(comparisonsPackageSymbol, for: funcSymbol)
+        symbols.setExternalLinkName(extLink, for: funcSymbol)
+
+        let comparatorParamName = interner.intern("comparator")
+        let comparatorParamSymbol = symbols.define(
+            kind: .valueParameter,
+            name: comparatorParamName,
+            fqName: functionFQName + [comparatorParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(funcSymbol, for: comparatorParamSymbol)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [comparatorInType],
+                returnType: comparatorReturnType,
+                isSuspend: false,
+                valueParameterSymbols: [comparatorParamSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
+                typeParameterSymbols: [tParamSymbol],
+                typeParameterUpperBoundsList: [[types.anyType]]
+            ),
+            for: funcSymbol
+        )
     }
 
     private func registerArrayBinarySearchComparator(

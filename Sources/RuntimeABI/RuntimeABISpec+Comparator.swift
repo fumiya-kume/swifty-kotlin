@@ -300,6 +300,15 @@ public extension RuntimeABISpec {
             section: "Comparator"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_comparator_nulls_first_of",
+            parameters: [
+                RuntimeABIParameter(name: "cFn", type: .intptr),
+                RuntimeABIParameter(name: "cClosure", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Comparator"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_comparator_nulls_first_trampoline",
             parameters: [
                 RuntimeABIParameter(name: "closureRaw", type: .intptr),
