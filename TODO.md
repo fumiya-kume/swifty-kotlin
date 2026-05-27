@@ -286,7 +286,7 @@
 
 #### kotlin.text 型の実装
 - [x] STDLIB-TEXT-TYPE-001: `Appendable` インターフェースの実装
-- [ ] STDLIB-TEXT-TYPE-002: `CharacterCodingException` クラスの実装
+- [x] STDLIB-TEXT-TYPE-002: `CharacterCodingException` クラスの実装
 - [x] STDLIB-TEXT-TYPE-003: `CharCategory` enum の実装
 - [x] STDLIB-TEXT-TYPE-004: `CharDirectionality` enum の実装
 - [x] STDLIB-TEXT-TYPE-005: `Charsets` オブジェクトの実装
