@@ -724,6 +724,26 @@ extension DataFlowSemaPhase {
             symbols.setDirectSupertypes([writerSymbol], for: bufferedWriterSymbol)
             types.setNominalDirectSupertypes([writerSymbol], for: bufferedWriterSymbol)
         }
+        registerFilePackageExtensionFunction(
+            named: "copyTo",
+            packageFQName: kotlinIOPkg,
+            receiverType: readerType,
+            parameters: [("out", writerType)],
+            returnType: types.longType,
+            externalLinkName: "kk_reader_copyTo_default",
+            symbols: symbols,
+            interner: interner
+        )
+        registerFilePackageExtensionFunction(
+            named: "copyTo",
+            packageFQName: kotlinIOPkg,
+            receiverType: readerType,
+            parameters: [("out", writerType), ("bufferSize", intType)],
+            returnType: types.longType,
+            externalLinkName: "kk_reader_copyTo",
+            symbols: symbols,
+            interner: interner
+        )
 
         // File.bufferedWriter() -> BufferedWriter
         registerFileMemberFunction(
