@@ -1227,12 +1227,31 @@ extension DataFlowSemaPhase {
             scopeTypeParamSymbol = param
         }
         types.setNominalTypeParameterSymbols([scopeTypeParamSymbol], for: scopeSymbol)
-        types.setNominalTypeParameterVariances([.invariant], for: scopeSymbol)
+        types.setNominalTypeParameterVariances([.in], for: scopeSymbol)
 
         let scopeTypeParamType = types.make(.typeParam(TypeParamType(symbol: scopeTypeParamSymbol)))
         let scopeReceiverType = types.make(.classType(ClassType(
             classSymbol: scopeSymbol,
             args: [.invariant(scopeTypeParamType)],
+            nullability: .nonNull
+        )))
+        let iteratorType = nominalSequenceParameterType(
+            package: ["kotlin", "collections", "Iterator"],
+            elementType: scopeTypeParamType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let iterableType = nominalSequenceParameterType(
+            package: ["kotlin", "collections", "Iterable"],
+            elementType: scopeTypeParamType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let sequenceType = types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
+            args: [.out(scopeTypeParamType)],
             nullability: .nonNull
         )))
         registerSequenceScopeMember(
@@ -1247,16 +1266,34 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // STDLIB-553: yieldAll(iterable) — yields all elements from a collection/sequence
-        // Note: Uses `anyType` because Kotlin's Iterable<T> interface is not yet
-        // fully modeled in the type system. The runtime validates the actual collection
-        // kind (List, Array, Set, Sequence) and rejects unsupported types at runtime.
         registerSequenceScopeMember(
             named: "yieldAll",
             sequenceScopeSymbol: scopeSymbol,
             sequenceScopeFQName: scopeFQName,
             receiverType: scopeReceiverType,
-            parameters: [(name: "elements", type: types.anyType)],
+            parameters: [(name: "iterator", type: iteratorType)],
+            returnType: types.unitType,
+            externalLinkName: "kk_sequence_builder_yieldAll",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSequenceScopeMember(
+            named: "yieldAll",
+            sequenceScopeSymbol: scopeSymbol,
+            sequenceScopeFQName: scopeFQName,
+            receiverType: scopeReceiverType,
+            parameters: [(name: "elements", type: iterableType)],
+            returnType: types.unitType,
+            externalLinkName: "kk_sequence_builder_yieldAll",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSequenceScopeMember(
+            named: "yieldAll",
+            sequenceScopeSymbol: scopeSymbol,
+            sequenceScopeFQName: scopeFQName,
+            receiverType: scopeReceiverType,
+            parameters: [(name: "sequence", type: sequenceType)],
             returnType: types.unitType,
             externalLinkName: "kk_sequence_builder_yieldAll",
             symbols: symbols,
@@ -1334,6 +1371,24 @@ extension DataFlowSemaPhase {
             ),
             for: functionSymbol
         )
+    }
+
+    private func nominalSequenceParameterType(
+        package: [String],
+        elementType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID {
+        let fqName = package.map { interner.intern($0) }
+        guard let symbol = symbols.lookup(fqName: fqName) else {
+            return types.anyType
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: symbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
     }
 
     // STDLIB-331/564: iterator {} builder → Iterator<T>

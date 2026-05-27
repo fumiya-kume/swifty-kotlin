@@ -761,6 +761,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_first")
             case firstOrNullName:
                 return interner.intern("kk_sequence_firstOrNull")
+            case interner.intern("random"):
+                return interner.intern("kk_sequence_random")
             case interner.intern("randomOrNull"):
                 return interner.intern("kk_sequence_randomOrNull")
             case lastName:
@@ -824,6 +826,10 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_unzip")
             case interner.intern("foldIndexed"):
                 return interner.intern("kk_sequence_foldIndexed")
+            case interner.intern("runningFold"):
+                return interner.intern(useIterableRuntimeForCollectionFallback
+                    ? "kk_list_runningFold"
+                    : "kk_sequence_runningFold")
             case interner.intern("scan"):
                 return interner.intern("kk_sequence_scan")
             case interner.intern("runningFoldIndexed"):
@@ -832,6 +838,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_scanIndexed")
             case interner.intern("reduceOrNull"):
                 return interner.intern("kk_sequence_reduceOrNull")
+            case interner.intern("reduce"):
+                return interner.intern("kk_sequence_reduce")
             case interner.intern("reduceRight"):
                 return interner.intern("kk_sequence_reduceRight")
             case interner.intern("reduceIndexed"):

@@ -3,6 +3,7 @@ import Foundation
 import XCTest
 
 final class RuntimeNetworkTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     private final class HTTPTestServer {
         private static let serverStartupTimeout: TimeInterval = 5
         private static let serverShutdownTimeout: TimeInterval = 5

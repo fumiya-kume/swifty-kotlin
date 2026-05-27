@@ -376,7 +376,7 @@ public func kk_list_average(_ listRaw: Int) -> Int {
     var sum: Double = 0.0
     for raw in elements {
         if let ptr = UnsafeMutableRawPointer(bitPattern: raw) {
-            let isObj = runtimeStorage.withLock { state in
+            let isObj = runtimeStorage.withGCLock { state in
                 state.objectPointers.contains(UInt(bitPattern: ptr))
             }
             if isObj {

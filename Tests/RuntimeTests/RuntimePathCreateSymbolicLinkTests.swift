@@ -3,6 +3,7 @@ import Foundation
 import XCTest
 
 final class RuntimePathCreateSymbolicLinkTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     func testPathCreateSymbolicLinkPointingToAttributesCreatesLink() throws {
         let rootURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let targetURL = rootURL.appendingPathComponent("target.txt")

@@ -125,6 +125,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("plusElement", 1),
             sequence("chunked", 1),
             sequence("contains", 1),
+            sequence("drop", 1),
             sequence("dropWhile", 1),
             sequence("distinctBy", 1),
             sequence("constrainOnce", 0),
@@ -147,6 +148,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("first", 0),
             sequence("firstOrNull", 0),
             sequence("maxWithOrNull", 1),
+            sequence("minOrNull", 0),
             sequence("minWith", 1),
             sequence("firstNotNullOf", 1),
             sequence("firstNotNullOfOrNull", 1),
@@ -169,7 +171,9 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("runningReduceIndexed", 1),
             sequence("scanIndexed", 2),
             sequence("runningFoldIndexed", 2),
+            sequence("runningFold", 2),
             sequence("scan", 2),
+            sequence("filterNotNull", 0),
             sequence("filterTo", 2),
             sequence("filterNotTo", 2),
             sequence("mapTo", 2),
@@ -191,6 +195,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("reduceOrNull", 1),
             sequence("reduceRight", 1),
             sequence("reduceIndexed", 1),
+            sequence("reduce", 1),
         ]
 
         let actual = Set(StdlibSurfaceSpec.collectionHOFMembers.map(SpecKey.init(spec:)))
@@ -230,12 +235,14 @@ final class StdlibSurfaceSpecTests: XCTestCase {
                 (.sequence, ["kotlin", "sequences", "Sequence"], "firstNotNullOf", 1),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "runningReduceIndexed", 1),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "partition", 1),
+                (.sequence, ["kotlin", "sequences", "Sequence"], "random", 0),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "reversed", 0),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "scanIndexed", 2),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "reduceRightIndexed", 1),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "reduceRightOrNull", 1),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "plus", 1),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "runningFoldIndexed", 2),
+                (.sequence, ["kotlin", "sequences", "Sequence"], "runningFold", 2),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "reduceIndexed", 1),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "randomOrNull", 0),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "plusElement", 1),
@@ -246,6 +253,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
                 (.sequence, ["kotlin", "sequences", "Sequence"], "reduceRight", 1),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "scan", 2),
                 (.sequence, ["kotlin", "sequences", "Sequence"], "maxOrNull", 0),
+                (.sequence, ["kotlin", "sequences", "Sequence"], "reduce", 1),
             ]
 
             for testCase in cases {

@@ -2,6 +2,7 @@
 import XCTest
 
 final class RuntimeNativeStackTraceAddressesTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     func testGetStackTraceAddressesReturnsRuntimeList() throws {
         let raw = kk_native_getStackTraceAddresses()
         let ptr = try XCTUnwrap(UnsafeMutableRawPointer(bitPattern: raw))

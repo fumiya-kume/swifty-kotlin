@@ -22,6 +22,7 @@ class ThreadSafeInt: @unchecked Sendable {
 }
 
 final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
 
     // MARK: - Rendezvous Channel (capacity == 0)
 

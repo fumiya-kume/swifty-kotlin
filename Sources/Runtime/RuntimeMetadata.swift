@@ -236,7 +236,7 @@ private func runtimeMetadataKParameterBox(from raw: Int) -> RuntimeKParameterBox
     guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
         return nil
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObjectPointer else {
@@ -249,7 +249,7 @@ private func runtimeMetadataKClassBox(from raw: Int) -> RuntimeKClassBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
         return nil
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObjectPointer else {

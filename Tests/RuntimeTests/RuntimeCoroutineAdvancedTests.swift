@@ -126,6 +126,7 @@ func advcoro_nested_two_delays(_ continuation: Int, _ outThrown: UnsafeMutablePo
 /// resumeWith, multi-spill slot state, timeout-or-null, exception handler invocation,
 /// and recursive / chained suspend patterns.
 final class RuntimeCoroutineAdvancedTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     override func resetIsolatedRuntimeTestState() {
         advancedCoroTestState.reset()
     }
@@ -445,7 +446,7 @@ private final class AdvThrownCapture: @unchecked Sendable {
 
 private func runtimeRegisterAdvStringBox(_ box: RuntimeStringBox) -> Int {
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)

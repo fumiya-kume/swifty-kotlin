@@ -3,6 +3,7 @@ import Foundation
 import XCTest
 
 final class RuntimePathCreateTempFileTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     func testPathCreateTempFilePrefixSuffixAttributesCreatesFile() throws {
         var thrown = 0
         let resultRaw = kk_path_createTempFile_prefix_suffix_attributes(

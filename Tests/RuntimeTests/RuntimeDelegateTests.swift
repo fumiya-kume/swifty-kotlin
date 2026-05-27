@@ -226,6 +226,7 @@ private let vetoableOrderCallback: KKDelegateObserverEntryPoint = { _, _, _, _ i
 }
 
 final class RuntimeDelegateTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcAndDelegate }
     override func resetIsolatedRuntimeTestState() {
         gDelegateState.reset()
         gLazyPublicationState.reset()

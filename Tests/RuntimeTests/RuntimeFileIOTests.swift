@@ -3,6 +3,7 @@ import Foundation
 import XCTest
 
 final class RuntimeFileIOTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     func testReadTextReturnsUtf8Contents() throws {
         let fileURL = try makeTempFile(contents: "alpha\nbeta")
         defer { try? FileManager.default.removeItem(at: fileURL) }

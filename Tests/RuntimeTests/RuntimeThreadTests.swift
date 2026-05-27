@@ -59,6 +59,7 @@ private let runtimeThreadThunk: @convention(c) (Int, UnsafeMutablePointer<Int>?)
 private let runtimeThreadThunkPtr = unsafeBitCast(runtimeThreadThunk, to: Int.self)
 
 final class RuntimeThreadTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     override func resetIsolatedRuntimeTestState() {
         runtimeThreadLaunchState.reset()
     }

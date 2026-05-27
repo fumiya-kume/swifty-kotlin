@@ -3,6 +3,7 @@ import Dispatch
 import XCTest
 
 final class JobComprehensiveTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     
     // MARK: - Job State Transitions Tests
     

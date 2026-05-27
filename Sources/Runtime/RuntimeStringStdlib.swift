@@ -417,7 +417,7 @@ public func kk_string_iterator(_ strRaw: Int) -> Int {
     let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
     let box = RuntimeStringIteratorBox(charRaws: charRaws)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return Int(bitPattern: opaque)
@@ -2821,7 +2821,7 @@ private func runtimeComparableScalar(from raw: Int) -> RuntimeComparableScalar? 
     guard let pointer = UnsafeMutableRawPointer(bitPattern: raw) else {
         return .integer(raw)
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: pointer))
     }
     guard isObjectPointer else {
@@ -3125,7 +3125,7 @@ private func runtimeMakeStringRaw(_ value: String) -> Int {
 private func runtimeMakeListRaw(_ values: [Int]) -> Int {
     let box = RuntimeListBox(elements: values)
     let pointer = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: pointer))
     }
     return Int(bitPattern: pointer)
@@ -3137,7 +3137,7 @@ private func runtimeMakeArrayRaw(_ values: [Int]) -> Int {
         box.elements[index] = value
     }
     let pointer = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: pointer))
     }
     return Int(bitPattern: pointer)
@@ -3466,7 +3466,7 @@ private func runtimeApplyStringWidth(_ value: String, specifier: RuntimeFormatSp
 }
 
 private func runtimeIsObjectPointer(_ pointer: UnsafeMutableRawPointer) -> Bool {
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: pointer))
     }
 }

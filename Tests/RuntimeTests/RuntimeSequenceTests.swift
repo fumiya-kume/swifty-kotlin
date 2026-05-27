@@ -257,6 +257,7 @@ private func runtimeTestStringHandle(_ value: String) -> Int {
 }
 
 final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     override func resetIsolatedRuntimeTestState() {
         _lazyTestYieldCounter = 0
         _lazySequenceOnEachIndexedTrace = []
@@ -525,23 +526,9 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(emptyResult, runtimeNullSentinelInt)
     }
 
-    func testMinWithOrNullReturnsComparatorMinimumAndNullOnEmpty() {
-        var thrown = 0
-        let result = kk_sequence_minWithOrNull(
-            makeSequence([5, 2, 3]),
-            unsafeBitCast(sequenceReverseIntComparator, to: Int.self),
-            0,
-            &thrown
-        )
-        XCTAssertEqual(result, 5)
-        XCTAssertEqual(thrown, 0)
-
-        thrown = 0
-        XCTAssertEqual(
-            kk_sequence_minWithOrNull(makeSequence([]), unsafeBitCast(sequenceReverseIntComparator, to: Int.self), 0, &thrown),
-            runtimeNullSentinelInt
-        )
-        XCTAssertEqual(thrown, 0)
+    func testMinOrNullReturnsSmallestElementAndNullOnEmpty() {
+        XCTAssertEqual(kk_sequence_minOrNull(makeSequence([5, 2, 3])), 2)
+        XCTAssertEqual(kk_sequence_minOrNull(makeSequence([])), runtimeNullSentinelInt)
     }
 
     func testMaxOrNullReturnsLargestElementAndNullOnEmpty() {
@@ -1887,6 +1874,12 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_unbox_bool(kk_sequence_contains(seq, 9)), 0)
     }
 
+    func testDropSkipsRequestedPrefix() {
+        let result = kk_sequence_drop(makeSequence([1, 2, 3, 4, 5]), 2)
+
+        XCTAssertEqual(listElements(kk_sequence_to_list(result, nil)), [3, 4, 5])
+    }
+
     func testDropWhileSkipsLeadingMatchesOnly() {
         let result = kk_sequence_dropWhile(
             makeSequence([1, 2, 3, 1, 4]),
@@ -2268,6 +2261,15 @@ final class RuntimeSequenceTests: IsolatedRuntimeXCTestCase {
         let seq = makeSequence([1, 2, 3])
         let combined = kk_sequence_plus_element(seq, 42)
         XCTAssertEqual(sequenceElements(combined), [1, 2, 3, 42])
+    }
+
+    func testRandomReturnsOnlyElementAndThrowsOnEmpty() {
+        var thrown = 0
+        XCTAssertEqual(kk_sequence_random(makeSequence([42]), &thrown), 42)
+        XCTAssertEqual(thrown, 0)
+        thrown = 0
+        XCTAssertEqual(kk_sequence_random(makeSequence([]), &thrown), 0)
+        XCTAssertNotEqual(thrown, 0)
     }
 
     func testSequenceMaxOfReturnsLargestSelectorAndThrowsOnEmpty() throws {

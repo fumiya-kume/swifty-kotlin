@@ -68,7 +68,7 @@ public func kk_native_identityHashCode(_ objectRaw: Int) -> Int {
     }
 
     let key = UInt(bitPattern: ptr)
-    let isKnownRuntimeObject = runtimeStorage.withLock { state in
+    let isKnownRuntimeObject = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(key) || state.heapObjects[key] != nil
     }
     guard isKnownRuntimeObject else {
@@ -460,7 +460,7 @@ public func kk_native_heap_free(_ handle: Int) -> Int {
     }
     // Release the box; its deinit frees the underlying C memory.
     Unmanaged<RuntimeNativeHeapAllocationBox>.fromOpaque(ptr).release()
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.remove(UInt(bitPattern: ptr))
     }
     return 0
@@ -494,7 +494,7 @@ final class RuntimeMemScopeBox: @unchecked Sendable {
         allocations.removeAll(keepingCapacity: false)
         lock.unlock()
 
-        runtimeStorage.withLock { state in
+        runtimeStorage.withGCLock { state in
             for key in keys {
                 guard state.objectPointers.remove(key) != nil,
                       let ptr = UnsafeMutableRawPointer(bitPattern: key)
@@ -535,7 +535,7 @@ public func kk_mem_scope_exit(_ handle: Int) -> Int {
     let unmanaged = Unmanaged<RuntimeMemScopeBox>.fromOpaque(ptr)
     let box = unmanaged.takeUnretainedValue()
     box.freeAll()
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.remove(UInt(bitPattern: ptr))
     }
     unmanaged.release()
@@ -581,7 +581,7 @@ public func kk_pin_object(_ objectRaw: Int) -> Int {
     }
     // Register the object as a GC root so the mark-sweep collector treats it
     // as reachable for as long as the pin is held.
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.pinnedObjects.insert(UInt(bitPattern: objectRaw))
     }
     return registerRuntimeObject(RuntimePinnedBox(objectRaw: objectRaw))
@@ -593,7 +593,7 @@ public func kk_unpin_object(_ pinnedHandle: Int) -> Int {
         return 0
     }
     // ABI-005: guard is not registered at all → silently no-op.
-    let isKnown = runtimeStorage.withLock { state in
+    let isKnown = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isKnown else {
@@ -608,7 +608,7 @@ public func kk_unpin_object(_ pinnedHandle: Int) -> Int {
     }
     let unmanaged = Unmanaged<RuntimePinnedBox>.fromOpaque(ptr)
     // Drop GC root registration so the object can be collected again; see kk_pin_object.
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.pinnedObjects.remove(UInt(bitPattern: box.objectRaw))
         state.objectPointers.remove(UInt(bitPattern: ptr))
     }
@@ -670,7 +670,7 @@ private func runtimeWeakReferentIsLive(_ objectRaw: Int) -> Bool {
         return false
     }
     let key = UInt(bitPattern: ptr)
-    return runtimeStorage.withLock { state in
+    return runtimeStorage.withGCLock { state in
         state.objectPointers.contains(key) || state.heapObjects[key] != nil
     }
 }
@@ -680,7 +680,7 @@ private func runtimeWeakReferenceBox(from weakRefRaw: Int) -> RuntimeWeakReferen
         return nil
     }
     let key = UInt(bitPattern: ptr)
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(key)
     }
     guard isObjectPointer else {
@@ -764,7 +764,7 @@ private func runtimeCleanerBox(from cleanerRaw: Int) -> RuntimeCleanerBox? {
         return nil
     }
     let key = UInt(bitPattern: ptr)
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(key)
     }
     guard isObjectPointer else {
@@ -836,7 +836,7 @@ private final class RuntimeFrozenRegistry: @unchecked Sendable {
             lock.unlock()
             // Collect children only for registered objectPointer boxes.
             guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { continue }
-            let isRegistered = runtimeStorage.withLock { state in
+            let isRegistered = runtimeStorage.withGCLock { state in
                 state.objectPointers.contains(UInt(bitPattern: ptr))
             }
             guard isRegistered else { continue }

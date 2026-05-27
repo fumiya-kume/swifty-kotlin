@@ -28,7 +28,7 @@ extension DataFlowSemaPhase {
         )
     }
 
-    private func ensureJsReadonlySetCollectionsType(
+    func ensureJsReadonlySetCollectionsType(
         packageFQName: [InternedString],
         symbols: SymbolTable,
         types: TypeSystem,
@@ -148,7 +148,7 @@ extension DataFlowSemaPhase {
         return (classSymbol, typeParamSymbol)
     }
 
-    private func appendJsCollectionsSetAnnotation(
+    func appendJsCollectionsSetAnnotation(
         to symbol: SymbolID,
         symbols: SymbolTable
     ) {

@@ -10,6 +10,7 @@ import XCTest
 // overflow/saturation, toString on elapsed duration, and monotonicity invariants.
 
 final class RuntimeExperimentalTimeEdgeCaseTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
 
     // MARK: - Helpers
 

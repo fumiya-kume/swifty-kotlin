@@ -132,7 +132,7 @@ final class RuntimeArrayIndexOutOfBoundsExceptionBox: RuntimeThrowableBox {
 func runtimeAllocateAssertionError(message: String, cause: Int = 0) -> Int {
     let throwable = RuntimeAssertionErrorBox(message: message, cause: cause)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(throwable).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -142,7 +142,7 @@ func runtimeAllocateAssertionError(message: String, cause: Int = 0) -> Int {
 func runtimeAllocateIllegalStateException(message: String, cause: Int = 0) -> Int {
     let throwable = RuntimeIllegalStateExceptionBox(message: message, cause: cause)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(throwable).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -152,7 +152,7 @@ func runtimeAllocateIllegalStateException(message: String, cause: Int = 0) -> In
 func runtimeAllocateIllegalArgumentException(message: String, cause: Int = 0) -> Int {
     let throwable = RuntimeIllegalArgumentExceptionBox(message: message, cause: cause)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(throwable).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -161,7 +161,7 @@ func runtimeAllocateIllegalArgumentException(message: String, cause: Int = 0) ->
 func runtimeAllocateNoWhenBranchMatchedException(message: String, cause: Int = 0) -> Int {
     let throwable = RuntimeNoWhenBranchMatchedExceptionBox(message: message, cause: cause)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(throwable).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -170,7 +170,7 @@ func runtimeAllocateNoWhenBranchMatchedException(message: String, cause: Int = 0
 func runtimeAllocateConcurrentModificationException(message: String, cause: Int = 0) -> Int {
     let throwable = RuntimeConcurrentModificationExceptionBox(message: message, cause: cause)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(throwable).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -179,7 +179,7 @@ func runtimeAllocateConcurrentModificationException(message: String, cause: Int 
 func runtimeAllocateArrayIndexOutOfBoundsException(message: String) -> Int {
     let throwable = RuntimeArrayIndexOutOfBoundsExceptionBox(message: message)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(throwable).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)

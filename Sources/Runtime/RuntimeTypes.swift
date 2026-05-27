@@ -1085,7 +1085,7 @@ final class RuntimeKMemberRegistry: @unchecked Sendable {
         guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
             return false
         }
-        let isObjectPointer = runtimeStorage.withLock { state in
+        let isObjectPointer = runtimeStorage.withGCLock { state in
             state.objectPointers.contains(UInt(bitPattern: ptr))
         }
         guard isObjectPointer else {

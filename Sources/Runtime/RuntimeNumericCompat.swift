@@ -36,7 +36,7 @@ public func kk_any_to_string(_ value: Int, _ tag: Int) -> UnsafeMutableRawPointe
 
 private func runtimeRenderTaggedChar(_ value: Int) -> String {
     if let ptr = UnsafeMutableRawPointer(bitPattern: value) {
-        let isObjectPointer = runtimeStorage.withLock { state in
+        let isObjectPointer = runtimeStorage.withGCLock { state in
             state.objectPointers.contains(UInt(bitPattern: ptr))
         }
         if isObjectPointer, let charBox = tryCast(ptr, to: RuntimeCharBox.self) {
@@ -48,7 +48,7 @@ private func runtimeRenderTaggedChar(_ value: Int) -> String {
 
 private func runtimeTaggedFloatValue(_ value: Int) -> Float {
     if let ptr = UnsafeMutableRawPointer(bitPattern: value) {
-        let isObjectPointer = runtimeStorage.withLock { state in
+        let isObjectPointer = runtimeStorage.withGCLock { state in
             state.objectPointers.contains(UInt(bitPattern: ptr))
         }
         if isObjectPointer, let floatBox = tryCast(ptr, to: RuntimeFloatBox.self) {
@@ -60,7 +60,7 @@ private func runtimeTaggedFloatValue(_ value: Int) -> Float {
 
 private func runtimeTaggedDoubleValue(_ value: Int) -> Double {
     if let ptr = UnsafeMutableRawPointer(bitPattern: value) {
-        let isObjectPointer = runtimeStorage.withLock { state in
+        let isObjectPointer = runtimeStorage.withGCLock { state in
             state.objectPointers.contains(UInt(bitPattern: ptr))
         }
         if isObjectPointer, let doubleBox = tryCast(ptr, to: RuntimeDoubleBox.self) {
@@ -83,7 +83,7 @@ private func runtimeAnyHashCode(_ value: Int, _ tag: Int32) -> Int {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: value) else {
         return tag == 2 ? (value != 0 ? 1231 : 1237) : value
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: pointer))
     }
     guard isObjectPointer else {
@@ -137,7 +137,7 @@ private func runtimeAnyKind(_ value: Int, _ tag: Int32) -> Int32 {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: value) else {
         return tag == 2 ? 2 : 1
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: pointer))
     }
     guard isObjectPointer else {
@@ -250,7 +250,7 @@ public func kk_println_long(_ value: Int) {
     // opaque runtime object handles.  Detect that case and render via
     // runtimeElementToString so that "println(1L..10L)" prints "1..10".
     if let ptr = UnsafeMutableRawPointer(bitPattern: value) {
-        let isObj = runtimeStorage.withLock { state in
+        let isObj = runtimeStorage.withGCLock { state in
             state.objectPointers.contains(UInt(bitPattern: ptr))
         }
         if isObj, tryCast(ptr, to: RuntimeRangeBox.self) != nil {

@@ -44,6 +44,7 @@ private func runtimeNativeUnhandledExceptionThrowingHook(
 }
 
 final class RuntimeNativeUnhandledExceptionHookTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     override func resetIsolatedRuntimeTestState() {
         runtimeNativeUnhandledExceptionHookTestState.reset()
         _ = kk_native_setUnhandledExceptionHook(0)
