@@ -410,7 +410,7 @@
 - [ ] STDLIB-TEXT-FN-084: `toBigDecimalOrNull` 関数の実装
 - [ ] STDLIB-TEXT-FN-085: `toBigInteger` 関数の実装
 - [ ] STDLIB-TEXT-FN-086: `toBigIntegerOrNull` 関数の実装
-- [ ] STDLIB-TEXT-FN-087: `toBoolean` 関数の実装
+- [x] STDLIB-TEXT-FN-087: `toBoolean` 関数の実装
 - [ ] STDLIB-TEXT-FN-088: `toBooleanStrict` 関数の実装
 - [ ] STDLIB-TEXT-FN-089: `toBooleanStrictOrNull` 関数の実装
 - [ ] STDLIB-TEXT-FN-090: `toByte` 関数の実装
