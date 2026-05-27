@@ -269,7 +269,7 @@
 - [x] STDLIB-SEQ-FN-100: `runningFold` 関数の実装
 - [x] STDLIB-SEQ-FN-102: `runningReduce` 関数の実装
 - [ ] STDLIB-SEQ-FN-106: `shuffled` 関数の実装
-- [ ] STDLIB-SEQ-FN-107: `single` 関数の実装
+- [x] STDLIB-SEQ-FN-107: `single` 関数の実装
 - [x] STDLIB-SEQ-FN-109: `slice` 関数の実装
 - [ ] STDLIB-SEQ-FN-111: `sortedBy` 関数の実装
 - [x] STDLIB-SEQ-FN-133: `zip` 関数の実装
