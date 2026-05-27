@@ -278,7 +278,7 @@
 - [ ] STDLIB-STREAMS-FN-003: `toList` 関数の実装（各ストリーム型）
 
 #### kotlin.system 関数の実装
-- [ ] STDLIB-SYSTEM-FN-001: `exitProcess` 関数の実装
+- [x] STDLIB-SYSTEM-FN-001: `exitProcess` 関数の実装
 - [ ] STDLIB-SYSTEM-FN-002: `getTimeMicros` 関数の実装
 - [ ] STDLIB-SYSTEM-FN-003: `getTimeMillis` 関数の実装
 - [ ] STDLIB-SYSTEM-FN-004: `getTimeNanos` 関数の実装
