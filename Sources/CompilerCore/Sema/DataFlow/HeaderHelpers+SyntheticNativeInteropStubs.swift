@@ -2582,6 +2582,21 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        // fun CPointer<ByteVar>.toKString(): String
+        let toKStringByteVarReceiverType = types.make(.classType(ClassType(
+            classSymbol: cPointerSymbol,
+            args: [.invariant(byteVarType)],
+            nullability: .nonNull
+        )))
+        registerSyntheticNativeTopLevelFunction(
+            named: "toKString",
+            packageFQName: cinteropPkg,
+            receiverType: toKStringByteVarReceiverType,
+            parameters: [],
+            returnType: types.stringType,
+            symbols: symbols,
+            interner: interner
+        )
         let cOpaquePointerUnderlyingType = types.make(.classType(ClassType(
             classSymbol: cPointerSymbol,
             args: [.out(cPointedType)],
