@@ -451,7 +451,7 @@
 - [ ] STDLIB-TIME-TYPE-007: `ExperimentalTime` アノテーションの実装
 - [x] STDLIB-TIME-TYPE-008: `Instant` クラスの実装
 - [x] STDLIB-TIME-TYPE-009: `TestTimeSource` クラスの実装
-- [ ] STDLIB-TIME-TYPE-010: `TimedValue` クラスの実装
+- [x] STDLIB-TIME-TYPE-010: `TimedValue` クラスの実装
 - [ ] STDLIB-TIME-TYPE-011: `TimeMark` クラスの実装
 - [ ] STDLIB-TIME-TYPE-012: `TimeSource` インターフェースの実装
 
