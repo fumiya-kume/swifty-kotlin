@@ -53,6 +53,15 @@ extension DataFlowSemaPhase {
             comparatorSymbol: comparatorSymbol
         )
 
+        registerNullsTopLevelComparatorOverloads(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            comparisonsPkg: comparisonsPkg,
+            comparisonsPackageSymbol: comparisonsPackageSymbol,
+            comparatorSymbol: comparatorSymbol
+        )
+
         registerNaturalAndReverseOrder(
             symbols: symbols,
             types: types,
@@ -892,6 +901,101 @@ extension DataFlowSemaPhase {
                     classTypeParameterCount: 1
                 ),
                 for: memberSymbol
+            )
+        }
+    }
+
+    /// Register the top-level `kotlin.comparisons.nullsFirst(Comparator)` and
+    /// `kotlin.comparisons.nullsLast(Comparator)` overloads
+    /// (STDLIB-COMP-FN-060 / STDLIB-COMP-FN-062), which mirror
+    /// `fun <T : Any> nullsFirst(comparator: Comparator<in T>): Comparator<T?>` and
+    /// `fun <T : Any> nullsLast(comparator: Comparator<in T>): Comparator<T?>`.
+    private func registerNullsTopLevelComparatorOverloads(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        comparisonsPkg: [InternedString],
+        comparisonsPackageSymbol: SymbolID,
+        comparatorSymbol: SymbolID
+    ) {
+        for (name, extLink) in [
+            ("nullsFirst", "kk_comparator_nulls_first"),
+            ("nullsLast", "kk_comparator_nulls_last"),
+        ] {
+            let functionName = interner.intern(name)
+            let functionFQName = comparisonsPkg + [functionName]
+            let tParamName = interner.intern("T")
+            let tParamInternalName = interner.intern("T_\(name)_comparator")
+            let tParamFQName = functionFQName + [tParamInternalName]
+            let tParamSymbol = symbols.lookup(fqName: tParamFQName) ?? symbols.define(
+                kind: .typeParameter,
+                name: tParamName,
+                fqName: tParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            symbols.setTypeParameterUpperBounds([types.anyType], for: tParamSymbol)
+
+            let tParamType = types.make(.typeParam(TypeParamType(
+                symbol: tParamSymbol,
+                nullability: .nonNull
+            )))
+            let nullableTParamType = types.makeNullable(tParamType)
+            let parameterComparatorType = types.make(.classType(ClassType(
+                classSymbol: comparatorSymbol,
+                args: [.in(tParamType)],
+                nullability: .nonNull
+            )))
+            let returnComparatorType = types.make(.classType(ClassType(
+                classSymbol: comparatorSymbol,
+                args: [.invariant(nullableTParamType)],
+                nullability: .nonNull
+            )))
+
+            if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+                guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+                return sig.parameterTypes == [parameterComparatorType] &&
+                    sig.returnType == returnComparatorType
+            }) {
+                symbols.setExternalLinkName(extLink, for: existing)
+                continue
+            }
+
+            let funcSymbol = symbols.define(
+                kind: .function,
+                name: functionName,
+                fqName: functionFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(comparisonsPackageSymbol, for: funcSymbol)
+            symbols.setExternalLinkName(extLink, for: funcSymbol)
+
+            let comparatorParamName = interner.intern("comparator")
+            let comparatorParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: comparatorParamName,
+                fqName: functionFQName + [interner.intern("comparator_\(name)_comparator")],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(funcSymbol, for: comparatorParamSymbol)
+
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    parameterTypes: [parameterComparatorType],
+                    returnType: returnComparatorType,
+                    isSuspend: false,
+                    valueParameterSymbols: [comparatorParamSymbol],
+                    valueParameterHasDefaultValues: [false],
+                    valueParameterIsVararg: [false],
+                    typeParameterSymbols: [tParamSymbol],
+                    typeParameterUpperBoundsList: [[types.anyType]]
+                ),
+                for: funcSymbol
             )
         }
     }
