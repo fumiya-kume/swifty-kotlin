@@ -296,7 +296,7 @@
 - [ ] STDLIB-TEXT-TYPE-009: `MatchNamedGroupCollection` インターフェースの実装
 - [ ] STDLIB-TEXT-TYPE-010: `MatchResult` インターフェースの実装
 - [x] STDLIB-TEXT-TYPE-011: `Regex` クラスの実装
-- [ ] STDLIB-TEXT-TYPE-012: `RegexOption` enum の実装
+- [x] STDLIB-TEXT-TYPE-012: `RegexOption` enum の実装
 - [x] STDLIB-TEXT-TYPE-013: `StringBuilder` クラスの実装
 
 #### kotlin.text プロパティの実装
