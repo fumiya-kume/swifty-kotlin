@@ -885,6 +885,7 @@ extension CallTypeChecker {
             lambdaLiteralIndices: preparedArgs.lambdaLiteralIndices,
             inputOnlyLambdaIndices: preparedArgs.inputOnlyLambdaIndices,
             blockedLambdaRefinement: preparedArgs.blockedLambdaRefinement,
+            preferredCandidates: preparedArgs.preferredCandidates,
             ctx: ctx
         )
         if let diagnostic = resolved.diagnostic {

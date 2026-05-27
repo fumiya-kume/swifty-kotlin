@@ -1073,6 +1073,75 @@ final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
         }
     }
 
+    func testPathVisitFileTreeBuilderActionExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
+        let source = """
+        import kotlin.io.path.Path
+        import kotlin.io.path.visitFileTree
+
+        fun visit(path: Path) {
+            path.visitFileTree {
+            }
+            path.visitFileTree(2, true) {
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Path.visitFileTree(maxDepth, followLinks, builderAction) extension function in kotlin.io.path should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let pathSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "Path"].map(interner.intern)))
+            let fileVisitorBuilderSymbol = try XCTUnwrap(symbols.lookup(fqName: ["kotlin", "io", "path", "FileVisitorBuilder"].map(interner.intern)))
+            let pathType = types.make(.classType(ClassType(classSymbol: pathSymbol, args: [], nullability: .nonNull)))
+            let fileVisitorBuilderType = types.make(.classType(ClassType(
+                classSymbol: fileVisitorBuilderSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            let builderActionType = types.make(.functionType(FunctionType(
+                receiver: fileVisitorBuilderType,
+                params: [],
+                returnType: types.unitType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let visitFileTreeSymbols = symbols.lookupAll(fqName: ["kotlin", "io", "path", "visitFileTree"].map(interner.intern))
+            let visitFileTree = try XCTUnwrap(visitFileTreeSymbols.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else {
+                    return false
+                }
+                return signature.receiverType == pathType
+                    && signature.parameterTypes == [types.intType, types.booleanType, builderActionType]
+                    && signature.returnType == types.unitType
+            })
+            XCTAssertEqual(symbols.externalLinkName(for: visitFileTree), "kk_path_visitFileTree_builder")
+
+            let signature = try XCTUnwrap(symbols.functionSignature(for: visitFileTree))
+            XCTAssertEqual(signature.valueParameterHasDefaultValues, [true, true, false])
+            XCTAssertEqual(signature.valueParameterIsVararg, [false, false, false])
+            XCTAssertEqual(signature.valueParameterSymbols.count, 3)
+            XCTAssertEqual(interner.resolve(try XCTUnwrap(symbols.symbol(signature.valueParameterSymbols[0])?.name)), "maxDepth")
+            XCTAssertEqual(interner.resolve(try XCTUnwrap(symbols.symbol(signature.valueParameterSymbols[1])?.name)), "followLinks")
+            XCTAssertEqual(interner.resolve(try XCTUnwrap(symbols.symbol(signature.valueParameterSymbols[2])?.name)), "builderAction")
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let callExprs = memberCallExprIDs(named: "visitFileTree", in: ast, interner: interner)
+            XCTAssertEqual(callExprs.count, 2)
+            for callExpr in callExprs {
+                XCTAssertEqual(sema.bindings.callBinding(for: callExpr)?.chosenCallee, visitFileTree)
+                XCTAssertEqual(sema.bindings.exprTypes[callExpr], types.unitType)
+            }
+        }
+    }
+
     func testPathVisitFileTreeVisitorExtensionFunctionInIOPathPackageSurfaceIsResolved() throws {
         let source = """
         import java.nio.file.FileVisitor

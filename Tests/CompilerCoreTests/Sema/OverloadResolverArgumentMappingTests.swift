@@ -54,6 +54,72 @@ extension OverloadResolverTests {
         XCTAssertEqual(resolved.parameterMapping, [0: 0])
     }
 
+    func testResolveCallMapsTrailingLambdaAfterDefaultArgumentsToFunctionParameter() {
+        let (resolver, types, symbols, interner, ctx) = makeEnv()
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        let builderActionType = types.make(.functionType(FunctionType(
+            params: [],
+            returnType: types.unitType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let fn = defineSymbol(
+            kind: .function,
+            name: "withTrailingLambda",
+            suffix: "withTrailingLambda",
+            symbols: symbols,
+            interner: interner
+        )
+        let paramDepth = defineSymbol(
+            kind: .valueParameter,
+            name: "maxDepth",
+            suffix: "withTrailingLambda_maxDepth",
+            symbols: symbols,
+            interner: interner
+        )
+        let paramFollow = defineSymbol(
+            kind: .valueParameter,
+            name: "followLinks",
+            suffix: "withTrailingLambda_followLinks",
+            symbols: symbols,
+            interner: interner
+        )
+        let paramBuilder = defineSymbol(
+            kind: .valueParameter,
+            name: "builderAction",
+            suffix: "withTrailingLambda_builderAction",
+            symbols: symbols,
+            interner: interner
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [intType, boolType, builderActionType],
+                returnType: types.unitType,
+                valueParameterSymbols: [paramDepth, paramFollow, paramBuilder],
+                valueParameterHasDefaultValues: [true, true, false]
+            ),
+            for: fn
+        )
+
+        let call = CallExpr(
+            range: makeRange(start: 81, end: 94),
+            calleeName: interner.intern("withTrailingLambda"),
+            args: [CallArg(type: builderActionType, isLambdaLike: true)]
+        )
+        let resolved = resolver.resolveCall(
+            candidates: [fn],
+            call: call,
+            expectedType: nil,
+            ctx: ctx
+        )
+
+        XCTAssertEqual(resolved.chosenCallee, fn)
+        XCTAssertNil(resolved.diagnostic)
+        XCTAssertEqual(resolved.parameterMapping, [0: 2])
+    }
+
     func testResolveCallSupportsNamedArgumentsAndParameterMapping() {
         let (resolver, types, symbols, interner, ctx) = makeEnv()
 

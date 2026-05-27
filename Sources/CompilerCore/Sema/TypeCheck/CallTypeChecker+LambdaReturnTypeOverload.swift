@@ -6,12 +6,21 @@ extension CallTypeChecker {
         let lambdaLiteralIndices: Set<Int>
         let inputOnlyLambdaIndices: Set<Int>
         let blockedLambdaRefinement: Bool
+        /// When non-nil, a strict subset of the original candidates list containing
+        /// only those where every trailing lambda argument maps directly to a parameter
+        /// (no default-parameter skipping required). Used to prefer the simpler
+        /// overload — e.g. `forEachLine(action)` over `forEachLine(charset=default, action)` —
+        /// when both are otherwise equally viable.
+        let preferredCandidates: [SymbolID]?
     }
 
     private struct LambdaParameterCandidate {
         let symbol: SymbolID
         let originalType: TypeID
         let functionType: FunctionType
+        /// True when the lambda parameter was reached only by skipping over
+        /// default-valued parameters (i.e. `mappedParameterIndex != index`).
+        let usesDefaultSkip: Bool
     }
 
     func prepareCallArguments(
@@ -79,9 +88,11 @@ extension CallTypeChecker {
                 let expectation = lambdaLiteralExpectedType(
                     at: index,
                     candidates: expectedTypeCandidates,
+                    args: args,
+                    inferredNonLambdaArgTypes: inferredNonLambdaArgTypes,
                     explicitTypeArgs: explicitTypeArgs,
                     receiverType: receiverType,
-                    sema: sema
+                    ctx: ctx
                 )
                 contextualArgExpectedTypes[index] = expectation.type
                 if expectation.isInputOnly {
@@ -98,6 +109,14 @@ extension CallTypeChecker {
         if lambdaLiteralIndices.count > 1 {
             blockedLambdaRefinement = true
         }
+
+        let preferredCandidates = computePreferredCandidates(
+            lambdaLiteralIndices: lambdaLiteralIndices,
+            candidates: candidates,
+            args: args,
+            inferredNonLambdaArgTypes: inferredNonLambdaArgTypes,
+            ctx: ctx
+        )
 
         let argTypes = args.enumerated().map { index, argument -> TypeID in
             if let contextualExpectedType = contextualArgExpectedTypes[index] {
@@ -127,7 +146,8 @@ extension CallTypeChecker {
             argTypes: argTypes,
             lambdaLiteralIndices: lambdaLiteralIndices,
             inputOnlyLambdaIndices: inputOnlyLambdaIndices,
-            blockedLambdaRefinement: blockedLambdaRefinement
+            blockedLambdaRefinement: blockedLambdaRefinement,
+            preferredCandidates: preferredCandidates
         )
     }
 
@@ -143,10 +163,16 @@ extension CallTypeChecker {
         lambdaLiteralIndices: Set<Int>,
         inputOnlyLambdaIndices: Set<Int>,
         blockedLambdaRefinement: Bool,
+        preferredCandidates: [SymbolID]? = nil,
         ctx: TypeInferenceContext
     ) -> ResolvedCall {
         let resolvedArgs = zip(args, argTypes).map { argument, type in
-            CallArg(label: argument.label, isSpread: argument.isSpread, type: type)
+            CallArg(
+                label: argument.label,
+                isSpread: argument.isSpread,
+                type: type,
+                isLambdaLike: isLambdaLikeArgument(argument, ast: ctx.ast)
+            )
         }
         let call = CallExpr(
             range: range,
@@ -189,8 +215,12 @@ extension CallTypeChecker {
         }
 
         guard !inputOnlyLambdaIndices.isEmpty else {
+            // When preferred candidates were identified (direct-mapped lambdas, no
+            // default-parameter skipping), use them to break ties between overloads
+            // that differ only in how many default parameters they supply.
+            let resolveCandidates = preferredCandidates ?? candidates
             return ctx.resolver.resolveCall(
-                candidates: candidates,
+                candidates: resolveCandidates,
                 call: call,
                 expectedType: expectedType,
                 implicitReceiverType: implicitReceiverType,
@@ -433,15 +463,25 @@ extension CallTypeChecker {
     private func lambdaLiteralExpectedType(
         at index: Int,
         candidates: [SymbolID],
+        args: [CallArgument],
+        inferredNonLambdaArgTypes: [Int: TypeID],
         explicitTypeArgs: [TypeID] = [],
         receiverType: TypeID? = nil,
-        sema: SemaModule
+        ctx: TypeInferenceContext
     ) -> (type: TypeID?, isInputOnly: Bool, blocksRefinement: Bool) {
+        let sema = ctx.sema
         if candidates.count == 1,
            let signature = sema.symbols.functionSignature(for: candidates[0]),
-           index < signature.parameterTypes.count
+           let parameterIndex = mappedParameterIndex(
+               forArgumentAt: index,
+               candidate: candidates[0],
+               args: args,
+               inferredNonLambdaArgTypes: inferredNonLambdaArgTypes,
+               ctx: ctx
+           ),
+           parameterIndex < signature.parameterTypes.count
         {
-            let rawType = signature.parameterTypes[index]
+            let rawType = signature.parameterTypes[parameterIndex]
             let isConstructor = sema.symbols.symbol(candidates[0])?.kind == .constructor
             let typeArgOffset = isConstructor ? 0 : signature.classTypeParameterCount
             let explicitSubstituted = applyExplicitTypeArgs(
@@ -472,7 +512,9 @@ extension CallTypeChecker {
         let parameterCandidates = lambdaParameterCandidates(
             at: index,
             candidates: candidates,
-            sema: sema
+            args: args,
+            inferredNonLambdaArgTypes: inferredNonLambdaArgTypes,
+            ctx: ctx
         )
         guard !parameterCandidates.isEmpty else {
             return (nil, false, false)
@@ -493,27 +535,144 @@ extension CallTypeChecker {
         return (sharedType, true, false)
     }
 
+    private func mappedParameterIndex(
+        forArgumentAt index: Int,
+        candidate: SymbolID,
+        args: [CallArgument],
+        inferredNonLambdaArgTypes: [Int: TypeID],
+        ctx: TypeInferenceContext
+    ) -> Int? {
+        guard let signature = ctx.sema.symbols.functionSignature(for: candidate) else {
+            return nil
+        }
+        let callArgs = args.enumerated().map { argIndex, argument in
+            CallArg(
+                label: argument.label,
+                isSpread: argument.isSpread,
+                type: inferredNonLambdaArgTypes[argIndex] ?? ctx.sema.types.anyType,
+                isLambdaLike: isLambdaLikeArgument(argument, ast: ctx.ast)
+            )
+        }
+        return ctx.resolver.buildParameterMapping(
+            signature: signature,
+            callArgs: callArgs,
+            symbols: ctx.sema.symbols,
+            typeSystem: ctx.sema.types
+        )?[index]
+    }
+
+    private func isLambdaLikeArgument(_ argument: CallArgument, ast: ASTModule) -> Bool {
+        guard let expr = ast.arena.expr(argument.expr) else {
+            return false
+        }
+        if case .lambdaLiteral = expr {
+            return true
+        }
+        return false
+    }
+
+    /// Returns a strict subset of `candidates` where every trailing lambda argument
+    /// (at positions in `lambdaLiteralIndices`) maps directly — without skipping any
+    /// default-valued parameters — to a **function-typed** parameter.
+    ///
+    /// This lets calls like `path.forEachLine { block }` prefer the 1-param overload
+    /// `forEachLine(action)` over the 2-param `forEachLine(charset=default, action)`,
+    /// while leaving alone cases like `path.visitFileTree { builder }` where the only
+    /// candidate that expects a lambda is reached only by skipping default parameters
+    /// (so `direct` is empty and no filtering is applied).
+    ///
+    /// Returns `nil` when no filtering is needed.
+    private func computePreferredCandidates(
+        lambdaLiteralIndices: Set<Int>,
+        candidates: [SymbolID],
+        args: [CallArgument],
+        inferredNonLambdaArgTypes: [Int: TypeID],
+        ctx: TypeInferenceContext
+    ) -> [SymbolID]? {
+        guard !lambdaLiteralIndices.isEmpty else { return nil }
+        let sema = ctx.sema
+        var preferred = candidates
+        for lambdaIndex in lambdaLiteralIndices {
+            // Candidates that directly map this lambda arg to a function-typed parameter.
+            let direct = preferred.filter { candidate in
+                guard let signature = sema.symbols.functionSignature(for: candidate) else {
+                    return false
+                }
+                guard let parameterIndex = mappedParameterIndex(
+                    forArgumentAt: lambdaIndex,
+                    candidate: candidate,
+                    args: args,
+                    inferredNonLambdaArgTypes: inferredNonLambdaArgTypes,
+                    ctx: ctx
+                ) else {
+                    // Cannot determine mapping — do not exclude this candidate.
+                    return true
+                }
+                guard parameterIndex == lambdaIndex,
+                      parameterIndex < signature.parameterTypes.count
+                else {
+                    return false // uses default-skip
+                }
+                // Only treat a directly-mapped parameter as a "lambda match" if the
+                // parameter type is actually a function type. This prevents overloads
+                // like `visitFileTree(visitor: FileVisitor)` — where param 0 is a
+                // class type, not a lambda — from being falsely preferred over the
+                // `visitFileTree(maxDepth=default, followLinks=default, builderAction)`
+                // overload that actually accepts a lambda (at param 2).
+                if case .functionType = sema.types.kind(of: signature.parameterTypes[parameterIndex]) {
+                    return true
+                }
+                return false
+            }
+            if !direct.isEmpty, direct.count < preferred.count {
+                preferred = direct
+            }
+        }
+        return preferred.count < candidates.count ? preferred : nil
+    }
+
     private func lambdaParameterCandidates(
         at index: Int,
         candidates: [SymbolID],
-        sema: SemaModule
+        args: [CallArgument],
+        inferredNonLambdaArgTypes: [Int: TypeID],
+        ctx: TypeInferenceContext
     ) -> [LambdaParameterCandidate] {
-        candidates.compactMap { candidate in
-            guard let signature = sema.symbols.functionSignature(for: candidate),
-                  index < signature.parameterTypes.count
-            else {
+        let sema = ctx.sema
+        var result = candidates.compactMap { candidate -> LambdaParameterCandidate? in
+            guard let signature = sema.symbols.functionSignature(for: candidate) else {
                 return nil
             }
-            let parameterType = signature.parameterTypes[index]
+            let parameterIndex = mappedParameterIndex(
+                forArgumentAt: index,
+                candidate: candidate,
+                args: args,
+                inferredNonLambdaArgTypes: inferredNonLambdaArgTypes,
+                ctx: ctx
+            ) ?? index
+            guard parameterIndex < signature.parameterTypes.count else {
+                return nil
+            }
+            let parameterType = signature.parameterTypes[parameterIndex]
             guard case let .functionType(functionType) = sema.types.kind(of: parameterType) else {
                 return nil
             }
             return LambdaParameterCandidate(
                 symbol: candidate,
                 originalType: parameterType,
-                functionType: functionType
+                functionType: functionType,
+                usesDefaultSkip: parameterIndex != index
             )
         }
+        // Prefer direct-mapped candidates over default-skip candidates.
+        // If any candidate maps the lambda argument directly (usesDefaultSkip == false),
+        // discard all candidates that only match by skipping default parameters,
+        // so that e.g. `path.forEachLine { block }` resolves to the 1-param overload
+        // rather than becoming ambiguous with the 2-param (charset=default, action) overload.
+        if result.contains(where: { !$0.usesDefaultSkip }) {
+            result = result.filter { !$0.usesDefaultSkip }
+        }
+        return result
     }
 
     private func sharedLambdaInputOnlyType(
