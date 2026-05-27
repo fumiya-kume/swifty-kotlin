@@ -26,4 +26,28 @@ final class RuntimeURITests: XCTestCase {
         let normalized = kk_uri_normalize(uriRaw)
         XCTAssertEqual(stringValue(kk_uri_path(normalized)), "/path")
     }
+
+    func testURIToPathExtractsFilePath() {
+        var thrown = 0
+        let uriRaw = kk_uri_new(runtimeString("file:///tmp/archive.tar.gz"), &thrown)
+        XCTAssertEqual(thrown, 0)
+        let pathRaw = kk_uri_toPath(uriRaw)
+        XCTAssertEqual(stringValue(kk_path_pathString(pathRaw)), "/tmp/archive.tar.gz")
+    }
+
+    func testURIToPathDecodesPercentEncodedPath() {
+        var thrown = 0
+        let uriRaw = kk_uri_new(runtimeString("file:///tmp/hello%20world.txt"), &thrown)
+        XCTAssertEqual(thrown, 0)
+        let pathRaw = kk_uri_toPath(uriRaw)
+        XCTAssertEqual(stringValue(kk_path_pathString(pathRaw)), "/tmp/hello world.txt")
+    }
+
+    func testURIToPathRoundTripsThroughPathToUri() {
+        let absolute = "/tmp/example/file.kt"
+        let pathRaw = kk_path_new(runtimeString(absolute))
+        let uriRaw = kk_path_toUri(pathRaw)
+        let restoredPathRaw = kk_uri_toPath(uriRaw)
+        XCTAssertEqual(stringValue(kk_path_pathString(restoredPathRaw)), absolute)
+    }
 }
