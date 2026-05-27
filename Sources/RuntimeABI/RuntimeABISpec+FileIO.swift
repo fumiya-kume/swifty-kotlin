@@ -70,6 +70,39 @@ public extension RuntimeABISpec {
             section: "FileIO"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_file_copyTo_default",
+            parameters: [
+                RuntimeABIParameter(name: "sourceRaw", type: .intptr),
+                RuntimeABIParameter(name: "targetRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_file_copyTo_overwrite",
+            parameters: [
+                RuntimeABIParameter(name: "sourceRaw", type: .intptr),
+                RuntimeABIParameter(name: "targetRaw", type: .intptr),
+                RuntimeABIParameter(name: "overwriteRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_file_copyTo",
+            parameters: [
+                RuntimeABIParameter(name: "sourceRaw", type: .intptr),
+                RuntimeABIParameter(name: "targetRaw", type: .intptr),
+                RuntimeABIParameter(name: "overwriteRaw", type: .intptr),
+                RuntimeABIParameter(name: "bufferSizeRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_file_forEachLine",
             parameters: [
                 RuntimeABIParameter(name: "fileRaw", type: .intptr),

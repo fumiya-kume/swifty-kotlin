@@ -125,6 +125,29 @@ extension LoweringPassRegressionTests {
         }
     }
 
+    func testFileCopyToRewriteSelectsFullRuntimeCallee() throws {
+        let source = """
+        import java.io.File
+
+        fun main() {
+            File("source.txt").copyTo(File("target.txt"), true, 1024)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "FileCopyToRewrite", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: mainBody, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_file_copyTo"))
+            XCTAssertFalse(callees.contains("copyTo"))
+        }
+    }
+
     func testFileReadTextRewrite() throws {
         let source = """
         import java.io.File

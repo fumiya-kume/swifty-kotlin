@@ -469,6 +469,56 @@ public func kk_file_appendBytes(_ fileRaw: Int, _ arrayRaw: Int, _ outThrown: Un
     return 0
 }
 
+@_cdecl("kk_file_copyTo_default")
+public func kk_file_copyTo_default(_ sourceRaw: Int, _ targetRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    kk_file_copyTo(sourceRaw, targetRaw, kk_box_bool(0), 8192, outThrown)
+}
+
+@_cdecl("kk_file_copyTo_overwrite")
+public func kk_file_copyTo_overwrite(
+    _ sourceRaw: Int,
+    _ targetRaw: Int,
+    _ overwriteRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    kk_file_copyTo(sourceRaw, targetRaw, overwriteRaw, 8192, outThrown)
+}
+
+@_cdecl("kk_file_copyTo")
+public func kk_file_copyTo(
+    _ sourceRaw: Int,
+    _ targetRaw: Int,
+    _ overwriteRaw: Int,
+    _ bufferSizeRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard bufferSizeRaw > 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: bufferSize must be positive")
+        return targetRaw
+    }
+    guard let source = runtimeFileBox(from: sourceRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_copyTo received invalid source File handle")
+    }
+    guard let target = runtimeFileBox(from: targetRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_copyTo received invalid target File handle")
+    }
+    do {
+        let fileManager = FileManager.default
+        if fileManager.fileExists(atPath: target.path) {
+            guard kk_unbox_bool(overwriteRaw) != 0 else {
+                outThrown?.pointee = runtimeAllocateThrowable(message: "FileAlreadyExistsException: \(target.path)")
+                return targetRaw
+            }
+            try fileManager.removeItem(atPath: target.path)
+        }
+        try fileManager.copyItem(atPath: source.path, toPath: target.path)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return targetRaw
+}
+
 // MARK: - STDLIB-321: File properties and existence checks
 
 @_cdecl("kk_file_exists")

@@ -489,6 +489,39 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // MARK: - File.copyTo() (STDLIB-IO-FN-015)
+
+        registerFileMemberFunction(
+            named: "copyTo",
+            externalLinkName: "kk_file_copyTo_default",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [("target", fileType)],
+            returnType: fileType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerFileMemberFunction(
+            named: "copyTo",
+            externalLinkName: "kk_file_copyTo_overwrite",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [("target", fileType), ("overwrite", types.booleanType)],
+            returnType: fileType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerFileMemberFunction(
+            named: "copyTo",
+            externalLinkName: "kk_file_copyTo",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [("target", fileType), ("overwrite", types.booleanType), ("bufferSize", intType)],
+            returnType: fileType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // MARK: - File filesystem operations (STDLIB-323)
 
         registerFileMemberFunction(
