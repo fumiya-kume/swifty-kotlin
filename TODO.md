@@ -383,7 +383,7 @@
 - [ ] STDLIB-TEXT-FN-057: `replaceAfterLast` 関数の実装
 - [x] STDLIB-TEXT-FN-058: `replaceBefore` 関数の実装
 - [ ] STDLIB-TEXT-FN-059: `replaceBeforeLast` 関数の実装
-- [ ] STDLIB-TEXT-FN-060: `replaceFirst` 関数の実装
+- [x] STDLIB-TEXT-FN-060: `replaceFirst` 関数の実装
 - [ ] STDLIB-TEXT-FN-061: `replaceIndent` 関数の実装
 - [ ] STDLIB-TEXT-FN-062: `replaceRange` 関数の実装
 - [x] STDLIB-TEXT-FN-063: `reversed` 関数の実装
