@@ -428,6 +428,35 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    // MARK: - filterIndexedTo appends indexed matches
+
+    func testSequenceFilterIndexedToAppendsIndexedMatches() throws {
+        let source = """
+        fun main() {
+            val destination = mutableListOf(1)
+            val result = sequenceOf(10, 20, 30, 40)
+                .filterIndexedTo(destination) { index, value -> index % 2 == 0 || value > 30 }
+            println(result)
+            println(destination)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceFilterIndexedTo",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[1, 10, 30, 40]\n[1, 10, 30, 40]\n")
+        }
+    }
+
     func testSequenceDropWhileSkipsLeadingMatchesOnly() throws {
         let source = """
         fun main() {
@@ -499,8 +528,6 @@ extension CodegenBackendIntegrationTests {
             XCTAssertEqual(normalizedStdout, "20\n")
         }
     }
-
-
 
     // MARK: - filterIsInstance keeps matching runtime types
 
