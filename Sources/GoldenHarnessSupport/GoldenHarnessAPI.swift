@@ -36,7 +36,6 @@ enum GoldenHarnessAPIError: Error, CustomStringConvertible {
 
 public enum GoldenHarness {
     private static let subprocessTimeout: TimeInterval = 30
-    private static let pipeDrainTimeout: DispatchTimeInterval = .seconds(20)
     private static let terminationGracePeriodSeconds: TimeInterval = 1.0
     private static let sigkillGracePeriodSeconds: TimeInterval = 1.0
     private static let processPollIntervalSeconds: TimeInterval = 0.05

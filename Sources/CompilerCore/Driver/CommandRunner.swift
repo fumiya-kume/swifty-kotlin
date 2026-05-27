@@ -52,7 +52,6 @@ private final class LockedCommandOutput: @unchecked Sendable {
 }
 
 public enum CommandRunner {
-    private static let defaultTimeoutSeconds: TimeInterval = 120
     private static let drainTimeoutSeconds: TimeInterval = 20
     private static let terminationGracePeriodSeconds: TimeInterval = 1
 
