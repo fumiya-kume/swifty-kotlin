@@ -428,10 +428,16 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
-    func testSequenceElementAtReturnsIndexedValue() throws {
+    // MARK: - filterIndexedTo appends indexed matches
+
+    func testSequenceFilterIndexedToAppendsIndexedMatches() throws {
         let source = """
         fun main() {
-            println(sequenceOf(10, 20, 30).elementAt(1))
+            val destination = mutableListOf(1)
+            val result = sequenceOf(10, 20, 30, 40)
+                .filterIndexedTo(destination) { index, value -> index % 2 == 0 || value > 30 }
+            println(result)
+            println(destination)
         }
         """
 
@@ -439,7 +445,7 @@ extension CodegenBackendIntegrationTests {
             let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
             let ctx = try runCodegenPipeline(
                 inputPath: path,
-                moduleName: "SequenceElementAt",
+                moduleName: "SequenceFilterIndexedTo",
                 emit: .executable,
                 outputPath: outputBase
             )
@@ -447,7 +453,7 @@ extension CodegenBackendIntegrationTests {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "20\n")
+            XCTAssertEqual(normalizedStdout, "[1, 10, 30, 40]\n[1, 10, 30, 40]\n")
         }
     }
 
@@ -497,6 +503,29 @@ extension CodegenBackendIntegrationTests {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(normalizedStdout, "20\n-1\n")
+        }
+    }
+
+    func testSequenceElementAtReturnsIndexedValue() throws {
+        let source = """
+        fun main() {
+            println(sequenceOf(10, 20, 30).elementAt(1))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceElementAt",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "20\n")
         }
     }
 

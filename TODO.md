@@ -214,7 +214,8 @@
 - [x] STDLIB-SEQ-FN-021: `elementAtOrElse` 関数の実装
 - [ ] STDLIB-SEQ-FN-022: `elementAtOrNull` 関数の実装
 - [x] STDLIB-SEQ-FN-023: `filter` 関数の実装
-- [ ] STDLIB-SEQ-FN-025: `filterIndexedTo` 関数の実装
+- [ ] STDLIB-SEQ-FN-024: `filterIndexed` 関数の実装
+- [x] STDLIB-SEQ-FN-025: `filterIndexedTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-026: `filterIsInstance` 関数の実装
 - [ ] STDLIB-SEQ-FN-027: `filterIsInstanceTo` 関数の実装
  - [x] STDLIB-SEQ-FN-029: `filterNotNull` 関数の実装
@@ -256,7 +257,7 @@
 - [ ] STDLIB-SEQ-FN-087: `plus` 関数の実装
 - [x] STDLIB-SEQ-FN-089: `random` 関数の実装
 - [x] STDLIB-SEQ-FN-090: `randomOrNull` 関数の実装
-- [ ] STDLIB-SEQ-FN-091: `reduce` 関数の実装
+- [x] STDLIB-SEQ-FN-091: `reduce` 関数の実装
 - [ ] STDLIB-SEQ-FN-092: `reduceIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-093: `reduceOrNull` 関数の実装
 - [x] STDLIB-SEQ-FN-094: `reduceRight` 関数の実装
@@ -620,7 +621,7 @@
 - [x] STDLIB-CINTEROP-TYPE-022: `kotlinx.cinterop.CStructVar` class surface を追加する
 - [x] STDLIB-CINTEROP-TYPE-023: `kotlinx.cinterop.CValue<T>` class surface を追加する
 - [x] STDLIB-CINTEROP-TYPE-024: `kotlinx.cinterop.CValues<T>` class surface を追加する
-- [ ] STDLIB-CINTEROP-TYPE-025: `kotlinx.cinterop.CValuesRef<T>` class shape を公式 surface と整合させる
+- [x] STDLIB-CINTEROP-TYPE-025: `kotlinx.cinterop.CValuesRef<T>` class shape を公式 surface と整合させる
 - [x] STDLIB-CINTEROP-TYPE-026: `kotlinx.cinterop.CVariable` class surface を追加する
 - [x] STDLIB-CINTEROP-TYPE-027: `kotlinx.cinterop.DeferScope` class surface を追加する
 - [x] STDLIB-CINTEROP-TYPE-028: `kotlinx.cinterop.NativeFreeablePlacement` class surface を追加する
@@ -630,15 +631,15 @@
 - [x] STDLIB-CINTEROP-PROP-002: `CPointer<T>.rawValue` property を追加する
 - [x] STDLIB-CINTEROP-PROP-003: `nativeHeap` property を追加する
 - [x] STDLIB-CINTEROP-FN-001: `alloc<T>()` を追加する
-- [ ] STDLIB-CINTEROP-FN-002: `allocArray<T>(length)` を追加する
+- [x] STDLIB-CINTEROP-FN-002: `allocArray<T>(length)` を追加する
 - [x] STDLIB-CINTEROP-FN-003: `asStableRef<T>()` を追加する
-- [ ] STDLIB-CINTEROP-FN-004: `cstr` helper を追加する
+- [x] STDLIB-CINTEROP-FN-004: `cstr` helper を追加する
 - [x] STDLIB-CINTEROP-FN-005: `wcstr` helper を追加する
-- [ ] STDLIB-CINTEROP-FN-006: `defer(block)` を追加する
+- [x] STDLIB-CINTEROP-FN-006: `defer(block)` を追加する
 - [x] STDLIB-CINTEROP-FN-007: `free(pointed)` を追加する
 - [ ] STDLIB-CINTEROP-FN-008: `memScoped(block)` を追加する
 - [ ] STDLIB-CINTEROP-FN-009: `pin()` を追加する
-- [ ] STDLIB-CINTEROP-FN-010: `place(value)` を追加する
+- [x] STDLIB-CINTEROP-FN-010: `place(value)` を追加する
 - [ ] STDLIB-CINTEROP-FN-011: `CPointer<T>.plus(index)` を追加する
 - [ ] STDLIB-CINTEROP-FN-012: `readValue()` を追加する
 - [ ] STDLIB-CINTEROP-FN-013: `refTo(index)` を追加する

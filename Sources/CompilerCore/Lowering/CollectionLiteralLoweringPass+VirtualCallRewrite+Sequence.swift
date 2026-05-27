@@ -1072,8 +1072,9 @@ extension CollectionLiteralLoweringPass {
            arguments.count == 2 || arguments.count == 3,
            sequenceExprIDs.contains(receiver.rawValue)
         {
-            let destID = arguments[0]
-            let lambdaID = arguments[1]
+            let firstArgIsCallable = module.arena.callableValueInfoByExprID[arguments[0]] != nil
+            let destID = firstArgIsCallable ? arguments[1] : arguments[0]
+            let lambdaID = firstArgIsCallable ? arguments[0] : arguments[1]
             let closureRawExpr: KIRExprID
             if arguments.count == 3 {
                 closureRawExpr = arguments[2]
