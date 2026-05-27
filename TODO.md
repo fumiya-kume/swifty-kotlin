@@ -259,7 +259,7 @@
 - [ ] STDLIB-SEQ-FN-092: `reduceIndexed` 関数の実装
 - [ ] STDLIB-SEQ-FN-093: `reduceOrNull` 関数の実装
 - [x] STDLIB-SEQ-FN-094: `reduceRight` 関数の実装
-- [ ] STDLIB-SEQ-FN-095: `reduceRightIndexed` 関数の実装
+- [x] STDLIB-SEQ-FN-095: `reduceRightIndexed` 関数の実装
 - [x] STDLIB-SEQ-FN-096: `reduceRightIndexedOrNull` 関数の実装
 - [x] STDLIB-SEQ-FN-097: `reduceRightOrNull` 関数の実装
 - [ ] STDLIB-SEQ-FN-098: `requireNoNulls` 関数の実装
