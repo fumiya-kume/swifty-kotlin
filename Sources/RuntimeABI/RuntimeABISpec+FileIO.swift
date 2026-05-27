@@ -540,6 +540,15 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "FileIO"
         ),
+        // STDLIB-IO-FN-004: OutputStream.buffered() / buffered(bufferSize)
+        RuntimeABIFunctionSpec(
+            name: "kk_output_stream_buffered",
+            parameters: [
+                RuntimeABIParameter(name: "streamRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_print_writer_print",
             parameters: [
@@ -592,6 +601,16 @@ public extension RuntimeABISpec {
             name: "kk_print_writer_close",
             parameters: [
                 RuntimeABIParameter(name: "writerRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_output_stream_buffered_sized",
+            parameters: [
+                RuntimeABIParameter(name: "streamRaw", type: .intptr),
+                RuntimeABIParameter(name: "bufferSize", type: .intptr),
             ],
             returnType: .intptr,
             section: "FileIO"
