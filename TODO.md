@@ -388,7 +388,7 @@
 - [x] STDLIB-TEXT-FN-062: `replaceRange` 関数の実装
 - [x] STDLIB-TEXT-FN-063: `reversed` 関数の実装
 - [ ] STDLIB-TEXT-FN-064: `set` 関数の実装
-- [ ] STDLIB-TEXT-FN-065: `setRange` 関数の実装
+- [x] STDLIB-TEXT-FN-065: `setRange` 関数の実装
 - [ ] STDLIB-TEXT-FN-066: `single` 関数の実装
 - [ ] STDLIB-TEXT-FN-067: `singleOrNull` 関数の実装
 - [ ] STDLIB-TEXT-FN-068: `slice` 関数の実装
