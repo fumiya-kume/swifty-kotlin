@@ -2476,6 +2476,28 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        // fun ByteArray.toCValues(): CValues<ByteVar>
+        let byteArrayReceiverType = syntheticClassType(
+            packagePath: ["kotlin"],
+            name: "ByteArray",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        let byteArrayToCValuesReturnType = types.make(.classType(ClassType(
+            classSymbol: cValuesSymbol,
+            args: [.invariant(byteVarType)],
+            nullability: .nonNull
+        )))
+        registerSyntheticNativeTopLevelFunction(
+            named: "toCValues",
+            packageFQName: cinteropPkg,
+            receiverType: byteArrayReceiverType,
+            parameters: [],
+            returnType: byteArrayToCValuesReturnType,
+            symbols: symbols,
+            interner: interner
+        )
         let cOpaquePointerUnderlyingType = types.make(.classType(ClassType(
             classSymbol: cPointerSymbol,
             args: [.out(cPointedType)],
