@@ -3096,6 +3096,36 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // fun UByteArray.toCValues(): CValues<UByteVar>
+        if let uByteVarSymbol = symbols.lookup(fqName: cinteropPkg + [interner.intern("UByteVar")]) {
+            let uByteVarType = types.make(.classType(ClassType(
+                classSymbol: uByteVarSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            let uByteArrayReceiverType = syntheticClassType(
+                packagePath: ["kotlin"],
+                name: "UByteArray",
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
+            let uByteArrayToCValuesReturnType = types.make(.classType(ClassType(
+                classSymbol: cValuesSymbol,
+                args: [.invariant(uByteVarType)],
+                nullability: .nonNull
+            )))
+            registerSyntheticNativeTopLevelFunction(
+                named: "toCValues",
+                packageFQName: cinteropPkg,
+                receiverType: uByteArrayReceiverType,
+                parameters: [],
+                returnType: uByteArrayToCValuesReturnType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
         registerSyntheticCInteropVector128Stubs(
             cinteropPkg: cinteropPkg,
             cinteropPkgSymbol: cinteropPkgSymbol,
