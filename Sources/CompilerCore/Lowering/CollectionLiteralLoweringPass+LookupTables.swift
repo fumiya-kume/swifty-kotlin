@@ -773,6 +773,10 @@ struct CollectionLiteralLookupTables {
     let kkFileWriteTextName: InternedString
     let appendTextName: InternedString
     let kkFileAppendTextName: InternedString
+    let copyToName: InternedString
+    let kkFileCopyToDefaultName: InternedString
+    let kkFileCopyToOverwriteName: InternedString
+    let kkFileCopyToName: InternedString
     let readLinesName: InternedString
     let kkFileReadLinesName: InternedString
     let existsName: InternedString
@@ -1580,6 +1584,10 @@ struct CollectionLiteralLookupTables {
         kkFileWriteTextName = interner.intern("kk_file_writeText")
         appendTextName = interner.intern("appendText")
         kkFileAppendTextName = interner.intern("kk_file_appendText")
+        copyToName = interner.intern("copyTo")
+        kkFileCopyToDefaultName = interner.intern("kk_file_copyTo_default")
+        kkFileCopyToOverwriteName = interner.intern("kk_file_copyTo_overwrite")
+        kkFileCopyToName = interner.intern("kk_file_copyTo")
         readLinesName = interner.intern("readLines")
         kkFileReadLinesName = interner.intern("kk_file_readLines")
         existsName = interner.intern("exists")

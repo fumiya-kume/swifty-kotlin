@@ -149,6 +149,17 @@ extension CollectionLiteralLoweringPass {
                 kkCallee = lookup.kkFileReadBytesName
             case lookup.appendTextName:
                 kkCallee = lookup.kkFileAppendTextName
+            case lookup.copyToName:
+                kkCallee = switch arguments.count {
+                case 2:
+                    lookup.kkFileCopyToDefaultName
+                case 3:
+                    lookup.kkFileCopyToOverwriteName
+                case 4:
+                    lookup.kkFileCopyToName
+                default:
+                    nil
+                }
             // STDLIB-IO-087: Additional File operations
             case lookup.absolutePathName:
                 kkCallee = lookup.kkFileAbsolutePathName
@@ -178,6 +189,7 @@ extension CollectionLiteralLoweringPass {
                         || callee == lookup.useLinesName
                         || callee == lookup.writeTextName
                         || callee == lookup.appendTextName
+                        || callee == lookup.copyToName
                 ) ? [receiverID] + arguments.dropFirst() : [receiverID]
                 loweredBody.append(.call(
                     symbol: nil,

@@ -61,6 +61,34 @@ final class RuntimeFileIOTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(try Data(contentsOf: fileURL), Data([65, 66, 67]))
     }
 
+    func testFileCopyToCopiesAndHonorsOverwrite() throws {
+        let sourceURL = try makeTempFile(contents: "copy me")
+        let targetURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer {
+            try? FileManager.default.removeItem(at: sourceURL)
+            try? FileManager.default.removeItem(at: targetURL)
+        }
+
+        let sourceRaw = runtimeTestFileHandle(sourceURL.path)
+        let targetRaw = runtimeTestFileHandle(targetURL.path)
+        var thrown = 0
+
+        XCTAssertEqual(kk_file_copyTo_default(sourceRaw, targetRaw, &thrown), targetRaw)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(try String(contentsOf: targetURL, encoding: .utf8), "copy me")
+
+        thrown = 0
+        _ = kk_file_copyTo_overwrite(sourceRaw, targetRaw, kk_box_bool(0), &thrown)
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(try String(contentsOf: targetURL, encoding: .utf8), "copy me")
+
+        try "updated".write(to: sourceURL, atomically: true, encoding: .utf8)
+        thrown = 0
+        XCTAssertEqual(kk_file_copyTo_overwrite(sourceRaw, targetRaw, kk_box_bool(1), &thrown), targetRaw)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(try String(contentsOf: targetURL, encoding: .utf8), "updated")
+    }
+
     func testStringByteInputStreamReadsEncodedBytes() {
         var thrown = 0
         let streamRaw = kk_string_byteInputStream_default(runtimeStringRaw("ABC"), &thrown)

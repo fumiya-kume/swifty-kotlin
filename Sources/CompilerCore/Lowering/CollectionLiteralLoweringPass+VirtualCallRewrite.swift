@@ -342,6 +342,17 @@ extension CollectionLiteralLoweringPass {
             kkCallee = lookup.kkFileReadBytesName
         case lookup.appendTextName:
             kkCallee = lookup.kkFileAppendTextName
+        case lookup.copyToName:
+            kkCallee = switch arguments.count {
+            case 1:
+                lookup.kkFileCopyToDefaultName
+            case 2:
+                lookup.kkFileCopyToOverwriteName
+            case 3:
+                lookup.kkFileCopyToName
+            default:
+                nil
+            }
         default:
             kkCallee = nil
         }
@@ -353,6 +364,7 @@ extension CollectionLiteralLoweringPass {
             || callee == lookup.useLinesName
             || callee == lookup.writeTextName
             || callee == lookup.appendTextName
+            || callee == lookup.copyToName
         let memberArgs = needsExtraArgs ?
             [receiver] + arguments :
             [receiver]
