@@ -488,6 +488,25 @@ extension CallLowerer {
                 finalArguments = [receiver.loweredID] + finalArguments
             }
         }
+        if loweredCallee == interner.intern("kk_sequence_filterIndexedTo"),
+           finalArguments.count == 2 || finalArguments.count == 3
+        {
+            // finalArguments is already normalized to parameter order (destination=0, predicate=1)
+            // by normalizedCallArguments, so use fixed indices regardless of named-arg source order.
+            let includesReceiver = finalArguments.count == 3
+            let argumentOffset = includesReceiver ? 1 : 0
+            let receiverArg = includesReceiver ? finalArguments[0] : receiver.loweredID
+            let destinationArgIndex = argumentOffset + 0
+            let lambdaArgIndex = argumentOffset + 1
+            let (fnPtrExpr, envPtrExpr) = splitCallableLambdaArgument(
+                finalArguments[lambdaArgIndex],
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            finalArguments = [receiverArg, finalArguments[destinationArgIndex], fnPtrExpr, envPtrExpr]
+        }
         if loweredCallee == interner.intern("kk_sequence_elementAtOrElse"),
            finalArguments.count == 3
         {

@@ -492,6 +492,7 @@ private func runtimeSequenceBestValue(
     guard let bestSelector else {
         if throwOnEmpty {
             outThrown?.pointee = runtimeAllocateThrowable(message: kEmptySequenceNoSuchElement)
+            return runtimeExceptionCaughtSentinel
         }
         return runtimeNullSentinelInt
     }
