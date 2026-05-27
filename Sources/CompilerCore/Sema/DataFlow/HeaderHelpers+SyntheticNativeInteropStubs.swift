@@ -3126,6 +3126,35 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // fun ShortArray.toCValues(): CValues<ShortVar>
+        if let shortVarSymbol = symbols.lookup(fqName: cinteropPkg + [interner.intern("ShortVar")]) {
+            let shortVarType = types.make(.classType(ClassType(
+                classSymbol: shortVarSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            let shortArrayReceiverType = syntheticClassType(
+                packagePath: ["kotlin"],
+                name: "ShortArray",
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
+            let shortArrayToCValuesReturnType = types.make(.classType(ClassType(
+                classSymbol: cValuesSymbol,
+                args: [.invariant(shortVarType)],
+                nullability: .nonNull
+            )))
+            registerSyntheticNativeTopLevelFunction(
+                named: "toCValues",
+                packageFQName: cinteropPkg,
+                receiverType: shortArrayReceiverType,
+                parameters: [],
+                returnType: shortArrayToCValuesReturnType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
         registerSyntheticCInteropVector128Stubs(
             cinteropPkg: cinteropPkg,
             cinteropPkgSymbol: cinteropPkgSymbol,
