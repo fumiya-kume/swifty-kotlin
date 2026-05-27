@@ -51,7 +51,7 @@ final class RuntimeCoroutineNameBox: @unchecked Sendable {
 /// Register a heap-allocated object in the runtime storage so it is not GC'd.
 func runtimeRegisterObject<T: AnyObject>(_ object: T) -> Int {
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(object).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -391,7 +391,7 @@ public func kk_context_release(_ contextRaw: Int) {
     else {
         return
     }
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.remove(UInt(bitPattern: ptr))
     }
     Unmanaged<AnyObject>.fromOpaque(ptr).release()
@@ -427,7 +427,7 @@ private func isRegisteredRuntimeObjectPointer(_ raw: Int) -> Bool {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
         return false
     }
-    return runtimeStorage.withLock { state in
+    return runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
 }
@@ -445,7 +445,7 @@ func resolveToCoroutineContext(_ raw: Int) -> RuntimeCoroutineContext {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
         return RuntimeCoroutineContext()
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObjectPointer else {
@@ -632,7 +632,7 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
     if !isDispatcherTag(dispatcherRaw), dispatcherRaw != 0,
        isRegisteredRuntimeObjectPointer(dispatcherRaw),
        let ptr = UnsafeMutableRawPointer(bitPattern: dispatcherRaw),
-       runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+       runtimeStorage.withGCLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
        tryCast(ptr, to: RuntimeCoroutineContext.self) != nil
     {
         return kk_with_context_full(dispatcherRaw, blockFnPtr, continuation)

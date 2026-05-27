@@ -198,6 +198,7 @@ private let readNestedThunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) ->
 }
 
 final class RuntimeReadWriteLockTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     override func resetIsolatedRuntimeTestState() {
         readWriteLockHandle = 0
         capturedReadClosureRaw = 0

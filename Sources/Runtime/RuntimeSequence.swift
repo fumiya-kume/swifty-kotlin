@@ -20,6 +20,9 @@ func runtimeSequenceSourceElements(from rawValue: Int) -> [Int]? {
     if let array = runtimeArrayBox(from: rawValue) {
         return array.elements
     }
+    if let set = runtimeSetBox(from: rawValue) {
+        return set.elements
+    }
     return nil
 }
 
@@ -2349,6 +2352,24 @@ public func kk_sequence_firstOrNull(_ seqRaw: Int, _ outThrown: UnsafeMutablePoi
     return found ? result : runtimeNullSentinelInt
 }
 
+@_cdecl("kk_sequence_random")
+public func kk_sequence_random(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let elements = runtimeSequenceSourceElementsOrThrow(
+        from: seqRaw,
+        caller: #function,
+        outThrown: outThrown
+    ) else {
+        return 0
+    }
+    if let outThrown, outThrown.pointee != 0 { return 0 }
+    guard let element = elements.randomElement() else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kEmptySequenceNoSuchElement)
+        return 0
+    }
+    return element
+}
+
 @_cdecl("kk_sequence_randomOrNull")
 public func kk_sequence_randomOrNull(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
@@ -3506,7 +3527,7 @@ public func kk_sequence_toMap(_ seqRaw: Int) -> Int {
         guard let pointer = UnsafeMutableRawPointer(bitPattern: element) else {
             fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_toMap element is not a valid Pair handle")
         }
-        let isObjectPointer = runtimeStorage.withLock { state in
+        let isObjectPointer = runtimeStorage.withGCLock { state in
             state.objectPointers.contains(UInt(bitPattern: pointer))
         }
         guard isObjectPointer, let pair = tryCast(pointer, to: RuntimePairBox.self) else {

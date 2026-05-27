@@ -170,7 +170,7 @@ public func kk_collection_toList(_ collRaw: Int) -> Int {
     // This can happen when Collection.toList() is resolved on a sequence
     // receiver via the synthetic Collection stub.
     if let ptr = UnsafeMutableRawPointer(bitPattern: collRaw) {
-        let isObj = runtimeStorage.withLock { $0.objectPointers.contains(UInt(bitPattern: ptr)) }
+        let isObj = runtimeStorage.withGCLock { $0.objectPointers.contains(UInt(bitPattern: ptr)) }
         if isObj, tryCast(ptr, to: RuntimeSequenceBox.self) != nil {
             return kk_sequence_to_list(collRaw, nil)
         }

@@ -2,6 +2,7 @@
 import XCTest
 
 final class RuntimeStreamsTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     private func makeArray(_ elements: [Int]) -> Int {
         let array = kk_array_new(elements.count)
         var thrown = 0

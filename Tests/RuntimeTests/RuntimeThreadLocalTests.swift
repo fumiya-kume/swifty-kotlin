@@ -105,6 +105,7 @@ private final class ThreadLocalBackgroundValueBox: @unchecked Sendable {
 }
 
 final class RuntimeThreadLocalTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcAndThreadLocal }
     override func resetIsolatedRuntimeTestState() {
         threadLocalThunkState.reset()
     }

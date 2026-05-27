@@ -38,7 +38,7 @@ func runtimeListBox(from rawValue: Int) -> RuntimeListBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObjectPointer else {
@@ -51,7 +51,7 @@ func runtimeMapBox(from rawValue: Int) -> RuntimeMapBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObjectPointer else {
@@ -64,7 +64,7 @@ func runtimeSetBox(from rawValue: Int) -> RuntimeSetBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObjectPointer else {
@@ -77,7 +77,7 @@ func runtimeArrayDequeBox(from rawValue: Int) -> RuntimeArrayDequeBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObjectPointer else {
@@ -131,7 +131,7 @@ func runtimeListIteratorBox(from rawValue: Int) -> RuntimeListIteratorBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObjectPointer else {
@@ -144,7 +144,7 @@ func runtimeStringIteratorBox(from rawValue: Int) -> RuntimeStringIteratorBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObjectPointer else {
@@ -157,7 +157,7 @@ func runtimeStringIterableBox(from rawValue: Int) -> RuntimeStringIterableBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObjectPointer else {
@@ -170,7 +170,7 @@ func runtimeIndexingIterableBox(from rawValue: Int) -> RuntimeIndexingIterableBo
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObjectPointer else {
@@ -183,7 +183,7 @@ func runtimeMapIteratorBox(from rawValue: Int) -> RuntimeMapIteratorBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObjectPointer else {
@@ -196,7 +196,7 @@ func runtimeIndexingIteratorBox(from rawValue: Int) -> RuntimeIndexingIteratorBo
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObjectPointer else {
@@ -219,7 +219,7 @@ func runtimeMapArrayPair(
 
 func registerRuntimeObject(_ box: AnyObject) -> Int {
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return Int(bitPattern: opaque)
@@ -235,7 +235,7 @@ func maybeUnbox(_ value: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
         return value
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObjectPointer else {
@@ -279,10 +279,10 @@ func runtimeValuesEqual(_ lhs: Int, _ rhs: Int) -> Bool {
     }
     let lhsPtr = UnsafeMutableRawPointer(bitPattern: lhs)
     let rhsPtr = UnsafeMutableRawPointer(bitPattern: rhs)
-    let lhsIsObjectPointer = runtimeStorage.withLock { state in
+    let lhsIsObjectPointer = runtimeStorage.withGCLock { state in
         lhsPtr.map { state.objectPointers.contains(UInt(bitPattern: $0)) } ?? false
     }
-    let rhsIsObjectPointer = runtimeStorage.withLock { state in
+    let rhsIsObjectPointer = runtimeStorage.withGCLock { state in
         rhsPtr.map { state.objectPointers.contains(UInt(bitPattern: $0)) } ?? false
     }
     if lhsIsObjectPointer != rhsIsObjectPointer {
@@ -425,7 +425,7 @@ func runtimeElementToString(_ elem: Int) -> String {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: elem) else {
         return "\(elem)"
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObjectPointer else {
@@ -524,7 +524,7 @@ typealias ComparatorLambda = RuntimeCollectionLambda2
 /// Retains an object and registers it as a runtime handle.
 func runtimeRetainObjectHandle(_ object: AnyObject) -> Int {
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(object).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return Int(bitPattern: opaque)
@@ -759,7 +759,7 @@ private func runtimeComparableScalarValue(from raw: Int) -> RuntimeComparableSca
     guard let pointer = UnsafeMutableRawPointer(bitPattern: raw) else {
         return .integer(raw)
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: pointer))
     }
     guard isObjectPointer else {
@@ -791,7 +791,7 @@ private func runtimePrimitiveIntValue(_ raw: Int) -> Int {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: raw) else {
         return raw
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: pointer))
     }
     guard isObjectPointer else {
@@ -817,7 +817,7 @@ private func runtimePrimitiveFloatValue(_ raw: Int, kind: RuntimePrimitiveCompar
     guard let pointer = UnsafeMutableRawPointer(bitPattern: raw) else {
         return kind == .float ? Double(kk_bits_to_float(raw)) : kk_bits_to_double(raw)
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: pointer))
     }
     guard isObjectPointer else {

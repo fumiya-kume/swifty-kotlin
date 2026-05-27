@@ -605,7 +605,7 @@ public func kk_itable_lookup(_ receiver: Int, _ ifaceSlot: Int, _ methodSlot: In
     if let pointer = UnsafeMutableRawPointer(bitPattern: receiver) {
         let objectKey = UInt(bitPattern: pointer)
         let dispatchKey = (UInt64(UInt32(ifaceSlot)) << 32) | UInt64(UInt32(methodSlot))
-        let registered = runtimeStorage.withLock { state in
+        let registered = runtimeStorage.withMetadataLock { state in
             state.objectItableMethods[objectKey]?[dispatchKey]
         }
         if let registered {
@@ -638,7 +638,7 @@ func runtimeRangeBox(from rawValue: Int) -> RuntimeRangeBox? {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: pointer))
     }
     guard isObjectPointer else {
@@ -651,7 +651,7 @@ private func runtimeRangeIteratorBox(from rawValue: Int) -> RuntimeRangeIterator
     guard let pointer = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: pointer))
     }
     guard isObjectPointer else {
@@ -664,7 +664,7 @@ private func runtimeIteratorBuilderBox(from rawValue: Int) -> RuntimeIteratorBui
     guard let pointer = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: pointer))
     }
     guard isObjectPointer else {
@@ -685,7 +685,7 @@ private func runtimeTypeInfo(from receiver: Int) -> UnsafePointer<KTypeInfo>? {
     else {
         return nil
     }
-    let isHeapObject = runtimeStorage.withLock { state in
+    let isHeapObject = runtimeStorage.withGCLock { state in
         state.heapObjects[UInt(bitPattern: pointer)] != nil
     }
     guard isHeapObject else {

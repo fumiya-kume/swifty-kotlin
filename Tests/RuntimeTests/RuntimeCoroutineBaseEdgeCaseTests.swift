@@ -55,7 +55,7 @@ private final class CountBox: @unchecked Sendable {
 /// Register a RuntimeStringBox into the runtime object store and return its raw pointer Int.
 private func runtimeRegisterStringBox(_ box: RuntimeStringBox) -> Int {
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)

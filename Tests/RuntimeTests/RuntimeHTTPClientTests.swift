@@ -69,6 +69,7 @@ private final class MockURLProtocol: URLProtocol {
 
 #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
 final class RuntimeHTTPClientTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     override func resetIsolatedRuntimeTestState() {
         MockURLProtocol.handler = nil
         unsetenv("KSWIFTK_HTTP_PROTOCOL_CLASS")

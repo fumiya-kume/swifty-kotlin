@@ -76,6 +76,7 @@ private let workerExecuteJobThunk: @convention(c) (Int, Int, UnsafeMutablePointe
 // ---------------------------------------------------------------------------
 
 final class RuntimeWorkerTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcAndThreadLocal }
 
     // MARK: Worker lifecycle
 
@@ -178,6 +179,7 @@ final class RuntimeWorkerTests: IsolatedRuntimeXCTestCase {
 // ---------------------------------------------------------------------------
 
 final class RuntimeFreezeTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcAndThreadLocal }
 
     func testFreezeObjectReturnsSameHandle() {
         let handle = makeRawHandleForFreezeTest()
@@ -368,6 +370,7 @@ final class RuntimeAtomicReferenceNativeConcurrentTests: XCTestCase {
 // ---------------------------------------------------------------------------
 
 final class RuntimeWorkerIDTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcAndThreadLocal }
 
     func testWorkerIDIsPositive() {
         let handle = kk_worker_new(0)
@@ -400,6 +403,7 @@ final class RuntimeWorkerIDTests: IsolatedRuntimeXCTestCase {
 // ---------------------------------------------------------------------------
 
 final class RuntimeFutureTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcAndThreadLocal }
 
     func testFutureNewReturnsNonZeroHandle() {
         let handle = kk_future_new()
@@ -472,6 +476,7 @@ final class RuntimeFutureTests: IsolatedRuntimeXCTestCase {
 // ---------------------------------------------------------------------------
 
 final class RuntimeTransferModeTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcAndThreadLocal }
 
     func testTransferSafeModeReturnsSameHandle() {
         let handle = kk_atomic_int_create(10)
@@ -503,6 +508,7 @@ final class RuntimeTransferModeTests: IsolatedRuntimeXCTestCase {
 // ---------------------------------------------------------------------------
 
 final class RuntimeFreezableAtomicRefTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcAndThreadLocal }
 
     func testCreateReturnsNonZeroHandle() {
         let handle = kk_freezable_atomic_ref_create(0)
@@ -583,6 +589,7 @@ final class RuntimeFreezableAtomicRefTests: IsolatedRuntimeXCTestCase {
 // ---------------------------------------------------------------------------
 
 final class RuntimeSharedImmutableTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcAndThreadLocal }
 
     func testSharedImmutableInitFreezesObject() {
         let handle = kk_atomic_int_create(42)
@@ -610,6 +617,7 @@ final class RuntimeSharedImmutableTests: IsolatedRuntimeXCTestCase {
 // ---------------------------------------------------------------------------
 
 final class RuntimeWorkerExecuteAfterTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcAndThreadLocal }
 
     func testExecuteAfterReturnsZeroForTerminatedWorker() {
         let handle = kk_worker_new(0)

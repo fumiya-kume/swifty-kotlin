@@ -19,7 +19,7 @@ func runtimeArrayBox(from rawValue: Int) -> RuntimeArrayBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObjectPointer else {
@@ -32,7 +32,7 @@ func runtimeIsHeapObject(_ rawValue: Int) -> Bool {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return false
     }
-    return runtimeStorage.withLock { state in
+    return runtimeStorage.withGCLock { state in
         state.heapObjects[UInt(bitPattern: ptr)] != nil
     }
 }
@@ -41,7 +41,7 @@ func runtimeRegisterObjectType(rawValue: Int, classID: Int64) {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue), classID != 0 else {
         return
     }
-    runtimeStorage.withLock { state in
+    runtimeStorage.withMetadataLock { state in
         state.objectTypeByPointer[UInt(bitPattern: ptr)] = classID
     }
 }
@@ -50,7 +50,7 @@ func runtimeObjectTypeID(rawValue: Int) -> Int64? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
     }
-    return runtimeStorage.withLock { state in
+    return runtimeStorage.withMetadataLock { state in
         state.objectTypeByPointer[UInt(bitPattern: ptr)]
     }
 }
@@ -59,7 +59,7 @@ func runtimeRegisterTypeEdge(childTypeID: Int64, parentTypeID: Int64) {
     guard childTypeID != 0, parentTypeID != 0 else {
         return
     }
-    runtimeStorage.withLock { state in
+    runtimeStorage.withMetadataLock { state in
         var parents = state.typeParents[childTypeID] ?? []
         parents.insert(parentTypeID)
         state.typeParents[childTypeID] = parents
@@ -73,7 +73,7 @@ func runtimeIsAssignable(sourceTypeID: Int64, targetTypeID: Int64) -> Bool {
     if sourceTypeID == targetTypeID {
         return true
     }
-    return runtimeStorage.withLock { state in
+    return runtimeStorage.withMetadataLock { state in
         var visited: Set<Int64> = [sourceTypeID]
         var queue: [Int64] = [sourceTypeID]
         var index = 0
@@ -97,7 +97,7 @@ func runtimeIsAssignable(sourceTypeID: Int64, targetTypeID: Int64) -> Bool {
 func runtimeAllocateThrowable(message: String, cause: Int = 0) -> Int {
     let throwable = RuntimeThrowableBox(message: message, cause: cause)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(throwable).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -106,7 +106,7 @@ func runtimeAllocateThrowable(message: String, cause: Int = 0) -> Int {
 func runtimeAllocateUninitializedPropertyAccessException(message: String, cause: Int = 0) -> Int {
     let throwable = RuntimeUninitializedPropertyAccessExceptionBox(message: message, cause: cause)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(throwable).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -135,7 +135,7 @@ func runtimeThrowableMatchesNominalTypeID(_ throwable: RuntimeThrowableBox, targ
 func runtimeAllocateCancellationException(message: String = "CancellationException", cause: Int = 0) -> Int {
     let cancellation = RuntimeCancellationBox(message: message, cause: cause)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(cancellation).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -185,7 +185,7 @@ func extractString(from ptr: UnsafeMutableRawPointer?) -> String? {
     guard let ptr = normalizeNullableRuntimePointer(ptr) else {
         return nil
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObjectPointer else {

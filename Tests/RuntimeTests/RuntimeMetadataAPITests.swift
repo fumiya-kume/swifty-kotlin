@@ -2,6 +2,7 @@
 import XCTest
 
 final class RuntimeMetadataAPITests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcAndMetadata }
     private func makeRuntimeString(_ value: String) -> Int {
         value.withCString { cString in
             cString.withMemoryRebound(to: UInt8.self, capacity: value.utf8.count) { ptr in

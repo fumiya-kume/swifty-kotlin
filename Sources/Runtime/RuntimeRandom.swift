@@ -109,7 +109,7 @@ private func seededBox(from raw: Int) -> SeededRandomBox? {
     guard raw != 0, let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
         return nil
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObjectPointer else {
@@ -122,7 +122,7 @@ private func secureRandomBox(from raw: Int) -> SecureRandomBox? {
     guard raw != 0, let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
         return nil
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
+    let isObjectPointer = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObjectPointer else {
@@ -194,7 +194,7 @@ private func runtimeRandomUIntRange(receiver: Int, from: UInt64, until: UInt64) 
 private func runtimeCreateSeededRandom(seed: Int) -> Int {
     let box = SeededRandomBox(seed: seed)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)
@@ -221,7 +221,7 @@ public func kk_java_random_new_seed(_ seed: Int) -> Int {
 public func kk_secure_random_get_instance() -> Int {
     let box = SecureRandomBox()
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    runtimeStorage.withGCLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
     return Int(bitPattern: ptr)

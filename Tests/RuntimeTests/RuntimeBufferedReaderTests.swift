@@ -3,6 +3,7 @@ import Foundation
 import XCTest
 
 final class RuntimeBufferedReaderTests: IsolatedRuntimeXCTestCase {
+    override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     func testBufferedReaderHandlesMixedLineEndingsAndNoTrailingEmptyLine() throws {
         let fileURL = try makeTempFile(contents: "alpha\r\nbeta\rgamma\n")
         defer { try? FileManager.default.removeItem(at: fileURL) }

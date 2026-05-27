@@ -99,24 +99,8 @@ private let kclassBridgeFunctions = [
     "kk_kclass_is_value_class",
 ].map { bridgeSpec($0, section: "TypeCheck", params: ["kclassRaw"]) }
 
-private let sequenceHOFBridgeNames = [
-    "kk_sequence_reduce",
-]
-
 private let sequenceOnlyBridgeFunctions: [RuntimeABIFunctionSpec] =
-    sequenceHOFBridgeNames.map {
-        bridgeSpec(
-            $0,
-            section: "Sequence",
-            typedParams: [
-                ("seqRaw", .intptr),
-                ("fnPtr", .intptr),
-                ("closureRaw", .intptr),
-                ("outThrown", .nullableIntptrPointer),
-            ]
-        )
-    }
-    + [
+    [
         bridgeSpec(
             "kk_sequence_fold",
             section: "Sequence",
