@@ -105,6 +105,15 @@ extension DataFlowSemaPhase {
             comparatorSymbol: comparatorSymbol
         )
 
+        registerSyntheticMaxWithComparatorStubs(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            comparisonsPkg: comparisonsPkg,
+            comparisonsPackageSymbol: comparisonsPackageSymbol,
+            comparatorSymbol: comparatorSymbol
+        )
+
         registerSyntheticMaxOfUnsignedStubs(
             symbols: symbols,
             types: types,
@@ -333,6 +342,59 @@ extension DataFlowSemaPhase {
                 returnType: tParamType,
                 parameterNames: ["a", "other", "comparator"],
                 valueParameterIsVararg: [false, true, false],
+                typeParameterSymbols: [tParamSymbol],
+                typeParameterUpperBoundsList: [[]],
+                packageFQName: comparisonsPkg,
+                packageSymbol: comparisonsPackageSymbol,
+                types: types,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+    }
+
+    /// Registers the top-level `kotlin.comparisons.maxWith(comparator, a, b): T`
+    /// overload (and its `minWith` sibling). The 3-arg form takes a
+    /// `Comparator<in T>` and two values, returning the greater of the two
+    /// (or lesser for `minWith`).
+    ///
+    /// STDLIB-COMP-FN-027 / STDLIB-COMP-FN-028.
+    private func registerSyntheticMaxWithComparatorStubs(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        comparisonsPkg: [InternedString],
+        comparisonsPackageSymbol: SymbolID,
+        comparatorSymbol: SymbolID
+    ) {
+        for functionName in ["maxWith", "minWith"] {
+            let functionNameID = interner.intern(functionName)
+            let functionFQName = comparisonsPkg + [functionNameID]
+            let tParamName = interner.intern("T")
+            let tParamFQName = functionFQName + [tParamName]
+            let tParamSymbol = symbols.lookup(fqName: tParamFQName) ?? symbols.define(
+                kind: .typeParameter,
+                name: tParamName,
+                fqName: tParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let tParamType = types.make(.typeParam(TypeParamType(
+                symbol: tParamSymbol,
+                nullability: .nonNull
+            )))
+            let comparatorType = types.make(.classType(ClassType(
+                classSymbol: comparatorSymbol,
+                args: [.in(tParamType)],
+                nullability: .nonNull
+            )))
+
+            registerSyntheticComparisonFunction(
+                named: functionName,
+                parameterTypes: [comparatorType, tParamType, tParamType],
+                returnType: tParamType,
+                parameterNames: ["comparator", "a", "b"],
                 typeParameterSymbols: [tParamSymbol],
                 typeParameterUpperBoundsList: [[]],
                 packageFQName: comparisonsPkg,
