@@ -1399,6 +1399,12 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let pinnedSymbol = ensureClassSymbol(
+            named: "Pinned",
+            in: cinteropPkg,
+            symbols: symbols,
+            interner: interner
+        )
         let cPointerSymbol = ensureClassSymbol(
             named: "CPointer",
             in: cinteropPkg,
@@ -1458,6 +1464,7 @@ extension DataFlowSemaPhase {
             cValueSymbol,
             cValuesSymbol,
             stableRefSymbol,
+            pinnedSymbol,
             cPointerSymbol,
             cPointerVarSymbol,
             cPointerVarOfSymbol,
@@ -2511,6 +2518,74 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let pinnedFQName = cinteropPkg + [interner.intern("Pinned")]
+        let pinnedTypeParameterName = interner.intern("T")
+        let pinnedTypeParameterFQName = pinnedFQName + [pinnedTypeParameterName]
+        let pinnedTypeParameterSymbol: SymbolID = if let existing = symbols.lookup(fqName: pinnedTypeParameterFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: pinnedTypeParameterName,
+                fqName: pinnedTypeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        symbols.setTypeParameterUpperBounds([types.anyType], for: pinnedTypeParameterSymbol)
+        let pinnedTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: pinnedTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let pinnedType = types.make(.classType(ClassType(
+            classSymbol: pinnedSymbol,
+            args: [.invariant(pinnedTypeParameterType)],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(pinnedType, for: pinnedSymbol)
+        types.setNominalTypeParameterSymbols([pinnedTypeParameterSymbol], for: pinnedSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: pinnedSymbol)
+
+        let pinName = interner.intern("pin")
+        let pinFQName = cinteropPkg + [pinName]
+        let pinTypeParameterName = interner.intern("T")
+        let pinTypeParameterFQName = pinFQName + [pinTypeParameterName]
+        let pinTypeParameterSymbol: SymbolID = if let existing = symbols.lookup(fqName: pinTypeParameterFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: pinTypeParameterName,
+                fqName: pinTypeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+        }
+        symbols.setTypeParameterUpperBounds([types.anyType], for: pinTypeParameterSymbol)
+        let pinTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: pinTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let pinReturnType = types.make(.classType(ClassType(
+            classSymbol: pinnedSymbol,
+            args: [.invariant(pinTypeParameterType)],
+            nullability: .nonNull
+        )))
+        registerSyntheticNativeTopLevelFunction(
+            named: "pin",
+            packageFQName: cinteropPkg,
+            receiverType: pinTypeParameterType,
+            parameters: [],
+            returnType: pinReturnType,
+            typeParameterSymbols: [pinTypeParameterSymbol],
+            typeParameterUpperBoundsList: [[types.anyType]],
+            flags: [.synthetic, .inlineFunction],
+            symbols: symbols,
+            interner: interner
+        )
+
         let stableRefFQName = cinteropPkg + [interner.intern("StableRef")]
         let stableRefTypeParameterName = interner.intern("T")
         let stableRefTypeParameterFQName = stableRefFQName + [stableRefTypeParameterName]
