@@ -462,7 +462,7 @@
 #### kotlin.time 関数の実装
 - [ ] STDLIB-TIME-FN-001: `asClock` 関数の実装
 - [x] STDLIB-TIME-FN-002: `measureTime` 関数の実装
-- [ ] STDLIB-TIME-FN-003: `measureTimedValue` 関数の実装
+- [x] STDLIB-TIME-FN-003: `measureTimedValue` 関数の実装
 - [ ] STDLIB-TIME-FN-004: `times` 関数の実装
 - [ ] STDLIB-TIME-FN-005: `toDuration` 関数の実装
 - [ ] STDLIB-TIME-FN-006: `toDurationUnit` 関数の実装
