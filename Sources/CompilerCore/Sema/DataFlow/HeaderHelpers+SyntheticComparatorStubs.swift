@@ -62,6 +62,15 @@ extension DataFlowSemaPhase {
             comparatorSymbol: comparatorSymbol
         )
 
+        registerNullsFirstAndLastTopLevel(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            comparisonsPkg: comparisonsPkg,
+            comparisonsPackageSymbol: comparisonsPackageSymbol,
+            comparatorSymbol: comparatorSymbol
+        )
+
         registerArrayBinarySearchComparator(
             symbols: symbols,
             types: types,
@@ -948,6 +957,67 @@ extension DataFlowSemaPhase {
                 FunctionSignature(
                     parameterTypes: [],
                     returnType: comparatorType,
+                    isSuspend: false,
+                    typeParameterSymbols: [tParamSymbol],
+                    typeParameterUpperBoundsList: [[]]
+                ),
+                for: funcSymbol
+            )
+        }
+    }
+
+    /// Registers top-level `nullsFirst<T : Comparable<T>>(): Comparator<T?>` and
+    /// `nullsLast<T : Comparable<T>>(): Comparator<T?>` in the kotlin.comparisons
+    /// package (STDLIB-COMP-FN-059 / STDLIB-COMP-FN-061).
+    private func registerNullsFirstAndLastTopLevel(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        comparisonsPkg: [InternedString],
+        comparisonsPackageSymbol: SymbolID,
+        comparatorSymbol: SymbolID
+    ) {
+        guard let compInfo = symbols.symbol(comparatorSymbol) else { return }
+        let comparatorFQName = compInfo.fqName
+        let tParamName = interner.intern("T")
+        let tParamFQName = comparatorFQName + [tParamName]
+        guard let tParamSymbol = symbols.lookup(fqName: tParamFQName) else { return }
+        let nullableTParamType = types.make(.typeParam(TypeParamType(
+            symbol: tParamSymbol, nullability: .nullable
+        )))
+        let comparatorOfNullableTType = types.make(.classType(ClassType(
+            classSymbol: comparatorSymbol,
+            args: [.invariant(nullableTParamType)],
+            nullability: .nonNull
+        )))
+
+        for (name, extLink) in [
+            ("nullsFirst", "kk_comparator_nulls_first_natural"),
+            ("nullsLast", "kk_comparator_nulls_last_natural"),
+        ] {
+            let functionName = interner.intern(name)
+            let functionFQName = comparisonsPkg + [functionName]
+            if symbols.lookupAll(fqName: functionFQName).contains(where: { symbolID in
+                guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+                return sig.parameterTypes.isEmpty && sig.returnType == comparatorOfNullableTType
+            }) {
+                continue
+            }
+
+            let funcSymbol = symbols.define(
+                kind: .function,
+                name: functionName,
+                fqName: functionFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(comparisonsPackageSymbol, for: funcSymbol)
+            symbols.setExternalLinkName(extLink, for: funcSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    parameterTypes: [],
+                    returnType: comparatorOfNullableTType,
                     isSuspend: false,
                     typeParameterSymbols: [tParamSymbol],
                     typeParameterUpperBoundsList: [[]]
