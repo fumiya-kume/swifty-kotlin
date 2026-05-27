@@ -422,7 +422,7 @@
 - [ ] STDLIB-TEXT-FN-096: `toDoubleOrNull` 関数の実装
 - [ ] STDLIB-TEXT-FN-097: `toFloat` 関数の実装
 - [ ] STDLIB-TEXT-FN-098: `toFloatOrNull` 関数の実装
-- [ ] STDLIB-TEXT-FN-099: `toInt` 関数の実装
+- [x] STDLIB-TEXT-FN-099: `toInt` 関数の実装
 - [x] STDLIB-TEXT-FN-100: `toIntOrNull` 関数の実装
 - [ ] STDLIB-TEXT-FN-101: `toList` 関数の実装
 - [ ] STDLIB-TEXT-FN-102: `toLong` 関数の実装
