@@ -192,7 +192,7 @@
 #### kotlin.sequences 型の実装
 - [x] STDLIB-SEQ-TYPE-001: `Sequence` インターフェースの実装
 - [x] STDLIB-SEQ-TYPE-002: `SequenceScope` クラスの実装
-- [ ] STDLIB-SEQ-TYPE-002: `SequenceScope` クラスの実装
+- [x] STDLIB-SEQ-TYPE-002: `SequenceScope` クラスの実装
 
 #### kotlin.sequences 関数の実装
 - [ ] STDLIB-SEQ-FN-005: `associate` 関数の実装
