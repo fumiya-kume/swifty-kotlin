@@ -215,7 +215,7 @@
 - [x] STDLIB-SEQ-FN-022: `elementAtOrNull` 関数の実装
 - [x] STDLIB-SEQ-FN-023: `filter` 関数の実装
 - [ ] STDLIB-SEQ-FN-025: `filterIndexedTo` 関数の実装
-- [ ] STDLIB-SEQ-FN-026: `filterIsInstance` 関数の実装
+- [x] STDLIB-SEQ-FN-026: `filterIsInstance` 関数の実装
 - [x] STDLIB-SEQ-FN-027: `filterIsInstanceTo` 関数の実装
  - [x] STDLIB-SEQ-FN-029: `filterNotNull` 関数の実装
  - [ ] STDLIB-SEQ-FN-030: `filterNotTo` 関数の実装
