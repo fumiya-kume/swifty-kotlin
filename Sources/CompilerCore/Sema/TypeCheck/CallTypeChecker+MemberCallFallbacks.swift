@@ -448,6 +448,77 @@ extension CallTypeChecker {
         return finalType
     }
 
+    /// Resolves `placement.alloc<T>()` to the synthetic
+    /// `kotlinx.cinterop.alloc<T : CVariable>(): T` extension when the new
+    /// `NativePlacement` member overloads (`alloc(size, align)`) shadow the
+    /// zero-argument generic form during member lookup.  See
+    /// `inferRegularMemberCall` for why member candidates are not mixed with
+    /// extension candidates by default.
+    func tryNativePlacementAllocExtensionFallback(
+        _ id: ExprID,
+        calleeName: InternedString,
+        isClassNameReceiver: Bool,
+        safeCall: Bool,
+        receiverID: ExprID,
+        args: [CallArgument],
+        explicitTypeArgs: [TypeID],
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
+    ) -> TypeID? {
+        let sema = ctx.sema
+        let interner = ctx.interner
+        guard !isClassNameReceiver,
+              args.isEmpty,
+              explicitTypeArgs.count == 1,
+              interner.resolve(calleeName) == "alloc"
+        else {
+            return nil
+        }
+
+        let cinteropPkg = [interner.intern("kotlinx"), interner.intern("cinterop")]
+        guard let nativePlacementSymbol = sema.symbols.lookup(
+            fqName: cinteropPkg + [interner.intern("NativePlacement")]
+        ) else {
+            return nil
+        }
+        let nativePlacementType = sema.types.make(.classType(ClassType(
+            classSymbol: nativePlacementSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
+        let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+        guard sema.types.isSubtype(nonNullReceiverType, nativePlacementType) else {
+            return nil
+        }
+
+        let allocFQName = cinteropPkg + [interner.intern("alloc")]
+        guard let chosen = sema.symbols.lookupAll(fqName: allocFQName).first(where: { candidate in
+            guard let signature = sema.symbols.functionSignature(for: candidate) else {
+                return false
+            }
+            return signature.receiverType == nativePlacementType
+                && signature.parameterTypes.isEmpty
+                && signature.typeParameterSymbols.count == 1
+        }) else {
+            return nil
+        }
+
+        let typeArg = explicitTypeArgs[0]
+        sema.bindings.bindCall(
+            id,
+            binding: CallBinding(
+                chosenCallee: chosen,
+                substitutedTypeArguments: [typeArg],
+                parameterMapping: [:]
+            )
+        )
+        sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+        let finalType = safeCall ? sema.types.makeNullable(typeArg) : typeArg
+        sema.bindings.bindExprType(id, type: finalType)
+        return finalType
+    }
+
     func tryPathCharsetReadExtensionFallback(
         _ id: ExprID,
         calleeName: InternedString,

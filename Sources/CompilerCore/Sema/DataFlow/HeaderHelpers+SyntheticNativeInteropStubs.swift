@@ -1333,7 +1333,7 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
-        let nativePlacementSymbol = ensureClassSymbol(
+        let nativePlacementSymbol = ensureInterfaceSymbol(
             named: "NativePlacement",
             in: cinteropPkg,
             symbols: symbols,
@@ -1716,6 +1716,32 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(nativePlacementType, for: nativePlacementSymbol)
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "alloc",
+            ownerSymbol: nativePlacementSymbol,
+            receiverType: nativePlacementType,
+            parameters: [
+                (name: "size", type: types.longType),
+                (name: "align", type: types.intType),
+            ],
+            returnType: nativePointedType,
+            flags: [.synthetic, .abstractType],
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticNativeBitSetMemberFunction(
+            named: "alloc",
+            ownerSymbol: nativePlacementSymbol,
+            receiverType: nativePlacementType,
+            parameters: [
+                (name: "size", type: types.intType),
+                (name: "align", type: types.intType),
+            ],
+            returnType: nativePointedType,
+            flags: [.synthetic, .openType],
+            symbols: symbols,
+            interner: interner
+        )
         let nativePlacementAllocName = interner.intern("alloc")
         let nativePlacementAllocFQName = cinteropPkg + [nativePlacementAllocName]
         let nativePlacementAllocTypeParameterName = interner.intern("T")

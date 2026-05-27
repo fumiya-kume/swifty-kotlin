@@ -982,6 +982,19 @@ extension CallTypeChecker {
             ) {
                 return fallbackType
             }
+            if let fallbackType = tryNativePlacementAllocExtensionFallback(
+                id,
+                calleeName: calleeName,
+                isClassNameReceiver: isClassNameReceiver,
+                safeCall: safeCall,
+                receiverID: receiverID,
+                args: args,
+                explicitTypeArgs: explicitTypeArgs,
+                ctx: ctx,
+                locals: &locals
+            ) {
+                return fallbackType
+            }
             if let fallbackType = tryFileMemberFallback(
                 id,
                 calleeName: calleeName,
