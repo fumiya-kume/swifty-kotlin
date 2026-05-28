@@ -3,6 +3,7 @@ import Foundation
 /// Synthetic stubs for kotlin.io filesystem exception types.
 ///
 /// Covers:
+/// - STDLIB-IO-TYPE-001: `kotlin.io.AccessDeniedException` class
 /// - STDLIB-IO-TYPE-002: `kotlin.io.FileAlreadyExistsException` class
 ///
 /// The exception classes are registered as subclasses of `kotlin.Exception`
@@ -52,6 +53,43 @@ extension DataFlowSemaPhase {
         )))
         let nullableStringType = types.makeNullable(types.stringType)
 
+        // STDLIB-IO-TYPE-001: AccessDeniedException
+        // Inherits from Exception directly (FileSystemException is tracked separately
+        // under STDLIB-IO-TYPE-003).
+        let accessDeniedSymbol = ensureClassSymbol(
+            named: "AccessDeniedException",
+            in: kotlinIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinIOPkgSymbol {
+            symbols.setParentSymbol(kotlinIOPkgSymbol, for: accessDeniedSymbol)
+        }
+        symbols.setDirectSupertypes([exceptionSymbol], for: accessDeniedSymbol)
+        types.setNominalDirectSupertypes([exceptionSymbol], for: accessDeniedSymbol)
+
+        let accessDeniedType = types.make(.classType(ClassType(
+            classSymbol: accessDeniedSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(accessDeniedType, for: accessDeniedSymbol)
+
+        let accessDeniedOverloads: [[(name: String, type: TypeID)]] = [
+            [("file", fileType)],
+            [("file", fileType), ("other", nullableFileType)],
+            [("file", fileType), ("other", nullableFileType), ("reason", nullableStringType)],
+        ]
+        for parameters in accessDeniedOverloads {
+            registerSyntheticExceptionConstructor(
+                ownerSymbol: accessDeniedSymbol,
+                ownerType: accessDeniedType,
+                parameters: parameters,
+                externalLinkName: "kk_throwable_new",
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
+        // STDLIB-IO-TYPE-002: FileAlreadyExistsException
         let fileAlreadyExistsSymbol = ensureClassSymbol(
             named: "FileAlreadyExistsException",
             in: kotlinIOPkg,
@@ -77,12 +115,12 @@ extension DataFlowSemaPhase {
         // `kk_throwable_new` (which expects a single message argument) — the
         // surrounding compiler call lowering is responsible for synthesising the
         // descriptive message before passing it down.
-        let overloads: [[(name: String, type: TypeID)]] = [
+        let fileAlreadyExistsOverloads: [[(name: String, type: TypeID)]] = [
             [("file", fileType)],
             [("file", fileType), ("other", nullableFileType)],
             [("file", fileType), ("other", nullableFileType), ("reason", nullableStringType)],
         ]
-        for parameters in overloads {
+        for parameters in fileAlreadyExistsOverloads {
             registerSyntheticExceptionConstructor(
                 ownerSymbol: fileAlreadyExistsSymbol,
                 ownerType: fileAlreadyExistsType,
