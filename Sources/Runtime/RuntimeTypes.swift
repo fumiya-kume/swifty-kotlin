@@ -1674,6 +1674,15 @@ final class RuntimeOutputStreamBox {
         closed = true
         return writer
     }
+
+    func makeBufferedWriter(bufferSize: Int) -> RuntimeBufferedWriterBox? {
+        guard let fileHandle = underlyingFileHandle else {
+            return nil
+        }
+        let writer = RuntimeBufferedWriterBox(fileHandle: fileHandle, bufferSize: bufferSize)
+        closed = true
+        return writer
+    }
 }
 
 // MARK: - BufferedWriter (STDLIB-IO-091/093)
