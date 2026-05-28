@@ -16,6 +16,16 @@ private let firstNotNullOfAlwaysZeroNull: @convention(c) (Int, Int, UnsafeMutabl
     0
 }
 
+private let reduceIndexedPickIndexOne: @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = {
+    _, index, acc, charRaw, _ in
+    index == 1 ? charRaw : acc
+}
+
+private let reduceIndexedIndexChecksum: @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = {
+    _, index, acc, charRaw, _ in
+    acc + charRaw + index
+}
+
 private let reduceRightIndexedPickIndexOne: @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = {
     _, index, charRaw, acc, _ in
     index == 1 ? charRaw : acc
@@ -143,6 +153,133 @@ final class RuntimeStringHOFTests: XCTestCase {
 
         XCTAssertEqual(thrown, 0)
         XCTAssertEqual(result, runtimeNullSentinelInt)
+    }
+
+    // MARK: - reduceIndexed
+
+    func testReduceIndexedPicksCharAtIndexOne() {
+        // "abc": index 0 = 'a' (initial acc), index 1 = 'b', index 2 = 'c'
+        // lambda: return char at index 1
+        let source = registerRuntimeObject(RuntimeStringBox("abc"))
+        var thrown = 0
+
+        let result = kk_string_reduceIndexed(
+            source,
+            unsafeBitCast(reduceIndexedPickIndexOne, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, Int(Unicode.Scalar("b").value))
+    }
+
+    func testReduceIndexedUsesFirstCharacterAsInitialAccumulator() {
+        // "abc": acc starts at 'a'(97), then index=1 acc+char+index = 97+98+1=196, then index=2 196+99+2=297
+        let source = registerRuntimeObject(RuntimeStringBox("abc"))
+        var thrown = 0
+
+        let result = kk_string_reduceIndexed(
+            source,
+            unsafeBitCast(reduceIndexedIndexChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 297)
+    }
+
+    func testReduceIndexedSetsThrownForEmptyString() {
+        let source = registerRuntimeObject(RuntimeStringBox(""))
+        var thrown = 0
+
+        let result = kk_string_reduceIndexed(
+            source,
+            unsafeBitCast(reduceIndexedPickIndexOne, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testReduceIndexedReturnsSingleCharWithoutInvokingLambda() {
+        let source = registerRuntimeObject(RuntimeStringBox("z"))
+        var thrown = 0
+
+        let result = kk_string_reduceIndexed(
+            source,
+            unsafeBitCast(reduceIndexedPickIndexOne, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, Int(Unicode.Scalar("z").value))
+    }
+
+    // MARK: - reduceIndexedOrNull
+
+    func testReduceIndexedOrNullPicksCharAtIndexOne() {
+        let source = registerRuntimeObject(RuntimeStringBox("abc"))
+        var thrown = 0
+
+        let result = kk_string_reduceIndexedOrNull(
+            source,
+            unsafeBitCast(reduceIndexedPickIndexOne, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, Int(Unicode.Scalar("b").value))
+    }
+
+    func testReduceIndexedOrNullReturnsNullSentinelForEmptyString() {
+        let source = registerRuntimeObject(RuntimeStringBox(""))
+        var thrown = 0
+
+        let result = kk_string_reduceIndexedOrNull(
+            source,
+            unsafeBitCast(reduceIndexedPickIndexOne, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, runtimeNullSentinelInt)
+    }
+
+    func testReduceIndexedOrNullUsesFirstCharacterAsInitialAccumulator() {
+        let source = registerRuntimeObject(RuntimeStringBox("abc"))
+        var thrown = 0
+
+        let result = kk_string_reduceIndexedOrNull(
+            source,
+            unsafeBitCast(reduceIndexedIndexChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 297)
+    }
+
+    func testReduceIndexedOrNullReturnsSingleCharWithoutInvokingLambda() {
+        let source = registerRuntimeObject(RuntimeStringBox("z"))
+        var thrown = 0
+
+        let result = kk_string_reduceIndexedOrNull(
+            source,
+            unsafeBitCast(reduceIndexedPickIndexOne, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, Int(Unicode.Scalar("z").value))
     }
 
     func testReduceRightIndexedWalksRightToLeftWithIndexes() {

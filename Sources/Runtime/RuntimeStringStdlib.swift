@@ -3891,6 +3891,75 @@ public func kk_string_firstNotNullOfOrNull(
     return runtimeNullSentinelInt
 }
 
+@_cdecl("kk_string_reduceIndexed")
+public func kk_string_reduceIndexed(
+    _ strRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard !scalars.isEmpty else {
+        return handleCollectionLambdaThrow(
+            runtimeAllocateThrowable(message: "Empty char sequence can't be reduced."),
+            outThrown
+        )
+    }
+    var acc = Int(scalars[0].value)
+    guard scalars.count > 1 else {
+        return acc
+    }
+    for index in 1 ..< scalars.count {
+        var thrown = 0
+        acc = maybeUnbox(runtimeInvokeCollectionLambda3(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            arg1: index,
+            arg2: acc,
+            arg3: Int(scalars[index].value),
+            outThrown: &thrown
+        ))
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+    }
+    return acc
+}
+
+@_cdecl("kk_string_reduceIndexedOrNull")
+public func kk_string_reduceIndexedOrNull(
+    _ strRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard !scalars.isEmpty else {
+        return runtimeNullSentinelInt
+    }
+    var acc = Int(scalars[0].value)
+    guard scalars.count > 1 else {
+        return acc
+    }
+    for index in 1 ..< scalars.count {
+        var thrown = 0
+        acc = maybeUnbox(runtimeInvokeCollectionLambda3(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            arg1: index,
+            arg2: acc,
+            arg3: Int(scalars[index].value),
+            outThrown: &thrown
+        ))
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+    }
+    return acc
+}
+
 @_cdecl("kk_string_reduceRightIndexed")
 public func kk_string_reduceRightIndexed(
     _ strRaw: Int,
