@@ -403,6 +403,43 @@ extension CallTypeChecker {
             }
         }
 
+        // --- STDLIB-IO-FN-016: File.forEachBlock ---
+        // forEachBlock(action: (ByteArray, Int) -> Unit)          -- 1 arg
+        // forEachBlock(blockSize: Int, action: (ByteArray, Int) -> Unit) -- 2 args
+        do {
+            let calleeStr = interner.resolve(calleeName)
+            if calleeStr == "forEachBlock",
+               isFileType(receiverType, sema: sema, interner: interner),
+               args.count == 1 || args.count == 2
+            {
+                let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first
+                let listOfIntType: TypeID = if let listSym = listSymbol {
+                    sema.types.make(.classType(ClassType(
+                        classSymbol: listSym,
+                        args: [.out(sema.types.intType)],
+                        nullability: .nonNull
+                    )))
+                } else { sema.types.anyType }
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [listOfIntType, sema.types.intType],
+                    returnType: sema.types.unitType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                let lambdaArgIndex = args.count == 2 ? 1 : 0
+                if args.count == 2 {
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
+                }
+                if let lambdaExpr = ast.arena.expr(args[lambdaArgIndex].expr), case .lambdaLiteral = lambdaExpr {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[lambdaArgIndex].expr)
+                }
+                _ = driver.inferExpr(args[lambdaArgIndex].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                let finalType = safeCall ? sema.types.makeNullable(sema.types.unitType) : sema.types.unitType
+                sema.bindings.bindExprType(id, type: finalType)
+                return finalType
+            }
+        }
+
         // --- File lambda-accepting methods: forEachLine, useLines (STDLIB-322) ---
         // These require the lambda to use the collection HOF closure ABI (closureRaw
         // prepended), and the lambda's implicit `it` must be correctly resolved.

@@ -322,6 +322,11 @@ extension CollectionLiteralLoweringPass {
             kkCallee = lookup.kkFilePathName
         case lookup.forEachLineName:
             kkCallee = lookup.kkFileForEachLineName
+        // STDLIB-IO-FN-016: forEachBlock — arity-based dispatch (virtual call path, args excludes receiver)
+        case lookup.forEachBlockName:
+            kkCallee = arguments.isEmpty
+                ? lookup.kkFileForEachBlockName
+                : lookup.kkFileForEachBlockBlockSizeName
         case lookup.useLinesName:
             kkCallee = lookup.kkFileUseLinesName
         case lookup.bufferedReaderName:
@@ -356,6 +361,7 @@ extension CollectionLiteralLoweringPass {
 
         // Methods that pass extra arguments beyond the receiver
         let needsExtraArgs = callee == lookup.forEachLineName
+            || callee == lookup.forEachBlockName
             || callee == lookup.useLinesName
             || callee == lookup.writeTextName
             || callee == lookup.appendTextName

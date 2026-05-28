@@ -78,6 +78,134 @@ extension LoweringPassRegressionTests {
         XCTAssertTrue(call.canThrow)
     }
 
+    // STDLIB-IO-FN-016: forEachBlock KIR rewrite adds closureRaw argument
+    func testFileForEachBlockRewriteAddsClosureRawArgument() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let ctx = KIRContext(
+            diagnostics: DiagnosticEngine(),
+            options: CompilerOptions(
+                moduleName: "FileForEachBlockRewrite",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory
+                    .appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            interner: interner
+        )
+
+        let fileExpr = arena.appendExpr(.temporary(0))
+        let lambdaExpr = arena.appendExpr(.temporary(1))
+        let resultExpr = arena.appendExpr(.temporary(2))
+        let fn = KIRFunction(
+            symbol: SymbolID(rawValue: 1),
+            name: interner.intern("main"),
+            params: [],
+            returnType: TypeSystem().unitType,
+            body: [
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("kk_file_new"),
+                    arguments: [arena.appendExpr(.stringLiteral(interner.intern("demo.bin")), type: nil)],
+                    result: fileExpr,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("kk_file_forEachBlock"),
+                    arguments: [fileExpr, lambdaExpr],
+                    result: resultExpr,
+                    canThrow: true,
+                    thrownResult: nil
+                ),
+                .returnUnit,
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+        let declID = arena.appendDecl(.function(fn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [declID])], arena: arena)
+
+        try CollectionLiteralLoweringPass().run(module: module, ctx: ctx)
+
+        guard case let .function(lowered)? = module.arena.decl(declID) else {
+            XCTFail("expected lowered function")
+            return
+        }
+
+        let forEachBlockCall = lowered.body.compactMap { instruction -> (arguments: [KIRExprID], canThrow: Bool)? in
+            guard case let .call(_, callee, arguments, _, canThrow, _, _, _) = instruction,
+                  interner.resolve(callee) == "kk_file_forEachBlock"
+            else {
+                return nil
+            }
+            return (arguments, canThrow)
+        }.first
+
+        guard let call = forEachBlockCall else {
+            XCTFail("Expected kk_file_forEachBlock call after collection literal lowering")
+            return
+        }
+        XCTAssertEqual(call.arguments.count, 3, "kk_file_forEachBlock should receive fileRaw, fnPtr, and closureRaw")
+        XCTAssertTrue(call.canThrow)
+    }
+
+    // STDLIB-IO-FN-016: forEachBlock source-level rewrite (default blockSize)
+    func testFileForEachBlockSourceLevelRewrite() throws {
+        let source = """
+        import java.io.File
+
+        fun main() {
+            val f = File("/tmp/test.bin")
+            f.forEachBlock { bytes, bytesRead ->
+                println(bytesRead)
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "FileForEachBlock", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: mainBody, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_file_forEachBlock"))
+            XCTAssertFalse(callees.contains("forEachBlock"))
+        }
+    }
+
+    // STDLIB-IO-FN-016: forEachBlock with explicit blockSize
+    func testFileForEachBlockWithBlockSizeSourceLevelRewrite() throws {
+        let source = """
+        import java.io.File
+
+        fun main() {
+            val f = File("/tmp/test.bin")
+            f.forEachBlock(1024) { bytes, bytesRead ->
+                println(bytesRead)
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "FileForEachBlockSize", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: mainBody, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_file_forEachBlock_blockSize"))
+            XCTAssertFalse(callees.contains("forEachBlock"))
+        }
+    }
+
     func testFileWalkRewriteKeepsListTrackingForChainedForEach() throws {
         let source = """
         import java.io.File

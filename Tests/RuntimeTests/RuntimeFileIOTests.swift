@@ -2,6 +2,26 @@ import Foundation
 @testable import Runtime
 import XCTest
 
+// MARK: - STDLIB-IO-FN-016: File.forEachBlock lambda thunks
+// Lambda ABI: (closureRaw: Int, bytesRaw: Int, bytesReadRaw: Int, outThrown: UnsafeMutablePointer<Int>?) -> Int
+private nonisolated(unsafe) var forEachBlockAccumulator: Int = 0
+private nonisolated(unsafe) var forEachBlockChunkCount: Int = 0
+
+// Counts total bytesRead across all callback invocations
+private let forEachBlockCountBytes: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, bytesReadRaw, outThrown in
+    outThrown?.pointee = 0
+    forEachBlockAccumulator += kk_unbox_int(bytesReadRaw)
+    return 0
+}
+
+// Counts chunks and accumulates bytesRead
+private let forEachBlockCountChunks: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, bytesReadRaw, outThrown in
+    outThrown?.pointee = 0
+    forEachBlockChunkCount += 1
+    forEachBlockAccumulator += kk_unbox_int(bytesReadRaw)
+    return 0
+}
+
 final class RuntimeFileIOTests: IsolatedRuntimeXCTestCase {
     override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     func testReadTextReturnsUtf8Contents() throws {
@@ -78,6 +98,52 @@ final class RuntimeFileIOTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_file_appendBytes(fileRaw, bytesRaw, &thrown), 0)
         XCTAssertEqual(thrown, 0)
         XCTAssertEqual(try Data(contentsOf: fileURL), Data([0, 127, 128, 255]))
+    }
+
+    // STDLIB-IO-FN-016: File.forEachBlock — default blockSize accumulates all bytes
+    func testForEachBlockDefaultBlockSizeAccumulatesAllBytes() throws {
+        let bytes: [UInt8] = [1, 2, 3, 4, 5, 6, 7, 8]
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try Data(bytes).write(to: fileURL)
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        let fileRaw = runtimeTestFileHandle(fileURL.path)
+
+        forEachBlockAccumulator = 0
+        let fnPtr = Int(bitPattern: unsafeBitCast(
+            forEachBlockCountBytes as @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int,
+            to: UnsafeRawPointer.self
+        ))
+        var thrown = 0
+        _ = kk_file_forEachBlock(fileRaw, fnPtr, 0, &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(forEachBlockAccumulator, 8)
+    }
+
+    // STDLIB-IO-FN-016: File.forEachBlock — explicit blockSize splits data into chunks
+    func testForEachBlockWithExplicitBlockSizeProcessesChunks() throws {
+        let bytes: [UInt8] = [10, 20, 30, 40, 50, 60]
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try Data(bytes).write(to: fileURL)
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        let fileRaw = runtimeTestFileHandle(fileURL.path)
+
+        forEachBlockChunkCount = 0
+        forEachBlockAccumulator = 0
+        let fnPtr = Int(bitPattern: unsafeBitCast(
+            forEachBlockCountChunks as @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int,
+            to: UnsafeRawPointer.self
+        ))
+        // blockSize = 2 → should produce 3 chunks of 2 bytes each
+        let blockSizeRaw = kk_box_int(2)
+        var thrown = 0
+        _ = kk_file_forEachBlock_blockSize(fileRaw, blockSizeRaw, fnPtr, 0, &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(forEachBlockChunkCount, 3)
+        XCTAssertEqual(forEachBlockAccumulator, 6) // 3 chunks × 2 bytes each
     }
 
     // STDLIB-IO-PROP-005: File.nameWithoutExtension extension property
