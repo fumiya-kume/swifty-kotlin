@@ -318,7 +318,7 @@
 #### kotlin.text プロパティの実装
 - [ ] STDLIB-TEXT-PROP-001: `CASE_INSENSITIVE_ORDER` プロパティの実装
 - [ ] STDLIB-TEXT-PROP-002: `category` 拡張プロパティの実装
-- [ ] STDLIB-TEXT-PROP-003: `directionality` 拡張プロパティの実装
+- [x] STDLIB-TEXT-PROP-003: `directionality` 拡張プロパティの実装
 - [x] STDLIB-TEXT-PROP-004: `isDefined` 拡張プロパティの実装
 - [x] STDLIB-TEXT-PROP-005: `isDigit` 拡張プロパティの実装
 - [x] STDLIB-TEXT-PROP-006: `isHighSurrogate` 拡張プロパティの実装
