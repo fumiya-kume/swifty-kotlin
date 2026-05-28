@@ -74,7 +74,7 @@
 - [x] STDLIB-CONC-FN-004: `fixedRateTimer` 関数の実装（各オーバーロード）
 - [x] STDLIB-CONC-FN-005: `schedule` 関数の実装
 - [x] STDLIB-CONC-FN-006: `scheduleAtFixedRate` 関数の実装（各オーバーロード）
-- [ ] STDLIB-CONC-FN-008: `timer` 関数の実装（各オーバーロード）
+- [x] STDLIB-CONC-FN-008: `timer` 関数の実装（各オーバーロード）
 
 #### kotlin.concurrent.atomics 型の実装
 
