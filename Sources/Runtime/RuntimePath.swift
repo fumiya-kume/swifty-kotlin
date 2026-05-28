@@ -395,6 +395,35 @@ public func kk_path_exists(_ pathRaw: Int) -> Int {
     return kk_box_bool(FileManager.default.fileExists(atPath: path.pathString) ? 1 : 0)
 }
 
+/// Path.getLastModifiedTime(vararg options: LinkOption): FileTime
+///
+/// Returns the last modification time of the file system entry referenced by
+/// `path` wrapped in a `FileTime` value (milliseconds since the epoch). The
+/// `optionsRaw` parameter matches the Sema-declared `vararg options:
+/// LinkOption` shape and is accepted for ABI symmetry with the Foundation
+/// surface (link options have no effect on the macOS Foundation-backed
+/// runtime today). When the underlying `attributesOfItem` call throws, the
+/// error is propagated through `outThrown` as an `IOException`, mirroring
+/// `kk_files_getLastModifiedTime`'s behaviour.
+@_cdecl("kk_path_getLastModifiedTime")
+public func kk_path_getLastModifiedTime(_ pathRaw: Int, _ optionsRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    _ = optionsRaw
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_getLastModifiedTime received invalid Path handle")
+    }
+    do {
+        let attrs = try FileManager.default.attributesOfItem(atPath: path.pathString)
+        guard let modDate = attrs[.modificationDate] as? Date else {
+            return registerRuntimeObject(RuntimeFileTimeBox(milliseconds: 0))
+        }
+        return registerRuntimeObject(RuntimeFileTimeBox(milliseconds: Int(modDate.timeIntervalSince1970 * 1000)))
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+        return registerRuntimeObject(RuntimeFileTimeBox(milliseconds: 0))
+    }
+}
+
 @_cdecl("kk_path_isDirectory")
 public func kk_path_isDirectory(_ pathRaw: Int) -> Int {
     guard let path = runtimePathBox(from: pathRaw) else {
