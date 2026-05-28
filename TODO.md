@@ -405,7 +405,7 @@
 - [ ] STDLIB-TEXT-FN-077: `substringBeforeLast` 関数の実装
 - [x] STDLIB-TEXT-FN-078: `take` 関数の実装
 - [ ] STDLIB-TEXT-FN-079: `takeIf` 関数の実装
-- [ ] STDLIB-TEXT-FN-080: `takeLast` 関数の実装
+- [x] STDLIB-TEXT-FN-080: `takeLast` 関数の実装
 - [ ] STDLIB-TEXT-FN-081: `takeLastWhile` 関数の実装
 - [ ] STDLIB-TEXT-FN-082: `takeWhile` 関数の実装
 - [ ] STDLIB-TEXT-FN-083: `toBigDecimal` 関数の実装
