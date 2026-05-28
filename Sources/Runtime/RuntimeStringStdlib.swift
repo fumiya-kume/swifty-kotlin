@@ -1466,22 +1466,56 @@ public func kk_string_ifEmpty(
 }
 
 // MARK: - STDLIB-186: substringBefore / substringAfter / substringBeforeLast / substringAfterLast
+//
+// STDLIB-TEXT-FN-076: `String.substringBefore(delimiter, missingDelimiterValue)` is the
+// public Kotlin signature. We expose four runtime helpers per direction (before/after
+// and before-last/after-last), one for `String` delimiters and one for `Char`. Each
+// accepts an optional `missingDelimiterValueRaw` boxed string; passing `0` means the
+// Kotlin default (`this`) should be returned when no match is found.
 
 @_cdecl("kk_string_substringBefore")
-public func kk_string_substringBefore(_ strRaw: Int, _ delimiterRaw: Int) -> Int {
+public func kk_string_substringBefore(_ strRaw: Int, _ delimiterRaw: Int, _ missingDelimiterValueRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     let idx = kk_string_indexOf(strRaw, delimiterRaw)
     if idx < 0 {
-        return runtimeMakeStringRaw(runtimeStringFromRawOrPanic(strRaw, caller: #function))
+        return runtimeMakeStringRaw(runtimeSubstringMissingDelimiterValue(
+            sourceRaw: strRaw,
+            source: source,
+            missingDelimiterValueRaw: missingDelimiterValueRaw,
+            caller: #function
+        ))
     }
     let scalars = runtimeStringScalars(strRaw)
     return runtimeMakeStringRaw(runtimeStringFromScalars(scalars[0 ..< idx]))
+}
+
+@_cdecl("kk_string_substringBefore_char")
+public func kk_string_substringBefore_char(_ strRaw: Int, _ delimiterRaw: Int, _ missingDelimiterValueRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let delimiter = runtimeCharacterFromRaw(delimiterRaw)
+    let scalars = runtimeStringScalars(strRaw)
+    if let idx = scalars.firstIndex(where: { UnicodeScalar($0) == UnicodeScalar(delimiter) }) {
+        return runtimeMakeStringRaw(runtimeStringFromScalars(scalars[0 ..< idx]))
+    }
+    return runtimeMakeStringRaw(runtimeSubstringMissingDelimiterValue(
+        sourceRaw: strRaw,
+        source: source,
+        missingDelimiterValueRaw: missingDelimiterValueRaw,
+        caller: #function
+    ))
 }
 
 @_cdecl("kk_string_substringAfter")
-public func kk_string_substringAfter(_ strRaw: Int, _ delimiterRaw: Int) -> Int {
+public func kk_string_substringAfter(_ strRaw: Int, _ delimiterRaw: Int, _ missingDelimiterValueRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     let idx = kk_string_indexOf(strRaw, delimiterRaw)
     if idx < 0 {
-        return runtimeMakeStringRaw(runtimeStringFromRawOrPanic(strRaw, caller: #function))
+        return runtimeMakeStringRaw(runtimeSubstringMissingDelimiterValue(
+            sourceRaw: strRaw,
+            source: source,
+            missingDelimiterValueRaw: missingDelimiterValueRaw,
+            caller: #function
+        ))
     }
     let scalars = runtimeStringScalars(strRaw)
     let delimScalars = runtimeStringScalars(delimiterRaw)
@@ -1489,26 +1523,99 @@ public func kk_string_substringAfter(_ strRaw: Int, _ delimiterRaw: Int) -> Int 
     return runtimeMakeStringRaw(runtimeStringFromScalars(scalars[start...]))
 }
 
+@_cdecl("kk_string_substringAfter_char")
+public func kk_string_substringAfter_char(_ strRaw: Int, _ delimiterRaw: Int, _ missingDelimiterValueRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let delimiter = runtimeCharacterFromRaw(delimiterRaw)
+    let scalars = runtimeStringScalars(strRaw)
+    if let idx = scalars.firstIndex(where: { UnicodeScalar($0) == UnicodeScalar(delimiter) }) {
+        return runtimeMakeStringRaw(runtimeStringFromScalars(scalars[(idx + 1)...]))
+    }
+    return runtimeMakeStringRaw(runtimeSubstringMissingDelimiterValue(
+        sourceRaw: strRaw,
+        source: source,
+        missingDelimiterValueRaw: missingDelimiterValueRaw,
+        caller: #function
+    ))
+}
+
 @_cdecl("kk_string_substringBeforeLast")
-public func kk_string_substringBeforeLast(_ strRaw: Int, _ delimiterRaw: Int) -> Int {
+public func kk_string_substringBeforeLast(_ strRaw: Int, _ delimiterRaw: Int, _ missingDelimiterValueRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     let idx = kk_string_lastIndexOf(strRaw, delimiterRaw)
     if idx < 0 {
-        return runtimeMakeStringRaw(runtimeStringFromRawOrPanic(strRaw, caller: #function))
+        return runtimeMakeStringRaw(runtimeSubstringMissingDelimiterValue(
+            sourceRaw: strRaw,
+            source: source,
+            missingDelimiterValueRaw: missingDelimiterValueRaw,
+            caller: #function
+        ))
     }
     let scalars = runtimeStringScalars(strRaw)
     return runtimeMakeStringRaw(runtimeStringFromScalars(scalars[0 ..< idx]))
 }
 
+@_cdecl("kk_string_substringBeforeLast_char")
+public func kk_string_substringBeforeLast_char(_ strRaw: Int, _ delimiterRaw: Int, _ missingDelimiterValueRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let delimiter = runtimeCharacterFromRaw(delimiterRaw)
+    let scalars = runtimeStringScalars(strRaw)
+    if let idx = scalars.lastIndex(where: { UnicodeScalar($0) == UnicodeScalar(delimiter) }) {
+        return runtimeMakeStringRaw(runtimeStringFromScalars(scalars[0 ..< idx]))
+    }
+    return runtimeMakeStringRaw(runtimeSubstringMissingDelimiterValue(
+        sourceRaw: strRaw,
+        source: source,
+        missingDelimiterValueRaw: missingDelimiterValueRaw,
+        caller: #function
+    ))
+}
+
 @_cdecl("kk_string_substringAfterLast")
-public func kk_string_substringAfterLast(_ strRaw: Int, _ delimiterRaw: Int) -> Int {
+public func kk_string_substringAfterLast(_ strRaw: Int, _ delimiterRaw: Int, _ missingDelimiterValueRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     let idx = kk_string_lastIndexOf(strRaw, delimiterRaw)
     if idx < 0 {
-        return runtimeMakeStringRaw(runtimeStringFromRawOrPanic(strRaw, caller: #function))
+        return runtimeMakeStringRaw(runtimeSubstringMissingDelimiterValue(
+            sourceRaw: strRaw,
+            source: source,
+            missingDelimiterValueRaw: missingDelimiterValueRaw,
+            caller: #function
+        ))
     }
     let scalars = runtimeStringScalars(strRaw)
     let delimScalars = runtimeStringScalars(delimiterRaw)
     let start = idx + delimScalars.count
     return runtimeMakeStringRaw(runtimeStringFromScalars(scalars[start...]))
+}
+
+@_cdecl("kk_string_substringAfterLast_char")
+public func kk_string_substringAfterLast_char(_ strRaw: Int, _ delimiterRaw: Int, _ missingDelimiterValueRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let delimiter = runtimeCharacterFromRaw(delimiterRaw)
+    let scalars = runtimeStringScalars(strRaw)
+    if let idx = scalars.lastIndex(where: { UnicodeScalar($0) == UnicodeScalar(delimiter) }) {
+        return runtimeMakeStringRaw(runtimeStringFromScalars(scalars[(idx + 1)...]))
+    }
+    return runtimeMakeStringRaw(runtimeSubstringMissingDelimiterValue(
+        sourceRaw: strRaw,
+        source: source,
+        missingDelimiterValueRaw: missingDelimiterValueRaw,
+        caller: #function
+    ))
+}
+
+@inline(__always)
+private func runtimeSubstringMissingDelimiterValue(
+    sourceRaw: Int,
+    source: String,
+    missingDelimiterValueRaw: Int,
+    caller: StaticString
+) -> String {
+    if missingDelimiterValueRaw == 0 || missingDelimiterValueRaw == sourceRaw {
+        return source
+    }
+    return runtimeStringFromRawOrPanic(missingDelimiterValueRaw, caller: caller)
 }
 
 @_cdecl("kk_string_replaceAfter")

@@ -401,7 +401,7 @@
 - [x] STDLIB-TEXT-FN-073: `substring` 関数の実装
 - [ ] STDLIB-TEXT-FN-074: `substringAfter` 関数の実装
 - [ ] STDLIB-TEXT-FN-075: `substringAfterLast` 関数の実装
-- [ ] STDLIB-TEXT-FN-076: `substringBefore` 関数の実装
+- [x] STDLIB-TEXT-FN-076: `substringBefore` 関数の実装
 - [ ] STDLIB-TEXT-FN-077: `substringBeforeLast` 関数の実装
 - [ ] STDLIB-TEXT-FN-078: `take` 関数の実装
 - [ ] STDLIB-TEXT-FN-079: `takeIf` 関数の実装

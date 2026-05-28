@@ -425,6 +425,30 @@ public extension RuntimeABISpec {
 
     static let stringBridgeFunctions: [RuntimeABIFunctionSpec] = [
         bridgeSpec("kk_string_singleOrNull", section: "String", params: ["strRaw"]),
-        bridgeSpec("kk_string_substringAfter", section: "String", params: ["strRaw", "delimiterRaw"]),
+        bridgeSpec(
+            "kk_string_substringAfter",
+            section: "String",
+            params: ["strRaw", "delimiterRaw", "missingDelimiterValueRaw"]
+        ),
+        bridgeSpec(
+            "kk_string_substringAfter_char",
+            section: "String",
+            params: ["strRaw", "delimiterRaw", "missingDelimiterValueRaw"]
+        ),
+        bridgeSpec(
+            "kk_string_substringBefore_char",
+            section: "String",
+            params: ["strRaw", "delimiterRaw", "missingDelimiterValueRaw"]
+        ),
+        bridgeSpec(
+            "kk_string_substringBeforeLast_char",
+            section: "String",
+            params: ["strRaw", "delimiterRaw", "missingDelimiterValueRaw"]
+        ),
+        bridgeSpec(
+            "kk_string_substringAfterLast_char",
+            section: "String",
+            params: ["strRaw", "delimiterRaw", "missingDelimiterValueRaw"]
+        ),
     ]
 }

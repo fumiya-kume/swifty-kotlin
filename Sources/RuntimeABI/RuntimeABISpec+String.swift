@@ -1671,12 +1671,13 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
-        // STDLIB-186
+        // STDLIB-186 / STDLIB-TEXT-FN-076: String.substringBefore(delimiter, missingDelimiterValue)
         RuntimeABIFunctionSpec(
             name: "kk_string_substringBefore",
             parameters: [
                 RuntimeABIParameter(name: "strRaw", type: .intptr),
                 RuntimeABIParameter(name: "delimiterRaw", type: .intptr),
+                RuntimeABIParameter(name: "missingDelimiterValueRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "String"
@@ -1884,20 +1885,24 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        // STDLIB-TEXT-FN-077: String.substringBeforeLast(delimiter, missingDelimiterValue)
         RuntimeABIFunctionSpec(
             name: "kk_string_substringBeforeLast",
             parameters: [
                 RuntimeABIParameter(name: "strRaw", type: .intptr),
                 RuntimeABIParameter(name: "delimiterRaw", type: .intptr),
+                RuntimeABIParameter(name: "missingDelimiterValueRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "String"
         ),
+        // STDLIB-TEXT-FN-075: String.substringAfterLast(delimiter, missingDelimiterValue)
         RuntimeABIFunctionSpec(
             name: "kk_string_substringAfterLast",
             parameters: [
                 RuntimeABIParameter(name: "strRaw", type: .intptr),
                 RuntimeABIParameter(name: "delimiterRaw", type: .intptr),
+                RuntimeABIParameter(name: "missingDelimiterValueRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "String"
