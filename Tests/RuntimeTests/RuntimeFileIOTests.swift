@@ -102,6 +102,85 @@ final class RuntimeFileIOTests: IsolatedRuntimeXCTestCase {
         }
     }
 
+    // MARK: - STDLIB-IO-FN-038: File.toRelativeString(base: File): String
+
+    func testToRelativeStringReturnsDescendantPath() {
+        let fileRaw = runtimeTestFileHandle("/a/b/c")
+        let baseRaw = runtimeTestFileHandle("/a/b")
+        var thrown = 0
+        let resultRaw = kk_file_toRelativeString(fileRaw, baseRaw, &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(readString(resultRaw), "c")
+    }
+
+    func testToRelativeStringReturnsAscendantPath() {
+        let fileRaw = runtimeTestFileHandle("/a/b")
+        let baseRaw = runtimeTestFileHandle("/a/b/c/d")
+        var thrown = 0
+        let resultRaw = kk_file_toRelativeString(fileRaw, baseRaw, &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(readString(resultRaw), "../..")
+    }
+
+    func testToRelativeStringReturnsSiblingPath() {
+        let fileRaw = runtimeTestFileHandle("/a/x")
+        let baseRaw = runtimeTestFileHandle("/a/b/c")
+        var thrown = 0
+        let resultRaw = kk_file_toRelativeString(fileRaw, baseRaw, &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(readString(resultRaw), "../../x")
+    }
+
+    func testToRelativeStringReturnsEmptyForEqualPaths() {
+        let fileRaw = runtimeTestFileHandle("/a/b")
+        let baseRaw = runtimeTestFileHandle("/a/b")
+        var thrown = 0
+        let resultRaw = kk_file_toRelativeString(fileRaw, baseRaw, &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(readString(resultRaw), "")
+    }
+
+    func testToRelativeStringNormalisesTrailingAndDoubleSeparators() {
+        let fileRaw = runtimeTestFileHandle("/a//b/c/")
+        let baseRaw = runtimeTestFileHandle("/a/b/")
+        var thrown = 0
+        let resultRaw = kk_file_toRelativeString(fileRaw, baseRaw, &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(readString(resultRaw), "c")
+    }
+
+    func testToRelativeStringWorksForRelativePaths() {
+        let fileRaw = runtimeTestFileHandle("a/b/c")
+        let baseRaw = runtimeTestFileHandle("a/b")
+        var thrown = 0
+        let resultRaw = kk_file_toRelativeString(fileRaw, baseRaw, &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(readString(resultRaw), "c")
+    }
+
+    func testToRelativeStringThrowsForMismatchedRoots() {
+        let fileRaw = runtimeTestFileHandle("/a/b")
+        let baseRaw = runtimeTestFileHandle("a/b")
+        var thrown = 0
+        _ = kk_file_toRelativeString(fileRaw, baseRaw, &thrown)
+
+        XCTAssertNotEqual(thrown, 0, "Different roots should surface a thrown exception")
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: thrown),
+              let box = tryCast(ptr, to: RuntimeThrowableBox.self) else {
+            XCTFail("Expected a throwable allocated for mismatched roots"); return
+        }
+        XCTAssertTrue(
+            box is RuntimeIllegalArgumentExceptionBox,
+            "Mismatched roots must surface IllegalArgumentException, got \(box.exceptionFQName)"
+        )
+    }
+
     private func makeTempFile(contents: String) throws -> URL {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try contents.write(to: url, atomically: true, encoding: .utf8)

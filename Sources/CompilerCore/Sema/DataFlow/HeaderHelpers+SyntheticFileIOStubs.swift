@@ -315,6 +315,24 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // MARK: - STDLIB-IO-FN-038: File.toRelativeString(base: File): String
+        //
+        // Produces the relative path string from `base` to `this`, mirroring the
+        // semantics of `kotlin.io.File.toRelativeString`. The synthetic stub
+        // binds to the runtime helper `kk_file_toRelativeString`, which is
+        // responsible for raising `IllegalArgumentException` via the standard
+        // `outThrown` channel when the two paths cannot share a common root.
+        registerFileMemberFunction(
+            named: "toRelativeString",
+            externalLinkName: "kk_file_toRelativeString",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [("base", fileType)],
+            returnType: types.stringType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // MARK: - File read/write methods (STDLIB-320)
 
         registerFileMemberFunction(

@@ -465,6 +465,79 @@ public func kk_file_invariantSeparatorsPath(_ fileRaw: Int) -> Int {
     return fileMakeStringRaw(file.path.replacingOccurrences(of: "\\", with: "/"))
 }
 
+// MARK: - STDLIB-IO-FN-038: File.toRelativeString(base: File): String
+//
+// Computes the relative path from `base` to `this`, mirroring Kotlin's
+// `kotlin.io.File.toRelativeString` contract. The implementation models the
+// java.io.File / Kotlin FilePathComponents semantics:
+//   - Both paths are split into an optional root ("/" on Unix or the empty
+//     string for relative paths) plus a sequence of non-empty path segments.
+//   - If the two roots do not match, the two paths cannot be expressed as a
+//     relative walk and we surface an `IllegalArgumentException` via the
+//     standard `outThrown` channel.
+//   - Otherwise we drop the longest common segment prefix and assemble the
+//     result by emitting one `..` for each remaining `base` segment followed
+//     by the remaining `this` segments. Equal paths therefore return the
+//     empty string.
+// The separator used for the result is `/`, matching the Unix-style runtime
+// File representation that the rest of `RuntimeFileIO.swift` already assumes.
+private func filePathRootAndSegments(_ path: String) -> (root: String, segments: [String]) {
+    if path.isEmpty {
+        return ("", [])
+    }
+    let isAbsolute = path.hasPrefix("/")
+    let root = isAbsolute ? "/" : ""
+    let trimmed = isAbsolute ? String(path.dropFirst()) : path
+    // Split on "/" and drop empty pieces so that consecutive separators ("a//b")
+    // or a trailing slash ("a/b/") are normalised away, matching the way the
+    // Kotlin reference implementation parses path components.
+    let segments = trimmed.split(separator: "/", omittingEmptySubsequences: true).map(String.init)
+    return (root, segments)
+}
+
+@_cdecl("kk_file_toRelativeString")
+public func kk_file_toRelativeString(_ fileRaw: Int, _ baseRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_toRelativeString received invalid File handle")
+    }
+    guard let base = runtimeFileBox(from: baseRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_toRelativeString received invalid base File handle")
+    }
+
+    let target = filePathRootAndSegments(file.path)
+    let baseComponents = filePathRootAndSegments(base.path)
+
+    if target.root != baseComponents.root {
+        outThrown?.pointee = runtimeAllocateIllegalArgumentException(
+            message: "this and base files have different roots: \(file.path) and \(base.path)."
+        )
+        return fileMakeStringRaw("")
+    }
+
+    // Find the length of the longest common segment prefix.
+    var commonCount = 0
+    let maxCommon = min(target.segments.count, baseComponents.segments.count)
+    while commonCount < maxCommon && target.segments[commonCount] == baseComponents.segments[commonCount] {
+        commonCount += 1
+    }
+
+    var pieces: [String] = []
+    // Climb out of every remaining base segment beyond the common prefix.
+    let baseExtraCount = baseComponents.segments.count - commonCount
+    if baseExtraCount > 0 {
+        pieces.append(contentsOf: Array(repeating: "..", count: baseExtraCount))
+    }
+    // Then append the residual segments that lead from the common prefix to
+    // the target path.
+    if commonCount < target.segments.count {
+        pieces.append(contentsOf: target.segments[commonCount...])
+    }
+
+    let result = pieces.joined(separator: "/")
+    return fileMakeStringRaw(result)
+}
+
 @_cdecl("kk_file_length")
 public func kk_file_length(_ fileRaw: Int) -> Int {
     guard let file = runtimeFileBox(from: fileRaw) else {
