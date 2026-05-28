@@ -658,7 +658,7 @@
 - [x] STDLIB-CINTEROP-FN-023: `ShortArray.toCValues()` を追加する
 - [x] STDLIB-CINTEROP-FN-024: `UByteArray.toCValues()` を追加する
 - [ ] STDLIB-CINTEROP-FN-025: `UIntArray.toCValues()` を追加する
-- [ ] STDLIB-CINTEROP-FN-026: `ULongArray.toCValues()` を追加する
+- [x] STDLIB-CINTEROP-FN-026: `ULongArray.toCValues()` を追加する
 - [x] STDLIB-CINTEROP-FN-027: `UShortArray.toCValues()` を追加する
 - [x] STDLIB-CINTEROP-FN-028: `List<CPointer<T>?>.toCValues()` を追加する
 - [ ] STDLIB-CINTEROP-FN-029: `ByteArray.toKString()` を追加する
