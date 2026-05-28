@@ -580,6 +580,141 @@ public func kk_file_walk(_ fileRaw: Int) -> Int {
     return registerRuntimeObject(listBox)
 }
 
+// MARK: - STDLIB-IO-FN-015: File.copyTo(target, overwrite, bufferSize)
+//
+// Kotlin signature:
+//   public fun File.copyTo(
+//       target: File,
+//       overwrite: Boolean = false,
+//       bufferSize: Int = DEFAULT_BUFFER_SIZE
+//   ): File
+//
+// Behaviour mirrored from `kotlin.io.FileTreeWalk`:
+// - Throws `NoSuchFileException` if `this` does not exist.
+// - If `this` is a directory: creates the target directory (does NOT copy
+//   contents recursively — that is `copyRecursively`).
+// - If target exists and `overwrite == false`: throws
+//   `FileAlreadyExistsException`.
+// - If target exists and is a non-empty directory while `overwrite == true`:
+//   throws `FileAlreadyExistsException` (matches Kotlin's behaviour).
+// - Creates target's parent directories if missing.
+// - Copies via a buffered loop sized by `bufferSize` so the I/O behaviour
+//   matches Kotlin's implementation.
+// - Returns the target File handle.
+@_cdecl("kk_file_copyTo")
+public func kk_file_copyTo(
+    _ fileRaw: Int,
+    _ targetRaw: Int,
+    _ overwriteRaw: Int,
+    _ bufferSizeRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let source = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_copyTo received invalid source File handle")
+    }
+    guard let target = runtimeFileBox(from: targetRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_copyTo received invalid target File handle")
+    }
+    let overwrite = kk_unbox_bool(overwriteRaw) != 0
+    let bufferSize = max(1, kk_unbox_int(bufferSizeRaw))
+
+    let fm = FileManager.default
+    var sourceIsDir: ObjCBool = false
+    guard fm.fileExists(atPath: source.path, isDirectory: &sourceIsDir) else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "NoSuchFileException: \(source.path) (The source file doesn't exist.)"
+        )
+        return targetRaw
+    }
+
+    var targetIsDir: ObjCBool = false
+    let targetExists = fm.fileExists(atPath: target.path, isDirectory: &targetIsDir)
+    if targetExists {
+        if !overwrite {
+            outThrown?.pointee = runtimeAllocateThrowable(
+                message: "FileAlreadyExistsException: \(target.path) (The destination file already exists.)"
+            )
+            return targetRaw
+        }
+        if targetIsDir.boolValue,
+           let contents = try? fm.contentsOfDirectory(atPath: target.path),
+           !contents.isEmpty {
+            outThrown?.pointee = runtimeAllocateThrowable(
+                message: "FileAlreadyExistsException: \(target.path) (The destination file already exists.)"
+            )
+            return targetRaw
+        }
+        do {
+            try fm.removeItem(atPath: target.path)
+        } catch {
+            outThrown?.pointee = runtimeAllocateThrowable(
+                message: "IOException: \(error.localizedDescription)"
+            )
+            return targetRaw
+        }
+    }
+
+    // Ensure the target's parent directory exists.
+    let targetParent = (target.path as NSString).deletingLastPathComponent
+    if !targetParent.isEmpty,
+       !fm.fileExists(atPath: targetParent) {
+        do {
+            try fm.createDirectory(
+                atPath: targetParent,
+                withIntermediateDirectories: true
+            )
+        } catch {
+            outThrown?.pointee = runtimeAllocateThrowable(
+                message: "IOException: \(error.localizedDescription)"
+            )
+            return targetRaw
+        }
+    }
+
+    if sourceIsDir.boolValue {
+        // Mirror Kotlin: copyTo on a directory creates the target directory
+        // without copying contents.
+        do {
+            try fm.createDirectory(
+                atPath: target.path,
+                withIntermediateDirectories: false
+            )
+        } catch {
+            outThrown?.pointee = runtimeAllocateThrowable(
+                message: "IOException: \(error.localizedDescription)"
+            )
+        }
+        return targetRaw
+    }
+
+    do {
+        let sourceURL = URL(fileURLWithPath: source.path)
+        let readHandle = try FileHandle(forReadingFrom: sourceURL)
+        defer { try? readHandle.close() }
+
+        guard fm.createFile(atPath: target.path, contents: nil) else {
+            outThrown?.pointee = runtimeAllocateThrowable(
+                message: "IOException: Failed to create target file \(target.path)"
+            )
+            return targetRaw
+        }
+        let writeHandle = try FileHandle(forWritingTo: URL(fileURLWithPath: target.path))
+        defer { try? writeHandle.close() }
+
+        while true {
+            let chunk = readHandle.readData(ofLength: bufferSize)
+            if chunk.isEmpty { break }
+            writeHandle.write(chunk)
+        }
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IOException: \(error.localizedDescription)"
+        )
+    }
+    return targetRaw
+}
+
 // MARK: - STDLIB-567: File.bufferedReader()
 
 private func runtimeBufferedReaderBox(from raw: Int) -> RuntimeBufferedReaderBox? {

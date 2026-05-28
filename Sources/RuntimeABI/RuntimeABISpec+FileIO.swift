@@ -151,6 +151,19 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "FileIO"
         ),
+        // STDLIB-IO-FN-015: File.copyTo(target, overwrite, bufferSize)
+        RuntimeABIFunctionSpec(
+            name: "kk_file_copyTo",
+            parameters: [
+                RuntimeABIParameter(name: "fileRaw", type: .intptr),
+                RuntimeABIParameter(name: "targetRaw", type: .intptr),
+                RuntimeABIParameter(name: "overwriteRaw", type: .intptr),
+                RuntimeABIParameter(name: "bufferSizeRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
         // STDLIB-567: File.bufferedReader()
         RuntimeABIFunctionSpec(
             name: "kk_file_bufferedReader",

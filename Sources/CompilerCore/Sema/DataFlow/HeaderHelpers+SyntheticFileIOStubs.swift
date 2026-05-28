@@ -1144,6 +1144,30 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // MARK: - File.copyTo(target, overwrite, bufferSize) (STDLIB-IO-FN-015)
+        //
+        // Kotlin signature: `public fun File.copyTo(
+        //     target: File,
+        //     overwrite: Boolean = false,
+        //     bufferSize: Int = DEFAULT_BUFFER_SIZE
+        // ): File` declared in the `kotlin.io` package.
+        registerKotlinIOExtensionFunction(
+            named: "copyTo",
+            packageFQName: kotlinIOPkg,
+            receiverType: fileType,
+            parameters: [
+                ("target", fileType),
+                ("overwrite", types.booleanType),
+                ("bufferSize", types.intType),
+            ],
+            returnType: fileType,
+            externalLinkName: "kk_file_copyTo",
+            valueParameterHasDefaultValues: [false, true, true],
+            valueParameterIsVararg: [false, false, false],
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     // MARK: - Private Helpers
