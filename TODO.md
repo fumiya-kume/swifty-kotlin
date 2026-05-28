@@ -131,7 +131,7 @@
 
 #### kotlin.io.encoding 関数の実装
 - [ ] STDLIB-IO-ENC-FN-001: `decodingWith` 関数の実装
-- [ ] STDLIB-IO-ENC-FN-002: `encodingWith` 関数の実装
+- [x] STDLIB-IO-ENC-FN-002: `encodingWith` 関数の実装
 
 #### kotlin.io.path プロパティの実装
 - [ ] STDLIB-IO-PATH-PROP-001: `extension` 拡張プロパティの実装

@@ -313,6 +313,98 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
         }
+
+        // ── OutputStream.encodingWith(base64: Base64): OutputStream (STDLIB-IO-ENC-FN-002) ──
+        registerBase64OutputStreamEncodingWithExtension(
+            ioEncodingPkg: ioEncodingPkg,
+            base64Type: base64Type,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+    }
+
+    /// Registers `kotlin.io.encoding.encodingWith(base64: Base64): OutputStream` as a
+    /// synthetic extension function on `java.io.OutputStream` (STDLIB-IO-ENC-FN-002).
+    private func registerBase64OutputStreamEncodingWithExtension(
+        ioEncodingPkg: [InternedString],
+        base64Type: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        // ── Ensure java.io.OutputStream is visible to Sema ─────────────────────
+        let javaName = interner.intern("java")
+        let ioName = interner.intern("io")
+        let javaFQ: [InternedString] = [javaName]
+        if symbols.lookup(fqName: javaFQ) == nil {
+            _ = symbols.define(
+                kind: .package, name: javaName, fqName: javaFQ,
+                declSite: nil, visibility: .public, flags: [.synthetic]
+            )
+        }
+        let javaIOFQ: [InternedString] = [javaName, ioName]
+        if symbols.lookup(fqName: javaIOFQ) == nil {
+            _ = symbols.define(
+                kind: .package, name: ioName, fqName: javaIOFQ,
+                declSite: nil, visibility: .public, flags: [.synthetic]
+            )
+        }
+        let outputStreamSymbol = ensureClassSymbol(
+            named: "OutputStream",
+            in: javaIOFQ,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaIOPkgSym = symbols.lookup(fqName: javaIOFQ) {
+            symbols.setParentSymbol(javaIOPkgSym, for: outputStreamSymbol)
+        }
+        let outputStreamType = types.make(.classType(ClassType(
+            classSymbol: outputStreamSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        // ── Register kotlin.io.encoding.encodingWith ────────────────────────────
+        let funcName = interner.intern("encodingWith")
+        let funcFQName = ioEncodingPkg + [funcName]
+
+        // Avoid duplicates
+        if symbols.lookupAll(fqName: funcFQName).contains(where: { symbolID in
+            guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+            return sig.receiverType == outputStreamType
+                && sig.parameterTypes == [base64Type]
+        }) { return }
+
+        let funcSym = symbols.define(
+            kind: .function, name: funcName, fqName: funcFQName,
+            declSite: nil, visibility: .public, flags: [.synthetic]
+        )
+        if let pkgSym = symbols.lookup(fqName: ioEncodingPkg) {
+            symbols.setParentSymbol(pkgSym, for: funcSym)
+        }
+        symbols.setExternalLinkName("kk_output_stream_encodingWith", for: funcSym)
+
+        let paramName = interner.intern("base64")
+        let paramFQName = funcFQName + [paramName]
+        let paramSym = symbols.define(
+            kind: .valueParameter, name: paramName, fqName: paramFQName,
+            declSite: nil, visibility: .private, flags: [.synthetic]
+        )
+        symbols.setParentSymbol(funcSym, for: paramSym)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: outputStreamType,
+                parameterTypes: [base64Type],
+                returnType: outputStreamType,
+                isSuspend: false,
+                valueParameterSymbols: [paramSym],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false]
+            ),
+            for: funcSym
+        )
     }
 
     // MARK: - Package helpers

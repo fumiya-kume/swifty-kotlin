@@ -1322,7 +1322,10 @@ public func kk_output_stream_bufferedWriter(_ streamRaw: Int, _ charsetRaw: Int)
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_output_stream_bufferedWriter received invalid OutputStream handle")
     }
     let encoding = outputStreamEncoding(for: charsetRaw)
-    return registerRuntimeObject(stream.makeBufferedWriter(encoding: encoding))
+    guard let writer = stream.makeBufferedWriter(encoding: encoding) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_output_stream_bufferedWriter cannot wrap non-file-handle OutputStream")
+    }
+    return registerRuntimeObject(writer)
 }
 
 /// Charset-less default overload — `kotlin.io.bufferedWriter()` with no

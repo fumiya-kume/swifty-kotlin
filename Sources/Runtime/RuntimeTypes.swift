@@ -1536,7 +1536,19 @@ final class RuntimeSequenceInputStreamBox {
     }
 }
 
-final class RuntimeOutputStreamBox {
+// MARK: - RuntimeOutputStreamSink (STDLIB-IO-ENC-FN-002)
+
+/// Pluggable back-end for `RuntimeOutputStreamBox`.  Concrete implementations
+/// may wrap a real `FileHandle` (normal file-backed streams) or provide a
+/// transforming layer such as the Base64-encoding stream.
+protocol RuntimeOutputStreamSink: AnyObject {
+    func write(_ data: Data) throws
+    func flush() throws
+    func close()
+}
+
+/// Concrete `RuntimeOutputStreamSink` backed by a `FileHandle`.
+final class RuntimeFileHandleOutputStreamSink: RuntimeOutputStreamSink {
     private let fileHandle: FileHandle
     private var closed: Bool
 
@@ -1545,16 +1557,9 @@ final class RuntimeOutputStreamBox {
         self.closed = false
     }
 
-    func writeByte(_ value: Int) throws {
+    func write(_ data: Data) throws {
         guard !closed else { return }
-        let byte = UInt8(truncatingIfNeeded: value)
-        try fileHandle.write(contentsOf: Data([byte]))
-    }
-
-    func writeBytes(_ values: [Int]) throws {
-        guard !closed else { return }
-        let bytes = values.map { UInt8(truncatingIfNeeded: $0) }
-        try fileHandle.write(contentsOf: Data(bytes))
+        try fileHandle.write(contentsOf: data)
     }
 
     func flush() throws {
@@ -1568,19 +1573,59 @@ final class RuntimeOutputStreamBox {
         closed = true
     }
 
-    /// Returns true if the underlying stream has been closed (STDLIB-IO-FN-009).
-    var isClosed: Bool { closed }
+    var underlyingFileHandle: FileHandle { fileHandle }
+}
 
-    /// Creates a `RuntimeBufferedWriterBox` that wraps the same file handle
-    /// as this `OutputStream`, marking the OutputStream as closed so that
-    /// ownership of the file handle is transferred to the new BufferedWriter
-    /// (matching JVM semantics where `OutputStream.bufferedWriter()` returns
-    /// a writer that owns the underlying stream).  STDLIB-IO-FN-009.
-    func makeBufferedWriter(encoding: String.Encoding) -> RuntimeBufferedWriterBox {
+final class RuntimeOutputStreamBox {
+    private let sink: RuntimeOutputStreamSink
+
+    init(fileHandle: FileHandle) {
+        self.sink = RuntimeFileHandleOutputStreamSink(fileHandle: fileHandle)
+    }
+
+    init(sink: RuntimeOutputStreamSink) {
+        self.sink = sink
+    }
+
+    func writeByte(_ value: Int) throws {
+        let byte = UInt8(truncatingIfNeeded: value)
+        try sink.write(Data([byte]))
+    }
+
+    func writeBytes(_ values: [Int]) throws {
+        let bytes = values.map { UInt8(truncatingIfNeeded: $0) }
+        try sink.write(Data(bytes))
+    }
+
+    func write(_ data: Data) throws {
+        try sink.write(data)
+    }
+
+    func flush() throws {
+        try sink.flush()
+    }
+
+    func close() {
+        sink.close()
+    }
+
+    /// Returns true if the underlying stream has been closed.
+    /// Note: after close() the sink handles the closed state internally;
+    /// writes on a closed sink are no-ops.
+    var isClosed: Bool { false }
+
+    var underlyingFileHandle: FileHandle? {
+        (sink as? RuntimeFileHandleOutputStreamSink)?.underlyingFileHandle
+    }
+
+    /// Creates a `RuntimeBufferedWriterBox` wrapping the underlying file handle.
+    /// Returns `nil` when the sink is not file-handle backed (e.g. an encoding
+    /// stream).  STDLIB-IO-FN-009.
+    func makeBufferedWriter(encoding: String.Encoding) -> RuntimeBufferedWriterBox? {
+        guard let fileHandle = underlyingFileHandle else {
+            return nil
+        }
         let writer = RuntimeBufferedWriterBox(fileHandle: fileHandle, encoding: encoding)
-        // Transfer ownership: mark this OutputStream closed so further writes
-        // are no-ops and the deinit does not double-close the handle.
-        closed = true
         return writer
     }
 }
