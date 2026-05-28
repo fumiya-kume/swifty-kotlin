@@ -20,6 +20,8 @@
 /// - `Path.appendText(text: CharSequence, charset)` extension function
 /// - `Path.copyTo(target: Path, options)` extension function
 /// - `Path.copyTo(target: Path, overwrite: Boolean)` extension function
+/// - `Path.extension: String` extension property
+/// - `Path.nameWithoutExtension: String` extension property
 /// - `Path.invariantSeparatorsPath: String` extension property
 /// - `Path.absolute(): Path` extension function
 /// - `Path.relativeToOrSelf(base: Path): Path` extension function
@@ -740,6 +742,26 @@ extension DataFlowSemaPhase {
             receiverType: pathType,
             returnType: types.stringType,
             externalLinkName: "kk_path_name",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionProperty(
+            named: "extension",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            returnType: types.stringType,
+            externalLinkName: "kk_path_extension",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerPathExtensionProperty(
+            named: "nameWithoutExtension",
+            packageFQName: kotlinIOPathPkg,
+            receiverType: pathType,
+            returnType: types.stringType,
+            externalLinkName: "kk_path_nameWithoutExtension",
             symbols: symbols,
             interner: interner
         )

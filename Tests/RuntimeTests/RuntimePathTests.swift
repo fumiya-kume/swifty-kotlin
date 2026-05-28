@@ -69,6 +69,25 @@ final class RuntimePathTests: XCTestCase {
         )
     }
 
+    func testPathExtensionReturnsLastComponentExtension() {
+        XCTAssertEqual(
+            extractStringRaw(kk_path_extension(makePathRaw("/tmp/archive.tar.gz"))),
+            "gz"
+        )
+        XCTAssertEqual(
+            extractStringRaw(kk_path_extension(makePathRaw("/tmp/README"))),
+            ""
+        )
+        XCTAssertEqual(
+            extractStringRaw(kk_path_extension(makePathRaw("/tmp/.gitignore"))),
+            "gitignore"
+        )
+        XCTAssertEqual(
+            extractStringRaw(kk_path_extension(makePathRaw("/tmp/file.kt"))),
+            "kt"
+        )
+    }
+
     func testPathFactoryWriteTextAndAppendTextRoundTrip() throws {
         let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: fileURL) }
