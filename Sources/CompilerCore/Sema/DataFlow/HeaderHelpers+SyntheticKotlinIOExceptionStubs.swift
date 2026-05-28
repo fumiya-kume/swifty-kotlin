@@ -5,12 +5,16 @@ import Foundation
 /// Covers:
 /// - STDLIB-IO-TYPE-001: `kotlin.io.AccessDeniedException` class
 /// - STDLIB-IO-TYPE-002: `kotlin.io.FileAlreadyExistsException` class
+/// - STDLIB-IO-TYPE-003: `kotlin.io.FileSystemException` class
 ///
 /// The exception classes are registered as subclasses of `kotlin.Exception`
 /// so that `try/catch` and `throw` sites can be type-checked. Constructors
 /// mirror the Kotlin stdlib shape `(file: File, other: File? = null, reason: String? = null)`
 /// and route through the shared `kk_throwable_new` runtime entry point so no
 /// dedicated runtime hook is required.
+///
+/// `FileSystemException` is the abstract base class for filesystem-related
+/// exceptions in `kotlin.io`. `FileAlreadyExistsException` inherits from it.
 ///
 /// This stub must run after `registerSyntheticFileIOStubs` (which defines
 /// `java.io.File`) and after `registerSyntheticExceptionStubs` (which defines
@@ -53,6 +57,47 @@ extension DataFlowSemaPhase {
         )))
         let nullableStringType = types.makeNullable(types.stringType)
 
+        // MARK: - STDLIB-IO-TYPE-003: FileSystemException
+
+        let fileSystemExceptionSymbol = ensureClassSymbol(
+            named: "FileSystemException",
+            in: kotlinIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinIOPkgSymbol {
+            symbols.setParentSymbol(kotlinIOPkgSymbol, for: fileSystemExceptionSymbol)
+        }
+
+        // FileSystemException extends Exception (we model IOException → Exception for simplicity).
+        symbols.setDirectSupertypes([exceptionSymbol], for: fileSystemExceptionSymbol)
+        types.setNominalDirectSupertypes([exceptionSymbol], for: fileSystemExceptionSymbol)
+
+        let fileSystemExceptionType = types.make(.classType(ClassType(
+            classSymbol: fileSystemExceptionSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(fileSystemExceptionType, for: fileSystemExceptionSymbol)
+
+        // Mirror the Kotlin stdlib constructor shape:
+        //   FileSystemException(file: File)
+        //   FileSystemException(file: File, other: File?)
+        //   FileSystemException(file: File, other: File?, reason: String?)
+        let fileSystemExceptionOverloads: [[(name: String, type: TypeID)]] = [
+            [("file", fileType)],
+            [("file", fileType), ("other", nullableFileType)],
+            [("file", fileType), ("other", nullableFileType), ("reason", nullableStringType)],
+        ]
+        for parameters in fileSystemExceptionOverloads {
+            registerSyntheticExceptionConstructor(
+                ownerSymbol: fileSystemExceptionSymbol,
+                ownerType: fileSystemExceptionType,
+                parameters: parameters,
+                externalLinkName: "kk_throwable_new",
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
         // STDLIB-IO-TYPE-001: AccessDeniedException
         // Inherits from Exception directly (FileSystemException is tracked separately
         // under STDLIB-IO-TYPE-003).
@@ -89,7 +134,9 @@ extension DataFlowSemaPhase {
             )
         }
 
-        // STDLIB-IO-TYPE-002: FileAlreadyExistsException
+        // MARK: - STDLIB-IO-TYPE-002: FileAlreadyExistsException
+
+
         let fileAlreadyExistsSymbol = ensureClassSymbol(
             named: "FileAlreadyExistsException",
             in: kotlinIOPkg,
@@ -100,11 +147,10 @@ extension DataFlowSemaPhase {
             symbols.setParentSymbol(kotlinIOPkgSymbol, for: fileAlreadyExistsSymbol)
         }
 
-        // Reuse the shared Exception → Throwable chain rather than minting a
-        // dedicated FileSystemException, which is tracked separately under
-        // STDLIB-IO-TYPE-003.
-        symbols.setDirectSupertypes([exceptionSymbol], for: fileAlreadyExistsSymbol)
-        types.setNominalDirectSupertypes([exceptionSymbol], for: fileAlreadyExistsSymbol)
+        // FileAlreadyExistsException extends FileSystemException (corrected from
+        // the placeholder Exception supertype now that FileSystemException exists).
+        symbols.setDirectSupertypes([fileSystemExceptionSymbol], for: fileAlreadyExistsSymbol)
+        types.setNominalDirectSupertypes([fileSystemExceptionSymbol], for: fileAlreadyExistsSymbol)
 
         let fileAlreadyExistsType = types.make(.classType(ClassType(
             classSymbol: fileAlreadyExistsSymbol, args: [], nullability: .nonNull

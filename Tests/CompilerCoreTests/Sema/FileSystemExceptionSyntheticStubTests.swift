@@ -1,11 +1,14 @@
 @testable import CompilerCore
 import XCTest
 
-/// STDLIB-IO-TYPE-002: Validates that `kotlin.io.FileAlreadyExistsException`
+/// STDLIB-IO-TYPE-003: Validates that `kotlin.io.FileSystemException`
 /// is registered as a synthetic class with the expected `Exception` supertype,
 /// File-based constructor overloads, and routes to the shared
 /// `kk_throwable_new` runtime entry point.
-final class FileAlreadyExistsExceptionSyntheticStubTests: XCTestCase {
+///
+/// Also verifies that `FileAlreadyExistsException` now inherits from
+/// `FileSystemException` rather than directly from `Exception`.
+final class FileSystemExceptionSyntheticStubTests: XCTestCase {
     private func makeSema(source: String = "fun noop() {}") throws -> (SemaModule, StringInterner) {
         var result: (SemaModule, StringInterner)?
         try withTemporaryFile(contents: source) { path in
@@ -16,18 +19,17 @@ final class FileAlreadyExistsExceptionSyntheticStubTests: XCTestCase {
         return try XCTUnwrap(result)
     }
 
-    func testFileAlreadyExistsExceptionSurfaceIsRegistered() throws {
+    func testFileSystemExceptionSurfaceIsRegistered() throws {
         let (sema, interner) = try makeSema()
 
-        let exceptionFQName = ["kotlin", "io", "FileAlreadyExistsException"].map { interner.intern($0) }
+        let exceptionFQName = ["kotlin", "io", "FileSystemException"].map { interner.intern($0) }
         let exceptionSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: exceptionFQName))
         XCTAssertEqual(sema.symbols.symbol(exceptionSymbol)?.kind, .class)
 
-        // Inherits from kotlin.io.FileSystemException (which in turn inherits from kotlin.Exception)
-        // so try/catch chains observe the full parent type chain.
-        let fileSystemFQName = ["kotlin", "io", "FileSystemException"].map { interner.intern($0) }
-        let fileSystemSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: fileSystemFQName))
-        XCTAssertTrue(sema.symbols.directSupertypes(for: exceptionSymbol).contains(fileSystemSymbol))
+        // Inherits from kotlin.Exception so try/catch chains observe the parent type.
+        let rootExceptionFQName = ["kotlin", "Exception"].map { interner.intern($0) }
+        let rootExceptionSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: rootExceptionFQName))
+        XCTAssertTrue(sema.symbols.directSupertypes(for: exceptionSymbol).contains(rootExceptionSymbol))
 
         // The synthetic class type round-trips through propertyType for downstream lookups.
         let exceptionType = sema.types.make(.classType(ClassType(
@@ -76,22 +78,50 @@ final class FileAlreadyExistsExceptionSyntheticStubTests: XCTestCase {
         }
     }
 
-    func testFileAlreadyExistsExceptionResolvesInSource() throws {
+    func testFileAlreadyExistsExceptionInheritsFromFileSystemException() throws {
+        let (sema, interner) = try makeSema()
+
+        let fileSystemFQName = ["kotlin", "io", "FileSystemException"].map { interner.intern($0) }
+        let fileSystemSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: fileSystemFQName))
+
+        let fileAlreadyExistsFQName = ["kotlin", "io", "FileAlreadyExistsException"].map { interner.intern($0) }
+        let fileAlreadyExistsSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: fileAlreadyExistsFQName))
+
+        // FileAlreadyExistsException must now inherit from FileSystemException.
+        XCTAssertTrue(
+            sema.symbols.directSupertypes(for: fileAlreadyExistsSymbol).contains(fileSystemSymbol),
+            "FileAlreadyExistsException should inherit directly from FileSystemException"
+        )
+    }
+
+    func testFileSystemExceptionResolvesInSource() throws {
+        _ = try makeSema(source: """
+        import java.io.File
+        import kotlin.io.FileSystemException
+
+        fun build(file: File): FileSystemException = FileSystemException(file)
+
+        fun buildWithOther(file: File, other: File?): FileSystemException =
+            FileSystemException(file, other)
+
+        fun buildWithReason(file: File, other: File?, reason: String?): FileSystemException =
+            FileSystemException(file, other, reason)
+
+        fun catchAsException(file: File): String =
+            try { throw FileSystemException(file) }
+            catch (e: Exception) { e.message ?: "caught" }
+        """)
+    }
+
+    func testFileAlreadyExistsExceptionCaughtAsFileSystemException() throws {
         _ = try makeSema(source: """
         import java.io.File
         import kotlin.io.FileAlreadyExistsException
+        import kotlin.io.FileSystemException
 
-        fun build(file: File): FileAlreadyExistsException = FileAlreadyExistsException(file)
-
-        fun buildWithOther(file: File, other: File?): FileAlreadyExistsException =
-            FileAlreadyExistsException(file, other)
-
-        fun buildWithReason(file: File, other: File?, reason: String?): FileAlreadyExistsException =
-            FileAlreadyExistsException(file, other, reason)
-
-        fun catchAsException(file: File): String =
+        fun catchAsFileSystemException(file: File): String =
             try { throw FileAlreadyExistsException(file) }
-            catch (e: Exception) { e.message ?: "caught" }
+            catch (e: FileSystemException) { e.message ?: "caught" }
         """)
     }
 }
