@@ -1692,6 +1692,41 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-TEXT-FN-044: CharSequence.random(): Char / random(Random): Char ---
+        // Returns a random character; throws NoSuchElementException if empty.
+
+        let kotlinRandomType = syntheticNominalType(
+            named: "Random",
+            in: [interner.intern("kotlin"), interner.intern("random")],
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        for randomReceiverType in [stringType, charSequenceType] {
+            registerSyntheticStringExtensionFunction(
+                named: "random",
+                externalLinkName: "kk_string_random",
+                receiverType: randomReceiverType,
+                parameters: [],
+                returnType: charType,
+                packageFQName: kotlinTextPkg,
+                symbols: symbols,
+                interner: interner
+            )
+
+            registerSyntheticStringExtensionFunction(
+                named: "random",
+                externalLinkName: "kk_string_random_random",
+                receiverType: randomReceiverType,
+                parameters: [("random", kotlinRandomType, false, false)],
+                returnType: charType,
+                packageFQName: kotlinTextPkg,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
         // --- STDLIB-140: String.getOrNull(Int): Char? ---
 
         registerSyntheticStringExtensionFunction(

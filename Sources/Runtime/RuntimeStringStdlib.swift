@@ -1432,6 +1432,32 @@ public func kk_string_getOrNull(_ strRaw: Int, _ index: Int) -> Int {
     return kk_box_char(Int(scalars[index].value))
 }
 
+// MARK: - STDLIB-TEXT-FN-044: CharSequence.random(): Char / random(Random): Char
+
+@_cdecl("kk_string_random")
+public func kk_string_random(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard !scalars.isEmpty else {
+        runtimeSetThrown(outThrown, message: "Char sequence is empty.")
+        return 0
+    }
+    let index = Int.random(in: 0 ..< scalars.count)
+    return kk_box_char(Int(scalars[index].value))
+}
+
+@_cdecl("kk_string_random_random")
+public func kk_string_random_random(_ strRaw: Int, _ randomRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard !scalars.isEmpty else {
+        runtimeSetThrown(outThrown, message: "Char sequence is empty.")
+        return 0
+    }
+    let index = kk_random_nextInt_until(randomRaw, scalars.count, nil)
+    return kk_box_char(Int(scalars[index].value))
+}
+
 // MARK: - STDLIB-187: isEmpty / isNotEmpty / isBlank / isNotBlank
 
 @_cdecl("kk_string_isEmpty")
