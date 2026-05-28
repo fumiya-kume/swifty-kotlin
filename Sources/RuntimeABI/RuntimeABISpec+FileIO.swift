@@ -393,6 +393,18 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "FileIO"
         ),
+        // STDLIB-IO-FN-013: InputStream.copyTo(out, bufferSize) -> Long
+        RuntimeABIFunctionSpec(
+            name: "kk_input_stream_copyTo",
+            parameters: [
+                RuntimeABIParameter(name: "streamRaw", type: .intptr),
+                RuntimeABIParameter(name: "outStreamRaw", type: .intptr),
+                RuntimeABIParameter(name: "bufferSizeRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_output_stream_write_byte",
             parameters: [

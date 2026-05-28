@@ -1130,6 +1130,52 @@ public func kk_input_stream_close(_ streamRaw: Int) -> Int {
     return 0
 }
 
+// MARK: - STDLIB-IO-FN-013: InputStream.copyTo(out, bufferSize)
+//
+// Kotlin signature:
+//   public fun InputStream.copyTo(
+//       out: OutputStream,
+//       bufferSize: Int = DEFAULT_BUFFER_SIZE
+//   ): Long
+//
+// Copies bytes from this InputStream into the given OutputStream until
+// all available bytes have been read, returning the total byte count as a
+// boxed Long.  The InputStream is not closed after copying (matching
+// Kotlin/JVM behaviour).
+@_cdecl("kk_input_stream_copyTo")
+public func kk_input_stream_copyTo(
+    _ streamRaw: Int,
+    _ outStreamRaw: Int,
+    _ bufferSizeRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let inputStream = runtimeInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_copyTo received invalid InputStream handle")
+    }
+    guard let outputStream = runtimeOutputStreamBox(from: outStreamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_copyTo received invalid OutputStream handle")
+    }
+    let bufferSize = max(1, kk_unbox_int(bufferSizeRaw))
+    var totalBytesCopied: Int = 0
+    let buffer = RuntimeListBox(elements: Array(repeating: 0, count: bufferSize))
+    while true {
+        let bytesRead = inputStream.read(into: buffer)
+        if bytesRead <= 0 { break }
+        let chunk = Array(buffer.elements.prefix(bytesRead))
+        do {
+            try outputStream.writeBytes(chunk)
+        } catch {
+            outThrown?.pointee = runtimeAllocateThrowable(
+                message: "IOException: \(error.localizedDescription)"
+            )
+            return kk_box_long(totalBytesCopied)
+        }
+        totalBytesCopied += bytesRead
+    }
+    return kk_box_long(totalBytesCopied)
+}
+
 // MARK: - InputStream.buffered (STDLIB-IO-FN-003)
 //
 // Kotlin's `InputStream.buffered(bufferSize)` extension returns a
