@@ -4281,6 +4281,23 @@ extension DataFlowSemaPhase {
             retention: "AnnotationRetention.BINARY",
             symbols: symbols
         )
+
+        // STDLIB-CINTEROP-INTERNAL-TYPE-003: CEnumVarTypeSize marks C enum companion size metadata.
+        let cEnumVarTypeSizeSymbol = ensureAnnotationClassSymbol(
+            named: "CEnumVarTypeSize",
+            in: cinteropInternalPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let cinteropInternalPkgSymbol {
+            symbols.setParentSymbol(cinteropInternalPkgSymbol, for: cEnumVarTypeSizeSymbol)
+        }
+        appendStandardAnnotationMetadata(
+            to: cEnumVarTypeSizeSymbol,
+            targets: ["AnnotationTarget.CLASS"],
+            retention: "AnnotationRetention.BINARY",
+            symbols: symbols
+        )
     }
 
     private func syntheticClassType(
