@@ -419,6 +419,22 @@ public func kk_file_parent(_ fileRaw: Int) -> Int {
     return fileMakeStringRaw(parent)
 }
 
+// MARK: - STDLIB-IO-PROP-003: File.invariantSeparatorsPath
+//
+// Kotlin signature: `public val File.invariantSeparatorsPath: String`
+//
+// Returns the file path string where the platform-specific separator character
+// is replaced with the forward slash `/`. On POSIX platforms (macOS / Linux)
+// the path is returned unchanged because the platform separator already is
+// `/`; on Windows-style paths containing `\` the backslashes are replaced.
+@_cdecl("kk_file_invariantSeparatorsPath")
+public func kk_file_invariantSeparatorsPath(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_invariantSeparatorsPath received invalid File handle")
+    }
+    return fileMakeStringRaw(file.path.replacingOccurrences(of: "\\", with: "/"))
+}
+
 @_cdecl("kk_file_length")
 public func kk_file_length(_ fileRaw: Int) -> Int {
     guard let file = runtimeFileBox(from: fileRaw) else {
