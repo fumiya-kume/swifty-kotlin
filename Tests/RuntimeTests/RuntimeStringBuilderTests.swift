@@ -12,6 +12,35 @@ final class RuntimeStringBuilderTests: XCTestCase {
         super.tearDown()
     }
 
+    // STDLIB-TEXT-FN-024: insert
+    func testInsertObjInsertsValueAtIndexAndReturnsReceiver() {
+        let builder = kk_string_builder_new_from_string(makeRuntimeString("ac"))
+        let value = makeRuntimeString("b")
+
+        let returned = kk_string_builder_insert_obj(builder, 1, value)
+
+        XCTAssertEqual(returned, builder)
+        XCTAssertEqual(runtimeStringValue(kk_string_builder_toString(builder)), "abc")
+    }
+
+    func testInsertObjAtBeginningPrependsValue() {
+        let builder = kk_string_builder_new_from_string(makeRuntimeString("bc"))
+        let value = makeRuntimeString("a")
+
+        _ = kk_string_builder_insert_obj(builder, 0, value)
+
+        XCTAssertEqual(runtimeStringValue(kk_string_builder_toString(builder)), "abc")
+    }
+
+    func testInsertObjAtEndAppendsValue() {
+        let builder = kk_string_builder_new_from_string(makeRuntimeString("ab"))
+        let value = makeRuntimeString("c")
+
+        _ = kk_string_builder_insert_obj(builder, 2, value)
+
+        XCTAssertEqual(runtimeStringValue(kk_string_builder_toString(builder)), "abc")
+    }
+
     func testDeleteAtRemovesCharacterAndReturnsReceiver() {
         let builder = kk_string_builder_new_from_string(makeRuntimeString("abc"))
 

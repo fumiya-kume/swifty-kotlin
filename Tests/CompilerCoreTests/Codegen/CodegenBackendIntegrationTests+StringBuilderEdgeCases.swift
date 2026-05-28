@@ -85,6 +85,49 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
+    // STDLIB-TEXT-FN-024: insert
+    func testCodegenCompilesStringBuilderInsertEdgeCases() throws {
+        let source = """
+        fun main() {
+            println(StringBuilder("ac").insert(1, "b").toString())
+
+            val sb = StringBuilder("bd")
+            sb.insert(0, "a")
+            sb.insert(2, "c")
+            println(sb.toString())
+
+            val implicit = with(StringBuilder("xz")) {
+                insert(1, "y")
+                toString()
+            }
+            println(implicit)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "StringBuilderInsertEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                abc
+                abcd
+                xyz
+                """
+                + "\n"
+            )
+        }
+    }
+
     func testCodegenCompilesStringBuilderInsertRangeEdgeCases() throws {
         let source = """
         fun main() {

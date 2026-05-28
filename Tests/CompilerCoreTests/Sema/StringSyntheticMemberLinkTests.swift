@@ -1383,6 +1383,40 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    // STDLIB-TEXT-FN-024: insert
+    func testStringBuilderInsertResolvesInCallExpressions() throws {
+        let source = """
+        import kotlin.text.StringBuilder
+
+        fun insertMiddle(): StringBuilder {
+            return StringBuilder("ac").insert(1, "b")
+        }
+
+        fun insertWithReceiver(): String {
+            return with(StringBuilder("ac")) {
+                insert(1, "b")
+                toString()
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics.map { "\($0.code): \($0.message)" }.joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected StringBuilder.insert surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let insertBindings = sema.bindings.callBindings.values.filter { binding in
+                sema.symbols.externalLinkName(for: binding.chosenCallee) == "kk_string_builder_insert_obj"
+            }
+            XCTAssertEqual(insertBindings.count, 2)
+        }
+    }
+
     func testStringBuilderInsertRangeResolvesInCallExpressions() throws {
         let source = """
         import kotlin.text.StringBuilder
