@@ -154,7 +154,7 @@
 - [x] STDLIB-IO-PATH-FN-027: `notExists` 関数の実装
 - [x] STDLIB-IO-PATH-FN-028: `outputStream` 関数の実装
 - [x] STDLIB-IO-PATH-FN-030: `readAttributes` 関数の実装
-- [ ] STDLIB-IO-PATH-FN-032: `setAttribute` 関数の実装
+- [x] STDLIB-IO-PATH-FN-032: `setAttribute` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-036: `toPath` 関数の実装
 - [x] STDLIB-IO-PATH-FN-037: `useDirectoryEntries` 関数の実装
 - [x] STDLIB-IO-PATH-FN-038: `useLines` 関数の実装
