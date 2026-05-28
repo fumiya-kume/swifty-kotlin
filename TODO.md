@@ -340,7 +340,7 @@
 - [x] STDLIB-TEXT-PROP-022: `uppercase` 拡張プロパティの実装
 
 #### kotlin.text 関数の実装
-- [ ] STDLIB-TEXT-FN-001: `all` 関数の実装
+- [x] STDLIB-TEXT-FN-001: `all` 関数の実装
 - [x] STDLIB-TEXT-FN-002: `any` 関数の実装
 - [ ] STDLIB-TEXT-FN-003: `append` 関数の実装
 - [ ] STDLIB-TEXT-FN-004: `appendLine` 関数の実装
