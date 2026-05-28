@@ -184,4 +184,62 @@ final class RuntimePathTests: XCTestCase {
         _ = kk_path_getLastModifiedTime(pathRaw, 0, &thrown)
         XCTAssertNotEqual(thrown, 0, "missing file should populate outThrown with an IOException")
     }
+
+    // MARK: - STDLIB-IO-PATH-FN-039: Path.walk
+
+    func testPathWalkReturnsRootFileAsOnlyElement() throws {
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try "data".write(to: fileURL, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        let pathRaw = makePathRaw(fileURL.path)
+        let seqRaw = kk_path_walk(pathRaw, 0)
+
+        let elements = runtimeSequenceSourceElements(from: seqRaw)
+        XCTAssertNotNil(elements)
+        XCTAssertEqual(elements?.count, 1)
+        // Extract path string via public kk_path_toString
+        let firstPathStr = extractStringRaw(kk_path_toString(elements![0]))
+        XCTAssertEqual(firstPathStr, fileURL.path)
+    }
+
+    func testPathWalkIncludesRootDirectoryAndDescendants() throws {
+        let tmpDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tmpDir, withIntermediateDirectories: false)
+        let subDir = tmpDir.appendingPathComponent("sub")
+        try FileManager.default.createDirectory(at: subDir, withIntermediateDirectories: false)
+        let file1 = tmpDir.appendingPathComponent("a.txt")
+        let file2 = subDir.appendingPathComponent("b.txt")
+        try "a".write(to: file1, atomically: true, encoding: .utf8)
+        try "b".write(to: file2, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: tmpDir) }
+
+        let pathRaw = makePathRaw(tmpDir.path)
+        let seqRaw = kk_path_walk(pathRaw, 0)
+
+        let elements = runtimeSequenceSourceElements(from: seqRaw)
+        XCTAssertNotNil(elements)
+        // Should include: tmpDir, sub/, a.txt, sub/b.txt (depth-first order)
+        XCTAssertGreaterThanOrEqual(elements?.count ?? 0, 4)
+        // Root is always first
+        let firstPathStr = extractStringRaw(kk_path_toString(elements![0]))
+        XCTAssertEqual(firstPathStr, tmpDir.path)
+        // All paths should start with the root directory
+        for elemRaw in elements! {
+            let p = extractStringRaw(kk_path_toString(elemRaw))
+            XCTAssertTrue(p.hasPrefix(tmpDir.path), "Expected \(p) to start with \(tmpDir.path)")
+        }
+    }
+
+    func testPathWalkOnNonexistentDirectoryReturnsOnlyRoot() {
+        let nonExistent = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString).path
+        let pathRaw = makePathRaw(nonExistent)
+        let seqRaw = kk_path_walk(pathRaw, 0)
+
+        let elements = runtimeSequenceSourceElements(from: seqRaw)
+        XCTAssertNotNil(elements)
+        // Non-existent path: root is included, but enumerator yields nothing
+        XCTAssertEqual(elements?.count, 1)
+    }
 }

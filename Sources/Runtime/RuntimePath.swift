@@ -1453,6 +1453,32 @@ public func kk_path_writer(
     }
 }
 
+// MARK: - Path.walk(vararg options: PathWalkOption): Sequence<Path>
+
+/// kotlin.io.path.Path.walk - recursively walks the directory tree starting
+/// at `this` path (depth-first, pre-order) and returns a lazy `Sequence<Path>`.
+///
+/// The root path itself is always the first element of the sequence, matching
+/// Kotlin stdlib behavior. The `optionsRaw` parameter accepts the vararg
+/// `PathWalkOption` array handle but is not inspected at runtime; all
+/// `BREADTH_FIRST` / `FOLLOW_LINKS` variants are silently treated as the
+/// default depth-first / no-follow-links walk on macOS.
+@_cdecl("kk_path_walk")
+public func kk_path_walk(_ pathRaw: Int, _ optionsRaw: Int) -> Int {
+    _ = optionsRaw
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_walk received invalid Path handle")
+    }
+    var paths: [Int] = [registerRuntimeObject(RuntimePathBox(path.pathString))]
+    if let enumerator = FileManager.default.enumerator(atPath: path.pathString) {
+        while let relativePath = enumerator.nextObject() as? String {
+            let fullPath = (path.pathString as NSString).appendingPathComponent(relativePath)
+            paths.append(registerRuntimeObject(RuntimePathBox(fullPath)))
+        }
+    }
+    return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: paths)]))
+}
+
 @_cdecl("kk_path_appendLines_sequence_default")
 public func kk_path_appendLines_sequence_default(_ pathRaw: Int, _ linesRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     kk_path_appendLines_sequence(pathRaw, linesRaw, 0, outThrown)
