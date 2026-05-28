@@ -111,6 +111,11 @@ private let syntheticCharMemberSpecs: [SyntheticCharMemberSpec] = [
         returnKind: .boolean
     ),
     SyntheticCharMemberSpec(
+        name: "isIdentifierIgnorable",
+        externalLinkName: "kk_char_isIdentifierIgnorable",
+        returnKind: .boolean
+    ),
+    SyntheticCharMemberSpec(
         name: "uppercase",
         externalLinkName: "kk_char_uppercase",
         returnKind: .string

@@ -340,6 +340,9 @@ public extension RuntimeABISpec {
         abiParitySpec("kk_char_isHighSurrogate", parameters: [
             p("value", .intptr),
         ]),
+        abiParitySpec("kk_char_isIdentifierIgnorable", parameters: [
+            p("value", .intptr),
+        ]),
         abiParitySpec("kk_char_isISOControl", parameters: [
             p("value", .intptr),
         ]),

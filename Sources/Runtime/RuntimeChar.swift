@@ -76,6 +76,24 @@ public func kk_char_isDefined(_ value: Int) -> Int {
     return kk_box_bool(scalar.properties.generalCategory == .unassigned ? 0 : 1)
 }
 
+private func runtimeCharIsIdentifierIgnorableValue(_ value: Int) -> Bool {
+    if (value >= 0x0000 && value <= 0x0008)
+        || (value >= 0x000E && value <= 0x001B)
+        || (value >= 0x007F && value <= 0x009F)
+    {
+        return true
+    }
+    guard let scalar = runtimeUnicodeScalar(value) else {
+        return false
+    }
+    return scalar.properties.generalCategory == .format
+}
+
+@_cdecl("kk_char_isIdentifierIgnorable")
+public func kk_char_isIdentifierIgnorable(_ value: Int) -> Int {
+    kk_box_bool(runtimeCharIsIdentifierIgnorableValue(value) ? 1 : 0)
+}
+
 @_cdecl("kk_char_isSupplementaryCodePoint")
 public func kk_char_isSupplementaryCodePoint(_ codepoint: Int) -> Int {
     kk_box_bool((codepoint >= 0x10000 && codepoint <= 0x10FFFF) ? 1 : 0)
