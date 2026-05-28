@@ -314,6 +314,17 @@ public func kk_char_minus(_ lhsRaw: Int, _ rhsRaw: Int) -> Int {
     return lhs - rhs
 }
 
+/// operator fun Char.minus(n: Int): Char
+/// Subtracts the other Int value from this character's code point and returns
+/// the resulting character. The result is masked to the valid Char range
+/// 0x0000..0xFFFF (matching Kotlin/JVM semantics).
+@_cdecl("kk_char_minus_int")
+public func kk_char_minus_int(_ lhsRaw: Int, _ n: Int) -> Int {
+    let codePoint = kk_unbox_char(lhsRaw)
+    let result = (codePoint - n) & 0xFFFF
+    return result
+}
+
 // New numeric conversion functions
 @_cdecl("kk_char_toInt")
 public func kk_char_toInt(_ value: Int) -> Int {
