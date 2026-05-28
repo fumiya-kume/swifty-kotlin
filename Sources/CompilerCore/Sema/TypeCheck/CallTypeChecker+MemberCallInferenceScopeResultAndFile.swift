@@ -409,14 +409,21 @@ extension CallTypeChecker {
         // STDLIB-IO-FN-040: also handles `BufferedReader.useLines { lines -> T }`
         // because the synthetic stub registers `useLines` on `java.io.BufferedReader`
         // with the same `(List<String>) -> Any` signature.
+        // STDLIB-IO-FN-017: also handles `BufferedReader.forEachLine { line -> Unit }`
+        // via the same HOF closure ABI — action receives `String`, returns `Unit`.
         if args.count == 1 {
             let calleeStr = interner.resolve(calleeName)
             let isFileReceiver = isFileType(receiverType, sema: sema, interner: interner)
+            let isBufferedReader = isBufferedReaderType(receiverType, sema: sema, interner: interner)
             let isReaderUseLines = !isFileReceiver
                 && calleeStr == "useLines"
-                && isBufferedReaderType(receiverType, sema: sema, interner: interner)
+                && isBufferedReader
+            let isReaderForEachLine = !isFileReceiver
+                && calleeStr == "forEachLine"
+                && isBufferedReader
             if (isFileReceiver && (calleeStr == "forEachLine" || calleeStr == "useLines"))
                 || isReaderUseLines
+                || isReaderForEachLine
             {
                 if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
                     sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
