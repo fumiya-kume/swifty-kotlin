@@ -1189,6 +1189,35 @@ extension CallTypeChecker {
             isMapReceiver: isMapReceiver,
             isSetReceiver: isSetReceiver
         )
+        // chunked(size): returns Sequence<List<T>> for sequence receivers,
+        // List<List<T>> for list/collection receivers.
+        if memberName == interner.intern("chunked"), args.count == 1 {
+            let chunkType = makeSyntheticListType(
+                symbols: sema.symbols,
+                types: sema.types,
+                interner: interner,
+                elementType: receiverElementType
+            )
+            if isSequenceReceiver {
+                return makeSyntheticSequenceType(
+                    symbols: sema.symbols,
+                    types: sema.types,
+                    interner: interner,
+                    elementType: chunkType
+                )
+            }
+            if let listSymbol = sema.symbols.lookup(fqName: [
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("List"),
+            ]) {
+                return sema.types.make(.classType(ClassType(
+                    classSymbol: listSymbol,
+                    args: [.out(chunkType)],
+                    nullability: .nonNull
+                )))
+            }
+        }
         if let surfaceSpec = stdlibSurfaceSpecForCollectionFallback(
             memberName: memberName,
             argCount: args.count,
@@ -1247,12 +1276,25 @@ extension CallTypeChecker {
 
         if memberName == interner.intern("chunked") && args.count == 2 {
             let transformExpr = args[1].expr
-            let lambdaReturnType: TypeID = if let transformType = sema.bindings.exprTypes[transformExpr],
-                                               case let .functionType(fnType) = sema.types.kind(of: transformType) {
-                fnType.returnType
-            } else {
-                sema.types.anyType
-            }
+            // Prefer the lambda body's inferred type over the stored function type,
+            // because inferLambdaLiteralExpr binds the lambda to the *expected* type
+            // (e.g. (List<T>) -> Any) rather than the *inferred* return type.
+            let lambdaReturnType: TypeID = {
+                if let lambdaNode = ctx.ast.arena.expr(transformExpr),
+                   case let .lambdaLiteral(_, body: bodyExprID, _, _) = lambdaNode,
+                   let bodyType = sema.bindings.exprTypes[bodyExprID],
+                   bodyType != sema.types.nothingType
+                {
+                    return bodyType
+                }
+                if let transformType = sema.bindings.exprTypes[transformExpr],
+                   case let .functionType(fnType) = sema.types.kind(of: transformType),
+                   fnType.returnType != sema.types.anyType
+                {
+                    return fnType.returnType
+                }
+                return sema.types.anyType
+            }()
 
             if isSequenceReceiver {
                 return makeSyntheticSequenceType(
