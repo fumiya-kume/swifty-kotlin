@@ -1802,6 +1802,48 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-TEXT-FN-068: CharSequence.slice(indices) ---
+        //
+        // Two overloads:
+        //   * fun CharSequence.slice(indices: IntRange): CharSequence
+        //   * fun CharSequence.slice(indices: Iterable<Int>): String
+        //
+        // IntRange expressions are typed as intType at the ABI level (mirroring the
+        // existing pattern used by removeRange/replaceRange and List.slice), so the
+        // IntRange overload is registered with parameterType=intType.  The runtime
+        // path unboxes a RuntimeRangeBox via `kk_string_slice`.
+        registerSyntheticStringExtensionFunction(
+            named: "slice",
+            externalLinkName: "kk_string_slice",
+            receiverType: stringType,
+            parameters: [
+                ("indices", intType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        let listOfIntType = makeListType(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            elementType: intType
+        )
+        registerSyntheticStringExtensionFunction(
+            named: "slice",
+            externalLinkName: "kk_string_slice_iterable",
+            receiverType: stringType,
+            parameters: [
+                ("indices", listOfIntType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-189: String HOF (filter, map, count, any, all, none) ---
         let charToBoolType = types.make(.functionType(FunctionType(
             params: [charType],

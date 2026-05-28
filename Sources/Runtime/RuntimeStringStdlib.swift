@@ -2758,6 +2758,89 @@ public func kk_string_removeRange_range(
     return kk_string_removeRange(strRaw, range.first, range.last + 1, outThrown)
 }
 
+// MARK: - STDLIB-TEXT-FN-068: CharSequence.slice(indices)
+
+/// String.slice(indices: IntRange) — return the substring whose Unicode-scalar indices
+/// fall within `indices`. Mirrors the Kotlin stdlib contract: empty range yields "",
+/// otherwise the bounds [first, last] are validated against [0, length) and any
+/// out-of-range index throws IndexOutOfBoundsException.
+@_cdecl("kk_string_slice")
+public func kk_string_slice(
+    _ strRaw: Int,
+    _ rangeRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        runtimeSetThrown(outThrown, message: "Invalid range for slice")
+        return 0
+    }
+    let scalars = runtimeStringScalars(strRaw)
+    let length = scalars.count
+    let first = range.first
+    let last = range.last
+    // Kotlin: an empty IntRange (first > last) yields "" regardless of length.
+    if first > last {
+        return runtimeMakeStringRaw("")
+    }
+    if first < 0 || last >= length {
+        runtimeSetThrown(
+            outThrown,
+            message: "StringIndexOutOfBoundsException: begin \(first), end \(last + 1), length \(length)"
+        )
+        return 0
+    }
+    let step = range.step > 0 ? range.step : 1
+    if step == 1 {
+        return runtimeMakeStringRaw(runtimeStringFromScalars(scalars[first ... last]))
+    }
+    // Stepped range: collect scalars at first, first+step, ..., <= last.
+    var picked: [UnicodeScalar] = []
+    var i = first
+    while i <= last {
+        picked.append(scalars[i])
+        i += step
+    }
+    return runtimeMakeStringRaw(runtimeStringFromScalars(picked))
+}
+
+/// String.slice(indices: Iterable<Int>) — pick scalars at the given indices in order.
+/// Accepts a List or Set of boxed Int values. Any index outside `[0, length)` throws
+/// IndexOutOfBoundsException, matching kotlin.text.slice semantics.
+@_cdecl("kk_string_slice_iterable")
+public func kk_string_slice_iterable(
+    _ strRaw: Int,
+    _ indicesRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    let length = scalars.count
+    let indexElements: [Int]
+    if let indexList = runtimeListBox(from: indicesRaw) {
+        indexElements = indexList.elements
+    } else if let indexSet = runtimeSetBox(from: indicesRaw) {
+        indexElements = indexSet.elements
+    } else {
+        runtimeSetThrown(outThrown, message: "Invalid indices for slice")
+        return 0
+    }
+    var picked: [UnicodeScalar] = []
+    picked.reserveCapacity(indexElements.count)
+    for rawIdx in indexElements {
+        let idx = kk_unbox_int(rawIdx)
+        if idx < 0 || idx >= length {
+            runtimeSetThrown(
+                outThrown,
+                message: "StringIndexOutOfBoundsException: index \(idx), length \(length)"
+            )
+            return 0
+        }
+        picked.append(scalars[idx])
+    }
+    return runtimeMakeStringRaw(runtimeStringFromScalars(picked))
+}
+
 @_cdecl("kk_compare_any")
 public func kk_compare_any(_ lhsRaw: Int, _ rhsRaw: Int) -> Int {
     if lhsRaw == rhsRaw {
