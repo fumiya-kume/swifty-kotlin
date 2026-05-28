@@ -2285,12 +2285,18 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // --- STDLIB-142: String.toBoolean / toBooleanStrict ---
+        // --- STDLIB-142 / STDLIB-TEXT-FN-087: String?.toBoolean / String.toBooleanStrict ---
 
+        // Kotlin signature: `public actual fun String?.toBoolean(): Boolean`.
+        // The receiver is nullable: `null.toBoolean()` returns false, otherwise
+        // the result is `equalsIgnoreCase("true")`. We model this by registering
+        // the extension on `String?` so both nullable and non-null receivers bind
+        // without needing a safe-call. `nullableStringType` is declared earlier
+        // in this function for STDLIB-192 (equals) so we reuse it here.
         registerSyntheticStringExtensionFunction(
             named: "toBoolean",
             externalLinkName: "kk_string_toBoolean",
-            receiverType: stringType,
+            receiverType: nullableStringType,
             parameters: [],
             returnType: boolType,
             packageFQName: kotlinTextPkg,

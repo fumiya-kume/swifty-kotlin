@@ -1868,7 +1868,16 @@ public func kk_string_contentEquals_ignoreCase(_ receiverRaw: Int, _ otherRaw: I
 
 @_cdecl("kk_string_toBoolean")
 public func kk_string_toBoolean(_ strRaw: Int) -> Int {
-    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    // Kotlin spec: `public actual fun String?.toBoolean(): Boolean` returns false
+    // when the receiver is null, otherwise true iff content equals "true" ignoring case.
+    if strRaw == runtimeNullSentinelInt {
+        return kk_box_bool(0)
+    }
+    guard let rawPointer = UnsafeMutableRawPointer(bitPattern: strRaw),
+          let source = extractString(from: rawPointer)
+    else {
+        return kk_box_bool(0)
+    }
     return kk_box_bool(source.caseInsensitiveCompare("true") == .orderedSame ? 1 : 0)
 }
 
