@@ -270,6 +270,74 @@ public func kk_string_builder_get(_ sbRaw: Int, _ index: Int) -> Int {
     return kk_box_char(charValue)
 }
 
+// MARK: - STDLIB-TEXT-FN-003: Typed append overloads
+
+/// append(value: Boolean): StringBuilder
+/// Accepts the raw unboxed boolean (0 or 1) and appends "false" or "true".
+@_cdecl("kk_string_builder_append_bool")
+public func kk_string_builder_append_bool(_ sbRaw: Int, _ value: Int) -> Int {
+    guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return sbRaw }
+    sb.value.append(value != 0 ? "true" : "false")
+    return sbRaw
+}
+
+/// append(value: Char): StringBuilder
+/// Accepts the raw unboxed char (unicode scalar value or boxed CharBox) and appends the character.
+@_cdecl("kk_string_builder_append_char")
+public func kk_string_builder_append_char(_ sbRaw: Int, _ value: Int) -> Int {
+    guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return sbRaw }
+    // The value may be either a boxed RuntimeCharBox or a raw unicode scalar.
+    if let ptr = UnsafeMutableRawPointer(bitPattern: value) {
+        let isObjectPointer = runtimeStorage.withGCLock { state in
+            state.objectPointers.contains(UInt(bitPattern: ptr))
+        }
+        if isObjectPointer, let charBox = tryCast(ptr, to: RuntimeCharBox.self) {
+            let rendered = UnicodeScalar(charBox.value).map(String.init) ?? "?"
+            sb.value.append(rendered)
+            return sbRaw
+        }
+    }
+    let rendered = UnicodeScalar(value).map(String.init) ?? "?"
+    sb.value.append(rendered)
+    return sbRaw
+}
+
+/// append(value: Float): StringBuilder
+/// Accepts the raw float bits (via kk_bits_to_float) or a boxed RuntimeFloatBox.
+@_cdecl("kk_string_builder_append_float")
+public func kk_string_builder_append_float(_ sbRaw: Int, _ value: Int) -> Int {
+    guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return sbRaw }
+    if let ptr = UnsafeMutableRawPointer(bitPattern: value) {
+        let isObjectPointer = runtimeStorage.withGCLock { state in
+            state.objectPointers.contains(UInt(bitPattern: ptr))
+        }
+        if isObjectPointer, let floatBox = tryCast(ptr, to: RuntimeFloatBox.self) {
+            sb.value.append(runtimeFormatFloatingPoint(floatBox.value))
+            return sbRaw
+        }
+    }
+    sb.value.append(runtimeFormatFloatingPoint(kk_bits_to_float(value)))
+    return sbRaw
+}
+
+/// append(value: Double): StringBuilder
+/// Accepts the raw double bits (via kk_bits_to_double) or a boxed RuntimeDoubleBox.
+@_cdecl("kk_string_builder_append_double")
+public func kk_string_builder_append_double(_ sbRaw: Int, _ value: Int) -> Int {
+    guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return sbRaw }
+    if let ptr = UnsafeMutableRawPointer(bitPattern: value) {
+        let isObjectPointer = runtimeStorage.withGCLock { state in
+            state.objectPointers.contains(UInt(bitPattern: ptr))
+        }
+        if isObjectPointer, let doubleBox = tryCast(ptr, to: RuntimeDoubleBox.self) {
+            sb.value.append(runtimeFormatFloatingPoint(doubleBox.value))
+            return sbRaw
+        }
+    }
+    sb.value.append(runtimeFormatFloatingPoint(kk_bits_to_double(value)))
+    return sbRaw
+}
+
 // MARK: - STDLIB-TEXT-EDGE-012: append(vararg) overloads
 
 /// Append each element in an array/list of values to the StringBuilder.

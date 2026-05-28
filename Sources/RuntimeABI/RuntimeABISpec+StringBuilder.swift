@@ -211,6 +211,43 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "StringBuilder"
         ),
+        // STDLIB-TEXT-FN-003: Typed append overloads
+        RuntimeABIFunctionSpec(
+            name: "kk_string_builder_append_bool",
+            parameters: [
+                RuntimeABIParameter(name: "sbRaw", type: .intptr),
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "StringBuilder"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_builder_append_char",
+            parameters: [
+                RuntimeABIParameter(name: "sbRaw", type: .intptr),
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "StringBuilder"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_builder_append_float",
+            parameters: [
+                RuntimeABIParameter(name: "sbRaw", type: .intptr),
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "StringBuilder"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_builder_append_double",
+            parameters: [
+                RuntimeABIParameter(name: "sbRaw", type: .intptr),
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "StringBuilder"
+        ),
         // STDLIB-TEXT-EDGE-012: append(vararg) overloads
         RuntimeABIFunctionSpec(
             name: "kk_string_builder_append_vararg_obj",
