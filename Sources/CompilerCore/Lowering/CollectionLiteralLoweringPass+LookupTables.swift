@@ -833,6 +833,15 @@ struct CollectionLiteralLookupTables {
     let canExecuteName: InternedString
     let kkFileCanExecuteName: InternedString
     let kkFileNewParentChildName: InternedString
+    // STDLIB-IO-FN-027: PrintWriter
+    let printWriterName: InternedString
+    let kkFilePrintWriterName: InternedString
+    let kkPrintWriterPrintName: InternedString
+    let kkPrintWriterPrintlnName: InternedString
+    let kkPrintWriterPrintlnNoArgName: InternedString
+    let kkPrintWriterWriteName: InternedString
+    let kkPrintWriterFlushName: InternedString
+    let kkPrintWriterCloseName: InternedString
 
     // Common lookup sets
     let listFactoryNames: Set<InternedString>
@@ -1647,6 +1656,15 @@ struct CollectionLiteralLookupTables {
         canExecuteName = interner.intern("canExecute")
         kkFileCanExecuteName = interner.intern("kk_file_canExecute")
         kkFileNewParentChildName = interner.intern("kk_file_new_parent_child")
+        // STDLIB-IO-FN-027: PrintWriter
+        printWriterName = interner.intern("printWriter")
+        kkFilePrintWriterName = interner.intern("kk_file_printWriter")
+        kkPrintWriterPrintName = interner.intern("kk_print_writer_print")
+        kkPrintWriterPrintlnName = interner.intern("kk_print_writer_println")
+        kkPrintWriterPrintlnNoArgName = interner.intern("kk_print_writer_println_no_arg")
+        kkPrintWriterWriteName = interner.intern("kk_print_writer_write")
+        kkPrintWriterFlushName = interner.intern("kk_print_writer_flush")
+        kkPrintWriterCloseName = interner.intern("kk_print_writer_close")
 
         listFactoryNames = [listOfName, mutableListOfName, arrayListOfName, emptyListName, listOfNotNullName]
         setFactoryNames = [setOfName, setOfNotNullName, mutableSetOfName, hashSetOfName, linkedSetOfName, emptySetName]
