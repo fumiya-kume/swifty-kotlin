@@ -80,6 +80,15 @@ extension DataFlowSemaPhase {
             comparatorSymbol: comparatorSymbol
         )
 
+        registerNullsLastTopLevel(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            comparisonsPkg: comparisonsPkg,
+            comparisonsPackageSymbol: comparisonsPackageSymbol,
+            comparatorSymbol: comparatorSymbol
+        )
+
         registerArrayBinarySearchComparator(
             symbols: symbols,
             types: types,
@@ -1129,6 +1138,64 @@ extension DataFlowSemaPhase {
                 for: funcSymbol
             )
         }
+    }
+
+    /// Registers top-level `nullsLast<T : Comparable<T>>(): Comparator<T?>` in the
+    /// kotlin.comparisons package (STDLIB-COMP-FN-061). Creates a comparator using
+    /// natural (Comparable) ordering with null values sorted last.
+    private func registerNullsLastTopLevel(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        comparisonsPkg: [InternedString],
+        comparisonsPackageSymbol: SymbolID,
+        comparatorSymbol: SymbolID
+    ) {
+        guard let compInfo = symbols.symbol(comparatorSymbol) else { return }
+        let comparatorFQName = compInfo.fqName
+        let tParamName = interner.intern("T")
+        let tParamFQName = comparatorFQName + [tParamName]
+        guard let tParamSymbol = symbols.lookup(fqName: tParamFQName) else { return }
+        let nullableTParamType = types.make(.typeParam(TypeParamType(
+            symbol: tParamSymbol, nullability: .nullable
+        )))
+        let comparatorOfNullableTType = types.make(.classType(ClassType(
+            classSymbol: comparatorSymbol,
+            args: [.invariant(nullableTParamType)],
+            nullability: .nonNull
+        )))
+
+        let functionName = interner.intern("nullsLast")
+        let functionFQName = comparisonsPkg + [functionName]
+        let extLink = "kk_comparator_nulls_last_natural"
+
+        if symbols.lookupAll(fqName: functionFQName).contains(where: { symbolID in
+            guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+            return sig.parameterTypes.isEmpty && sig.returnType == comparatorOfNullableTType
+        }) {
+            return
+        }
+
+        let funcSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(comparisonsPackageSymbol, for: funcSymbol)
+        symbols.setExternalLinkName(extLink, for: funcSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [],
+                returnType: comparatorOfNullableTType,
+                isSuspend: false,
+                typeParameterSymbols: [tParamSymbol],
+                typeParameterUpperBoundsList: [[]]
+            ),
+            for: funcSymbol
+        )
     }
 
     private func registerArrayBinarySearchComparator(
