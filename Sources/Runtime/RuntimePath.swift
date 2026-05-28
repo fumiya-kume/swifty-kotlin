@@ -614,6 +614,59 @@ public func kk_path_readLines(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<
     }
 }
 
+/// STDLIB-IO-PATH-FN-020: `Path.forEachLine(charset, action)` extension function.
+///
+/// Reads the file referenced by `pathRaw` using the encoding implied by
+/// `charsetRaw` (mapping defined by `pathStringEncoding`) and invokes
+/// `actionRaw` once per logical line, mirroring `kotlin.io.path.forEachLine`.
+///
+/// Lines follow the same splitting rules as `kk_path_readLines` (the trailing
+/// newline does not produce a final empty element) and are passed to the
+/// action as boxed Kotlin `String` values. If the action throws, the
+/// exception is propagated through `outThrown` and iteration stops.
+@_cdecl("kk_path_forEachLine")
+public func kk_path_forEachLine(
+    _ pathRaw: Int,
+    _ charsetRaw: Int,
+    _ actionRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_forEachLine received invalid Path handle")
+    }
+    let encoding = pathStringEncoding(for: charsetRaw)
+    let content: String
+    do {
+        content = try String(contentsOfFile: path.pathString, encoding: encoding)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+        return 0
+    }
+    for line in pathSplitLines(content) {
+        let lineRaw = pathMakeStringRaw(line)
+        var thrown = 0
+        _ = kk_function_invoke(actionRaw, lineRaw, &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return 0
+        }
+    }
+    return 0
+}
+
+/// STDLIB-IO-PATH-FN-020: Default-charset overload of `Path.forEachLine`.
+///
+/// Mirrors `kotlin.io.path.forEachLine(action)`, which defaults to UTF-8.
+@_cdecl("kk_path_forEachLine_default")
+public func kk_path_forEachLine_default(
+    _ pathRaw: Int,
+    _ actionRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    kk_path_forEachLine(pathRaw, 0, actionRaw, outThrown)
+}
+
 @_cdecl("kk_path_bufferedReader")
 public func kk_path_bufferedReader(
     _ pathRaw: Int,
