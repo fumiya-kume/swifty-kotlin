@@ -2,6 +2,31 @@ import Foundation
 @testable import Runtime
 import XCTest
 
+// MARK: - STDLIB-IO-FN-040 lambda thunks for useLines
+//
+// Block receives the materialised lines as a boxed Int (RuntimeListBox raw pointer).
+// We unbox the list, read its size, and box the count back as an Int — matching the
+// collection HOF lambda ABI consumed by `runtimeInvokeCollectionLambda1`.
+
+private let useLinesCountsLines: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, outThrown in
+    outThrown?.pointee = 0
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: value),
+          let list = tryCast(ptr, to: RuntimeListBox.self)
+    else {
+        return kk_box_int(-1)
+    }
+    return kk_box_int(list.elements.count)
+}
+
+private let useLinesAlwaysThrows: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, outThrown in
+    outThrown?.pointee = runtimeAllocateThrowable(message: "BlockError: useLines lambda threw")
+    return 0
+}
+
+private func fnPtrInt(_ fn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int) -> Int {
+    Int(bitPattern: unsafeBitCast(fn, to: UnsafeRawPointer.self))
+}
+
 final class RuntimeBufferedReaderTests: IsolatedRuntimeXCTestCase {
     override class var requiredLockSet: RuntimeLockSet { .gcOnly }
     func testBufferedReaderHandlesMixedLineEndingsAndNoTrailingEmptyLine() throws {
@@ -148,6 +173,68 @@ final class RuntimeBufferedReaderTests: IsolatedRuntimeXCTestCase {
         XCTAssertNotEqual(thrown, 0)
         XCTAssertEqual(readerRaw, 0)
         XCTAssertEqual(kk_runtime_heap_object_count(), baselineObjectCount)
+    }
+
+    // MARK: - STDLIB-IO-FN-040: BufferedReader.useLines
+
+    func testBufferedReaderUseLinesInvokesBlockWithMaterialisedLines() throws {
+        let fileURL = try makeTempFile(contents: "alpha\nbeta\ngamma\n")
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        let fileRaw = runtimeTestFileHandle(fileURL.path)
+        var thrown = 0
+        let readerRaw = kk_file_bufferedReader(fileRaw, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertNotEqual(readerRaw, 0)
+
+        let result = kk_buffered_reader_useLines(readerRaw, fnPtrInt(useLinesCountsLines), 0, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_unbox_int(result), 3)
+    }
+
+    func testBufferedReaderUseLinesEmptyFileReturnsZeroLines() throws {
+        let fileURL = try makeTempFile(contents: "")
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        let fileRaw = runtimeTestFileHandle(fileURL.path)
+        var thrown = 0
+        let readerRaw = kk_file_bufferedReader(fileRaw, &thrown)
+        XCTAssertEqual(thrown, 0)
+
+        let result = kk_buffered_reader_useLines(readerRaw, fnPtrInt(useLinesCountsLines), 0, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_unbox_int(result), 0)
+    }
+
+    func testBufferedReaderUseLinesPropagatesThrownFromBlock() throws {
+        let fileURL = try makeTempFile(contents: "one\ntwo\n")
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        let fileRaw = runtimeTestFileHandle(fileURL.path)
+        var thrown = 0
+        let readerRaw = kk_file_bufferedReader(fileRaw, &thrown)
+        XCTAssertEqual(thrown, 0)
+
+        let result = kk_buffered_reader_useLines(readerRaw, fnPtrInt(useLinesAlwaysThrows), 0, &thrown)
+        XCTAssertEqual(result, 0)
+        XCTAssertNotEqual(thrown, 0, "block exception should surface via outThrown")
+    }
+
+    func testBufferedReaderUseLinesClosesReaderAfterBlock() throws {
+        let fileURL = try makeTempFile(contents: "first\nsecond\nthird\n")
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        let fileRaw = runtimeTestFileHandle(fileURL.path)
+        var thrown = 0
+        let readerRaw = kk_file_bufferedReader(fileRaw, &thrown)
+        XCTAssertEqual(thrown, 0)
+
+        _ = kk_buffered_reader_useLines(readerRaw, fnPtrInt(useLinesCountsLines), 0, &thrown)
+        XCTAssertEqual(thrown, 0)
+
+        // After useLines returns, the reader is closed and yields no further lines
+        // (mirrors the JVM `use { }` contract on the underlying Reader).
+        XCTAssertEqual(kk_buffered_reader_readLine(readerRaw), runtimeNullSentinelInt)
     }
 
     private func makeTempFile(contents: String) throws -> URL {

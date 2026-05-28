@@ -545,6 +545,31 @@ extension DataFlowSemaPhase {
             symbols.insertFlags(.operatorFunction, for: candidate)
         }
 
+        // BufferedReader.useLines { lines: List<String> -> T } (STDLIB-IO-FN-040)
+        //
+        // Kotlin declares `useLines` as an extension function on `kotlin.io.Reader`
+        // (which `BufferedReader` extends). The lambda is invoked with the receiver's
+        // remaining lines as a `Sequence<String>`, and the reader is closed before
+        // the function returns. We model the lambda parameter as `List<String>` for
+        // parity with the existing `File.useLines` stub — both flow through the same
+        // runtime helper shape (lines materialised eagerly into a `RuntimeListBox`).
+        let listOfStringToAnyTypeBR = types.make(.functionType(FunctionType(
+            params: [listOfStringType],
+            returnType: types.anyType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        registerFileMemberFunction(
+            named: "useLines",
+            externalLinkName: "kk_buffered_reader_useLines",
+            ownerSymbol: bufferedReaderSymbol,
+            ownerType: bufferedReaderType,
+            parameters: [("block", listOfStringToAnyTypeBR)],
+            returnType: types.anyType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // MARK: - BufferedWriter type and File.bufferedWriter() (STDLIB-IO-091/093)
 
         let bufferedWriterSymbol = ensureClassSymbol(
