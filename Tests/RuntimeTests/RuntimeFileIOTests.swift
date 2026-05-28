@@ -45,6 +45,28 @@ final class RuntimeFileIOTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(runtimeListBox(from: bytesRaw)?.elements, [0, 127, -128, -1])
     }
 
+    // STDLIB-IO-PROP-005: File.nameWithoutExtension extension property
+    func testNameWithoutExtensionStripsTrailingExtension() {
+        let cases: [(path: String, expected: String)] = [
+            ("/tmp/archive.tar.gz", "archive.tar"),
+            ("/tmp/README", "README"),
+            ("/tmp/.gitignore", ""),
+            ("/tmp/notes.txt", "notes"),
+            ("relative/file.kt", "file"),
+            ("/tmp/", "tmp"),
+            ("plain.name", "plain"),
+        ]
+        for (path, expected) in cases {
+            let fileRaw = runtimeTestFileHandle(path)
+            let nameRaw = kk_file_nameWithoutExtension(fileRaw)
+            XCTAssertEqual(
+                readString(nameRaw),
+                expected,
+                "nameWithoutExtension for \(path) should be \(expected)"
+            )
+        }
+    }
+
     private func makeTempFile(contents: String) throws -> URL {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try contents.write(to: url, atomically: true, encoding: .utf8)

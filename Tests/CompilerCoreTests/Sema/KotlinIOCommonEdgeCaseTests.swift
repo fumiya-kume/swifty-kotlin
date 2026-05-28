@@ -676,6 +676,32 @@ final class KotlinIOCommonEdgeCaseTests: XCTestCase {
         }
     }
 
+    // MARK: - File.nameWithoutExtension (STDLIB-IO-PROP-005)
+
+    func testFileNameWithoutExtensionResolvesAsString() throws {
+        let source = """
+        import java.io.File
+
+        fun stem(f: File): String {
+            val name: String = f.nameWithoutExtension
+            return name
+        }
+
+        fun main() {
+            val f = File("/tmp/archive.tar.gz")
+            println(stem(f))
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "File.nameWithoutExtension extension property should resolve as String: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     // MARK: - java.io.Closeable maps to kotlin.io.Closeable
 
     func testJavaIOCloseableIsAcceptedByUseExtension() throws {

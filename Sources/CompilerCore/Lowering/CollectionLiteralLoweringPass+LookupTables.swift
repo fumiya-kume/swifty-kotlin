@@ -783,6 +783,9 @@ struct CollectionLiteralLookupTables {
     let kkFileIsDirectoryName: InternedString
     let namePropertyName: InternedString
     let kkFileNameName: InternedString
+    // STDLIB-IO-PROP-005: File.nameWithoutExtension extension property
+    let nameWithoutExtensionName: InternedString
+    let kkFileNameWithoutExtensionName: InternedString
     let pathPropertyName: InternedString
     let kkFilePathName: InternedString
     let forEachLineName: InternedString
@@ -1590,6 +1593,9 @@ struct CollectionLiteralLookupTables {
         kkFileIsDirectoryName = interner.intern("kk_file_isDirectory")
         namePropertyName = interner.intern("name")
         kkFileNameName = interner.intern("kk_file_name")
+        // STDLIB-IO-PROP-005: File.nameWithoutExtension extension property
+        nameWithoutExtensionName = interner.intern("nameWithoutExtension")
+        kkFileNameWithoutExtensionName = interner.intern("kk_file_nameWithoutExtension")
         pathPropertyName = interner.intern("path")
         kkFilePathName = interner.intern("kk_file_path")
         forEachLineName = interner.intern("forEachLine")

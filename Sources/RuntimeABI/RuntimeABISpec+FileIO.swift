@@ -102,6 +102,15 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "FileIO"
         ),
+        // STDLIB-IO-PROP-005: File.nameWithoutExtension extension property
+        RuntimeABIFunctionSpec(
+            name: "kk_file_nameWithoutExtension",
+            parameters: [
+                RuntimeABIParameter(name: "fileRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_file_path",
             parameters: [
