@@ -2335,6 +2335,15 @@ public enum RuntimeABISpec {
             section: "Char"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_char_minus_int",
+            parameters: [
+                RuntimeABIParameter(name: "lhsRaw", type: .intptr),
+                RuntimeABIParameter(name: "n", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Char"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_char_plus",
             parameters: [
                 RuntimeABIParameter(name: "charValue", type: .intptr),

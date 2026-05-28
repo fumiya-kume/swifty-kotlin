@@ -401,6 +401,8 @@ extension DataFlowSemaPhase {
         )
         // STDLIB-003-ABI-001: Char.digitToInt(radix: Int)
         registerDigitToIntRadixStub(symbols: symbols, types: types, interner: interner)
+        // STDLIB-TEXT-FN-038: Char.minus(Char): Int and Char.minus(Int): Char
+        registerCharMinusStubs(symbols: symbols, types: types, interner: interner)
         registerNativeCharCompanionHelpers(symbols: symbols, types: types, interner: interner)
     }
 
@@ -628,6 +630,108 @@ extension DataFlowSemaPhase {
             ),
             for: functionSymbol
         )
+    }
+
+    // MARK: - STDLIB-TEXT-FN-038: Char.minus operator stubs
+
+    /// Register `operator fun Char.minus(other: Char): Int` and
+    /// `operator fun Char.minus(n: Int): Char` synthetic stubs.
+    func registerCharMinusStubs(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let kotlinTextPkg = ensureKotlinTextPackageForCharStubs(symbols: symbols, interner: interner)
+        let functionName = interner.intern("minus")
+        let functionFQName = kotlinTextPkg + [functionName]
+        let charType = types.charType
+        let intType = types.intType
+
+        // --- Char.minus(other: Char): Int ---
+        let charMinusCharExists = symbols.lookupAll(fqName: functionFQName).contains { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+            return signature.receiverType == charType
+                && signature.parameterTypes == [charType]
+                && signature.returnType == intType
+        }
+        if !charMinusCharExists {
+            let functionSymbol = symbols.define(
+                kind: .function,
+                name: functionName,
+                fqName: functionFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .operatorFunction]
+            )
+            if let pkgSym = symbols.lookup(fqName: kotlinTextPkg) {
+                symbols.setParentSymbol(pkgSym, for: functionSymbol)
+            }
+            symbols.setExternalLinkName("kk_char_minus", for: functionSymbol)
+            let otherParamName = interner.intern("other")
+            let otherParamSym = symbols.define(
+                kind: .valueParameter,
+                name: otherParamName,
+                fqName: functionFQName + [otherParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: otherParamSym)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: charType,
+                    parameterTypes: [charType],
+                    returnType: intType,
+                    valueParameterSymbols: [otherParamSym],
+                    valueParameterHasDefaultValues: [false],
+                    valueParameterIsVararg: [false]
+                ),
+                for: functionSymbol
+            )
+        }
+
+        // --- Char.minus(n: Int): Char ---
+        let charMinusIntExists = symbols.lookupAll(fqName: functionFQName).contains { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+            return signature.receiverType == charType
+                && signature.parameterTypes == [intType]
+                && signature.returnType == charType
+        }
+        if !charMinusIntExists {
+            let functionSymbol = symbols.define(
+                kind: .function,
+                name: functionName,
+                fqName: functionFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .operatorFunction]
+            )
+            if let pkgSym = symbols.lookup(fqName: kotlinTextPkg) {
+                symbols.setParentSymbol(pkgSym, for: functionSymbol)
+            }
+            symbols.setExternalLinkName("kk_char_minus_int", for: functionSymbol)
+            let nParamName = interner.intern("n")
+            let nParamSym = symbols.define(
+                kind: .valueParameter,
+                name: nParamName,
+                fqName: functionFQName + [nParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: nParamSym)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: charType,
+                    parameterTypes: [intType],
+                    returnType: charType,
+                    valueParameterSymbols: [nParamSym],
+                    valueParameterHasDefaultValues: [false],
+                    valueParameterIsVararg: [false]
+                ),
+                for: functionSymbol
+            )
+        }
     }
 
     private func ensureSyntheticCharDirectionalityEnum(
