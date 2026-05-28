@@ -25,6 +25,10 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerSyntheticCInteropInternalAnnotations(
+            symbols: symbols,
+            interner: interner
+        )
         registerSyntheticNativeVector128Stubs(
             symbols: symbols,
             types: types,
@@ -2160,6 +2164,221 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        // inline fun <reified T : CPointed> CPointer<*>.reinterpret(): CPointer<T>
+        let reinterpretStarReceiverType = types.make(.classType(ClassType(
+            classSymbol: cPointerSymbol,
+            args: [.star],
+            nullability: .nonNull
+        )))
+        let reinterpretFunctionName = interner.intern("reinterpret")
+        let reinterpretFunctionFQName = cinteropPkg + [reinterpretFunctionName]
+        let reinterpretTypeParameterName = interner.intern("T")
+        let reinterpretTypeParameterFQName = reinterpretFunctionFQName + [reinterpretTypeParameterName]
+        let reinterpretTypeParameterSymbol: SymbolID = if let existing = symbols.lookup(
+            fqName: reinterpretTypeParameterFQName
+        ) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: reinterpretTypeParameterName,
+                fqName: reinterpretTypeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic, .reifiedTypeParameter]
+            )
+        }
+        symbols.insertFlags([.synthetic, .reifiedTypeParameter], for: reinterpretTypeParameterSymbol)
+        symbols.setTypeParameterUpperBounds([cPointedType], for: reinterpretTypeParameterSymbol)
+        let reinterpretTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: reinterpretTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let reinterpretReturnType = types.make(.classType(ClassType(
+            classSymbol: cPointerSymbol,
+            args: [.invariant(reinterpretTypeParameterType)],
+            nullability: .nonNull
+        )))
+        registerSyntheticNativeTopLevelFunction(
+            named: "reinterpret",
+            packageFQName: cinteropPkg,
+            receiverType: reinterpretStarReceiverType,
+            parameters: [],
+            returnType: reinterpretReturnType,
+            typeParameterSymbols: [reinterpretTypeParameterSymbol],
+            typeParameterUpperBoundsList: [[cPointedType]],
+            reifiedTypeParameterIndices: [0],
+            flags: [.synthetic, .inlineFunction],
+            symbols: symbols,
+            interner: interner
+        )
+        // inline fun <reified T : Any> unwrapKotlinObjectHolder(holder: COpaquePointer?): T
+        let unwrapHolderFunctionName = interner.intern("unwrapKotlinObjectHolder")
+        let unwrapHolderFunctionFQName = cinteropPkg + [unwrapHolderFunctionName]
+        let unwrapHolderTypeParameterName = interner.intern("T")
+        let unwrapHolderTypeParameterFQName = unwrapHolderFunctionFQName + [unwrapHolderTypeParameterName]
+        let unwrapHolderTypeParameterSymbol: SymbolID = if let existing = symbols.lookup(
+            fqName: unwrapHolderTypeParameterFQName
+        ) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: unwrapHolderTypeParameterName,
+                fqName: unwrapHolderTypeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic, .reifiedTypeParameter]
+            )
+        }
+        symbols.insertFlags([.synthetic, .reifiedTypeParameter], for: unwrapHolderTypeParameterSymbol)
+        symbols.setTypeParameterUpperBounds([types.anyType], for: unwrapHolderTypeParameterSymbol)
+        let unwrapHolderTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: unwrapHolderTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let unwrapHolderHolderType: TypeID = if let cOpaquePointerSymbol = symbols.lookup(fqName: cinteropPkg + [interner.intern("COpaquePointer")]) {
+            types.make(.classType(ClassType(
+                classSymbol: cOpaquePointerSymbol,
+                args: [],
+                nullability: .nullable
+            )))
+        } else {
+            types.make(.classType(ClassType(
+                classSymbol: cPointerSymbol,
+                args: [.star],
+                nullability: .nullable
+            )))
+        }
+        registerSyntheticNativeTopLevelFunction(
+            named: "unwrapKotlinObjectHolder",
+            packageFQName: cinteropPkg,
+            receiverType: nil,
+            parameters: [(name: "holder", type: unwrapHolderHolderType)],
+            returnType: unwrapHolderTypeParameterType,
+            typeParameterSymbols: [unwrapHolderTypeParameterSymbol],
+            typeParameterUpperBoundsList: [[types.anyType]],
+            reifiedTypeParameterIndices: [0],
+            flags: [.synthetic, .inlineFunction],
+            symbols: symbols,
+            interner: interner
+        )
+        // inline fun <T : CVariable, R> CValue<T>.useContents(block: T.() -> R): R
+        let useContentsFunctionName = interner.intern("useContents")
+        let useContentsFunctionFQName = cinteropPkg + [useContentsFunctionName]
+        let useContentsTTypeParameterName = interner.intern("T")
+        let useContentsTTypeParameterFQName = useContentsFunctionFQName + [useContentsTTypeParameterName]
+        let useContentsTTypeParameterSymbol: SymbolID = if let existing = symbols.lookup(
+            fqName: useContentsTTypeParameterFQName
+        ) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: useContentsTTypeParameterName,
+                fqName: useContentsTTypeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+        }
+        symbols.insertFlags([.synthetic], for: useContentsTTypeParameterSymbol)
+        symbols.setTypeParameterUpperBounds([cVariableType], for: useContentsTTypeParameterSymbol)
+        let useContentsTTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: useContentsTTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let useContentsRTypeParameterName = interner.intern("R")
+        let useContentsRTypeParameterFQName = useContentsFunctionFQName + [useContentsRTypeParameterName]
+        let useContentsRTypeParameterSymbol: SymbolID = if let existing = symbols.lookup(
+            fqName: useContentsRTypeParameterFQName
+        ) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: useContentsRTypeParameterName,
+                fqName: useContentsRTypeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+        }
+        symbols.insertFlags([.synthetic], for: useContentsRTypeParameterSymbol)
+        symbols.setTypeParameterUpperBounds([types.anyType], for: useContentsRTypeParameterSymbol)
+        let useContentsRTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: useContentsRTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let useContentsCValueReceiverType = types.make(.classType(ClassType(
+            classSymbol: cValueSymbol,
+            args: [.invariant(useContentsTTypeParameterType)],
+            nullability: .nonNull
+        )))
+        let useContentsBlockType = types.make(.functionType(FunctionType(
+            receiver: useContentsTTypeParameterType,
+            params: [],
+            returnType: useContentsRTypeParameterType
+        )))
+        registerSyntheticNativeTopLevelFunction(
+            named: "useContents",
+            packageFQName: cinteropPkg,
+            receiverType: useContentsCValueReceiverType,
+            parameters: [(name: "block", type: useContentsBlockType)],
+            returnType: useContentsRTypeParameterType,
+            typeParameterSymbols: [useContentsTTypeParameterSymbol, useContentsRTypeParameterSymbol],
+            typeParameterUpperBoundsList: [[cVariableType], [types.anyType]],
+            flags: [.synthetic, .inlineFunction],
+            symbols: symbols,
+            interner: interner
+        )
+        // inline fun <reified T : CVariable> zeroValue(size: Int, align: Int): CValue<T>
+        let zeroValue2ArgFunctionName = interner.intern("zeroValue")
+        let zeroValue2ArgFunctionFQName = cinteropPkg + [zeroValue2ArgFunctionName]
+        let zeroValue2ArgTypeParameterName = interner.intern("T")
+        let zeroValue2ArgTypeParameterDiscriminator = interner.intern("T$sizeAlign")
+        let zeroValue2ArgTypeParameterFQName = zeroValue2ArgFunctionFQName + [zeroValue2ArgTypeParameterDiscriminator]
+        let zeroValue2ArgTypeParameterSymbol: SymbolID = if let existing = symbols.lookup(
+            fqName: zeroValue2ArgTypeParameterFQName
+        ) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: zeroValue2ArgTypeParameterName,
+                fqName: zeroValue2ArgTypeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic, .reifiedTypeParameter]
+            )
+        }
+        symbols.insertFlags([.synthetic, .reifiedTypeParameter], for: zeroValue2ArgTypeParameterSymbol)
+        symbols.setTypeParameterUpperBounds([cVariableType], for: zeroValue2ArgTypeParameterSymbol)
+        let zeroValue2ArgTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: zeroValue2ArgTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let zeroValue2ArgReturnType = types.make(.classType(ClassType(
+            classSymbol: cValueSymbol,
+            args: [.invariant(zeroValue2ArgTypeParameterType)],
+            nullability: .nonNull
+        )))
+        registerSyntheticNativeTopLevelFunction(
+            named: "zeroValue",
+            packageFQName: cinteropPkg,
+            receiverType: nil,
+            parameters: [
+                (name: "size", type: types.intType),
+                (name: "align", type: types.intType),
+            ],
+            returnType: zeroValue2ArgReturnType,
+            typeParameterSymbols: [zeroValue2ArgTypeParameterSymbol],
+            typeParameterUpperBoundsList: [[cVariableType]],
+            reifiedTypeParameterIndices: [0],
+            flags: [.synthetic, .inlineFunction],
+            symbols: symbols,
+            interner: interner
+        )
         configureSingleTypeParameterNominal(
             ownerSymbol: cPointerVarOfSymbol,
             fqName: cinteropPkg + [interner.intern("CPointerVarOf")],
@@ -3548,6 +3767,52 @@ extension DataFlowSemaPhase {
         if didAppend {
             symbols.setAnnotations(annotations, for: symbol)
         }
+    }
+
+    private func registerSyntheticCInteropInternalAnnotations(
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let cinteropInternalPkg = ensurePackage(
+            path: ["kotlinx", "cinterop", "internal"],
+            symbols: symbols,
+            interner: interner
+        )
+        let cinteropInternalPkgSymbol = symbols.lookup(fqName: cinteropInternalPkg)
+
+        // STDLIB-CINTEROP-INTERNAL-TYPE-001: CCall — marks a Kotlin/Native function as a C call
+        let cCallSymbol = ensureAnnotationClassSymbol(
+            named: "CCall",
+            in: cinteropInternalPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let cinteropInternalPkgSymbol {
+            symbols.setParentSymbol(cinteropInternalPkgSymbol, for: cCallSymbol)
+        }
+        appendStandardAnnotationMetadata(
+            to: cCallSymbol,
+            targets: ["AnnotationTarget.FUNCTION"],
+            retention: "AnnotationRetention.BINARY",
+            symbols: symbols
+        )
+
+        // STDLIB-CINTEROP-INTERNAL-TYPE-002: CEnumEntryAlias — marks an enum entry alias property
+        let cEnumEntryAliasSymbol = ensureAnnotationClassSymbol(
+            named: "CEnumEntryAlias",
+            in: cinteropInternalPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let cinteropInternalPkgSymbol {
+            symbols.setParentSymbol(cinteropInternalPkgSymbol, for: cEnumEntryAliasSymbol)
+        }
+        appendStandardAnnotationMetadata(
+            to: cEnumEntryAliasSymbol,
+            targets: ["AnnotationTarget.PROPERTY"],
+            retention: "AnnotationRetention.BINARY",
+            symbols: symbols
+        )
     }
 
     private func syntheticClassType(
