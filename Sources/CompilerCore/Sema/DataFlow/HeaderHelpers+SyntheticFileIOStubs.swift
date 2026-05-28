@@ -255,6 +255,36 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // MARK: - File.resolveSibling (STDLIB-IO-FN-036)
+        //
+        // Two overloads matching kotlin.io.File:
+        //   fun File.resolveSibling(relative: File): File
+        //   fun File.resolveSibling(relative: String): File
+        // Both replace the last path component of the receiver with `relative`,
+        // mirroring kotlin.io.File.resolveSibling semantics.
+
+        registerFileMemberFunction(
+            named: "resolveSibling",
+            externalLinkName: "kk_file_resolveSibling_file",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [("relative", fileType)],
+            returnType: fileType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "resolveSibling",
+            externalLinkName: "kk_file_resolveSibling_string",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [("relative", types.stringType)],
+            returnType: fileType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // MARK: - File.startsWith (STDLIB-IO-FN-037)
         //
         // Two overloads matching kotlin.io.File:

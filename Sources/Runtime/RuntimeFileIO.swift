@@ -526,6 +526,56 @@ public func kk_file_canExecute(_ fileRaw: Int) -> Int {
     return kk_box_bool(FileManager.default.isExecutableFile(atPath: file.path) ? 1 : 0)
 }
 
+// MARK: - STDLIB-IO-FN-036: File.resolveSibling
+
+/// Returns a new File whose path is formed by replacing the last component of
+/// the receiver's path with `sibling`. Mirrors kotlin.io.File.resolveSibling:
+///   - If the receiver has no parent (e.g. a bare file name like "foo.txt"), the
+///     result is just `File(sibling)`.
+///   - Otherwise the result is `File(parentDirectory + "/" + sibling)`.
+private func fileResolveSiblingPath(base: String, sibling: String) -> String {
+    // Trim trailing slashes so that "/a/b/" behaves like "/a/b"
+    let trimmed = base.hasSuffix("/") && base.count > 1
+        ? String(base.dropLast(1))
+        : base
+    guard let slashIndex = trimmed.lastIndex(of: "/") else {
+        // No parent component (bare filename like "foo.txt") — return the sibling directly
+        return sibling
+    }
+    // Build the parent prefix: everything up to but not including the last "/"
+    let parent = String(trimmed[..<slashIndex])
+    if parent.isEmpty {
+        // Receiver is at root level (e.g. "/foo") — parent is "/"
+        return "/" + sibling
+    }
+    return parent + "/" + sibling
+}
+
+@_cdecl("kk_file_resolveSibling_file")
+public func kk_file_resolveSibling_file(_ fileRaw: Int, _ relativeRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_resolveSibling_file received invalid File handle")
+    }
+    guard let relative = runtimeFileBox(from: relativeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_resolveSibling_file received invalid relative File handle")
+    }
+    let resultPath = fileResolveSiblingPath(base: file.path, sibling: relative.path)
+    return registerRuntimeObject(RuntimeFileBox(resultPath))
+}
+
+@_cdecl("kk_file_resolveSibling_string")
+public func kk_file_resolveSibling_string(_ fileRaw: Int, _ relativeRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_resolveSibling_string received invalid File handle")
+    }
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: relativeRaw),
+          let relativeString = extractString(from: ptr) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_resolveSibling_string received invalid relative string")
+    }
+    let resultPath = fileResolveSiblingPath(base: file.path, sibling: relativeString)
+    return registerRuntimeObject(RuntimeFileBox(resultPath))
+}
+
 // MARK: - STDLIB-IO-FN-037: File.startsWith
 
 /// Split a path string into name components, dropping empty separators.
