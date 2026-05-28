@@ -1270,6 +1270,49 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // MARK: - ByteArray.inputStream() and ByteArray.inputStream(offset, length) (STDLIB-IO-FN-020 / STDLIB-IO-FN-021)
+        //
+        // Kotlin stdlib declares two overloads in kotlin.io:
+        //   fun ByteArray.inputStream(): ByteArrayInputStream
+        //   fun ByteArray.inputStream(offset: Int, length: Int): ByteArrayInputStream
+        //
+        // We register both on the ByteArray class symbol so that extension-receiver
+        // resolution succeeds for both `bytes.inputStream()` and
+        // `bytes.inputStream(offset, length)`.
+        let byteArrayFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("ByteArray")]
+        if let byteArraySymbol = symbols.lookup(fqName: byteArrayFQName) {
+            let byteArrayType = types.make(.classType(ClassType(
+                classSymbol: byteArraySymbol, args: [], nullability: .nonNull
+            )))
+
+            // STDLIB-IO-FN-020: ByteArray.inputStream() -> ByteArrayInputStream
+            registerSyntheticStringExtensionFunction(
+                named: "inputStream",
+                externalLinkName: "kk_bytearray_inputStream",
+                receiverType: byteArrayType,
+                parameters: [],
+                returnType: byteArrayInputStreamType,
+                packageFQName: kotlinIOPkg,
+                symbols: symbols,
+                interner: interner
+            )
+
+            // STDLIB-IO-FN-021: ByteArray.inputStream(offset: Int, length: Int) -> ByteArrayInputStream
+            registerSyntheticStringExtensionFunction(
+                named: "inputStream",
+                externalLinkName: "kk_bytearray_inputStream_range",
+                receiverType: byteArrayType,
+                parameters: [
+                    ("offset", types.intType, false, false),
+                    ("length", types.intType, false, false),
+                ],
+                returnType: byteArrayInputStreamType,
+                packageFQName: kotlinIOPkg,
+                symbols: symbols,
+                interner: interner
+            )
+        }
     }
 
     // MARK: - Private Helpers

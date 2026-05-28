@@ -320,6 +320,28 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "FileIO"
         ),
+        // STDLIB-IO-FN-020: ByteArray.inputStream()
+        RuntimeABIFunctionSpec(
+            name: "kk_bytearray_inputStream",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        // STDLIB-IO-FN-021: ByteArray.inputStream(offset: Int, length: Int)
+        RuntimeABIFunctionSpec(
+            name: "kk_bytearray_inputStream_range",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+                RuntimeABIParameter(name: "offsetRaw", type: .intptr),
+                RuntimeABIParameter(name: "lengthRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
         // STDLIB-IO-FN-011: String.byteInputStream()
         RuntimeABIFunctionSpec(
             name: "kk_string_byteInputStream",

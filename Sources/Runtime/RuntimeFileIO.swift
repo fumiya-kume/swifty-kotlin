@@ -1054,6 +1054,45 @@ public func kk_bytearrayinputstream_new(_ bufferRaw: Int, _ outThrown: UnsafeMut
     return registerRuntimeObject(RuntimeInputStreamBox(data: Data(bytes)))
 }
 
+// STDLIB-IO-FN-020: ByteArray.inputStream() — wraps the entire byte array as a
+// ByteArrayInputStream. Mirrors the Kotlin stdlib `public fun ByteArray.inputStream()`.
+@_cdecl("kk_bytearray_inputStream")
+public func kk_bytearray_inputStream(_ arrayRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let bytes = runtimeByteArrayBytes(from: arrayRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: expected ByteArray handle")
+        return 0
+    }
+    return registerRuntimeObject(RuntimeInputStreamBox(data: Data(bytes)))
+}
+
+// STDLIB-IO-FN-021: ByteArray.inputStream(offset: Int, length: Int) — wraps a
+// subrange of the byte array as a ByteArrayInputStream. Mirrors the Kotlin stdlib
+// `public fun ByteArray.inputStream(offset: Int, length: Int)`.
+@_cdecl("kk_bytearray_inputStream_range")
+public func kk_bytearray_inputStream_range(
+    _ arrayRaw: Int,
+    _ offsetRaw: Int,
+    _ lengthRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let bytes = runtimeByteArrayBytes(from: arrayRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: expected ByteArray handle")
+        return 0
+    }
+    let offset = offsetRaw
+    let length = lengthRaw
+    guard offset >= 0, length >= 0, offset + length <= bytes.count else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IndexOutOfBoundsException: offset=\(offset) length=\(length) size=\(bytes.count)"
+        )
+        return 0
+    }
+    let slice = Array(bytes[offset ..< offset + length])
+    return registerRuntimeObject(RuntimeInputStreamBox(data: Data(slice)))
+}
+
 // STDLIB-IO-FN-011: String.byteInputStream() — encodes the receiver as UTF-8 and
 // returns a ByteArrayInputStream over the resulting bytes. Default charset overload
 // mirrors `String.toByteArray()` semantics for behavioral consistency.
