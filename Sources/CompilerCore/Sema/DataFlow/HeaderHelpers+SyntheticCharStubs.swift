@@ -116,6 +116,11 @@ private let syntheticCharMemberSpecs: [SyntheticCharMemberSpec] = [
         returnKind: .boolean
     ),
     SyntheticCharMemberSpec(
+        name: "isJavaIdentifierPart",
+        externalLinkName: "kk_char_isJavaIdentifierPart",
+        returnKind: .boolean
+    ),
+    SyntheticCharMemberSpec(
         name: "isJavaIdentifierStart",
         externalLinkName: "kk_char_isJavaIdentifierStart",
         returnKind: .boolean

@@ -343,6 +343,9 @@ public extension RuntimeABISpec {
         abiParitySpec("kk_char_isIdentifierIgnorable", parameters: [
             p("value", .intptr),
         ]),
+        abiParitySpec("kk_char_isJavaIdentifierPart", parameters: [
+            p("value", .intptr),
+        ]),
         abiParitySpec("kk_char_isJavaIdentifierStart", parameters: [
             p("value", .intptr),
         ]),
