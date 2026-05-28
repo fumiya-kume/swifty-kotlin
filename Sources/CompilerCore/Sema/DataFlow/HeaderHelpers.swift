@@ -1084,6 +1084,7 @@ extension DataFlowSemaPhase {
         registerSyntheticStreamToListStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticNativeSetterStubs(symbols: symbols, interner: interner)
         registerSyntheticConcurrencyStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticScheduleAtFixedRateStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCoroutineCancellationStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCoroutineIntrinsicsStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticReadWriteLockStubs(symbols: symbols, types: types, interner: interner)
