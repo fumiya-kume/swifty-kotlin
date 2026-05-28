@@ -1277,6 +1277,56 @@ public func kk_path_getLastModifiedTime(_ pathRaw: Int, _ optionsRaw: Int, _ out
     }
 }
 
+// MARK: - STDLIB-IO-PATH-FN-020: Path.forEachLine
+
+/// Path.forEachLine(action: (String) -> Unit)
+///
+/// Reads the file at this path and invokes `action` for each line, using the
+/// default UTF-8 charset. The line-splitting behaviour mirrors Kotlin stdlib:
+/// an empty file produces no invocations, and a trailing newline does not
+/// produce a final empty line.
+@_cdecl("kk_path_forEachLine_default")
+public func kk_path_forEachLine_default(
+    _ pathRaw: Int,
+    _ actionRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    kk_path_forEachLine(pathRaw, 0, actionRaw, outThrown)
+}
+
+/// Path.forEachLine(charset: Charset = Charsets.UTF_8, action: (String) -> Unit)
+///
+/// Reads the file at this path and invokes `action` for each line.
+/// `charsetRaw` == 0 selects the default UTF-8 encoding.
+@_cdecl("kk_path_forEachLine")
+public func kk_path_forEachLine(
+    _ pathRaw: Int,
+    _ charsetRaw: Int,
+    _ actionRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_forEachLine received invalid Path handle")
+    }
+    let encoding = pathStringEncoding(for: charsetRaw)
+    guard let content = try? String(contentsOfFile: path.pathString, encoding: encoding) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: Cannot read file \(path.pathString)")
+        return 0
+    }
+    let lines = pathSplitLines(content)
+    for line in lines {
+        let lineRaw = pathMakeStringRaw(line)
+        var thrown = 0
+        _ = kk_function_invoke(actionRaw, lineRaw, &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return 0
+        }
+    }
+    return 0
+}
+
 @_cdecl("kk_path_appendLines_sequence_default")
 public func kk_path_appendLines_sequence_default(_ pathRaw: Int, _ linesRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     kk_path_appendLines_sequence(pathRaw, linesRaw, 0, outThrown)

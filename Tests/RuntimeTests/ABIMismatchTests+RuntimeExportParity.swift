@@ -122,8 +122,7 @@ extension ABIMismatchTests {
             "kk_path_forEachDirectoryEntry",
             "kk_path_forEachDirectoryEntry_default",
             "kk_path_fileAttributesView",
-            "kk_path_forEachLine",
-            "kk_path_forEachLine_default",
+
             "kk_path_getAttribute",
             "kk_path_getOwner",
             "kk_path_getPosixFilePermissions",

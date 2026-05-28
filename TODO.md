@@ -148,7 +148,7 @@
 - [x] STDLIB-IO-PATH-FN-013: `createTempFile` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-018: `fileVisitor` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-019: `forEachDirectoryEntry` 関数の実装
-- [ ] STDLIB-IO-PATH-FN-020: `forEachLine` 関数の実装
+- [x] STDLIB-IO-PATH-FN-020: `forEachLine` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-021: `getAttribute` 関数の実装
 - [x] STDLIB-IO-PATH-FN-022: `getLastModifiedTime` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-023: `getOwner` 関数の実装
