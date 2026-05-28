@@ -357,6 +357,8 @@
 - [x] STDLIB-TEXT-FN-027: `isBlank` 関数の実装
 - [ ] STDLIB-TEXT-FN-028: `isEmpty` 関数の実装
 - [ ] STDLIB-TEXT-FN-029: `isNotBlank` 関数の実装
+- [ ] STDLIB-TEXT-FN-028: `isEmpty` 関数の実装
+- [x] STDLIB-TEXT-FN-029: `isNotBlank` 関数の実装
 - [ ] STDLIB-TEXT-FN-030: `isNotEmpty` 関数の実装
 - [ ] STDLIB-TEXT-FN-031: `isNullOrEmpty` 関数の実装
 - [x] STDLIB-TEXT-FN-032: `isNullOrBlank` 関数の実装
