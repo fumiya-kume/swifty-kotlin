@@ -737,6 +737,40 @@ public func kk_string_contains_str(_ strRaw: Int, _ otherRaw: Int) -> Int {
     return kk_box_bool(source.contains(other) ? 1 : 0)
 }
 
+// STDLIB-TEXT-FN-010: CharSequence.codePointCount(beginIndex, endIndex)
+@_cdecl("kk_string_codePointCount")
+public func kk_string_codePointCount(_ strRaw: Int, _ beginIndex: Int, _ endIndex: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let utf16 = source.utf16
+    let length = utf16.count
+    guard beginIndex >= 0, endIndex >= beginIndex, endIndex <= length else {
+        fatalError(
+            "StringIndexOutOfBoundsException: beginIndex=\(beginIndex), endIndex=\(endIndex), length=\(length)"
+        )
+    }
+    let start = utf16.index(utf16.startIndex, offsetBy: beginIndex)
+    let end = utf16.index(utf16.startIndex, offsetBy: endIndex)
+    var count = 0
+    var i = start
+    while i < end {
+        let unit = utf16[i]
+        if unit >= 0xD800 && unit <= 0xDBFF {
+            let next = utf16.index(after: i)
+            if next < end {
+                let nextUnit = utf16[next]
+                if nextUnit >= 0xDC00 && nextUnit <= 0xDFFF {
+                    count += 1
+                    i = utf16.index(after: next)
+                    continue
+                }
+            }
+        }
+        count += 1
+        i = utf16.index(after: i)
+    }
+    return count
+}
+
 @_cdecl("kk_string_toInt")
 public func kk_string_toInt(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0

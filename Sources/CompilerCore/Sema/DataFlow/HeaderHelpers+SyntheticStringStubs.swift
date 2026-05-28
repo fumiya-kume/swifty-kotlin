@@ -457,6 +457,20 @@ extension DataFlowSemaPhase {
         )
 
         registerSyntheticStringExtensionFunction(
+            named: "codePointCount",
+            externalLinkName: "kk_string_codePointCount",
+            receiverType: charSequenceType,
+            parameters: [
+                ("beginIndex", intType, false, false),
+                ("endIndex", intType, false, false),
+            ],
+            returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
             named: "toInt",
             externalLinkName: "kk_string_toInt",
             receiverType: stringType,

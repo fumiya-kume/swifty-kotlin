@@ -108,7 +108,8 @@ final class ABIMismatchTests: XCTestCase {
     func testStringFunctionCount() {
         // Keep this in sync with RuntimeABISpec.stringFunctions entries.
         // STDLIB-TEXT-FN-068: +2 for kk_string_slice and kk_string_slice_iterable.
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 206)
+        // STDLIB-TEXT-FN-010: +1 for kk_string_codePointCount.
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 207)
     }
 
     func testRegexFunctionCount() {
