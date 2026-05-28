@@ -344,6 +344,20 @@ extension CallTypeChecker {
                     return resultType
                 }
             }
+            // STDLIB-TEXT-FN-087: `String?.toBoolean()` accepts nullable receivers
+            // directly per Kotlin spec (`null.toBoolean()` returns false). Mirror the
+            // isNullOrBlank handling above so non-null receivers also match without a
+            // safe-call.
+            if !isNullLiteralReceiver,
+               calleeStr == "toBoolean"
+            {
+                let baseType = sema.types.makeNonNullable(lookupReceiverType)
+                if sema.types.isSubtype(baseType, sema.types.stringType) {
+                    let resultType = sema.types.booleanType
+                    sema.bindings.bindExprType(id, type: resultType)
+                    return resultType
+                }
+            }
         }
         // String stdlib: 0-arg methods (STDLIB-006)
         let listCharType = makeSyntheticListType(
