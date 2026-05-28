@@ -68,6 +68,29 @@ final class NativeCInteropCValueSurfaceTests: XCTestCase {
             $0.parameterTypes.isEmpty && $0.returnType == cValueType
         })
         XCTAssertEqual(constructorSignature.valueParameterHasDefaultValues, [])
+
+        let cValuesRefSymbol = try cinteropSymbol("CValuesRef")
+        let cValuesRefOfTNullableType = sema.types.make(.classType(ClassType(
+            classSymbol: cValuesRefSymbol,
+            args: [.invariant(typeParameterType)],
+            nullability: .nullable
+        )))
+        let writeSymbol = try XCTUnwrap(
+            sema.symbols.lookupAll(fqName: fqName + [interner.intern("write")])
+                .first { symbolID in
+                    guard let signature = sema.symbols.functionSignature(for: symbolID) else {
+                        return false
+                    }
+                    return signature.receiverType == cValueType
+                        && signature.parameterTypes == [cValuesRefOfTNullableType]
+                        && signature.returnType == sema.types.unitType
+                },
+            "CValue.write(location: CValuesRef<T>?) must be registered"
+        )
+        let writeSignature = try XCTUnwrap(sema.symbols.functionSignature(for: writeSymbol))
+        XCTAssertEqual(writeSignature.typeParameterSymbols, [typeParameter])
+        XCTAssertEqual(writeSignature.typeParameterUpperBoundsList, [[cVariableType]])
+        XCTAssertEqual(writeSignature.classTypeParameterCount, 1)
     }
 
     func testCValueResolvesInSource() throws {
@@ -85,6 +108,24 @@ final class NativeCInteropCValueSurfaceTests: XCTestCase {
         XCTAssertFalse(
             ctx.diagnostics.hasError,
             "Expected CValue to resolve, got: \(ctx.diagnostics.diagnostics)"
+        )
+    }
+
+    func testCValueWriteResolvesInSource() throws {
+        let ctx = makeContextFromSource("""
+        import kotlinx.cinterop.CValue
+        import kotlinx.cinterop.CValuesRef
+        import kotlinx.cinterop.CVariable
+
+        fun <T : CVariable> writeValue(value: CValue<T>, location: CValuesRef<T>?) {
+            value.write(location)
+        }
+        """)
+        try runSema(ctx)
+
+        XCTAssertFalse(
+            ctx.diagnostics.hasError,
+            "Expected CValue.write(location) to resolve, got: \(ctx.diagnostics.diagnostics)"
         )
     }
 }
