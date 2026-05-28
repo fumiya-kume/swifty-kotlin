@@ -1005,6 +1005,33 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // STDLIB-IO-FN-013: InputStream.copyTo(out, bufferSize) -> Long
+        //
+        // Kotlin signature:
+        //   public fun InputStream.copyTo(
+        //       out: OutputStream,
+        //       bufferSize: Int = DEFAULT_BUFFER_SIZE
+        //   ): Long
+        //
+        // Registered as a kotlin.io extension function on InputStream.
+        // Two overloads: one with an explicit bufferSize and one that
+        // relies on the default (DEFAULT_BUFFER_SIZE = 8 * 1024).
+        registerKotlinIOExtensionFunction(
+            named: "copyTo",
+            packageFQName: kotlinIOPkg,
+            receiverType: inputStreamType,
+            parameters: [
+                ("out", outputStreamType),
+                ("bufferSize", types.intType),
+            ],
+            returnType: types.longType,
+            externalLinkName: "kk_input_stream_copyTo",
+            valueParameterHasDefaultValues: [false, true],
+            valueParameterIsVararg: [false, false],
+            symbols: symbols,
+            interner: interner
+        )
+
         registerFileMemberFunction(
             named: "read",
             externalLinkName: "kk_sequence_input_stream_read",

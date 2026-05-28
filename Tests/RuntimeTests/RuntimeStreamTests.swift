@@ -53,6 +53,57 @@ final class RuntimeStreamTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(contents, "ABC")
     }
 
+    // STDLIB-IO-FN-013: InputStream.copyTo(out, bufferSize) -> Long
+    func testInputStreamCopyToTransfersBytesAndReturnsCount() throws {
+        let sourceURL = try makeTempFile(contents: "hello")
+        let destURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer {
+            try? FileManager.default.removeItem(at: sourceURL)
+            try? FileManager.default.removeItem(at: destURL)
+        }
+        // Create the destination file so outputStream can open it.
+        FileManager.default.createFile(atPath: destURL.path, contents: nil)
+
+        let srcFileRaw = runtimeTestFileHandle(sourceURL.path)
+        let dstFileRaw = runtimeTestFileHandle(destURL.path)
+        var thrown = 0
+        let inputStreamRaw = kk_file_inputStream(srcFileRaw, &thrown)
+        XCTAssertEqual(thrown, 0)
+        let outputStreamRaw = kk_file_outputStream(dstFileRaw, &thrown)
+        XCTAssertEqual(thrown, 0)
+
+        let bufferSizeRaw = kk_box_int(1024)
+        let resultRaw = kk_input_stream_copyTo(inputStreamRaw, outputStreamRaw, bufferSizeRaw, &thrown)
+        XCTAssertEqual(thrown, 0)
+        let bytesCopied = kk_unbox_long(resultRaw)
+        XCTAssertEqual(bytesCopied, 5)
+
+        _ = kk_output_stream_flush(outputStreamRaw, &thrown)
+        _ = kk_output_stream_close(outputStreamRaw)
+        let contents = try String(contentsOf: destURL, encoding: .utf8)
+        XCTAssertEqual(contents, "hello")
+    }
+
+    func testInputStreamCopyToEmptyStreamReturnsZero() throws {
+        let sourceURL = try makeTempFile(contents: "")
+        let destURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer {
+            try? FileManager.default.removeItem(at: sourceURL)
+            try? FileManager.default.removeItem(at: destURL)
+        }
+        FileManager.default.createFile(atPath: destURL.path, contents: nil)
+
+        let srcFileRaw = runtimeTestFileHandle(sourceURL.path)
+        let dstFileRaw = runtimeTestFileHandle(destURL.path)
+        var thrown = 0
+        let inputStreamRaw = kk_file_inputStream(srcFileRaw, &thrown)
+        let outputStreamRaw = kk_file_outputStream(dstFileRaw, &thrown)
+        let bufferSizeRaw = kk_box_int(8192)
+        let resultRaw = kk_input_stream_copyTo(inputStreamRaw, outputStreamRaw, bufferSizeRaw, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_unbox_long(resultRaw), 0)
+    }
+
     private func makeTempFile(contents: String) throws -> URL {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try contents.write(to: url, atomically: true, encoding: .utf8)
