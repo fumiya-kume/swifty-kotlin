@@ -90,14 +90,7 @@ extension DataFlowSemaPhase {
             comparisonsPkg: comparisonsPkg,
             comparisonsPackageSymbol: comparisonsPackageSymbol
         )
-        registerSyntheticMinOfComparable3Stub(
-            symbols: symbols,
-            types: types,
-            interner: interner,
-            comparisonsPkg: comparisonsPkg,
-            comparisonsPackageSymbol: comparisonsPackageSymbol
-        )
-        registerSyntheticMinOfComparableVarargStub(
+        registerSyntheticMinOfComparableStubs(
             symbols: symbols,
             types: types,
             interner: interner,
@@ -270,7 +263,7 @@ extension DataFlowSemaPhase {
         )))
         let comparableUpperBounds: [TypeID] = [types.make(.classType(ClassType(
             classSymbol: comparableSymbol,
-            args: [.in(tParamType)],
+            args: [.invariant(tParamType)],
             nullability: .nonNull
         )))]
 
@@ -316,7 +309,7 @@ extension DataFlowSemaPhase {
         )
     }
 
-    private func registerSyntheticMinOfComparable3Stub(
+    private func registerSyntheticMinOfComparableStubs(
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,
@@ -346,10 +339,23 @@ extension DataFlowSemaPhase {
         )))
         let comparableUpperBounds: [TypeID] = [types.make(.classType(ClassType(
             classSymbol: comparableSymbol,
-            args: [.in(tParamType)],
+            args: [.invariant(tParamType)],
             nullability: .nonNull
         )))]
 
+        registerSyntheticComparisonFunction(
+            named: minOfName,
+            parameterTypes: [tParamType, tParamType],
+            returnType: tParamType,
+            parameterNames: ["a", "b"],
+            typeParameterSymbols: [tParamSymbol],
+            typeParameterUpperBoundsList: [comparableUpperBounds],
+            packageFQName: comparisonsPkg,
+            packageSymbol: comparisonsPackageSymbol,
+            types: types,
+            symbols: symbols,
+            interner: interner
+        )
         registerSyntheticComparisonFunction(
             named: minOfName,
             parameterTypes: [tParamType, tParamType, tParamType],
@@ -363,42 +369,6 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
-    }
-
-    private func registerSyntheticMinOfComparableVarargStub(
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner,
-        comparisonsPkg: [InternedString],
-        comparisonsPackageSymbol: SymbolID
-    ) {
-        guard let comparableSymbol = types.comparableInterfaceSymbol else {
-            return
-        }
-
-        let minOfName = "minOf"
-        let functionName = interner.intern(minOfName)
-        let functionFQName = comparisonsPkg + [functionName]
-        let tParamName = interner.intern("T")
-        let tParamFQName = functionFQName + [tParamName]
-        let tParamSymbol = symbols.lookup(fqName: tParamFQName) ?? symbols.define(
-            kind: .typeParameter,
-            name: tParamName,
-            fqName: tParamFQName,
-            declSite: nil,
-            visibility: .private,
-            flags: []
-        )
-        let tParamType = types.make(.typeParam(TypeParamType(
-            symbol: tParamSymbol,
-            nullability: .nonNull
-        )))
-        let comparableUpperBounds: [TypeID] = [types.make(.classType(ClassType(
-            classSymbol: comparableSymbol,
-            args: [.in(tParamType)],
-            nullability: .nonNull
-        )))]
-
         registerSyntheticComparisonFunction(
             named: minOfName,
             parameterTypes: [tParamType],
