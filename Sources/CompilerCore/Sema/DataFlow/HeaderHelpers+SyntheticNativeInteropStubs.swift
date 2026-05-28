@@ -3672,6 +3672,34 @@ extension DataFlowSemaPhase {
         )
     }
 
+    private func registerSyntheticCInteropInternalAnnotations(
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let cinteropInternalPkg = ensurePackage(
+            path: ["kotlinx", "cinterop", "internal"],
+            symbols: symbols,
+            interner: interner
+        )
+        let cinteropInternalPkgSymbol = symbols.lookup(fqName: cinteropInternalPkg)
+
+        let cCallSymbol = ensureAnnotationClassSymbol(
+            named: "CCall",
+            in: cinteropInternalPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let cinteropInternalPkgSymbol {
+            symbols.setParentSymbol(cinteropInternalPkgSymbol, for: cCallSymbol)
+        }
+        appendStandardAnnotationMetadata(
+            to: cCallSymbol,
+            targets: ["AnnotationTarget.FUNCTION"],
+            retention: "AnnotationRetention.BINARY",
+            symbols: symbols
+        )
+    }
+
     private func registerSyntheticCInteropVector128Stubs(
         cinteropPkg: [InternedString],
         cinteropPkgSymbol: SymbolID?,
