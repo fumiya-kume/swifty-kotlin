@@ -4289,6 +4289,24 @@ public func kk_string_findLast(
     return runtimeNullSentinelInt
 }
 
+// MARK: - STDLIB-TEXT-FN-039: CharSequence.onEach(action)
+
+@_cdecl("kk_string_onEach")
+public func kk_string_onEach(
+    _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard fnPtr != 0 else { return strRaw }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    for scalar in scalars {
+        var thrown = 0
+        _ = lambda(closureRaw, Int(scalar.value), &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return strRaw }
+    }
+    return strRaw
+}
+
 // MARK: - STDLIB-partition: String.partition(predicate)
 
 @_cdecl("kk_string_partition")

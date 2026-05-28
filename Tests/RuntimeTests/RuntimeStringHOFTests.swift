@@ -477,6 +477,74 @@ final class RuntimeStringHOFTests: XCTestCase {
         XCTAssertEqual(kk_bits_to_double(result), 0.0, accuracy: 0.000001)
     }
 
+    // MARK: - STDLIB-TEXT-FN-039: CharSequence.onEach(action)
+
+    func testOnEachRunsActionForEachChar() {
+        let source = registerRuntimeObject(RuntimeStringBox("abc"))
+        var collected: [UInt32] = []
+        let action: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, charRaw, _ in
+            // Use a side channel: push charRaw to collected via a global
+            RuntimeStringHOFTests._onEachCollector.append(UInt32(charRaw))
+            return 0
+        }
+        RuntimeStringHOFTests._onEachCollector = []
+        var thrown = 0
+        let result = kk_string_onEach(
+            source,
+            unsafeBitCast(action, to: Int.self),
+            0,
+            &thrown
+        )
+        collected = RuntimeStringHOFTests._onEachCollector
+        XCTAssertEqual(thrown, 0)
+        // onEach returns the original string unchanged
+        XCTAssertEqual(runtimeStringValue(result), "abc")
+        // action ran for each character in order
+        XCTAssertEqual(collected, [
+            Unicode.Scalar("a").value,
+            Unicode.Scalar("b").value,
+            Unicode.Scalar("c").value,
+        ])
+    }
+
+    func testOnEachReturnsOriginalStringUnchanged() {
+        let source = registerRuntimeObject(RuntimeStringBox("hello"))
+        let identity: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, _ in 0 }
+        var thrown = 0
+        let result = kk_string_onEach(
+            source,
+            unsafeBitCast(identity, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(runtimeStringValue(result), "hello")
+    }
+
+    func testOnEachEmptyStringDoesNotCallAction() {
+        let source = registerRuntimeObject(RuntimeStringBox(""))
+        let shouldNotRun: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, _ in
+            // If called, mark failure by returning a non-zero sentinel we detect
+            // via the global collector
+            RuntimeStringHOFTests._onEachCollector.append(99)
+            return 0
+        }
+        RuntimeStringHOFTests._onEachCollector = []
+        var thrown = 0
+        let result = kk_string_onEach(
+            source,
+            unsafeBitCast(shouldNotRun, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(runtimeStringValue(result), "")
+        XCTAssertTrue(RuntimeStringHOFTests._onEachCollector.isEmpty)
+    }
+
+    // Thread-unsafe side-channel used only from single-threaded tests above.
+    nonisolated(unsafe) private static var _onEachCollector: [UInt32] = []
+
     private func runtimeStringValue(_ raw: Int) -> String {
         extractString(from: UnsafeMutableRawPointer(bitPattern: raw)) ?? ""
     }
