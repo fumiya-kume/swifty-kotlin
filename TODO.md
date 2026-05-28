@@ -367,7 +367,7 @@
 - [x] STDLIB-TEXT-FN-037: `lines` 関数の実装
 - [x] STDLIB-TEXT-FN-038: `minus` 関数の実装
 - [x] STDLIB-TEXT-FN-039: `onEach` 関数の実装
-- [ ] STDLIB-TEXT-FN-040: `onEachIndexed` 関数の実装
+- [x] STDLIB-TEXT-FN-040: `onEachIndexed` 関数の実装
 - [x] STDLIB-TEXT-FN-041: `padEnd` 関数の実装
 - [x] STDLIB-TEXT-FN-042: `padStart` 関数の実装
 - [ ] STDLIB-TEXT-FN-043: `plus` 関数の実装

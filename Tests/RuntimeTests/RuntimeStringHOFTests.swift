@@ -614,8 +614,99 @@ final class RuntimeStringHOFTests: XCTestCase {
         XCTAssertTrue(RuntimeStringHOFTests._onEachCollector.isEmpty)
     }
 
+    // MARK: - STDLIB-TEXT-FN-040: String.onEachIndexed
+
+    func testOnEachIndexedVisitsAllCharsWithCorrectIndices() {
+        let source = registerRuntimeObject(RuntimeStringBox("abc"))
+        let action: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, charRaw, _ in
+            RuntimeStringHOFTests._onEachIndexedCollector.append((index, UInt32(charRaw)))
+            return 0
+        }
+        RuntimeStringHOFTests._onEachIndexedCollector = []
+        var thrown = 0
+
+        let result = kk_string_onEachIndexed(
+            source,
+            unsafeBitCast(action, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(runtimeStringValue(result), "abc")
+        XCTAssertEqual(RuntimeStringHOFTests._onEachIndexedCollector.map(\.0), [0, 1, 2])
+        XCTAssertEqual(RuntimeStringHOFTests._onEachIndexedCollector.map(\.1), [
+            Unicode.Scalar("a").value,
+            Unicode.Scalar("b").value,
+            Unicode.Scalar("c").value,
+        ])
+    }
+
+    func testOnEachIndexedReturnsOriginalStringUnchanged() {
+        let source = registerRuntimeObject(RuntimeStringBox("hello"))
+        let action: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, _, _ in 0 }
+        var thrown = 0
+
+        let result = kk_string_onEachIndexed(
+            source,
+            unsafeBitCast(action, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(runtimeStringValue(result), "hello")
+    }
+
+    func testOnEachIndexedEmptyStringDoesNotCallAction() {
+        let source = registerRuntimeObject(RuntimeStringBox(""))
+        let shouldNotRun: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, charRaw, _ in
+            RuntimeStringHOFTests._onEachIndexedCollector.append((index, UInt32(charRaw)))
+            return 0
+        }
+        RuntimeStringHOFTests._onEachIndexedCollector = []
+        var thrown = 0
+
+        let result = kk_string_onEachIndexed(
+            source,
+            unsafeBitCast(shouldNotRun, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(runtimeStringValue(result), "")
+        XCTAssertTrue(RuntimeStringHOFTests._onEachIndexedCollector.isEmpty)
+    }
+
+    func testOnEachIndexedPropagatesThrownException() {
+        let source = registerRuntimeObject(RuntimeStringBox("abc"))
+        let throwOnB: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, index, charRaw, outThrown in
+            if charRaw == Int(Unicode.Scalar("b").value) {
+                outThrown?.pointee = registerRuntimeObject(RuntimeStringBox("boom"))
+                return 0
+            }
+            RuntimeStringHOFTests._onEachIndexedCollector.append((index, UInt32(charRaw)))
+            return 0
+        }
+        RuntimeStringHOFTests._onEachIndexedCollector = []
+        var thrown = 0
+
+        _ = kk_string_onEachIndexed(
+            source,
+            unsafeBitCast(throwOnB, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(RuntimeStringHOFTests._onEachIndexedCollector.map(\.0), [0])
+        XCTAssertEqual(RuntimeStringHOFTests._onEachIndexedCollector.map(\.1), [Unicode.Scalar("a").value])
+    }
+
     // Thread-unsafe side-channel used only from single-threaded tests above.
     nonisolated(unsafe) private static var _onEachCollector: [UInt32] = []
+    nonisolated(unsafe) private static var _onEachIndexedCollector: [(Int, UInt32)] = []
 
     private func runtimeStringValue(_ raw: Int) -> String {
         extractString(from: UnsafeMutableRawPointer(bitPattern: raw)) ?? ""

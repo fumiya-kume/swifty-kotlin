@@ -1719,6 +1719,8 @@ extension CallLowerer {
                     ("kk_string_findLast", [loweredReceiverID] + normalizedArgIDs)
                 case "onEach":
                     ("kk_string_onEach", [loweredReceiverID] + normalizedArgIDs)
+                case "onEachIndexed":
+                    ("kk_string_onEachIndexed", [loweredReceiverID] + normalizedArgIDs)
                 case "partition":
                     ("kk_string_partition", [loweredReceiverID] + normalizedArgIDs)
                 case "ifBlank":

@@ -4398,6 +4398,24 @@ public func kk_string_onEach(
     return strRaw
 }
 
+// MARK: - STDLIB-TEXT-FN-040: String.onEachIndexed(action: (Int, Char) -> Unit): String
+
+@_cdecl("kk_string_onEachIndexed")
+public func kk_string_onEachIndexed(
+    _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard fnPtr != 0 else { return strRaw }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    for (index, scalar) in scalars.enumerated() {
+        var thrown = 0
+        _ = lambda(closureRaw, index, Int(scalar.value), &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return strRaw }
+    }
+    return strRaw
+}
+
 // MARK: - STDLIB-partition: String.partition(predicate)
 
 @_cdecl("kk_string_partition")

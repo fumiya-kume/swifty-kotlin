@@ -1207,6 +1207,7 @@ extension CallTypeChecker {
                    "reduceRightOrNull",
                    "sumBy",
                    "sumByDouble",
+                   "onEachIndexed",
                ].contains(calleeStr)
             {
                 let charType = sema.types.make(.primitive(.char, .nonNull))
@@ -1216,7 +1217,7 @@ extension CallTypeChecker {
                         sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
                     }
                     let lambdaParamTypes: [TypeID] = switch calleeStr {
-                    case "mapIndexed", "filterIndexed":
+                    case "mapIndexed", "filterIndexed", "onEachIndexed":
                         [intType, charType]
                     case "reduceRightIndexed", "reduceRightIndexedOrNull":
                         [intType, charType, charType]
@@ -1242,6 +1243,8 @@ extension CallTypeChecker {
                         sema.types.anyType
                     case "ifBlank", "ifEmpty":
                         sema.types.stringType
+                    case "onEachIndexed":
+                        sema.types.unitType
                     case "sumBy":
                         sema.types.intType
                     case "sumByDouble":
@@ -1450,6 +1453,7 @@ extension CallTypeChecker {
                 case "splitToSequence": sequenceStringType
                 case "partition": pairStringStringType
                 case "ifBlank", "ifEmpty": sema.types.stringType
+                case "onEachIndexed": sema.types.stringType
                 case "reduceRightIndexed": charType
                 case "reduceRightIndexedOrNull": sema.types.make(.primitive(.char, .nullable))
                 case "reduceRightOrNull": sema.types.make(.primitive(.char, .nullable))
