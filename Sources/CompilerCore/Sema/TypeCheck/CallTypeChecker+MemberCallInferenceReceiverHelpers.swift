@@ -101,7 +101,7 @@ extension CallTypeChecker {
            declaredCt.args.contains(where: { arg in
                switch arg {
                case let .invariant(t), let .out(t), let .in(t):
-                   if case .typeParam = sema.types.kind(of: sema.types.makeNonNullable(t)) {
+                   if extensionDeclaredArgContainsTypeParam(t, sema: sema) {
                        return true
                    }
                    return false
@@ -118,6 +118,37 @@ extension CallTypeChecker {
             return typeArgumentLikeMatch(actual: actualKClass.argument, declared: declaredKClass.argument)
         }
         return false
+    }
+
+    /// Walks the declared-receiver type tree looking for any type parameter.
+    /// Used by `extensionSyntheticFallbackReceiverMatches` to keep matches like
+    /// `List<CPointer<T>?>.toCValues()` discoverable: the outer arg
+    /// (`.out(CPointer<T>?)`) is itself a class type, so a single-level
+    /// type-parameter check would miss the embedded `T`. Final substitution is
+    /// deferred to inference.
+    private func extensionDeclaredArgContainsTypeParam(
+        _ type: TypeID,
+        sema: SemaModule
+    ) -> Bool {
+        let kind = sema.types.kind(of: sema.types.makeNonNullable(type))
+        switch kind {
+        case .typeParam:
+            return true
+        case let .classType(ct):
+            for arg in ct.args {
+                switch arg {
+                case let .invariant(t), let .out(t), let .in(t):
+                    if extensionDeclaredArgContainsTypeParam(t, sema: sema) {
+                        return true
+                    }
+                case .star:
+                    continue
+                }
+            }
+            return false
+        default:
+            return false
+        }
     }
 
     func tryBuiltinFlowMemberCall(

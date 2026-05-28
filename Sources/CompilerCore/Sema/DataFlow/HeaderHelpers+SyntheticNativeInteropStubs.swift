@@ -2353,6 +2353,75 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        // fun <T : CPointed> List<CPointer<T>?>.toCValues(): CValues<CPointerVar<T>>
+        let collectionsPkgForListToCValues = ensurePackage(
+            path: ["kotlin", "collections"],
+            symbols: symbols,
+            interner: interner
+        )
+        if let listSymbol = symbols.lookup(fqName: collectionsPkgForListToCValues + [interner.intern("List")]) {
+            let listToCValuesFnName = interner.intern("toCValues")
+            let listToCValuesFQName = cinteropPkg + [listToCValuesFnName]
+            let listToCValuesTypeParamName = interner.intern("T")
+            let listToCValuesTypeParamFQName = listToCValuesFQName + [interner.intern("List")] + [listToCValuesTypeParamName]
+            let listToCValuesTypeParamSymbol: SymbolID = if let existing = symbols.lookup(
+                fqName: listToCValuesTypeParamFQName
+            ) {
+                existing
+            } else {
+                symbols.define(
+                    kind: .typeParameter,
+                    name: listToCValuesTypeParamName,
+                    fqName: listToCValuesTypeParamFQName,
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+            }
+            symbols.insertFlags([.synthetic], for: listToCValuesTypeParamSymbol)
+            symbols.setTypeParameterUpperBounds([cPointedType], for: listToCValuesTypeParamSymbol)
+            let listToCValuesTypeParamType = types.make(.typeParam(TypeParamType(
+                symbol: listToCValuesTypeParamSymbol,
+                nullability: .nonNull
+            )))
+            let listCPointerElementType = types.make(.classType(ClassType(
+                classSymbol: cPointerSymbol,
+                args: [.invariant(listToCValuesTypeParamType)],
+                nullability: .nullable
+            )))
+            let listReceiverType = types.make(.classType(ClassType(
+                classSymbol: listSymbol,
+                args: [.out(listCPointerElementType)],
+                nullability: .nonNull
+            )))
+            // CPointerVar<T> is a type alias for CPointerVarOf<CPointer<T>>.
+            let listCPointerNonNullElementType = types.make(.classType(ClassType(
+                classSymbol: cPointerSymbol,
+                args: [.invariant(listToCValuesTypeParamType)],
+                nullability: .nonNull
+            )))
+            let listCPointerVarReturnType = types.make(.classType(ClassType(
+                classSymbol: cPointerVarOfSymbol,
+                args: [.invariant(listCPointerNonNullElementType)],
+                nullability: .nonNull
+            )))
+            let listCValuesReturnType = types.make(.classType(ClassType(
+                classSymbol: cValuesSymbol,
+                args: [.invariant(listCPointerVarReturnType)],
+                nullability: .nonNull
+            )))
+            registerSyntheticNativeTopLevelFunction(
+                named: "toCValues",
+                packageFQName: cinteropPkg,
+                receiverType: listReceiverType,
+                parameters: [],
+                returnType: listCValuesReturnType,
+                typeParameterSymbols: [listToCValuesTypeParamSymbol],
+                typeParameterUpperBoundsList: [[cPointedType]],
+                symbols: symbols,
+                interner: interner
+            )
+        }
         let cOpaquePointerUnderlyingType = types.make(.classType(ClassType(
             classSymbol: cPointerSymbol,
             args: [.out(cPointedType)],
