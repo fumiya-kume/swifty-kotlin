@@ -1000,6 +1000,48 @@ public func kk_output_stream_close(_ streamRaw: Int) -> Int {
     return 0
 }
 
+// MARK: - STDLIB-IO-FN-009: OutputStream.bufferedWriter(charset)
+
+/// Maps Kotlin `Charset` tag (mirrors `kotlin.text.Charsets.*` IDs in the
+/// runtime ABI) to a Swift `String.Encoding`.  Mirrors the helper in
+/// `RuntimePath.swift` so this file stays self-contained.
+private func outputStreamEncoding(for charsetRaw: Int) -> String.Encoding {
+    switch charsetRaw {
+    case 1: .isoLatin1
+    case 2: .ascii
+    case 3: .utf16
+    case 4: .utf16BigEndian
+    case 5: .utf16LittleEndian
+    case 6: .utf32
+    case 7: .utf32BigEndian
+    case 8: .utf32LittleEndian
+    default: .utf8
+    }
+}
+
+/// `kotlin.io.bufferedWriter(charset: Charset = Charsets.UTF_8): BufferedWriter`
+/// extension on `java.io.OutputStream`.
+///
+/// JVM semantics: returns a new `BufferedWriter` wrapping an `OutputStreamWriter`
+/// over this output stream using the specified charset.  Subsequent writes/closes
+/// of the returned writer affect the underlying stream; the original `OutputStream`
+/// handle should no longer be used directly.
+@_cdecl("kk_output_stream_bufferedWriter")
+public func kk_output_stream_bufferedWriter(_ streamRaw: Int, _ charsetRaw: Int) -> Int {
+    guard let stream = runtimeOutputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_output_stream_bufferedWriter received invalid OutputStream handle")
+    }
+    let encoding = outputStreamEncoding(for: charsetRaw)
+    return registerRuntimeObject(stream.makeBufferedWriter(encoding: encoding))
+}
+
+/// Charset-less default overload — `kotlin.io.bufferedWriter()` with no
+/// argument should use `Charsets.UTF_8`.  STDLIB-IO-FN-009.
+@_cdecl("kk_output_stream_bufferedWriter_default")
+public func kk_output_stream_bufferedWriter_default(_ streamRaw: Int) -> Int {
+    kk_output_stream_bufferedWriter(streamRaw, 0)
+}
+
 // MARK: - STDLIB-IO-090: Files utility (java.nio.file.Files)
 
 private func runtimePathBox(from raw: Int) -> RuntimePathBox? {

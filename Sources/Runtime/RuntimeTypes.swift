@@ -1567,6 +1567,22 @@ final class RuntimeOutputStreamBox {
         try? fileHandle.close()
         closed = true
     }
+
+    /// Returns true if the underlying stream has been closed (STDLIB-IO-FN-009).
+    var isClosed: Bool { closed }
+
+    /// Creates a `RuntimeBufferedWriterBox` that wraps the same file handle
+    /// as this `OutputStream`, marking the OutputStream as closed so that
+    /// ownership of the file handle is transferred to the new BufferedWriter
+    /// (matching JVM semantics where `OutputStream.bufferedWriter()` returns
+    /// a writer that owns the underlying stream).  STDLIB-IO-FN-009.
+    func makeBufferedWriter(encoding: String.Encoding) -> RuntimeBufferedWriterBox {
+        let writer = RuntimeBufferedWriterBox(fileHandle: fileHandle, encoding: encoding)
+        // Transfer ownership: mark this OutputStream closed so further writes
+        // are no-ops and the deinit does not double-close the handle.
+        closed = true
+        return writer
+    }
 }
 
 // MARK: - BufferedWriter (STDLIB-IO-091/093)

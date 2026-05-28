@@ -994,6 +994,46 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // MARK: - OutputStream.bufferedWriter(charset) (STDLIB-IO-FN-009)
+        //
+        // Kotlin signature: `public fun OutputStream.bufferedWriter(
+        //     charset: Charset = Charsets.UTF_8
+        // ): BufferedWriter`  declared in the `kotlin.io` package.
+        let kotlinTextPkg = ensurePackage(
+            path: ["kotlin", "text"],
+            symbols: symbols,
+            interner: interner
+        )
+        let kotlinTextPkgSymbol = symbols.lookup(fqName: kotlinTextPkg)
+        let outputStreamCharsetSymbol = ensureClassSymbol(
+            named: "Charset",
+            in: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinTextPkgSymbol {
+            symbols.setParentSymbol(kotlinTextPkgSymbol, for: outputStreamCharsetSymbol)
+        }
+        let outputStreamCharsetType = types.make(.classType(ClassType(
+            classSymbol: outputStreamCharsetSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(outputStreamCharsetType, for: outputStreamCharsetSymbol)
+
+        registerKotlinIOExtensionFunction(
+            named: "bufferedWriter",
+            packageFQName: kotlinIOPkg,
+            receiverType: outputStreamType,
+            parameters: [("charset", outputStreamCharsetType)],
+            returnType: bufferedWriterType,
+            externalLinkName: "kk_output_stream_bufferedWriter",
+            valueParameterHasDefaultValues: [true],
+            valueParameterIsVararg: [false],
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     // MARK: - Private Helpers
@@ -1071,6 +1111,104 @@ extension DataFlowSemaPhase {
                 valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
             ),
             for: ctorSymbol
+        )
+    }
+
+    /// Registers a top-level extension function in a Kotlin package
+    /// (e.g. `kotlin.io`) whose receiver is a class symbol such as
+    /// `java.io.OutputStream`.  Used for stdlib extensions like
+    /// `OutputStream.bufferedWriter(charset)` (STDLIB-IO-FN-009).
+    private func registerKotlinIOExtensionFunction(
+        named name: String,
+        packageFQName: [InternedString],
+        receiverType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        externalLinkName: String,
+        valueParameterHasDefaultValues: [Bool]? = nil,
+        valueParameterIsVararg: [Bool]? = nil,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        let parameterTypes = parameters.map(\.type)
+        let defaults = valueParameterHasDefaultValues
+            ?? Array(repeating: false, count: parameters.count)
+        let varargs = valueParameterIsVararg
+            ?? Array(repeating: false, count: parameters.count)
+
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let existingSignature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return existingSignature.receiverType == receiverType
+                && existingSignature.parameterTypes == parameterTypes
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            if let existingSignature = symbols.functionSignature(for: existing) {
+                let shouldUpdateSignature =
+                    existingSignature.returnType != returnType
+                    || existingSignature.valueParameterHasDefaultValues != defaults
+                    || existingSignature.valueParameterIsVararg != varargs
+                guard shouldUpdateSignature else {
+                    return
+                }
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: existingSignature.receiverType,
+                        parameterTypes: existingSignature.parameterTypes,
+                        returnType: returnType,
+                        isSuspend: existingSignature.isSuspend,
+                        valueParameterSymbols: existingSignature.valueParameterSymbols,
+                        valueParameterHasDefaultValues: defaults,
+                        valueParameterIsVararg: varargs
+                    ),
+                    for: existing
+                )
+            }
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        var valueParameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: functionFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            valueParameterSymbols.append(parameterSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameterTypes,
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: defaults,
+                valueParameterIsVararg: varargs
+            ),
+            for: functionSymbol
         )
     }
 
