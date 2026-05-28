@@ -470,6 +470,11 @@ extension ABIMismatchTests {
         "kk_kotlin_version_patch",
     ]
 
+    // MARK: URL (java.net.URL / kotlin.io extensions)
+    private static let urlStubLinkNames: Set<String> = [
+        "kk_url_readBytes",
+    ]
+
     /// Union of every category. New categories should be added below.
     /// Each category lives in its own `static let` above so that parallel
     /// branches editing different category Sets do not collide.
@@ -497,6 +502,7 @@ extension ABIMismatchTests {
         result.formUnion(jsonSerializationStubLinkNames)
         result.formUnion(base64StubLinkNames)
         result.formUnion(kotlinVersionStubLinkNames)
+        result.formUnion(urlStubLinkNames)
         return result
     }
 

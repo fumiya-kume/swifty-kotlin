@@ -654,6 +654,20 @@ public func kk_url_hashCode(_ urlRaw: Int) -> Int {
     runtimeURLHash(runtimeURLCanonicalEqualityKey(runtimeURLComponents(from: urlRaw, caller: #function)))
 }
 
+@_cdecl("kk_url_readBytes")
+public func kk_url_readBytes(_ urlRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let box = runtimeURLComponents(from: urlRaw, caller: #function)
+    do {
+        let data = try Data(contentsOf: box.url)
+        let elements = data.map { Int(Int8(bitPattern: $0)) }
+        return registerRuntimeObject(RuntimeListBox(elements: elements))
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+}
+
 @_cdecl("kk_url_encode")
 public func kk_url_encode(_ valueRaw: Int) -> Int {
     let value = networkString(from: valueRaw, caller: #function)
