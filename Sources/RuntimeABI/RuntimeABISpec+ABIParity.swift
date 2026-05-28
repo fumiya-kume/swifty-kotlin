@@ -1117,6 +1117,11 @@ public extension RuntimeABISpec {
             p("strRaw", .intptr),
             p("outThrown", .nullableIntptrPointer),
         ]),
+        abiParitySpec("kk_string_toByte_radix", parameters: [
+            p("strRaw", .intptr),
+            p("radix", .intptr),
+            p("outThrown", .nullableIntptrPointer),
+        ]),
         abiParitySpec("kk_string_toByteOrNull", parameters: [
             p("strRaw", .intptr),
         ]),

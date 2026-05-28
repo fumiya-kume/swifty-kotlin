@@ -2353,6 +2353,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // String.toByte(radix: Int) (STDLIB-TEXT-FN-090)
+        registerSyntheticStringExtensionFunction(
+            named: "toByte",
+            externalLinkName: "kk_string_toByte_radix",
+            receiverType: stringType,
+            parameters: [
+                ("radix", intType, false, false),
+            ],
+            returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticStringExtensionFunction(
             named: "toByteOrNull",
             externalLinkName: "kk_string_toByteOrNull",

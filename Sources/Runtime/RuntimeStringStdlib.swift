@@ -1940,6 +1940,31 @@ public func kk_string_toByte(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<In
     return Int(value)
 }
 
+@_cdecl("kk_string_toByte_radix")
+public func kk_string_toByte_radix(
+    _ strRaw: Int,
+    _ radix: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    guard (2 ... 36).contains(radix) else {
+        runtimeSetThrown(
+            outThrown,
+            message: "IllegalArgumentException: radix \(radix) was not in valid range 2..36"
+        )
+        return 0
+    }
+    guard let value = Int8(source, radix: radix) else {
+        runtimeSetThrown(
+            outThrown,
+            message: "NumberFormatException: For input string: \"\(source)\""
+        )
+        return 0
+    }
+    return Int(value)
+}
+
 @_cdecl("kk_string_toByteOrNull")
 public func kk_string_toByteOrNull(_ strRaw: Int) -> Int {
     let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
