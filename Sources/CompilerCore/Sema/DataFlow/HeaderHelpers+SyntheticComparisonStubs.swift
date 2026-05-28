@@ -97,6 +97,13 @@ extension DataFlowSemaPhase {
             comparisonsPkg: comparisonsPkg,
             comparisonsPackageSymbol: comparisonsPackageSymbol
         )
+        registerSyntheticMinOfComparableVarargStub(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            comparisonsPkg: comparisonsPkg,
+            comparisonsPackageSymbol: comparisonsPackageSymbol
+        )
 
         let comparatorFQName = kotlinPkg + [interner.intern("Comparator")]
         guard let comparatorSymbol = symbols.lookup(fqName: comparatorFQName) else {
@@ -316,6 +323,56 @@ extension DataFlowSemaPhase {
             parameterTypes: [tParamType, tParamType, tParamType],
             returnType: tParamType,
             parameterNames: ["a", "b", "c"],
+            typeParameterSymbols: [tParamSymbol],
+            typeParameterUpperBoundsList: [comparableUpperBounds],
+            packageFQName: comparisonsPkg,
+            packageSymbol: comparisonsPackageSymbol,
+            types: types,
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    private func registerSyntheticMinOfComparableVarargStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        comparisonsPkg: [InternedString],
+        comparisonsPackageSymbol: SymbolID
+    ) {
+        guard let comparableSymbol = types.comparableInterfaceSymbol else {
+            return
+        }
+
+        let minOfName = "minOf"
+        let functionName = interner.intern(minOfName)
+        let functionFQName = comparisonsPkg + [functionName]
+        let tParamName = interner.intern("T")
+        let tParamFQName = functionFQName + [tParamName]
+        let tParamSymbol = symbols.lookup(fqName: tParamFQName) ?? symbols.define(
+            kind: .typeParameter,
+            name: tParamName,
+            fqName: tParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let tParamType = types.make(.typeParam(TypeParamType(
+            symbol: tParamSymbol,
+            nullability: .nonNull
+        )))
+        let comparableUpperBounds: [TypeID] = [types.make(.classType(ClassType(
+            classSymbol: comparableSymbol,
+            args: [.in(tParamType)],
+            nullability: .nonNull
+        )))]
+
+        registerSyntheticComparisonFunction(
+            named: minOfName,
+            parameterTypes: [tParamType],
+            returnType: tParamType,
+            parameterNames: ["a"],
+            valueParameterIsVararg: [true],
             typeParameterSymbols: [tParamSymbol],
             typeParameterUpperBoundsList: [comparableUpperBounds],
             packageFQName: comparisonsPkg,

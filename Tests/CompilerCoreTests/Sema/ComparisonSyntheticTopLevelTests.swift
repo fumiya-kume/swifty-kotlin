@@ -403,4 +403,44 @@ final class ComparisonSyntheticTopLevelTests: XCTestCase {
             XCTAssertFalse(signature.valueParameterIsVararg.contains(true))
         }
     }
+
+    func testComparableVarargMinOfResolvesToSyntheticComparisonFunction() throws {
+        let source = """
+        fun sample(): String {
+            return minOf("d", "c", "a", "b")
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let interner = ctx.interner
+
+            let callExpr = try XCTUnwrap(
+                firstExprID(in: ast) { _, expr in
+                    guard case let .call(calleeExpr, _, args, _) = expr,
+                          case let .nameRef(calleeName, _) = ast.arena.expr(calleeExpr)
+                    else {
+                        return false
+                    }
+                    return interner.resolve(calleeName) == "minOf" && args.count == 4
+                },
+                "Expected comparable vararg minOf call"
+            )
+            XCTAssertNil(sema.bindings.stdlibSpecialCallKind(for: callExpr))
+            XCTAssertEqual(sema.bindings.exprTypes[callExpr], sema.types.stringType)
+            let chosen = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            let symbol = try XCTUnwrap(sema.symbols.symbol(chosen))
+            XCTAssertEqual(symbol.fqName, [
+                interner.intern("kotlin"),
+                interner.intern("comparisons"),
+                interner.intern("minOf"),
+            ])
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: chosen))
+            XCTAssertTrue(signature.valueParameterIsVararg.contains(true))
+        }
+    }
 }
