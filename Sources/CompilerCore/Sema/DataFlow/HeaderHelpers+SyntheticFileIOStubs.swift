@@ -1110,15 +1110,15 @@ extension DataFlowSemaPhase {
         // Kotlin signature: `public fun OutputStream.bufferedWriter(
         //     charset: Charset = Charsets.UTF_8
         // ): BufferedWriter`  declared in the `kotlin.io` package.
-        let kotlinTextPkg = ensurePackage(
+        let kotlinTextPkgFQName = ensurePackage(
             path: ["kotlin", "text"],
             symbols: symbols,
             interner: interner
         )
-        let kotlinTextPkgSymbol = symbols.lookup(fqName: kotlinTextPkg)
+        let kotlinTextPkgSymbol = symbols.lookup(fqName: kotlinTextPkgFQName)
         let outputStreamCharsetSymbol = ensureClassSymbol(
             named: "Charset",
-            in: kotlinTextPkg,
+            in: kotlinTextPkgFQName,
             symbols: symbols,
             interner: interner
         )
