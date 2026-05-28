@@ -493,7 +493,7 @@
 - [ ] STDLIB-COMP-003: `Comparator` runtime と failure path を固定
 
 #### kotlin.comparisons 関数の実装
-- [ ] STDLIB-COMP-FN-001: `compareBy` 関数の実装（selector版）
+- [x] STDLIB-COMP-FN-001: `compareBy` 関数の実装（selector版）
 - [x] STDLIB-COMP-FN-002: `compareByDescending` 関数の実装（selector版）
 - [x] STDLIB-COMP-FN-003: `compareValues` 関数の実装
 - [x] STDLIB-COMP-FN-004: `compareValuesBy` 関数の実装（selector版）
