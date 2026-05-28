@@ -464,6 +464,16 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "FileIO"
         ),
+        // STDLIB-IO-FN-029: InputStream.readBytes() -> ByteArray (drains the stream)
+        RuntimeABIFunctionSpec(
+            name: "kk_input_stream_readAllBytes",
+            parameters: [
+                RuntimeABIParameter(name: "streamRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_input_stream_close",
             parameters: [

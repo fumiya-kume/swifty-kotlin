@@ -1551,6 +1551,39 @@ public func kk_input_stream_read_bytes(_ streamRaw: Int, _ bytesRaw: Int, _ outT
     return stream.read(into: list)
 }
 
+// MARK: - InputStream.readBytes() (STDLIB-IO-FN-029)
+//
+// Kotlin defines:
+//   public fun InputStream.readBytes(): ByteArray
+//
+// The extension reads all remaining bytes from `this` into a freshly allocated
+// ByteArray. We model `ByteArray` as a `List<Int>` whose elements are signed
+// Int values in [-128, 127] (matching the rest of the runtime's ByteArray
+// representation, e.g. `kk_file_readBytes`).
+//
+// The implementation drains the underlying `RuntimeInputStreamBox` in a single
+// pass (or, for `SequenceInputStream`, walks both chained streams to EOF).
+// The receiver is not closed — `InputStream.readBytes()` mirrors JVM
+// `InputStream.readAllBytes()` in that the caller is responsible for closing
+// the stream (typically via `.use { it.readBytes() }`).
+@_cdecl("kk_input_stream_readAllBytes")
+public func kk_input_stream_readAllBytes(_ streamRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    // Try a plain InputStream first.
+    if let stream = runtimeInputStreamBox(from: streamRaw) {
+        let bytes = stream.readAllBytes()
+        return registerRuntimeObject(RuntimeListBox(elements: bytes))
+    }
+    // Fall back to a SequenceInputStream chain.
+    if let ptr = UnsafeMutableRawPointer(bitPattern: streamRaw),
+       let sequenceStream = tryCast(ptr, to: RuntimeSequenceInputStreamBox.self)
+    {
+        let bytes = sequenceStream.readAllBytes()
+        return registerRuntimeObject(RuntimeListBox(elements: bytes))
+    }
+    fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_readAllBytes received invalid InputStream handle")
+}
+
 @_cdecl("kk_input_stream_mark")
 public func kk_input_stream_mark(_ streamRaw: Int, _ readLimitRaw: Int) -> Int {
     guard let stream = runtimeInputStreamBox(from: streamRaw) else {

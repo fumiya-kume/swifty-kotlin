@@ -1504,6 +1504,24 @@ final class RuntimeInputStreamBox {
         return writableCount
     }
 
+    /// Reads all remaining bytes from the stream as a list of signed Int values
+    /// in the range [-128, 127] (matching `kotlin.ByteArray` element semantics).
+    /// Advances the read cursor to the end of the underlying buffer.  When the
+    /// stream is closed or already at EOF, returns an empty list.
+    /// Used by `InputStream.readBytes()` (STDLIB-IO-FN-029).
+    func readAllBytes() -> [Int] {
+        guard !closed else { return [] }
+        let remaining = max(0, data.count - offset)
+        guard remaining > 0 else { return [] }
+        var elements: [Int] = []
+        elements.reserveCapacity(remaining)
+        for index in 0 ..< remaining {
+            elements.append(Int(Int8(bitPattern: data[offset + index])))
+        }
+        offset += remaining
+        return elements
+    }
+
     func mark(readLimit: Int) {
         // FileInputStream does not support mark/reset; this is a no-op.
     }
@@ -1546,6 +1564,23 @@ final class RuntimeSequenceInputStreamBox {
     func available() -> Int {
         guard !closed else { return 0 }
         return first?.available() ?? 0
+    }
+
+    /// Reads all remaining bytes across both chained streams.  Drains `first`
+    /// fully, then drains `second`.  Used by `InputStream.readBytes()`
+    /// (STDLIB-IO-FN-029) when the receiver is a SequenceInputStream.
+    func readAllBytes() -> [Int] {
+        guard !closed else { return [] }
+        var elements: [Int] = []
+        if let s1 = first {
+            elements.append(contentsOf: s1.readAllBytes())
+            s1.close()
+            first = nil
+        }
+        if let s2 = second {
+            elements.append(contentsOf: s2.readAllBytes())
+        }
+        return elements
     }
 
     func close() {

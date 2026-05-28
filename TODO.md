@@ -133,6 +133,8 @@
 - [ ] STDLIB-IO-FN-027: `printWriter` 関数の実装
 - [ ] STDLIB-IO-FN-029: `readBytes` 関数の実装（InputStream版）
 - [x] STDLIB-IO-FN-030: `readBytes` 関数の実装（URL版）
+- [x] STDLIB-IO-FN-029: `readBytes` 関数の実装（InputStream版）
+- [ ] STDLIB-IO-FN-030: `readBytes` 関数の実装（URL版）
 - [ ] STDLIB-IO-FN-033: `readText` 関数の実装（Reader版）
 - [ ] STDLIB-IO-FN-030: `readBytes` 関数の実装（URL版）
 - [x] STDLIB-IO-FN-033: `readText` 関数の実装（Reader版）
