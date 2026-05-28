@@ -624,7 +624,7 @@
 - [x] STDLIB-CINTEROP-TYPE-022: `kotlinx.cinterop.CStructVar` class surface を追加する
 - [x] STDLIB-CINTEROP-TYPE-023: `kotlinx.cinterop.CValue<T>` class surface を追加する
 - [x] STDLIB-CINTEROP-TYPE-024: `kotlinx.cinterop.CValues<T>` class surface を追加する
-- [ ] STDLIB-CINTEROP-TYPE-025: `kotlinx.cinterop.CValuesRef<T>` class shape を公式 surface と整合させる
+- [x] STDLIB-CINTEROP-TYPE-025: `kotlinx.cinterop.CValuesRef<T>` class shape を公式 surface と整合させる
 - [x] STDLIB-CINTEROP-TYPE-026: `kotlinx.cinterop.CVariable` class surface を追加する
 - [x] STDLIB-CINTEROP-TYPE-027: `kotlinx.cinterop.DeferScope` class surface を追加する
 - [x] STDLIB-CINTEROP-TYPE-028: `kotlinx.cinterop.NativeFreeablePlacement` class surface を追加する
