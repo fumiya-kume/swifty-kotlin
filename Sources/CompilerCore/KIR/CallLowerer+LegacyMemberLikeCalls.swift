@@ -1606,6 +1606,28 @@ extension CallLowerer {
                 } else {
                     stringGetThrownExpr = nil
                 }
+
+                // STDLIB-TEXT-FN-020: CharSequence.indexOf(Char) — 1-arg overload routes to the dedicated Char runtime entry.
+                if calleeStr == "indexOf",
+                   sema.types.isSubtype(
+                       sema.types.makeNonNullable(sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType),
+                       sema.types.charType
+                   )
+                {
+                    let zeroIndexExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                    instructions.append(.constValue(result: zeroIndexExpr, value: .intLiteral(0)))
+                    let falseExpr = arena.appendExpr(.intLiteral(0), type: sema.types.booleanType)
+                    instructions.append(.constValue(result: falseExpr, value: .boolLiteral(false)))
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_indexOf_char"),
+                        arguments: [loweredReceiverID, loweredArgIDs[0], zeroIndexExpr, falseExpr],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
                 let runtimeCall: (callee: String, arguments: [KIRExprID])? = switch calleeStr {
                 case "split":
                     if isRegexLikeType(sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType, sema: sema, interner: interner) {
@@ -1896,6 +1918,23 @@ extension CallLowerer {
                     symbol: nil,
                     callee: interner.intern("kk_string_indexOf_from"),
                     arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+            // STDLIB-TEXT-FN-020: CharSequence.indexOf(Char, startIndex) — 2-arg overload routes to kk_string_indexOf_char.
+            if (sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) || isCharSequenceReceiver),
+               calleeStr == "indexOf",
+               sema.types.isSubtype(firstArgType, sema.types.charType)
+            {
+                let falseExpr = arena.appendExpr(.intLiteral(0), type: sema.types.booleanType)
+                instructions.append(.constValue(result: falseExpr, value: .boolLiteral(false)))
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_indexOf_char"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1], falseExpr],
                     result: result,
                     canThrow: false,
                     thrownResult: nil

@@ -824,6 +824,23 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-TEXT-FN-020: CharSequence.indexOf(Char, startIndex, ignoreCase) ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "indexOf",
+            externalLinkName: "kk_string_indexOf_char",
+            receiverType: charSequenceType,
+            parameters: [
+                ("char", charType, false, false),
+                ("startIndex", intType, true, false),
+                ("ignoreCase", boolType, true, false),
+            ],
+            returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-TEXT-SEARCH-001: CharSequence.indexOfAny(chars, startIndex, ignoreCase) ---
 
         registerSyntheticStringExtensionFunction(
