@@ -1014,6 +1014,72 @@ public func kk_path_listDirectoryEntries(_ pathRaw: Int, _ outThrown: UnsafeMuta
     }
 }
 
+// MARK: - Path.useDirectoryEntries(glob, block)
+
+/// Match a file name against a simple glob pattern using POSIX `fnmatch`.
+/// Only the last path component (the file name) is matched against `pattern`.
+private func pathGlobMatches(pattern: String, name: String) -> Bool {
+    pattern.withCString { patternPtr in
+        name.withCString { namePtr in
+            Darwin.fnmatch(patternPtr, namePtr, 0) == 0
+        }
+    }
+}
+
+/// STDLIB-IO-PATH-FN-037: `Path.useDirectoryEntries(glob, block)` extension function.
+///
+/// Lists the direct children of the directory at `pathRaw`, filters them
+/// by the glob pattern in `globRaw` (defaulting to `"*"` when `globRaw` is 0),
+/// wraps them in a `Sequence<Path>` and passes the sequence to the Kotlin lambda
+/// in `actionRaw`, mirroring `kotlin.io.path.useDirectoryEntries`.
+///
+/// The block receives the sequence as its sole argument and may return any type T;
+/// the return value is forwarded to the caller.  I/O errors listing the directory
+/// cause the block to be invoked with an empty sequence.  Exceptions thrown by the
+/// block are NOT propagated (the ABI spec carries no `outThrown` slot).
+@_cdecl("kk_path_useDirectoryEntries")
+public func kk_path_useDirectoryEntries(
+    _ pathRaw: Int,
+    _ globRaw: Int,
+    _ actionRaw: Int
+) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_useDirectoryEntries received invalid Path handle")
+    }
+    let glob: String
+    if globRaw == 0 {
+        glob = "*"
+    } else {
+        glob = pathStringValue(from: globRaw) ?? "*"
+    }
+    let entries: [String]
+    do {
+        entries = try FileManager.default.contentsOfDirectory(atPath: path.pathString)
+    } catch {
+        entries = []
+    }
+    let elements = entries.compactMap { entry -> Int? in
+        guard pathGlobMatches(pattern: glob, name: entry) else { return nil }
+        let childPath = (path.pathString as NSString).appendingPathComponent(entry)
+        return registerRuntimeObject(RuntimePathBox(childPath))
+    }
+    let sequenceRaw = registerRuntimeObject(RuntimeListBox(elements: elements))
+    var thrown = 0
+    let result = kk_function_invoke(actionRaw, sequenceRaw, &thrown)
+    return result
+}
+
+/// STDLIB-IO-PATH-FN-037: Default-glob overload of `Path.useDirectoryEntries`.
+///
+/// Mirrors `kotlin.io.path.useDirectoryEntries(block)`, using `"*"` as the glob.
+@_cdecl("kk_path_useDirectoryEntries_default")
+public func kk_path_useDirectoryEntries_default(
+    _ pathRaw: Int,
+    _ actionRaw: Int
+) -> Int {
+    kk_path_useDirectoryEntries(pathRaw, 0, actionRaw)
+}
+
 // MARK: - Path.relativize(other: Path)
 
 @_cdecl("kk_path_relativize")
