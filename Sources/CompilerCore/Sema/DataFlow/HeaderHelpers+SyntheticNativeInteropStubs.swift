@@ -2280,13 +2280,6 @@ extension DataFlowSemaPhase {
         let useContentsTTypeParameterFQName = useContentsFunctionFQName + [useContentsTTypeParameterName]
         let useContentsTTypeParameterSymbol: SymbolID = if let existing = symbols.lookup(
             fqName: useContentsTTypeParameterFQName
-        // inline fun <reified T : CVariable> zeroValue(): CValue<T>
-        let zeroValueFunctionName = interner.intern("zeroValue")
-        let zeroValueFunctionFQName = cinteropPkg + [zeroValueFunctionName]
-        let zeroValueTypeParameterName = interner.intern("T")
-        let zeroValueTypeParameterFQName = zeroValueFunctionFQName + [zeroValueTypeParameterName]
-        let zeroValueTypeParameterSymbol: SymbolID = if let existing = symbols.lookup(
-            fqName: zeroValueTypeParameterFQName
         ) {
             existing
         } else {
@@ -2349,21 +2342,19 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
-        // inline fun <reified T : CVariable> zeroValue(size: Int, align: Int): CValue<T>
-        let zeroValue2ArgFunctionName = interner.intern("zeroValue")
-        let zeroValue2ArgFunctionFQName = cinteropPkg + [zeroValue2ArgFunctionName]
-        let zeroValue2ArgTypeParameterName = interner.intern("T")
-        let zeroValue2ArgTypeParameterDiscriminator = interner.intern("T$sizeAlign")
-        let zeroValue2ArgTypeParameterFQName = zeroValue2ArgFunctionFQName + [zeroValue2ArgTypeParameterDiscriminator]
-        let zeroValue2ArgTypeParameterSymbol: SymbolID = if let existing = symbols.lookup(
-            fqName: zeroValue2ArgTypeParameterFQName
+
+        // inline fun <reified T : CVariable> zeroValue(): CValue<T>
+        let zeroValueFunctionName = interner.intern("zeroValue")
+        let zeroValueFunctionFQName = cinteropPkg + [zeroValueFunctionName]
+        let zeroValueTypeParameterName = interner.intern("T")
+        let zeroValueTypeParameterFQName = zeroValueFunctionFQName + [zeroValueTypeParameterName]
+        let zeroValueTypeParameterSymbol: SymbolID = if let existing = symbols.lookup(
+            fqName: zeroValueTypeParameterFQName
         ) {
             existing
         } else {
             symbols.define(
                 kind: .typeParameter,
-                name: zeroValue2ArgTypeParameterName,
-                fqName: zeroValue2ArgTypeParameterFQName,
                 name: zeroValueTypeParameterName,
                 fqName: zeroValueTypeParameterFQName,
                 declSite: nil,
@@ -2371,15 +2362,6 @@ extension DataFlowSemaPhase {
                 flags: [.synthetic, .reifiedTypeParameter]
             )
         }
-        symbols.insertFlags([.synthetic, .reifiedTypeParameter], for: zeroValue2ArgTypeParameterSymbol)
-        symbols.setTypeParameterUpperBounds([cVariableType], for: zeroValue2ArgTypeParameterSymbol)
-        let zeroValue2ArgTypeParameterType = types.make(.typeParam(TypeParamType(
-            symbol: zeroValue2ArgTypeParameterSymbol,
-            nullability: .nonNull
-        )))
-        let zeroValue2ArgReturnType = types.make(.classType(ClassType(
-            classSymbol: cValueSymbol,
-            args: [.invariant(zeroValue2ArgTypeParameterType)],
         symbols.insertFlags([.synthetic, .reifiedTypeParameter], for: zeroValueTypeParameterSymbol)
         symbols.setTypeParameterUpperBounds([cVariableType], for: zeroValueTypeParameterSymbol)
         let zeroValueTypeParameterType = types.make(.typeParam(TypeParamType(
@@ -2395,15 +2377,57 @@ extension DataFlowSemaPhase {
             named: "zeroValue",
             packageFQName: cinteropPkg,
             receiverType: nil,
+            parameters: [],
+            returnType: zeroValueReturnType,
+            typeParameterSymbols: [zeroValueTypeParameterSymbol],
+            typeParameterUpperBoundsList: [[cVariableType]],
+            reifiedTypeParameterIndices: [0],
+            flags: [.synthetic, .inlineFunction],
+            symbols: symbols,
+            interner: interner
+        )
+
+        // inline fun <reified T : CVariable> zeroValue(size: Int, align: Int): CValue<T>
+        let zeroValue2ArgFunctionName = interner.intern("zeroValue")
+        let zeroValue2ArgFunctionFQName = cinteropPkg + [zeroValue2ArgFunctionName]
+        let zeroValue2ArgTypeParameterName = interner.intern("T")
+        let zeroValue2ArgTypeParameterDiscriminator = interner.intern("T$sizeAlign")
+        let zeroValue2ArgTypeParameterFQName = zeroValue2ArgFunctionFQName + [zeroValue2ArgTypeParameterDiscriminator]
+        let zeroValue2ArgTypeParameterSymbol: SymbolID = if let existing = symbols.lookup(
+            fqName: zeroValue2ArgTypeParameterFQName
+        ) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: zeroValue2ArgTypeParameterName,
+                fqName: zeroValue2ArgTypeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic, .reifiedTypeParameter]
+            )
+        }
+        symbols.insertFlags([.synthetic, .reifiedTypeParameter], for: zeroValue2ArgTypeParameterSymbol)
+        symbols.setTypeParameterUpperBounds([cVariableType], for: zeroValue2ArgTypeParameterSymbol)
+        let zeroValue2ArgTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: zeroValue2ArgTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let zeroValue2ArgReturnType = types.make(.classType(ClassType(
+            classSymbol: cValueSymbol,
+            args: [.invariant(zeroValue2ArgTypeParameterType)],
+            nullability: .nonNull
+        )))
+        registerSyntheticNativeTopLevelFunction(
+            named: "zeroValue",
+            packageFQName: cinteropPkg,
+            receiverType: nil,
             parameters: [
                 (name: "size", type: types.intType),
                 (name: "align", type: types.intType),
             ],
             returnType: zeroValue2ArgReturnType,
             typeParameterSymbols: [zeroValue2ArgTypeParameterSymbol],
-            parameters: [],
-            returnType: zeroValueReturnType,
-            typeParameterSymbols: [zeroValueTypeParameterSymbol],
             typeParameterUpperBoundsList: [[cVariableType]],
             reifiedTypeParameterIndices: [0],
             flags: [.synthetic, .inlineFunction],
@@ -4323,34 +4347,6 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             types: types,
             interner: interner
-        )
-    }
-
-    private func registerSyntheticCInteropInternalAnnotations(
-        symbols: SymbolTable,
-        interner: StringInterner
-    ) {
-        let cinteropInternalPkg = ensurePackage(
-            path: ["kotlinx", "cinterop", "internal"],
-            symbols: symbols,
-            interner: interner
-        )
-        let cinteropInternalPkgSymbol = symbols.lookup(fqName: cinteropInternalPkg)
-
-        let cCallSymbol = ensureAnnotationClassSymbol(
-            named: "CCall",
-            in: cinteropInternalPkg,
-            symbols: symbols,
-            interner: interner
-        )
-        if let cinteropInternalPkgSymbol {
-            symbols.setParentSymbol(cinteropInternalPkgSymbol, for: cCallSymbol)
-        }
-        appendStandardAnnotationMetadata(
-            to: cCallSymbol,
-            targets: ["AnnotationTarget.FUNCTION"],
-            retention: "AnnotationRetention.BINARY",
-            symbols: symbols
         )
     }
 
