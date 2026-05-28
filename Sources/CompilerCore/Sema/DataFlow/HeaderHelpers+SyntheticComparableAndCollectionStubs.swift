@@ -530,7 +530,7 @@ extension DataFlowSemaPhase {
         let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
         let comparableRBounds: [TypeID] = [types.make(.classType(ClassType(
             classSymbol: comparableSymbol,
-            args: [.in(rType)],
+            args: [.invariant(rType)],
             nullability: .nonNull
         )))]
         return (rSymbol, rType, comparableRBounds)
