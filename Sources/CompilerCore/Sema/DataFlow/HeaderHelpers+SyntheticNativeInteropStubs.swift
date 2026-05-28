@@ -2406,6 +2406,48 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        // inline operator fun <T : CPointed> CPointer<T>?.plus(index: Long): CPointer<T>?
+        let plusFunctionName = interner.intern("plus")
+        let plusFunctionFQName = cinteropPkg + [plusFunctionName]
+        let plusTypeParameterName = interner.intern("T")
+        let plusTypeParameterFQName = plusFunctionFQName + [plusTypeParameterName]
+        let plusTypeParameterSymbol: SymbolID = if let existing = symbols.lookup(
+            fqName: plusTypeParameterFQName
+        ) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: plusTypeParameterName,
+                fqName: plusTypeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+        }
+        symbols.insertFlags([.synthetic], for: plusTypeParameterSymbol)
+        symbols.setTypeParameterUpperBounds([cPointedType], for: plusTypeParameterSymbol)
+        let plusTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: plusTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let plusNullableCPointerType = types.make(.classType(ClassType(
+            classSymbol: cPointerSymbol,
+            args: [.invariant(plusTypeParameterType)],
+            nullability: .nullable
+        )))
+        registerSyntheticNativeTopLevelFunction(
+            named: "plus",
+            packageFQName: cinteropPkg,
+            receiverType: plusNullableCPointerType,
+            parameters: [(name: "index", type: types.longType)],
+            returnType: plusNullableCPointerType,
+            typeParameterSymbols: [plusTypeParameterSymbol],
+            typeParameterUpperBoundsList: [[cPointedType]],
+            flags: [.synthetic, .inlineFunction, .operatorFunction],
+            symbols: symbols,
+            interner: interner
+        )
         // inline fun <reified T : Any> unwrapKotlinObjectHolder(holder: COpaquePointer?): T
         let unwrapHolderFunctionName = interner.intern("unwrapKotlinObjectHolder")
         let unwrapHolderFunctionFQName = cinteropPkg + [unwrapHolderFunctionName]
@@ -2679,6 +2721,23 @@ extension DataFlowSemaPhase {
             packageSymbol: cinteropPkgSymbol,
             receiverType: types.stringType,
             propertyType: cstrReturnType,
+            symbols: symbols,
+            interner: interner
+        )
+        // fun ByteArray.toKString(): String
+        let toKStringByteArrayReceiverType = syntheticClassType(
+            packagePath: ["kotlin"],
+            name: "ByteArray",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerSyntheticNativeTopLevelFunction(
+            named: "toKString",
+            packageFQName: cinteropPkg,
+            receiverType: toKStringByteArrayReceiverType,
+            parameters: [],
+            returnType: types.stringType,
             symbols: symbols,
             interner: interner
         )
