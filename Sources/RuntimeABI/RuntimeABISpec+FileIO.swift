@@ -236,6 +236,18 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "FileIO"
         ),
+        // STDLIB-IO-FN-017: Reader.forEachLine { line -> Unit }
+        RuntimeABIFunctionSpec(
+            name: "kk_buffered_reader_forEachLine",
+            parameters: [
+                RuntimeABIParameter(name: "readerRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
         // STDLIB-IO-091/093: BufferedWriter
         RuntimeABIFunctionSpec(
             name: "kk_file_bufferedWriter",

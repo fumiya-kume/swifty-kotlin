@@ -916,6 +916,38 @@ public func kk_buffered_reader_useLines(_ readerRaw: Int, _ fnPtr: Int, _ closur
     return result
 }
 
+// MARK: - STDLIB-IO-FN-017: Reader.forEachLine { line -> Unit }
+//
+// Kotlin's `kotlin.io.Reader.forEachLine(action)` extension reads lines from the
+// receiver one by one and invokes `action` with each line as a `String`. Iteration
+// stops early when the action throws (the thrown value is propagated via `outThrown`).
+// Unlike `useLines`, the reader is NOT automatically closed after iteration ends —
+// this mirrors the JVM contract where `forEachLine` leaves the reader open.
+@_cdecl("kk_buffered_reader_forEachLine")
+public func kk_buffered_reader_forEachLine(
+    _ readerRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let reader = runtimeBufferedReaderBox(from: readerRaw) else {
+        fatalError(
+            "KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_buffered_reader_forEachLine received invalid BufferedReader handle"
+        )
+    }
+    for line in reader.readLines() {
+        let lineRaw = fileMakeStringRaw(line)
+        var thrown = 0
+        _ = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: lineRaw, outThrown: &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return 0
+        }
+    }
+    return 0
+}
+
 // MARK: - STDLIB-IO-091: BufferedWriter
 
 private func runtimeBufferedWriterBox(from raw: Int) -> RuntimeBufferedWriterBox? {

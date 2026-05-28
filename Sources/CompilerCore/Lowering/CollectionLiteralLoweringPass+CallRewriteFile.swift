@@ -209,12 +209,15 @@ extension CollectionLiteralLoweringPass {
         // --- Append closureRaw argument for File lambda-accepting methods (STDLIB-322) ---
         // STDLIB-IO-FN-040: also covers `kk_buffered_reader_useLines`, the synthetic
         // stub for `kotlin.io.Reader.useLines` (resolved against `BufferedReader`).
+        // STDLIB-IO-FN-017: also covers `kk_buffered_reader_forEachLine`, the synthetic
+        // stub for `kotlin.io.Reader.forEachLine` (resolved against `BufferedReader`).
         // When the KIR callee is already rewritten via externalLinkName,
         // the lambda argument must be supplemented with closureRaw (0)
         // so the runtime receives (receiverRaw, fnPtr, closureRaw, outThrown).
         if callee == lookup.kkFileForEachLineName
             || callee == lookup.kkFileUseLinesName
             || callee == lookup.kkBufferedReaderUseLinesName
+            || callee == lookup.kkBufferedReaderForEachLineName
         {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))

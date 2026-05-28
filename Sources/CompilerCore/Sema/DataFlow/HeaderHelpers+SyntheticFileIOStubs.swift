@@ -610,6 +610,24 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // BufferedReader.forEachLine { line: String -> Unit } (STDLIB-IO-FN-017)
+        //
+        // Kotlin declares `forEachLine` as an extension function on `kotlin.io.Reader`
+        // (which `BufferedReader` extends). The lambda receives each line as a `String`
+        // and returns `Unit`. We model it as a member of `java.io.BufferedReader` so
+        // user code can call `file.bufferedReader().forEachLine { line -> ... }`.
+        // Unlike `useLines`, the reader is NOT automatically closed after iteration.
+        registerFileMemberFunction(
+            named: "forEachLine",
+            externalLinkName: "kk_buffered_reader_forEachLine",
+            ownerSymbol: bufferedReaderSymbol,
+            ownerType: bufferedReaderType,
+            parameters: [("action", stringToUnitType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // MARK: - BufferedWriter type and File.bufferedWriter() (STDLIB-IO-091/093)
 
         let bufferedWriterSymbol = ensureClassSymbol(

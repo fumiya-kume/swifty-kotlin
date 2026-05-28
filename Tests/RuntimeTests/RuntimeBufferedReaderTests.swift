@@ -8,6 +8,27 @@ import XCTest
 // We unbox the list, read its size, and box the count back as an Int — matching the
 // collection HOF lambda ABI consumed by `runtimeInvokeCollectionLambda1`.
 
+// MARK: - STDLIB-IO-FN-017 lambda thunks for forEachLine
+//
+// Action receives each line as a raw String pointer (boxed Int). We extract the
+// Swift String value and accumulate it into `forEachLineCollectedLines` so tests
+// can assert which lines were visited.
+
+nonisolated(unsafe) private var forEachLineCollectedLines: [String] = []
+
+private let forEachLineCollector: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, lineRaw, outThrown in
+    outThrown?.pointee = 0
+    if let str = extractString(from: UnsafeMutableRawPointer(bitPattern: lineRaw)) {
+        forEachLineCollectedLines.append(str)
+    }
+    return 0
+}
+
+private let forEachLineAlwaysThrows: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, outThrown in
+    outThrown?.pointee = runtimeAllocateThrowable(message: "ActionError: forEachLine action threw")
+    return 0
+}
+
 private let useLinesCountsLines: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, outThrown in
     outThrown?.pointee = 0
     guard let ptr = UnsafeMutableRawPointer(bitPattern: value),
@@ -235,6 +256,74 @@ final class RuntimeBufferedReaderTests: IsolatedRuntimeXCTestCase {
         // After useLines returns, the reader is closed and yields no further lines
         // (mirrors the JVM `use { }` contract on the underlying Reader).
         XCTAssertEqual(kk_buffered_reader_readLine(readerRaw), runtimeNullSentinelInt)
+    }
+
+    // MARK: - STDLIB-IO-FN-017: BufferedReader.forEachLine
+
+    func testBufferedReaderForEachLineInvokesActionForEachLine() throws {
+        let fileURL = try makeTempFile(contents: "alpha\nbeta\ngamma\n")
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        forEachLineCollectedLines = []
+        let fileRaw = runtimeTestFileHandle(fileURL.path)
+        var thrown = 0
+        let readerRaw = kk_file_bufferedReader(fileRaw, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertNotEqual(readerRaw, 0)
+
+        _ = kk_buffered_reader_forEachLine(readerRaw, fnPtrInt(forEachLineCollector), 0, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(forEachLineCollectedLines, ["alpha", "beta", "gamma"])
+    }
+
+    func testBufferedReaderForEachLineEmptyFileInvokesNoAction() throws {
+        let fileURL = try makeTempFile(contents: "")
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        forEachLineCollectedLines = []
+        let fileRaw = runtimeTestFileHandle(fileURL.path)
+        var thrown = 0
+        let readerRaw = kk_file_bufferedReader(fileRaw, &thrown)
+        XCTAssertEqual(thrown, 0)
+
+        _ = kk_buffered_reader_forEachLine(readerRaw, fnPtrInt(forEachLineCollector), 0, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(forEachLineCollectedLines, [], "action should not be called for an empty file")
+    }
+
+    func testBufferedReaderForEachLinePropagatesThrownFromAction() throws {
+        let fileURL = try makeTempFile(contents: "one\ntwo\n")
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        let fileRaw = runtimeTestFileHandle(fileURL.path)
+        var thrown = 0
+        let readerRaw = kk_file_bufferedReader(fileRaw, &thrown)
+        XCTAssertEqual(thrown, 0)
+
+        let result = kk_buffered_reader_forEachLine(readerRaw, fnPtrInt(forEachLineAlwaysThrows), 0, &thrown)
+        XCTAssertEqual(result, 0)
+        XCTAssertNotEqual(thrown, 0, "action exception should surface via outThrown")
+    }
+
+    func testBufferedReaderForEachLineDoesNotCloseReaderAfterIteration() throws {
+        let fileURL = try makeTempFile(contents: "first\nsecond\n")
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        let fileRaw = runtimeTestFileHandle(fileURL.path)
+        var thrown = 0
+        let readerRaw = kk_file_bufferedReader(fileRaw, &thrown)
+        XCTAssertEqual(thrown, 0)
+
+        forEachLineCollectedLines = []
+        _ = kk_buffered_reader_forEachLine(readerRaw, fnPtrInt(forEachLineCollector), 0, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(forEachLineCollectedLines, ["first", "second"])
+
+        // After forEachLine returns, the reader is still open. All lines have been
+        // consumed, so the next readLine returns null sentinel — but the reader handle
+        // itself is still valid (not released). This differs from useLines.
+        XCTAssertEqual(kk_buffered_reader_readLine(readerRaw), runtimeNullSentinelInt,
+                       "all lines already consumed; reader still open but at EOF")
     }
 
     private func makeTempFile(contents: String) throws -> URL {
