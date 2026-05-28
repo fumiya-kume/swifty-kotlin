@@ -2270,6 +2270,13 @@ extension DataFlowSemaPhase {
         let useContentsTTypeParameterFQName = useContentsFunctionFQName + [useContentsTTypeParameterName]
         let useContentsTTypeParameterSymbol: SymbolID = if let existing = symbols.lookup(
             fqName: useContentsTTypeParameterFQName
+        // inline fun <reified T : CVariable> zeroValue(): CValue<T>
+        let zeroValueFunctionName = interner.intern("zeroValue")
+        let zeroValueFunctionFQName = cinteropPkg + [zeroValueFunctionName]
+        let zeroValueTypeParameterName = interner.intern("T")
+        let zeroValueTypeParameterFQName = zeroValueFunctionFQName + [zeroValueTypeParameterName]
+        let zeroValueTypeParameterSymbol: SymbolID = if let existing = symbols.lookup(
+            fqName: zeroValueTypeParameterFQName
         ) {
             existing
         } else {
@@ -2347,6 +2354,8 @@ extension DataFlowSemaPhase {
                 kind: .typeParameter,
                 name: zeroValue2ArgTypeParameterName,
                 fqName: zeroValue2ArgTypeParameterFQName,
+                name: zeroValueTypeParameterName,
+                fqName: zeroValueTypeParameterFQName,
                 declSite: nil,
                 visibility: .private,
                 flags: [.synthetic, .reifiedTypeParameter]
@@ -2361,6 +2370,15 @@ extension DataFlowSemaPhase {
         let zeroValue2ArgReturnType = types.make(.classType(ClassType(
             classSymbol: cValueSymbol,
             args: [.invariant(zeroValue2ArgTypeParameterType)],
+        symbols.insertFlags([.synthetic, .reifiedTypeParameter], for: zeroValueTypeParameterSymbol)
+        symbols.setTypeParameterUpperBounds([cVariableType], for: zeroValueTypeParameterSymbol)
+        let zeroValueTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: zeroValueTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let zeroValueReturnType = types.make(.classType(ClassType(
+            classSymbol: cValueSymbol,
+            args: [.invariant(zeroValueTypeParameterType)],
             nullability: .nonNull
         )))
         registerSyntheticNativeTopLevelFunction(
@@ -2373,6 +2391,9 @@ extension DataFlowSemaPhase {
             ],
             returnType: zeroValue2ArgReturnType,
             typeParameterSymbols: [zeroValue2ArgTypeParameterSymbol],
+            parameters: [],
+            returnType: zeroValueReturnType,
+            typeParameterSymbols: [zeroValueTypeParameterSymbol],
             typeParameterUpperBoundsList: [[cVariableType]],
             reifiedTypeParameterIndices: [0],
             flags: [.synthetic, .inlineFunction],
