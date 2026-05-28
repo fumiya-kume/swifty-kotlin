@@ -449,6 +449,30 @@ public func kk_file_parent(_ fileRaw: Int) -> Int {
     return fileMakeStringRaw(parent)
 }
 
+// MARK: - STDLIB-IO-PROP-002: File.extension property
+
+/// Returns the substring of the file name after the last `.`, matching the
+/// behavior of `kotlin.io.File.extension`. If the file name has no `.` (e.g.
+/// `"README"` or `".bashrc"` where the only dot is at index 0), the property
+/// returns an empty string. The dot itself is not included in the result.
+///
+/// Examples:
+/// - `File("Main.kt").extension` → `"kt"`
+/// - `File("archive.tar.gz").extension` → `"gz"`
+/// - `File("README").extension` → `""`
+/// - `File(".bashrc").extension` → `"bashrc"` (matches Kotlin/JVM behavior)
+@_cdecl("kk_file_extension")
+public func kk_file_extension(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_extension received invalid File handle")
+    }
+    let name = (file.path as NSString).lastPathComponent
+    guard let dotIndex = name.lastIndex(of: ".") else {
+        return fileMakeStringRaw("")
+    }
+    return fileMakeStringRaw(String(name[name.index(after: dotIndex)...]))
+}
+
 // MARK: - STDLIB-IO-PROP-003: File.invariantSeparatorsPath
 //
 // Kotlin signature: `public val File.invariantSeparatorsPath: String`

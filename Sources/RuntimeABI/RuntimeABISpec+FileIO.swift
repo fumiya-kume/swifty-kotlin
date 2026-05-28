@@ -798,6 +798,17 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "FileIO"
         ),
+        // STDLIB-IO-PROP-002: File.extension property — returns the substring of
+        // the file name after the last `.`. Implemented in Runtime/RuntimeFileIO.swift
+        // as `kk_file_extension` and exposed via the synthetic File stubs.
+        RuntimeABIFunctionSpec(
+            name: "kk_file_extension",
+            parameters: [
+                RuntimeABIParameter(name: "fileRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_file_invariantSeparatorsPath",
             parameters: [

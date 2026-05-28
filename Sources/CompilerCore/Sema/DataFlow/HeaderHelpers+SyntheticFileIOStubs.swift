@@ -152,6 +152,23 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // MARK: - File extension property (STDLIB-IO-PROP-002)
+
+        // `kotlin.io.File.extension` is a non-null `String` extension property that
+        // returns the substring after the last `.` of the file name. When the file
+        // name contains no dot, the property returns an empty string. This matches
+        // Kotlin's stdlib `kotlin.io.FileTreeWalk.kt` definition. The Sema layer
+        // exposes it as a synthetic member on `java.io.File` because KSwiftK does
+        // not yet model Kotlin extension properties separately from members.
+        registerFileMemberProperty(
+            named: "extension",
+            externalLinkName: "kk_file_extension",
+            ownerSymbol: fileSymbol,
+            returnType: types.stringType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // MARK: - File query methods (STDLIB-321)
 
         registerFileMemberFunction(
