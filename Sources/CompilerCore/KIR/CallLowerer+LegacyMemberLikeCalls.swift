@@ -1366,6 +1366,17 @@ extension CallLowerer {
                     ))
                     return result
                 }
+                if calleeStr == "toSortedSet" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_toSortedSet"),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
                 if calleeStr == "asIterable" {
                     instructions.append(.call(
                         symbol: nil,

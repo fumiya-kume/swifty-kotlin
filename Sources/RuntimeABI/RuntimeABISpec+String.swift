@@ -1345,6 +1345,15 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        // STDLIB-TEXT-FN-108: CharSequence.toSortedSet()
+        RuntimeABIFunctionSpec(
+            name: "kk_string_toSortedSet",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
         // STDLIB-640: CharArray.concatToString()
         RuntimeABIFunctionSpec(
             name: "kk_chararray_concatToString",
