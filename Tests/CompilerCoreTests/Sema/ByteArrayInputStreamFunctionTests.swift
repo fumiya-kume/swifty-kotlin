@@ -12,7 +12,33 @@ import XCTest
 /// Both return `java.io.ByteArrayInputStream`, which is registered as an
 /// `InputStream` subtype so that resource-management surfaces (`.use {}`) work
 /// out of the box.
+///
+/// STDLIB-IO-FN-020: Validates that `kotlin.io.ByteArray.inputStream(): ByteArrayInputStream`
+/// extension resolves through Sema for plain `kotlin.ByteArray` receivers and yields a
+/// `java.io.ByteArrayInputStream` value that is also usable through the
+/// `java.io.InputStream` surface (close / read / use {} / etc.).
+///
+/// The extension is wired through the synthetic File IO stub registry in
+/// `Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticFileIOStubs.swift`, and is
+/// expected to bind to the runtime helper `kk_bytearray_inputStream` declared in
+/// `Sources/RuntimeABI/RuntimeABISpec+FileIO.swift`.
 final class ByteArrayInputStreamFunctionTests: XCTestCase {
+    private func memberCallExprIDs(
+        named name: String,
+        in ast: ASTModule,
+        interner: StringInterner
+    ) -> [ExprID] {
+        ast.arena.exprs.indices.compactMap { index in
+            let exprID = ExprID(rawValue: Int32(index))
+            guard let expr = ast.arena.expr(exprID),
+                  case let .memberCall(_, callee, _, _, _) = expr,
+                  interner.resolve(callee) == name
+            else {
+                return nil
+            }
+            return exprID
+        }
+    }
 
     // MARK: - STDLIB-IO-FN-020: ByteArray.inputStream() (zero-arg)
 
@@ -67,6 +93,27 @@ final class ByteArrayInputStreamFunctionTests: XCTestCase {
         }
     }
 
+    func testByteArrayInputStreamResolvesWithNoArguments() throws {
+        let source = """
+        import java.io.ByteArrayInputStream
+        import kotlin.io.inputStream
+
+        fun openSource(bytes: ByteArray): ByteArrayInputStream {
+            return bytes.inputStream()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let errors = ctx.diagnostics.diagnostics.filter { $0.severity == .error }
+            XCTAssertTrue(
+                errors.isEmpty,
+                "ByteArray.inputStream() should resolve without arguments, got: \(errors.map { "\($0.code): \($0.message)" })"
+            )
+        }
+    }
+
     // MARK: - STDLIB-IO-FN-021: ByteArray.inputStream(offset, length) (range)
 
     func testRangeByteArrayInputStreamResolvesCleanly() throws {
@@ -115,6 +162,42 @@ final class ByteArrayInputStreamFunctionTests: XCTestCase {
         }
     }
 
+    func testByteArrayInputStreamCanFlowThroughInputStreamSurface() throws {
+        // ByteArrayInputStream extends InputStream, so the returned value can be
+        // bound to an InputStream variable and used through Closeable/.use {} as
+        // well as read()/available()/close() surface methods.
+        let source = """
+        import java.io.ByteArrayInputStream
+        import java.io.InputStream
+        import kotlin.io.inputStream
+
+        fun consume(bytes: ByteArray): Int {
+            val stream: ByteArrayInputStream = bytes.inputStream()
+            val byte: Int = stream.read()
+            val remaining: Int = stream.available()
+            stream.close()
+            return byte + remaining
+        }
+
+        fun useViaCloseable(bytes: ByteArray): Int {
+            val raw: InputStream = bytes.inputStream()
+            return raw.use { stream ->
+                stream.read()
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let errors = ctx.diagnostics.diagnostics.filter { $0.severity == .error }
+            XCTAssertTrue(
+                errors.isEmpty,
+                "ByteArrayInputStream returned by ByteArray.inputStream() must satisfy InputStream surface, got: \(errors.map { "\($0.code): \($0.message)" })"
+            )
+        }
+    }
+
     func testBothOverloadsExistInKotlinIOPackage() throws {
         // Direct symbol lookup to verify both inputStream stubs live in kotlin.io.
         try withTemporaryFile(contents: "fun noop() {}") { path in
@@ -153,6 +236,96 @@ final class ByteArrayInputStreamFunctionTests: XCTestCase {
                 externalLinks.contains("kk_bytearray_inputStream_range"),
                 "Range overload kk_bytearray_inputStream_range not found"
             )
+        }
+    }
+
+    func testByteArrayInputStreamFunctionSignatureAndRuntimeLink() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+
+            let byteArraySymbol = try XCTUnwrap(
+                symbols.lookup(fqName: ["kotlin", "ByteArray"].map(interner.intern))
+            )
+            let byteArrayType = types.make(
+                .classType(ClassType(classSymbol: byteArraySymbol, args: [], nullability: .nonNull))
+            )
+            let byteArrayInputStreamSymbol = try XCTUnwrap(
+                symbols.lookup(fqName: ["java", "io", "ByteArrayInputStream"].map(interner.intern))
+            )
+            let byteArrayInputStreamType = types.make(
+                .classType(ClassType(classSymbol: byteArrayInputStreamSymbol, args: [], nullability: .nonNull))
+            )
+
+            let candidates = symbols.lookupAll(
+                fqName: ["kotlin", "io", "inputStream"].map(interner.intern)
+            )
+            let inputStream = try XCTUnwrap(candidates.first { symbolID in
+                guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+                return signature.receiverType == byteArrayType
+                    && signature.parameterTypes.isEmpty
+                    && signature.returnType == byteArrayInputStreamType
+            }, "Expected a kotlin.io.inputStream extension with ByteArray receiver and ByteArrayInputStream return")
+
+            XCTAssertEqual(
+                symbols.externalLinkName(for: inputStream),
+                "kk_bytearray_inputStream",
+                "ByteArray.inputStream should bind to runtime helper kk_bytearray_inputStream"
+            )
+
+            let signature = try XCTUnwrap(symbols.functionSignature(for: inputStream))
+            XCTAssertEqual(signature.receiverType, byteArrayType)
+            XCTAssertTrue(signature.parameterTypes.isEmpty)
+            XCTAssertEqual(signature.returnType, byteArrayInputStreamType)
+            XCTAssertFalse(signature.isSuspend)
+        }
+    }
+
+    func testByteArrayInputStreamCallExpressionTypedAsByteArrayInputStream() throws {
+        let source = """
+        import java.io.ByteArrayInputStream
+        import kotlin.io.inputStream
+
+        fun openSource(bytes: ByteArray): ByteArrayInputStream {
+            val stream = bytes.inputStream()
+            return stream
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "ByteArray.inputStream() should resolve cleanly: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbols = sema.symbols
+            let types = sema.types
+            let byteArrayInputStreamSymbol = try XCTUnwrap(
+                symbols.lookup(fqName: ["java", "io", "ByteArrayInputStream"].map(interner.intern))
+            )
+            let byteArrayInputStreamType = types.make(
+                .classType(ClassType(classSymbol: byteArrayInputStreamSymbol, args: [], nullability: .nonNull))
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let callExprs = memberCallExprIDs(named: "inputStream", in: ast, interner: interner)
+            XCTAssertEqual(callExprs.count, 1, "Should find exactly one bytes.inputStream() call")
+            for callExpr in callExprs {
+                XCTAssertEqual(
+                    sema.bindings.exprTypes[callExpr],
+                    byteArrayInputStreamType,
+                    "ByteArray.inputStream() call expression must be typed as java.io.ByteArrayInputStream"
+                )
+            }
         }
     }
 
