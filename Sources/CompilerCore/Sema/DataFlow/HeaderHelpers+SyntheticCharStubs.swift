@@ -197,6 +197,12 @@ private let syntheticCharMemberSpecs: [SyntheticCharMemberSpec] = [
         externalLinkName: "kk_char_isTitleCase",
         returnKind: .boolean
     ),
+    // STDLIB-TEXT-PROP-017: Char.isUnicodeIdentifierPart
+    SyntheticCharMemberSpec(
+        name: "isUnicodeIdentifierPart",
+        externalLinkName: "kk_char_isUnicodeIdentifierPart",
+        returnKind: .boolean
+    ),
     // Code point and Unicode properties
     SyntheticCharMemberSpec(
         name: "code",
