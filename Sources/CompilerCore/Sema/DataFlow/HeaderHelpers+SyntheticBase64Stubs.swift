@@ -339,6 +339,104 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
         }
+
+        // ── OutputStream.encodingWith(base64) (STDLIB-IO-ENC-FN-002) ─────────────
+        //
+        // Kotlin signature: `public fun OutputStream.encodingWith(
+        //     base64: Base64
+        // ): OutputStream`  declared in the `kotlin.io.encoding` package.
+        registerBase64OutputStreamEncodingWithExtension(
+            ioEncodingPkg: ioEncodingPkg,
+            base64Type: base64Type,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+    }
+
+    // MARK: - OutputStream.encodingWith(base64) registration (STDLIB-IO-ENC-FN-002)
+
+    /// Registers `kotlin.io.encoding.encodingWith(base64: Base64): OutputStream`
+    /// as a top-level extension function whose receiver is `java.io.OutputStream`.
+    /// The OutputStream symbol is expected to already be registered by
+    /// `registerSyntheticFileIOStubs`; we just need to look it up here.
+    private func registerBase64OutputStreamEncodingWithExtension(
+        ioEncodingPkg: [InternedString],
+        base64Type: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let outputStreamFQName: [InternedString] = [
+            interner.intern("java"),
+            interner.intern("io"),
+            interner.intern("OutputStream"),
+        ]
+        guard let outputStreamSymbol = symbols.lookup(fqName: outputStreamFQName) else {
+            // OutputStream stubs weren't registered (older toolchain configuration);
+            // skip gracefully so we don't block other Base64 registrations.
+            return
+        }
+        let outputStreamType = types.make(.classType(ClassType(
+            classSymbol: outputStreamSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        let funcName = interner.intern("encodingWith")
+        let funcFQName = ioEncodingPkg + [funcName]
+        let parameterTypes: [TypeID] = [base64Type]
+
+        // Idempotent: if a matching synthetic stub already exists, just patch
+        // the external link name (mirrors the pattern used by other Kotlin IO
+        // extension registrations).
+        if let existing = symbols.lookupAll(fqName: funcFQName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return signature.receiverType == outputStreamType
+                && signature.parameterTypes == parameterTypes
+        }) {
+            symbols.setExternalLinkName("kk_output_stream_encodingWith", for: existing)
+            return
+        }
+
+        let funcSym = symbols.define(
+            kind: .function,
+            name: funcName,
+            fqName: funcFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let pkgSym = symbols.lookup(fqName: ioEncodingPkg) {
+            symbols.setParentSymbol(pkgSym, for: funcSym)
+        }
+        symbols.setExternalLinkName("kk_output_stream_encodingWith", for: funcSym)
+
+        let paramName = interner.intern("base64")
+        let paramSym = symbols.define(
+            kind: .valueParameter,
+            name: paramName,
+            fqName: funcFQName + [paramName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(funcSym, for: paramSym)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: outputStreamType,
+                parameterTypes: parameterTypes,
+                returnType: outputStreamType,
+                isSuspend: false,
+                valueParameterSymbols: [paramSym],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false]
+            ),
+            for: funcSym
+        )
     }
 
     // MARK: - Package helpers

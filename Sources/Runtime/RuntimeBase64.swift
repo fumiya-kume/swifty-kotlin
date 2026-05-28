@@ -571,3 +571,184 @@ public func kk_input_stream_decodingWith(_ streamRaw: Int, _ base64Raw: Int) -> 
     )
     return registerRuntimeObject(RuntimeInputStreamBox(data: decoded))
 }
+
+// MARK: - STDLIB-IO-ENC-FN-002: OutputStream.encodingWith(base64)
+
+/// Pure-Swift Base64 alphabet tables for streaming encoding.  Mirrors
+/// `decodeBase64String`'s alphabet handling so encoded writes stay in sync
+/// with one-shot `Base64.encode(...)` results.
+private let standardBase64Alphabet: [UInt8] = Array(
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".utf8
+)
+private let urlSafeBase64Alphabet: [UInt8] = Array(
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_".utf8
+)
+
+/// Returns the alphabet table corresponding to a `Base64RuntimeVariant`.
+private func base64AlphabetTable(for variant: Base64RuntimeVariant) -> [UInt8] {
+    switch variant {
+    case .standard, .mime: standardBase64Alphabet
+    case .urlSafe: urlSafeBase64Alphabet
+    }
+}
+
+/// Sink that incrementally Base64-encodes written bytes and forwards the
+/// encoded text to a wrapped `RuntimeOutputStreamBox`.  Used by
+/// `OutputStream.encodingWith(base64)` (STDLIB-IO-ENC-FN-002).
+private final class RuntimeBase64EncodingOutputStreamSink: RuntimeOutputStreamSink {
+    private let downstream: RuntimeOutputStreamBox
+    private let variant: Base64RuntimeVariant
+    private let paddingOption: Base64PaddingOption
+    /// Buffer of unwritten input bytes (always < 3 bytes at rest).
+    private var pending: [UInt8]
+    /// Column in the current MIME line, used to insert CRLF every 76 chars.
+    private var mimeColumn: Int
+    private var closed: Bool
+
+    init(downstream: RuntimeOutputStreamBox, variant: Base64RuntimeVariant, paddingOption: Base64PaddingOption) {
+        self.downstream = downstream
+        self.variant = variant
+        self.paddingOption = paddingOption
+        self.pending = []
+        self.mimeColumn = 0
+        self.closed = false
+    }
+
+    func write(_ data: Data) throws {
+        guard !closed else { return }
+        guard !data.isEmpty else { return }
+        var buffer = pending + Array(data)
+        let completeGroups = buffer.count / 3
+        let consumable = completeGroups * 3
+        if consumable > 0 {
+            let encoded = encodeFullGroups(Array(buffer.prefix(consumable)))
+            try writeEncoded(encoded)
+        }
+        pending = Array(buffer.suffix(buffer.count - consumable))
+        buffer.removeAll(keepingCapacity: false)
+    }
+
+    func flush() throws {
+        guard !closed else { return }
+        try downstream.flush()
+    }
+
+    func close() {
+        guard !closed else { return }
+        // Encode any trailing partial group with padding before forwarding close.
+        if !pending.isEmpty {
+            let tail = encodeTail(pending)
+            try? writeEncoded(tail)
+        }
+        pending.removeAll(keepingCapacity: false)
+        downstream.close()
+        closed = true
+    }
+
+    /// Encodes whole 3-byte groups using the configured alphabet.  Always
+    /// produces `(bytes.count / 3) * 4` output characters (no padding).
+    private func encodeFullGroups(_ bytes: [UInt8]) -> [UInt8] {
+        let alphabet = base64AlphabetTable(for: variant)
+        var out: [UInt8] = []
+        out.reserveCapacity((bytes.count / 3) * 4)
+        var index = 0
+        while index + 3 <= bytes.count {
+            let b0 = bytes[index]
+            let b1 = bytes[index + 1]
+            let b2 = bytes[index + 2]
+            out.append(alphabet[Int(b0 >> 2)])
+            out.append(alphabet[Int(((b0 & 0x03) << 4) | (b1 >> 4))])
+            out.append(alphabet[Int(((b1 & 0x0F) << 2) | (b2 >> 6))])
+            out.append(alphabet[Int(b2 & 0x3F)])
+            index += 3
+        }
+        return out
+    }
+
+    /// Encodes a trailing 1- or 2-byte partial group, applying padding per
+    /// the configured `paddingOption`.
+    private func encodeTail(_ tail: [UInt8]) -> [UInt8] {
+        let alphabet = base64AlphabetTable(for: variant)
+        var out: [UInt8] = []
+        if tail.count == 1 {
+            let b0 = tail[0]
+            out.append(alphabet[Int(b0 >> 2)])
+            out.append(alphabet[Int((b0 & 0x03) << 4)])
+            switch paddingOption {
+            case .present, .presentOptional:
+                out.append(UInt8(ascii: "="))
+                out.append(UInt8(ascii: "="))
+            case .absent, .absentOptional:
+                break
+            }
+        } else if tail.count == 2 {
+            let b0 = tail[0]
+            let b1 = tail[1]
+            out.append(alphabet[Int(b0 >> 2)])
+            out.append(alphabet[Int(((b0 & 0x03) << 4) | (b1 >> 4))])
+            out.append(alphabet[Int((b1 & 0x0F) << 2)])
+            switch paddingOption {
+            case .present, .presentOptional:
+                out.append(UInt8(ascii: "="))
+            case .absent, .absentOptional:
+                break
+            }
+        }
+        return out
+    }
+
+    /// Forwards already-encoded ASCII bytes to the downstream stream,
+    /// inserting CRLF every 76 chars for the MIME variant.
+    private func writeEncoded(_ encoded: [UInt8]) throws {
+        guard !encoded.isEmpty else { return }
+        if variant != .mime {
+            try downstream.writeBytes(encoded.map { Int($0) })
+            return
+        }
+        // MIME: maintain a running column so CRLF gets inserted every 76 chars.
+        var index = 0
+        while index < encoded.count {
+            let remainingInLine = mimeLineLength - mimeColumn
+            if remainingInLine <= 0 {
+                try downstream.writeBytes(Array(mimeCRLF.utf8).map { Int($0) })
+                mimeColumn = 0
+                continue
+            }
+            let take = min(remainingInLine, encoded.count - index)
+            let chunk = Array(encoded[index ..< index + take])
+            try downstream.writeBytes(chunk.map { Int($0) })
+            mimeColumn += take
+            index += take
+        }
+    }
+}
+
+/// Looks up a `RuntimeOutputStreamBox` from a raw handle (file-local helper
+/// matching the one in `RuntimeFileIO.swift`).
+private func base64OutputStreamBox(from raw: Int) -> RuntimeOutputStreamBox? {
+    if raw == runtimeNullSentinelInt { return nil }
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(ptr, to: RuntimeOutputStreamBox.self)
+}
+
+/// `kotlin.io.encoding.encodingWith(base64: Base64): OutputStream` extension
+/// on `java.io.OutputStream` (STDLIB-IO-ENC-FN-002).
+///
+/// JVM semantics: returns a new `OutputStream` that encodes bytes using the
+/// supplied `Base64` instance and forwards the encoded text to this stream.
+/// `close()` on the returned stream finalises the trailing partial group
+/// (applying padding per the `Base64` instance's `PaddingOption`) and then
+/// closes the underlying stream.
+@_cdecl("kk_output_stream_encodingWith")
+public func kk_output_stream_encodingWith(_ streamRaw: Int, _ base64Raw: Int) -> Int {
+    guard let downstream = base64OutputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_output_stream_encodingWith received invalid OutputStream handle")
+    }
+    let box = base64BoxOrDefault(from: base64Raw)
+    let sink = RuntimeBase64EncodingOutputStreamSink(
+        downstream: downstream,
+        variant: box.variant,
+        paddingOption: box.paddingOption
+    )
+    return registerRuntimeObject(RuntimeOutputStreamBox(sink: sink))
+}

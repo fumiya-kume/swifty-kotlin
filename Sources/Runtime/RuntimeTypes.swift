@@ -1565,8 +1565,19 @@ final class RuntimeSequenceInputStreamBox {
     }
 }
 
-final class RuntimeOutputStreamBox {
-    private let fileHandle: FileHandle
+/// Abstract sink backing a `RuntimeOutputStreamBox`.  Allows the OutputStream
+/// to be backed by either a direct `FileHandle` (the common case) or a
+/// transformation pipeline such as Base64 encoding wrapping another
+/// `RuntimeOutputStreamBox` (STDLIB-IO-ENC-FN-002).
+protocol RuntimeOutputStreamSink: AnyObject {
+    func write(_ data: Data) throws
+    func flush() throws
+    func close()
+}
+
+/// Default sink: writes raw bytes directly to a `FileHandle`.
+final class RuntimeFileHandleOutputStreamSink: RuntimeOutputStreamSink {
+    let fileHandle: FileHandle
     private var closed: Bool
 
     init(fileHandle: FileHandle) {
@@ -1574,16 +1585,9 @@ final class RuntimeOutputStreamBox {
         self.closed = false
     }
 
-    func writeByte(_ value: Int) throws {
+    func write(_ data: Data) throws {
         guard !closed else { return }
-        let byte = UInt8(truncatingIfNeeded: value)
-        try fileHandle.write(contentsOf: Data([byte]))
-    }
-
-    func writeBytes(_ values: [Int]) throws {
-        guard !closed else { return }
-        let bytes = values.map { UInt8(truncatingIfNeeded: $0) }
-        try fileHandle.write(contentsOf: Data(bytes))
+        try fileHandle.write(contentsOf: data)
     }
 
     func flush() throws {
@@ -1600,6 +1604,75 @@ final class RuntimeOutputStreamBox {
         guard !closed else { return }
         try? fileHandle.close()
         closed = true
+    }
+}
+
+final class RuntimeOutputStreamBox {
+    private let sink: RuntimeOutputStreamSink
+    private var closed: Bool
+
+    init(fileHandle: FileHandle) {
+        self.sink = RuntimeFileHandleOutputStreamSink(fileHandle: fileHandle)
+        self.closed = false
+    }
+
+    /// Builds an `OutputStream` backed by an arbitrary sink such as a
+    /// Base64-encoding pipeline (STDLIB-IO-ENC-FN-002).
+    init(sink: RuntimeOutputStreamSink) {
+        self.sink = sink
+        self.closed = false
+    }
+
+    func writeByte(_ value: Int) throws {
+        guard !closed else { return }
+        let byte = UInt8(truncatingIfNeeded: value)
+        try sink.write(Data([byte]))
+    }
+
+    func writeBytes(_ values: [Int]) throws {
+        guard !closed else { return }
+        let bytes = values.map { UInt8(truncatingIfNeeded: $0) }
+        try sink.write(Data(bytes))
+    }
+
+    func flush() throws {
+        guard !closed else { return }
+        try sink.flush()
+    }
+
+    func close() {
+        guard !closed else { return }
+        sink.close()
+        closed = true
+    }
+
+    /// Returns true if the underlying stream has been closed (STDLIB-IO-FN-009).
+    var isClosed: Bool { closed }
+
+    /// Returns the backing `FileHandle` when this OutputStream is wrapping a
+    /// raw file descriptor (the common case).  Non-file-handle backed streams
+    /// (e.g. Base64-encoding wrappers from STDLIB-IO-ENC-FN-002) return `nil`.
+    var underlyingFileHandle: FileHandle? {
+        (sink as? RuntimeFileHandleOutputStreamSink)?.fileHandle
+    }
+
+    /// Creates a `RuntimeBufferedWriterBox` that wraps the same file handle
+    /// as this `OutputStream`, marking the OutputStream as closed so that
+    /// ownership of the file handle is transferred to the new BufferedWriter
+    /// (matching JVM semantics where `OutputStream.bufferedWriter()` returns
+    /// a writer that owns the underlying stream).  STDLIB-IO-FN-009.
+    func makeBufferedWriter(encoding: String.Encoding) -> RuntimeBufferedWriterBox? {
+        guard let fileHandle = underlyingFileHandle else {
+            // Non-file-handle backed streams (e.g. Base64 encoding wrappers)
+            // can't currently be converted to a BufferedWriter — this matches
+            // the conservative subset supported by STDLIB-IO-FN-009.
+            return nil
+        }
+        let writer = RuntimeBufferedWriterBox(fileHandle: fileHandle, encoding: encoding)
+        // Transfer ownership: mark this OutputStream closed so further writes
+        // are no-ops and the deinit does not double-close the handle.
+        closed = true
+        return writer
     }
 }
 

@@ -222,5 +222,15 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Base64"
         ),
+        // STDLIB-IO-ENC-FN-002: OutputStream.encodingWith(base64)
+        RuntimeABIFunctionSpec(
+            name: "kk_output_stream_encodingWith",
+            parameters: [
+                RuntimeABIParameter(name: "streamRaw", type: .intptr),
+                RuntimeABIParameter(name: "base64Raw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Base64"
+        ),
     ]
 }
