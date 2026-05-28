@@ -1555,6 +1555,34 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testCharSequenceReduceResolvesInCallExpressions() throws {
+        let source = """
+        fun reduceFromSequence(value: CharSequence): Char {
+            return value.reduce { acc, ch -> if (ch == 'b') ch else acc }
+        }
+
+        fun reduceFromString(value: String): Char {
+            return value.reduce { acc, ch -> if (ch == 'a') ch else acc }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let diagnosticSummary = ctx.diagnostics.diagnostics.map { "\($0.code): \($0.message)" }.joined(separator: " | ")
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected CharSequence.reduce surface to resolve cleanly, got: \(diagnosticSummary)"
+            )
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let bindings = sema.bindings.callBindings.values.filter { binding in
+                sema.symbols.externalLinkName(for: binding.chosenCallee) == "kk_string_reduce"
+            }
+            XCTAssertEqual(bindings.count, 2)
+        }
+    }
+
     func testCharSequenceReduceRightIndexedResolvesInCallExpressions() throws {
         let source = """
         fun reduceFromSequence(value: CharSequence): Char {

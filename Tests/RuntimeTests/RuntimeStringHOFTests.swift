@@ -16,6 +16,16 @@ private let firstNotNullOfAlwaysZeroNull: @convention(c) (Int, Int, UnsafeMutabl
     0
 }
 
+private let reducePickB: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = {
+    _, acc, charRaw, _ in
+    charRaw == Int(Unicode.Scalar("b").value) ? charRaw : acc
+}
+
+private let reduceChecksum: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = {
+    _, acc, charRaw, _ in
+    acc + charRaw
+}
+
 private let reduceIndexedPickIndexOne: @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = {
     _, index, acc, charRaw, _ in
     index == 1 ? charRaw : acc
@@ -153,6 +163,68 @@ final class RuntimeStringHOFTests: XCTestCase {
 
         XCTAssertEqual(thrown, 0)
         XCTAssertEqual(result, runtimeNullSentinelInt)
+    }
+
+    // MARK: - STDLIB-TEXT-FN-046: CharSequence.reduce
+
+    func testReduceWalksLeftToRight() {
+        let source = registerRuntimeObject(RuntimeStringBox("abc"))
+        var thrown = 0
+
+        let result = kk_string_reduce(
+            source,
+            unsafeBitCast(reducePickB, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, Int(Unicode.Scalar("b").value))
+    }
+
+    func testReduceUsesFirstCharacterAsInitialAccumulator() {
+        let source = registerRuntimeObject(RuntimeStringBox("abc"))
+        var thrown = 0
+
+        let result = kk_string_reduce(
+            source,
+            unsafeBitCast(reduceChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 294)
+    }
+
+    func testReduceReturnsSingleCharForSingleCharString() {
+        let source = registerRuntimeObject(RuntimeStringBox("z"))
+        var thrown = 0
+
+        let result = kk_string_reduce(
+            source,
+            unsafeBitCast(reducePickB, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, Int(Unicode.Scalar("z").value))
+    }
+
+    func testReduceSetsThrownForEmptyString() {
+        let source = registerRuntimeObject(RuntimeStringBox(""))
+        var thrown = 0
+
+        let result = kk_string_reduce(
+            source,
+            unsafeBitCast(reducePickB, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
     }
 
     // MARK: - reduceIndexed

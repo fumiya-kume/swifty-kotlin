@@ -1500,6 +1500,7 @@ extension CallLowerer {
                 || calleeStr == "chunkedSequence"
                 || calleeStr == "firstNotNullOf"
                 || calleeStr == "firstNotNullOfOrNull"
+                || calleeStr == "reduce"
                 || calleeStr == "reduceIndexed"
                 || calleeStr == "reduceIndexedOrNull"
                 || calleeStr == "reduceRightIndexed"
@@ -1512,6 +1513,7 @@ extension CallLowerer {
             {
                 if calleeStr == "firstNotNullOf"
                     || calleeStr == "firstNotNullOfOrNull"
+                    || calleeStr == "reduce"
                     || calleeStr == "reduceIndexed"
                     || calleeStr == "reduceIndexedOrNull"
                     || calleeStr == "reduceRightIndexed"
@@ -1549,6 +1551,7 @@ extension CallLowerer {
                     let runtimeCallee = switch calleeStr {
                     case "firstNotNullOf": "kk_string_firstNotNullOf"
                     case "firstNotNullOfOrNull": "kk_string_firstNotNullOfOrNull"
+                    case "reduce": "kk_string_reduce"
                     case "reduceIndexed": "kk_string_reduceIndexed"
                     case "reduceIndexedOrNull": "kk_string_reduceIndexedOrNull"
                     case "reduceRightIndexed": "kk_string_reduceRightIndexed"

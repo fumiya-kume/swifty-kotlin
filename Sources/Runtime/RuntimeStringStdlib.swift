@@ -3891,6 +3891,41 @@ public func kk_string_firstNotNullOfOrNull(
     return runtimeNullSentinelInt
 }
 
+// MARK: - STDLIB-TEXT-FN-046: CharSequence.reduce
+
+@_cdecl("kk_string_reduce")
+public func kk_string_reduce(
+    _ strRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard !scalars.isEmpty else {
+        return handleCollectionLambdaThrow(
+            runtimeAllocateThrowable(message: "Empty char sequence can't be reduced."),
+            outThrown
+        )
+    }
+    var acc = Int(scalars[0].value)
+    guard scalars.count > 1 else { return acc }
+    for index in 1 ..< scalars.count {
+        var thrown = 0
+        acc = maybeUnbox(runtimeInvokeCollectionLambda2(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            lhs: acc,
+            rhs: Int(scalars[index].value),
+            outThrown: &thrown
+        ))
+        if thrown != 0 {
+            return handleCollectionLambdaThrow(thrown, outThrown)
+        }
+    }
+    return acc
+}
+
 @_cdecl("kk_string_reduceIndexed")
 public func kk_string_reduceIndexed(
     _ strRaw: Int,
