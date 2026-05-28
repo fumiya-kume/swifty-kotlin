@@ -526,6 +526,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                 "maxByOrNull": "kk_list_maxByOrNull",
                 "minOfWithOrNull": "kk_list_minOfWithOrNull",
                 "maxOfOrNull": "kk_list_maxOfOrNull",
+                "minOfOrNull": "kk_list_minOfOrNull",
                 "filterNotTo": "kk_list_filterNotTo",
                 "filterNotNullTo": "kk_list_filterNotNullTo",
                 "find": "kk_list_find",
