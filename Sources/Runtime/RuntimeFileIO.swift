@@ -324,6 +324,36 @@ public func kk_file_readBytes(_ fileRaw: Int, _ outThrown: UnsafeMutablePointer<
     }
 }
 
+// MARK: - STDLIB-IO-FN-001: File.appendBytes(array: ByteArray)
+
+@_cdecl("kk_file_appendBytes")
+public func kk_file_appendBytes(_ fileRaw: Int, _ arrayRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_appendBytes received invalid File handle")
+    }
+    guard let list = runtimeListBox(from: arrayRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: expected ByteArray/List<Int> array")
+        return 0
+    }
+    do {
+        let bytes = list.elements.map { UInt8(bitPattern: Int8(truncatingIfNeeded: $0)) }
+        let data = Data(bytes)
+        let url = URL(fileURLWithPath: file.path)
+        if FileManager.default.fileExists(atPath: file.path) {
+            let handle = try FileHandle(forWritingTo: url)
+            handle.seekToEndOfFile()
+            handle.write(data)
+            handle.closeFile()
+        } else {
+            try data.write(to: url)
+        }
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return 0
+}
+
 // MARK: - STDLIB-321: File properties and existence checks
 
 @_cdecl("kk_file_exists")

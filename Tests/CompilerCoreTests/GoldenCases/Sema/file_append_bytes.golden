@@ -1,0 +1,23 @@
+symbol s0 kind=class fq=kotlin.ByteArray vis=public flags=synthetic type=Class#0
+symbol s1 kind=function fq=kotlin.byteArrayOf vis=public flags=synthetic sig=recv=_ params=[Int] ret=Class#0 suspend=0 defaults=[0] vararg=[1]
+symbol s2 kind=class fq=java.io.File vis=public flags=synthetic type=Class#2
+symbol s3 kind=constructor fq=java.io.File.<init> vis=public flags=synthetic sig=recv=_ params=[String] ret=Class#2 suspend=0 defaults=[0] vararg=[0]
+symbol s4 kind=function fq=java.io.File.appendBytes vis=public flags=synthetic sig=recv=Class#2 params=[Class#0] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s5 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s6 kind=local fq=__local_0.f vis=private flags=_ type=Class#2
+symbol s7 kind=local fq=__local_1.bytes vis=private flags=_ type=Class#0
+file f0 package=_
+  decl d0 fun main suspend=0 inline=0 sym=s5
+expr e0 name(File) type=_
+expr e1 string(test.bin) type=String
+expr e2 call callee=e0 args=[_:e1] type=Class#2 call=s3 map=[0->0] targs=[]
+expr e3 localDecl f mutable=0 type=_ init=e2 type=Unit ref=s6
+expr e4 name(byteArrayOf) type=_
+expr e5 int(1) type=Int
+expr e6 int(2) type=Int
+expr e7 int(3) type=Int
+expr e8 call callee=e4 args=[_:e5,_:e6,_:e7] type=Class#0 call=s1 map=[0->0,1->0,2->0] targs=[]
+expr e9 localDecl bytes mutable=0 type=_ init=e8 type=Unit ref=s7
+expr e10 name(f) type=Class#2 ref=s6
+expr e11 name(bytes) type=Class#0 ref=s7
+expr e12 memberCall recv=e10 callee=appendBytes args=[_:e11] type=Unit call=s4 map=[0->0] targs=[]

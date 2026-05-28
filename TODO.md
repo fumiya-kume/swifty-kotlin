@@ -102,7 +102,7 @@
 - [x] STDLIB-IO-PROP-005: `nameWithoutExtension` 拡張プロパティの実装
 
 #### kotlin.io 関数の実装
-- [ ] STDLIB-IO-FN-001: `appendBytes` 関数の実装
+- [x] STDLIB-IO-FN-001: `appendBytes` 関数の実装
 - [x] STDLIB-IO-FN-003: `buffered` 関数の実装（InputStream版）
 - [ ] STDLIB-IO-FN-004: `buffered` 関数の実装（OutputStream版）
 - [ ] STDLIB-IO-FN-005: `buffered` 関数の実装（Reader版）

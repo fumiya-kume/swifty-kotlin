@@ -369,6 +369,36 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // MARK: - File.appendBytes() (STDLIB-IO-FN-001)
+        //
+        // Kotlin signature: `fun File.appendBytes(array: ByteArray): Unit`
+        // ByteArray is represented internally as List<Int>; we register both
+        // the ByteArray-typed overload (user-facing) and List<Int> (internal)
+        // so that both `byteArrayOf(...)` and `listOf(...)` argument styles resolve.
+
+        let byteArrayFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("ByteArray")]
+        let appendBytesByteArrayType: TypeID
+        if let byteArraySymbol = symbols.lookup(fqName: byteArrayFQName) {
+            appendBytesByteArrayType = types.make(.classType(ClassType(
+                classSymbol: byteArraySymbol, args: [], nullability: .nonNull
+            )))
+        } else {
+            appendBytesByteArrayType = listOfIntType
+        }
+
+        for arrayParamType in [appendBytesByteArrayType, listOfIntType] {
+            registerFileMemberFunction(
+                named: "appendBytes",
+                externalLinkName: "kk_file_appendBytes",
+                ownerSymbol: fileSymbol,
+                ownerType: fileType,
+                parameters: [("array", arrayParamType)],
+                returnType: types.unitType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
         // MARK: - File line-by-line operations (STDLIB-322)
 
         registerFileMemberFunction(

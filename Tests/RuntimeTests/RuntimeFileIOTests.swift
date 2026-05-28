@@ -45,6 +45,41 @@ final class RuntimeFileIOTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(runtimeListBox(from: bytesRaw)?.elements, [0, 127, -128, -1])
     }
 
+    // STDLIB-IO-FN-001: File.appendBytes(array: ByteArray)
+    func testAppendBytesCreatesAndAppendsFile() throws {
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        let fileRaw = runtimeTestFileHandle(fileURL.path)
+        var thrown = 0
+
+        // Write initial bytes [1, 2, 3]
+        let bytesRaw1 = registerRuntimeObject(RuntimeListBox(elements: [1, 2, 3]))
+        XCTAssertEqual(kk_file_appendBytes(fileRaw, bytesRaw1, &thrown), 0)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(try Data(contentsOf: fileURL), Data([1, 2, 3]))
+
+        // Append additional bytes [4, 5]
+        let bytesRaw2 = registerRuntimeObject(RuntimeListBox(elements: [4, 5]))
+        XCTAssertEqual(kk_file_appendBytes(fileRaw, bytesRaw2, &thrown), 0)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(try Data(contentsOf: fileURL), Data([1, 2, 3, 4, 5]))
+    }
+
+    func testAppendBytesHandlesSignedByteValues() throws {
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        let fileRaw = runtimeTestFileHandle(fileURL.path)
+        var thrown = 0
+
+        // Kotlin Byte range: -128 to 127; -1 maps to 0xFF, -128 to 0x80
+        let bytesRaw = registerRuntimeObject(RuntimeListBox(elements: [0, 127, -128, -1]))
+        XCTAssertEqual(kk_file_appendBytes(fileRaw, bytesRaw, &thrown), 0)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(try Data(contentsOf: fileURL), Data([0, 127, 128, 255]))
+    }
+
     // STDLIB-IO-PROP-005: File.nameWithoutExtension extension property
     func testNameWithoutExtensionStripsTrailingExtension() {
         let cases: [(path: String, expected: String)] = [
