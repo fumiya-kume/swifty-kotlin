@@ -209,5 +209,18 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Base64"
         ),
+        // STDLIB-IO-ENC-FN-001: InputStream.decodingWith(base64) extension
+        // exposed under kotlin.io.encoding.  Returns a fresh InputStream over
+        // the Base64-decoded bytes of the source stream using the supplied
+        // Base64 instance for alphabet + padding configuration.
+        RuntimeABIFunctionSpec(
+            name: "kk_input_stream_decodingWith",
+            parameters: [
+                RuntimeABIParameter(name: "streamRaw", type: .intptr),
+                RuntimeABIParameter(name: "base64Raw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Base64"
+        ),
     ]
 }

@@ -479,3 +479,95 @@ private func decodeBase64String(
     }
     return base64MakeByteArrayRaw(Array(data))
 }
+
+// MARK: - STDLIB-IO-ENC-FN-001: InputStream.decodingWith(base64)
+
+/// Casts a raw Int handle to a `RuntimeInputStreamBox`, or returns nil when the
+/// raw value does not encode a live stream box.  Local to RuntimeBase64.swift
+/// so this file does not depend on internals of `RuntimeFileIO.swift`.
+private func base64InputStreamBox(from raw: Int) -> RuntimeInputStreamBox? {
+    if raw == runtimeNullSentinelInt { return nil }
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(ptr, to: RuntimeInputStreamBox.self)
+}
+
+/// Drains all remaining bytes from an `InputStream` into a Swift `Data`.
+/// Uses the public `readByte()` accessor to avoid touching private storage.
+private func drainInputStream(_ stream: RuntimeInputStreamBox) -> Data {
+    var bytes = Data()
+    while true {
+        let byte = stream.readByte()
+        if byte == -1 { break }
+        bytes.append(UInt8(truncatingIfNeeded: byte))
+    }
+    return bytes
+}
+
+/// Decodes a buffer of Base64-encoded bytes according to the provided
+/// `Base64` runtime configuration (variant + padding option).  Used by
+/// `kk_input_stream_decodingWith` to lazily resolve a stream's contents.
+private func decodeBase64Bytes(
+    _ bytes: Data,
+    variant: Base64RuntimeVariant,
+    paddingOption: Base64PaddingOption
+) -> Data {
+    // The input is Base64 text encoded as bytes (typically ASCII).
+    guard let text = String(data: bytes, encoding: .utf8) else {
+        return Data()
+    }
+    let sanitized: String
+    let alphabet: Base64Alphabet
+    switch variant {
+    case .standard:
+        sanitized = text
+        alphabet = .standard
+    case .urlSafe:
+        sanitized = text
+        alphabet = .urlSafe
+    case .mime:
+        // MIME ignores non-alphabet characters during decoding (RFC 2045).
+        sanitized = mimeFilterBase64Alphabet(text)
+        alphabet = .standard
+    }
+
+    // Normalise URL-safe alphabet → standard before handing to Foundation.
+    var normalised = sanitized
+    if alphabet == .urlSafe {
+        normalised = normalised
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+    }
+
+    // For PaddingOption.absent, leave the data unpadded; Foundation requires
+    // padding, so we always pad before decoding here.  The `decodingWith`
+    // surface does not validate padding errors — it follows JVM semantics of
+    // surfacing IOException on read, which is not modelled in the MVP.
+    _ = paddingOption
+    let padded = addPadding(normalised)
+    return Data(base64Encoded: padded) ?? Data()
+}
+
+/// `kotlin.io.encoding.decodingWith(base64: Base64): InputStream` extension
+/// on `java.io.InputStream`.  Returns a new `InputStream` whose readable bytes
+/// are the Base64-decoded form of the underlying stream's bytes.
+///
+/// MVP semantics: eagerly drain the source stream, decode, and return a
+/// fresh `RuntimeInputStreamBox` over the decoded bytes.  Matches JVM
+/// behaviour for the common "decode then consume" flow.  An invalid Base64
+/// payload yields an empty stream rather than a runtime exception so that
+/// the synthetic ABI stays infallible (the throwing path is reserved for
+/// future work alongside MIME line-handling refinements).
+@_cdecl("kk_input_stream_decodingWith")
+public func kk_input_stream_decodingWith(_ streamRaw: Int, _ base64Raw: Int) -> Int {
+    let box = base64BoxOrDefault(from: base64Raw)
+    guard let source = base64InputStreamBox(from: streamRaw) else {
+        return registerRuntimeObject(RuntimeInputStreamBox(data: Data()))
+    }
+    let raw = drainInputStream(source)
+    let decoded = decodeBase64Bytes(
+        raw,
+        variant: box.variant,
+        paddingOption: box.paddingOption
+    )
+    return registerRuntimeObject(RuntimeInputStreamBox(data: decoded))
+}

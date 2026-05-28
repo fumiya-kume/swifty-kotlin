@@ -313,6 +313,32 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
         }
+
+        // ── InputStream.decodingWith(base64) (STDLIB-IO-ENC-FN-001) ──────────────
+        //
+        // Kotlin signature:
+        //   public fun InputStream.decodingWith(base64: Base64): InputStream
+        //
+        // Declared in the `kotlin.io.encoding` package on `java.io.InputStream`.
+        // The returned `InputStream` decodes Base64-encoded bytes read from the
+        // underlying stream using the supplied `Base64` instance (which carries
+        // alphabet + padding configuration).
+        if let inputStreamType = lookupJavaIOInputStreamType(
+            symbols: symbols,
+            types: types,
+            interner: interner
+        ) {
+            registerBase64ExtensionFunction(
+                named: "decodingWith",
+                packageFQName: ioEncodingPkg,
+                receiverType: inputStreamType,
+                parameters: [("base64", base64Type)],
+                returnType: inputStreamType,
+                externalLinkName: "kk_input_stream_decodingWith",
+                symbols: symbols,
+                interner: interner
+            )
+        }
     }
 
     // MARK: - Package helpers
@@ -647,6 +673,101 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             types: types,
             interner: interner
+        )
+    }
+
+    /// Looks up the already-registered `java.io.InputStream` class type.
+    /// `registerSyntheticFileIOStubs` runs before this Base64 batch (see
+    /// `HeaderHelpers.swift` ordering), so the InputStream symbol is expected
+    /// to exist by the time `registerSyntheticBase64Stubs` is invoked. Returns
+    /// `nil` if the symbol is missing so callers can degrade gracefully.
+    private func lookupJavaIOInputStreamType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID? {
+        let fqName: [InternedString] = [
+            interner.intern("java"),
+            interner.intern("io"),
+            interner.intern("InputStream"),
+        ]
+        guard let inputStreamSymbol = symbols.lookup(fqName: fqName) else {
+            return nil
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: inputStreamSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+    }
+
+    /// Registers a top-level extension function in the `kotlin.io.encoding`
+    /// package whose receiver is a class type (e.g. `java.io.InputStream`).
+    /// Used for stdlib extensions like `InputStream.decodingWith(base64)`
+    /// (STDLIB-IO-ENC-FN-001).
+    private func registerBase64ExtensionFunction(
+        named name: String,
+        packageFQName: [InternedString],
+        receiverType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        externalLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        let parameterTypes = parameters.map(\.type)
+
+        if symbols.lookupAll(fqName: functionFQName).contains(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return signature.receiverType == receiverType
+                && signature.parameterTypes == parameterTypes
+        }) {
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        var valueParameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: functionFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            valueParameterSymbols.append(parameterSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameterTypes,
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+            ),
+            for: functionSymbol
         )
     }
 }
