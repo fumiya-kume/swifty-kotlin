@@ -1985,6 +1985,24 @@ extension DataFlowSemaPhase {
                 symbols: symbols,
                 interner: interner
             )
+            let cValuesRefOfTNullableType = types.make(.classType(ClassType(
+                classSymbol: cValuesRefSymbol,
+                args: [.invariant(cValueTypeParameterType)],
+                nullability: .nullable
+            )))
+            registerSyntheticNativeBitSetMemberFunction(
+                named: "write",
+                ownerSymbol: cValueSymbol,
+                receiverType: cValueType,
+                parameters: [(name: "location", type: cValuesRefOfTNullableType)],
+                returnType: types.unitType,
+                typeParameterSymbols: [cValueTypeParameterSymbol],
+                typeParameterUpperBoundsList: [[cVariableType]],
+                classTypeParameterCount: 1,
+                flags: [.synthetic],
+                symbols: symbols,
+                interner: interner
+            )
         }
         configureSingleTypeParameterNominal(
             ownerSymbol: cValuesSymbol,
@@ -3026,6 +3044,359 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
         }
+
+        // fun LongArray.toCValues(): CValues<LongVar>
+        if let longVarSymbol = symbols.lookup(fqName: cinteropPkg + [interner.intern("LongVar")]) {
+            let longVarType = types.make(.classType(ClassType(
+                classSymbol: longVarSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            let longArrayReceiverType = syntheticClassType(
+                packagePath: ["kotlin"],
+                name: "LongArray",
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
+            let longArrayToCValuesReturnType = types.make(.classType(ClassType(
+                classSymbol: cValuesSymbol,
+                args: [.invariant(longVarType)],
+                nullability: .nonNull
+            )))
+            registerSyntheticNativeTopLevelFunction(
+                named: "toCValues",
+                packageFQName: cinteropPkg,
+                receiverType: longArrayReceiverType,
+                parameters: [],
+                returnType: longArrayToCValuesReturnType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+        // fun FloatArray.toCValues(): CValues<FloatVar>
+        if let floatVarSymbol = symbols.lookup(fqName: cinteropPkg + [interner.intern("FloatVar")]) {
+            let floatVarType = types.make(.classType(ClassType(
+                classSymbol: floatVarSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            let floatArrayReceiverType = syntheticClassType(
+                packagePath: ["kotlin"],
+                name: "FloatArray",
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
+            let floatArrayToCValuesReturnType = types.make(.classType(ClassType(
+                classSymbol: cValuesSymbol,
+                args: [.invariant(floatVarType)],
+                nullability: .nonNull
+            )))
+            registerSyntheticNativeTopLevelFunction(
+                named: "toCValues",
+                packageFQName: cinteropPkg,
+                receiverType: floatArrayReceiverType,
+                parameters: [],
+                returnType: floatArrayToCValuesReturnType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+        // fun DoubleArray.toCValues(): CValues<DoubleVar>
+        if let doubleVarSymbol = symbols.lookup(fqName: cinteropPkg + [interner.intern("DoubleVar")]) {
+            let doubleVarType = types.make(.classType(ClassType(
+                classSymbol: doubleVarSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            let doubleArrayReceiverType = syntheticClassType(
+                packagePath: ["kotlin"],
+                name: "DoubleArray",
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
+            let doubleArrayToCValuesReturnType = types.make(.classType(ClassType(
+                classSymbol: cValuesSymbol,
+                args: [.invariant(doubleVarType)],
+                nullability: .nonNull
+            )))
+            registerSyntheticNativeTopLevelFunction(
+                named: "toCValues",
+                packageFQName: cinteropPkg,
+                receiverType: doubleArrayReceiverType,
+                parameters: [],
+                returnType: doubleArrayToCValuesReturnType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
+        // fun ULongArray.toCValues(): CValues<ULongVar>
+        if let uLongVarSymbol = symbols.lookup(fqName: cinteropPkg + [interner.intern("ULongVar")]) {
+            let uLongVarType = types.make(.classType(ClassType(
+                classSymbol: uLongVarSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            let uLongArrayReceiverType = syntheticClassType(
+                packagePath: ["kotlin"],
+                name: "ULongArray",
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
+            let uLongArrayToCValuesReturnType = types.make(.classType(ClassType(
+                classSymbol: cValuesSymbol,
+                args: [.invariant(uLongVarType)],
+                nullability: .nonNull
+            )))
+            registerSyntheticNativeTopLevelFunction(
+                named: "toCValues",
+                packageFQName: cinteropPkg,
+                receiverType: uLongArrayReceiverType,
+                parameters: [],
+                returnType: uLongArrayToCValuesReturnType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+        // fun CPointer<IntVar>.toKStringFromUtf32(): String
+        if let intVarSymbolForUtf32 = symbols.lookup(fqName: cinteropPkg + [interner.intern("IntVar")]) {
+            let intVarTypeForUtf32 = types.make(.classType(ClassType(
+                classSymbol: intVarSymbolForUtf32,
+                args: [],
+                nullability: .nonNull
+            )))
+            let toKStringFromUtf32ReceiverType = types.make(.classType(ClassType(
+                classSymbol: cPointerSymbol,
+                args: [.invariant(intVarTypeForUtf32)],
+                nullability: .nonNull
+            )))
+            registerSyntheticNativeTopLevelFunction(
+                named: "toKStringFromUtf32",
+                packageFQName: cinteropPkg,
+                receiverType: toKStringFromUtf32ReceiverType,
+                parameters: [],
+                returnType: types.stringType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
+        // fun CPointer<ShortVar>.toKString(): String
+        if let shortVarSymbolForToKString = symbols.lookup(fqName: cinteropPkg + [interner.intern("ShortVar")]) {
+            let shortVarTypeForToKString = types.make(.classType(ClassType(
+                classSymbol: shortVarSymbolForToKString,
+                args: [],
+                nullability: .nonNull
+            )))
+            let toKStringShortVarReceiverType = types.make(.classType(ClassType(
+                classSymbol: cPointerSymbol,
+                args: [.invariant(shortVarTypeForToKString)],
+                nullability: .nonNull
+            )))
+            registerSyntheticNativeTopLevelFunction(
+                named: "toKString",
+                packageFQName: cinteropPkg,
+                receiverType: toKStringShortVarReceiverType,
+                parameters: [],
+                returnType: types.stringType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
+        // fun CPointer<UShortVar>.toKStringFromUtf16(): String
+        if let uShortVarSymbolForUtf16 = symbols.lookup(fqName: cinteropPkg + [interner.intern("UShortVar")]) {
+            let uShortVarTypeForUtf16 = types.make(.classType(ClassType(
+                classSymbol: uShortVarSymbolForUtf16,
+                args: [],
+                nullability: .nonNull
+            )))
+            let toKStringFromUtf16UShortReceiverType = types.make(.classType(ClassType(
+                classSymbol: cPointerSymbol,
+                args: [.invariant(uShortVarTypeForUtf16)],
+                nullability: .nonNull
+            )))
+            registerSyntheticNativeTopLevelFunction(
+                named: "toKStringFromUtf16",
+                packageFQName: cinteropPkg,
+                receiverType: toKStringFromUtf16UShortReceiverType,
+                parameters: [],
+                returnType: types.stringType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+        // fun UByteArray.toCValues(): CValues<UByteVar>
+        if let uByteVarSymbol = symbols.lookup(fqName: cinteropPkg + [interner.intern("UByteVar")]) {
+            let uByteVarType = types.make(.classType(ClassType(
+                classSymbol: uByteVarSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            let uByteArrayReceiverType = syntheticClassType(
+                packagePath: ["kotlin"],
+                name: "UByteArray",
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
+            let uByteArrayToCValuesReturnType = types.make(.classType(ClassType(
+                classSymbol: cValuesSymbol,
+                args: [.invariant(uByteVarType)],
+                nullability: .nonNull
+            )))
+            registerSyntheticNativeTopLevelFunction(
+                named: "toCValues",
+                packageFQName: cinteropPkg,
+                receiverType: uByteArrayReceiverType,
+                parameters: [],
+                returnType: uByteArrayToCValuesReturnType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
+        // fun ShortArray.toCValues(): CValues<ShortVar>
+        if let shortVarSymbol = symbols.lookup(fqName: cinteropPkg + [interner.intern("ShortVar")]) {
+            let shortVarType = types.make(.classType(ClassType(
+                classSymbol: shortVarSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            let shortArrayReceiverType = syntheticClassType(
+                packagePath: ["kotlin"],
+                name: "ShortArray",
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
+            let shortArrayToCValuesReturnType = types.make(.classType(ClassType(
+                classSymbol: cValuesSymbol,
+                args: [.invariant(shortVarType)],
+                nullability: .nonNull
+            )))
+            registerSyntheticNativeTopLevelFunction(
+                named: "toCValues",
+                packageFQName: cinteropPkg,
+                receiverType: shortArrayReceiverType,
+                parameters: [],
+                returnType: shortArrayToCValuesReturnType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+        // fun <T : CPointed> Array<CPointer<T>?>.toCValues(): CValues<CPointerVarOf<CPointer<T>>>
+        if let arraySymbol = symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Array")]) {
+            let toCValuesArrayFunctionName = interner.intern("toCValues")
+            let toCValuesArrayFunctionFQName = cinteropPkg + [toCValuesArrayFunctionName]
+            let toCValuesArrayTypeParamName = interner.intern("T")
+            let toCValuesArrayTypeParamFQName = toCValuesArrayFunctionFQName + [toCValuesArrayTypeParamName]
+            let toCValuesArrayTypeParamSymbol: SymbolID
+            if let existing = symbols.lookup(fqName: toCValuesArrayTypeParamFQName),
+               symbols.symbol(existing)?.kind == .typeParameter,
+               symbols.parentSymbol(for: existing) == nil
+            {
+                toCValuesArrayTypeParamSymbol = existing
+            } else {
+                toCValuesArrayTypeParamSymbol = symbols.define(
+                    kind: .typeParameter,
+                    name: toCValuesArrayTypeParamName,
+                    fqName: toCValuesArrayTypeParamFQName,
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+            }
+            symbols.setTypeParameterUpperBounds([cPointedType], for: toCValuesArrayTypeParamSymbol)
+            let toCValuesArrayTypeParamType = types.make(.typeParam(TypeParamType(
+                symbol: toCValuesArrayTypeParamSymbol,
+                nullability: .nonNull
+            )))
+            // CPointer<T>  (nonNull)
+            let cPointerOfTType = types.make(.classType(ClassType(
+                classSymbol: cPointerSymbol,
+                args: [.invariant(toCValuesArrayTypeParamType)],
+                nullability: .nonNull
+            )))
+            // CPointer<T>?  (nullable element type)
+            let cPointerOfTNullableType = types.makeNullable(cPointerOfTType)
+            // Array<CPointer<T>?>  (receiver)
+            let arrayCPointerTReceiverType = types.make(.classType(ClassType(
+                classSymbol: arraySymbol,
+                args: [.invariant(cPointerOfTNullableType)],
+                nullability: .nonNull
+            )))
+            // CPointerVarOf<CPointer<T>>  (the var type)
+            let cPointerVarOfCPointerTType = types.make(.classType(ClassType(
+                classSymbol: cPointerVarOfSymbol,
+                args: [.invariant(cPointerOfTType)],
+                nullability: .nonNull
+            )))
+            // CValues<CPointerVarOf<CPointer<T>>>  (return type)
+            let arrayCPointerToCValuesReturnType = types.make(.classType(ClassType(
+                classSymbol: cValuesSymbol,
+                args: [.invariant(cPointerVarOfCPointerTType)],
+                nullability: .nonNull
+            )))
+            registerSyntheticNativeTopLevelFunction(
+                named: "toCValues",
+                packageFQName: cinteropPkg,
+                receiverType: arrayCPointerTReceiverType,
+                parameters: [],
+                returnType: arrayCPointerToCValuesReturnType,
+                typeParameterSymbols: [toCValuesArrayTypeParamSymbol],
+                typeParameterUpperBoundsList: [[cPointedType]],
+                symbols: symbols,
+                interner: interner
+            )
+        }
+        // STDLIB-CINTEROP-FN-039: inline fun <reified T> typeOf(): KType in kotlinx.cinterop
+        // kotlinx.cinterop re-exports typeOf<T>() so callers can use it without a kotlin.reflect import.
+        let typeOfCInteropName = interner.intern("typeOf")
+        let typeOfCInteropFQName = cinteropPkg + [typeOfCInteropName]
+        let kotlinReflectPkg = [interner.intern("kotlin"), interner.intern("reflect")]
+        let kTypeType: TypeID
+        if let kTypeSym = symbols.lookup(fqName: kotlinReflectPkg + [interner.intern("KType")]) {
+            kTypeType = types.make(.classType(ClassType(
+                classSymbol: kTypeSym,
+                args: [],
+                nullability: .nonNull
+            )))
+        } else {
+            kTypeType = types.anyType
+        }
+        let tParamNameCInterop = interner.intern("T")
+        let tParamFQNameCInterop = typeOfCInteropFQName + [tParamNameCInterop]
+        let tParamSymbolCInterop: SymbolID = if let existing = symbols.lookup(fqName: tParamFQNameCInterop) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: tParamNameCInterop,
+                fqName: tParamFQNameCInterop,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic, .reifiedTypeParameter]
+            )
+        }
+        symbols.insertFlags([.synthetic, .reifiedTypeParameter], for: tParamSymbolCInterop)
+        registerSyntheticNativeTopLevelFunction(
+            named: "typeOf",
+            packageFQName: cinteropPkg,
+            receiverType: nil,
+            parameters: [],
+            returnType: kTypeType,
+            typeParameterSymbols: [tParamSymbolCInterop],
+            typeParameterUpperBoundsList: [[]],
+            reifiedTypeParameterIndices: [0],
+            flags: [.synthetic, .inlineFunction],
+            symbols: symbols,
+            interner: interner
+        )
 
         registerSyntheticCInteropVector128Stubs(
             cinteropPkg: cinteropPkg,
