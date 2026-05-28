@@ -151,6 +151,14 @@ extension DataFlowSemaPhase {
             comparisonsPackageSymbol: comparisonsPackageSymbol,
             comparatorSymbol: comparatorSymbol
         )
+        registerSyntheticMinOfUnsignedStub(
+            typeID: types.ulongType,
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            comparisonsPkg: comparisonsPkg,
+            comparisonsPackageSymbol: comparisonsPackageSymbol
+        )
     }
 
     private func registerSyntheticComparisonFunction(
