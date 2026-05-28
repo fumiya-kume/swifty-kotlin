@@ -644,7 +644,7 @@
 - [x] STDLIB-CINTEROP-FN-007: `free(pointed)` を追加する
 - [ ] STDLIB-CINTEROP-FN-008: `memScoped(block)` を追加する
 - [ ] STDLIB-CINTEROP-FN-009: `pin()` を追加する
-- [ ] STDLIB-CINTEROP-FN-010: `place(value)` を追加する
+- [x] STDLIB-CINTEROP-FN-010: `place(value)` を追加する
 - [ ] STDLIB-CINTEROP-FN-011: `CPointer<T>.plus(index)` を追加する
 - [ ] STDLIB-CINTEROP-FN-012: `readValue()` を追加する
 - [x] STDLIB-CINTEROP-FN-013: `refTo(index)` を追加する
