@@ -518,6 +518,73 @@ public func kk_path_appendText(
     return pathRaw
 }
 
+// MARK: - Path.forEachDirectoryEntry
+
+/// Returns true if `name` matches the given glob pattern (filename only, no path separators).
+/// Uses POSIX fnmatch semantics.
+private func pathGlobMatches(pattern: String, name: String) -> Bool {
+    pattern == "*" || fnmatch(pattern, name, 0) == 0
+}
+
+/// Invokes the action lambda for every immediate child of `path`, filtered by the
+/// optional glob pattern (nil = match all, same as "*").
+private func pathForEachDirectoryEntryImpl(
+    _ path: RuntimePathBox,
+    glob pattern: String?,
+    actionRaw: Int,
+    outThrown: UnsafeMutablePointer<Int>?
+) {
+    outThrown?.pointee = 0
+    let entries: [String]
+    do {
+        entries = try FileManager.default.contentsOfDirectory(atPath: path.pathString)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+        return
+    }
+    for entry in entries {
+        if let pattern, !pathGlobMatches(pattern: pattern, name: entry) {
+            continue
+        }
+        let childPath = (path.pathString as NSString).appendingPathComponent(entry)
+        let entryRaw = registerRuntimeObject(RuntimePathBox(childPath))
+        var thrown = 0
+        _ = kk_function_invoke(actionRaw, entryRaw, &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return
+        }
+    }
+}
+
+/// Path.forEachDirectoryEntry(glob: String, action: (Path) -> Unit): Unit
+@_cdecl("kk_path_forEachDirectoryEntry")
+public func kk_path_forEachDirectoryEntry(
+    _ pathRaw: Int,
+    _ globRaw: Int,
+    _ actionRaw: Int
+) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_forEachDirectoryEntry received invalid Path handle")
+    }
+    let globPattern = pathStringValue(from: globRaw) ?? "*"
+    pathForEachDirectoryEntryImpl(path, glob: globPattern, actionRaw: actionRaw, outThrown: nil)
+    return 0
+}
+
+/// Path.forEachDirectoryEntry(action: (Path) -> Unit): Unit
+@_cdecl("kk_path_forEachDirectoryEntry_default")
+public func kk_path_forEachDirectoryEntry_default(
+    _ pathRaw: Int,
+    _ actionRaw: Int
+) -> Int {
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_forEachDirectoryEntry_default received invalid Path handle")
+    }
+    pathForEachDirectoryEntryImpl(path, glob: nil, actionRaw: actionRaw, outThrown: nil)
+    return 0
+}
+
 @_cdecl("kk_path_copyTo_options")
 public func kk_path_copyTo_options(
     _ pathRaw: Int,
