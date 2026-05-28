@@ -142,6 +142,35 @@ public func kk_char_isJavaIdentifierPart(_ value: Int) -> Int {
     kk_box_bool(runtimeCharIsJavaIdentifierPartValue(value) ? 1 : 0)
 }
 
+private func runtimeCharIsUnicodeIdentifierPartValue(_ value: Int) -> Bool {
+    if runtimeCharIsIdentifierIgnorableValue(value) {
+        return true
+    }
+    guard let scalar = runtimeUnicodeScalar(value) else {
+        return false
+    }
+    switch scalar.properties.generalCategory {
+    case .uppercaseLetter,
+         .lowercaseLetter,
+         .titlecaseLetter,
+         .modifierLetter,
+         .otherLetter,
+         .letterNumber,
+         .nonspacingMark,
+         .spacingMark,
+         .decimalNumber,
+         .connectorPunctuation:
+        return true
+    default:
+        return false
+    }
+}
+
+@_cdecl("kk_char_isUnicodeIdentifierPart")
+public func kk_char_isUnicodeIdentifierPart(_ value: Int) -> Int {
+    kk_box_bool(runtimeCharIsUnicodeIdentifierPartValue(value) ? 1 : 0)
+}
+
 @_cdecl("kk_char_isSupplementaryCodePoint")
 public func kk_char_isSupplementaryCodePoint(_ codepoint: Int) -> Int {
     kk_box_bool((codepoint >= 0x10000 && codepoint <= 0x10FFFF) ? 1 : 0)

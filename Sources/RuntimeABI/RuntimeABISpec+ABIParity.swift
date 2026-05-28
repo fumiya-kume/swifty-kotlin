@@ -361,6 +361,9 @@ public extension RuntimeABISpec {
         abiParitySpec("kk_char_isTitleCase", parameters: [
             p("value", .intptr),
         ]),
+        abiParitySpec("kk_char_isUnicodeIdentifierPart", parameters: [
+            p("value", .intptr),
+        ]),
         abiParitySpec("kk_check_not_null", parameters: [
             p("value", .intptr),
             p("outThrown", .nullableIntptrPointer),

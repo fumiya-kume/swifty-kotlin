@@ -126,6 +126,11 @@ private let syntheticCharMemberSpecs: [SyntheticCharMemberSpec] = [
         returnKind: .boolean
     ),
     SyntheticCharMemberSpec(
+        name: "isUnicodeIdentifierPart",
+        externalLinkName: "kk_char_isUnicodeIdentifierPart",
+        returnKind: .boolean
+    ),
+    SyntheticCharMemberSpec(
         name: "uppercase",
         externalLinkName: "kk_char_uppercase",
         returnKind: .string
