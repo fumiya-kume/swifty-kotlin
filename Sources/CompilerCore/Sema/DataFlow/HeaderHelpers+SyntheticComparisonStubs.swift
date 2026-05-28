@@ -134,6 +134,14 @@ extension DataFlowSemaPhase {
             comparisonsPkg: comparisonsPkg,
             comparisonsPackageSymbol: comparisonsPackageSymbol
         )
+        registerSyntheticMinOfUnsignedStub(
+            typeID: types.uintType,
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            comparisonsPkg: comparisonsPkg,
+            comparisonsPackageSymbol: comparisonsPackageSymbol
+        )
 
         registerCompareValuesAndCompareValuesBy(
             symbols: symbols,
