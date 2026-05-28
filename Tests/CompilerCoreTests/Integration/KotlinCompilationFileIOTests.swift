@@ -23,4 +23,29 @@ final class KotlinCompilationFileIOTests: XCTestCase {
         }
         """)
     }
+
+    // STDLIB-IO-PROP-002: `File.extension` resolves to a non-null `String`
+    // through the synthetic stub registered in HeaderHelpers+SyntheticFileIOStubs.
+    // The property is exposed as a member so that callers can use it on any
+    // `java.io.File` instance produced by either `File(path)` constructor.
+    func testCompile_file_extensionPropertyResolves() throws {
+        try assertKotlinCompilesToKIR("""
+        import java.io.File
+
+        fun main() {
+            val src = File("Main.kt")
+            val archive = File("archive.tar.gz")
+            val readme = File("README")
+            val nested = File("/tmp", "notes.md")
+            val srcExt: String = src.extension
+            val archiveExt: String = archive.extension
+            val readmeExt: String = readme.extension
+            val nestedExt: String = nested.extension
+            println(srcExt)
+            println(archiveExt)
+            println(readmeExt)
+            println(nestedExt)
+        }
+        """)
+    }
 }

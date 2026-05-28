@@ -146,6 +146,50 @@ final class RuntimeFileIOTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(forEachBlockAccumulator, 6) // 3 chunks × 2 bytes each
     }
 
+    // MARK: - STDLIB-IO-PROP-002: File.extension property
+
+    func testExtensionReturnsSubstringAfterLastDot() {
+        let fileRaw = runtimeTestFileHandle("/tmp/Main.kt")
+        XCTAssertEqual(readString(kk_file_extension(fileRaw)), "kt")
+    }
+
+    func testExtensionWithMultipleDotsReturnsLastSegment() {
+        let fileRaw = runtimeTestFileHandle("/tmp/archive.tar.gz")
+        XCTAssertEqual(readString(kk_file_extension(fileRaw)), "gz")
+    }
+
+    func testExtensionReturnsEmptyStringWhenNoDot() {
+        let fileRaw = runtimeTestFileHandle("/tmp/README")
+        XCTAssertEqual(readString(kk_file_extension(fileRaw)), "")
+    }
+
+    func testExtensionIgnoresParentDirectoryDots() {
+        // The dot in the parent directory must not be treated as the extension
+        // separator — only the last path component matters.
+        let fileRaw = runtimeTestFileHandle("/var/data.v2/payload")
+        XCTAssertEqual(readString(kk_file_extension(fileRaw)), "")
+    }
+
+    func testExtensionForDotFileMatchesKotlinJvmBehavior() {
+        // Kotlin/JVM treats `.bashrc` as a name whose extension is "bashrc"
+        // because `File("/tmp/.bashrc").name == ".bashrc"` and the only dot is
+        // at index 0; the substring after it is `"bashrc"`.
+        let fileRaw = runtimeTestFileHandle("/tmp/.bashrc")
+        XCTAssertEqual(readString(kk_file_extension(fileRaw)), "bashrc")
+    }
+
+    func testExtensionForRelativePathName() {
+        let fileRaw = runtimeTestFileHandle("Main.kt")
+        XCTAssertEqual(readString(kk_file_extension(fileRaw)), "kt")
+    }
+
+    func testExtensionWithTrailingDotReturnsEmptyTail() {
+        // `File("/tmp/file.").extension` → "" — the dot is the last character so
+        // the substring after it is the empty string.
+        let fileRaw = runtimeTestFileHandle("/tmp/file.")
+        XCTAssertEqual(readString(kk_file_extension(fileRaw)), "")
+    }
+
     // STDLIB-IO-PROP-005: File.nameWithoutExtension extension property
     func testNameWithoutExtensionStripsTrailingExtension() {
         let cases: [(path: String, expected: String)] = [
