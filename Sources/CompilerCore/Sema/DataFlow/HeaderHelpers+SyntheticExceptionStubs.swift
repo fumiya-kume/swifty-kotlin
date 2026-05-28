@@ -29,6 +29,16 @@ extension DataFlowSemaPhase {
         if let kotlinTextPkgSymbol = symbols.lookup(fqName: kotlinTextPkg) {
             symbols.setParentSymbol(kotlinTextPkgSymbol, for: characterCodingSymbol)
         }
+        let kotlinIOPkg = ensurePackage(path: ["kotlin", "io"], symbols: symbols, interner: interner)
+        let noSuchFileSymbol = ensureClassSymbol(
+            named: "NoSuchFileException",
+            in: kotlinIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinIOPkgSymbol = symbols.lookup(fqName: kotlinIOPkg) {
+            symbols.setParentSymbol(kotlinIOPkgSymbol, for: noSuchFileSymbol)
+        }
         let runtimeExceptionSymbol = ensureClassSymbol(
             named: "RuntimeException",
             in: kotlinPkg,
@@ -174,6 +184,7 @@ extension DataFlowSemaPhase {
 
         symbols.setDirectSupertypes([throwableSymbol], for: exceptionSymbol)
         symbols.setDirectSupertypes([exceptionSymbol], for: characterCodingSymbol)
+        symbols.setDirectSupertypes([exceptionSymbol], for: noSuchFileSymbol)
         symbols.setDirectSupertypes([throwableSymbol], for: errorSymbol)
         symbols.setDirectSupertypes([errorSymbol], for: assertionErrorSymbol)
         symbols.setDirectSupertypes([exceptionSymbol], for: runtimeExceptionSymbol)
@@ -194,6 +205,7 @@ extension DataFlowSemaPhase {
         // Register nominal supertypes in TypeSystem for subtype checking
         types.setNominalDirectSupertypes([throwableSymbol], for: exceptionSymbol)
         types.setNominalDirectSupertypes([exceptionSymbol], for: characterCodingSymbol)
+        types.setNominalDirectSupertypes([exceptionSymbol], for: noSuchFileSymbol)
         types.setNominalDirectSupertypes([exceptionSymbol], for: runtimeExceptionSymbol)
         types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: uninitializedSymbol)
         types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: nullPointerSymbol)
@@ -215,6 +227,7 @@ extension DataFlowSemaPhase {
             throwableSymbol,
             exceptionSymbol,
             characterCodingSymbol,
+            noSuchFileSymbol,
             runtimeExceptionSymbol,
             uninitializedSymbol,
             nullPointerSymbol,
@@ -263,6 +276,27 @@ extension DataFlowSemaPhase {
             ownerSymbol: characterCodingSymbol,
             ownerType: characterCodingType,
             parameters: [("message", nullableStringType)],
+            externalLinkName: "kk_throwable_new",
+            symbols: symbols,
+            interner: interner
+        )
+        let noSuchFileType = types.make(.classType(ClassType(
+            classSymbol: noSuchFileSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        registerSyntheticExceptionConstructor(
+            ownerSymbol: noSuchFileSymbol,
+            ownerType: noSuchFileType,
+            parameters: [],
+            externalLinkName: "kk_throwable_new",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticExceptionConstructor(
+            ownerSymbol: noSuchFileSymbol,
+            ownerType: noSuchFileType,
+            parameters: [("file", types.stringType)],
             externalLinkName: "kk_throwable_new",
             symbols: symbols,
             interner: interner

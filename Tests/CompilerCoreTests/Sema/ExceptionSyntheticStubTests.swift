@@ -115,6 +115,53 @@ final class ExceptionSyntheticStubTests: XCTestCase {
         """)
     }
 
+    func testNoSuchFileExceptionSurfaceIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let exceptionFQName = ["kotlin", "io", "NoSuchFileException"].map { interner.intern($0) }
+        let exceptionSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: exceptionFQName))
+        XCTAssertEqual(sema.symbols.symbol(exceptionSymbol)?.kind, .class)
+
+        let rootExceptionFQName = ["kotlin", "Exception"].map { interner.intern($0) }
+        let rootExceptionSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: rootExceptionFQName))
+        XCTAssertTrue(sema.symbols.directSupertypes(for: exceptionSymbol).contains(rootExceptionSymbol))
+
+        let exceptionType = sema.types.make(.classType(ClassType(
+            classSymbol: exceptionSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        XCTAssertEqual(sema.symbols.propertyType(for: exceptionSymbol), exceptionType)
+
+        let constructorFQName = exceptionFQName + [interner.intern("<init>")]
+        let constructors = sema.symbols.lookupAll(fqName: constructorFQName).filter {
+            sema.symbols.symbol($0)?.kind == .constructor
+        }
+        let expected: [([TypeID], String)] = [
+            ([], "kk_throwable_new"),
+            ([sema.types.stringType], "kk_throwable_new"),
+        ]
+        for (parameterTypes, externalLinkName) in expected {
+            let constructor = try XCTUnwrap(constructors.first {
+                sema.symbols.functionSignature(for: $0)?.parameterTypes == parameterTypes
+            })
+            XCTAssertEqual(sema.symbols.functionSignature(for: constructor)?.returnType, exceptionType)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: constructor), externalLinkName)
+        }
+    }
+
+    func testNoSuchFileExceptionResolvesInSource() throws {
+        _ = try makeSema(source: """
+        import kotlin.io.NoSuchFileException
+
+        fun noArg(): Exception = NoSuchFileException()
+        fun file(path: String): Exception = NoSuchFileException(path)
+        fun catchNoSuchFile(): String =
+            try { throw NoSuchFileException("missing.txt") }
+            catch (e: NoSuchFileException) { e.message ?: "caught" }
+        """)
+    }
+
     func testConcurrentModificationExceptionSurfaceIsRegistered() throws {
         let (sema, interner) = try makeSema()
 

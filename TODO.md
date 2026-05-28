@@ -88,7 +88,7 @@
 - [ ] STDLIB-IO-TYPE-003: `FileSystemException` クラスの実装
 - [ ] STDLIB-IO-TYPE-004: `FileTreeWalk` クラスの実装
 - [ ] STDLIB-IO-TYPE-005: `FileWalkDirection` enum の実装
-- [ ] STDLIB-IO-TYPE-006: `NoSuchFileException` クラスの実装
+- [x] STDLIB-IO-TYPE-006: `NoSuchFileException` クラスの実装
 - [ ] STDLIB-IO-TYPE-007: `OnErrorAction` enum の実装
 
 #### kotlin.io プロパティの実装
