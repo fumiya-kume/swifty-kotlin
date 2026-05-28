@@ -3561,6 +3561,21 @@ public func kk_string_toBigDecimalOrNull(_ strRaw: Int) -> Int {
     return registerRuntimeObject(box)
 }
 
+private func isValidBigIntegerFormat(_ str: String) -> Bool {
+    var idx = str.startIndex
+    guard idx < str.endIndex else {
+        return false
+    }
+    if str[idx] == "+" || str[idx] == "-" {
+        idx = str.index(after: idx)
+    }
+    let digitStart = idx
+    while idx < str.endIndex, str[idx] >= "0", str[idx] <= "9" {
+        idx = str.index(after: idx)
+    }
+    return idx > digitStart && idx == str.endIndex
+}
+
 @_cdecl("kk_string_toBigInteger")
 public func kk_string_toBigInteger(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
@@ -3572,22 +3587,23 @@ public func kk_string_toBigInteger(_ strRaw: Int, _ outThrown: UnsafeMutablePoin
     // Validate integer format: [+-]?\d+ (optional single leading sign, then digits).
     // No whitespace trimming: Kotlin/JVM throws NumberFormatException on
     // leading/trailing whitespace, so we validate the raw string as-is.
-    var idx = str.startIndex
-    guard idx < str.endIndex else {
+    guard isValidBigIntegerFormat(str) else {
         outThrown?.pointee = runtimeAllocateThrowable(message: "NumberFormatException: For input string: \"\(str)\"")
         return 0
     }
-    if str[idx] == "+" || str[idx] == "-" {
-        idx = str.index(after: idx)
+    let box = RuntimeBigNumberBox(value: str, kind: .integer)
+    return registerRuntimeObject(box)
+}
+
+@_cdecl("kk_string_toBigIntegerOrNull")
+public func kk_string_toBigIntegerOrNull(_ strRaw: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: strRaw),
+          let str = extractString(from: ptr)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_string_toBigIntegerOrNull received invalid string handle")
     }
-    let digitStart = idx
-    while idx < str.endIndex, str[idx] >= "0", str[idx] <= "9" {
-        idx = str.index(after: idx)
-    }
-    let isValid = idx > digitStart && idx == str.endIndex
-    guard isValid else {
-        outThrown?.pointee = runtimeAllocateThrowable(message: "NumberFormatException: For input string: \"\(str)\"")
-        return 0
+    guard isValidBigIntegerFormat(str) else {
+        return runtimeNullSentinelInt
     }
     let box = RuntimeBigNumberBox(value: str, kind: .integer)
     return registerRuntimeObject(box)
