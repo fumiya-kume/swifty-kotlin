@@ -30,14 +30,25 @@ extension DataFlowSemaPhase {
             symbols.setParentSymbol(kotlinTextPkgSymbol, for: characterCodingSymbol)
         }
         let kotlinIOPkg = ensurePackage(path: ["kotlin", "io"], symbols: symbols, interner: interner)
+        let kotlinIOPkgSymbol = symbols.lookup(fqName: kotlinIOPkg)
         let noSuchFileSymbol = ensureClassSymbol(
             named: "NoSuchFileException",
             in: kotlinIOPkg,
             symbols: symbols,
             interner: interner
         )
-        if let kotlinIOPkgSymbol = symbols.lookup(fqName: kotlinIOPkg) {
+        if let kotlinIOPkgSymbol {
             symbols.setParentSymbol(kotlinIOPkgSymbol, for: noSuchFileSymbol)
+        }
+        // MARK: - kotlin.io.FileAlreadyExistsException (STDLIB-IO-TYPE-002)
+        let fileAlreadyExistsExceptionSymbol = ensureClassSymbol(
+            named: "FileAlreadyExistsException",
+            in: kotlinIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinIOPkgSymbol {
+            symbols.setParentSymbol(kotlinIOPkgSymbol, for: fileAlreadyExistsExceptionSymbol)
         }
         let runtimeExceptionSymbol = ensureClassSymbol(
             named: "RuntimeException",
@@ -185,6 +196,7 @@ extension DataFlowSemaPhase {
         symbols.setDirectSupertypes([throwableSymbol], for: exceptionSymbol)
         symbols.setDirectSupertypes([exceptionSymbol], for: characterCodingSymbol)
         symbols.setDirectSupertypes([exceptionSymbol], for: noSuchFileSymbol)
+        symbols.setDirectSupertypes([exceptionSymbol], for: fileAlreadyExistsExceptionSymbol)
         symbols.setDirectSupertypes([throwableSymbol], for: errorSymbol)
         symbols.setDirectSupertypes([errorSymbol], for: assertionErrorSymbol)
         symbols.setDirectSupertypes([exceptionSymbol], for: runtimeExceptionSymbol)
@@ -206,6 +218,7 @@ extension DataFlowSemaPhase {
         types.setNominalDirectSupertypes([throwableSymbol], for: exceptionSymbol)
         types.setNominalDirectSupertypes([exceptionSymbol], for: characterCodingSymbol)
         types.setNominalDirectSupertypes([exceptionSymbol], for: noSuchFileSymbol)
+        types.setNominalDirectSupertypes([exceptionSymbol], for: fileAlreadyExistsExceptionSymbol)
         types.setNominalDirectSupertypes([exceptionSymbol], for: runtimeExceptionSymbol)
         types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: uninitializedSymbol)
         types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: nullPointerSymbol)
@@ -228,6 +241,7 @@ extension DataFlowSemaPhase {
             exceptionSymbol,
             characterCodingSymbol,
             noSuchFileSymbol,
+            fileAlreadyExistsExceptionSymbol,
             runtimeExceptionSymbol,
             uninitializedSymbol,
             nullPointerSymbol,
@@ -296,6 +310,28 @@ extension DataFlowSemaPhase {
         registerSyntheticExceptionConstructor(
             ownerSymbol: noSuchFileSymbol,
             ownerType: noSuchFileType,
+            parameters: [("file", types.stringType)],
+            externalLinkName: "kk_throwable_new",
+            symbols: symbols,
+            interner: interner
+        )
+        // MARK: - FileAlreadyExistsException constructors (STDLIB-IO-TYPE-002)
+        let fileAlreadyExistsExceptionType = types.make(.classType(ClassType(
+            classSymbol: fileAlreadyExistsExceptionSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        registerSyntheticExceptionConstructor(
+            ownerSymbol: fileAlreadyExistsExceptionSymbol,
+            ownerType: fileAlreadyExistsExceptionType,
+            parameters: [],
+            externalLinkName: "kk_throwable_new",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticExceptionConstructor(
+            ownerSymbol: fileAlreadyExistsExceptionSymbol,
+            ownerType: fileAlreadyExistsExceptionType,
             parameters: [("file", types.stringType)],
             externalLinkName: "kk_throwable_new",
             symbols: symbols,
