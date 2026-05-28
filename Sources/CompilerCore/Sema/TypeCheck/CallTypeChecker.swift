@@ -3763,6 +3763,9 @@ final class CallTypeChecker {
                     }
                 } else if args.count == 2, name == "replace" {
                     stringResultType = sema.types.stringType
+                } else if args.count == 3, name == "replace" {
+                    // STDLIB-TEXT-FN-055: String.replace(oldValue, newValue, ignoreCase)
+                    stringResultType = sema.types.stringType
                 }
                 if let resultType = stringResultType {
                     sema.bindings.bindExprType(id, type: resultType)

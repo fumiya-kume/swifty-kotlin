@@ -263,6 +263,9 @@ extension CallTypeChecker {
             listStringType
         case ("replace", 2):
             sema.types.stringType
+        // STDLIB-TEXT-FN-055: String.replace(oldValue, newValue, ignoreCase) -> String
+        case ("replace", 3):
+            sema.types.stringType
         // STDLIB-REGEX-094: String.replaceFirst(Regex, String) -> String
         case ("replaceFirst", 2):
             sema.types.stringType

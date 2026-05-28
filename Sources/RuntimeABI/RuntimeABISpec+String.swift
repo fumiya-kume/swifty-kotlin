@@ -322,6 +322,18 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        // STDLIB-TEXT-FN-055: CharSequence.replace(oldValue, newValue, ignoreCase)
+        RuntimeABIFunctionSpec(
+            name: "kk_string_replace_ignoreCase",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "oldRaw", type: .intptr),
+                RuntimeABIParameter(name: "newRaw", type: .intptr),
+                RuntimeABIParameter(name: "ignoreCase", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_string_replaceFirst",
             parameters: [

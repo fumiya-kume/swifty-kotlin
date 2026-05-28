@@ -224,6 +224,67 @@ public func kk_string_replace(_ strRaw: Int, _ oldRaw: Int, _ newRaw: Int) -> In
     return runtimeMakeStringRaw(source.replacingOccurrences(of: oldValue, with: newValue))
 }
 
+// MARK: - STDLIB-TEXT-FN-055: CharSequence.replace(oldValue, newValue, ignoreCase)
+
+@_cdecl("kk_string_replace_ignoreCase")
+public func kk_string_replace_ignoreCase(
+    _ strRaw: Int,
+    _ oldRaw: Int,
+    _ newRaw: Int,
+    _ ignoreCaseRaw: Int
+) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let oldValue = runtimeStringFromRawOrPanic(oldRaw, caller: #function)
+    let newValue = runtimeStringFromRawOrPanic(newRaw, caller: #function)
+    let ignoreCase = ignoreCaseRaw != 0
+
+    // Fast path: empty needle matches Kotlin's behaviour by inserting `newValue`
+    // between every Unicode scalar and at both ends.
+    if oldValue.isEmpty {
+        let scalars = Array(source.unicodeScalars)
+        if scalars.isEmpty {
+            return runtimeMakeStringRaw(newValue)
+        }
+        var result = newValue
+        for scalar in scalars {
+            result.unicodeScalars.append(scalar)
+            result.append(newValue)
+        }
+        return runtimeMakeStringRaw(result)
+    }
+
+    if !ignoreCase {
+        return runtimeMakeStringRaw(source.replacingOccurrences(of: oldValue, with: newValue))
+    }
+
+    let sourceScalars = Array(source.unicodeScalars)
+    let oldScalars = Array(oldValue.unicodeScalars)
+    if oldScalars.count > sourceScalars.count {
+        return runtimeMakeStringRaw(source)
+    }
+
+    var result = String.UnicodeScalarView()
+    var index = 0
+    let maxOffset = sourceScalars.count - oldScalars.count
+    while index <= maxOffset {
+        let slice = sourceScalars[index ..< (index + oldScalars.count)]
+        let matches = zip(slice, oldScalars).allSatisfy {
+            String($0).caseInsensitiveCompare(String($1)) == .orderedSame
+        }
+        if matches {
+            result.append(contentsOf: newValue.unicodeScalars)
+            index += oldScalars.count
+        } else {
+            result.append(sourceScalars[index])
+            index += 1
+        }
+    }
+    if index < sourceScalars.count {
+        result.append(contentsOf: sourceScalars[index ..< sourceScalars.count])
+    }
+    return runtimeMakeStringRaw(String(result))
+}
+
 @_cdecl("kk_string_substring")
 public func kk_string_substring(
     _ strRaw: Int,

@@ -404,6 +404,22 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // STDLIB-TEXT-FN-055: CharSequence.replace(oldValue, newValue, ignoreCase)
+        registerSyntheticStringExtensionFunction(
+            named: "replace",
+            externalLinkName: "kk_string_replace_ignoreCase",
+            receiverType: stringType,
+            parameters: [
+                ("oldValue", stringType, false, false),
+                ("newValue", stringType, false, false),
+                ("ignoreCase", boolType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticStringExtensionFunction(
             named: "startsWith",
             externalLinkName: "kk_string_startsWith",

@@ -376,6 +376,57 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(runtimeStringValue(replaced), "zbz")
     }
 
+    // STDLIB-TEXT-FN-055: CharSequence.replace(oldValue, newValue, ignoreCase)
+    func testStringReplaceIgnoreCaseFalseMatchesLiteralReplace() {
+        let replaced = kk_string_replace_ignoreCase(
+            rawFromRuntimeString("AbCabc"),
+            rawFromRuntimeString("ab"),
+            rawFromRuntimeString("z"),
+            0
+        )
+        XCTAssertEqual(runtimeStringValue(replaced), "AbCzc")
+    }
+
+    func testStringReplaceIgnoreCaseTrueIgnoresCaseDifferences() {
+        let replaced = kk_string_replace_ignoreCase(
+            rawFromRuntimeString("AbCabc"),
+            rawFromRuntimeString("ab"),
+            rawFromRuntimeString("z"),
+            1
+        )
+        XCTAssertEqual(runtimeStringValue(replaced), "zCzc")
+    }
+
+    func testStringReplaceIgnoreCaseEmptyNeedleInsertsBetweenScalars() {
+        let replaced = kk_string_replace_ignoreCase(
+            rawFromRuntimeString("ab"),
+            rawFromRuntimeString(""),
+            rawFromRuntimeString("-"),
+            1
+        )
+        XCTAssertEqual(runtimeStringValue(replaced), "-a-b-")
+    }
+
+    func testStringReplaceIgnoreCaseEmptySourceReturnsReplacementForEmptyNeedle() {
+        let replaced = kk_string_replace_ignoreCase(
+            rawFromRuntimeString(""),
+            rawFromRuntimeString(""),
+            rawFromRuntimeString("X"),
+            0
+        )
+        XCTAssertEqual(runtimeStringValue(replaced), "X")
+    }
+
+    func testStringReplaceIgnoreCaseTrueHandlesNeedleLongerThanSource() {
+        let replaced = kk_string_replace_ignoreCase(
+            rawFromRuntimeString("ab"),
+            rawFromRuntimeString("abc"),
+            rawFromRuntimeString("X"),
+            1
+        )
+        XCTAssertEqual(runtimeStringValue(replaced), "ab")
+    }
+
     func testStringReplaceFirstCharReplacesOnlyLeadingScalar() {
         let replaced = kk_string_replaceFirstChar(
             rawFromRuntimeString("abc"),

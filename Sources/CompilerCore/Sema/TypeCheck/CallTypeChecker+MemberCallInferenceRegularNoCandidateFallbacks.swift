@@ -1537,6 +1537,24 @@ extension CallTypeChecker {
                 return finalType
             }
         }
+        // STDLIB-TEXT-FN-055: String.replace(oldValue, newValue, ignoreCase)
+        if args.count == 3, interner.resolve(calleeName) == "replace" {
+            let receiverTypeForCheck = safeCall
+                ? sema.types.makeNonNullable(lookupReceiverType)
+                : lookupReceiverType
+            let oldType = sema.types.makeNonNullable(argTypes[0])
+            let newType = sema.types.makeNonNullable(argTypes[1])
+            let ignoreCaseType = sema.types.makeNonNullable(argTypes[2])
+            if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType),
+               sema.types.isSubtype(oldType, sema.types.stringType),
+               sema.types.isSubtype(newType, sema.types.stringType),
+               sema.types.isSubtype(ignoreCaseType, sema.types.booleanType)
+            {
+                let finalType = safeCall ? sema.types.makeNullable(sema.types.stringType) : sema.types.stringType
+                sema.bindings.bindExprType(id, type: finalType)
+                return finalType
+            }
+        }
         if args.count == 2 {
             let receiverTypeForCheck = safeCall
                 ? sema.types.makeNonNullable(lookupReceiverType)

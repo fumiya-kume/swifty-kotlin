@@ -2303,6 +2303,36 @@ extension CallLowerer {
             }
         }
 
+        // STDLIB-TEXT-FN-055: String.replace(oldValue, newValue, ignoreCase) — 3-arg overload
+        if args.count == 3, interner.resolve(calleeName) == "replace" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            let firstArgType = sema.types.makeNonNullable(
+                sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
+            )
+            let secondArgType = sema.types.makeNonNullable(
+                sema.bindings.exprTypes[args[1].expr] ?? sema.types.anyType
+            )
+            let thirdArgType = sema.types.makeNonNullable(
+                sema.bindings.exprTypes[args[2].expr] ?? sema.types.anyType
+            )
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType),
+               sema.types.isSubtype(firstArgType, sema.types.stringType),
+               sema.types.isSubtype(secondArgType, sema.types.stringType),
+               sema.types.isSubtype(thirdArgType, sema.types.booleanType)
+            {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_replace_ignoreCase"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1], loweredArgIDs[2]],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
         // String stdlib: replaceFirst(regex, replacement) (STDLIB-REGEX-094)
         if args.count == 2, interner.resolve(calleeName) == "replaceFirst" {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
