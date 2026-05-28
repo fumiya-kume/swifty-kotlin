@@ -452,6 +452,27 @@ extension CallTypeChecker {
             && interner.resolve(symbol.fqName[symbol.fqName.count - 2]) == "io"
     }
 
+    /// Returns true when the receiver type is java.io.BufferedReader.
+    /// Used by Reader-targeted special-case lambda inference (STDLIB-IO-FN-040)
+    /// where the `useLines` extension on `kotlin.io.Reader` resolves to the
+    /// synthetic `BufferedReader.useLines` stub registered by
+    /// `registerSyntheticFileIOStubs`.
+    func isBufferedReaderType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let nonNullType = sema.types.makeNonNullable(receiverType)
+        guard case let .classType(classType) = sema.types.kind(of: nonNullType),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return symbol.fqName.count >= 2
+            && interner.resolve(symbol.fqName.last!) == "BufferedReader"
+            && interner.resolve(symbol.fqName[symbol.fqName.count - 2]) == "io"
+    }
+
     func isChannelReceiverType(
         _ receiverType: TypeID,
         sema: SemaModule,

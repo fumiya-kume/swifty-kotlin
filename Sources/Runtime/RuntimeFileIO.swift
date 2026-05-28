@@ -686,6 +686,37 @@ public func kk_buffered_reader_iterator(_ readerRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeListIteratorBox(elements: lineRaws))
 }
 
+// MARK: - STDLIB-IO-FN-040: Reader.useLines {}
+//
+// Kotlin's `kotlin.io.Reader.useLines(block)` extension reads all lines from the
+// receiver Reader, passes them to `block` as a `Sequence<String>`, and closes
+// the receiver before returning the block's result (Reader subclasses such as
+// `BufferedReader` inherit this overload). Our implementation materialises the
+// receiver's remaining lines into a `List<String>` (the same surface returned by
+// `kk_file_useLines`), invokes the supplied lambda once via the collection HOF
+// closure ABI, and closes the underlying buffered reader after the block runs —
+// mirroring the JVM contract where the reader is closed even when the lambda
+// returns or throws.
+@_cdecl("kk_buffered_reader_useLines")
+public func kk_buffered_reader_useLines(_ readerRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let reader = runtimeBufferedReaderBox(from: readerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_buffered_reader_useLines received invalid BufferedReader handle")
+    }
+    let lines = reader.readLines()
+    let linesList = RuntimeListBox(elements: lines.map { fileMakeStringRaw($0) })
+    let linesListRaw = registerRuntimeObject(linesList)
+    var thrown = 0
+    let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: linesListRaw, outThrown: &thrown)
+    // Always close the reader to honour the `use { }` contract even on lambda throw.
+    reader.close()
+    if thrown != 0 {
+        outThrown?.pointee = thrown
+        return 0
+    }
+    return result
+}
+
 // MARK: - STDLIB-IO-091: BufferedWriter
 
 private func runtimeBufferedWriterBox(from raw: Int) -> RuntimeBufferedWriterBox? {
