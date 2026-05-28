@@ -3461,6 +3461,25 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- STDLIB-TEXT-FN-011: String.concat(str) ---
+        // Kotlin exposes `String.concat(str: String): String` as a member function
+        // on java.lang.String that appends the given string.  The backing runtime
+        // helper `kk_string_concat` (receiver + argument as opaque pointers) is
+        // already used for the `+` operator; we simply surface it here as the named
+        // member so that call-sites that use `.concat(…)` resolve correctly.
+        registerSyntheticStringExtensionFunction(
+            named: "concat",
+            externalLinkName: "kk_string_concat",
+            receiverType: stringType,
+            parameters: [
+                ("str", stringType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func ensureKotlinTextPackage(
