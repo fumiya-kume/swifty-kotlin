@@ -182,7 +182,6 @@
 - [x] STDLIB-REFLECT-TYPE-013: `KParameter` インターフェースの実装
 - [x] STDLIB-REFLECT-TYPE-015: `KProperty0` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-013: `KParameter` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-015: `KProperty0` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-010: `KMutableProperty0` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-013: `KParameter` インターフェースの実装
 
