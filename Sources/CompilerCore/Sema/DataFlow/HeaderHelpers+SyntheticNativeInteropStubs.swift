@@ -2422,6 +2422,28 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
         }
+
+        if let byteVarSymbol = symbols.lookup(fqName: cinteropPkg + [interner.intern("ByteVar")]) {
+            let byteVarAliasType = types.make(.classType(ClassType(
+                classSymbol: byteVarSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            let cPointerByteVarType = types.make(.classType(ClassType(
+                classSymbol: cPointerSymbol,
+                args: [.invariant(byteVarAliasType)],
+                nullability: .nonNull
+            )))
+            registerSyntheticNativeTopLevelFunction(
+                named: "toKStringFromUtf8",
+                packageFQName: cinteropPkg,
+                receiverType: cPointerByteVarType,
+                parameters: [],
+                returnType: types.stringType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
         let cOpaquePointerUnderlyingType = types.make(.classType(ClassType(
             classSymbol: cPointerSymbol,
             args: [.out(cPointedType)],
