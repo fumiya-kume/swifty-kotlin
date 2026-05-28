@@ -31,7 +31,7 @@ extension CallTypeChecker {
             "filterTo", "filterNotTo", "mapTo", "flatMapTo", "mapNotNullTo", "mapIndexedTo", "flatMapIndexedTo",
             "mapIndexedNotNullTo", "filterIndexedTo", "filterNotNullTo",
             "mapKeysTo", "mapValuesTo",
-            "forEachIndexed", "mapIndexed", "mapIndexedNotNull",
+            "forEachIndexed", "mapIndexed", "mapIndexedNotNull", "filterIndexed",
             "onEach", "onEachIndexed",
             "sumOf", "sumBy", "sumByDouble", "min", "maxOrNull", "minOrNull",
             "indexOfFirst", "indexOfLast", "binarySearch", "binarySearchBy",

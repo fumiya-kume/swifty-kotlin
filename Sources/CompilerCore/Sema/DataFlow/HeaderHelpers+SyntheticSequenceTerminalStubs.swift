@@ -1232,6 +1232,26 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // filterIndexed(predicate: (Int, T) -> Boolean): Sequence<T>
+        let indexedPredicateType = types.make(.functionType(FunctionType(
+            params: [types.intType, typeParamType],
+            returnType: types.booleanType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        registerSequenceMemberStub(
+            named: "filterIndexed",
+            externalLinkName: "kk_sequence_filterIndexed",
+            receiverType: receiverType,
+            parameters: [("predicate", indexedPredicateType)],
+            returnType: receiverType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // takeWhile(predicate): Sequence<T>
         registerSequenceMemberStub(
             named: "takeWhile",
