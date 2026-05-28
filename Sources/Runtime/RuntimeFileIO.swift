@@ -1852,6 +1852,109 @@ public func kk_output_stream_buffered_sized(_ streamRaw: Int, _ bufferSize: Int)
     return streamRaw
 }
 
+// MARK: - STDLIB-IO-FN-014: Reader.copyTo(out: Writer, bufferSize) -> Long
+
+/// Kotlin's default buffer size for `kotlin.io.copyTo`.  Matches
+/// `kotlin.io.DEFAULT_BUFFER_SIZE` (16 KiB).
+private let kReaderCopyToDefaultBufferSize: Int = 16 * 1024
+
+/// `kotlin.io.Reader.copyTo(out: Writer, bufferSize: Int = DEFAULT_BUFFER_SIZE): Long`
+///
+/// Copies every character that remains in the receiver into `out` using an
+/// internal buffer of `bufferSize` characters and returns the total number of
+/// characters transferred.  Mirrors the JVM contract:
+///   - Neither the receiver nor `out` is closed by this function.
+///   - The receiver is read until EOF (`Reader.read()` returning `-1`).
+///   - Characters are emitted to `out` as `String` chunks of up to
+///     `bufferSize` characters at a time.
+///   - A non-positive `bufferSize` raises `IllegalArgumentException` to match
+///     the behaviour of `kotlin.io.copyTo` on the JVM.
+///
+/// Concrete `Reader` / `Writer` boxes currently supported by the runtime are
+/// `RuntimeBufferedReaderBox` and `RuntimeBufferedWriterBox` — the only
+/// character-stream types modelled in the synthetic stubs.  Passing any other
+/// box panics with a clear diagnostic so test failures surface immediately.
+@_cdecl("kk_reader_copyTo")
+public func kk_reader_copyTo(
+    _ readerRaw: Int,
+    _ writerRaw: Int,
+    _ bufferSizeRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+
+    guard let reader = runtimeBufferedReaderBox(from: readerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_reader_copyTo received invalid Reader handle")
+    }
+    guard let writer = runtimeBufferedWriterBox(from: writerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_reader_copyTo received invalid Writer handle")
+    }
+
+    if bufferSizeRaw <= 0 {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IllegalArgumentException: bufferSize must be positive (was \(bufferSizeRaw))"
+        )
+        return kk_box_long(0)
+    }
+
+    var copied: Int = 0
+    var pending = String.UnicodeScalarView()
+    pending.reserveCapacity(bufferSizeRaw)
+
+    while true {
+        let charCode = reader.read()
+        if charCode < 0 {
+            break // EOF
+        }
+        guard let scalar = Unicode.Scalar(UInt32(charCode)) else {
+            // Invalid scalar — surface as IOException to match JVM-style
+            // surface for malformed character data.
+            outThrown?.pointee = runtimeAllocateThrowable(
+                message: "IOException: invalid Unicode scalar in Reader stream (code point \(charCode))"
+            )
+            return kk_box_long(copied)
+        }
+        pending.append(scalar)
+        copied += 1
+
+        if pending.count >= bufferSizeRaw {
+            do {
+                try writer.write(String(pending))
+            } catch {
+                outThrown?.pointee = runtimeAllocateThrowable(
+                    message: "IOException: \(error.localizedDescription)"
+                )
+                return kk_box_long(copied)
+            }
+            pending.removeAll(keepingCapacity: true)
+        }
+    }
+
+    if !pending.isEmpty {
+        do {
+            try writer.write(String(pending))
+        } catch {
+            outThrown?.pointee = runtimeAllocateThrowable(
+                message: "IOException: \(error.localizedDescription)"
+            )
+            return kk_box_long(copied)
+        }
+    }
+
+    return kk_box_long(copied)
+}
+
+/// Zero-bufferSize overload — `Reader.copyTo(out)` defaults to
+/// `DEFAULT_BUFFER_SIZE`.  STDLIB-IO-FN-014.
+@_cdecl("kk_reader_copyTo_default")
+public func kk_reader_copyTo_default(
+    _ readerRaw: Int,
+    _ writerRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    kk_reader_copyTo(readerRaw, writerRaw, kReaderCopyToDefaultBufferSize, outThrown)
+}
+
 // MARK: - STDLIB-IO-090: Files utility (java.nio.file.Files)
 
 private func runtimePathBox(from raw: Int) -> RuntimePathBox? {

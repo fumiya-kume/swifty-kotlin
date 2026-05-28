@@ -120,6 +120,9 @@
 - [x] STDLIB-IO-FN-013: `copyTo` 関数の実装（InputStream版）
 - [ ] STDLIB-IO-FN-014: `copyTo` 関数の実装（Reader版）
 - [x] STDLIB-IO-FN-015: `copyTo` 関数の実装（File版）
+- [ ] STDLIB-IO-FN-013: `copyTo` 関数の実装（InputStream版）
+- [x] STDLIB-IO-FN-014: `copyTo` 関数の実装（Reader版）
+- [ ] STDLIB-IO-FN-015: `copyTo` 関数の実装（File版）
 - [ ] STDLIB-IO-FN-016: `forEachBlock` 関数の実装
 - [x] STDLIB-IO-FN-017: `forEachLine` 関数の実装（Reader版）
 - [x] STDLIB-IO-FN-016: `forEachBlock` 関数の実装
