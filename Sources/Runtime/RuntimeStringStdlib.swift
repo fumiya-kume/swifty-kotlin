@@ -2390,6 +2390,14 @@ public func kk_string_replaceIndentByMargin(_ strRaw: Int, _ newIndentRaw: Int, 
     )
 }
 
+// MARK: - STDLIB-TEXT-FN-019: String.indent(n: Int)
+
+@_cdecl("kk_string_indent")
+public func kk_string_indent(_ strRaw: Int, _ n: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    return runtimeMakeStringRaw(runtimeStringIndent(source, n: n))
+}
+
 // MARK: - STDLIB-316: String.chunked / String.windowed
 
 @_cdecl("kk_string_chunked")
@@ -3090,6 +3098,30 @@ private func runtimeReplaceIndentByMargin(
         }
         return newIndent + String(trimmedLeading.dropFirst(marginPrefix.count))
     }.joined(separator: "\n")
+}
+
+/// STDLIB-TEXT-FN-019: Kotlin `String.indent(n: Int)`
+///
+/// Prepends `n` spaces (or removes `-n` leading spaces when n < 0) to each line
+/// of the string, then appends a trailing newline so every line ends with `\n`.
+/// This matches the Kotlin stdlib contract:
+///   - n >= 0: prepend `n` spaces to every line.
+///   - n < 0: remove up to `|n|` leading spaces from every line.
+///   - Always appends a newline at the end of the result (even if source was empty).
+private func runtimeStringIndent(_ source: String, n: Int) -> String {
+    let lines = runtimeNormalizedMultilineString(source)
+    let prefix = n >= 0 ? String(repeating: " ", count: n) : ""
+    let trimCount = n < 0 ? -n : 0
+    let result = lines.map { line -> String in
+        if n >= 0 {
+            return prefix + line
+        } else {
+            let leading = line.prefix { $0 == " " }.count
+            let drop = Swift.min(leading, trimCount)
+            return String(line.dropFirst(drop))
+        }
+    }.joined(separator: "\n")
+    return result + "\n"
 }
 
 private func runtimeStringFromRaw(_ raw: Int) -> String? {

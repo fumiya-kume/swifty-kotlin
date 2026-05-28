@@ -1712,6 +1712,21 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-TEXT-FN-019: indent(n: Int) ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "indent",
+            externalLinkName: "kk_string_indent",
+            receiverType: stringType,
+            parameters: [
+                ("n", intType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-192: equals(other, ignoreCase) ---
 
         let nullableStringType = types.make(.primitive(.string, .nullable))
