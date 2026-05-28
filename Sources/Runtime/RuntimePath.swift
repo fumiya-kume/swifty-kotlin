@@ -1321,3 +1321,57 @@ public func kk_path_appendLines_sequence(_ pathRaw: Int, _ linesRaw: Int, _ char
     }
     return pathRaw
 }
+
+// MARK: - Path.writeLines()
+
+@_cdecl("kk_path_writeLines_iterable")
+public func kk_path_writeLines_iterable(
+    _ pathRaw: Int,
+    _ linesRaw: Int,
+    _ charsetRaw: Int,
+    _ optionsRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    _ = optionsRaw
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_writeLines_iterable received invalid Path handle")
+    }
+    guard let elements = pathLineElements(from: linesRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_writeLines_iterable received invalid Iterable handle")
+    }
+    let text = elements.map { pathStringValue(from: $0) ?? "null" }.map { $0 + "\n" }.joined()
+    let encoding = pathStringEncoding(for: charsetRaw)
+    do {
+        try text.write(toFile: path.pathString, atomically: true, encoding: encoding)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return pathRaw
+}
+
+@_cdecl("kk_path_writeLines_sequence")
+public func kk_path_writeLines_sequence(
+    _ pathRaw: Int,
+    _ linesRaw: Int,
+    _ charsetRaw: Int,
+    _ optionsRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    _ = optionsRaw
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_writeLines_sequence received invalid Path handle")
+    }
+    guard let elements = runtimeSequenceSourceElements(from: linesRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_writeLines_sequence received invalid lines sequence")
+    }
+    let text = elements.map { pathStringValue(from: $0) ?? "null" }.map { $0 + "\n" }.joined()
+    let encoding = pathStringEncoding(for: charsetRaw)
+    do {
+        try text.write(toFile: path.pathString, atomically: true, encoding: encoding)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return pathRaw
+}
