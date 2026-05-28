@@ -157,7 +157,7 @@
 - [ ] STDLIB-IO-PATH-FN-032: `setAttribute` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-036: `toPath` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-037: `useDirectoryEntries` 関数の実装
-- [ ] STDLIB-IO-PATH-FN-038: `useLines` 関数の実装
+- [x] STDLIB-IO-PATH-FN-038: `useLines` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-039: `walk` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-040: `writeLines` 関数の実装（Iterable版）
 - [ ] STDLIB-IO-PATH-FN-041: `writeLines` 関数の実装（Sequence版）
