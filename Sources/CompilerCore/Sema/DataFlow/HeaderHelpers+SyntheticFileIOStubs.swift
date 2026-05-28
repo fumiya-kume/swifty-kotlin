@@ -762,6 +762,46 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // STDLIB-IO-FN-011: String.byteInputStream(charset: Charset = Charsets.UTF_8): ByteArrayInputStream
+        // Lives in kotlin.io as an extension function on String. Two overloads are
+        // exposed so callers can resolve both `value.byteInputStream()` and
+        // `value.byteInputStream(Charsets.UTF_16)` without relying on default-argument
+        // synthesis. ByteArrayInputStream → InputStream → Closeable, so the return
+        // type carries `.use {}` compatibility through existing supertype wiring.
+        let kotlinIOPkg = ensureSyntheticPackageHierarchy(
+            fqName: [interner.intern("kotlin"), interner.intern("io")],
+            symbols: symbols
+        )
+        let kotlinTextPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("text")]
+        let charsetFQName = kotlinTextPkg + [interner.intern("Charset")]
+        if let charsetSymbol = symbols.lookup(fqName: charsetFQName) {
+            let charsetType = types.make(.classType(ClassType(
+                classSymbol: charsetSymbol, args: [], nullability: .nonNull
+            )))
+            registerSyntheticStringExtensionFunction(
+                named: "byteInputStream",
+                externalLinkName: "kk_string_byteInputStream",
+                receiverType: types.stringType,
+                parameters: [],
+                returnType: byteArrayInputStreamType,
+                packageFQName: kotlinIOPkg,
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticStringExtensionFunction(
+                named: "byteInputStream",
+                externalLinkName: "kk_string_byteInputStream_charset",
+                receiverType: types.stringType,
+                parameters: [
+                    ("charset", charsetType, false, false),
+                ],
+                returnType: byteArrayInputStreamType,
+                packageFQName: kotlinIOPkg,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
         registerFileMemberFunction(
             named: "read",
             externalLinkName: "kk_input_stream_read",
@@ -1011,11 +1051,6 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        let kotlinIOPkg = ensurePackage(
-            path: ["kotlin", "io"],
-            symbols: symbols,
-            interner: interner
-        )
         registerTopLevelResourceFunction(
             packageFQName: kotlinIOPkg,
             name: "resourceExists",

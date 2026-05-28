@@ -3688,7 +3688,7 @@ extension DataFlowSemaPhase {
         return interfaceSymbol
     }
 
-    private func registerSyntheticStringExtensionFunction(
+    func registerSyntheticStringExtensionFunction(
         named name: String,
         externalLinkName: String,
         receiverType: TypeID,

@@ -778,6 +778,31 @@ public func kk_bytearrayinputstream_new(_ bufferRaw: Int, _ outThrown: UnsafeMut
     return registerRuntimeObject(RuntimeInputStreamBox(data: Data(bytes)))
 }
 
+// STDLIB-IO-FN-011: String.byteInputStream() — encodes the receiver as UTF-8 and
+// returns a ByteArrayInputStream over the resulting bytes. Default charset overload
+// mirrors `String.toByteArray()` semantics for behavioral consistency.
+@_cdecl("kk_string_byteInputStream")
+public func kk_string_byteInputStream(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let bytes = source.utf8.map { UInt8($0) }
+    return registerRuntimeObject(RuntimeInputStreamBox(data: Data(bytes)))
+}
+
+// STDLIB-IO-FN-011: String.byteInputStream(charset: Charset) — charset-aware
+// overload. Delegates the encoding step to kk_string_toByteArray_charset so the
+// charset table remains a single source of truth.
+@_cdecl("kk_string_byteInputStream_charset")
+public func kk_string_byteInputStream_charset(_ strRaw: Int, _ charsetTag: Int) -> Int {
+    let bytesRaw = kk_string_toByteArray_charset(strRaw, charsetTag)
+    guard let bytes = runtimeByteArrayBytes(from: bytesRaw) else {
+        // Fall back to UTF-8 if the encoded bytes cannot be retrieved (should not happen)
+        let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+        return registerRuntimeObject(RuntimeInputStreamBox(data: Data(source.utf8.map { UInt8($0) })))
+    }
+    let unsignedBytes = bytes.map { UInt8(truncatingIfNeeded: $0) }
+    return registerRuntimeObject(RuntimeInputStreamBox(data: Data(unsignedBytes)))
+}
+
 @_cdecl("kk_file_outputStream")
 public func kk_file_outputStream(_ fileRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
