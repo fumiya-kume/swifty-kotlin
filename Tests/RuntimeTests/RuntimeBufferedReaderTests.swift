@@ -120,6 +120,76 @@ final class RuntimeBufferedReaderTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_iterator_hasNext(iterRaw), 0)
     }
 
+    // MARK: - STDLIB-IO-FN-033: Reader.readText()
+
+    func testReaderReadTextReturnsRemainingContentsAsSingleString() throws {
+        let fileURL = try makeTempFile(contents: "alpha\nbeta\ngamma")
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        let fileRaw = runtimeTestFileHandle(fileURL.path)
+        var thrown = 0
+        let readerRaw = kk_file_bufferedReader(fileRaw, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertNotEqual(readerRaw, 0)
+
+        let textRaw = kk_reader_readText(readerRaw)
+        XCTAssertEqual(readString(textRaw), "alpha\nbeta\ngamma")
+    }
+
+    func testReaderReadTextAfterPartialReadReturnsOnlyTheRemainder() throws {
+        let fileURL = try makeTempFile(contents: "alpha\nbeta\ngamma")
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        let fileRaw = runtimeTestFileHandle(fileURL.path)
+        var thrown = 0
+        let readerRaw = kk_file_bufferedReader(fileRaw, &thrown)
+        XCTAssertEqual(thrown, 0)
+
+        XCTAssertEqual(readString(kk_buffered_reader_readLine(readerRaw)), "alpha")
+        let textRaw = kk_reader_readText(readerRaw)
+        XCTAssertEqual(readString(textRaw), "beta\ngamma")
+    }
+
+    func testReaderReadTextOnEmptyFileReturnsEmptyString() throws {
+        let fileURL = try makeTempFile(contents: "")
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        let fileRaw = runtimeTestFileHandle(fileURL.path)
+        var thrown = 0
+        let readerRaw = kk_file_bufferedReader(fileRaw, &thrown)
+        XCTAssertEqual(thrown, 0)
+
+        let textRaw = kk_reader_readText(readerRaw)
+        XCTAssertEqual(readString(textRaw), "")
+    }
+
+    func testReaderReadTextAfterCloseReturnsEmptyString() throws {
+        let fileURL = try makeTempFile(contents: "alpha\nbeta")
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        let fileRaw = runtimeTestFileHandle(fileURL.path)
+        var thrown = 0
+        let readerRaw = kk_file_bufferedReader(fileRaw, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_buffered_reader_close(readerRaw), 0)
+
+        let textRaw = kk_reader_readText(readerRaw)
+        XCTAssertEqual(readString(textRaw), "")
+    }
+
+    func testReaderReadTextHandlesMultilineUTF8Content() throws {
+        let fileURL = try makeTempFile(contents: "α\nβ\nγ")
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        let fileRaw = runtimeTestFileHandle(fileURL.path)
+        var thrown = 0
+        let readerRaw = kk_file_bufferedReader(fileRaw, &thrown)
+        XCTAssertEqual(thrown, 0)
+
+        let textRaw = kk_reader_readText(readerRaw)
+        XCTAssertEqual(readString(textRaw), "α\nβ\nγ")
+    }
+
     func testBufferedReaderIteratorAfterCloseYieldsNoElements() throws {
         let fileURL = try makeTempFile(contents: "first\nsecond\n")
         defer { try? FileManager.default.removeItem(at: fileURL) }

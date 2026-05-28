@@ -509,8 +509,19 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // MARK: - BufferedReader type and File.bufferedReader() (STDLIB-567)
+        // MARK: - Reader / BufferedReader types and File.bufferedReader() (STDLIB-567)
 
+        // `java.io.Reader` is the abstract supertype of `BufferedReader` and is
+        // the receiver of `kotlin.io` extension functions such as
+        // `Reader.readText()` (STDLIB-IO-FN-033). We register it as a synthetic
+        // class so that extension calls on any concrete reader instance (which
+        // is currently always a `BufferedReader`) resolve correctly.
+        let readerSymbol = ensureClassSymbol(
+            named: "Reader",
+            in: javaIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
         let bufferedReaderSymbol = ensureClassSymbol(
             named: "BufferedReader",
             in: javaIOPkg,
@@ -518,11 +529,16 @@ extension DataFlowSemaPhase {
             interner: interner
         )
         if let javaIOPkgSymbol {
+            symbols.setParentSymbol(javaIOPkgSymbol, for: readerSymbol)
             symbols.setParentSymbol(javaIOPkgSymbol, for: bufferedReaderSymbol)
         }
+        let readerType = types.make(.classType(ClassType(
+            classSymbol: readerSymbol, args: [], nullability: .nonNull
+        )))
         let bufferedReaderType = types.make(.classType(ClassType(
             classSymbol: bufferedReaderSymbol, args: [], nullability: .nonNull
         )))
+        symbols.setPropertyType(readerType, for: readerSymbol)
         symbols.setPropertyType(bufferedReaderType, for: bufferedReaderSymbol)
 
         // File.bufferedReader() -> BufferedReader
@@ -573,11 +589,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // Register BufferedReader as a Closeable subtype (STDLIB-IO-093)
-        // so that .use {} pattern works: `file.bufferedReader().use { reader -> ... }`
+        // Register BufferedReader as a Reader/Closeable subtype.
+        // - Reader supertype lets `Reader.readText()` (STDLIB-IO-FN-033) resolve
+        //   when invoked on a `BufferedReader` value (the only concrete reader
+        //   currently produced by `File.bufferedReader()` etc.).
+        // - Closeable supertype (STDLIB-IO-093) lets `.use {}` work:
+        //   `file.bufferedReader().use { reader -> ... }`.
         if let closeableSymbol = types.closeableInterfaceSymbol {
-            symbols.setDirectSupertypes([closeableSymbol], for: bufferedReaderSymbol)
-            types.setNominalDirectSupertypes([closeableSymbol], for: bufferedReaderSymbol)
+            symbols.setDirectSupertypes([closeableSymbol], for: readerSymbol)
+            types.setNominalDirectSupertypes([closeableSymbol], for: readerSymbol)
+            symbols.setDirectSupertypes([readerSymbol, closeableSymbol], for: bufferedReaderSymbol)
+            types.setNominalDirectSupertypes([readerSymbol, closeableSymbol], for: bufferedReaderSymbol)
+        } else {
+            symbols.setDirectSupertypes([readerSymbol], for: bufferedReaderSymbol)
+            types.setNominalDirectSupertypes([readerSymbol], for: bufferedReaderSymbol)
         }
         // MARK: - BufferedWriter type and File.bufferedWriter() (STDLIB-IO-091)
 
@@ -1421,6 +1446,24 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_file_copyTo",
             valueParameterHasDefaultValues: [false, true, true],
             valueParameterIsVararg: [false, false, false],
+            symbols: symbols,
+            interner: interner
+        )
+
+        // MARK: - Reader.readText() (STDLIB-IO-FN-033)
+        //
+        // Kotlin signature: `public fun Reader.readText(): String` declared in
+        // the `kotlin.io` package. Reads the entire remaining content of the
+        // receiver into a single `String`. Mirrors the stdlib semantics of
+        // exhausting the reader; the runtime helper `kk_reader_readText`
+        // delegates to `RuntimeBufferedReaderBox.readText()`.
+        registerKotlinIOExtensionFunction(
+            named: "readText",
+            packageFQName: kotlinIOPkg,
+            receiverType: readerType,
+            parameters: [],
+            returnType: types.stringType,
+            externalLinkName: "kk_reader_readText",
             symbols: symbols,
             interner: interner
         )
