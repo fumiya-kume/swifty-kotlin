@@ -1002,6 +1002,144 @@ public func kk_file_copyTo(
     return targetRaw
 }
 
+// MARK: - STDLIB-IO-FN-012: File.copyRecursively(target, overwrite)
+//
+// Kotlin signature:
+//   public fun File.copyRecursively(
+//       target: File,
+//       overwrite: Boolean = false,
+//       onError: (File, IOException) -> OnErrorAction = { _, exception -> throw exception }
+//   ): Boolean
+//
+// Behaviour:
+// - Returns false immediately if `this` does not exist.
+// - Recursively copies all files and sub-directories under `this` into `target`.
+// - If `overwrite == false` and a target item already exists, throws
+//   `FileAlreadyExistsException` (matching Kotlin's default error handler which
+//   re-throws the first encountered exception).
+// - Creates target directories as needed.
+// - Returns true on success.
+@_cdecl("kk_file_copyRecursively")
+public func kk_file_copyRecursively(
+    _ fileRaw: Int,
+    _ targetRaw: Int,
+    _ overwriteRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let source = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_copyRecursively received invalid source File handle")
+    }
+    guard let target = runtimeFileBox(from: targetRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_copyRecursively received invalid target File handle")
+    }
+    let overwrite = kk_unbox_bool(overwriteRaw) != 0
+    let fm = FileManager.default
+
+    // Return false (boxed) if source does not exist.
+    var sourceIsDir: ObjCBool = false
+    guard fm.fileExists(atPath: source.path, isDirectory: &sourceIsDir) else {
+        return kk_box_bool(0)
+    }
+
+    func copyItem(srcPath: String, dstPath: String) -> Bool {
+        var srcIsDir: ObjCBool = false
+        fm.fileExists(atPath: srcPath, isDirectory: &srcIsDir)
+
+        if srcIsDir.boolValue {
+            // Create target directory if needed.
+            var dstIsDir: ObjCBool = false
+            let dstExists = fm.fileExists(atPath: dstPath, isDirectory: &dstIsDir)
+            if dstExists {
+                if !dstIsDir.boolValue {
+                    if !overwrite {
+                        outThrown?.pointee = runtimeAllocateThrowable(
+                            message: "FileAlreadyExistsException: \(dstPath) (The destination file already exists.)"
+                        )
+                        return false
+                    }
+                    do {
+                        try fm.removeItem(atPath: dstPath)
+                        try fm.createDirectory(atPath: dstPath, withIntermediateDirectories: true)
+                    } catch {
+                        outThrown?.pointee = runtimeAllocateThrowable(
+                            message: "IOException: \(error.localizedDescription)"
+                        )
+                        return false
+                    }
+                }
+                // directory already exists — continue
+            } else {
+                do {
+                    try fm.createDirectory(atPath: dstPath, withIntermediateDirectories: true)
+                } catch {
+                    outThrown?.pointee = runtimeAllocateThrowable(
+                        message: "IOException: \(error.localizedDescription)"
+                    )
+                    return false
+                }
+            }
+
+            // Recurse into children.
+            guard let children = try? fm.contentsOfDirectory(atPath: srcPath) else {
+                return true
+            }
+            for child in children {
+                let childSrc = (srcPath as NSString).appendingPathComponent(child)
+                let childDst = (dstPath as NSString).appendingPathComponent(child)
+                if !copyItem(srcPath: childSrc, dstPath: childDst) {
+                    return false
+                }
+            }
+            return true
+        } else {
+            // Regular file copy.
+            var dstIsDir: ObjCBool = false
+            let dstExists = fm.fileExists(atPath: dstPath, isDirectory: &dstIsDir)
+            if dstExists {
+                if !overwrite {
+                    outThrown?.pointee = runtimeAllocateThrowable(
+                        message: "FileAlreadyExistsException: \(dstPath) (The destination file already exists.)"
+                    )
+                    return false
+                }
+                do {
+                    try fm.removeItem(atPath: dstPath)
+                } catch {
+                    outThrown?.pointee = runtimeAllocateThrowable(
+                        message: "IOException: \(error.localizedDescription)"
+                    )
+                    return false
+                }
+            }
+            // Ensure parent exists.
+            let parentPath = (dstPath as NSString).deletingLastPathComponent
+            if !parentPath.isEmpty, !fm.fileExists(atPath: parentPath) {
+                do {
+                    try fm.createDirectory(atPath: parentPath, withIntermediateDirectories: true)
+                } catch {
+                    outThrown?.pointee = runtimeAllocateThrowable(
+                        message: "IOException: \(error.localizedDescription)"
+                    )
+                    return false
+                }
+            }
+            do {
+                try fm.copyItem(atPath: srcPath, toPath: dstPath)
+            } catch {
+                outThrown?.pointee = runtimeAllocateThrowable(
+                    message: "IOException: \(error.localizedDescription)"
+                )
+                return false
+            }
+            return true
+        }
+    }
+
+    let success = copyItem(srcPath: source.path, dstPath: target.path)
+    return kk_box_bool(success ? 1 : 0)
+}
+
 // MARK: - STDLIB-567: File.bufferedReader()
 
 private func runtimeBufferedReaderBox(from raw: Int) -> RuntimeBufferedReaderBox? {

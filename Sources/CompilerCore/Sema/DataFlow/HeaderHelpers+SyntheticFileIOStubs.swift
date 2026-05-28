@@ -1640,6 +1640,35 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+
+        // MARK: - File.copyRecursively(target, overwrite) (STDLIB-IO-FN-012)
+        //
+        // Kotlin signature:
+        //   public fun File.copyRecursively(
+        //       target: File,
+        //       overwrite: Boolean = false,
+        //       onError: (File, IOException) -> OnErrorAction = { _, exception -> throw exception }
+        //   ): Boolean
+        //
+        // This stub covers the primary (target, overwrite) overload.  The `onError`
+        // lambda parameter is not modelled here; callers relying on the default
+        // error handler (re-throw) are fully supported by the runtime implementation.
+        registerKotlinIOExtensionFunction(
+            named: "copyRecursively",
+            packageFQName: kotlinIOPkg,
+            receiverType: fileType,
+            parameters: [
+                ("target", fileType),
+                ("overwrite", types.booleanType),
+            ],
+            returnType: types.booleanType,
+            externalLinkName: "kk_file_copyRecursively",
+            valueParameterHasDefaultValues: [false, true],
+            valueParameterIsVararg: [false, false],
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     // MARK: - Private Helpers
