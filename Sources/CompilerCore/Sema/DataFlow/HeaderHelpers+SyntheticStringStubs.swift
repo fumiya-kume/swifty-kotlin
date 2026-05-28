@@ -2379,6 +2379,24 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-TEXT-FN-039: CharSequence.onEach(action) ---
+        let charToUnitType = types.make(.functionType(FunctionType(
+            params: [charType],
+            returnType: types.unitType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        registerSyntheticStringExtensionFunction(
+            named: "onEach",
+            externalLinkName: "kk_string_onEach",
+            receiverType: stringType,
+            parameters: [("action", charToUnitType, false, false)],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- String.indexOfFirst / indexOfLast ---
         registerSyntheticStringExtensionFunction(
             named: "indexOfFirst",

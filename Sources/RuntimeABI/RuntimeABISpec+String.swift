@@ -1946,6 +1946,19 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        // STDLIB-TEXT-FN-039: CharSequence.onEach(action)
+        RuntimeABIFunctionSpec(
+            name: "kk_string_onEach",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        // STDLIB-TEXT-FN-077: String.substringBeforeLast(delimiter, missingDelimiterValue)
         RuntimeABIFunctionSpec(
             name: "kk_string_substringBeforeLast",
             parameters: [
