@@ -340,7 +340,7 @@
 - [ ] STDLIB-TEXT-FN-012: `contains` 関数の実装
 - [ ] STDLIB-TEXT-FN-013: `decodeToString` 関数の実装
 - [ ] STDLIB-TEXT-FN-014: `encodeToByteArray` 関数の実装
-- [ ] STDLIB-TEXT-FN-015: `endsWith` 関数の実装
+- [x] STDLIB-TEXT-FN-015: `endsWith` 関数の実装
 - [ ] STDLIB-TEXT-FN-016: `equals` 関数の実装
 - [ ] STDLIB-TEXT-FN-017: `format` 関数の実装
 - [ ] STDLIB-TEXT-FN-018: `get` 関数の実装
