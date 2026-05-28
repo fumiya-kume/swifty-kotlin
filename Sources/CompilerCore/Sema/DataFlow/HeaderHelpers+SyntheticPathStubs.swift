@@ -238,6 +238,47 @@ extension DataFlowSemaPhase {
         )))
         symbols.setPropertyType(linkOptionType, for: linkOptionSymbol)
 
+        let standardOpenOptionFQName = javaNioFilePkg + [interner.intern("StandardOpenOption")]
+        let standardOpenOptionSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: standardOpenOptionFQName) {
+            standardOpenOptionSymbol = existing
+        } else {
+            let soName = interner.intern("StandardOpenOption")
+            standardOpenOptionSymbol = symbols.define(
+                kind: .enumClass,
+                name: soName,
+                fqName: standardOpenOptionFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            if let javaNioFilePkgSymbol {
+                symbols.setParentSymbol(javaNioFilePkgSymbol, for: standardOpenOptionSymbol)
+            }
+            symbols.setPropertyType(openOptionType, for: standardOpenOptionSymbol)
+            types.setNominalDirectSupertypes(
+                types.directNominalSupertypes(for: standardOpenOptionSymbol) + [openOptionSymbol],
+                for: standardOpenOptionSymbol
+            )
+            for constantName in ["READ", "WRITE", "APPEND", "TRUNCATE_EXISTING", "CREATE",
+                                  "CREATE_NEW", "DELETE_ON_CLOSE", "SPARSE", "SYNC", "DSYNC"] {
+                let entryName = interner.intern(constantName)
+                let entryFQName = standardOpenOptionFQName + [entryName]
+                if symbols.lookup(fqName: entryFQName) == nil {
+                    let entrySymbol = symbols.define(
+                        kind: .field,
+                        name: entryName,
+                        fqName: entryFQName,
+                        declSite: nil,
+                        visibility: .public,
+                        flags: [.synthetic]
+                    )
+                    symbols.setParentSymbol(standardOpenOptionSymbol, for: entrySymbol)
+                    symbols.setPropertyType(openOptionType, for: entrySymbol)
+                }
+            }
+        }
+
         registerPathCopyActionContextSurface(
             packageFQName: kotlinIOPathPkg,
             packageSymbol: kotlinIOPathPkgSymbol,
