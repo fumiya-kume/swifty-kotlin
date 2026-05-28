@@ -152,7 +152,7 @@
 - [ ] STDLIB-IO-PATH-FN-021: `getAttribute` 関数の実装
 - [x] STDLIB-IO-PATH-FN-022: `getLastModifiedTime` 関数の実装
 - [x] STDLIB-IO-PATH-FN-023: `getOwner` 関数の実装
-- [ ] STDLIB-IO-PATH-FN-024: `getPosixFilePermissions` 関数の実装
+- [x] STDLIB-IO-PATH-FN-024: `getPosixFilePermissions` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-025: `inputStream` 関数の実装
 - [x] STDLIB-IO-PATH-FN-026: `moveTo` 関数の実装
 - [x] STDLIB-IO-PATH-FN-027: `notExists` 関数の実装
