@@ -87,6 +87,65 @@ final class RuntimePathTests: XCTestCase {
         XCTAssertEqual(try String(contentsOf: fileURL, encoding: .utf8), "alpha\nbeta")
     }
 
+    func testPathWriteLinesIterableWritesLinesToFile() throws {
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        let pathRaw = makePathRaw(fileURL.path)
+        let linesRaw = registerRuntimeObject(RuntimeListBox(elements: [
+            makeStringRaw("hello"),
+            makeStringRaw("world"),
+        ]))
+        var thrown = 0
+        let returnedRaw = kk_path_writeLines_iterable(pathRaw, linesRaw, 0, 0, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(returnedRaw, pathRaw)
+        XCTAssertEqual(try String(contentsOf: fileURL, encoding: .utf8), "hello\nworld\n")
+    }
+
+    func testPathWriteLinesIterableOverwritesExistingContent() throws {
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try "old content".write(to: fileURL, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        let pathRaw = makePathRaw(fileURL.path)
+        let linesRaw = registerRuntimeObject(RuntimeListBox(elements: [
+            makeStringRaw("new line"),
+        ]))
+        var thrown = 0
+        kk_path_writeLines_iterable(pathRaw, linesRaw, 0, 0, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(try String(contentsOf: fileURL, encoding: .utf8), "new line\n")
+    }
+
+    func testPathWriteLinesSequenceWritesLinesToFile() throws {
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        let pathRaw = makePathRaw(fileURL.path)
+        let elements = [makeStringRaw("alpha"), makeStringRaw("beta")]
+        let seqRaw = registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: elements)]))
+        var thrown = 0
+        let returnedRaw = kk_path_writeLines_sequence(pathRaw, seqRaw, 0, 0, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(returnedRaw, pathRaw)
+        XCTAssertEqual(try String(contentsOf: fileURL, encoding: .utf8), "alpha\nbeta\n")
+    }
+
+    func testPathWriteLinesSequenceOverwritesExistingContent() throws {
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try "stale".write(to: fileURL, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+
+        let pathRaw = makePathRaw(fileURL.path)
+        let elements = [makeStringRaw("fresh")]
+        let seqRaw = registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: elements)]))
+        var thrown = 0
+        kk_path_writeLines_sequence(pathRaw, seqRaw, 0, 0, &thrown)
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(try String(contentsOf: fileURL, encoding: .utf8), "fresh\n")
+    }
+
     func testPathDeleteIfExistsRemovesExistingFile() throws {
         let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try "data".write(to: fileURL, atomically: true, encoding: .utf8)
