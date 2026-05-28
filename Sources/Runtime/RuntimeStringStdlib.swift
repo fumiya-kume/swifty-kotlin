@@ -722,6 +722,43 @@ public func kk_string_contains_str(_ strRaw: Int, _ otherRaw: Int) -> Int {
     return kk_box_bool(source.contains(other) ? 1 : 0)
 }
 
+// STDLIB-TEXT-FN-012: CharSequence.contains(other, ignoreCase)
+//
+// Adds the case-insensitive overload. When `ignoreCase` is false this matches
+// `kk_string_contains_str` exactly. When true, comparison is performed scalar
+// by scalar using Foundation's `caseInsensitiveCompare`, mirroring how
+// `kk_string_indexOf_ignoreCase` walks Unicode scalar arrays so behaviour stays
+// consistent across the `contains` / `indexOf` family.
+@_cdecl("kk_string_contains_ignoreCase")
+public func kk_string_contains_ignoreCase(_ strRaw: Int, _ otherRaw: Int, _ ignoreCaseRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let other = runtimeStringFromRawOrPanic(otherRaw, caller: #function)
+    let ignoreCase = ignoreCaseRaw != 0
+
+    if other.isEmpty {
+        return kk_box_bool(1)
+    }
+    if !ignoreCase {
+        return kk_box_bool(source.contains(other) ? 1 : 0)
+    }
+
+    let sourceScalars = Array(source.unicodeScalars)
+    let otherScalars = Array(other.unicodeScalars)
+    if otherScalars.count > sourceScalars.count {
+        return kk_box_bool(0)
+    }
+    for offset in 0 ... (sourceScalars.count - otherScalars.count) {
+        let slice = sourceScalars[offset ..< (offset + otherScalars.count)]
+        let matches = zip(slice, otherScalars).allSatisfy {
+            String($0).caseInsensitiveCompare(String($1)) == .orderedSame
+        }
+        if matches {
+            return kk_box_bool(1)
+        }
+    }
+    return kk_box_bool(0)
+}
+
 @_cdecl("kk_string_toInt")
 public func kk_string_toInt(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0

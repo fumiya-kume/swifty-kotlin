@@ -444,6 +444,23 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // STDLIB-TEXT-FN-012: CharSequence.contains(other, ignoreCase) overload.
+        // Routes to `kk_string_contains_ignoreCase` so callers can opt into
+        // case-insensitive substring matching by passing `ignoreCase = true`.
+        registerSyntheticStringExtensionFunction(
+            named: "contains",
+            externalLinkName: "kk_string_contains_ignoreCase",
+            receiverType: stringType,
+            parameters: [
+                ("other", stringType, false, false),
+                ("ignoreCase", boolType, false, false),
+            ],
+            returnType: boolType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticStringExtensionFunction(
             named: "toInt",
             externalLinkName: "kk_string_toInt",

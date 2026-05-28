@@ -422,6 +422,68 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_unbox_bool(kk_string_contains_str(source, rawFromRuntimeString(""))), 1)
     }
 
+    // STDLIB-TEXT-FN-012: kk_string_contains_ignoreCase
+    //
+    // Asserts the boxed Boolean returned by `kk_string_contains_ignoreCase`
+    // matches Kotlin's `CharSequence.contains(other, ignoreCase)` semantics:
+    // - empty needle always matches (mirroring `String.contains("")`)
+    // - case-sensitive mode (`ignoreCase = false`) behaves like `kk_string_contains_str`
+    // - case-insensitive mode matches across mixed-case ASCII without copying
+    //   into a normalized scratch buffer.
+    func testStringContainsIgnoreCase() {
+        let source = rawFromRuntimeString("HelloWorld")
+
+        // ignoreCase = false → identical to kk_string_contains_str
+        XCTAssertEqual(
+            kk_unbox_bool(kk_string_contains_ignoreCase(source, rawFromRuntimeString("World"), 0)),
+            1,
+            "case-sensitive hit should box `true`"
+        )
+        XCTAssertEqual(
+            kk_unbox_bool(kk_string_contains_ignoreCase(source, rawFromRuntimeString("world"), 0)),
+            0,
+            "case-sensitive miss should box `false`"
+        )
+        XCTAssertEqual(
+            kk_unbox_bool(kk_string_contains_ignoreCase(source, rawFromRuntimeString(""), 0)),
+            1,
+            "empty needle should always match"
+        )
+
+        // ignoreCase = true → case-insensitive substring match
+        XCTAssertEqual(
+            kk_unbox_bool(kk_string_contains_ignoreCase(source, rawFromRuntimeString("world"), 1)),
+            1,
+            "case-insensitive hit should box `true`"
+        )
+        XCTAssertEqual(
+            kk_unbox_bool(kk_string_contains_ignoreCase(source, rawFromRuntimeString("WORLD"), 1)),
+            1,
+            "fully uppercased needle should box `true` when ignoreCase=true"
+        )
+        XCTAssertEqual(
+            kk_unbox_bool(kk_string_contains_ignoreCase(source, rawFromRuntimeString(""), 1)),
+            1,
+            "empty needle should always match even when ignoreCase=true"
+        )
+
+        // Needle longer than source must return false without indexing OOB.
+        XCTAssertEqual(
+            kk_unbox_bool(kk_string_contains_ignoreCase(
+                rawFromRuntimeString("hi"),
+                rawFromRuntimeString("there"),
+                1
+            )),
+            0
+        )
+
+        // Truly absent needle returns false even with ignoreCase=true.
+        XCTAssertEqual(
+            kk_unbox_bool(kk_string_contains_ignoreCase(source, rawFromRuntimeString("zzz"), 1)),
+            0
+        )
+    }
+
     func testStringToIntSuccessAndFailure() {
         var thrown = 0
         let value = kk_string_toInt(rawFromRuntimeString("42"), &thrown)
