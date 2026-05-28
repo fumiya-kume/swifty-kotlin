@@ -3662,6 +3662,7 @@ public enum RuntimeABISpec {
         threadFunctions,
         threadLocalFunctions,
         timeAndPathBridgeFunctions,
+        timerFunctions,
         uuidFunctions,
     ] as [[RuntimeABIFunctionSpec]]).flatMap { $0 }
 

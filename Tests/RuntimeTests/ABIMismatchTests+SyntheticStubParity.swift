@@ -475,6 +475,12 @@ extension ABIMismatchTests {
         "kk_url_readBytes",
     ]
 
+    // MARK: kotlin.concurrent.schedule / java.util.Timer (STDLIB-CONC-FN-005)
+    private static let timerStubLinkNames: Set<String> = [
+        "kk_concurrent_schedule_delay",
+        "kk_concurrent_schedule_period",
+    ]
+
     /// Union of every category. New categories should be added below.
     /// Each category lives in its own `static let` above so that parallel
     /// branches editing different category Sets do not collide.
@@ -503,6 +509,7 @@ extension ABIMismatchTests {
         result.formUnion(base64StubLinkNames)
         result.formUnion(kotlinVersionStubLinkNames)
         result.formUnion(urlStubLinkNames)
+        result.formUnion(timerStubLinkNames)
         return result
     }
 
