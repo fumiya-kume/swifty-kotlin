@@ -3629,6 +3629,7 @@ public enum RuntimeABISpec {
             + uuidFunctions
             + durationFunctions
             + timeAndPathBridgeFunctions
+            + timerFunctions
             + atomicFunctions
             + nativeRefFunctions
             + threadLocalFunctions

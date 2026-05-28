@@ -438,6 +438,9 @@ extension ABIMismatchTests {
             "kk_kotlin_version_compareTo",
             "kk_kotlin_version_isAtLeast",
             "kk_kotlin_version_isAtLeast_patch",
+            // kotlin.concurrent.schedule / java.util.Timer
+            "kk_concurrent_schedule_delay",
+            "kk_concurrent_schedule_period",
         ]
 
         for linkName in syntheticLinkNames {
