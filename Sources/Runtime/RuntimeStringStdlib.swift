@@ -333,6 +333,18 @@ public func kk_string_toList(_ strRaw: Int) -> Int {
     return runtimeMakeListRaw(charRaws)
 }
 
+// MARK: - STDLIB-TEXT-FN-104: CharSequence.toMutableList()
+
+/// Returns a new `MutableList<Char>` containing all characters of the string.
+///
+/// Mirrors `kotlin.text.CharSequence.toMutableList(): MutableList<Char>`.
+/// The returned list is independent of the source string and can be mutated freely.
+@_cdecl("kk_string_toMutableList")
+public func kk_string_toMutableList(_ strRaw: Int) -> Int {
+    let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
+    return registerRuntimeObject(RuntimeListBox(elements: charRaws))
+}
+
 @_cdecl("kk_string_toCharArray")
 public func kk_string_toCharArray(_ strRaw: Int) -> Int {
     let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }

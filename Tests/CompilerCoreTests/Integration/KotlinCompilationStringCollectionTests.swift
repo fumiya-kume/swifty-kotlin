@@ -141,6 +141,14 @@ final class KotlinCompilationStringCollectionTests: XCTestCase {
         """)
     }
 
+    func testCompile_string_toMutableList() throws {
+        try assertKotlinCompilesToKIR("""
+        fun main() {
+            val chars: MutableList<Char> = "hello".toMutableList()
+        }
+        """)
+    }
+
     // MARK: - String padding
 
     func testCompile_string_padStart() throws {

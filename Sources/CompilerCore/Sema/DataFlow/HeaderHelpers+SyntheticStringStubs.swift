@@ -976,6 +976,35 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-TEXT-FN-104: CharSequence.toMutableList() ---
+        // Returns a new MutableList<Char> containing all characters of the string.
+        let mutableListCharType: TypeID
+        let kotlinCollectionsPkg: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+        ]
+        if let mutableListSymbol = symbols.lookup(
+            fqName: kotlinCollectionsPkg + [interner.intern("MutableList")]
+        ) {
+            mutableListCharType = types.make(.classType(ClassType(
+                classSymbol: mutableListSymbol,
+                args: [.invariant(charType)],
+                nullability: .nonNull
+            )))
+        } else {
+            mutableListCharType = types.anyType
+        }
+        registerSyntheticStringExtensionFunction(
+            named: "toMutableList",
+            externalLinkName: "kk_string_toMutableList",
+            receiverType: stringType,
+            parameters: [],
+            returnType: mutableListCharType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticStringExtensionFunction(
             named: "toCharArray",
             externalLinkName: "kk_string_toCharArray",

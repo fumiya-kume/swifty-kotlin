@@ -1316,6 +1316,15 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        // STDLIB-TEXT-FN-104: CharSequence.toMutableList()
+        RuntimeABIFunctionSpec(
+            name: "kk_string_toMutableList",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_string_toCharArray",
             parameters: [

@@ -237,6 +237,31 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(typedArray?.elements.map(kk_unbox_char), expected)
         XCTAssertEqual(charArray?.elements.map(kk_unbox_char), expected)
         XCTAssertNotEqual(typedArrayRaw, charArrayRaw, "toTypedArray and toCharArray should return distinct array handles")
+
+    // MARK: - STDLIB-TEXT-FN-104: CharSequence.toMutableList()
+
+    func testStringToMutableListReturnsCharElements() {
+        let listRaw = kk_string_toMutableList(rawFromRuntimeString("abc"))
+        let list = runtimeListBox(from: listRaw)
+        XCTAssertNotNil(list)
+        let expected = [97, 98, 99] // 'a', 'b', 'c'
+        XCTAssertEqual(list?.elements.map(kk_unbox_char), expected)
+    }
+
+    func testStringToMutableListEmptyStringReturnsEmptyList() {
+        let listRaw = kk_string_toMutableList(rawFromRuntimeString(""))
+        let list = runtimeListBox(from: listRaw)
+        XCTAssertNotNil(list)
+        XCTAssertEqual(list?.elements.count, 0)
+    }
+
+    func testStringToMutableListIsIndependentOfSourceString() {
+        let strRaw = rawFromRuntimeString("hi")
+        let listRaw = kk_string_toMutableList(strRaw)
+        let list = runtimeListBox(from: listRaw)
+        XCTAssertNotNil(list)
+        XCTAssertEqual(list?.elements.count, 2)
+        XCTAssertEqual(list?.elements.map(kk_unbox_char), [104, 105]) // 'h', 'i'
     }
 
     // MARK: - STDLIB-317: String.asIterable() tests
