@@ -2,11 +2,13 @@ public struct CallArg {
     public let label: InternedString?
     public let isSpread: Bool
     public let type: TypeID
+    public let isLambdaLike: Bool
 
-    public init(label: InternedString? = nil, isSpread: Bool = false, type: TypeID) {
+    public init(label: InternedString? = nil, isSpread: Bool = false, type: TypeID, isLambdaLike: Bool = false) {
         self.label = label
         self.isSpread = isSpread
         self.type = type
+        self.isLambdaLike = isLambdaLike
     }
 }
 

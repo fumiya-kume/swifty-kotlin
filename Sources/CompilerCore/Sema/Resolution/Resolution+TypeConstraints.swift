@@ -25,7 +25,7 @@ extension OverloadResolver {
         }
         func trailingLambdaParameterIndex(for argIndex: Int) -> Int? {
             guard argIndex == callArgs.count - 1,
-                  isCallableLike(callArgs[argIndex].type)
+                  (callArgs[argIndex].isLambdaLike || isCallableLike(callArgs[argIndex].type))
             else {
                 return nil
             }
@@ -143,6 +143,17 @@ extension OverloadResolver {
             }
 
             advancePositionalCursor(for: argIndex)
+            if let trailingLambdaParamIndex = trailingLambdaParameterIndex(for: argIndex) {
+                if boundNonVarargParams.contains(trailingLambdaParamIndex) {
+                    return nil
+                }
+                boundNonVarargParams.insert(trailingLambdaParamIndex)
+                mapping[argIndex] = trailingLambdaParamIndex
+                if trailingLambdaParamIndex == positionalCursor {
+                    positionalCursor += 1
+                }
+                continue
+            }
             if positionalCursor >= paramCount {
                 return nil
             }
