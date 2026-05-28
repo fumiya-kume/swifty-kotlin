@@ -83,7 +83,7 @@
 #### kotlin.coroutines.cancellation 関数の実装
 
 #### kotlin.io 型の実装
-- [ ] STDLIB-IO-TYPE-001: `AccessDeniedException` クラスの実装
+- [x] STDLIB-IO-TYPE-001: `AccessDeniedException` クラスの実装
 - [ ] STDLIB-IO-TYPE-002: `FileAlreadyExistsException` クラスの実装
 - [ ] STDLIB-IO-TYPE-003: `FileSystemException` クラスの実装
 - [ ] STDLIB-IO-TYPE-004: `FileTreeWalk` クラスの実装
