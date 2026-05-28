@@ -1515,11 +1515,6 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        let kotlinIOPkg = ensurePackage(
-            path: ["kotlin", "io"],
-            symbols: symbols,
-            interner: interner
-        )
         registerTopLevelResourceFunction(
             packageFQName: kotlinIOPkg,
             name: "resourceExists",
