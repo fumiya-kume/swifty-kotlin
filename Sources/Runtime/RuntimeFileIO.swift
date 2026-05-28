@@ -999,6 +999,116 @@ public func kk_buffered_writer_close(_ writerRaw: Int) -> Int {
     return 0
 }
 
+// MARK: - STDLIB-IO-FN-027: PrintWriter
+
+/// `PrintWriter` shares the same `RuntimeBufferedWriterBox` as `BufferedWriter`.
+/// `kk_file_printWriter` creates a fresh writer identical to `kk_file_bufferedWriter`.
+@_cdecl("kk_file_printWriter")
+public func kk_file_printWriter(_ fileRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_printWriter received invalid File handle")
+    }
+    let url = URL(fileURLWithPath: file.path)
+    if !FileManager.default.fileExists(atPath: file.path) {
+        _ = FileManager.default.createFile(atPath: file.path, contents: Data())
+    }
+    do {
+        let handle = try FileHandle(forWritingTo: url)
+        handle.truncateFile(atOffset: 0)
+        return registerRuntimeObject(RuntimeBufferedWriterBox(fileHandle: handle))
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+        return 0
+    }
+}
+
+/// `PrintWriter.print(text)` — writes the text string without a trailing newline.
+@_cdecl("kk_print_writer_print")
+public func kk_print_writer_print(_ writerRaw: Int, _ textRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let writer = runtimeBufferedWriterBox(from: writerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_print_writer_print received invalid PrintWriter handle")
+    }
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: textRaw),
+          let text = extractString(from: ptr)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_print_writer_print received invalid text")
+    }
+    do {
+        try writer.write(text)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return 0
+}
+
+/// `PrintWriter.println(text)` — writes the text string followed by a newline.
+@_cdecl("kk_print_writer_println")
+public func kk_print_writer_println(_ writerRaw: Int, _ textRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let writer = runtimeBufferedWriterBox(from: writerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_print_writer_println received invalid PrintWriter handle")
+    }
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: textRaw),
+          let text = extractString(from: ptr)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_print_writer_println received invalid text")
+    }
+    do {
+        try writer.write(text + "\n")
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return 0
+}
+
+/// `PrintWriter.println()` — writes a newline only (no-arg overload).
+@_cdecl("kk_print_writer_println_no_arg")
+public func kk_print_writer_println_no_arg(_ writerRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let writer = runtimeBufferedWriterBox(from: writerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_print_writer_println_no_arg received invalid PrintWriter handle")
+    }
+    do {
+        try writer.newLine()
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return 0
+}
+
+/// `PrintWriter.write(text)` — writes a string (equivalent to `print(text)`).
+@_cdecl("kk_print_writer_write")
+public func kk_print_writer_write(_ writerRaw: Int, _ textRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    return kk_print_writer_print(writerRaw, textRaw, outThrown)
+}
+
+/// `PrintWriter.flush()` — flushes buffered data to the underlying file.
+@_cdecl("kk_print_writer_flush")
+public func kk_print_writer_flush(_ writerRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let writer = runtimeBufferedWriterBox(from: writerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_print_writer_flush received invalid PrintWriter handle")
+    }
+    do {
+        try writer.flush()
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return 0
+}
+
+/// `PrintWriter.close()` — flushes and closes the underlying writer.
+@_cdecl("kk_print_writer_close")
+public func kk_print_writer_close(_ writerRaw: Int) -> Int {
+    guard let writer = runtimeBufferedWriterBox(from: writerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_print_writer_close received invalid PrintWriter handle")
+    }
+    writer.close()
+    return 0
+}
+
 @_cdecl("kk_file_inputStream")
 public func kk_file_inputStream(_ fileRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0

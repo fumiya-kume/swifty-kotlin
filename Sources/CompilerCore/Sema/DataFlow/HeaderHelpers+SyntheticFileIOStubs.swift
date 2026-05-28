@@ -1190,6 +1190,112 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // MARK: - PrintWriter type and File.printWriter() (STDLIB-IO-FN-027)
+
+        let printWriterSymbol = ensureClassSymbol(
+            named: "PrintWriter",
+            in: javaIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaIOPkgSymbol {
+            symbols.setParentSymbol(javaIOPkgSymbol, for: printWriterSymbol)
+        }
+        let printWriterType = types.make(.classType(ClassType(
+            classSymbol: printWriterSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(printWriterType, for: printWriterSymbol)
+
+        // Register PrintWriter as a Closeable subtype so that .use {} works
+        if let closeableSymbol = types.closeableInterfaceSymbol {
+            symbols.setDirectSupertypes([closeableSymbol], for: printWriterSymbol)
+            types.setNominalDirectSupertypes([closeableSymbol], for: printWriterSymbol)
+        }
+
+        // File.printWriter() -> PrintWriter
+        registerFileMemberFunction(
+            named: "printWriter",
+            externalLinkName: "kk_file_printWriter",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: printWriterType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // PrintWriter.print(text: String) -> Unit
+        registerFileMemberFunction(
+            named: "print",
+            externalLinkName: "kk_print_writer_print",
+            ownerSymbol: printWriterSymbol,
+            ownerType: printWriterType,
+            parameters: [("text", types.stringType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // PrintWriter.println(text: String) -> Unit
+        registerFileMemberFunction(
+            named: "println",
+            externalLinkName: "kk_print_writer_println",
+            ownerSymbol: printWriterSymbol,
+            ownerType: printWriterType,
+            parameters: [("text", types.stringType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // PrintWriter.println() -> Unit  (no-arg overload)
+        registerFileMemberFunction(
+            named: "println",
+            externalLinkName: "kk_print_writer_println_no_arg",
+            ownerSymbol: printWriterSymbol,
+            ownerType: printWriterType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // PrintWriter.write(text: String) -> Unit
+        registerFileMemberFunction(
+            named: "write",
+            externalLinkName: "kk_print_writer_write",
+            ownerSymbol: printWriterSymbol,
+            ownerType: printWriterType,
+            parameters: [("text", types.stringType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // PrintWriter.flush() -> Unit
+        registerFileMemberFunction(
+            named: "flush",
+            externalLinkName: "kk_print_writer_flush",
+            ownerSymbol: printWriterSymbol,
+            ownerType: printWriterType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // PrintWriter.close() -> Unit
+        registerFileMemberFunction(
+            named: "close",
+            externalLinkName: "kk_print_writer_close",
+            ownerSymbol: printWriterSymbol,
+            ownerType: printWriterType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // MARK: - File.copyTo(target, overwrite, bufferSize) (STDLIB-IO-FN-015)
         //
         // Kotlin signature: `public fun File.copyTo(

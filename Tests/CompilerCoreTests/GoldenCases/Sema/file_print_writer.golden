@@ -1,0 +1,33 @@
+symbol s0 kind=class fq=java.io.File vis=public flags=synthetic type=Class#0
+symbol s1 kind=constructor fq=java.io.File.<init> vis=public flags=synthetic sig=recv=_ params=[String] ret=Class#0 suspend=0 defaults=[0] vararg=[0]
+symbol s2 kind=class fq=java.io.PrintWriter vis=public flags=synthetic type=Class#2
+symbol s3 kind=function fq=java.io.File.printWriter vis=public flags=synthetic sig=recv=Class#0 params=[] ret=Class#2 suspend=0 defaults=[] vararg=[]
+symbol s4 kind=function fq=java.io.PrintWriter.print vis=public flags=synthetic sig=recv=Class#2 params=[String] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s5 kind=function fq=java.io.PrintWriter.println vis=public flags=synthetic sig=recv=Class#2 params=[String] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s6 kind=function fq=java.io.PrintWriter.println vis=public flags=synthetic sig=recv=Class#2 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=java.io.PrintWriter.flush vis=public flags=synthetic sig=recv=Class#2 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s8 kind=function fq=java.io.PrintWriter.close vis=public flags=synthetic sig=recv=Class#2 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s9 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s10 kind=local fq=__local_0.f vis=private flags=_ type=Class#0
+symbol s11 kind=local fq=__local_1.pw vis=private flags=_ type=Class#2
+file f0 package=_
+  decl d0 fun main suspend=0 inline=0 sym=s9
+expr e0 name(File) type=_
+expr e1 string(output.txt) type=String
+expr e2 call callee=e0 args=[_:e1] type=Class#0 call=s1 map=[0->0] targs=[]
+expr e3 localDecl f mutable=0 type=_ init=e2 type=Unit ref=s10
+expr e4 name(f) type=Class#0 ref=s10
+expr e5 memberCall recv=e4 callee=printWriter args=[] type=Class#2 call=s3 map=[] targs=[]
+expr e6 localDecl pw mutable=0 type=_ init=e5 type=Unit ref=s11
+expr e7 name(pw) type=Class#2 ref=s11
+expr e8 string(hello) type=String
+expr e9 memberCall recv=e7 callee=print args=[_:e8] type=Unit call=s4 map=[0->0] targs=[]
+expr e10 name(pw) type=Class#2 ref=s11
+expr e11 string( world) type=String
+expr e12 memberCall recv=e10 callee=println args=[_:e11] type=Unit call=s5 map=[0->0] targs=[]
+expr e13 name(pw) type=Class#2 ref=s11
+expr e14 memberCall recv=e13 callee=println args=[] type=Unit call=s6 map=[] targs=[]
+expr e15 name(pw) type=Class#2 ref=s11
+expr e16 memberCall recv=e15 callee=flush args=[] type=Unit call=s7 map=[] targs=[]
+expr e17 name(pw) type=Class#2 ref=s11
+expr e18 memberCall recv=e17 callee=close args=[] type=Unit call=s8 map=[] targs=[]

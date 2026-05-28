@@ -448,6 +448,72 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "FileIO"
         ),
+        // STDLIB-IO-FN-027: PrintWriter
+        RuntimeABIFunctionSpec(
+            name: "kk_file_printWriter",
+            parameters: [
+                RuntimeABIParameter(name: "fileRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_print_writer_print",
+            parameters: [
+                RuntimeABIParameter(name: "writerRaw", type: .intptr),
+                RuntimeABIParameter(name: "textRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_print_writer_println",
+            parameters: [
+                RuntimeABIParameter(name: "writerRaw", type: .intptr),
+                RuntimeABIParameter(name: "textRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_print_writer_println_no_arg",
+            parameters: [
+                RuntimeABIParameter(name: "writerRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_print_writer_write",
+            parameters: [
+                RuntimeABIParameter(name: "writerRaw", type: .intptr),
+                RuntimeABIParameter(name: "textRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_print_writer_flush",
+            parameters: [
+                RuntimeABIParameter(name: "writerRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_print_writer_close",
+            parameters: [
+                RuntimeABIParameter(name: "writerRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_classloader_getSystemClassLoader",
             parameters: [],
