@@ -721,6 +721,53 @@ public func kk_file_startsWith_string(_ fileRaw: Int, _ otherRaw: Int) -> Int {
     return kk_box_bool(fileStartsWithComponents(path: file.path, other: otherString) ? 1 : 0)
 }
 
+// MARK: - STDLIB-IO-FN-024: File.normalize
+
+/// Normalize a path string purely lexically, matching kotlin.io.File.normalize():
+/// - Splits on "/", resolves "." (current) and ".." (parent) components.
+/// - Preserves leading "/" for absolute paths.
+/// - An empty result for a non-absolute path returns ".".
+private func fileNormalizePath(_ path: String) -> String {
+    let isAbsolute = path.hasPrefix("/")
+    let parts = path.split(separator: "/", omittingEmptySubsequences: true).map(String.init)
+    var stack: [String] = []
+    for part in parts {
+        switch part {
+        case ".":
+            break // skip current-directory markers
+        case "..":
+            if isAbsolute {
+                // Cannot go above root
+                if !stack.isEmpty { stack.removeLast() }
+            } else {
+                if stack.last == ".." || stack.isEmpty {
+                    stack.append("..")
+                } else {
+                    stack.removeLast()
+                }
+            }
+        default:
+            stack.append(part)
+        }
+    }
+    let joined = stack.joined(separator: "/")
+    if isAbsolute {
+        return "/" + joined
+    } else {
+        return joined.isEmpty ? "." : joined
+    }
+}
+
+@_cdecl("kk_file_normalize")
+public func kk_file_normalize(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_normalize received invalid File handle")
+    }
+    let normalizedPath = fileNormalizePath(file.path)
+    let normalizedFile = RuntimeFileBox(normalizedPath)
+    return Int(bitPattern: Unmanaged.passRetained(normalizedFile).toOpaque())
+}
+
 // MARK: - STDLIB-322: File line-by-line operations
 
 @_cdecl("kk_file_forEachLine")
@@ -747,12 +794,22 @@ public func kk_file_forEachLine(_ fileRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
 }
 
 // MARK: - STDLIB-IO-FN-016: File.forEachBlock
-
+//
+// Kotlin signatures:
+//   public fun File.forEachBlock(action: (buffer: ByteArray, bytesRead: Int) -> Unit): Unit
+//   public fun File.forEachBlock(blockSize: Int, action: (buffer: ByteArray, bytesRead: Int) -> Unit): Unit
+//
+// Reads the file in binary chunks of `blockSize` bytes (default 4096). For each
+// chunk the HOF action is invoked with (buffer: List<Int>, bytesRead: Int). The
+// caller (KIR lowering) appends a zero closureRaw sentinel so the runtime
+// receives (fileRaw, fnPtr, closureRaw, outThrown) for the default-size overload
+// and (fileRaw, blockSizeRaw, fnPtr, closureRaw, outThrown) for the explicit-size
+// overload. The lambda uses the 2-argument HOF closure ABI
+// (runtimeInvokeCollectionLambda2).
 private let fileForEachBlockDefaultSize = 4096
 
 private func fileForEachBlockImpl(
-    fileRaw: Int, blockSize: Int, fnPtr: Int, closureRaw: Int,
-    outThrown: UnsafeMutablePointer<Int>?
+    fileRaw: Int, blockSize: Int, fnPtr: Int, closureRaw: Int,    outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     outThrown?.pointee = 0
     guard let file = runtimeFileBox(from: fileRaw) else {
@@ -789,8 +846,7 @@ public func kk_file_forEachBlock(_ fileRaw: Int, _ fnPtr: Int, _ closureRaw: Int
 
 @_cdecl("kk_file_forEachBlock_blockSize")
 public func kk_file_forEachBlock_blockSize(_ fileRaw: Int, _ blockSizeRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    fileForEachBlockImpl(fileRaw: fileRaw, blockSize: kk_unbox_int(blockSizeRaw), fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown)
-}
+    fileForEachBlockImpl(fileRaw: fileRaw, blockSize: kk_unbox_int(blockSizeRaw), fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown)}
 
 // MARK: - STDLIB-566: File.useLines {}
 

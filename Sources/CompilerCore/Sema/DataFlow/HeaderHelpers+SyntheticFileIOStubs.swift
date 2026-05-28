@@ -302,6 +302,25 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // MARK: - File.normalize (STDLIB-IO-FN-024)
+        //
+        // Kotlin signature: fun File.normalize(): File
+        // Returns a new File whose path has been normalized by resolving any `.`
+        // and `..` components, and by removing redundant separators.  The operation
+        // is purely lexical — no filesystem access — matching kotlin-stdlib behaviour.
+
+        registerFileMemberFunction(
+            named: "normalize",
+            externalLinkName: "kk_file_normalize",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: fileType,
+            symbols: symbols,
+            interner: interner
+        )
+
+
         // MARK: - File.startsWith (STDLIB-IO-FN-037)
         //
         // Two overloads matching kotlin.io.File:

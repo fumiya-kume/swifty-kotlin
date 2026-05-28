@@ -1088,6 +1088,7 @@ extension ABILoweringPass {
             interner.intern("kk_file_resolveSibling_string"),
             interner.intern("kk_file_startsWith_file"),
             interner.intern("kk_file_startsWith_string"),
+            interner.intern("kk_file_normalize"),
             interner.intern("kk_file_delete"),
             interner.intern("kk_file_mkdirs"),
             interner.intern("kk_file_listFiles"),
