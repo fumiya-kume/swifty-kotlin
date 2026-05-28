@@ -2763,6 +2763,35 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
         }
+        if let uShortArraySymbol = symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("UShortArray")]),
+           let uShortVarSymbol = symbols.lookup(fqName: cinteropPkg + [interner.intern("UShortVar")])
+        {
+            let uShortArrayType = types.make(.classType(ClassType(
+                classSymbol: uShortArraySymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            let uShortVarType = types.make(.classType(ClassType(
+                classSymbol: uShortVarSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            let uShortArrayToCValuesReturnType = types.make(.classType(ClassType(
+                classSymbol: cValuesSymbol,
+                args: [.invariant(uShortVarType)],
+                nullability: .nonNull
+            )))
+            registerSyntheticNativeTopLevelFunction(
+                named: "toCValues",
+                packageFQName: cinteropPkg,
+                receiverType: uShortArrayType,
+                parameters: [],
+                returnType: uShortArrayToCValuesReturnType,
+                annotations: [MetadataAnnotationRecord(annotationFQName: "kotlin.ExperimentalUnsignedTypes")],
+                symbols: symbols,
+                interner: interner
+            )
+        }
         if let uShortVarSymbol = symbols.lookup(fqName: cinteropPkg + [interner.intern("UShortVar")]) {
             let uShortVarType = types.make(.classType(ClassType(
                 classSymbol: uShortVarSymbol,
