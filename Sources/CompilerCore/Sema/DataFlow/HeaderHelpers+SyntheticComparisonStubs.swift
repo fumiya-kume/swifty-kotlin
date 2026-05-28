@@ -118,6 +118,14 @@ extension DataFlowSemaPhase {
             comparisonsPackageSymbol: comparisonsPackageSymbol,
             comparatorSymbol: comparatorSymbol
         )
+        registerSyntheticMinOfUnsignedStub(
+            typeID: types.ushortType,
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            comparisonsPkg: comparisonsPkg,
+            comparisonsPackageSymbol: comparisonsPackageSymbol
+        )
 
         registerSyntheticMaxOfUnsignedStubs(
             symbols: symbols,
