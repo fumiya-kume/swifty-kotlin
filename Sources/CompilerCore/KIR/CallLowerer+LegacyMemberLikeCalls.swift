@@ -3289,6 +3289,9 @@ extension CallLowerer {
                     "kk_string_builder_delete_obj"
                 } else if calleeName == sbNames.deleteRange {
                     "kk_string_builder_deleteRange"
+                } else if calleeName == sbNames.sbSet {
+                    // STDLIB-TEXT-FN-064: operator fun set(index, value) desugars to setCharAt
+                    "kk_string_builder_setCharAt"
                 } else if calleeName == sbNames.setCharAt {
                     "kk_string_builder_setCharAt"
                 } else {

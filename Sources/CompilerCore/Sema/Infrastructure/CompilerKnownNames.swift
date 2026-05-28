@@ -348,6 +348,7 @@ struct KnownCompilerNames {
     let deleteAt: InternedString
     let deleteRange: InternedString
     let get: InternedString
+    let sbSet: InternedString
     let insert: InternedString
     let insertRange: InternedString
     let delete: InternedString
@@ -544,6 +545,7 @@ struct KnownCompilerNames {
         deleteAt = interner.intern("deleteAt")
         deleteRange = interner.intern("deleteRange")
         get = interner.intern("get")
+        sbSet = interner.intern("set")
         insert = interner.intern("insert")
         insertRange = interner.intern("insertRange")
         delete = interner.intern("delete")

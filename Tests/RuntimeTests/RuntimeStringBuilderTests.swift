@@ -50,6 +50,24 @@ final class RuntimeStringBuilderTests: XCTestCase {
         XCTAssertEqual(runtimeStringValue(kk_string_builder_toString(builder)), "aXYZd")
     }
 
+    // STDLIB-TEXT-FN-064: operator fun set(index, value) — backed by kk_string_builder_setCharAt
+    func testSetCharAtReplacesCharacterAtIndex() {
+        let builder = kk_string_builder_new_from_string(makeRuntimeString("abc"))
+
+        let returned = kk_string_builder_setCharAt(builder, 1, kk_box_char(Int(Unicode.Scalar("X").value)))
+
+        XCTAssertEqual(returned, builder)
+        XCTAssertEqual(runtimeStringValue(kk_string_builder_toString(builder)), "aXc")
+    }
+
+    func testSetCharAtFirstIndexReplacesCharacter() {
+        let builder = kk_string_builder_new_from_string(makeRuntimeString("hello"))
+
+        _ = kk_string_builder_setCharAt(builder, 0, kk_box_char(Int(Unicode.Scalar("H").value)))
+
+        XCTAssertEqual(runtimeStringValue(kk_string_builder_toString(builder)), "Hello")
+    }
+
     private func makeRuntimeString(_ value: String) -> Int {
         registerRuntimeObject(RuntimeStringBox(value))
     }
