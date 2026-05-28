@@ -920,7 +920,7 @@ extension CallTypeChecker {
                         let lambdaBodyType = inferredLambdaReturnType(
                             argExpr: args[0].expr, ast: ast, sema: sema
                         )
-                        let innerElementType = extractListElementType(
+                        let innerElementType = extractIterableOrSequenceElementType(
                             lambdaBodyType, sema: sema, interner: interner
                         )
                         if isSequenceReceiver {
