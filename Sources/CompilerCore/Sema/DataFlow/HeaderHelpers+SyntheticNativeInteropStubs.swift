@@ -4247,6 +4247,23 @@ extension DataFlowSemaPhase {
             retention: "AnnotationRetention.BINARY",
             symbols: symbols
         )
+
+        // STDLIB-CINTEROP-INTERNAL-TYPE-004: CGlobalAccess marks generated C global accessors.
+        let cGlobalAccessSymbol = ensureAnnotationClassSymbol(
+            named: "CGlobalAccess",
+            in: cinteropInternalPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let cinteropInternalPkgSymbol {
+            symbols.setParentSymbol(cinteropInternalPkgSymbol, for: cGlobalAccessSymbol)
+        }
+        appendStandardAnnotationMetadata(
+            to: cGlobalAccessSymbol,
+            targets: ["AnnotationTarget.PROPERTY"],
+            retention: "AnnotationRetention.BINARY",
+            symbols: symbols
+        )
     }
 
     private func syntheticClassType(
