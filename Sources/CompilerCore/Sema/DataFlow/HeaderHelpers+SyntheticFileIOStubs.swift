@@ -245,6 +245,36 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // MARK: - File.startsWith (STDLIB-IO-FN-037)
+        //
+        // Two overloads matching kotlin.io.File:
+        //   fun File.startsWith(other: File): Boolean
+        //   fun File.startsWith(other: String): Boolean
+        // Both compare path components against the receiver, returning true when
+        // the receiver's path begins with all components of `other`.
+
+        registerFileMemberFunction(
+            named: "startsWith",
+            externalLinkName: "kk_file_startsWith_file",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [("other", fileType)],
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "startsWith",
+            externalLinkName: "kk_file_startsWith_string",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [("other", types.stringType)],
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // MARK: - File read/write methods (STDLIB-320)
 
         registerFileMemberFunction(

@@ -464,6 +464,54 @@ public func kk_file_canExecute(_ fileRaw: Int) -> Int {
     return kk_box_bool(FileManager.default.isExecutableFile(atPath: file.path) ? 1 : 0)
 }
 
+// MARK: - STDLIB-IO-FN-037: File.startsWith
+
+/// Split a path string into name components, dropping empty separators.
+/// Matches the implementation used by `kk_path_startsWith_path` and friends.
+private func fileStartsWithPathComponents(_ pathString: String) -> [String] {
+    pathString.split(separator: "/", omittingEmptySubsequences: true).map(String.init)
+}
+
+/// Returns true if `path` starts with `other` on a component-by-component basis.
+/// Both paths must agree on absoluteness (leading "/") and `other` must be a
+/// prefix of the receiver's components, mirroring kotlin.io.File.startsWith.
+private func fileStartsWithComponents(path: String, other: String) -> Bool {
+    let pathParts = fileStartsWithPathComponents(path)
+    let otherParts = fileStartsWithPathComponents(other)
+    let pathIsAbsolute = path.hasPrefix("/")
+    let otherIsAbsolute = other.hasPrefix("/")
+    guard pathIsAbsolute == otherIsAbsolute, otherParts.count <= pathParts.count else {
+        return false
+    }
+    for index in 0 ..< otherParts.count where pathParts[index] != otherParts[index] {
+        return false
+    }
+    return true
+}
+
+@_cdecl("kk_file_startsWith_file")
+public func kk_file_startsWith_file(_ fileRaw: Int, _ otherRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_startsWith_file received invalid File handle")
+    }
+    guard let other = runtimeFileBox(from: otherRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_startsWith_file received invalid other File handle")
+    }
+    return kk_box_bool(fileStartsWithComponents(path: file.path, other: other.path) ? 1 : 0)
+}
+
+@_cdecl("kk_file_startsWith_string")
+public func kk_file_startsWith_string(_ fileRaw: Int, _ otherRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_startsWith_string received invalid File handle")
+    }
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: otherRaw),
+          let otherString = extractString(from: ptr) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_startsWith_string received invalid other string")
+    }
+    return kk_box_bool(fileStartsWithComponents(path: file.path, other: otherString) ? 1 : 0)
+}
+
 // MARK: - STDLIB-322: File line-by-line operations
 
 @_cdecl("kk_file_forEachLine")
