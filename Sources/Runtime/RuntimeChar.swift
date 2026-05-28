@@ -303,6 +303,25 @@ public func kk_char_isTitleCase(_ value: Int) -> Int {
     return kk_box_bool(scalar.properties.generalCategory == .titlecaseLetter ? 1 : 0)
 }
 
+@_cdecl("kk_char_isIdentifierIgnorable")
+public func kk_char_isIdentifierIgnorable(_ value: Int) -> Int {
+    // Matches Java's Character.isIdentifierIgnorable(int), which Kotlin delegates to on JVM.
+    // Returns true for:
+    //   - ISO control characters that are not whitespace: U+0000..U+0008, U+000E..U+001B, U+007F..U+009F
+    //   - Unicode format characters (general category Cf)
+    let isISOControlIgnorable =
+        (value >= 0x0000 && value <= 0x0008) ||
+        (value >= 0x000E && value <= 0x001B) ||
+        (value >= 0x007F && value <= 0x009F)
+    if isISOControlIgnorable {
+        return kk_box_bool(1)
+    }
+    guard let scalar = runtimeUnicodeScalar(value) else {
+        return kk_box_bool(0)
+    }
+    return kk_box_bool(scalar.properties.generalCategory == .format ? 1 : 0)
+}
+
 // MARK: - STDLIB-003-ABI-001: Char.digitToInt(radix: Int)
 
 /// fun Char.digitToInt(radix: Int): Int
