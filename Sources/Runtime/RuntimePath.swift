@@ -1062,6 +1062,55 @@ public func kk_path_copyToRecursively_copyAction(
     return targetRaw
 }
 
+@_cdecl("kk_path_moveTo_overwrite")
+public func kk_path_moveTo_overwrite(
+    _ pathRaw: Int,
+    _ targetRaw: Int,
+    _ overwriteRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let source = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_moveTo_overwrite received invalid source Path handle")
+    }
+    guard let target = runtimePathBox(from: targetRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_moveTo_overwrite received invalid target Path handle")
+    }
+    do {
+        if kk_unbox_bool(overwriteRaw) != 0,
+           FileManager.default.fileExists(atPath: target.pathString) {
+            try FileManager.default.removeItem(atPath: target.pathString)
+        }
+        try FileManager.default.moveItem(atPath: source.pathString, toPath: target.pathString)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return targetRaw
+}
+
+@_cdecl("kk_path_moveTo_options")
+public func kk_path_moveTo_options(
+    _ pathRaw: Int,
+    _ targetRaw: Int,
+    _ optionsRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    _ = optionsRaw
+    guard let source = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_moveTo_options received invalid source Path handle")
+    }
+    guard let target = runtimePathBox(from: targetRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_moveTo_options received invalid target Path handle")
+    }
+    do {
+        try FileManager.default.moveItem(atPath: source.pathString, toPath: target.pathString)
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return targetRaw
+}
+
 @_cdecl("kk_path_listDirectoryEntries")
 public func kk_path_listDirectoryEntries(_ pathRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
