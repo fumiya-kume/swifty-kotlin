@@ -461,6 +461,18 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         XCTAssertTrue(thrownOutput.contains("NumberFormatException"))
     }
 
+    func testStringCodePointCount() {
+        let ascii = rawFromRuntimeString("Hello")
+        XCTAssertEqual(kk_string_codePointCount(ascii, 0, 5), 5)
+        XCTAssertEqual(kk_string_codePointCount(ascii, 1, 4), 3)
+        XCTAssertEqual(kk_string_codePointCount(ascii, 2, 2), 0)
+
+        let emoji = rawFromRuntimeString("A\u{1F600}B")
+        XCTAssertEqual(kk_string_codePointCount(emoji, 0, 4), 3)
+        XCTAssertEqual(kk_string_codePointCount(emoji, 1, 3), 1)
+        XCTAssertEqual(kk_string_codePointCount(emoji, 0, 1), 1)
+    }
+
     func testStringToIntRadixThrowsOnInvalidRadix() {
         var thrown = 0
 
