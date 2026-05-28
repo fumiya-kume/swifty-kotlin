@@ -219,5 +219,16 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Base64"
         ),
+        // STDLIB-IO-ENC-FN-001: String.decodingWith(codec: Base64): ByteArray
+        RuntimeABIFunctionSpec(
+            name: "kk_base64_decodingWith",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "instanceRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Base64"
+        ),
     ]
 }

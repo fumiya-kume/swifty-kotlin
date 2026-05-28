@@ -293,6 +293,22 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // ── String.decodingWith (STDLIB-IO-ENC-FN-001) ──────────────────────────
+        // `fun String.decodingWith(codec: Base64): ByteArray`
+        // Lowered as [strRaw, instanceRaw] → kk_base64_decodingWith(strRaw, instanceRaw, outThrown)
+        registerBase64ThrowingStringExtensionFunction(
+            named: "decodingWith",
+            externalLinkName: "kk_base64_decodingWith",
+            packageFQName: ioEncodingPkg,
+            receiverType: stringType,
+            parameters: [
+                (name: "codec", type: base64Type, hasDefault: false),
+            ],
+            returnType: byteArrayType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // ── encodeToByteArray variants ───────────────────────────────────────────
         for (name, link) in [
             ("kk_base64_encodeToByteArray_default_fn", "kk_base64_encodeToByteArray_default"),
@@ -739,6 +755,76 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             types: types,
             interner: interner
+        )
+    }
+
+    /// Registers a package-level throwing extension function on an arbitrary receiver type
+    /// in kotlin.io.encoding (e.g. `String.decodingWith(codec: Base64): ByteArray`).
+    private func registerBase64ThrowingStringExtensionFunction(
+        named name: String,
+        externalLinkName: String,
+        packageFQName: [InternedString],
+        receiverType: TypeID,
+        parameters: [(name: String, type: TypeID, hasDefault: Bool)],
+        returnType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let existingSignature = symbols.functionSignature(for: symbolID) else { return false }
+            return existingSignature.receiverType == receiverType
+                && existingSignature.parameterTypes == parameters.map(\.type)
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        var parameterTypes: [TypeID] = []
+        var parameterSymbols: [SymbolID] = []
+        var parameterDefaults: [Bool] = []
+
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: functionFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            parameterTypes.append(parameter.type)
+            parameterSymbols.append(parameterSymbol)
+            parameterDefaults.append(parameter.hasDefault)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameterTypes,
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: parameterSymbols,
+                valueParameterHasDefaultValues: parameterDefaults,
+                valueParameterIsVararg: Array(repeating: false, count: parameterSymbols.count)
+            ),
+            for: functionSymbol
         )
     }
 }

@@ -880,6 +880,7 @@ extension CallLowerer {
             interner.intern("kk_base64_decodeFromByteArray_mime"),
             interner.intern("kk_base64_decode_instance"),
             interner.intern("kk_base64_decodeFromByteArray_instance"),
+            interner.intern("kk_base64_decodingWith"),
             interner.intern("kk_list_random"),
             interner.intern("kk_list_elementAt"),
             interner.intern("kk_list_take"),

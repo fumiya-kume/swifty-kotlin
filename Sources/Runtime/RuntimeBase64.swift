@@ -413,6 +413,20 @@ public func kk_base64_decodeFromByteArray_instance(
     }
 }
 
+// MARK: - decodingWith (String extension, STDLIB-IO-ENC-FN-001)
+
+/// `fun String.decodingWith(codec: Base64): ByteArray`
+/// Decodes this Base64-encoded string using the supplied `codec` instance.
+/// Arguments: [strRaw, instanceRaw] — receiver is prepended first by the lowering pass.
+@_cdecl("kk_base64_decodingWith")
+public func kk_base64_decodingWith(
+    _ strRaw: Int,
+    _ instanceRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    kk_base64_decode_instance(instanceRaw, strRaw, outThrown)
+}
+
 // MARK: - Shared Decode Implementation
 
 private enum Base64Alphabet {
