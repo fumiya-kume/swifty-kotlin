@@ -473,6 +473,27 @@ extension CallTypeChecker {
             && interner.resolve(symbol.fqName[symbol.fqName.count - 2]) == "io"
     }
 
+    /// Returns true when the receiver type is kotlin.io.path.Path.
+    /// Used by Path-targeted special-case lambda inference (STDLIB-IO-PATH-FN-038)
+    /// where `Path.useLines` receives a `(Sequence<String>) -> T` block.
+    func isPathType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let nonNullType = sema.types.makeNonNullable(receiverType)
+        guard case let .classType(classType) = sema.types.kind(of: nonNullType),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return symbol.fqName.count >= 4
+            && interner.resolve(symbol.fqName.last!) == "Path"
+            && interner.resolve(symbol.fqName[symbol.fqName.count - 2]) == "path"
+            && interner.resolve(symbol.fqName[symbol.fqName.count - 3]) == "io"
+            && interner.resolve(symbol.fqName[symbol.fqName.count - 4]) == "kotlin"
+    }
+
     func isChannelReceiverType(
         _ receiverType: TypeID,
         sema: SemaModule,

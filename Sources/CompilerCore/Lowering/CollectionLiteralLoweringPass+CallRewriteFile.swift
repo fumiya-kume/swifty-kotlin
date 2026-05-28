@@ -233,6 +233,8 @@ extension CollectionLiteralLoweringPass {
             || callee == lookup.kkFileUseLinesName
             || callee == lookup.kkBufferedReaderUseLinesName
             || callee == lookup.kkBufferedReaderForEachLineName
+            || callee == lookup.kkPathUseLinesName
+            || callee == lookup.kkPathUseLinesDefaultName
         {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
