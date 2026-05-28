@@ -46,6 +46,18 @@ private let reduceRightChecksum: @convention(c) (Int, Int, Int, UnsafeMutablePoi
     acc + charRaw
 }
 
+// MARK: - STDLIB-TEXT-FN-049: reduceOrNull helpers (acc first, char second)
+
+private let reduceOrNullPickB: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = {
+    _, acc, charRaw, _ in
+    charRaw == Int(Unicode.Scalar("b").value) ? charRaw : acc
+}
+
+private let reduceOrNullChecksum: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = {
+    _, acc, charRaw, _ in
+    acc + charRaw
+}
+
 private let sumByWeightedA: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, charRaw, _ in
     charRaw == Int(Unicode.Scalar("a").value) ? 10 : 1
 }
@@ -365,6 +377,68 @@ final class RuntimeStringHOFTests: XCTestCase {
 
         XCTAssertEqual(thrown, 0)
         XCTAssertEqual(result, 294)
+    }
+
+    // MARK: - STDLIB-TEXT-FN-049: kk_string_reduceOrNull
+
+    func testReduceOrNullWalksLeftToRight() {
+        let source = registerRuntimeObject(RuntimeStringBox("abc"))
+        var thrown = 0
+
+        let result = kk_string_reduceOrNull(
+            source,
+            unsafeBitCast(reduceOrNullPickB, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, Int(Unicode.Scalar("b").value))
+    }
+
+    func testReduceOrNullReturnsNullSentinelForEmptyString() {
+        let source = registerRuntimeObject(RuntimeStringBox(""))
+        var thrown = 0
+
+        let result = kk_string_reduceOrNull(
+            source,
+            unsafeBitCast(reduceOrNullPickB, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, runtimeNullSentinelInt)
+    }
+
+    func testReduceOrNullUsesFirstCharacterAsInitialAccumulator() {
+        let source = registerRuntimeObject(RuntimeStringBox("abc"))
+        var thrown = 0
+
+        let result = kk_string_reduceOrNull(
+            source,
+            unsafeBitCast(reduceOrNullChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 294)
+    }
+
+    func testReduceOrNullReturnsSingleCharForOneCharString() {
+        let source = registerRuntimeObject(RuntimeStringBox("x"))
+        var thrown = 0
+
+        let result = kk_string_reduceOrNull(
+            source,
+            unsafeBitCast(reduceOrNullChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, Int(Unicode.Scalar("x").value))
     }
 
     func testSumByAppliesSelectorToEveryCharacter() {

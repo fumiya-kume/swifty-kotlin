@@ -2283,6 +2283,19 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-TEXT-FN-049: CharSequence.reduceOrNull(operation) ---
+        registerSyntheticStringExtensionFunction(
+            named: "reduceOrNull",
+            externalLinkName: "kk_string_reduceOrNull",
+            receiverType: charSequenceType,
+            parameters: [("operation", charCharToCharType, false, false)],
+            returnType: nullableCharType,
+            flags: [.synthetic, .inlineFunction],
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-TEXT-HOF-006: CharSequence.sumBy(selector) deprecated surface ---
         registerSyntheticStringExtensionFunction(
             named: "sumBy",
