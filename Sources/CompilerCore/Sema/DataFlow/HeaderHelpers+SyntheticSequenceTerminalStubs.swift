@@ -3059,6 +3059,20 @@ extension DataFlowSemaPhase {
             canThrow: false
         )
 
+        // STDLIB-SEQ-FN-044: forEach(action: (T) -> Unit): Unit
+        registerSequenceMemberStub(
+            named: "forEach",
+            externalLinkName: "kk_sequence_forEach",
+            receiverType: receiverType,
+            parameters: [("action", actionType)],
+            returnType: types.unitType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         // forEachIndexed(action: (Int, T) -> Unit): Unit
         let forEachIndexedActionType = types.make(.functionType(FunctionType(
             params: [types.intType, typeParamType],
