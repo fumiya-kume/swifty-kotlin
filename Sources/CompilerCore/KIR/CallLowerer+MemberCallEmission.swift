@@ -999,6 +999,8 @@ extension CallLowerer {
             interner.intern("kk_sequence_count"),
             interner.intern("kk_string_firstNotNullOf"),
             interner.intern("kk_string_firstNotNullOfOrNull"),
+            interner.intern("kk_string_reduceIndexed"),
+            interner.intern("kk_string_reduceIndexedOrNull"),
             interner.intern("kk_string_reduceRightIndexed"),
             interner.intern("kk_string_reduceRightIndexedOrNull"),
             interner.intern("kk_string_reduceRightOrNull"),
