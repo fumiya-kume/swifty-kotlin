@@ -29,6 +29,11 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerSyntheticCInteropInternalFunctionStubs(
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
         registerSyntheticNativeVector128Stubs(
             symbols: symbols,
             types: types,
@@ -4010,6 +4015,30 @@ extension DataFlowSemaPhase {
             cinteropPkgSymbol: cinteropPkgSymbol,
             symbols: symbols,
             types: types,
+            interner: interner
+        )
+    }
+
+    /// Synthetic stubs for `kotlinx.cinterop.internal` top-level functions.
+    private func registerSyntheticCInteropInternalFunctionStubs(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let cinteropInternalPkg = ensurePackage(
+            path: ["kotlinx", "cinterop", "internal"],
+            symbols: symbols,
+            interner: interner
+        )
+
+        // STDLIB-CINTEROP-INTERNAL-FN-002: fun detachObjCObject(obj: Any): Unit
+        registerSyntheticNativeTopLevelFunction(
+            named: "detachObjCObject",
+            packageFQName: cinteropInternalPkg,
+            receiverType: nil,
+            parameters: [(name: "obj", type: types.anyType)],
+            returnType: types.unitType,
+            symbols: symbols,
             interner: interner
         )
     }
