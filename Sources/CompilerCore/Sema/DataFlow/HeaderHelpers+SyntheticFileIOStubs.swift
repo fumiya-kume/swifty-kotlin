@@ -1453,6 +1453,52 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // MARK: - ByteArray.inputStream() (STDLIB-IO-FN-020)
+        //
+        // Kotlin signature (kotlin.io):
+        //   public inline fun ByteArray.inputStream(): ByteArrayInputStream =
+        //       ByteArrayInputStream(this)
+        //
+        // The receiver is the user-facing `kotlin.ByteArray` type. KSwiftK's runtime
+        // represents `ByteArray` as `List<Int>` internally, so we also register the
+        // extension for `List<Int>` receivers to allow callers (and synthetic
+        // helpers) that have already lowered to the list representation to resolve
+        // the same extension function. Both forms link to `kk_bytearray_inputStream`
+        // which boxes the bytes into a `RuntimeInputStreamBox`.
+        let kotlinPkg = ensurePackage(
+            path: ["kotlin"],
+            symbols: symbols,
+            interner: interner
+        )
+        let byteArrayInputStreamReceiverSymbol = ensureClassSymbol(
+            named: "ByteArray",
+            in: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinPkgSymbol = symbols.lookup(fqName: kotlinPkg) {
+            symbols.setParentSymbol(kotlinPkgSymbol, for: byteArrayInputStreamReceiverSymbol)
+        }
+        let byteArrayReceiverType = types.make(.classType(ClassType(
+            classSymbol: byteArrayInputStreamReceiverSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(byteArrayReceiverType, for: byteArrayInputStreamReceiverSymbol)
+
+        for receiverType in [byteArrayReceiverType, listIntType] {
+            registerKotlinIOExtensionFunction(
+                named: "inputStream",
+                packageFQName: kotlinIOPkg,
+                receiverType: receiverType,
+                parameters: [],
+                returnType: byteArrayInputStreamType,
+                externalLinkName: "kk_bytearray_inputStream",
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
         // MARK: - ByteArray.inputStream() and ByteArray.inputStream(offset, length) (STDLIB-IO-FN-020 / STDLIB-IO-FN-021)
         //
         // Kotlin stdlib declares two overloads in kotlin.io:
