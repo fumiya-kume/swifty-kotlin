@@ -4264,6 +4264,23 @@ extension DataFlowSemaPhase {
             retention: "AnnotationRetention.BINARY",
             symbols: symbols
         )
+
+        // STDLIB-CINTEROP-INTERNAL-TYPE-006: CStruct marks C struct wrapper classes.
+        let cStructSymbol = ensureAnnotationClassSymbol(
+            named: "CStruct",
+            in: cinteropInternalPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let cinteropInternalPkgSymbol {
+            symbols.setParentSymbol(cinteropInternalPkgSymbol, for: cStructSymbol)
+        }
+        appendStandardAnnotationMetadata(
+            to: cStructSymbol,
+            targets: ["AnnotationTarget.CLASS"],
+            retention: "AnnotationRetention.BINARY",
+            symbols: symbols
+        )
     }
 
     private func syntheticClassType(
