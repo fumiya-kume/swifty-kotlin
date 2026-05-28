@@ -1,0 +1,44 @@
+symbol s0 kind=property fq=kotlin.Throwable.message vis=public flags=synthetic type=String?
+symbol s1 kind=class fq=java.io.File vis=public flags=synthetic type=Class#1
+symbol s2 kind=constructor fq=java.io.File.<init> vis=public flags=synthetic sig=recv=_ params=[String] ret=Class#1 suspend=0 defaults=[0] vararg=[0]
+symbol s3 kind=class fq=kotlin.io.AccessDeniedException vis=public flags=synthetic type=Class#3
+symbol s4 kind=constructor fq=kotlin.io.AccessDeniedException.<init> vis=public flags=synthetic sig=recv=_ params=[Class#1] ret=Class#3 suspend=0 defaults=[0] vararg=[0]
+symbol s5 kind=constructor fq=kotlin.io.AccessDeniedException.<init> vis=public flags=synthetic sig=recv=_ params=[Class#1,Class#1?,String?] ret=Class#3 suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s6 kind=function fq=golden.sema.catchAccessDenied vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s7 kind=function fq=golden.sema.catchAccessDeniedWithReason vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s8 kind=local fq=__local_0.f vis=private flags=_ type=Class#1
+symbol s9 kind=local fq=__try_11_catch_0.e vis=internal flags=_ type=Class#3
+symbol s10 kind=local fq=__local_1.f vis=private flags=_ type=Class#1
+symbol s11 kind=local fq=__try_28_catch_0.e vis=internal flags=_ type=Class#3
+file f0 package=golden.sema
+  decl d0 fun catchAccessDenied suspend=0 inline=0 sym=s6
+  decl d1 fun catchAccessDeniedWithReason suspend=0 inline=0 sym=s7
+expr e0 name(File) type=_
+expr e1 string(/protected/file.txt) type=String
+expr e2 call callee=e0 args=[_:e1] type=Class#1 call=s2 map=[0->0] targs=[]
+expr e3 localDecl f mutable=0 type=_ init=e2 type=Unit ref=s8
+expr e4 name(AccessDeniedException) type=_
+expr e5 name(f) type=Class#1 ref=s8
+expr e6 call callee=e4 args=[_:e5] type=Class#3 call=s4 map=[0->0] targs=[]
+expr e7 throw value=e6 type=Nothing
+expr e8 blockExpr stmts=[e3] trailing=e7 type=Nothing
+expr e9 string(access denied) type=String
+expr e10 blockExpr stmts=[] trailing=e9 type=String ref=s9
+expr e11 try body=e8 catches=[e10] finally=_ type=String
+expr e12 name(File) type=_
+expr e13 string(/protected/file.txt) type=String
+expr e14 call callee=e12 args=[_:e13] type=Class#1 call=s2 map=[0->0] targs=[]
+expr e15 localDecl f mutable=0 type=_ init=e14 type=Unit ref=s10
+expr e16 name(AccessDeniedException) type=_
+expr e17 name(f) type=Class#1 ref=s10
+expr e18 name(null) type=Nothing?
+expr e19 string(permission denied) type=String
+expr e20 call callee=e16 args=[_:e17,_:e18,_:e19] type=Class#3 call=s5 map=[0->0,1->1,2->2] targs=[]
+expr e21 throw value=e20 type=Nothing
+expr e22 blockExpr stmts=[e15] trailing=e21 type=Nothing
+expr e23 name(e) type=Class#3 ref=s11
+expr e24 memberCall recv=e23 callee=message args=[] type=String? ref=s0
+expr e25 string(no message) type=String
+expr e26 binary(elvis) lhs=e24 rhs=e25 type=String
+expr e27 blockExpr stmts=[] trailing=e26 type=String ref=s11
+expr e28 try body=e22 catches=[e27] finally=_ type=String
