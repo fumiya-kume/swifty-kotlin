@@ -1897,6 +1897,76 @@ extension DataFlowSemaPhase {
         symbols.setDirectSupertypes([arenaBaseSymbol], for: memScopeSymbol)
         types.setNominalDirectSupertypes([arenaBaseSymbol], for: memScopeSymbol)
 
+        // inline fun <R> memScoped(block: MemScope.() -> R): R
+        let memScopedName = interner.intern("memScoped")
+        let memScopedFQName = cinteropPkg + [memScopedName]
+        if symbols.lookupAll(fqName: memScopedFQName).contains(where: { symbolID in
+            guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+            return sig.receiverType == nil && sig.parameterTypes.count == 1 && sig.typeParameterSymbols.count == 1
+        }) {
+            // already registered
+        } else {
+            let memScopedRName = interner.intern("R")
+            let memScopedRFQName = memScopedFQName + [memScopedRName]
+            let memScopedRSymbol = symbols.define(
+                kind: .typeParameter,
+                name: memScopedRName,
+                fqName: memScopedRFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let memScopedRType = types.make(.typeParam(TypeParamType(
+                symbol: memScopedRSymbol,
+                nullability: .nonNull
+            )))
+            let memScopedBlockType = types.make(.functionType(FunctionType(
+                receiver: memScopeType,
+                params: [],
+                returnType: memScopedRType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let memScopedBlockName = interner.intern("block")
+            let memScopedBlockSymbol = symbols.define(
+                kind: .valueParameter,
+                name: memScopedBlockName,
+                fqName: memScopedFQName + [memScopedBlockName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            let memScopedSymbolID = symbols.define(
+                kind: .function,
+                name: memScopedName,
+                fqName: memScopedFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            if let packageSymbol = symbols.lookup(fqName: cinteropPkg) {
+                symbols.setParentSymbol(packageSymbol, for: memScopedSymbolID)
+            }
+            symbols.setParentSymbol(memScopedSymbolID, for: memScopedRSymbol)
+            symbols.setParentSymbol(memScopedSymbolID, for: memScopedBlockSymbol)
+            symbols.setPropertyType(memScopedBlockType, for: memScopedBlockSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: [memScopedBlockType],
+                    returnType: memScopedRType,
+                    isSuspend: false,
+                    valueParameterSymbols: [memScopedBlockSymbol],
+                    valueParameterHasDefaultValues: [false],
+                    valueParameterIsVararg: [false],
+                    typeParameterSymbols: [memScopedRSymbol],
+                    typeParameterUpperBoundsList: [[]],
+                    classTypeParameterCount: 0
+                ),
+                for: memScopedSymbolID
+            )
+        }
+
         registerSyntheticNativeBitSetConstructor(
             ownerSymbol: arenaBaseSymbol,
             ownerType: arenaBaseType,
