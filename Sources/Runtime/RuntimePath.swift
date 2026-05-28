@@ -1479,6 +1479,55 @@ public func kk_path_walk(_ pathRaw: Int, _ optionsRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: paths)]))
 }
 
+// MARK: - kotlin.io.path.fileVisitor
+
+/// Opaque runtime box for a FileVisitor<Path> built via the DSL.
+final class RuntimeFileVisitorBox {
+    var preVisitDirectoryRaw: Int
+    var visitFileRaw: Int
+    var visitFileFailedRaw: Int
+    var postVisitDirectoryRaw: Int
+
+    init(
+        preVisitDirectoryRaw: Int = 0,
+        visitFileRaw: Int = 0,
+        visitFileFailedRaw: Int = 0,
+        postVisitDirectoryRaw: Int = 0
+    ) {
+        self.preVisitDirectoryRaw = preVisitDirectoryRaw
+        self.visitFileRaw = visitFileRaw
+        self.visitFileFailedRaw = visitFileFailedRaw
+        self.postVisitDirectoryRaw = postVisitDirectoryRaw
+    }
+}
+
+/// Opaque runtime box for the FileVisitorBuilder DSL receiver.
+final class RuntimeFileVisitorBuilderBox {
+    var preVisitDirectoryRaw: Int = 0
+    var visitFileRaw: Int = 0
+    var visitFileFailedRaw: Int = 0
+    var postVisitDirectoryRaw: Int = 0
+}
+
+@_cdecl("kk_path_fileVisitor")
+public func kk_path_fileVisitor(_ builderActionRaw: Int) -> Int {
+    let builder = RuntimeFileVisitorBuilderBox()
+    let builderRaw = registerRuntimeObject(builder)
+
+    if builderActionRaw != 0 {
+        var thrown = 0
+        _ = kk_function_invoke(builderActionRaw, builderRaw, &thrown)
+    }
+
+    let visitor = RuntimeFileVisitorBox(
+        preVisitDirectoryRaw: builder.preVisitDirectoryRaw,
+        visitFileRaw: builder.visitFileRaw,
+        visitFileFailedRaw: builder.visitFileFailedRaw,
+        postVisitDirectoryRaw: builder.postVisitDirectoryRaw
+    )
+    return registerRuntimeObject(visitor)
+}
+
 @_cdecl("kk_path_appendLines_sequence_default")
 public func kk_path_appendLines_sequence_default(_ pathRaw: Int, _ linesRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     kk_path_appendLines_sequence(pathRaw, linesRaw, 0, outThrown)

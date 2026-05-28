@@ -117,7 +117,6 @@ extension ABIMismatchTests {
             "kk_path_fileAttributesViewOrNull",
             "kk_path_fileSize",
             "kk_path_fileStore",
-            "kk_path_fileVisitor",
             "kk_path_getAttribute",
             "kk_path_getOwner",
             "kk_path_getPosixFilePermissions",
