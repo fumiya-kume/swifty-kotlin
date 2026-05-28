@@ -1538,6 +1538,70 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        // MARK: - FileWalkDirection enum (STDLIB-IO-TYPE-005)
+        //
+        // Kotlin declaration:
+        //     public enum class FileWalkDirection {
+        //         TOP_DOWN,
+        //         BOTTOM_UP,
+        //     }
+        // Declared in the `kotlin.io` package and used by `File.walk(direction)`
+        // / `FileTreeWalk` to control traversal order. Registered as a synthetic
+        // enumClass so that `import kotlin.io.FileWalkDirection`,
+        // `FileWalkDirection.TOP_DOWN`, and `when` exhaustiveness against the
+        // two entries type-check without a full FileTreeWalk runtime.
+        let kotlinIOPkgSymbolForEnum = symbols.lookup(fqName: kotlinIOPkg)
+        let fileWalkDirectionSymbol = ensureEnumClassSymbol(
+            named: "FileWalkDirection",
+            in: kotlinIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinIOPkgSymbolForEnum {
+            symbols.setParentSymbol(kotlinIOPkgSymbolForEnum, for: fileWalkDirectionSymbol)
+        }
+        let fileWalkDirectionType = types.make(.classType(ClassType(
+            classSymbol: fileWalkDirectionSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(fileWalkDirectionType, for: fileWalkDirectionSymbol)
+        registerFileWalkDirectionEntries(
+            enumSymbol: fileWalkDirectionSymbol,
+            enumType: fileWalkDirectionType,
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    private func registerFileWalkDirectionEntries(
+        enumSymbol: SymbolID,
+        enumType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let enumInfo = symbols.symbol(enumSymbol) else { return }
+        for entry in ["TOP_DOWN", "BOTTOM_UP"] {
+            let entryName = interner.intern(entry)
+            let entryFQName = enumInfo.fqName + [entryName]
+            let entrySymbol: SymbolID
+            if let existing = symbols.lookup(fqName: entryFQName) {
+                entrySymbol = existing
+            } else {
+                entrySymbol = symbols.define(
+                    kind: .field,
+                    name: entryName,
+                    fqName: entryFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(enumSymbol, for: entrySymbol)
+            }
+            if symbols.propertyType(for: entrySymbol) == nil {
+                symbols.setPropertyType(enumType, for: entrySymbol)
+            }
+        }
     }
 
     // MARK: - Private Helpers
