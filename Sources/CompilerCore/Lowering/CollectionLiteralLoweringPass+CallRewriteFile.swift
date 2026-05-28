@@ -124,6 +124,8 @@ extension CollectionLiteralLoweringPass {
                 kkCallee = lookup.kkFileIsDirectoryName
             case lookup.namePropertyName:
                 kkCallee = lookup.kkFileNameName
+            case lookup.nameWithoutExtensionName:
+                kkCallee = lookup.kkFileNameWithoutExtensionName
             case lookup.pathPropertyName:
                 kkCallee = lookup.kkFilePathName
             case lookup.forEachLineName:

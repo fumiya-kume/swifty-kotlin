@@ -1062,6 +1062,7 @@ extension ABILoweringPass {
             interner.intern("kk_file_isFile"),
             interner.intern("kk_file_isDirectory"),
             interner.intern("kk_file_name"),
+            interner.intern("kk_file_nameWithoutExtension"),
             interner.intern("kk_file_path"),
             interner.intern("kk_classloader_getSystemClassLoader"),
             interner.intern("kk_classloader_getResource"),

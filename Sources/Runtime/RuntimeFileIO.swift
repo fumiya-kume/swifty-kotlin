@@ -362,6 +362,22 @@ public func kk_file_name(_ fileRaw: Int) -> Int {
     return fileMakeStringRaw((file.path as NSString).lastPathComponent)
 }
 
+// STDLIB-IO-PROP-005: File.nameWithoutExtension extension property
+// Returns the file name without an extension, equivalent to
+// `name.substringBeforeLast(".")` in Kotlin. If the name has no extension
+// (i.e. no '.' character), the full name is returned.
+@_cdecl("kk_file_nameWithoutExtension")
+public func kk_file_nameWithoutExtension(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_nameWithoutExtension received invalid File handle")
+    }
+    let name = (file.path as NSString).lastPathComponent
+    guard let dotIndex = name.lastIndex(of: ".") else {
+        return fileMakeStringRaw(name)
+    }
+    return fileMakeStringRaw(String(name[..<dotIndex]))
+}
+
 @_cdecl("kk_file_path")
 public func kk_file_path(_ fileRaw: Int) -> Int {
     guard let file = runtimeFileBox(from: fileRaw) else {

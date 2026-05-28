@@ -103,6 +103,16 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // STDLIB-IO-PROP-005: File.nameWithoutExtension extension property
+        registerFileMemberProperty(
+            named: "nameWithoutExtension",
+            externalLinkName: "kk_file_nameWithoutExtension",
+            ownerSymbol: fileSymbol,
+            returnType: types.stringType,
+            symbols: symbols,
+            interner: interner
+        )
+
         registerFileMemberProperty(
             named: "path",
             externalLinkName: "kk_file_path",
