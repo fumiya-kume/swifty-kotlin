@@ -1,0 +1,32 @@
+symbol s0 kind=class fq=kotlin.io.path.Path vis=public flags=synthetic type=Class#0
+symbol s1 kind=interface fq=java.nio.file.attribute.FileAttribute vis=public flags=synthetic type=Class#1<T#2>
+symbol s2 kind=typeParameter fq=java.nio.file.attribute.FileAttribute.T vis=private flags=synthetic
+symbol s3 kind=property fq=kotlin.io.path.pathString vis=public flags=synthetic type=String
+symbol s4 kind=function fq=kotlin.io.path.pathString.$get vis=public flags=synthetic sig=recv=Class#0 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s5 kind=function fq=kotlin.io.path.createTempFile vis=public flags=synthetic sig=recv=_ params=[Class#0?,String?,String?,Class#1<*>] ret=Class#0 suspend=0 defaults=[0,1,1,0] vararg=[0,0,0,1]
+symbol s6 kind=function fq=kotlin.io.path.createTempFile vis=public flags=synthetic sig=recv=_ params=[String?,String?,Class#1<*>] ret=Class#0 suspend=0 defaults=[1,1,0] vararg=[0,0,1]
+symbol s7 kind=function fq=createWithPrefixAndSuffix vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s8 kind=function fq=createWithDirectoryPrefixAndSuffix vis=public flags=_ sig=recv=_ params=[Class#0] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s9 kind=valueParameter fq=createWithDirectoryPrefixAndSuffix.$0.dir vis=private flags=_
+symbol s10 kind=local fq=__local_0.tmp vis=private flags=_ type=Class#0
+symbol s11 kind=local fq=__local_1.tmp vis=private flags=_ type=Class#0
+file f0 package=_
+  decl d0 fun createWithPrefixAndSuffix suspend=0 inline=0 sym=s7
+  decl d1 fun createWithDirectoryPrefixAndSuffix suspend=0 inline=0 sym=s8
+expr e0 name(createTempFile) type=_
+expr e1 string(kswiftk-) type=String
+expr e2 string(.data) type=String
+expr e3 call callee=e0 args=[_:e1,_:e2] type=Class#0 call=s6 map=[0->0,1->1] targs=[]
+expr e4 localDecl tmp mutable=0 type=_ init=e3 type=Unit ref=s10
+expr e5 name(tmp) type=Class#0 ref=s10
+expr e6 memberCall recv=e5 callee=pathString args=[] type=String ref=s3 call=s4 map=[] targs=[]
+expr e7 return value=e6 type=Nothing
+expr e8 name(createTempFile) type=_
+expr e9 name(dir) type=Class#0 ref=s9
+expr e10 string(kswiftk-) type=String
+expr e11 string(.data) type=String
+expr e12 call callee=e8 args=[_:e9,_:e10,_:e11] type=Class#0 call=s5 map=[0->0,1->1,2->2] targs=[]
+expr e13 localDecl tmp mutable=0 type=_ init=e12 type=Unit ref=s11
+expr e14 name(tmp) type=Class#0 ref=s11
+expr e15 memberCall recv=e14 callee=pathString args=[] type=String ref=s3 call=s4 map=[] targs=[]
+expr e16 return value=e15 type=Nothing
