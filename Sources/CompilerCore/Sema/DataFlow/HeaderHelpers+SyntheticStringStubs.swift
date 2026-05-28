@@ -1528,6 +1528,17 @@ extension DataFlowSemaPhase {
         )
 
         registerSyntheticStringExtensionFunction(
+            named: "isNotEmpty",
+            externalLinkName: "kk_string_isNotEmpty",
+            receiverType: charSequenceType,
+            parameters: [],
+            returnType: boolType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
             named: "isBlank",
             externalLinkName: "kk_string_isBlank",
             receiverType: stringType,
