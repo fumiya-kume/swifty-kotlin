@@ -1676,6 +1676,15 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        // STDLIB-TEXT-FN-045: CharSequence.randomOrNull(): Char?
+        RuntimeABIFunctionSpec(
+            name: "kk_string_randomOrNull",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
         // STDLIB-187
         RuntimeABIFunctionSpec(
             name: "kk_string_isEmpty",

@@ -1727,6 +1727,22 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // --- STDLIB-TEXT-FN-045: CharSequence.randomOrNull(): Char? ---
+        // Returns a random character, or null if the string is empty.
+
+        for randomOrNullReceiverType in [stringType, charSequenceType] {
+            registerSyntheticStringExtensionFunction(
+                named: "randomOrNull",
+                externalLinkName: "kk_string_randomOrNull",
+                receiverType: randomOrNullReceiverType,
+                parameters: [],
+                returnType: nullableCharType,
+                packageFQName: kotlinTextPkg,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
         // --- STDLIB-140: String.getOrNull(Int): Char? ---
 
         registerSyntheticStringExtensionFunction(

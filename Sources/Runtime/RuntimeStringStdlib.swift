@@ -1458,6 +1458,17 @@ public func kk_string_random_random(_ strRaw: Int, _ randomRaw: Int, _ outThrown
     return kk_box_char(Int(scalars[index].value))
 }
 
+// MARK: - STDLIB-TEXT-FN-045: CharSequence.randomOrNull(): Char?
+
+@_cdecl("kk_string_randomOrNull")
+public func kk_string_randomOrNull(_ strRaw: Int) -> Int {
+    let scalars = runtimeStringScalars(strRaw)
+    guard let randomScalar = scalars.randomElement() else {
+        return runtimeNullSentinelInt
+    }
+    return kk_box_char(Int(randomScalar.value))
+}
+
 // MARK: - STDLIB-187: isEmpty / isNotEmpty / isBlank / isNotBlank
 
 @_cdecl("kk_string_isEmpty")

@@ -70,4 +70,27 @@ final class StringRandomFunctionTests: XCTestCase {
             "Expected random(Random) extension to link to kk_string_random_random"
         )
     }
+
+    func testRandomOrNullStringExtensionHasRuntimeLink() throws {
+        let ctx = makeContextFromSource("fun noop() {}")
+        try runSema(ctx)
+
+        let sema = try XCTUnwrap(ctx.sema)
+        let interner = ctx.interner
+        let fqName = ["kotlin", "text", "randomOrNull"].map { interner.intern($0) }
+        let candidates = sema.symbols.lookupAll(fqName: fqName)
+        let noArgCandidate = candidates.first { symID in
+            guard let sig = sema.symbols.functionSignature(for: symID) else { return false }
+            return sig.parameterTypes.isEmpty
+        }
+        let symbol = try XCTUnwrap(
+            noArgCandidate,
+            "Expected kotlin.text.randomOrNull (no-arg) to be registered"
+        )
+        XCTAssertEqual(
+            sema.symbols.externalLinkName(for: symbol),
+            "kk_string_randomOrNull",
+            "Expected randomOrNull() extension to link to kk_string_randomOrNull"
+        )
+    }
 }
