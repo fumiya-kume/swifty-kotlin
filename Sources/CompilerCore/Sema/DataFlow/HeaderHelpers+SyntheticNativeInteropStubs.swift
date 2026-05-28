@@ -4201,6 +4201,23 @@ extension DataFlowSemaPhase {
             retention: "AnnotationRetention.BINARY",
             symbols: symbols
         )
+
+        // STDLIB-CINTEROP-INTERNAL-TYPE-005: ConstantValue marks generated constant properties.
+        let constantValueSymbol = ensureAnnotationClassSymbol(
+            named: "ConstantValue",
+            in: cinteropInternalPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let cinteropInternalPkgSymbol {
+            symbols.setParentSymbol(cinteropInternalPkgSymbol, for: constantValueSymbol)
+        }
+        appendStandardAnnotationMetadata(
+            to: constantValueSymbol,
+            targets: ["AnnotationTarget.PROPERTY"],
+            retention: "AnnotationRetention.BINARY",
+            symbols: symbols
+        )
     }
 
     private func syntheticClassType(
