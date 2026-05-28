@@ -810,6 +810,56 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // MARK: - BufferedInputStream and InputStream.buffered() (STDLIB-IO-FN-003)
+        //
+        // Kotlin defines:
+        //   public inline fun InputStream.buffered(bufferSize: Int = DEFAULT_BUFFER_SIZE): BufferedInputStream
+        // We model BufferedInputStream as a java.io.InputStream subtype and expose
+        // both the zero-arg and bufferSize overloads as member-style synthetic stubs
+        // on InputStream so user code can call `inputStream.buffered()` or
+        // `inputStream.buffered(8 * 1024)` and receive a BufferedInputStream value.
+        let bufferedInputStreamSymbol = ensureClassSymbol(
+            named: "BufferedInputStream",
+            in: javaIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaIOPkgSymbol {
+            symbols.setParentSymbol(javaIOPkgSymbol, for: bufferedInputStreamSymbol)
+        }
+        let bufferedInputStreamType = types.make(.classType(ClassType(
+            classSymbol: bufferedInputStreamSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(bufferedInputStreamType, for: bufferedInputStreamSymbol)
+
+        // BufferedInputStream extends InputStream so it inherits Closeable + read/skip/etc.
+        symbols.setDirectSupertypes([inputStreamSymbol], for: bufferedInputStreamSymbol)
+        types.setNominalDirectSupertypes([inputStreamSymbol], for: bufferedInputStreamSymbol)
+
+        // InputStream.buffered() -> BufferedInputStream (uses DEFAULT_BUFFER_SIZE = 8 * 1024)
+        registerFileMemberFunction(
+            named: "buffered",
+            externalLinkName: "kk_input_stream_buffered_default",
+            ownerSymbol: inputStreamSymbol,
+            ownerType: inputStreamType,
+            parameters: [],
+            returnType: bufferedInputStreamType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // InputStream.buffered(bufferSize: Int) -> BufferedInputStream
+        registerFileMemberFunction(
+            named: "buffered",
+            externalLinkName: "kk_input_stream_buffered",
+            ownerSymbol: inputStreamSymbol,
+            ownerType: inputStreamType,
+            parameters: [("bufferSize", intType)],
+            returnType: bufferedInputStreamType,
+            symbols: symbols,
+            interner: interner
+        )
+
         registerFileMemberFunction(
             named: "read",
             externalLinkName: "kk_sequence_input_stream_read",

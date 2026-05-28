@@ -856,6 +856,51 @@ public func kk_input_stream_close(_ streamRaw: Int) -> Int {
     return 0
 }
 
+// MARK: - InputStream.buffered (STDLIB-IO-FN-003)
+//
+// Kotlin's `InputStream.buffered(bufferSize)` extension returns a
+// BufferedInputStream wrapping the underlying stream.  Since the byte-level
+// reading methods provided by RuntimeInputStreamBox already operate against
+// an in-memory Data buffer, returning the same handle re-typed as a
+// BufferedInputStream preserves observable Kotlin semantics:
+//   - read()/available()/skip()/close() continue to delegate to the same
+//     underlying byte source
+//   - mark/reset remain unsupported (mirroring FileInputStream behaviour)
+//   - the buffer size argument is honoured by the type but does not alter
+//     the in-memory byte sequence
+//
+// If a future revision introduces a dedicated BufferedInputStreamBox with
+// look-ahead semantics, this function will continue to be the single seam
+// for materialising one from an arbitrary InputStream handle.
+@_cdecl("kk_input_stream_buffered_default")
+public func kk_input_stream_buffered_default(_ streamRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard runtimeInputStreamBox(from: streamRaw) != nil else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_buffered_default received invalid InputStream handle")
+    }
+    // The underlying RuntimeInputStreamBox already buffers via Data, so we
+    // can hand out the same handle re-typed.  Returning the same raw value
+    // keeps reference counting consistent.
+    return streamRaw
+}
+
+@_cdecl("kk_input_stream_buffered")
+public func kk_input_stream_buffered(_ streamRaw: Int, _ bufferSizeRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard runtimeInputStreamBox(from: streamRaw) != nil else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_buffered received invalid InputStream handle")
+    }
+    // Kotlin's reference implementation throws IllegalArgumentException for
+    // non-positive buffer sizes (BufferedInputStream's underlying JVM type
+    // does the same).  Surface that diagnostic via the standard outThrown
+    // channel rather than returning a sentinel.
+    if bufferSizeRaw <= 0 {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: Buffer size <= 0")
+        return 0
+    }
+    return streamRaw
+}
+
 // MARK: - SequenceInputStream (STDLIB-IO-092)
 
 private func runtimeSequenceInputStreamBox(from raw: Int) -> RuntimeSequenceInputStreamBox? {
