@@ -291,6 +291,31 @@ final class RuntimeFileIOTests: IsolatedRuntimeXCTestCase {
         )
     }
 
+    /// STDLIB-IO-PROP-004: `File.isRooted` returns `true` when the path begins
+    /// with a Unix root, a Windows drive letter, or a UNC/backslash prefix,
+    /// and `false` for empty or relative paths. Covers the helper directly so
+    /// the deterministic logic stays in lock-step with Kotlin's
+    /// `FilePathComponents.root.isNotEmpty()` semantics.
+    func testRuntimeFilePathIsRootedHelper() {
+        // Unix-style roots
+        XCTAssertTrue(runtimeFilePathIsRooted("/"))
+        XCTAssertTrue(runtimeFilePathIsRooted("/etc/hosts"))
+        // Windows-style roots (drive letter or drive+separator)
+        XCTAssertTrue(runtimeFilePathIsRooted("C:\\Windows"))
+        XCTAssertTrue(runtimeFilePathIsRooted("c:/Users"))
+        XCTAssertTrue(runtimeFilePathIsRooted("Z:"))
+        // Backslash / UNC prefix
+        XCTAssertTrue(runtimeFilePathIsRooted("\\foo"))
+        XCTAssertTrue(runtimeFilePathIsRooted("\\\\server\\share"))
+        // Relative or empty paths
+        XCTAssertFalse(runtimeFilePathIsRooted(""))
+        XCTAssertFalse(runtimeFilePathIsRooted("relative.txt"))
+        XCTAssertFalse(runtimeFilePathIsRooted("./local"))
+        XCTAssertFalse(runtimeFilePathIsRooted("foo/bar"))
+        // Non-letter drive prefix is not a root.
+        XCTAssertFalse(runtimeFilePathIsRooted("1:foo"))
+    }
+
     private func makeTempFile(contents: String) throws -> URL {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try contents.write(to: url, atomically: true, encoding: .utf8)
