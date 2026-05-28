@@ -126,7 +126,6 @@ extension ABIMismatchTests {
             "kk_path_forEachLine_default",
             "kk_path_getAttribute",
             "kk_path_getOwner",
-            "kk_path_getLastModifiedTime",
             "kk_path_getPosixFilePermissions",
             "kk_path_get_base_subpaths",
             "kk_path_isExecutable",

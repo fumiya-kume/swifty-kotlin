@@ -1250,6 +1250,33 @@ public func kk_path_bufferedWriter(
     }
 }
 
+/// Path.getLastModifiedTime(vararg options: LinkOption): FileTime
+///
+/// Returns the last-modified time of the file or directory at this path as a
+/// `FileTime` (milliseconds since the Unix epoch). The `optionsRaw` parameter
+/// represents the vararg `LinkOption` array and is accepted for ABI symmetry;
+/// link options have no effect on the macOS Foundation-backed runtime today.
+/// Throws an IOException-wrapped throwable if the file attributes cannot be
+/// retrieved.
+@_cdecl("kk_path_getLastModifiedTime")
+public func kk_path_getLastModifiedTime(_ pathRaw: Int, _ optionsRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    _ = optionsRaw
+    guard let path = runtimePathBox(from: pathRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_getLastModifiedTime received invalid Path handle")
+    }
+    do {
+        let attrs = try FileManager.default.attributesOfItem(atPath: path.pathString)
+        guard let modDate = attrs[.modificationDate] as? Date else {
+            return registerRuntimeObject(RuntimeFileTimeBox(milliseconds: 0))
+        }
+        return registerRuntimeObject(RuntimeFileTimeBox(milliseconds: Int(modDate.timeIntervalSince1970 * 1000)))
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+        return registerRuntimeObject(RuntimeFileTimeBox(milliseconds: 0))
+    }
+}
+
 @_cdecl("kk_path_appendLines_sequence_default")
 public func kk_path_appendLines_sequence_default(_ pathRaw: Int, _ linesRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     kk_path_appendLines_sequence(pathRaw, linesRaw, 0, outThrown)
