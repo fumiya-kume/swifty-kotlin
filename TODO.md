@@ -651,7 +651,7 @@
 - [x] STDLIB-CINTEROP-FN-016: `CPointer<T>.set(index, value)` を追加する
 - [x] STDLIB-CINTEROP-FN-017: `Array<CPointer<T>?>.toCValues()` を追加する
 - [ ] STDLIB-CINTEROP-FN-018: `ByteArray.toCValues()` を追加する
-- [ ] STDLIB-CINTEROP-FN-019: `DoubleArray.toCValues()` を追加する
+- [x] STDLIB-CINTEROP-FN-019: `DoubleArray.toCValues()` を追加する
 - [x] STDLIB-CINTEROP-FN-020: `FloatArray.toCValues()` を追加する
 - [x] STDLIB-CINTEROP-FN-021: `IntArray.toCValues()` を追加する
 - [ ] STDLIB-CINTEROP-FN-022: `LongArray.toCValues()` を追加する
