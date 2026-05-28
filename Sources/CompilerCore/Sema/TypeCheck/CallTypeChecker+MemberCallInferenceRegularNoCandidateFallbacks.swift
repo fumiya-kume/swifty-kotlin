@@ -558,6 +558,37 @@ extension CallTypeChecker {
                 }
             }
         }
+        // STDLIB-TEXT-FN-043: String.plus(other: Any?): String
+        // The argument can be of any type (Any?), so we match purely on the
+        // receiver being a String and the callee being "plus", without
+        // constraining the argument type.
+        if args.count == 1,
+           interner.resolve(calleeName) == "plus"
+        {
+            let receiverTypeForCheck = safeCall
+                ? sema.types.makeNonNullable(lookupReceiverType)
+                : lookupReceiverType
+            if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType) {
+                let resultType = sema.types.stringType
+                if let boundType = tryBindSyntheticStringMemberFallback(
+                    id,
+                    calleeName: calleeName,
+                    receiverType: receiverTypeForCheck,
+                    args: args,
+                    argTypes: argTypes,
+                    range: range,
+                    ctx: ctx,
+                    expectedType: expectedType,
+                    explicitTypeArgs: explicitTypeArgs,
+                    safeCall: safeCall
+                ) {
+                    return boundType
+                }
+                let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                sema.bindings.bindExprType(id, type: finalType)
+                return finalType
+            }
+        }
         if args.count == 1 {
             let receiverTypeForCheck = safeCall
                 ? sema.types.makeNonNullable(lookupReceiverType)

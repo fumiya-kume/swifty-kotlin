@@ -1598,6 +1598,45 @@ extension CallLowerer {
                     ))
                     return result
                 }
+                // STDLIB-TEXT-FN-043: String.plus(other: Any?)
+                // Desugar to kk_any_to_string(arg, tag) + kk_string_concat,
+                // mirroring the binary-operator path in CallLowerer+Operators.swift.
+                if calleeStr == "plus" {
+                    let argExpr = args[0].expr
+                    let stringType = sema.types.stringType
+                    let intType = sema.types.intType
+                    let nullableStringType = sema.types.make(.primitive(.string, .nullable))
+                    let argExprType = sema.bindings.exprTypes[argExpr]
+                    let effectiveRHS: KIRExprID
+                    if argExprType == stringType || argExprType == nullableStringType {
+                        effectiveRHS = loweredArgIDs[0]
+                    } else {
+                        let tag = anyFallbackTag(for: argExprType ?? sema.types.anyType, sema: sema)
+                        let tagExpr = arena.appendExpr(.intLiteral(tag), type: intType)
+                        instructions.append(.constValue(result: tagExpr, value: .intLiteral(tag)))
+                        let converted = arena.appendExpr(
+                            .temporary(Int32(arena.expressions.count)), type: stringType
+                        )
+                        instructions.append(.call(
+                            symbol: nil,
+                            callee: interner.intern("kk_any_to_string"),
+                            arguments: [loweredArgIDs[0], tagExpr],
+                            result: converted,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        effectiveRHS = converted
+                    }
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_concat"),
+                        arguments: [loweredReceiverID, effectiveRHS],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
                 let stringGetThrownExpr: KIRExprID?
                 if calleeStr == "get" {
                     let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)

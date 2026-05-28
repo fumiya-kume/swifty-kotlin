@@ -268,6 +268,32 @@ final class KotlinCompilationStringCollectionTests: XCTestCase {
 
     // MARK: - Chained string operations
 
+    // MARK: - STDLIB-TEXT-FN-043: String.plus(Any?)
+
+    func testCompile_string_plus_withIntArg() throws {
+        try assertKotlinCompilesToKIR("""
+        fun main() {
+            val s = "count: ".plus(42)
+        }
+        """)
+    }
+
+    func testCompile_string_plus_withStringArg() throws {
+        try assertKotlinCompilesToKIR("""
+        fun main() {
+            val s = "hello".plus(" world")
+        }
+        """)
+    }
+
+    func testCompile_string_plus_withNullArg() throws {
+        try assertKotlinCompilesToKIR("""
+        fun main() {
+            val s = "value: ".plus(null)
+        }
+        """)
+    }
+
     func testCompile_string_chainedOperations() throws {
         try assertKotlinCompilesToKIR("""
         fun normalize(s: String): String {

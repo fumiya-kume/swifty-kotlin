@@ -1673,6 +1673,25 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-TEXT-FN-043: String.plus(other: Any?): String ---
+        // Appends the string representation of `other` to this string.
+        // The KIR lowerer handles this inline via `kk_any_to_string` +
+        // `kk_string_concat`, mirroring the binary-operator (String + Any?) path.
+
+        registerSyntheticStringExtensionFunction(
+            named: "plus",
+            externalLinkName: "kk_string_plus",
+            receiverType: stringType,
+            parameters: [
+                ("other", types.nullableAnyType, false, false),
+            ],
+            returnType: stringType,
+            flags: [.synthetic, .operatorFunction],
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-140: String.getOrNull(Int): Char? ---
 
         registerSyntheticStringExtensionFunction(

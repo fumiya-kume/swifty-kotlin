@@ -1705,6 +1705,52 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    // STDLIB-TEXT-FN-043: String.plus(other: Any?) stub registration
+    func testStringPlusStubIsRegisteredWithCorrectExternalLink() throws {
+        let (sema, interner) = try makeSema()
+        let links = externalLinks(for: "plus", sema: sema, interner: interner)
+        XCTAssertTrue(
+            links.contains("kk_string_plus"),
+            "String.plus(other: Any?) should be registered with link kk_string_plus, got: \(links)"
+        )
+    }
+
+    // STDLIB-TEXT-FN-043: String.plus(Any?) type inference
+    func testStringPlusWithIntArgTypeChecks() throws {
+        let source = """
+        fun test(): String {
+            val s = "hello"
+            return s.plus(42)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "String.plus(Int) should resolve without errors, got: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
+    // STDLIB-TEXT-FN-043: String.plus(Any?) with null arg
+    func testStringPlusWithNullArgTypeChecks() throws {
+        let source = """
+        fun test(): String {
+            val s = "hello"
+            return s.plus(null)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "String.plus(null) should resolve without errors, got: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     func testByteArrayDecodeToStringRangeMembersResolveInCallExpressions() throws {
         let source = """
         fun decode(bytes: ByteArray): String {
