@@ -1802,4 +1802,44 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
             }
         }
     }
+
+    // STDLIB-TEXT-FN-116: CharSequence.zip(other) / zip(other, transform)
+    func testCharSequenceZipMembersResolveInCallExpressions() throws {
+        let source = """
+        fun pairs(value: CharSequence, other: CharSequence): List<Pair<Char, Char>> {
+            return value.zip(other)
+        }
+
+        fun labels(value: CharSequence, other: CharSequence): List<String> {
+            return value.zip(other) { a, b -> "" + a + b }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            var externalLinks: [String] = []
+            for index in ast.arena.exprs.indices {
+                let exprID = ExprID(rawValue: Int32(index))
+                guard let expr = ast.arena.expr(exprID),
+                      case let .memberCall(_, callee, _, _, _) = expr,
+                      ctx.interner.resolve(callee) == "zip",
+                      let chosenCallee = sema.bindings.callBinding(for: exprID)?.chosenCallee,
+                      let link = sema.symbols.externalLinkName(for: chosenCallee)
+                else {
+                    continue
+                }
+                externalLinks.append(link)
+            }
+
+            XCTAssertEqual(
+                externalLinks,
+                ["kk_string_zip", "kk_string_zipTransform"]
+            )
+        }
+    }
 }

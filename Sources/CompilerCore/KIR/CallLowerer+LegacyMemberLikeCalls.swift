@@ -1457,6 +1457,22 @@ extension CallLowerer {
                     ))
                     return result
                 }
+                if calleeName == interner.intern("zip"), args.count >= 1 {
+                    // String.zip overload dispatch: 1-arg (other) → kk_string_zip,
+                    // 2-arg (other + transform) → kk_string_zipTransform.
+                    let hasTransform = args.count >= 2
+                    let runtimeCallee = hasTransform ? "kk_string_zipTransform" : "kk_string_zip"
+                    let callArguments = [loweredReceiverID] + normalizedArgIDs
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(runtimeCallee),
+                        arguments: callArguments,
+                        result: result,
+                        canThrow: hasTransform,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
                 if calleeStr == "asSequence" {
                     instructions.append(.call(
                         symbol: nil,

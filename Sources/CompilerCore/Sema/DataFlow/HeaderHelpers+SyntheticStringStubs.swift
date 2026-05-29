@@ -3552,6 +3552,119 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- STDLIB-TEXT-FN-116: CharSequence.zip(other) / zip(other, transform) ---
+
+        let zipFQName = kotlinTextPkg + [interner.intern("zip")]
+
+        // zip(other: CharSequence): List<Pair<Char, Char>>
+        registerSyntheticStringExtensionFunction(
+            named: "zip",
+            externalLinkName: "kk_string_zip",
+            receiverType: stringType,
+            parameters: [
+                ("other", charSequenceType, false, false),
+            ],
+            returnType: listPairCharCharType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "zip",
+            externalLinkName: "kk_string_zip",
+            receiverType: charSequenceType,
+            parameters: [
+                ("other", charSequenceType, false, false),
+            ],
+            returnType: listPairCharCharType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // zip(other: CharSequence, transform: (Char, Char) -> R): List<R>
+        func registerZipTransform(receiverType: TypeID) {
+            let existingZipTransform = symbols.lookupAll(fqName: zipFQName).first { symID in
+                guard let sig = symbols.functionSignature(for: symID) else { return false }
+                return sig.receiverType == receiverType && sig.parameterTypes.count == 2
+            }
+            if let existingZipTransform {
+                symbols.setExternalLinkName("kk_string_zipTransform", for: existingZipTransform)
+                return
+            }
+
+            let rName = interner.intern("R")
+            let rSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: zipFQName + [rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let transformFnType = types.make(.functionType(FunctionType(
+                params: [charType, charType],
+                returnType: rType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let transformResultType = makeListType(
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                elementType: rType
+            )
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: interner.intern("zip"),
+                fqName: zipFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            if let packageSymbol = symbols.lookup(fqName: kotlinTextPkg) {
+                symbols.setParentSymbol(packageSymbol, for: memberSymbol)
+            }
+            symbols.setExternalLinkName("kk_string_zipTransform", for: memberSymbol)
+            let otherParamName = interner.intern("other")
+            let otherParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: otherParamName,
+                fqName: zipFQName + [otherParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: otherParamSymbol)
+            let transformParamName = interner.intern("transform")
+            let transformParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: transformParamName,
+                fqName: zipFQName + [transformParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: transformParamSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [charSequenceType, transformFnType],
+                    returnType: transformResultType,
+                    valueParameterSymbols: [otherParamSymbol, transformParamSymbol],
+                    valueParameterHasDefaultValues: [false, false],
+                    valueParameterIsVararg: [false, false],
+                    typeParameterSymbols: [rSymbol],
+                    classTypeParameterCount: 0
+                ),
+                for: memberSymbol
+            )
+        }
+        registerZipTransform(receiverType: stringType)
+        registerZipTransform(receiverType: charSequenceType)
     }
 
     private func ensureKotlinTextPackage(

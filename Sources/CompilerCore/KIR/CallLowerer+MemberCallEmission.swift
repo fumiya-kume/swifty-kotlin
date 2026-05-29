@@ -1027,6 +1027,7 @@ extension CallLowerer {
             interner.intern("kk_string_reduceRightOrNull"),
             interner.intern("kk_string_sumBy"),
             interner.intern("kk_string_sumByDouble"),
+            interner.intern("kk_string_zipTransform"),
             interner.intern("kk_string_zipWithNextTransform"),
             interner.intern("kk_string_chunked_sequence_transform"),
             interner.intern("kk_string_windowedSequence_transform"),
