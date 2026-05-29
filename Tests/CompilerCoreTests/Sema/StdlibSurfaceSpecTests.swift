@@ -58,6 +58,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             list("sumByDouble", 1),
             list("firstNotNullOf", 1),
             list("firstNotNullOfOrNull", 1),
+            list("maxOfOrNull", 1),
             list("forEachIndexed", 1),
             list("onEach", 1),
             list("onEachIndexed", 1),
