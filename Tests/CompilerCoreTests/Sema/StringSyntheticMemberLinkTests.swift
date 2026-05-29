@@ -283,6 +283,7 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
             "repeat": "kk_string_repeat",
             "reversed": "kk_string_reversed",
             "toList": "kk_string_toList",
+            "toMutableList": "kk_string_toMutableList",
             "toCharArray": "kk_string_toCharArray",
         ]
         for (member, expectedLink) in expected {
@@ -291,6 +292,48 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
                 expectedLink,
                 "String.\(member) should link to \(expectedLink)"
             )
+        }
+    }
+
+    func testCharSequenceToMutableListResolvesFromSource() throws {
+        let source = """
+        fun chars(value: CharSequence): MutableList<Char> = value.toMutableList()
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected CharSequence.toMutableList usage to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let functionSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [ctx.interner.intern("chars")]))
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: functionSymbol))
+            let mutableListSymbol = try XCTUnwrap(sema.symbols.lookup(
+                fqName: ["kotlin", "collections", "MutableList"].map { ctx.interner.intern($0) }
+            ))
+
+            guard case let .classType(returnClassType) = sema.types.kind(of: signature.returnType) else {
+                return XCTFail("Expected chars() to return MutableList<Char>")
+            }
+            XCTAssertEqual(returnClassType.classSymbol, mutableListSymbol)
+            switch try XCTUnwrap(returnClassType.args.first) {
+            case let .invariant(arg), let .out(arg):
+                XCTAssertEqual(arg, sema.types.charType)
+            case .in, .star:
+                XCTFail("Expected chars() to return MutableList<Char>")
+            }
+
+            let callExpr = try XCTUnwrap(allExprIDs(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "toMutableList"
+            }.first)
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_string_toMutableList")
         }
     }
 

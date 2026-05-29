@@ -77,7 +77,7 @@ Audit date: 2026-04-17. Source: `Sources/Runtime/` `@_cdecl` scan.
 | `String.toInt()` / `toLong()` / `toDouble()` etc. | done | all `kk_string_to*` conversions with `OrNull` variants |
 | `String.toByteArray()` / `encodeToByteArray()` | done | `kk_string_toByteArray`, `kk_string_encodeToByteArray`, charset variants |
 | `String.toCharArray()` | done | `kk_string_toCharArray` |
-| `String.toList()` / `toSet()` / `asSequence()` | done | `kk_string_toList`, `kk_string_asSequence`, `kk_string_asIterable` |
+| `String.toList()` / `toMutableList()` / `toSet()` / `asSequence()` | done | `kk_string_toList`, `kk_string_toMutableList`, `kk_string_asSequence`, `kk_string_asIterable` |
 | `String.map` / `filter` / `forEach` / `flatMap` etc. | done | full HOF set: `kk_string_map`, `kk_string_filter`, `kk_string_filterIndexed`, `kk_string_mapIndexed`, `kk_string_mapNotNull`, `kk_string_find`, `kk_string_findLast` |
 | `String.first` / `last` / `single` / `count` | done | `kk_string_first`, `kk_string_last`, `kk_string_single`, `kk_string_count` |
 | `String.drop` / `take` / `dropWhile` / `takeWhile` | done | all four and `dropLast`/`takeLast` variants |

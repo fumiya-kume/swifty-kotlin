@@ -300,6 +300,10 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         let expectedScalars: [Int] = [97, 233, 128_059] // 'a', 'é', '🐻'
         XCTAssertEqual(list?.elements.map(kk_unbox_char), expectedScalars)
 
+        let mutableListRaw = kk_string_toMutableList(rawFromRuntimeString(text))
+        let mutableList = runtimeListBox(from: mutableListRaw)
+        XCTAssertEqual(mutableList?.elements.map(kk_unbox_char), expectedScalars)
+
         XCTAssertEqual(runtimeStringValue(kk_string_take(rawFromRuntimeString(text), 2, nil)), "aé")
         XCTAssertEqual(runtimeStringValue(kk_string_drop(rawFromRuntimeString(text), 1, nil)), "é🐻")
     }

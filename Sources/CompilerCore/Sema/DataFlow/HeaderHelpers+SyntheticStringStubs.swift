@@ -76,6 +76,12 @@ extension DataFlowSemaPhase {
             interner: interner,
             elementType: charType
         )
+        let mutableListCharType = makeMutableListType(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            elementType: charType
+        )
         let charArrayType = makeNominalType(
             symbols: symbols,
             types: types,
@@ -992,6 +998,17 @@ extension DataFlowSemaPhase {
             receiverType: stringType,
             parameters: [],
             returnType: listCharType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "toMutableList",
+            externalLinkName: "kk_string_toMutableList",
+            receiverType: charSequenceType,
+            parameters: [],
+            returnType: mutableListCharType,
             packageFQName: kotlinTextPkg,
             symbols: symbols,
             interner: interner
@@ -3670,6 +3687,20 @@ extension DataFlowSemaPhase {
         )))
     }
 
+    private func makeMutableListType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        elementType: TypeID
+    ) -> TypeID {
+        let mutableListSymbol = ensureMutableListSymbol(symbols: symbols, types: types, interner: interner)
+        return types.make(.classType(ClassType(
+            classSymbol: mutableListSymbol,
+            args: [.invariant(elementType)],
+            nullability: .nonNull
+        )))
+    }
+
     private func makeSequenceType(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -3976,6 +4007,53 @@ extension DataFlowSemaPhase {
         )
         types.setNominalTypeParameterSymbols([typeParamSymbol], for: interfaceSymbol)
         types.setNominalTypeParameterVariances([.out], for: interfaceSymbol)
+        return interfaceSymbol
+    }
+
+    private func ensureMutableListSymbol(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> SymbolID {
+        let collectionsPkg: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+        ]
+        if symbols.lookup(fqName: collectionsPkg) == nil {
+            _ = symbols.define(
+                kind: .package,
+                name: interner.intern("collections"),
+                fqName: collectionsPkg,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        let mutableListName = interner.intern("MutableList")
+        let mutableListFQName = collectionsPkg + [mutableListName]
+        if let existing = symbols.lookup(fqName: mutableListFQName) {
+            return existing
+        }
+        let interfaceSymbol = symbols.define(
+            kind: .interface,
+            name: mutableListName,
+            fqName: mutableListFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = mutableListFQName + [typeParamName]
+        let typeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: typeParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: interfaceSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: interfaceSymbol)
         return interfaceSymbol
     }
 

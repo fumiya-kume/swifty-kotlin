@@ -348,6 +348,11 @@ public func kk_string_toList(_ strRaw: Int) -> Int {
     return runtimeMakeListRaw(charRaws)
 }
 
+@_cdecl("kk_string_toMutableList")
+public func kk_string_toMutableList(_ strRaw: Int) -> Int {
+    kk_string_toList(strRaw)
+}
+
 @_cdecl("kk_string_toCharArray")
 public func kk_string_toCharArray(_ strRaw: Int) -> Int {
     let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
