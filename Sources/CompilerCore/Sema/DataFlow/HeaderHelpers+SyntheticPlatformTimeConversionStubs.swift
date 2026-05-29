@@ -172,6 +172,15 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerPlatformTimeExtensionFunction(
+            named: "toTimeUnit",
+            externalLinkName: "kk_duration_unit_to_time_unit",
+            receiverType: kotlinDurationUnitType,
+            returnType: javaTimeUnitType,
+            packageFQName: kotlinTimePkg,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func registerPlatformTimeExtensionFunction(
