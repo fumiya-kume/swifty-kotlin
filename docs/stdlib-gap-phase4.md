@@ -297,6 +297,20 @@ Runtime comparator behavior and failure propagation are pinned by `RuntimeCompar
 | `kotlin.experimental.ExperimentalNativeApi` | Done | |
 | `kotlin.experimental.ExperimentalObjCName/Refinement/Enum` | Done | |
 
+### `kotlin.native.Platform`
+
+| Symbol | Status | Notes |
+|---|---|---|
+| `Platform.osFamily` / `OsFamily` | Done | `kk_platform_osFamily` |
+| `Platform.cpuArchitecture` / `CpuArchitecture` | Done | `kk_platform_cpuArchitecture` |
+| `Platform.memoryModel` / `MemoryModel` | Done | `kk_platform_memoryModel` |
+| `Platform.canAccessUnaligned` | Done | `kk_platform_canAccessUnaligned` |
+| `Platform.isLittleEndian` | Done | `kk_platform_isLittleEndian` |
+| `Platform.getAvailableProcessors()` | Done | `kk_platform_getAvailableProcessors` |
+| `Platform.isDebugBinary` | Done | `kk_platform_isDebugBinary` |
+
+Platform runtime behavior is pinned by `RuntimePlatformInfoTests` and `RuntimePlatformTests`.
+
 ### `kotlinx.cinterop` types
 
 | Symbol | Status | Notes |
@@ -317,7 +331,7 @@ Runtime comparator behavior and failure propagation are pinned by `RuntimeCompar
 | `CFunction<T>` | Gap | No stub or runtime entry point |
 | `interpretCPointer<T>` / `nativeNullPtr` | Gap | Not wired |
 
-**Summary: ~5 gaps (StableRef, Arena, pointed accessor, CFunction, interpretCPointer), 14 items Done.**
+**Summary: ~5 gaps (StableRef, Arena, pointed accessor, CFunction, interpretCPointer), 21 items Done.**
 
 ---
 
@@ -332,8 +346,8 @@ Runtime comparator behavior and failure propagation are pinned by `RuntimeCompar
 | `kotlin.annotation` | 14 | 1 | 0 |
 | `kotlin.system` | 7 | 0 | 2 |
 | `kotlin.uuid` | 10 | 1 | 4 |
-| `kotlin.native` / `kotlinx.cinterop` | 14 | 0 | 5 |
-| **Total** | **158** | **4** | **17** |
+| `kotlin.native` / `kotlinx.cinterop` | 21 | 0 | 5 |
+| **Total** | **165** | **4** | **17** |
 
 ---
 
