@@ -814,10 +814,17 @@ private func roundDoubleJava7(_ raw: Double) -> Int64 {
     }
 }
 
+// Kotlin `Double.roundToInt()` / `roundToLong()` (and the Float overloads)
+// throw IllegalArgumentException when the receiver is NaN. Infinity / out-of-range
+// still saturate to MIN/MAX (no exception). These are therefore throwing callees
+// (outThrown appended by ABILoweringPass — they must NOT be in nonThrowingCallees).
 @_cdecl("kk_float_roundToInt")
-public func kk_float_roundToInt(_ value: Int) -> Int {
+public func kk_float_roundToInt(_ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     let raw = kk_bits_to_float(value)
-    if raw.isNaN { return 0 }
+    if raw.isNaN {
+        outThrown?.pointee = runtimeAllocateIllegalArgumentException(message: "Cannot round NaN value.")
+        return 0
+    }
     let r = roundFloatJava7(raw)
     if r >= Int64(Int32.max) { return Int(Int32.max) }
     if r <= Int64(Int32.min) { return Int(Int32.min) }
@@ -825,9 +832,12 @@ public func kk_float_roundToInt(_ value: Int) -> Int {
 }
 
 @_cdecl("kk_double_roundToInt")
-public func kk_double_roundToInt(_ value: Int) -> Int {
+public func kk_double_roundToInt(_ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     let raw = kk_bits_to_double(value)
-    if raw.isNaN { return 0 }
+    if raw.isNaN {
+        outThrown?.pointee = runtimeAllocateIllegalArgumentException(message: "Cannot round NaN value.")
+        return 0
+    }
     let r = roundDoubleJava7(raw)
     if r >= Int64(Int32.max) { return Int(Int32.max) }
     if r <= Int64(Int32.min) { return Int(Int32.min) }
@@ -835,9 +845,12 @@ public func kk_double_roundToInt(_ value: Int) -> Int {
 }
 
 @_cdecl("kk_float_roundToLong")
-public func kk_float_roundToLong(_ value: Int) -> Int {
+public func kk_float_roundToLong(_ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     let raw = kk_bits_to_float(value)
-    if raw.isNaN { return 0 }
+    if raw.isNaN {
+        outThrown?.pointee = runtimeAllocateIllegalArgumentException(message: "Cannot round NaN value.")
+        return 0
+    }
     let r = roundFloatJava7(raw)
     if r >= Int64.max { return Int(Int64.max) }
     if r <= Int64.min { return Int(Int64.min) }
@@ -845,9 +858,12 @@ public func kk_float_roundToLong(_ value: Int) -> Int {
 }
 
 @_cdecl("kk_double_roundToLong")
-public func kk_double_roundToLong(_ value: Int) -> Int {
+public func kk_double_roundToLong(_ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     let raw = kk_bits_to_double(value)
-    if raw.isNaN { return 0 }
+    if raw.isNaN {
+        outThrown?.pointee = runtimeAllocateIllegalArgumentException(message: "Cannot round NaN value.")
+        return 0
+    }
     let r = roundDoubleJava7(raw)
     if r >= Int64.max { return Int(Int64.max) }
     if r <= Int64.min { return Int(Int64.min) }

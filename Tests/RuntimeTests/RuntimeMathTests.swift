@@ -66,71 +66,83 @@ final class RuntimeMathTests: XCTestCase {
     // MARK: - roundToInt / roundToLong edge cases
 
     func testFloatRoundToIntEdgeCases() {
-        // NaN -> 0
-        XCTAssertEqual(kk_float_roundToInt(floatToBits(Float.nan)), 0)
-        // +Infinity saturates to Int32.max
-        XCTAssertEqual(kk_float_roundToInt(floatToBits(Float.infinity)), Int(Int32.max))
+        var thrown = 0
+        // NaN -> throws IllegalArgumentException (Kotlin contract)
+        _ = kk_float_roundToInt(floatToBits(Float.nan), &thrown)
+        XCTAssertNotEqual(thrown, 0, "roundToInt(NaN) must throw IllegalArgumentException")
+        // +Infinity saturates to Int32.max (no throw)
+        thrown = 0
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(Float.infinity), &thrown), Int(Int32.max))
+        XCTAssertEqual(thrown, 0, "roundToInt(+Inf) must saturate, not throw")
         // -Infinity saturates to Int32.min
-        XCTAssertEqual(kk_float_roundToInt(floatToBits(-Float.infinity)), Int(Int32.min))
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(-Float.infinity), nil), Int(Int32.min))
         // Negative tie: -1.5 rounds to -1 (toward +inf), not -2
-        XCTAssertEqual(kk_float_roundToInt(floatToBits(-1.5)), -1)
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(-1.5), nil), -1)
         // Negative tie: -0.5 rounds to 0 (toward +inf), not -1
-        XCTAssertEqual(kk_float_roundToInt(floatToBits(-0.5)), 0)
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(-0.5), nil), 0)
         // Positive tie: 0.5 rounds to 1
-        XCTAssertEqual(kk_float_roundToInt(floatToBits(0.5)), 1)
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(0.5), nil), 1)
         // Positive tie: 1.5 rounds to 2
-        XCTAssertEqual(kk_float_roundToInt(floatToBits(1.5)), 2)
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(1.5), nil), 2)
         // Normal values
-        XCTAssertEqual(kk_float_roundToInt(floatToBits(2.3)), 2)
-        XCTAssertEqual(kk_float_roundToInt(floatToBits(-2.3)), -2)
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(2.3), nil), 2)
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(-2.3), nil), -2)
         // Saturation beyond Int32 bounds
-        XCTAssertEqual(kk_float_roundToInt(floatToBits(Float(3e9))), Int(Int32.max))
-        XCTAssertEqual(kk_float_roundToInt(floatToBits(Float(-3e9))), Int(Int32.min))
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(Float(3e9)), nil), Int(Int32.max))
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(Float(-3e9)), nil), Int(Int32.min))
     }
 
     func testDoubleRoundToIntEdgeCases() {
-        // NaN -> 0
-        XCTAssertEqual(kk_double_roundToInt(doubleToBits(Double.nan)), 0)
-        // +Infinity saturates to Int32.max
-        XCTAssertEqual(kk_double_roundToInt(doubleToBits(Double.infinity)), Int(Int32.max))
+        var thrown = 0
+        // NaN -> throws IllegalArgumentException (Kotlin contract)
+        _ = kk_double_roundToInt(doubleToBits(Double.nan), &thrown)
+        XCTAssertNotEqual(thrown, 0, "roundToInt(NaN) must throw IllegalArgumentException")
+        // +Infinity saturates to Int32.max (no throw)
+        thrown = 0
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(Double.infinity), &thrown), Int(Int32.max))
+        XCTAssertEqual(thrown, 0, "roundToInt(+Inf) must saturate, not throw")
         // -Infinity saturates to Int32.min
-        XCTAssertEqual(kk_double_roundToInt(doubleToBits(-Double.infinity)), Int(Int32.min))
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(-Double.infinity), nil), Int(Int32.min))
         // Negative tie: -1.5 rounds to -1
-        XCTAssertEqual(kk_double_roundToInt(doubleToBits(-1.5)), -1)
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(-1.5), nil), -1)
         // Negative tie: -0.5 rounds to 0
-        XCTAssertEqual(kk_double_roundToInt(doubleToBits(-0.5)), 0)
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(-0.5), nil), 0)
         // Positive tie: 0.5 rounds to 1
-        XCTAssertEqual(kk_double_roundToInt(doubleToBits(0.5)), 1)
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(0.5), nil), 1)
         // nextDown(0.5) should round to 0 (not 1)
-        XCTAssertEqual(kk_double_roundToInt(doubleToBits(0.49999999999999994)), 0)
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(0.49999999999999994), nil), 0)
         // Saturation beyond Int32 bounds
-        XCTAssertEqual(kk_double_roundToInt(doubleToBits(3e9)), Int(Int32.max))
-        XCTAssertEqual(kk_double_roundToInt(doubleToBits(-3e9)), Int(Int32.min))
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(3e9), nil), Int(Int32.max))
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(-3e9), nil), Int(Int32.min))
     }
 
     func testFloatRoundToLongEdgeCases() {
-        XCTAssertEqual(kk_float_roundToLong(floatToBits(Float.nan)), 0)
-        XCTAssertEqual(kk_float_roundToLong(floatToBits(Float.infinity)), Int(Int64.max))
-        XCTAssertEqual(kk_float_roundToLong(floatToBits(-Float.infinity)), Int(Int64.min))
-        XCTAssertEqual(kk_float_roundToLong(floatToBits(-1.5)), -1)
-        XCTAssertEqual(kk_float_roundToLong(floatToBits(-0.5)), 0)
-        XCTAssertEqual(kk_float_roundToLong(floatToBits(0.5)), 1)
+        var thrown = 0
+        _ = kk_float_roundToLong(floatToBits(Float.nan), &thrown)
+        XCTAssertNotEqual(thrown, 0, "roundToLong(NaN) must throw IllegalArgumentException")
+        XCTAssertEqual(kk_float_roundToLong(floatToBits(Float.infinity), nil), Int(Int64.max))
+        XCTAssertEqual(kk_float_roundToLong(floatToBits(-Float.infinity), nil), Int(Int64.min))
+        XCTAssertEqual(kk_float_roundToLong(floatToBits(-1.5), nil), -1)
+        XCTAssertEqual(kk_float_roundToLong(floatToBits(-0.5), nil), 0)
+        XCTAssertEqual(kk_float_roundToLong(floatToBits(0.5), nil), 1)
         // Saturation beyond Int64 bounds
-        XCTAssertEqual(kk_float_roundToLong(floatToBits(Float(1e19))), Int(Int64.max))
-        XCTAssertEqual(kk_float_roundToLong(floatToBits(Float(-1e19))), Int(Int64.min))
+        XCTAssertEqual(kk_float_roundToLong(floatToBits(Float(1e19)), nil), Int(Int64.max))
+        XCTAssertEqual(kk_float_roundToLong(floatToBits(Float(-1e19)), nil), Int(Int64.min))
     }
 
     func testDoubleRoundToLongEdgeCases() {
-        XCTAssertEqual(kk_double_roundToLong(doubleToBits(Double.nan)), 0)
-        XCTAssertEqual(kk_double_roundToLong(doubleToBits(Double.infinity)), Int(Int64.max))
-        XCTAssertEqual(kk_double_roundToLong(doubleToBits(-Double.infinity)), Int(Int64.min))
-        XCTAssertEqual(kk_double_roundToLong(doubleToBits(-1.5)), -1)
-        XCTAssertEqual(kk_double_roundToLong(doubleToBits(-0.5)), 0)
-        XCTAssertEqual(kk_double_roundToLong(doubleToBits(0.5)), 1)
-        XCTAssertEqual(kk_double_roundToLong(doubleToBits(0.49999999999999994)), 0)
+        var thrown = 0
+        _ = kk_double_roundToLong(doubleToBits(Double.nan), &thrown)
+        XCTAssertNotEqual(thrown, 0, "roundToLong(NaN) must throw IllegalArgumentException")
+        XCTAssertEqual(kk_double_roundToLong(doubleToBits(Double.infinity), nil), Int(Int64.max))
+        XCTAssertEqual(kk_double_roundToLong(doubleToBits(-Double.infinity), nil), Int(Int64.min))
+        XCTAssertEqual(kk_double_roundToLong(doubleToBits(-1.5), nil), -1)
+        XCTAssertEqual(kk_double_roundToLong(doubleToBits(-0.5), nil), 0)
+        XCTAssertEqual(kk_double_roundToLong(doubleToBits(0.5), nil), 1)
+        XCTAssertEqual(kk_double_roundToLong(doubleToBits(0.49999999999999994), nil), 0)
         // Saturation beyond Int64 bounds
-        XCTAssertEqual(kk_double_roundToLong(doubleToBits(1e19)), Int(Int64.max))
-        XCTAssertEqual(kk_double_roundToLong(doubleToBits(-1e19)), Int(Int64.min))
+        XCTAssertEqual(kk_double_roundToLong(doubleToBits(1e19), nil), Int(Int64.max))
+        XCTAssertEqual(kk_double_roundToLong(doubleToBits(-1e19), nil), Int(Int64.min))
     }
 
     // MARK: - Float trig / rounding (STDLIB-500..509)
@@ -350,29 +362,37 @@ final class RuntimeMathTests: XCTestCase {
     // MARK: - roundToInt / roundToLong (STDLIB-510..511)
 
     func testFloatRoundToInt() {
-        XCTAssertEqual(kk_float_roundToInt(floatToBits(2.5)), 3)
-        XCTAssertEqual(kk_float_roundToInt(floatToBits(3.5)), 4)
-        XCTAssertEqual(kk_float_roundToInt(floatToBits(-1.5)), -1)
-        XCTAssertEqual(kk_float_roundToInt(floatToBits(-2.5)), -2)
-        XCTAssertEqual(kk_float_roundToInt(floatToBits(Float.nan)), 0)
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(2.5), nil), 3)
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(3.5), nil), 4)
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(-1.5), nil), -1)
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(-2.5), nil), -2)
+        var thrown = 0
+        _ = kk_float_roundToInt(floatToBits(Float.nan), &thrown)
+        XCTAssertNotEqual(thrown, 0, "roundToInt(NaN) must throw IllegalArgumentException")
     }
 
     func testDoubleRoundToInt() {
-        XCTAssertEqual(kk_double_roundToInt(doubleToBits(2.5)), 3)
-        XCTAssertEqual(kk_double_roundToInt(doubleToBits(3.5)), 4)
-        XCTAssertEqual(kk_double_roundToInt(doubleToBits(-1.5)), -1)
-        XCTAssertEqual(kk_double_roundToInt(doubleToBits(-2.5)), -2)
-        XCTAssertEqual(kk_double_roundToInt(doubleToBits(Double.nan)), 0)
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(2.5), nil), 3)
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(3.5), nil), 4)
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(-1.5), nil), -1)
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(-2.5), nil), -2)
+        var thrown = 0
+        _ = kk_double_roundToInt(doubleToBits(Double.nan), &thrown)
+        XCTAssertNotEqual(thrown, 0, "roundToInt(NaN) must throw IllegalArgumentException")
     }
 
     func testFloatRoundToLong() {
-        XCTAssertEqual(kk_float_roundToLong(floatToBits(2.5)), 3)
-        XCTAssertEqual(kk_float_roundToLong(floatToBits(Float.nan)), 0)
+        XCTAssertEqual(kk_float_roundToLong(floatToBits(2.5), nil), 3)
+        var thrown = 0
+        _ = kk_float_roundToLong(floatToBits(Float.nan), &thrown)
+        XCTAssertNotEqual(thrown, 0, "roundToLong(NaN) must throw IllegalArgumentException")
     }
 
     func testDoubleRoundToLong() {
-        XCTAssertEqual(kk_double_roundToLong(doubleToBits(2.5)), 3)
-        XCTAssertEqual(kk_double_roundToLong(doubleToBits(Double.nan)), 0)
+        XCTAssertEqual(kk_double_roundToLong(doubleToBits(2.5), nil), 3)
+        var thrown = 0
+        _ = kk_double_roundToLong(doubleToBits(Double.nan), &thrown)
+        XCTAssertNotEqual(thrown, 0, "roundToLong(NaN) must throw IllegalArgumentException")
     }
 
     // MARK: - ulp / nextUp / nextDown (STDLIB-512..513)

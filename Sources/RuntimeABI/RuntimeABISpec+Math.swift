@@ -592,10 +592,13 @@ public extension RuntimeABISpec {
             section: "Math"
         ),
         // STDLIB-510~511: roundToInt / roundToLong
+        // Throwing callees: NaN receiver throws IllegalArgumentException, so the
+        // ABI carries the trailing outThrown pointer (see RuntimeNumericCompat).
         RuntimeABIFunctionSpec(
             name: "kk_float_roundToInt",
             parameters: [
                 RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Math"
@@ -604,6 +607,7 @@ public extension RuntimeABISpec {
             name: "kk_double_roundToInt",
             parameters: [
                 RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Math"
@@ -612,6 +616,7 @@ public extension RuntimeABISpec {
             name: "kk_float_roundToLong",
             parameters: [
                 RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Math"
@@ -620,6 +625,7 @@ public extension RuntimeABISpec {
             name: "kk_double_roundToLong",
             parameters: [
                 RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Math"

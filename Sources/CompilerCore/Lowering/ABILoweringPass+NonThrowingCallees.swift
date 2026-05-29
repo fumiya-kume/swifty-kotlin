@@ -247,11 +247,9 @@ extension ABILoweringPass {
             interner.intern("kk_math_log_float"),
             interner.intern("kk_math_sign_float"),
             interner.intern("kk_math_hypot_float"),
-            // STDLIB-510~511: roundToInt / roundToLong extensions
-            interner.intern("kk_float_roundToInt"),
-            interner.intern("kk_double_roundToInt"),
-            interner.intern("kk_float_roundToLong"),
-            interner.intern("kk_double_roundToLong"),
+            // NOTE: kk_{float,double}_roundTo{Int,Long} are intentionally NOT listed here.
+            // They throw IllegalArgumentException on NaN (Kotlin contract), so they are
+            // throwing callees and must receive the outThrown parameter from lowering.
             // STDLIB-NUM-130: isNaN / isInfinite / isFinite / toBits / fromBits
             interner.intern("kk_double_isNaN"),
             interner.intern("kk_double_isInfinite"),
