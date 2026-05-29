@@ -2402,6 +2402,27 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        // CharSequence.indexOfFirst / indexOfLast — delegate to the same runtime functions.
+        registerSyntheticStringExtensionFunction(
+            named: "indexOfFirst",
+            externalLinkName: "kk_string_indexOfFirst",
+            receiverType: charSequenceType,
+            parameters: [("predicate", charToBoolType, false, false)],
+            returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticStringExtensionFunction(
+            named: "indexOfLast",
+            externalLinkName: "kk_string_indexOfLast",
+            receiverType: charSequenceType,
+            parameters: [("predicate", charToBoolType, false, false)],
+            returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
 
         // --- STDLIB-315: String.replaceFirstChar ---
         registerSyntheticStringExtensionFunction(
