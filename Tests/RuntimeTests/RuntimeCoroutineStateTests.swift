@@ -9,7 +9,9 @@ private let runtimeKxMiniLaunchFunctionID = 9102
 private let runtimeKxMiniAsyncFunctionID = 9103
 private let runtimeKxMiniCancelFunctionID = 9104
 private let runtimeWithContextFunctionID = 9105
+private let runtimeWithContextParentFunctionID = 9106
 private let runtimeCoroutineTestState = RuntimeCoroutineTestState()
+private nonisolated(unsafe) var runtimeWithContextParentFirstReturn = 0
 
 private func makeRuntimeString(_ value: String) -> Int {
     let box = RuntimeStringBox(value)
@@ -100,6 +102,26 @@ func runtime_test_with_context_delay(_ continuation: Int, _ outThrown: UnsafeMut
     }
     outThrown?.pointee = 0
     return kk_coroutine_state_exit(continuation, 55)
+}
+
+@_cdecl("runtime_test_with_context_parent_nonblocking")
+func runtime_test_with_context_parent_nonblocking(
+    _ continuation: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let label = kk_coroutine_state_enter(continuation, runtimeWithContextParentFunctionID)
+    if label == 0 {
+        _ = kk_coroutine_state_set_label(continuation, 1)
+        let entryRaw = unsafeBitCast(
+            runtime_test_with_context_simple as RuntimeTestSuspendEntry,
+            to: Int.self
+        )
+        let firstReturn = kk_with_context(kk_dispatcher_default(), entryRaw, continuation)
+        runtimeWithContextParentFirstReturn = firstReturn
+        return firstReturn
+    }
+    outThrown?.pointee = 0
+    return kk_coroutine_state_exit(continuation, kk_coroutine_state_get_completion(continuation))
 }
 
 final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
@@ -709,5 +731,26 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
         let dispatcher = kk_dispatcher_io()
         let result = kk_with_context(dispatcher, entryRaw, continuation)
         XCTAssertEqual(result, 55, "withContext(IO) should handle suspension correctly")
+    }
+
+    func testWithContextSuspendsCallerAndResumesViaContinuation() {
+        runtimeWithContextParentFirstReturn = 0
+        let continuation = kk_coroutine_continuation_new(runtimeWithContextParentFunctionID)
+        let entryRaw = unsafeBitCast(
+            runtime_test_with_context_parent_nonblocking as RuntimeTestSuspendEntry,
+            to: Int.self
+        )
+
+        let result = runSuspendEntryLoopWithContinuation(
+            entryPointRaw: entryRaw,
+            continuation: continuation
+        )
+
+        XCTAssertEqual(result, 99)
+        XCTAssertEqual(
+            runtimeWithContextParentFirstReturn,
+            Int(bitPattern: kk_coroutine_suspended()),
+            "withContext should suspend the caller instead of blocking in a suspend-aware context"
+        )
     }
 }

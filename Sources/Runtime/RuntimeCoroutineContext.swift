@@ -619,8 +619,8 @@ private final class WithContextResultBox: @unchecked Sendable {
 /// Kotlin `withContext(dispatcher) { block }` — switches coroutine execution
 /// to the dispatch queue that corresponds to `dispatcherRaw`, runs the
 /// suspend-aware block through the full entry loop (supporting intermediate
-/// suspension points such as `delay`), and blocks the caller until the block
-/// completes, returning its result.
+/// suspension points such as `delay`). Suspend-aware callers are resumed through
+/// their continuation; direct runtime callers use the legacy blocking fallback.
 ///
 /// STDLIB-CORO-077: Also handles RuntimeCoroutineContext objects. If dispatcherRaw
 /// is a pointer to a RuntimeCoroutineContext, the dispatcher is extracted from it
@@ -687,9 +687,40 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
         )
     }
 
-    // CORO-004: Continuation-based withContext is still in progress.
-    // For now keep the semaphore fallback, which matches the current runtime
-    // model and avoids relying on unfinished continuation result plumbing.
+    if continuation != 0, RuntimeContinuationState.current != nil {
+        let parentContinuation = continuation
+        let childContinuation = kk_coroutine_continuation_new(blockFnPtr)
+        if let childState = runtimeContinuationState(from: childContinuation),
+           let parentState = runtimeContinuationState(from: parentContinuation)
+        {
+            childState.scope = parentScope
+            childState.jobHandle = parentState.jobHandle
+        }
+        dispatcher.dispatchAsync {
+            // Propagate the coroutine scope to the target thread.
+            let savedScope = RuntimeCoroutineScope.current
+            RuntimeCoroutineScope.current = parentScope
+            defer { RuntimeCoroutineScope.current = savedScope }
+
+            var thrown = 0
+            let result = runSuspendEntryLoopWithContinuation(
+                entryPointRaw: blockFnPtr,
+                continuation: childContinuation,
+                outThrown: &thrown
+            )
+            _ = kk_coroutine_state_exit(childContinuation, 0)
+            if thrown != 0 {
+                kk_coroutine_continuation_resume_with_exception(parentContinuation, thrown)
+            } else {
+                kk_coroutine_continuation_resume(parentContinuation, result)
+            }
+        }
+        return Int(bitPattern: kk_coroutine_suspended())
+    }
+
+    // Direct runtime callers are not inside a suspend-entry loop and therefore
+    // have no installed resume continuation. Keep the blocking fallback for
+    // that compatibility path.
     let semaphore = DispatchSemaphore(value: 0)
     let resultBox = WithContextResultBox()
 
@@ -709,4 +740,3 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
     semaphore.wait()
     return resultBox.value
 }
-
