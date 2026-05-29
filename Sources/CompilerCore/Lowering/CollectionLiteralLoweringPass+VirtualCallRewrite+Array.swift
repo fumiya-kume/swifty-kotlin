@@ -121,6 +121,28 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        // contains/indexOf/lastIndexOf on array -> direct array search runtime.
+        if callee == lookup.containsName || callee == lookup.indexOfName || callee == lookup.lastIndexOfName,
+           arguments.count == 1
+        {
+            let kkName: InternedString = if callee == lookup.containsName {
+                lookup.kkArrayContainsName
+            } else if callee == lookup.indexOfName {
+                lookup.kkArrayIndexOfName
+            } else {
+                lookup.kkArrayLastIndexOfName
+            }
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: kkName,
+                arguments: [receiver] + arguments,
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return true
+        }
+
         // copyOf on array → kk_array_copyOf* (result is Array)
         if callee == lookup.copyOfName, arguments.isEmpty || arguments.count == 1 || arguments.count == 2 || arguments.count == 3 {
             let copyResult = module.arena.appendExpr(

@@ -353,6 +353,12 @@ extension CallLowerer {
                 return interner.intern("kk_array_none")
             case "count":
                 return interner.intern("kk_array_count")
+            case "contains":
+                return interner.intern("kk_array_contains")
+            case "indexOf":
+                return interner.intern("kk_array_indexOf")
+            case "lastIndexOf":
+                return interner.intern("kk_array_lastIndexOf")
             case "copyOf":
                 switch argumentCount {
                 case 0:

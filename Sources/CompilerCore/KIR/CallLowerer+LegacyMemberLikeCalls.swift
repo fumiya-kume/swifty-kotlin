@@ -2526,26 +2526,6 @@ extension CallLowerer {
                     ))
                     return result
                 }
-                if calleeStr == "contains" {
-                    let listExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: nil)
-                    instructions.append(.call(
-                        symbol: nil,
-                        callee: interner.intern("kk_array_toList"),
-                        arguments: [loweredReceiverID],
-                        result: listExpr,
-                        canThrow: false,
-                        thrownResult: nil
-                    ))
-                    instructions.append(.call(
-                        symbol: nil,
-                        callee: interner.intern("kk_list_contains"),
-                        arguments: [listExpr] + normalizedArgIDs,
-                        result: result,
-                        canThrow: false,
-                        thrownResult: nil
-                    ))
-                    return result
-                }
                 let runtimeCallee: String? = switch calleeStr {
                 case "map":
                     "kk_array_map"
@@ -2561,6 +2541,12 @@ extension CallLowerer {
                     "kk_array_none"
                 case "count":
                     "kk_array_count"
+                case "contains":
+                    "kk_array_contains"
+                case "indexOf":
+                    "kk_array_indexOf"
+                case "lastIndexOf":
+                    "kk_array_lastIndexOf"
                 case "fill":
                     "kk_array_fill"
                 default:

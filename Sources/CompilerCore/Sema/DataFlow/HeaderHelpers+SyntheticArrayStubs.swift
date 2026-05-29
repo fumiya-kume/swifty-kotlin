@@ -114,6 +114,61 @@ extension DataFlowSemaPhase {
             }
         }
 
+        let arraySearchReceiverType = types.make(.classType(ClassType(
+            classSymbol: arraySymbol,
+            args: [.out(arrayTypeParamType)],
+            nullability: .nonNull
+        )))
+
+        func registerArrayElementSearchMember(
+            named name: String,
+            externalLinkName: String,
+            returnType: TypeID,
+            flags: SymbolFlags = [.synthetic]
+        ) {
+            let memberName = interner.intern(name)
+            let memberFQName = arrayFQName + [memberName]
+            guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: memberName,
+                fqName: memberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: flags
+            )
+            symbols.setParentSymbol(arraySymbol, for: memberSymbol)
+            symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: arraySearchReceiverType,
+                    parameterTypes: [arrayTypeParamType],
+                    returnType: returnType,
+                    typeParameterSymbols: [tParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        registerArrayElementSearchMember(
+            named: "contains",
+            externalLinkName: "kk_array_contains",
+            returnType: types.booleanType,
+            flags: [.synthetic, .operatorFunction]
+        )
+        registerArrayElementSearchMember(
+            named: "indexOf",
+            externalLinkName: "kk_array_indexOf",
+            returnType: types.intType
+        )
+        registerArrayElementSearchMember(
+            named: "lastIndexOf",
+            externalLinkName: "kk_array_lastIndexOf",
+            returnType: types.intType
+        )
+
         registerArrayIsArrayOfJvmExtension(
             arraySymbol: arraySymbol,
             symbols: symbols,

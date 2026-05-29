@@ -70,6 +70,51 @@ final class ArraySyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testArraySearchMembersUseRuntimeExternalLinks() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let specs = [
+                ("contains", "kk_array_contains", sema.types.booleanType, true),
+                ("indexOf", "kk_array_indexOf", sema.types.intType, false),
+                ("lastIndexOf", "kk_array_lastIndexOf", sema.types.intType, false),
+            ]
+
+            for (memberName, externalLinkName, returnType, isOperator) in specs {
+                let symbolID = try XCTUnwrap(
+                    sema.symbols.lookup(
+                        fqName: [
+                            ctx.interner.intern("kotlin"),
+                            ctx.interner.intern("Array"),
+                            ctx.interner.intern(memberName),
+                        ]
+                    ),
+                    "Expected synthetic Array.\(memberName) to be registered"
+                )
+                XCTAssertEqual(sema.symbols.externalLinkName(for: symbolID), externalLinkName)
+
+                let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbolID))
+                XCTAssertEqual(signature.parameterTypes.count, 1)
+                XCTAssertEqual(signature.returnType, returnType)
+                XCTAssertEqual(signature.typeParameterSymbols.count, 1)
+
+                guard let receiverType = signature.receiverType,
+                      case let .classType(receiverClass) = sema.types.kind(of: receiverType),
+                      let receiverSymbol = sema.symbols.symbol(receiverClass.classSymbol)
+                else {
+                    return XCTFail("Expected Array receiver type")
+                }
+                XCTAssertEqual(ctx.interner.resolve(receiverSymbol.name), "Array")
+                XCTAssertEqual(receiverClass.args.count, 1)
+
+                let flags = try XCTUnwrap(sema.symbols.symbol(symbolID)?.flags)
+                XCTAssertEqual(flags.contains(.operatorFunction), isOperator)
+            }
+        }
+    }
+
     func testArrayBinarySearchComparatorOverloadUsesRuntimeExternalLink() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])

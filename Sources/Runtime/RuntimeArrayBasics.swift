@@ -51,6 +51,36 @@ public func kk_array_is_empty(_ arrayRaw: Int) -> Int {
     return kk_box_bool(array.elements.isEmpty ? 1 : 0)
 }
 
+@_cdecl("kk_array_contains")
+public func kk_array_contains(_ arrayRaw: Int, _ element: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return kk_box_bool(0)
+    }
+    return kk_box_bool(array.elements.contains(where: { runtimeValuesEqual($0, element) }) ? 1 : 0)
+}
+
+@_cdecl("kk_array_indexOf")
+public func kk_array_indexOf(_ arrayRaw: Int, _ element: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return -1
+    }
+    for (index, current) in array.elements.enumerated() where runtimeValuesEqual(current, element) {
+        return index
+    }
+    return -1
+}
+
+@_cdecl("kk_array_lastIndexOf")
+public func kk_array_lastIndexOf(_ arrayRaw: Int, _ element: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return -1
+    }
+    for index in array.elements.indices.reversed() where runtimeValuesEqual(array.elements[index], element) {
+        return index
+    }
+    return -1
+}
+
 // MARK: - Pair Functions (FUNC-002)
 
 @_cdecl("kk_pair_new")

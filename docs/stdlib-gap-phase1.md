@@ -141,8 +141,8 @@ links, `kk_string_split_limit`/`kk_string_splitToSequence`,
 | `array.flatMap` | done | `kk_array_flatMap` |
 | `array.sorted` / `sortedBy` / `sortedDescending` | missing | no `kk_array_sorted*` entries |
 | `array.reversed()` / `reversedArray()` | missing | no `kk_array_reversed` found |
-| `array.contains(element)` | missing | no `kk_array_contains` found |
-| `array.indexOf(element)` / `lastIndexOf` | missing | no `kk_array_indexOf` found |
+| `array.contains(element)` | done | `kk_array_contains` |
+| `array.indexOf(element)` / `lastIndexOf` | done | `kk_array_indexOf`, `kk_array_lastIndexOf` |
 | `array.sum` / `sumOf` | missing | no `kk_array_sum*` found |
 | `array.average()` | missing | no `kk_array_average` found |
 | `array.max` / `min` / `maxOrNull` / `minOrNull` | missing | no `kk_array_max*`/`kk_array_min*` found |
@@ -157,7 +157,7 @@ links, `kk_string_split_limit`/`kk_string_splitToSequence`,
 | `IntArray.sum()` / `average()` etc. | missing | no typed-array sum/average |
 | `ArrayDeque<T>` | done | `kk_arraydeque_new/addFirst/addLast/removeFirst/removeLast/first/last/size/isEmpty/toString` |
 
-**Array summary:** 40 rows — done: 25, partial: 2, missing: 13
+**Array summary:** 40 rows — done: 27, partial: 2, missing: 11
 
 STDLIB-004 scope is now closed for Array / primitive-array generation,
 conversion, and boundary behavior. Coverage is pinned by
@@ -174,5 +174,5 @@ Array API gaps above are tracked by `STDLIB-GAP-PH1` rather than STDLIB-004.
 |---|---|---|---|---|
 | `kotlin` (top-level) | 29 | 22 | 1 | 6 |
 | `kotlin.text` | 46 | 46 | 0 | 0 |
-| `Array` | 40 | 25 | 2 | 13 |
-| **Grand total** | **115** | **93** | **3** | **19** |
+| `Array` | 40 | 27 | 2 | 11 |
+| **Grand total** | **115** | **95** | **3** | **17** |
