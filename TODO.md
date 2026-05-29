@@ -701,7 +701,6 @@
 - [x] STDLIB-CINTEROP-INTERNAL-FN-002: `detachObjCObject(obj)` を追加する
 - [x] STDLIB-DOM-TYPE-001: `org.w3c.dom.ItemArrayLike<T>` external interface を追加する
 - [x] STDLIB-DOM-FN-001: `ItemArrayLike<T>.asList()` を追加する
-- [ ] STDLIB-JVM-166: Java プレビュー機能の実装
 - [x] STDLIB-JS-167: JavaScript 固有 API の実装
 - [ ] STDLIB-NATIVE-168: Native 固有 API の実装
 - [ ] STDLIB-REFL-173: コンパイラプラグイン API 実装
@@ -710,6 +709,7 @@
 ## ターゲット外バックログ（本体非追跡）
 - JDBC / DB コネクション・トランザクション・プール
 - JVM 風ロギングフレームワーク互換
+- STDLIB-JVM-166: Java プレビュー機能（JVM 専用）
 - `kotlin.jvm` / `kotlin.js` / `kotlin.wasm*` / `java.nio.file` 系・`kotlin.streams`
 - kotlinx-metadata / コンパイラプラグイン API / KSP / KAPT
 - kotlinx.coroutines の Flow 拡張（SharedFlow、高度演算子）
