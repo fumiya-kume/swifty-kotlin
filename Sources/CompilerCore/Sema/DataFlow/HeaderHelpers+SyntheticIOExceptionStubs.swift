@@ -2,6 +2,7 @@
 ///
 /// Covers:
 /// - STDLIB-IO-TYPE-001: `kotlin.io.AccessDeniedException` class surface
+/// - STDLIB-IO-TYPE-006: `kotlin.io.NoSuchFileException` class surface
 ///
 /// `AccessDeniedException` inherits from `FileSystemException`, which in turn
 /// inherits from `kotlin.Exception` (Kotlin's stdlib aliases this through
@@ -121,6 +122,72 @@ extension DataFlowSemaPhase {
             nullableFileType: nullableFileType,
             nullableStringType: nullableStringType,
             externalLinkPrefix: "kk_access_denied_exception",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // NoSuchFileException — STDLIB-IO-TYPE-006
+        registerFileSystemExceptionSubtype(
+            named: "NoSuchFileException",
+            externalLinkPrefix: "kk_no_such_file_exception",
+            kotlinIoPkg: kotlinIoPkg,
+            kotlinIoPkgSymbol: kotlinIoPkgSymbol,
+            parentSymbol: fileSystemExceptionSymbol,
+            fileType: fileType,
+            nullableFileType: nullableFileType,
+            nullableStringType: nullableStringType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+    }
+
+    private func registerFileSystemExceptionSubtype(
+        named typeName: String,
+        externalLinkPrefix: String,
+        kotlinIoPkg: [InternedString],
+        kotlinIoPkgSymbol: SymbolID?,
+        parentSymbol: SymbolID,
+        fileType: TypeID,
+        nullableFileType: TypeID,
+        nullableStringType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let classSymbol = ensureClassSymbol(
+            named: typeName,
+            in: kotlinIoPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinIoPkgSymbol {
+            symbols.setParentSymbol(kotlinIoPkgSymbol, for: classSymbol)
+        }
+        symbols.setDirectSupertypes([parentSymbol], for: classSymbol)
+        types.setNominalDirectSupertypes([parentSymbol], for: classSymbol)
+        let classType = types.make(.classType(ClassType(
+            classSymbol: classSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(classType, for: classSymbol)
+
+        registerIOExceptionConstructorOverloads(
+            ownerSymbol: classSymbol,
+            ownerType: classType,
+            fileType: fileType,
+            nullableFileType: nullableFileType,
+            nullableStringType: nullableStringType,
+            externalLinkPrefix: externalLinkPrefix,
+            symbols: symbols,
+            interner: interner
+        )
+        registerIOExceptionMemberProperties(
+            ownerSymbol: classSymbol,
+            ownerType: classType,
+            fileType: fileType,
+            nullableFileType: nullableFileType,
+            nullableStringType: nullableStringType,
+            externalLinkPrefix: externalLinkPrefix,
             symbols: symbols,
             interner: interner
         )
