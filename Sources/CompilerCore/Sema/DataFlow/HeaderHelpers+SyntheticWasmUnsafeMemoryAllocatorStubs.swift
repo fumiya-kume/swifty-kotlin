@@ -59,6 +59,14 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerWithScopedMemoryAllocatorFunction(
+            packageFQName: wasmUnsafePkg,
+            packageSymbol: wasmUnsafePkgSymbol,
+            allocatorType: allocatorType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
     }
 
     private func ensureWasmUnsafePointerShell(
@@ -190,6 +198,100 @@ extension DataFlowSemaPhase {
                 valueParameterIsVararg: [false]
             ),
             for: allocateSymbol
+        )
+    }
+
+    private func registerWithScopedMemoryAllocatorFunction(
+        packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        allocatorType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern("withScopedMemoryAllocator")
+        let functionFQName = packageFQName + [functionName]
+        let returnTypeParameterName = interner.intern("R")
+        let returnTypeParameterFQName = functionFQName + [returnTypeParameterName]
+        let returnTypeParameterSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: returnTypeParameterFQName),
+           symbols.symbol(existing)?.kind == .typeParameter {
+            returnTypeParameterSymbol = existing
+        } else {
+            returnTypeParameterSymbol = symbols.define(
+                kind: .typeParameter,
+                name: returnTypeParameterName,
+                fqName: returnTypeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+        }
+        symbols.setTypeParameterUpperBounds([types.anyType], for: returnTypeParameterSymbol)
+        let returnTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: returnTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let blockType = types.make(.functionType(FunctionType(
+            params: [allocatorType],
+            returnType: returnTypeParameterType
+        )))
+
+        if symbols.lookupAll(fqName: functionFQName).contains(where: { symbolID in
+            guard symbols.symbol(symbolID)?.kind == .function,
+                  let signature = symbols.functionSignature(for: symbolID)
+            else {
+                return false
+            }
+            return signature.receiverType == nil
+                && signature.parameterTypes == [blockType]
+                && signature.returnType == returnTypeParameterType
+        }) {
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .inlineFunction]
+        )
+        if let packageSymbol {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setParentSymbol(functionSymbol, for: returnTypeParameterSymbol)
+
+        let blockName = interner.intern("block")
+        let blockParameter = symbols.define(
+            kind: .valueParameter,
+            name: blockName,
+            fqName: functionFQName + [blockName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(functionSymbol, for: blockParameter)
+        symbols.setPropertyType(blockType, for: blockParameter)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: nil,
+                parameterTypes: [blockType],
+                returnType: returnTypeParameterType,
+                typeParameterSymbols: [returnTypeParameterSymbol],
+                typeParameterUpperBoundsList: [[types.anyType]],
+                valueParameterSymbols: [blockParameter],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false]
+            ),
+            for: functionSymbol
+        )
+        symbols.setExternalLinkName("kk_wasm_withScopedMemoryAllocator", for: functionSymbol)
+        symbols.setAnnotations(
+            [MetadataAnnotationRecord(annotationFQName: "kotlin.wasm.unsafe.UnsafeWasmMemoryApi")],
+            for: functionSymbol
         )
     }
 }

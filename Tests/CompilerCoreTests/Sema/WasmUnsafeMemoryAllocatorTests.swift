@@ -108,4 +108,42 @@ final class WasmUnsafeMemoryAllocatorTests: XCTestCase {
 
         XCTAssertEqual(signature.returnType, try classType(["kotlin", "wasm", "unsafe", "Pointer"], sema: sema, interner: interner))
     }
+
+    func testWithScopedMemoryAllocatorResolvesInSource() throws {
+        let source = """
+        import kotlin.wasm.unsafe.withScopedMemoryAllocator
+
+        fun allocateScoped() =
+            withScopedMemoryAllocator { allocator -> allocator.allocate(4) }
+        """
+        let (sema, interner) = try makeSema(source: source)
+        let functionSymbol = try XCTUnwrap(
+            symbol(["allocateScoped"], sema: sema, interner: interner),
+            "allocateScoped must be registered"
+        )
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: functionSymbol))
+
+        XCTAssertEqual(signature.returnType, try classType(["kotlin", "wasm", "unsafe", "Pointer"], sema: sema, interner: interner))
+    }
+
+    func testWithScopedMemoryAllocatorSurfaceIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+        let packageFQName = ["kotlin", "wasm", "unsafe"].map { interner.intern($0) }
+        let functionSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: packageFQName + [interner.intern("withScopedMemoryAllocator")]),
+            "withScopedMemoryAllocator must be registered"
+        )
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: functionSymbol))
+
+        XCTAssertTrue(sema.symbols.symbol(functionSymbol)?.flags.contains(.inlineFunction) == true)
+        XCTAssertEqual(signature.parameterTypes.count, 1)
+        XCTAssertEqual(signature.returnType, sema.types.make(.typeParam(TypeParamType(
+            symbol: try XCTUnwrap(signature.typeParameterSymbols.first),
+            nullability: .nonNull
+        ))))
+        XCTAssertEqual(sema.symbols.externalLinkName(for: functionSymbol), "kk_wasm_withScopedMemoryAllocator")
+        XCTAssertTrue(sema.symbols.annotations(for: functionSymbol).contains {
+            $0.annotationFQName == "kotlin.wasm.unsafe.UnsafeWasmMemoryApi"
+        })
+    }
 }
