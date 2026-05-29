@@ -6,6 +6,10 @@ workers_override="${SWIFT_TEST_WORKERS:-}"
 build_jobs_override="${SWIFT_TEST_BUILD_JOBS:-}"
 junit_xml_path="${SWIFT_TEST_JUNIT_XML:-}"
 
+if [[ -z "$workers_override" && "$parallel_mode" =~ ^[1-9][0-9]*$ ]]; then
+    workers_override="$parallel_mode"
+fi
+
 detect_workers() {
     local detected
 
