@@ -457,6 +457,24 @@ final class RuntimeStringHOFTests: XCTestCase {
         XCTAssertEqual(list?.elements.count, 0)
     }
 
+    func testStringZipUsesUTF16CodeUnits() {
+        let source = registerRuntimeObject(RuntimeStringBox("a🐻"))
+        let other = registerRuntimeObject(RuntimeStringBox("XYZ"))
+        let result = kk_string_zip(source, other)
+        guard let list = runtimeListBox(from: result) else {
+            XCTFail("Expected list from kk_string_zip")
+            return
+        }
+
+        XCTAssertEqual(list.elements.count, 3)
+        XCTAssertEqual(kk_unbox_char(kk_pair_first(list.elements[0])), 97)
+        XCTAssertEqual(kk_unbox_char(kk_pair_second(list.elements[0])), Int(Unicode.Scalar("X").value))
+        XCTAssertEqual(kk_unbox_char(kk_pair_first(list.elements[1])), 0xD83D)
+        XCTAssertEqual(kk_unbox_char(kk_pair_second(list.elements[1])), Int(Unicode.Scalar("Y").value))
+        XCTAssertEqual(kk_unbox_char(kk_pair_first(list.elements[2])), 0xDC3B)
+        XCTAssertEqual(kk_unbox_char(kk_pair_second(list.elements[2])), Int(Unicode.Scalar("Z").value))
+    }
+
     // STDLIB-TEXT-FN-116: CharSequence.zip(other, transform)
     func testStringZipTransformCombinesCharsWithLambda() {
         let source = registerRuntimeObject(RuntimeStringBox("ab"))
@@ -479,6 +497,27 @@ final class RuntimeStringHOFTests: XCTestCase {
         XCTAssertEqual(kk_unbox_char(list.elements[0]), 97 + 65)
         // 'b'(98) + 'B'(66) = 164
         XCTAssertEqual(kk_unbox_char(list.elements[1]), 98 + 66)
+    }
+
+    func testStringZipTransformUsesUTF16CodeUnits() {
+        let source = registerRuntimeObject(RuntimeStringBox("🐻"))
+        let other = registerRuntimeObject(RuntimeStringBox("AZ"))
+        var thrown = 0
+        let result = kk_string_zipTransform(
+            source,
+            other,
+            unsafeBitCast(zipTransformSumCodepoints, to: Int.self),
+            0,
+            &thrown
+        )
+        XCTAssertEqual(thrown, 0)
+        guard let list = runtimeListBox(from: result) else {
+            XCTFail("Expected list from kk_string_zipTransform")
+            return
+        }
+        XCTAssertEqual(list.elements.count, 2)
+        XCTAssertEqual(kk_unbox_char(list.elements[0]), 0xD83D + Int(Unicode.Scalar("A").value))
+        XCTAssertEqual(kk_unbox_char(list.elements[1]), 0xDC3B + Int(Unicode.Scalar("Z").value))
     }
 
     private func runtimeStringValue(_ raw: Int) -> String {
