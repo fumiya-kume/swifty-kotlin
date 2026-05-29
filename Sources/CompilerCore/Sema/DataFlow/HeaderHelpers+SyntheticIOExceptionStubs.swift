@@ -2,6 +2,7 @@
 ///
 /// Covers:
 /// - STDLIB-IO-TYPE-001: `kotlin.io.AccessDeniedException` class surface
+/// - STDLIB-IO-TYPE-002: `kotlin.io.FileAlreadyExistsException` class surface
 /// - STDLIB-IO-TYPE-006: `kotlin.io.NoSuchFileException` class surface
 ///
 /// `AccessDeniedException` inherits from `FileSystemException`, which in turn
@@ -123,6 +124,21 @@ extension DataFlowSemaPhase {
             nullableStringType: nullableStringType,
             externalLinkPrefix: "kk_access_denied_exception",
             symbols: symbols,
+            interner: interner
+        )
+
+        // FileAlreadyExistsException — STDLIB-IO-TYPE-002
+        registerFileSystemExceptionSubtype(
+            named: "FileAlreadyExistsException",
+            externalLinkPrefix: "kk_file_already_exists_exception",
+            kotlinIoPkg: kotlinIoPkg,
+            kotlinIoPkgSymbol: kotlinIoPkgSymbol,
+            parentSymbol: fileSystemExceptionSymbol,
+            fileType: fileType,
+            nullableFileType: nullableFileType,
+            nullableStringType: nullableStringType,
+            symbols: symbols,
+            types: types,
             interner: interner
         )
 
