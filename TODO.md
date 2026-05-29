@@ -599,7 +599,7 @@
 - [x] STDLIB-WASM-UNSAFE-TYPE-001: `kotlin.wasm.unsafe.MemoryAllocator` abstract class を追加する
 - [x] STDLIB-WASM-UNSAFE-TYPE-002: `kotlin.wasm.unsafe.Pointer` value class を追加する
 - [x] STDLIB-WASM-UNSAFE-TYPE-003: `kotlin.wasm.unsafe.UnsafeWasmMemoryApi` marker annotation を追加する
-- [ ] STDLIB-WASM-UNSAFE-FN-001: `withScopedMemoryAllocator(block)` を追加する
+- [x] STDLIB-WASM-UNSAFE-FN-001: `withScopedMemoryAllocator(block)` を追加する
 - [x] STDLIB-CINTEROP-TYPE-001: `kotlinx.cinterop.Arena` class surface を追加する
 - [x] STDLIB-CINTEROP-TYPE-002: `kotlinx.cinterop.ArenaBase` class surface を追加する
 - [x] STDLIB-CINTEROP-TYPE-003: `kotlinx.cinterop.AutofreeScope` class surface を追加する
