@@ -211,6 +211,8 @@ Runtime seed reproducibility and boundary behavior are pinned by `RuntimeRandomB
 
 Inventory is pinned by `ComparisonsAPISurfaceInventoryTests` and runtime ABI coverage in
 `RuntimeABISpec+Comparator`.
+Comparator composition sema and lowering behavior are pinned by `ComparatorOverloadResolutionTests`
+and `CodegenBackendIntegrationTests+ComparatorCompositionEdgeCases`.
 Runtime comparator behavior and failure propagation are pinned by `RuntimeComparatorTests`.
 
 **Summary: 0 gaps, 20 items Done.**
