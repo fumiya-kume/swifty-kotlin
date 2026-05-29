@@ -29,6 +29,17 @@ extension DataFlowSemaPhase {
             args: [],
             nullability: .nonNull
         )))
+        let kotlinDurationUnitSymbol = ensureEnumClassSymbol(
+            named: "DurationUnit",
+            in: kotlinTimePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let kotlinDurationUnitType = types.make(.classType(ClassType(
+            classSymbol: kotlinDurationUnitSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
 
         let javaTimePkg = ensurePackage(path: ["java", "time"], symbols: symbols, interner: interner)
         let javaTimePkgSymbol = symbols.lookup(fqName: javaTimePkg)
@@ -56,6 +67,27 @@ extension DataFlowSemaPhase {
         )))
         let javaDurationType = types.make(.classType(ClassType(
             classSymbol: javaDurationSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        let javaUtilConcurrentPkg = ensurePackage(
+            path: ["java", "util", "concurrent"],
+            symbols: symbols,
+            interner: interner
+        )
+        let javaUtilConcurrentPkgSymbol = symbols.lookup(fqName: javaUtilConcurrentPkg)
+        let javaTimeUnitSymbol = ensureEnumClassSymbol(
+            named: "TimeUnit",
+            in: javaUtilConcurrentPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaUtilConcurrentPkgSymbol {
+            symbols.setParentSymbol(javaUtilConcurrentPkgSymbol, for: javaTimeUnitSymbol)
+        }
+        let javaTimeUnitType = types.make(.classType(ClassType(
+            classSymbol: javaTimeUnitSymbol,
             args: [],
             nullability: .nonNull
         )))
@@ -127,6 +159,15 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_js_date_to_kotlin_instant",
             receiverType: jsDateType,
             returnType: kotlinInstantType,
+            packageFQName: kotlinTimePkg,
+            symbols: symbols,
+            interner: interner
+        )
+        registerPlatformTimeExtensionFunction(
+            named: "toDurationUnit",
+            externalLinkName: "kk_time_unit_to_duration_unit",
+            receiverType: javaTimeUnitType,
+            returnType: kotlinDurationUnitType,
             packageFQName: kotlinTimePkg,
             symbols: symbols,
             interner: interner
