@@ -10,8 +10,8 @@ import XCTest
 ///  - `encodeToByteArray(charset)` → `kk_string_encodeToByteArray_charset`
 ///
 /// The synthetic extension functions are registered in
-/// `HeaderHelpers+SyntheticStringStubs.swift`, and the runtime implementation lives
-/// in `Sources/Runtime/RuntimeStringStdlib.swift`.
+/// `HeaderHelpers+SyntheticStringStubs.swift` (STDLIB-573/STDLIB-581), and the
+/// runtime implementation lives in `Sources/Runtime/RuntimeStringStdlib.swift`.
 final class StringEncodeToByteArrayFunctionTests: XCTestCase {
     func testEncodeToByteArrayNoArgResolvesInSource() throws {
         let ctx = makeContextFromSource("""
