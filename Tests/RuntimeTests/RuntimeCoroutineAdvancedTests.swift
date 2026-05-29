@@ -120,7 +120,8 @@ func advcoro_nested_two_delays(_ continuation: Int, _ outThrown: UnsafeMutablePo
 
 // MARK: - Advanced Coroutine Tests (TEST-CORO-003)
 
-/// Covers advanced coroutine runtime behaviours beyond the base 29 tests:
+/// Covers 15 advanced coroutine runtime behaviours beyond the base 29 tests,
+/// raising the tracked coroutine runtime coverage from 29 to 44:
 /// nested suspension, spill/reload across suspension points, exception propagation,
 /// supervisor scope semantics, dispatcher dispatch, Result round-trips through
 /// resumeWith, multi-spill slot state, timeout-or-null, exception handler invocation,
