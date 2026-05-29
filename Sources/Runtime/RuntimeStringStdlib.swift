@@ -3923,21 +3923,21 @@ public func kk_string_reduceOrNull(
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     outThrown?.pointee = 0
-    let scalars = runtimeStringScalars(strRaw)
-    guard !scalars.isEmpty else {
+    let codeUnits = runtimeStringUTF16CodeUnits(strRaw)
+    guard !codeUnits.isEmpty else {
         return runtimeNullSentinelInt
     }
-    var acc = Int(scalars[0].value)
-    guard scalars.count > 1 else {
+    var acc = Int(codeUnits[0])
+    guard codeUnits.count > 1 else {
         return acc
     }
-    for index in 1 ..< scalars.count {
+    for index in 1 ..< codeUnits.count {
         var thrown = 0
         acc = maybeUnbox(runtimeInvokeCollectionLambda2(
             fnPtr: fnPtr,
             closureRaw: closureRaw,
             lhs: acc,
-            rhs: Int(scalars[index].value),
+            rhs: Int(codeUnits[index]),
             outThrown: &thrown
         ))
         if thrown != 0 {

@@ -441,6 +441,21 @@ final class RuntimeStringHOFTests: XCTestCase {
         XCTAssertEqual(result, Int(Unicode.Scalar("x").value))
     }
 
+    func testReduceOrNullUsesUTF16CodeUnits() {
+        let source = registerRuntimeObject(RuntimeStringBox("a🐻"))
+        var thrown = 0
+
+        let result = kk_string_reduceOrNull(
+            source,
+            unsafeBitCast(reduceOrNullChecksum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(result, 97 + 0xD83D + 0xDC3B)
+    }
+
     func testSumByAppliesSelectorToEveryCharacter() {
         let source = registerRuntimeObject(RuntimeStringBox("aba"))
         var thrown = 0
