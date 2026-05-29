@@ -702,7 +702,7 @@
 - [x] STDLIB-DOM-TYPE-001: `org.w3c.dom.ItemArrayLike<T>` external interface を追加する
 - [x] STDLIB-DOM-FN-001: `ItemArrayLike<T>.asList()` を追加する
 - [x] STDLIB-JS-167: JavaScript 固有 API の実装
-- [ ] STDLIB-NATIVE-168: Native 固有 API の実装
+- [x] STDLIB-NATIVE-168: Native 固有 API の実装
 
 ## ターゲット外バックログ（本体非追跡）
 - JDBC / DB コネクション・トランザクション・プール
