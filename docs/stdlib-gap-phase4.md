@@ -63,8 +63,10 @@ Legend: **Done** = runtime entry point exists + sema stub registered.
 | Symbol | Status | Notes |
 |---|---|---|
 | `Random(seed: Int)` constructor | Done | `kk_random_create_seeded` |
-| `Random(seed: Long)` constructor | Gap | No `kk_random_create_seeded_long`; only Int seed supported |
-| `Random.Default` singleton | Partial | Resolved implicitly via the `Random` object symbol; no dedicated `kk_random_get_default` |
+| `Random(seed: Long)` constructor | Done | `kk_random_create_seeded` |
+| `Random.Default` singleton | Done | `kk_random_default` |
+| `asKotlinRandom()` | Done | `kk_random_asKotlinRandom` |
+| `Random.asJavaRandom()` | Done | `kk_random_asJavaRandom` |
 
 ### Instance methods
 
@@ -73,9 +75,19 @@ Legend: **Done** = runtime entry point exists + sema stub registered.
 | `nextInt()` | Done | |
 | `nextInt(until)` | Done | |
 | `nextInt(from, until)` | Done | |
+| `nextInt(range: IntRange)` | Done | `kk_random_nextInt_rangeObject` |
 | `nextLong()` | Done | |
 | `nextLong(until)` | Done | |
 | `nextLong(from, until)` | Done | |
+| `nextLong(range: LongRange)` | Done | `kk_random_nextLong_rangeObject` |
+| `nextUInt()` | Done | |
+| `nextUInt(until)` | Done | |
+| `nextUInt(from, until)` | Done | |
+| `nextUInt(range: UIntRange)` | Done | `kk_random_nextUInt_uintRange` |
+| `nextULong()` | Done | |
+| `nextULong(until)` | Done | |
+| `nextULong(from, until)` | Done | |
+| `nextULong(range: ULongRange)` | Done | `kk_random_nextULong_ulongRange` |
 | `nextFloat()` | Done | |
 | `nextFloat(until)` | Done | |
 | `nextFloat(from, until)` | Done | STDLIB-655 |
@@ -84,8 +96,12 @@ Legend: **Done** = runtime entry point exists + sema stub registered.
 | `nextDouble(from, until)` | Done | |
 | `nextBoolean()` | Done | |
 | `nextBytes(array: ByteArray)` | Done | STDLIB-653 |
-| `nextBits(bitCount)` | Partial | `kk_random_nextBits` exists at runtime but not wired as a sema stub |
-| `nextBytes(size: Int)` | Gap | Factory overload (allocates new ByteArray); only the fill-in-place variant exists |
+| `nextBytes(size: Int)` | Done | `kk_random_nextBytes_size` |
+| `nextBytes(array: ByteArray, fromIndex, toIndex)` | Done | `kk_random_nextBytes_range` |
+| `nextUBytes(size: Int)` | Done | `kk_random_nextUBytes_size` |
+| `nextUBytes(array: UByteArray)` | Done | `kk_random_nextUBytes` |
+| `nextUBytes(array: UByteArray, fromIndex, toIndex)` | Done | `kk_random_nextUBytes_range` |
+| `nextBits(bitCount)` | Done | `kk_random_nextBits` |
 
 ### `SecureRandom`
 
@@ -97,7 +113,10 @@ Legend: **Done** = runtime entry point exists + sema stub registered.
 | `nextBytes(array)` | Done | |
 | `nextBytes(size: Int)` factory | Gap | Missing allocating overload |
 
-**Summary: ~3 gaps, 16+ items Done.**
+Inventory is pinned by `RandomSyntheticLinkTests+OverloadCoverage` and runtime ABI coverage in
+`RuntimeABISpec+Random`.
+
+**Summary: 1 gap, 39 items Done.**
 
 ---
 
@@ -291,14 +310,14 @@ Legend: **Done** = runtime entry point exists + sema stub registered.
 | Package | Done | Partial | Gap |
 |---|---|---|---|
 | `kotlin.math` | 25 | 0 | 4 |
-| `kotlin.random` | 16 | 1 | 3 |
+| `kotlin.random` | 39 | 0 | 1 |
 | `kotlin.reflect` | 28 | 2 | 2 |
 | `kotlin.comparisons` | 11 | 0 | 2 |
 | `kotlin.annotation` | 14 | 1 | 0 |
 | `kotlin.system` | 7 | 0 | 2 |
 | `kotlin.uuid` | 10 | 1 | 4 |
 | `kotlin.native` / `kotlinx.cinterop` | 14 | 0 | 5 |
-| **Total** | **125** | **5** | **22** |
+| **Total** | **148** | **4** | **20** |
 
 ---
 
