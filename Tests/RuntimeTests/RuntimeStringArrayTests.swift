@@ -271,6 +271,13 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(setBox?.elements.map(kk_unbox_char), [122]) // 'z'
     }
 
+    func testStringToSortedSetUsesUTF16CodeUnits() {
+        let setRaw = kk_string_toSortedSet(rawFromRuntimeString("a🐻a"))
+        let setBox = runtimeSetBox(from: setRaw)
+        XCTAssertNotNil(setBox)
+        XCTAssertEqual(setBox?.elements.map(kk_unbox_char), [97, 0xD83D, 0xDC3B])
+    }
+
     // MARK: - STDLIB-317: String.asIterable() tests
 
     func testStringAsIterableReturnsLazyBox() {

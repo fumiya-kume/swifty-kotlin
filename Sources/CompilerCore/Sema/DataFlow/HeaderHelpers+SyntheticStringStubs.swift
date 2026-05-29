@@ -1021,6 +1021,16 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerSyntheticStringExtensionFunction(
+            named: "toSortedSet",
+            externalLinkName: "kk_string_toSortedSet",
+            receiverType: charSequenceType,
+            parameters: [],
+            returnType: setCharType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
 
         registerSyntheticStringExtensionFunction(
             named: "toCharArray",

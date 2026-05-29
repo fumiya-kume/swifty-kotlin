@@ -151,6 +151,15 @@ final class KotlinCompilationStringCollectionTests: XCTestCase {
         """)
     }
 
+    func testCompile_charSequence_toSortedSet() throws {
+        try assertKotlinCompilesToKIR("""
+        fun main() {
+            val text: CharSequence = "hello"
+            val chars: Set<Char> = text.toSortedSet()
+        }
+        """)
+    }
+
     // MARK: - String padding
 
     func testCompile_string_padStart() throws {

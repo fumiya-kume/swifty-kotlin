@@ -352,12 +352,12 @@ public func kk_string_toTypedArray(_ strRaw: Int) -> Int {
 
 // MARK: - STDLIB-TEXT-FN-108: CharSequence.toSortedSet()
 
-/// Returns a `SortedSet<Char>` containing all unique characters of the string
-/// in their natural (Unicode code-point) ascending order.
+/// Returns a `SortedSet<Char>` containing all unique UTF-16 code units of the string
+/// in their natural `Char` ascending order.
 /// Implements `kotlin.text.CharSequence.toSortedSet(): SortedSet<Char>`.
 @_cdecl("kk_string_toSortedSet")
 public func kk_string_toSortedSet(_ strRaw: Int) -> Int {
-    let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
+    let charRaws = runtimeStringUTF16CodeUnits(strRaw).map { kk_box_char(Int($0)) }
     let deduped = runtimeDeduplicatePreservingOrder(charRaws)
     let sorted = deduped.sorted { runtimeCompareValues($0, $1) < 0 }
     return registerRuntimeObject(RuntimeSetBox(elements: sorted))
