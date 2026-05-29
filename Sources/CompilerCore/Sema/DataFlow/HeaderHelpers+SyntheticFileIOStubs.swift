@@ -683,6 +683,17 @@ extension DataFlowSemaPhase {
         )
 
         registerFileMemberFunction(
+            named: "deleteRecursively",
+            externalLinkName: "kk_file_deleteRecursively",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
             named: "mkdirs",
             externalLinkName: "kk_file_mkdirs",
             ownerSymbol: fileSymbol,
@@ -707,6 +718,28 @@ extension DataFlowSemaPhase {
         registerFileMemberFunction(
             named: "walk",
             externalLinkName: "kk_file_walk",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: fileTreeWalkType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "walkTopDown",
+            externalLinkName: "kk_file_walkTopDown",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: fileTreeWalkType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "walkBottomUp",
+            externalLinkName: "kk_file_walkBottomUp",
             ownerSymbol: fileSymbol,
             ownerType: fileType,
             parameters: [],

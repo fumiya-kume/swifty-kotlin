@@ -807,12 +807,19 @@ struct CollectionLiteralLookupTables {
     let kkBufferedWriterFlushName: InternedString
     let kkBufferedWriterCloseName: InternedString
     let kkFileDeleteName: InternedString
+    let deleteRecursivelyName: InternedString
+    let kkFileDeleteRecursivelyName: InternedString
     let mkdirsName: InternedString
     let kkFileMkdirsName: InternedString
     let listFilesName: InternedString
     let kkFileListFilesName: InternedString
     let walkName: InternedString
     let kkFileWalkName: InternedString
+    let kkFileWalkDirectionName: InternedString
+    let walkTopDownName: InternedString
+    let kkFileWalkTopDownName: InternedString
+    let walkBottomUpName: InternedString
+    let kkFileWalkBottomUpName: InternedString
     let readBytesName: InternedString
     let kkFileReadBytesName: InternedString
     // STDLIB-IO-087: Additional File operations
@@ -1623,12 +1630,19 @@ struct CollectionLiteralLookupTables {
         kkBufferedWriterFlushName = interner.intern("kk_buffered_writer_flush")
         kkBufferedWriterCloseName = interner.intern("kk_buffered_writer_close")
         kkFileDeleteName = interner.intern("kk_file_delete")
+        deleteRecursivelyName = interner.intern("deleteRecursively")
+        kkFileDeleteRecursivelyName = interner.intern("kk_file_deleteRecursively")
         mkdirsName = interner.intern("mkdirs")
         kkFileMkdirsName = interner.intern("kk_file_mkdirs")
         listFilesName = interner.intern("listFiles")
         kkFileListFilesName = interner.intern("kk_file_listFiles")
         walkName = interner.intern("walk")
         kkFileWalkName = interner.intern("kk_file_walk")
+        kkFileWalkDirectionName = interner.intern("kk_file_walk_direction")
+        walkTopDownName = interner.intern("walkTopDown")
+        kkFileWalkTopDownName = interner.intern("kk_file_walkTopDown")
+        walkBottomUpName = interner.intern("walkBottomUp")
+        kkFileWalkBottomUpName = interner.intern("kk_file_walkBottomUp")
         readBytesName = interner.intern("readBytes")
         kkFileReadBytesName = interner.intern("kk_file_readBytes")
         // STDLIB-IO-087: Additional File operations

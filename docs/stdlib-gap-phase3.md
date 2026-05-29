@@ -10,11 +10,11 @@
 
 | Package | Implemented | Missing / Partial | Total audited |
 |---|---|---|---|
-| `kotlin.io` (common) | 13 | 5 | 18 |
+| `kotlin.io` (common) | 18 | 0 | 18 |
 | `kotlin.time` | 86 | 3 | 89 |
 | `kotlin.concurrent` | 18 | 2 | 20 |
 | `kotlin.concurrent.atomics` | 64 | 4 | 68 |
-| **Total** | **181** | **14** | **195** |
+| **Total** | **186** | **9** | **195** |
 
 ---
 
@@ -46,19 +46,19 @@
 | `BufferedReader.close()` | `kk_buffered_reader_close` | STDLIB-567 |
 | `File.bufferedWriter()` | `kk_file_bufferedWriter` | STDLIB-IO-091 |
 | `BufferedWriter.write()` | `kk_buffered_writer_write` | STDLIB-IO-091 |
+| `File.copyTo()` | `kk_file_copyTo*` | STDLIB-IO-FN-015 |
+| `File.copyRecursively()` | `kk_file_copyRecursively*` | STDLIB-IO-FN-012 |
+| `File.deleteRecursively()` | `kk_file_deleteRecursively` | STDLIB-030 |
 | `File.walk()` | `kk_file_walk` | STDLIB-323 |
+| `File.walk(direction)`, `.walkTopDown()`, `.walkBottomUp()` | `kk_file_walk_direction`, `kk_file_walkTopDown`, `kk_file_walkBottomUp` | STDLIB-030 |
 | `File.exists()`, `.isFile()`, `.isDirectory()` | `kk_file_exists` etc. | STDLIB-321 |
 | `File.delete()`, `.mkdirs()`, `.listFiles()` | `kk_file_delete` etc. | STDLIB-323 |
 
 ### Missing / Partial
 
-| API | Gap description | Priority |
-|---|---|---|
-| `File.copyTo(target, overwrite)` | No `kk_file_copyTo` runtime symbol; no compiler stub | High |
-| `File.copyRecursively(target, overwrite)` | No implementation | Medium |
-| `File.deleteRecursively()` | No `kk_file_deleteRecursively` | Medium |
-| `File.walkTopDown()` / `File.walkBottomUp()` | Only generic `kk_file_walk` exists; direction variants missing | Low |
-| `createTempFile()` / `createTempDir()` | Deprecated variants have annotated stubs; new `kotlin.io.path.*` variants unresolved | Medium |
+No remaining `kotlin.io` common gaps in the Phase 3 audit scope. File copy, recursive copy,
+recursive delete, walk direction shortcuts, deprecated temp-file helpers, and
+`kotlin.io.path` temp-file variants are covered by runtime symbols and compiler stubs.
 
 ---
 

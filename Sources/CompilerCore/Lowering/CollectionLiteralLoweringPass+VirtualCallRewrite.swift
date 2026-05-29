@@ -333,11 +333,24 @@ extension CollectionLiteralLoweringPass {
         case lookup.printWriterName:
             kkCallee = arguments.isEmpty ? lookup.kkFilePrintWriterName : nil
         case lookup.walkName:
-            kkCallee = lookup.kkFileWalkName
+            kkCallee = switch arguments.count {
+            case 0:
+                lookup.kkFileWalkName
+            case 1:
+                lookup.kkFileWalkDirectionName
+            default:
+                nil
+            }
+        case lookup.walkTopDownName:
+            kkCallee = arguments.isEmpty ? lookup.kkFileWalkTopDownName : nil
+        case lookup.walkBottomUpName:
+            kkCallee = arguments.isEmpty ? lookup.kkFileWalkBottomUpName : nil
         case lookup.listFilesName:
             kkCallee = lookup.kkFileListFilesName
         case lookup.deleteName:
             kkCallee = lookup.kkFileDeleteName
+        case lookup.deleteRecursivelyName:
+            kkCallee = lookup.kkFileDeleteRecursivelyName
         case lookup.mkdirsName:
             kkCallee = lookup.kkFileMkdirsName
         case lookup.readBytesName:
@@ -377,6 +390,9 @@ extension CollectionLiteralLoweringPass {
             || callee == lookup.appendTextName
             || callee == lookup.copyToName
             || callee == lookup.copyRecursivelyName
+            || callee == lookup.walkName
+            || callee == lookup.walkTopDownName
+            || callee == lookup.walkBottomUpName
         let memberArgs = needsExtraArgs ?
             [receiver] + arguments :
             [receiver]
@@ -391,7 +407,12 @@ extension CollectionLiteralLoweringPass {
         ))
 
         // Track results that produce lists (readLines/readBytes return List)
-        if (callee == lookup.readLinesName || callee == lookup.readBytesName), let result {
+        if (callee == lookup.readLinesName
+            || callee == lookup.readBytesName
+            || callee == lookup.walkName
+            || callee == lookup.walkTopDownName
+            || callee == lookup.walkBottomUpName
+        ), let result {
             listExprIDs.insert(result.rawValue)
         }
 

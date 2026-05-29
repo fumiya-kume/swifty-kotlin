@@ -140,11 +140,24 @@ extension CollectionLiteralLoweringPass {
             case lookup.printWriterName:
                 kkCallee = arguments.count == 1 ? lookup.kkFilePrintWriterName : nil
             case lookup.walkName:
-                kkCallee = lookup.kkFileWalkName
+                kkCallee = switch arguments.count {
+                case 1:
+                    lookup.kkFileWalkName
+                case 2:
+                    lookup.kkFileWalkDirectionName
+                default:
+                    nil
+                }
+            case lookup.walkTopDownName:
+                kkCallee = arguments.count == 1 ? lookup.kkFileWalkTopDownName : nil
+            case lookup.walkBottomUpName:
+                kkCallee = arguments.count == 1 ? lookup.kkFileWalkBottomUpName : nil
             case lookup.listFilesName:
                 kkCallee = lookup.kkFileListFilesName
             case lookup.deleteName:
                 kkCallee = lookup.kkFileDeleteName
+            case lookup.deleteRecursivelyName:
+                kkCallee = lookup.kkFileDeleteRecursivelyName
             case lookup.mkdirsName:
                 kkCallee = lookup.kkFileMkdirsName
             case lookup.readBytesName:
@@ -202,6 +215,9 @@ extension CollectionLiteralLoweringPass {
                         || callee == lookup.appendTextName
                         || callee == lookup.copyToName
                         || callee == lookup.copyRecursivelyName
+                        || callee == lookup.walkName
+                        || callee == lookup.walkTopDownName
+                        || callee == lookup.walkBottomUpName
                 ) ? [receiverID] + arguments.dropFirst() : [receiverID]
                 loweredBody.append(.call(
                     symbol: nil,
@@ -214,7 +230,12 @@ extension CollectionLiteralLoweringPass {
                 // Track walk()/listFiles()/readLines() results as lists
                 // so chained operations (forEach, sortedBy, etc.) are rewritten correctly
                 if let result,
-                   callee == lookup.walkName || callee == lookup.listFilesName || callee == lookup.readLinesName || callee == lookup.readBytesName
+                   callee == lookup.walkName
+                    || callee == lookup.walkTopDownName
+                    || callee == lookup.walkBottomUpName
+                    || callee == lookup.listFilesName
+                    || callee == lookup.readLinesName
+                    || callee == lookup.readBytesName
                 {
                     state.listExprIDs.insert(result.rawValue)
                 }

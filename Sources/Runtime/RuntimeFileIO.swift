@@ -154,6 +154,24 @@ private func runtimeFileRelativeString(path: String, basePath: String) -> String
     return relative.isEmpty ? "." : relative
 }
 
+private enum RuntimeFileWalkDirection {
+    case topDown
+    case bottomUp
+}
+
+private func runtimeFileWalkElements(from file: RuntimeFileBox, direction: RuntimeFileWalkDirection) -> [Int] {
+    var paths: [String] = [file.path]
+    if let enumerator = FileManager.default.enumerator(atPath: file.path) {
+        while let relativePath = enumerator.nextObject() as? String {
+            paths.append((file.path as NSString).appendingPathComponent(relativePath))
+        }
+    }
+    if direction == .bottomUp {
+        paths.reverse()
+    }
+    return paths.map { registerRuntimeObject(RuntimeFileBox($0)) }
+}
+
 private func fileMakeStringRaw(_ value: String) -> Int {
     Int(bitPattern: value.withCString { cstr in
         cstr.withMemoryRebound(to: UInt8.self, capacity: value.utf8.count) { pointer in
@@ -918,6 +936,23 @@ public func kk_file_delete(_ fileRaw: Int) -> Int {
     return kk_box_bool((try? FileManager.default.removeItem(atPath: file.path)) != nil ? 1 : 0)
 }
 
+@_cdecl("kk_file_deleteRecursively")
+public func kk_file_deleteRecursively(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_deleteRecursively received invalid File handle")
+    }
+    let fileManager = FileManager.default
+    guard fileManager.fileExists(atPath: file.path) else {
+        return kk_box_bool(1)
+    }
+    do {
+        try fileManager.removeItem(atPath: file.path)
+        return kk_box_bool(fileManager.fileExists(atPath: file.path) ? 0 : 1)
+    } catch {
+        return kk_box_bool(0)
+    }
+}
+
 @_cdecl("kk_file_mkdirs")
 public func kk_file_mkdirs(_ fileRaw: Int) -> Int {
     guard let file = runtimeFileBox(from: fileRaw) else {
@@ -946,17 +981,32 @@ public func kk_file_walk(_ fileRaw: Int) -> Int {
     guard let file = runtimeFileBox(from: fileRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_walk received invalid File handle")
     }
-    // Kotlin's File.walk() includes the root directory itself as the first element
-    var files: [Int] = [registerRuntimeObject(RuntimeFileBox(file.path))]
-    if let enumerator = FileManager.default.enumerator(atPath: file.path) {
-        while let relativePath = enumerator.nextObject() as? String {
-            let fullPath = (file.path as NSString).appendingPathComponent(relativePath)
-            files.append(registerRuntimeObject(RuntimeFileBox(fullPath)))
-        }
+    let files = runtimeFileWalkElements(from: file, direction: .topDown)
+    return registerRuntimeObject(RuntimeListBox(elements: files))
+}
+
+@_cdecl("kk_file_walk_direction")
+public func kk_file_walk_direction(_ fileRaw: Int, _ directionRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_walk_direction received invalid File handle")
     }
-    // Return as a Sequence (list of File handles)
-    let listBox = RuntimeListBox(elements: files)
-    return registerRuntimeObject(listBox)
+    let direction: RuntimeFileWalkDirection = kk_unbox_int(directionRaw) == 1 ? .bottomUp : .topDown
+    let files = runtimeFileWalkElements(from: file, direction: direction)
+    return registerRuntimeObject(RuntimeListBox(elements: files))
+}
+
+@_cdecl("kk_file_walkTopDown")
+public func kk_file_walkTopDown(_ fileRaw: Int) -> Int {
+    return kk_file_walk(fileRaw)
+}
+
+@_cdecl("kk_file_walkBottomUp")
+public func kk_file_walkBottomUp(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_walkBottomUp received invalid File handle")
+    }
+    let files = runtimeFileWalkElements(from: file, direction: .bottomUp)
+    return registerRuntimeObject(RuntimeListBox(elements: files))
 }
 
 // MARK: - STDLIB-567: File.bufferedReader()
