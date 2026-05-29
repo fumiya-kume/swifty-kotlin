@@ -4089,6 +4089,29 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // fun ByteArray.toKString(startIndex: Int, endIndex: Int, throwOnInvalidSequence: Boolean): String
+        let byteArrayToKStringRangeReceiverType = syntheticClassType(
+            packagePath: ["kotlin"],
+            name: "ByteArray",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerSyntheticNativeTopLevelFunction(
+            named: "toKString",
+            packageFQName: cinteropPkg,
+            receiverType: byteArrayToKStringRangeReceiverType,
+            parameters: [
+                (name: "startIndex", type: types.intType),
+                (name: "endIndex", type: types.intType),
+                (name: "throwOnInvalidSequence", type: types.booleanType),
+            ],
+            returnType: types.stringType,
+            defaultValues: [true, true, true],
+            symbols: symbols,
+            interner: interner
+        )
         registerSyntheticCInteropVector128Stubs(
             cinteropPkg: cinteropPkg,
             cinteropPkgSymbol: cinteropPkgSymbol,
