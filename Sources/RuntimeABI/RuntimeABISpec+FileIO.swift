@@ -200,6 +200,18 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "FileIO"
         ),
+        // STDLIB-IO-FN-012: File.copyRecursively(target, overwrite)
+        RuntimeABIFunctionSpec(
+            name: "kk_file_copyRecursively",
+            parameters: [
+                RuntimeABIParameter(name: "fileRaw", type: .intptr),
+                RuntimeABIParameter(name: "targetRaw", type: .intptr),
+                RuntimeABIParameter(name: "overwriteRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
         // STDLIB-567: File.bufferedReader()
         RuntimeABIFunctionSpec(
             name: "kk_file_bufferedReader",
