@@ -4381,17 +4381,17 @@ extension DataFlowSemaPhase {
             symbol: typeParameterSymbol,
             nullability: .nonNull
         )))
-        let nullablePointerType = types.make(.classType(ClassType(
+        let pointerType = types.make(.classType(ClassType(
             classSymbol: cPointerSymbol,
             args: [.invariant(typeParameterType)],
-            nullability: .nullable
+            nullability: .nonNull
         )))
         registerSyntheticNativeTopLevelFunction(
             named: "plus",
             packageFQName: packageFQName,
-            receiverType: nullablePointerType,
+            receiverType: pointerType,
             parameters: [(name: "index", type: indexType)],
-            returnType: nullablePointerType,
+            returnType: pointerType,
             typeParameterSymbols: [typeParameterSymbol],
             typeParameterUpperBoundsList: [[typeParameterUpperBound]],
             flags: [.synthetic, .inlineFunction, .operatorFunction],

@@ -59,7 +59,7 @@ final class NativeCInteropCPointerPlusFunctionTests: XCTestCase {
             let expectedPointerType = sema.types.make(.classType(ClassType(
                 classSymbol: cPointerSymbol,
                 args: [.invariant(typeParameterType)],
-                nullability: .nullable
+                nullability: .nonNull
             )))
             let parameterSymbol = try XCTUnwrap(signature.valueParameterSymbols.first, file: file, line: line)
             let flags = try XCTUnwrap(sema.symbols.symbol(plusSymbol)?.flags, file: file, line: line)
@@ -83,12 +83,13 @@ final class NativeCInteropCPointerPlusFunctionTests: XCTestCase {
         let ctx = makeContextFromSource("""
         import kotlinx.cinterop.ByteVar
         import kotlinx.cinterop.CPointer
+        import kotlinx.cinterop.plus
 
-        fun plusInt(value: CPointer<ByteVar>?): CPointer<ByteVar>? {
+        fun plusInt(value: CPointer<ByteVar>): CPointer<ByteVar> {
             return value + 1
         }
 
-        fun plusLong(value: CPointer<ByteVar>?): CPointer<ByteVar>? {
+        fun plusLong(value: CPointer<ByteVar>): CPointer<ByteVar> {
             return value + 1L
         }
         """)
