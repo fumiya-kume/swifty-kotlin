@@ -230,21 +230,38 @@ emit_failure_summary() {
 # ---------------------------------------------------------------------------
 # Optionally emit JUnit XML (set SWIFT_TEST_JUNIT_XML=/path/report.xml)
 # ---------------------------------------------------------------------------
+xml_escape() {
+    local value="$1"
+    value="${value//&/&amp;}"
+    value="${value//</&lt;}"
+    value="${value//>/&gt;}"
+    value="${value//\"/&quot;}"
+    value="${value//\'/&apos;}"
+    printf '%s' "$value"
+}
+
 emit_junit_xml() {
     [[ -z "$junit_xml_path" ]] && return
     local count="${#unique_failures[@]}"
     local timestamp
     timestamp="$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || date +"%Y-%m-%dT%H:%M:%SZ")"
+    mkdir -p "$(dirname "$junit_xml_path")"
 
     {
         printf '<?xml version="1.0" encoding="UTF-8"?>\n'
-        printf '<testsuites failures="%d" timestamp="%s">\n' "$count" "$timestamp"
-        printf '  <testsuite name="SwiftTests" failures="%d" tests="%d">\n' "$count" "$count"
+        printf '<testsuites tests="%d" failures="%d" errors="0" skipped="0" timestamp="%s">\n' \
+            "$count" "$count" "$timestamp"
+        printf '  <testsuite name="SwiftTests" tests="%d" failures="%d" errors="0" skipped="0">\n' \
+            "$count" "$count"
         for t in "${unique_failures[@]}"; do
             local classname="${t%%[./]*}"
             local testname="${t}"
-            printf '    <testcase classname="%s" name="%s">\n' "$classname" "$testname"
-            printf '      <failure message="Test failed">%s</failure>\n' "$testname"
+            local escaped_classname
+            local escaped_testname
+            escaped_classname="$(xml_escape "$classname")"
+            escaped_testname="$(xml_escape "$testname")"
+            printf '    <testcase classname="%s" name="%s">\n' "$escaped_classname" "$escaped_testname"
+            printf '      <failure message="Test failed">%s</failure>\n' "$escaped_testname"
             printf '    </testcase>\n'
         done
         printf '  </testsuite>\n'
