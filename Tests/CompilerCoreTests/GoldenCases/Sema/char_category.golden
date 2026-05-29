@@ -1,0 +1,8 @@
+symbol s0 kind=enumClass fq=kotlin.text.CharCategory vis=public flags=synthetic
+symbol s1 kind=function fq=kotlin.text.category vis=public flags=synthetic sig=recv=Char params=[] ret=Class#0 suspend=0 defaults=[] vararg=[]
+symbol s2 kind=function fq=charCategory vis=public flags=_ sig=recv=_ params=[Char] ret=Class#0 suspend=0 defaults=[0] vararg=[0]
+symbol s3 kind=valueParameter fq=charCategory.$0.c vis=private flags=_
+file f0 package=_
+  decl d0 fun charCategory suspend=0 inline=0 sym=s2
+expr e0 name(c) type=Char ref=s3
+expr e1 memberCall recv=e0 callee=category args=[] type=Class#0 call=s1 map=[] targs=[]
