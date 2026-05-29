@@ -1758,7 +1758,8 @@ extension DataFlowSemaPhase {
             sequenceFQName: sequenceFQName,
             typeParamSymbol: typeParamSymbol,
             symbols: symbols,
-            interner: interner
+            interner: interner,
+            flags: [.synthetic]
         )
 
         // plusElement(element: T): Sequence<T> (STDLIB-SEQ-013)
