@@ -170,7 +170,7 @@
 - [x] STDLIB-IO-PATH-FN-036: `toPath` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-037: `useDirectoryEntries` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-038: `useLines` 関数の実装
-- [ ] STDLIB-IO-PATH-FN-039: `walk` 関数の実装
+- [x] STDLIB-IO-PATH-FN-039: `walk` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-040: `writeLines` 関数の実装（Iterable版）
 - [ ] STDLIB-IO-PATH-FN-041: `writeLines` 関数の実装（Sequence版）
 - [ ] STDLIB-IO-PATH-FN-042: `writer` 関数の実装
@@ -248,6 +248,8 @@
 - [ ] STDLIB-SEQ-FN-044: `forEach` 関数の実装
 - [ ] STDLIB-SEQ-FN-046: `groupBy` 関数の実装
 - [x] STDLIB-SEQ-FN-047: `groupByTo` 関数の実装
+- [x] STDLIB-SEQ-FN-046: `groupBy` 関数の実装
+- [ ] STDLIB-SEQ-FN-047: `groupByTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-048: `indexOf` 関数の実装
 - [x] STDLIB-SEQ-FN-056: `lastOrNull` 関数の実装
 - [x] STDLIB-SEQ-FN-057: `map` 関数の実装
