@@ -1399,6 +1399,17 @@ extension CallLowerer {
                     ))
                     return result
                 }
+                if calleeStr == "toTypedArray" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_toTypedArray"),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
                 if calleeStr == "toRegex" {
                     instructions.append(.call(
                         symbol: nil,

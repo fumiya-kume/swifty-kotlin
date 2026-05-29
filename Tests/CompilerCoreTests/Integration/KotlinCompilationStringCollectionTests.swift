@@ -141,6 +141,14 @@ final class KotlinCompilationStringCollectionTests: XCTestCase {
         """)
     }
 
+    func testCompile_charSequence_toTypedArray() throws {
+        try assertKotlinCompilesToKIR("""
+        fun copy(value: CharSequence): Array<Char> {
+            return value.toTypedArray()
+        }
+        """)
+    }
+
     // MARK: - String padding
 
     func testCompile_string_padStart() throws {
