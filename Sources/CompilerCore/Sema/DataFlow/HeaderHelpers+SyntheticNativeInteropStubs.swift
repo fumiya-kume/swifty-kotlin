@@ -4112,6 +4112,47 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // fun <T : CPointed> CPointer<T>?.toLong(): Long
+        let cPointerToLongName = interner.intern("toLong")
+        let cPointerToLongFQName = cinteropPkg + [cPointerToLongName]
+        let cPointerToLongTypeParameterName = interner.intern("T")
+        let cPointerToLongTypeParameterFQName = cPointerToLongFQName + [cPointerToLongTypeParameterName]
+        let cPointerToLongTypeParameterSymbol: SymbolID = if let existing = symbols.lookup(
+            fqName: cPointerToLongTypeParameterFQName
+        ) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: cPointerToLongTypeParameterName,
+                fqName: cPointerToLongTypeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+        }
+        symbols.setTypeParameterUpperBounds([cPointedType], for: cPointerToLongTypeParameterSymbol)
+        let cPointerToLongTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: cPointerToLongTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let cPointerToLongReceiverType = types.make(.classType(ClassType(
+            classSymbol: cPointerSymbol,
+            args: [.invariant(cPointerToLongTypeParameterType)],
+            nullability: .nullable
+        )))
+        registerSyntheticNativeTopLevelFunction(
+            named: "toLong",
+            packageFQName: cinteropPkg,
+            receiverType: cPointerToLongReceiverType,
+            parameters: [],
+            returnType: types.longType,
+            typeParameterSymbols: [cPointerToLongTypeParameterSymbol],
+            typeParameterUpperBoundsList: [[cPointedType]],
+            symbols: symbols,
+            interner: interner
+        )
         registerSyntheticCInteropVector128Stubs(
             cinteropPkg: cinteropPkg,
             cinteropPkgSymbol: cinteropPkgSymbol,
