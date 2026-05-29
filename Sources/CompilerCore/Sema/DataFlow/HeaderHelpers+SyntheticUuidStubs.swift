@@ -263,6 +263,10 @@ extension DataFlowSemaPhase {
             args: [],
             nullability: .nonNull
         )))
+        let putUuidAnnotations = [
+            MetadataAnnotationRecord(annotationFQName: "kotlin.uuid.ExperimentalUuidApi"),
+            MetadataAnnotationRecord(annotationFQName: "kotlin.IgnorableReturnValue"),
+        ]
 
         // --- STDLIB-UUID-FN-003: Uuid.toJavaUuid() JVM bridge ---
         registerUuidTopLevelExtensionFunction(
@@ -309,6 +313,35 @@ extension DataFlowSemaPhase {
             returnType: uuidType,
             parameters: [(name: "index", type: types.intType)],
             packageFQName: kotlinUuidPkg,
+            flags: [.synthetic, .inlineFunction],
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-UUID-FN-002: ByteBuffer.putUuid(...) JVM bridge ---
+        registerUuidTopLevelExtensionFunction(
+            named: "putUuid",
+            externalLinkName: "kk_byte_buffer_put_uuid",
+            receiverType: byteBufferType,
+            returnType: byteBufferType,
+            parameters: [(name: "uuid", type: uuidType)],
+            packageFQName: kotlinUuidPkg,
+            annotations: putUuidAnnotations,
+            flags: [.synthetic, .inlineFunction],
+            symbols: symbols,
+            interner: interner
+        )
+        registerUuidTopLevelExtensionFunction(
+            named: "putUuid",
+            externalLinkName: "kk_byte_buffer_put_uuid_at",
+            receiverType: byteBufferType,
+            returnType: byteBufferType,
+            parameters: [
+                (name: "index", type: types.intType),
+                (name: "uuid", type: uuidType),
+            ],
+            packageFQName: kotlinUuidPkg,
+            annotations: putUuidAnnotations,
             flags: [.synthetic, .inlineFunction],
             symbols: symbols,
             interner: interner
