@@ -1479,6 +1479,17 @@ extension CallLowerer {
                     ))
                     return result
                 }
+                if calleeStr == "withIndex" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_withIndex"),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
             }
         }
 

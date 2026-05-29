@@ -3492,6 +3492,40 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-TEXT-FN-115: CharSequence.withIndex() → Iterable<IndexedValue<Char>> ---
+
+        let kotlinCollectionsPkg: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+        ]
+        let indexedValueCharSymbol = registerSyntheticIndexedValueStub(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg
+        )
+        let indexedValueCharType = types.make(.classType(ClassType(
+            classSymbol: indexedValueCharSymbol,
+            args: [.out(charType)],
+            nullability: .nonNull
+        )))
+        let iterableIndexedValueCharType = makeIterableType(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            elementType: indexedValueCharType
+        )
+        registerSyntheticStringExtensionFunction(
+            named: "withIndex",
+            externalLinkName: "kk_string_withIndex",
+            receiverType: stringType,
+            parameters: [],
+            returnType: iterableIndexedValueCharType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-534: String?.orEmpty() ---
 
         registerSyntheticStringExtensionFunction(

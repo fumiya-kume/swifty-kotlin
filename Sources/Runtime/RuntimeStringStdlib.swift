@@ -421,6 +421,23 @@ public func kk_string_asSequence(_ strRaw: Int) -> Int {
     return registerRuntimeObject(seq)
 }
 
+// MARK: - STDLIB-TEXT-FN-115: CharSequence.withIndex() — Iterable<IndexedValue<Char>>
+
+/// Returns an `Iterable<IndexedValue<Char>>` that wraps each character with its index.
+/// Each element is an `IndexedValue<Char>` represented as a `RuntimePairBox(index, boxedChar)`.
+/// The list is materialised eagerly (strings are immutable).
+@_cdecl("kk_string_withIndex")
+public func kk_string_withIndex(_ strRaw: Int) -> Int {
+    let scalars = runtimeStringScalars(strRaw)
+    var elements: [Int] = []
+    elements.reserveCapacity(scalars.count)
+    for (idx, scalar) in scalars.enumerated() {
+        let charRaw = kk_box_char(Int(scalar.value))
+        elements.append(runtimeIndexedValueNew(index: idx, value: charRaw))
+    }
+    return runtimeMakeListRaw(elements)
+}
+
 // MARK: - STDLIB-189: String iterator and HOF (filter, map, count, any, all, none)
 
 @_cdecl("kk_string_iterator")
