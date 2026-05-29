@@ -154,6 +154,13 @@ Audit date: 2026-04-17. Source: `Sources/Runtime/` `@_cdecl` scan.
 
 **Array summary:** 40 rows — done: 25, partial: 2, missing: 13
 
+STDLIB-004 scope is now closed for Array / primitive-array generation,
+conversion, and boundary behavior. Coverage is pinned by
+`CodegenBackendIntegrationTests+PrimitiveArrayEdgeCases`,
+`ArraySyntheticMemberLinkTests`, `ListSyntheticMemberLinkTests`,
+`RuntimeCollectionHOFTests`, and `RuntimeUnsignedArrayAsListTests`. Remaining
+Array API gaps above are tracked by `STDLIB-GAP-PH1` rather than STDLIB-004.
+
 ---
 
 ## Totals
