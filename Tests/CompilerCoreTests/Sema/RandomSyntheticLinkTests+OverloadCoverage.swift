@@ -479,4 +479,19 @@ extension RandomSyntheticLinkTests {
             }
         }
     }
+
+    func testSecureRandomNextBytesSizeOverloadIsRegistered() throws {
+        let (sema, interner) = try makeSema()
+
+        let fq = ["kotlin", "random", "SecureRandom", "nextBytes"].map { interner.intern($0) }
+        let candidates = sema.symbols.lookupAll(fqName: fq)
+        let sizeOverload = candidates.first { id in
+            sema.symbols.functionSignature(for: id)?.parameterTypes == [sema.types.intType]
+        }
+
+        let overload = try XCTUnwrap(sizeOverload, "SecureRandom.nextBytes(size: Int) must be registered")
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: overload))
+        XCTAssertEqual(sema.symbols.externalLinkName(for: overload), "kk_secure_random_next_bytes_size")
+        XCTAssertTrue(signature.canThrow, "SecureRandom.nextBytes(size) must expose its negative-size failure")
+    }
 }

@@ -494,7 +494,7 @@
 - [ ] STDLIB-GAP-PH4: `kotlin.math` / `kotlin.random` / `kotlin.reflect` / `kotlin.comparisons` / `kotlin.annotation` / `kotlin.system` / `kotlin.uuid` / `kotlin.native` 周辺の「部分」を潰す
 - [ ] STDLIB-REFLECT-067: `KClass` / metadata / メンバ introspection の残差を詰める
 - [x] STDLIB-RANDOM-001: `kotlin.random` の対象 API 一覧を固定
-- [ ] STDLIB-RANDOM-002: `kotlin.random` の sema / lowering を整える
+- [x] STDLIB-RANDOM-002: `kotlin.random` の sema / lowering を整える
 - [ ] STDLIB-RANDOM-003: `kotlin.random` の runtime / seed / 境界値を固定
 - [x] STDLIB-COMP-001: `kotlin.comparisons` の対象 API 一覧を固定
 - [ ] STDLIB-COMP-002: `Comparator` 合成の sema / lowering を整える

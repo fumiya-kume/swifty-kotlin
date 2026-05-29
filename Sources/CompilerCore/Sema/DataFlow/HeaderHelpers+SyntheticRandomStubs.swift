@@ -559,6 +559,17 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerSyntheticRandomMember(
+            ownerSymbol: secureRandomSymbol,
+            ownerType: secureRandomType,
+            name: "nextBytes",
+            externalLinkName: "kk_secure_random_next_bytes_size",
+            returnType: byteArrayType,
+            parameters: [(name: "size", type: intType)],
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func ensureRandomCompanionSymbol(

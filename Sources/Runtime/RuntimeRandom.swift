@@ -263,6 +263,21 @@ public func kk_secure_random_next_bytes(_ receiver: Int, _ arrayRaw: Int) -> Int
     return registerRuntimeObject(RuntimeListBox(elements: filled))
 }
 
+@_cdecl("kk_secure_random_next_bytes_size")
+public func kk_secure_random_next_bytes_size(
+    _ receiver: Int,
+    _ size: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard size >= 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IllegalArgumentException: SecureRandom.nextBytes size must be non-negative, but was \(size)."
+        )
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    return kk_secure_random_generate_seed(receiver, size)
+}
+
 // MARK: - Random (STDLIB-165, STDLIB-514, STDLIB-515, STDLIB-516, STDLIB-653, STDLIB-654, STDLIB-655)
 
 @_cdecl("kk_random_default")

@@ -111,12 +111,12 @@ Legend: **Done** = runtime entry point exists + sema stub registered.
 | `setSeed(seed: Int)` | Done | |
 | `generateSeed(size: Int)` | Done | |
 | `nextBytes(array)` | Done | |
-| `nextBytes(size: Int)` factory | Gap | Missing allocating overload |
+| `nextBytes(size: Int)` factory | Done | `kk_secure_random_next_bytes_size` |
 
 Inventory is pinned by `RandomSyntheticLinkTests+OverloadCoverage` and runtime ABI coverage in
 `RuntimeABISpec+Random`.
 
-**Summary: 1 gap, 39 items Done.**
+**Summary: 0 gaps, 40 items Done.**
 
 ---
 
@@ -321,14 +321,14 @@ Inventory is pinned by `ComparisonsAPISurfaceInventoryTests` and runtime ABI cov
 | Package | Done | Partial | Gap |
 |---|---|---|---|
 | `kotlin.math` | 25 | 0 | 4 |
-| `kotlin.random` | 39 | 0 | 1 |
+| `kotlin.random` | 40 | 0 | 0 |
 | `kotlin.reflect` | 28 | 2 | 2 |
 | `kotlin.comparisons` | 20 | 0 | 0 |
 | `kotlin.annotation` | 14 | 1 | 0 |
 | `kotlin.system` | 7 | 0 | 2 |
 | `kotlin.uuid` | 10 | 1 | 4 |
 | `kotlin.native` / `kotlinx.cinterop` | 14 | 0 | 5 |
-| **Total** | **157** | **4** | **18** |
+| **Total** | **158** | **4** | **17** |
 
 ---
 
@@ -336,6 +336,6 @@ Inventory is pinned by `ComparisonsAPISurfaceInventoryTests` and runtime ABI cov
 
 1. **`kotlin.math` — `min/max/clamp` top-level** (frequently used in real code)
 2. **`kotlin.uuid` — `fromLongs`, `fromByteArray`, `parseOrNull`** (API completeness)
-3. **`kotlin.random` — `SecureRandom.nextBytes(size)`** (allocating overload parity)
+3. **`kotlin.native` / `kotlinx.cinterop` — StableRef / Arena residuals** (interop parity)
 4. **`kotlin.reflect` — `KType.equals`** (needed for `typeOf<T>() == typeOf<U>()` patterns)
 5. **`kotlinx.cinterop` — `StableRef<T>`** (required by Kotlin/Native interop patterns)

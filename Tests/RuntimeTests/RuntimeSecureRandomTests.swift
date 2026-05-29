@@ -46,4 +46,16 @@ final class RuntimeSecureRandomTests: XCTestCase {
 
         XCTAssertEqual(output.count, 5)
     }
+
+    func testSecureRandomNextBytesSizeProducesRequestedLengthAndRejectsNegativeSize() {
+        let secure = kk_secure_random_get_instance()
+        var thrown = 0
+
+        let output = runtimeListInts(kk_secure_random_next_bytes_size(secure, 7, &thrown))
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(output.count, 7)
+
+        _ = kk_secure_random_next_bytes_size(secure, -1, &thrown)
+        XCTAssertNotEqual(thrown, 0)
+    }
 }

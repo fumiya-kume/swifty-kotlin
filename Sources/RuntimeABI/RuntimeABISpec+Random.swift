@@ -373,5 +373,15 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Random"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_secure_random_next_bytes_size",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
+                RuntimeABIParameter(name: "size", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Random"
+        ),
     ]
 }
