@@ -109,6 +109,7 @@ extension CollectionLiteralLoweringPass {
             sema: context.sema, interner: context.interner,
             rangeExprIDs: &rangeExprIDs, charRangeExprIDs: &charRangeExprIDs,
             ulongRangeExprIDs: &ulongRangeExprIDs,
+            setExprIDs: &setExprIDs,
             listExprIDs: &listExprIDs,
             loweredBody: &loweredBody
         ) { return true }

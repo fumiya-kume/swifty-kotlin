@@ -19,6 +19,7 @@ extension CollectionLiteralLoweringPass {
         rangeExprIDs: inout Set<Int32>,
         charRangeExprIDs: inout Set<Int32>,
         ulongRangeExprIDs: inout Set<Int32>,
+        setExprIDs: inout Set<Int32>,
         listExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
@@ -27,6 +28,17 @@ extension CollectionLiteralLoweringPass {
         let isULongRange = ulongRangeExprIDs.contains(receiver.rawValue)
         let isUIntRange = sema.map { module.arena.exprType(receiver) == $0.types.uintType } ?? false
         let isLongRange = sema.map { module.arena.exprType(receiver) == $0.types.longType } ?? false
+        let receiverRangeName = sema.flatMap { sema -> InternedString? in
+            guard let type = module.arena.exprType(receiver),
+                  case let .classType(classType) = sema.types.kind(of: type)
+            else {
+                return nil
+            }
+            return sema.symbols.symbol(classType.classSymbol)?.name
+        }
+        let isIntRange = receiverRangeName.map { interner.resolve($0) == "IntRange" || interner.resolve($0) == "Range" }
+            ?? (!isCharRange && !isLongRange && !isUIntRange && !isULongRange)
+        let isNamedLongRange = receiverRangeName.map { interner.resolve($0) == "LongRange" } ?? false
         let randomName = interner.intern("random")
         let randomOrNullName = interner.intern("randomOrNull")
 
@@ -38,6 +50,7 @@ extension CollectionLiteralLoweringPass {
                 arguments: [receiver], result: result,
                 canThrow: false, thrownResult: nil
             ))
+            if let result { setExprIDs.insert(result.rawValue) }
             return true
         }
 
@@ -124,6 +137,16 @@ extension CollectionLiteralLoweringPass {
                 canThrow: false, thrownResult: nil
             ))
             if let result { listExprIDs.insert(result.rawValue) }
+            return true
+        }
+
+        // toSet - IntRange only (STDLIB-GAP-PH2 low-risk slice)
+        if callee == lookup.toSetName, arguments.isEmpty, isIntRange, !isNamedLongRange {
+            loweredBody.append(.call(
+                symbol: nil, callee: lookup.kkRangeToSetName,
+                arguments: [receiver], result: result,
+                canThrow: false, thrownResult: nil
+            ))
             return true
         }
 

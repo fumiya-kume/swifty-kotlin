@@ -154,6 +154,55 @@ final class RangeSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testIntRangeToSetStubHasCorrectExternalLinkAndReturnType() throws {
+        let (sema, interner) = try makeSema()
+        let fq = ["kotlin", "ranges", "IntRange", "toSet"].map { interner.intern($0) }
+        let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: fq))
+        let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbol))
+        let setSymbol = try XCTUnwrap(sema.symbols.lookup(
+            fqName: ["kotlin", "collections", "Set"].map { interner.intern($0) }
+        ))
+
+        XCTAssertEqual(sema.symbols.externalLinkName(for: symbol), "kk_range_toSet")
+        XCTAssertEqual(signature.parameterTypes, [])
+        guard case let .classType(returnClassType) = sema.types.kind(of: signature.returnType) else {
+            return XCTFail("Expected IntRange.toSet() to return Set<Int>")
+        }
+        XCTAssertEqual(returnClassType.classSymbol, setSymbol)
+        guard case let .out(elementType) = try XCTUnwrap(returnClassType.args.first) else {
+            return XCTFail("Expected IntRange.toSet() to return Set<out Int>")
+        }
+        XCTAssertEqual(elementType, sema.types.intType)
+    }
+
+    func testIntRangeToSetResolvesInCallExpressions() throws {
+        let source = """
+        import kotlin.ranges.*
+
+        fun probe(range: IntRange): Set<Int> = range.toSet()
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected IntRange.toSet usage to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else {
+                    return false
+                }
+                return ctx.interner.resolve(callee) == "toSet"
+            })
+            let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_range_toSet")
+        }
+    }
+
     func testRangeRandomMembersResolveInCallExpressions() throws {
         try assertRandomCallLink(
             source: """

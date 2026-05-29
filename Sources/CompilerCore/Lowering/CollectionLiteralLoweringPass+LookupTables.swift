@@ -449,6 +449,7 @@ struct CollectionLiteralLookupTables {
     let kkRangeEndExclusiveName: InternedString
     let kkRangeCountName: InternedString
     let kkRangeToListName: InternedString
+    let kkRangeToSetName: InternedString
     let kkRangeForEachName: InternedString
     let kkRangeMapName: InternedString
     let kkRangeMapIndexedName: InternedString
@@ -1287,6 +1288,7 @@ struct CollectionLiteralLookupTables {
         kkRangeEndExclusiveName = interner.intern("kk_range_endExclusive")
         kkRangeCountName = interner.intern("kk_range_count")
         kkRangeToListName = interner.intern("kk_range_toList")
+        kkRangeToSetName = interner.intern("kk_range_toSet")
         kkRangeForEachName = interner.intern("kk_range_forEach")
         kkRangeMapName = interner.intern("kk_range_map")
         kkRangeMapIndexedName = interner.intern("kk_range_mapIndexed")

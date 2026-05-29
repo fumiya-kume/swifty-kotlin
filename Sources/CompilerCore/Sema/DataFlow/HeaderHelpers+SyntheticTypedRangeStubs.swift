@@ -151,6 +151,17 @@ extension DataFlowSemaPhase {
             interner: interner
         )
         registerSyntheticIntRangeMethod(
+            named: "toSet",
+            ownerSymbol: classSymbol,
+            classFQName: classFQName,
+            receiverType: intRangeType,
+            parameterTypes: [],
+            returnType: syntheticSetType(elementType: types.intType, symbols: symbols, types: types, interner: interner),
+            externalLinkName: "kk_range_toSet",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticIntRangeMethod(
             named: "toIntArray",
             ownerSymbol: classSymbol,
             classFQName: classFQName,
@@ -1086,6 +1097,22 @@ extension DataFlowSemaPhase {
         }
         return types.make(.classType(ClassType(
             classSymbol: listSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+    }
+
+    fileprivate func syntheticSetType(
+        elementType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID {
+        guard let setSymbol = symbols.lookupByShortName(interner.intern("Set")).first else {
+            return types.anyType
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: setSymbol,
             args: [.out(elementType)],
             nullability: .nonNull
         )))

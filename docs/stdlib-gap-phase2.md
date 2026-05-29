@@ -383,7 +383,7 @@ Legend: **implemented** = sema stub + lowering + runtime; **partial** = sema stu
 
 | Type | Status | Notes |
 |---|---|---|
-| `IntRange` | implemented | first, last, step, isEmpty, contains, iterator, reversed, toList, sorted, take, drop, etc. |
+| `IntRange` | implemented | first, last, step, isEmpty, contains, iterator, reversed, toList, toSet, sorted, take, drop, etc. |
 | `LongRange` | implemented | |
 | `UIntRange` | implemented | |
 | `ULongRange` | implemented | |
@@ -418,7 +418,7 @@ Legend: **implemented** = sema stub + lowering + runtime; **partial** = sema stu
 | `toLongArray` | implemented | |
 | `toUIntArray` | implemented | |
 | `toULongArray` | implemented | |
-| `toSet` | gap | on ranges |
+| `toSet` | partial | IntRange only |
 | `toSortedSet` | gap | |
 | `constrainTo` | gap | |
 | `take` | implemented | |

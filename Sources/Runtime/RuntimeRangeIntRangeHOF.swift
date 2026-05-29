@@ -30,6 +30,11 @@ public func kk_range_toList(_ rangeRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: elements))
 }
 
+@_cdecl("kk_range_toSet")
+public func kk_range_toSet(_ rangeRaw: Int) -> Int {
+    kk_list_to_set(kk_range_toList(rangeRaw))
+}
+
 @_cdecl("kk_range_forEach")
 public func kk_range_forEach(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
                              _ outThrown: UnsafeMutablePointer<Int>?) -> Int

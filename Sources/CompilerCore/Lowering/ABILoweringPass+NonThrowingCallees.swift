@@ -340,6 +340,7 @@ extension ABILoweringPass {
             interner.intern("kk_range_average"),
             interner.intern("kk_range_sorted"),
             interner.intern("kk_range_toList"),
+            interner.intern("kk_range_toSet"),
             interner.intern("kk_range_take"),
             interner.intern("kk_range_drop"),
             interner.intern("kk_range_average"),

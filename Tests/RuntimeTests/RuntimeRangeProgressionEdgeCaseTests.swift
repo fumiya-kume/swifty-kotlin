@@ -30,6 +30,12 @@ final class RuntimeRangeProgressionEdgeCaseTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_list_size(list), 0)
     }
 
+    func testIntEmptyRange_toSetIsEmpty() {
+        let empty = kk_op_rangeTo(10, 1)
+        let set = kk_range_toSet(empty)
+        XCTAssertEqual(kk_set_size(set), 0)
+    }
+
     // MARK: - Single-element range (from == to)
 
     func testIntSingleElementRange_notEmpty() {
@@ -50,6 +56,26 @@ final class RuntimeRangeProgressionEdgeCaseTests: IsolatedRuntimeXCTestCase {
         let list = kk_range_toList(single)
         XCTAssertEqual(kk_list_size(list), 1)
         XCTAssertEqual(kk_list_get(list, 0), 7)
+    }
+
+    func testIntRange_toSetContainsEachValueOnce() {
+        let range = kk_op_rangeTo(1, 3)
+        let set = kk_range_toSet(range)
+
+        XCTAssertEqual(kk_set_size(set), 3)
+        XCTAssertEqual(kk_unbox_bool(kk_set_contains(set, 1)), 1)
+        XCTAssertEqual(kk_unbox_bool(kk_set_contains(set, 2)), 1)
+        XCTAssertEqual(kk_unbox_bool(kk_set_contains(set, 3)), 1)
+        XCTAssertEqual(kk_unbox_bool(kk_set_contains(set, 4)), 0)
+    }
+
+    func testIntRange_toSetOrderInsensitive() {
+        let range = kk_op_downTo(3, 1)
+        let set = kk_range_toSet(range)
+        let elements = runtimeSetBox(from: set)?.elements ?? []
+
+        XCTAssertEqual(kk_set_size(set), 3)
+        XCTAssertEqual(Set(elements), Set([1, 2, 3]))
     }
 
     // MARK: - Boundary values (Int.MIN / Int.MAX)
