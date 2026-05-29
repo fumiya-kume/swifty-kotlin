@@ -1186,6 +1186,19 @@ extension DataFlowSemaPhase {
         symbols.setDirectSupertypes([inputStreamSymbol], for: bufferedInputStreamSymbol)
         types.setNominalDirectSupertypes([inputStreamSymbol], for: bufferedInputStreamSymbol)
 
+        // STDLIB-IO-FN-029: BufferedInputStream.readBytes() — delegate to the same
+        // runtime entry so that member dispatch resolves without a supertype walk.
+        registerFileMemberFunction(
+            named: "readBytes",
+            externalLinkName: "kk_input_stream_readAllBytes",
+            ownerSymbol: bufferedInputStreamSymbol,
+            ownerType: bufferedInputStreamType,
+            parameters: [],
+            returnType: listOfIntType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // InputStream.buffered() -> BufferedInputStream (uses DEFAULT_BUFFER_SIZE = 8 * 1024)
         registerFileMemberFunction(
             named: "buffered",
