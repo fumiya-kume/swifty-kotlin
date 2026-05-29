@@ -1,5 +1,4 @@
 @testable import CompilerCore
-import Foundation
 import XCTest
 
 extension CodegenBackendIntegrationTests {
@@ -34,37 +33,25 @@ extension CodegenBackendIntegrationTests {
         }
         """
 
-        try withTemporaryFile(contents: source) { path in
-            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
-            let ctx = try runCodegenPipeline(
-                inputPath: path,
-                moduleName: "Base64EdgeCases",
-                emit: .executable,
-                outputPath: outputBase
-            )
-            try LinkPhase().run(ctx)
-
-            let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(
-                normalizedStdout,
-                """
-                Zm9v
-                foo
-                4KC-
-                foobar
-                foobar
-                Zm9v
-                4KC-
-                Zm9vYmFy
-                Zm9vYg==
-                Zm9vYg
-                Zm9vYg==
-                4KC-IQ
-                4KC+IQ==
-                Zm9vYg
-                """ + "\n"
-            )
-        }
+        let normalizedStdout = try runCodegenExecutableStdout(source, moduleName: "Base64EdgeCases")
+        XCTAssertEqual(
+            normalizedStdout,
+            """
+            Zm9v
+            foo
+            4KC-
+            foobar
+            foobar
+            Zm9v
+            4KC-
+            Zm9vYmFy
+            Zm9vYg==
+            Zm9vYg
+            Zm9vYg==
+            4KC-IQ
+            4KC+IQ==
+            Zm9vYg
+            """ + "\n"
+        )
     }
 }

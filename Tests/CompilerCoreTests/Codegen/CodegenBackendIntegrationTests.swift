@@ -3,6 +3,25 @@ import Foundation
 import XCTest
 
 final class CodegenBackendIntegrationTests: XCTestCase {
+    func runCodegenExecutableStdout(_ source: String, moduleName: String) throws -> String {
+        var normalizedStdout: String?
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: moduleName,
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+        }
+        return try XCTUnwrap(normalizedStdout)
+    }
+
     func testCodegenEmitsKirDumpArtifact() throws {
         let source = """
         inline fun helper(x: Int) = x + 1
