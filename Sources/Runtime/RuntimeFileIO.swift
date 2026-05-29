@@ -1074,6 +1074,25 @@ public func kk_buffered_reader_forEachLine(
     return 0
 }
 
+// MARK: - STDLIB-IO-FN-033: Reader.readText()
+//
+// Kotlin's `kotlin.io.Reader.readText(): String` extension drains the remaining
+// content of a `Reader` and returns it as a single `String`. In KSwiftK every
+// concrete `Reader` instance is currently a `BufferedReader` so we dispatch to
+// `RuntimeBufferedReaderBox.readText()`. The function does NOT close the
+// reader, matching the stdlib contract (callers should pair with `use { }`).
+// Errors during stream reads bubble up as an empty string with no thrown
+// exception, mirroring the lenient behaviour of our other reader helpers
+// (`readLine`, `readLines`). The Sema extension signature is `() -> String`,
+// so the only ABI argument is the receiver handle — no `outThrown` parameter.
+@_cdecl("kk_reader_readText")
+public func kk_reader_readText(_ readerRaw: Int) -> Int {
+    guard let reader = runtimeBufferedReaderBox(from: readerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_reader_readText received invalid Reader handle")
+    }
+    return fileMakeStringRaw(reader.readText())
+}
+
 // MARK: - STDLIB-IO-091: BufferedWriter
 
 private func runtimeBufferedWriterBox(from raw: Int) -> RuntimeBufferedWriterBox? {

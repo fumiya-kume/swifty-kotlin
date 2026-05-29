@@ -1337,6 +1337,28 @@ final class RuntimeBufferedReaderBox {
         return remaining
     }
 
+    /// Reads the remaining content of the reader into a single `String`
+    /// (STDLIB-IO-FN-033). Mirrors `kotlin.io.readText()`: drains any buffered
+    /// bytes and then reads the underlying stream to EOF, decoding the
+    /// accumulated bytes as UTF-8. Returns an empty string if the reader is
+    /// already closed or has nothing left to read. Does NOT close the reader,
+    /// matching Kotlin's `Reader.readText()` contract (callers wrap in `use`
+    /// to release the underlying file handle).
+    func readText() -> String {
+        guard !closed else { return "" }
+        var data = pendingData
+        pendingData.removeAll(keepingCapacity: false)
+        while !reachedEOF {
+            if !readNextChunk() {
+                reachedEOF = true
+            } else {
+                data.append(pendingData)
+                pendingData.removeAll(keepingCapacity: false)
+            }
+        }
+        return String(decoding: data, as: UTF8.self)
+    }
+
     /// Reads a single character, returning its Unicode scalar value, or -1 on EOF.
     func read() -> Int {
         guard !closed else { return -1 }
