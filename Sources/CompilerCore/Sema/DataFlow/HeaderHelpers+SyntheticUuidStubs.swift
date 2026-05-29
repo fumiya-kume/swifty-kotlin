@@ -262,6 +262,19 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-UUID-FN-004: java.util.UUID.toKotlinUuid() JVM bridge ---
+        registerUuidTopLevelExtensionFunction(
+            named: "toKotlinUuid",
+            externalLinkName: "kk_java_uuid_to_kotlin_uuid",
+            receiverType: javaUuidType,
+            returnType: uuidType,
+            parameters: [],
+            packageFQName: kotlinUuidPkg,
+            flags: [.synthetic, .inlineFunction],
+            symbols: symbols,
+            interner: interner
+        )
+
         registerUuidInstanceMethod(
             named: "toByteArray",
             externalLinkName: "kk_uuid_toByteArray",

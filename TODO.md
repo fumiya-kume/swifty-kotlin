@@ -489,6 +489,8 @@
 - [ ] STDLIB-UUID-FN-002: `putUuid` 関数の実装
 - [x] STDLIB-UUID-FN-003: `toJavaUuid` 関数の実装
 - [ ] STDLIB-UUID-FN-004: `toKotlinUuid` 関数の実装
+- [ ] STDLIB-UUID-FN-003: `toJavaUuid` 関数の実装
+- [x] STDLIB-UUID-FN-004: `toKotlinUuid` 関数の実装
 
 ### Phase 4: リフレクション・数値・テキスト・その他 stdlib
 - [ ] STDLIB-GAP-PH4: `kotlin.math` / `kotlin.random` / `kotlin.reflect` / `kotlin.comparisons` / `kotlin.annotation` / `kotlin.system` / `kotlin.uuid` / `kotlin.native` 周辺の「部分」を潰す
