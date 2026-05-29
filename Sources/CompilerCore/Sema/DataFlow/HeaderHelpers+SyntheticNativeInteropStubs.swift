@@ -4168,8 +4168,34 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner
     ) {
+        let cinteropPkg = ensurePackage(
+            path: ["kotlinx", "cinterop"],
+            symbols: symbols,
+            interner: interner
+        )
         let cinteropInternalPkg = ensurePackage(
             path: ["kotlinx", "cinterop", "internal"],
+            symbols: symbols,
+            interner: interner
+        )
+        let nativePtrType: TypeID
+        if let nativePtrSymbol = symbols.lookup(fqName: cinteropPkg + [interner.intern("NativePtr")]) {
+            nativePtrType = types.make(.classType(ClassType(
+                classSymbol: nativePtrSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+        } else {
+            nativePtrType = types.anyType
+        }
+
+        // STDLIB-CINTEROP-INTERNAL-FN-001: fun convertBlockPtrToKotlinFunction(blockPtr: NativePtr): Any
+        registerSyntheticNativeTopLevelFunction(
+            named: "convertBlockPtrToKotlinFunction",
+            packageFQName: cinteropInternalPkg,
+            receiverType: nil,
+            parameters: [(name: "blockPtr", type: nativePtrType)],
+            returnType: types.anyType,
             symbols: symbols,
             interner: interner
         )
