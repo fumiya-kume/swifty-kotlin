@@ -115,6 +115,8 @@ Legend: **Done** = runtime entry point exists + sema stub registered.
 
 Inventory is pinned by `RandomSyntheticLinkTests+OverloadCoverage` and runtime ABI coverage in
 `RuntimeABISpec+Random`.
+Runtime seed reproducibility and boundary behavior are pinned by `RuntimeRandomBoundaryTests` and
+`RuntimeSecureRandomTests`.
 
 **Summary: 0 gaps, 40 items Done.**
 
