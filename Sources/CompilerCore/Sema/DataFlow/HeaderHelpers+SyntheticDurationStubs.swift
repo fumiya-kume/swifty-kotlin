@@ -326,12 +326,36 @@ extension DataFlowSemaPhase {
         )
 
         registerDurationMemberMethod(
+            named: "times",
+            externalLinkName: "kk_duration_times_double",
+            ownerSymbol: durationSymbol,
+            ownerType: durationType,
+            parameterTypes: [doubleType],
+            returnType: durationType,
+            canThrow: true,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationMemberMethod(
             named: "div",
             externalLinkName: "kk_duration_div_int",
             ownerSymbol: durationSymbol,
             ownerType: durationType,
             parameterTypes: [intType],
             returnType: durationType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationMemberMethod(
+            named: "div",
+            externalLinkName: "kk_duration_div_double",
+            ownerSymbol: durationSymbol,
+            ownerType: durationType,
+            parameterTypes: [doubleType],
+            returnType: durationType,
+            canThrow: true,
             symbols: symbols,
             interner: interner
         )
@@ -868,6 +892,7 @@ extension DataFlowSemaPhase {
         parameterTypes: [TypeID],
         returnType: TypeID,
         isOperator: Bool = true,
+        canThrow: Bool = false,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -885,13 +910,18 @@ extension DataFlowSemaPhase {
             if isOperator {
                 symbols.insertFlags([.operatorFunction], for: existing)
             }
+            if canThrow {
+                symbols.insertFlags([.throwingFunction], for: existing)
+            }
             if let existingSignature = symbols.functionSignature(for: existing),
                existingSignature.receiverType != ownerType
             {
                 symbols.setFunctionSignature(
-                    existingSignature.withReceiverType(ownerType),
+                    existingSignature.withReceiverType(ownerType).withCanThrow(existingSignature.canThrow || canThrow),
                     for: existing
                 )
+            } else if canThrow, let existingSignature = symbols.functionSignature(for: existing) {
+                symbols.setFunctionSignature(existingSignature.withCanThrow(true), for: existing)
             }
             return
         }
@@ -899,6 +929,9 @@ extension DataFlowSemaPhase {
         var flags: SymbolFlags = [.synthetic]
         if isOperator {
             flags.insert(.operatorFunction)
+        }
+        if canThrow {
+            flags.insert(.throwingFunction)
         }
         let functionSymbol = symbols.define(
             kind: .function,
@@ -939,6 +972,7 @@ extension DataFlowSemaPhase {
                 parameterTypes: parameterTypes,
                 returnType: returnType,
                 isSuspend: false,
+                canThrow: canThrow,
                 valueParameterSymbols: paramSymbols,
                 valueParameterHasDefaultValues: paramDefaults,
                 valueParameterIsVararg: paramVarargs,
@@ -1217,6 +1251,24 @@ extension DataFlowSemaPhase {
 
 private extension FunctionSignature {
     func withReceiverType(_ receiverType: TypeID?) -> FunctionSignature {
+        FunctionSignature(
+            receiverType: receiverType,
+            parameterTypes: parameterTypes,
+            returnType: returnType,
+            isSuspend: isSuspend,
+            canThrow: canThrow,
+            valueParameterSymbols: valueParameterSymbols,
+            valueParameterHasDefaultValues: valueParameterHasDefaultValues,
+            valueParameterIsVararg: valueParameterIsVararg,
+            typeParameterSymbols: typeParameterSymbols,
+            reifiedTypeParameterIndices: reifiedTypeParameterIndices,
+            typeParameterUpperBounds: typeParameterUpperBounds,
+            typeParameterUpperBoundsList: typeParameterUpperBoundsList,
+            classTypeParameterCount: classTypeParameterCount
+        )
+    }
+
+    func withCanThrow(_ canThrow: Bool) -> FunctionSignature {
         FunctionSignature(
             receiverType: receiverType,
             parameterTypes: parameterTypes,

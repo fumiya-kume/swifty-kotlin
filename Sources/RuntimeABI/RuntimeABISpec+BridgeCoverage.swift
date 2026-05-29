@@ -317,11 +317,29 @@ public extension RuntimeABISpec {
     static let timeAndPathBridgeFunctions: [RuntimeABIFunctionSpec] =
         [
             bridgeSpec("kk_duration_div_int", section: "Duration", params: ["durationRaw", "scale"]),
+            bridgeSpec(
+                "kk_duration_div_double",
+                section: "Duration",
+                typedParams: [
+                    ("durationRaw", .intptr),
+                    ("scaleBits", .intptr),
+                    ("outThrown", .nullableIntptrPointer),
+                ]
+            ),
             bridgeSpec("kk_duration_isFinite", section: "Duration", params: ["durationRaw"]),
             bridgeSpec("kk_duration_isInfinite", section: "Duration", params: ["durationRaw"]),
             bridgeSpec("kk_duration_isNegative", section: "Duration", params: ["durationRaw"]),
             bridgeSpec("kk_duration_isPositive", section: "Duration", params: ["durationRaw"]),
             bridgeSpec("kk_duration_times_int", section: "Duration", params: ["durationRaw", "scale"]),
+            bridgeSpec(
+                "kk_duration_times_double",
+                section: "Duration",
+                typedParams: [
+                    ("durationRaw", .intptr),
+                    ("scaleBits", .intptr),
+                    ("outThrown", .nullableIntptrPointer),
+                ]
+            ),
             bridgeSpec("kk_duration_unary_minus", section: "Duration", params: ["durationRaw"]),
             bridgeSpec("kk_instant_compare", section: "System", params: ["aRaw", "bRaw"]),
             bridgeSpec("kk_instant_epoch_seconds", section: "System", params: ["instantRaw"]),

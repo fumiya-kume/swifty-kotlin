@@ -23,14 +23,16 @@ final class DurationSyntheticStubTests: XCTestCase {
             nullability: .nonNull
         )))
 
-        let expectedMembers: [(name: String, link: String, parameterTypes: [TypeID])] = [
-            ("plus", "kk_duration_plus", [durationType]),
-            ("minus", "kk_duration_minus", [durationType]),
-            ("times", "kk_duration_times_int", [sema.types.intType]),
-            ("div", "kk_duration_div_int", [sema.types.intType]),
-            ("div", "kk_duration_div_duration", [durationType]),
-            ("compareTo", "kk_duration_compareTo", [durationType]),
-            ("unaryMinus", "kk_duration_unary_minus", []),
+        let expectedMembers: [(name: String, link: String, parameterTypes: [TypeID], canThrow: Bool)] = [
+            ("plus", "kk_duration_plus", [durationType], false),
+            ("minus", "kk_duration_minus", [durationType], false),
+            ("times", "kk_duration_times_int", [sema.types.intType], false),
+            ("times", "kk_duration_times_double", [sema.types.doubleType], true),
+            ("div", "kk_duration_div_int", [sema.types.intType], false),
+            ("div", "kk_duration_div_double", [sema.types.doubleType], true),
+            ("div", "kk_duration_div_duration", [durationType], false),
+            ("compareTo", "kk_duration_compareTo", [durationType], false),
+            ("unaryMinus", "kk_duration_unary_minus", [], false),
         ]
 
         for member in expectedMembers {
@@ -55,6 +57,35 @@ final class DurationSyntheticStubTests: XCTestCase {
                 "Duration.\(member.name) should be an operatorFunction"
             )
             XCTAssertEqual(sema.symbols.externalLinkName(for: symbol), member.link)
+            XCTAssertEqual(
+                sema.symbols.functionSignature(for: symbol)?.canThrow,
+                member.canThrow,
+                "Duration.\(member.name) throwing flag should match runtime ABI"
+            )
+        }
+    }
+
+    func testDurationDoubleScaleOperatorsResolveInSource() throws {
+        let source = """
+        import kotlin.time.Duration
+        import kotlin.time.Duration.Companion.seconds
+
+        fun main() {
+            val base: Duration = 3.seconds
+            val multiplied: Duration = base * 2.5
+            val divided: Duration = base / 2.0
+            println(multiplied)
+            println(divided)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Duration Double scale operators should resolve: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
         }
     }
 
