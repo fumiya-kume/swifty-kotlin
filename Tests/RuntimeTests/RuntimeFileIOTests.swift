@@ -156,6 +156,43 @@ final class RuntimeFileIOTests: IsolatedRuntimeXCTestCase {
         )
     }
 
+    func testFileDeleteRecursivelyRemovesDirectoryTree() throws {
+        let rootURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let nestedURL = rootURL.appendingPathComponent("nested")
+        let fileURL = nestedURL.appendingPathComponent("value.txt")
+        defer { try? FileManager.default.removeItem(at: rootURL) }
+
+        try FileManager.default.createDirectory(at: nestedURL, withIntermediateDirectories: true)
+        try "value".write(to: fileURL, atomically: true, encoding: .utf8)
+
+        let rootRaw = runtimeTestFileHandle(rootURL.path)
+        XCTAssertEqual(kk_unbox_bool(kk_file_deleteRecursively(rootRaw)), 1)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: rootURL.path))
+        XCTAssertEqual(kk_unbox_bool(kk_file_deleteRecursively(rootRaw)), 1)
+    }
+
+    func testFileWalkShortcutsPreserveRootDirection() throws {
+        let rootURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let nestedURL = rootURL.appendingPathComponent("nested")
+        let fileURL = nestedURL.appendingPathComponent("value.txt")
+        defer { try? FileManager.default.removeItem(at: rootURL) }
+
+        try FileManager.default.createDirectory(at: nestedURL, withIntermediateDirectories: true)
+        try "value".write(to: fileURL, atomically: true, encoding: .utf8)
+
+        let rootRaw = runtimeTestFileHandle(rootURL.path)
+        let topDown = fileWalkPaths(kk_file_walkTopDown(rootRaw))
+        let bottomUp = fileWalkPaths(kk_file_walkBottomUp(rootRaw))
+        let directionalBottomUp = fileWalkPaths(kk_file_walk_direction(rootRaw, 1))
+
+        XCTAssertEqual(topDown.first, rootURL.path)
+        XCTAssertEqual(bottomUp.last, rootURL.path)
+        XCTAssertEqual(directionalBottomUp.last, rootURL.path)
+        XCTAssertTrue(topDown.contains(fileURL.path))
+        XCTAssertTrue(bottomUp.contains(fileURL.path))
+        XCTAssertTrue(directionalBottomUp.contains(fileURL.path))
+    }
+
     func testStringByteInputStreamReadsEncodedBytes() {
         var thrown = 0
         let streamRaw = kk_string_byteInputStream_default(runtimeStringRaw("ABC"), &thrown)
@@ -276,6 +313,10 @@ final class RuntimeFileIOTests: IsolatedRuntimeXCTestCase {
 
     private func runtimeTestFileHandle(_ path: String) -> Int {
         kk_file_new(runtimeStringRaw(path))
+    }
+
+    private func fileWalkPaths(_ raw: Int) -> [String] {
+        runtimeListBox(from: raw)?.elements.compactMap { readString(kk_file_path($0)) } ?? []
     }
 
     private func runtimeStringRaw(_ value: String) -> Int {

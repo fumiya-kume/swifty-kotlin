@@ -1080,9 +1080,13 @@ extension ABILoweringPass {
             interner.intern("kk_file_canWrite"),
             interner.intern("kk_file_canExecute"),
             interner.intern("kk_file_delete"),
+            interner.intern("kk_file_deleteRecursively"),
             interner.intern("kk_file_mkdirs"),
             interner.intern("kk_file_listFiles"),
             interner.intern("kk_file_walk"),
+            interner.intern("kk_file_walk_direction"),
+            interner.intern("kk_file_walkTopDown"),
+            interner.intern("kk_file_walkBottomUp"),
             // Files utility (STDLIB-IO-090) — non-throwing subset
             interner.intern("kk_files_isRegularFile"),
             interner.intern("kk_files_isDirectory"),

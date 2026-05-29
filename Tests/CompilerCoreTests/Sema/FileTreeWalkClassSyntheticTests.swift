@@ -169,6 +169,34 @@ final class FileTreeWalkClassSyntheticTests: XCTestCase {
                 && signature.returnType == fileTreeWalkType
         })
         XCTAssertEqual(sema.symbols.externalLinkName(for: directionalWalk), "kk_file_walk_direction")
+
+        let walkTopDownFunctions = sema.symbols.lookupAll(fqName: [
+            interner.intern("java"),
+            interner.intern("io"),
+            interner.intern("File"),
+            interner.intern("walkTopDown"),
+        ])
+        let walkTopDown = try XCTUnwrap(walkTopDownFunctions.first { symbolID in
+            guard let signature = sema.symbols.functionSignature(for: symbolID) else { return false }
+            return signature.receiverType == fileType
+                && signature.parameterTypes == []
+                && signature.returnType == fileTreeWalkType
+        })
+        XCTAssertEqual(sema.symbols.externalLinkName(for: walkTopDown), "kk_file_walkTopDown")
+
+        let walkBottomUpFunctions = sema.symbols.lookupAll(fqName: [
+            interner.intern("java"),
+            interner.intern("io"),
+            interner.intern("File"),
+            interner.intern("walkBottomUp"),
+        ])
+        let walkBottomUp = try XCTUnwrap(walkBottomUpFunctions.first { symbolID in
+            guard let signature = sema.symbols.functionSignature(for: symbolID) else { return false }
+            return signature.receiverType == fileType
+                && signature.parameterTypes == []
+                && signature.returnType == fileTreeWalkType
+        })
+        XCTAssertEqual(sema.symbols.externalLinkName(for: walkBottomUp), "kk_file_walkBottomUp")
     }
 
     func testFileTreeWalkResolvesInSource() throws {
@@ -180,6 +208,8 @@ final class FileTreeWalkClassSyntheticTests: XCTestCase {
 
         fun defaultWalk(file: File): FileTreeWalk = file.walk()
         fun bottomUpWalk(file: File): FileTreeWalk = file.walk(FileWalkDirection.BOTTOM_UP)
+        fun topDownShortcut(file: File): FileTreeWalk = file.walkTopDown()
+        fun bottomUpShortcut(file: File): FileTreeWalk = file.walkBottomUp()
         fun walkAsSequence(file: File): Sequence<File> = file.walk()
         fun constructDefault(file: File): FileTreeWalk = FileTreeWalk(file)
         fun constructBottomUp(file: File): FileTreeWalk = FileTreeWalk(file, FileWalkDirection.BOTTOM_UP)
