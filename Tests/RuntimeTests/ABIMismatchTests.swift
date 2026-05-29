@@ -109,7 +109,8 @@ final class ABIMismatchTests: XCTestCase {
         // Keep this in sync with RuntimeABISpec.stringFunctions entries.
         // STDLIB-TEXT-FN-012 adds kk_string_contains_ignoreCase (204 → 205).
         // STDLIB-TEXT-FN-109 adds kk_string_toTypedArray (205 → 206).
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 206)
+        // STDLIB-TEXT-FN-104 adds kk_string_toMutableList (206 → 207).
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 207)
     }
 
     func testRegexFunctionCount() {
