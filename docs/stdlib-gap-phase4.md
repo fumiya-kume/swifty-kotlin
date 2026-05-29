@@ -185,21 +185,32 @@ Inventory is pinned by `RandomSyntheticLinkTests+OverloadCoverage` and runtime A
 
 | Symbol | Status | Notes |
 |---|---|---|
+| `Comparator<T>` interface synthetic stub | Done | Registered via `HeaderHelpers+SyntheticComparatorStubs` |
+| `Comparator.compare(a, b)` | Done | Interface member |
 | `compareBy { }` (single selector) | Done | `kk_comparator_from_selector` |
 | `compareByDescending { }` | Done | `kk_comparator_from_selector_descending` |
 | `compareBy` multi-selector | Done | `kk_comparator_from_multi_selectors*` |
-| `compareByDescending` primitive variant | Done | |
-| `thenBy / thenByDescending` | Done | `kk_comparator_then_by*` |
-| `then(comparator)` / `thenDescending` | Done | `kk_comparator_then_comparator / then_descending` |
+| `compareByPrimitive` | Done | `kk_comparator_from_selector_primitive` |
+| `compareByDescending` primitive variant | Done | `kk_comparator_from_selector_primitive_descending` |
+| `thenBy` | Done | `kk_comparator_then_by / kk_comparator_then_by_comparator_selector` |
+| `thenByDescending` | Done | `kk_comparator_then_by_descending / kk_comparator_then_by_descending_comparator_selector` |
+| `thenComparator` | Done | `kk_comparator_then_comparator` |
+| `thenDescending` | Done | `kk_comparator_then_descending` |
 | `naturalOrder()` | Done | `kk_comparator_natural_order` |
 | `reverseOrder()` | Done | `kk_comparator_reverse_order` |
 | `reversed()` | Done | `kk_comparator_reversed` |
 | `nullsFirst / nullsLast` | Done | `kk_comparator_nulls_first / nulls_last` |
-| `compareValues(a, b)` top-level | Gap | No `kk_compare_values` entry point or sema stub |
-| `compareValuesBy(a, b, vararg selectors)` | Gap | No entry point or sema stub |
-| `Comparator<T>` interface synthetic stub | Done | Registered via `HeaderHelpers+SyntheticComparatorStubs` |
+| `compareValues(a, b)` top-level | Done | `kk_compareValues` |
+| `compareValuesBy(a, b, selector)` | Done | `kk_compareValuesBy1` |
+| `compareValuesBy(a, b, selector1, selector2)` | Done | `kk_compareValuesBy` |
+| `compareValuesBy(a, b, selector1, selector2, selector3)` | Done | `kk_compareValuesBy3` |
+| `compareValuesBy(a, b, vararg selectors)` | Done | `kk_compareValuesByVararg` |
+| `compareValuesBy(a, b, comparator, selector)` | Done | `kk_compareValuesByComparator` |
 
-**Summary: ~2 gaps (`compareValues`, `compareValuesBy`), 11 items Done.**
+Inventory is pinned by `ComparisonsAPISurfaceInventoryTests` and runtime ABI coverage in
+`RuntimeABISpec+Comparator`.
+
+**Summary: 0 gaps, 20 items Done.**
 
 ---
 
@@ -312,12 +323,12 @@ Inventory is pinned by `RandomSyntheticLinkTests+OverloadCoverage` and runtime A
 | `kotlin.math` | 25 | 0 | 4 |
 | `kotlin.random` | 39 | 0 | 1 |
 | `kotlin.reflect` | 28 | 2 | 2 |
-| `kotlin.comparisons` | 11 | 0 | 2 |
+| `kotlin.comparisons` | 20 | 0 | 0 |
 | `kotlin.annotation` | 14 | 1 | 0 |
 | `kotlin.system` | 7 | 0 | 2 |
 | `kotlin.uuid` | 10 | 1 | 4 |
 | `kotlin.native` / `kotlinx.cinterop` | 14 | 0 | 5 |
-| **Total** | **148** | **4** | **20** |
+| **Total** | **157** | **4** | **18** |
 
 ---
 
@@ -325,6 +336,6 @@ Inventory is pinned by `RandomSyntheticLinkTests+OverloadCoverage` and runtime A
 
 1. **`kotlin.math` — `min/max/clamp` top-level** (frequently used in real code)
 2. **`kotlin.uuid` — `fromLongs`, `fromByteArray`, `parseOrNull`** (API completeness)
-3. **`kotlin.comparisons` — `compareValues`, `compareValuesBy`** (needed for sort helpers)
+3. **`kotlin.random` — `SecureRandom.nextBytes(size)`** (allocating overload parity)
 4. **`kotlin.reflect` — `KType.equals`** (needed for `typeOf<T>() == typeOf<U>()` patterns)
 5. **`kotlinx.cinterop` — `StableRef<T>`** (required by Kotlin/Native interop patterns)
