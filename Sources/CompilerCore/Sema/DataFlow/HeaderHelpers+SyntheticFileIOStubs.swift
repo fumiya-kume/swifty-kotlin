@@ -442,6 +442,34 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // MARK: - File.forEachBlock(action) and File.forEachBlock(blockSize, action) (STDLIB-IO-FN-016)
+        let byteArrayToIntToUnitType = types.make(.functionType(FunctionType(
+            params: [listOfIntType, types.intType],
+            returnType: types.unitType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        registerFileMemberFunction(
+            named: "forEachBlock",
+            externalLinkName: "kk_file_forEachBlock",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [("action", byteArrayToIntToUnitType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerFileMemberFunction(
+            named: "forEachBlock",
+            externalLinkName: "kk_file_forEachBlock_blockSize",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [("blockSize", types.intType), ("action", byteArrayToIntToUnitType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // MARK: - File.useLines {} (STDLIB-566)
 
         // (List<String>) -> T  (represented as Any for generic return)

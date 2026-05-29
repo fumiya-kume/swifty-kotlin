@@ -791,6 +791,10 @@ struct CollectionLiteralLookupTables {
     let forEachLineName: InternedString
     let kkFileForEachLineName: InternedString
     let kkBufferedReaderForEachLineName: InternedString
+    // STDLIB-IO-FN-016: File.forEachBlock
+    let forEachBlockName: InternedString
+    let kkFileForEachBlockName: InternedString
+    let kkFileForEachBlockBlockSizeName: InternedString
     let useLinesName: InternedString
     let kkFileUseLinesName: InternedString
     let kkBufferedReaderUseLinesName: InternedString
@@ -1615,6 +1619,10 @@ struct CollectionLiteralLookupTables {
         forEachLineName = interner.intern("forEachLine")
         kkFileForEachLineName = interner.intern("kk_file_forEachLine")
         kkBufferedReaderForEachLineName = interner.intern("kk_buffered_reader_forEachLine")
+        // STDLIB-IO-FN-016: File.forEachBlock
+        forEachBlockName = interner.intern("forEachBlock")
+        kkFileForEachBlockName = interner.intern("kk_file_forEachBlock")
+        kkFileForEachBlockBlockSizeName = interner.intern("kk_file_forEachBlock_blockSize")
         useLinesName = interner.intern("useLines")
         kkFileUseLinesName = interner.intern("kk_file_useLines")
         kkBufferedReaderUseLinesName = interner.intern("kk_buffered_reader_useLines")

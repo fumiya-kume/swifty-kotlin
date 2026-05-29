@@ -649,6 +649,52 @@ public func kk_file_forEachLine(_ fileRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
     return 0
 }
 
+// MARK: - STDLIB-IO-FN-016: File.forEachBlock
+
+private let fileForEachBlockDefaultSize = 4096
+
+private func fileForEachBlockImpl(
+    fileRaw: Int, blockSize: Int, fnPtr: Int, closureRaw: Int,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: forEachBlock received invalid File handle")
+    }
+    let effectiveBlockSize = max(1, blockSize)
+    guard let data = try? Data(contentsOf: URL(fileURLWithPath: file.path)) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: Cannot read file \(file.path)")
+        return 0
+    }
+    var offset = data.startIndex
+    while offset < data.endIndex {
+        let end = data.index(offset, offsetBy: effectiveBlockSize, limitedBy: data.endIndex) ?? data.endIndex
+        let chunk = data[offset ..< end]
+        let bytesRead = chunk.count
+        let bufferElements = chunk.map { Int(Int8(bitPattern: $0)) }
+        let bufferListRaw = registerRuntimeObject(RuntimeListBox(elements: bufferElements))
+        let bytesReadRaw = kk_box_int(bytesRead)
+        var thrown = 0
+        _ = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: bufferListRaw, rhs: bytesReadRaw, outThrown: &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return 0
+        }
+        offset = end
+    }
+    return 0
+}
+
+@_cdecl("kk_file_forEachBlock")
+public func kk_file_forEachBlock(_ fileRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    fileForEachBlockImpl(fileRaw: fileRaw, blockSize: fileForEachBlockDefaultSize, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown)
+}
+
+@_cdecl("kk_file_forEachBlock_blockSize")
+public func kk_file_forEachBlock_blockSize(_ fileRaw: Int, _ blockSizeRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    fileForEachBlockImpl(fileRaw: fileRaw, blockSize: kk_unbox_int(blockSizeRaw), fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown)
+}
+
 // MARK: - STDLIB-566: File.useLines {}
 
 @_cdecl("kk_file_useLines")
