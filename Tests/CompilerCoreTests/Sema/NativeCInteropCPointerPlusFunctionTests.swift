@@ -99,5 +99,28 @@ final class NativeCInteropCPointerPlusFunctionTests: XCTestCase {
             ctx.diagnostics.hasError,
             "Expected CPointer.plus to resolve, got: \(ctx.diagnostics.diagnostics)"
         )
+        let ast = try XCTUnwrap(ctx.ast)
+        let sema = try XCTUnwrap(ctx.sema)
+        let interner = ctx.interner
+        let plusFQName = ["kotlinx", "cinterop", "plus"].map { interner.intern($0) }
+        let plusCandidates = Set(sema.symbols.lookupAll(fqName: plusFQName))
+        let plusExprs = ast.arena.exprs.indices.compactMap { index -> ExprID? in
+            let exprID = ExprID(rawValue: Int32(index))
+            guard let expr = ast.arena.expr(exprID),
+                  case .binary(.add, _, _, _) = expr
+            else {
+                return nil
+            }
+            return exprID
+        }
+
+        XCTAssertEqual(plusExprs.count, 2)
+        for exprID in plusExprs {
+            let chosen = try XCTUnwrap(
+                sema.bindings.callBinding(for: exprID)?.chosenCallee,
+                "Expected CPointer.plus binary expression to bind a callee"
+            )
+            XCTAssertTrue(plusCandidates.contains(chosen))
+        }
     }
 }
