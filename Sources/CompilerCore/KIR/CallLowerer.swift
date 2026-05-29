@@ -1167,9 +1167,29 @@ final class CallLowerer {
             return nil
         }
 
+        // For append(value), dispatch to typed overloads when the argument is a primitive.
+        if interner.resolve(sourceCalleeName) == "append", loweredArguments.count == 1 {
+            let argCallee: String
+            if let argType = arena.exprType(loweredArguments[0]) {
+                let nonNull = sema.types.makeNonNullable(argType)
+                if nonNull == sema.types.booleanType {
+                    argCallee = "kk_string_builder_append_bool"
+                } else if nonNull == sema.types.charType {
+                    argCallee = "kk_string_builder_append_char"
+                } else if nonNull == sema.types.make(.primitive(.float, .nonNull)) {
+                    argCallee = "kk_string_builder_append_float"
+                } else if nonNull == sema.types.make(.primitive(.double, .nonNull)) {
+                    argCallee = "kk_string_builder_append_double"
+                } else {
+                    argCallee = "kk_string_builder_append_obj"
+                }
+            } else {
+                argCallee = "kk_string_builder_append_obj"
+            }
+            return (implicitReceiver, interner.intern(argCallee))
+        }
+
         let callee: String? = switch (interner.resolve(sourceCalleeName), loweredArguments.count) {
-        case ("append", 1):
-            "kk_string_builder_append_obj"
         case ("appendLine", 0):
             "kk_string_builder_append_line_noarg_obj"
         case ("appendLine", 1):
