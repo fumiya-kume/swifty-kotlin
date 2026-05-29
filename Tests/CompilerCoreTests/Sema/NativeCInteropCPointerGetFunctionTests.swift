@@ -76,5 +76,24 @@ final class NativeCInteropCPointerGetFunctionTests: XCTestCase {
             ctx.diagnostics.hasError,
             "Expected CPointer.get to resolve via indexing syntax, got: \(ctx.diagnostics.diagnostics)"
         )
+        let ast = try XCTUnwrap(ctx.ast)
+        let sema = try XCTUnwrap(ctx.sema)
+        let interner = ctx.interner
+        let getFQName = ["kotlinx", "cinterop", "get"].map { interner.intern($0) }
+        let getCandidates = Set(sema.symbols.lookupAll(fqName: getFQName))
+        let indexedAccess = try XCTUnwrap(ast.arena.exprs.indices.compactMap { index -> ExprID? in
+            let exprID = ExprID(rawValue: Int32(index))
+            guard let expr = ast.arena.expr(exprID),
+                  case .indexedAccess = expr
+            else {
+                return nil
+            }
+            return exprID
+        }.first)
+        let chosen = try XCTUnwrap(
+            sema.bindings.callBinding(for: indexedAccess)?.chosenCallee,
+            "Expected CPointer.get indexed access to bind a callee"
+        )
+        XCTAssertTrue(getCandidates.contains(chosen))
     }
 }
