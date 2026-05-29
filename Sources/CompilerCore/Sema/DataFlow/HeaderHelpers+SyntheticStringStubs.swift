@@ -1296,6 +1296,7 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // STDLIB-TEXT-FN-074: String.substringAfter(delimiter, missingDelimiterValue)
         registerSyntheticStringExtensionFunction(
             named: "substringAfter",
             externalLinkName: "kk_string_substringAfter",
