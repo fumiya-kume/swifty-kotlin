@@ -26,7 +26,7 @@ final class PathCreateTempDirectoryFunctionTests: XCTestCase {
                 return nil
             }
             // Callee is a name expression whose text is the function name.
-            if case let .name(text, _, _) = ast.arena.expr(callee),
+            if case let .nameRef(text, _) = ast.arena.expr(callee),
                interner.resolve(text) == name {
                 return exprID
             }
