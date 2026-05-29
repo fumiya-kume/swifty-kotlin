@@ -233,6 +233,34 @@ extension DataFlowSemaPhase {
         } else {
             byteArrayType = types.intType
         }
+        let javaUtilPkg = ensurePackage(path: ["java", "util"], symbols: symbols, interner: interner)
+        let javaUuidSymbol = ensureClassSymbol(
+            named: "UUID",
+            in: javaUtilPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaUtilPkgSymbol = symbols.lookup(fqName: javaUtilPkg) {
+            symbols.setParentSymbol(javaUtilPkgSymbol, for: javaUuidSymbol)
+        }
+        let javaUuidType = types.make(.classType(ClassType(
+            classSymbol: javaUuidSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        // --- STDLIB-UUID-FN-003: Uuid.toJavaUuid() JVM bridge ---
+        registerUuidTopLevelExtensionFunction(
+            named: "toJavaUuid",
+            externalLinkName: "kk_uuid_to_java_uuid",
+            receiverType: uuidType,
+            returnType: javaUuidType,
+            parameters: [],
+            packageFQName: kotlinUuidPkg,
+            flags: [.synthetic, .inlineFunction],
+            symbols: symbols,
+            interner: interner
+        )
 
         registerUuidInstanceMethod(
             named: "toByteArray",
@@ -542,6 +570,80 @@ extension DataFlowSemaPhase {
         symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
         symbols.setPropertyType(returnType, for: propertySymbol)
         attachExperimentalUuidApiAnnotation(to: propertySymbol, symbols: symbols)
+    }
+
+    private func registerUuidTopLevelExtensionFunction(
+        named name: String,
+        externalLinkName: String,
+        receiverType: TypeID,
+        returnType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        packageFQName: [InternedString],
+        annotations: [MetadataAnnotationRecord] = [
+            MetadataAnnotationRecord(annotationFQName: "kotlin.uuid.ExperimentalUuidApi")
+        ],
+        flags: SymbolFlags = [.synthetic],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        let parameterTypes = parameters.map(\.type)
+
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return signature.receiverType == receiverType
+                && signature.parameterTypes == parameterTypes
+                && signature.returnType == returnType
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            symbols.insertFlags(flags, for: existing)
+            symbols.setAnnotations(annotations, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: flags
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+        symbols.setAnnotations(annotations, for: functionSymbol)
+
+        let valueParameterSymbols = parameters.map { parameter in
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: functionFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            symbols.setPropertyType(parameter.type, for: parameterSymbol)
+            return parameterSymbol
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameterTypes,
+                returnType: returnType,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+            ),
+            for: functionSymbol
+        )
     }
 
     private func registerUuidCompanionProperty(
