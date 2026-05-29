@@ -1434,7 +1434,6 @@ extension DataFlowSemaPhase {
         // We register both on the ByteArray class symbol so that extension-receiver
         // resolution succeeds for both `bytes.inputStream()` and
         // `bytes.inputStream(offset, length)`.
-        let byteArrayFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("ByteArray")]
         if let byteArraySymbol = symbols.lookup(fqName: byteArrayFQName) {
             let byteArrayType = types.make(.classType(ClassType(
                 classSymbol: byteArraySymbol, args: [], nullability: .nonNull
