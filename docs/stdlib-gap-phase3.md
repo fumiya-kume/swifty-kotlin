@@ -11,10 +11,10 @@
 | Package | Implemented | Missing / Partial | Total audited |
 |---|---|---|---|
 | `kotlin.io` (common) | 18 | 0 | 18 |
-| `kotlin.time` | 86 | 3 | 89 |
+| `kotlin.time` | 89 | 0 | 89 |
 | `kotlin.concurrent` | 20 | 0 | 20 |
 | `kotlin.concurrent.atomics` | 68 | 0 | 68 |
-| **Total** | **192** | **3** | **195** |
+| **Total** | **195** | **0** | **195** |
 
 ---
 
@@ -69,9 +69,10 @@ recursive delete, walk direction shortcuts, deprecated temp-file helpers, and
 | Sub-API group | Key runtime symbols | STDLIB ref |
 |---|---|---|
 | `Duration` constructors (`.seconds`, `.minutes`, `.hours`, `.days`, `.milliseconds`, `.microseconds`, `.nanoseconds`) | `kk_duration_from_*` (7 symbols) | STDLIB-230 |
-| `Duration.inWhole*` (seconds, minutes, hours, milliseconds, nanoseconds) | `kk_duration_inWhole*` (5 symbols) | STDLIB-231 |
-| `Duration` arithmetic (`+`, `-`, `*`, `/`, unary minus) | `kk_duration_plus/minus/times_int/div_int/unary_minus` | STDLIB-231 |
+| `Duration.inWhole*` (days, hours, minutes, seconds, milliseconds, microseconds, nanoseconds) | `kk_duration_inWhole*` (7 symbols) | STDLIB-231 |
+| `Duration` arithmetic (`+`, `-`, `*`, `/`, unary minus) | `kk_duration_plus/minus/times_int/times_double/div_int/div_double/unary_minus` | STDLIB-231 |
 | `Duration.absoluteValue`, `isNegative`, `isPositive`, `isInfinite`, `isFinite` | 5 symbols | STDLIB-231 |
+| `Duration.toComponents(action)` | `kk_duration_toComponents_*` (4 overloads) | STDLIB-TIME-STABLE-004 |
 | `Duration.toString()` | `kk_duration_toString` | STDLIB-231 |
 | `Instant.now()` / `Clock.System.now()` | `kk_instant_now`, `kk_clock_system_now` | STDLIB-TIME-083 |
 | `Instant` arithmetic (`+Duration`, `-Duration`, `until`, `elapsed`, `compare`) | 5 symbols | STDLIB-TIME-083 |
@@ -92,11 +93,7 @@ recursive delete, walk direction shortcuts, deprecated temp-file helpers, and
 
 ### Missing / Partial
 
-| API | Gap description | Priority |
-|---|---|---|
-| `Duration.inWholeDays` | `kk_duration_inWholeDays` symbol absent; only `kk_duration_from_days` (constructor direction) exists | Medium |
-| `Duration * Double` / `Duration / Double` | `kk_duration_times_double` / `kk_duration_div_double` symbols absent; only integer overloads present | Medium |
-| `Duration.toComponents(action)` | Decompose-into-hours/minutes/seconds/nanoseconds callback form; no runtime or stub | Low |
+None.
 
 ---
 

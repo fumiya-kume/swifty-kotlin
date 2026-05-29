@@ -144,6 +144,33 @@ private func runtimeDurationNanoseconds(from value: Double, scale: Int64) -> Int
     return Int64(rounded)
 }
 
+private func runtimeDurationDoubleValue(fromNanoseconds nanoseconds: Int64) -> Double {
+    if nanoseconds == Int64.max {
+        return Double.infinity
+    }
+    if nanoseconds == Int64.min {
+        return -Double.infinity
+    }
+    return Double(nanoseconds)
+}
+
+private func runtimeDurationNanoseconds(fromOperationResult value: Double) -> Int64? {
+    guard !value.isNaN else {
+        return nil
+    }
+    guard value.isFinite else {
+        return value.sign == .minus ? Int64.min : Int64.max
+    }
+    let rounded = value.rounded()
+    if rounded >= Double(Int64.max) {
+        return Int64.max
+    }
+    if rounded <= Double(Int64.min) {
+        return Int64.min
+    }
+    return Int64(rounded)
+}
+
 private func runtimeDurationParseNumber(_ chars: [Character], index: inout Int) -> Double? {
     let start = index
     if index < chars.count, chars[index] == "+" || chars[index] == "-" {
@@ -932,6 +959,27 @@ public func kk_duration_times_int(_ durationRaw: Int, _ scale: Int) -> Int {
     return registerRuntimeObject(RuntimeDurationBox(nanoseconds: saturatingMultiply(box.nanoseconds, Int64(scale))))
 }
 
+@_cdecl("kk_duration_times_double")
+public func kk_duration_times_double(
+    _ durationRaw: Int,
+    _ scaleBits: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let box = runtimeDurationBox(from: durationRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_duration_times_double received invalid Duration handle")
+    }
+    let scale = kk_bits_to_double(scaleBits)
+    let result = runtimeDurationDoubleValue(fromNanoseconds: box.nanoseconds) * scale
+    guard let nanoseconds = runtimeDurationNanoseconds(fromOperationResult: result) else {
+        outThrown?.pointee = runtimeAllocateIllegalArgumentException(
+            message: "Duration multiplication result is undefined for the given arguments."
+        )
+        return 0
+    }
+    return registerRuntimeObject(RuntimeDurationBox(nanoseconds: nanoseconds))
+}
+
 @_cdecl("kk_duration_div_int")
 public func kk_duration_div_int(_ durationRaw: Int, _ scale: Int) -> Int {
     guard let box = runtimeDurationBox(from: durationRaw) else {
@@ -942,6 +990,27 @@ public func kk_duration_div_int(_ durationRaw: Int, _ scale: Int) -> Int {
         return registerRuntimeObject(RuntimeDurationBox(nanoseconds: ns))
     }
     return registerRuntimeObject(RuntimeDurationBox(nanoseconds: box.nanoseconds / Int64(scale)))
+}
+
+@_cdecl("kk_duration_div_double")
+public func kk_duration_div_double(
+    _ durationRaw: Int,
+    _ scaleBits: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let box = runtimeDurationBox(from: durationRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_duration_div_double received invalid Duration handle")
+    }
+    let scale = kk_bits_to_double(scaleBits)
+    let result = runtimeDurationDoubleValue(fromNanoseconds: box.nanoseconds) / scale
+    guard let nanoseconds = runtimeDurationNanoseconds(fromOperationResult: result) else {
+        outThrown?.pointee = runtimeAllocateIllegalArgumentException(
+            message: "Duration division result is undefined for the given arguments."
+        )
+        return 0
+    }
+    return registerRuntimeObject(RuntimeDurationBox(nanoseconds: nanoseconds))
 }
 
 @_cdecl("kk_duration_div_duration")

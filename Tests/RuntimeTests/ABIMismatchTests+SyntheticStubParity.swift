@@ -226,6 +226,8 @@ extension ABIMismatchTests {
             "kk_duration_from_minutes_double",
             "kk_duration_from_hours_double",
             "kk_duration_from_days_double",
+            "kk_duration_times_double",
+            "kk_duration_div_double",
             "kk_duration_toDuration_int",
             "kk_duration_toDuration_long",
             "kk_duration_toDuration_double",

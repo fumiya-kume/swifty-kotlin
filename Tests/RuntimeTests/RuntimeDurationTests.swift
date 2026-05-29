@@ -309,6 +309,44 @@ final class RuntimeDurationTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_bits_to_double(resultBits), 1.5)
     }
 
+    // MARK: - Duration Double scale operators
+
+    func testDurationTimesDoubleScalesAndRounds() {
+        let duration = kk_duration_from_milliseconds(1_500)
+        var thrown = 0
+        let scaled = kk_duration_times_double(duration, kk_double_to_bits(2.5), &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_duration_inWholeMilliseconds(scaled), 3_750)
+    }
+
+    func testDurationDivDoubleScalesAndRounds() {
+        let duration = kk_duration_from_seconds(3)
+        var thrown = 0
+        let scaled = kk_duration_div_double(duration, kk_double_to_bits(2.0), &thrown)
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(kk_duration_inWholeMilliseconds(scaled), 1_500)
+    }
+
+    func testDurationTimesDoubleReportsUndefinedNaNResult() {
+        let duration = kk_duration_from_seconds(1)
+        var thrown = 0
+        let result = kk_duration_times_double(duration, kk_double_to_bits(Double.nan), &thrown)
+
+        XCTAssertEqual(result, 0)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testDurationDivDoubleReportsUndefinedZeroByZero() {
+        let duration = kk_duration_zero()
+        var thrown = 0
+        let result = kk_duration_div_double(duration, kk_double_to_bits(0.0), &thrown)
+
+        XCTAssertEqual(result, 0)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
     // MARK: - toComponents
 
     func testToComponentsSplitsFiniteDuration() {
