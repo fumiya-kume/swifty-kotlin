@@ -54,6 +54,11 @@ private let sumByDoubleWeightedA: @convention(c) (Int, Int, UnsafeMutablePointer
     kk_double_to_bits(charRaw == Int(Unicode.Scalar("a").value) ? 1.5 : 0.25)
 }
 
+private let takeLastWhileSurrogateCodeUnit: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = {
+    _, charRaw, _ in
+    (0xD800 ... 0xDFFF).contains(charRaw) ? 1 : 0
+}
+
 final class RuntimeStringHOFTests: XCTestCase {
     override func setUp() {
         super.setUp()
@@ -185,6 +190,21 @@ final class RuntimeStringHOFTests: XCTestCase {
 
         XCTAssertEqual(result, 0)
         XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testTakeLastWhileUsesUTF16CodeUnits() {
+        let source = registerRuntimeObject(RuntimeStringBox("a🐻"))
+        var thrown = 0
+
+        let result = kk_string_takeLastWhile(
+            source,
+            unsafeBitCast(takeLastWhileSurrogateCodeUnit, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(runtimeStringValue(result), "🐻")
     }
 
     func testFirstNotNullOfOrNullReturnsFirstNonNullResult() {
