@@ -105,6 +105,11 @@ Audit date: 2026-04-17. Source: `Sources/Runtime/` `@_cdecl` scan.
 
 **kotlin.text summary:** 46 rows — done: 46, partial: 0, missing: 0
 
+STDLIB-005 scope is closed for string conversion, split, and replacement edge
+cases. The surface is covered by the registered `kk_string_to*` conversion
+links, `kk_string_split_limit`/`kk_string_splitToSequence`,
+`kk_string_replace*` runtime entries, and focused sema/runtime edge-case tests.
+
 ---
 
 ## `Array<T>` (and typed arrays) — kotlin.Array + extension functions
