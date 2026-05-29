@@ -949,18 +949,20 @@ public func kk_kproperty_get(
     _ handle: Int,
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
-    guard runtimeKPropertyStubBox(from: handle) != nil else {
+    guard let stub = runtimeKPropertyStubBox(from: handle) else {
         outThrown?.pointee = runtimeAllocateThrowable(
             message: "IllegalArgumentException: Invalid KProperty handle.")
         return runtimeNullSentinelInt
     }
-    // RuntimeKPropertyStub carries only name/type metadata; actual value access
-    // is delegated through the callable-ref mechanism at the call site.
-    // Return the sentinel to indicate "no direct value" — the compiler lowers
-    // KProperty.get() to the appropriate accessor call before reaching here.
-    outThrown?.pointee = runtimeAllocateThrowable(
-        message: "UnsupportedOperationException: KProperty.get() requires a bound receiver; use a property reference with receiver.")
-    return runtimeNullSentinelInt
+    guard stub.getterFnPtr != 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "UnsupportedOperationException: KProperty.get() requires an attached getter function pointer.")
+        return runtimeNullSentinelInt
+    }
+    outThrown?.pointee = 0
+    typealias GetterFn = @convention(c) (Int) -> Int
+    let fn = unsafeBitCast(stub.getterFnPtr, to: GetterFn.self)
+    return fn(stub.receiverPtr)
 }
 
 /// Invokes the setter function pointer stored in a KProperty stub.
@@ -970,14 +972,20 @@ public func kk_kproperty_set(
     _ value: Int,
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
-    guard runtimeKPropertyStubBox(from: handle) != nil else {
+    guard let stub = runtimeKPropertyStubBox(from: handle) else {
         outThrown?.pointee = runtimeAllocateThrowable(
             message: "IllegalArgumentException: Invalid KProperty handle.")
         return runtimeNullSentinelInt
     }
-    outThrown?.pointee = runtimeAllocateThrowable(
-        message: "UnsupportedOperationException: KProperty.set() requires a bound receiver; use a mutable property reference with receiver.")
-    return runtimeNullSentinelInt
+    guard stub.setterFnPtr != 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "UnsupportedOperationException: KProperty.set() requires an attached setter function pointer.")
+        return runtimeNullSentinelInt
+    }
+    outThrown?.pointee = 0
+    typealias SetterFn = @convention(c) (Int, Int) -> Int
+    let fn = unsafeBitCast(stub.setterFnPtr, to: SetterFn.self)
+    return fn(stub.receiverPtr, value)
 }
 
 // MARK: - KConstructor (STDLIB-REFLECT-064)

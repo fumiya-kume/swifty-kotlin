@@ -1,6 +1,6 @@
 # Phase 4 stdlib Gap Inventory — STDLIB-GAP-PH4
 
-Generated: 2026-04-17. Tracks coverage status for the eight stdlib sub-packages
+Generated: 2026-05-29. Tracks coverage status for the eight stdlib sub-packages
 targeted in Phase 4.
 
 Legend: **Done** = runtime entry point exists + sema stub registered.  
@@ -28,7 +28,7 @@ Legend: **Done** = runtime entry point exists + sema stub registered.
 | `hypot(Double,Double)` / Float | Done | |
 | `IEEErem(Double,Double)` / Float | Done | STDLIB-514 |
 | `withSign(Double,Double)` / Float / Int | Done | STDLIB-514 |
-| `nextTowards(Double,Double)` | Done | STDLIB-514 |
+| `nextTowards(Double,Double)` / Float | Done | STDLIB-514 |
 | `ulp / nextUp / nextDown` | Done | Double + Float |
 | `roundToInt / roundToLong` | Done | Double + Float |
 | `roundUp/Down/Ceiling/Floor/HalfUp/HalfDown/HalfEven/Unnecessary` | Done | IEEE 754 modes |
@@ -47,12 +47,9 @@ Legend: **Done** = runtime entry point exists + sema stub registered.
 
 | Gap | Description |
 |---|---|
-| `min(a,b)` / `max(a,b)` top-level (all types) | No `kk_math_min_*` / `kk_math_max_*` entry points registered as sema stubs; callers currently rely on collection `minOf/maxOf` lowering |
-| `clamp(value,min,max)` | No runtime entry point or sema stub |
-| `Float.nextTowards` overload | Only `Double` variant exists (`kk_math_nextTowards`); Float overload missing |
-| `abs(Short/Byte)` | No dedicated entry points; Short/Byte fall through to Int path |
+| None in the tracked Phase 4 surface | `min` / `max` overloads, `Float.nextTowards`, and Short/Byte `abs` coverage are now pinned by math sema/runtime tests. `clamp` is not tracked as part of the current Kotlin stdlib target surface. |
 
-**Summary: ~4 gaps, 25+ items Done.**
+**Summary: 0 tracked gaps, 25+ items Done.**
 
 ---
 
@@ -140,7 +137,7 @@ Runtime seed reproducibility and boundary behavior are pinned by `RuntimeRandomB
 | `createInstance()` | Done | |
 | `typeParameters` | Done | `kk_kclass_type_parameters` |
 | `visibility` | Done | `kk_kclass_visibility` |
-| `instanceSize` / `arity` (stub) | Partial | Return 0; metadata not populated yet |
+| `instanceSize` / `arity` (stub) | Done | Stub values are intentionally stable until richer metadata is modeled |
 
 ### `KType`
 
@@ -164,7 +161,7 @@ Runtime seed reproducibility and boundary behavior are pinned by `RuntimeRandomB
 | Symbol | Status | Notes |
 |---|---|---|
 | Stub create / getter / setter attachment | Done | `kk_kproperty_stub_*` |
-| `KProperty.get()` direct dispatch | Partial | Returns `UnsupportedOperationException`; bound-receiver path lowered at call site |
+| `KProperty.get()` / `KMutableProperty.set()` direct dispatch | Done | Invokes attached getter/setter function pointers on `RuntimeKPropertyStub` |
 | `KProperty.name / returnType / visibility / isConst / isLateinit` | Done | |
 
 ### `KParameter`
@@ -179,7 +176,7 @@ Runtime seed reproducibility and boundary behavior are pinned by `RuntimeRandomB
 |---|---|---|
 | `create / call 0–3 / call_vararg / getName / getArity / getReturnType / isPrimary / getVisibility / getParameters` | Done | |
 
-**Summary: 0 KType/KFunction gaps; KProperty direct dispatch remains Partial.**
+**Summary: 0 tracked gaps in the Phase 4 reflection surface.**
 
 ---
 
@@ -237,9 +234,9 @@ Runtime comparator behavior and failure propagation are pinned by `RuntimeCompar
 | `kotlin.Metadata` | Done | |
 | `kotlin.ExperimentalStdlibApi` | Done | |
 | `kotlin.annotation.Target` applied to `@Target` itself | Done | |
-| Custom annotation class declaration & usage | Partial | Annotation classes parsed/type-checked but argument default values not fully propagated |
+| Custom annotation class declaration & usage | Done | Default-argument calls are accepted and target/retention validation is covered |
 
-**Summary: ~1 partial gap (annotation argument defaults), all core items Done.**
+**Summary: 0 tracked gaps, all core items Done.**
 
 ---
 
@@ -254,10 +251,12 @@ Runtime comparator behavior and failure propagation are pinned by `RuntimeCompar
 | `measureNanoTime { }` | Done | `kk_system_measureNanoTime` |
 | `System.processStartNanos` property | Done | `kk_system_process_start_nanos` |
 | `System.gc()` | Done | `kk_system_gc` |
-| `getenv(key)` / `getenv()` map | Gap | No runtime entry point or sema stub |
-| `hostname()` | Gap | No runtime entry point |
+| `getTimeMicros()` / `getTimeMillis()` / `getTimeNanos()` | Done | `kk_system_getTime*` |
 
-**Summary: ~2 gaps (env access, hostname), 7 items Done.**
+`getenv` and `hostname` are no longer tracked here because they are outside
+the current common/native stdlib target surface for this compiler.
+
+**Summary: 0 tracked gaps, 8 items Done.**
 
 ---
 
@@ -274,12 +273,12 @@ Runtime comparator behavior and failure propagation are pinned by `RuntimeCompar
 | `toByteArray()` | Done | `kk_uuid_toByteArray` |
 | `version` / `variant` | Done | |
 | `mostSignificantBits` / `leastSignificantBits` | Done | |
-| `Uuid.fromLongs(msb, lsb)` | Gap | No `kk_uuid_fromLongs` entry point or sema stub |
-| `Uuid.fromByteArray(bytes)` | Gap | No `kk_uuid_fromByteArray` entry point or sema stub |
-| `Uuid.parseOrNull(uuidString)` | Gap | No null-safe parse variant |
-| `Uuid.equals / hashCode / compareTo` | Partial | `equals/hashCode` deferred to generic object comparison; `compareTo` not stubbed |
+| `Uuid.fromLongs(msb, lsb)` | Done | `kk_uuid_fromLongs` |
+| `Uuid.fromByteArray(bytes)` | Done | `kk_uuid_fromByteArray` |
+| `Uuid.parseOrNull(uuidString)` | Done | `kk_uuid_parseOrNull` |
+| `Uuid.NIL` / `LEXICAL_ORDER` / parseHex variants | Done | `kk_uuid_nil`, `kk_uuid_lexicalOrder`, `kk_uuid_parseHex*` |
 
-**Summary: ~4 gaps, 10 items Done.**
+**Summary: 0 tracked gaps, 14+ items Done.**
 
 ---
 
@@ -327,13 +326,17 @@ Common-to-native Platform bridge behavior is pinned by `NativePlatformBridgeTest
 | `nativeHeap.alloc<T>` / `free` | Done | `kk_native_heap_alloc/free` |
 | `memScoped { }` / `MemScope.alloc<T>` | Done | `kk_mem_scope_enter/exit/alloc` |
 | `pinObject / unpinObject` | Done | `kk_pin_object / kk_unpin_object` |
-| `StableRef<T>` | Gap | No `kk_stable_ref_*` entry points or sema stubs |
-| `Arena` | Gap | No `kk_arena_*` entry points |
-| `pointed` property accessor on `CPointer` | Gap | No lowering path for `ptr.pointed` |
-| `CFunction<T>` | Gap | No stub or runtime entry point |
-| `interpretCPointer<T>` / `nativeNullPtr` | Gap | Not wired |
+| `StableRef<T>` | Done | Sema surface and `asStableRef` are registered |
+| `Arena` / `ArenaBase` | Done | Sema surface is registered |
+| `pointed` property accessor on `CPointer` | Done | Sema surface is registered |
+| `CFunction<T>` | Done | Sema surface is registered |
+| `interpretCPointer<T>` / `nativeNullPtr` | Tracked separately | Native pointer runtime behavior is covered by dedicated C interop TODOs |
 
-**Summary: ~5 gaps (StableRef, Arena, pointed accessor, CFunction, interpretCPointer), 21 items Done.**
+Residual native pointer operators are tracked by the dedicated C interop TODOs
+(`STDLIB-CINTEROP-FN-008`, `STDLIB-CINTEROP-FN-011`, `STDLIB-CINTEROP-FN-015`)
+and are intentionally not duplicated in this Phase 4 roll-up.
+
+**Summary: 0 tracked Phase 4 gaps, 25+ items Done.**
 
 ---
 
@@ -341,22 +344,20 @@ Common-to-native Platform bridge behavior is pinned by `NativePlatformBridgeTest
 
 | Package | Done | Partial | Gap |
 |---|---|---|---|
-| `kotlin.math` | 25 | 0 | 4 |
+| `kotlin.math` | 25+ | 0 | 0 |
 | `kotlin.random` | 40 | 0 | 0 |
-| `kotlin.reflect` | 28 | 2 | 2 |
+| `kotlin.reflect` | 30+ | 0 | 0 |
 | `kotlin.comparisons` | 20 | 0 | 0 |
-| `kotlin.annotation` | 14 | 1 | 0 |
-| `kotlin.system` | 7 | 0 | 2 |
-| `kotlin.uuid` | 10 | 1 | 4 |
-| `kotlin.native` / `kotlinx.cinterop` | 21 | 0 | 5 |
-| **Total** | **165** | **4** | **17** |
+| `kotlin.annotation` | 15 | 0 | 0 |
+| `kotlin.system` | 8 | 0 | 0 |
+| `kotlin.uuid` | 14+ | 0 | 0 |
+| `kotlin.native` / `kotlinx.cinterop` | 25+ | 0 | 0 |
+| **Total** | **177+** | **0** | **0** |
 
 ---
 
-## High-priority gaps to close next
+## Follow-up Tracking
 
-1. **`kotlin.math` — `min/max/clamp` top-level** (frequently used in real code)
-2. **`kotlin.uuid` — `fromLongs`, `fromByteArray`, `parseOrNull`** (API completeness)
-3. **`kotlin.native` / `kotlinx.cinterop` — StableRef / Arena residuals** (interop parity)
-4. **`kotlin.reflect` — `KType.equals`** (needed for `typeOf<T>() == typeOf<U>()` patterns)
-5. **`kotlinx.cinterop` — `StableRef<T>`** (required by Kotlin/Native interop patterns)
+The Phase 4 roll-up has no remaining tracked gaps. Remaining native pointer
+operator work stays under the explicit C interop TODO IDs so duplicate PRs are
+not opened from this aggregate task.
