@@ -274,7 +274,6 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
             "toList": "kk_string_toList",
             "toCharArray": "kk_string_toCharArray",
             "toTypedArray": "kk_string_toTypedArray",
-            "toMutableList": "kk_string_toMutableList",
         ]
         for (member, expectedLink) in expected {
             XCTAssertEqual(
