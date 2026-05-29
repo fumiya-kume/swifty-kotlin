@@ -104,6 +104,7 @@ extension DataFlowSemaPhase {
             unitType: unitType,
             prefix: "kk_atomic_int_array",
             includeArithmetic: true,
+            includeFetchAndUpdate: true,
             symbols: symbols,
             interner: interner,
             types: types
@@ -117,6 +118,22 @@ extension DataFlowSemaPhase {
             unitType: unitType,
             prefix: "kk_atomic_long_array",
             includeArithmetic: true,
+            includeFetchAndUpdate: true,
+            symbols: symbols,
+            interner: interner,
+            types: types
+        )
+        registerAtomicArrayFamily(
+            packageFQName: concurrentPkg,
+            className: "AtomicBooleanArray",
+            constructorLinkName: "kk_atomic_bool_array_create",
+            valueType: boolType,
+            boolType: boolType,
+            unitType: unitType,
+            prefix: "kk_atomic_bool_array",
+            includeArithmetic: false,
+            includeGetAndSetAlias: true,
+            includeFetchAndUpdate: true,
             symbols: symbols,
             interner: interner,
             types: types
@@ -289,6 +306,22 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             types: types,
             interner: interner
+        )
+
+        registerAtomicArrayFamily(
+            packageFQName: atomicsPkg,
+            className: "AtomicBooleanArray",
+            constructorLinkName: "kk_atomic_bool_array_create",
+            valueType: boolType,
+            boolType: boolType,
+            unitType: unitType,
+            prefix: "kk_atomic_bool_array",
+            includeArithmetic: false,
+            includeGetAndSetAlias: true,
+            includeFetchAndUpdate: true,
+            symbols: symbols,
+            interner: interner,
+            types: types
         )
 
         registerAtomicRefArrayStub(
@@ -1314,6 +1347,26 @@ extension DataFlowSemaPhase {
                 ownerType: ownerType,
                 name: "fetchAndUpdateAt",
                 externalLinkName: "\(prefix)_fetchAndUpdateAt",
+                returnType: valueType,
+                parameters: [(name: "index", type: types.intType), (name: "transform", type: transformType)],
+                symbols: symbols,
+                interner: interner
+            )
+            registerAtomicMember(
+                ownerSymbol: symbol,
+                ownerType: ownerType,
+                name: "getAndUpdateAt",
+                externalLinkName: "\(prefix)_getAndUpdateAt",
+                returnType: valueType,
+                parameters: [(name: "index", type: types.intType), (name: "transform", type: transformType)],
+                symbols: symbols,
+                interner: interner
+            )
+            registerAtomicMember(
+                ownerSymbol: symbol,
+                ownerType: ownerType,
+                name: "updateAndGetAt",
+                externalLinkName: "\(prefix)_updateAndGetAt",
                 returnType: valueType,
                 parameters: [(name: "index", type: types.intType), (name: "transform", type: transformType)],
                 symbols: symbols,

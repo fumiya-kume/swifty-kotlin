@@ -52,6 +52,13 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(threadType, for: threadSymbol)
+        registerSyntheticThreadClassMembers(
+            ownerSymbol: threadSymbol,
+            ownerType: threadType,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
 
         let timerSymbol = ensureClassSymbol(
             named: "Timer",
@@ -255,6 +262,161 @@ extension DataFlowSemaPhase {
                 valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
             ),
             for: functionSymbol
+        )
+    }
+
+    private func registerSyntheticThreadClassMembers(
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        registerSyntheticThreadStaticFunction(
+            named: "sleep",
+            externalLinkName: "kk_thread_sleep",
+            ownerSymbol: ownerSymbol,
+            parameters: [("millis", types.longType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticThreadStaticFunction(
+            named: "currentThread",
+            externalLinkName: "kk_thread_currentThread",
+            ownerSymbol: ownerSymbol,
+            parameters: [],
+            returnType: ownerType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticThreadMemberFunction(
+            named: "join",
+            externalLinkName: "kk_thread_join",
+            ownerSymbol: ownerSymbol,
+            ownerType: ownerType,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    private func registerSyntheticThreadStaticFunction(
+        named name: String,
+        externalLinkName: String,
+        ownerSymbol: SymbolID,
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else { return }
+        let memberName = interner.intern(name)
+        let memberFQName = ownerInfo.fqName + [memberName]
+        guard symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+            return signature.receiverType == nil
+                && signature.parameterTypes == parameters.map(\.type)
+                && signature.returnType == returnType
+        }) == nil else {
+            return
+        }
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .static]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+
+        let parameterSymbols = parameters.map { parameter -> SymbolID in
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: memberFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: parameterSymbol)
+            return parameterSymbol
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: parameters.map(\.type),
+                returnType: returnType,
+                valueParameterSymbols: parameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: parameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: parameterSymbols.count)
+            ),
+            for: memberSymbol
+        )
+    }
+
+    private func registerSyntheticThreadMemberFunction(
+        named name: String,
+        externalLinkName: String,
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else { return }
+        let memberName = interner.intern(name)
+        let memberFQName = ownerInfo.fqName + [memberName]
+        guard symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+            guard let signature = symbols.functionSignature(for: symbolID) else { return false }
+            return signature.receiverType == ownerType
+                && signature.parameterTypes == parameters.map(\.type)
+                && signature.returnType == returnType
+        }) == nil else {
+            return
+        }
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+
+        let parameterSymbols = parameters.map { parameter -> SymbolID in
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: memberFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: parameterSymbol)
+            return parameterSymbol
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: ownerType,
+                parameterTypes: parameters.map(\.type),
+                returnType: returnType,
+                valueParameterSymbols: parameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: parameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: parameterSymbols.count)
+            ),
+            for: memberSymbol
         )
     }
 

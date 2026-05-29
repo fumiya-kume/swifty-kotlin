@@ -77,6 +77,11 @@ final class RuntimeThreadTests: IsolatedRuntimeXCTestCase {
         return Unmanaged<RuntimeManagedThread>.fromOpaque(pointer!).takeUnretainedValue()
     }
 
+    private func foundationThread(from raw: Int) -> Thread {
+        let pointer = UnsafeMutableRawPointer(bitPattern: raw)
+        return Unmanaged<Thread>.fromOpaque(pointer!).takeUnretainedValue()
+    }
+
     func testThreadCreateStartsImmediatelyWhenRequested() throws {
         let baseline = runtimeThreadLaunchState.snapshot().launchCount
         let raw = kk_thread_create(
@@ -149,5 +154,38 @@ final class RuntimeThreadTests: IsolatedRuntimeXCTestCase {
             accuracy: 0.0001
         )
         #endif
+    }
+
+    func testCurrentThreadReturnsCurrentFoundationThread() {
+        let raw = kk_thread_currentThread()
+        XCTAssertNotEqual(raw, 0)
+
+        let thread = foundationThread(from: raw)
+        XCTAssertEqual(thread.isMainThread, Thread.current.isMainThread)
+    }
+
+    func testThreadSleepAcceptsZeroDuration() {
+        XCTAssertEqual(kk_thread_sleep(0), 0)
+    }
+
+    func testThreadJoinWaitsForStartedManagedThread() {
+        let baseline = runtimeThreadLaunchState.snapshot().launchCount
+        let raw = kk_thread_create(
+            1,
+            0,
+            runtimeNullSentinelInt,
+            stringRaw("join-worker"),
+            5,
+            runtimeThreadThunkPtr,
+            0
+        )
+
+        XCTAssertEqual(kk_thread_join(raw), 0)
+        XCTAssertGreaterThanOrEqual(runtimeThreadLaunchState.snapshot().launchCount, baseline + 1)
+    }
+
+    func testThreadJoinOnCurrentThreadReturnsImmediately() {
+        let raw = kk_thread_currentThread()
+        XCTAssertEqual(kk_thread_join(raw), 0)
     }
 }

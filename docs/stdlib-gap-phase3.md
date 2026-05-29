@@ -12,9 +12,9 @@
 |---|---|---|---|
 | `kotlin.io` (common) | 18 | 0 | 18 |
 | `kotlin.time` | 86 | 3 | 89 |
-| `kotlin.concurrent` | 18 | 2 | 20 |
-| `kotlin.concurrent.atomics` | 64 | 4 | 68 |
-| **Total** | **186** | **9** | **195** |
+| `kotlin.concurrent` | 20 | 0 | 20 |
+| `kotlin.concurrent.atomics` | 68 | 0 | 68 |
+| **Total** | **192** | **3** | **195** |
 
 ---
 
@@ -106,7 +106,9 @@ recursive delete, walk direction shortcuts, deprecated temp-file helpers, and
 
 | API | Runtime symbol | Notes |
 |---|---|---|
+| `@Volatile` annotation | Compiler annotation stub | Annotation surface resolves; no separate runtime ABI symbol is required |
 | `Thread` constructor (Runnable) | `kk_thread_create` | `java.lang.Thread` alias |
+| `Thread.sleep(millis)` / `Thread.currentThread()` / `Thread.join()` | `kk_thread_sleep`, `kk_thread_currentThread`, `kk_thread_join` | Static and instance method stubs |
 | `kotlin.concurrent.thread {}` | `kk_thread_create` (reused) | |
 | `ThreadLocal<T>` constructor | `kk_thread_local_new` | |
 | `ThreadLocal<T>.getOrSet {}` | `kk_thread_local_getOrSet` | |
@@ -118,10 +120,7 @@ recursive delete, walk direction shortcuts, deprecated temp-file helpers, and
 
 ### Missing / Partial
 
-| API | Gap description | Priority |
-|---|---|---|
-| `@Volatile` annotation | Annotation class is referenced in compiler (HeaderHelpers.swift:341) as an `expect`/`actual` alias shape, but no runtime semantics for volatile field ordering are enforced at codegen | Medium |
-| `Thread.sleep(millis)` / `Thread.currentThread()` / `Thread.join()` | Thread instance methods beyond `start()` not stubbed; only constructor lowering is present | Medium |
+None.
 
 ---
 
@@ -135,18 +134,15 @@ recursive delete, walk direction shortcuts, deprecated temp-file helpers, and
 | `AtomicLong` | same set as AtomicInt | 12 symbols (`kk_atomic_long_*`) |
 | `AtomicBoolean` | create, load, store, exchange, CAS, CAX, getAndUpdate, updateAndGet | 8 symbols (`kk_atomic_bool_*`) |
 | `AtomicReference<T>` | create, load, store, exchange, CAS, CAX, getAndUpdate, updateAndGet | 8 symbols (`kk_atomic_ref_*`) |
-| `AtomicIntArray` | create, size, loadAt, storeAt, exchangeAt, CASAt, CAXAt, fetchAndAddAt, addAndFetchAt, inc/decAt | 11 symbols (`kk_atomic_int_array_*`) |
-| `AtomicLongArray` | same set as AtomicIntArray | 11 symbols (`kk_atomic_long_array_*`) |
-| Package aliases | `kotlin.concurrent.AtomicInt` → `kotlin.concurrent.atomics.AtomicInt` etc. | Compiler alias stubs |
+| `AtomicIntArray` | create, size, loadAt, storeAt, exchangeAt, CASAt, CAXAt, fetchAndUpdateAt, getAndUpdateAt, updateAndGetAt, fetchAndAddAt, addAndFetchAt, inc/decAt, Java bridge aliases | 18 symbols (`kk_atomic_int_array_*`) |
+| `AtomicLongArray` | same set as AtomicIntArray | 18 symbols (`kk_atomic_long_array_*`) |
+| `AtomicBooleanArray` | create, size, loadAt, storeAt, exchangeAt, CASAt, CAXAt, fetchAndUpdateAt, getAndUpdateAt, updateAndGetAt | 10 symbols (`kk_atomic_bool_array_*`) |
+| `AtomicArray<T>` | create/of, size, loadAt, storeAt, exchangeAt, CASAt, CAXAt, fetchAndUpdateAt, updateAt, updateAndFetchAt, Java bridge aliases | `kk_atomic_ref_array_*` |
+| Package aliases | `kotlin.concurrent.AtomicInt` / array types → `kotlin.concurrent.atomics.*` surfaces | Compiler alias stubs |
 
 ### Missing / Partial
 
-| API | Gap description | Priority |
-|---|---|---|
-| `AtomicIntArray.getAndUpdateAt {}` / `updateAndGetAt {}` | Higher-order per-element update missing for arrays (present on scalar AtomicInt/Long) | Medium |
-| `AtomicLongArray.getAndUpdateAt {}` / `updateAndGetAt {}` | Same as above for Long arrays | Medium |
-| `AtomicBooleanArray` | No runtime type or stubs exist | Low |
-| `AtomicArray<T>` (reference array) | `AtomicArray<T>` generic reference-typed array not implemented | Low |
+None.
 
 ---
 
@@ -166,9 +162,11 @@ recursive delete, walk direction shortcuts, deprecated temp-file helpers, and
 | `Sources/Runtime/RuntimeInstant.swift` | `kotlin.time.Instant` |
 | `Sources/Runtime/RuntimeTime.swift` | `kotlin.time` platform bridges, TimeMark |
 | `Sources/Runtime/RuntimeAtomic.swift` | `kotlin.concurrent.atomics` all types |
+| `Sources/Runtime/RuntimeThread.swift` | `java.lang.Thread` / `kotlin.concurrent.thread` |
 | `Sources/Runtime/RuntimeSync.swift` | `kotlin.concurrent` Mutex/Semaphore/Lock |
 | `Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticTODOAndIOStubs.swift` | `kotlin.io` stubs |
 | `Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticAtomicStubs.swift` | atomic stubs |
+| `Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticConcurrencyStubs.swift` | concurrency stubs |
 | `Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticDurationStubs.swift` | Duration stubs |
 | `Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticInstantStubs.swift` | Instant stubs |
 | `Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticExperimentalTimeStubs.swift` | TimeMark stubs |

@@ -15,10 +15,11 @@ import XCTest
 //                    compareAndSet / compareAndExchange / getAndUpdate / updateAndGet
 //   AtomicIntArray : kk_atomic_int_array_create / size / loadAt / storeAt /
 //                    exchangeAt / compareAndSetAt / compareAndExchangeAt /
-//                    fetchAndAddAt / addAndFetchAt / fetchAndIncrementAt /
-//                    incrementAndFetchAt / fetchAndDecrementAt /
-//                    decrementAndFetchAt
+//                    getAndUpdateAt / updateAndGetAt / fetchAndAddAt /
+//                    addAndFetchAt / fetchAndIncrementAt / incrementAndFetchAt /
+//                    fetchAndDecrementAt / decrementAndFetchAt
 //   AtomicLongArray: kk_atomic_long_array_* (same shape as AtomicIntArray)
+//   AtomicBooleanArray: kk_atomic_bool_array_* (non-arithmetic array operations)
 //   AtomicInt      : getAndUpdate / updateAndGet (higher-order variants)
 //   AtomicLong     : getAndUpdate / updateAndGet (higher-order variants)
 //   AtomicReference: getAndUpdate / updateAndGet (higher-order variants)
@@ -112,6 +113,11 @@ private let negateIntThunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> 
     -value
 }
 private let negateIntThunkPtr = unsafeBitCast(negateIntThunk, to: Int.self)
+
+private let toggleBoolThunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { value, _ in
+    value == 0 ? 1 : 0
+}
+private let toggleBoolThunkPtr = unsafeBitCast(toggleBoolThunk, to: Int.self)
 
 final class RuntimeAtomicIntHigherOrderTests: XCTestCase {
 
@@ -281,6 +287,19 @@ final class RuntimeAtomicIntArrayTests: XCTestCase {
         XCTAssertEqual(afterDec, 0)
     }
 
+    func testHigherOrderUpdateAliases() {
+        let handle = kk_atomic_int_array_create(1)
+        _ = kk_atomic_int_array_storeAt(handle, 0, 3, nil)
+
+        let old = kk_atomic_int_array_getAndUpdateAt(handle, 0, doubleIntThunkPtr, nil)
+        XCTAssertEqual(old, 3)
+        XCTAssertEqual(kk_atomic_int_array_loadAt(handle, 0, nil), 6)
+
+        let new = kk_atomic_int_array_updateAndGetAt(handle, 0, doubleIntThunkPtr, nil)
+        XCTAssertEqual(new, 12)
+        XCTAssertEqual(kk_atomic_int_array_loadAt(handle, 0, nil), 12)
+    }
+
     func testOutOfBoundsIndexReturnsZero() {
         let handle = kk_atomic_int_array_create(2)
         XCTAssertEqual(kk_atomic_int_array_loadAt(handle, 99, nil), 0)
@@ -362,10 +381,76 @@ final class RuntimeAtomicLongArrayTests: XCTestCase {
         XCTAssertEqual(kk_atomic_long_array_loadAt(handle, 0, nil), 0)
     }
 
+    func testHigherOrderUpdateAliases() {
+        let handle = kk_atomic_long_array_create(1)
+        _ = kk_atomic_long_array_storeAt(handle, 0, 5, nil)
+
+        let old = kk_atomic_long_array_getAndUpdateAt(handle, 0, doubleIntThunkPtr, nil)
+        XCTAssertEqual(old, 5)
+        XCTAssertEqual(kk_atomic_long_array_loadAt(handle, 0, nil), 10)
+
+        let new = kk_atomic_long_array_updateAndGetAt(handle, 0, doubleIntThunkPtr, nil)
+        XCTAssertEqual(new, 20)
+        XCTAssertEqual(kk_atomic_long_array_loadAt(handle, 0, nil), 20)
+    }
+
     func testOutOfBoundsIndexReturnsZero() {
         let handle = kk_atomic_long_array_create(2)
         XCTAssertEqual(kk_atomic_long_array_loadAt(handle, 50, nil), 0)
         XCTAssertEqual(kk_atomic_long_array_compareAndSetAt(handle, 50, 0, 1, nil), 0)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// MARK: - AtomicBooleanArray
+// ---------------------------------------------------------------------------
+
+final class RuntimeAtomicBooleanArrayTests: XCTestCase {
+
+    func testCreateLoadStoreAndExchange() {
+        let handle = kk_atomic_bool_array_create(2)
+        XCTAssertNotEqual(handle, 0)
+        XCTAssertEqual(kk_atomic_bool_array_size(handle), 2)
+        XCTAssertEqual(kk_atomic_bool_array_loadAt(handle, 0, nil), 0)
+
+        _ = kk_atomic_bool_array_storeAt(handle, 0, 1, nil)
+        XCTAssertEqual(kk_atomic_bool_array_loadAt(handle, 0, nil), 1)
+
+        let old = kk_atomic_bool_array_exchangeAt(handle, 0, 0, nil)
+        XCTAssertEqual(old, 1)
+        XCTAssertEqual(kk_atomic_bool_array_loadAt(handle, 0, nil), 0)
+    }
+
+    func testCompareAndSetAndExchange() {
+        let handle = kk_atomic_bool_array_create(1)
+        _ = kk_atomic_bool_array_storeAt(handle, 0, 1, nil)
+
+        XCTAssertEqual(kk_atomic_bool_array_compareAndSetAt(handle, 0, 1, 0, nil), 1)
+        XCTAssertEqual(kk_atomic_bool_array_loadAt(handle, 0, nil), 0)
+
+        let failedOld = kk_atomic_bool_array_compareAndExchangeAt(handle, 0, 1, 1, nil)
+        XCTAssertEqual(failedOld, 0)
+        XCTAssertEqual(kk_atomic_bool_array_loadAt(handle, 0, nil), 0)
+    }
+
+    func testHigherOrderUpdateAliases() {
+        let handle = kk_atomic_bool_array_create(1)
+        _ = kk_atomic_bool_array_storeAt(handle, 0, 1, nil)
+
+        let old = kk_atomic_bool_array_getAndUpdateAt(handle, 0, toggleBoolThunkPtr, nil)
+        XCTAssertEqual(old, 1)
+        XCTAssertEqual(kk_atomic_bool_array_loadAt(handle, 0, nil), 0)
+
+        let new = kk_atomic_bool_array_updateAndGetAt(handle, 0, toggleBoolThunkPtr, nil)
+        XCTAssertEqual(new, 1)
+        XCTAssertEqual(kk_atomic_bool_array_loadAt(handle, 0, nil), 1)
+    }
+
+    func testOutOfBoundsIndexReturnsZero() {
+        let handle = kk_atomic_bool_array_create(1)
+        XCTAssertEqual(kk_atomic_bool_array_loadAt(handle, 4, nil), 0)
+        XCTAssertEqual(kk_atomic_bool_array_compareAndSetAt(handle, 4, 0, 1, nil), 0)
+        XCTAssertEqual(kk_atomic_bool_array_getAndUpdateAt(handle, 4, toggleBoolThunkPtr, nil), 0)
     }
 }
 

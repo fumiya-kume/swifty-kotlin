@@ -934,6 +934,38 @@ public func kk_atomic_int_array_fetchAndUpdateAt(
     return result.old
 }
 
+@_cdecl("kk_atomic_int_array_getAndUpdateAt")
+public func kk_atomic_int_array_getAndUpdateAt(
+    _ receiver: Int,
+    _ index: Int,
+    _ updateFn: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    return kk_atomic_int_array_fetchAndUpdateAt(receiver, index, updateFn, outThrown)
+}
+
+@_cdecl("kk_atomic_int_array_updateAndGetAt")
+public func kk_atomic_int_array_updateAndGetAt(
+    _ receiver: Int,
+    _ index: Int,
+    _ updateFn: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let box = atomicIntArrayBox(from: receiver) else { return 0 }
+    let size = box.size()
+    guard index >= 0 && index < size else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IndexOutOfBoundsException: index \(index) out of bounds for size \(size)"
+        )
+        return 0
+    }
+    let result = box.fetchAndUpdate(at: index, transform: { old in
+        kk_function_invoke(updateFn, old, outThrown)
+    }, outThrown: outThrown)
+    return result.new
+}
+
 @_cdecl("kk_atomic_int_array_fetchAndAddAt")
 public func kk_atomic_int_array_fetchAndAddAt(
     _ receiver: Int, _ index: Int, _ delta: Int, _ outThrown: UnsafeMutablePointer<Int>?
@@ -1259,6 +1291,38 @@ public func kk_atomic_long_array_fetchAndUpdateAt(
     return result.old
 }
 
+@_cdecl("kk_atomic_long_array_getAndUpdateAt")
+public func kk_atomic_long_array_getAndUpdateAt(
+    _ receiver: Int,
+    _ index: Int,
+    _ updateFn: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    return kk_atomic_long_array_fetchAndUpdateAt(receiver, index, updateFn, outThrown)
+}
+
+@_cdecl("kk_atomic_long_array_updateAndGetAt")
+public func kk_atomic_long_array_updateAndGetAt(
+    _ receiver: Int,
+    _ index: Int,
+    _ updateFn: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let box = atomicLongArrayBox(from: receiver) else { return 0 }
+    let size = box.size()
+    guard index >= 0 && index < size else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IndexOutOfBoundsException: index \(index) out of bounds for size \(size)"
+        )
+        return 0
+    }
+    let result = box.fetchAndUpdate(at: index, transform: { old in
+        kk_function_invoke(updateFn, old, outThrown)
+    }, outThrown: outThrown)
+    return result.new
+}
+
 @_cdecl("kk_atomic_long_array_fetchAndAddAt")
 public func kk_atomic_long_array_fetchAndAddAt(
     _ receiver: Int, _ index: Int, _ delta: Int, _ outThrown: UnsafeMutablePointer<Int>?
@@ -1353,6 +1417,244 @@ public func kk_atomic_long_array_decrementAndFetchAt(
         return 0
     }
     return box.addAndFetch(at: index, delta: -1)
+}
+
+// MARK: - AtomicBooleanArray
+
+/// Backing storage for kotlin.concurrent.atomics.AtomicBooleanArray.
+final class AtomicBoolArrayBox {
+    private var storage: [Bool]
+    private let lock = NSLock()
+
+    init(size: Int) {
+        self.storage = Array(repeating: false, count: max(0, size))
+    }
+
+    func size() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return storage.count
+    }
+
+    func load(at index: Int) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        guard storage.indices.contains(index) else { return false }
+        return storage[index]
+    }
+
+    func store(at index: Int, value: Bool) {
+        lock.lock()
+        defer { lock.unlock() }
+        guard storage.indices.contains(index) else { return }
+        storage[index] = value
+    }
+
+    func exchange(at index: Int, newValue: Bool) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        guard storage.indices.contains(index) else { return false }
+        let old = storage[index]
+        storage[index] = newValue
+        return old
+    }
+
+    func compareAndSet(at index: Int, expect: Bool, update: Bool) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        guard storage.indices.contains(index) else { return false }
+        if storage[index] == expect {
+            storage[index] = update
+            return true
+        }
+        return false
+    }
+
+    func compareAndExchange(at index: Int, expect: Bool, update: Bool) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        guard storage.indices.contains(index) else { return false }
+        let old = storage[index]
+        if old == expect {
+            storage[index] = update
+        }
+        return old
+    }
+
+    func fetchAndUpdate(
+        at index: Int,
+        transform: (Bool) -> Bool,
+        outThrown: UnsafeMutablePointer<Int>?
+    ) -> (old: Bool, new: Bool) {
+        while true {
+            let old = load(at: index)
+            let new = transform(old)
+            if let thrown = outThrown, thrown.pointee != 0 {
+                return (old, old)
+            }
+            if compareAndSet(at: index, expect: old, update: new) {
+                return (old, new)
+            }
+        }
+    }
+}
+
+private func atomicBoolArrayBox(from raw: Int) -> AtomicBoolArrayBox? {
+    guard raw != 0, let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
+        return nil
+    }
+    return Unmanaged<AtomicBoolArrayBox>.fromOpaque(ptr).takeUnretainedValue()
+}
+
+@_cdecl("kk_atomic_bool_array_create")
+public func kk_atomic_bool_array_create(_ size: Int) -> Int {
+    let box = AtomicBoolArrayBox(size: size)
+    let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+    runtimeStorage.withGCLock { state in
+        state.objectPointers.insert(UInt(bitPattern: ptr))
+    }
+    return Int(bitPattern: ptr)
+}
+
+@_cdecl("kk_atomic_bool_array_size")
+public func kk_atomic_bool_array_size(_ receiver: Int) -> Int {
+    guard let box = atomicBoolArrayBox(from: receiver) else { return 0 }
+    return box.size()
+}
+
+@_cdecl("kk_atomic_bool_array_loadAt")
+public func kk_atomic_bool_array_loadAt(
+    _ receiver: Int, _ index: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let box = atomicBoolArrayBox(from: receiver) else { return 0 }
+    let size = box.size()
+    guard index >= 0 && index < size else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IndexOutOfBoundsException: index \(index) out of bounds for size \(size)"
+        )
+        return 0
+    }
+    return box.load(at: index) ? 1 : 0
+}
+
+@_cdecl("kk_atomic_bool_array_storeAt")
+public func kk_atomic_bool_array_storeAt(
+    _ receiver: Int, _ index: Int, _ value: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let box = atomicBoolArrayBox(from: receiver) else { return 0 }
+    let size = box.size()
+    guard index >= 0 && index < size else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IndexOutOfBoundsException: index \(index) out of bounds for size \(size)"
+        )
+        return 0
+    }
+    box.store(at: index, value: value != 0)
+    return 0
+}
+
+@_cdecl("kk_atomic_bool_array_exchangeAt")
+public func kk_atomic_bool_array_exchangeAt(
+    _ receiver: Int, _ index: Int, _ newValue: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let box = atomicBoolArrayBox(from: receiver) else { return 0 }
+    let size = box.size()
+    guard index >= 0 && index < size else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IndexOutOfBoundsException: index \(index) out of bounds for size \(size)"
+        )
+        return 0
+    }
+    return box.exchange(at: index, newValue: newValue != 0) ? 1 : 0
+}
+
+@_cdecl("kk_atomic_bool_array_compareAndSetAt")
+public func kk_atomic_bool_array_compareAndSetAt(
+    _ receiver: Int, _ index: Int, _ expect: Int, _ update: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let box = atomicBoolArrayBox(from: receiver) else { return 0 }
+    let size = box.size()
+    guard index >= 0 && index < size else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IndexOutOfBoundsException: index \(index) out of bounds for size \(size)"
+        )
+        return 0
+    }
+    return box.compareAndSet(at: index, expect: expect != 0, update: update != 0) ? 1 : 0
+}
+
+@_cdecl("kk_atomic_bool_array_compareAndExchangeAt")
+public func kk_atomic_bool_array_compareAndExchangeAt(
+    _ receiver: Int, _ index: Int, _ expect: Int, _ update: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let box = atomicBoolArrayBox(from: receiver) else { return 0 }
+    let size = box.size()
+    guard index >= 0 && index < size else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IndexOutOfBoundsException: index \(index) out of bounds for size \(size)"
+        )
+        return 0
+    }
+    return box.compareAndExchange(at: index, expect: expect != 0, update: update != 0) ? 1 : 0
+}
+
+@_cdecl("kk_atomic_bool_array_fetchAndUpdateAt")
+public func kk_atomic_bool_array_fetchAndUpdateAt(
+    _ receiver: Int,
+    _ index: Int,
+    _ updateFn: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let box = atomicBoolArrayBox(from: receiver) else { return 0 }
+    let size = box.size()
+    guard index >= 0 && index < size else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IndexOutOfBoundsException: index \(index) out of bounds for size \(size)"
+        )
+        return 0
+    }
+    let result = box.fetchAndUpdate(at: index, transform: { old in
+        kk_function_invoke(updateFn, old ? 1 : 0, outThrown) != 0
+    }, outThrown: outThrown)
+    return result.old ? 1 : 0
+}
+
+@_cdecl("kk_atomic_bool_array_getAndUpdateAt")
+public func kk_atomic_bool_array_getAndUpdateAt(
+    _ receiver: Int,
+    _ index: Int,
+    _ updateFn: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    return kk_atomic_bool_array_fetchAndUpdateAt(receiver, index, updateFn, outThrown)
+}
+
+@_cdecl("kk_atomic_bool_array_updateAndGetAt")
+public func kk_atomic_bool_array_updateAndGetAt(
+    _ receiver: Int,
+    _ index: Int,
+    _ updateFn: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let box = atomicBoolArrayBox(from: receiver) else { return 0 }
+    let size = box.size()
+    guard index >= 0 && index < size else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IndexOutOfBoundsException: index \(index) out of bounds for size \(size)"
+        )
+        return 0
+    }
+    let result = box.fetchAndUpdate(at: index, transform: { old in
+        kk_function_invoke(updateFn, old ? 1 : 0, outThrown) != 0
+    }, outThrown: outThrown)
+    return result.new ? 1 : 0
 }
 
 // MARK: - AtomicArray<T> (generic reference-typed array)

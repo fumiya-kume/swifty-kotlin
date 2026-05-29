@@ -16,5 +16,27 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Thread"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_thread_sleep",
+            parameters: [
+                RuntimeABIParameter(name: "millis", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Thread"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_thread_currentThread",
+            parameters: [],
+            returnType: .intptr,
+            section: "Thread"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_thread_join",
+            parameters: [
+                RuntimeABIParameter(name: "threadRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Thread"
+        ),
     ]
 }
