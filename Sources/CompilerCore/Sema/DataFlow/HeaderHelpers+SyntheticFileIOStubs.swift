@@ -161,6 +161,85 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // MARK: - FileTreeWalk class (STDLIB-IO-TYPE-004)
+        //
+        // Kotlin declaration:
+        //     public class FileTreeWalk : Sequence<File>
+        //
+        // The runtime traversal is exposed through File.walk(); this synthetic
+        // surface makes the nominal type importable and preserves the Sequence<File>
+        // relationship needed by source-level type checking.
+        let kotlinCollectionsPkg = ensurePackage(path: ["kotlin", "collections"], symbols: symbols, interner: interner)
+        let sequenceSymbol = ensureSyntheticSequenceStub(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg
+        )
+        let kotlinIOPkgSymbol = symbols.lookup(fqName: kotlinIOPkg)
+        let fileWalkDirectionSymbolForFileTreeWalk = ensureEnumClassSymbol(
+            named: "FileWalkDirection",
+            in: kotlinIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinIOPkgSymbol {
+            symbols.setParentSymbol(kotlinIOPkgSymbol, for: fileWalkDirectionSymbolForFileTreeWalk)
+        }
+        let fileWalkDirectionTypeForFileTreeWalk = types.make(.classType(ClassType(
+            classSymbol: fileWalkDirectionSymbolForFileTreeWalk,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(fileWalkDirectionTypeForFileTreeWalk, for: fileWalkDirectionSymbolForFileTreeWalk)
+
+        let fileTreeWalkSymbol = ensureClassSymbol(
+            named: "FileTreeWalk",
+            in: kotlinIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinIOPkgSymbol {
+            symbols.setParentSymbol(kotlinIOPkgSymbol, for: fileTreeWalkSymbol)
+        }
+        let fileTreeWalkType = types.make(.classType(ClassType(
+            classSymbol: fileTreeWalkSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(fileTreeWalkType, for: fileTreeWalkSymbol)
+        if !symbols.directSupertypes(for: fileTreeWalkSymbol).contains(sequenceSymbol) {
+            symbols.setDirectSupertypes(
+                symbols.directSupertypes(for: fileTreeWalkSymbol) + [sequenceSymbol],
+                for: fileTreeWalkSymbol
+            )
+        }
+        if !types.directNominalSupertypes(for: fileTreeWalkSymbol).contains(sequenceSymbol) {
+            types.setNominalDirectSupertypes(
+                types.directNominalSupertypes(for: fileTreeWalkSymbol) + [sequenceSymbol],
+                for: fileTreeWalkSymbol
+            )
+        }
+        let sequenceOfFileArgs: [TypeArg] = [.out(fileType)]
+        symbols.setSupertypeTypeArgs(sequenceOfFileArgs, for: fileTreeWalkSymbol, supertype: sequenceSymbol)
+        types.setNominalSupertypeTypeArgs(sequenceOfFileArgs, for: fileTreeWalkSymbol, supertype: sequenceSymbol)
+        registerFileConstructor(
+            ownerSymbol: fileTreeWalkSymbol,
+            ownerType: fileTreeWalkType,
+            parameters: [("start", fileType)],
+            externalLinkName: "kk_file_tree_walk_new_default",
+            symbols: symbols,
+            interner: interner
+        )
+        registerFileConstructor(
+            ownerSymbol: fileTreeWalkSymbol,
+            ownerType: fileTreeWalkType,
+            parameters: [("start", fileType), ("direction", fileWalkDirectionTypeForFileTreeWalk)],
+            externalLinkName: "kk_file_tree_walk_new",
+            symbols: symbols,
+            interner: interner
+        )
+
         // List<File> type for listFiles return
         let listSymbol = resolveListSymbol(symbols: symbols, interner: interner)
         if listSymbol == nil {
@@ -609,7 +688,18 @@ extension DataFlowSemaPhase {
             ownerSymbol: fileSymbol,
             ownerType: fileType,
             parameters: [],
-            returnType: listOfFileType,
+            returnType: fileTreeWalkType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "walk",
+            externalLinkName: "kk_file_walk_direction",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [("direction", fileWalkDirectionTypeForFileTreeWalk)],
+            returnType: fileTreeWalkType,
             symbols: symbols,
             interner: interner
         )
