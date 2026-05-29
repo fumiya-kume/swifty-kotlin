@@ -69,7 +69,7 @@ final class NativeCInteropMemScopedFunctionTests: XCTestCase {
         import kotlinx.cinterop.memScoped
 
         fun scopedValue(): Int {
-            return memScoped {
+            return memScoped<Int> {
                 42
             }
         }
