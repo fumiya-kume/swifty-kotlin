@@ -248,6 +248,21 @@ extension DataFlowSemaPhase {
             args: [],
             nullability: .nonNull
         )))
+        let javaNioPkg = ensurePackage(path: ["java", "nio"], symbols: symbols, interner: interner)
+        let byteBufferSymbol = ensureClassSymbol(
+            named: "ByteBuffer",
+            in: javaNioPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaNioPkgSymbol = symbols.lookup(fqName: javaNioPkg) {
+            symbols.setParentSymbol(javaNioPkgSymbol, for: byteBufferSymbol)
+        }
+        let byteBufferType = types.make(.classType(ClassType(
+            classSymbol: byteBufferSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
 
         // --- STDLIB-UUID-FN-003: Uuid.toJavaUuid() JVM bridge ---
         registerUuidTopLevelExtensionFunction(
@@ -269,6 +284,30 @@ extension DataFlowSemaPhase {
             receiverType: javaUuidType,
             returnType: uuidType,
             parameters: [],
+            packageFQName: kotlinUuidPkg,
+            flags: [.synthetic, .inlineFunction],
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-UUID-FN-001: ByteBuffer.getUuid() JVM bridge ---
+        registerUuidTopLevelExtensionFunction(
+            named: "getUuid",
+            externalLinkName: "kk_byte_buffer_get_uuid",
+            receiverType: byteBufferType,
+            returnType: uuidType,
+            parameters: [],
+            packageFQName: kotlinUuidPkg,
+            flags: [.synthetic, .inlineFunction],
+            symbols: symbols,
+            interner: interner
+        )
+        registerUuidTopLevelExtensionFunction(
+            named: "getUuid",
+            externalLinkName: "kk_byte_buffer_get_uuid_at",
+            receiverType: byteBufferType,
+            returnType: uuidType,
+            parameters: [(name: "index", type: types.intType)],
             packageFQName: kotlinUuidPkg,
             flags: [.synthetic, .inlineFunction],
             symbols: symbols,
