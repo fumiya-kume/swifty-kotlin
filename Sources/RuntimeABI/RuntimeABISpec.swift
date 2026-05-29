@@ -840,6 +840,54 @@ public enum RuntimeABISpec {
             section: "System"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_list_asJsReadonlyArrayView",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_mutable_list_asJsArrayView",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_map_asJsReadonlyMapView",
+            parameters: [
+                RuntimeABIParameter(name: "mapRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_mutable_map_asJsMapView",
+            parameters: [
+                RuntimeABIParameter(name: "mapRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_set_asJsReadonlySetView",
+            parameters: [
+                RuntimeABIParameter(name: "setRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_mutable_set_asJsSetView",
+            parameters: [
+                RuntimeABIParameter(name: "setRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_js_map_toMap",
             parameters: [
                 RuntimeABIParameter(name: "jsMapRaw", type: .intptr),
