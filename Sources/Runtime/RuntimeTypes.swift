@@ -1201,6 +1201,10 @@ final class RuntimeKFunctionBox {
     let parameterRaws: [Int]
     /// Function type string as a KKString raw handle (e.g. "(Int, Int) -> Int").
     let typeStringRaw: Int
+    /// Visibility as a runtime string raw handle, or 0 when unknown/default public.
+    let visibilityRaw: Int
+    /// Annotation raw handles attached to this function.
+    let annotationRaws: [Int]
 
     init(
         nameRaw: Int,
@@ -1210,7 +1214,9 @@ final class RuntimeKFunctionBox {
         fnPtr: Int = 0,
         closureRaw: Int = 0,
         parameterRaws: [Int] = [],
-        typeStringRaw: Int = 0
+        typeStringRaw: Int = 0,
+        visibilityRaw: Int = 0,
+        annotationRaws: [Int] = []
     ) {
         self.nameRaw = nameRaw
         self.arity = arity
@@ -1220,6 +1226,8 @@ final class RuntimeKFunctionBox {
         self.closureRaw = closureRaw
         self.parameterRaws = parameterRaws
         self.typeStringRaw = typeStringRaw
+        self.visibilityRaw = visibilityRaw
+        self.annotationRaws = annotationRaws
     }
 }
 

@@ -127,6 +127,12 @@ private func runtimeAnyHashCode(_ value: Int, _ tag: Int32) -> Int {
         hash ^= Int64(instantBox.nanoOfSecond)
         return Int(truncatingIfNeeded: hash ^ (hash >> 32))
     }
+    if let ktypeBox = tryCast(pointer, to: RuntimeKTypeBox.self) {
+        return runtimeKTypeBoxHash(ktypeBox)
+    }
+    if let ktypeProjectionBox = tryCast(pointer, to: RuntimeKTypeProjectionBox.self) {
+        return runtimeKTypeProjectionBoxHash(ktypeProjectionBox)
+    }
     return Int(truncatingIfNeeded: UInt(bitPattern: pointer))
 }
 

@@ -1161,6 +1161,24 @@ public func kk_ktype_isMarkedNullable(_ ktypeRaw: Int) -> Int {
     return box.isMarkedNullable ? 1 : 0
 }
 
+/// Returns structural equality for KType handles.
+@_cdecl("kk_ktype_equals")
+public func kk_ktype_equals(_ lhsRaw: Int, _ rhsRaw: Int) -> Int {
+    guard runtimeKTypeBox(from: lhsRaw) != nil else {
+        return kk_box_bool(0)
+    }
+    return kk_box_bool(runtimeValuesEqual(lhsRaw, rhsRaw) ? 1 : 0)
+}
+
+/// Returns a structural hash code for a KType handle.
+@_cdecl("kk_ktype_hashCode")
+public func kk_ktype_hashCode(_ ktypeRaw: Int) -> Int {
+    guard let box = runtimeKTypeBox(from: ktypeRaw) else {
+        return 0
+    }
+    return runtimeKTypeBoxHash(box)
+}
+
 /// Creates a KTypeProjection from a KType raw handle and variance ordinal.
 /// variance: 0=IN, 1=OUT, 2=INVARIANT, -1=STAR (type is ignored for STAR)
 @_cdecl("kk_ktypeprojection_create")

@@ -636,6 +636,25 @@ public func kk_kfunction_get_type(_ kfunctionRaw: Int) -> Int {
     return runtimeNullSentinelInt
 }
 
+@_cdecl("kk_kfunction_get_visibility")
+public func kk_kfunction_get_visibility(_ kfunctionRaw: Int) -> Int {
+    guard let box = runtimeKFunctionBox(from: kfunctionRaw) else {
+        return runtimeNullSentinelInt
+    }
+    if box.visibilityRaw != 0, box.visibilityRaw != runtimeNullSentinelInt {
+        return box.visibilityRaw
+    }
+    return runtimeReflectionStringRaw("PUBLIC")
+}
+
+@_cdecl("kk_kfunction_get_annotations")
+public func kk_kfunction_get_annotations(_ kfunctionRaw: Int) -> Int {
+    guard let box = runtimeKFunctionBox(from: kfunctionRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: box.annotationRaws))
+}
+
 // MARK: KFunction.call() — arity 0
 
 @_cdecl("kk_kfunction_call_0")

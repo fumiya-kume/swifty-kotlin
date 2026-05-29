@@ -149,7 +149,7 @@ Runtime seed reproducibility and boundary behavior are pinned by `RuntimeRandomB
 | `create / classifier / arguments / isMarkedNullable / toString` | Done | |
 | `KTypeProjection create / type / variance` | Done | |
 | `KVariance` enum | Done | |
-| `KType.equals` / `hashCode` | Gap | No `kk_ktype_equals`; equality check falls back to pointer identity |
+| `KType.equals` / `hashCode` | Done | Structural `kk_ktype_equals` / `kk_ktype_hashCode` |
 
 ### `KFunction<T>`
 
@@ -157,7 +157,7 @@ Runtime seed reproducibility and boundary behavior are pinned by `RuntimeRandomB
 |---|---|---|
 | `create / create_full / call 0–3 / call_vararg` | Done | |
 | `getName / getArity / getReturnType / isSuspend / getParameters / getValueParameters / getType` | Done | |
-| `visibility` / `annotations` on KFunction | Gap | No getter entry points for visibility or annotation list |
+| `visibility` / `annotations` on KFunction | Done | `kk_kfunction_get_visibility` / `kk_kfunction_get_annotations` |
 
 ### `KProperty` / `KMutableProperty`
 
@@ -179,7 +179,7 @@ Runtime seed reproducibility and boundary behavior are pinned by `RuntimeRandomB
 |---|---|---|
 | `create / call 0–3 / call_vararg / getName / getArity / getReturnType / isPrimary / getVisibility / getParameters` | Done | |
 
-**Summary: ~2 gaps (KType equality, KFunction visibility/annotations), most items Done.**
+**Summary: 0 KType/KFunction gaps; KProperty direct dispatch remains Partial.**
 
 ---
 

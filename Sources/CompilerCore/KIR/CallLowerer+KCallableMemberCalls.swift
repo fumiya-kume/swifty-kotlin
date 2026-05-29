@@ -101,6 +101,8 @@ extension CallLowerer {
         "valueParameters": "kk_kfunction_get_value_parameters",
         "isSuspend": "kk_kfunction_is_suspend",
         "type": "kk_kfunction_get_type",
+        "visibility": "kk_kfunction_get_visibility",
+        "annotations": "kk_kfunction_get_annotations",
     ]
 
     func tryLowerKFunctionMemberAccess(

@@ -145,6 +145,22 @@ public extension RuntimeABISpec {
             section: "Reflection"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_kfunction_get_visibility",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Reflection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_kfunction_get_annotations",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Reflection"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_kfunction_call_0",
             parameters: [
                 RuntimeABIParameter(name: "handle", type: .intptr),

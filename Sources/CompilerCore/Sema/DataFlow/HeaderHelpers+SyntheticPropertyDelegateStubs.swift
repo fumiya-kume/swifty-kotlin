@@ -252,6 +252,28 @@ extension DataFlowSemaPhase {
                 symbols.setParentSymbol(kCallableSymbol, for: namePropSymbol)
                 symbols.setPropertyType(stringType, for: namePropSymbol)
             }
+
+            let visibilityType: TypeID = if let kVisibilitySymbol = symbols.lookup(
+                fqName: kotlinReflectPkg + [interner.intern("KVisibility")]
+            ) {
+                types.makeNullable(types.make(.classType(ClassType(
+                    classSymbol: kVisibilitySymbol,
+                    args: [],
+                    nullability: .nonNull
+                ))))
+            } else {
+                types.nullableAnyType
+            }
+            let visibilityPropName = interner.intern("visibility")
+            let visibilityPropFQ = kCallableInfo.fqName + [visibilityPropName]
+            if symbols.lookup(fqName: visibilityPropFQ) == nil {
+                let visibilityPropSymbol = symbols.define(
+                    kind: .property, name: visibilityPropName, fqName: visibilityPropFQ,
+                    declSite: nil, visibility: .public, flags: [.synthetic]
+                )
+                symbols.setParentSymbol(kCallableSymbol, for: visibilityPropSymbol)
+                symbols.setPropertyType(visibilityType, for: visibilityPropSymbol)
+            }
         }
         let kMutablePropertySymbol = ensureInterfaceSymbol(
             named: "KMutableProperty", in: kotlinReflectPkg, symbols: symbols, interner: interner
@@ -1864,6 +1886,29 @@ extension DataFlowSemaPhase {
                 symbols.setPropertyType(anyType, for: propSym)
                 symbols.setExternalLinkName("kk_ktype_arguments", for: propSym)
             }
+
+            registerSyntheticKTypeMemberFunction(
+                named: "equals",
+                ownerSymbol: kTypeSymbol,
+                ownerType: kTypeType,
+                ownerFQName: kTypeInfo.fqName,
+                parameterTypes: [types.nullableAnyType],
+                returnType: boolType,
+                externalLinkName: "kk_ktype_equals",
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticKTypeMemberFunction(
+                named: "hashCode",
+                ownerSymbol: kTypeSymbol,
+                ownerType: kTypeType,
+                ownerFQName: kTypeInfo.fqName,
+                parameterTypes: [],
+                returnType: types.intType,
+                externalLinkName: "kk_ktype_hashCode",
+                symbols: symbols,
+                interner: interner
+            )
         }
 
         // Register kotlin.reflect.KTypeProjection class stub
@@ -2219,6 +2264,69 @@ extension DataFlowSemaPhase {
         )
         symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
         symbols.setPropertyType(propertyType, for: propertySymbol)
+    }
+
+    private func registerSyntheticKTypeMemberFunction(
+        named name: String,
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        ownerFQName: [InternedString],
+        parameterTypes: [TypeID],
+        returnType: TypeID,
+        externalLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = ownerFQName + [functionName]
+        guard symbols.lookupAll(fqName: functionFQName).first(where: { symbol in
+            guard let signature = symbols.functionSignature(for: symbol) else {
+                return false
+            }
+            return signature.receiverType == ownerType &&
+                signature.parameterTypes == parameterTypes &&
+                signature.returnType == returnType
+        }) == nil else {
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        var parameterSymbols: [SymbolID] = []
+        for index in parameterTypes.indices {
+            let parameterName = interner.intern(index == 0 ? "other" : "arg\(index)")
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: functionFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            parameterSymbols.append(parameterSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: ownerType,
+                parameterTypes: parameterTypes,
+                returnType: returnType,
+                valueParameterSymbols: parameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: parameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: parameterSymbols.count)
+            ),
+            for: functionSymbol
+        )
     }
 
     // STDLIB-REFLECT-073: Register KVariance enum with declaration/use-site variance entries.

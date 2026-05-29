@@ -270,6 +270,113 @@ func runtimeMapNotNullResultValue(_ raw: Int) -> Int? {
     return maybeUnbox(raw)
 }
 
+private func runtimeKTypeBoxForStructuralComparison(from raw: Int) -> RuntimeKTypeBox? {
+    guard raw != 0, raw != runtimeNullSentinelInt,
+          let ptr = UnsafeMutableRawPointer(bitPattern: raw)
+    else {
+        return nil
+    }
+    let isObjectPointer = runtimeStorage.withGCLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObjectPointer else { return nil }
+    return tryCast(ptr, to: RuntimeKTypeBox.self)
+}
+
+private func runtimeKTypeProjectionBoxForStructuralComparison(from raw: Int) -> RuntimeKTypeProjectionBox? {
+    guard raw != 0, raw != runtimeNullSentinelInt,
+          let ptr = UnsafeMutableRawPointer(bitPattern: raw)
+    else {
+        return nil
+    }
+    let isObjectPointer = runtimeStorage.withGCLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObjectPointer else { return nil }
+    return tryCast(ptr, to: RuntimeKTypeProjectionBox.self)
+}
+
+private func runtimeKTypeRawsEqual(_ lhsRaw: Int, _ rhsRaw: Int) -> Bool {
+    if lhsRaw == rhsRaw {
+        return true
+    }
+    guard let lhs = runtimeKTypeBoxForStructuralComparison(from: lhsRaw),
+          let rhs = runtimeKTypeBoxForStructuralComparison(from: rhsRaw)
+    else {
+        return runtimeValuesEqual(lhsRaw, rhsRaw)
+    }
+    return runtimeKTypeBoxesEqual(lhs, rhs)
+}
+
+func runtimeKTypeBoxesEqual(_ lhs: RuntimeKTypeBox, _ rhs: RuntimeKTypeBox) -> Bool {
+    guard lhs.isMarkedNullable == rhs.isMarkedNullable,
+          runtimeValuesEqual(lhs.classifierRaw, rhs.classifierRaw),
+          lhs.argumentRaws.count == rhs.argumentRaws.count
+    else {
+        return false
+    }
+    for index in lhs.argumentRaws.indices {
+        guard let lhsProjection = runtimeKTypeProjectionBoxForStructuralComparison(from: lhs.argumentRaws[index]),
+              let rhsProjection = runtimeKTypeProjectionBoxForStructuralComparison(from: rhs.argumentRaws[index])
+        else {
+            if !runtimeValuesEqual(lhs.argumentRaws[index], rhs.argumentRaws[index]) {
+                return false
+            }
+            continue
+        }
+        if !runtimeKTypeProjectionBoxesEqual(lhsProjection, rhsProjection) {
+            return false
+        }
+    }
+    return true
+}
+
+func runtimeKTypeProjectionBoxesEqual(
+    _ lhs: RuntimeKTypeProjectionBox,
+    _ rhs: RuntimeKTypeProjectionBox
+) -> Bool {
+    guard lhs.variance == rhs.variance else {
+        return false
+    }
+    guard lhs.variance != nil else {
+        return true
+    }
+    return runtimeKTypeRawsEqual(lhs.typeRaw, rhs.typeRaw)
+}
+
+private func runtimeKTypeRawHash(_ raw: Int) -> Int {
+    guard let box = runtimeKTypeBoxForStructuralComparison(from: raw) else {
+        return kk_any_hashCode(raw, 0)
+    }
+    return runtimeKTypeBoxHash(box)
+}
+
+private func runtimeKTypeProjectionRawHash(_ raw: Int) -> Int {
+    guard let box = runtimeKTypeProjectionBoxForStructuralComparison(from: raw) else {
+        return kk_any_hashCode(raw, 0)
+    }
+    return runtimeKTypeProjectionBoxHash(box)
+}
+
+func runtimeKTypeBoxHash(_ box: RuntimeKTypeBox) -> Int {
+    var result = kk_any_hashCode(box.classifierRaw, 0)
+    result = 31 &* result &+ (box.isMarkedNullable ? 1 : 0)
+    result = 31 &* result &+ box.argumentRaws.count
+    for argumentRaw in box.argumentRaws {
+        result = 31 &* result &+ runtimeKTypeProjectionRawHash(argumentRaw)
+    }
+    return result
+}
+
+func runtimeKTypeProjectionBoxHash(_ box: RuntimeKTypeProjectionBox) -> Int {
+    var result = box.variance?.rawValue ?? -1
+    guard box.variance != nil else {
+        return result
+    }
+    result = 31 &* result &+ runtimeKTypeRawHash(box.typeRaw)
+    return result
+}
+
 func runtimeValuesEqual(_ lhs: Int, _ rhs: Int) -> Bool {
     if lhs == rhs {
         return true
@@ -339,6 +446,16 @@ func runtimeValuesEqual(_ lhs: Int, _ rhs: Int) -> Bool {
     {
         return lhsInstant.epochSeconds == rhsInstant.epochSeconds
             && lhsInstant.nanoOfSecond == rhsInstant.nanoOfSecond
+    }
+    if let lhsKType = tryCast(lhsPtr, to: RuntimeKTypeBox.self),
+       let rhsKType = tryCast(rhsPtr, to: RuntimeKTypeBox.self)
+    {
+        return runtimeKTypeBoxesEqual(lhsKType, rhsKType)
+    }
+    if let lhsKTypeProjection = tryCast(lhsPtr, to: RuntimeKTypeProjectionBox.self),
+       let rhsKTypeProjection = tryCast(rhsPtr, to: RuntimeKTypeProjectionBox.self)
+    {
+        return runtimeKTypeProjectionBoxesEqual(lhsKTypeProjection, rhsKTypeProjection)
     }
     if let lhsList = tryCast(lhsPtr, to: RuntimeListBox.self),
        let rhsList = tryCast(rhsPtr, to: RuntimeListBox.self)

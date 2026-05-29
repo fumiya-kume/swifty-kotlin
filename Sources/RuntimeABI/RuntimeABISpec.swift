@@ -1685,6 +1685,23 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "TypeCheck"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ktype_equals",
+            parameters: [
+                RuntimeABIParameter(name: "lhsRaw", type: .intptr),
+                RuntimeABIParameter(name: "rhsRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ktype_hashCode",
+            parameters: [
+                RuntimeABIParameter(name: "ktypeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
         // STDLIB-REFLECT-066: KType.toString()
         RuntimeABIFunctionSpec(
             name: "kk_ktype_to_string",

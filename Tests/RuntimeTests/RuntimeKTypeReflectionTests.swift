@@ -21,6 +21,15 @@ final class RuntimeKTypeReflectionTests: IsolatedRuntimeXCTestCase {
         extractString(from: UnsafeMutableRawPointer(bitPattern: raw)) ?? ""
     }
 
+    private func boolValue(_ raw: Int) -> Bool {
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: raw),
+              let box = tryCast(ptr, to: RuntimeBoolBox.self)
+        else {
+            return false
+        }
+        return box.value
+    }
+
     private func makeRuntimeString(_ value: String) -> Int {
         value.withCString { cstr in
             cstr.withMemoryRebound(to: UInt8.self, capacity: max(1, value.utf8.count)) { ptr in
@@ -135,6 +144,39 @@ final class RuntimeKTypeReflectionTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(arguments?.elements.first, projection)
         XCTAssertEqual(runtimeStringValue(kk_ktype_to_string(arrayType)), "kotlin.Array<kotlin.Int>")
         XCTAssertEqual(capturePrintln { kk_println_any(UnsafeMutableRawPointer(bitPattern: argumentsRaw)) }, "[kotlin.Int]")
+    }
+
+    func testKTypeEqualityAndHashCodeAreStructural() {
+        let stringTypeA = makeKTypeHandle(name: "kotlin.String", typeToken: 30)
+        let stringTypeB = makeKTypeHandle(name: "kotlin.String", typeToken: 30)
+        let nullableStringType = makeKTypeHandle(name: "kotlin.String", typeToken: 30, isNullable: true)
+        let listTypeA = makeKTypeHandle(
+            name: "kotlin.collections.List",
+            typeToken: 31,
+            arguments: [makeKTypeProjectionHandle(type: stringTypeA)]
+        )
+        let listTypeB = makeKTypeHandle(
+            name: "kotlin.collections.List",
+            typeToken: 31,
+            arguments: [makeKTypeProjectionHandle(type: stringTypeB)]
+        )
+        let outListType = makeKTypeHandle(
+            name: "kotlin.collections.List",
+            typeToken: 31,
+            arguments: [makeKTypeProjectionHandle(type: stringTypeB, variance: 1)]
+        )
+
+        XCTAssertNotEqual(stringTypeA, stringTypeB)
+        XCTAssertTrue(boolValue(kk_ktype_equals(stringTypeA, stringTypeB)))
+        XCTAssertTrue(boolValue(kk_ktype_equals(listTypeA, listTypeB)))
+        XCTAssertEqual(kk_structural_eq(listTypeA, listTypeB), 1)
+        XCTAssertEqual(kk_ktype_hashCode(listTypeA), kk_ktype_hashCode(listTypeB))
+        XCTAssertEqual(kk_any_hashCode(listTypeA, 0), kk_any_hashCode(listTypeB, 0))
+        XCTAssertFalse(boolValue(kk_ktype_equals(stringTypeA, nullableStringType)))
+        XCTAssertFalse(boolValue(kk_ktype_equals(listTypeA, outListType)))
+        XCTAssertFalse(boolValue(kk_ktype_equals(listTypeA, stringTypeA)))
+        XCTAssertFalse(boolValue(kk_ktype_equals(123456, 123456)))
+        XCTAssertEqual(kk_ktype_hashCode(123456), 0)
     }
 
     func testInvalidHandlesReturnSentinels() {

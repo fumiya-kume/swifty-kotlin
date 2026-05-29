@@ -28,6 +28,10 @@ final class RuntimeKClassCastAndMembersTests: XCTestCase {
         }
     }
 
+    private func runtimeStringValue(_ raw: Int) -> String {
+        extractString(from: UnsafeMutableRawPointer(bitPattern: raw)) ?? ""
+    }
+
     /// Registers a KClass with minimal metadata and returns its raw handle.
     private func registerKClass(
         typeToken: Int,
@@ -101,6 +105,18 @@ final class RuntimeKClassCastAndMembersTests: XCTestCase {
         }
         XCTAssertEqual(list.elements.count, 1)
         XCTAssertEqual(list.elements[0], fnRaw)
+    }
+
+    func testFunctionVisibilityAndAnnotationsDefaultToPublicAndEmpty() {
+        let fnRaw = kk_kfunction_create(
+            makeRuntimeString("run"), 0,
+            makeRuntimeString("kotlin.Unit"), 0, 0, 0
+        )
+
+        XCTAssertEqual(runtimeStringValue(kk_kfunction_get_visibility(fnRaw)), "PUBLIC")
+        XCTAssertTrue(runtimeListElements(from: kk_kfunction_get_annotations(fnRaw)).isEmpty)
+        XCTAssertEqual(kk_kfunction_get_visibility(0), runtimeNullSentinelInt)
+        XCTAssertTrue(runtimeListElements(from: kk_kfunction_get_annotations(0)).isEmpty)
     }
 
     func testMembersReturnsMultipleRegisteredMembers() {
