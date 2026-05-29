@@ -285,6 +285,7 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
             "toList": "kk_string_toList",
             "toMutableList": "kk_string_toMutableList",
             "toCharArray": "kk_string_toCharArray",
+            "toTypedArray": "kk_string_toTypedArray",
         ]
         for (member, expectedLink) in expected {
             XCTAssertEqual(
@@ -292,6 +293,56 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
                 expectedLink,
                 "String.\(member) should link to \(expectedLink)"
             )
+        }
+    }
+
+    func testCharSequenceToTypedArrayResolvesFromSource() throws {
+        let source = """
+        fun fromSequence(value: CharSequence): Array<Char> = value.toTypedArray()
+        fun fromString(value: String): Array<Char> = value.toTypedArray()
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected CharSequence.toTypedArray usage to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let arraySymbol = try XCTUnwrap(sema.symbols.lookup(
+                fqName: ["kotlin", "Array"].map { ctx.interner.intern($0) }
+            ))
+
+            for functionName in ["fromSequence", "fromString"] {
+                let functionSymbol = try XCTUnwrap(
+                    sema.symbols.lookup(fqName: [ctx.interner.intern(functionName)])
+                )
+                let signature = try XCTUnwrap(sema.symbols.functionSignature(for: functionSymbol))
+                guard case let .classType(returnClassType) = sema.types.kind(of: signature.returnType) else {
+                    return XCTFail("Expected \(functionName)() to return Array<Char>")
+                }
+                XCTAssertEqual(returnClassType.classSymbol, arraySymbol)
+                switch try XCTUnwrap(returnClassType.args.first) {
+                case let .invariant(arg), let .out(arg):
+                    XCTAssertEqual(arg, sema.types.charType)
+                case .in, .star:
+                    XCTFail("Expected \(functionName)() to return Array<Char>")
+                }
+            }
+
+            let callExprs = allExprIDs(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == "toTypedArray"
+            }
+            XCTAssertEqual(callExprs.count, 2)
+            for callExpr in callExprs {
+                let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+                XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_string_toTypedArray")
+            }
         }
     }
 

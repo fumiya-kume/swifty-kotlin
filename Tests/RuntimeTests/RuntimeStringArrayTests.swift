@@ -196,14 +196,27 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
     func testStringToListAndToCharArrayReturnCharElements() {
         let listRaw = kk_string_toList(rawFromRuntimeString("abc"))
         let charArrayRaw = kk_string_toCharArray(rawFromRuntimeString("abc"))
+        let typedArrayRaw = kk_string_toTypedArray(rawFromRuntimeString("abc"))
 
         let list = runtimeListBox(from: listRaw)
         let charArray = runtimeArrayBox(from: charArrayRaw)
+        let typedArray = runtimeArrayBox(from: typedArrayRaw)
         XCTAssertNotNil(list)
         XCTAssertNotNil(charArray)
+        XCTAssertNotNil(typedArray)
+        XCTAssertNotEqual(charArrayRaw, typedArrayRaw)
         let expected = [97, 98, 99]
         XCTAssertEqual(list?.elements.map(kk_unbox_char), expected)
         XCTAssertEqual(charArray?.elements.map(kk_unbox_char), expected)
+        XCTAssertEqual(typedArray?.elements.map(kk_unbox_char), expected)
+    }
+
+    func testStringToTypedArrayEmptyString() {
+        let typedArrayRaw = kk_string_toTypedArray(rawFromRuntimeString(""))
+        let typedArray = runtimeArrayBox(from: typedArrayRaw)
+
+        XCTAssertNotNil(typedArray)
+        XCTAssertEqual(typedArray?.elements.count, 0)
     }
 
     // MARK: - STDLIB-317: String.asIterable() tests
@@ -303,6 +316,10 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         let mutableListRaw = kk_string_toMutableList(rawFromRuntimeString(text))
         let mutableList = runtimeListBox(from: mutableListRaw)
         XCTAssertEqual(mutableList?.elements.map(kk_unbox_char), expectedScalars)
+
+        let typedArrayRaw = kk_string_toTypedArray(rawFromRuntimeString(text))
+        let typedArray = runtimeArrayBox(from: typedArrayRaw)
+        XCTAssertEqual(typedArray?.elements.map(kk_unbox_char), expectedScalars)
 
         XCTAssertEqual(runtimeStringValue(kk_string_take(rawFromRuntimeString(text), 2, nil)), "aé")
         XCTAssertEqual(runtimeStringValue(kk_string_drop(rawFromRuntimeString(text), 1, nil)), "é🐻")

@@ -170,6 +170,7 @@ extension ABILoweringPass {
             interner.intern("kk_string_equalsIgnoreCase"),
             interner.intern("kk_string_iterable_toList"),
             interner.intern("kk_string_toMutableList"),
+            interner.intern("kk_string_toTypedArray"),
             interner.intern("kk_string_iterable_iterator"),
             interner.intern("kk_math_abs"),
             interner.intern("kk_math_abs_int"),

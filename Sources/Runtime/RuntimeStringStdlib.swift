@@ -359,6 +359,11 @@ public func kk_string_toCharArray(_ strRaw: Int) -> Int {
     return runtimeMakeArrayRaw(charRaws)
 }
 
+@_cdecl("kk_string_toTypedArray")
+public func kk_string_toTypedArray(_ strRaw: Int) -> Int {
+    kk_string_toCharArray(strRaw)
+}
+
 // MARK: - STDLIB-TEXT-FN-094: CharSequence.toCollection(destination)
 
 /// Appends every character of the string (as a boxed `Char`) to `destRaw`,

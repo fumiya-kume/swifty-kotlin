@@ -87,6 +87,12 @@ extension DataFlowSemaPhase {
             types: types,
             fqName: [interner.intern("kotlin"), interner.intern("CharArray")]
         )
+        let arrayCharType = makeArrayType(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            elementType: charType
+        )
         let nullableCharSequenceType = types.makeNullable(charSequenceType)
 
         // --- STDLIB-TEXT-TYPE-001: kotlin.text.Appendable interface surface ---
@@ -1020,6 +1026,17 @@ extension DataFlowSemaPhase {
             receiverType: stringType,
             parameters: [],
             returnType: charArrayType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "toTypedArray",
+            externalLinkName: "kk_string_toTypedArray",
+            receiverType: charSequenceType,
+            parameters: [],
+            returnType: arrayCharType,
             packageFQName: kotlinTextPkg,
             symbols: symbols,
             interner: interner
@@ -3701,6 +3718,20 @@ extension DataFlowSemaPhase {
         )))
     }
 
+    private func makeArrayType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        elementType: TypeID
+    ) -> TypeID {
+        let arraySymbol = ensureArraySymbol(symbols: symbols, types: types, interner: interner)
+        return types.make(.classType(ClassType(
+            classSymbol: arraySymbol,
+            args: [.invariant(elementType)],
+            nullability: .nonNull
+        )))
+    }
+
     private func makeSequenceType(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -4055,6 +4086,47 @@ extension DataFlowSemaPhase {
         types.setNominalTypeParameterSymbols([typeParamSymbol], for: interfaceSymbol)
         types.setNominalTypeParameterVariances([.invariant], for: interfaceSymbol)
         return interfaceSymbol
+    }
+
+    private func ensureArraySymbol(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> SymbolID {
+        let kotlinPkg: [InternedString] = [interner.intern("kotlin")]
+        if symbols.lookup(fqName: kotlinPkg) == nil {
+            _ = symbols.define(
+                kind: .package,
+                name: interner.intern("kotlin"),
+                fqName: kotlinPkg,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        let arrayName = interner.intern("Array")
+        let arrayFQName = kotlinPkg + [arrayName]
+        let arraySymbol: SymbolID = symbols.lookup(fqName: arrayFQName) ?? symbols.define(
+            kind: .class,
+            name: arrayName,
+            fqName: arrayFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = arrayFQName + [typeParamName]
+        let typeParamSymbol = symbols.lookup(fqName: typeParamFQName) ?? symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: typeParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: arraySymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: arraySymbol)
+        return arraySymbol
     }
 
     private func registerSyntheticStringExtensionFunction(

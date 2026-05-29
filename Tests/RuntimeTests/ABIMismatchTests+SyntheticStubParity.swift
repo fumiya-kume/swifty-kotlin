@@ -162,6 +162,8 @@ extension ABIMismatchTests {
             "kk_string_toUIntOrNull_radix",
             "kk_string_toULongOrNull_radix",
             "kk_string_case_insensitive_order",
+            "kk_string_toMutableList",
+            "kk_string_toTypedArray",
             "kk_system_exitProcess",
             "kk_system_currentTimeMillis",
             "kk_system_nanoTime",
