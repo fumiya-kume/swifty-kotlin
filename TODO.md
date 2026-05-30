@@ -532,7 +532,7 @@
 - [ ] STDLIB-TIME-FN-003: `measureTimedValue` 関数の実装
 - [ ] STDLIB-TIME-FN-004: `times` 関数の実装
 - [ ] STDLIB-TIME-FN-005: `toDuration` 関数の実装
-- [ ] STDLIB-TIME-FN-006: `toDurationUnit` 関数の実装
+- [x] STDLIB-TIME-FN-006: `toDurationUnit` 関数の実装
 - [ ] STDLIB-TIME-FN-007: `toJavaDuration` 関数の実装
 - [ ] STDLIB-TIME-FN-008: `toJavaInstant` 関数の実装
 - [ ] STDLIB-TIME-FN-009: `toJSDate` 関数の実装
