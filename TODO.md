@@ -433,7 +433,7 @@
 - [ ] STDLIB-TEXT-FN-040: `onEachIndexed` 関数の実装
 - [x] STDLIB-TEXT-FN-041: `padEnd` 関数の実装
 - [ ] STDLIB-TEXT-FN-042: `padStart` 関数の実装
-- [ ] STDLIB-TEXT-FN-043: `plus` 関数の実装
+- [x] STDLIB-TEXT-FN-043: `plus` 関数の実装
 - [ ] STDLIB-TEXT-FN-044: `random` 関数の実装
 - [ ] STDLIB-TEXT-FN-045: `randomOrNull` 関数の実装
 - [ ] STDLIB-TEXT-FN-046: `reduce` 関数の実装
