@@ -143,7 +143,7 @@
 - [x] STDLIB-IO-FN-037: `startsWith` 関数の実装
 - [ ] STDLIB-IO-FN-038: `toRelativeString` 関数の実装
 - [x] STDLIB-IO-FN-040: `useLines` 関数の実装（Reader版）
-- [ ] STDLIB-IO-FN-037: `startsWith` 関数の実装
+- [x] STDLIB-IO-FN-037: `startsWith` 関数の実装
 - [x] STDLIB-IO-FN-038: `toRelativeString` 関数の実装
 - [ ] STDLIB-IO-FN-040: `useLines` 関数の実装（Reader版）
 
