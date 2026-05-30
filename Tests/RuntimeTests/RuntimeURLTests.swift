@@ -68,4 +68,32 @@ final class RuntimeURLTests: XCTestCase {
         XCTAssertEqual(thrown, 0)
         XCTAssertEqual(runtimeListBox(from: bytesRaw)?.elements, [0, 127, -128, -1])
     }
+
+    // STDLIB-IO-FN-035: URL.readText()
+    func testURLReadTextReadsFileURLContents() throws {
+        let tmpURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".txt")
+        let expected = "hello from readText"
+        try expected.write(to: tmpURL, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: tmpURL) }
+
+        var thrown = 0
+        let urlRaw = kk_url_new(runtimeString(tmpURL.absoluteString), &thrown)
+        XCTAssertEqual(thrown, 0, "URL construction must not throw")
+
+        let textRaw = kk_url_readText(urlRaw, &thrown)
+        XCTAssertEqual(thrown, 0, "readText on a readable file:// URL must not throw")
+        XCTAssertEqual(stringValue(textRaw), expected)
+    }
+
+    func testURLReadTextThrowsOnUnreadablePath() {
+        var thrown = 0
+        let nonExistentPath = "/nonexistent_kswiftk_test_\(UUID().uuidString)/file.txt"
+        let urlRaw = kk_url_new(runtimeString("file://" + nonExistentPath), &thrown)
+        XCTAssertEqual(thrown, 0, "URL construction must not throw even for nonexistent paths")
+
+        let textRaw = kk_url_readText(urlRaw, &thrown)
+        XCTAssertNotEqual(thrown, 0, "readText on an unreadable file:// URL must set outThrown")
+        _ = textRaw
+    }
 }
