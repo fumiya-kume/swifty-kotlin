@@ -757,7 +757,7 @@
 - [ ] STDLIB-CINTEROP-INTERNAL-TYPE-001: `kotlinx.cinterop.internal.CCall` annotation を追加する
 - [ ] STDLIB-CINTEROP-INTERNAL-TYPE-002: `kotlinx.cinterop.internal.CEnumEntryAlias` annotation を追加する
 - [ ] STDLIB-CINTEROP-INTERNAL-TYPE-003: `kotlinx.cinterop.internal.CEnumVarTypeSize` annotation を追加する
-- [ ] STDLIB-CINTEROP-INTERNAL-TYPE-004: `kotlinx.cinterop.internal.CGlobalAccess` annotation を追加する
+- [x] STDLIB-CINTEROP-INTERNAL-TYPE-004: `kotlinx.cinterop.internal.CGlobalAccess` annotation を追加する
 - [ ] STDLIB-CINTEROP-INTERNAL-TYPE-005: `kotlinx.cinterop.internal.ConstantValue` object を追加する
 - [ ] STDLIB-CINTEROP-INTERNAL-TYPE-006: `kotlinx.cinterop.internal.CStruct` annotation を追加する
 - [ ] STDLIB-CINTEROP-INTERNAL-FN-001: `convertBlockPtrToKotlinFunction(blockPtr)` を追加する
