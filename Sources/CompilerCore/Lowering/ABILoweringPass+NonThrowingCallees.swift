@@ -941,6 +941,7 @@ extension ABILoweringPass {
             interner.intern("kk_sequence_flatMapIndexed"),
             interner.intern("kk_sequence_joinTo"),
             interner.intern("kk_sequence_joinToString"),
+            interner.intern("kk_sequence_indexOf"),
             interner.intern("kk_sequence_lastIndexOf"),
             interner.intern("kk_sequence_chunked"),
             interner.intern("kk_sequence_windowed"),

@@ -1281,6 +1281,20 @@ final class SequenceSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testSequenceIndexOfResolvesInCallExpressions() throws {
+        try assertSequenceMemberResolves(
+            source: """
+            fun findIndex(): Int {
+                val values = sequenceOf(10, 20, 30)
+                return values.indexOf(20)
+            }
+            """,
+            memberName: "indexOf",
+            expectedLinkName: "kk_sequence_indexOf",
+            diagnosticContext: "Sequence.indexOf"
+        )
+    }
+
     func testSequenceSingleResolvesInCallExpressions() throws {
         let source = """
         fun pickOnly(): Int {

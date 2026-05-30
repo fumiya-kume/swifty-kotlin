@@ -126,6 +126,7 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("plusElement", 1),
             sequence("chunked", 1),
             sequence("contains", 1),
+            sequence("indexOf", 1),
             sequence("drop", 1),
             sequence("dropWhile", 1),
             sequence("distinct", 0),
