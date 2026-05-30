@@ -447,7 +447,7 @@
 - [x] STDLIB-TEXT-FN-054: `repeat` 関数の実装
 - [ ] STDLIB-TEXT-FN-055: `replace` 関数の実装
 - [ ] STDLIB-TEXT-FN-056: `replaceAfter` 関数の実装
-- [ ] STDLIB-TEXT-FN-057: `replaceAfterLast` 関数の実装
+- [x] STDLIB-TEXT-FN-057: `replaceAfterLast` 関数の実装
 - [ ] STDLIB-TEXT-FN-058: `replaceBefore` 関数の実装
 - [ ] STDLIB-TEXT-FN-059: `replaceBeforeLast` 関数の実装
 - [ ] STDLIB-TEXT-FN-060: `replaceFirst` 関数の実装
