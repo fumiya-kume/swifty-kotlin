@@ -113,6 +113,7 @@ extension ABILoweringPass {
             interner.intern("kk_string_contentEquals"),
             interner.intern("kk_string_contentEquals_ignoreCase"),
             interner.intern("kk_string_indexOf_ignoreCase"),
+            interner.intern("kk_string_indexOf_char"),
             interner.intern("kk_string_indexOfAny_chars"),
             interner.intern("kk_string_indexOfAny_strings"),
             interner.intern("kk_string_lastIndexOfAny_chars"),

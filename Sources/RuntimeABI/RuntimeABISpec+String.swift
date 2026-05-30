@@ -668,6 +668,18 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        // STDLIB-TEXT-FN-020: CharSequence.indexOf(Char, startIndex, ignoreCase)
+        RuntimeABIFunctionSpec(
+            name: "kk_string_indexOf_char",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "charRaw", type: .intptr),
+                RuntimeABIParameter(name: "startIndex", type: .intptr),
+                RuntimeABIParameter(name: "ignoreCase", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
         // STDLIB-TEXT-EDGE-003: indexOf / lastIndexOf with ignoreCase
         RuntimeABIFunctionSpec(
             name: "kk_string_indexOf_ignoreCase",

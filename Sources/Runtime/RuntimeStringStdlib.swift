@@ -1871,6 +1871,33 @@ public func kk_string_lastIndexOf(_ strRaw: Int, _ otherRaw: Int) -> Int {
     return lastIndex
 }
 
+// MARK: - STDLIB-TEXT-FN-020: CharSequence.indexOf(Char, startIndex, ignoreCase)
+
+@_cdecl("kk_string_indexOf_char")
+public func kk_string_indexOf_char(_ strRaw: Int, _ charRaw: Int, _ startIndexRaw: Int, _ ignoreCaseRaw: Int) -> Int {
+    let source = runtimeStringScalars(strRaw)
+    guard let needle = UnicodeScalar(kk_unbox_char(charRaw)) else {
+        return -1
+    }
+    let ignoreCase = ignoreCaseRaw != 0
+    let start = max(0, startIndexRaw)
+    guard start < source.count else {
+        return -1
+    }
+    let needleString = String(needle)
+    for offset in start..<source.count {
+        let scalar = source[offset]
+        if ignoreCase {
+            if String(scalar).caseInsensitiveCompare(needleString) == .orderedSame {
+                return offset
+            }
+        } else if scalar == needle {
+            return offset
+        }
+    }
+    return -1
+}
+
 // MARK: - STDLIB-TEXT-EDGE-003: indexOf / lastIndexOf with ignoreCase
 
 @_cdecl("kk_string_indexOf_ignoreCase")
