@@ -582,7 +582,7 @@
 - [ ] STDLIB-COMP-FN-015: `maxOf` 関数の実装（Float版、3引数）
 - [ ] STDLIB-COMP-FN-016: `maxOf` 関数の実装（Float版、vararg）
 - [ ] STDLIB-COMP-FN-017: `maxOf` 関数の実装（Int版、2引数）
-- [ ] STDLIB-COMP-FN-018: `maxOf` 関数の実装（Int版、3引数）
+- [x] STDLIB-COMP-FN-018: `maxOf` 関数の実装（Int版、3引数）
 - [ ] STDLIB-COMP-FN-019: `maxOf` 関数の実装（Int版、vararg）
 - [ ] STDLIB-COMP-FN-020: `maxOf` 関数の実装（Long版、2引数）
 - [ ] STDLIB-COMP-FN-021: `maxOf` 関数の実装（Long版、3引数）
