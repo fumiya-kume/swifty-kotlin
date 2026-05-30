@@ -1291,6 +1291,34 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // STDLIB-IO-FN-004: OutputStream.buffered() / buffered(bufferSize) extension members.
+        // Returns an OutputStream that wraps the receiver with buffering. The runtime
+        // implementation is identity-compatible: the underlying RuntimeOutputStreamBox
+        // already streams through the OS, so the wrapped handle is the same instance.
+        // This satisfies Kotlin's `fun OutputStream.buffered(bufferSize: Int = DEFAULT_BUFFER_SIZE): BufferedOutputStream`
+        // contract at the Sema surface — callers can chain `.write(...)` / `.flush()` / `.close()` etc.
+        registerFileMemberFunction(
+            named: "buffered",
+            externalLinkName: "kk_output_stream_buffered",
+            ownerSymbol: outputStreamSymbol,
+            ownerType: outputStreamType,
+            parameters: [],
+            returnType: outputStreamType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "buffered",
+            externalLinkName: "kk_output_stream_buffered_sized",
+            ownerSymbol: outputStreamSymbol,
+            ownerType: outputStreamType,
+            parameters: [("bufferSize", intType)],
+            returnType: outputStreamType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // ClassLoader resource access functions (STDLIB-IO-093)
 
         registerFileMemberFunction(

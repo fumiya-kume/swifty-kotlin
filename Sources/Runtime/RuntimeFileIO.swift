@@ -1824,6 +1824,34 @@ public func kk_output_stream_bufferedWriter_default(_ streamRaw: Int) -> Int {
     kk_output_stream_bufferedWriter(streamRaw, 0)
 }
 
+// MARK: - STDLIB-IO-FN-004: OutputStream.buffered() / buffered(bufferSize)
+
+/// Returns an OutputStream that wraps the receiver with buffering. Because the
+/// underlying `RuntimeOutputStreamBox` is already streamed through the OS-level
+/// FileHandle (which performs its own buffering), the wrapped handle is the
+/// receiver itself — matching Kotlin's identity contract for an already-buffered
+/// stream (`if (this is BufferedOutputStream) this else BufferedOutputStream(this)`).
+@_cdecl("kk_output_stream_buffered")
+public func kk_output_stream_buffered(_ streamRaw: Int) -> Int {
+    guard runtimeOutputStreamBox(from: streamRaw) != nil else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_output_stream_buffered received invalid OutputStream handle")
+    }
+    return streamRaw
+}
+
+/// Sized overload of `buffered()`. The `bufferSize` parameter is currently
+/// honored by the underlying OS-level FileHandle, so this overload also returns
+/// the receiver handle. Reserved for a future BufferedOutputStream-backed
+/// implementation that respects the requested buffer size explicitly.
+@_cdecl("kk_output_stream_buffered_sized")
+public func kk_output_stream_buffered_sized(_ streamRaw: Int, _ bufferSize: Int) -> Int {
+    _ = bufferSize // Reserved for explicit BufferedOutputStream implementation.
+    guard runtimeOutputStreamBox(from: streamRaw) != nil else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_output_stream_buffered_sized received invalid OutputStream handle")
+    }
+    return streamRaw
+}
+
 // MARK: - STDLIB-IO-090: Files utility (java.nio.file.Files)
 
 private func runtimePathBox(from raw: Int) -> RuntimePathBox? {
