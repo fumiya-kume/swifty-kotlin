@@ -195,6 +195,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // set(Int, Char): Unit (STDLIB-TEXT-FN-064: operator fun set(index, value))
+        // sb[i] = 'c' desugars to sb.set(i, 'c'); runtime delegate is kk_string_builder_setCharAt.
+        registerStringBuilderMemberFunction(
+            named: "set",
+            externalLinkName: "kk_string_builder_setCharAt",
+            ownerSymbol: sbSymbol,
+            ownerType: sbType,
+            parameters: [("index", intType, false, false), ("value", charType, false, false)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner,
+            extraFlags: [.operatorFunction]
+        )
+
         // appendRange(CharSequence, Int, Int): StringBuilder (STDLIB-580)
         // The runtime still accepts raw string storage, but the surface type now
         // matches Kotlin's CharSequence signature.
@@ -348,7 +362,8 @@ extension DataFlowSemaPhase {
         parameters: [(name: String, type: TypeID, hasDefault: Bool, isVararg: Bool)],
         returnType: TypeID,
         symbols: SymbolTable,
-        interner: StringInterner
+        interner: StringInterner,
+        extraFlags: SymbolFlags = []
     ) {
         guard let ownerInfo = symbols.symbol(ownerSymbol) else {
             return
@@ -372,7 +387,7 @@ extension DataFlowSemaPhase {
             fqName: functionFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: SymbolFlags.synthetic.union(extraFlags)
         )
         symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
         symbols.setExternalLinkName(externalLinkName, for: functionSymbol)

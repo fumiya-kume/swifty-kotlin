@@ -1149,6 +1149,7 @@ extension ABILoweringPass {
             interner.intern("kk_string_builder_deleteCharAt"),
             interner.intern("kk_string_builder_deleteAt"),
             interner.intern("kk_string_builder_get"),
+            interner.intern("kk_string_builder_setCharAt"), // STDLIB-TEXT-FN-064: operator fun set(index, value)
             interner.intern("kk_string_builder_appendRange_obj"),
             interner.intern("kk_string_builder_insertRange_obj"),
             interner.intern("kk_string_builder_setRange"),

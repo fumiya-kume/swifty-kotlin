@@ -1198,6 +1198,9 @@ final class CallLowerer {
             "kk_string_builder_insertRange_obj"
         case ("setRange", 3):
             "kk_string_builder_setRange"
+        case ("set", 2):
+            // STDLIB-TEXT-FN-064: operator fun set(index, value) desugars to setCharAt
+            "kk_string_builder_setCharAt"
         default:
             nil
         }
