@@ -391,7 +391,7 @@
 - [ ] STDLIB-TEXT-FN-007: `buildStringAppend` 関数の実装
 - [ ] STDLIB-TEXT-FN-008: `buildStringBuilder` 関数の実装
 - [ ] STDLIB-TEXT-FN-006: `buildString` 関数の実装
-- [ ] STDLIB-TEXT-FN-009: `capitalize` 関数の実装
+- [x] STDLIB-TEXT-FN-009: `capitalize` 関数の実装
 - [ ] STDLIB-TEXT-FN-010: `codePointCount` 関数の実装
 - [x] STDLIB-TEXT-FN-011: `concat` 関数の実装
 - [x] STDLIB-TEXT-FN-012: `contains` 関数の実装
