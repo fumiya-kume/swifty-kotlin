@@ -408,7 +408,7 @@
 - [x] STDLIB-TEXT-FN-023: `indexOfLast` 関数の実装
 - [x] STDLIB-TEXT-FN-022: `indexOfFirst` 関数の実装
 - [ ] STDLIB-TEXT-FN-023: `indexOfLast` 関数の実装
-- [ ] STDLIB-TEXT-FN-024: `insert` 関数の実装
+- [x] STDLIB-TEXT-FN-024: `insert` 関数の実装
 - [x] STDLIB-TEXT-FN-025: `insertRange` 関数の実装
 - [ ] STDLIB-TEXT-FN-023: `indexOfLast` 関数の実装
 - [x] STDLIB-TEXT-FN-024: `insert` 関数の実装
