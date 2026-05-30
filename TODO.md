@@ -268,7 +268,7 @@
 - [x] STDLIB-SEQ-FN-047: `groupByTo` 関数の実装
 - [x] STDLIB-SEQ-FN-046: `groupBy` 関数の実装
 - [ ] STDLIB-SEQ-FN-047: `groupByTo` 関数の実装
-- [ ] STDLIB-SEQ-FN-048: `indexOf` 関数の実装
+- [x] STDLIB-SEQ-FN-048: `indexOf` 関数の実装
 - [ ] STDLIB-SEQ-FN-047: `groupByTo` 関数の実装
 - [x] STDLIB-SEQ-FN-048: `indexOf` 関数の実装
 - [x] STDLIB-SEQ-FN-056: `lastOrNull` 関数の実装
