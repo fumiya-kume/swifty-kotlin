@@ -351,7 +351,7 @@
 - [ ] STDLIB-TEXT-TYPE-010: `MatchResult` インターフェースの実装
 - [ ] STDLIB-TEXT-TYPE-011: `Regex` クラスの実装
 - [x] STDLIB-TEXT-TYPE-012: `RegexOption` enum の実装
-- [ ] STDLIB-TEXT-TYPE-013: `StringBuilder` クラスの実装
+- [x] STDLIB-TEXT-TYPE-013: `StringBuilder` クラスの実装
 
 #### kotlin.text プロパティの実装
 - [ ] STDLIB-TEXT-PROP-001: `CASE_INSENSITIVE_ORDER` プロパティの実装
