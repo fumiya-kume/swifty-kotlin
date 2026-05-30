@@ -524,7 +524,7 @@
 
 #### kotlin.time プロパティの実装
 - [ ] STDLIB-TIME-PROP-001: `isDistantFuture` 拡張プロパティの実装
-- [ ] STDLIB-TIME-PROP-002: `isDistantPast` 拡張プロパティの実装
+- [x] STDLIB-TIME-PROP-002: `isDistantPast` 拡張プロパティの実装
 
 #### kotlin.time 関数の実装
 - [ ] STDLIB-TIME-FN-001: `asClock` 関数の実装
