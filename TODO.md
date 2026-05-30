@@ -782,7 +782,7 @@
 - `java.text` 前提の日時・数値フォーマット
 
 ## テスト改善タスク
-- [ ] TEST-CORO-003: 高度な Coroutine 機能テスト（29→40）
+- [x] TEST-CORO-003: 高度な Coroutine 機能テスト（29→40）
 - [ ] TEST-INT-006: Integration Tests の整理と重複削減
 - [ ] TEST-CI-007: CI パイプラインの最適化
 - [ ] TEST-REPORT-008: テストレポート形式の改善
