@@ -106,7 +106,7 @@
 #### kotlin.io 関数の実装
 - [x] STDLIB-IO-FN-001: `appendBytes` 関数の実装
 - [x] STDLIB-IO-FN-003: `buffered` 関数の実装（InputStream版）
-- [ ] STDLIB-IO-FN-004: `buffered` 関数の実装（OutputStream版）
+- [x] STDLIB-IO-FN-004: `buffered` 関数の実装（OutputStream版）
 - [ ] STDLIB-IO-FN-001: `appendBytes` 関数の実装
 - [ ] STDLIB-IO-FN-003: `buffered` 関数の実装（InputStream版）
 - [x] STDLIB-IO-FN-004: `buffered` 関数の実装（OutputStream版）
