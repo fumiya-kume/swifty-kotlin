@@ -714,7 +714,7 @@
 - [x] STDLIB-CINTEROP-FN-012: `readValue()` を追加する
 - [ ] STDLIB-CINTEROP-FN-013: `refTo(index)` を追加する
 - [x] STDLIB-CINTEROP-FN-014: `reinterpret<T>()` を追加する
-- [ ] STDLIB-CINTEROP-FN-015: `CPointer<T>.get(index)` を追加する
+- [x] STDLIB-CINTEROP-FN-015: `CPointer<T>.get(index)` を追加する
 - [ ] STDLIB-CINTEROP-FN-016: `CPointer<T>.set(index, value)` を追加する
 - [ ] STDLIB-CINTEROP-FN-017: `Array<CPointer<T>?>.toCValues()` を追加する
 - [x] STDLIB-CINTEROP-FN-018: `ByteArray.toCValues()` を追加する
