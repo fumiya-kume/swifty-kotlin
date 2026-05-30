@@ -2284,6 +2284,48 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        // inline fun <T : CPointed> CPointer<T>?.toLong(): Long
+        let pointerToLongFunctionName = interner.intern("toLong")
+        let pointerToLongFunctionFQName = cinteropPkg + [pointerToLongFunctionName]
+        let pointerToLongTypeParameterName = interner.intern("T")
+        let pointerToLongTypeParameterFQName = pointerToLongFunctionFQName + [pointerToLongTypeParameterName]
+        let pointerToLongTypeParameterSymbol: SymbolID = if let existing = symbols.lookup(
+            fqName: pointerToLongTypeParameterFQName
+        ) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: pointerToLongTypeParameterName,
+                fqName: pointerToLongTypeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+        }
+        symbols.insertFlags([.synthetic], for: pointerToLongTypeParameterSymbol)
+        symbols.setTypeParameterUpperBounds([cPointedType], for: pointerToLongTypeParameterSymbol)
+        let pointerToLongTypeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: pointerToLongTypeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let pointerToLongNullableReceiverType = types.make(.classType(ClassType(
+            classSymbol: cPointerSymbol,
+            args: [.invariant(pointerToLongTypeParameterType)],
+            nullability: .nullable
+        )))
+        registerSyntheticNativeTopLevelFunction(
+            named: "toLong",
+            packageFQName: cinteropPkg,
+            receiverType: pointerToLongNullableReceiverType,
+            parameters: [],
+            returnType: types.longType,
+            typeParameterSymbols: [pointerToLongTypeParameterSymbol],
+            typeParameterUpperBoundsList: [[cPointedType]],
+            flags: [.synthetic, .inlineFunction],
+            symbols: symbols,
+            interner: interner
+        )
         // inline fun <reified T : Any> unwrapKotlinObjectHolder(holder: COpaquePointer?): T
         let unwrapHolderFunctionName = interner.intern("unwrapKotlinObjectHolder")
         let unwrapHolderFunctionFQName = cinteropPkg + [unwrapHolderFunctionName]
@@ -3224,6 +3266,35 @@ extension DataFlowSemaPhase {
                 receiverType: shortArrayReceiverType,
                 parameters: [],
                 returnType: shortArrayToCValuesReturnType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+        // fun UShortArray.toCValues(): CValues<UShortVar>
+        if let uShortVarSymbol = symbols.lookup(fqName: cinteropPkg + [interner.intern("UShortVar")]) {
+            let uShortVarType = types.make(.classType(ClassType(
+                classSymbol: uShortVarSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            let uShortArrayReceiverType = syntheticClassType(
+                packagePath: ["kotlin"],
+                name: "UShortArray",
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
+            let uShortArrayToCValuesReturnType = types.make(.classType(ClassType(
+                classSymbol: cValuesSymbol,
+                args: [.invariant(uShortVarType)],
+                nullability: .nonNull
+            )))
+            registerSyntheticNativeTopLevelFunction(
+                named: "toCValues",
+                packageFQName: cinteropPkg,
+                receiverType: uShortArrayReceiverType,
+                parameters: [],
+                returnType: uShortArrayToCValuesReturnType,
                 symbols: symbols,
                 interner: interner
             )
