@@ -347,7 +347,7 @@
 - [ ] STDLIB-TEXT-TYPE-006: `HexFormat` クラスの実装
 - [x] STDLIB-TEXT-TYPE-007: `MatchGroup` クラスの実装
 - [ ] STDLIB-TEXT-TYPE-008: `MatchGroupCollection` インターフェースの実装
-- [ ] STDLIB-TEXT-TYPE-009: `MatchNamedGroupCollection` インターフェースの実装
+- [x] STDLIB-TEXT-TYPE-009: `MatchNamedGroupCollection` インターフェースの実装
 - [ ] STDLIB-TEXT-TYPE-010: `MatchResult` インターフェースの実装
 - [ ] STDLIB-TEXT-TYPE-011: `Regex` クラスの実装
 - [x] STDLIB-TEXT-TYPE-012: `RegexOption` enum の実装
