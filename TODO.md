@@ -763,7 +763,7 @@
 - [ ] STDLIB-CINTEROP-INTERNAL-FN-001: `convertBlockPtrToKotlinFunction(blockPtr)` を追加する
 - [ ] STDLIB-CINTEROP-INTERNAL-FN-002: `detachObjCObject(obj)` を追加する
 - [ ] STDLIB-DOM-TYPE-001: `org.w3c.dom.ItemArrayLike<T>` external interface を追加する
-- [ ] STDLIB-DOM-FN-001: `ItemArrayLike<T>.asList()` を追加する
+- [x] STDLIB-DOM-FN-001: `ItemArrayLike<T>.asList()` を追加する
 - [ ] STDLIB-JVM-166: Java プレビュー機能の実装
 - [ ] STDLIB-JS-167: JavaScript 固有 API の実装
 - [ ] STDLIB-NATIVE-168: Native 固有 API の実装
