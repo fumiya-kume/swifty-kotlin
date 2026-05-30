@@ -40,7 +40,7 @@
 - `kotlin.experimental`
 
 ### Phase 1: プリミティブ・演算子・配列・String コア
-- [ ] STDLIB-GAP-PH1: ギャップ表の `kotlin` / `kotlin.text` / `Array` 周辺の未対応を潰す
+- [x] STDLIB-GAP-PH1: ギャップ表の `kotlin` / `kotlin.text` / `Array` 周辺の未対応を潰す
 - [ ] STDLIB-004: `Array` / primitive array の生成・変換・境界挙動を整理する
 - [ ] STDLIB-005: `kotlin.text` の文字列変換・分割・置換の端ケースを揃える
 
