@@ -73,7 +73,6 @@ extension ABIMismatchTests {
         "kk_collection_toTypedArray",
         "kk_iterable_toMutableList",
         "kk_iterable_toMutableSet",
-        "kk_int_stream_toList",
         "kk_js_array_toMutableList",
         "kk_js_map_toMutableMap",
         "kk_js_set_toMutableSet",
@@ -109,7 +108,6 @@ extension ABIMismatchTests {
         "kk_list_zip",
         "kk_list_zipWithNext",
         "kk_list_zipWithNextTransform",
-        "kk_long_stream_toList",
         "kk_map_withDefault",
         "kk_mutable_list_removeFirst",
         "kk_mutable_list_removeFirstOrNull",
@@ -143,8 +141,6 @@ extension ABIMismatchTests {
 
     // MARK: System / timing / Stream toList
     private static let systemStubLinkNames: Set<String> = [
-        "kk_double_stream_toList",
-        "kk_stream_toList",
         "kk_synchronized",
         "kk_system_currentTimeMillis",
         "kk_system_exitProcess",
