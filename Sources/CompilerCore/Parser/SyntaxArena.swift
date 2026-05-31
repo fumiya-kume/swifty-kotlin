@@ -23,18 +23,7 @@ public enum SyntaxKind: Equatable {
     case whenConditionList
     case whenCondition
     case callExpr
-    case binaryExpr
-    case unaryExpr
-    case lambdaLiteral
-    case objectLiteral
-    case stringTemplate
-    case callableRef
-    case typeRef
-    case nullableType
-    case functionType
-    case suspendFunctionType
     case typeArgs
-    case typeProjection
 }
 
 public enum SyntaxChild: Equatable {

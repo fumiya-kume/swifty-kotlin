@@ -44,18 +44,6 @@ public final class ASTArena: @unchecked Sendable {
         return _exprs
     }
 
-    public var typeRefs: [TypeRef] {
-        lock.lock()
-        defer { lock.unlock() }
-        return _typeRefs
-    }
-
-    public var loopLabels: [ExprID: InternedString] {
-        lock.lock()
-        defer { lock.unlock() }
-        return _loopLabels
-    }
-
     public init() {}
 
     public init(snapshot: ASTArenaSnapshot) {
