@@ -1,6 +1,6 @@
 # Kotlin Compiler Remaining Tasks
 
-最終更新: 2026-05-28
+最終更新: 2026-05-31
 
 ---
 
@@ -794,3 +794,17 @@
 - [ ] TEST-COL-014: `kotlin.collections` の `List` 受信者版 `reduceIndexedOrNull` / `scanIndexed` の Codegen 統合テストを追加する。Sequence 受信者版はカバー済みだが List 受信者の実行テストが欠落。カバー対象: 空（`reduceIndexedOrNull` は `null`、`scanIndexed` は initial のみ）・単一要素・accumulator に渡る index の検証
 - [ ] TEST-RANGE-015: `kotlin.ranges` の IntRange/LongRange 受信者の HOF 実行テストを追加する。`forEach` / `drop` / `take` / `sorted` / `average` / `mapIndexed` / `mapNotNull` / `filterIndexed` / `findLast` / `reduceIndexed` / `first`(predicate版) / `last`(predicate版) は実装ありだが実行レベルのテストが無い（`KotlinCompilationBasicTests` は KIR コンパイルのみで実行せず、`forEach`/`drop`/`take`/`sorted`/`average` は KIR すら未通過）。`RuntimeRangeHOFTests` の直接 `kk_range_*` 呼び出しか Codegen 統合（`.kt` 実行）で。カバー対象: 空 range・単一要素・降順 progression（step 負）・`average` の整数→Double 変換。IntRange の `mapIndexed` は直接ギャップ（UInt/ULong 版は既存）
 - [ ] TEST-TEXT-016: `StringBuilder` の明示 API の実行テストを追加する。`insert` / `delete(start,end)` / `deleteCharAt` / `replace` / `reverse` / `setCharAt` / `capacity` / `ensureCapacity` / `trimToSize` / `get` / `length` は実装ありだが未テスト（カバー済みの `deleteAt` / `deleteRange` / `insertRange` / `setRange` とは別関数）。`append` / `appendLine` / `toString` は文字列補間の lowering で間接カバー済みのため対象外。カバー対象: 境界インデックス・空 builder・`reverse` のサロゲートペア保持・`setCharAt`/`get` の範囲外で例外
+- [~] TEST-NUM-017: 数値境界の Kotlin parity（kotlinc 2.3.10 diff）を整備する。検証手段として `Scripts/diff_kotlinc.sh`（実 kotlinc 2.3.10）と `Tests/CompilerCoreTests/Codegen/CodegenBackendIntegrationTests+NumericBoundaries.swift` を使用。**一致を確認して固定済み**: 縮約変換（`Scripts/diff_cases/numeric_conversion_truncation.kt`）、浮動小数点→整数の境界/NaN/Inf（`float_to_int_boundaries.kt`）、Char 算術の基本（`char_arithmetic_basics.kt`）、unsigned companion 定数（`unsigned_companion_constants.kt`、PARITY-NUM-002 で修正）。**未修正で `// KSWIFTK_DIFF_IGNORE` 登録済み**（PARITY-NUM-001 修正後に有効化）: `integer_overflow_wraparound.kt` / `shift_amount_masking.kt` / `unsigned_arithmetic_overflow.kt` / `int_to_char_truncation.kt`。残タスク: 32/64bit 切り詰めを実装し IGNORE ケースを ACTIVE 化、Byte/Short/Char↔Int の境界を Runtime テストへ拡充
+
+## Kotlin 挙動 parity（kotlinc 2.3.10 比較で発見した差分）
+
+> `Scripts/diff_kotlinc.sh` を実 kotlinc 2.3.10（Swift 6.2 + LLVM 18）で実行して検出。`// KSWIFTK_DIFF_IGNORE` ケースは `--force-run-skipped` で再現可能。
+
+- [ ] PARITY-NUM-001: Int/Long/UInt の 32/64bit オーバーフロー・シフトが未実装（**重大・アーキテクチャ**）。native backend が全整数を i64 で表現し、Int(32bit) の演算結果を切り詰めず、シフト量もマスクしない（Int は `& 31`、Long は `& 63`）。
+  - 症状: `Int.MAX_VALUE + 1` → `2147483648`（正 `-2147483648`）、`100000 * 100000` → `10000000000`（正 `1410065408`）、`1 shl 32` → `4294967296`（正 `1`）、`1 shl 31` → `2147483648`（正 `-2147483648`）、`1 shl -1` → `null`（範囲外シフトは LLVM 上 UB）、`UInt.MAX_VALUE + 1u` → `4294967296`（正 `0`）、`65601.toChar().code` → `65601`（正 `65`）。
+  - 原因: `Sources/CompilerCore/Codegen/NativeEmitter+EmissionConstants.swift`（`kk_op_add`/`mul`/`shl`/`shr`/`ushr` 等が i64 のまま）と `NativeEmitter+FunctionEmission.swift` の `.binary` 経路。型(Int/Long)は KIR `exprTypes` にあるが emitter が TypeSystem を持たないため、型別 callee の分割か KIR 段での truncation/mask 挿入が必要（定数畳み込み経路も同様に未対応）。Byte/Short/Char/unsigned 縮約にも波及。
+  - 再現: `Scripts/diff_cases/{integer_overflow_wraparound,shift_amount_masking,unsigned_arithmetic_overflow,int_to_char_truncation}.kt`。
+- [x] PARITY-NUM-002: unsigned companion 定数 `UInt/ULong/UByte/UShort` の `MAX_VALUE`/`MIN_VALUE`/`SIZE_BITS`/`SIZE_BYTES` が未解決（`KSWIFTK-SEMA-0024`）だった。`numericCompanionConstant`（`Sources/CompilerCore/Sema/TypeCheck/CallTypeChecker+MemberCallInferenceFallbacks.swift`）に追加して解決。回帰: `Scripts/diff_cases/unsigned_companion_constants.kt`。
+- [ ] PARITY-SEMA-003: 完全修飾 `kotlin.math.abs(x)` が解決できない（`KSWIFTK-SEMA-0002`/`0022`）。`import kotlin.math.abs` 経由は可。`kotlin.math.*` トップレベル関数を完全修飾名で呼ぶ経路の名前解決ギャップ。
+- [ ] PARITY-PARSE-004: ソフトキーワード `by` をローカル変数名に使えない（`KSWIFTK-SEMA-0013`）。kotlinc は受理。`val by = ...` のような識別子としての `by` をパーサ/sema が拒否。
+- [ ] PARITY-CODEGEN-005: `Char.compareTo(Char)` がリンクエラー（`undefined reference to 'compareTo'`）。`'Z'.compareTo('A')` で発生。Char の `compareTo` メンバ呼び出しの lowering/ランタイムシンボル欠落。
