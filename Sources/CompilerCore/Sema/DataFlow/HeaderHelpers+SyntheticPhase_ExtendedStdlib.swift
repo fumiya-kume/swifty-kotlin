@@ -38,8 +38,6 @@ extension DataFlowSemaPhase {
         registerSyntheticSerializationStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticURIStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticURLStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticNetworkStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticAdvancedNetworkStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticLocaleConstructorStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticMetaprogStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticJsStubs(symbols: symbols, interner: interner)
