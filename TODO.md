@@ -566,7 +566,7 @@
 - [x] STDLIB-COMP-FN-002: `compareByDescending` 関数の実装（selector版）
 - [ ] STDLIB-COMP-FN-003: `compareValues` 関数の実装
 - [x] STDLIB-COMP-FN-004: `compareValuesBy` 関数の実装（selector版）
-- [ ] STDLIB-COMP-FN-002: `compareByDescending` 関数の実装（selector版）
+- [x] STDLIB-COMP-FN-002: `compareByDescending` 関数の実装（selector版）
 - [x] STDLIB-COMP-FN-003: `compareValues` 関数の実装
 - [ ] STDLIB-COMP-FN-004: `compareValuesBy` 関数の実装（selector版）
 - [ ] STDLIB-COMP-FN-005: `maxOf` 関数の実装（Comparable版、2引数）
