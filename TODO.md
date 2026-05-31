@@ -344,7 +344,7 @@
 - [x] STDLIB-TEXT-TYPE-003: `CharCategory` enum の実装
 - [x] STDLIB-TEXT-TYPE-004: `CharDirectionality` enum の実装
 - [x] STDLIB-TEXT-TYPE-005: `Charsets` オブジェクトの実装
-- [ ] STDLIB-TEXT-TYPE-006: `HexFormat` クラスの実装
+- [x] STDLIB-TEXT-TYPE-006: `HexFormat` クラスの実装
 - [x] STDLIB-TEXT-TYPE-007: `MatchGroup` クラスの実装
 - [ ] STDLIB-TEXT-TYPE-008: `MatchGroupCollection` インターフェースの実装
 - [x] STDLIB-TEXT-TYPE-009: `MatchNamedGroupCollection` インターフェースの実装
