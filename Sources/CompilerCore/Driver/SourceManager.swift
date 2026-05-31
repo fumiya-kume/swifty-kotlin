@@ -69,7 +69,7 @@ public final class SourceManager: @unchecked Sendable {
         fileIDByPath[path] != nil
     }
 
-    func fileID(forPath path: String) -> FileID? {
+    public func fileID(forPath path: String) -> FileID? {
         fileIDByPath[path]
     }
 
@@ -100,6 +100,61 @@ public final class SourceManager: @unchecked Sendable {
         let end = max(start, min(range.end.offset, fileSize))
         let text = String(decoding: record.contents[start ..< end], as: UTF8.self)
         return Substring(text)
+    }
+
+    // MARK: - LSP position conversion (0-based, UTF-16)
+
+    /// Converts a byte `SourceLocation` to a 0-based LSP position. `character`
+    /// counts UTF-16 code units from the start of the line, matching LSP's
+    /// default `utf-16` position encoding.
+    public func lspPosition(of loc: SourceLocation) -> (line: Int, character: Int) {
+        guard let record = fileRecord(for: loc.file), !record.contents.isEmpty else {
+            return (0, 0)
+        }
+        let clampedOffset = max(0, min(loc.offset, record.contents.count))
+        let lineIdx = lineIndex(for: clampedOffset, in: record.lineStartOffsets)
+        let lineStartOffset = record.lineStartOffsets[lineIdx]
+        let prefix = record.contents[lineStartOffset ..< clampedOffset]
+        let utf16Count = String(decoding: prefix, as: UTF8.self).utf16.count
+        return (lineIdx, utf16Count)
+    }
+
+    /// Converts a 0-based LSP position (line + UTF-16 character offset) into a
+    /// byte offset within the given file. Returns `nil` when the file is
+    /// unknown. Out-of-range lines and characters are clamped to the nearest
+    /// valid offset so callers always receive a usable location.
+    public func offset(ofLine line: Int, utf16Character character: Int, in file: FileID) -> Int? {
+        guard let record = fileRecord(for: file) else {
+            return nil
+        }
+        let lineStarts = record.lineStartOffsets
+        guard !lineStarts.isEmpty else { return 0 }
+        if line < 0 { return 0 }
+        if line >= lineStarts.count { return record.contents.count }
+
+        let lineStart = lineStarts[line]
+        let lineEnd = (line + 1 < lineStarts.count) ? lineStarts[line + 1] : record.contents.count
+        if character <= 0 { return lineStart }
+
+        let lineText = String(decoding: record.contents[lineStart ..< lineEnd], as: UTF8.self)
+        var utf16Seen = 0
+        var byteOffset = lineStart
+        for scalar in lineText.unicodeScalars {
+            if utf16Seen >= character { break }
+            if scalar == "\n" || scalar == "\r" { break }
+            utf16Seen += scalar.value > 0xFFFF ? 2 : 1
+            byteOffset += utf8Length(of: scalar)
+        }
+        return byteOffset
+    }
+
+    private func utf8Length(of scalar: Unicode.Scalar) -> Int {
+        switch scalar.value {
+        case 0 ... 0x7F: 1
+        case 0x80 ... 0x7FF: 2
+        case 0x800 ... 0xFFFF: 3
+        default: 4
+        }
     }
 
     private func fileRecord(for id: FileID) -> FileRecord? {
