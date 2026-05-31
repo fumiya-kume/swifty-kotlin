@@ -95,6 +95,11 @@ let package = Package(
             name: "KSwiftKCLITests",
             dependencies: ["KSwiftKCLI", "CompilerCore"],
             path: "Tests/KSwiftKCLITests"
+        ),
+        .testTarget(
+            name: "LSPServerTests",
+            dependencies: ["LSPServer", "CompilerCore"],
+            path: "Tests/LSPServerTests"
         )
     ],
     swiftLanguageModes: [.v6]
