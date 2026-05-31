@@ -583,7 +583,6 @@ extension CallLowerer {
             let sortedDescendingName = interner.intern("sortedDescending")
             let joinToName = interner.intern("joinTo")
             let joinToStringName = interner.intern("joinToString")
-            let averageOfName = interner.intern("averageOf")
             let sumOfName = interner.intern("sumOf")
             let sumByName = interner.intern("sumBy")
             let sumByDoubleName = interner.intern("sumByDouble")
@@ -649,8 +648,6 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_joinTo")
             case joinToStringName:
                 return interner.intern("kk_sequence_joinToString")
-            case averageOfName:
-                return interner.intern("kk_sequence_averageOf")
             case sumOfName:
                 return interner.intern("kk_sequence_sumOf")
             case sumByName:

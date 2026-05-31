@@ -135,7 +135,6 @@ final class StdlibSurfaceSpecTests: XCTestCase {
             sequence("count", 0),
             sequence("shuffled", 0),
             sequence("shuffled", 1),
-            sequence("averageOf", 1),
             sequence("elementAtOrNull", 1),
             sequence("elementAt", 1),
             sequence("elementAtOrElse", 2),
