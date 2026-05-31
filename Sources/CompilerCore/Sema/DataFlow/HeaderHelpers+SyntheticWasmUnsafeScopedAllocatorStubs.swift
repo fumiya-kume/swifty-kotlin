@@ -28,7 +28,6 @@ extension DataFlowSemaPhase {
             return
         }
 
-        // --- Type parameter R ---
         let rName = interner.intern("R")
         let rSymbol = symbols.define(
             kind: .typeParameter,
@@ -40,7 +39,6 @@ extension DataFlowSemaPhase {
         )
         let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
 
-        // --- MemoryAllocator type reference ---
         let allocatorSymbol = ensureClassSymbol(
             named: "MemoryAllocator",
             in: wasmUnsafePkg,
@@ -53,7 +51,6 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
 
-        // --- block: (MemoryAllocator) -> R ---
         let blockFunctionType = types.make(.functionType(FunctionType(
             params: [allocatorType],
             returnType: rType,
@@ -61,7 +58,6 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
 
-        // --- Value parameter symbol: block ---
         let blockName = interner.intern("block")
         let blockSymbol = symbols.define(
             kind: .valueParameter,
@@ -73,7 +69,6 @@ extension DataFlowSemaPhase {
         )
         symbols.setPropertyType(blockFunctionType, for: blockSymbol)
 
-        // --- Function symbol ---
         let funcSymbol = symbols.define(
             kind: .function,
             name: funcName,

@@ -136,7 +136,6 @@ private func runtimeCloseableClose(_ resourceRaw: Int) -> Int {
 /// Runtime signature: kk_use(resourceRaw, fnPtr, closureRaw, outThrown) -> R
 @_cdecl("kk_use")
 public func kk_use(_ resourceRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    // Call the lambda with the resource as its argument
     var blockThrown = 0
     let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: resourceRaw, outThrown: &blockThrown)
 

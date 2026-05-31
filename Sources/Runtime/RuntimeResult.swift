@@ -86,7 +86,6 @@ public func kk_result_getOrElse(
     if box.isSuccess {
         return box.value
     }
-    // Call the lambda with the exception as argument
     guard let result = invokeResultLambda(fnPtr: fnPtr, closureRaw: closureRaw, argument: box.exception, outThrown: outThrown) else {
         return 0
     }
@@ -157,10 +156,8 @@ public func kk_result_map(
         return registerRuntimeObject(RuntimeResultBox(isSuccess: false, value: 0, exception: runtimeAllocateThrowable(message: "Result is null")))
     }
     if !box.isSuccess {
-        // Return the same failure
         return resultRaw
     }
-    // Apply transform to success value
     guard let mapped = invokeResultLambda(fnPtr: fnPtr, closureRaw: closureRaw, argument: box.value, outThrown: outThrown) else {
         return 0
     }
