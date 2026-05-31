@@ -316,9 +316,6 @@
 - [x] STDLIB-SEQ-FN-111: `sortedBy` 関数の実装
 - [x] STDLIB-SEQ-FN-133: `zip` 関数の実装
 
-#### kotlin.streams 関数の実装
-- [x] STDLIB-STREAMS-FN-003: `toList` 関数の実装（各ストリーム型）
-
 #### kotlin.system 関数の実装
 - [x] STDLIB-SYSTEM-FN-001: `exitProcess` 関数の実装
 - [x] STDLIB-SYSTEM-FN-002: `getTimeMicros` 関数の実装
