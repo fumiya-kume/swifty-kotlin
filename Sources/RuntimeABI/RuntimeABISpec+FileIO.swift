@@ -973,11 +973,6 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "FileIO"
         ),
-        RuntimeABIFunctionSpec(name: "kk_message_digest_getInstance", parameters: [RuntimeABIParameter(name: "algorithmRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_message_digest_digest", parameters: [RuntimeABIParameter(name: "digestRaw", type: .intptr), RuntimeABIParameter(name: "dataRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_mac_getInstance", parameters: [RuntimeABIParameter(name: "algorithmRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_mac_init", parameters: [RuntimeABIParameter(name: "macRaw", type: .intptr), RuntimeABIParameter(name: "keyRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_mac_doFinal", parameters: [RuntimeABIParameter(name: "macRaw", type: .intptr), RuntimeABIParameter(name: "dataRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "FileIO"),
         RuntimeABIFunctionSpec(
             name: "kk_resource_bundle_getBundle",
             parameters: [

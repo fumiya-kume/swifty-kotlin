@@ -3650,7 +3650,6 @@ public enum RuntimeABISpec {
         regexFunctions,
         resultFunctions,
         runtimeOnlyBridgeFunctions,
-        securityFunctions,
         sequenceFunctions,
         serializationFunctions,
         streamFunctions,

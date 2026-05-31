@@ -407,20 +407,6 @@ extension ABIMismatchTests {
         "kk_reentrant_read_write_lock_read",
     ]
 
-    // MARK: Symmetric crypto (javax.crypto)
-    private static let cryptoStubLinkNames: Set<String> = [
-        "kk_cipher_doFinal",
-        "kk_cipher_doFinal_noarg",
-        "kk_cipher_getInstance",
-        "kk_cipher_init",
-        "kk_cipher_init_with_iv",
-        "kk_ivparameterspec_new",
-        "kk_mac_doFinal",
-        "kk_mac_getInstance",
-        "kk_mac_init",
-        "kk_secretkeyspec_new",
-    ]
-
     // MARK: JSON Serialization (STDLIB-SER-132)
     private static let jsonSerializationStubLinkNames: Set<String> = [
         "kk_json_decodeFromString",
@@ -504,7 +490,6 @@ extension ABIMismatchTests {
         result.formUnion(threadLocalStubLinkNames)
         result.formUnion(concurrentStubLinkNames)
         result.formUnion(readWriteLockStubLinkNames)
-        result.formUnion(cryptoStubLinkNames)
         result.formUnion(jsonSerializationStubLinkNames)
         result.formUnion(base64StubLinkNames)
         result.formUnion(kotlinVersionStubLinkNames)
