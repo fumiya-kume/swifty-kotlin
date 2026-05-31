@@ -2731,35 +2731,7 @@ final class CallTypeChecker {
             let adjustedReturnType: TypeID = if let externalLinkName = sema.symbols.externalLinkName(for: chosen) {
                 switch externalLinkName {
                 case "kk_emptyList":
-                    if let calleeName,
-                       interner.resolve(calleeName) == "LinkedList"
-                    {
-                        {
-                            let elementType: TypeID = if let explicitTypeArg = explicitTypeArgs.first {
-                                explicitTypeArg
-                            } else if let expectedType,
-                                      expectedType != sema.types.errorType,
-                                      case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
-                                      let firstArg = expectedClassType.args.first
-                            {
-                                switch firstArg {
-                                case let .invariant(type), let .in(type), let .out(type):
-                                    type
-                                case .star:
-                                    sema.types.anyType
-                                }
-                            } else {
-                                sema.types.anyType
-                            }
-                            return makeSyntheticListConstructorType(
-                                name: "LinkedList",
-                                symbols: sema.symbols,
-                                types: sema.types,
-                                interner: interner,
-                                elementType: elementType
-                            )
-                        }()
-                    } else if let expectedType, expectedType != sema.types.errorType,
+                    if let expectedType, expectedType != sema.types.errorType,
                        case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
                        !expectedClassType.args.isEmpty
                     {
@@ -3315,10 +3287,10 @@ final class CallTypeChecker {
                             valueType: sema.types.anyType
                         )
                     }
-                // --- Type alias/concrete collection constructors: ArrayList, LinkedList, HashSet, LinkedHashSet, HashMap, LinkedHashMap ---
+                // --- Type alias/concrete collection constructors: ArrayList, HashSet, LinkedHashSet, HashMap, LinkedHashMap ---
                 // These constructors take capacity or collection args, NOT element varargs.
                 // Always produce a mutable collection; use explicit type arg or Any? element type.
-                } else if name == "ArrayList" || name == "LinkedList" {
+                } else if name == "ArrayList" {
                     if let explicitTypeArg = explicitTypeArgs.first {
                         collectionType = makeSyntheticListConstructorType(
                             name: name,
