@@ -232,7 +232,7 @@
 - [x] STDLIB-SEQ-FN-007: `associateByTo` 関数の実装
 - [x] STDLIB-SEQ-FN-008: `associateTo` 関数の実装
 - [x] STDLIB-SEQ-FN-009: `associateWith` 関数の実装
-- [ ] STDLIB-SEQ-FN-007: `associateByTo` 関数の実装
+- [x] STDLIB-SEQ-FN-007: `associateByTo` 関数の実装
 - [x] STDLIB-SEQ-FN-008: `associateTo` 関数の実装
 - [ ] STDLIB-SEQ-FN-009: `associateWith` 関数の実装
 - [ ] STDLIB-SEQ-FN-010: `associateWithTo` 関数の実装
