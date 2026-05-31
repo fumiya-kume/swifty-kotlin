@@ -994,10 +994,6 @@ public extension RuntimeABISpec {
         RuntimeABIFunctionSpec(name: "kk_mac_getInstance", parameters: [RuntimeABIParameter(name: "algorithmRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "FileIO"),
         RuntimeABIFunctionSpec(name: "kk_mac_init", parameters: [RuntimeABIParameter(name: "macRaw", type: .intptr), RuntimeABIParameter(name: "keyRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "FileIO"),
         RuntimeABIFunctionSpec(name: "kk_mac_doFinal", parameters: [RuntimeABIParameter(name: "macRaw", type: .intptr), RuntimeABIParameter(name: "dataRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_cache_new", parameters: [RuntimeABIParameter(name: "capacityRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_cache_put", parameters: [RuntimeABIParameter(name: "cacheRaw", type: .intptr), RuntimeABIParameter(name: "keyRaw", type: .intptr), RuntimeABIParameter(name: "valueRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_cache_get", parameters: [RuntimeABIParameter(name: "cacheRaw", type: .intptr), RuntimeABIParameter(name: "keyRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_cache_size", parameters: [RuntimeABIParameter(name: "cacheRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
         RuntimeABIFunctionSpec(
             name: "kk_resource_bundle_getBundle",
             parameters: [
