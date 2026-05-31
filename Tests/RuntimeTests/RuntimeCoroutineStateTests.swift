@@ -11,6 +11,25 @@ private let runtimeKxMiniCancelFunctionID = 9104
 private let runtimeWithContextFunctionID = 9105
 private let runtimeCoroutineTestState = RuntimeCoroutineTestState()
 
+/// CORO-004: thread-safe probe to observe whether a completion/join resumer fired
+/// and with what value, without sharing mutable state unsafely across threads.
+private final class ResumerProbe: @unchecked Sendable {
+    private let lock = NSLock()
+    private var firedFlag = false
+    private var resultValue = 0
+    private var thrownValue = 0
+    func record(result: Int, thrown: Int) {
+        lock.lock()
+        firedFlag = true
+        resultValue = result
+        thrownValue = thrown
+        lock.unlock()
+    }
+    var fired: Bool { lock.lock(); defer { lock.unlock() }; return firedFlag }
+    var result: Int { lock.lock(); defer { lock.unlock() }; return resultValue }
+    var thrown: Int { lock.lock(); defer { lock.unlock() }; return thrownValue }
+}
+
 private func makeRuntimeString(_ value: String) -> Int {
     let box = RuntimeStringBox(value)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
@@ -160,7 +179,7 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
             runtimeCoroutineTestState.waitForLaunchEvent(after: launchBaseline, timeout: 1.0),
             "Expected launched coroutine to record a launch event."
         )
-        XCTAssertEqual(kk_job_join(jobHandle), 7)
+        XCTAssertEqual(kk_job_join(jobHandle, 0), 7)
     }
 
     func testKxMiniAsyncReturnsAwaitableHandle() {
@@ -170,7 +189,7 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
         )
         let handle = kk_kxmini_async(entryRaw, runtimeKxMiniAsyncFunctionID)
         XCTAssertNotEqual(handle, 0)
-        XCTAssertEqual(kk_kxmini_async_await(handle), 73)
+        XCTAssertEqual(kk_kxmini_async_await(handle, 0), 73)
     }
 
     func testLauncherArgSetAndGetRoundTrips() {
@@ -224,7 +243,7 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
             runtimeCoroutineTestState.waitForLaunchEvent(after: launchBaseline, timeout: 1.0),
             "Expected launched continuation to record a launch event."
         )
-        XCTAssertEqual(kk_job_join(jobHandle), 7)
+        XCTAssertEqual(kk_job_join(jobHandle, 0), 7)
     }
 
     func testAsyncWithContReturnsAwaitableResult() {
@@ -238,7 +257,7 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
         )
         let handle = kk_kxmini_async_with_cont(entryRaw, continuation)
         XCTAssertNotEqual(handle, 0)
-        XCTAssertEqual(kk_kxmini_async_await(handle), 73)
+        XCTAssertEqual(kk_kxmini_async_await(handle, 0), 73)
     }
 
     func testRunBlockingWithContInvalidEntryDoesNotCrash() {
@@ -308,7 +327,7 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
         // Launch outside a scope to get a job handle directly
         let jobHandle = kk_kxmini_launch(entryRaw, runtimeKxMiniAsyncFunctionID)
         XCTAssertNotEqual(jobHandle, 0)
-        let result = kk_job_join(jobHandle)
+        let result = kk_job_join(jobHandle, 0)
         XCTAssertEqual(result, 73)
     }
 
@@ -362,7 +381,7 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
 
         // Await the async result BEFORE scope_wait, since scope_wait releases the handle.
         // This matches real usage: user code awaits within the scope block, then scope cleans up.
-        let result = kk_kxmini_async_await(asyncHandle)
+        let result = kk_kxmini_async_await(asyncHandle, 0)
         XCTAssertEqual(result, 73)
 
         // Wait for children — scope releases remaining retains for the child
@@ -383,7 +402,7 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
         XCTAssertNotEqual(jobHandle, 0)
 
         // Explicitly join the job and verify it completed successfully
-        let result = kk_job_join(jobHandle)
+        let result = kk_job_join(jobHandle, 0)
         XCTAssertEqual(result, 73)
 
         // Scope wait should also complete successfully after the child has finished
@@ -494,7 +513,7 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
 
         // Join the job — should complete promptly after cancellation
         let startTime = DispatchTime.now()
-        _ = kk_job_join(jobHandle)
+        _ = kk_job_join(jobHandle, 0)
         let elapsed = Double(DispatchTime.now().uptimeNanoseconds - startTime.uptimeNanoseconds) / 1_000_000_000
         XCTAssertLessThan(elapsed, 2.0, "Coroutine should stop promptly after cancel")
     }
@@ -519,7 +538,7 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_job_is_cancelled(jobHandle), 1)
 
         let startTime = DispatchTime.now()
-        _ = kk_job_join(jobHandle)
+        _ = kk_job_join(jobHandle, 0)
         let elapsed = Double(DispatchTime.now().uptimeNanoseconds - startTime.uptimeNanoseconds) / 1_000_000_000
         XCTAssertLessThan(elapsed, 2.0, "Coroutine should stop promptly after context cancel")
     }
@@ -536,7 +555,7 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
             runtimeCoroutineTestState.waitForLaunchEvent(after: launchBaseline, timeout: 1.0),
             "Expected launched coroutine to record a launch event."
         )
-        XCTAssertEqual(kk_job_join(jobHandle), 7)
+        XCTAssertEqual(kk_job_join(jobHandle, 0), 7)
     }
 
     func testJobStateMachineTransitionsAndAwaitCompletion() {
@@ -709,5 +728,55 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
         let dispatcher = kk_dispatcher_io()
         let result = kk_with_context(dispatcher, entryRaw, continuation)
         XCTAssertEqual(result, 55, "withContext(IO) should handle suspension correctly")
+    }
+
+    // MARK: - CORO-004: suspend-aware await / join resumers
+
+    func testAsyncTaskCompletionResumerFiresWithResultOnComplete() {
+        let task = RuntimeAsyncTask()
+        let probe = ResumerProbe()
+        task.addCompletionResumer { result, thrown in
+            probe.record(result: result, thrown: thrown)
+        }
+        XCTAssertFalse(probe.fired, "resumer must not fire before completion")
+        task.complete(with: 42)
+        XCTAssertTrue(probe.fired, "resumer should fire when the task completes")
+        XCTAssertEqual(probe.result, 42)
+        XCTAssertEqual(probe.thrown, 0)
+    }
+
+    func testAsyncTaskCompletionResumerFiresWithExceptionOnCompleteExceptionally() {
+        let task = RuntimeAsyncTask()
+        let probe = ResumerProbe()
+        task.addCompletionResumer { result, thrown in
+            probe.record(result: result, thrown: thrown)
+        }
+        task.completeExceptionally(with: 0xBEEF)
+        XCTAssertTrue(probe.fired)
+        XCTAssertEqual(probe.thrown, 0xBEEF, "the thrown exception pointer should be propagated")
+    }
+
+    func testAsyncTaskCompletionResumerFiresImmediatelyWhenAlreadyComplete() {
+        let task = RuntimeAsyncTask()
+        task.complete(with: 7)
+        let probe = ResumerProbe()
+        task.addCompletionResumer { result, thrown in
+            probe.record(result: result, thrown: thrown)
+        }
+        XCTAssertTrue(probe.fired, "resumer must fire immediately for an already-completed task")
+        XCTAssertEqual(probe.result, 7)
+    }
+
+    func testJobHandleJoinResumerFiresOnComplete() {
+        let job = RuntimeJobHandle()
+        job.markStarted()
+        let probe = ResumerProbe()
+        job.addJoinResumer { value in
+            probe.record(result: value, thrown: 0)
+        }
+        XCTAssertFalse(probe.fired, "join resumer must not fire before completion")
+        _ = job.complete(with: 11)
+        XCTAssertTrue(probe.fired, "join resumer should fire when the job completes")
+        XCTAssertEqual(probe.result, 11)
     }
 }

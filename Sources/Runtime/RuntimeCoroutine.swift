@@ -487,6 +487,26 @@ final class RuntimeAsyncTask: @unchecked Sendable {
     /// Set when the async body is actually scheduled (`KxMiniRuntime.launch` / dispatcher queue).
     /// Keeps `kk_job_is_active` aligned with `RuntimeJobHandle` (inactive until `markStarted`).
     private var isBodyStarted = false
+    /// CORO-004: Resumers invoked with (result, thrownException) when the task completes
+    /// (normally, exceptionally, or via cancel). Lets a suspend-aware awaiter
+    /// (`Deferred.await`) resume via its continuation instead of blocking a GCD thread
+    /// on `ready`.
+    private var completionResumers: [@Sendable (Int, Int) -> Void] = []
+
+    /// CORO-004: Register a resumer invoked when this task completes. If the task is
+    /// already complete, the resumer runs immediately on the calling thread.
+    func addCompletionResumer(_ resumer: @escaping @Sendable (Int, Int) -> Void) {
+        lock.lock()
+        if isCompleted {
+            let snapshotResult = result
+            let snapshotThrown = thrownException
+            lock.unlock()
+            resumer(snapshotResult, snapshotThrown)
+            return
+        }
+        completionResumers.append(resumer)
+        lock.unlock()
+    }
 
     func markStarted() {
         lock.lock()
@@ -542,8 +562,13 @@ final class RuntimeAsyncTask: @unchecked Sendable {
         }
         self.result = result
         isCompleted = true
+        let resumers = completionResumers
+        completionResumers = []
         lock.unlock()
         ready.signal()
+        for resumer in resumers {
+            resumer(result, 0)
+        }
     }
 
     /// Complete the task with an exception (CORO-071: async exception handling).
@@ -555,8 +580,13 @@ final class RuntimeAsyncTask: @unchecked Sendable {
         }
         self.thrownException = exception
         isCompleted = true
+        let resumers = completionResumers
+        completionResumers = []
         lock.unlock()
         ready.signal()
+        for resumer in resumers {
+            resumer(0, exception)
+        }
     }
 
     func cancel() {
@@ -566,36 +596,33 @@ final class RuntimeAsyncTask: @unchecked Sendable {
         if !wasCompleted {
             isCompleted = true
         }
+        let resumers = wasCompleted ? [] : completionResumers
+        if !wasCompleted {
+            completionResumers = []
+        }
+        let snapshotResult = result
+        let snapshotThrown = thrownException
         lock.unlock()
         if !wasCompleted {
             ready.signal()
+            for resumer in resumers {
+                resumer(snapshotResult, snapshotThrown)
+            }
         }
     }
 
-    // CORO-004: awaitResult() now supports continuation-based async completion.
-    // When called from a suspend-aware context (via codegen changes), it uses
-    // continuation model instead of blocking on semaphore.
-    func awaitResult(continuation: Int = 0) -> Int {
+    /// Blocking wait for the task result. Suspend-aware awaiting (which avoids
+    /// blocking a GCD thread) is handled by `kk_kxmini_async_await` via
+    /// `addCompletionResumer` (CORO-004); this method is the synchronous fallback
+    /// used by non-suspend contexts (e.g. structured-concurrency child joins).
+    func awaitResult() -> Int {
         lock.lock()
         if isCompleted {
             let value = result
             lock.unlock()
             return value
         }
-
-        // If continuation is provided and we're in a suspend-aware context,
-        // install for async completion instead of blocking
-        if continuation != 0 {
-            // CORO-004: TODO - Implement continuation-based async completion
-            // This requires codegen changes to make await a suspend point
-            // For now, fall back to semaphore blocking
-            // return suspendCallerAndAwaitCompletion(continuation: continuation) { result in
-            //     return result
-            // }
-        }
-
         lock.unlock()
-        // Fallback to semaphore blocking for non-suspend-aware contexts
         ready.wait()
         // Re-signal so other concurrent awaitResult() callers also wake up
         ready.signal()
@@ -704,6 +731,10 @@ final class RuntimeJobHandle: @unchecked Sendable {
     /// (via kk_job_join). Checked by scope's waitForChildren
     /// to avoid double-releasing the original passRetained.
     private var isConsumedByUserCode = false
+    /// CORO-004: Resumers invoked with the terminal value when the job completes.
+    /// Lets a suspend-aware `Job.join()` caller resume via its continuation instead
+    /// of blocking a GCD thread on `completionSemaphore`.
+    private var joinResumers: [@Sendable (Int) -> Void] = []
 
     static var current: RuntimeJobHandle? {
         get {
@@ -771,6 +802,21 @@ final class RuntimeJobHandle: @unchecked Sendable {
         return isConsumedByUserCode
     }
 
+    /// CORO-004: Register a resumer invoked with the terminal value when the job
+    /// completes (normally, exceptionally, or via cancellation). If the job is
+    /// already complete, the resumer runs immediately on the calling thread.
+    func addJoinResumer(_ resumer: @escaping @Sendable (Int) -> Void) {
+        lock.lock()
+        if state.isCompleted {
+            let value = terminalValueLocked()
+            lock.unlock()
+            resumer(value)
+            return
+        }
+        joinResumers.append(resumer)
+        lock.unlock()
+    }
+
     private func terminalValueLocked() -> Int {
         switch state {
         case .completed:
@@ -816,9 +862,17 @@ final class RuntimeJobHandle: @unchecked Sendable {
     func complete(with value: Int) -> Bool {
         lock.lock()
         let shouldSignal = completeLocked(successState: .completed, value: value)
+        let resumers = shouldSignal ? joinResumers : []
+        if shouldSignal {
+            joinResumers = []
+        }
+        let terminal = shouldSignal ? terminalValueLocked() : 0
         lock.unlock()
         if shouldSignal {
             completionSemaphore.signal()
+            for resumer in resumers {
+                resumer(terminal)
+            }
         }
         return shouldSignal
     }
@@ -826,9 +880,17 @@ final class RuntimeJobHandle: @unchecked Sendable {
     func completeExceptionally(with exception: Int) -> Bool {
         lock.lock()
         let shouldSignal = completeLocked(successState: .failed, value: 0, failureValue: exception)
+        let resumers = shouldSignal ? joinResumers : []
+        if shouldSignal {
+            joinResumers = []
+        }
+        let terminal = shouldSignal ? terminalValueLocked() : 0
         lock.unlock()
         if shouldSignal {
             completionSemaphore.signal()
+            for resumer in resumers {
+                resumer(terminal)
+            }
         }
         return shouldSignal
     }
@@ -843,6 +905,8 @@ final class RuntimeJobHandle: @unchecked Sendable {
         var childrenToCancel: [Int] = []
         var stateToResume: RuntimeContinuationState?
         var shouldSignalCompletion = false
+        var joinResumersToRun: [@Sendable (Int) -> Void] = []
+        var terminalForJoin = 0
         lock.lock()
         switch state {
         case .completed, .cancelled, .failed:
@@ -866,6 +930,9 @@ final class RuntimeJobHandle: @unchecked Sendable {
             if state == .new && continuationState == nil {
                 state = .cancelled
                 shouldSignalCompletion = true
+                joinResumersToRun = joinResumers
+                joinResumers = []
+                terminalForJoin = terminalValueLocked()
             } else {
                 state = .cancelling
             }
@@ -883,6 +950,9 @@ final class RuntimeJobHandle: @unchecked Sendable {
         }
         if shouldSignalCompletion {
             completionSemaphore.signal()
+            for resumer in joinResumersToRun {
+                resumer(terminalForJoin)
+            }
         }
         return true
     }
@@ -894,27 +964,27 @@ final class RuntimeJobHandle: @unchecked Sendable {
             return false
         }
         state = .cancelled
+        let resumers = joinResumers
+        joinResumers = []
+        let terminal = terminalValueLocked()
         lock.unlock()
         completionSemaphore.signal()
+        for resumer in resumers {
+            resumer(terminal)
+        }
         return true
     }
 
-    // CORO-004: join() now supports continuation-based async completion.
-    // When called from a suspend-aware context (via codegen changes), it uses
-    // continuation model instead of blocking on semaphore.
-    func join(continuation: Int = 0) -> Int {
+    /// Blocking wait for job completion. Suspend-aware joining (which avoids blocking
+    /// a GCD thread) is handled by `kk_job_join` via `addJoinResumer` (CORO-004); this
+    /// method is the synchronous fallback for non-suspend contexts.
+    func join() -> Int {
         lock.lock()
         if state.isCompleted {
             let value = terminalValueLocked()
             lock.unlock()
             return value
         }
-
-        if continuation != 0 {
-            // TODO: Resume-based join can be wired in once the lowering emits
-            // a suspend point for Job.join. For now we keep the semaphore path.
-        }
-
         lock.unlock()
         completionSemaphore.wait()
         completionSemaphore.signal()
@@ -2020,7 +2090,7 @@ public func kk_kxmini_launch_with_exception_handler(_ entryPointRaw: Int, _ func
 }
 
 @_cdecl("kk_kxmini_async_await")
-public func kk_kxmini_async_await(_ handle: Int) -> Int {
+public func kk_kxmini_async_await(_ handle: Int, _ continuation: Int) -> Int {
     guard let handlePtr = UnsafeMutableRawPointer(bitPattern: handle) else {
         return 0
     }
@@ -2028,7 +2098,28 @@ public func kk_kxmini_async_await(_ handle: Int) -> Int {
     // This is checked by scope's waitForChildren to avoid double-release.
     let task = Unmanaged<RuntimeAsyncTask>.fromOpaque(handlePtr).takeUnretainedValue()
     task.markConsumedByUserCode()
-    // Now consume the passRetained
+
+    // CORO-004: suspend-aware await. When invoked from a coroutine state machine
+    // (continuation != 0) and the task has not completed yet, register a resumer and
+    // suspend instead of blocking a GCD thread. The passRetained handle is released
+    // when the resumer fires (the task stays alive via the closure capture until then).
+    if continuation != 0, !task.isCompletedSnapshot(),
+       let callerState = runtimeContinuationState(from: continuation) {
+        task.addCompletionResumer { result, thrown in
+            if thrown != 0 {
+                callerState.resume(withException: thrown)
+            } else {
+                callerState.resume(with: result)
+            }
+            // Recreate the pointer from the Int handle (Sendable) inside the closure.
+            if let releasePtr = UnsafeMutableRawPointer(bitPattern: handle) {
+                Unmanaged<RuntimeAsyncTask>.fromOpaque(releasePtr).release()
+            }
+        }
+        return Int(bitPattern: kk_coroutine_suspended())
+    }
+
+    // Completed or non-suspend context: consume the passRetained and return synchronously.
     let consumed = Unmanaged<RuntimeAsyncTask>.fromOpaque(handlePtr).takeRetainedValue()
     return consumed.awaitResult()
 }
@@ -2240,7 +2331,7 @@ public func kk_coroutine_scope_register_child(_ scopeHandle: Int, _ childHandle:
 /// Joins (waits for) a job handle to complete and releases it.
 /// This consumes the handle (balances the passRetained from launch).
 @_cdecl("kk_job_join")
-public func kk_job_join(_ jobHandle: Int) -> Int {
+public func kk_job_join(_ jobHandle: Int, _ continuation: Int) -> Int {
     guard jobHandle != 0, let ptr = UnsafeMutableRawPointer(bitPattern: jobHandle) else {
         return 0
     }
@@ -2252,6 +2343,37 @@ public func kk_job_join(_ jobHandle: Int) -> Int {
     } else if let task = obj as? RuntimeAsyncTask {
         task.markConsumedByUserCode()
     }
+
+    // CORO-004: suspend-aware join. Register a resumer and suspend when the job/task is
+    // still running, releasing the passRetained handle once the resumer fires.
+    if continuation != 0, let callerState = runtimeContinuationState(from: continuation) {
+        let releaseHandle: @Sendable () -> Void = {
+            // Recreate the pointer from the Int handle (Sendable) inside the closure.
+            guard let releasePtr = UnsafeMutableRawPointer(bitPattern: jobHandle) else { return }
+            Unmanaged<AnyObject>.fromOpaque(releasePtr).release()
+            runtimeStorage.withGCLock { state in
+                state.objectPointers.remove(UInt(bitPattern: releasePtr))
+            }
+        }
+        if let job = obj as? RuntimeJobHandle, !job.completedSnapshot() {
+            job.addJoinResumer { value in
+                callerState.resume(with: value)
+                releaseHandle()
+            }
+            return Int(bitPattern: kk_coroutine_suspended())
+        } else if let task = obj as? RuntimeAsyncTask, !task.isCompletedSnapshot() {
+            task.addCompletionResumer { result, thrown in
+                if thrown != 0 {
+                    callerState.resume(withException: thrown)
+                } else {
+                    callerState.resume(with: result)
+                }
+                releaseHandle()
+            }
+            return Int(bitPattern: kk_coroutine_suspended())
+        }
+    }
+
     let result: Int = if let job = obj as? RuntimeJobHandle {
         job.join()
     } else if let task = obj as? RuntimeAsyncTask {
@@ -2270,8 +2392,8 @@ public func kk_job_join(_ jobHandle: Int) -> Int {
 
 /// Await job completion using the same consuming wait path as join().
 @_cdecl("kk_job_await_completion")
-public func kk_job_await_completion(_ jobHandle: Int) -> Int {
-    kk_job_join(jobHandle)
+public func kk_job_await_completion(_ jobHandle: Int, _ continuation: Int) -> Int {
+    kk_job_join(jobHandle, continuation)
 }
 
 /// Convenience: creates a scope, runs the block synchronously, waits for all children.

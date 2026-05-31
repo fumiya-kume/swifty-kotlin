@@ -37,6 +37,13 @@ extension CoroutineLoweringPass {
         let sourceDelayCallee = interner.intern("delay")
         let suspendCoroutineRuntimeCallee = interner.intern("kk_suspend_coroutine")
         let suspendCoroutineUninterceptedOrReturnCallee = interner.intern("suspendCoroutineUninterceptedOrReturn")
+        // CORO-004: runtime suspend callees that take the caller continuation as a
+        // trailing argument so they can resume the awaiting coroutine without blocking.
+        let continuationConsumingRuntimeCallees: Set<InternedString> = [
+            interner.intern("kk_kxmini_async_await"),
+            interner.intern("kk_job_join"),
+            interner.intern("kk_job_await_completion"),
+        ]
         let stateBlocks = suspendPlan.stateBlocks
         let transitionsByResumeLabel = suspendPlan.transitionsByResumeLabel
         let spillPlan = suspendPlan.spillPlan
@@ -262,6 +269,10 @@ extension CoroutineLoweringPass {
                         loweredSuspendCallee = suspendCallInfo.callee == sourceDelayCallee ? runtimeDelayCallee : suspendCallInfo.callee
                         loweredSuspendArguments = suspendCallInfo.arguments
                         if suspendCallInfo.callee == sourceDelayCallee {
+                            loweredSuspendArguments.append(continuationExpr)
+                        } else if continuationConsumingRuntimeCallees.contains(suspendCallInfo.callee) {
+                            // CORO-004: append the caller continuation so await / join can
+                            // resume the coroutine via the runtime instead of blocking.
                             loweredSuspendArguments.append(continuationExpr)
                         }
                     }

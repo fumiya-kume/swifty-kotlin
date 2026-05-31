@@ -255,7 +255,7 @@ final class RuntimeCoroutineAdvancedTests: IsolatedRuntimeXCTestCase {
 
         // When an exception handler is installed and the coroutine throws,
         // the handler is invoked and the job is completed with 0 (handler consumes the exception).
-        let joinResult = kk_job_join(jobHandle)
+        let joinResult = kk_job_join(jobHandle, 0)
         XCTAssertEqual(joinResult, 0, "Exception handler should consume the exception; job completes with 0")
     }
 
@@ -272,7 +272,7 @@ final class RuntimeCoroutineAdvancedTests: IsolatedRuntimeXCTestCase {
         let dispatcher = kk_dispatcher_default()
         let jobHandle = kk_kxmini_launch_with_dispatcher(entryRaw, functionID, dispatcher)
         XCTAssertNotEqual(jobHandle, 0)
-        let result = kk_job_join(jobHandle)
+        let result = kk_job_join(jobHandle, 0)
         XCTAssertEqual(result, 42, "launch_with_dispatcher(Default) must deliver the coroutine's return value")
     }
 
@@ -287,7 +287,7 @@ final class RuntimeCoroutineAdvancedTests: IsolatedRuntimeXCTestCase {
         let dispatcher = kk_dispatcher_io()
         let jobHandle = kk_kxmini_launch_with_dispatcher(entryRaw, functionID, dispatcher)
         XCTAssertNotEqual(jobHandle, 0)
-        let result = kk_job_join(jobHandle)
+        let result = kk_job_join(jobHandle, 0)
         XCTAssertEqual(result, 42, "launch_with_dispatcher(IO) must deliver the coroutine's return value")
     }
 
@@ -422,8 +422,8 @@ final class RuntimeCoroutineAdvancedTests: IsolatedRuntimeXCTestCase {
         XCTAssertNotEqual(job1, 0)
         XCTAssertNotEqual(job2, 0)
 
-        let result1 = kk_job_join(job1)
-        let result2 = kk_job_join(job2)
+        let result1 = kk_job_join(job1, 0)
+        let result2 = kk_job_join(job2, 0)
 
         XCTAssertEqual(result1, 42, "First concurrent launch must return 42")
         XCTAssertEqual(result2, 107, "Second concurrent launch must return arg(7)+100=107")
