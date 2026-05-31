@@ -487,14 +487,6 @@ extension CallTypeChecker {
         return knownNames.isChannelSymbol(symbol)
     }
 
-    func isKClassReceiverType(
-        _ receiverType: TypeID,
-        sema: SemaModule,
-        interner: StringInterner
-    ) -> Bool {
-        kClassReceiverArgumentType(receiverType, sema: sema, interner: interner) != nil
-    }
-
     func kClassReceiverArgumentType(
         _ receiverType: TypeID,
         sema: SemaModule,
