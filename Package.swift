@@ -18,6 +18,10 @@ let package = Package(
         .executable(
             name: "kswiftc",
             targets: ["KSwiftKCLI"]
+        ),
+        .executable(
+            name: "kswift-lsp",
+            targets: ["KSwiftLSPCLI"]
         )
     ],
     targets: [
@@ -51,6 +55,14 @@ let package = Package(
         .executableTarget(
             name: "KSwiftKCLI",
             dependencies: ["CompilerCore"]
+        ),
+        .target(
+            name: "LSPServer",
+            dependencies: ["CompilerCore"]
+        ),
+        .executableTarget(
+            name: "KSwiftLSPCLI",
+            dependencies: ["LSPServer"]
         ),
         .executableTarget(
             name: "GoldenHarnessWorker",
