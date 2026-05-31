@@ -21,7 +21,6 @@ final class EnumEntriesLoweringPass: LoweringPass {
                 if let rewritten = self.rewriteEntriesAccess(
                     instruction: instruction,
                     sema: sema,
-                    interner: ctx.interner,
                     arena: module.arena,
                     entriesName: entriesName,
                     entriesGetName: entriesGetName
@@ -34,8 +33,6 @@ final class EnumEntriesLoweringPass: LoweringPass {
                 if let rewritten = self.rewriteEntriesConstValue(
                     instruction: instruction,
                     sema: sema,
-                    interner: ctx.interner,
-                    arena: module.arena,
                     entriesName: entriesName,
                     entriesGetName: entriesGetName
                 ) {
@@ -57,7 +54,6 @@ final class EnumEntriesLoweringPass: LoweringPass {
     private func rewriteEntriesAccess(
         instruction: KIRInstruction,
         sema: SemaModule,
-        interner: StringInterner,
         arena: KIRArena,
         entriesName: InternedString,
         entriesGetName: InternedString
@@ -117,8 +113,6 @@ final class EnumEntriesLoweringPass: LoweringPass {
     private func rewriteEntriesConstValue(
         instruction: KIRInstruction,
         sema: SemaModule,
-        interner: StringInterner,
-        arena: KIRArena,
         entriesName: InternedString,
         entriesGetName: InternedString
     ) -> KIRInstruction? {

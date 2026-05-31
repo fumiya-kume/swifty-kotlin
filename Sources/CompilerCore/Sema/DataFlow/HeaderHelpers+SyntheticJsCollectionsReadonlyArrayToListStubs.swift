@@ -48,7 +48,6 @@ extension DataFlowSemaPhase {
             returnType: returnType,
             typeParamSymbol: readonlyArray.typeParameterSymbol,
             symbols: symbols,
-            types: types,
             interner: interner
         )
     }
@@ -162,7 +161,6 @@ extension DataFlowSemaPhase {
         returnType: TypeID,
         typeParamSymbol: SymbolID,
         symbols: SymbolTable,
-        types: TypeSystem,
         interner: StringInterner
     ) {
         registerJsReadonlyArrayConversionMember(

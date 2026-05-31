@@ -1288,7 +1288,6 @@ extension CodegenBackendIntegrationTests {
             diagnostics: diagnostics
         )
 
-        let runtime = RuntimeLinkInfo(libraryPaths: [], libraries: [], extraObjects: [])
         let missingObjectPath = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
             .appendingPathComponent("missing")
@@ -1298,7 +1297,6 @@ extension CodegenBackendIntegrationTests {
         XCTAssertThrowsError(
             try backend.emitObject(
                 module: module,
-                runtime: runtime,
                 outputObjectPath: missingObjectPath,
                 interner: interner
             )

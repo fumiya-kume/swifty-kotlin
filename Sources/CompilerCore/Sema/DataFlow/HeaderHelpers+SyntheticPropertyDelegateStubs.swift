@@ -341,7 +341,6 @@ extension DataFlowSemaPhase {
         let kClassifierSymbol = ensureInterfaceSymbol(
             named: "KClassifier", in: kotlinReflectPkg, symbols: symbols, interner: interner
         )
-        types.kClassifierInterfaceSymbol = kClassifierSymbol
         let kClassSymbol = ensureInterfaceSymbol(
             named: "KClass", in: kotlinReflectPkg, symbols: symbols, interner: interner
         )
@@ -1890,7 +1889,6 @@ extension DataFlowSemaPhase {
         let kClassifierSymbol = ensureInterfaceSymbol(
             named: "KClassifier", in: kotlinReflectPkg, symbols: symbols, interner: interner
         )
-        types.kClassifierInterfaceSymbol = kClassifierSymbol
         registerSyntheticKTypeParameterStub(
             kClassifierSymbol: kClassifierSymbol,
             kTypeSymbol: kTypeSymbol,

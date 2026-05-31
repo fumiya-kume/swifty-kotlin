@@ -1,48 +1,48 @@
-public enum SyntheticSymbolScheme {
-    public static let defaultStubOffset: Int32 = -40000
-    public static let defaultMaskOffset: Int32 = -30000
-    public static let typeTokenOffset: Int32 = -20000
-    public static let propertySetterAccessorOffset: Int32 = -13000
-    public static let propertyGetterAccessorOffset: Int32 = -12000
-    public static let receiverParameterOffset: Int32 = -10000
+enum SyntheticSymbolScheme {
+    static let defaultStubOffset: Int32 = -40000
+    static let defaultMaskOffset: Int32 = -30000
+    static let typeTokenOffset: Int32 = -20000
+    static let propertySetterAccessorOffset: Int32 = -13000
+    static let propertyGetterAccessorOffset: Int32 = -12000
+    static let receiverParameterOffset: Int32 = -10000
 
     private static func makeSymbol(offset: Int32, original: SymbolID) -> SymbolID {
         SymbolID(rawValue: offset - original.rawValue)
     }
 
-    public static func defaultStubSymbol(for original: SymbolID) -> SymbolID {
+    static func defaultStubSymbol(for original: SymbolID) -> SymbolID {
         makeSymbol(offset: defaultStubOffset, original: original)
     }
 
-    public static func defaultMaskSymbol(for original: SymbolID) -> SymbolID {
+    static func defaultMaskSymbol(for original: SymbolID) -> SymbolID {
         makeSymbol(offset: defaultMaskOffset, original: original)
     }
 
-    public static func setterValueParameterSymbol(for propertySymbol: SymbolID) -> SymbolID {
+    static func setterValueParameterSymbol(for propertySymbol: SymbolID) -> SymbolID {
         makeSymbol(offset: defaultMaskOffset, original: propertySymbol)
     }
 
-    public static func semaSetterValueSymbol(for propertySymbol: SymbolID) -> SymbolID {
+    static func semaSetterValueSymbol(for propertySymbol: SymbolID) -> SymbolID {
         makeSymbol(offset: defaultStubOffset, original: propertySymbol)
     }
 
-    public static func reifiedTypeTokenSymbol(for typeParameterSymbol: SymbolID) -> SymbolID {
+    static func reifiedTypeTokenSymbol(for typeParameterSymbol: SymbolID) -> SymbolID {
         makeSymbol(offset: typeTokenOffset, original: typeParameterSymbol)
     }
 
-    public static func receiverParameterSymbol(for functionSymbol: SymbolID) -> SymbolID {
+    static func receiverParameterSymbol(for functionSymbol: SymbolID) -> SymbolID {
         makeSymbol(offset: receiverParameterOffset, original: functionSymbol)
     }
 
-    public static func propertyGetterAccessorSymbol(for propertySymbol: SymbolID) -> SymbolID {
+    static func propertyGetterAccessorSymbol(for propertySymbol: SymbolID) -> SymbolID {
         makeSymbol(offset: propertyGetterAccessorOffset, original: propertySymbol)
     }
 
-    public static func propertySetterAccessorSymbol(for propertySymbol: SymbolID) -> SymbolID {
+    static func propertySetterAccessorSymbol(for propertySymbol: SymbolID) -> SymbolID {
         makeSymbol(offset: propertySetterAccessorOffset, original: propertySymbol)
     }
 
-    public static func propertyAccessorSymbol(
+    static func propertyAccessorSymbol(
         for propertySymbol: SymbolID,
         kind: PropertyAccessorKind
     ) -> SymbolID {
@@ -56,21 +56,21 @@ public enum SyntheticSymbolScheme {
 
     /// Preserves the historical heuristic used by ABI lowering to classify
     /// synthetic accessor call symbols as non-throwing.
-    public static func isLikelySyntheticPropertyAccessor(_ symbol: SymbolID) -> Bool {
+    static func isLikelySyntheticPropertyAccessor(_ symbol: SymbolID) -> Bool {
         let raw = symbol.rawValue
         return raw <= propertyGetterAccessorOffset && raw > typeTokenOffset
     }
 
     /// Returns true when `symbol` is a synthetic setter accessor symbol
     /// (raw value in the setter accessor range, below getter accessor offset).
-    public static func isLikelySyntheticSetterAccessor(_ symbol: SymbolID) -> Bool {
+    static func isLikelySyntheticSetterAccessor(_ symbol: SymbolID) -> Bool {
         let raw = symbol.rawValue
         return raw < propertyGetterAccessorOffset && raw > typeTokenOffset
     }
 
     /// Reverse of `propertySetterAccessorSymbol(for:)`: recovers the original
     /// property symbol from a synthetic setter accessor symbol.
-    public static func originalPropertySymbolFromSetterAccessor(_ setterAccessor: SymbolID) -> SymbolID {
+    static func originalPropertySymbolFromSetterAccessor(_ setterAccessor: SymbolID) -> SymbolID {
         SymbolID(rawValue: propertySetterAccessorOffset - setterAccessor.rawValue)
     }
 }

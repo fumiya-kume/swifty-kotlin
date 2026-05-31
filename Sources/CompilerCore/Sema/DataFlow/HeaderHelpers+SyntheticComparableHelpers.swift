@@ -76,8 +76,7 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             types: types,
             interner: interner,
-            comparableSymbol: comparableSymbol,
-            tParamType: tParamType
+            comparableSymbol: comparableSymbol
         )
     }
 
@@ -86,8 +85,7 @@ extension DataFlowSemaPhase {
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,
-        comparableSymbol: SymbolID,
-        tParamType: TypeID
+        comparableSymbol: SymbolID
     ) {
         let kotlinPkg: [InternedString] = [interner.intern("kotlin")]
         let extensionsPkg = kotlinPkg + [interner.intern("comparisons")]
@@ -110,8 +108,7 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner,
             extensionsPkg: extensionsPkg,
-            comparableSymbol: comparableSymbol,
-            tParamType: tParamType
+            comparableSymbol: comparableSymbol
         )
     }
 
@@ -121,8 +118,7 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner,
         extensionsPkg: [InternedString],
-        comparableSymbol: SymbolID,
-        tParamType: TypeID
+        comparableSymbol: SymbolID
     ) {
         let functionName = interner.intern("compareToOrNull")
         let functionFQName = extensionsPkg + [functionName]

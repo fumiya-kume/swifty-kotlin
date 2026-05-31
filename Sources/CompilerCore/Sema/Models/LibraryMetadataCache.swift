@@ -9,8 +9,8 @@ import Foundation
 /// - Important: This class is **not** thread-safe. It is designed for use within a
 ///   single compilation session on one thread — the same threading model used by the
 ///   rest of the Sema pipeline.
-public final class LibraryMetadataCache {
-    public init() {}
+final class LibraryMetadataCache {
+    init() {}
 
     // MARK: - Manifest cache (libraryDir → single entry with mtime + target)
 
@@ -148,17 +148,17 @@ public final class LibraryMetadataCache {
     // MARK: - Statistics
 
     /// Number of manifest cache entries.
-    public var manifestCacheCount: Int {
+    var manifestCacheCount: Int {
         manifestCache.count
     }
 
     /// Number of metadata record cache entries.
-    public var metadataCacheCount: Int {
+    var metadataCacheCount: Int {
         metadataCache.count
     }
 
     /// Number of cached type signature entries.
-    public var signatureCacheCount: Int {
+    var signatureCacheCount: Int {
         signatureCache.count
     }
 

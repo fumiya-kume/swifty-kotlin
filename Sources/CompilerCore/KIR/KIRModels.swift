@@ -3,8 +3,6 @@ import Foundation
 public struct KIRDeclID: Hashable, Sendable {
     public let rawValue: Int32
 
-    public static let invalid = KIRDeclID(rawValue: -1)
-
     public init(rawValue: Int32 = -1) {
         self.rawValue = rawValue
     }
@@ -14,16 +12,6 @@ public struct KIRExprID: Hashable, Sendable {
     public let rawValue: Int32
 
     public static let invalid = KIRExprID(rawValue: -1)
-
-    public init(rawValue: Int32 = -1) {
-        self.rawValue = rawValue
-    }
-}
-
-public struct KIRTypeID: Hashable, Sendable {
-    public let rawValue: Int32
-
-    public static let invalid = KIRTypeID(rawValue: -1)
 
     public init(rawValue: Int32 = -1) {
         self.rawValue = rawValue
@@ -433,13 +421,13 @@ public final class KIRModule {
     }
 }
 
-public final class KIRContext {
-    public let diagnostics: DiagnosticEngine
-    public let options: CompilerOptions
-    public let interner: StringInterner
-    public let sema: SemaModule?
+final class KIRContext {
+    let diagnostics: DiagnosticEngine
+    let options: CompilerOptions
+    let interner: StringInterner
+    let sema: SemaModule?
 
-    public init(
+    init(
         diagnostics: DiagnosticEngine,
         options: CompilerOptions,
         interner: StringInterner,
@@ -452,7 +440,7 @@ public final class KIRContext {
     }
 }
 
-public protocol KIRPass {
+protocol KIRPass {
     static var name: String { get }
     func run(module: KIRModule, ctx: KIRContext) throws
 }

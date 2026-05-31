@@ -1,12 +1,12 @@
 import Foundation
 
-public struct CompilerVersion: Equatable {
-    public let major: Int
-    public let minor: Int
-    public let patch: Int
-    public let gitHash: String?
+struct CompilerVersion: Equatable {
+    let major: Int
+    let minor: Int
+    let patch: Int
+    let gitHash: String?
 
-    public init(major: Int, minor: Int, patch: Int, gitHash: String?) {
+    init(major: Int, minor: Int, patch: Int, gitHash: String?) {
         self.major = major
         self.minor = minor
         self.patch = patch
@@ -14,7 +14,7 @@ public struct CompilerVersion: Equatable {
     }
 }
 
-public enum KotlinLanguageVersion: Equatable {
+enum KotlinLanguageVersion: Equatable {
     case v2_3_10
 }
 

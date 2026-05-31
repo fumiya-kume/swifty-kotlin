@@ -359,9 +359,8 @@ extension VirtualDispatchTests {
         } catch {
             throw XCTSkip("LLVM backend is unavailable in this environment: \(error)")
         }
-        let runtime = RuntimeLinkInfo(libraryPaths: [], libraries: [], extraObjects: [])
         let irPath = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".ll").path
-        try backend.emitLLVMIR(module: fixture.module, runtime: runtime, outputIRPath: irPath, interner: fixture.interner)
+        try backend.emitLLVMIR(module: fixture.module, outputIRPath: irPath, interner: fixture.interner)
         let ir = try String(contentsOfFile: irPath, encoding: .utf8)
         XCTAssertTrue(ir.contains("kk_vtable_lookup") || ir.contains("kk_fn_"), "IR should contain vtable dispatch or emitted functions")
     }

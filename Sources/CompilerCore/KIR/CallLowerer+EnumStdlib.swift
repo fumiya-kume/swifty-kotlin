@@ -4,11 +4,9 @@ extension CallLowerer {
     func lowerEnumValuesCallExpr(
         _ exprID: ExprID,
         args: [CallArgument],
-        ast: ASTModule,
         sema: SemaModule,
         arena: KIRArena,
         interner: StringInterner,
-        propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID? {
         lowerEnumEntryCollectionCallExpr(
@@ -26,11 +24,9 @@ extension CallLowerer {
     func lowerEnumEntriesCallExpr(
         _ exprID: ExprID,
         args: [CallArgument],
-        ast: ASTModule,
         sema: SemaModule,
         arena: KIRArena,
         interner: StringInterner,
-        propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID? {
         lowerEnumEntryCollectionCallExpr(

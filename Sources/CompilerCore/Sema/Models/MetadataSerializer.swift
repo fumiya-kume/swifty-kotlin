@@ -4,47 +4,47 @@ import Foundation
 
 /// Unified metadata record used by both export (MetadataEncoder) and import (MetadataDecoder).
 /// This is the single source of truth for what information survives the metadata round-trip.
-public struct MetadataRecord {
-    public let kind: SymbolKind
-    public let mangledName: String
-    public let fqName: String
-    public let arity: Int
-    public let isSuspend: Bool
-    public let isInline: Bool
-    public let typeSignature: String?
-    public let externalLinkName: String?
-    public let declaredFieldCount: Int?
-    public let declaredInstanceSizeWords: Int?
-    public let declaredVtableSize: Int?
-    public let declaredItableSize: Int?
-    public let superFQName: String?
-    public let fieldOffsets: String?
-    public let vtableSlots: String?
-    public let itableSlots: String?
+struct MetadataRecord {
+    let kind: SymbolKind
+    let mangledName: String
+    let fqName: String
+    let arity: Int
+    let isSuspend: Bool
+    let isInline: Bool
+    let typeSignature: String?
+    let externalLinkName: String?
+    let declaredFieldCount: Int?
+    let declaredInstanceSizeWords: Int?
+    let declaredVtableSize: Int?
+    let declaredItableSize: Int?
+    let superFQName: String?
+    let fieldOffsets: String?
+    let vtableSlots: String?
+    let itableSlots: String?
 
     // P5-74: data class flag
-    public let isDataClass: Bool
+    let isDataClass: Bool
 
     // P5-74: sealed class flag
-    public let isSealedClass: Bool
+    let isSealedClass: Bool
 
     // P5-86: annotation metadata
-    public let annotations: [MetadataAnnotationRecord]
+    let annotations: [MetadataAnnotationRecord]
 
     // P5-75: value class flag
-    public let isValueClass: Bool
+    let isValueClass: Bool
 
     // P5-75: value class underlying type signature (e.g. "I" for Int)
-    public let valueClassUnderlyingTypeSig: String?
+    let valueClassUnderlyingTypeSig: String?
 
     // P5-78: sealed subclass FQ names for cross-module exhaustiveness
-    public let sealedSubclassFQNames: [String]
+    let sealedSubclassFQNames: [String]
 
     // MPP-001: expect/actual declaration flags
-    public let isExpect: Bool
-    public let isActual: Bool
+    let isExpect: Bool
+    let isActual: Bool
 
-    public init(
+    init(
         kind: SymbolKind,
         mangledName: String = "",
         fqName: String = "",
@@ -121,11 +121,11 @@ public struct MetadataAnnotationRecord: Equatable {
 
 /// Encodes compiler symbols into `[MetadataRecord]` and serializes them to the text-based
 /// metadata format consumed by `MetadataDecoder`.
-public final class MetadataEncoder {
-    public init() {}
+final class MetadataEncoder {
+    init() {}
 
     /// Build metadata records from the compiler's semantic state.
-    public func buildRecords(
+    func buildRecords(
         symbols: SymbolTable,
         types: TypeSystem,
         moduleName: String,
@@ -520,7 +520,7 @@ public final class MetadataEncoder {
     }
 
     /// Serialize records to the text-based metadata format.
-    public func serialize(_ records: [MetadataRecord]) -> String {
+    func serialize(_ records: [MetadataRecord]) -> String {
         var lines = ["symbols=\(records.count)"]
         for record in records {
             var fields: [String] = [
@@ -700,11 +700,11 @@ public final class MetadataEncoder {
 
 /// Decodes the text-based metadata format into `[MetadataRecord]`.
 /// This replaces the ad-hoc parsing previously done in DataFlow/LibraryMetadataParsing.swift.
-public final class MetadataDecoder {
-    public init() {}
+final class MetadataDecoder {
+    init() {}
 
     /// Parse text content into metadata records.
-    public func decode(_ content: String) -> [MetadataRecord] {
+    func decode(_ content: String) -> [MetadataRecord] {
         var records: [MetadataRecord] = []
         for rawLine in content.split(whereSeparator: \.isNewline) {
             let line = rawLine.trimmingCharacters(in: .whitespacesAndNewlines)

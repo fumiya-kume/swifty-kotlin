@@ -239,13 +239,6 @@ public struct ContractConditionEffect: Equatable, Sendable {
         self.returnsValue = returnsValue
     }
 }
-
-/// STDLIB-593: `contract { returnsNotNull() }` effect.
-/// Records that the function is guaranteed to return a non-null value.
-public struct ContractReturnsNotNullEffect: Equatable, Sendable {
-    public init() {}
-}
-
 public struct NominalLayout: Equatable, Sendable {
     public let objectHeaderWords: Int
     public let instanceFieldCount: Int
@@ -307,7 +300,6 @@ public struct NominalLayoutHint: Equatable, Sendable {
 }
 
 public protocol Scope: AnyObject {
-    var parent: Scope? { get }
     func lookup(_ name: InternedString) -> [SymbolID]
     func insert(_ sym: SymbolID)
 }
@@ -349,31 +341,31 @@ open class BaseScope: Scope {
     }
 }
 
-public final class FileScope: BaseScope {}
-public final class PackageScope: BaseScope {}
-public final class ImportScope: BaseScope {}
+final class FileScope: BaseScope {}
+final class PackageScope: BaseScope {}
+final class ImportScope: BaseScope {}
 
-public final class ClassMemberScope: BaseScope {
+final class ClassMemberScope: BaseScope {
     private let ownerSymbol: SymbolID
     private let thisType: TypeID?
 
-    public init(parent: Scope?, symbols: SymbolTable, ownerSymbol: SymbolID, thisType: TypeID?) {
+    init(parent: Scope?, symbols: SymbolTable, ownerSymbol: SymbolID, thisType: TypeID?) {
         self.ownerSymbol = ownerSymbol
         self.thisType = thisType
         super.init(parent: parent, symbols: symbols)
     }
 
-    public var receiverType: TypeID? {
+    var receiverType: TypeID? {
         thisType
     }
 
-    public var owner: SymbolID {
+    var owner: SymbolID {
         ownerSymbol
     }
 }
 
-public final class FunctionScope: BaseScope {}
-public final class BlockScope: BaseScope {}
+final class FunctionScope: BaseScope {}
+final class BlockScope: BaseScope {}
 
 import Foundation
 
@@ -1062,12 +1054,6 @@ public final class SymbolTable {
     public func setContractConditionEffect(_ effect: ContractConditionEffect, for function: SymbolID) {
         contractConditionEffects[function] = effect
     }
-
-    /// STDLIB-591: Returns the `returns() implies condition` effect for a function, if any.
-    public func contractConditionEffect(for function: SymbolID) -> ContractConditionEffect? {
-        contractConditionEffects[function]
-    }
-
     // MARK: - Indexed queries
 
     /// Returns all symbol IDs of a given kind.
@@ -1438,12 +1424,6 @@ public final class BindingTable {
         builderDSLExprIDs.insert(expr)
         builderDSLKinds[expr] = kind
     }
-
-    /// Whether the given expression is a builder DSL call.
-    public func isBuilderDSLExpr(_ expr: ExprID) -> Bool {
-        builderDSLExprIDs.contains(expr)
-    }
-
     /// Retrieve the builder DSL kind for a builder call expression.
     public func builderDSLKind(for expr: ExprID) -> BuilderDSLKind? {
         builderDSLKinds[expr]
@@ -1454,12 +1434,6 @@ public final class BindingTable {
         scopeFunctionExprIDs.insert(expr)
         scopeFunctionKinds[expr] = kind
     }
-
-    /// Whether the given expression is a scope function call.
-    public func isScopeFunctionExpr(_ expr: ExprID) -> Bool {
-        scopeFunctionExprIDs.contains(expr)
-    }
-
     /// Retrieve the scope function kind for a scope function call expression.
     public func scopeFunctionKind(for expr: ExprID) -> ScopeFunctionKind? {
         scopeFunctionKinds[expr]
@@ -1470,12 +1444,6 @@ public final class BindingTable {
         takeIfTakeUnlessExprIDs.insert(expr)
         takeIfTakeUnlessKinds[expr] = kind
     }
-
-    /// Whether the given expression is a takeIf / takeUnless call.
-    public func isTakeIfTakeUnlessExpr(_ expr: ExprID) -> Bool {
-        takeIfTakeUnlessExprIDs.contains(expr)
-    }
-
     /// Retrieve the takeIf/takeUnless kind for a marked call expression.
     public func takeIfTakeUnlessKind(for expr: ExprID) -> TakeIfTakeUnlessKind? {
         takeIfTakeUnlessKinds[expr]
@@ -1496,12 +1464,6 @@ public final class BindingTable {
         stdlibSpecialCallExprIDs.insert(expr)
         stdlibSpecialCallKinds[expr] = kind
     }
-
-    /// Whether the given expression is a stdlib special call.
-    public func isStdlibSpecialCallExpr(_ expr: ExprID) -> Bool {
-        stdlibSpecialCallExprIDs.contains(expr)
-    }
-
     /// Retrieve the stdlib special call kind for a marked call expression.
     public func stdlibSpecialCallKind(for expr: ExprID) -> StdlibSpecialCallKind? {
         stdlibSpecialCallKinds[expr]

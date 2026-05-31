@@ -178,7 +178,6 @@ extension CoroutineLoweringPass {
             )
             blocks.append(
                 CFGBlock(
-                    id: blockID,
                     instructions: blockInstructions,
                     successors: successors
                 )

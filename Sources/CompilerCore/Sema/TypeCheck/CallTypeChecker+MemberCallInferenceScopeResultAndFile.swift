@@ -28,7 +28,7 @@ extension CallTypeChecker {
             case "run": .scopeRun
             case "apply": .scopeApply
             case "also": .scopeAlso
-            case "use" where isCloseableReceiver(receiverType, sema: sema, interner: interner): .scopeUse
+            case "use" where isCloseableReceiver(receiverType, sema: sema): .scopeUse
             default: nil
             }
             let hasUserDefinedMember = if scopeKind != nil {

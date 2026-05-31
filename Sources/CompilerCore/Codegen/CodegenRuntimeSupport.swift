@@ -17,15 +17,3 @@ enum CodegenRuntimeSupport {
         return String(hash, radix: 16)
     }
 }
-
-public struct RuntimeLinkInfo {
-    public let libraryPaths: [String]
-    public let libraries: [String]
-    public let extraObjects: [String]
-
-    public init(libraryPaths: [String], libraries: [String], extraObjects: [String]) {
-        self.libraryPaths = libraryPaths
-        self.libraries = libraries
-        self.extraObjects = extraObjects
-    }
-}

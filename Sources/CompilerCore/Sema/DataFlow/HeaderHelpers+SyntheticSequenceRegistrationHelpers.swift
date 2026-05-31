@@ -1015,7 +1015,6 @@ extension DataFlowSemaPhase {
             typeParameterSymbols: [typeParamSymbol],
             packageFQName: packageFQName,
             symbols: symbols,
-            types: types,
             interner: interner
         )
 
@@ -1088,7 +1087,6 @@ extension DataFlowSemaPhase {
         typeParameterSymbols: [SymbolID] = [],
         packageFQName: [InternedString],
         symbols: SymbolTable,
-        types: TypeSystem,
         interner: StringInterner
     ) {
         let functionName = interner.intern(name)
@@ -1154,7 +1152,6 @@ extension DataFlowSemaPhase {
     }
 
     func registerSyntheticSequenceBuilderStub(
-        packageFQName: [InternedString],
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner

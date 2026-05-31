@@ -9,7 +9,6 @@ extension OverloadResolver {
     ) -> ProbedCallResult {
         let solver = ConstraintSolver()
         var viable: [ViableCandidate] = []
-        var candidateFailures: [Diagnostic] = []
         for candidate in candidates {
             let evaluation = evaluateCandidate(
                 candidate,
@@ -23,15 +22,12 @@ extension OverloadResolver {
             switch evaluation {
             case let .viable(value):
                 viable.append(value)
-            case let .constraintFailure(diagnostic):
-                candidateFailures.append(diagnostic)
-            case .rejected:
+            case .constraintFailure, .rejected:
                 continue
             }
         }
         return ProbedCallResult(
-            viableCandidates: viable.map { $0.toProbedCallCandidate() },
-            diagnostic: viable.isEmpty ? candidateFailures.first : nil
+            viableCandidates: viable.map { $0.toProbedCallCandidate() }
         )
     }
 
@@ -505,12 +501,7 @@ extension OverloadResolver {
         }
 
         func toProbedCallCandidate() -> ProbedCallCandidate {
-            ProbedCallCandidate(
-                symbol: symbol,
-                instantiatedParameterTypes: instantiatedParameterTypes,
-                substitutedTypeArguments: substitutedTypeArguments,
-                parameterMapping: parameterMapping
-            )
+            ProbedCallCandidate(symbol: symbol)
         }
     }
 

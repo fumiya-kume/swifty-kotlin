@@ -6,7 +6,6 @@ public final class CompilationContext: @unchecked Sendable {
     public let sourceManager: SourceManager
     public let diagnostics: DiagnosticEngine
     public let interner: StringInterner
-    public lazy var builtinNames: BuiltinTypeNames = BuiltinTypeNames(interner: interner)
 
     public internal(set) var tokens: [Token] = []
     public internal(set) var tokensByFile: [(FileID, [Token])] = []
@@ -66,10 +65,6 @@ public final class CompilationContext: @unchecked Sendable {
 
     public func needsRecompilation(fileID: FileID) -> Bool {
         needsRecompilation(path: sourceManager.path(of: fileID))
-    }
-
-    public var hasIncrementalFrontendState: Bool {
-        incrementalRecompileSet != nil && incrementalFrontendState != nil
     }
 
     /// The number of frontend parallel jobs parsed from `-Xfrontend jobs=N`.

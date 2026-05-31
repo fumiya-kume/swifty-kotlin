@@ -9,7 +9,6 @@ extension CallTypeChecker {
     }
 
     private struct LambdaParameterCandidate {
-        let symbol: SymbolID
         let originalType: TypeID
         let functionType: FunctionType
     }
@@ -315,7 +314,6 @@ extension CallTypeChecker {
         signature: FunctionSignature,
         candidate: SymbolID,
         explicitTypeArgs: [TypeID],
-        typeArgOffset: Int = 0,
         sema: SemaModule
     ) -> TypeID {
         guard !explicitTypeArgs.isEmpty, !signature.typeParameterSymbols.isEmpty else {
@@ -399,14 +397,11 @@ extension CallTypeChecker {
            index < signature.parameterTypes.count
         {
             let rawType = signature.parameterTypes[index]
-            let isConstructor = sema.symbols.symbol(candidates[0])?.kind == .constructor
-            let typeArgOffset = isConstructor ? 0 : signature.classTypeParameterCount
             return applyExplicitTypeArgs(
                 to: rawType,
                 signature: signature,
                 candidate: candidates[0],
                 explicitTypeArgs: explicitTypeArgs,
-                typeArgOffset: typeArgOffset,
                 sema: sema
             )
         }
@@ -442,14 +437,11 @@ extension CallTypeChecker {
            index < signature.parameterTypes.count
         {
             let rawType = signature.parameterTypes[index]
-            let isConstructor = sema.symbols.symbol(candidates[0])?.kind == .constructor
-            let typeArgOffset = isConstructor ? 0 : signature.classTypeParameterCount
             let explicitSubstituted = applyExplicitTypeArgs(
                 to: rawType,
                 signature: signature,
                 candidate: candidates[0],
                 explicitTypeArgs: explicitTypeArgs,
-                typeArgOffset: typeArgOffset,
                 sema: sema
             )
             let substituted = applyReceiverClassTypeArgs(
@@ -509,7 +501,6 @@ extension CallTypeChecker {
                 return nil
             }
             return LambdaParameterCandidate(
-                symbol: candidate,
                 originalType: parameterType,
                 functionType: functionType
             )

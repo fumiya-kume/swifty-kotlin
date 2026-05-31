@@ -129,8 +129,7 @@ extension KIRLoweringDriver {
                         let implementationSymbol = findOverrideMethod(
                             for: methodSymbol,
                             in: objectSymbol,
-                            sema: sema,
-                            interner: interner
+                            sema: sema
                         ) ?? methodSymbol
                         let methodSlotExpr = arena.appendExpr(.intLiteral(methodSlot), type: intType)
                         body.append(.constValue(result: methodSlotExpr, value: .intLiteral(methodSlot)))
@@ -178,8 +177,7 @@ extension KIRLoweringDriver {
     private func findOverrideMethod(
         for interfaceMethod: SymbolID,
         in nominalSymbol: SymbolID,
-        sema: SemaModule,
-        interner: StringInterner
+        sema: SemaModule
     ) -> SymbolID? {
         guard let methodSym = sema.symbols.symbol(interfaceMethod) else { return nil }
         let methodName = methodSym.name

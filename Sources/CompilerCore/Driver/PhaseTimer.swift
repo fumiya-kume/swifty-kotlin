@@ -198,11 +198,4 @@ public final class PhaseTimer {
         ))
         return result
     }
-
-    /// Encode timing report as JSON `Data`.
-    public func exportJSONData() throws -> Data {
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.sortedKeys]
-        return try encoder.encode(exportJSON())
-    }
 }

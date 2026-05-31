@@ -124,8 +124,6 @@ extension CodegenBackendIntegrationTests {
             diagnostics: diagnostics
         )
 
-        let runtime = RuntimeLinkInfo(libraryPaths: [], libraries: [], extraObjects: [])
-
         let debugIRPath = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString + "_debug.ll").path
         let noDebugIRPath = FileManager.default.temporaryDirectory
@@ -137,13 +135,11 @@ extension CodegenBackendIntegrationTests {
 
         try backendWithDebug.emitLLVMIR(
             module: module,
-            runtime: runtime,
             outputIRPath: debugIRPath,
             interner: interner
         )
         try backendNoDebug.emitLLVMIR(
             module: module,
-            runtime: runtime,
             outputIRPath: noDebugIRPath,
             interner: interner
         )
@@ -197,15 +193,12 @@ extension CodegenBackendIntegrationTests {
             diagnostics: diagnostics
         )
 
-        let runtime = RuntimeLinkInfo(libraryPaths: [], libraries: [], extraObjects: [])
-
         let irPath = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString + "_dbgloc.ll").path
         defer { try? FileManager.default.removeItem(atPath: irPath) }
 
         try backend.emitLLVMIR(
             module: module,
-            runtime: runtime,
             outputIRPath: irPath,
             interner: interner
         )
@@ -255,15 +248,12 @@ extension CodegenBackendIntegrationTests {
             diagnostics: diagnostics
         )
 
-        let runtime = RuntimeLinkInfo(libraryPaths: [], libraries: [], extraObjects: [])
-
         let irPath = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString + "_localvar.ll").path
         defer { try? FileManager.default.removeItem(atPath: irPath) }
 
         try backend.emitLLVMIR(
             module: module,
-            runtime: runtime,
             outputIRPath: irPath,
             interner: interner
         )

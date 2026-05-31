@@ -34,7 +34,6 @@ extension DataFlowSemaPhase {
                 parameterNames: ["a", "b"],
                 packageFQName: comparisonsPkg,
                 packageSymbol: comparisonsPackageSymbol,
-                types: types,
                 symbols: symbols,
                 interner: interner
             )
@@ -45,7 +44,6 @@ extension DataFlowSemaPhase {
                 parameterNames: ["a", "b"],
                 packageFQName: comparisonsPkg,
                 packageSymbol: comparisonsPackageSymbol,
-                types: types,
                 symbols: symbols,
                 interner: interner
             )
@@ -66,7 +64,6 @@ extension DataFlowSemaPhase {
                 parameterNames: ["a", "b", "c"],
                 packageFQName: comparisonsPkg,
                 packageSymbol: comparisonsPackageSymbol,
-                types: types,
                 symbols: symbols,
                 interner: interner
             )
@@ -77,7 +74,6 @@ extension DataFlowSemaPhase {
                 parameterNames: ["a", "b", "c"],
                 packageFQName: comparisonsPkg,
                 packageSymbol: comparisonsPackageSymbol,
-                types: types,
                 symbols: symbols,
                 interner: interner
             )
@@ -142,7 +138,6 @@ extension DataFlowSemaPhase {
         typeParameterUpperBoundsList: [[TypeID]] = [],
         packageFQName: [InternedString],
         packageSymbol: SymbolID,
-        types: TypeSystem,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -246,7 +241,6 @@ extension DataFlowSemaPhase {
             typeParameterUpperBoundsList: [comparableUpperBounds],
             packageFQName: comparisonsPkg,
             packageSymbol: comparisonsPackageSymbol,
-            types: types,
             symbols: symbols,
             interner: interner
         )
@@ -259,7 +253,6 @@ extension DataFlowSemaPhase {
             typeParameterUpperBoundsList: [comparableUpperBounds],
             packageFQName: comparisonsPkg,
             packageSymbol: comparisonsPackageSymbol,
-            types: types,
             symbols: symbols,
             interner: interner
         )
@@ -273,7 +266,6 @@ extension DataFlowSemaPhase {
             typeParameterUpperBoundsList: [comparableUpperBounds],
             packageFQName: comparisonsPkg,
             packageSymbol: comparisonsPackageSymbol,
-            types: types,
             symbols: symbols,
             interner: interner
         )
@@ -319,7 +311,6 @@ extension DataFlowSemaPhase {
                 typeParameterUpperBoundsList: [[]],
                 packageFQName: comparisonsPkg,
                 packageSymbol: comparisonsPackageSymbol,
-                types: types,
                 symbols: symbols,
                 interner: interner
             )
@@ -332,7 +323,6 @@ extension DataFlowSemaPhase {
                 typeParameterUpperBoundsList: [[]],
                 packageFQName: comparisonsPkg,
                 packageSymbol: comparisonsPackageSymbol,
-                types: types,
                 symbols: symbols,
                 interner: interner
             )
@@ -346,7 +336,6 @@ extension DataFlowSemaPhase {
                 typeParameterUpperBoundsList: [[]],
                 packageFQName: comparisonsPkg,
                 packageSymbol: comparisonsPackageSymbol,
-                types: types,
                 symbols: symbols,
                 interner: interner
             )
@@ -399,7 +388,6 @@ extension DataFlowSemaPhase {
                 typeParameterUpperBoundsList: [[]],
                 packageFQName: comparisonsPkg,
                 packageSymbol: comparisonsPackageSymbol,
-                types: types,
                 symbols: symbols,
                 interner: interner
             )
@@ -428,7 +416,6 @@ extension DataFlowSemaPhase {
                 parameterNames: ["a", "b"],
                 packageFQName: comparisonsPkg,
                 packageSymbol: comparisonsPackageSymbol,
-                types: types,
                 symbols: symbols,
                 interner: interner
             )
@@ -439,7 +426,6 @@ extension DataFlowSemaPhase {
                 parameterNames: ["a", "b", "c"],
                 packageFQName: comparisonsPkg,
                 packageSymbol: comparisonsPackageSymbol,
-                types: types,
                 symbols: symbols,
                 interner: interner
             )
@@ -451,7 +437,6 @@ extension DataFlowSemaPhase {
                 valueParameterIsVararg: [false, true],
                 packageFQName: comparisonsPkg,
                 packageSymbol: comparisonsPackageSymbol,
-                types: types,
                 symbols: symbols,
                 interner: interner
             )

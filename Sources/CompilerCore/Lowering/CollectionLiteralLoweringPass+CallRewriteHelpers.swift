@@ -35,7 +35,6 @@ extension CollectionLiteralLoweringPass {
     /// symbol entry.
     func isStdlibCollectionFactory(
         symbol: SymbolID?,
-        callee: InternedString,
         lookup: CollectionLiteralLookupTables,
         ctx: KIRContext
     ) -> Bool {
@@ -76,7 +75,7 @@ extension CollectionLiteralLoweringPass {
         guard lookup.arrayOfFactoryNames.contains(callee) else {
             return false
         }
-        return isStdlibCollectionFactory(symbol: symbol, callee: callee, lookup: lookup, ctx: ctx)
+        return isStdlibCollectionFactory(symbol: symbol, lookup: lookup, ctx: ctx)
     }
 
     func isCollectionCopyConstructorArgument(

@@ -1024,7 +1024,7 @@ extension CallLowerer {
             )
         }
         if parentSymbol.kind == .class {
-            return resolveVtableDispatch(callee: callee, parentID: parentID, layout: layout, sema: sema)
+            return resolveVtableDispatch(parentID: parentID, sema: sema)
         }
         return nil
     }
@@ -1061,9 +1061,7 @@ extension CallLowerer {
     }
 
     private func resolveVtableDispatch(
-        callee: SymbolID,
         parentID: SymbolID,
-        layout: NominalLayout,
         sema: SemaModule
     ) -> KIRDispatchKind? {
         // Only use virtual dispatch if the class actually has subtypes.

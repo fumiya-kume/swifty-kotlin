@@ -38,8 +38,6 @@ extension CodegenBackendIntegrationTests {
             diagnostics: diagnostics
         )
 
-        let runtime = RuntimeLinkInfo(libraryPaths: [], libraries: [], extraObjects: [])
-
         let debugObjPath = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString + "_debug.o").path
         let noDebugObjPath = FileManager.default.temporaryDirectory
@@ -50,11 +48,11 @@ extension CodegenBackendIntegrationTests {
         }
 
         try backendDebug.emitObject(
-            module: module, runtime: runtime,
+            module: module,
             outputObjectPath: debugObjPath, interner: interner
         )
         try backendNoDebug.emitObject(
-            module: module, runtime: runtime,
+            module: module,
             outputObjectPath: noDebugObjPath, interner: interner
         )
 

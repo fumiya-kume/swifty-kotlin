@@ -62,7 +62,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         // RegexOption.DOT_MATCHES_ALL) into boxed ordinal int literals.
         // User-defined enum entries are backed by global variables, but
         // synthetic entries have no globals — so we inline the ordinal.
-        rewriteSyntheticEnumEntryRefs(module: module, sema: sema, interner: ctx.interner)
+        rewriteSyntheticEnumEntryRefs(module: module, sema: sema)
 
         module.recordLowering(Self.name)
     }
@@ -73,8 +73,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
     /// `call kk_box_int` so the value is a boxed enum ordinal.
     private func rewriteSyntheticEnumEntryRefs(
         module: KIRModule,
-        sema: SemaModule,
-        interner: StringInterner
+        sema: SemaModule
     ) {
         // Build a lookup: syntheticEnumEntrySymbol -> ordinal
         var syntheticEntryOrdinal: [SymbolID: Int] = [:]

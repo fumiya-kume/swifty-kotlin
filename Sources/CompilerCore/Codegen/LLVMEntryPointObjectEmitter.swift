@@ -20,7 +20,6 @@ enum LLVMEntryPointObjectEmitterError: Error, CustomStringConvertible {
 private struct LLVMEntryPointPrimitiveTypes {
     let int64Type: LLVMCAPIBindings.LLVMTypeRef
     let int32Type: LLVMCAPIBindings.LLVMTypeRef
-    let int8Type: LLVMCAPIBindings.LLVMTypeRef
     let thrownPointerType: LLVMCAPIBindings.LLVMTypeRef
     let cStringPointerType: LLVMCAPIBindings.LLVMTypeRef
 }
@@ -149,7 +148,6 @@ struct LLVMEntryPointObjectEmitter {
         return LLVMEntryPointPrimitiveTypes(
             int64Type: int64Type,
             int32Type: int32Type,
-            int8Type: int8Type,
             thrownPointerType: thrownPointerType,
             cStringPointerType: cStringPointerType
         )

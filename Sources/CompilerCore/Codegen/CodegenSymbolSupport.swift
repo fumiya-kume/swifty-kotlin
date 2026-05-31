@@ -35,7 +35,7 @@ enum CodegenSymbolSupport {
         symbols: SymbolTable? = nil,
         fileFacadeNamesByFileID: [Int32: String] = [:]
     ) -> String {
-        let rawName = jvmFunctionName(for: function, interner: interner, symbols: symbols)
+        let rawName = jvmFunctionName(for: function, symbols: symbols)
             ?? interner.resolve(function.name)
         let facadePrefix = if let fileID = function.sourceRange?.start.file.rawValue,
                               let facadeName = fileFacadeNamesByFileID[fileID],
@@ -52,7 +52,6 @@ enum CodegenSymbolSupport {
 
     private static func jvmFunctionName(
         for function: KIRFunction,
-        interner: StringInterner,
         symbols: SymbolTable?
     ) -> String? {
         guard let symbols else {

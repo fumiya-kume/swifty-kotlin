@@ -462,8 +462,7 @@ extension CallTypeChecker {
         receiverID: ExprID,
         args: [CallArgument],
         explicitTypeArgs: [TypeID],
-        ctx: TypeInferenceContext,
-        locals: inout LocalBindings
+        ctx: TypeInferenceContext
     ) -> TypeID? {
         let sema = ctx.sema
         let interner = ctx.interner
@@ -533,8 +532,7 @@ extension CallTypeChecker {
         safeCall: Bool,
         receiverID: ExprID,
         args: [CallArgument],
-        ctx: TypeInferenceContext,
-        locals: inout LocalBindings
+        ctx: TypeInferenceContext
     ) -> TypeID? {
         let sema = ctx.sema
         let interner = ctx.interner

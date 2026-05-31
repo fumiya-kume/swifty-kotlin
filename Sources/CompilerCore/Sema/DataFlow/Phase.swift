@@ -1,11 +1,11 @@
 import Foundation
 
-public final class DataFlowSemaPhase: CompilerPhase {
-    public static let name = "DataFlowSema"
+final class DataFlowSemaPhase: CompilerPhase {
+    static let name = "DataFlowSema"
 
-    public init() {}
+    init() {}
 
-    public func run(_ ctx: CompilationContext) throws {
+    func run(_ ctx: CompilationContext) throws {
         guard let ast = ctx.ast else {
             throw CompilerPipelineError.invalidInput("No AST available for semantic analysis.")
         }

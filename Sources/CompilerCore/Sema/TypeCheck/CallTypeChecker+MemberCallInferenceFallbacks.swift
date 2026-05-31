@@ -852,7 +852,7 @@ extension CallTypeChecker {
     /// by registerSyntheticFileIOStubs, we also accept any class type whose class symbol
     /// has a `close()` member function registered with no parameters — this ensures that
     /// `file.bufferedReader().use { }` and similar patterns resolve correctly.
-    func isCloseableReceiver(_ receiverType: TypeID, sema: SemaModule, interner: StringInterner) -> Bool {
+    func isCloseableReceiver(_ receiverType: TypeID, sema: SemaModule) -> Bool {
         guard let closeableType = sema.types.closeableTypeID else {
             return false
         }

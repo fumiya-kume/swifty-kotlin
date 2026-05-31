@@ -40,7 +40,7 @@ import Foundation
 ///     [4 bytes] length in bytes (little-endian u32)
 ///     [N bytes] UTF-8 string data (NOT null-terminated)
 /// ```
-public struct RuntimeReflectionMetadataEmitter {
+struct RuntimeReflectionMetadataEmitter {
     /// Magic bytes: "KKRM"
     static let magic: UInt32 = 0x4D52_4B4B
 
@@ -93,7 +93,7 @@ public struct RuntimeReflectionMetadataEmitter {
 
     /// Serializes metadata records into a flat binary buffer suitable for
     /// embedding as a global constant in the compiled binary.
-    public static func serialize(_ records: [MetadataRecord]) -> Data {
+    static func serialize(_ records: [MetadataRecord]) -> Data {
         var stringTable = StringTable()
 
         // Pre-register all strings so indices are stable.

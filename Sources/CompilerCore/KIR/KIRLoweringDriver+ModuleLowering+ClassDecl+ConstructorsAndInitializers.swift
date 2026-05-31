@@ -483,8 +483,7 @@ extension KIRLoweringDriver {
     func synthesizeConstructorReflectionInitializer(
         classDecl: ClassDecl,
         ownerSymbol: SymbolID,
-        shared: KIRLoweringSharedContext,
-        compilationCtx: CompilationContext
+        shared: KIRLoweringSharedContext
     ) -> [KIRDeclID] {
         let sema = shared.sema
         let arena = shared.arena

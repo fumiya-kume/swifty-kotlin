@@ -115,7 +115,7 @@ enum RuntimeTypeCheckToken {
     }
 
     /// Classifies a resolved `TypeID` into a `RuntimeTypeDescriptor`.
-    static func classify(type: TypeID, sema: SemaModule, interner: StringInterner) -> RuntimeTypeDescriptor {
+    static func classify(type: TypeID, sema: SemaModule) -> RuntimeTypeDescriptor {
         let nullable = sema.types.nullability(of: type) == .nullable
         let category: RuntimeTypeCategory
         switch sema.types.kind(of: type) {
@@ -182,7 +182,7 @@ enum RuntimeTypeCheckToken {
     }
 
     static func encode(type: TypeID, sema: SemaModule, interner: StringInterner) -> Int64 {
-        let descriptor = classify(type: type, sema: sema, interner: interner)
+        let descriptor = classify(type: type, sema: sema)
         switch descriptor.category {
         case let .nominal(symbolID):
             let nominalTypeID = stableNominalTypeID(symbol: symbolID, sema: sema, interner: interner)
@@ -197,7 +197,7 @@ enum RuntimeTypeCheckToken {
     /// Returns the simple (unqualified) type name for a given `TypeID`, or `nil`
     /// when the type is not representable as a Kotlin class name.
     static func simpleName(of type: TypeID, sema: SemaModule, interner: StringInterner) -> String? {
-        let descriptor = classify(type: type, sema: sema, interner: interner)
+        let descriptor = classify(type: type, sema: sema)
         if let name = descriptor.category.simpleName {
             return name
         }
@@ -227,7 +227,7 @@ enum RuntimeTypeCheckToken {
     /// Returns the fully-qualified Kotlin name for a given `TypeID`, or `nil`
     /// when the type cannot be represented as a class-like name.
     static func qualifiedName(of type: TypeID, sema: SemaModule, interner: StringInterner) -> String? {
-        let descriptor = classify(type: type, sema: sema, interner: interner)
+        let descriptor = classify(type: type, sema: sema)
         switch descriptor.category {
         case .any:
             return "kotlin.Any"

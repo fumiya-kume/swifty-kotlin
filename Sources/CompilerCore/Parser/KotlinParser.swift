@@ -1,18 +1,18 @@
-public final class KotlinParser {
+final class KotlinParser {
     let stream: TokenStream
     let interner: StringInterner
     let diagnostics: DiagnosticEngine
     let arena: SyntaxArena
     var lastConsumedToken: Token?
 
-    public init(tokens: [Token], interner: StringInterner, diagnostics: DiagnosticEngine) {
+    init(tokens: [Token], interner: StringInterner, diagnostics: DiagnosticEngine) {
         stream = TokenStream(tokens)
         self.interner = interner
         self.diagnostics = diagnostics
         arena = SyntaxArena()
     }
 
-    public func parseFile() -> (arena: SyntaxArena, root: NodeID) {
+    func parseFile() -> (arena: SyntaxArena, root: NodeID) {
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
         var sawTopLevelStatement = false

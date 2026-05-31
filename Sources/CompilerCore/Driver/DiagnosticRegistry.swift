@@ -14,19 +14,19 @@ public struct DiagnosticCodeAction: Equatable, Sendable {
 }
 
 /// Metadata describing a registered diagnostic code.
-public struct DiagnosticDescriptor: Equatable, Sendable {
+struct DiagnosticDescriptor: Equatable, Sendable {
     /// The canonical code string (e.g. "KSWIFTK-SEMA-0014").
-    public let code: String
+    let code: String
     /// Which compiler pass this diagnostic originates from.
-    public let pass: String
+    let pass: String
     /// Default severity for this diagnostic.
-    public let defaultSeverity: DiagnosticSeverity
+    let defaultSeverity: DiagnosticSeverity
     /// Short human-readable summary of what the diagnostic means.
-    public let summary: String
+    let summary: String
     /// Default code actions (quick-fixes) available for this diagnostic.
-    public let codeActions: [DiagnosticCodeAction]
+    let codeActions: [DiagnosticCodeAction]
 
-    public init(
+    init(
         code: String,
         pass: String,
         defaultSeverity: DiagnosticSeverity,
@@ -47,9 +47,9 @@ public struct DiagnosticDescriptor: Equatable, Sendable {
 /// `{PASS}` identifies the compiler pass (LEX, PARSE, SEMA, TYPE, LIB, KIR,
 /// CORO, BACKEND, LINK, PIPELINE, ICE) and `{CODE}` is a numeric or mnemonic
 /// identifier unique within that pass.
-public enum DiagnosticRegistry {
+enum DiagnosticRegistry {
     /// All registered diagnostic descriptors, keyed by their code string.
-    public static let descriptors: [String: DiagnosticDescriptor] = {
+    static let descriptors: [String: DiagnosticDescriptor] = {
         var map: [String: DiagnosticDescriptor] = [:]
         for descriptor in allDescriptors {
             map[descriptor.code] = descriptor
@@ -58,18 +58,12 @@ public enum DiagnosticRegistry {
     }()
 
     /// Look up a descriptor by its diagnostic code.
-    public static func lookup(_ code: String) -> DiagnosticDescriptor? {
+    static func lookup(_ code: String) -> DiagnosticDescriptor? {
         descriptors[code]
     }
-
-    /// All registered codes as a sorted array.
-    public static var allCodes: [String] {
-        allDescriptors.map(\.code).sorted()
-    }
-
     /// Expands a user-facing suppression key (e.g. `UNCHECKED_CAST`) into one
     /// or more internal diagnostic codes.
-    public static func suppressionCodes(for requestedCode: String) -> [String] {
+    static func suppressionCodes(for requestedCode: String) -> [String] {
         let normalized = requestedCode.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !normalized.isEmpty else {
             return []

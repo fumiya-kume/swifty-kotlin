@@ -16,7 +16,7 @@
 ///
 /// When caching is disabled (the default), all call-sites receive `nil` and fall
 /// back to the original uncached paths.
-public final class SemaCacheContext {
+final class SemaCacheContext {
     // MARK: - Scope lookup cache
 
     /// Keyed by the identity of the ``Scope`` object (via ``ObjectIdentifier``)
@@ -31,7 +31,7 @@ public final class SemaCacheContext {
     private var scopeRetainer: [ObjectIdentifier: Scope] = [:]
 
     /// Cached wrapper around ``Scope.lookup(_:)``.
-    public func lookupInScope(_ name: InternedString, scope: Scope) -> [SymbolID] {
+    func lookupInScope(_ name: InternedString, scope: Scope) -> [SymbolID] {
         let scopeKey = ObjectIdentifier(scope)
         if let nameCache = scopeCache[scopeKey], let cached = nameCache[name] {
             scopeHits += 1
@@ -45,7 +45,7 @@ public final class SemaCacheContext {
     }
 
     /// Invalidates all cached entries for a specific scope (e.g. after an insert).
-    public func invalidateScope(_ scope: Scope) {
+    func invalidateScope(_ scope: Scope) {
         let key = ObjectIdentifier(scope)
         scopeCache.removeValue(forKey: key)
         scopeRetainer.removeValue(forKey: key)
@@ -60,7 +60,7 @@ public final class SemaCacheContext {
     private var symbolMissCache: Set<SymbolID> = []
 
     /// Cached wrapper around ``SymbolTable.symbol(_:)``.
-    public func symbol(_ id: SymbolID, in table: SymbolTable) -> SemanticSymbol? {
+    func symbol(_ id: SymbolID, in table: SymbolTable) -> SemanticSymbol? {
         if let cached = symbolCache[id] {
             return cached
         }
@@ -141,10 +141,10 @@ public final class SemaCacheContext {
 
     // MARK: - Statistics (for testing / debugging)
 
-    public private(set) var scopeHits: Int = 0
-    public private(set) var scopeMisses: Int = 0
-    public private(set) var callResolutionHits: Int = 0
-    public private(set) var callResolutionMisses: Int = 0
+    private(set) var scopeHits: Int = 0
+    private(set) var scopeMisses: Int = 0
+    private(set) var callResolutionHits: Int = 0
+    private(set) var callResolutionMisses: Int = 0
 
     func recordCallResolutionHit() {
         callResolutionHits += 1

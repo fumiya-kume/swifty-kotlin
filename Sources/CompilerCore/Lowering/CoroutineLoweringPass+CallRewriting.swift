@@ -23,7 +23,6 @@ extension CoroutineLoweringPass {
         let runtimeCreateCoroutineUninterceptedCallee: InternedString
         let runtimeStartCoroutineUninterceptedOrReturnCallee: InternedString
         let runtimeContinuationResumeCallee: InternedString
-        let suspendCoroutineUninterceptedOrReturnCallee: InternedString
         let continuationFactory: InternedString
         let launcherArgSetCallee: InternedString
         let runtimeRunBlockingWithContCallee: InternedString

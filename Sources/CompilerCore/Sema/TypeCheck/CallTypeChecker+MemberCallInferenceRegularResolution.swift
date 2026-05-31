@@ -990,8 +990,7 @@ extension CallTypeChecker {
                 receiverID: receiverID,
                 args: args,
                 explicitTypeArgs: explicitTypeArgs,
-                ctx: ctx,
-                locals: &locals
+                ctx: ctx
             ) {
                 return fallbackType
             }
@@ -1002,8 +1001,7 @@ extension CallTypeChecker {
                 safeCall: safeCall,
                 receiverID: receiverID,
                 args: args,
-                ctx: ctx,
-                locals: &locals
+                ctx: ctx
             ) {
                 return fallbackType
             }

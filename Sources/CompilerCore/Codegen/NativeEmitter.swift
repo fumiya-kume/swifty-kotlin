@@ -21,8 +21,6 @@ struct NativeEmitter {
     struct DebugInfoContext {
         let diBuilder: LLVMCAPIBindings.LLVMDIBuilderRef
         let file: LLVMCAPIBindings.LLVMMetadataRef
-        let compileUnit: LLVMCAPIBindings.LLVMMetadataRef
-        let subroutineType: LLVMCAPIBindings.LLVMMetadataRef?
         let subprograms: [SymbolID: LLVMCAPIBindings.LLVMMetadataRef]
         /// Per-file DI file metadata keyed by FileID.
         let diFiles: [FileID: LLVMCAPIBindings.LLVMMetadataRef]
@@ -299,13 +297,15 @@ guard case let .function(function) = declaration,
         }
 
         let isOptimized = optLevel != .O0
-        guard let compileUnit = bindings.diBuilderCreateCompileUnit(
+        // The compile unit must be created so the module's debug info is well-formed,
+        // even though the resulting handle is not retained on DebugInfoContext.
+        guard bindings.diBuilderCreateCompileUnit(
             diBuilder,
             lang: Self.dwarfLangC99,
             file: diFile,
             producer: "kswiftk",
             isOptimized: isOptimized
-        ) else {
+        ) != nil else {
             bindings.disposeDIBuilder(diBuilder)
             return nil
         }
@@ -331,8 +331,6 @@ guard case let .function(function) = declaration,
         return DebugInfoContext(
             diBuilder: diBuilder,
             file: diFile,
-            compileUnit: compileUnit,
-            subroutineType: subroutineType,
             subprograms: subprograms,
             diFiles: diFiles,
             int64DIType: int64DIType

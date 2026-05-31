@@ -380,19 +380,16 @@ extension DataFlowSemaPhase {
             )
             registerIterableToMutableListMember(
                 symbols: symbols, types: types, interner: interner,
-                kotlinCollectionsPkg: kotlinCollectionsPkg,
                 iterableInterfaceSymbol: iterableInterfaceSymbol,
                 mutableListSymbol: mutableListSym
             )
             registerIterableToMutableSetMember(
                 symbols: symbols, types: types, interner: interner,
-                kotlinCollectionsPkg: kotlinCollectionsPkg,
                 iterableInterfaceSymbol: iterableInterfaceSymbol,
                 mutableSetSymbol: mutableSetSym
             )
             registerIterableToHashSetMember(
                 symbols: symbols, types: types, interner: interner,
-                kotlinCollectionsPkg: kotlinCollectionsPkg,
                 iterableInterfaceSymbol: iterableInterfaceSymbol,
                 mutableSetSymbol: mutableSetSym
             )

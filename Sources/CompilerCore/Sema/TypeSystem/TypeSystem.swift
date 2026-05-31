@@ -29,9 +29,6 @@ public final class TypeSystem {
     /// The symbol ID of the synthetic `kotlin.reflect.KClass` interface.
     public internal(set) var kClassInterfaceSymbol: SymbolID?
 
-    /// The symbol ID of the synthetic `kotlin.reflect.KClassifier` interface.
-    public internal(set) var kClassifierInterfaceSymbol: SymbolID?
-
     /// The symbol ID of the synthetic `kotlin.reflect.KAnnotatedElement` interface.
     public internal(set) var kAnnotatedElementInterfaceSymbol: SymbolID?
 
@@ -166,21 +163,6 @@ public final class TypeSystem {
             kc.nullability
         case let .intersection(parts):
             parts.contains { nullability(of: $0) == .nonNull } ? .nonNull : .nullable
-        }
-    }
-
-    public func isSignedInteger(_ type: TypeID) -> Bool {
-        switch kind(of: type) {
-        case .primitive(.int, _), .primitive(.long, _), .primitive(.char, _),
-             .primitive(.ubyte, _), .primitive(.ushort, _):
-            // In Kotlin, Char, UByte, UShort undergo widening to Int for arithmetic, so we treat them as signed
-            // or we only explicitly mark Int and Long as signed. Wait, UByte and UShort are unsigned logically,
-            // but for binary operations they might already be promoted to Int unless we are strict.
-            // Let's rely strictly on Int, Long for signed integer type.
-            type == intType || type == longType || type == charType ||
-                type == makeNullable(intType) || type == makeNullable(longType) || type == makeNullable(charType)
-        default:
-            false
         }
     }
 

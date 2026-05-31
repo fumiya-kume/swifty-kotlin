@@ -942,7 +942,6 @@ extension DataFlowSemaPhase {
             parentVisibility: parentVisibility,
             memberName: memberName,
             memberRange: memberRange,
-            parentSymbol: parentSymbol,
             ctx: ctx
         )
     }
@@ -952,7 +951,6 @@ extension DataFlowSemaPhase {
         parentVisibility: Visibility,
         memberName: InternedString,
         memberRange: SourceRange,
-        parentSymbol: SemanticSymbol,
         ctx: OpenFinalOverrideContext
     ) {
         // Simplified module boundary check

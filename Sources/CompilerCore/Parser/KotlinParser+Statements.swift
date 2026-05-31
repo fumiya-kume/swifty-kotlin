@@ -1,5 +1,5 @@
 extension KotlinParser {
-    func parseBlock(isClassBody: Bool = false) -> NodeID {
+    func parseBlock() -> NodeID {
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
         guard consumeIfSymbol(.lBrace, into: &children, range: &range) else {
@@ -656,7 +656,7 @@ extension KotlinParser {
         ParserBoundaryPolicy.shouldSplitStatementOnNewline(kind)
     }
 
-    func parseTail(inBlock: Bool, into children: inout [SyntaxChild], range: inout RangeAccumulator, isClassBody: Bool = false) {
+    func parseTail(inBlock: Bool, into children: inout [SyntaxChild], range: inout RangeAccumulator) {
         var progress = false
         var sawTryKeyword = false
         var parenDepth = 0
@@ -676,7 +676,7 @@ extension KotlinParser {
                 continue
             }
             if case .symbol(.lBrace) = token.kind, atTopLevel {
-                let blockID = parseBlock(isClassBody: isClassBody)
+                let blockID = parseBlock()
                 children.append(.node(blockID))
                 range.append(arena.node(blockID).range)
                 progress = true
