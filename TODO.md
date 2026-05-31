@@ -45,7 +45,7 @@
 - [ ] STDLIB-005: `kotlin.text` の文字列変換・分割・置換の端ケースを揃える
 
 ### Phase 2: コレクション・Sequence・Range
-- [ ] STDLIB-GAP-PH2: `kotlin.collections` / `kotlin.sequences` / `kotlin.ranges` の未対応を潰す
+- [x] STDLIB-GAP-PH2: `kotlin.collections` / `kotlin.sequences` / `kotlin.ranges` の未対応を潰す
 - [~] STDLIB-022: range / progression / unsigned range の網羅性を上げる（LongRange `firstOrNull` / `lastOrNull` runtime 済み）
 
 #### kotlin.collections 抽象基底クラスの実装
