@@ -62,6 +62,20 @@ extension NativeEmitter {
             )
         }
 
+        // Sign-extend the low 32 bits of a 64-bit slot back into a canonical
+        // 64-bit representation of a Kotlin `Int`. Implemented as
+        // `(value << 32) >>a 32` so it needs no dedicated i32 type / SExt
+        // binding. This enforces Kotlin's two's-complement `Int` wraparound.
+        func narrowTo32(_ value: LLVMCAPIBindings.LLVMValueRef?, name: String) -> LLVMCAPIBindings.LLVMValueRef? {
+            guard let value,
+                  let thirtyTwo = bindings.constInt(state.int64Type, value: 32),
+                  let widened = bindings.buildShl(state.builder, lhs: value, rhs: thirtyTwo, name: "\(name)_w_\(instructionIndex)")
+            else {
+                return nil
+            }
+            return bindings.buildAShr(state.builder, lhs: widened, rhs: thirtyTwo, name: "\(name)_\(instructionIndex)")
+        }
+
         let lowered: LLVMCAPIBindings.LLVMValueRef?
         switch calleeName {
         case "kk_op_add":
@@ -204,6 +218,68 @@ extension NativeEmitter {
             lowered = bindings.buildAShr(state.builder, lhs: lhs, rhs: rhs, name: "shr_\(instructionIndex)")
         case "kk_op_ushr":
             lowered = bindings.buildLShr(state.builder, lhs: lhs, rhs: rhs, name: "ushr_\(instructionIndex)")
+        case "kk_int_narrow":
+            // Wrap a 64-bit arithmetic result to Kotlin's 32-bit `Int`.
+            lowered = narrowTo32(lhs, name: "narrow")
+        case "kk_op_ishl":
+            // Kotlin `Int.shl`: shift distance is `rhs and 31`; result wraps to 32 bits.
+            if let mask = bindings.constInt(state.int64Type, value: 31),
+               let amount = bindings.buildAnd(state.builder, lhs: rhs, rhs: mask, name: "ishl_amt_\(instructionIndex)"),
+               let shifted = bindings.buildShl(state.builder, lhs: lhs, rhs: amount, name: "ishl_s_\(instructionIndex)")
+            {
+                lowered = narrowTo32(shifted, name: "ishl")
+            } else {
+                lowered = nil
+            }
+        case "kk_op_ishr":
+            // Kotlin `Int.shr`: arithmetic (sign-propagating) shift by `rhs and 31`.
+            if let mask = bindings.constInt(state.int64Type, value: 31),
+               let amount = bindings.buildAnd(state.builder, lhs: rhs, rhs: mask, name: "ishr_amt_\(instructionIndex)"),
+               let signExtended = narrowTo32(lhs, name: "ishr_in")
+            {
+                lowered = bindings.buildAShr(state.builder, lhs: signExtended, rhs: amount, name: "ishr_\(instructionIndex)")
+            } else {
+                lowered = nil
+            }
+        case "kk_op_iushr":
+            // Kotlin `Int.ushr`: logical shift of the 32-bit value by `rhs and 31`.
+            if let mask = bindings.constInt(state.int64Type, value: 31),
+               let lowMask = bindings.constInt(state.int64Type, value: 0xFFFF_FFFF),
+               let amount = bindings.buildAnd(state.builder, lhs: rhs, rhs: mask, name: "iushr_amt_\(instructionIndex)"),
+               let zeroExtended = bindings.buildAnd(state.builder, lhs: lhs, rhs: lowMask, name: "iushr_in_\(instructionIndex)"),
+               let shifted = bindings.buildLShr(state.builder, lhs: zeroExtended, rhs: amount, name: "iushr_s_\(instructionIndex)")
+            {
+                lowered = narrowTo32(shifted, name: "iushr")
+            } else {
+                lowered = nil
+            }
+        case "kk_op_lshl":
+            // Kotlin `Long.shl`: shift distance is `rhs and 63` (64-bit result).
+            if let mask = bindings.constInt(state.int64Type, value: 63),
+               let amount = bindings.buildAnd(state.builder, lhs: rhs, rhs: mask, name: "lshl_amt_\(instructionIndex)")
+            {
+                lowered = bindings.buildShl(state.builder, lhs: lhs, rhs: amount, name: "lshl_\(instructionIndex)")
+            } else {
+                lowered = nil
+            }
+        case "kk_op_lshr":
+            // Kotlin `Long.shr`: arithmetic shift by `rhs and 63`.
+            if let mask = bindings.constInt(state.int64Type, value: 63),
+               let amount = bindings.buildAnd(state.builder, lhs: rhs, rhs: mask, name: "lshr_amt_\(instructionIndex)")
+            {
+                lowered = bindings.buildAShr(state.builder, lhs: lhs, rhs: amount, name: "lshr_\(instructionIndex)")
+            } else {
+                lowered = nil
+            }
+        case "kk_op_lushr":
+            // Kotlin `Long.ushr`: logical shift by `rhs and 63`.
+            if let mask = bindings.constInt(state.int64Type, value: 63),
+               let amount = bindings.buildAnd(state.builder, lhs: rhs, rhs: mask, name: "lushr_amt_\(instructionIndex)")
+            {
+                lowered = bindings.buildLShr(state.builder, lhs: lhs, rhs: amount, name: "lushr_\(instructionIndex)")
+            } else {
+                lowered = nil
+            }
         case "kk_op_inv":
             lowered = bindings.buildNot(state.builder, value: lhs, name: "inv_\(instructionIndex)")
         case "kk_op_elvis":
