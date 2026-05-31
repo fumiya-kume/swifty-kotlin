@@ -13,31 +13,7 @@ reuse the existing build products:
 bash Scripts/swift_test.sh --skip-build
 ```
 
-## Style workflow
-
-Format all Swift sources and tests:
-
-```bash
-bash Scripts/swift_format.sh
-```
-
-Lint formatting without modifying files:
-
-```bash
-bash Scripts/swift_format.sh --lint
-```
-
-Run SwiftLint with strict mode and baseline filtering:
-
-```bash
-bash Scripts/swift_lint.sh
-```
-
-Update SwiftLint baseline intentionally after reviewing violations:
-
-```bash
-bash Scripts/swift_lint.sh --update-baseline
-```
+## Runtime ABI link validation
 
 Validate compiler runtime link names against `RuntimeABISpec`:
 
@@ -143,24 +119,4 @@ Render a markdown summary from that report:
 
 ```bash
 bash Scripts/diff_kotlinc_ci_summary.sh --report /tmp/diff_report.tsv --summary /tmp/step_summary.md
-```
-
-## Review worktree workflow
-
-List open PRs, unresolved review counts, and matching local worktrees:
-
-```bash
-python3 Scripts/review_worktrees.py list --with-review-counts
-```
-
-Create a dedicated review worktree for an open PR:
-
-```bash
-python3 Scripts/review_worktrees.py add 276
-```
-
-Override the destination directory if needed:
-
-```bash
-python3 Scripts/review_worktrees.py add 274 --base-dir /tmp
 ```
