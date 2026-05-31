@@ -321,26 +321,35 @@ public func kk_char_digitToInt_radix(
         )
         return 0
     }
-    let digitVal: Int
-    if value >= Int(("0" as UnicodeScalar).value), value <= Int(("9" as UnicodeScalar).value) {
-        digitVal = value - Int(("0" as UnicodeScalar).value)
-    } else if value >= Int(("a" as UnicodeScalar).value), value <= Int(("z" as UnicodeScalar).value) {
-        digitVal = value - Int(("a" as UnicodeScalar).value) + 10
-    } else if value >= Int(("A" as UnicodeScalar).value), value <= Int(("Z" as UnicodeScalar).value) {
-        digitVal = value - Int(("A" as UnicodeScalar).value) + 10
-    } else {
-        outThrown?.pointee = runtimeAllocateThrowable(
-            message: "IllegalArgumentException: code point \(value) is not a valid digit in radix \(radix)"
-        )
-        return 0
-    }
-    guard digitVal < radix else {
+    let digitVal = charDigitValueForRadix(value)
+    guard digitVal >= 0, digitVal < radix else {
         outThrown?.pointee = runtimeAllocateThrowable(
             message: "IllegalArgumentException: code point \(value) is not a valid digit in radix \(radix)"
         )
         return 0
     }
     return digitVal
+}
+
+/// Mirrors `kotlin.text.digitOf`: maps a Char code point to its raw digit value
+/// (before applying the radix bound), or -1 if it is not a recognized digit.
+///
+/// Per the Kotlin spec for `Char.digitToInt(radix)` a Char represents a digit if:
+///  - it is an ASCII digit '0'..'9' / Latin letter 'A'..'Z' / 'a'..'z', or
+///  - it is a fullwidth Latin letter '\uFF21'..'\uFF3A' / '\uFF41'..'\uFF5A', or
+///  - `isDigit` is true (Unicode category Nd) and the Unicode decimal value is used.
+/// All other characters below U+0080 are rejected outright (matching `digitOf`).
+private func charDigitValueForRadix(_ code: Int) -> Int {
+    if code >= 0x30, code <= 0x39 { return code - 0x30 }            // '0'..'9'
+    if code >= 0x41, code <= 0x5A { return code - 0x41 + 10 }       // 'A'..'Z'
+    if code >= 0x61, code <= 0x7A { return code - 0x61 + 10 }       // 'a'..'z'
+    if code < 0x80 { return -1 }                                    // other ASCII is never a digit
+    if code >= 0xFF21, code <= 0xFF3A { return code - 0xFF21 + 10 } // fullwidth 'A'..'Z'
+    if code >= 0xFF41, code <= 0xFF5A { return code - 0xFF41 + 10 } // fullwidth 'a'..'z'
+    if let scalar = runtimeUnicodeScalar(code), let value = charBase10DigitValue(scalar) {
+        return value
+    }
+    return -1
 }
 
 // MARK: - STDLIB-003-ABI-002: Char.Companion.digitToChar(digit: Int, radix: Int)
@@ -367,10 +376,13 @@ public func kk_char_digitToChar_radix(
         )
         return 0
     }
+    // Kotlin spec (Int.digitToChar): digits < 10 map to '0'..'9', and digits
+    // >= 10 map to the UPPERCASE Latin letters 'A'..'Z'. Example from the docs:
+    // 10.digitToChar(16) == 'A', 20.digitToChar(36) == 'K'.
     if digit < 10 {
         return Int(("0" as UnicodeScalar).value) + digit
     } else {
-        return Int(("a" as UnicodeScalar).value) + digit - 10
+        return Int(("A" as UnicodeScalar).value) + digit - 10
     }
 }
 
