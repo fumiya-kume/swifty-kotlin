@@ -973,42 +973,6 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "FileIO"
         ),
-        RuntimeABIFunctionSpec(
-            name: "kk_resource_bundle_getBundle",
-            parameters: [
-                RuntimeABIParameter(name: "nameRaw", type: .intptr),
-                RuntimeABIParameter(name: "localeRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "FileIO"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_resource_bundle_getString",
-            parameters: [
-                RuntimeABIParameter(name: "bundleRaw", type: .intptr),
-                RuntimeABIParameter(name: "keyRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "FileIO"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_resource_bundle_getObject",
-            parameters: [
-                RuntimeABIParameter(name: "bundleRaw", type: .intptr),
-                RuntimeABIParameter(name: "keyRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "FileIO"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_resource_bundle_getKeys",
-            parameters: [RuntimeABIParameter(name: "bundleRaw", type: .intptr)],
-            returnType: .intptr,
-            section: "FileIO"
-        ),
     ]
 
 }

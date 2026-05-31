@@ -396,39 +396,6 @@ public extension RuntimeABISpec {
         abiParitySpec("kk_cpointer_new", parameters: [
             p("address", .intptr),
         ]),
-        abiParitySpec("kk_decimalformat_formatDouble", parameters: [
-            p("formatRaw", .intptr),
-            p("value", .double),
-        ]),
-        abiParitySpec("kk_decimalformat_formatFloat", parameters: [
-            p("formatRaw", .intptr),
-            p("value", .float),
-        ]),
-        abiParitySpec("kk_decimalformat_formatInt", parameters: [
-            p("formatRaw", .intptr),
-            p("value", .intptr),
-        ]),
-        abiParitySpec("kk_decimalformat_formatLong", parameters: [
-            p("formatRaw", .intptr),
-            p("value", .intptr),
-        ]),
-        abiParitySpec("kk_decimalformat_getDecimalSeparator", parameters: [
-            p("formatRaw", .intptr),
-        ]),
-        abiParitySpec("kk_decimalformat_getGroupingSeparator", parameters: [
-            p("formatRaw", .intptr),
-        ]),
-        abiParitySpec("kk_decimalformat_new", parameters: [
-            p("patternRaw", .intptr),
-        ]),
-        abiParitySpec("kk_decimalformat_newWithLocale", parameters: [
-            p("patternRaw", .intptr),
-            p("localeRaw", .intptr),
-        ]),
-        abiParitySpec("kk_decimalformat_parse", parameters: [
-            p("formatRaw", .intptr),
-            p("stringRaw", .intptr),
-        ]),
         abiParitySpec("kk_file_appender_new", parameters: [
             p("pathRaw", .intptr),
         ]),
@@ -873,28 +840,6 @@ public extension RuntimeABISpec {
         abiParitySpec("kk_normalization_form_nfd"),
         abiParitySpec("kk_normalization_form_nfkc"),
         abiParitySpec("kk_normalization_form_nfkd"),
-        abiParitySpec("kk_numberformat_getDecimalSeparator", parameters: [
-            p("formatRaw", .intptr),
-        ]),
-        abiParitySpec("kk_numberformat_getGroupingSeparator", parameters: [
-            p("formatRaw", .intptr),
-        ]),
-        abiParitySpec("kk_numberformat_parse", parameters: [
-            p("formatRaw", .intptr),
-            p("stringRaw", .intptr),
-        ]),
-        abiParitySpec("kk_numberformat_setGroupingUsed", parameters: [
-            p("formatRaw", .intptr),
-            p("used", .intptr),
-        ]),
-        abiParitySpec("kk_numberformat_setMaximumFractionDigits", parameters: [
-            p("formatRaw", .intptr),
-            p("digits", .intptr),
-        ]),
-        abiParitySpec("kk_numberformat_setMinimumFractionDigits", parameters: [
-            p("formatRaw", .intptr),
-            p("digits", .intptr),
-        ]),
         abiParitySpec("kk_pin_object", parameters: [
             p("objectRaw", .intptr),
         ]),
