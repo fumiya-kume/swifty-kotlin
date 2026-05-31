@@ -557,7 +557,7 @@
 - [ ] STDLIB-RANDOM-003: `kotlin.random` の runtime / seed / 境界値を固定
 - [ ] STDLIB-COMP-001: `kotlin.comparisons` の対象 API 一覧を固定
 - [ ] STDLIB-COMP-002: `Comparator` 合成の sema / lowering を整える
-- [ ] STDLIB-COMP-003: `Comparator` runtime と failure path を固定
+- [x] STDLIB-COMP-003: `Comparator` runtime と failure path を固定
 
 #### kotlin.comparisons 関数の実装
 - [x] STDLIB-COMP-FN-001: `compareBy` 関数の実装（selector版）
