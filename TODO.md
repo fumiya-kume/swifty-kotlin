@@ -58,9 +58,9 @@
 - [x] STDLIB-COL-FN-073: `firstNotNullOfOrNull` 関数の実装
 - [x] STDLIB-COL-FN-074: `firstOrNull` 関数の実装
 - [x] STDLIB-COL-FN-073: `firstNotNullOfOrNull` 関数の実装
-- [ ] STDLIB-COL-FN-074: `firstOrNull` 関数の実装
+- [x] STDLIB-COL-FN-074: `firstOrNull` 関数の実装
 - [x] STDLIB-COL-FN-075: `flatMap` 関数の実装
-- [ ] STDLIB-COL-FN-074: `firstOrNull` 関数の実装
+- [x] STDLIB-COL-FN-074: `firstOrNull` 関数の実装
 - [x] STDLIB-COL-FN-075: `flatMap` 関数の実装
 
 ### Phase 3: I/O・パス・時間・並行（common）
