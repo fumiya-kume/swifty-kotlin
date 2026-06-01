@@ -619,7 +619,7 @@
 - [ ] STDLIB-COMP-FN-052: `minOf` 関数の実装（ULong版）
 - [x] STDLIB-COMP-FN-053: `minOf` 関数の実装（UShort版）
 - [x] STDLIB-COMP-FN-054: `minOfOrNull` 関数の実装（各オーバーロード）
-- [ ] STDLIB-COMP-FN-055: `minWith` 関数の実装
+- [x] STDLIB-COMP-FN-055: `minWith` 関数の実装
 - [x] STDLIB-COMP-FN-056: `minWithOrNull` 関数の実装
 - [x] STDLIB-COMP-FN-057: `naturalOrder` 関数の実装
 - [ ] STDLIB-COMP-FN-059: `nullsFirst` 関数の実装（Comparable版）
