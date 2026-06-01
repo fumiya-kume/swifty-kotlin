@@ -303,6 +303,47 @@ public func kk_char_isTitleCase(_ value: Int) -> Int {
     return kk_box_bool(scalar.properties.generalCategory == .titlecaseLetter ? 1 : 0)
 }
 
+// STDLIB-TEXT-PROP-009: Char.isJavaIdentifierPart
+/// Returns true if this character may be part of a Java/Kotlin identifier as other than the first character.
+/// Matches java.lang.Character.isJavaIdentifierPart: letters, digits, currency symbols,
+/// connecting punctuation (e.g. '_'), combining marks, non-spacing marks, and numeric letters.
+@_cdecl("kk_char_isJavaIdentifierPart")
+public func kk_char_isJavaIdentifierPart(_ value: Int) -> Int {
+    // Surrogate code units are considered identifier parts in Java
+    if value >= 0xD800 && value <= 0xDFFF {
+        return kk_box_bool(1)
+    }
+    guard let scalar = runtimeUnicodeScalar(value) else {
+        return kk_box_bool(0)
+    }
+    let category = scalar.properties.generalCategory
+    switch category {
+    case .uppercaseLetter,      // Lu
+         .lowercaseLetter,      // Ll
+         .titlecaseLetter,      // Lt
+         .modifierLetter,       // Lm
+         .otherLetter,          // Lo
+         .letterNumber,         // Nl
+         .decimalNumber,        // Nd
+         .nonspacingMark,       // Mn
+         .spacingMark,          // Mc
+         .enclosingMark,        // Me
+         .connectorPunctuation, // Pc (includes '_')
+         .currencySymbol:       // Sc
+        return kk_box_bool(1)
+    default:
+        // isIdentifierIgnorable: ISO control chars in certain ranges, format chars
+        let v = scalar.value
+        if (v >= 0x0000 && v <= 0x0008) || (v >= 0x000E && v <= 0x001B) || (v >= 0x007F && v <= 0x009F) {
+            return kk_box_bool(1)
+        }
+        if category == .format {
+            return kk_box_bool(1)
+        }
+        return kk_box_bool(0)
+    }
+}
+
 // MARK: - STDLIB-003-ABI-001: Char.digitToInt(radix: Int)
 
 /// fun Char.digitToInt(radix: Int): Int
