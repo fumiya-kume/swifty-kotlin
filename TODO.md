@@ -78,9 +78,6 @@
 
 #### kotlin.concurrent.atomics 型の実装
 
-#### kotlin.concurrent.atomics 関数の実装
-- [x] STDLIB-ATOMIC-NEW-FN-009: `asKotlinAtomicArray` 関数の実装（各オーバーロード）
-- [x] STDLIB-ATOMIC-NEW-FN-017: `fetchAndUpdate` 拡張関数の実装（AtomicLongArray版）
 
 #### kotlin.contracts 型の実装
 
