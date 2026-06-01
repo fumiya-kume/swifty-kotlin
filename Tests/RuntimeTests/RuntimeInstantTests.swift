@@ -12,6 +12,38 @@ final class RuntimeInstantTests: XCTestCase {
         XCTAssertEqual(kk_any_hashCode(first, 0), kk_any_hashCode(second, 0))
     }
 
+    func testInstantFromEpochSecondsPreservesAndNormalizesNanoseconds() {
+        let instant = kk_instant_from_epoch_seconds(1_700_000_000, 123_456_789)
+
+        XCTAssertEqual(kk_instant_epoch_seconds(instant), 1_700_000_000)
+        XCTAssertEqual(kk_instant_nano_of_second(instant), 123_456_789)
+        XCTAssertEqual(kk_instant_to_epoch_millis(instant), 1_700_000_000_123)
+
+        let adjusted = kk_instant_from_epoch_seconds(1, 1_500_000_000)
+        XCTAssertEqual(kk_instant_epoch_seconds(adjusted), 2)
+        XCTAssertEqual(kk_instant_nano_of_second(adjusted), 500_000_000)
+        XCTAssertEqual(kk_instant_to_epoch_millis(adjusted), 2_500)
+    }
+
+    func testInstantEpochMillisecondsForBeforeEpochValues() {
+        let beforeEpoch = kk_instant_from_epoch_seconds(-2, 500_000_000)
+
+        XCTAssertEqual(kk_instant_epoch_seconds(beforeEpoch), -2)
+        XCTAssertEqual(kk_instant_nano_of_second(beforeEpoch), 500_000_000)
+        XCTAssertEqual(kk_instant_to_epoch_millis(beforeEpoch), -1_500)
+    }
+
+    func testInstantFoundationDateBridgeRoundTripsEpochMilliseconds() {
+        let instant = kk_instant_from_epoch_seconds(-1, 250_000_000)
+        let foundationDate = kk_instant_to_foundation_date(instant)
+
+        XCTAssertEqual(kk_js_date_epoch_millis(foundationDate), -750)
+
+        let roundTripped = kk_foundation_date_to_kotlin_instant(foundationDate)
+        XCTAssertEqual(kk_instant_compare(roundTripped, instant), 0)
+        XCTAssertEqual(kk_instant_to_epoch_millis(roundTripped), -750)
+    }
+
     func testInstantElapsedProducesPositiveDuration() {
         let epoch = kk_instant_from_epoch_millis(0)
         let elapsed = kk_instant_elapsed(epoch)
