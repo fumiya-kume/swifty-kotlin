@@ -3216,7 +3216,16 @@ extension CallLowerer {
             if isStringBuilderLikeType(nonNullReceiverType, sema: sema, interner: interner) {
                 let sbNames = KnownCompilerNames(interner: interner)
                 let runtimeCallee: String? = if calleeName == sbNames.append {
-                    "kk_string_builder_append_obj"
+                    // Dispatch append(value) to the typed overload based on the argument type.
+                    {
+                        let argType = normalizedArgIDs.first.flatMap { arena.exprType($0) }
+                        let nonNull = argType.map { sema.types.makeNonNullable($0) }
+                        if nonNull == sema.types.booleanType { return "kk_string_builder_append_bool" }
+                        if nonNull == sema.types.charType { return "kk_string_builder_append_char" }
+                        if nonNull == sema.types.make(.primitive(.float, .nonNull)) { return "kk_string_builder_append_float" }
+                        if nonNull == sema.types.make(.primitive(.double, .nonNull)) { return "kk_string_builder_append_double" }
+                        return "kk_string_builder_append_obj"
+                    }()
                 } else if calleeName == sbNames.appendLine {
                     "kk_string_builder_append_line_obj"
                 } else if calleeName == sbNames.deleteCharAt {

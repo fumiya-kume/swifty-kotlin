@@ -40,6 +40,11 @@ extension DataFlowSemaPhase {
         let intType = types.intType
         let nullableAnyType = types.makeNullable(types.anyType)
         let charType = types.make(.primitive(.char, .nonNull))
+        let booleanType = types.make(.primitive(.boolean, .nonNull))
+        let longType = types.make(.primitive(.long, .nonNull))
+        let floatType = types.make(.primitive(.float, .nonNull))
+        let doubleType = types.make(.primitive(.double, .nonNull))
+        let nullableStringType = types.makeNullable(stringType)
 
         // append(Any?): StringBuilder
         registerStringBuilderMemberFunction(
@@ -48,6 +53,100 @@ extension DataFlowSemaPhase {
             ownerSymbol: sbSymbol,
             ownerType: sbType,
             parameters: [("value", nullableAnyType, false, false)],
+            returnType: sbType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // STDLIB-TEXT-FN-003: Typed append overloads for StringBuilder.
+        // String?, Int, Long delegate to kk_string_builder_append_obj (runtimeElementToString handles them).
+        // Boolean, Char, Float, Double use dedicated runtime functions for correct type-specific conversion.
+
+        // append(value: String?): StringBuilder
+        registerStringBuilderMemberFunction(
+            named: "append",
+            externalLinkName: "kk_string_builder_append_obj",
+            ownerSymbol: sbSymbol,
+            ownerType: sbType,
+            parameters: [("value", nullableStringType, false, false)],
+            returnType: sbType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // append(value: Char): StringBuilder
+        // Uses dedicated runtime function that correctly converts raw char code point to character.
+        registerStringBuilderMemberFunction(
+            named: "append",
+            externalLinkName: "kk_string_builder_append_char",
+            ownerSymbol: sbSymbol,
+            ownerType: sbType,
+            parameters: [("value", charType, false, false)],
+            returnType: sbType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // append(value: Boolean): StringBuilder
+        // Uses dedicated runtime function that correctly converts raw 0/1 to "false"/"true".
+        registerStringBuilderMemberFunction(
+            named: "append",
+            externalLinkName: "kk_string_builder_append_bool",
+            ownerSymbol: sbSymbol,
+            ownerType: sbType,
+            parameters: [("value", booleanType, false, false)],
+            returnType: sbType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // append(value: Int): StringBuilder
+        // kk_string_builder_append_obj correctly handles raw Int values via runtimeElementToString.
+        registerStringBuilderMemberFunction(
+            named: "append",
+            externalLinkName: "kk_string_builder_append_obj",
+            ownerSymbol: sbSymbol,
+            ownerType: sbType,
+            parameters: [("value", intType, false, false)],
+            returnType: sbType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // append(value: Long): StringBuilder
+        // kk_string_builder_append_obj correctly handles raw Long values via runtimeElementToString.
+        registerStringBuilderMemberFunction(
+            named: "append",
+            externalLinkName: "kk_string_builder_append_obj",
+            ownerSymbol: sbSymbol,
+            ownerType: sbType,
+            parameters: [("value", longType, false, false)],
+            returnType: sbType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // append(value: Float): StringBuilder
+        // Uses dedicated runtime function that correctly converts raw float bits to string.
+        registerStringBuilderMemberFunction(
+            named: "append",
+            externalLinkName: "kk_string_builder_append_float",
+            ownerSymbol: sbSymbol,
+            ownerType: sbType,
+            parameters: [("value", floatType, false, false)],
+            returnType: sbType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // append(value: Double): StringBuilder
+        // Uses dedicated runtime function that correctly converts raw double bits to string.
+        registerStringBuilderMemberFunction(
+            named: "append",
+            externalLinkName: "kk_string_builder_append_double",
+            ownerSymbol: sbSymbol,
+            ownerType: sbType,
+            parameters: [("value", doubleType, false, false)],
             returnType: sbType,
             symbols: symbols,
             interner: interner
