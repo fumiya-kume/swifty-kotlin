@@ -1939,6 +1939,15 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        // STDLIB-TEXT-PROP-017: Char.isUnicodeIdentifierPart
+        RuntimeABIFunctionSpec(
+            name: "kk_char_isUnicodeIdentifierPart",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
         // STDLIB-534: String?.orEmpty()
         RuntimeABIFunctionSpec(
             name: "kk_string_orEmpty",
