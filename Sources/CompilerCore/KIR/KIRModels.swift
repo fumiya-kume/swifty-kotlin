@@ -3,8 +3,6 @@ import Foundation
 public struct KIRDeclID: Hashable, Sendable {
     public let rawValue: Int32
 
-    public static let invalid = KIRDeclID(rawValue: -1)
-
     public init(rawValue: Int32 = -1) {
         self.rawValue = rawValue
     }
@@ -14,16 +12,6 @@ public struct KIRExprID: Hashable, Sendable {
     public let rawValue: Int32
 
     public static let invalid = KIRExprID(rawValue: -1)
-
-    public init(rawValue: Int32 = -1) {
-        self.rawValue = rawValue
-    }
-}
-
-public struct KIRTypeID: Hashable, Sendable {
-    public let rawValue: Int32
-
-    public static let invalid = KIRTypeID(rawValue: -1)
 
     public init(rawValue: Int32 = -1) {
         self.rawValue = rawValue

@@ -62,11 +62,6 @@ public enum DiagnosticRegistry {
         descriptors[code]
     }
 
-    /// All registered codes as a sorted array.
-    public static var allCodes: [String] {
-        allDescriptors.map(\.code).sorted()
-    }
-
     /// Expands a user-facing suppression key (e.g. `UNCHECKED_CAST`) into one
     /// or more internal diagnostic codes.
     public static func suppressionCodes(for requestedCode: String) -> [String] {
