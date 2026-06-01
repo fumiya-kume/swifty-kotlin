@@ -544,7 +544,7 @@
 - [x] STDLIB-UUID-TYPE-002: `Uuid` クラスの実装
 
 #### kotlin.uuid 関数の実装
-- [ ] STDLIB-UUID-FN-001: `getUuid` 関数の実装
+- [x] STDLIB-UUID-FN-001: `getUuid` 関数の実装
 - [ ] STDLIB-UUID-FN-002: `putUuid` 関数の実装
 - [x] STDLIB-UUID-FN-003: `toJavaUuid` 関数の実装
 - [ ] STDLIB-UUID-FN-004: `toKotlinUuid` 関数の実装
