@@ -625,7 +625,7 @@
 - [ ] STDLIB-COMP-FN-059: `nullsFirst` 関数の実装（Comparable版）
 - [x] STDLIB-COMP-FN-060: `nullsFirst` 関数の実装（Comparator版）
 - [ ] STDLIB-COMP-FN-061: `nullsLast` 関数の実装（Comparable版）
-- [ ] STDLIB-COMP-FN-062: `nullsLast` 関数の実装（Comparator版）
+- [x] STDLIB-COMP-FN-062: `nullsLast` 関数の実装（Comparator版）
 - [x] STDLIB-COMP-FN-063: `reverseOrder` 関数の実装
 - [x] STDLIB-ANNO-002: annotation sema / diagnostics を整える
  - [x] STDLIB-ANNO-001: `kotlin.annotation` の対象一覧を固定
