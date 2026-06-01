@@ -78,13 +78,28 @@ extension CodegenBackendIntegrationTests {
         let source = """
         import kotlin.time.Duration.Companion.seconds
         import kotlin.time.Duration.Companion.milliseconds
+        import kotlin.time.Duration.Companion.microseconds
         import kotlin.time.Duration.Companion.nanoseconds
+        import kotlin.time.Duration.Companion.minutes
+        import kotlin.time.Duration.Companion.hours
+        import kotlin.time.Duration.Companion.days
 
         fun main() {
             println(5L.seconds.inWholeSeconds)
             println(2500L.milliseconds.inWholeMilliseconds)
             // 1_000_000 ns == 1 ms
             println(1_000_000L.nanoseconds.inWholeMilliseconds)
+            println(5L.microseconds.inWholeMicroseconds)
+            println(5L.minutes.inWholeSeconds)
+            println(5L.hours.inWholeMinutes)
+            println(5L.days.inWholeHours)
+            println((-5L).hours.inWholeHours)
+            println(0L.days.inWholeNanoseconds)
+
+            println(9223372036854775807L.days.isInfinite())
+            println(9223372036854775807L.hours.isInfinite())
+            println(9223372036854775807L.minutes.isInfinite())
+            println(9223372036854775807L.microseconds.isInfinite())
         }
         """
 
@@ -100,7 +115,24 @@ extension CodegenBackendIntegrationTests {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "5\n2500\n1\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                5
+                2500
+                1
+                5
+                300
+                300
+                120
+                -5
+                0
+                true
+                true
+                true
+                true
+                """ + "\n"
+            )
         }
     }
 
