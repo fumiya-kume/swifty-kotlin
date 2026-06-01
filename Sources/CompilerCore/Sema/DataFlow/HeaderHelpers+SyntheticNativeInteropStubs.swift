@@ -1897,6 +1897,76 @@ extension DataFlowSemaPhase {
         symbols.setDirectSupertypes([arenaBaseSymbol], for: memScopeSymbol)
         types.setNominalDirectSupertypes([arenaBaseSymbol], for: memScopeSymbol)
 
+        // inline fun <R> memScoped(block: MemScope.() -> R): R
+        let memScopedName = interner.intern("memScoped")
+        let memScopedFQName = cinteropPkg + [memScopedName]
+        if symbols.lookupAll(fqName: memScopedFQName).contains(where: { symbolID in
+            guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+            return sig.receiverType == nil && sig.parameterTypes.count == 1 && sig.typeParameterSymbols.count == 1
+        }) {
+            // already registered
+        } else {
+            let memScopedRName = interner.intern("R")
+            let memScopedRFQName = memScopedFQName + [memScopedRName]
+            let memScopedRSymbol = symbols.define(
+                kind: .typeParameter,
+                name: memScopedRName,
+                fqName: memScopedRFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let memScopedRType = types.make(.typeParam(TypeParamType(
+                symbol: memScopedRSymbol,
+                nullability: .nonNull
+            )))
+            let memScopedBlockType = types.make(.functionType(FunctionType(
+                receiver: memScopeType,
+                params: [],
+                returnType: memScopedRType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let memScopedBlockName = interner.intern("block")
+            let memScopedBlockSymbol = symbols.define(
+                kind: .valueParameter,
+                name: memScopedBlockName,
+                fqName: memScopedFQName + [memScopedBlockName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            let memScopedSymbolID = symbols.define(
+                kind: .function,
+                name: memScopedName,
+                fqName: memScopedFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            if let packageSymbol = symbols.lookup(fqName: cinteropPkg) {
+                symbols.setParentSymbol(packageSymbol, for: memScopedSymbolID)
+            }
+            symbols.setParentSymbol(memScopedSymbolID, for: memScopedRSymbol)
+            symbols.setParentSymbol(memScopedSymbolID, for: memScopedBlockSymbol)
+            symbols.setPropertyType(memScopedBlockType, for: memScopedBlockSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: [memScopedBlockType],
+                    returnType: memScopedRType,
+                    isSuspend: false,
+                    valueParameterSymbols: [memScopedBlockSymbol],
+                    valueParameterHasDefaultValues: [false],
+                    valueParameterIsVararg: [false],
+                    typeParameterSymbols: [memScopedRSymbol],
+                    typeParameterUpperBoundsList: [[]],
+                    classTypeParameterCount: 0
+                ),
+                for: memScopedSymbolID
+            )
+        }
+
         registerSyntheticNativeBitSetConstructor(
             ownerSymbol: arenaBaseSymbol,
             ownerType: arenaBaseType,
@@ -2221,6 +2291,16 @@ extension DataFlowSemaPhase {
             )
         }
         registerSyntheticCPointerPointedProperty(
+            cPointerSymbol: cPointerSymbol,
+            cPointedType: cPointedType,
+            packageFQName: cinteropPkg,
+            packageSymbol: cinteropPkgSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        // operator fun <T : CPointed> CPointer<T>.get(index: Int): T
+        registerSyntheticCPointerGetFunction(
             cPointerSymbol: cPointerSymbol,
             cPointedType: cPointedType,
             packageFQName: cinteropPkg,
@@ -4443,5 +4523,94 @@ extension DataFlowSemaPhase {
             symbols.setSupertypeTypeArgs(supertypeTypeArgs, for: ownerSymbol, supertype: supertype)
             types.setNominalSupertypeTypeArgs(supertypeTypeArgs, for: ownerSymbol, supertype: supertype)
         }
+    }
+
+    /// Registers `operator fun <T : CPointed> CPointer<T>.get(index: Int): T`.
+    private func registerSyntheticCPointerGetFunction(
+        cPointerSymbol: SymbolID,
+        cPointedType: TypeID,
+        packageFQName: [InternedString],
+        packageSymbol: SymbolID?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern("get")
+        let functionFQName = packageFQName + [functionName]
+        let typeParameterName = interner.intern("T")
+        let typeParameterFQName = functionFQName + [interner.intern("$cPointerGet"), typeParameterName]
+        let typeParameterSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParameterFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParameterName,
+                fqName: typeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+        }
+        symbols.setTypeParameterUpperBounds([cPointedType], for: typeParameterSymbol)
+
+        let typeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: typeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: cPointerSymbol,
+            args: [.invariant(typeParameterType)],
+            nullability: .nonNull
+        )))
+
+        let existingMatch = symbols.lookupAll(fqName: functionFQName).first { symbolID in
+            guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+            return sig.receiverType == receiverType
+                && sig.parameterTypes == [types.intType]
+                && sig.returnType == typeParameterType
+                && sig.typeParameterSymbols == [typeParameterSymbol]
+        }
+        if let existing = existingMatch {
+            symbols.insertFlags([.synthetic, .operatorFunction], for: existing)
+            symbols.setParentSymbol(existing, for: typeParameterSymbol)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        if let packageSymbol {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setParentSymbol(functionSymbol, for: typeParameterSymbol)
+
+        let indexName = interner.intern("index")
+        let indexSymbol = symbols.define(
+            kind: .valueParameter,
+            name: indexName,
+            fqName: functionFQName + [indexName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(functionSymbol, for: indexSymbol)
+        symbols.setPropertyType(types.intType, for: indexSymbol)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [types.intType],
+                returnType: typeParameterType,
+                typeParameterSymbols: [typeParameterSymbol],
+                typeParameterUpperBoundsList: [[cPointedType]],
+                classTypeParameterCount: 0
+            ),
+            for: functionSymbol
+        )
     }
 }
