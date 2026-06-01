@@ -627,7 +627,7 @@
 - [ ] STDLIB-COMP-FN-061: `nullsLast` 関数の実装（Comparable版）
 - [ ] STDLIB-COMP-FN-062: `nullsLast` 関数の実装（Comparator版）
 - [x] STDLIB-COMP-FN-063: `reverseOrder` 関数の実装
-- [ ] STDLIB-ANNO-002: annotation sema / diagnostics を整える
+- [x] STDLIB-ANNO-002: annotation sema / diagnostics を整える
  - [x] STDLIB-ANNO-001: `kotlin.annotation` の対象一覧を固定
  - [x] STDLIB-ANNO-002: annotation sema / diagnostics を整える
 - [~] STDLIB-CORO-001: `kotlin.coroutines.intrinsics` / cancellation — 主要部分実装済み（`suspendCoroutineUninterceptedOrReturn`, `intercepted`, `CancellationException`）。残課題は別チケットへ分割。
