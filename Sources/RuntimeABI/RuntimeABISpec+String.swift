@@ -1165,6 +1165,14 @@ public extension RuntimeABISpec {
             section: "String"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_char_isIdentifierIgnorable",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_char_toChars",
             parameters: [
                 RuntimeABIParameter(name: "codePoint", type: .intptr),

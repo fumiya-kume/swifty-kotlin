@@ -396,4 +396,63 @@ final class RuntimeCharEdgeCaseTests: XCTestCase {
     func testSurrogateCharacterIsNotDigit() {
         XCTAssertFalse(boolValue(kk_char_isDigit(0xD800)))
     }
+
+    // MARK: - isIdentifierIgnorable
+
+    func testNulIsIdentifierIgnorable() {
+        // U+0000 NUL is an ISO control char in the ignorable range
+        XCTAssertTrue(boolValue(kk_char_isIdentifierIgnorable(0x0000)))
+    }
+
+    func testISOControlIgnorableRangeLowerBound() {
+        // U+0001 is ignorable
+        XCTAssertTrue(boolValue(kk_char_isIdentifierIgnorable(0x0001)))
+        // U+0008 is the last in the first ignorable range
+        XCTAssertTrue(boolValue(kk_char_isIdentifierIgnorable(0x0008)))
+    }
+
+    func testTabIsNotIdentifierIgnorable() {
+        // U+0009 TAB is whitespace, not ignorable
+        XCTAssertFalse(boolValue(kk_char_isIdentifierIgnorable(0x0009)))
+    }
+
+    func testSecondISOControlIgnorableRange() {
+        // U+000E .. U+001B
+        XCTAssertTrue(boolValue(kk_char_isIdentifierIgnorable(0x000E)))
+        XCTAssertTrue(boolValue(kk_char_isIdentifierIgnorable(0x001B)))
+    }
+
+    func testDeleteIsIdentifierIgnorable() {
+        // U+007F DEL
+        XCTAssertTrue(boolValue(kk_char_isIdentifierIgnorable(0x007F)))
+    }
+
+    func testC1ControlRangeIsIdentifierIgnorable() {
+        // U+0080..U+009F
+        XCTAssertTrue(boolValue(kk_char_isIdentifierIgnorable(0x0080)))
+        XCTAssertTrue(boolValue(kk_char_isIdentifierIgnorable(0x009F)))
+    }
+
+    func testAsciiLetterIsNotIdentifierIgnorable() {
+        XCTAssertFalse(boolValue(kk_char_isIdentifierIgnorable(Int(("A" as UnicodeScalar).value))))
+    }
+
+    func testSpaceIsNotIdentifierIgnorable() {
+        XCTAssertFalse(boolValue(kk_char_isIdentifierIgnorable(Int((" " as UnicodeScalar).value))))
+    }
+
+    func testUnicodeFormatCharIsIdentifierIgnorable() {
+        // U+00AD SOFT HYPHEN is category Cf (format)
+        XCTAssertTrue(boolValue(kk_char_isIdentifierIgnorable(0x00AD)))
+    }
+
+    func testZeroWidthNonJoinerIsIdentifierIgnorable() {
+        // U+200C ZERO WIDTH NON-JOINER, category Cf
+        XCTAssertTrue(boolValue(kk_char_isIdentifierIgnorable(0x200C)))
+    }
+
+    func testByteOrderMarkIsIdentifierIgnorable() {
+        // U+FEFF BOM, category Cf
+        XCTAssertTrue(boolValue(kk_char_isIdentifierIgnorable(0xFEFF)))
+    }
 }
