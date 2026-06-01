@@ -375,6 +375,7 @@
 - [x] STDLIB-TEXT-PROP-015: `isSurrogate` 拡張プロパティの実装
 - [x] STDLIB-TEXT-PROP-016: `isTitleCase` 拡張プロパティの実装
 - [x] STDLIB-TEXT-PROP-017: `isUnicodeIdentifierPart` 拡張プロパティの実装
+- [ ] STDLIB-TEXT-PROP-017: `isUnicodeIdentifierPart` 拡張プロパティの実装
 - [x] STDLIB-TEXT-PROP-018: `isUpperCase` 拡張プロパティの実装
 - [x] STDLIB-TEXT-PROP-019: `isWhitespace` 拡張プロパティの実装
 - [x] STDLIB-TEXT-PROP-020: `lowercase` 拡張プロパティの実装
