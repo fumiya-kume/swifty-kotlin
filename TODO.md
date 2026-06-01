@@ -386,8 +386,6 @@
 - [x] STDLIB-TEXT-FN-002: `any` 関数の実装
 - [x] STDLIB-TEXT-FN-003: `append` 関数の実装
 - [x] STDLIB-TEXT-FN-004: `appendLine` 関数の実装
-- [x] STDLIB-TEXT-FN-003: `append` 関数の実装
-- [ ] STDLIB-TEXT-FN-004: `appendLine` 関数の実装
 - [ ] STDLIB-TEXT-FN-005: `appendRange` 関数の実装
 - [x] STDLIB-TEXT-FN-006: `buildString` 関数の実装
 - [x] STDLIB-TEXT-FN-007: `buildStringAppend` 関数の実装
