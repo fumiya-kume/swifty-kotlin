@@ -100,7 +100,7 @@
 - [x] STDLIB-IO-PROP-003: `invariantSeparatorsPath` 拡張プロパティの実装
 - [x] STDLIB-IO-PROP-002: `extension` 拡張プロパティの実装
 - [ ] STDLIB-IO-PROP-003: `invariantSeparatorsPath` 拡張プロパティの実装
-- [ ] STDLIB-IO-PROP-004: `isRooted` 拡張プロパティの実装
+- [x] STDLIB-IO-PROP-004: `isRooted` 拡張プロパティの実装
 - [x] STDLIB-IO-PROP-005: `nameWithoutExtension` 拡張プロパティの実装
 
 #### kotlin.io 関数の実装

@@ -1640,6 +1640,22 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // MARK: - File.isRooted extension property (STDLIB-IO-PROP-004)
+        //
+        // Kotlin signature: `public val File.isRooted: Boolean` declared in the
+        // `kotlin.io` package. Returns `true` if this file's path begins with a
+        // root component (e.g. `/` on Unix, drive letter on Windows). Backed by
+        // the runtime helper `kk_file_isRooted`.
+        registerKotlinIOExtensionProperty(
+            named: "isRooted",
+            packageFQName: kotlinIOPkg,
+            receiverType: fileType,
+            returnType: types.booleanType,
+            externalLinkName: "kk_file_isRooted",
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     // MARK: - Private Helpers

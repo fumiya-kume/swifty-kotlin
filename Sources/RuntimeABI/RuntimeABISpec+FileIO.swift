@@ -973,6 +973,15 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "FileIO"
         ),
+        // STDLIB-IO-PROP-004: File.isRooted extension property backing.
+        RuntimeABIFunctionSpec(
+            name: "kk_file_isRooted",
+            parameters: [
+                RuntimeABIParameter(name: "fileRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
         RuntimeABIFunctionSpec(name: "kk_logger_getLogger", parameters: [RuntimeABIParameter(name: "nameRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
         RuntimeABIFunctionSpec(name: "kk_logging_level_info", parameters: [], returnType: .intptr, section: "FileIO"),
         RuntimeABIFunctionSpec(name: "kk_logging_level_config", parameters: [], returnType: .intptr, section: "FileIO"),

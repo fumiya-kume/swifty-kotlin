@@ -721,6 +721,45 @@ public func kk_file_startsWith_string(_ fileRaw: Int, _ otherRaw: Int) -> Int {
     return kk_box_bool(fileStartsWithComponents(path: file.path, other: otherString) ? 1 : 0)
 }
 
+// MARK: - STDLIB-IO-PROP-004: File.isRooted extension property
+//
+// Kotlin's `File.isRooted: Boolean` is defined as
+// `val File.isRooted: Boolean get() = FileSystem.SYSTEM.getRootLength(path) > 0`.
+// For Unix-like targets the path is rooted when it starts with `/`; for
+// Windows-style paths it is rooted when it begins with a drive letter
+// (`C:`...) optionally followed by `\` or `/`, or with a UNC prefix
+// (`\\server\share`).
+@_cdecl("kk_file_isRooted")
+public func kk_file_isRooted(_ fileRaw: Int) -> Int {
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_isRooted received invalid File handle")
+    }
+    return kk_box_bool(runtimeFilePathIsRooted(file.path) ? 1 : 0)
+}
+
+/// Returns `true` when `path` begins with a root component matching Kotlin's
+/// `FilePathComponents.root.isNotEmpty()` behaviour. Mirrors the platform-aware
+/// logic of `kotlin.io.FilePathComponents.parseInternal` for Unix and Windows
+/// roots so that test fixtures using either separator yield the same answer.
+@inline(__always)
+internal func runtimeFilePathIsRooted(_ path: String) -> Bool {
+    if path.isEmpty {
+        return false
+    }
+    let first = path.first!
+    if first == "/" || first == "\\" {
+        return true
+    }
+    // Windows-style `C:`, optionally followed by `/` or `\\`.
+    let chars = Array(path)
+    if chars.count >= 2,
+       chars[1] == ":",
+       chars[0].isLetter {
+        return true
+    }
+    return false
+}
+
 // MARK: - STDLIB-322: File line-by-line operations
 
 @_cdecl("kk_file_forEachLine")
