@@ -592,7 +592,7 @@
 - [x] STDLIB-COMP-FN-025: `maxOf` 関数の実装（Short版、vararg）
 - [x] STDLIB-COMP-FN-026: `maxOfOrNull` 関数の実装（各オーバーロード）
 - [x] STDLIB-COMP-FN-027: `maxWith` 関数の実装
-- [ ] STDLIB-COMP-FN-028: `maxWithOrNull` 関数の実装
+- [x] STDLIB-COMP-FN-028: `maxWithOrNull` 関数の実装
 - [x] STDLIB-COMP-FN-029: `minOf` 関数の実装（Comparable版、2引数）
 - [ ] STDLIB-COMP-FN-030: `minOf` 関数の実装（Comparable版、3引数）
 - [x] STDLIB-COMP-FN-031: `minOf` 関数の実装（Comparable版、vararg）
