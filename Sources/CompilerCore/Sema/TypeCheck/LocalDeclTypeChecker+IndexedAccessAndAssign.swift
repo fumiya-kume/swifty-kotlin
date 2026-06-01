@@ -18,12 +18,57 @@ extension LocalDeclTypeChecker {
 
         // Try to resolve operator fun get on the receiver type
         let getName = interner.intern("get")
-        let getCandidates = driver.helpers.collectMemberFunctionCandidates(
+        var getCandidates = driver.helpers.collectMemberFunctionCandidates(
             named: getName,
             receiverType: receiverType,
             sema: sema,
             interner: interner
         )
+        if getCandidates.isEmpty {
+            let nonNullReceiver = sema.types.makeNonNullable(receiverType)
+            let scopedCandidates = ctx.filterByVisibility(ctx.cachedScopeLookup(getName)).visible
+            getCandidates = scopedCandidates.filter { candidate in
+                guard let symbol = ctx.cachedSymbol(candidate),
+                      symbol.kind == .function,
+                      symbol.flags.contains(.operatorFunction),
+                      let signature = sema.symbols.functionSignature(for: candidate),
+                      let declaredReceiver = signature.receiverType
+                else {
+                    return false
+                }
+                return driver.callChecker.extensionSyntheticFallbackReceiverMatches(
+                    callSiteReceiver: nonNullReceiver,
+                    declaredReceiver: declaredReceiver,
+                    sema: sema
+                )
+            }
+        }
+        if getCandidates.isEmpty {
+            let nonNullReceiver = sema.types.makeNonNullable(receiverType)
+            let visibleSyntheticCandidates = ctx.filterByVisibility(sema.symbols.lookupByShortName(getName)).visible
+            getCandidates = visibleSyntheticCandidates.filter { candidate in
+                guard let symbol = ctx.cachedSymbol(candidate),
+                      symbol.kind == .function,
+                      symbol.flags.contains(.synthetic),
+                      symbol.flags.contains(.operatorFunction),
+                      let signature = sema.symbols.functionSignature(for: candidate),
+                      let declaredReceiver = signature.receiverType
+                else {
+                    return false
+                }
+                if let parentID = sema.symbols.parentSymbol(for: candidate),
+                   let parentSymbol = sema.symbols.symbol(parentID),
+                   parentSymbol.kind == .property
+                {
+                    return false
+                }
+                return driver.callChecker.extensionSyntheticFallbackReceiverMatches(
+                    callSiteReceiver: nonNullReceiver,
+                    declaredReceiver: declaredReceiver,
+                    sema: sema
+                )
+            }
+        }
 
         // Infer all index expressions without forcing Int.
         // Int constraint is only applied in the built-in array fallback.
