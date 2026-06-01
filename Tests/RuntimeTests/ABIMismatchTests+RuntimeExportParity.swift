@@ -148,8 +148,6 @@ extension ABIMismatchTests {
             "kk_path_setOwner",
             "kk_path_setAttribute",
             "kk_path_setPosixFilePermissions",
-            "kk_path_useLines",
-            "kk_path_useLines_default",
             "kk_path_visitFileTree",
             "kk_path_useDirectoryEntries",
             "kk_path_useDirectoryEntries_default",

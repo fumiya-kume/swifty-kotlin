@@ -513,6 +513,57 @@ extension CallTypeChecker {
                 return finalType
             }
         }
+
+        // --- STDLIB-IO-PATH-FN-038: Path.useLines(charset?, block) ---
+        // Path.useLines receives a `(Sequence<String>) -> T` block and can be called
+        // as `path.useLines { lines -> ... }` (1 arg) or
+        // `path.useLines(Charsets.UTF_8) { lines -> ... }` (2 args: charset + block).
+        // The lambda argument is always the last one.
+        if (args.count == 1 || args.count == 2),
+           interner.resolve(calleeName) == "useLines",
+           isPathType(receiverType, sema: sema, interner: interner)
+        {
+            let lambdaArgIndex = args.count - 1
+            let lambdaArg = args[lambdaArgIndex]
+            if let lambdaExpr = ast.arena.expr(lambdaArg.expr), case .lambdaLiteral = lambdaExpr {
+                sema.bindings.markCollectionHOFLambdaExpr(lambdaArg.expr)
+            }
+            // The block receives Sequence<String>; materialize the type.
+            let sequenceSymbol = sema.symbols.lookupByShortName(interner.intern("Sequence")).first
+            let sequenceOfStringType: TypeID = if let seqSym = sequenceSymbol {
+                sema.types.make(.classType(ClassType(
+                    classSymbol: seqSym,
+                    args: [.out(sema.types.stringType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                sema.types.anyType
+            }
+            let lambdaReturnType = expectedType ?? sema.types.anyType
+            let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                params: [sequenceOfStringType],
+                returnType: lambdaReturnType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            // Infer the non-lambda arg (charset) if present using the normal path.
+            if args.count == 2 {
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: nil)
+            }
+            let inferredLambdaType = driver.inferExpr(
+                lambdaArg.expr, ctx: ctx, locals: &locals,
+                expectedType: lambdaExpectedType
+            )
+            let finalReturnType: TypeID = if case let .functionType(fnType) = sema.types.kind(of: inferredLambdaType) {
+                fnType.returnType
+            } else {
+                lambdaReturnType
+            }
+            let finalType = safeCall ? sema.types.makeNullable(finalReturnType) : finalReturnType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+        }
+
         return nil
     }
 }

@@ -1303,6 +1303,20 @@ public func kk_path_forEachLine(
     _ pathRaw: Int,
     _ charsetRaw: Int,
     _ actionRaw: Int,
+// MARK: - STDLIB-IO-PATH-FN-038: Path.useLines { block }
+
+/// Reads all lines from `path` (using the given charset) and calls `block` once
+/// with a `Sequence<String>` containing them.  Mirrors the Kotlin stdlib contract:
+///   fun <T> Path.useLines(charset: Charset = Charsets.UTF_8, block: (Sequence<String>) -> T): T
+///
+/// The sequence is materialised as a RuntimeListBox so it can be passed through
+/// the collection HOF closure ABI (fnPtr + closureRaw).
+@_cdecl("kk_path_useLines")
+public func kk_path_useLines(
+    _ pathRaw: Int,
+    _ charsetRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     outThrown?.pointee = 0
@@ -1325,6 +1339,39 @@ public func kk_path_forEachLine(
         }
     }
     return 0
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_path_useLines received invalid Path handle")
+    }
+    let encoding = pathStringEncoding(for: charsetRaw)
+    guard let content = try? String(contentsOfFile: path.pathString, encoding: encoding) else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "IOException: Cannot read file \(path.pathString)"
+        )
+        return 0
+    }
+    let lines = pathSplitLines(content)
+    let linesListRaw = registerRuntimeObject(
+        RuntimeListBox(elements: lines.map { pathMakeStringRaw($0) })
+    )
+    var thrown = 0
+    let result = runtimeInvokeCollectionLambda1(
+        fnPtr: fnPtr, closureRaw: closureRaw, value: linesListRaw, outThrown: &thrown
+    )
+    if thrown != 0 {
+        outThrown?.pointee = thrown
+        return 0
+    }
+    return result
+}
+
+/// Default-charset variant of `kk_path_useLines` (UTF-8).
+@_cdecl("kk_path_useLines_default")
+public func kk_path_useLines_default(
+    _ pathRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    kk_path_useLines(pathRaw, 0, fnPtr, closureRaw, outThrown)
 }
 
 @_cdecl("kk_path_appendLines_sequence_default")
