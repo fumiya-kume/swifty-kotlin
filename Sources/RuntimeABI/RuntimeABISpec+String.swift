@@ -1714,6 +1714,27 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        // STDLIB-TEXT-FN-074: String.substringAfter(delimiter, missingDelimiterValue)
+        RuntimeABIFunctionSpec(
+            name: "kk_string_substringAfter",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "delimiterRaw", type: .intptr),
+                RuntimeABIParameter(name: "missingDelimiterValueRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_substringAfter_char",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "delimiterRaw", type: .intptr),
+                RuntimeABIParameter(name: "missingDelimiterValueRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_string_toBigDecimal",
             parameters: [
