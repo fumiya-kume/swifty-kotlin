@@ -267,14 +267,12 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.nativeRefFunctions,
             RuntimeABISpec.threadLocalFunctions,
             RuntimeABISpec.threadFunctions,
-            RuntimeABISpec.securityFunctions,
             RuntimeABISpec.parallelFunctions,
             RuntimeABISpec.bigIntegerFunctions,
             RuntimeABISpec.broadcastChannelFunctions,
             RuntimeABISpec.serializationFunctions,
             RuntimeABISpec.networkFunctions,
             RuntimeABISpec.abiParityFunctions,
-            RuntimeABISpec.streamFunctions,
         ]
         let sectionNames = sections.flatMap { $0.map(\.name) }
         let duplicateNames = Dictionary(grouping: sectionNames, by: { $0 })

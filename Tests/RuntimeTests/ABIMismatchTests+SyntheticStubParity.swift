@@ -73,7 +73,6 @@ extension ABIMismatchTests {
         "kk_collection_toTypedArray",
         "kk_iterable_toMutableList",
         "kk_iterable_toMutableSet",
-        "kk_int_stream_toList",
         "kk_js_array_toMutableList",
         "kk_js_map_toMutableMap",
         "kk_js_set_toMutableSet",
@@ -109,7 +108,6 @@ extension ABIMismatchTests {
         "kk_list_zip",
         "kk_list_zipWithNext",
         "kk_list_zipWithNextTransform",
-        "kk_long_stream_toList",
         "kk_map_withDefault",
         "kk_mutable_list_removeFirst",
         "kk_mutable_list_removeFirstOrNull",
@@ -143,8 +141,6 @@ extension ABIMismatchTests {
 
     // MARK: System / timing / Stream toList
     private static let systemStubLinkNames: Set<String> = [
-        "kk_double_stream_toList",
-        "kk_stream_toList",
         "kk_synchronized",
         "kk_system_currentTimeMillis",
         "kk_system_exitProcess",
@@ -407,20 +403,6 @@ extension ABIMismatchTests {
         "kk_reentrant_read_write_lock_read",
     ]
 
-    // MARK: Symmetric crypto (javax.crypto)
-    private static let cryptoStubLinkNames: Set<String> = [
-        "kk_cipher_doFinal",
-        "kk_cipher_doFinal_noarg",
-        "kk_cipher_getInstance",
-        "kk_cipher_init",
-        "kk_cipher_init_with_iv",
-        "kk_ivparameterspec_new",
-        "kk_mac_doFinal",
-        "kk_mac_getInstance",
-        "kk_mac_init",
-        "kk_secretkeyspec_new",
-    ]
-
     // MARK: JSON Serialization (STDLIB-SER-132)
     private static let jsonSerializationStubLinkNames: Set<String> = [
         "kk_json_decodeFromString",
@@ -504,7 +486,6 @@ extension ABIMismatchTests {
         result.formUnion(threadLocalStubLinkNames)
         result.formUnion(concurrentStubLinkNames)
         result.formUnion(readWriteLockStubLinkNames)
-        result.formUnion(cryptoStubLinkNames)
         result.formUnion(jsonSerializationStubLinkNames)
         result.formUnion(base64StubLinkNames)
         result.formUnion(kotlinVersionStubLinkNames)

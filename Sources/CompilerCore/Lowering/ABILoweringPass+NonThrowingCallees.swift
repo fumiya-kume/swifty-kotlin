@@ -661,10 +661,6 @@ extension ABILoweringPass {
             interner.intern("kk_array_fill"),
             interner.intern("kk_list_asSequence"),
             interner.intern("kk_array_asSequence"),
-            interner.intern("kk_stream_asSequence"),
-            interner.intern("kk_int_stream_asSequence"),
-            interner.intern("kk_long_stream_asSequence"),
-            interner.intern("kk_double_stream_asSequence"),
             // NOTE: kk_array_map/filter/forEach/any/none are NOT non-throwing
             // — the lambda argument can throw.
             interner.intern("kk_set_of"),
@@ -1120,19 +1116,6 @@ extension ABILoweringPass {
             interner.intern("kk_http_response_headers"),
             interner.intern("kk_http_headers_map"),
             interner.intern("kk_http_headers_firstValue"),
-            interner.intern("kk_logger_getLogger"),
-            interner.intern("kk_logging_level_info"),
-            interner.intern("kk_logging_level_config"),
-            interner.intern("kk_logging_level_fine"),
-            interner.intern("kk_logging_level_finer"),
-            interner.intern("kk_logging_level_finest"),
-            interner.intern("kk_logging_level_warning"),
-            interner.intern("kk_logging_level_severe"),
-            interner.intern("kk_logger_log"),
-            interner.intern("kk_logger_log_throwable"),
-            interner.intern("kk_logger_info"),
-            interner.intern("kk_logger_warning"),
-            interner.intern("kk_logger_severe"),
             // StringBuilder (STDLIB-255/256/257)
             interner.intern("kk_string_builder_new"),
             interner.intern("kk_string_builder_new_from_string"),
@@ -1239,10 +1222,6 @@ extension ABILoweringPass {
             interner.intern("kk_json_encodeMapToString"),
             interner.intern("kk_json_default"),
             // Security constructors (STDLIB-SEC-144) — no outThrown parameter
-            interner.intern("kk_secretkeyspec_new"),
-            interner.intern("kk_ivparameterspec_new"),
-            interner.intern("kk_keypair_public"),
-            interner.intern("kk_keypair_private"),
             // kotlin.js JsReference (STDLIB-JS-FN-004)
             interner.intern("kk_js_reference_get"),
             // Kotlin/Native reference helpers — no outThrown parameter

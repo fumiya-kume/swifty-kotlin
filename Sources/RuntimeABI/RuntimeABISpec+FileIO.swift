@@ -973,67 +973,6 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "FileIO"
         ),
-        RuntimeABIFunctionSpec(name: "kk_logger_getLogger", parameters: [RuntimeABIParameter(name: "nameRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_logging_level_info", parameters: [], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_logging_level_config", parameters: [], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_logging_level_fine", parameters: [], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_logging_level_finer", parameters: [], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_logging_level_finest", parameters: [], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_logging_level_warning", parameters: [], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_logging_level_severe", parameters: [], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_console_handler_new", parameters: [], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_file_handler_new", parameters: [RuntimeABIParameter(name: "pathRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_logger_addHandler", parameters: [RuntimeABIParameter(name: "loggerRaw", type: .intptr), RuntimeABIParameter(name: "handlerRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_logger_log", parameters: [RuntimeABIParameter(name: "loggerRaw", type: .intptr), RuntimeABIParameter(name: "levelRaw", type: .intptr), RuntimeABIParameter(name: "messageRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_logger_log_throwable", parameters: [RuntimeABIParameter(name: "loggerRaw", type: .intptr), RuntimeABIParameter(name: "levelRaw", type: .intptr), RuntimeABIParameter(name: "messageRaw", type: .intptr), RuntimeABIParameter(name: "throwableRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_logger_info", parameters: [RuntimeABIParameter(name: "loggerRaw", type: .intptr), RuntimeABIParameter(name: "messageRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_logger_warning", parameters: [RuntimeABIParameter(name: "loggerRaw", type: .intptr), RuntimeABIParameter(name: "messageRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_logger_severe", parameters: [RuntimeABIParameter(name: "loggerRaw", type: .intptr), RuntimeABIParameter(name: "messageRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_message_digest_getInstance", parameters: [RuntimeABIParameter(name: "algorithmRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_message_digest_digest", parameters: [RuntimeABIParameter(name: "digestRaw", type: .intptr), RuntimeABIParameter(name: "dataRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_mac_getInstance", parameters: [RuntimeABIParameter(name: "algorithmRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_mac_init", parameters: [RuntimeABIParameter(name: "macRaw", type: .intptr), RuntimeABIParameter(name: "keyRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_mac_doFinal", parameters: [RuntimeABIParameter(name: "macRaw", type: .intptr), RuntimeABIParameter(name: "dataRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_cache_new", parameters: [RuntimeABIParameter(name: "capacityRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_cache_put", parameters: [RuntimeABIParameter(name: "cacheRaw", type: .intptr), RuntimeABIParameter(name: "keyRaw", type: .intptr), RuntimeABIParameter(name: "valueRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_cache_get", parameters: [RuntimeABIParameter(name: "cacheRaw", type: .intptr), RuntimeABIParameter(name: "keyRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(name: "kk_cache_size", parameters: [RuntimeABIParameter(name: "cacheRaw", type: .intptr)], returnType: .intptr, section: "FileIO"),
-        RuntimeABIFunctionSpec(
-            name: "kk_resource_bundle_getBundle",
-            parameters: [
-                RuntimeABIParameter(name: "nameRaw", type: .intptr),
-                RuntimeABIParameter(name: "localeRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "FileIO"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_resource_bundle_getString",
-            parameters: [
-                RuntimeABIParameter(name: "bundleRaw", type: .intptr),
-                RuntimeABIParameter(name: "keyRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "FileIO"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_resource_bundle_getObject",
-            parameters: [
-                RuntimeABIParameter(name: "bundleRaw", type: .intptr),
-                RuntimeABIParameter(name: "keyRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "FileIO"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_resource_bundle_getKeys",
-            parameters: [RuntimeABIParameter(name: "bundleRaw", type: .intptr)],
-            returnType: .intptr,
-            section: "FileIO"
-        ),
     ]
 
 }
