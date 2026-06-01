@@ -3,6 +3,47 @@ import Foundation
 import XCTest
 
 extension CodegenBackendIntegrationTests {
+    func testCodegenCompilesStringBuilderAppendRangeEdgeCases() throws {
+        let source = """
+        fun main() {
+            println(StringBuilder("hello").appendRange("WORLD", 1, 4).toString())
+
+            val sb = StringBuilder("01")
+            sb.appendRange("abcd", 0, 2)
+            println(sb.toString())
+
+            val implicit = with(StringBuilder("rust")) {
+                appendRange("SWIFT", 1, 4)
+                toString()
+            }
+            println(implicit)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "StringBuilderAppendRangeEdgeCases",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(
+                normalizedStdout,
+                """
+                helloORL
+                01ab
+                rustWIF
+                """
+                + "\n"
+            )
+        }
+    }
+
     func testCodegenCompilesStringBuilderDeleteAtEdgeCases() throws {
         let source = """
         fun main() {
