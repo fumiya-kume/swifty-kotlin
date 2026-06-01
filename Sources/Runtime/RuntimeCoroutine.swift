@@ -568,30 +568,17 @@ final class RuntimeAsyncTask: @unchecked Sendable {
         }
     }
 
-    // CORO-004: awaitResult() now supports continuation-based async completion.
-    // When called from a suspend-aware context (via codegen changes), it uses
-    // continuation model instead of blocking on semaphore.
-    func awaitResult(continuation: Int = 0) -> Int {
+    // CORO-004 [TODO]: blocks on a semaphore; convert to a suspend point so the
+    // caller installs a continuation that complete() dispatches. See the
+    // migration plan at the top of this file.
+    func awaitResult() -> Int {
         lock.lock()
         if isCompleted {
             let value = result
             lock.unlock()
             return value
         }
-
-        // If continuation is provided and we're in a suspend-aware context,
-        // install for async completion instead of blocking
-        if continuation != 0 {
-            // CORO-004: TODO - Implement continuation-based async completion
-            // This requires codegen changes to make await a suspend point
-            // For now, fall back to semaphore blocking
-            // return suspendCallerAndAwaitCompletion(continuation: continuation) { result in
-            //     return result
-            // }
-        }
-
         lock.unlock()
-        // Fallback to semaphore blocking for non-suspend-aware contexts
         ready.wait()
         // Re-signal so other concurrent awaitResult() callers also wake up
         ready.signal()

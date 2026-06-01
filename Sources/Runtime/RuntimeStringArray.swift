@@ -1205,7 +1205,6 @@ public func kk_ktypeprojection_variance(_ projRaw: Int) -> Int {
 /// type token and nullability at the call site.
 @_cdecl("kk_typeof")
 public func kk_typeof(_ typeToken: Int, _ nameHint: Int, _ argsRaw: Int, _ isNullable: Int) -> Int {
-    // Create the KClass classifier for this type.
     let classifierRaw = kk_kclass_create(typeToken, nameHint)
     return kk_ktype_create(classifierRaw, argsRaw, isNullable)
 }

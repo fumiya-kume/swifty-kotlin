@@ -970,7 +970,6 @@ public final class SymbolTable {
         var issues: [String] = []
         
         for (expectId, actualId) in expectActualLinks {
-            // Check if both symbols exist
             guard let expectSymbol = symbol(expectId) else {
                 issues.append("Expect symbol \(expectId) not found in symbol table")
                 continue
@@ -981,12 +980,10 @@ public final class SymbolTable {
                 continue
             }
             
-            // Check if expect symbol has expect flag
             if !expectSymbol.flags.contains(.expectDeclaration) {
                 issues.append("Symbol \(expectId) lacks expect declaration flag")
             }
             
-            // Check if actual symbol has actual flag
             if !actualSymbol.flags.contains(.actualDeclaration) {
                 issues.append("Symbol \(actualId) lacks actual declaration flag")
             }

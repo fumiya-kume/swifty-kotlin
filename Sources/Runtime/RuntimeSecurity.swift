@@ -1872,45 +1872,8 @@ public func kk_certpathvalidator_validate(
 private func runtimeSetThrown(_ outThrown: UnsafeMutablePointer<Int>?, message: String) {
     outThrown?.pointee = runtimeAllocateThrowable(message: message)
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #endif
+
 // MARK: - MessageDigest Runtime Support (STDLIB-SEC-143)
 
 #if canImport(CryptoKit)
