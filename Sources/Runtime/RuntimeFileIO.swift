@@ -1190,6 +1190,30 @@ public func kk_reader_readText(_ readerRaw: Int) -> Int {
     return fileMakeStringRaw(reader.readText())
 }
 
+
+// MARK: - STDLIB-IO-FN-007: InputStream.bufferedReader(charset)
+//
+// Kotlin's `InputStream.bufferedReader(charset: Charset = Charsets.UTF_8): BufferedReader`
+// is a top-level extension in `kotlin.io`. Charset selection is delegated to
+// the `BufferedReader` returned here — the runtime currently decodes lines as
+// UTF-8, matching the rest of the `BufferedReader` API (see
+// `RuntimeBufferedReaderBox.readLine`). The `charsetRaw` argument is accepted
+// for ABI compatibility with future charset support and is otherwise ignored.
+@_cdecl("kk_input_stream_bufferedReader")
+public func kk_input_stream_bufferedReader(
+    _ streamRaw: Int,
+    _ charsetRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    _ = charsetRaw
+    outThrown?.pointee = 0
+    guard let stream = runtimeInputStreamBox(from: streamRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_input_stream_bufferedReader received invalid InputStream handle")
+    }
+    let remaining = stream.drainRemaining()
+    return registerRuntimeObject(RuntimeBufferedReaderBox(data: remaining))
+}
+
 // MARK: - STDLIB-IO-091: BufferedWriter
 
 private func runtimeBufferedWriterBox(from raw: Int) -> RuntimeBufferedWriterBox? {

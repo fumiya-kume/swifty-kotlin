@@ -1640,6 +1640,38 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+
+        // STDLIB-IO-FN-007: kotlin.io.InputStream.bufferedReader(charset)
+        // Top-level extension function on java.io.InputStream returning BufferedReader.
+        // Signature: fun InputStream.bufferedReader(charset: Charset = Charsets.UTF_8): BufferedReader
+        let charsetFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("text"),
+            interner.intern("Charset"),
+        ]
+        let resolvedCharsetType: TypeID = {
+            if let charsetSymbol = symbols.lookup(fqName: charsetFQName) {
+                return types.make(.classType(ClassType(
+                    classSymbol: charsetSymbol,
+                    args: [],
+                    nullability: .nonNull
+                )))
+            }
+            return types.anyType
+        }()
+
+        registerExtensionFunction(
+            named: "bufferedReader",
+            packageFQName: kotlinIOPkg,
+            receiverType: inputStreamType,
+            parameters: [("charset", resolvedCharsetType)],
+            returnType: bufferedReaderType,
+            externalLinkName: "kk_input_stream_bufferedReader",
+            valueParameterHasDefaultValues: [true],
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     // MARK: - Private Helpers
@@ -2007,6 +2039,105 @@ extension DataFlowSemaPhase {
             )
         }
         return javaIOPkg
+    }
+
+    /// Register a top-level Kotlin extension function in `packageFQName` with the
+    /// provided receiver. Mirrors `registerPathExtensionFunction` from
+    /// `HeaderHelpers+SyntheticPathStubs.swift`, scoped to FileIO so that
+    /// extensions on `InputStream` / `OutputStream` can live next to the rest
+    /// of the FileIO stubs without leaking helpers between extension files.
+    private func registerExtensionFunction(
+        named name: String,
+        packageFQName: [InternedString],
+        receiverType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        externalLinkName: String,
+        valueParameterHasDefaultValues: [Bool]? = nil,
+        valueParameterIsVararg: [Bool]? = nil,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        let parameterTypes = parameters.map(\.type)
+        let defaults = valueParameterHasDefaultValues
+            ?? Array(repeating: false, count: parameters.count)
+        let varargs = valueParameterIsVararg
+            ?? Array(repeating: false, count: parameters.count)
+
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let existingSignature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return existingSignature.receiverType == receiverType
+                && existingSignature.parameterTypes == parameterTypes
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            if let existingSignature = symbols.functionSignature(for: existing) {
+                let shouldUpdateSignature =
+                    existingSignature.returnType != returnType
+                    || existingSignature.valueParameterHasDefaultValues != defaults
+                    || existingSignature.valueParameterIsVararg != varargs
+                guard shouldUpdateSignature else {
+                    return
+                }
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: existingSignature.receiverType,
+                        parameterTypes: existingSignature.parameterTypes,
+                        returnType: returnType,
+                        isSuspend: existingSignature.isSuspend,
+                        valueParameterSymbols: existingSignature.valueParameterSymbols,
+                        valueParameterHasDefaultValues: defaults,
+                        valueParameterIsVararg: varargs
+                    ),
+                    for: existing
+                )
+            }
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let pkgSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(pkgSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        var valueParameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: functionFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            valueParameterSymbols.append(parameterSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameterTypes,
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: defaults,
+                valueParameterIsVararg: varargs
+            ),
+            for: functionSymbol
+        )
     }
 
     private func registerTopLevelResourceFunction(
