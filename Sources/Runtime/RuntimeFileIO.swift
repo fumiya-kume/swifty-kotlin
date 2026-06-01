@@ -1492,6 +1492,7 @@ public func kk_string_byteInputStream_charset(_ strRaw: Int, _ charsetTag: Int) 
     return registerRuntimeObject(RuntimeInputStreamBox(data: Data(unsignedBytes)))
 }
 
+
 @_cdecl("kk_file_outputStream")
 public func kk_file_outputStream(_ fileRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
