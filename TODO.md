@@ -439,7 +439,7 @@
 - [ ] STDLIB-TEXT-FN-046: `reduce` 関数の実装
 - [x] STDLIB-TEXT-FN-047: `reduceIndexed` 関数の実装
 - [ ] STDLIB-TEXT-FN-048: `reduceIndexedOrNull` 関数の実装
-- [ ] STDLIB-TEXT-FN-049: `reduceOrNull` 関数の実装
+- [x] STDLIB-TEXT-FN-049: `reduceOrNull` 関数の実装
 - [x] STDLIB-TEXT-FN-050: `removePrefix` 関数の実装
 - [x] STDLIB-TEXT-FN-051: `removeRange` 関数の実装
 - [x] STDLIB-TEXT-FN-052: `removeSuffix` 関数の実装
