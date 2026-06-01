@@ -2878,6 +2878,57 @@ public func kk_string_zipWithNextTransform(_ strRaw: Int, _ fnPtr: Int, _ closur
     return registerRuntimeObject(RuntimeListBox(elements: results))
 }
 
+// MARK: - STDLIB-TEXT-FN-116: CharSequence.zip(other) / zip(other, transform)
+
+@_cdecl("kk_string_zip")
+public func kk_string_zip(_ strRaw: Int, _ otherRaw: Int) -> Int {
+    let sourceCodeUnits = runtimeStringUTF16CodeUnits(strRaw)
+    let otherCodeUnits = runtimeStringUTF16CodeUnits(otherRaw)
+    let count = min(sourceCodeUnits.count, otherCodeUnits.count)
+    var pairs: [Int] = []
+    pairs.reserveCapacity(count)
+    for i in 0 ..< count {
+        let a = kk_box_char(Int(sourceCodeUnits[i]))
+        let b = kk_box_char(Int(otherCodeUnits[i]))
+        pairs.append(kk_pair_new(a, b))
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: pairs))
+}
+
+@_cdecl("kk_string_zipTransform")
+public func kk_string_zipTransform(
+    _ strRaw: Int,
+    _ otherRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let sourceCodeUnits = runtimeStringUTF16CodeUnits(strRaw)
+    let otherCodeUnits = runtimeStringUTF16CodeUnits(otherRaw)
+    let count = min(sourceCodeUnits.count, otherCodeUnits.count)
+    var results: [Int] = []
+    results.reserveCapacity(count)
+    for i in 0 ..< count {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda2(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            lhs: kk_box_char(Int(sourceCodeUnits[i])),
+            rhs: kk_box_char(Int(otherCodeUnits[i])),
+            outThrown: &thrown
+        )
+        if thrown != 0 {
+            if let outThrown = outThrown {
+                outThrown.pointee = thrown
+            }
+            return 0
+        }
+        results.append(maybeUnbox(result))
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: results))
+}
+
 // MARK: - STDLIB-192: equals(other, ignoreCase)
 
 @_cdecl("kk_string_equalsIgnoreCase")

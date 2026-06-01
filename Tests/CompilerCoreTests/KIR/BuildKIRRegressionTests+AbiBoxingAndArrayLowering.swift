@@ -171,6 +171,28 @@ extension BuildKIRRegressionTests {
         }
     }
 
+    func testBuildKIRLowersStringZipOverloadsToRuntimeCalls() throws {
+        let source = """
+        fun main(left: String, right: CharSequence) {
+            left.zip(right)
+            left.zip(right) { a, b -> a }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
+
+            XCTAssertTrue(callNames.contains("kk_string_zip"))
+            XCTAssertTrue(callNames.contains("kk_string_zipTransform"))
+            XCTAssertFalse(callNames.contains("zip"))
+        }
+    }
+
     func testBuildKIRLowersMapWithDefaultToCollectionRuntimeCall() throws {
         let source = """
         fun main(values: Map<Int, Int>) {

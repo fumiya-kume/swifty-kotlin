@@ -21,7 +21,7 @@ extension CallLowerer {
             "maxWith", "maxWithOrNull", "minWith", "minWithOrNull",
             "maxOfWith", "maxOfWithOrNull", "minOfWith", "minOfWithOrNull",
             "indexOfFirst", "indexOfLast", "binarySearch", "binarySearchBy", "reduceIndexed", "reduceIndexedOrNull", "reduceRightOrNull", "reduceRightIndexed", "reduceRightIndexedOrNull", "foldIndexed", "foldRightIndexed",
-            "sortedByDescending", "sortedWith", "partition", "zipWithNext",
+            "sortedByDescending", "sortedWith", "partition", "zip", "zipWithNext",
             "sortedArrayWith",
             "takeWhile", "dropWhile", "dropLastWhile", "filterNot", "findLast", "replaceAll", "removeIf",
             "replaceFirstChar",

@@ -506,7 +506,7 @@
 - [x] STDLIB-TEXT-FN-113: `trimMargin` 関数の実装
 - [x] STDLIB-TEXT-FN-114: `trimStart` 関数の実装
 - [ ] STDLIB-TEXT-FN-115: `withIndex` 関数の実装
-- [ ] STDLIB-TEXT-FN-116: `zip` 関数の実装
+- [x] STDLIB-TEXT-FN-116: `zip` 関数の実装
 
 #### kotlin.time 型の実装
 - [ ] STDLIB-TIME-TYPE-001: `AbstractDoubleTimeSource` 抽象クラスの実装
