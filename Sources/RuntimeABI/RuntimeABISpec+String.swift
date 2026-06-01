@@ -1341,6 +1341,13 @@ public extension RuntimeABISpec {
             name: "kk_string_toTypedArray",
             parameters: [
                 RuntimeABIParameter(name: "strRaw", type: .intptr),
+
+        // STDLIB-TEXT-FN-094: CharSequence.toCollection(destination)
+        RuntimeABIFunctionSpec(
+            name: "kk_string_toCollection",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "destRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "String"

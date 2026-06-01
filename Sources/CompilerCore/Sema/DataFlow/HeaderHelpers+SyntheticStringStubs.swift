@@ -1021,6 +1021,31 @@ extension DataFlowSemaPhase {
             receiverType: stringType,
             parameters: [],
             returnType: arrayCharType,
+
+        // --- STDLIB-TEXT-FN-094: CharSequence.toCollection(destination) ---
+        // Appends all characters to the given mutable collection and returns it.
+        // The destination type is erased to `Any` in the ABI (type parameter C).
+        registerSyntheticStringExtensionFunction(
+            named: "toCollection",
+            externalLinkName: "kk_string_toCollection",
+            receiverType: charSequenceType,
+            parameters: [
+                ("destination", types.anyType, false, false),
+            ],
+            returnType: types.anyType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "toCollection",
+            externalLinkName: "kk_string_toCollection",
+            receiverType: stringType,
+            parameters: [
+                ("destination", types.anyType, false, false),
+            ],
+            returnType: types.anyType,
             packageFQName: kotlinTextPkg,
             symbols: symbols,
             interner: interner
