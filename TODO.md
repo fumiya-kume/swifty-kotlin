@@ -596,7 +596,7 @@
 - [x] STDLIB-COMP-FN-029: `minOf` 関数の実装（Comparable版、2引数）
 - [ ] STDLIB-COMP-FN-030: `minOf` 関数の実装（Comparable版、3引数）
 - [x] STDLIB-COMP-FN-031: `minOf` 関数の実装（Comparable版、vararg）
-- [ ] STDLIB-COMP-FN-032: `minOf` 関数の実装（Byte版、2引数）
+- [x] STDLIB-COMP-FN-032: `minOf` 関数の実装（Byte版、2引数）
 - [x] STDLIB-COMP-FN-033: `minOf` 関数の実装（Byte版、3引数）
 - [ ] STDLIB-COMP-FN-034: `minOf` 関数の実装（Byte版、vararg）
 - [x] STDLIB-COMP-FN-035: `minOf` 関数の実装（Double版、2引数）
