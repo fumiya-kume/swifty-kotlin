@@ -18,6 +18,10 @@ let package = Package(
         .executable(
             name: "kswiftc",
             targets: ["KSwiftKCLI"]
+        ),
+        .executable(
+            name: "kswift-lsp",
+            targets: ["KSwiftLSPCLI"]
         )
     ],
     targets: [
@@ -52,6 +56,14 @@ let package = Package(
             name: "KSwiftKCLI",
             dependencies: ["CompilerCore"]
         ),
+        .target(
+            name: "LSPServer",
+            dependencies: ["CompilerCore"]
+        ),
+        .executableTarget(
+            name: "KSwiftLSPCLI",
+            dependencies: ["LSPServer"]
+        ),
         .executableTarget(
             name: "GoldenHarnessWorker",
             dependencies: ["GoldenHarnessSupport"],
@@ -83,6 +95,11 @@ let package = Package(
             name: "KSwiftKCLITests",
             dependencies: ["KSwiftKCLI", "CompilerCore"],
             path: "Tests/KSwiftKCLITests"
+        ),
+        .testTarget(
+            name: "LSPServerTests",
+            dependencies: ["LSPServer", "CompilerCore"],
+            path: "Tests/LSPServerTests"
         )
     ],
     swiftLanguageModes: [.v6]

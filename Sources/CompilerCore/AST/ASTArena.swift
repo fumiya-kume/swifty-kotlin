@@ -167,6 +167,24 @@ public final class ASTArena: @unchecked Sendable {
         }
     }
 
+    /// Returns the source range of a declaration, mirroring `exprRange` for the
+    /// expression arena. Used by IDE features to locate the declaration that
+    /// encloses a cursor position.
+    public func declRange(_ id: DeclID) -> SourceRange? {
+        guard let decl = decl(id) else {
+            return nil
+        }
+        switch decl {
+        case let .classDecl(d): return d.range
+        case let .interfaceDecl(d): return d.range
+        case let .funDecl(d): return d.range
+        case let .propertyDecl(d): return d.range
+        case let .typeAliasDecl(d): return d.range
+        case let .objectDecl(d): return d.range
+        case let .enumEntryDecl(d): return d.range
+        }
+    }
+
     public func setLoopLabel(_ label: InternedString, for exprID: ExprID) {
         lock.lock()
         defer { lock.unlock() }
