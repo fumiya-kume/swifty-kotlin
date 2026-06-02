@@ -1093,6 +1093,29 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // MARK: - InputStream.readBytes() (STDLIB-IO-FN-029)
+        //
+        // Kotlin defines:
+        //   public fun InputStream.readBytes(): ByteArray
+        //
+        // Reads all remaining bytes from `this` and returns them as a freshly
+        // allocated ByteArray.  We model ByteArray as List<Int>, matching the
+        // representation used by File.readBytes() / Path.readBytes().
+        //
+        // Note: this extension does NOT close the receiver — callers typically
+        // wrap the call in `.use { it.readBytes() }`.  Sema only needs to
+        // resolve the call shape; the runtime drains the stream.
+        registerFileMemberFunction(
+            named: "readBytes",
+            externalLinkName: "kk_input_stream_readAllBytes",
+            ownerSymbol: inputStreamSymbol,
+            ownerType: inputStreamType,
+            parameters: [],
+            returnType: listOfIntType,
+            symbols: symbols,
+            interner: interner
+        )
+
         registerFileMemberFunction(
             named: "mark",
             externalLinkName: "kk_input_stream_mark",
@@ -1162,6 +1185,19 @@ extension DataFlowSemaPhase {
         // BufferedInputStream extends InputStream so it inherits Closeable + read/skip/etc.
         symbols.setDirectSupertypes([inputStreamSymbol], for: bufferedInputStreamSymbol)
         types.setNominalDirectSupertypes([inputStreamSymbol], for: bufferedInputStreamSymbol)
+
+        // STDLIB-IO-FN-029: BufferedInputStream.readBytes() — delegate to the same
+        // runtime entry so that member dispatch resolves without a supertype walk.
+        registerFileMemberFunction(
+            named: "readBytes",
+            externalLinkName: "kk_input_stream_readAllBytes",
+            ownerSymbol: bufferedInputStreamSymbol,
+            ownerType: bufferedInputStreamType,
+            parameters: [],
+            returnType: listOfIntType,
+            symbols: symbols,
+            interner: interner
+        )
 
         // InputStream.buffered() -> BufferedInputStream (uses DEFAULT_BUFFER_SIZE = 8 * 1024)
         registerFileMemberFunction(
