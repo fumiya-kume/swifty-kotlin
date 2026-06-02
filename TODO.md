@@ -515,7 +515,7 @@
 - [x] STDLIB-TIME-TYPE-004: `ComparableTimeMark` クラスの実装
 - [ ] STDLIB-TIME-TYPE-005: `Duration` クラスの実装
 - [x] STDLIB-TIME-TYPE-006: `DurationUnit` enum の実装
-- [ ] STDLIB-TIME-TYPE-007: `ExperimentalTime` アノテーションの実装
+- [x] STDLIB-TIME-TYPE-007: `ExperimentalTime` アノテーションの実装
 - [x] STDLIB-TIME-TYPE-008: `Instant` クラスの実装
 - [ ] STDLIB-TIME-TYPE-009: `TestTimeSource` クラスの実装
 - [ ] STDLIB-TIME-TYPE-010: `TimedValue` クラスの実装
