@@ -2233,7 +2233,7 @@ extension CallTypeChecker {
                     resultType = sema.types.anyType
                 }
 
-            case "averageOf", "sumOf", "sumBy":
+            case "sumOf", "sumBy":
                 guard args.count == 1 else {
                     sema.bindings.bindExprType(id, type: sema.types.anyType)
                     return sema.types.anyType
@@ -2246,7 +2246,7 @@ extension CallTypeChecker {
                     sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
                 }
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
-                resultType = calleeStr == "averageOf" ? sema.types.doubleType : sema.types.intType
+                resultType = sema.types.intType
                 if calleeStr == "sumBy" {
                     let memberFQName = [
                         interner.intern("kotlin"),

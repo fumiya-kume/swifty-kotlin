@@ -42,7 +42,6 @@ extension DataFlowSemaPhase {
         registerSyntheticAdvancedNetworkStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticLoggingStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticSecurityStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticCacheStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticResourceBundleStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticLocaleConstructorStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticNumberFormatStubs(symbols: symbols, types: types, interner: interner)

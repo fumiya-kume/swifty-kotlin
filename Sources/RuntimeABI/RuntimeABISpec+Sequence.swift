@@ -501,17 +501,6 @@ public extension RuntimeABISpec {
             section: "Sequence"
         ),
         RuntimeABIFunctionSpec(
-            name: stdlibSequenceHOFName("averageOf", arity: 1, fallback: "kk_sequence_averageOf"),
-            parameters: [
-                RuntimeABIParameter(name: "seqRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Sequence"
-        ),
-        RuntimeABIFunctionSpec(
             name: stdlibSequenceHOFName("sumOf", arity: 1, fallback: "kk_sequence_sumOf"),
             parameters: [
                 RuntimeABIParameter(name: "seqRaw", type: .intptr),

@@ -152,7 +152,7 @@ extension CallLowerer {
         "toHashSet",
         "containsAll", "binarySearch", "average",
         "addFirst", "addLast",
-        "sum", "averageOf", "sumOf", "sumBy", "sumByDouble",
+        "sum", "sumOf", "sumBy", "sumByDouble",
         "to", // FUNC-002
     ]
 

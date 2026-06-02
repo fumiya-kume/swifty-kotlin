@@ -26,63 +26,6 @@ extension DataFlowSemaPhase {
             }
         }
 
-        registerSyntheticCoerceValueInFunction(
-            externalLinkName: "kk_int_coerceIn",
-            valueType: types.intType,
-            packageFQName: kotlinRangesPkg,
-            symbols: symbols,
-            interner: interner
-        )
-        registerSyntheticCoerceValueInFunction(
-            externalLinkName: "kk_long_coerceIn",
-            valueType: types.longType,
-            packageFQName: kotlinRangesPkg,
-            symbols: symbols,
-            interner: interner
-        )
-        registerSyntheticCoerceValueInFunction(
-            externalLinkName: "kk_double_coerceIn",
-            valueType: types.doubleType,
-            packageFQName: kotlinRangesPkg,
-            symbols: symbols,
-            interner: interner
-        )
-        registerSyntheticCoerceValueInFunction(
-            externalLinkName: "kk_float_coerceIn",
-            valueType: types.floatType,
-            packageFQName: kotlinRangesPkg,
-            symbols: symbols,
-            interner: interner
-        )
-        registerSyntheticCoerceValueInFunction(
-            externalLinkName: "kk_ubyte_coerceIn",
-            valueType: types.ubyteType,
-            packageFQName: kotlinRangesPkg,
-            symbols: symbols,
-            interner: interner
-        )
-        registerSyntheticCoerceValueInFunction(
-            externalLinkName: "kk_ushort_coerceIn",
-            valueType: types.ushortType,
-            packageFQName: kotlinRangesPkg,
-            symbols: symbols,
-            interner: interner
-        )
-        registerSyntheticCoerceValueInFunction(
-            externalLinkName: "kk_uint_coerceIn",
-            valueType: types.uintType,
-            packageFQName: kotlinRangesPkg,
-            symbols: symbols,
-            interner: interner
-        )
-        registerSyntheticCoerceValueInFunction(
-            externalLinkName: "kk_ulong_coerceIn",
-            valueType: types.ulongType,
-            packageFQName: kotlinRangesPkg,
-            symbols: symbols,
-            interner: interner
-        )
-
         // coerceIn(minimumValue: Int, maximumValue: Int): Int
         registerSyntheticCoercionFunction(
             named: "coerceIn",
@@ -1402,28 +1345,6 @@ extension DataFlowSemaPhase {
             parameters: [(name: "bits", type: types.intType)],
             returnType: types.floatType,
             externalLinkName: "kk_float_fromBits",
-            symbols: symbols,
-            interner: interner
-        )
-    }
-
-    private func registerSyntheticCoerceValueInFunction(
-        externalLinkName: String,
-        valueType: TypeID,
-        packageFQName: [InternedString],
-        symbols: SymbolTable,
-        interner: StringInterner
-    ) {
-        registerSyntheticTopLevelFunction(
-            named: "coerceValueIn",
-            packageFQName: packageFQName,
-            parameters: [
-                (name: "value", type: valueType),
-                (name: "minimumValue", type: valueType),
-                (name: "maximumValue", type: valueType),
-            ],
-            returnType: valueType,
-            externalLinkName: externalLinkName,
             symbols: symbols,
             interner: interner
         )

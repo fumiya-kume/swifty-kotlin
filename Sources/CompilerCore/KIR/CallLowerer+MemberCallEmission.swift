@@ -535,7 +535,6 @@ extension CallLowerer {
             finalArguments = [finalArguments[0], fnPtrExpr, envPtrExpr]
         }
         if (loweredCallee == interner.intern("kk_list_sumOf")
-            || loweredCallee == interner.intern("kk_sequence_averageOf")
             || loweredCallee == interner.intern("kk_sequence_sumOf")
             || loweredCallee == interner.intern("kk_list_sumBy")
             || loweredCallee == interner.intern("kk_list_sumByDouble")
