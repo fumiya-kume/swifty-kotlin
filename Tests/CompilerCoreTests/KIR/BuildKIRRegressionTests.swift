@@ -53,6 +53,7 @@ final class BuildKIRRegressionTests: XCTestCase {
                 "LambdaClosureConversion",
                 "InlineLowering",
                 "CoroutineLowering",
+                "IntegerNarrowing",
                 "ABILowering",
             ])
             // Source defines add, susp, chooser, main

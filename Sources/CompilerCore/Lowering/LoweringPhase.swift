@@ -34,6 +34,10 @@ public final class LoweringPhase: CompilerPhase {
         LambdaClosureConversionPass(),
         InlineLoweringPass(),
         CoroutineLoweringPass(),
+        // Must run after every pass that emits integer arithmetic builtins
+        // (Operator/For/Inline/...) and before ABILoweringPass so the inserted
+        // narrowing calls participate in throw-channel resolution.
+        IntegerNarrowingPass(),
         ABILoweringPass(),
     ]
 
