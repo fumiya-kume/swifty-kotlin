@@ -226,9 +226,11 @@ extension DataFlowSemaPhase {
             symbol: tParamSymbol,
             nullability: .nonNull
         )))
+        // Kotlin signature: fun <T : Comparable<T>> maxOf(...)
+        // The bound uses invariant T so that Version : Comparable<Version> satisfies T = Version.
         let comparableUpperBounds: [TypeID] = [types.make(.classType(ClassType(
             classSymbol: comparableSymbol,
-            args: [.in(tParamType)],
+            args: [.invariant(tParamType)],
             nullability: .nonNull
         )))]
 
