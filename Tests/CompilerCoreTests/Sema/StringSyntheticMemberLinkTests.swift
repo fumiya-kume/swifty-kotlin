@@ -1802,4 +1802,36 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
             }
         }
     }
+
+    func testCharSequenceWithIndexResolvesInCallExpressions() throws {
+        let source = """
+        fun indexed(value: CharSequence) = value.withIndex()
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Expected CharSequence.withIndex to resolve cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let callExprIDs = ast.arena.exprs.indices.compactMap { index -> ExprID? in
+                let exprID = ExprID(rawValue: Int32(index))
+                guard let expr = ast.arena.expr(exprID),
+                      case let .memberCall(_, callee, _, _, _) = expr,
+                      ctx.interner.resolve(callee) == "withIndex"
+                else {
+                    return nil
+                }
+                return exprID
+            }
+
+            let chosenCallee = try XCTUnwrap(
+                callExprIDs.compactMap { sema.bindings.callBinding(for: $0)?.chosenCallee }.first
+            )
+            XCTAssertEqual(sema.symbols.externalLinkName(for: chosenCallee), "kk_string_withIndex")
+        }
+    }
 }

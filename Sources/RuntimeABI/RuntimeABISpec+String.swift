@@ -1372,6 +1372,15 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        // STDLIB-TEXT-FN-115: CharSequence.withIndex() — Iterable<IndexedValue<Char>>
+        RuntimeABIFunctionSpec(
+            name: "kk_string_withIndex",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_string_iterable_toList",
             parameters: [

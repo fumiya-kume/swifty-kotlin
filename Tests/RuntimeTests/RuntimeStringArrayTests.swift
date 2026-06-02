@@ -1033,6 +1033,57 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         XCTAssertTrue(output.contains("some error"))
     }
 
+    // MARK: - STDLIB-TEXT-FN-115: String.withIndex()
+
+    func testStringWithIndexReturnsListOfIndexedValues() {
+        let strRaw = rawFromRuntimeString("abc")
+        let resultRaw = kk_string_withIndex(strRaw)
+        let list = runtimeListBox(from: resultRaw)
+        XCTAssertNotNil(list, "withIndex should return a list")
+        XCTAssertEqual(list?.elements.count, 3)
+    }
+
+    func testStringWithIndexElementsAreIndexedValuePairs() {
+        let strRaw = rawFromRuntimeString("ab")
+        let resultRaw = kk_string_withIndex(strRaw)
+        let list = runtimeListBox(from: resultRaw)
+        XCTAssertNotNil(list)
+
+        let elements = list?.elements ?? []
+        XCTAssertEqual(elements.count, 2)
+
+        // First element: IndexedValue(index=0, value='a')
+        XCTAssertEqual(kk_pair_first(elements[0]), 0)
+        XCTAssertEqual(kk_unbox_char(kk_pair_second(elements[0])), 97) // 'a'
+
+        // Second element: IndexedValue(index=1, value='b')
+        XCTAssertEqual(kk_pair_first(elements[1]), 1)
+        XCTAssertEqual(kk_unbox_char(kk_pair_second(elements[1])), 98) // 'b'
+    }
+
+    func testStringWithIndexEmptyStringReturnsEmptyList() {
+        let strRaw = rawFromRuntimeString("")
+        let resultRaw = kk_string_withIndex(strRaw)
+        let list = runtimeListBox(from: resultRaw)
+        XCTAssertNotNil(list)
+        XCTAssertEqual(list?.elements.count, 0)
+    }
+
+    func testStringWithIndexNonASCIICharsGetCorrectIndices() {
+        let strRaw = rawFromRuntimeString("aé🐻")
+        let resultRaw = kk_string_withIndex(strRaw)
+        let list = runtimeListBox(from: resultRaw)
+        XCTAssertNotNil(list)
+        XCTAssertEqual(list?.elements.count, 4)
+
+        let expectedIndices = [0, 1, 2, 3]
+        let expectedScalars = [97, 233, 0xD83D, 0xDC3B] // 'a', 'é', high surrogate, low surrogate
+        for (i, elem) in (list?.elements ?? []).enumerated() {
+            XCTAssertEqual(kk_pair_first(elem), expectedIndices[i], "Index mismatch at \(i)")
+            XCTAssertEqual(kk_unbox_char(kk_pair_second(elem)), expectedScalars[i], "Scalar mismatch at \(i)")
+        }
+    }
+
     // MARK: - Helpers
 
     private func makeRuntimeString(_ value: String) -> UnsafeMutableRawPointer {
