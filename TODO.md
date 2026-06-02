@@ -458,7 +458,7 @@
 - [x] STDLIB-TEXT-FN-065: `setRange` 関数の実装
 - [x] STDLIB-TEXT-FN-066: `single` 関数の実装
 - [x] STDLIB-TEXT-FN-067: `singleOrNull` 関数の実装
-- [ ] STDLIB-TEXT-FN-068: `slice` 関数の実装
+- [x] STDLIB-TEXT-FN-068: `slice` 関数の実装
 - [x] STDLIB-TEXT-FN-069: `split` 関数の実装
 - [ ] STDLIB-TEXT-FN-070: `splitToSequence` 関数の実装
 - [x] STDLIB-TEXT-FN-071: `startsWith` 関数の実装
