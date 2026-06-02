@@ -748,7 +748,7 @@
 - [x] STDLIB-CINTEROP-FN-040: `unwrapKotlinObjectHolder(holder)` を追加する
 - [x] STDLIB-CINTEROP-FN-041: `CValue<T>.useContents(block)` を追加する
 - [ ] STDLIB-CINTEROP-FN-042: `T.usePinned(block)` を追加する
-- [ ] STDLIB-CINTEROP-FN-043: `vectorOf(Float, Float, Float, Float)` の公式 annotation/signature を既存 stub と整合させる
+- [x] STDLIB-CINTEROP-FN-043: `vectorOf(Float, Float, Float, Float)` の公式 annotation/signature を既存 stub と整合させる
 - [x] STDLIB-CINTEROP-FN-044: `vectorOf(Int, Int, Int, Int)` の公式 annotation/signature を既存 stub と整合させる
 - [ ] STDLIB-CINTEROP-FN-045: `CValue<T>.write(location)` を追加する
 - [ ] STDLIB-CINTEROP-FN-046: `writeBits(ptr, offset, size, value)` を追加する
