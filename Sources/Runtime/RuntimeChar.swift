@@ -303,6 +303,31 @@ public func kk_char_isTitleCase(_ value: Int) -> Int {
     return kk_box_bool(scalar.properties.generalCategory == .titlecaseLetter ? 1 : 0)
 }
 
+// MARK: - STDLIB-TEXT-PROP-010: Char.isJavaIdentifierStart
+
+/// fun Char.isJavaIdentifierStart(): Boolean
+/// Returns true if this character is permissible as the first character of a
+/// Java identifier.  Mirrors Java's `Character.isJavaIdentifierStart(char)`:
+/// letters (Unicode categories Lu, Ll, Lt, Lm, Lo), currency symbols (Sc),
+/// and connecting punctuation (Pc, i.e. '_' and similar) all qualify.
+@_cdecl("kk_char_isJavaIdentifierStart")
+public func kk_char_isJavaIdentifierStart(_ value: Int) -> Int {
+    guard let scalar = runtimeUnicodeScalar(value) else {
+        return kk_box_bool(0)
+    }
+    let category = scalar.properties.generalCategory
+    switch category {
+    case .uppercaseLetter, .lowercaseLetter, .titlecaseLetter,
+         .modifierLetter, .otherLetter,
+         .letterNumber,
+         .currencySymbol,
+         .connectorPunctuation:
+        return kk_box_bool(1)
+    default:
+        return kk_box_bool(0)
+    }
+}
+
 // MARK: - STDLIB-003-ABI-001: Char.digitToInt(radix: Int)
 
 /// fun Char.digitToInt(radix: Int): Int

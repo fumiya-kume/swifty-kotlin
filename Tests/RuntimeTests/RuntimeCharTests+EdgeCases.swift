@@ -396,4 +396,46 @@ final class RuntimeCharEdgeCaseTests: XCTestCase {
     func testSurrogateCharacterIsNotDigit() {
         XCTAssertFalse(boolValue(kk_char_isDigit(0xD800)))
     }
+
+    // MARK: - STDLIB-TEXT-PROP-010: isJavaIdentifierStart
+
+    func testIsJavaIdentifierStartForUppercaseLetter() {
+        XCTAssertTrue(boolValue(kk_char_isJavaIdentifierStart(Int(("A" as UnicodeScalar).value))))
+    }
+
+    func testIsJavaIdentifierStartForLowercaseLetter() {
+        XCTAssertTrue(boolValue(kk_char_isJavaIdentifierStart(Int(("z" as UnicodeScalar).value))))
+    }
+
+    func testIsJavaIdentifierStartForUnderscore() {
+        // '_' is a connector punctuation (Pc) — valid Java identifier start
+        XCTAssertTrue(boolValue(kk_char_isJavaIdentifierStart(Int(("_" as UnicodeScalar).value))))
+    }
+
+    func testIsJavaIdentifierStartForDollarSign() {
+        // '$' is a currency symbol (Sc) — valid Java identifier start
+        XCTAssertTrue(boolValue(kk_char_isJavaIdentifierStart(Int(("$" as UnicodeScalar).value))))
+    }
+
+    func testIsJavaIdentifierStartRejectsDigit() {
+        XCTAssertFalse(boolValue(kk_char_isJavaIdentifierStart(Int(("5" as UnicodeScalar).value))))
+    }
+
+    func testIsJavaIdentifierStartRejectsSpace() {
+        XCTAssertFalse(boolValue(kk_char_isJavaIdentifierStart(Int((" " as UnicodeScalar).value))))
+    }
+
+    func testIsJavaIdentifierStartRejectsPunctuation() {
+        XCTAssertFalse(boolValue(kk_char_isJavaIdentifierStart(Int(("!" as UnicodeScalar).value))))
+    }
+
+    func testIsJavaIdentifierStartForUnicodeLetter() {
+        // U+00E9 'é' is a lowercase letter — valid Java identifier start
+        XCTAssertTrue(boolValue(kk_char_isJavaIdentifierStart(0x00E9)))
+    }
+
+    func testIsJavaIdentifierStartForCjkIdeograph() {
+        // U+4E2D '中' is an other letter — valid Java identifier start
+        XCTAssertTrue(boolValue(kk_char_isJavaIdentifierStart(0x4E2D)))
+    }
 }
