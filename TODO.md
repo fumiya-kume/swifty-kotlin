@@ -610,7 +610,7 @@
 - [ ] STDLIB-COMP-FN-043: `minOf` 関数の実装（Int版、vararg）
 - [ ] STDLIB-COMP-FN-044: `minOf` 関数の実装（Long版、2引数）
 - [x] STDLIB-COMP-FN-045: `minOf` 関数の実装（Long版、3引数）
-- [ ] STDLIB-COMP-FN-046: `minOf` 関数の実装（Long版、vararg）
+- [x] STDLIB-COMP-FN-046: `minOf` 関数の実装（Long版、vararg）
 - [x] STDLIB-COMP-FN-047: `minOf` 関数の実装（Short版、2引数）
 - [ ] STDLIB-COMP-FN-048: `minOf` 関数の実装（Short版、3引数）
 - [ ] STDLIB-COMP-FN-049: `minOf` 関数の実装（Short版、vararg）
