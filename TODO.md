@@ -496,7 +496,7 @@
 - [x] STDLIB-TEXT-FN-103: `toLongOrNull` 関数の実装
 - [ ] STDLIB-TEXT-FN-104: `toMutableList` 関数の実装
 - [x] STDLIB-TEXT-FN-105: `toRegex` 関数の実装
-- [ ] STDLIB-TEXT-FN-106: `toShort` 関数の実装
+- [x] STDLIB-TEXT-FN-106: `toShort` 関数の実装
 - [x] STDLIB-TEXT-FN-107: `toShortOrNull` 関数の実装
 - [ ] STDLIB-TEXT-FN-108: `toSortedSet` 関数の実装
 - [x] STDLIB-TEXT-FN-109: `toTypedArray` 関数の実装
