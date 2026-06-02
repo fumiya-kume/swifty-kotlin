@@ -24,12 +24,25 @@ public func kk_char_isDigit(_ value: Int) -> Int {
     return kk_box_bool(CharacterSet.decimalDigits.contains(scalar) ? 1 : 0)
 }
 
+/// Kotlin `Char.isLetter()`: true iff the category is one of UPPERCASE_LETTER,
+/// LOWERCASE_LETTER, TITLECASE_LETTER, MODIFIER_LETTER or OTHER_LETTER (the L*
+/// categories). Note that `CharacterSet.letters` ALSO contains the M* (mark)
+/// categories, so it must not be used here.
+private func charScalarIsLetter(_ scalar: UnicodeScalar) -> Bool {
+    switch scalar.properties.generalCategory {
+    case .uppercaseLetter, .lowercaseLetter, .titlecaseLetter, .modifierLetter, .otherLetter:
+        return true
+    default:
+        return false
+    }
+}
+
 @_cdecl("kk_char_isLetter")
 public func kk_char_isLetter(_ value: Int) -> Int {
     guard let scalar = runtimeUnicodeScalar(value) else {
         return kk_box_bool(0)
     }
-    return kk_box_bool(CharacterSet.letters.contains(scalar) ? 1 : 0)
+    return kk_box_bool(charScalarIsLetter(scalar) ? 1 : 0)
 }
 
 @_cdecl("kk_char_isLetterOrDigit")
@@ -37,7 +50,7 @@ public func kk_char_isLetterOrDigit(_ value: Int) -> Int {
     guard let scalar = runtimeUnicodeScalar(value) else {
         return kk_box_bool(0)
     }
-    let isLetterOrDigit = CharacterSet.letters.contains(scalar) || CharacterSet.decimalDigits.contains(scalar)
+    let isLetterOrDigit = charScalarIsLetter(scalar) || CharacterSet.decimalDigits.contains(scalar)
     return kk_box_bool(isLetterOrDigit ? 1 : 0)
 }
 
@@ -46,7 +59,13 @@ public func kk_char_isUpperCase(_ value: Int) -> Int {
     guard let scalar = runtimeUnicodeScalar(value) else {
         return kk_box_bool(0)
     }
-    return kk_box_bool(CharacterSet.uppercaseLetters.contains(scalar) ? 1 : 0)
+    // Kotlin `Char.isUpperCase()`: category is UPPERCASE_LETTER, or the char has
+    // the contributory property `Other_Uppercase`. That is exactly the Unicode
+    // "Uppercase" derived property exposed by `properties.isUppercase`.
+    // `CharacterSet.uppercaseLetters` (Lu + Lt) does not match: it wrongly
+    // includes titlecase letters and excludes Other_Uppercase chars such as
+    // Roman numerals (U+2160) and circled capitals (U+24B6).
+    return kk_box_bool(scalar.properties.isUppercase ? 1 : 0)
 }
 
 @_cdecl("kk_char_isLowerCase")
@@ -54,7 +73,13 @@ public func kk_char_isLowerCase(_ value: Int) -> Int {
     guard let scalar = runtimeUnicodeScalar(value) else {
         return kk_box_bool(0)
     }
-    return kk_box_bool(CharacterSet.lowercaseLetters.contains(scalar) ? 1 : 0)
+    // Kotlin `Char.isLowerCase()`: category is LOWERCASE_LETTER, or the char has
+    // the contributory property `Other_Lowercase` — the Unicode "Lowercase"
+    // derived property exposed by `properties.isLowercase`. This additionally
+    // covers Other_Lowercase chars such as modifier letters (U+02B0) and
+    // lowercase Roman numerals (U+2170) that `CharacterSet.lowercaseLetters`
+    // omits.
+    return kk_box_bool(scalar.properties.isLowercase ? 1 : 0)
 }
 
 @_cdecl("kk_char_isWhitespace")
@@ -321,26 +346,35 @@ public func kk_char_digitToInt_radix(
         )
         return 0
     }
-    let digitVal: Int
-    if value >= Int(("0" as UnicodeScalar).value), value <= Int(("9" as UnicodeScalar).value) {
-        digitVal = value - Int(("0" as UnicodeScalar).value)
-    } else if value >= Int(("a" as UnicodeScalar).value), value <= Int(("z" as UnicodeScalar).value) {
-        digitVal = value - Int(("a" as UnicodeScalar).value) + 10
-    } else if value >= Int(("A" as UnicodeScalar).value), value <= Int(("Z" as UnicodeScalar).value) {
-        digitVal = value - Int(("A" as UnicodeScalar).value) + 10
-    } else {
-        outThrown?.pointee = runtimeAllocateThrowable(
-            message: "IllegalArgumentException: code point \(value) is not a valid digit in radix \(radix)"
-        )
-        return 0
-    }
-    guard digitVal < radix else {
+    let digitVal = charDigitValueForRadix(value)
+    guard digitVal >= 0, digitVal < radix else {
         outThrown?.pointee = runtimeAllocateThrowable(
             message: "IllegalArgumentException: code point \(value) is not a valid digit in radix \(radix)"
         )
         return 0
     }
     return digitVal
+}
+
+/// Mirrors `kotlin.text.digitOf`: maps a Char code point to its raw digit value
+/// (before applying the radix bound), or -1 if it is not a recognized digit.
+///
+/// Per the Kotlin spec for `Char.digitToInt(radix)` a Char represents a digit if:
+///  - it is an ASCII digit '0'..'9' / Latin letter 'A'..'Z' / 'a'..'z', or
+///  - it is a fullwidth Latin letter '\uFF21'..'\uFF3A' / '\uFF41'..'\uFF5A', or
+///  - `isDigit` is true (Unicode category Nd) and the Unicode decimal value is used.
+/// All other characters below U+0080 are rejected outright (matching `digitOf`).
+private func charDigitValueForRadix(_ code: Int) -> Int {
+    if code >= 0x30, code <= 0x39 { return code - 0x30 }            // '0'..'9'
+    if code >= 0x41, code <= 0x5A { return code - 0x41 + 10 }       // 'A'..'Z'
+    if code >= 0x61, code <= 0x7A { return code - 0x61 + 10 }       // 'a'..'z'
+    if code < 0x80 { return -1 }                                    // other ASCII is never a digit
+    if code >= 0xFF21, code <= 0xFF3A { return code - 0xFF21 + 10 } // fullwidth 'A'..'Z'
+    if code >= 0xFF41, code <= 0xFF5A { return code - 0xFF41 + 10 } // fullwidth 'a'..'z'
+    if let scalar = runtimeUnicodeScalar(code), let value = charBase10DigitValue(scalar) {
+        return value
+    }
+    return -1
 }
 
 // MARK: - STDLIB-003-ABI-002: Char.Companion.digitToChar(digit: Int, radix: Int)
@@ -367,10 +401,13 @@ public func kk_char_digitToChar_radix(
         )
         return 0
     }
+    // Kotlin spec (Int.digitToChar): digits < 10 map to '0'..'9', and digits
+    // >= 10 map to the UPPERCASE Latin letters 'A'..'Z'. Example from the docs:
+    // 10.digitToChar(16) == 'A', 20.digitToChar(36) == 'K'.
     if digit < 10 {
         return Int(("0" as UnicodeScalar).value) + digit
     } else {
-        return Int(("a" as UnicodeScalar).value) + digit - 10
+        return Int(("A" as UnicodeScalar).value) + digit - 10
     }
 }
 

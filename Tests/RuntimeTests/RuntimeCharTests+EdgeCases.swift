@@ -396,4 +396,79 @@ final class RuntimeCharEdgeCaseTests: XCTestCase {
     func testSurrogateCharacterIsNotDigit() {
         XCTAssertFalse(boolValue(kk_char_isDigit(0xD800)))
     }
+
+    // MARK: - isLetter must exclude combining marks (category M*)
+    // Kotlin Char.isLetter() is true only for L* categories (Lu/Ll/Lt/Lm/Lo);
+    // combining marks (Mn/Mc/Me) are NOT letters.
+
+    func testCombiningMarkIsNotLetter() {
+        // U+0301 COMBINING ACUTE ACCENT (Mn)
+        XCTAssertFalse(boolValue(kk_char_isLetter(0x0301)))
+        // U+0300 COMBINING GRAVE ACCENT (Mn)
+        XCTAssertFalse(boolValue(kk_char_isLetter(0x0300)))
+        // U+0903 DEVANAGARI SIGN VISARGA (Mc, spacing combining mark)
+        XCTAssertFalse(boolValue(kk_char_isLetter(0x0903)))
+        // U+20DD COMBINING ENCLOSING CIRCLE (Me)
+        XCTAssertFalse(boolValue(kk_char_isLetter(0x20DD)))
+    }
+
+    func testCombiningMarkIsNotLetterOrDigit() {
+        XCTAssertFalse(boolValue(kk_char_isLetterOrDigit(0x0301)))
+        XCTAssertFalse(boolValue(kk_char_isLetterOrDigit(0x20DD)))
+    }
+
+    func testModifierLetterIsLetter() {
+        // U+02B0 MODIFIER LETTER SMALL H (Lm) is a letter.
+        XCTAssertTrue(boolValue(kk_char_isLetter(0x02B0)))
+    }
+
+    func testTitlecaseLetterIsLetter() {
+        // U+01C5 'ǅ' (Lt) is a letter.
+        XCTAssertTrue(boolValue(kk_char_isLetter(0x01C5)))
+    }
+
+    func testLetterNumberIsNotLetter() {
+        // U+2160 ROMAN NUMERAL ONE (Nl) is NOT a letter (it is a number).
+        XCTAssertFalse(boolValue(kk_char_isLetter(0x2160)))
+    }
+
+    // MARK: - isUpperCase / isLowerCase follow Unicode Uppercase/Lowercase
+    // Kotlin: isUpperCase == (category Lu) || Other_Uppercase, and likewise for
+    // lowercase. This differs from "Lu+Lt" / "Ll" letter sets.
+
+    func testTitlecaseLetterIsNeitherUpperNorLower() {
+        // U+01C5 'ǅ' (Lt) — titlecase is not upper case nor lower case.
+        XCTAssertFalse(boolValue(kk_char_isUpperCase(0x01C5)))
+        XCTAssertFalse(boolValue(kk_char_isLowerCase(0x01C5)))
+    }
+
+    func testRomanNumeralUpperLowerCase() {
+        // U+2160 ROMAN NUMERAL ONE has Other_Uppercase -> isUpperCase true.
+        XCTAssertTrue(boolValue(kk_char_isUpperCase(0x2160)))
+        XCTAssertFalse(boolValue(kk_char_isLowerCase(0x2160)))
+        // U+2170 SMALL ROMAN NUMERAL ONE has Other_Lowercase -> isLowerCase true.
+        XCTAssertTrue(boolValue(kk_char_isLowerCase(0x2170)))
+        XCTAssertFalse(boolValue(kk_char_isUpperCase(0x2170)))
+    }
+
+    func testCircledLatinLettersUpperLowerCase() {
+        // U+24B6 CIRCLED LATIN CAPITAL LETTER A has Other_Uppercase.
+        XCTAssertTrue(boolValue(kk_char_isUpperCase(0x24B6)))
+        // U+24D0 CIRCLED LATIN SMALL LETTER A has Other_Lowercase.
+        XCTAssertTrue(boolValue(kk_char_isLowerCase(0x24D0)))
+    }
+
+    func testModifierLetterIsLowerCase() {
+        // U+02B0 MODIFIER LETTER SMALL H has Other_Lowercase -> isLowerCase true.
+        XCTAssertTrue(boolValue(kk_char_isLowerCase(0x02B0)))
+        XCTAssertFalse(boolValue(kk_char_isUpperCase(0x02B0)))
+    }
+
+    func testAsciiCaseClassificationUnaffected() {
+        // Sanity: the common ASCII path is still correct after the fix.
+        XCTAssertTrue(boolValue(kk_char_isUpperCase(Int(("A" as UnicodeScalar).value))))
+        XCTAssertFalse(boolValue(kk_char_isLowerCase(Int(("A" as UnicodeScalar).value))))
+        XCTAssertTrue(boolValue(kk_char_isLowerCase(Int(("z" as UnicodeScalar).value))))
+        XCTAssertFalse(boolValue(kk_char_isUpperCase(Int(("z" as UnicodeScalar).value))))
+    }
 }
