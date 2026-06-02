@@ -768,7 +768,7 @@
 - [x] STDLIB-JS-167: JavaScript 固有 API の実装
 - [ ] STDLIB-NATIVE-168: Native 固有 API の実装
 - [x] STDLIB-REFL-173: コンパイラプラグイン API 実装
-- [ ] STDLIB-REFL-175: アノテーション処理高度機能実装
+- [x] STDLIB-REFL-175: アノテーション処理高度機能実装
 
 ## ターゲット外バックログ（本体非追跡）
 - JDBC / DB コネクション・トランザクション・プール
