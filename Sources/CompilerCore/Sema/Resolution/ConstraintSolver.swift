@@ -8,19 +8,19 @@ public struct TypeVarID: Hashable, Sendable {
     }
 }
 
-public enum ConstraintKind {
+enum ConstraintKind {
     case subtype
     case equal
     case supertype
 }
 
-public struct Constraint {
-    public let kind: ConstraintKind
-    public let left: TypeID
-    public let right: TypeID
-    public let blameRange: SourceRange?
+struct Constraint {
+    let kind: ConstraintKind
+    let left: TypeID
+    let right: TypeID
+    let blameRange: SourceRange?
 
-    public init(kind: ConstraintKind, left: TypeID, right: TypeID, blameRange: SourceRange? = nil) {
+    init(kind: ConstraintKind, left: TypeID, right: TypeID, blameRange: SourceRange? = nil) {
         self.kind = kind
         self.left = left
         self.right = right
@@ -28,18 +28,18 @@ public struct Constraint {
     }
 }
 
-public enum ConstraintOperand: Equatable {
+enum ConstraintOperand: Equatable {
     case type(TypeID)
     case variable(TypeVarID)
 }
 
-public struct VariableConstraint {
-    public let kind: ConstraintKind
-    public let left: ConstraintOperand
-    public let right: ConstraintOperand
-    public let blameRange: SourceRange?
+struct VariableConstraint {
+    let kind: ConstraintKind
+    let left: ConstraintOperand
+    let right: ConstraintOperand
+    let blameRange: SourceRange?
 
-    public init(
+    init(
         kind: ConstraintKind,
         left: ConstraintOperand,
         right: ConstraintOperand,
@@ -52,22 +52,22 @@ public struct VariableConstraint {
     }
 }
 
-public struct Solution {
-    public let substitution: [TypeVarID: TypeID]
-    public let isSuccess: Bool
-    public let failure: Diagnostic?
+struct Solution {
+    let substitution: [TypeVarID: TypeID]
+    let isSuccess: Bool
+    let failure: Diagnostic?
 
-    public init(substitution: [TypeVarID: TypeID], isSuccess: Bool, failure: Diagnostic?) {
+    init(substitution: [TypeVarID: TypeID], isSuccess: Bool, failure: Diagnostic?) {
         self.substitution = substitution
         self.isSuccess = isSuccess
         self.failure = failure
     }
 }
 
-public final class ConstraintSolver {
-    public init() {}
+final class ConstraintSolver {
+    init() {}
 
-    public func solve(
+    func solve(
         vars: [TypeVarID],
         constraints: [Constraint],
         typeSystem: TypeSystem
@@ -83,7 +83,7 @@ public final class ConstraintSolver {
         return solve(vars: vars, constraints: converted, typeSystem: typeSystem)
     }
 
-    public func solve(
+    func solve(
         vars: [TypeVarID],
         constraints: [VariableConstraint],
         typeSystem: TypeSystem

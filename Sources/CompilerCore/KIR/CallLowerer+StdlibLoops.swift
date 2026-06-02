@@ -506,7 +506,7 @@ extension CallLowerer {
                 let nullExpr = arena.appendExpr(.null, type: sema.types.nullableAnyType)
                 return emitTimedValueNew(
                     valueExpr: nullExpr, durationExpr: durationExpr, resultType: resultType,
-                    sema: sema, arena: arena, interner: interner, instructions: &instructions
+                    arena: arena, interner: interner, instructions: &instructions
                 )
             }
             let callResultType = sema.types.makeNullable(sema.types.anyType)
@@ -549,7 +549,7 @@ extension CallLowerer {
         // Create TimedValue(value, duration) via kk_timedvalue_new.
         return emitTimedValueNew(
             valueExpr: blockResultExpr, durationExpr: durationExpr, resultType: resultType,
-            sema: sema, arena: arena, interner: interner, instructions: &instructions
+            arena: arena, interner: interner, instructions: &instructions
         )
     }
 
@@ -558,7 +558,6 @@ extension CallLowerer {
         valueExpr: KIRExprID,
         durationExpr: KIRExprID,
         resultType: TypeID,
-        sema: SemaModule,
         arena: KIRArena,
         interner: StringInterner,
         instructions: inout [KIRInstruction]

@@ -28,8 +28,6 @@ extension CallLowerer {
               let receiverType = sema.bindings.exprTypes[receiverExpr],
               let receiverKind = base64RuntimeReceiverKind(
                   for: receiverType,
-                  loweredReceiverID: loweredReceiverID,
-                  arena: arena,
                   sema: sema,
                   interner: interner
               )
@@ -166,8 +164,6 @@ extension CallLowerer {
 
     func base64RuntimeReceiverKind(
         for receiverType: TypeID,
-        loweredReceiverID: KIRExprID,
-        arena: KIRArena,
         sema: SemaModule,
         interner: StringInterner
     ) -> Base64RuntimeReceiverKind? {

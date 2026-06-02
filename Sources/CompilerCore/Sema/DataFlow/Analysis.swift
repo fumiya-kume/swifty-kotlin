@@ -1,31 +1,31 @@
-public struct VariableFlowState: Equatable {
-    public var possibleTypes: Set<TypeID>
-    public var nullability: Nullability
-    public var isStable: Bool
+struct VariableFlowState: Equatable {
+    var possibleTypes: Set<TypeID>
+    var nullability: Nullability
+    var isStable: Bool
 
-    public init(possibleTypes: Set<TypeID>, nullability: Nullability, isStable: Bool) {
+    init(possibleTypes: Set<TypeID>, nullability: Nullability, isStable: Bool) {
         self.possibleTypes = possibleTypes
         self.nullability = nullability
         self.isStable = isStable
     }
 }
 
-public struct DataFlowState: Equatable {
-    public var variables: [SymbolID: VariableFlowState]
+struct DataFlowState: Equatable {
+    var variables: [SymbolID: VariableFlowState]
 
-    public init(variables: [SymbolID: VariableFlowState] = [:]) {
+    init(variables: [SymbolID: VariableFlowState] = [:]) {
         self.variables = variables
     }
 }
 
-public struct WhenBranchSummary {
-    public let coveredSymbols: Set<InternedString>
-    public let hasElse: Bool
-    public let hasNullCase: Bool
-    public let hasTrueCase: Bool
-    public let hasFalseCase: Bool
+struct WhenBranchSummary {
+    let coveredSymbols: Set<InternedString>
+    let hasElse: Bool
+    let hasNullCase: Bool
+    let hasTrueCase: Bool
+    let hasFalseCase: Bool
 
-    public init(
+    init(
         coveredSymbols: Set<InternedString>,
         hasElse: Bool,
         hasNullCase: Bool = false,
@@ -40,20 +40,20 @@ public struct WhenBranchSummary {
     }
 }
 
-public struct ConditionBranch: Equatable {
-    public let trueState: DataFlowState
-    public let falseState: DataFlowState
+struct ConditionBranch: Equatable {
+    let trueState: DataFlowState
+    let falseState: DataFlowState
 
-    public init(trueState: DataFlowState, falseState: DataFlowState) {
+    init(trueState: DataFlowState, falseState: DataFlowState) {
         self.trueState = trueState
         self.falseState = falseState
     }
 }
 
-public final class DataFlowAnalyzer {
-    public init() {}
+final class DataFlowAnalyzer {
+    init() {}
 
-    public func branchOnCondition(
+    func branchOnCondition(
         _ conditionID: ExprID,
         base: DataFlowState,
         locals: [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)],
@@ -263,7 +263,7 @@ public final class DataFlowAnalyzer {
         )
     }
 
-    public func branchOnWhenSubject(
+    func branchOnWhenSubject(
         subjectSymbol: SymbolID,
         subjectType: TypeID,
         conditionID: ExprID,
@@ -406,7 +406,7 @@ public final class DataFlowAnalyzer {
         return DataFlowState(variables: vars)
     }
 
-    public func whenElseState(
+    func whenElseState(
         subjectSymbol: SymbolID,
         subjectType: TypeID,
         hasExplicitNullBranch: Bool,
@@ -426,7 +426,7 @@ public final class DataFlowAnalyzer {
         return DataFlowState(variables: vars)
     }
 
-    public func whenNonNullBranchState(
+    func whenNonNullBranchState(
         subjectSymbol: SymbolID,
         subjectType: TypeID,
         base: DataFlowState,
@@ -442,7 +442,7 @@ public final class DataFlowAnalyzer {
         return DataFlowState(variables: vars)
     }
 
-    public func resolvedTypeFromFlowState(
+    func resolvedTypeFromFlowState(
         _ state: DataFlowState,
         symbol: SymbolID
     ) -> TypeID? {
@@ -573,7 +573,7 @@ public final class DataFlowAnalyzer {
 
     /// Narrow a variable to non-null in the given flow state.
     /// Infrastructure for future smart cast call sites (e.g., property narrowing, when-subject exhaustive narrowing).
-    public func narrowToNonNull(
+    func narrowToNonNull(
         symbol: SymbolID,
         type: TypeID,
         base: DataFlowState,
@@ -592,7 +592,7 @@ public final class DataFlowAnalyzer {
     /// Invalidate (remove) smart cast information for a variable after reassignment.
     /// Infrastructure for future DataFlowState-level invalidation (locals-level invalidation is already handled
     /// by `inferLocalAssignExpr` resetting `locals[name]` to the declared type).
-    public func invalidateVariable(
+    func invalidateVariable(
         symbol: SymbolID,
         base: DataFlowState
     ) -> DataFlowState {
@@ -601,7 +601,7 @@ public final class DataFlowAnalyzer {
         return DataFlowState(variables: vars)
     }
 
-    public func merge(_ lhs: DataFlowState, _ rhs: DataFlowState) -> DataFlowState {
+    func merge(_ lhs: DataFlowState, _ rhs: DataFlowState) -> DataFlowState {
         var merged: [SymbolID: VariableFlowState] = [:]
         for (symbol, lhsState) in lhs.variables {
             guard let rhsState = rhs.variables[symbol] else { continue }
@@ -618,7 +618,7 @@ public final class DataFlowAnalyzer {
         return DataFlowState(variables: merged)
     }
 
-    public func isWhenExhaustive(
+    func isWhenExhaustive(
         subjectType: TypeID,
         branches: WhenBranchSummary,
         sema: SemaModule
@@ -647,7 +647,7 @@ public final class DataFlowAnalyzer {
 
     /// P5-78: Returns the set of missing sealed subtype InternedString names for diagnostic purposes.
     /// Returns nil if the type is not a sealed type or if all branches are covered.
-    public func missingSealedBranches(
+    func missingSealedBranches(
         subjectType: TypeID,
         branches: WhenBranchSummary,
         sema: SemaModule

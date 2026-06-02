@@ -339,7 +339,6 @@ final class CoroutineLoweringPass: LoweringPass {
             runtimeCreateCoroutineUninterceptedCallee: runtimeCreateCoroutineUninterceptedCallee,
             runtimeStartCoroutineUninterceptedOrReturnCallee: runtimeStartCoroutineUninterceptedOrReturnCallee,
             runtimeContinuationResumeCallee: runtimeContinuationResumeCallee,
-            suspendCoroutineUninterceptedOrReturnCallee: suspendCoroutineUninterceptedOrReturnCallee,
             continuationFactory: continuationFactory,
             launcherArgSetCallee: launcherArgSetCallee,
             runtimeRunBlockingWithContCallee: runtimeRunBlockingWithContCallee,

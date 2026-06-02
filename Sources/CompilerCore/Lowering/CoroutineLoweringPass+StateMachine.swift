@@ -402,7 +402,6 @@ extension CoroutineLoweringPass {
     }
 
     struct CFGBlock {
-        let id: Int
         let instructions: [IndexedInstruction]
         let successors: [Int]
     }

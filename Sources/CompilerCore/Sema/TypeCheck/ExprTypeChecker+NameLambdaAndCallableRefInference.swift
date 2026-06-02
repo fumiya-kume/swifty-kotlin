@@ -770,8 +770,7 @@ extension ExprTypeChecker {
                 expectedReturnType: expectedFunctionType.returnType,
                 bodyExpr: body,
                 ast: ast,
-                sema: sema,
-                ctx: ctx
+                sema: sema
             )
             
             // Apply subtype constraint only if needed
@@ -835,7 +834,7 @@ extension ExprTypeChecker {
            case .thisRef = ast.arena.expr(receiver)
         {
             if let result = inferExprReceiverClassRef(
-                id, receiver: receiver, range: range, ctx: ctx, locals: &locals
+                id, receiver: receiver, ctx: ctx, locals: &locals
             ) {
                 return result
             }
@@ -1102,7 +1101,6 @@ extension ExprTypeChecker {
     private func inferExprReceiverClassRef(
         _ id: ExprID,
         receiver: ExprID,
-        range: SourceRange,
         ctx: TypeInferenceContext,
         locals: inout LocalBindings
     ) -> TypeID? {
@@ -1313,7 +1311,7 @@ extension ExprTypeChecker {
             return inferTypeFromHOFContext(parentCall, ctx: ctx, sema: sema)
         }
 
-        if let assignmentType = inferFromAssignmentContext(id: id, ctx: ctx, sema: sema) {
+        if let assignmentType = inferFromAssignmentContext() {
             return assignmentType
         }
 
@@ -1381,7 +1379,7 @@ extension ExprTypeChecker {
     }
 
     /// Infers lambda parameter type from assignment context
-    private func inferFromAssignmentContext(id: ExprID, ctx: TypeInferenceContext, sema: SemaModule) -> TypeID? {
+    private func inferFromAssignmentContext() -> TypeID? {
         // This would analyze assignments like `val x: (Int) -> String = { it.toString() }`
         return nil
     }
@@ -1392,8 +1390,7 @@ extension ExprTypeChecker {
         expectedReturnType: TypeID,
         bodyExpr: ExprID,
         ast: ASTModule,
-        sema: SemaModule,
-        ctx: TypeInferenceContext
+        sema: SemaModule
     ) -> TypeID {
         // Unit optimization: if expected type is Unit, always return Unit
         if expectedReturnType == sema.types.unitType {

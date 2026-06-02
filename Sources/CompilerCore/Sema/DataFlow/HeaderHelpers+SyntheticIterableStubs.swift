@@ -687,7 +687,6 @@ extension DataFlowSemaPhase {
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,
-        kotlinCollectionsPkg: [InternedString],
         iterableInterfaceSymbol: SymbolID,
         mutableListSymbol: SymbolID
     ) {
@@ -740,7 +739,6 @@ extension DataFlowSemaPhase {
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,
-        kotlinCollectionsPkg: [InternedString],
         iterableInterfaceSymbol: SymbolID,
         mutableSetSymbol: SymbolID
     ) {
@@ -794,7 +792,6 @@ extension DataFlowSemaPhase {
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,
-        kotlinCollectionsPkg: [InternedString],
         iterableInterfaceSymbol: SymbolID,
         mutableSetSymbol: SymbolID
     ) {

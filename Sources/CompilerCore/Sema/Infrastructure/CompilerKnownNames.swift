@@ -202,7 +202,6 @@ enum KnownCollectionKind {
 }
 
 struct KnownCompilerNames {
-    let interner: StringInterner
 
     let byte: InternedString
     let short: InternedString
@@ -249,7 +248,6 @@ struct KnownCompilerNames {
     let stringBuilder: InternedString
     let sequence: InternedString
     let grouping: InternedString
-    let coroutineContext: InternedString
     let continuation: InternedString
     let suspendCoroutine: InternedString
     let resume: InternedString
@@ -267,7 +265,6 @@ struct KnownCompilerNames {
     let null: InternedString
     let field: InternedString
     let thisName: InternedString
-    let it: InternedString
     let main: InternedString
     let with: InternedString
     let run: InternedString
@@ -279,12 +276,8 @@ struct KnownCompilerNames {
     let flow: InternedString
     let emit: InternedString
     let to: InternedString
-    let lazy: InternedString
-    let observable: InternedString
-    let vetoable: InternedString
     let notNull: InternedString
     let emptyListFn: InternedString
-    let emptyArrayFn: InternedString
     let emptySetFn: InternedString
     let emptyMapFn: InternedString
     let buildList: InternedString
@@ -318,7 +311,6 @@ struct KnownCompilerNames {
     let annotationsName: InternedString
     let findAnnotationName: InternedString
     let findAssociatedObjectName: InternedString
-    let annotationClassName: InternedString
     let size: InternedString
     let isEmpty: InternedString
     let getValue: InternedString
@@ -333,12 +325,6 @@ struct KnownCompilerNames {
     let produce: InternedString
 
     // Scope function names (STDLIB-004 / STDLIB-250)
-    let letFn: InternedString
-    let runFn: InternedString
-    let applyFn: InternedString
-    let alsoFn: InternedString
-    let useFn: InternedString
-    let closeFn: InternedString
 
     // StringBuilder member names
     let append: InternedString
@@ -367,7 +353,6 @@ struct KnownCompilerNames {
     let kotlinRegexFQName: [InternedString]
     let kotlinStringBuilderFQName: [InternedString]
     let kotlinSequenceFQName: [InternedString]
-    let kotlinCoroutineContextFQName: [InternedString]
     let kotlinContinuationFQName: [InternedString]
     let kotlinSuspendCoroutineFQName: [InternedString]
     let kotlinCollectionsGroupingFQName: [InternedString]
@@ -386,20 +371,16 @@ struct KnownCompilerNames {
     let kotlinxCoroutinesJobFQName: [InternedString]
     let kotlinxCoroutinesDeferredFQName: [InternedString]
     let kotlinxCoroutinesChannelFQName: [InternedString]
-    let kotlinxCoroutinesFlowFQName: [InternedString]
     let kotlinxCoroutinesProduceFQName: [InternedString]
     let kotlinxCoroutinesRunBlockingFQName: [InternedString]
     let kotlinxCoroutinesLaunchFQName: [InternedString]
     let kotlinxCoroutinesAsyncFQName: [InternedString]
     let kotlinCoroutinesContinuationFQName: [InternedString]
-    let kotlinCoroutinesCoroutineContextFQName: [InternedString]
-    let kotlinCoroutinesCoroutineSuspendedFQName: [InternedString]
     let kotlinCoroutinesSuspendCoroutineUninterceptedOrReturnFQName: [InternedString]
     let kotlinResultFQName: [InternedString]
     let kotlinRunCatchingFQName: [InternedString]
 
     init(interner: StringInterner) {
-        self.interner = interner
 
         byte = interner.intern("Byte")
         short = interner.intern("Short")
@@ -446,7 +427,6 @@ struct KnownCompilerNames {
         stringBuilder = interner.intern("StringBuilder")
         sequence = interner.intern("Sequence")
         grouping = interner.intern("Grouping")
-        coroutineContext = interner.intern("CoroutineContext")
         continuation = interner.intern("Continuation")
         suspendCoroutine = interner.intern("suspendCoroutine")
         resume = interner.intern("resume")
@@ -464,7 +444,6 @@ struct KnownCompilerNames {
         null = interner.intern("null")
         field = interner.intern("field")
         thisName = interner.intern("this")
-        it = interner.intern("it")
         main = interner.intern("main")
         with = interner.intern("with")
         run = interner.intern("run")
@@ -476,12 +455,8 @@ struct KnownCompilerNames {
         flow = interner.intern("flow")
         emit = interner.intern("emit")
         to = interner.intern("to")
-        lazy = interner.intern("lazy")
-        observable = interner.intern("observable")
-        vetoable = interner.intern("vetoable")
         notNull = interner.intern("notNull")
         emptyListFn = interner.intern("emptyList")
-        emptyArrayFn = interner.intern("emptyArray")
         emptySetFn = interner.intern("emptySet")
         emptyMapFn = interner.intern("emptyMap")
         buildList = interner.intern("buildList")
@@ -515,7 +490,6 @@ struct KnownCompilerNames {
         annotationsName = interner.intern("annotations")
         findAnnotationName = interner.intern("findAnnotation")
         findAssociatedObjectName = interner.intern("findAssociatedObject")
-        annotationClassName = interner.intern("annotationClass")
         size = interner.intern("size")
         isEmpty = interner.intern("isEmpty")
         getValue = interner.intern("getValue")
@@ -530,12 +504,6 @@ struct KnownCompilerNames {
         produce = interner.intern("produce")
 
         // Scope function names (STDLIB-004 / STDLIB-250)
-        letFn = interner.intern("let")
-        runFn = interner.intern("run")
-        applyFn = interner.intern("apply")
-        alsoFn = interner.intern("also")
-        useFn = interner.intern("use")
-        closeFn = interner.intern("close")
 
         // StringBuilder member names
         append = interner.intern("append")
@@ -569,15 +537,11 @@ struct KnownCompilerNames {
         let kotlinx = interner.intern("kotlinx")
         let coroutines = interner.intern("coroutines")
         let channels = interner.intern("channels")
-        let flowPkg = interner.intern("flow")
-        let coroutineSuspended = interner.intern("COROUTINE_SUSPENDED")
-        let coroutineContext = interner.intern("CoroutineContext")
         let coroutinesIntrinsics = interner.intern("intrinsics")
 
         kotlinRegexFQName = [kotlin, kotlinText, regex]
         kotlinStringBuilderFQName = [kotlin, kotlinText, stringBuilder]
         kotlinSequenceFQName = [kotlin, kotlinSequences, sequence]
-        kotlinCoroutineContextFQName = [kotlin, kotlinCoroutines, coroutineContext]
         kotlinContinuationFQName = [kotlin, kotlinCoroutines, continuation]
         kotlinSuspendCoroutineFQName = [kotlin, kotlinCoroutines, suspendCoroutine]
         kotlinCollectionsGroupingFQName = [kotlin, kotlinCollections, grouping]
@@ -594,7 +558,6 @@ struct KnownCompilerNames {
         kotlinxCoroutinesJobFQName = [kotlinx, coroutines, job]
         kotlinxCoroutinesDeferredFQName = [kotlinx, coroutines, deferred]
         kotlinxCoroutinesChannelFQName = [kotlinx, coroutines, channels, channel]
-        kotlinxCoroutinesFlowFQName = [kotlinx, coroutines, flowPkg, flow]
         kotlinxCoroutinesProduceFQName = [kotlinx, coroutines, channels, produce]
         kotlinxCoroutinesRunBlockingFQName = [kotlinx, coroutines, runBlocking]
         kotlinxCoroutinesLaunchFQName = [kotlinx, coroutines, launch]
@@ -602,8 +565,6 @@ struct KnownCompilerNames {
         kotlinCoroutinesFQName = [kotlin, coroutines]
         kotlinCoroutinesIntrinsicsFQName = [kotlin, coroutines, coroutinesIntrinsics]
         kotlinCoroutinesContinuationFQName = [kotlin, coroutines, continuation]
-        kotlinCoroutinesCoroutineContextFQName = [kotlin, coroutines, coroutineContext]
-        kotlinCoroutinesCoroutineSuspendedFQName = [kotlin, coroutines, coroutinesIntrinsics, coroutineSuspended]
         kotlinCoroutinesSuspendCoroutineUninterceptedOrReturnFQName = [kotlin, coroutines, coroutinesIntrinsics, suspendCoroutineUninterceptedOrReturn]
 
         let resultName = interner.intern("Result")

@@ -1,15 +1,15 @@
 import Foundation
 
-public enum MangledDeclKind {
+enum MangledDeclKind {
     case automatic
     case getter
     case setter
 }
 
-public final class NameMangler {
-    public init() {}
+final class NameMangler {
+    init() {}
 
-    public func mangle(
+    func mangle(
         moduleName: String,
         symbol: SemanticSymbol,
         signature: String,
@@ -23,7 +23,7 @@ public final class NameMangler {
         return "\(base)__\(hash)"
     }
 
-    public func mangle(
+    func mangle(
         moduleName: String,
         symbol: SemanticSymbol,
         symbols: SymbolTable,

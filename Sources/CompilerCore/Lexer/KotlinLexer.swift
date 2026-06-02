@@ -1,6 +1,6 @@
 import Foundation
 
-public final class KotlinLexer {
+final class KotlinLexer {
     let file: FileID
     let bytes: [UInt8]
     let interner: StringInterner
@@ -8,14 +8,14 @@ public final class KotlinLexer {
 
     var offset: Int = 0
 
-    public init(file: FileID, source: Data, interner: StringInterner, diagnostics: DiagnosticEngine) {
+    init(file: FileID, source: Data, interner: StringInterner, diagnostics: DiagnosticEngine) {
         self.file = file
         bytes = Array(source)
         self.interner = interner
         self.diagnostics = diagnostics
     }
 
-    public func lexAll() -> [Token] {
+    func lexAll() -> [Token] {
         var tokens: [Token] = []
         while offset < bytes.count {
             let leadingTrivia = consumeTrivia()

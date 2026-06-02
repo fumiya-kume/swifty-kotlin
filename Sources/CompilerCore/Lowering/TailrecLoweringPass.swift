@@ -9,7 +9,6 @@ final class TailrecLoweringPass: LoweringPass {
 
     private struct TailrecFunctionIdentity {
         let symbol: SymbolID
-        let name: InternedString
     }
 
     func shouldRun(module: KIRModule, ctx _: KIRContext) -> Bool {
@@ -38,8 +37,7 @@ final class TailrecLoweringPass: LoweringPass {
             nextLoopLabel = loopLabel + 1
 
             let functionIdentity = TailrecFunctionIdentity(
-                symbol: function.symbol,
-                name: function.name
+                symbol: function.symbol
             )
             var updated = function
             updated.replaceBody(rewriteTailCalls(

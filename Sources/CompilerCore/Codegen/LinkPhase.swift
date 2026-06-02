@@ -6,8 +6,8 @@ import Darwin
 import Glibc
 #endif
 
-public final class LinkPhase: CompilerPhase {
-    public static let name = "Link"
+final class LinkPhase: CompilerPhase {
+    static let name = "Link"
 
     /// Linux links share one Swift autolink stub per target triple under `TMPDIR/kswiftk-link-stubs`.
     /// Guard creation with a file lock so parallel Swift test workers in separate processes
@@ -24,9 +24,9 @@ public final class LinkPhase: CompilerPhase {
     }
     """
 
-    public init() {}
+    init() {}
 
-    public func run(_ ctx: CompilationContext) throws {
+    func run(_ ctx: CompilationContext) throws {
         guard ctx.options.emit == .executable else { return }
         guard let objectPath = ctx.generatedObjectPath else {
             ctx.diagnostics.error(

@@ -1606,13 +1606,6 @@ public func kk_op_mod(_ lhs: Int, _ rhs: Int) -> Int {
     return lhs % rhs
 }
 
-@_cdecl("kk_op_lmod")
-public func kk_op_lmod(_ lhs: Int, _ rhs: Int) -> Int {
-    // Long uses same Int representation on 64-bit platforms
-    if rhs == 0 { return 0 } // Handle division by zero
-    return lhs % rhs
-}
-
 private func runtimeFloorMod(_ lhs: Int, _ rhs: Int) -> Int {
     if rhs == 0 { return 0 }
     if lhs == Int.min && rhs == -1 { return 0 }
@@ -1631,18 +1624,6 @@ public func kk_op_floor_mod(_ lhs: Int, _ rhs: Int) -> Int {
 @_cdecl("kk_op_lfloor_mod")
 public func kk_op_lfloor_mod(_ lhs: Int, _ rhs: Int) -> Int {
     runtimeFloorMod(lhs, rhs)
-}
-
-// MARK: - Boolean logical ops
-
-@_cdecl("kk_logical_and")
-public func kk_logical_and(_ lhs: Int, _ rhs: Int) -> Int {
-    (lhs != 0 && rhs != 0) ? 1 : 0
-}
-
-@_cdecl("kk_logical_or")
-public func kk_logical_or(_ lhs: Int, _ rhs: Int) -> Int {
-    (lhs != 0 || rhs != 0) ? 1 : 0
 }
 
 // MARK: - Char operations

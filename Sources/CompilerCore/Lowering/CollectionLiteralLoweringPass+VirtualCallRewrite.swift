@@ -408,7 +408,6 @@ extension CollectionLiteralLoweringPass {
             callee: callee, receiver: receiver, arguments: arguments,
             result: result, origCanThrow: origCanThrow,
             origThrownResult: origThrownResult, module: module, lookup: lookup,
-            context: context,
             listExprIDs: &listExprIDs, loweredBody: &loweredBody
         ) { return true }
 
@@ -571,7 +570,6 @@ extension CollectionLiteralLoweringPass {
         origThrownResult: KIRExprID?,
         module: KIRModule,
         lookup: CollectionLiteralLookupTables,
-        context: VirtualCallRewriteContext,
         listExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {

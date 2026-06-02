@@ -112,7 +112,6 @@ extension CallTypeChecker {
             id,
             calleeName: calleeName,
             argExpr: samArgExpr,
-            range: range,
             ctx: ctx,
             locals: &locals,
             explicitTypeArgs: explicitTypeArgs
@@ -206,7 +205,6 @@ extension CallTypeChecker {
         _ id: ExprID,
         calleeName: InternedString,
         argExpr: ExprID,
-        range: SourceRange,
         ctx: TypeInferenceContext,
         locals: inout LocalBindings,
         explicitTypeArgs: [TypeID]

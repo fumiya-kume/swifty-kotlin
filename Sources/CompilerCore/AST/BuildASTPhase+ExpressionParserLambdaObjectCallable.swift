@@ -3,8 +3,7 @@ import Foundation
 extension BuildASTPhase.ExpressionParser {
     func parseLambdaLiteral(
         label: InternedString? = nil,
-        start: SourceLocation? = nil,
-        allowImplicitEmptyParams: Bool = false
+        start: SourceLocation? = nil
     ) -> ExprID? {
         guard matches(.symbol(.lBrace)) else {
             return nil
@@ -65,9 +64,8 @@ extension BuildASTPhase.ExpressionParser {
         // No-arrow lambda: `{ body }`.
         //
         // In expression position Kotlin treats bare braces as lambda literals,
-        // including zero-argument lambdas like `{ 42 }`. Trailing-lambda call
-        // sites still pass `allowImplicitEmptyParams`, but plain expression
-        // contexts must also accept the same syntax.
+        // including zero-argument lambdas like `{ 42 }`. Both trailing-lambda
+        // call sites and plain expression contexts accept the same syntax.
         let bodyExpr = parseLambdaBody(bodySlice: bodyTokens[...], fallbackStart: openBrace.range.end)
         let range = SourceRange(start: start ?? openBrace.range.start, end: end)
         return astArena.appendExpr(.lambdaLiteral(params: [], body: bodyExpr, label: label, range: range))

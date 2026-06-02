@@ -24,7 +24,6 @@ final class LLVMCAPIBindings {
     typealias LLVMSetTargetFn = @convention(c) (LLVMModuleRef?, UnsafePointer<CChar>?) -> Void
     typealias LLVMSetDataLayoutFn = @convention(c) (LLVMModuleRef?, UnsafePointer<CChar>?) -> Void
     typealias LLVMSetLinkageFn = @convention(c) (LLVMValueRef?, UInt32) -> Void
-    typealias LLVMVoidTypeInContextFn = @convention(c) (LLVMContextRef?) -> LLVMTypeRef?
     typealias LLVMInt8TypeInContextFn = @convention(c) (LLVMContextRef?) -> LLVMTypeRef?
     typealias LLVMInt64TypeInContextFn = @convention(c) (LLVMContextRef?) -> LLVMTypeRef?
     typealias LLVMPointerTypeFn = @convention(c) (LLVMTypeRef?, UInt32) -> LLVMTypeRef?
@@ -39,7 +38,6 @@ final class LLVMCAPIBindings {
     typealias LLVMPositionBuilderAtEndFn = @convention(c) (LLVMBuilderRef?, LLVMBasicBlockRef?) -> Void
     typealias LLVMGetBasicBlockTerminatorFn = @convention(c) (LLVMBasicBlockRef?) -> LLVMValueRef?
     typealias LLVMBuildRetFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?) -> LLVMValueRef?
-    typealias LLVMBuildRetVoidFn = @convention(c) (LLVMBuilderRef?) -> LLVMValueRef?
     typealias LLVMBuildBrFn = @convention(c) (LLVMBuilderRef?, LLVMBasicBlockRef?) -> LLVMValueRef?
     typealias LLVMBuildCondBrFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMBasicBlockRef?, LLVMBasicBlockRef?) -> LLVMValueRef?
     typealias LLVMBuildAddFn = @convention(c) (LLVMBuilderRef?, LLVMValueRef?, LLVMValueRef?, UnsafePointer<CChar>?) -> LLVMValueRef?
@@ -231,7 +229,6 @@ final class LLVMCAPIBindings {
     let setTargetFn: LLVMSetTargetFn
     let setDataLayoutFn: LLVMSetDataLayoutFn
     let setLinkageFn: LLVMSetLinkageFn
-    let voidTypeInContextFn: LLVMVoidTypeInContextFn
     let int8TypeInContextFn: LLVMInt8TypeInContextFn
     let int64TypeFn: LLVMInt64TypeInContextFn
     let pointerTypeFn: LLVMPointerTypeFn
@@ -246,7 +243,6 @@ final class LLVMCAPIBindings {
     let positionBuilderFn: LLVMPositionBuilderAtEndFn
     let getBasicBlockTerminatorFn: LLVMGetBasicBlockTerminatorFn
     let buildRetFn: LLVMBuildRetFn
-    let buildRetVoidFn: LLVMBuildRetVoidFn
     let buildBrFn: LLVMBuildBrFn
     let buildCondBrFn: LLVMBuildCondBrFn
     let buildAddFn: LLVMBuildAddFn
@@ -330,7 +326,6 @@ final class LLVMCAPIBindings {
         setTargetFn: @escaping LLVMSetTargetFn,
         setDataLayoutFn: @escaping LLVMSetDataLayoutFn,
         setLinkageFn: @escaping LLVMSetLinkageFn,
-        voidTypeInContextFn: @escaping LLVMVoidTypeInContextFn,
         int8TypeInContextFn: @escaping LLVMInt8TypeInContextFn,
         int64TypeFn: @escaping LLVMInt64TypeInContextFn,
         pointerTypeFn: @escaping LLVMPointerTypeFn,
@@ -345,7 +340,6 @@ final class LLVMCAPIBindings {
         positionBuilderFn: @escaping LLVMPositionBuilderAtEndFn,
         getBasicBlockTerminatorFn: @escaping LLVMGetBasicBlockTerminatorFn,
         buildRetFn: @escaping LLVMBuildRetFn,
-        buildRetVoidFn: @escaping LLVMBuildRetVoidFn,
         buildBrFn: @escaping LLVMBuildBrFn,
         buildCondBrFn: @escaping LLVMBuildCondBrFn,
         buildAddFn: @escaping LLVMBuildAddFn,
@@ -429,7 +423,6 @@ final class LLVMCAPIBindings {
         self.setTargetFn = setTargetFn
         self.setDataLayoutFn = setDataLayoutFn
         self.setLinkageFn = setLinkageFn
-        self.voidTypeInContextFn = voidTypeInContextFn
         self.int8TypeInContextFn = int8TypeInContextFn
         self.int64TypeFn = int64TypeFn
         self.pointerTypeFn = pointerTypeFn
@@ -444,7 +437,6 @@ final class LLVMCAPIBindings {
         self.positionBuilderFn = positionBuilderFn
         self.getBasicBlockTerminatorFn = getBasicBlockTerminatorFn
         self.buildRetFn = buildRetFn
-        self.buildRetVoidFn = buildRetVoidFn
         self.buildBrFn = buildBrFn
         self.buildCondBrFn = buildCondBrFn
         self.buildAddFn = buildAddFn

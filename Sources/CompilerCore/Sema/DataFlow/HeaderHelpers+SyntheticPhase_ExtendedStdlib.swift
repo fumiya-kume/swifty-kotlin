@@ -96,6 +96,6 @@ extension DataFlowSemaPhase {
         registerSyntheticJsBigIntInteropStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticNativeGetterStubs(symbols: symbols, interner: interner)
         registerSyntheticJsNameStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticExperimentalMarkerStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticExperimentalMarkerStubs(symbols: symbols, interner: interner)
     }
 }

@@ -1702,7 +1702,6 @@ extension ExprLowerer {
                     containerID: rhsID,
                     resultID: result,
                     sema: sema,
-                    arena: arena,
                     interner: interner,
                     instructions: &instructions
                 )
@@ -1750,7 +1749,6 @@ extension ExprLowerer {
                     containerID: rhsID,
                     resultID: containsResult,
                     sema: sema,
-                    arena: arena,
                     interner: interner,
                     instructions: &instructions
                 )
@@ -1847,7 +1845,6 @@ extension ExprLowerer {
         containerID: KIRExprID,
         resultID: KIRExprID,
         sema: SemaModule,
-        arena: KIRArena,
         interner: StringInterner,
         instructions: inout [KIRInstruction]
     ) {

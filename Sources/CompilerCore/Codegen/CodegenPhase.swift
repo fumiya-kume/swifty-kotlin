@@ -1,11 +1,11 @@
 import Foundation
 
-public final class CodegenPhase: CompilerPhase {
-    public static let name = "Codegen"
+final class CodegenPhase: CompilerPhase {
+    static let name = "Codegen"
 
-    public init() {}
+    init() {}
 
-    public func run(_ ctx: CompilationContext) throws {
+    func run(_ ctx: CompilationContext) throws {
         guard let kir = ctx.kir else {
             throw CompilerPipelineError.invalidInput("KIR not available for codegen.")
         }
@@ -22,11 +22,6 @@ public final class CodegenPhase: CompilerPhase {
             }
         }
 
-        let runtime = RuntimeLinkInfo(
-            libraryPaths: ctx.options.libraryPaths,
-            libraries: ctx.options.linkLibraries,
-            extraObjects: []
-        )
         let backend = try makeBackend(ctx: ctx)
         // REFL-004: Build runtime reflection metadata records from sema state.
         let reflectionRecords = buildReflectionMetadataRecords(ctx: ctx, fileFacadeNamesByFileID: fileFacadeNamesByFileID)
@@ -37,7 +32,6 @@ public final class CodegenPhase: CompilerPhase {
                 let path = outputPath(base: ctx.options.outputPath, defaultExtension: "ll")
                 try backend.emitLLVMIR(
                     module: kir,
-                    runtime: runtime,
                     outputIRPath: path,
                     interner: ctx.interner,
                     sourceManager: ctx.sourceManager,
@@ -51,7 +45,6 @@ public final class CodegenPhase: CompilerPhase {
                 let path = outputPath(base: ctx.options.outputPath, defaultExtension: "o")
                 try backend.emitObject(
                     module: kir,
-                    runtime: runtime,
                     outputObjectPath: path,
                     interner: ctx.interner,
                     sourceManager: ctx.sourceManager,
@@ -66,7 +59,6 @@ public final class CodegenPhase: CompilerPhase {
                 try CodegenCriticalSection.withLinuxExecutableToolchainLock(target: ctx.options.target) {
                     try backend.emitObject(
                         module: kir,
-                        runtime: runtime,
                         outputObjectPath: path,
                         interner: ctx.interner,
                         sourceManager: ctx.sourceManager,
@@ -81,7 +73,6 @@ public final class CodegenPhase: CompilerPhase {
                 try emitLibrary(
                     module: kir,
                     backend: backend,
-                    runtime: runtime,
                     ctx: ctx,
                     reflectionMetadataRecords: reflectionRecords,
                     reflectionMetadataSymbolPrefix: ctx.options.moduleName
@@ -127,7 +118,6 @@ public final class CodegenPhase: CompilerPhase {
     private func emitLibrary(
         module: KIRModule,
         backend: LLVMBackend,
-        runtime: RuntimeLinkInfo,
         ctx: CompilationContext,
         reflectionMetadataRecords: [MetadataRecord] = [],
         reflectionMetadataSymbolPrefix: String? = nil
@@ -147,7 +137,6 @@ public final class CodegenPhase: CompilerPhase {
         let objectPath = objectsDir + "/\(ctx.options.moduleName)_0.o"
         try backend.emitObject(
             module: module,
-            runtime: runtime,
             outputObjectPath: objectPath,
             interner: ctx.interner,
             sourceManager: ctx.sourceManager,

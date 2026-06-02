@@ -29,7 +29,6 @@ import Foundation
 extension DataFlowSemaPhase {
     func registerSyntheticExperimentalMarkerStubs(
         symbols: SymbolTable,
-        types: TypeSystem,
         interner: StringInterner
     ) {
         let kotlinPkg = ensurePackage(

@@ -7,14 +7,13 @@ extension DataFlowSemaPhase {
     /// - Constructor parameters are exempt from variance checks.
     func validateDeclarationSiteVariance(
         ast: ASTModule,
-        symbols: SymbolTable,
-        bindings: BindingTable,
+        symbols _: SymbolTable,
+        bindings _: BindingTable,
         types _: TypeSystem,
         diagnostics: DiagnosticEngine,
         interner: StringInterner
     ) {
-        let env = VarianceCheckEnv(ast: ast, symbols: symbols, bindings: bindings,
-                                   diagnostics: diagnostics, interner: interner)
+        let env = VarianceCheckEnv(ast: ast, diagnostics: diagnostics, interner: interner)
         for file in ast.sortedFiles {
             for declID in file.topLevelDecls {
                 validateVarianceForDecl(declID: declID, env: env)
@@ -40,8 +39,6 @@ extension DataFlowSemaPhase {
     /// Bundles the immutable context needed by every variance-check helper.
     private struct VarianceCheckEnv {
         let ast: ASTModule
-        let symbols: SymbolTable
-        let bindings: BindingTable
         let diagnostics: DiagnosticEngine
         let interner: StringInterner
     }

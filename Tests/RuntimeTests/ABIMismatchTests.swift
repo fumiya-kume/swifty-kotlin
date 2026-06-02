@@ -178,7 +178,8 @@ final class ABIMismatchTests: XCTestCase {
 
     func testBitwiseFunctionCount() {
         // Includes integer and long bitwise helpers plus bit-counting utilities.
-        XCTAssertGreaterThanOrEqual(RuntimeABISpec.bitwiseFunctions.count, 36)
+        // Removed kk_op_lmod (superseded by kk_op_mod / kk_op_lfloor_mod): 36 → 35.
+        XCTAssertGreaterThanOrEqual(RuntimeABISpec.bitwiseFunctions.count, 35)
     }
 
     func testFloorDivABISignatures() throws {

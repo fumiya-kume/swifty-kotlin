@@ -564,7 +564,7 @@ extension DataFlowSemaPhase {
 
         // addFirst(element: E): Unit
         registerArrayDequeMember(
-            symbols: symbols, types: types, interner: interner,
+            symbols: symbols, interner: interner,
             fqName: arrayDequeFQName, parentSymbol: arrayDequeSymbol,
             receiverType: receiverType, typeParamSymbol: typeParamSymbol,
             memberName: "addFirst", externalName: "kk_arraydeque_addFirst",
@@ -573,7 +573,7 @@ extension DataFlowSemaPhase {
 
         // addLast(element: E): Unit
         registerArrayDequeMember(
-            symbols: symbols, types: types, interner: interner,
+            symbols: symbols, interner: interner,
             fqName: arrayDequeFQName, parentSymbol: arrayDequeSymbol,
             receiverType: receiverType, typeParamSymbol: typeParamSymbol,
             memberName: "addLast", externalName: "kk_arraydeque_addLast",
@@ -582,7 +582,7 @@ extension DataFlowSemaPhase {
 
         // removeFirst(): E (can throw)
         registerArrayDequeMember(
-            symbols: symbols, types: types, interner: interner,
+            symbols: symbols, interner: interner,
             fqName: arrayDequeFQName, parentSymbol: arrayDequeSymbol,
             receiverType: receiverType, typeParamSymbol: typeParamSymbol,
             memberName: "removeFirst", externalName: "kk_arraydeque_removeFirst",
@@ -591,7 +591,7 @@ extension DataFlowSemaPhase {
 
         // removeLast(): E (can throw)
         registerArrayDequeMember(
-            symbols: symbols, types: types, interner: interner,
+            symbols: symbols, interner: interner,
             fqName: arrayDequeFQName, parentSymbol: arrayDequeSymbol,
             receiverType: receiverType, typeParamSymbol: typeParamSymbol,
             memberName: "removeLast", externalName: "kk_arraydeque_removeLast",
@@ -600,7 +600,7 @@ extension DataFlowSemaPhase {
 
         // first(): E (can throw)
         registerArrayDequeMember(
-            symbols: symbols, types: types, interner: interner,
+            symbols: symbols, interner: interner,
             fqName: arrayDequeFQName, parentSymbol: arrayDequeSymbol,
             receiverType: receiverType, typeParamSymbol: typeParamSymbol,
             memberName: "first", externalName: "kk_arraydeque_first",
@@ -609,7 +609,7 @@ extension DataFlowSemaPhase {
 
         // last(): E (can throw)
         registerArrayDequeMember(
-            symbols: symbols, types: types, interner: interner,
+            symbols: symbols, interner: interner,
             fqName: arrayDequeFQName, parentSymbol: arrayDequeSymbol,
             receiverType: receiverType, typeParamSymbol: typeParamSymbol,
             memberName: "last", externalName: "kk_arraydeque_last",
@@ -618,7 +618,7 @@ extension DataFlowSemaPhase {
 
         // size: Int (property-like)
         registerArrayDequeMember(
-            symbols: symbols, types: types, interner: interner,
+            symbols: symbols, interner: interner,
             fqName: arrayDequeFQName, parentSymbol: arrayDequeSymbol,
             receiverType: receiverType, typeParamSymbol: typeParamSymbol,
             memberName: "size", externalName: "kk_arraydeque_size",
@@ -627,7 +627,7 @@ extension DataFlowSemaPhase {
 
         // isEmpty(): Boolean
         registerArrayDequeMember(
-            symbols: symbols, types: types, interner: interner,
+            symbols: symbols, interner: interner,
             fqName: arrayDequeFQName, parentSymbol: arrayDequeSymbol,
             receiverType: receiverType, typeParamSymbol: typeParamSymbol,
             memberName: "isEmpty", externalName: "kk_arraydeque_isEmpty",
@@ -636,7 +636,7 @@ extension DataFlowSemaPhase {
 
         // toString(): String
         registerArrayDequeMember(
-            symbols: symbols, types: types, interner: interner,
+            symbols: symbols, interner: interner,
             fqName: arrayDequeFQName, parentSymbol: arrayDequeSymbol,
             receiverType: receiverType, typeParamSymbol: typeParamSymbol,
             memberName: "toString", externalName: "kk_arraydeque_toString",
@@ -646,7 +646,6 @@ extension DataFlowSemaPhase {
 
     private func registerArrayDequeMember(
         symbols: SymbolTable,
-        types: TypeSystem,
         interner: StringInterner,
         fqName: [InternedString],
         parentSymbol: SymbolID,

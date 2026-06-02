@@ -226,11 +226,9 @@ extension CallTypeChecker {
                 return invalidFallbackType
             }
             let parameterMapping = buildCollectionFallbackParameterMapping(
-                memberName: calleeName,
                 args: args,
                 fallbackCallee: fallbackCallee,
-                sema: sema,
-                interner: interner
+                sema: sema
             )
             sema.bindings.bindCall(
                 id,
@@ -374,11 +372,9 @@ extension CallTypeChecker {
     }
 
     private func buildCollectionFallbackParameterMapping(
-        memberName: InternedString,
         args: [CallArgument],
         fallbackCallee: SymbolID,
-        sema: SemaModule,
-        interner: StringInterner
+        sema: SemaModule
     ) -> [Int: Int] {
         // Build a parameter mapping so that user-provided arguments are correctly
         // assigned to the right parameter slots. Without this, normalizedCallArguments

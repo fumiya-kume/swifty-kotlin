@@ -207,7 +207,6 @@ extension DataFlowSemaPhase {
             returnType: nullableTType,
             externalLinkName: "kk_weak_ref_get",
             symbols: symbols,
-            types: types,
             interner: interner
         )
 
@@ -222,7 +221,6 @@ extension DataFlowSemaPhase {
             returnType: types.unitType,
             externalLinkName: "kk_weak_ref_clear",
             symbols: symbols,
-            types: types,
             interner: interner
         )
     }
@@ -427,7 +425,6 @@ extension DataFlowSemaPhase {
             returnType: types.unitType,
             externalLinkName: "kk_gc_collect",
             symbols: symbols,
-            types: types,
             interner: interner
         )
 
@@ -442,7 +439,6 @@ extension DataFlowSemaPhase {
             returnType: types.unitType,
             externalLinkName: "kk_gc_schedule",
             symbols: symbols,
-            types: types,
             interner: interner
         )
 
@@ -1086,7 +1082,6 @@ extension DataFlowSemaPhase {
         returnType: TypeID,
         externalLinkName: String,
         symbols: SymbolTable,
-        types: TypeSystem,
         interner: StringInterner
     ) {
         let memberName = interner.intern(name)

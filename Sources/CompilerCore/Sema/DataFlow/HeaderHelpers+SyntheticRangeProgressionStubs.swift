@@ -20,7 +20,7 @@ extension DataFlowSemaPhase {
             )
         }
         let rangesFQName: [InternedString] = [kotlinName, rangesName]
-        let randomType = syntheticNominalType(
+        _ = syntheticNominalType(
             named: "Random",
             in: [kotlinName, interner.intern("random")],
             symbols: symbols,
@@ -152,8 +152,7 @@ extension DataFlowSemaPhase {
             openEndRangeSymbol: openEndRangeSymbol,
             symbols: symbols,
             types: types,
-            interner: interner,
-            randomType: randomType
+            interner: interner
         )
         registerSyntheticProgressionStub(
             named: "ULongProgression",
@@ -172,8 +171,7 @@ extension DataFlowSemaPhase {
             openEndRangeSymbol: openEndRangeSymbol,
             symbols: symbols,
             types: types,
-            interner: interner,
-            randomType: randomType
+            interner: interner
         )
         registerSyntheticIntRangeStub(
             rangesPackageSymbol: rangesPackageSymbol,
@@ -181,8 +179,7 @@ extension DataFlowSemaPhase {
             openEndRangeSymbol: openEndRangeSymbol,
             symbols: symbols,
             types: types,
-            interner: interner,
-            randomType: randomType
+            interner: interner
         )
         registerSyntheticLongRangeStub(
             rangesPackageSymbol: rangesPackageSymbol,
@@ -190,8 +187,7 @@ extension DataFlowSemaPhase {
             openEndRangeSymbol: openEndRangeSymbol,
             symbols: symbols,
             types: types,
-            interner: interner,
-            randomType: randomType
+            interner: interner
         )
         registerSyntheticCharRangeStub(
             rangesPackageSymbol: rangesPackageSymbol,
@@ -199,8 +195,7 @@ extension DataFlowSemaPhase {
             openEndRangeSymbol: openEndRangeSymbol,
             symbols: symbols,
             types: types,
-            interner: interner,
-            randomType: randomType
+            interner: interner
         )
         registerSyntheticClosedRangeStub(
             rangesPackageSymbol: rangesPackageSymbol,

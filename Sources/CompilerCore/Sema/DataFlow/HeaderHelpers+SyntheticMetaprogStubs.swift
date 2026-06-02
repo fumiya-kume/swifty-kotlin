@@ -1294,9 +1294,3 @@ extension DataFlowSemaPhase {
     }
 
 }
-
-private extension String {
-    var wrappedInBrackets: String {
-        "[\(self)]"
-    }
-}

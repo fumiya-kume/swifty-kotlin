@@ -56,7 +56,6 @@ extension DataFlowSemaPhase {
             listTypeParamSymbol: listTypeParamSymbol,
             returnType: jsArrayReturnType,
             symbols: symbols,
-            types: types,
             interner: interner
         )
 
@@ -83,7 +82,6 @@ extension DataFlowSemaPhase {
                 arrayTypeParamSymbol: arrayTypeParamSymbol,
                 returnType: arrayJsArrayReturnType,
                 symbols: symbols,
-                types: types,
                 interner: interner
             )
         }
@@ -155,7 +153,6 @@ extension DataFlowSemaPhase {
         listTypeParamSymbol: SymbolID,
         returnType: TypeID,
         symbols: SymbolTable,
-        types: TypeSystem,
         interner: StringInterner
     ) {
         guard let listInfo = symbols.symbol(listSymbol) else {
@@ -205,7 +202,6 @@ extension DataFlowSemaPhase {
         arrayTypeParamSymbol: SymbolID,
         returnType: TypeID,
         symbols: SymbolTable,
-        types: TypeSystem,
         interner: StringInterner
     ) {
         guard let arrayInfo = symbols.symbol(arraySymbol) else {

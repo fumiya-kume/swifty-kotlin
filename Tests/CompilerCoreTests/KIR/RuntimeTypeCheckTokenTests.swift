@@ -32,7 +32,7 @@ final class RuntimeTypeCheckTokenTests: XCTestCase {
 
         for (kind, expectedCategory, expectedNullable) in cases {
             let typeID = types.make(kind)
-            let descriptor = RuntimeTypeCheckToken.classify(type: typeID, sema: sema, interner: interner)
+            let descriptor = RuntimeTypeCheckToken.classify(type: typeID, sema: sema)
             XCTAssertEqual(
                 descriptor.category.base,
                 expectedCategory.base,
@@ -53,11 +53,11 @@ final class RuntimeTypeCheckTokenTests: XCTestCase {
         )
 
         let nothingNonNull = types.make(.nothing(.nonNull))
-        let descriptorNonNull = RuntimeTypeCheckToken.classify(type: nothingNonNull, sema: sema, interner: interner)
+        let descriptorNonNull = RuntimeTypeCheckToken.classify(type: nothingNonNull, sema: sema)
         XCTAssertEqual(descriptorNonNull.category.base, RuntimeTypeCheckToken.unknownBase)
 
         let nothingNullable = types.make(.nothing(.nullable))
-        let descriptorNullable = RuntimeTypeCheckToken.classify(type: nothingNullable, sema: sema, interner: interner)
+        let descriptorNullable = RuntimeTypeCheckToken.classify(type: nothingNullable, sema: sema)
         XCTAssertEqual(descriptorNullable.category.base, RuntimeTypeCheckToken.nullBase)
     }
 
@@ -82,7 +82,7 @@ final class RuntimeTypeCheckTokenTests: XCTestCase {
             visibility: .public
         )
         let classType = types.make(.classType(ClassType(classSymbol: classSymbol, args: [], nullability: .nonNull)))
-        let descriptor = RuntimeTypeCheckToken.classify(type: classType, sema: sema, interner: interner)
+        let descriptor = RuntimeTypeCheckToken.classify(type: classType, sema: sema)
         XCTAssertEqual(descriptor.category.base, RuntimeTypeCheckToken.nominalBase)
         XCTAssertFalse(descriptor.nullable)
         if case let .nominal(symbolID) = descriptor.category {
@@ -111,7 +111,7 @@ final class RuntimeTypeCheckTokenTests: XCTestCase {
             isSuspend: false,
             nullability: .nonNull
         )))
-        let descriptor = RuntimeTypeCheckToken.classify(type: funcType, sema: sema, interner: interner)
+        let descriptor = RuntimeTypeCheckToken.classify(type: funcType, sema: sema)
         XCTAssertEqual(descriptor.category.base, RuntimeTypeCheckToken.unknownBase)
     }
 
@@ -143,7 +143,7 @@ final class RuntimeTypeCheckTokenTests: XCTestCase {
         for kind in testTypes {
             let typeID = types.make(kind)
             let encoded = RuntimeTypeCheckToken.encode(type: typeID, sema: sema, interner: interner)
-            let descriptor = RuntimeTypeCheckToken.classify(type: typeID, sema: sema, interner: interner)
+            let descriptor = RuntimeTypeCheckToken.classify(type: typeID, sema: sema)
             let manuallyEncoded = RuntimeTypeCheckToken.encode(
                 base: descriptor.category.base,
                 nullable: descriptor.nullable
@@ -202,7 +202,7 @@ final class RuntimeTypeCheckTokenTests: XCTestCase {
         let classType = types.make(.classType(ClassType(classSymbol: classSymbol, args: [], nullability: .nonNull)))
 
         let encoded = RuntimeTypeCheckToken.encode(type: classType, sema: sema, interner: interner)
-        let descriptor = RuntimeTypeCheckToken.classify(type: classType, sema: sema, interner: interner)
+        let descriptor = RuntimeTypeCheckToken.classify(type: classType, sema: sema)
         guard case let .nominal(symbolID) = descriptor.category else {
             XCTFail("Expected .nominal category")
             return
@@ -244,7 +244,7 @@ final class RuntimeTypeCheckTokenTests: XCTestCase {
         for (kind, expectedName) in testCases {
             let typeID = types.make(kind)
             let simpleName = RuntimeTypeCheckToken.simpleName(of: typeID, sema: sema, interner: interner)
-            let descriptor = RuntimeTypeCheckToken.classify(type: typeID, sema: sema, interner: interner)
+            let descriptor = RuntimeTypeCheckToken.classify(type: typeID, sema: sema)
             XCTAssertEqual(simpleName, expectedName, "simpleName mismatch for \(kind)")
             if descriptor.category.simpleName != nil {
                 XCTAssertEqual(descriptor.category.simpleName, expectedName, "category.simpleName mismatch for \(kind)")
@@ -360,7 +360,7 @@ final class RuntimeTypeCheckTokenTests: XCTestCase {
         )
 
         // Verify it does NOT produce a nominal token
-        let descriptor = RuntimeTypeCheckToken.classify(type: intType, sema: sema, interner: interner)
+        let descriptor = RuntimeTypeCheckToken.classify(type: intType, sema: sema)
         if case .nominal = descriptor.category {
             XCTFail("Resolved type alias to Int should not classify as nominal.")
         }

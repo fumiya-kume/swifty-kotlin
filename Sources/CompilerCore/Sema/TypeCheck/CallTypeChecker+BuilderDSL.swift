@@ -10,7 +10,6 @@ extension CallTypeChecker {
         _ id: ExprID,
         calleeName: InternedString?,
         args: [CallArgument],
-        range: SourceRange,
         ctx: TypeInferenceContext,
         locals: inout LocalBindings,
         expectedType: TypeID?,
@@ -33,7 +32,6 @@ extension CallTypeChecker {
                   // like `with` and the existing builder DSL stubs.
                   hasExperimentalTypeInferenceAnnotation(candidate, sema: ctx.sema),
                   isEligibleExperimentalBuilderCandidate(
-                    candidate: candidate,
                     signature: signature,
                     args: args,
                     ctx: ctx,
@@ -482,7 +480,6 @@ extension CallTypeChecker {
     }
 
     private func isEligibleExperimentalBuilderCandidate(
-        candidate: SymbolID,
         signature: FunctionSignature,
         args: [CallArgument],
         ctx: TypeInferenceContext,

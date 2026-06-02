@@ -12,8 +12,8 @@ extension LoweringPass {
     }
 }
 
-public final class LoweringPhase: CompilerPhase {
-    public static let name = "Lowerings"
+final class LoweringPhase: CompilerPhase {
+    static let name = "Lowerings"
 
     private let passes: [any LoweringPass] = [
         TailrecLoweringPass(), // Must run before NormalizeBlocksPass (relies on beginBlock)
@@ -41,9 +41,9 @@ public final class LoweringPhase: CompilerPhase {
         ABILoweringPass(),
     ]
 
-    public init() {}
+    init() {}
 
-    public func run(_ ctx: CompilationContext) throws {
+    func run(_ ctx: CompilationContext) throws {
         guard let module = ctx.kir else {
             throw CompilerPipelineError.invalidInput("KIR not available for lowering.")
         }

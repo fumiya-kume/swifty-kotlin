@@ -33,10 +33,9 @@ final class RuntimeStubImplementationTests: XCTestCase {
             debugInfo: false,
             diagnostics: DiagnosticEngine()
         )
-        let runtime = RuntimeLinkInfo(libraryPaths: [], libraries: [], extraObjects: [])
         let irPath = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".ll").path
 
-        try backend.emitLLVMIR(module: module, runtime: runtime, outputIRPath: irPath, interner: interner)
+        try backend.emitLLVMIR(module: module, outputIRPath: irPath, interner: interner)
         let ir = try String(contentsOfFile: irPath, encoding: .utf8)
 
         // Functions must be referenced in the IR

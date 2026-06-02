@@ -1,6 +1,6 @@
 import Foundation
 
-public protocol CompilerPhase {
+protocol CompilerPhase {
     static var name: String { get }
     func run(_ ctx: CompilationContext) throws
 }

@@ -11,8 +11,7 @@ extension DataFlowSemaPhase {
         openEndRangeSymbol: SymbolID,
         symbols: SymbolTable,
         types: TypeSystem,
-        interner: StringInterner,
-        randomType: TypeID
+        interner: StringInterner
     ) {
         let className = interner.intern("IntRange")
         let classFQName = rangesFQName + [className]
@@ -563,8 +562,7 @@ extension DataFlowSemaPhase {
         openEndRangeSymbol: SymbolID,
         symbols: SymbolTable,
         types: TypeSystem,
-        interner: StringInterner,
-        randomType: TypeID
+        interner: StringInterner
     ) {
         let className = interner.intern("LongRange")
         let classFQName = rangesFQName + [className]
@@ -838,8 +836,7 @@ extension DataFlowSemaPhase {
         openEndRangeSymbol: SymbolID,
         symbols: SymbolTable,
         types: TypeSystem,
-        interner: StringInterner,
-        randomType: TypeID
+        interner: StringInterner
     ) {
         let className = interner.intern("CharRange")
         let classFQName = rangesFQName + [className]

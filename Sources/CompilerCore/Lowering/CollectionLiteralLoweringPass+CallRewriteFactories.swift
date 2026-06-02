@@ -1,5 +1,4 @@
 import Foundation
-import RuntimeABI
 
 extension CollectionLiteralLoweringPass {
 
@@ -25,7 +24,7 @@ extension CollectionLiteralLoweringPass {
         // kotlin.collections.* factory to avoid accidentally
         // lowering user-defined functions with the same name.
         if lookup.listFactoryNames.contains(callee),
-           isStdlibCollectionFactory(symbol: symbol, callee: callee, lookup: lookup, ctx: ctx) {
+           isStdlibCollectionFactory(symbol: symbol, lookup: lookup, ctx: ctx) {
             let count = arguments.count
             if count == 0 && callee != lookup.mutableListOfName && callee != lookup.arrayListOfName {
                 if callee == lookup.emptyListName {
@@ -286,7 +285,7 @@ extension CollectionLiteralLoweringPass {
 
         // --- Rewrite setOf/mutableSetOf/hashSetOf/linkedSetOf/emptySet -> kk_set_of / kk_emptySet ---
         if lookup.setFactoryNames.contains(callee),
-           isStdlibCollectionFactory(symbol: symbol, callee: callee, lookup: lookup, ctx: ctx) {
+           isStdlibCollectionFactory(symbol: symbol, lookup: lookup, ctx: ctx) {
             let count = arguments.count
             if count == 0
                 && callee != lookup.mutableSetOfName
@@ -387,7 +386,7 @@ extension CollectionLiteralLoweringPass {
 
         // --- Rewrite mapOf/mutableMapOf/hashMapOf/linkedMapOf/emptyMap → kk_map_of / kk_emptyMap ---
         if lookup.mapFactoryNames.contains(callee),
-           isStdlibCollectionFactory(symbol: symbol, callee: callee, lookup: lookup, ctx: ctx) {
+           isStdlibCollectionFactory(symbol: symbol, lookup: lookup, ctx: ctx) {
             let count = arguments.count
             if count == 0
                 && callee != lookup.mutableMapOfName

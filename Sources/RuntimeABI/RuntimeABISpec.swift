@@ -2273,15 +2273,6 @@ public enum RuntimeABISpec {
             section: "Bitwise"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_op_lmod",
-            parameters: [
-                RuntimeABIParameter(name: "lhs", type: .intptr),
-                RuntimeABIParameter(name: "rhs", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Bitwise"
-        ),
-        RuntimeABIFunctionSpec(
             name: "kk_op_floor_mod",
             parameters: [
                 RuntimeABIParameter(name: "lhs", type: .intptr),
@@ -2307,24 +2298,6 @@ public enum RuntimeABISpec {
             name: "kk_op_not",
             parameters: [
                 RuntimeABIParameter(name: "value", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Boolean"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_logical_and",
-            parameters: [
-                RuntimeABIParameter(name: "lhs", type: .intptr),
-                RuntimeABIParameter(name: "rhs", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Boolean"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_logical_or",
-            parameters: [
-                RuntimeABIParameter(name: "lhs", type: .intptr),
-                RuntimeABIParameter(name: "rhs", type: .intptr),
             ],
             returnType: .intptr,
             section: "Boolean"

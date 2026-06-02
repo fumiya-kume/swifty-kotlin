@@ -7,12 +7,12 @@ import Foundation
 /// `CallTypeChecker`, `ControlFlowTypeChecker`, etc.). Each delegate holds only
 /// the context it needs, replacing the previous extension-based splitting
 /// where a single monolithic class shared all state across multiple files.
-public final class TypeCheckSemaPhase: CompilerPhase {
-    public static let name = "TypeCheckSema"
+final class TypeCheckSemaPhase: CompilerPhase {
+    static let name = "TypeCheckSema"
 
-    public init() {}
+    init() {}
 
-    public func run(_ ctx: CompilationContext) throws {
+    func run(_ ctx: CompilationContext) throws {
         guard let sema = ctx.sema else {
             throw CompilerPipelineError.invalidInput("Semantic model is unavailable.")
         }

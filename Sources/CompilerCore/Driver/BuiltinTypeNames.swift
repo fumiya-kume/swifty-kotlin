@@ -1,33 +1,26 @@
 /// Pre-interned Kotlin builtin type name strings.
 /// Use this instead of comparing `interner.resolve(x) == "Int"` etc.
 /// Comparison becomes `x == builtinNames.int` which is Int32 == Int32.
-public struct BuiltinTypeNames {
-    public let int: InternedString
-    public let long: InternedString
-    public let float: InternedString
-    public let double: InternedString
-    public let boolean: InternedString
-    public let char: InternedString
-    public let string: InternedString
-    public let uint: InternedString
-    public let ulong: InternedString
-    public let ubyte: InternedString
-    public let ushort: InternedString
-    public let any: InternedString
-    public let number: InternedString
-    public let unit: InternedString
-    public let nothing: InternedString
-    public let annotation: InternedString
-    public let null: InternedString
-    public let intArray: InternedString
-    public let longArray: InternedString
-    public let ubyteArray: InternedString
-    public let doubleArray: InternedString
-    public let floatArray: InternedString
-    public let booleanArray: InternedString
-    public let charArray: InternedString
+struct BuiltinTypeNames {
+    let int: InternedString
+    let long: InternedString
+    let float: InternedString
+    let double: InternedString
+    let boolean: InternedString
+    let char: InternedString
+    let string: InternedString
+    let uint: InternedString
+    let ulong: InternedString
+    let ubyte: InternedString
+    let ushort: InternedString
+    let any: InternedString
+    let number: InternedString
+    let unit: InternedString
+    let nothing: InternedString
+    let annotation: InternedString
+    let null: InternedString
 
-    public init(interner: StringInterner) {
+    init(interner: StringInterner) {
         self.int = interner.intern("Int")
         self.long = interner.intern("Long")
         self.float = interner.intern("Float")
@@ -45,17 +38,10 @@ public struct BuiltinTypeNames {
         self.nothing = interner.intern("Nothing")
         self.annotation = interner.intern("Annotation")
         self.null = interner.intern("null")
-        self.intArray = interner.intern("IntArray")
-        self.longArray = interner.intern("LongArray")
-        self.ubyteArray = interner.intern("UByteArray")
-        self.doubleArray = interner.intern("DoubleArray")
-        self.floatArray = interner.intern("FloatArray")
-        self.booleanArray = interner.intern("BooleanArray")
-        self.charArray = interner.intern("CharArray")
     }
 
     /// Resolve an InternedString to a PrimitiveType, or nil if not a primitive.
-    public func primitiveType(for name: InternedString) -> PrimitiveType? {
+    func primitiveType(for name: InternedString) -> PrimitiveType? {
         if name == int { return .int }
         if name == long { return .long }
         if name == float { return .float }
@@ -71,7 +57,7 @@ public struct BuiltinTypeNames {
     }
 
     /// Resolve an InternedString to a builtin TypeID (including Any/Unit/Nothing), or nil.
-    public func resolveBuiltinType(
+    func resolveBuiltinType(
         _ name: InternedString,
         nullability: Nullability = .nonNull,
         types: TypeSystem

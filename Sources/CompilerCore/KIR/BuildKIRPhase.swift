@@ -1,11 +1,11 @@
 import Foundation
 
-public final class BuildKIRPhase: CompilerPhase {
-    public static let name = "BuildKIR"
+final class BuildKIRPhase: CompilerPhase {
+    static let name = "BuildKIR"
 
-    public init() {}
+    init() {}
 
-    public func run(_ ctx: CompilationContext) throws {
+    func run(_ ctx: CompilationContext) throws {
         guard let ast = ctx.ast, let sema = ctx.sema else {
             throw CompilerPipelineError.invalidInput("Sema phase did not run.")
         }

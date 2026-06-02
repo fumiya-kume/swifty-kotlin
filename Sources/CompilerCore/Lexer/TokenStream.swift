@@ -1,6 +1,6 @@
-public final class TokenStream {
-    public let tokens: [Token]
-    public private(set) var index: Int = 0
+final class TokenStream {
+    let tokens: [Token]
+    private(set) var index: Int = 0
 
     private var syntheticEOFToken: Token {
         Token(
@@ -12,11 +12,11 @@ public final class TokenStream {
         )
     }
 
-    public init(_ tokens: [Token]) {
+    init(_ tokens: [Token]) {
         self.tokens = tokens
     }
 
-    public func peek(_ offset: Int = 0) -> Token {
+    func peek(_ offset: Int = 0) -> Token {
         if tokens.isEmpty || offset < 0 {
             return syntheticEOFToken
         }
@@ -27,7 +27,7 @@ public final class TokenStream {
         return syntheticEOFToken
     }
 
-    public func advance() -> Token {
+    func advance() -> Token {
         let token = peek()
         if index < tokens.count {
             index += 1
@@ -35,11 +35,11 @@ public final class TokenStream {
         return token
     }
 
-    public func atEOF() -> Bool {
+    func atEOF() -> Bool {
         peek().kind == .eof
     }
 
-    public func consumeIf(_ predicate: (Token) -> Bool) -> Token? {
+    func consumeIf(_ predicate: (Token) -> Bool) -> Token? {
         let token = peek()
         if predicate(token) {
             return advance()

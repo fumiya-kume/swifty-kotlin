@@ -127,7 +127,6 @@ extension DataFlowSemaPhase {
             interner: interner
         )
         registerSyntheticSequenceBuilderStub(
-            packageFQName: kotlinSequencesPkg,
             symbols: symbols,
             types: types,
             interner: interner
@@ -193,7 +192,6 @@ extension DataFlowSemaPhase {
 
         // STDLIB-330: sequence { yield(x) } builder
         registerSyntheticSequenceBuilderStub(
-            packageFQName: kotlinSequencesPkg,
             symbols: symbols,
             types: types,
             interner: interner

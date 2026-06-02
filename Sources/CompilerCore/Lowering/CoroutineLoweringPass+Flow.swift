@@ -25,11 +25,6 @@ enum RuntimeFlowTag: Int64 {
 
 struct FlowLoweringNames {
     let flow: InternedString
-    let channelFlow: InternedString
-    let callbackFlow: InternedString
-    let flowOf: InternedString
-    let emptyFlow: InternedString
-    let asFlow: InternedString
     let emit: InternedString
     let collect: InternedString
     let map: InternedString
@@ -63,9 +58,6 @@ struct FlowLoweringNames {
     let kkFlowCollect: InternedString
     let kkFlowRetain: InternedString
     let kkFlowRelease: InternedString
-    let kkFlowOf: InternedString
-    let kkFlowEmpty: InternedString
-    let kkFlowAsFlow: InternedString
     let kkFlowToList: InternedString
     let kkFlowFirst: InternedString
     let kkFlowSingle: InternedString
@@ -468,11 +460,6 @@ extension CoroutineLoweringPass {
             // Phase 2: rewrite flow instructions.
             let names = FlowLoweringNames(
                 flow: flowName,
-                channelFlow: channelFlowName,
-                callbackFlow: callbackFlowName,
-                flowOf: flowOfName,
-                emptyFlow: emptyFlowName,
-                asFlow: asFlowName,
                 emit: emitName,
                 collect: collectName,
                 map: mapName,
@@ -506,9 +493,6 @@ extension CoroutineLoweringPass {
                 kkFlowCollect: kkFlowCollectName,
                 kkFlowRetain: kkFlowRetainName,
                 kkFlowRelease: kkFlowReleaseName,
-                kkFlowOf: kkFlowOfName,
-                kkFlowEmpty: kkFlowEmptyName,
-                kkFlowAsFlow: kkFlowAsFlowName,
                 kkFlowToList: kkFlowToListName,
                 kkFlowFirst: kkFlowFirstName,
                 kkFlowSingle: kkFlowSingleName,

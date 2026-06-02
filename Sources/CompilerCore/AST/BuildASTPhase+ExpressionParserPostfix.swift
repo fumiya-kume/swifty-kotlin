@@ -32,7 +32,7 @@ extension BuildASTPhase.ExpressionParser {
                         // Trailing lambda without parentheses: foo<T> { ... }.
                         if matches(.symbol(.lBrace)),
                            let braceToken = current(),
-                           let trailingLambda = parseLambdaLiteral(label: calleeNameForImplicitLabel(expr), allowImplicitEmptyParams: true)
+                           let trailingLambda = parseLambdaLiteral(label: calleeNameForImplicitLabel(expr))
                         {
                             args.append(CallArgument(expr: trailingLambda))
                             callEndRange = astArena.exprRange(trailingLambda) ?? braceToken.range
@@ -46,7 +46,7 @@ extension BuildASTPhase.ExpressionParser {
                     // Trailing lambda without parentheses: foo<T> { ... }.
                     if matches(.symbol(.lBrace)),
                        let braceToken = current(),
-                       let trailingLambda = parseLambdaLiteral(label: calleeNameForImplicitLabel(expr), allowImplicitEmptyParams: true)
+                       let trailingLambda = parseLambdaLiteral(label: calleeNameForImplicitLabel(expr))
                     {
                         let trailingRange = astArena.exprRange(trailingLambda) ?? braceToken.range
                         let range = mergeRanges(astArena.exprRange(expr), trailingRange, fallback: trailingRange)
@@ -70,7 +70,7 @@ extension BuildASTPhase.ExpressionParser {
                 // Trailing lambda after a parenthesized call: foo(...) { ... }.
                 if matches(.symbol(.lBrace)),
                    let braceToken = current(),
-                   let trailingLambda = parseLambdaLiteral(label: calleeNameForImplicitLabel(expr), allowImplicitEmptyParams: true)
+                   let trailingLambda = parseLambdaLiteral(label: calleeNameForImplicitLabel(expr))
                 {
                     args.append(CallArgument(expr: trailingLambda))
                     callEndRange = astArena.exprRange(trailingLambda) ?? braceToken.range
@@ -85,7 +85,7 @@ extension BuildASTPhase.ExpressionParser {
             // Trailing lambda without parentheses: foo { ... }.
             if matches(.symbol(.lBrace)),
                let braceToken = current(),
-               let trailingLambda = parseLambdaLiteral(label: calleeNameForImplicitLabel(expr), allowImplicitEmptyParams: true)
+               let trailingLambda = parseLambdaLiteral(label: calleeNameForImplicitLabel(expr))
             {
                 let trailingRange = astArena.exprRange(trailingLambda) ?? braceToken.range
                 let range = mergeRanges(astArena.exprRange(expr), trailingRange, fallback: trailingRange)
@@ -156,7 +156,7 @@ extension BuildASTPhase.ExpressionParser {
             }
             // Trailing lambda: attach `{ ... }` as the last argument (Kotlin grammar).
             if matches(.symbol(.lBrace)),
-               let trailingLambda = parseLambdaLiteral(label: memberName, allowImplicitEmptyParams: true)
+               let trailingLambda = parseLambdaLiteral(label: memberName)
             {
                 args.append(CallArgument(expr: trailingLambda))
                 memberEndRange = astArena.exprRange(trailingLambda) ?? memberEndRange
@@ -242,12 +242,12 @@ extension BuildASTPhase.ExpressionParser {
 
         let expr: ExprID?
         if matches(.symbol(.lBrace)) {
-            expr = parseLambdaLiteral(label: implicitLambdaLabel, allowImplicitEmptyParams: true)
+            expr = parseLambdaLiteral(label: implicitLambdaLabel)
         } else if matches(.symbol(.lParen)) {
             let savedIndex = index
             _ = consume()
             if matches(.symbol(.lBrace)),
-               let lambdaExpr = parseLambdaLiteral(label: implicitLambdaLabel, allowImplicitEmptyParams: true),
+               let lambdaExpr = parseLambdaLiteral(label: implicitLambdaLabel),
                matches(.symbol(.rParen))
             {
                 _ = consume()
