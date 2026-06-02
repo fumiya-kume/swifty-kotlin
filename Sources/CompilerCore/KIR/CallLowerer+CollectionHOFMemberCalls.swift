@@ -23,7 +23,7 @@ extension CallLowerer {
             "indexOfFirst", "indexOfLast", "binarySearch", "binarySearchBy", "reduceIndexed", "reduceIndexedOrNull", "reduceRightOrNull", "reduceRightIndexed", "reduceRightIndexedOrNull", "foldIndexed", "foldRightIndexed",
             "sortedByDescending", "sortedWith", "partition", "zipWithNext",
             "sortedArrayWith",
-            "takeWhile", "dropWhile", "dropLastWhile", "filterNot", "findLast", "replaceAll", "removeIf",
+            "takeWhile", "takeLastWhile", "dropWhile", "dropLastWhile", "filterNot", "findLast", "replaceAll", "removeIf",
             "replaceFirstChar",
             "trim", "trimStart", "trimEnd",
             "sortWith", "sortBy", "sortByDescending",

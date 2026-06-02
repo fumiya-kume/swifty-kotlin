@@ -4140,6 +4140,29 @@ public func kk_string_takeWhile(
     return runtimeMakeStringRaw(runtimeStringFromScalars(taken))
 }
 
+@_cdecl("kk_string_takeLastWhile")
+public func kk_string_takeLastWhile(
+    _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let codeUnits = runtimeStringUTF16CodeUnits(strRaw)
+    guard fnPtr != 0 else { return runtimeMakeStringRaw(runtimeStringFromRawOrPanic(strRaw, caller: #function)) }
+    var takenCount = 0
+    for codeUnit in codeUnits.reversed() {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: Int(codeUnit),
+            outThrown: &thrown
+        )
+        if thrown != 0 { outThrown?.pointee = thrown; return runtimeMakeStringRaw("") }
+        if result == 0 { break }
+        takenCount += 1
+    }
+    return runtimeMakeStringRaw(String(decoding: codeUnits.suffix(takenCount), as: UTF16.self))
+}
+
 @_cdecl("kk_string_dropWhile")
 public func kk_string_dropWhile(
     _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?

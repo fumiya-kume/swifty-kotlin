@@ -2357,6 +2357,17 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        // --- STDLIB-TEXT-FN-081: CharSequence.takeLastWhile(predicate: (Char) -> Boolean): String ---
+        registerSyntheticStringExtensionFunction(
+            named: "takeLastWhile",
+            externalLinkName: "kk_string_takeLastWhile",
+            receiverType: stringType,
+            parameters: [("predicate", charToBoolType, false, false)],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
         registerSyntheticStringExtensionFunction(
             named: "dropWhile",
             externalLinkName: "kk_string_dropWhile",

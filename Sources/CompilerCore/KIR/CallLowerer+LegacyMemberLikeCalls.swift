@@ -1677,6 +1677,8 @@ extension CallLowerer {
                     ("kk_string_indexOfLast", [loweredReceiverID] + normalizedArgIDs)
                 case "takeWhile":
                     ("kk_string_takeWhile", [loweredReceiverID] + normalizedArgIDs)
+                case "takeLastWhile":
+                    ("kk_string_takeLastWhile", [loweredReceiverID] + normalizedArgIDs)
                 case "dropWhile":
                     ("kk_string_dropWhile", [loweredReceiverID] + normalizedArgIDs)
                 case "trim":
