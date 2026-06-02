@@ -2290,6 +2290,40 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
         }
+        let cPointerPlusOverloadUpperBounds = [
+            types.make(.classType(ClassType(
+                classSymbol: byteVarOfSymbol,
+                args: [.star],
+                nullability: .nonNull
+            ))),
+            types.make(.classType(ClassType(
+                classSymbol: cPointerVarOfSymbol,
+                args: [.star],
+                nullability: .nonNull
+            ))),
+        ]
+        for (upperBoundIndex, upperBound) in cPointerPlusOverloadUpperBounds.enumerated() {
+            registerSyntheticCPointerPlusFunction(
+                indexType: types.intType,
+                typeParameterDiscriminator: "$upper\(upperBoundIndex)$indexInt",
+                typeParameterUpperBound: upperBound,
+                cPointerSymbol: cPointerSymbol,
+                packageFQName: cinteropPkg,
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
+            registerSyntheticCPointerPlusFunction(
+                indexType: types.longType,
+                typeParameterDiscriminator: "$upper\(upperBoundIndex)$indexLong",
+                typeParameterUpperBound: upperBound,
+                cPointerSymbol: cPointerSymbol,
+                packageFQName: cinteropPkg,
+                symbols: symbols,
+                types: types,
+                interner: interner
+            )
+        }
         registerSyntheticCPointerPointedProperty(
             cPointerSymbol: cPointerSymbol,
             cPointedType: cPointedType,
@@ -4312,6 +4346,58 @@ extension DataFlowSemaPhase {
         symbols.setFunctionSignature(getterSignature, for: getterSymbol)
         symbols.setExtensionPropertyGetterAccessor(getterSymbol, for: propertySymbol)
         symbols.setAccessorOwnerProperty(propertySymbol, for: getterSymbol)
+    }
+
+    private func registerSyntheticCPointerPlusFunction(
+        indexType: TypeID,
+        typeParameterDiscriminator: String,
+        typeParameterUpperBound: TypeID,
+        cPointerSymbol: SymbolID,
+        packageFQName: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern("plus")
+        let functionFQName = packageFQName + [functionName]
+        let typeParameterName = interner.intern("T")
+        let typeParameterFQName = functionFQName + [interner.intern(typeParameterDiscriminator), typeParameterName]
+        let typeParameterSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParameterFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParameterName,
+                fqName: typeParameterFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+        }
+        symbols.insertFlags([.synthetic], for: typeParameterSymbol)
+        symbols.setTypeParameterUpperBounds([typeParameterUpperBound], for: typeParameterSymbol)
+
+        let typeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: typeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let pointerType = types.make(.classType(ClassType(
+            classSymbol: cPointerSymbol,
+            args: [.invariant(typeParameterType)],
+            nullability: .nonNull
+        )))
+        registerSyntheticNativeTopLevelFunction(
+            named: "plus",
+            packageFQName: packageFQName,
+            receiverType: pointerType,
+            parameters: [(name: "index", type: indexType)],
+            returnType: pointerType,
+            typeParameterSymbols: [typeParameterSymbol],
+            typeParameterUpperBoundsList: [[typeParameterUpperBound]],
+            flags: [.synthetic, .inlineFunction, .operatorFunction],
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func registerSyntheticNativePlacementAllocArrayFunction(
