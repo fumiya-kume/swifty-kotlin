@@ -1338,7 +1338,7 @@ extension CodegenBackendIntegrationTests {
     func testCodegenListToTypeArrayUsesTypedArrayRuntime() throws {
         let source = """
         fun main() {
-            val array = listOf(3, 1, 2).toTypeArray()
+            val array = listOf(3, 1, 2).toTypedArray()
             println(array.size)
             println(array[0])
             println(array[2])

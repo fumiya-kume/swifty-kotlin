@@ -1,4 +1,4 @@
-/// `List<E>.toList` / `toMutableList` / `toTypeArray` / `toIntArray` / `toDoubleArray` /
+/// `List<E>.toList` / `toMutableList` / `toTypedArray` / `toIntArray` / `toDoubleArray` /
 /// `toBooleanArray` / etc. conversion members extracted from
 /// `HeaderHelpers+SyntheticListStubs.swift`.
 extension DataFlowSemaPhase {
@@ -87,7 +87,7 @@ extension DataFlowSemaPhase {
             listInterfaceSymbol: listInterfaceSymbol,
             listTypeParamSymbol: listTypeParamSymbol,
             listTypeParamType: listTypeParamType,
-            memberName: "toTypeArray",
+            memberName: "toTypedArray",
             externalLinkName: "kk_list_toTypedArray"
         )
         let kotlinPkg = [interner.intern("kotlin")]
@@ -201,7 +201,7 @@ extension DataFlowSemaPhase {
         )
     }
 
-    /// Register a `List<E>.toTypeArray(): Array<E>` conversion member stub.
+    /// Register a `List<E>.toTypedArray(): Array<E>` conversion member stub.
     private func registerListToGenericArrayMember(
         symbols: SymbolTable,
         types: TypeSystem,

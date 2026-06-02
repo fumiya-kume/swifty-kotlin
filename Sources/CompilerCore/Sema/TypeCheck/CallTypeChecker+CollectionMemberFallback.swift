@@ -801,7 +801,6 @@ extension CallTypeChecker {
             interner.intern("asIterable"),
             interner.intern("toList"),
             interner.intern("toCollection"),
-            interner.intern("toTypeArray"),
             interner.intern("toTypedArray"),
             interner.intern("toCharArray"),
             interner.intern("toBooleanArray"),
@@ -939,7 +938,7 @@ extension CallTypeChecker {
         let collectionReturningMembers: Set = [
             interner.intern("asSequence"), interner.intern("asIterable"), interner.intern("filterNotNull"), interner.intern("requireNoNulls"),
             interner.intern("filterIsInstanceTo"), interner.intern("reduceTo"),
-            interner.intern("zip"), interner.intern("toList"), interner.intern("toTypeArray"), interner.intern("toTypedArray"), interner.intern("take"), interner.intern("drop"), interner.intern("reversed"), interner.intern("asReversed"),
+            interner.intern("zip"), interner.intern("toList"), interner.intern("toTypedArray"), interner.intern("take"), interner.intern("drop"), interner.intern("reversed"), interner.intern("asReversed"),
             interner.intern("sorted"), interner.intern("distinct"), interner.intern("distinctBy"), interner.intern("flatten"), interner.intern("chunked"), interner.intern("windowed"), interner.intern("withIndex"),
             interner.intern("shuffled"),
             interner.intern("sortedDescending"), interner.intern("sortedByDescending"), interner.intern("sortedWith"),
@@ -1002,7 +1001,7 @@ extension CallTypeChecker {
         switch memberName {
         case knownNames.size, knownNames.isEmpty, interner.intern("iterator"), interner.intern("asSequence"),
              interner.intern("asIterable"),
-             interner.intern("toList"), interner.intern("toTypeArray"), interner.intern("toTypedArray"), interner.intern("reversed"),
+             interner.intern("toList"), interner.intern("toTypedArray"), interner.intern("reversed"),
             interner.intern("asReversed"), interner.intern("sorted"),
              interner.intern("distinct"), interner.intern("flatten"), interner.intern("withIndex"),
              interner.intern("min"), interner.intern("maxOrNull"), interner.intern("minOrNull"), interner.intern("sortedDescending"), interner.intern("filterIsInstance"),
@@ -1252,22 +1251,6 @@ extension CallTypeChecker {
 
         if memberName == interner.intern("average") {
             return sema.types.doubleType
-        }
-
-        if memberName == interner.intern("toTypeArray"),
-           !isMapReceiver,
-           !isSetReceiver,
-           !isSequenceReceiver,
-           let arraySymbol = sema.symbols.lookup(fqName: [
-               interner.intern("kotlin"),
-               interner.intern("Array"),
-           ])
-        {
-            return sema.types.make(.classType(ClassType(
-                classSymbol: arraySymbol,
-                args: [.invariant(receiverElementType)],
-                nullability: .nonNull
-            )))
         }
 
         if memberName == interner.intern("chunked") && args.count == 2 {

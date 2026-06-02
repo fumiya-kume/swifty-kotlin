@@ -228,7 +228,6 @@ struct KnownCompilerNames {
     let mutableSet: InternedString
     let linkedHashSet: InternedString
     let collection: InternedString
-    let linkedList: InternedString
     let arrayDeque: InternedString
     let array: InternedString
     let intArray: InternedString
@@ -363,7 +362,6 @@ struct KnownCompilerNames {
     let kotlinCollectionsLinkedHashSetFQName: [InternedString]
     let kotlinCollectionsMapFQName: [InternedString]
     let kotlinCollectionsMutableMapFQName: [InternedString]
-    let kotlinCollectionsLinkedListFQName: [InternedString]
     let kotlinCollectionsArrayDequeFQName: [InternedString]
     let kotlinCollectionsCollectionFQName: [InternedString]
     let kotlinCoroutinesFQName: [InternedString]
@@ -407,7 +405,6 @@ struct KnownCompilerNames {
         mutableSet = interner.intern("MutableSet")
         linkedHashSet = interner.intern("LinkedHashSet")
         collection = interner.intern("Collection")
-        linkedList = interner.intern("LinkedList")
         arrayDeque = interner.intern("ArrayDeque")
         array = interner.intern("Array")
         intArray = interner.intern("IntArray")
@@ -552,7 +549,6 @@ struct KnownCompilerNames {
         kotlinCollectionsLinkedHashSetFQName = [kotlin, kotlinCollections, linkedHashSet]
         kotlinCollectionsMapFQName = [kotlin, kotlinCollections, map]
         kotlinCollectionsMutableMapFQName = [kotlin, kotlinCollections, mutableMap]
-        kotlinCollectionsLinkedListFQName = [kotlin, kotlinCollections, linkedList]
         kotlinCollectionsArrayDequeFQName = [kotlin, kotlinCollections, arrayDeque]
         kotlinCollectionsCollectionFQName = [kotlin, kotlinCollections, collection]
         kotlinxCoroutinesJobFQName = [kotlinx, coroutines, job]
@@ -695,16 +691,15 @@ struct KnownCompilerNames {
         "setOf", "setOfNotNull", "mutableSetOf", "hashSetOf", "linkedSetOf", "emptySet",
         "listOfNotNull",
         "sequenceOf", "generateSequence",
-        "ArrayList", "LinkedList",
+        "ArrayList",
         "HashMap", "LinkedHashMap",
         "HashSet", "LinkedHashSet",
     ]
 
     func isConcreteListLikeSymbol(_ symbol: SemanticSymbol) -> Bool {
-        symbol.name == list || symbol.name == mutableList || symbol.name == linkedList
+        symbol.name == list || symbol.name == mutableList
             || symbolMatches(symbol, fqName: kotlinCollectionsListFQName)
             || symbolMatches(symbol, fqName: kotlinCollectionsMutableListFQName)
-            || symbolMatches(symbol, fqName: kotlinCollectionsLinkedListFQName)
     }
 
     func isMapLikeSymbol(_ symbol: SemanticSymbol) -> Bool {

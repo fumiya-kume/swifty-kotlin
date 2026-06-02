@@ -599,7 +599,6 @@ struct CollectionLiteralLookupTables {
 
     // Array member names (STDLIB-087/088/089)
     let toMutableListName: InternedString
-    let toTypeArrayName: InternedString
     let toTypedArrayName: InternedString
     let copyOfName: InternedString
     let copyOfRangeName: InternedString
@@ -1376,7 +1375,6 @@ struct CollectionLiteralLookupTables {
         lastOrNullName = interner.intern("lastOrNull")
 
         toMutableListName = interner.intern("toMutableList")
-        toTypeArrayName = interner.intern("toTypeArray")
         toTypedArrayName = interner.intern("toTypedArray")
         copyOfName = interner.intern("copyOf")
         copyOfRangeName = interner.intern("copyOfRange")

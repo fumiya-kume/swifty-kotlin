@@ -132,8 +132,8 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
-        // toTypedArray()/toTypeArray() on list -> kk_list_toTypedArray (result is Array)
-        if callee == lookup.toTypedArrayName || callee == lookup.toTypeArrayName,
+        // toTypedArray() on list -> kk_list_toTypedArray (result is Array)
+        if callee == lookup.toTypedArrayName,
            arguments.isEmpty,
            listExprIDs.contains(receiver.rawValue)
         {
