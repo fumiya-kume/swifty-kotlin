@@ -958,6 +958,23 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-TEXT-FN-034: CharSequence.lastIndexOf(Char, startIndex, ignoreCase) ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "lastIndexOf",
+            externalLinkName: "kk_string_lastIndexOf_char",
+            receiverType: charSequenceType,
+            parameters: [
+                ("char", charType, false, false),
+                ("startIndex", intType, false, false),
+                ("ignoreCase", boolType, false, false),
+            ],
+            returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticStringExtensionFunction(
             named: "repeat",
             externalLinkName: "kk_string_repeat",

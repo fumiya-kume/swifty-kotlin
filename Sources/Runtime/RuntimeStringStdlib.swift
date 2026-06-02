@@ -1970,6 +1970,36 @@ public func kk_string_lastIndexOf_ignoreCase(_ strRaw: Int, _ otherRaw: Int, _ s
     return lastIndex
 }
 
+// MARK: - STDLIB-TEXT-FN-034: CharSequence.lastIndexOf(Char, startIndex, ignoreCase)
+
+@_cdecl("kk_string_lastIndexOf_char")
+public func kk_string_lastIndexOf_char(_ strRaw: Int, _ charRaw: Int, _ startIndexRaw: Int, _ ignoreCaseRaw: Int) -> Int {
+    let source = runtimeStringScalars(strRaw)
+    guard let needle = runtimeUnicodeScalarFromRaw(charRaw) else {
+        return -1
+    }
+    guard !source.isEmpty else {
+        return -1
+    }
+    let ignoreCase = ignoreCaseRaw != 0
+    let start = min(startIndexRaw, source.count - 1)
+    guard start >= 0 else {
+        return -1
+    }
+    let needleStr = String(needle)
+    for offset in stride(from: start, through: 0, by: -1) {
+        let scalar = source[offset]
+        if ignoreCase {
+            if String(scalar).caseInsensitiveCompare(needleStr) == .orderedSame {
+                return offset
+            }
+        } else if scalar == needle {
+            return offset
+        }
+    }
+    return -1
+}
+
 @_cdecl("kk_string_get")
 public func kk_string_get(_ strRaw: Int, _ indexRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
