@@ -65,7 +65,7 @@
 
 ### Phase 3: I/O・パス・時間・並行（common）
 - [~] STDLIB-GAP-PH3: `kotlin.io`（common） / `kotlin.time` / `kotlin.concurrent` / `kotlin.concurrent.atomics` の未対応を潰す
-- [ ] STDLIB-030: `kotlin.io` common 範囲の file / buffered / `use` を仕様単位で締める
+- [x] STDLIB-030: `kotlin.io` common 範囲の file / buffered / `use` を仕様単位で締める
 - [x] STDLIB-033: `kotlin.concurrent` / `kotlin.concurrent.atomics` / Native concurrent の parity を上げる
 
 #### kotlin.concurrent 型の実装
