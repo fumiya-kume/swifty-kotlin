@@ -1079,6 +1079,26 @@ extension ExprLowerer {
             case .unaryPlus:
                 return operandID
             case .unaryMinus:
+                // IEEE floating-point negation must flip the sign bit so that
+                // `-(0.0) == -0.0`. Lowering it as `0.0 - x` is wrong because
+                // `0.0 - 0.0 == +0.0`. Use `x * -1.0`, which preserves the sign
+                // of zero, infinity and NaN. The result type of unary minus
+                // equals the operand type, so fall back to the operand's type
+                // when the unary expression itself has no recorded binding
+                // (e.g. inside expression-body function bodies).
+                let negationType = boundType
+                    ?? sema.bindings.exprTypes[operandExpr]
+                    ?? arena.exprType(operandID)
+                if let negationType,
+                   case let .primitive(primitiveKind, _) = sema.types.kind(of: negationType),
+                   primitiveKind == .double || primitiveKind == .float {
+                    let negativeOne = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: negationType)
+                    let literalValue: KIRExprKind = primitiveKind == .double ? .doubleLiteral(-1.0) : .floatLiteral(-1.0)
+                    instructions.append(.constValue(result: negativeOne, value: literalValue))
+                    let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: negationType)
+                    instructions.append(.binary(op: .multiply, lhs: operandID, rhs: negativeOne, result: result))
+                    return result
+                }
                 let zero = arena.appendExpr(.intLiteral(0), type: intType)
                 instructions.append(.constValue(result: zero, value: .intLiteral(0)))
                 let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? intType)

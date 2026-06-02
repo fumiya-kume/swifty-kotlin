@@ -1,6 +1,6 @@
 # Kotlin Compiler Remaining Tasks
 
-最終更新: 2026-05-28
+最終更新: 2026-05-31
 
 ---
 
@@ -794,5 +794,25 @@
 - [ ] TEST-COL-014: `kotlin.collections` の `List` 受信者版 `reduceIndexedOrNull` / `scanIndexed` の Codegen 統合テストを追加する。Sequence 受信者版はカバー済みだが List 受信者の実行テストが欠落。カバー対象: 空（`reduceIndexedOrNull` は `null`、`scanIndexed` は initial のみ）・単一要素・accumulator に渡る index の検証
 - [ ] TEST-RANGE-015: `kotlin.ranges` の IntRange/LongRange 受信者の HOF 実行テストを追加する。`forEach` / `drop` / `take` / `sorted` / `average` / `mapIndexed` / `mapNotNull` / `filterIndexed` / `findLast` / `reduceIndexed` / `first`(predicate版) / `last`(predicate版) は実装ありだが実行レベルのテストが無い（`KotlinCompilationBasicTests` は KIR コンパイルのみで実行せず、`forEach`/`drop`/`take`/`sorted`/`average` は KIR すら未通過）。`RuntimeRangeHOFTests` の直接 `kk_range_*` 呼び出しか Codegen 統合（`.kt` 実行）で。カバー対象: 空 range・単一要素・降順 progression（step 負）・`average` の整数→Double 変換。IntRange の `mapIndexed` は直接ギャップ（UInt/ULong 版は既存）
 - [ ] TEST-TEXT-016: `StringBuilder` の明示 API の実行テストを追加する。`insert` / `delete(start,end)` / `deleteCharAt` / `replace` / `reverse` / `setCharAt` / `capacity` / `ensureCapacity` / `trimToSize` / `get` / `length` は実装ありだが未テスト（カバー済みの `deleteAt` / `deleteRange` / `insertRange` / `setRange` とは別関数）。`append` / `appendLine` / `toString` は文字列補間の lowering で間接カバー済みのため対象外。カバー対象: 境界インデックス・空 builder・`reverse` のサロゲートペア保持・`setCharAt`/`get` の範囲外で例外
+
+## 仕様準拠監査（Spec Conformance Audit）
+
+Kotlin 公式仕様 / stdlib ドキュメントを基準に挙動を照合し、差異を記録・修正する継続タスク。
+
+### 方法論
+- 公式に文書化された挙動を真とし、二層で検証する:
+  1. **doc 由来ユニットテスト**（kotlinc 非依存・CI 強制）: 期待値を直接アサート。例: `Tests/RuntimeTests/RuntimeFloatingPointToStringTests.swift`。
+  2. **kotlinc 比較 diff ケース**: `Scripts/diff_cases/num_*.kt` を `Scripts/diff_kotlinc.sh` で本物の kotlinc(2.3.10) と突き合わせる。
+- 採番は `SPEC-NUM-{NUMBER}`。修正できない大規模/横断要因は再現 diff ケースを `// SKIP-DIFF` で残し追跡する（修正後にマーカーを外せば回帰テストになる）。
+
+### 数値・プリミティブ型（第1バッチ）
+- [x] SPEC-NUM-0004: `Double`/`Float.toString()` の科学的記数法しきい値。`Float` 版が `|x| >= 1e7 || < 1e-3` の科学的記数法変換を行わず、`0.0001f`→`0.0001`（正: `1.0E-4`）、`1.0E7f`→`10000000.0`（正: `1.0E7`）等になっていた。`Sources/Runtime/RuntimeStringArray.swift` の `runtimeFormatFloatingPoint(Float)` を Double 版と共通化して修正。回帰: `Scripts/diff_cases/num_float_tostring.kt` / `num_conversions.kt`、`RuntimeFloatingPointToStringTests`。
+- [x] SPEC-NUM-0005: 浮動小数の単項マイナスが符号付きゼロを失う。`-x` が `0 - x` に lowering されており `-(0.0)` が `+0.0`（正: `-0.0`）になっていた。`Sources/CompilerCore/KIR/ExprLowerer+ControlFlowAndBlocks.swift` で float/double のとき `x * -1.0` に変更。回帰: `Scripts/diff_cases/num_negative_zero.kt`。
+- [ ] SPEC-NUM-0001: `Int`/`Short`/`Byte` の算術・シフトが 64bit 幅で計算され 32/16/8bit へ切り詰められない。符号付きオーバーフローがラップせず、`Int.MAX_VALUE + 1`→`2147483648`（正: `-2147483648`）、`1 shl 32`→`4294967296`（正: シフト量マスクで `1`）等。実行時（関数引数）でも再現。codegen の整数幅の根本変更が必要。再現: `Scripts/diff_cases/num_int_overflow.kt`（SKIP-DIFF）。
+- [ ] SPEC-NUM-0002: 整数のゼロ除算・剰余が catch 可能な `ArithmeticException`（"/ by zero"）を投げず、ハードウェア SIGFPE でプロセスが異常終了する（catch 不能）。codegen で除数のゼロチェックを挿入する必要あり。浮動小数のゼロ除算（Infinity/NaN）は正しい。再現: `Scripts/diff_cases/num_div_by_zero.kt`（SKIP-DIFF）。
+- [ ] SPEC-NUM-0003: `Double`/`Float` の関係演算子（`<` `<=` `>` `>=`）が IEEE-754 比較（NaN は常に false）ではなく `Comparable.compareTo`（全順序、NaN 最大）経由になり、`1.0 < Double.NaN`→`true`（正: `false`）等。`compareTo` 束縛を外すと OperatorLoweringPass が被演算子の Double ランクを検出できず（`arena.exprType` が nil）整数比較 `kk_op_lt` に落ち、負の double 比較を壊すため、KIR 型伝播の改善（または専用 IEEE 比較 desugar）とセットで対応が必要。再現: `Scripts/diff_cases/num_nan_comparison.kt`（SKIP-DIFF）。
+- [ ] SPEC-NUM-0006: `Double.MIN_VALUE`/`Float.MIN_VALUE` の最短10進表現が `java.lang.*.toString` と異なる（Kotlin: `4.9E-324`/`1.4E-45`、kswiftk: `5.0E-324`/`1.0E-45`）。Swift の最短表現と Java の FloatingDecimal の差。subnormal 端の完全一致は別途。再現: `Scripts/diff_cases/num_float_min_value.kt`（SKIP-DIFF）。
+- [ ] SPEC-NUM-0007: 符号なし型のコンパニオン定数 `UInt`/`ULong`/`UByte`/`UShort.MAX_VALUE`/`MIN_VALUE` が未解決（`KSWIFTK-SEMA-0024`）。加えて `UInt.toByte()` や `String.toUByteOrNull()` 等の一部変換/パーサが未配線。再現: `Scripts/diff_cases/num_unsigned_limits.kt`（SKIP-DIFF）。
+- [ ] SPEC-NUM-0008: プリミティブ `Double`/`Float` への明示メンバ呼び出しの欠落。`x.compareTo(y)` がリンクエラー（`undefined reference to 'compareTo'`）、`(-0.0).toString()` が `"null"` を返す。また関数の戻り値として返した `-0.0` が呼び出し側の `println` で `0.0` に化ける（戻り値経路で符号消失）。
 - [ ] TEST-TIME-020: `kotlin.time` の Duration Long 受信ファクトリの実行テストを追加する。`from_days_long`（`5L.days`）/ `from_hours_long`（`5L.hours`）/ `from_minutes_long`（`5L.minutes`）/ `from_microseconds_long`（`5L.microseconds`）は実装ありだが実行テストなし。**注意**: `from_seconds_long` / `from_milliseconds_long` / `from_nanoseconds_long` は `CodegenBackendIntegrationTests+StableDurationEdgeCases.testDurationStableUnitExtensionPropertiesLong` でカバー済みのため対象外。カバー対象: 正常変換・`Long.MAX_VALUE` のオーバーフロー飽和（INFINITE）・負値・ゼロ
 - [ ] TEST-TIME-021: `kotlin.time` の Instant 変換の実行テストを追加する。`from_epoch_seconds`（`Instant.fromEpochSeconds(...)`）/ `to_epoch_millis`（`instant.toEpochMilliseconds()`）/ `to_foundation_date`（Foundation Date 変換）は `RuntimeTime.swift` に実装ありだが実行テストなし（`RuntimeInstantTests` は `from_epoch_millis`/`compare`/`elapsed`/`until` 等の別関数のみ）。カバー対象: epoch 往復・負の epoch（1970以前）・秒未満ナノ秒の保持・`fromEpochSeconds` の nanosecondAdjustment 引数

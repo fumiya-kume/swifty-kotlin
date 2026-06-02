@@ -1758,9 +1758,20 @@ private func runtimeScientificString(fromFixed rendered: String) -> String {
     return "\(sign)\(firstDigit).\(mantissaFraction)E\(exponent)"
 }
 
-private func runtimeFormatFloatingPointCore(
-    _ value: Double
-) -> String {
+/// Applies Kotlin's decimal/scientific notation rules to an already-rendered
+/// shortest-round-trip string. Kotlin (matching java.lang.Double/Float.toString)
+/// uses scientific notation when the magnitude is >= 1e7 or < 1e-3.
+private func runtimeFinishFloatingPointFormat(rendered: String, useScientific: Bool) -> String {
+    if rendered.contains("e") || rendered.contains("E") {
+        return runtimeNormalizeScientificExponent(rendered)
+    }
+    if useScientific {
+        return runtimeScientificString(fromFixed: rendered)
+    }
+    return rendered
+}
+
+func runtimeFormatFloatingPoint(_ value: Double) -> String {
     if value.isNaN {
         return "NaN"
     }
@@ -1770,19 +1781,11 @@ private func runtimeFormatFloatingPointCore(
     if value == -.infinity {
         return "-Infinity"
     }
-    let rendered = String(describing: value)
-    if rendered.contains("e") || rendered.contains("E") {
-        return runtimeNormalizeScientificExponent(rendered)
-    }
     let magnitude = abs(value)
-    if magnitude != 0, magnitude >= 1e7 || magnitude < 1e-3 {
-        return runtimeScientificString(fromFixed: rendered)
-    }
-    return rendered
-}
-
-func runtimeFormatFloatingPoint(_ value: Double) -> String {
-    runtimeFormatFloatingPointCore(value)
+    return runtimeFinishFloatingPointFormat(
+        rendered: String(describing: value),
+        useScientific: magnitude != 0 && (magnitude >= 1e7 || magnitude < 1e-3)
+    )
 }
 
 func runtimeFormatFloatingPoint(_ value: Float) -> String {
@@ -1795,11 +1798,11 @@ func runtimeFormatFloatingPoint(_ value: Float) -> String {
     if value == -.infinity {
         return "-Infinity"
     }
-    let rendered = String(describing: value)
-    if rendered.contains("e") || rendered.contains("E") {
-        return runtimeNormalizeScientificExponent(rendered)
-    }
-    return rendered
+    let magnitude = abs(value)
+    return runtimeFinishFloatingPointFormat(
+        rendered: String(describing: value),
+        useScientific: magnitude != 0 && (magnitude >= 1e7 || magnitude < 1e-3)
+    )
 }
 
 // MARK: - String nullable receiver helpers
