@@ -239,6 +239,45 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         XCTAssertNotEqual(typedArrayRaw, charArrayRaw, "toTypedArray and toCharArray should return distinct array handles")
     }
 
+    // MARK: - STDLIB-TEXT-FN-108: kk_string_toSortedSet tests
+
+    func testStringToSortedSetReturnsSortedUniqueChars() {
+        // "cba" should produce {a, b, c} sorted ascending
+        let setRaw = kk_string_toSortedSet(rawFromRuntimeString("cba"))
+        let setBox = runtimeSetBox(from: setRaw)
+        XCTAssertNotNil(setBox)
+        XCTAssertEqual(setBox?.elements.map(kk_unbox_char), [97, 98, 99]) // a, b, c
+    }
+
+    func testStringToSortedSetDeduplicates() {
+        // "aabba" — unique chars are 'a'(97) and 'b'(98) in ascending order
+        let setRaw = kk_string_toSortedSet(rawFromRuntimeString("aabba"))
+        let setBox = runtimeSetBox(from: setRaw)
+        XCTAssertNotNil(setBox)
+        XCTAssertEqual(setBox?.elements.map(kk_unbox_char), [97, 98]) // a, b
+    }
+
+    func testStringToSortedSetEmptyString() {
+        let setRaw = kk_string_toSortedSet(rawFromRuntimeString(""))
+        let setBox = runtimeSetBox(from: setRaw)
+        XCTAssertNotNil(setBox)
+        XCTAssertEqual(setBox?.elements.count, 0)
+    }
+
+    func testStringToSortedSetSingleChar() {
+        let setRaw = kk_string_toSortedSet(rawFromRuntimeString("z"))
+        let setBox = runtimeSetBox(from: setRaw)
+        XCTAssertNotNil(setBox)
+        XCTAssertEqual(setBox?.elements.map(kk_unbox_char), [122]) // 'z'
+    }
+
+    func testStringToSortedSetUsesUTF16CodeUnits() {
+        let setRaw = kk_string_toSortedSet(rawFromRuntimeString("a🐻a"))
+        let setBox = runtimeSetBox(from: setRaw)
+        XCTAssertNotNil(setBox)
+        XCTAssertEqual(setBox?.elements.map(kk_unbox_char), [97, 0xD83D, 0xDC3B])
+    }
+
     // MARK: - STDLIB-317: String.asIterable() tests
 
     func testStringAsIterableReturnsLazyBox() {

@@ -993,6 +993,45 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // STDLIB-TEXT-FN-108: CharSequence.toSortedSet(): SortedSet<Char>
+        // The return type is modelled as Set<Char> — the runtime produces a
+        // sorted, deduplicated set backed by RuntimeSetBox.
+        let setCharType: TypeID = {
+            let setFQName: [InternedString] = [
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("Set"),
+            ]
+            if let setSymbol = symbols.lookup(fqName: setFQName) {
+                return types.make(.classType(ClassType(
+                    classSymbol: setSymbol,
+                    args: [.out(charType)],
+                    nullability: .nonNull
+                )))
+            }
+            return types.anyType
+        }()
+        registerSyntheticStringExtensionFunction(
+            named: "toSortedSet",
+            externalLinkName: "kk_string_toSortedSet",
+            receiverType: stringType,
+            parameters: [],
+            returnType: setCharType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticStringExtensionFunction(
+            named: "toSortedSet",
+            externalLinkName: "kk_string_toSortedSet",
+            receiverType: charSequenceType,
+            parameters: [],
+            returnType: setCharType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticStringExtensionFunction(
             named: "toCharArray",
             externalLinkName: "kk_string_toCharArray",
