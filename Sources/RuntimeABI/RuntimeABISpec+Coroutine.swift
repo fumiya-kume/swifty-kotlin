@@ -154,6 +154,7 @@ public extension RuntimeABISpec {
             name: "kk_kxmini_async_await",
             parameters: [
                 RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -749,6 +750,7 @@ public extension RuntimeABISpec {
             name: "kk_job_join",
             parameters: [
                 RuntimeABIParameter(name: "jobHandle", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -757,6 +759,7 @@ public extension RuntimeABISpec {
             name: "kk_job_await_completion",
             parameters: [
                 RuntimeABIParameter(name: "jobHandle", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"

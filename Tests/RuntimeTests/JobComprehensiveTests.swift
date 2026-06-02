@@ -315,8 +315,8 @@ final class JobComprehensiveTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_job_is_active(0), 0)
         XCTAssertEqual(kk_job_is_completed(0), 1) // Invalid treated as completed
         XCTAssertEqual(kk_job_is_cancelled(0), 1) // Invalid treated as cancelled
-        XCTAssertEqual(kk_job_join(0), 0)
-        XCTAssertEqual(kk_job_await_completion(0), 0)
+        XCTAssertEqual(kk_job_join(0, 0), 0)
+        XCTAssertEqual(kk_job_await_completion(0, 0), 0)
     }
     
     func testJobConcurrentAccess() {

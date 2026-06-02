@@ -145,7 +145,12 @@ final class CoroutineLoweringPass: LoweringPass {
             suspendCoroutineUninterceptedOrReturnCallee,
             ctx.interner.intern("kk_suspend_function_invoke_0"),
             ctx.interner.intern("kk_suspend_function_invoke"),
-            ctx.interner.intern("kk_suspend_coroutine")
+            ctx.interner.intern("kk_suspend_coroutine"),
+            // CORO-004: await / join are real suspend points that consume the
+            // caller continuation so the runtime can resume them without blocking.
+            ctx.interner.intern("kk_kxmini_async_await"),
+            ctx.interner.intern("kk_job_join"),
+            ctx.interner.intern("kk_job_await_completion")
         ]
         let kxMiniLauncherRuntimeCallees: [InternedString: InternedString] = [
             kxMiniRunBlockingCallee: runtimeRunBlockingCallee,

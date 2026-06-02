@@ -176,6 +176,42 @@ final class LoweringPassRegressionTests: XCTestCase {
         }
     }
 
+    /// CORO-004: `Deferred.await()` and `Job.join()` must be lowered as real suspend
+    /// points — rewritten to their runtime callees and preceded by a resume-label
+    /// install so the runtime can resume the coroutine without blocking a thread.
+    func testCoroutineLoweringTreatsAwaitAndJoinAsSuspendPoints() throws {
+        let source = """
+        import kotlinx.coroutines.*
+
+        suspend fun awaitAndJoin(d: Deferred<Int>, j: Job): Int {
+            val value = d.await()
+            j.join()
+            return value
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "AwaitJoinLowering", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let suspendBody = try findKIRFunctionBody(named: "kk_suspend_awaitAndJoin", in: module, interner: ctx.interner)
+
+            let callees = extractCallees(from: suspendBody, interner: ctx.interner)
+            XCTAssertTrue(callees.contains("kk_kxmini_async_await"), "await should lower to kk_kxmini_async_await")
+            XCTAssertTrue(callees.contains("kk_job_join"), "join should lower to kk_job_join")
+            XCTAssertTrue(
+                callees.contains("kk_coroutine_state_set_label"),
+                "await/join must be treated as suspend points (resume label install)"
+            )
+
+            let throwFlags = extractThrowFlags(from: suspendBody, interner: ctx.interner)
+            XCTAssertEqual(throwFlags["kk_kxmini_async_await"]?.allSatisfy { $0 == false }, true)
+            XCTAssertEqual(throwFlags["kk_job_join"]?.allSatisfy { $0 == false }, true)
+        }
+    }
+
     func testCoroutineLoweringRewritesCoroutineScopeToScopeRun() throws {
         let source = """
         suspend fun delayedValue(): Int {
