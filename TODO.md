@@ -190,7 +190,7 @@
 - [x] STDLIB-IO-PATH-FN-039: `walk` 関数の実装
 - [ ] STDLIB-IO-PATH-FN-040: `writeLines` 関数の実装（Iterable版）
 - [x] STDLIB-IO-PATH-FN-041: `writeLines` 関数の実装（Sequence版）
-- [ ] STDLIB-IO-PATH-FN-042: `writer` 関数の実装
+- [x] STDLIB-IO-PATH-FN-042: `writer` 関数の実装
 
 #### kotlin.math プロパティの実装
 
