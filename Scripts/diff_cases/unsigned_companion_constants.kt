@@ -1,0 +1,18 @@
+fun main() {
+    println(UInt.MAX_VALUE)
+    println(UInt.MIN_VALUE)
+    println(UInt.SIZE_BITS)
+    println(UInt.SIZE_BYTES)
+    println(ULong.MAX_VALUE)
+    println(ULong.MIN_VALUE)
+    println(ULong.SIZE_BITS)
+    println(ULong.SIZE_BYTES)
+    println(UByte.MAX_VALUE)
+    println(UByte.MIN_VALUE)
+    println(UByte.SIZE_BITS)
+    println(UByte.SIZE_BYTES)
+    println(UShort.MAX_VALUE)
+    println(UShort.MIN_VALUE)
+    println(UShort.SIZE_BITS)
+    println(UShort.SIZE_BYTES)
+}
