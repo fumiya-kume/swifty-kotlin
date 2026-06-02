@@ -207,11 +207,11 @@
 
 #### kotlin.reflect 型の実装
 - [x] STDLIB-REFLECT-TYPE-009: `KMutableProperty` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-010: `KMutableProperty0` インターフェースの実装
+- [x] STDLIB-REFLECT-TYPE-010: `KMutableProperty0` インターフェースの実装
 - [x] STDLIB-REFLECT-TYPE-011: `KMutableProperty1` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-013: `KParameter` インターフェースの実装
 - [x] STDLIB-REFLECT-TYPE-015: `KProperty0` インターフェースの実装
-- [ ] STDLIB-REFLECT-TYPE-010: `KMutableProperty0` インターフェースの実装
+- [x] STDLIB-REFLECT-TYPE-010: `KMutableProperty0` インターフェースの実装
 - [ ] STDLIB-REFLECT-TYPE-013: `KParameter` インターフェースの実装
 
 #### kotlin.reflect プロパティの実装
