@@ -585,7 +585,7 @@ extension CallLowerer {
         case .elvis:
             preconditionFailure("?: must be lowered through lowerShortCircuitElvisExpr")
         case .rangeTo:
-            // kk_op_rangeTo / kk_uint_rangeTo are still residual operator-core helpers.
+            // kk_op_rangeTo / __kk_uint_rangeTo are residual operator-core helpers.
             let rangeToCallee: InternedString
             if sema.bindings.isFloatingPointRangeExpr(exprID) {
                 let lhsType = sema.bindings.exprTypes[lhs] ?? sema.types.anyType
@@ -596,7 +596,7 @@ extension CallLowerer {
                     rangeToCallee = interner.intern("__kk_double_rangeTo")
                 }
             } else if sema.bindings.isUIntRangeExpr(exprID) {
-                rangeToCallee = interner.intern("kk_uint_rangeTo")
+                rangeToCallee = interner.intern("__kk_uint_rangeTo")
             } else {
                 rangeToCallee = interner.intern("kk_op_rangeTo")
             }

@@ -14,7 +14,7 @@ extension CallTypeChecker {
                 "kk_op_rangeTo",
                 "__kk_op_rangeUntil",
                 "__kk_op_ulong_rangeUntil",
-                "kk_uint_rangeTo",
+                "__kk_uint_rangeTo",
                 "kk_char_rangeTo",
                 "__kk_int_progression_fromClosedRange",
                 "__kk_long_progression_fromClosedRange",
@@ -53,7 +53,7 @@ extension CallTypeChecker {
         // synthetic/runtime-backed operators (rangeTo, old signed rangeUntil,
         // etc.) whose return type may still be the scalar handle.
         if let externalLinkName = sema.symbols.externalLinkName(for: chosen) {
-            if externalLinkName == "kk_uint_rangeTo"
+            if externalLinkName == "__kk_uint_rangeTo"
                 || externalLinkName == "__kk_uint_progression_fromClosedRange"
                 || (externalLinkName == "__kk_op_rangeUntil" && returnType == sema.types.uintType)
             {
