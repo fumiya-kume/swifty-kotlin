@@ -41,7 +41,7 @@ symbol fq=golden.sema.collectionSurface.$0.ulongs kind=valueParameter vis=privat
 symbol fq=golden.sema.collectionSurface.$0.ushorts kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.collectionSurface.$0.values kind=valueParameter vis=private flags=_
 symbol fq=kotlin.Array kind=class vis=public flags=synthetic
-symbol fq=kotlin.BooleanArray kind=class vis=public flags=synthetic
+symbol fq=kotlin.BooleanArray#0 kind=class vis=public flags=synthetic
 symbol fq=kotlin.ByteArray kind=class vis=public flags=synthetic type=kotlin.ByteArray
 symbol fq=kotlin.CharArray kind=class vis=public flags=synthetic
 symbol fq=kotlin.DoubleArray kind=class vis=public flags=synthetic
