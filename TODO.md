@@ -5665,7 +5665,7 @@
     - `kotlin.text.StringBuilder.<init>` — constructor (Int)  -- `constructor <init>(kotlin/Int)`
     - `kotlin.text.StringBuilder.<init>` — constructor (String)  -- `constructor <init>(kotlin/String)`
 
-- [ ] KSP-1441: kotlin.text.Typography.Typography.almost-family の未実装 stdlib API を実装する（1 件）
+- [x] KSP-1441: kotlin.text.Typography.Typography.almost-family の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.text.Typography` / receiver `Typography` / family `almost`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/Typography/almost.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
