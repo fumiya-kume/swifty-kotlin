@@ -6164,7 +6164,7 @@
     - `kotlin.time.Instant.Companion.parse` — fun Companion.parse(CharSequence): Instant  -- `final fun parse(kotlin/CharSequence): kotlin.time/Instant`
     - `kotlin.time.Instant.Companion.parseOrNull` — fun Companion.parseOrNull(CharSequence): Instant  -- `final fun parseOrNull(kotlin/CharSequence): kotlin.time/Instant?`
 
-- [ ] KSP-1497: kotlin.time.TimedValue.TimedValue の未実装 stdlib API を実装する（7 件）
+- [x] KSP-1497: kotlin.time.TimedValue.TimedValue の未実装 stdlib API を実装する（7 件）
   - 対象: `kotlin.time.TimedValue` / receiver `TimedValue`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/time/TimedValue/TimedValue.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -6179,6 +6179,8 @@
     - `kotlin.time.TimedValue.hashCode` — fun TimedValue.hashCode(): Int  -- `final fun hashCode(): kotlin/Int`
     - `kotlin.time.TimedValue.toString` — fun TimedValue.toString(): String  -- `final fun toString(): kotlin/String`
     - `kotlin.time.TimedValue.value` — val TimedValue.value: #A  -- `final val value`
+  - 完了根拠: Kotlin 2.3.10 の common source と公開 API に合わせ、既存 `Sources/CompilerCore/Stdlib/kotlin/time/TimedValue.kt` を `data class TimedValue<T>(val value: T, val duration: Duration)` として source-backed 化した。constructor・property・data-class 合成メンバーは通常の source pipeline に統合し、旧 `__kk_timedvalue_*` / `kk_timedvalue_*`、synthetic stub、Runtime ABI エントリを削除した。対象専用の CallTypeChecker / CallLowerer name-string 特例は存在しない。
+  - 回帰: 専用 Sema Golden で generic constructor、`value` / `duration`、`component1` / `component2`、default/named argument を含む `copy`、`equals`、`hashCode`、`toString`、destructuring を固定。新規 member ケース・既存 constructor・既存 `measureTimedValue` の Kotlin 2.3.10 diff、TimedValue 関連 Sema 単体 Golden、KIR runtime type-token 13件、RuntimeDuration 89件、Runtime ABI link 4件を確認済み。
 
 ## Runtime follow-up
 
