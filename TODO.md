@@ -2903,7 +2903,7 @@
     - `kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn` — fun suspendCoroutineUninterceptedOrReturn(Function1): #A  -- `final suspend inline fun <#A: kotlin/Any?> kotlin.coroutines.intrinsics/suspendCoroutineUninterceptedOrReturn(crossinline kotlin/Function1<kotlin.coroutines/Continuation<#A>, kotlin/Any?>): #A`
     - `kotlin.coroutines.intrinsics.wrapWithContinuationImpl` — fun wrapWithContinuationImpl(Continuation): Continuation  -- `final fun <#A: kotlin/Any?> kotlin.coroutines.intrinsics/wrapWithContinuationImpl(kotlin.coroutines/Continuation<#A>): kotlin.coroutines/Continuation<#A>`
 
-- [ ] KSP-1152: kotlin.coroutines.intrinsics.Continuation の未実装 stdlib API を実装する（1 件）
+- [x] KSP-1152: kotlin.coroutines.intrinsics.Continuation の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.coroutines.intrinsics` / receiver `Continuation`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/coroutines/intrinsics/Continuation.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
