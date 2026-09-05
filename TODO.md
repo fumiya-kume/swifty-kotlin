@@ -2971,7 +2971,7 @@
   - 未実装シンボル一覧:
     - `kotlin.experimental.ExperimentalTypeInference.<init>` — constructor ()  -- `constructor <init>()`
 
-- [ ] KSP-1166: kotlin.io.encoding.Base64.Base64 の未実装 stdlib API を実装する（8 件）
+- [x] KSP-1166: kotlin.io.encoding.Base64.Base64 の未実装 stdlib API を実装する（8 件）
   - 対象: `kotlin.io.encoding.Base64` / receiver `Base64`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/io/encoding/Base64/Base64.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -2987,6 +2987,7 @@
     - `kotlin.io.encoding.Base64.encodeIntoByteArray` — fun Base64.encodeIntoByteArray(ByteArray, ByteArray, Int, Int, Int): Int  -- `final fun encodeIntoByteArray(kotlin/ByteArray, kotlin/ByteArray, kotlin/Int = ..., kotlin/Int = ..., kotlin/Int = ...): kotlin/Int`
     - `kotlin.io.encoding.Base64.encodeToAppendable` — fun Base64.encodeToAppendable(ByteArray, , Int, Int): #A1  -- `final fun <#A1: kotlin.text/Appendable> encodeToAppendable(kotlin/ByteArray, #A1, kotlin/Int = ..., kotlin/Int = ...): #A1`
     - `kotlin.io.encoding.Base64.encodeToByteArray` — fun Base64.encodeToByteArray(ByteArray, Int, Int): ByteArray  -- `final fun encodeToByteArray(kotlin/ByteArray, kotlin/Int = ..., kotlin/Int = ...): kotlin/ByteArray`
+  - 完了根拠: Base64.kt に Kotlin 2.3.10 準拠の範囲指定・destination・Appendable API を追加し、Sema Golden、KIR、codegen、kotlinc 差分で検証済み。対象 API に旧 Base64 runtime bridge は存在しない。
 
 - [x] KSP-1167: kotlin.io.encoding.Base64.Default.Default の未実装 stdlib API を実装する（3 件）
   - 対象: `kotlin.io.encoding.Base64.Default` / receiver `Default`
