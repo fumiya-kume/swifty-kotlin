@@ -871,7 +871,7 @@
     - `kotlin.annotation.MustBeDocumented.<init>` — constructor ()  -- `constructor <init>()`
   - 完了根拠（2026-09-03、確認 master: `cf95db64dac5d4ead0e3529998b9d26b8d2b8848`）: Kotlin 2.3.10 公式 [`Annotations.kt`](https://github.com/JetBrains/kotlin/blob/v2.3.10/libraries/stdlib/src/kotlin/annotation/Annotations.kt) と [`gap_v2.tsv`](docs/stdlib-gap-audit-2.3.10/gap_v2.tsv)（311-312 行）が `MustBeDocumented` と引数なし `<init>()` を要求する。merged commit `32945a5299e90365a29c39828388a4d54f3e13a8`（PR #6142, KSP-918）で `Sources/CompilerCore/Stdlib/kotlin/annotation/Stdlib.kt` に source-backed 宣言済みで、`HeaderCollection.collectHeader` の一般的な「primary constructor 構文あり、または secondary constructor なし」分岐が annotation class のゼロ引数 `<init>` を生成する。固有 bridge、Runtime ABI、name-string 特例はなく、synthetic 登録は source が無い構成の fallback のみ。`KotlinAnnotationAPIInventoryTests` 31/31、`CodegenBackendAnnotationEdgeCasesTests.testCodegenCompilesAnnotationEdgeCases` の LLVM artifact link/run、`DIFF_WORKERS=1 bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_annotation_n_n.kt` が pass。
 
-- [ ] KSP-922: kotlin.annotation.Repeatable top-level の未実装 stdlib API を実装する（1 件）
+- [x] KSP-922: kotlin.annotation.Repeatable top-level の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.annotation.Repeatable` / top-level
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/annotation/Repeatable/Stdlib.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -880,6 +880,7 @@
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
   - 未実装シンボル一覧:
     - `kotlin.annotation.Repeatable.<init>` — constructor ()  -- `constructor <init>()`
+  - 完了根拠（2026-09-04）: Kotlin 2.3.10 公式 `Annotations.kt` の `public annotation class Repeatable` は明示コンストラクタを持たず、公式 ABI 棚卸しにも `constructor <init>()` として現れる。現行 `Sources/CompilerCore/Stdlib/kotlin/annotation/Stdlib.kt` の source-backed 宣言に対し、`HeaderCollection` の一般クラス収集経路が引数なしの implicit `<init>` を生成し、専用 bridge/Runtime ABI/name-string 特例なしで解決する。`KotlinAnnotationAPIInventoryTests` と `AnnotationSemanticTests` の focused 46/46、既存 annotation diff 1/1、`RuntimeABIExternalLinkValidationTests` 4/4、`check_todo_ids.sh` が pass。KSP-918 の実装済みコードを重複変更せず、KSP-922 の TODO のみ同期した。
 
 - [x] KSP-923: kotlin.annotation.Retention top-level の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.annotation.Retention` / top-level
