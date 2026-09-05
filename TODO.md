@@ -3770,7 +3770,7 @@
     - `kotlin.native.runtime.SweepStatistics.keptCount` — val SweepStatistics.keptCount: Long  -- `final val keptCount`
     - `kotlin.native.runtime.SweepStatistics.sweptCount` — val SweepStatistics.sweptCount: Long  -- `final val sweptCount`
 
-- [ ] KSP-1273: kotlin.properties top-level の未実装 stdlib API を実装する（4 件）
+- [x] KSP-1273: kotlin.properties top-level の未実装 stdlib API を実装する（4 件）
   - 対象: `kotlin.properties` / top-level
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/properties/Stdlib.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
