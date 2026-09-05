@@ -743,7 +743,7 @@
     - `kotlin.Float.Companion.SIZE_BITS` — val Companion.SIZE_BITS: Int  -- `final const val SIZE_BITS`
     - `kotlin.Float.Companion.SIZE_BYTES` — val Companion.SIZE_BYTES: Int  -- `final const val SIZE_BYTES`
 
-- [ ] KSP-848: kotlin.FloatArray top-level の未実装 stdlib API を実装する（2 件）
+- [x] KSP-848: kotlin.FloatArray top-level の未実装 stdlib API を実装する（2 件）
   - 対象: `kotlin.FloatArray` / top-level
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/FloatArray/Stdlib.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -753,6 +753,7 @@
   - 未実装シンボル一覧:
     - `kotlin.FloatArray.<init>` — constructor (Int)  -- `constructor <init>(kotlin/Int)`
     - `kotlin.FloatArray.<init>` — constructor (Int, Function1)  -- `constructor <init>(kotlin/Int, kotlin/Function1<kotlin/Int, kotlin/Float>)`
+  - 完了根拠（2026-09-04）: `Sources/CompilerCore/Stdlib/kotlin/FloatArray/Stdlib.kt` に initializer overload の source owner を追加し、size-only constructor は共有 compiler/runtime allocation 経路に保持。対象固有の constructor bridge/runtime/ABI は存在しないため追加・削除せず、Sema/Golden/KIR/runtime/diff の focused 回帰で両 overload の契約を固定。
 
 - [~] KSP-874: kotlin.Pair top-level の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.Pair` / top-level
