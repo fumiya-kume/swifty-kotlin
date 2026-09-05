@@ -2,6 +2,63 @@
 
 /// Name-based fallback resolution for unresolved synthetic and collection members.
 extension CallLowerer {
+    /// Returns true only for the source-backed HashSet declaration. Other set
+    /// types may provide their own source implementation and must retain the
+    /// resolved symbol for ABI return-type handling.
+    func isSourceBackedHashSetType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        guard let (_, symbol) = resolveClassTypeSymbol(
+            sema.types.makeNonNullable(receiverType), sema: sema
+        ) else {
+            return false
+        }
+        return symbol.fqName == knownNames.kotlinCollectionsHashSetFQName
+    }
+
+    /// HashSet is source-backed for its nominal API, but its instances are
+    /// RuntimeSetBox values without a Kotlin vtable. Keep the mutating and
+    /// membership operations on their runtime ABI entry points.
+    func runtimeBackedSetMemberCallee(
+        memberName: String,
+        receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> InternedString? {
+        let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+        if isSourceBackedHashSetType(nonNullReceiverType, sema: sema, interner: interner) {
+            switch memberName {
+            case "equals":
+                return interner.intern("kk_any_member_equals")
+            case "hashCode":
+                return interner.intern("kk_any_member_hashCode")
+            default:
+                break
+            }
+        }
+        if memberName == "contains",
+           isSetLikeType(nonNullReceiverType, sema: sema, interner: interner)
+        {
+            return interner.intern("__kk_set_contains")
+        }
+        if isMutableSetLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+            switch memberName {
+            case "add":
+                return interner.intern("__kk_mutable_set_add")
+            case "remove":
+                return interner.intern("__kk_mutable_set_remove")
+            case "clear":
+                return interner.intern("__kk_mutable_set_clear")
+            default:
+                break
+            }
+        }
+        return nil
+    }
+
     // swiftlint:disable cyclomatic_complexity
     func unresolvedSyntheticMemberCallee(
         memberName: String,

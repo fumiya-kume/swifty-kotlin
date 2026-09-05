@@ -1,23 +1,10 @@
 
-/// Synthetic stdlib stubs for kotlin.concurrent atomic and lock types.
-/// This file holds only the top-level entry point that orchestrates
-/// registration; the actual registration logic is split by
-/// responsibility across sibling files (KSP-695):
-///  - `HeaderHelpers+SyntheticAtomicRegistrationHelpers.swift`: shared
-///    constructor/member/property registration primitives
-///  - `HeaderHelpers+SyntheticAtomicScalarStubs.swift`: AtomicInt/
-///    AtomicLong/AtomicBoolean/AtomicReference (incl. the
-///    `java.util.concurrent.atomic.AtomicInteger` direct-construction
-///    surface, which shares the `kk_atomic_int_*` box/prefix and is a
-///    live, tested API — see `Stdlib/kotlin/concurrent/AtomicMigration.kt`)
-///  - `HeaderHelpers+SyntheticAtomicArrayStubs.swift`: AtomicIntArray/
-///    AtomicLongArray/AtomicArray<T> and their factories
-///  - `HeaderHelpers+SyntheticAtomicPackageStubs.swift`:
-///    `kotlin.concurrent.atomics` package scaffolding (annotation,
-///    MemoryOrder enum, type aliases)
-///  - `HeaderHelpers+SyntheticAtomicNativePtrStubs.swift`: AtomicNativePtr
+/// Registration entry point for the atomic surfaces that still need synthetic
+/// nominal shells or compatibility members. Scalar public APIs live in bundled
+/// Kotlin source; arrays, package metadata, NativePtr, and Java compatibility
+/// remain registered through the responsibility-specific helpers.
 extension DataFlowSemaPhase {
-    func registerSyntheticAtomicStubs(
+    func registerSyntheticAtomicResidualStubs(
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner
@@ -45,7 +32,7 @@ extension DataFlowSemaPhase {
             valueType: intType,
             boolType: boolType,
             unitType: unitType,
-            prefix: "kk_atomic_int",
+            prefix: "__kk_atomic_int",
             includeArithmetic: true,
             includeIncrementAndGetAlias: true,
             includeGetAndIncrementAlias: true,
@@ -66,7 +53,7 @@ extension DataFlowSemaPhase {
             valueType: longType,
             boolType: boolType,
             unitType: unitType,
-            prefix: "kk_atomic_long",
+            prefix: "__kk_atomic_long",
             includeArithmetic: true,
             includeIncrementAndGetAlias: true,
             includeGetAndIncrementAlias: true,
@@ -87,7 +74,7 @@ extension DataFlowSemaPhase {
             valueType: boolType,
             boolType: boolType,
             unitType: unitType,
-            prefix: "kk_atomic_bool",
+            prefix: "__kk_atomic_bool",
             includeArithmetic: false,
             includeGetAndSetAlias: true,
             includeCompareAndSet: false,
@@ -102,8 +89,12 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             types: types,
             interner: interner,
-            externalLinkPrefix: "kk_atomic_ref"
+            constructorLinkName: "kk_atomic_ref_create",
+            externalLinkPrefix: "__kk_atomic_ref"
         )
+
+        // Array atomics retain their responsibility-specific synthetic shells and
+        // are intentionally outside KSP-696's scalar migration boundary.
         registerAtomicArrayFamily(
             packageFQName: concurrentPkg,
             className: "AtomicIntArray",
@@ -190,8 +181,9 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
-        // Directly-constructible java.util.concurrent.atomic.AtomicInteger, backed by the
-        // same kk_atomic_int_* box as kotlin.concurrent.AtomicInt.
+
+        // java.util.concurrent.atomic.AtomicInteger is a live compatibility
+        // surface backed by the same box as kotlin.concurrent.AtomicInt.
         let javaAtomicPkg = ensureAtomicPackage(
             path: ["java", "util", "concurrent", "atomic"],
             symbols: symbols,
@@ -204,7 +196,7 @@ extension DataFlowSemaPhase {
             valueType: intType,
             boolType: boolType,
             unitType: unitType,
-            prefix: "kk_atomic_int",
+            prefix: "__kk_atomic_int",
             includeArithmetic: true,
             includeIncrementAndGetAlias: true,
             includeGetAndIncrementAlias: true,
@@ -213,11 +205,11 @@ extension DataFlowSemaPhase {
             includeGetAndAddAlias: true,
             includeDecrementAndGetAlias: true,
             includeAddAndGetAlias: true,
+            compareAndSetLinkName: "kk_atomic_int_compareAndSet",
             symbols: symbols,
             interner: interner,
             types: types
         )
-
 
         registerAtomicArrayFamily(
             packageFQName: atomicsPkg,
@@ -239,8 +231,6 @@ extension DataFlowSemaPhase {
             interner: interner,
             types: types
         )
-
-
         registerAtomicArrayFamily(
             packageFQName: atomicsPkg,
             className: "AtomicLongArray",
@@ -262,7 +252,6 @@ extension DataFlowSemaPhase {
             types: types
         )
 
-
         registerAtomicRefArrayStub(
             packageFQName: atomicsPkg,
             boolType: boolType,
@@ -271,7 +260,6 @@ extension DataFlowSemaPhase {
             interner: interner,
             types: types
         )
-
         registerAtomicArrayOfNullsFactory(
             packageFQName: atomicsPkg,
             symbols: symbols,
@@ -285,7 +273,7 @@ extension DataFlowSemaPhase {
             types: types
         )
 
-        // -- Lock --
+        // Lock.withLock is source-backed; retain only its synthetic type shell.
         let lockSymbol = ensureClassSymbol(
             named: "Lock",
             in: concurrentPkg,
@@ -298,10 +286,5 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setPropertyType(lockType, for: lockSymbol)
-        // KSP-677: Lock.withLock is migrated to Kotlin source
-        // (Stdlib/kotlin/concurrent/Lock.kt) delegating to the demoted
-        // __kk_lock_withLock bridge. Only the Lock class symbol is kept so the
-        // Kotlin external declaration can reference it as a type.
-
     }
 }

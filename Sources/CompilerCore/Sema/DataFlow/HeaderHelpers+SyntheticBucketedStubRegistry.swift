@@ -161,9 +161,6 @@ private func delegateStubRegistryEntries() -> [SyntheticDelegateStubRegistryEntr
         SyntheticDelegateStubRegistryEntry(bucket: .targetOutCleanup, name: "FileIO") { phase, symbols, types, interner, _ in
             phase.registerSyntheticFileIOStubs(symbols: symbols, types: types, interner: interner)
         },
-        SyntheticDelegateStubRegistryEntry(bucket: .targetOutCleanup, name: "FilesUtility") { phase, symbols, types, interner, _ in
-            phase.registerSyntheticFilesUtilityStubs(symbols: symbols, types: types, interner: interner)
-        },
         SyntheticDelegateStubRegistryEntry(bucket: .targetOutCleanup, name: "Path") { phase, symbols, types, interner, _ in
             phase.registerSyntheticPathStubs(symbols: symbols, types: types, interner: interner)
         },
@@ -182,7 +179,7 @@ private func extendedStdlibRegistryEntries() -> [SyntheticStubRegistryEntry] {
             phase.registerSyntheticEnumStubs(symbols: symbols, types: types, interner: interner)
         },
         SyntheticStubRegistryEntry(bucket: .sourceBackedMigration, name: "Atomic") { phase, symbols, types, interner in
-            phase.registerSyntheticAtomicStubs(symbols: symbols, types: types, interner: interner)
+            phase.registerSyntheticAtomicResidualStubs(symbols: symbols, types: types, interner: interner)
         },
         SyntheticStubRegistryEntry(bucket: .residualCompilerSurface, name: "KotlinAnnotation") { phase, symbols, types, interner in
             phase.registerSyntheticKotlinAnnotationStubs(symbols: symbols, types: types, interner: interner)

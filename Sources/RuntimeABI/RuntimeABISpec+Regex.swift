@@ -293,6 +293,16 @@ public extension RuntimeABISpec {
             section: "Regex",
             isThrowing: false
         ),
+        RuntimeABIFunctionSpec(
+            name: "__kk_match_result_has_named_group",
+            parameters: [
+                RuntimeABIParameter(name: "matchRaw", type: .intptr),
+                RuntimeABIParameter(name: "nameRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex",
+            isThrowing: false
+        ),
         // STDLIB-REGEX-094: Regex.matches(input)
         // STDLIB-REGEX-094: Regex.fromLiteral
         // First param is the Companion object receiver (ignored at runtime).

@@ -7,8 +7,8 @@ symbol fq=golden.sema.countLines.$1.path kind=valueParameter vis=private flags=_
 symbol fq=java.io.File kind=class vis=public flags=synthetic type=java.io.File
 symbol fq=java.io.File.<init>#0 kind=constructor vis=public flags=synthetic sig=recv=_ params=[String] ret=java.io.File
 symbol fq=java.io.File.<init>.path kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 file ffile_use_lines package=golden.sema
   decl golden.sema.collectLines fun collectLines sym=golden.sema.collectLines
   decl golden.sema.countLines fun countLines sym=golden.sema.countLines

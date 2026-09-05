@@ -207,6 +207,18 @@ extension DataFlowSemaPhase {
             let moduleFQN = symbols.moduleFQN(for: binding.symbol)
             for length in 1 ..< fq.count {
                 let prefix = Array(fq.prefix(length))
+                // Constructors are named below their nominal owner (for
+                // example, `pkg.Type.<init>`). Keep that owner path nominal
+                // when it already exists; package-level functions may legally
+                // share the same FQ-name prefix as a class and still require
+                // a package symbol for import resolution.
+                if binding.record.kind == .constructor,
+                   prefix == Array(fq.dropLast()),
+                   symbols.lookupAll(fqName: prefix).contains(where: { id in
+                    symbols.symbol(id)?.kind != .package
+                }) {
+                    continue
+                }
                 syntheticPackagePaths.insert(prefix)
                 if let moduleFQN {
                     syntheticPackageModules[prefix] = moduleFQN
@@ -1111,7 +1123,8 @@ extension DataFlowSemaPhase {
         if record.propertyGetterExternalLinkName != nil,
            record.propertyReceiverTypeSignature == nil,
            getterOwnerInfo == nil || getterOwnerInfo?.kind == .package
-               || getterOwnerInfo?.kind == .class || getterOwnerInfo?.kind == .interface
+               || getterOwnerInfo?.kind == .class || getterOwnerInfo?.kind == .enumClass
+               || getterOwnerInfo?.kind == .interface
                || getterOwnerInfo?.kind == .object
         {
             symbols.setPropertyHasCustomGetter(true, for: symbol)

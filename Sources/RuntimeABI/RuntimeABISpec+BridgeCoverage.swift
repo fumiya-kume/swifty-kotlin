@@ -85,9 +85,7 @@ private let listComparatorBridgeFunctions = [
 
 private let listIndexedBridgeFunctions: [RuntimeABIFunctionSpec] = []
 
-private let listMiscBridgeFunctions: [RuntimeABIFunctionSpec] = [
-    bridgeSpec("kk_list_of_not_null", section: "Collection", params: ["arrayRaw", "count"]),
-]
+private let listMiscBridgeFunctions: [RuntimeABIFunctionSpec] = []
 
 private let mapBridgeFunctions = [
     "kk_map_flatMap",

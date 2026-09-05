@@ -104,7 +104,7 @@ public fun <T> Iterable<T>.toMutableSet(): MutableSet<T> {
 }
 
 public fun <T> Iterable<T>.toHashSet(): HashSet<T> {
-    val result = mutableSetOf<T>()
+    val result = HashSet<T>()
     for (element in this) result.add(element)
     return result
 }

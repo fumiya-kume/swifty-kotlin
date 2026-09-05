@@ -22,6 +22,23 @@ let setRuntimeTypeID: Int64 = {
     return id
 }()
 
+/// Nominal identity for source-backed `kotlin.collections.HashSet` instances.
+/// Ordinary Set factories keep using `setRuntimeTypeID`; only HashSet
+/// constructors opt into this more specific identity.
+let hashSetRuntimeTypeID: Int64 = {
+    let id = runtimeStableNominalTypeID(fqName: "kotlin.collections.HashSet")
+    runtimeRegisterTypeEdge(
+        childTypeID: id,
+        parentTypeID: runtimeStableNominalTypeID(fqName: "kotlin.collections.MutableSet")
+    )
+    runtimeRegisterTypeEdge(
+        childTypeID: id,
+        parentTypeID: runtimeStableNominalTypeID(fqName: "kotlin.collections.AbstractMutableSet")
+    )
+    runtimeRegisterTypeEdge(childTypeID: id, parentTypeID: setRuntimeTypeID)
+    return id
+}()
+
 // User-defined subclasses of LinkedHashSet are allocated as RuntimeObjectBox
 // instances. Keep the nominal ID available so runtimeSetBox can lazily attach
 // their storage even when library superclass initializers are not emitted.
@@ -1019,8 +1036,8 @@ func runtimeElementToString(_ elem: Int) -> String {
     if let charBox = tryCast(ptr, to: RuntimeCharBox.self) {
         return UnicodeScalar(charBox.value).map(String.init) ?? "?"
     }
-    if let throwable = tryCast(ptr, to: RuntimeThrowableBox.self) {
-        return "Throwable(\(throwable.renderedMessage))"
+    if let throwableString = runtimeThrowableToString(elem) {
+        return throwableString
     }
     if let instantBox = tryCast(ptr, to: RuntimeInstantBox.self) {
         return runtimeInstantToString(instantBox)

@@ -815,6 +815,12 @@ extension CallTypeChecker {
                 sema: sema,
                 interner: interner
             )
+            let arrayConversionSourceCandidates = collectArraySourceConversionCandidates(
+                named: calleeName,
+                receiverType: memberLookupType,
+                sema: sema,
+                interner: interner
+            )
             var mutableMapPutAllSourceCandidates: [SymbolID] = []
             if interner.resolve(calleeName) == "putAll",
                ReceiverClassifier(sema: sema, interner: interner).isMutableMapType(memberLookupType),
@@ -876,7 +882,9 @@ extension CallTypeChecker {
                 }
             }
             let memberCandidates: [SymbolID]
-            if !mutableMapPutAllSourceCandidates.isEmpty {
+            if !arrayConversionSourceCandidates.isEmpty {
+                memberCandidates = arrayConversionSourceCandidates
+            } else if !mutableMapPutAllSourceCandidates.isEmpty {
                 memberCandidates = mutableMapPutAllSourceCandidates
             } else if !primitiveArraySourceCandidates.isEmpty {
                 // Primitive-array HOFs are bundled Kotlin extensions. Prefer the
@@ -946,7 +954,15 @@ extension CallTypeChecker {
                         sema: sema,
                         interner: interner
                     )
-                    if !primitiveArraySourceCandidates.isEmpty {
+                    let arrayConversionSourceCandidates = collectArraySourceConversionCandidates(
+                        named: calleeName,
+                        receiverType: nonNullReceiverForScope,
+                        sema: sema,
+                        interner: interner
+                    )
+                    if !arrayConversionSourceCandidates.isEmpty {
+                        scopeCandidates = arrayConversionSourceCandidates
+                    } else if !primitiveArraySourceCandidates.isEmpty {
                         scopeCandidates = primitiveArraySourceCandidates
                     }
                     // Extension functions are excluded from scope by the scope
@@ -1413,7 +1429,7 @@ extension CallTypeChecker {
         // STDLIB-pipeline §5 / KSP-441: Source-backed Sequence transforms
         // (map, filter, etc.) must bind to the real Kotlin declaration so the
         // object-expression pipeline runs instead of a `kk_*` runtime shortcut.
-        let sourceBackedCollectionMemberNames: Set<String> = ["take", "drop", "chunked", "windowed", "asSequence", "constrainOnce", "orEmpty", "distinct", "flatten", "filterNotNull", "withIndex", "toList", "toMutableList", "toSet", "toMutableSet", "toHashSet", "toSortedSet", "toCollection", "toMap", "unzip", "union", "intersect", "subtract", "plus", "plusElement", "minus", "minusElement", "average"]
+        let sourceBackedCollectionMemberNames: Set<String> = ["take", "drop", "chunked", "windowed", "asSequence", "constrainOnce", "orEmpty", "distinct", "flatten", "filterNotNull", "withIndex", "toList", "toMutableList", "toSet", "toMutableSet", "toHashSet", "toSortedSet", "toCollection", "toMap", "unzip", "union", "intersect", "subtract", "plus", "plusElement", "minus", "minusElement", "average", "sliceArray", "reversedArray", "asList", "toTypedArray"]
         let sourceBackedTrailingLambdaMemberNames: Set<String> = ["map", "filter", "filterNot", "mapIndexed", "mapNotNull", "filterIndexed", "onEach", "onEachIndexed", "ifEmpty", "flatMap", "flatMapIndexed", "joinTo", "joinToString", "isNotEmpty"]
         let memberNameText = interner.resolve(calleeName)
         let isMutableMapIteratorSource = memberNameText == "iterator"
@@ -2213,7 +2229,7 @@ extension CallTypeChecker {
         interner: StringInterner
     ) -> Bool {
         switch interner.resolve(calleeName) {
-        case "getAndUpdate", "updateAndGet", "fetchAndUpdate", "updateAndFetch",
+        case "compareAndExchange", "getAndUpdate", "updateAndGet", "fetchAndUpdate", "updateAndFetch",
              "fetchAndUpdateAt", "updateAt", "updateAndFetchAt", "compareAndSet":
             return true
         default:

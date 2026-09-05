@@ -1,7 +1,7 @@
 symbol fq=iterableLastFamily kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String?>,String?] ret=String?
 symbol fq=iterableLastFamily.$0.probe kind=valueParameter vis=private flags=_
 symbol fq=iterableLastFamily.$0.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Iterable_last package=_
   decl iterableLastFamily fun iterableLastFamily sym=iterableLastFamily
 expr e@2:5 name(values) type=kotlin.collections.Iterable<String?> ref=iterableLastFamily.$0.values
