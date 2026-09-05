@@ -383,7 +383,7 @@ public struct ExplicitBackingField: Codable {
     /// The initializer expression for the backing field (required).
     public let initializer: ExprID
 
-    public init(type: TypeRefID?, initializer: ExprID) {
+    public init(type: TypeRefID? = nil, initializer: ExprID) {
         self.type = type
         self.initializer = initializer
     }
@@ -485,7 +485,12 @@ public struct EnumEntryDecl: Codable {
     public let annotations: [AnnotationNode]
     public let constructorArgs: [CallArgument]
 
-    public init(range: SourceRange, name: InternedString, annotations: [AnnotationNode] = [], constructorArgs: [CallArgument] = []) {
+    public init(
+        range: SourceRange,
+        name: InternedString,
+        annotations: [AnnotationNode] = [],
+        constructorArgs: [CallArgument] = []
+    ) {
         self.range = range
         self.name = name
         self.annotations = annotations
@@ -497,6 +502,12 @@ public struct ImportDecl: Sendable, Codable {
     public let range: SourceRange
     public let path: [InternedString]
     public let alias: InternedString?
+
+    public init(range: SourceRange, path: [InternedString], alias: InternedString? = nil) {
+        self.range = range
+        self.path = path
+        self.alias = alias
+    }
 }
 
 public struct TypeParamDecl: Codable {
@@ -504,10 +515,6 @@ public struct TypeParamDecl: Codable {
     public let variance: TypeVariance
     public let isReified: Bool
     public let upperBounds: [TypeRefID]
-
-    public var upperBound: TypeRefID? {
-        upperBounds.first
-    }
 
     public init(
         name: InternedString,
@@ -519,18 +526,6 @@ public struct TypeParamDecl: Codable {
         self.variance = variance
         self.isReified = isReified
         self.upperBounds = upperBounds
-    }
-
-    public init(
-        name: InternedString,
-        variance: TypeVariance = .invariant,
-        isReified: Bool = false,
-        upperBound: TypeRefID?
-    ) {
-        self.name = name
-        self.variance = variance
-        self.isReified = isReified
-        upperBounds = upperBound.map { [$0] } ?? []
     }
 }
 
