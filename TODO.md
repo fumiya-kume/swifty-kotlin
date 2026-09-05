@@ -4893,7 +4893,7 @@
     - `kotlin.text.elementAtOrElse` — fun CharSequence.elementAtOrElse(Int, Function1): Char  -- `final inline fun (kotlin/CharSequence).kotlin.text/elementAtOrElse(kotlin/Int, kotlin/Function1<kotlin/Int, kotlin/Char>): kotlin/Char`
     - `kotlin.text.elementAtOrNull` — fun CharSequence.elementAtOrNull(Int): Char  -- `final inline fun (kotlin/CharSequence).kotlin.text/elementAtOrNull(kotlin/Int): kotlin/Char?`
 
-- [ ] KSP-1373: kotlin.text.CharSequence.filter-family の未実装 stdlib API を実装する（6 件）
+- [x] KSP-1373: kotlin.text.CharSequence.filter-family の未実装 stdlib API を実装する（6 件）
   - 対象: `kotlin.text` / receiver `CharSequence` / family `filter`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
