@@ -41,9 +41,13 @@ struct ListSyntheticMemberLinkTests {
 
             #expect(ctx.diagnostics.diagnostics.isEmpty, "Expected List.lastIndex to type-check cleanly, got: \(ctx.diagnostics.diagnostics)")
 
-            let propertyExpr = try #require(firstExprID(in: ast) { _, expr in
+            // Bundled stdlib bodies are part of the AST, so inspect only this test input.
+            let propertyExpr = try #require(firstExprID(in: ast) { exprID, expr in
                 guard case let .memberCall(_, callee, _, args, _) = expr else { return false }
-                return ctx.interner.resolve(callee) == "lastIndex" && args.isEmpty
+                guard ctx.interner.resolve(callee) == "lastIndex", args.isEmpty,
+                      let exprRange = ast.arena.exprRange(exprID)
+                else { return false }
+                return ctx.sourceManager.path(of: exprRange.start.file) == path
             })
             #expect(sema.bindings.exprType(for: propertyExpr) == sema.types.intType)
 

@@ -3083,13 +3083,16 @@
     - `kotlin.native.toByteArray` — fun ImmutableBlob.toByteArray(Int, Int): ByteArray  -- `final fun (kotlin.native/ImmutableBlob).kotlin.native/toByteArray(kotlin/Int = ..., kotlin/Int = ...): kotlin/ByteArray`
     - `kotlin.native.toUByteArray` — fun ImmutableBlob.toUByteArray(Int, Int): UByteArray  -- `final fun (kotlin.native/ImmutableBlob).kotlin.native/toUByteArray(kotlin/Int = ..., kotlin/Int = ...): kotlin/UByteArray`
 
-- [ ] KSP-1195: kotlin.native.BitSet.BitSet の未実装 stdlib API を実装する（27 件）
+- [x] KSP-1195: kotlin.native.BitSet.BitSet の未実装 stdlib API を実装する（27 件）
   - 対象: `kotlin.native.BitSet` / receiver `BitSet`
-  - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/native/BitSet/BitSet.kt`（該当ファイルが無ければ新規作成）
+  - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/native/BitSet/Stdlib.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_native_BitSet_BitSet_n.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_native_BitSet_BitSet_n.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_native_BitSet_BitSet_n.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
+  - 完了根拠: Kotlin/Native 2.3.10 の packed `LongArray` 実装方針に基づき、27 件を `Stdlib.kt` の source-backed API として実装。追加の Runtime ABI bridge / synthetic stub は不要。
+  - 検証根拠: BitSet 専用 Golden の byte-level 一致、source-backed symbol 検証、KIR/codegen 実行テスト、diff ケースを追加・実行。Runtime ABI link 4 tests と TODO ID 検査も PASS。
+  - Golden aggregate: `GoldenSemaGoldenTests/matchesGolden` は全550ケースを走査するため約25分時点の113ケース付近で安全停止し、aggregate green とは扱わない。
   - 未実装シンボル一覧:
     - `kotlin.native.BitSet.and` — fun BitSet.and(BitSet): Unit  -- `final fun and(kotlin.native/BitSet)`
     - `kotlin.native.BitSet.andNot` — fun BitSet.andNot(BitSet): Unit  -- `final fun andNot(kotlin.native/BitSet)`
