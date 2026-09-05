@@ -2,8 +2,8 @@ symbol fq=__local_0.seq kind=local vis=private flags=_ type=kotlin.sequences.Seq
 symbol fq=__local_1.grouped kind=local vis=private flags=_ type=kotlin.collections.Map<Int, kotlin.collections.List<String>>
 symbol fq=__local_2.list kind=local vis=private flags=_ type=kotlin.collections.List<out Int>
 symbol fq=__local_3.byParity kind=local vis=private flags=_ type=kotlin.collections.Map<String, kotlin.collections.List<Int>>
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Map.K kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Map.V kind=typeParameter vis=private flags=_

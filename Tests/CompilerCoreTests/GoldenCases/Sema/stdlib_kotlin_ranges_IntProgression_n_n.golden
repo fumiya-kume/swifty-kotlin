@@ -1,0 +1,5 @@
+symbol fq=golden.sema.useIntProgressionCompanion kind=function vis=public flags=_ sig=recv=_ params=[] ret=Any
+file fstdlib_kotlin_ranges_IntProgression_n_n package=golden.sema
+  decl golden.sema.useIntProgressionCompanion fun useIntProgressionCompanion sym=golden.sema.useIntProgressionCompanion
+expr e@3:41 name(IntProgression) type=kotlin.ranges.IntProgression ref=kotlin.ranges.IntProgression
+expr e@3:41#1 memberCall recv=e@3:41 callee=Companion args=[] type=kotlin.ranges.IntProgression.Companion ref=kotlin.ranges.IntProgression.Companion

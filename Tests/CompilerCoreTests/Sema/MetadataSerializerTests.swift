@@ -452,6 +452,46 @@ struct MetadataSerializerTests {
         #expect(records.allSatisfy { $0.itableSlots == nil })
     }
 
+    @Test func testSerializeVTableSlotsUsesOwningPropertyForSyntheticGetter() throws {
+        let encoder = MetadataEncoder()
+        let interner = StringInterner()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+        let demo = interner.intern("demo")
+        let boxName = interner.intern("Box")
+        let valueName = interner.intern("value")
+
+        let box = symbols.define(
+            kind: .class,
+            name: boxName,
+            fqName: [demo, boxName],
+            declSite: nil,
+            visibility: .public
+        )
+        let value = symbols.define(
+            kind: .property,
+            name: valueName,
+            fqName: [demo, boxName, valueName],
+            declSite: nil,
+            visibility: .protected,
+            flags: [.abstractType]
+        )
+        symbols.setParentSymbol(box, for: value)
+        symbols.setPropertyType(types.intType, for: value)
+
+        let getter = SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: value)
+        let serialized = encoder.serializeVTableSlots(
+            [getter: 3],
+            symbols: symbols,
+            interner: interner,
+            includedSymbolIDs: Set<SymbolID>(),
+            mangler: NameMangler(),
+            types: types
+        )
+
+        #expect(serialized == "v2:pget:demo.Box.value@3")
+    }
+
     @Test func testSerializeMultipleRecords() {
         let encoder = MetadataEncoder()
         let records = [

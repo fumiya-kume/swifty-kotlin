@@ -716,7 +716,8 @@ extension CallLowerer {
         instructions.append(.jump(endLabel))
         instructions.append(.label(callLabel))
 
-        // KCallable.name is shared by KFunction, KConstructor, and KProperty
+        // KCallable metadata properties are shared by KFunction, KConstructor,
+        // and KProperty.
         // boxes. Handle the safe-call form here after the receiver null check;
         // otherwise the generic fallback emits an undefined `name` symbol.
         if tryLowerKCallableNameAccess(

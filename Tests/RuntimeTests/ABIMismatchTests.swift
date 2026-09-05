@@ -159,12 +159,23 @@ struct ABIMismatchTests {
         }
     }
 
+    /// Both accessors back Kotlin-source members of `Throwable`, so their
+    /// runtime exports carry the hidden `outThrown` channel that every
+    /// source-backed callee ABI appends.
     @Test
     func throwableRawStackFramesSignature() throws {
         let spec = try requireSpec("__kk_throwable_rawStackFrames")
         #expect(spec.returnType == .intptr)
-        #expect(spec.parameters.count == 1)
-        #expect(spec.parameters[0].type == .intptr)
+        #expect(spec.isThrowing)
+        #expect(spec.parameters.map(\.type) == [.intptr, .nullableIntptrPointer])
+    }
+
+    @Test
+    func throwableToStringSignature() throws {
+        let spec = try requireSpec("__kk_throwable_toString")
+        #expect(spec.returnType == .intptr)
+        #expect(spec.isThrowing)
+        #expect(spec.parameters.map(\.type) == [.intptr, .nullableIntptrPointer])
     }
 
     @Test

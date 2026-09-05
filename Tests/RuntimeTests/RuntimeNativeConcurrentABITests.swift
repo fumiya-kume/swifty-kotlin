@@ -37,47 +37,47 @@ struct RuntimeAtomicBooleanTests {
     @Test func createAndLoad() {
         let trueHandle = kk_atomic_bool_create(1)
         #expect(trueHandle != 0)
-        #expect(kk_atomic_bool_load(trueHandle) == 1)
+        #expect(__kk_atomic_bool_load(trueHandle) == 1)
 
         let falseHandle = kk_atomic_bool_create(0)
         #expect(falseHandle != 0)
-        #expect(kk_atomic_bool_load(falseHandle) == 0)
+        #expect(__kk_atomic_bool_load(falseHandle) == 0)
     }
 
     @Test func store() {
         let handle = kk_atomic_bool_create(0)
-        _ = kk_atomic_bool_store(handle, 1)
-        #expect(kk_atomic_bool_load(handle) == 1)
-        _ = kk_atomic_bool_store(handle, 0)
-        #expect(kk_atomic_bool_load(handle) == 0)
+        _ = __kk_atomic_bool_store(handle, 1)
+        #expect(__kk_atomic_bool_load(handle) == 1)
+        _ = __kk_atomic_bool_store(handle, 0)
+        #expect(__kk_atomic_bool_load(handle) == 0)
     }
 
     @Test func exchange() {
         let handle = kk_atomic_bool_create(1)
-        let old = kk_atomic_bool_exchange(handle, 0)
+        let old = __kk_atomic_bool_exchange(handle, 0)
         #expect(old == 1, "exchange must return old value")
-        #expect(kk_atomic_bool_load(handle) == 0, "exchange must store new value")
+        #expect(__kk_atomic_bool_load(handle) == 0, "exchange must store new value")
     }
 
     @Test func compareAndExchangeSuccess() {
         let handle = kk_atomic_bool_create(1)
-        let old = kk_atomic_bool_compareAndExchange(handle, 1, 0)
+        let old = __kk_atomic_bool_compareAndExchange(handle, 1, 0)
         #expect(old == 1, "compareAndExchange must return old value on success")
-        #expect(kk_atomic_bool_load(handle) == 0)
+        #expect(__kk_atomic_bool_load(handle) == 0)
     }
 
     @Test func compareAndExchangeFailure() {
         let handle = kk_atomic_bool_create(0)
-        let old = kk_atomic_bool_compareAndExchange(handle, 1, 1)
+        let old = __kk_atomic_bool_compareAndExchange(handle, 1, 1)
         #expect(old == 0, "compareAndExchange must return current value on failure")
-        #expect(kk_atomic_bool_load(handle) == 0, "Value must not change on failure")
+        #expect(__kk_atomic_bool_load(handle) == 0, "Value must not change on failure")
     }
 
     @Test func invalidHandleReturnsZero() {
-        #expect(kk_atomic_bool_load(0) == 0)
-        #expect(kk_atomic_bool_store(0, 1) == 0)
-        #expect(kk_atomic_bool_exchange(0, 1) == 0)
-        #expect(kk_atomic_bool_compareAndExchange(0, 0, 1) == 0)
+        #expect(__kk_atomic_bool_load(0) == 0)
+        #expect(__kk_atomic_bool_store(0, 1) == 0)
+        #expect(__kk_atomic_bool_exchange(0, 1) == 0)
+        #expect(__kk_atomic_bool_compareAndExchange(0, 0, 1) == 0)
     }
 }
 
@@ -310,9 +310,9 @@ struct RuntimePinnedTests {
         let handle = kk_atomic_int_create(42)
         let pinHandle = kk_pin_object(handle)
         // The AtomicInt backing value must be unaffected by pinning.
-        #expect(kk_atomic_int_load(handle) == 42)
+        #expect(__kk_atomic_int_load(handle) == 42)
         _ = kk_unpin_object(pinHandle)
-        #expect(kk_atomic_int_load(handle) == 42)
+        #expect(__kk_atomic_int_load(handle) == 42)
     }
 }
 
@@ -373,7 +373,7 @@ struct RuntimeAtomicIntConcurrencyTests {
             group.enter()
             DispatchQueue.global(qos: .userInitiated).async {
                 for _ in 0..<iterations {
-                    _ = kk_atomic_int_fetchAndAdd(handle, 1)
+                    _ = __kk_atomic_int_fetchAndAdd(handle, 1)
                 }
                 group.leave()
             }
@@ -381,7 +381,7 @@ struct RuntimeAtomicIntConcurrencyTests {
 
         let waitResult = group.wait(timeout: .now() + .seconds(10))
         #expect(waitResult == .success, "Concurrent increment timed out")
-        #expect(kk_atomic_int_load(handle) == queueCount * iterations,
+        #expect(__kk_atomic_int_load(handle) == queueCount * iterations,
                 "Each increment must be atomic — no lost updates")
     }
 
@@ -398,7 +398,7 @@ struct RuntimeAtomicIntConcurrencyTests {
             DispatchQueue.global(qos: .userInitiated).async {
                 let result = kk_atomic_int_compareAndSet(handle, 0, 1)
                 if result == 1 {
-                    _ = kk_atomic_int_fetchAndAdd(winCountHandle, 1)
+                    _ = __kk_atomic_int_fetchAndAdd(winCountHandle, 1)
                 }
                 group.leave()
             }
@@ -406,7 +406,7 @@ struct RuntimeAtomicIntConcurrencyTests {
 
         let waitResult = group.wait(timeout: .now() + .seconds(10))
         #expect(waitResult == .success)
-        #expect(kk_atomic_int_load(winCountHandle) == 1,
+        #expect(__kk_atomic_int_load(winCountHandle) == 1,
                 "Exactly one CAS must win when racing from 0 -> 1")
     }
 }
@@ -426,8 +426,8 @@ struct RuntimeAtomicBoolConcurrencyTests {
             group.enter()
             DispatchQueue.global(qos: .userInitiated).async {
                 for _ in 0..<500 {
-                    _ = kk_atomic_bool_store(handle, val)
-                    _ = kk_atomic_bool_load(handle)
+                    _ = __kk_atomic_bool_store(handle, val)
+                    _ = __kk_atomic_bool_load(handle)
                 }
                 group.leave()
             }

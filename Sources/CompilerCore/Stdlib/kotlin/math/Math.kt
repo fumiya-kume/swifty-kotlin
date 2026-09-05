@@ -15,7 +15,9 @@ import kotlin.internal.KsSymbolName
 // already own the NaN propagation and signed-zero ordering contract; everything
 // else is expressible without touching the runtime.
 
-public val PI: Double get() = 3.141592653589793
+/** Ratio of the circumference of a circle to its diameter, approximately 3.14159. */
+@SinceKotlin("1.2")
+public const val PI: Double = 3.141592653589793
 @SinceKotlin("1.2")
 public const val E: Double = 2.718281828459045
 

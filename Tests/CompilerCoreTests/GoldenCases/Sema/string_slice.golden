@@ -3,8 +3,8 @@ symbol fq=golden.sema.useSliceRange kind=function vis=public flags=_ sig=recv=_ 
 symbol fq=golden.sema.useSliceUntil kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 symbol fq=golden.sema.useSliceVar kind=function vis=public flags=_ sig=recv=_ params=[String] ret=String
 symbol fq=golden.sema.useSliceVar.$0.s kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.ranges.IntRange kind=class vis=public flags=synthetic
 file fstring_slice package=golden.sema
   decl golden.sema.useSliceRange fun useSliceRange sym=golden.sema.useSliceRange

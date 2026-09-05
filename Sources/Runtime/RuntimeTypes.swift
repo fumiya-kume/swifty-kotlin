@@ -378,6 +378,7 @@ enum RuntimeCallableRefKind {
 
 struct RuntimeCallableRefMetadata {
     let nameRaw: Int
+    let returnTypeRaw: Int
     let arity: Int
     let kind: RuntimeCallableRefKind
     let isSuspend: Bool
@@ -1942,11 +1943,19 @@ final class RuntimeKTypeBox {
     let argumentRaws: [Int]
     /// Whether the type is marked nullable (`T?`).
     let isMarkedNullable: Bool
+    /// Optional compact type descriptor used by callable reflection metadata.
+    let typeNameRaw: Int
 
-    init(classifierRaw: Int, argumentRaws: [Int], isMarkedNullable: Bool) {
+    init(
+        classifierRaw: Int,
+        argumentRaws: [Int],
+        isMarkedNullable: Bool,
+        typeNameRaw: Int = 0
+    ) {
         self.classifierRaw = classifierRaw
         self.argumentRaws = argumentRaws
         self.isMarkedNullable = isMarkedNullable
+        self.typeNameRaw = typeNameRaw
     }
 }
 

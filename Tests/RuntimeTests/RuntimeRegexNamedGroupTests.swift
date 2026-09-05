@@ -31,6 +31,14 @@ struct RuntimeRegexNamedGroupTests {
         }
     }
 
+    private func hasNamedGroup(_ matchRaw: Int, named name: String) -> Bool {
+        Array(name.utf8).withUnsafeBufferPointer { buffer in
+            guard let baseAddress = buffer.baseAddress else { return false }
+            let nameRaw = Int(bitPattern: kk_string_from_utf8(baseAddress, Int32(name.utf8.count)))
+            return __kk_match_result_has_named_group(matchRaw, nameRaw) != 0
+        }
+    }
+
     private func runtimeString(_ raw: Int) -> String {
         guard let ptr = UnsafeMutableRawPointer(bitPattern: raw),
               let box = tryCast(ptr, to: RuntimeStringBox.self) else {
@@ -63,6 +71,18 @@ struct RuntimeRegexNamedGroupTests {
         let matchRaw = find(regexRaw: regexRaw, input: "zzabcdyy")
 
         #expect(groupIndex(matchRaw, named: "missing") == -1)
+    }
+
+    @Test
+    func testDeclaredUnmatchedNamedGroupIsDistinguishedFromMissingGroup() {
+        let lease = RuntimeTestIsolationLease(lockSet: .all)
+        defer { lease.release() }
+        let regexRaw = makeRegex("(?<optional>a)?")
+        let matchRaw = find(regexRaw: regexRaw, input: "")
+
+        #expect(hasNamedGroup(matchRaw, named: "optional"))
+        #expect(!hasNamedGroup(matchRaw, named: "missing"))
+        #expect(groupIndex(matchRaw, named: "optional") == -1)
     }
 
     @Test
