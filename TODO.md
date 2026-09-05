@@ -3756,7 +3756,7 @@
     - `kotlin.native.runtime.RootSetStatistics.stackReferences` — val RootSetStatistics.stackReferences: Long  -- `final val stackReferences`
     - `kotlin.native.runtime.RootSetStatistics.threadLocalReferences` — val RootSetStatistics.threadLocalReferences: Long  -- `final val threadLocalReferences`
 
-- [ ] KSP-1271: kotlin.native.runtime.SweepStatistics top-level の未実装 stdlib API を実装する（1 件）
+- [x] KSP-1271: kotlin.native.runtime.SweepStatistics top-level の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.native.runtime.SweepStatistics` / top-level
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/native/runtime/SweepStatistics/Stdlib.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -3765,6 +3765,7 @@
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
   - 未実装シンボル一覧:
     - `kotlin.native.runtime.SweepStatistics.<init>` — constructor (Long, Long)  -- `constructor <init>(kotlin/Long, kotlin/Long)`
+  - 完了根拠: Kotlin 2.3.10 公式 `GCInfo.kt` と同じ `@NativeRuntimeApi` / `@SinceKotlin("1.9")` 付き constructor を bundled Kotlin source に移し、`NativeRefRuntimeSemaTests.testSweepStatisticsConstructorIsSourceBacked` で source-backed constructor と既存 synthetic property surface の分離を検証した。KSP-1272 の `sweptCount` / `keptCount` receiver properties、GC/GCInfo/MemoryUsage/RootSetStatistics/Debugging、Runtime/ABI bridge は変更していない。
 
 - [ ] KSP-1272: kotlin.native.runtime.SweepStatistics.SweepStatistics の未実装 stdlib API を実装する（2 件）
   - 対象: `kotlin.native.runtime.SweepStatistics` / receiver `SweepStatistics`
