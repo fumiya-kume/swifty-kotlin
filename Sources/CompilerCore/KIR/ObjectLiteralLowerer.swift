@@ -140,6 +140,7 @@ final class ObjectLiteralLowerer {
         appendObjectVtableMethodRegistrations(
             objectValue: objectValue,
             nominalSymbol: objectSymbol,
+            driver: driver,
             sema: sema,
             arena: arena,
             interner: interner,
@@ -718,6 +719,7 @@ final class ObjectLiteralLowerer {
         appendObjectVtableMethodRegistrations(
             objectValue: objectEntityExpr,
             nominalSymbol: symbols.nominalSymbol,
+            driver: driver,
             sema: sema,
             arena: arena,
             interner: interner,

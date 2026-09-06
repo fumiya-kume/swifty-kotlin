@@ -1487,7 +1487,7 @@
   - 未実装シンボル一覧:
     - `kotlin.collections.AbstractMutableMap.<init>` — constructor ()  -- `constructor <init>()`
 
-- [ ] KSP-1038: kotlin.collections.AbstractMutableMap.AbstractMutableMap の未実装 stdlib API を実装する（6 件）
+- [x] KSP-1038: kotlin.collections.AbstractMutableMap.AbstractMutableMap の未実装 stdlib API を実装する（6 件）
   - 対象: `kotlin.collections.AbstractMutableMap` / receiver `AbstractMutableMap`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/AbstractMutableMap/AbstractMutableMap.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -4001,7 +4001,7 @@
   - 回帰: 専用 Sema テストで両 call の canonical FQName (`kotlin.sequences.fold` / `foldIndexed`) と source-backed/no-link を固定し、Sema Golden と `Scripts/diff_cases/stdlib_kotlin_sequences_Sequence_fold.kt` を追加した。
   - 検証: focused Sema/Runtime、対象 Golden shard 59/69、Sequence terminal codegen、対象 `diff_kotlinc`、`git diff --check` が pass。
 
-- [ ] KSP-1347: kotlin.sequences.Sequence.for-family の未実装 stdlib API を実装する（2 件）
+- [x] KSP-1347: kotlin.sequences.Sequence.for-family の未実装 stdlib API を実装する（2 件）
   - 対象: `kotlin.sequences` / receiver `Sequence` / family `for`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/sequences/SequenceConversionsAndSetOps.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -4011,6 +4011,7 @@
   - 未実装シンボル一覧:
     - `kotlin.sequences.forEach` — fun Sequence.forEach(Function1): Unit  -- `final inline fun <#A: kotlin/Any?> (kotlin.sequences/Sequence<#A>).kotlin.sequences/forEach(kotlin/Function1<#A, kotlin/Unit>)`
     - `kotlin.sequences.forEachIndexed` — fun Sequence.forEachIndexed(Function2): Unit  -- `final inline fun <#A: kotlin/Any?> (kotlin.sequences/Sequence<#A>).kotlin.sequences/forEachIndexed(kotlin/Function2<kotlin/Int, #A, kotlin/Unit>)`
+  - 完了根拠: Kotlin 2.3.10準拠の `Sequence<T>.forEach` / `forEachIndexed` を bundled Kotlin source に追加し、順序・空Sequence・indexed引数・例外伝播を source-backed 経路で回帰固定。旧 `kk_sequence_forEach` / `kk_sequence_forEachIndexed` の Sequence stub、Runtime、ABI、lowering 特例を削除した。
 
 - [ ] KSP-1348: kotlin.sequences.Sequence.group-family の未実装 stdlib API を実装する（4 件）
   - 対象: `kotlin.sequences` / receiver `Sequence` / family `group`

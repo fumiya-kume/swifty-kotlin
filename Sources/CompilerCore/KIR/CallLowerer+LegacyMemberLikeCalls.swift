@@ -1376,7 +1376,6 @@ extension CallLowerer {
                 let runtimeCallee: String?
                 let mapName = interner.intern("map")
                 let filterName = interner.intern("filter")
-                let forEachName = interner.intern("forEach")
                 let flatMapName = interner.intern("flatMap")
                 let flatMapIndexedName = interner.intern("flatMapIndexed")
                 let takeLastWhileName = interner.intern("takeLastWhile")
@@ -1401,8 +1400,6 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_filter"
                 } else if calleeName == interner.intern("takeLast") {
                     runtimeCallee = "kk_sequence_takeLast"
-                } else if calleeName == forEachName {
-                    runtimeCallee = "kk_sequence_forEach"
                 } else if calleeName == flatMapName {
                     runtimeCallee = "kk_sequence_flatMap"
                 } else if calleeName == flatMapIndexedName {
@@ -1519,8 +1516,6 @@ extension CallLowerer {
                     }
                 } else if calleeName == interner.intern("ifEmpty") {
                     runtimeCallee = "kk_sequence_ifEmpty"
-                } else if calleeName == interner.intern("forEachIndexed") {
-                    runtimeCallee = "kk_sequence_forEachIndexed"
                 } else {
                     runtimeCallee = nil
                 }

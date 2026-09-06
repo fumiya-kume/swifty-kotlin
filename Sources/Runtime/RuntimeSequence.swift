@@ -2127,50 +2127,6 @@ public func kk_sequence_withIndex(_ seqRaw: Int) -> Int {
     return registerRuntimeObject(newSeq)
 }
 
-// MARK: - Sequence Terminal Operations
-
-@_cdecl("kk_sequence_forEach")
-public func kk_sequence_forEach(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int) -> Int {
-    if let seq = runtimeSequenceBox(from: seqRaw) {
-        runtimeTraverseSequence(seq, outThrown: nil) { elem in
-            var thrown = 0
-            _ = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-            if thrown != 0 {
-                fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: sequence lambda threw but no outThrown available")
-            }
-            return true
-        }
-    } else {
-        let elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
-        for elem in elements {
-            var thrown = 0
-            _ = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-            if thrown != 0 {
-                fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: sequence lambda threw but no outThrown available")
-            }
-        }
-    }
-    return 0
-}
-
-@_cdecl("kk_sequence_forEachIndexed")
-public func kk_sequence_forEachIndexed(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int) -> Int {
-    let elements: [Int]
-    if let seq = runtimeSequenceBox(from: seqRaw) {
-        elements = evaluateSequence(seq)
-    } else {
-        elements = runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function)
-    }
-    for (idx, elem) in elements.enumerated() {
-        var thrown = 0
-        _ = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: idx, rhs: elem, outThrown: &thrown)
-        if thrown != 0 {
-            fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: sequence forEachIndexed lambda threw but no outThrown available")
-        }
-    }
-    return 0
-}
-
 // MARK: - kk_sequence_zipWithNext (STDLIB: Sequence.zipWithNext)
 
 public func kk_sequence_zipWithNext(_ seqRaw: Int) -> Int {
