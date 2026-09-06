@@ -54,9 +54,9 @@ struct CodegenBackendThrowableEdgeCasesTests {
             moduleName: "ThrowableStringTemplateConcatIllegalState",
             expected:
                 """
-                interp existing: Throwable(IllegalStateException: existing type test)
-                plus existing: Throwable(IllegalStateException: existing type test)
-                Throwable(IllegalStateException: existing type test)
+                interp existing: java.lang.IllegalStateException: existing type test
+                plus existing: java.lang.IllegalStateException: existing type test
+                java.lang.IllegalStateException: existing type test
                 """ + "\n"
         )
     }
@@ -85,9 +85,9 @@ struct CodegenBackendThrowableEdgeCasesTests {
             moduleName: "ThrowableStringTemplateConcatArithmetic",
             expected:
                 """
-                interp arith: Throwable(ArithmeticException: / by zero)
-                plus arith: Throwable(ArithmeticException: / by zero)
-                Throwable(ArithmeticException: / by zero)
+                interp arith: java.lang.ArithmeticException: / by zero
+                plus arith: java.lang.ArithmeticException: / by zero
+                java.lang.ArithmeticException: / by zero
                 """ + "\n"
         )
     }

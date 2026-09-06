@@ -1,57 +1,7 @@
 // swiftlint:disable file_length
+// KSP-697: nominal collection shells are source-backed; this file retains residual registration.
 
 extension DataFlowSemaPhase {
-    /// Register the compiler-owned `kotlin.Comparable<in T>` shell and residual
-    /// primitive/range compatibility hooks.
-    func registerSyntheticComparableStub(
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner
-    ) {
-        let kotlinPkg: [InternedString] = [interner.intern("kotlin")]
-        if symbols.lookup(fqName: kotlinPkg) == nil {
-            _ = symbols.define(
-                kind: .package,
-                name: interner.intern("kotlin"),
-                fqName: kotlinPkg,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic]
-            )
-        }
-
-        let comparableName = interner.intern("Comparable")
-        let comparableFQName = kotlinPkg + [comparableName]
-        let comparableSymbol: SymbolID = if let existing = symbols.lookup(fqName: comparableFQName) {
-            existing
-        } else {
-            symbols.define(
-                kind: .interface,
-                name: comparableName,
-                fqName: comparableFQName,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic]
-            )
-        }
-        // Store in TypeSystem for use in isSubtype
-        types.comparableInterfaceSymbol = comparableSymbol
-        types.setNominalTypeParameterVariances([.in], for: comparableSymbol)
-
-        // KSP-669/KSP-797: the `Comparable<in T>` declaration and compareTo
-        // member are source-backed by `Stdlib/kotlin/Comparable.kt`, which
-        // reuses this synthetic shell on bundle load. Primitive conformances
-        // (c-hard) and range upper bounds stay compiler-side.
-        registerOpenEndRangeComparableUpperBound(
-            comparableSymbol: comparableSymbol,
-            symbols: symbols,
-            types: types,
-            interner: interner
-        )
-        setupPrimitiveComparableImplementations(symbols: symbols, types: types, interner: interner, comparableSymbol: comparableSymbol)
-        patchSyntheticClosedRangeTypeParameterUpperBound(symbols: symbols, types: types, interner: interner)
-    }
-
     func registerSyntheticCollectionStubs(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -121,7 +71,8 @@ extension DataFlowSemaPhase {
         let mutableCollectionInterfaceSymbol = registerSyntheticMutableCollectionStub(
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg,
-            collectionInterfaceSymbol: collectionInterfaceSymbol
+            collectionInterfaceSymbol: collectionInterfaceSymbol,
+            mutableIterableInterfaceSymbol: mutableIterableInterfaceSymbol
         )
 
         registerSyntheticAbstractMutableCollectionStub(

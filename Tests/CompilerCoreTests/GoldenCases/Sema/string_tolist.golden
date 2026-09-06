@@ -1,7 +1,7 @@
 symbol fq=charSequenceToList kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=kotlin.collections.List<Char>
 symbol fq=charSequenceToList.$0.cs kind=valueParameter vis=private flags=_
 symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=stringToList kind=function vis=public flags=_ sig=recv=_ params=[String] ret=kotlin.collections.List<Char>
 symbol fq=stringToList.$1.s kind=valueParameter vis=private flags=_
 file fstring_tolist package=_

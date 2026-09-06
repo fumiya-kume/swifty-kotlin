@@ -16,7 +16,7 @@ symbol fq=inspect.$0.nullable kind=valueParameter vis=private flags=_
 symbol fq=inspect.$0.sequence kind=valueParameter vis=private flags=_
 symbol fq=inspect.$0.values kind=valueParameter vis=private flags=_
 symbol fq=kotlin.Array kind=class vis=public flags=synthetic
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Set.E kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Set.isEmpty kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Set<out kotlin.collections.Set.E> params=[] ret=Boolean
@@ -25,19 +25,19 @@ file fstdlib_kotlin_collections_Set_n package=_
   decl inspect fun inspect sym=inspect
 expr e@8:35 name(values) type=kotlin.collections.Set<Int?> ref=inspect.$0.values
 expr e@8:44 name(null) type=Nothing?
-expr e@8:35#1 binary(subtract) lhs=e@8:35 rhs=e@8:44 type=kotlin.collections.Set<Int?> call=kotlin.collections.minus#6 targs=[Int?]
+expr e@8:35#1 binary(subtract) lhs=e@8:35 rhs=e@8:44 type=kotlin.collections.Set<Int?> call=kotlin.collections.minus#8 targs=[Int?]
 expr e@8:5 localDecl minusElement mutable=0 type=Set<Int?> init=e@8:35#1 type=Unit ref=__local_0.minusElement
 expr e@9:36 name(values) type=kotlin.collections.Set<Int?> ref=inspect.$0.values
 expr e@9:45 name(iterable) type=kotlin.collections.Iterable<Int?> ref=inspect.$0.iterable
-expr e@9:36#1 binary(subtract) lhs=e@9:36 rhs=e@9:45 type=kotlin.collections.Set<Int?> call=kotlin.collections.minus#7 targs=[Int?]
+expr e@9:36#1 binary(subtract) lhs=e@9:36 rhs=e@9:45 type=kotlin.collections.Set<Int?> call=kotlin.collections.minus#9 targs=[Int?]
 expr e@9:5 localDecl minusIterable mutable=0 type=Set<Int?> init=e@9:36#1 type=Unit ref=__local_1.minusIterable
 expr e@10:36 name(values) type=kotlin.collections.Set<Int?> ref=inspect.$0.values
 expr e@10:45 name(sequence) type=kotlin.sequences.Sequence<Int?> ref=inspect.$0.sequence
-expr e@10:36#1 binary(subtract) lhs=e@10:36 rhs=e@10:45 type=kotlin.collections.Set<Int?> call=kotlin.collections.minus#8 targs=[Int?]
+expr e@10:36#1 binary(subtract) lhs=e@10:36 rhs=e@10:45 type=kotlin.collections.Set<Int?> call=kotlin.collections.minus#10 targs=[Int?]
 expr e@10:5 localDecl minusSequence mutable=0 type=Set<Int?> init=e@10:36#1 type=Unit ref=__local_2.minusSequence
 expr e@11:33 name(values) type=kotlin.collections.Set<Int?> ref=inspect.$0.values
 expr e@11:42 name(array) type=kotlin.Array<Int?> ref=inspect.$0.array
-expr e@11:33#1 binary(subtract) lhs=e@11:33 rhs=e@11:42 type=kotlin.collections.Set<Int?> call=kotlin.collections.minus#9 targs=[Int?]
+expr e@11:33#1 binary(subtract) lhs=e@11:33 rhs=e@11:42 type=kotlin.collections.Set<Int?> call=kotlin.collections.minus#11 targs=[Int?]
 expr e@11:5 localDecl minusArray mutable=0 type=Set<Int?> init=e@11:33#1 type=Unit ref=__local_3.minusArray
 expr e@12:33 name(values) type=kotlin.collections.Set<Int?> ref=inspect.$0.values
 expr e@12:53 name(null) type=Nothing?

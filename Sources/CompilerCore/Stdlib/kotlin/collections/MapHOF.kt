@@ -8,6 +8,11 @@ import kotlin.contracts.contract
 @KsSymbolName("kk_map_is_empty")
 private external fun <K, V> __kkMapIsEmpty(map: Map<out K, V>): Boolean
 
+private external fun kk_max_float(a: Float, b: Float): Float
+private external fun kk_max_double(a: Double, b: Double): Double
+private external fun kk_unbox_float(value: Float): Float
+private external fun kk_unbox_double(value: Double): Double
+
 // MIGRATION-COL-015
 // Map higher-order functions migrated from Swift Runtime
 // Sources/Runtime/RuntimeCollectionHOF.swift (kk_map_* HOFs)
@@ -231,6 +236,7 @@ public inline fun <K, V> Map<K, V>.filter(predicate: (Map.Entry<K, V>) -> Boolea
     return result as Map<K, V>
 }
 
+
 /**
  * Returns a map containing all entries not matching the given [predicate].
  */
@@ -363,6 +369,32 @@ public inline fun <K, V, R : Any, C : MutableCollection<in R>> Map<out K, V>.map
 public inline fun <K, V> Map<out K, V>.__kspMapIterator(): Iterator<Map.Entry<K, V>> = this.entries.iterator()
 
 /**
+ * Returns the first entry yielding the largest value of the given [selector].
+ */
+@SinceKotlin("1.7")
+@kotlin.jvm.JvmName("maxByOrThrow")
+@Suppress("CONFLICTING_OVERLOADS")
+@kotlin.internal.InlineOnly
+public inline fun <K, V, R : Comparable<R>> Map<out K, V>.maxBy(
+    selector: (Map.Entry<K, V>) -> R
+): Map.Entry<K, V> {
+    val iterator = this.entries.iterator()
+    if (!iterator.hasNext()) throw NoSuchElementException()
+    var maxEntry = iterator.next()
+    if (!iterator.hasNext()) return maxEntry
+    var maxValue = selector(maxEntry)
+    while (iterator.hasNext()) {
+        val entry = iterator.next()
+        val value = selector(entry)
+        if (value > maxValue) {
+            maxEntry = entry
+            maxValue = value
+        }
+    }
+    return maxEntry
+}
+
+/**
  * Returns the first entry yielding the smallest value of the given [selector].
  */
 @SinceKotlin("1.7")
@@ -386,6 +418,164 @@ public inline fun <K, V, R : Comparable<R>> Map<out K, V>.minBy(
         }
     } while (iterator.hasNext())
     return minEntry
+}
+
+@SinceKotlin("1.4")
+@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
+@OverloadResolutionByLambdaReturnType
+@kotlin.internal.InlineOnly
+public inline fun <K, V> Map<out K, V>.maxOf(selector: (Map.Entry<K, V>) -> Double): Double {
+    val iterator = this.entries.iterator()
+    if (!iterator.hasNext()) throw NoSuchElementException()
+    var maxValue = kk_unbox_double(selector(iterator.next()))
+    while (iterator.hasNext()) {
+        val value = kk_unbox_double(selector(iterator.next()))
+        maxValue = kk_max_double(value, maxValue)
+    }
+    return maxValue
+}
+
+@SinceKotlin("1.4")
+@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
+@OverloadResolutionByLambdaReturnType
+@kotlin.internal.InlineOnly
+public inline fun <K, V> Map<out K, V>.maxOf(selector: (Map.Entry<K, V>) -> Float): Float {
+    val iterator = this.entries.iterator()
+    if (!iterator.hasNext()) throw NoSuchElementException()
+    var maxValue = kk_unbox_float(selector(iterator.next()))
+    while (iterator.hasNext()) {
+        val value = kk_unbox_float(selector(iterator.next()))
+        maxValue = kk_max_float(value, maxValue)
+    }
+    return maxValue
+}
+
+@SinceKotlin("1.4")
+@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
+@OverloadResolutionByLambdaReturnType
+@kotlin.internal.InlineOnly
+public inline fun <K, V, R : Comparable<R>> Map<out K, V>.maxOf(selector: (Map.Entry<K, V>) -> R): R {
+    val iterator = this.entries.iterator()
+    if (!iterator.hasNext()) throw NoSuchElementException()
+    var maxValue = selector(iterator.next())
+    while (iterator.hasNext()) {
+        val value = selector(iterator.next())
+        if (value > maxValue) maxValue = value
+    }
+    return maxValue
+}
+
+@SinceKotlin("1.4")
+@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
+@OverloadResolutionByLambdaReturnType
+@kotlin.internal.InlineOnly
+public inline fun <K, V> Map<out K, V>.maxOfOrNull(selector: (Map.Entry<K, V>) -> Double): Double? {
+    val iterator = this.entries.iterator()
+    if (!iterator.hasNext()) return null
+    var maxValue = kk_unbox_double(selector(iterator.next()))
+    while (iterator.hasNext()) {
+        val value = kk_unbox_double(selector(iterator.next()))
+        maxValue = kk_max_double(value, maxValue)
+    }
+    return maxValue
+}
+
+@SinceKotlin("1.4")
+@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
+@OverloadResolutionByLambdaReturnType
+@kotlin.internal.InlineOnly
+public inline fun <K, V> Map<out K, V>.maxOfOrNull(selector: (Map.Entry<K, V>) -> Float): Float? {
+    val iterator = this.entries.iterator()
+    if (!iterator.hasNext()) return null
+    var maxValue = kk_unbox_float(selector(iterator.next()))
+    while (iterator.hasNext()) {
+        val value = kk_unbox_float(selector(iterator.next()))
+        maxValue = kk_max_float(value, maxValue)
+    }
+    return maxValue
+}
+
+@SinceKotlin("1.4")
+@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
+@OverloadResolutionByLambdaReturnType
+@kotlin.internal.InlineOnly
+public inline fun <K, V, R : Comparable<R>> Map<out K, V>.maxOfOrNull(selector: (Map.Entry<K, V>) -> R): R? {
+    val iterator = this.entries.iterator()
+    if (!iterator.hasNext()) return null
+    var maxValue = selector(iterator.next())
+    while (iterator.hasNext()) {
+        val value = selector(iterator.next())
+        if (value > maxValue) maxValue = value
+    }
+    return maxValue
+}
+
+@SinceKotlin("1.4")
+@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
+@OverloadResolutionByLambdaReturnType
+@kotlin.internal.InlineOnly
+public inline fun <K, V, R> Map<out K, V>.maxOfWith(
+    comparator: Comparator<in R>,
+    selector: (Map.Entry<K, V>) -> R
+): R {
+    val iterator = this.entries.iterator()
+    if (!iterator.hasNext()) throw NoSuchElementException()
+    var maxValue = selector(iterator.next())
+    while (iterator.hasNext()) {
+        val value = selector(iterator.next())
+        if (comparator.compare(value, maxValue) > 0) maxValue = value
+    }
+    return maxValue
+}
+
+@SinceKotlin("1.4")
+@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
+@OverloadResolutionByLambdaReturnType
+@kotlin.internal.InlineOnly
+public inline fun <K, V, R> Map<out K, V>.maxOfWithOrNull(
+    comparator: Comparator<in R>,
+    selector: (Map.Entry<K, V>) -> R
+): R? {
+    val iterator = this.entries.iterator()
+    if (!iterator.hasNext()) return null
+    var maxValue = selector(iterator.next())
+    while (iterator.hasNext()) {
+        val value = selector(iterator.next())
+        if (comparator.compare(value, maxValue) > 0) maxValue = value
+    }
+    return maxValue
+}
+
+@SinceKotlin("1.7")
+@kotlin.jvm.JvmName("maxWithOrThrow")
+@Suppress("CONFLICTING_OVERLOADS")
+@kotlin.internal.InlineOnly
+public inline fun <K, V> Map<out K, V>.maxWith(
+    comparator: Comparator<in Map.Entry<K, V>>
+): Map.Entry<K, V> {
+    val iterator = this.entries.iterator()
+    if (!iterator.hasNext()) throw NoSuchElementException()
+    var maxEntry = iterator.next()
+    while (iterator.hasNext()) {
+        val entry = iterator.next()
+        if (comparator.compare(entry, maxEntry) > 0) maxEntry = entry
+    }
+    return maxEntry
+}
+
+@SinceKotlin("1.4")
+@kotlin.internal.InlineOnly
+public inline fun <K, V> Map<out K, V>.maxWithOrNull(
+    comparator: Comparator<in Map.Entry<K, V>>
+): Map.Entry<K, V>? {
+    val iterator = this.entries.iterator()
+    if (!iterator.hasNext()) return null
+    var maxEntry = iterator.next()
+    while (iterator.hasNext()) {
+        val entry = iterator.next()
+        if (comparator.compare(entry, maxEntry) > 0) maxEntry = entry
+    }
+    return maxEntry
 }
 
 /**
