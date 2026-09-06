@@ -24,9 +24,9 @@ public extension RuntimeABISpec {
         abiParitySpec("kk_annotation_get_arguments", parameters: [
             p("p0", .intptr),
         ]),
-        abiParitySpec("kk_any_javaClass", parameters: [
+        abiParitySpec("__kk_any_javaClass", parameters: [
             p("receiverRaw", .intptr),
-        ]),
+        ], isThrowing: false),
         abiParitySpec("kk_future_getState", parameters: [
             p("futureRaw", .intptr),
         ]),

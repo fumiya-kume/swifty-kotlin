@@ -363,13 +363,15 @@
   - diff: `string_builder_*.kt` 既存 + `Appendable`/`CharSequence` supertype ケース
   - 前提: KSP-711, KSP-717
 
-- [ ] KSP-713: `TODO()` / system / `Any.javaClass` 等の `SyntheticTODOAndIOStubs` 残余を Kotlin 化し縮小/削除する
+- [x] KSP-713: `TODO()` / system / `Any.javaClass` 等の `SyntheticTODOAndIOStubs` 残余を Kotlin 化し縮小/削除する
   - 対象スタブ: `Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticTODOAndIOStubs.swift`（KSP-692 分割後の残余）
-  - 実装先: `Sources/CompilerCore/Stdlib/kotlin/Preconditions.kt`（`TODO()`）, `Sources/CompilerCore/Stdlib/kotlin/system/` 新設 or `kotlin/io/` 既存（`Platform`/`Runtime`/`Any.javaClass`）
-  - 削除/降格 kk_*: `kk_todo`, `kk_system_*`, `kk_any_java_class` 等（`RuntimeHelpers.swift`/`RuntimeSystem.swift`。着手時 `rg 'kk_todo|kk_system_|kk_any_java_class' Sources/Runtime Sources/CompilerCore`）
+  - 実装先: `Sources/CompilerCore/Stdlib/kotlin/Preconditions.kt`（`TODO()`）、`kotlin/system/System.kt`、`kotlin/io/Buffer.kt`、`kotlin/JavaClass.kt`、`java/lang/{Class,System,Runtime}.kt`
+  - 削除/降格 kk_*: `kk_io_default_buffer_size`、`kk_system_gc`、`kk_runtime_{getRuntime,totalMemory,freeMemory,maxMemory}`、`kk_any_javaClass`（現行の `__kk_*` bridges は source-backed 宣言の内部実装として保持）
   - 手順: T
   - diff: `todo_*.kt`, `system_*.kt` 既存 + 新規
   - 前提: KSP-651（sequence factory 移行後）, KSP-683（duration compat 整理）, KSP-698（Closeable）, KSP-699（CollectionFactory）, KSP-707（Precondition）
+  - 完了（2026-09-04）: `kotlin/system/System.kt`、`kotlin/io/Buffer.kt`、`kotlin/JavaClass.kt`、`java/lang/{Class,System,Runtime}.kt` を source-backed 化。`TODO()`/console/system/`Any.javaClass`/`DEFAULT_BUFFER_SIZE` の専用Synthetic登録と純定数Runtime関数を削除し、GC/Runtime memory bridge は `__kk_*` に降格してKotlinラッパーからのみ利用する。対象ファイルに残るのは sequence、Kotlin/Native Platform/enum、MemoryModel、FileIO bootstrap、function-type fallback の残余。
+  - 検証: JavaClass/System/IO focused Sema、System bundled-callee KIR、GC/Runtime memory、Runtime ABI parity、targeted Sema Golden shard（更新あり/なし）、`memory_management.kt` の直接ビルド・実行、`check_todo_ids.sh`、`validate_runtime_abi_links.sh`、`git diff --check`。
 
 - [ ] KSP-714: RangeProgression / RangeInterface / RangeUntil クラス群を Kotlin 化し stub 群を削除する
   - 対象スタブ: `Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticRangeProgressionStubs.swift`, `Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticRangeInterfaceStubs.swift`, `Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticRangeUntilStubs.swift`

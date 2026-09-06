@@ -66,27 +66,42 @@ private func runtimeCurrentMemoryUsageBytes() -> Int64 {
 #endif
 }
 
-@_cdecl("kk_system_gc")
-public func kk_system_gc() {
+@_cdecl("__kk_system_gc")
+public func __kk_system_gc() {
     kk_gc_collect()
 }
 
-@_cdecl("kk_runtime_getRuntime")
-public func kk_runtime_getRuntime() -> Int {
+@_cdecl("__kk_runtime_getRuntime")
+public func __kk_runtime_getRuntime() -> Int {
     runtimeMemoryHandleRaw
 }
 
-@_cdecl("kk_runtime_totalMemory")
-public func kk_runtime_totalMemory() -> Int {
+@_cdecl("__kk_runtime_totalMemory")
+public func __kk_runtime_totalMemory() -> Int {
     Int(clamping: runtimeCaptureMemorySnapshot().totalBytes)
 }
 
-@_cdecl("kk_runtime_freeMemory")
-public func kk_runtime_freeMemory() -> Int {
+@_cdecl("__kk_runtime_freeMemory")
+public func __kk_runtime_freeMemory() -> Int {
     Int(clamping: runtimeCaptureMemorySnapshot().freeBytes)
 }
 
-@_cdecl("kk_runtime_maxMemory")
-public func kk_runtime_maxMemory() -> Int {
+@_cdecl("__kk_runtime_maxMemory")
+public func __kk_runtime_maxMemory() -> Int {
     Int(clamping: runtimeCaptureMemorySnapshot().maxBytes)
+}
+
+// MARK: - Java class runtime support
+
+final class RuntimeJavaClassBox: @unchecked Sendable {
+    let receiverRaw: Int
+
+    init(receiverRaw: Int) {
+        self.receiverRaw = receiverRaw
+    }
+}
+
+@_cdecl("__kk_any_javaClass")
+public func __kk_any_javaClass(_ receiverRaw: Int) -> Int {
+    registerRuntimeObject(RuntimeJavaClassBox(receiverRaw: receiverRaw))
 }

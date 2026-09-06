@@ -1960,12 +1960,6 @@ public func kk_vararg_spread_concat(_ pairsArrayRaw: Int, _ pairCount: Int) -> I
     return result
 }
 
-/// Runtime support for kotlin.io.DEFAULT_BUFFER_SIZE.
-@_cdecl("kk_io_default_buffer_size")
-public func kk_io_default_buffer_size() -> Int {
-    8192
-}
-
 /// KSP-615: single low-level console input bridge behind `kotlin.io.readLine` /
 /// `readln` / `readlnOrNull`. Reads a line from stdin. Returns a pointer to a
 /// runtime string on success, or `runtimeNullSentinelInt` on EOF; nullability

@@ -126,8 +126,7 @@ private func delegateStubRegistryEntries() -> [SyntheticDelegateStubRegistryEntr
                 symbols: symbols,
                 types: types,
                 interner: interner,
-                bundledIndex: context.bundledIndex,
-                skipStats: context.skipStats
+                bundledIndex: context.bundledIndex
             )
         },
         // KSP-682: these patches attach the Function{N} supertypes for the

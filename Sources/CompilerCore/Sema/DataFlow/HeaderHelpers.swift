@@ -1292,8 +1292,7 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             types: types,
             interner: interner,
-            bundledIndex: bundledIndex,
-            skipStats: skipStats
+            bundledIndex: bundledIndex
         )
         patchKPropertyFunctionSupertypes(symbols: symbols, types: types, interner: interner)
         patchKMutableProperty0FunctionSupertype(symbols: symbols, types: types, interner: interner)
