@@ -522,6 +522,231 @@
 
 ---
 
+## Golden fixture の単一目的化（RF-FIXTURE: 2026-09-06 調査）
+
+### 現状と対象の選定
+
+- 調査基準: `f637b7bdf77ce29a26ca00a782b34c5927df6d17`。`Tests/CompilerCoreTests/GoldenCases/Sema/` は入力 `.kt` / 期待値 `.golden` が各579件。履歴は同コミットの first-parent、2026-08-07 00:00〜2026-09-06 00:00（+09:00）の30日間で集計し、golden 517パス・延べ1,140回の変更を確認した。
+- 再集計用: `git log f637b7bdf77ce29a26ca00a782b34c5927df6d17 --first-parent --since=2026-08-07T00:00:00+09:00 --until=2026-09-06T00:00:00+09:00 --format= --name-only -- 'Tests/CompilerCoreTests/GoldenCases/Sema/*.golden'` の非空行をパス別に数える。以下の「変更回数」はこの期間の golden 変更コミット数であり、当初報告の「調査範囲内11回」と集計範囲・方法を揃えた比較ではない。一括再生成・ハーネス変更も含むため、すべてを fixture の多責務化に起因すると断定しない。
+- 候補抽出: **golden 変更7回以上、入力2,000 bytes以上、golden 15,000 bytes以上**のいずれかに該当する23件に、同型の `hashset_alias.kt` / `linkedhashset_alias.kt` を加えた25件を内容確認。3件を下記理由で除外し、22件をファイル単位で起票した。全579入力の詳細監査完了を意味しない。Lexer / Parser / Diagnostics の fixture は今回の対象外。
+- 最大の変更集中点は `linkedhashmap_alias.golden`（20回、19,045 bytes、入力80行）。履歴には Map / MutableMap のほか、Iterable の map、Set / Collection、Pair / `to`、`println`、配列・Sequence の変換などの移行が含まれる。`arrayof_type_preserve.golden` は18回、`map_hofs.golden` は15回、`collection_mutable_conversions.golden` は14回。`map_hofs.kt` は11行しかなく、行数だけでなく依存する API 群の多さが問題になる。
+- 大きな低頻度ケースも対象: `companion_object_private_access.kt` は163行 / golden 33,065 bytes、`stdlib_kotlin_collections_Collection_n.kt` は71行 / 28,285 bytes。`stdlib_kotlin_collections_MutableCollection_n.kt` と `stdlib_kotlin_collections_Map_flat.kt` は、同名の `Scripts/diff_cases/` 入力と Git blob が完全一致しており、実行用シナリオが Sema にも重複している。
+- **分割対象外**: `list_collection_hofs_chained.kt`（8回）は HOF 間の型伝播そのものを検証する7行の連鎖ケースとして維持する。`stdlib_kotlin_comparisons_n_max.kt` / `stdlib_kotlin_comparisons_n_min.kt`（各1回）は引数・戻り値で単一 API の overload 行列を検証済みで、出力処理もない。golden のサイズだけを理由に分割しない。
+
+### 共通方針・完了条件
+
+> **粒度**: 1タスク = 既存入力1ファイルの整理 = 原則1 PR。元の `.kt` と `.golden`、必要な分割先ペア、実行検証の不足補完を同じタスクで扱う。001から順に1件ずつ進め、別の巨大 fixture へまとめ直さない。後続対象はファイル単位の新IDで追加する。
+>
+> **目的**: ディレクトリ移動ではなく、検証目的と不要な依存機能の分離。現ハーネス（`GoldenHarnessCaseDiscovery.swift`）は Sema 直下の `.kt` を列挙し同名 `.golden` と対応させるため、この構造を維持する。共通コンテキストへの集約タスクとは別物であり、ハーネス・正規化・診断表示を変えて差分を隠さない。
+>
+> **型検証**: 引数・戻り値・代入先などで具体的な型、nullability、型引数、callee を固定する。推論自体が目的の式には先に期待型を与えず、推論後の別の代入・引数で照合する。`println`、出力用の文字列補間、`toList`、`size`、不要な factory / HOF は除くが、目的である overload 解決や型伝播の依存まで除かない。
+>
+> **網羅の維持**: 着手時に元の検証項目 → 残す型ケース / 既存ケースへの移管 / 実行ケースへの移管の対応を作り、重複を確認してから分割する。各分割先は「1つの API 群または1つの型規則」を短く説明できること。既存の回帰ケース・不正入力・`<error>` を無言で削って green にしない。コンパイラ / ランタイムのバグが判明した場合は既存のバグ修正ルールに従う。
+>
+> **他系列との整合**: RF-GOLDEN-010 を先行させ、ハーネスの切り替えと fixture 分割は別 PR にする。着手時点の新しい出力で対象・優先度を再確認する。対象指定の専用 Golden 導入後に入力を分割・改名する場合、`.kt` / `.golden` だけでなく対象指定・実行 profile・メタデータ契約の担当も同じ PR で移管し、旧指定の孤立と新ケースへの重複コピーを検査する。
+>
+> **実行コスト**: 現ハーネスは8ケース単位で worker を起動するが、各ケースは個別の CompilationContext / Sema 実行を持つ。分割前後のケース数・batch 数・同条件の suite 時間 / メモリを確認し、総再コンパイル量の増加を無視しない。入力を1 API 呼び出しずつ無制限に細分化せず、独立した検証目的とコストを両立する粒度にする。
+>
+> **実行検証**: 値・順序・副作用回数・同一性・例外は既存の diff / Codegen 実行テストへ寄せる。以下の実行先はソース照合済みの候補であり、全項目の網羅や実行 green を今回確認したという意味ではない。不足だけを補い、新規 stdout 比較は `Tests/CompilerBackendTests/Fixtures/` + `CodegenBackendFixtureTests` の既存規約に従う。既存の実行ケース全体を Sema へ再コピーしない。
+>
+> **検証ゲート**: 編集前の Sema golden と対応実行テストを基準として確認 → 対象の型・callee・診断を維持して最小化 → `UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter CompilerCoreTests.GoldenSemaGoldenTests/matchesGolden -Xswiftc -swift-version -Xswiftc 6` → 更新モードなしで同じ suite と対応する diff / Codegen テストを実行。差分は対象ペアに限定してレビューし、最終的には RF 必須ゲート（全テスト / Golden / 全 diff、存在する場合は LoC 指標）を満たす。`bash Scripts/check_todo_ids.sh` と `git diff --check` も実施する。検証項目の対応・削減した依存 API・分割後最大 fixture の規模を PR に記録する。合計行数やファイル数の減少だけを完了条件にしない。
+
+以下の対象入力名は `Tests/CompilerCoreTests/GoldenCases/Sema/` 配下、実行先の `.kt` は特記がなければ `Scripts/diff_cases/` 配下。括弧内は調査基準時の「入力行数 / golden 変更回数」。すべて分析・タスク登録のみで、fixture の編集・テスト実行は未着手。
+
+### 第1群: 変更集中点（001〜005）
+
+- [ ] RF-FIXTURE-001: `linkedhashmap_alias.kt` を型エイリアス解決中心に最小化する（80行 / 20回）
+  - 元入力には constructor の型引数推論、引数・戻り値・プロパティ型、`MutableMap` との互換性を残す。更新（set / remove / putAll）、参照（get / contains / keys / values / entries）、entries の HOF、iterator / destructuring の型検証は既存ケースと照合して必要分だけ別目的のペアへ分ける。
+  - 型だけを見る箇所から `println`・出力用補間・`toList` を除く。実行先は `linkedhashmap_alias.kt` / `map_entries_hof.kt`。現 diff には更新・順序・HOF があるが、元入力の for-destructuring やプロパティ経由の操作まで同じ網羅ではないため、必要な実行項目を照合・補完する。
+- [ ] RF-FIXTURE-002: `arrayof_type_preserve.kt` の配列生成の型推論を生成方式ごとに分離する（74行 / 18回）
+  - `arrayOf` の要素型 / 混在型、空配列の期待型、primitive factory 8型、`Array(size) { ... }` の initializer 推論・明示型引数と期待型の優先を区別する。特に `Array<Int>` を `Array<out Any>` に受けるケースを単なる期待型付き factory に置き換えない。
+  - `println(array.size)` ではなく推論結果の型を照合し、Byte / Short は不要な数値変換と切り離せる入力にする。実行先は `arrayof_type_safety.kt` / `array_constructor.kt` / `array_primitive_types.kt`。これらだけで8型・混在型の実行結果を網羅するとみなさず、元ケースのうち実行が必要な項目だけ補完する。
+- [ ] RF-FIXTURE-003: `map_hofs.kt` の Map HOF・分解宣言・変換を分離する（11行 / 15回）
+  - `forEach` の entry destructuring、`map` / `filter` の引数・戻り値、`mapValues` / `mapKeys` の K/V 型伝播、`toList` の Pair 変換を別目的にする。Map と entries の Iterable HOF の解決先を混同しない。
+  - ラムダ内外の `println` を型照合へ置き換え、必要のない String 操作を使わない。実行先は `map_hof.kt` / `map_entries_hof.kt`。destructuring と `toList` の型検証は、出力ケースがあるという理由だけでは削除しない。
+- [ ] RF-FIXTURE-004: `collection_mutable_conversions.kt` の変換型と変更後の挙動を分離する（29行 / 14回）
+  - `Iterable` / `Collection` → `MutableList`、`Iterable` → `MutableSet` / `HashSet`、`Map` → `MutableMap` を receiver / 変換 API 別に固定する。receiver をすべて具体的な List に変えて interface 経由の解決を失わない。
+  - 型ケースから `add`・`contains`・set・`println` を除き、可変な戻り型を明示的に検証する。コピー独立性・変更結果は `collection_copies.kt` / `iterable_generic_surface.kt` と照合し、Map 変換などの不足を補完する。
+- [ ] RF-FIXTURE-005: `unsigned_array_as_list.kt` を view / copy / size の型検証に分離する（31行 / 10回）
+  - unsigned 4型の `asList`、`toList` / `size`、generic `Array<T>` の `toList` / `size` を区別する。unsigned 配列を型付き引数等で受け、ULongRange → 配列生成や出力への不要な依存を除く。
+  - `List<UByte>` / `List<UShort>` / `List<UInt>` / `List<ULong>` の型を固定する。view が元配列の更新を反映し copy は反映しない挙動は、既存 `unsigned_array_conversions.kt` に寄せる。
+
+### 第2群: 関連コレクションと I/O の依存削減（006〜015）
+
+- [ ] RF-FIXTURE-006: `arraylist_alias.kt` の alias 解決と List 操作を分離する（67行 / 7回）
+  - 引数・戻り値・プロパティ、ネストした型引数、上限制約、拡張 receiver、`MutableList` / `List` への互換性を残し、それぞれの型規則に不要な `add` / `removeAt` / get / size / 補間 / 出力を外す。
+  - 更新・要素取得の実行先は `arraylist_alias.kt` / `ksp627_collection_aliases.kt`。ネスト・制約・拡張 receiver の型検証を、これらの実行ケースだけで代替しない。
+- [ ] RF-FIXTURE-007: `hashset_alias.kt` の nominal 型・factory・Set 操作を分離する（64行 / 6回）
+  - 現 `CollectionAliases.kt` の `HashSet` は typealias ではなくクラス。`hashSetOf` の期待型推論、`Set` / `MutableSet` への互換性、引数・戻り値・プロパティ、ネスト・上限制約・拡張 receiver を型検証として整理する。
+  - add / remove / contains / size / 出力のシナリオを切り離す。実行先は `ksp627_collection_aliases.kt` と `CodegenBackendIntegrationTests.swift` の `testCodegenHashSetOfFactoryUsesMutableRuntimeSet`。factory と nominal constructor の検証を取り違えず、不足する削除操作などを補完する。
+- [ ] RF-FIXTURE-008: `linkedhashset_alias.kt` の nominal 型と継承検証を分離する（72行 / 6回）
+  - `LinkedHashSet` は open class。型引数・引数 / 戻り値 / プロパティ・`Set` / `MutableSet` 互換性、ネスト / 上限制約 / 拡張 receiver と、`MySet` による継承・継承メンバ解決を別目的にする。
+  - 型だけを見る箇所の更新操作・文字列補間・出力を除く。実行先は `ksp627_collection_aliases.kt` / `bug196_linkedhashset_subclass.kt` と `testCodegenLinkedSetOfFactoryUsesMutableRuntimeSet`。既存の subclass 回帰を保持する。
+- [ ] RF-FIXTURE-009: `list_collection_hofs.kt` の独立 HOF 群を目的別に分離する（9行 / 9回）
+  - `mapIndexed`、`flatMap`、associate 系、`groupBy`、`partition` / destructuring の戻り型・ラムダ引数型を独立に固定する。文字列補間・`uppercase`・`first` など目的外の処理は最小のラムダに置き換える。
+  - 実行先は `collection_hof.kt` / `list_associate_group_hofs.kt`。別入力 `list_collection_hofs_chained.kt` は連鎖推論の sentinel としてそのまま残し、分割先への再統合をしない。
+- [ ] RF-FIXTURE-010: `flatten_sequence_stdlib.kt` の flatten 型解決と Sequence 実行シナリオを分離する（28行 / 7回）
+  - `Sequence<Iterable<T>>` と `Sequence<Sequence<T>>` の overload / 要素型推論を型付き入力と戻り型で検証する。builder・`yield`・for・`take` / `drop`・`toList`・size・出力を同居させない。
+  - 実行先は `flatten_sequence_edge_cases.kt`。元の `mixedSeq`（List と Sequence の混在）はこの diff にないため、標準 Kotlin で成立する型・診断と検証目的を確認して別途固定する。builder 内推論などを削るだけで既存の問題を隠さない。
+- [ ] RF-FIXTURE-011: `flatten_stdlib.kt` を Iterable flatten の型伝播に最小化する（18行 / 7回）
+  - Int / String の要素型保持と空入力の型引数を固定し、範囲 → `map` によるデータ生成・`take`・size・出力を除く。要素数の違いだけで同じ型検証を繰り返さない。
+  - 空・単一・複数・大きな入力の値と順序は `flatten_core_test.kt` に寄せる。`flatten_comprehensive.kt` は現状 `flatMap { it }` の実行ケースなので、これだけを `flatten()` の回帰代替としない。
+- [ ] RF-FIXTURE-012: `sequence_partition.kt` の戻り型と destructuring を実行条件から分離する（29行 / 7回）
+  - `Sequence<T>.partition` の predicate 引数と `Pair<List<T>, List<T>>`、分解後の各 List 型を固定する。`asSequence`・Pair の出力用アクセス・空 / 全一致 / 不一致の重複シナリオを型 fixture に集約しない。
+  - 実行先は `CodegenBackendSequenceEdgeCasesTests.testCodegenSequencePartitionSplitsElements`（通常・空は既存）。全一致 / 不一致 / `asSequence` 経由は不足を照合して補完し、List.partition のテストだけで Sequence の実行を代替しない。
+- [ ] RF-FIXTURE-013: `progression.kt` の生成・変換操作の型と列挙結果を分離する（8行 / 7回）
+  - 5種の `fromClosedRange` は Progression 自身の戻り型を固定し、`step` / `reversed` / `isEmpty` はそれぞれ必要な型検証へ分ける。全式を `toList` に接続して返す構成をやめる。
+  - 要素列・端点・空判定・step の挙動は既存 `progression.kt` の実行ケースに寄せ、Int / Long / Char / UInt / ULong の型検証を維持する。
+- [ ] RF-FIXTURE-014: `file_operations_advanced.kt` の File API 型解決とディレクトリ操作を分離する（28行 / 10回）
+  - mkdirs / delete の戻り型、walk の戻り型、listFiles の nullable 戻り型を別目的で固定する。File を引数に受け、固定 `/tmp` パスの操作手順と `toList()?.size` / 出力を型検証から外す。
+  - 実行先は `file_mkdirs.kt` / `file_walk.kt` / `file_listfiles.kt`。実ファイル生成・走査・削除はこれらの実行層で維持し、Sema が実行結果を検証しているとは扱わない。
+- [ ] RF-FIXTURE-015: `file_use_lines.kt` を useLines のラムダ / 戻り型推論に絞る（17行 / 8回）
+  - `File.useLines` のブロック引数 `Sequence<String>` と汎用戻り型の伝播を残し、File constructor、Sequence の `count` / `toList` 自体の型検証とは切り離す。Int と List 戻り値の推論範囲を狭めない。
+  - 実行先は `file_uselines.kt` と `CodegenBackendFileUseLinesForEachLineTests`。count / 行走査は既存だが、List を返して useLines の外で使うケースは今回照合した実行先にないため補完する。
+
+### 第3群: 大きな API surface / シナリオの分解（016〜022）
+
+- [ ] RF-FIXTURE-016: `stdlib_kotlin_collections_Collection_n.kt` の Collection surface を API 群別に分ける（71行 / 6回）
+  - containsAll / count / indices、nullable helper、plus overload、random overload、可変変換、signed / unsigned 配列変換に分ける。各入力は型付き receiver を受け、結果を連結した巨大な Boolean 式と `println` を除く。
+  - nullability、Random あり / なし、要素 / Iterable / Sequence / Array の overload、配列変換12型の行列を維持する。実行先は同名 `stdlib_kotlin_collections_Collection_n.kt`。コピー独立性・乱数・配列内容は実行層に残す。
+- [ ] RF-FIXTURE-017: `stdlib_kotlin_collections_MutableCollection_n.kt` の更新 surface と値検証を分離する（81行 / 3回）
+  - addAll、remove / removeAll、retainAll、plusAssign / minusAssign を目的別に分け、Iterable / Collection / Sequence / Array と nullable 要素の overload・戻り型を固定する。型付き引数を使い、同じ mutableList の生成・出力を繰り返さない。
+  - `StableIterable` の実走査、重複要素の削除、空入力、Set 更新などの値検証は、入力が完全一致する同名 diff に残す。静的 receiver / 引数型が変わって別 overload を検証する退行を防ぐ。
+- [ ] RF-FIXTURE-018: `stdlib_kotlin_collections_Map_flat.kt` を flatMapTo の overload / destination 型に絞る（70行 / 2回）
+  - Iterable と Sequence を返すラムダの overload、entry の K/V 型、nullable 要素、`MutableList<Any>` 等の広い destination と戻り型保持を型ケースにする。入力 Map・destination・変換元を引数に受け、不要な factory と処理手順を外す。
+  - destination の同一性・追記順・呼び出し回数・`constrainOnce`・独自 one-shot Iterable・例外時の部分結果は、入力が完全一致する同名 diff に残す。これらの runtime シナリオを別の Sema fixture にコピーし直さない。
+- [ ] RF-FIXTURE-019: `stdlib_kotlin_collections_MutableMap_n.kt` の更新・委譲・iterator を分離する（36行 / 2回）
+  - nullable getOrPut、plusAssign / minusAssign、putAll、set / remove、Map による property delegation、withDefault / getValue、mutable iterator / entry.setValue を別目的に分ける。各型・overload を明示して出力用の更新連鎖を外す。
+  - 実行先は同名 `stdlib_kotlin_collections_MutableMap_n.kt`。null / absent、wrapper と元 Map の共有、iterator.remove の結果を維持し、001の基本 Map 操作と分割先が重複しないよう照合する。
+- [ ] RF-FIXTURE-020: `stdlib_kotlin_collections_n_if.kt` の ifEmpty 型推論と遅延評価を分離する（87行 / 2回）
+  - Collection / Map / Array の overload、nullable 要素、receiver と fallback の異なる型からの戻り型推論を固定する。カウンタ・同一性比較・出力・空判定の実行シナリオを取り除く。
+  - custom Collection / Map の subtype に対する解決は必要な型ケースとして独立させ、size の override を使う isEmpty の実行結果と fallback 評価回数・同一性は同名 diff に残す。型注釈を追加して元の推論パスを失わない。
+- [ ] RF-FIXTURE-021: `companion_object_private_access.kt` のアクセス規則と companion 拡張を分離する（163行 / 4回）
+  - private constructor（通常 / data class）、companion → インスタンスの private property / function、外側クラス → companion の private member、名前付き / 無名 companion の拡張関数 / 拡張プロパティを目的別の最小クラスにする。
+  - メール検証の `contains`、業務的な分岐・演算、整形文字列、factory ごとの大量出力をアクセス可否の検証から外す。private の許可範囲と呼び出し先は Sema に残す。
+  - 実行先 `companion_receiver_extension_function.kt` は companion 拡張関数の一部のみをカバーする。private access / data class / 拡張プロパティまで網羅済みとはせず、残すべき実行挙動があれば既存 fixture ハーネスで不足を補う。
+- [ ] RF-FIXTURE-022: `stdlib_string_ops.kt` の String API を検証目的別に分離する（77行 / 5回）
+  - trim / indent、検索・prefix / suffix、部分文字列、置換、split、大小文字 / equals、数値変換、format、空白判定・先頭要素などの API 群に分ける。既に明示された戻り型・nullable 戻り型と overload の区別は維持する。
+  - `println` は元からないため、出力除去を成果としない。valid / invalid 入力で型が同じケースは、既存の型・実行検証と照合して冗長分だけ整理する。実行先は `stdlib_string_ops.kt` を起点に、prefix / suffix / indent 等の不足項目を API 別の既存実行ケースと照合する。
+
+---
+
+## Sema Golden と stdlib 実装契約の責務分離（RF-GOLDEN: 2026-09-06 調査）
+
+### 現状・確認した根拠
+
+- 調査基準は RF-FIXTURE と同じ `f637b7bdf77ce29a26ca00a782b34c5927df6d17`。`Sources/GoldenHarnessSupport/GoldenHarnessDump.swift` の `renderSemaOutput` は fixture の宣言・式を起点に `StableRenderContext.expandRequiredSymbols()` を呼び、関数の receiver / 引数 / 戻り型 / 上限境界 / 型パラメータ / 値パラメータ、プロパティ型へ推移的に広げたシンボルの flags / signature を出力する。
+- bundled 除外は **展開後**の `isExcludedBundledSymbol` で行われ、`declSite.start.file` が `SourceOrigin.isBundledStdlib`（bundled / residual）のファイルかだけを判定する。宣言位置がある bundled symbol は除外される一方、nil の synthetic stub・互換 nominal・source-backed member alias は同じ扱いにならない。`SemanticSymbol` に独立した由来フィールドはなく、`SymbolTable.isSourceBackedSymbol` も importedLibrary または非 nil declSite の判定で、stdlib / ユーザー / 他ライブラリを識別する API ではない。
+- `HeaderCollection.swift` の `predeclareBundledTupleHeaders` / `shouldRestoreDeclSiteForReusableSyntheticSymbol` には、Golden から除外されないために declSite を nil に保つ互換処理がある。`PairTripleNominalAnchorTests.testBundledSourcePairKeepsNilDeclSiteForGoldenStability` も **source-backed・非 synthetic の Pair に nil declSite を要求**する。Charset の先行登録にも同様の処理があり、表示都合がコンパイラ側の宣言位置に結び付いている。
+- 同じ `HeaderCollection.swift` は runtime-linked な bundled extension に、receiver 配下の FQName・nil declSite・synthetic flag・同じ signature / externalLinkName を持つ member alias を作る。したがって `synthetic == stdlib 外部参照` でも `!synthetic == fixture の宣言` でもない。owner + name + arity の `BundledDeclarationIndex` は stub 抑制用で、同 arity の overload を識別する完全な参照キーではない。
+- **重複変更の実例**: `410638346a4857d1db9908105845106d9134e2f0`（KSP-697 / #5904）の Sema golden 差分は106ファイル。`List` の `flags=synthetic` → `_` が94件、`Iterable` が51件、`MutableCollection` が12件に重複して現れる（件数は重なりあり）。`git show 410638346 --format= --unified=0 -- 'Tests/CompilerCoreTests/GoldenCases/Sema/*.golden'` で再確認できる。
+- **フラグを捨ててはいけない実例**: 同コミットは、source 化で List の synthetic flag が消えた結果、`ControlFlowLowerer.usesDynamicIteratorDispatch` が通常 List を任意の Iterable 実装と誤認して専用 iterator 経路を失う問題も修正している。現 `CodegenBackendInterfaceIterableForLoopTests.testConcreteListForLoopStillUsesListIterator` は `kk_list_iterator_next` を直接検証する。同 suite には Iterable の汎用経路と BUG-231 の手書き List / Set 実装の override 呼び出しもあり、単純にすべての List を固定経路へ寄せる変更も許されない。
+- 専用検証は一部存在する: `BundledDeclarationIndexTests` は source 所有と残存 stub / alias、`ListSyntheticMemberLinkTests` は nominal / factory / 外部リンク、`StdlibSurfaceSpecTests` は残存 bridge spec と登録、`RuntimeABIExternalLinkValidationTests` はリンク名・bundled `@KsSymbolName` の arity / signature、`ABIMismatchTests` / `ABIMismatchRuntimeExportParityTests` は spec / extern / runtime export を検証する。ただし surface-spec は source-backed API 全体の台帳ではなく、export parity にも対象除外があるため、これらの存在だけで移管完了とはしない。
+- `GoldenHarnessSemaFormat` は flags の一部を表示するが、`throwingFunction` / `importedLibrary` や signature の `canThrow` は表示しない。`ABILoweringPass` は throwingFunction で outThrown の有無を変えるため、現 Golden が ABI 契約をすべて検証しているという前提も置かない。
+- 現在の overload キーは同 FQName 内の receiver / parameter 型順から付けた `#N` で、同順位は SymbolID を使う。外部 symbol 行だけを削っても、`call=` / `ref=` / 型に残る番号・alias 名の揺れは解消しない。既存の dummy bundled file 不変テストは `fun main() { val x = 1 }` に空 package を注入するケースで、同じ stdlib API の synthetic / source-backed 切り替えの同値性までは扱っていない。
+
+### 最優先: オーバーロード番号を宣言の意味に基づくキーへ置き換える
+
+- `StableRenderContext` は参照集合を収集する前に **全 symbol を FQName 別に集め**、2件以上の場合だけソート順に `#0` / `#1` 等を割り当てる。未参照 overload の追加でも既存番号がずれ、1件 → 2件では suffix の有無まで変わる。型パラメータの `$<ownerID>` を桁揃えする現処理も、宣言内の位置に基づく正規化ではない。
+- 現 HEAD の `stdlib_kotlin_collections_n_Set_interface.golden` には Set receiver の `call=kotlin.collections.containsAll#2` がある。報告された Collection overload 追加時の `#1` → `#2` という特定の履歴差分は今回の first-parent 調査では直接確認できず、この fixture は追加コミット `24f091058` の時点で `#2`。番号が他の候補に依存する構造はコードで確認できるため、選択対象を固定して未参照候補だけを追加する最小テストで再現する。
+- 表示イメージ: `call=kotlin.collections.containsAll[recv=Set<T0>;params=Collection<T0>]`。これは省略表示例であり、実際のキーには宣言の種別・完全な型名・必要な型パラメータ / スコープ情報等を含める。単に `#番号` を削除する方式は採用しない。
+
+- [ ] RF-GOLDEN-010: **P0 / 最優先** — 候補集合のソート順位ではなく、宣言の意味に基づく安定キーを Golden ハーネスに導入する（001〜009・RF-FIXTURE より先行、stdlib 検証移管の完了待ちは不要）
+  - 対象: `GoldenHarnessStableRenderContext.swift` の FQName grouping / overloadSuffix / stableKey / overloadSortKey、`GoldenHarnessDump.swift` の宣言・`call=` / `ref=`、対応する GoldenHarness tests。stdlib に限らず同 FQName の各宣言を区別し、コンパイラ本体の overload 選択・SymbolID・flags・declSite・ABI は変えない。
+  - キーは FQName・symbol kind・必要な owner / 宣言スコープ・receiver・引数型・generic arity 等に基づく構造とする。**overload が1件でも同じ形式**を使い、候補件数・登録順・全候補中の順位を表記の条件にしない。callable / constructor / property / accessor の区別と、owner を含むローカル・ネストした宣言の識別もケースに含める。
+  - 型は `TypeKind` 等から構造的に符号化し、既存の `renderType` 文字列をそのままキーに流用しない。現 `Substitution.swift` の関数型表示は nullable な関数型と nullable 戻り型を同形にし得るため、`(() -> String)?` と `() -> String?` を区別する回帰を必須にする。`T` / `T?` / `T!`、star / in / out、関数の receiver / contextReceivers / suspend、KClass・intersection・再帰的境界を扱い、ABI 用の型消去や `erasedForMetadata` を識別に使わない。型構造にある追加属性は意味に必要なものを保持し、残りの検証先を001で明示する。
+  - 型パラメータは名前や内部IDでなく宣言順の `T0` / `T1` 等へ正規化する。`classTypeParameterCount` と owner / callable のスコープを考慮し、同名パラメータ・再帰的境界・相互参照で衝突や無限再帰を起こさない。receiver / parameter / return / bounds の参照を一貫させ、raw ID や runtime link 名を識別根拠にしない。キー計算の memoization は CompilationContext 内に閉じ、別ケースの ID を再利用しない。
+  - FQName の各要素・識別子・型構造の境界をエスケープ等で一意に表す。backtick 識別子に含まれる区切り文字や数値を通常のドット区切り / `[]` / `;` 等と混同しない。既存の全文正規化（`GoldenHarnessAPI.swift`）が意味キー・識別子・リテラル・診断本文を内部 ordinal と誤認して書き換えない感度テストを追加し、raw で異なる意味を normalized で同一化しない。
+  - 同名同 arity の別宣言を識別できることを確認する。キー衝突時は必要な宣言スコープ等で区別し、SymbolID の tie-break / 新たな連番に戻らない。同一宣言の再利用・合成 alias・本当の別宣言・不正入力の重複診断を区別し、未参照候補が増えただけで無関係な fixture を落とさない。実装方式をまたぐ alias の同一視は006で扱う。
+  - **先に書く不変テスト**: Set receiver の containsAll を選択したまま、同 FQName の未参照 Collection overload を追加してもキーが不変。さらに1件 → 2件、2件 → 3件、未参照候補の削除、登録順・内部ID・型パラメータ名の変更を確認する。fixture 自体の宣言追加ではなく、別入力 / テスト用 symbol table の未参照候補だけを変え、既存参照を比較する。
+  - **感度テスト**: 選ばれた overload、receiver / 引数型、種別、generic arity / 必要なスコープが異なればキーも区別される。`call=` と `ref=` と宣言行の対応が保たれ、誤選択を検出できること。既存の数値ソート用テストは、この意味上の契約を直接確認する回帰へ置き換える。
+  - 完了条件: raw / normalized の両方で上記回帰と `GoldenHarnessPersistenceTests` / `GoldenHarnessSemaComparisonNormalizationTests` / `GoldenHarnessNormalizationInvariantTests` が green。キーだけを新方式に接続し、Sema golden を更新・更新モードなしで再検証する。fixture 入力・参照 symbol の収集範囲・flags / signature / 診断の表示は減らさず、RF 必須ゲートも満たす。これにより後続の由来分離を待たず着手可能にする。
+
+### 構造的削減の採用案: 対象指定の専用 Golden（2026-09-06 選択）
+
+- TODO 上の設計方針として、通常 Golden から外部 symbol のメタデータ行を除き、**対象 API を明示する stdlib 専用 Golden**で保持する案を選択。実装着手・§8 の正式改訂は別途確認する。
+- 現 HEAD の `stdlib_kotlin_*` は280件ではなく **289入力**（Sema 全579件）。現在は通常ケースと同じ suite / renderer を使う API 呼び出し側の入力であり、stdlib の宣言本体ではない。例えば `stdlib_kotlin_Pair_n_n.kt` が宣言するのは `makePair` 等だけなので、fixture 所有 symbol だけを出す変更を一律に適用すると専用ケースからも Pair のメタデータが消える。専用の対象指定・描画経路を先に用意する必要がある。
+- KSP-697 の106変更は **通常53件・`stdlib_kotlin_*` 53件**。専用ケースをすべて従来の推移的 dump のまま残す方式では重複を解消できない。新規 API に固有ファイルを追加しても、そこで List 等の依存型メタデータを再出力すれば共有型の変更が再波及する。「106 → 1〜2」は未検証の目標であり、変更した契約の担当ケース数に局所化することを効果検証の基準とする。
+
+### 責務・実施順序
+
+> **通常の Sema Golden**: `symbol` 行は fixture 内の宣言とそれに属する合成宣言に限定する。外部参照の flags / sig / type メタデータ行は出さず、式の推論型・`ref=` / `call=` / `targs=`・診断で名前解決と型検証を維持する。外部参照キーは010・006を利用し、overload / receiver / nullability / 型制約等の意味上必要な差は残す。`call=kotlin.Enum.equals` のような実際の解決先変更は差分として残るべきもので、削減対象にしない。
+>
+> **対象指定の stdlib Golden**: 既存 `stdlib_kotlin_*` を活用するが、ファイル名だけで従来の全文出力を有効化しない。各ケースが担当する宣言とメタデータ契約を明示し、対象自身の flags / signature / type / 必要な由来等だけを専用節に出す。参照先の型や依存 API のメタデータへ推移的に広げない。原則1契約に1つの担当ケースを置き、同じ shared nominal を多数の期待値へ再複製しない。
+>
+> **併用する専用テスト**: ABI・externalLinkName・runtime export・bridge・実際の lowering 経路は既存の Sema / Lowering / Runtime / Codegen tests で引き続き検証する。メタデータが一致するだけでは正しい call や ABI を証明できない。全 symbol table を1つの巨大な stdlib Golden に移す解決にも、既存の実行検証を削除する解決にもしない。
+>
+> **保護条件**: synthetic 全除外、`kotlin.*` / パス prefix や declSite の有無だけでの所有判定、比較後の文字列から flags / signature を一括削除する方式は禁止。ユーザーの data / enum / object literal / accessor 等の合成宣言と stdlib receiver 拡張は fixture 所有として保持する。stdlib 以外の library の参照・型と必要なメタデータ検証も失わず、由来不明や専用対象の解決失敗を黙って省略しない。
+>
+> **順序**: **010が最優先**。その後は001を起点に002（所有・由来）と012（実行 profile）を進め、両方が揃って011（対象指定の基盤）→ 013（全量 inventory gate）→ 003（専用 Golden への移管）。004・005は001後、006は002・010後に進められ、003・004・005・006・011〜013が揃ってから007 → 008 → 009へ進む。**対象指定があるだけでは完了ではなく、検証移管・全量検査・007の情報保持テストが green になるまで、通常 Golden の情報を減らさない**。1タスク = 1責務 = 原則1 PR。RF-FIXTURE は個別入力の依存削減、本系列は横断の出力契約であり、010のキー更新・専用ケースの移管・008の通常出力切り替え・fixture 分割を混ぜない。
+>
+> **完了ゲート**: focused な GoldenHarness / Sema / KIR・Lowering / ABI / Codegen suite と RF 必須ゲート（全 Swift テスト、Golden、全 diff、存在する場合は LoC 指標）を満たし、source 注入 / stdlib artifact の必要な経路も確認する。通常側の不変性と専用側の変化検出を両方証明する。`docs/stdlib-pipeline.md` §8 の現行の一括更新許容方針は008で明示的に改訂するが、決定的なロード順や意味変更・出力形式移行時の一括更新は維持する。今回の記録は設計選択・タスク登録のみで、ハーネス実装・§8 改訂・テスト実行は未着手。
+
+### タスク
+
+- [ ] RF-GOLDEN-001: 通常 Golden に残す情報と専用テストへ移す情報の契約をテストケースで固定する（前提: 010）
+  - 対象: `GoldenHarnessPersistenceTests.swift` / `GoldenHarnessSemaComparisonNormalizationTests.swift` と既存 stdlib Sema suites。`linkedhashmap_alias`、`map_hofs`、Pair / List を含む型、ユーザーの data / enum / object literal / accessor を代表ケースに、宣言・型・callee・診断・由来・flags・ABI の検証先を列挙する。
+  - 「削る出力項目 → 具体的な既存 assertion または追加する assertion」を対応付ける。source / synthetic の実装差と、公開 signature / 解決先 / 診断の意味差を分け、現出力の特徴を固定する。既存 Golden に出ない throwingFunction / canThrow 等も専用契約側の監査対象として区別する。
+  - メタデータ契約を kind 別に棚卸しする。現 formatter の flags / functionSignature / propertyType だけでは nominal の型パラメータ・宣言側 variance・上限・supertype と型引数、typealias の underlyingType / 型パラメータ、注釈等を網羅しない。既に出力される visibility も保持し、callable の reified / default / vararg / non-local-return 許可等と併せて、専用節か既存 Sema / Lowering / ABI assertion のどちらで検証するか明示する。全項目を無条件にキーへ詰めず、宣言の識別条件と検証したいメタデータを分ける。
+  - 正例 fixture の新規 error diagnostic を機械的な golden 更新で受理しない基準を用意する。既存の error / `<error>` は基準時点で列挙し、意図した診断ケースか不具合かを確認してから扱う。特定の flag / API の不在が正しい契約は既存の残存 stub 検査等へ割り当て、存在すべき対象の解決失敗と混同しない。
+  - 完了条件: 代表入力と期待する情報区分が再現可能なテストになり、移管未完了の項目が明示されていること。既定 renderer と既存 golden はまだ変更しない。
+- [ ] RF-GOLDEN-002: declSite / synthetic flag に依存しない symbol の所有・由来判定を用意する（前提: 001）
+  - 対象: `GoldenHarnessDump.swift` / `GoldenHarnessStableRenderContext.swift`、必要に応じて `HeaderCollection.swift` / `SymbolTable` の登録・import 情報。まず AST の宣言 binding と `SourceOrigin`、owner 関係、登録済み stdlib / import の識別情報を利用し、足りない由来は登録・引き継ぎ時に明示的に保持する。表示用分類のために production の flags / declSite / isSourceBackedSymbol の意味を変更しない。
+  - fixture 所有（合成宣言を含む）、bundled / residual source、synthetic stdlib stub、source-backed member alias、imported stdlib、その他の library / 不明を区別する。type / value parameter や accessor は所有元の由来を追い、parent が不十分なら signature / 宣言 binding も照合する。source がない `--no-stdlib` の fallback と通常の imported library を混同しない。
+  - 完了条件: nil declSite の Pair、synthetic な source accessor / alias、ユーザーの stdlib receiver 拡張と同名 package、stdlib 以外の import を誤分類しないテストが green。由来不明を黙って外部扱いしない。既定出力は未変更。
+- [ ] RF-GOLDEN-012: Golden の source / artifact / no-stdlib 実行条件とケース識別を明示する（前提: 001・010）
+  - 対象: `GoldenHarnessCase` / `GoldenHarnessAPI` / `GoldenHarnessWorker` / `GoldenHarnessPipeline` / Golden IO・テスト。現 API と worker は suite / sourcePath だけを受け、pipeline は stdlibLibraryPath 等を渡さないため、専用ケースが実際にどの stdlib モードを検証したかを固定できる入力を追加する。現在の既定 source 経路は維持し、profile が指定された場合だけ対応する CompilerOptions を明示する。
+  - 必要な source / artifact / no-stdlib を区別し、未準備の artifact・不明な profile を source へ黙って fallback させない。`TestStdlibCache` は CompilerBackend を import するため、そのまま GoldenHarnessSupport に依存させず、artifact の準備と型検証を分離して Core の LLVM 非依存境界を維持する。artifact を必要とするテストの準備・実行レーンを明示する。
+  - ケースは sourcePath と profile の組で識別し、batch 応答の照合・期待値の参照・保存にも同じ識別を通す。現 goldenURL は sourcePath だけから導出されるため、複数 profile が同じ期待値を上書きしない保存方式または比較専用方式を決める。profile 固有の由来メタデータは同値比較の対象から区別し、API が異なる no-stdlib と source を無条件に等価としない。
+  - 完了条件: 単発 / batch / 直呼びで明示した経路が実際に使われ、同一 worker 内の A → B → A や異なる profile で状態・対象指定が漏れないこと。キャッシュや一時 artifact の絶対パスを Golden へ埋め込まず、必要な profile の期待値と実行実績を区別できる。全289ケースを機械的に全 profile へ倍増させない。
+- [ ] RF-GOLDEN-011: 対象 API を明示する stdlib 専用 Golden の基盤を追加する（前提: 001・002・010・012）
+  - 対象: `GoldenHarnessCaseDiscovery` / `GoldenHarnessAPI` / worker のケース伝達 / `GoldenHarnessDump` / persistence・normalization tests。各ケースが検証する宣言を010の意味キー相当の条件で指定し、002の由来判定と012の実行 profile を使う。指定方法はケース単位の隣接メタデータ等として設計し、全対象を1つの巨大な共有リストへ集めない。ファイル名 prefix だけで opt-in したことにはしない。
+  - 対象選択と期待値を分離する。flags・正しい戻り型等の「検証したい値」で対象を絞って不正な実装を検査から外さず、識別に必要な overload 条件だけで選ぶ。識別条件自体が変わった場合も対象不一致として必ず失敗させる。metadata schema / 描画契約の版と、未知の項目・不正な型・重複指定を拒否する規則を定める。
+  - 専用節は明示対象自身のメタデータを出し、001で必要とした visibility・nominal の型パラメータ / variance / 上限 / supertype 型引数・typealias 展開先・callable 属性等を、既存 assertion との分担どおり保持する。signature に現れる別 nominal や依存関数のメタデータへは自動展開しない。source-backed 対象を declSite 除外で消さず、対象の境界内だけを安定順で描画する。
+  - 存在すべき対象0件・一意であるべき指定の複数一致・古いキー・通常 library / fixture の誤指定は失敗させ、更新モードでも空の対象節を確定しない。不在が正しい契約は001で割り当てた専用 assertion と区別する。glob 的な全 package / 全依存 symbol 指定を通常の運用にしない。
+  - 完了条件: 対象の誤ったメタデータは差分または明示的失敗になり、依存型の無関係な変更は専用節を変えないこと。API・worker・保存・比較で対象と profile が失われないこと。通常 Golden の情報削減はまだ行わず、ケース間の担当・欠落検査は013で追加する。
+- [ ] RF-GOLDEN-013: 専用ケースの全量棚卸し・欠落防止を discovery / CI のゲートにする（前提: 011・012）
+  - 対象: `GoldenHarnessCaseDiscovery` / `GoldenHarnessStaticCases` / inventory・persistence tests / 必要な CI 配線。`.kt`・対象指定・期待値・profile の対応を検証し、孤立した指定 / golden、改名後の取り残し、既存専用ケースの指定欠落を検出する。対象指定ファイルの削除や読み込み失敗で通常モードへ黙って降格させず、既存専用期待値・必須の担当契約とも照合する。
+  - 契約（宣言・検証項目・profile）ごとの担当重複と未担当を **全ケース集合で**検査する。現ハーネスの8件 batch / shard / filter の内側だけでは別 shard の重複を見落とすため、全量 preflight または独立した必須 inventory suite を設ける。意図した重複は理由を示し、新規API追加・正規の削除・fixture分割時の担当変更も検証可能にする。
+  - `UPDATE_GOLDEN=1` は意味や対象指定の誤りを承認する操作にしない。mode / schema の意図しない変更や指定不正は書き込み前に拒否し、正規の移管・削除は担当契約を更新するレビュー対象にする。ケースの error が別ケースの正常結果に紛れず、直呼びでもケース単位の検査が働くことを確認する。
+  - ビルド・CI 接続も確認する。`Package.swift` の GoldenHarnessSupport は sources 明示列挙なので、新規 Swift helper は列挙に追加する。`.github/workflows/ci.yml` の Golden / method shard の選択条件を確認し、新 suite・新 profile が未実行にも重複実行にもならないよう実行件数を照合する。既存の検証や対象除外を緩めて通さない。
+  - 完了条件: shard をまたぐ重複・指定削除・孤立ファイル・不正 schema を負のケースで検出でき、通常実行と更新モードの両方でゲートが有効。更新前後の担当数 / case・profile 数を提示し、実行時間・メモリの増加も確認する。
+- [ ] RF-GOLDEN-003: stdlib メタデータを対象指定の専用 Golden へ移管し、由来検証を補完する（前提: 001・011・013）
+  - 対象: 既存 `stdlib_kotlin_*` 入力と期待値、`PairTripleNominalAnchorTests` / `BundledDeclarationIndexTests` / `ListSyntheticMemberLinkTests` 等。まず List / Iterable / MutableCollection、Pair / Triple、member alias のメタデータ契約を担当ケースへ割り当て、011の対象指定を追加する。新規ケースは不足する契約だけに限定する。
+  - API 群ごとに001の「削るメタデータ → 担当する専用節 / assertion」を対応付ける。Collection API を呼ぶケースへ List の flags が現れる、といった依存型の重複を残さない。既存289ケースが対象指定なしで自動的にメタデータを担うとはせず、必要な契約の担当と API 呼び出しの型検証のみを行うものを区別する。
+  - `synthetic` がないだけで source 所有と断定せず、AST / import との対応や残存 stub / alias の許可を既存 Sema テストで検証する。専用メタデータ抽出の分類結果をそのまま唯一の正解として使わない。既存の重要 lowering・ABI assertion は004・005で維持する。
+  - 完了条件: 対象の誤った所有・重要 flags / signature / type の変更を専用側が検出し、001の移管項目に未対応がないこと。担当契約の重複検査が green で、通常 Golden に依存しない検証先を示せること。件数が大きければ API 群別の新IDへ分け、全件の大規模再編や通常出力の削減をこのタスクへ混ぜない。
+- [ ] RF-GOLDEN-004: フラグ変更が iterator / lowering に与える影響を既存回帰 suite で担保する（前提: 001）
+  - 対象: `ControlFlowLowerer.swift` に対する `CodegenBackendInterfaceIterableForLoopTests`、`StdlibArtifactRegressionTests`、対応する Core KIR / Lowering suites。`testConcreteListForLoopStillUsesListIterator`、`testIterableInterfaceForLoopLowersToIteratorNotRangeIntrinsics`、BUG-231 の手書き List / Set / Mutable 系実装の実行テストを移管先として明示し、足りない source 注入 / artifact 経路だけを補う。
+  - KSP-697 の非 synthetic List でも専用の iterator 呼び出しが残り、interface 経由やユーザー実装の override は適切な経路を使うことを確認する。artifact の型代入テストだけを iterator の経路・実行検証の代わりにしない。001で重要と判定した data / enum 合成や inline 等も既存の対応 lowering テストへ紐付ける。
+  - 完了条件: Golden の flags 表示を使わず、正しい KIR callee と実行結果を検証できること。重要分岐を誤った状態にした負の対照で検出力を確認し、出力安定化のために production の分岐を緩めない。
+- [ ] RF-GOLDEN-005: ABI・bridge・throwing 契約の移管漏れを専用テストで補完する（前提: 001）
+  - 対象: `RuntimeABIExternalLinkValidationTests` / `StdlibSurfaceSpecTests` / `ABIMismatchTests` / `ABIMismatchRuntimeExportParityTests` と ABI lowering tests。参照先の externalLinkName と `@KsSymbolName`、RuntimeABISpec、runtime export の対応・引数順 / 型 / arity / 戻り型を照合する。既存の constructor 特例や export parity の除外を把握し、必要な個別テストを確認する。
+  - `ABILoweringPass` の throwingFunction → outThrown、非 throwing 呼び出し、source-backed bridge の実際の lowered call を確認する。`DurationSyntheticStubTests` の parse bridge flag assertion や collection mutation の ABI assertion は再利用し、symbol 名が登録されているだけ・spec とその派生表が一致するだけでは実 call / export との適合を証明したとしない。
+  - 完了条件: 001の ABI / bridge 移管項目を具体的な assertion と正常 / 異常系で覆い、`validate_runtime_abi_links.sh` と関連 Runtime / Lowering テストが green。既存除外・許可リストを拡大して green にする変更はしない。
+- [ ] RF-GOLDEN-006: 安定した宣言キーを stdlib の実装方式によらない公開参照へ対応付ける（前提: 002・010）
+  - 対象: `StableRenderContext` の外部参照 / 型 / signature の描画と Sema formatter。番号の廃止・型パラメータの位置正規化は010で完了させ、ここでは002の由来判定を使い、synthetic member alias / bundled extension / imported 宣言を同じ公開 API へ対応付ける追加の投影だけを実装する。
+  - 戻り型・nullability・variance・境界・suspend・default / vararg・named argument に必要な引数名など、型検証と呼び出し識別に必要な契約を保持する。member alias と元の extension は由来・対応が証明できる場合だけ同じ公開参照へ写し、同名同 arity の別 overload やユーザー override は潰さない。runtime link 名を公開 API の安定IDに使わない。
+  - 完了条件: 同じ公開 API の synthetic / source-backed / imported 表現は同じ参照となり、別 overload は区別されること。010の不変・感度テストを維持し、由来の違いを吸収する追加投影の既定出力への接続は008まで行わない。
+- [ ] RF-GOLDEN-007: 通常 symbol 行を fixture 所有の宣言に限定する描画経路と情報保持テストを追加する（前提: 003・004・005・006・011・012・013）
+  - 対象: `GoldenHarnessDump.renderSemaOutput` / `StableRenderContext.expandRequiredSymbols` と GoldenHarness tests。現在の参照収集で表示される fixture 所有の宣言・合成メンバを保持し、外部宣言の flags / sig / type 行を省く。未参照の fixture メンバ全列挙への変更は混ぜない。外部参照の中に現れる fixture の型や、実際の `targs` の収集まで止めず、別 library のメタデータも省く場合は001で検証先を確認する。
+  - `call=` / `ref=` / 型は006の同じ公開参照表現で描画し、推論型・`targs=`・診断を維持する。専用ケースに限って011の明示対象メタデータ節を追加する。比較後の文字列置換で消すのではなく、所有と対象指定を持つ描画時点で分離する。既定出力は維持したまま新経路をテストから検証する。
+  - 不変テスト: 公開 API が同じなら stdlib の由来・declSite・内部 flag / symbol ID・未参照宣言を変えても通常部分は同じ。専用側では対象のメタデータ変更だけが対応する節の差分になり、List の変更で List を型として参照するだけの他の専用ケースは変わらない。
+  - 感度テスト: fixture 宣言・推論型・callee / overload・型制約・診断の変更は通常部分でも差分になる。ユーザーの synthetic data / enum / accessor / object literal が残ること、`kotlin.Enum.equals` 等の解決先変更を消さないことを確認する。重要 flag の誤設定は対象指定の Golden と004・005の挙動検証で検出する。
+  - 完了条件: raw / normalized 双方で上記が green。専用対象が欠ける状態は失敗し、通常の行数を減らすだけでは通らないこと。描画が compiler の symbol / flags / binding を変更せず、空 package 注入や冪等性だけを情報保持の証明にしない。
+- [ ] RF-GOLDEN-008: メンテナ確認後、通常 / 対象指定 Golden へ切り替えて §8 と効果を検証する（前提: 003・004・005・007・011・012・013 の全ゲート green）
+  - 切り替え前に、省くメタデータと担当ケース、検証移管の網羅、更新件数への影響、`docs/stdlib-pipeline.md` §8 の改訂案をメンテナ確認する。新方針は「実装詳細だけの変化では通常 Golden を更新しない。公開 API / 解決先の意味変更・出力仕様移行時の更新は許容する」とし、決定的なロード順・stdlib diagnostics・diff 検証の要件は緩めない。
+  - 対象: `GoldenHarnessAPI` / `GoldenHarnessDump` / Sema golden / 同文書 §8。007を既定にし、Sema suite のみ `UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter CompilerCoreTests.GoldenSemaGoldenTests/matchesGolden -Xswiftc -swift-version -Xswiftc 6` で再生成する。入力 `.kt` の分割・意味変更は混ぜず、専用対象メタデータが保存されていることを確認する。
+  - 更新モードなしで同 suite と `GoldenHarnessPersistenceTests` / `GoldenHarnessSemaComparisonNormalizationTests` / `GoldenHarnessNormalizationInvariantTests` を再実行する。API・worker・保存 / 比較で専用対象が失われないことを確認し、正規化バイパスを再導入しない。Lexer / Parser / Diagnostics の出力は変更しない。
+  - 効果検証: KSP-697 の106ケース（通常53・stdlib名53）を基準に、同等の対象メタデータ変更で通常側が不変、専用側の更新は契約の担当ケースに限定されることを確認する。1〜2ファイルという値を保証せず、変更された独立契約数・担当ファイル数・残る意味上の expr 差分を分けて実測・記録する。
+  - 完了条件: RF 必須ゲートと移管テストが green。579ケース（着手時に件数再確認）の宣言・型・解決先・診断の情報を維持し、メタデータ担当の欠落・意図しない重複がないこと。§8 の正式改訂と通常 / 専用の両方向の回帰が揃うまで完了扱いにしない。
+- [ ] RF-GOLDEN-009: Golden 表示のための nil declSite 互換処理をコンパイラから切り離す（前提: 008）
+  - 対象: `HeaderCollection.predeclareBundledTupleHeaders` / Charset 先行登録 / `shouldRestoreDeclSiteForReusableSyntheticSymbol`、`PairTripleNominalAnchorTests`。まず Pair / Triple の nil declSite 要求を、正しい宣言所有・型解決・必要な flags と Golden の実装非依存性を確認するテストへ置き換える。
+  - nil 維持の理由を Golden 都合と実際の compiler / metadata 互換性に分け、前者だけを解消する。`isSourceBackedSymbol`、external call / constructor lowering、metadata export / import の挙動が変わるため、source 化された全 shell に declSite を一律復元しない。`--no-stdlib` の fallback と Duration 等の既存例外を保持し、着手時に影響が広ければ nominal 群別の新IDへ分割する。
+  - 完了条件: 型解決・source / artifact / no-stdlib の該当経路が green で、Golden 安定性のために宣言位置を偽装する必要がないこと。実行時に必要な互換処理は専用回帰テストとともに残し、単なる Golden の再更新で挙動差を隠さない。
+
+---
+
 ## Stdlib gap audit 2.3.10 実装タスク（KSP-719+）
 
 > 公式 Kotlin/Native 2.3.10 `klib dump-abi`（`official_native_stdlib_abi.txt`）を正典として、KSwiftK バンドル Kotlin ソース（`Sources/CompilerCore/Stdlib/kotlin/`）と比較した機械監査結果から生成。`kotlin.jvm` / `kotlin.internal` / `kotlin.native.internal` / `kotlin.test` / `kotlinx` / `java` / `javax` / wasm・web-only sourceset は除外。
