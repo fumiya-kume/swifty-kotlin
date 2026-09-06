@@ -81,6 +81,14 @@ struct ABIMismatchTests {
     }
 
     @Test
+    func longToCharBridgeABIIsRemoved() {
+        #expect(
+            !RuntimeABISpec.allFunctions.contains { $0.name == "kk_long_to_char" },
+            "Long.toChar should be provided by bundled Kotlin source, not RuntimeABI"
+        )
+    }
+
+    @Test
     func floorDivABISignatures() throws {
         for name in ["kk_op_floor_div", "kk_op_lfloor_div"] {
             let spec = try requireSpec(name)

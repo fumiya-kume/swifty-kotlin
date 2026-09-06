@@ -284,6 +284,45 @@ struct NativePlatformAnnotationTests {
     }
 
     @Test
+    func testSymbolNameCarriesTopLevelConstructorAndNativeMetadata() throws {
+        let (sema, interner) = try sharedSema()
+        let fqName = ["kotlin", "native", "SymbolName"].map { interner.intern($0) }
+        let symbol = try #require(
+            sema.symbols.lookup(fqName: fqName),
+            "kotlin.native.SymbolName must be registered"
+        )
+
+        #expect(sema.symbols.symbol(symbol)?.kind == .annotationClass)
+        #expect(sema.symbols.isSourceBackedSymbol(symbol))
+
+        let annotations = sema.symbols.annotations(for: symbol)
+        let target = try #require(
+            annotations.first { $0.annotationFQName == "kotlin.annotation.Target" },
+            "SymbolName must carry @Target metadata"
+        )
+        #expect(target.arguments == ["AnnotationTarget.FUNCTION"])
+        let retention = try #require(
+            annotations.first { $0.annotationFQName == "kotlin.annotation.Retention" },
+            "SymbolName must carry @Retention metadata"
+        )
+        #expect(retention.arguments == ["AnnotationRetention.BINARY"])
+        let constructor = try #require(
+            sema.symbols.lookupAll(fqName: fqName + [interner.intern("<init>")]).first {
+                sema.symbols.symbol($0)?.kind == .constructor
+            },
+            "kotlin.native.SymbolName.<init> must be registered"
+        )
+        let signature = try #require(sema.symbols.functionSignature(for: constructor))
+        #expect(signature.parameterTypes == [sema.types.stringType])
+        #expect(signature.valueParameterHasDefaultValues == [false])
+        #expect(signature.valueParameterIsVararg == [false])
+        #expect(
+            signature.valueParameterSymbols.map { interner.resolve(sema.symbols.symbol($0)!.name) }
+            == ["name"]
+        )
+    }
+
+    @Test
     func testHiddenFromObjCAnnotationIsRegistered() throws {
         let (sema, interner) = try sharedSema()
         let fqName = ["kotlin", "native", "HiddenFromObjC"].map { interner.intern($0) }

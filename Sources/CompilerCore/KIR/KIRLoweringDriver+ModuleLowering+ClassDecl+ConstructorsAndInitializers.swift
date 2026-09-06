@@ -1006,7 +1006,9 @@ extension KIRLoweringDriver {
                 let arity = Int64(signature.parameterTypes.count)
                 let arityExpr = arena.appendExpr(.intLiteral(arity), type: intType)
                 body.append(.constValue(result: arityExpr, value: .intLiteral(arity)))
-                let returnTypeName = sema.types.renderType(signature.returnType)
+                let returnTypeName = sema.types.displayName(
+                    of: signature.returnType, symbols: sema.symbols, interner: interner
+                )
                 let retTypeInterned = interner.intern(returnTypeName)
                 let retTypeExpr = arena.appendExpr(.stringLiteral(retTypeInterned), type: intType)
                 body.append(.constValue(result: retTypeExpr, value: .stringLiteral(retTypeInterned)))
@@ -1042,7 +1044,9 @@ extension KIRLoweringDriver {
                 body.append(.constValue(result: propNameExpr, value: .stringLiteral(propNameInterned)))
                 let propTypeName: String
                 if let propTypeID = sema.symbols.propertyType(for: childID) {
-                    propTypeName = sema.types.renderType(propTypeID)
+                    propTypeName = sema.types.displayName(
+                        of: propTypeID, symbols: sema.symbols, interner: interner
+                    )
                 } else {
                     propTypeName = "kotlin.Any"
                 }

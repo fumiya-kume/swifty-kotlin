@@ -1,7 +1,7 @@
 symbol fq=__local_0.empty kind=local vis=private flags=_ type=kotlin.BooleanArray
 symbol fq=__local_1.values kind=local vis=private flags=_ type=kotlin.BooleanArray
 symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.BooleanArray kind=class vis=public flags=synthetic
+symbol fq=kotlin.BooleanArray#0 kind=class vis=public flags=synthetic
 file fstdlib_kotlin_n_boolean package=golden.sema
   decl golden.sema.main fun main sym=golden.sema.main
 expr e@4:17 call callee=e@4:17#1 args=[] type=kotlin.BooleanArray call=kotlin.booleanArrayOf

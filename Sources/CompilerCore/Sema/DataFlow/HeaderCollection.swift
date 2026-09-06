@@ -466,6 +466,46 @@ extension DataFlowSemaPhase {
         }
     }
 
+    /// KSP-1150: forward-declares the source-backed cancellation nominal before
+    /// residual coroutine registration needs its type and constructor owner.
+    func predeclareBundledCancellationExceptionHeaders(
+        ast: ASTModule,
+        fileScopes: [Int32: FileScope],
+        symbols: SymbolTable,
+        sourceManager: SourceManager,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner,
+        into predeclared: inout [DeclID: SymbolID]
+    ) {
+        let packageFQName = [
+            interner.intern("kotlin"),
+            interner.intern("coroutines"),
+            interner.intern("cancellation"),
+        ]
+        let targetName = interner.intern("CancellationException")
+        for file in ast.sortedFiles where file.packageFQName == packageFQName {
+            let declaresTarget = file.topLevelDecls.contains { declID in
+                guard case let .classDecl(classDecl)? = ast.arena.decl(declID) else {
+                    return false
+                }
+                return classDecl.name == targetName
+            }
+            guard declaresTarget,
+                  let fileScope = fileScopes[file.fileID.rawValue]
+            else { continue }
+            predeclareNominalTypeHeaders(
+                file: file,
+                ast: ast,
+                symbols: symbols,
+                scope: fileScope,
+                sourceManager: sourceManager,
+                diagnostics: diagnostics,
+                interner: interner,
+                into: &predeclared
+            )
+        }
+    }
+
     /// KSP-1210: forward-declares the source-backed Native OsFamily enum before
     /// Platform.osFamily's retained runtime bridge resolves its property type.
     func predeclareBundledOsFamilyHeaders(
@@ -500,6 +540,44 @@ extension DataFlowSemaPhase {
         }
     }
 
+    /// KSP-1266: forward-declares the source-backed Native MemoryUsage class
+    /// before GCInfo's residual synthetic properties resolve their value type.
+    func predeclareBundledMemoryUsageHeaders(
+        ast: ASTModule,
+        fileScopes: [Int32: FileScope],
+        symbols: SymbolTable,
+        sourceManager: SourceManager,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner,
+        into predeclared: inout [DeclID: SymbolID]
+    ) {
+        let packageFQName = [
+            interner.intern("kotlin"),
+            interner.intern("native"),
+            interner.intern("runtime"),
+        ]
+        let targetName = interner.intern("MemoryUsage")
+        for file in ast.sortedFiles where file.packageFQName == packageFQName {
+            let declaresTargetNominal = file.topLevelDecls.contains { declID in
+                guard let decl = ast.arena.decl(declID) else { return false }
+                switch decl {
+                case .classDecl, .interfaceDecl, .objectDecl, .typeAliasDecl:
+                    return topLevelDeclarationDescriptor(for: decl, diagnostics: nil)?.name == targetName
+                case .funDecl, .propertyDecl, .enumEntryDecl:
+                    return false
+                }
+            }
+            guard declaresTargetNominal,
+                  let fileScope = fileScopes[file.fileID.rawValue]
+            else { continue }
+            predeclareNominalTypeHeaders(
+                file: file, ast: ast, symbols: symbols, scope: fileScope,
+                sourceManager: sourceManager, diagnostics: diagnostics,
+                interner: interner, into: &predeclared
+            )
+        }
+    }
+
     /// KSP-1334: forward-declares the source-backed KTypeProjection nominal
     /// before reflection synthetic stubs resolve its property owner.
     func predeclareBundledKTypeProjectionHeaders(
@@ -513,6 +591,40 @@ extension DataFlowSemaPhase {
     ) {
         let packageFQName = [interner.intern("kotlin"), interner.intern("reflect")]
         let targetName = interner.intern("KTypeProjection")
+        for file in ast.sortedFiles where file.packageFQName == packageFQName {
+            let declaresTarget = file.topLevelDecls.contains { declID in
+                guard let decl = ast.arena.decl(declID) else { return false }
+                switch decl {
+                case .classDecl, .interfaceDecl, .objectDecl, .typeAliasDecl:
+                    return topLevelDeclarationDescriptor(for: decl, diagnostics: nil)?.name == targetName
+                case .funDecl, .propertyDecl, .enumEntryDecl:
+                    return false
+                }
+            }
+            guard declaresTarget,
+                  let fileScope = fileScopes[file.fileID.rawValue]
+            else { continue }
+            predeclareNominalTypeHeaders(
+                file: file, ast: ast, symbols: symbols, scope: fileScope,
+                sourceManager: sourceManager, diagnostics: diagnostics,
+                interner: interner, into: &predeclared
+            )
+        }
+    }
+
+    /// KSP-1337: forward-declares the source-backed KVariance enum before
+    /// reflection synthetic stubs construct signatures that reference it.
+    func predeclareBundledKVarianceHeaders(
+        ast: ASTModule,
+        fileScopes: [Int32: FileScope],
+        symbols: SymbolTable,
+        sourceManager: SourceManager,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner,
+        into predeclared: inout [DeclID: SymbolID]
+    ) {
+        let packageFQName = [interner.intern("kotlin"), interner.intern("reflect")]
+        let targetName = interner.intern("KVariance")
         for file in ast.sortedFiles where file.packageFQName == packageFQName {
             let declaresTarget = file.topLevelDecls.contains { declID in
                 guard let decl = ast.arena.decl(declID) else { return false }
@@ -1473,8 +1585,10 @@ extension DataFlowSemaPhase {
         // for their value-class and enum metadata.
         let resolvedFQName = fqName.map(interner.resolve)
         return resolvedFQName == ["kotlin", "native", "ref", "WeakReference"]
+            || resolvedFQName == ["kotlin", "ranges", "IntProgression"]
             || resolvedFQName == ["kotlin", "time", "Duration"]
             || resolvedFQName == ["kotlin", "time", "DurationUnit"]
+            || resolvedFQName == ["kotlin", "text", "CharCategory"]
             || resolvedFQName == ["kotlin", "native", "concurrent", "TransferMode"]
     }
 

@@ -307,10 +307,15 @@ final class RuntimeIntBox {
     /// the raw ordinal once the static enum type has been erased. See
     /// kk_enum_box_ordinal.
     let enumEntryName: String?
+    /// Stable nominal ID for the enum class represented by this box. Unlike a
+    /// plain boxed Int, enum equality must keep two entries from different
+    /// enum classes unequal even when their ordinals match.
+    let enumClassID: Int64?
 
-    init(_ value: Int, enumEntryName: String? = nil) {
+    init(_ value: Int, enumEntryName: String? = nil, enumClassID: Int64? = nil) {
         self.value = value
         self.enumEntryName = enumEntryName
+        self.enumClassID = enumClassID
     }
 }
 
@@ -378,6 +383,7 @@ enum RuntimeCallableRefKind {
 
 struct RuntimeCallableRefMetadata {
     let nameRaw: Int
+    let returnTypeRaw: Int
     let arity: Int
     let kind: RuntimeCallableRefKind
     let isSuspend: Bool
@@ -945,24 +951,26 @@ final class RuntimeListIteratorBox {
         return true
     }
 
-    /// Replaces the element last returned by `next()`/`previous()`.
-    func setLastReturned(_ value: Int) -> Bool {
+    /// `MutableListIterator.set`: replaces the element most recently returned
+    /// by `next()`/`previous()`, at the same position `removeLastReturned()`
+    /// targets.
+    func setLastReturned(_ rawValue: Int) -> Bool {
         guard lastReturnedIndex >= 0, lastReturnedIndex < elements.count else {
             return false
         }
-        elements[lastReturnedIndex] = value
-        setAction?(lastReturnedIndex, value)
+        elements[lastReturnedIndex] = rawValue
+        setAction?(lastReturnedIndex, rawValue)
         return true
     }
 
-    /// Inserts `value` immediately before the cursor (i.e. before whatever
-    /// `next()` would return) and advances the cursor past it, so a
-    /// subsequent `next()` still returns the element it would have returned
-    /// before the insertion. Invalidates `lastReturnedIndex`: `add()` cannot
-    /// be followed directly by `set()`/`remove()`.
-    func addBeforeCursor(_ value: Int) {
-        elements.insert(value, at: index)
-        addAction?(index, value)
+    /// `MutableListIterator.add`: inserts before the element `next()` would
+    /// return, then advances the cursor past the inserted element so a
+    /// following `next()` does not return it again. Invalidates
+    /// `lastReturnedIndex`: `add()` cannot be followed directly by
+    /// `set()`/`remove()`.
+    func addBeforeNext(_ rawValue: Int) {
+        elements.insert(rawValue, at: index)
+        addAction?(index, rawValue)
         index += 1
         lastReturnedIndex = -1
     }
@@ -1978,11 +1986,19 @@ final class RuntimeKTypeBox {
     let argumentRaws: [Int]
     /// Whether the type is marked nullable (`T?`).
     let isMarkedNullable: Bool
+    /// Optional compact type descriptor used by callable reflection metadata.
+    let typeNameRaw: Int
 
-    init(classifierRaw: Int, argumentRaws: [Int], isMarkedNullable: Bool) {
+    init(
+        classifierRaw: Int,
+        argumentRaws: [Int],
+        isMarkedNullable: Bool,
+        typeNameRaw: Int = 0
+    ) {
         self.classifierRaw = classifierRaw
         self.argumentRaws = argumentRaws
         self.isMarkedNullable = isMarkedNullable
+        self.typeNameRaw = typeNameRaw
     }
 }
 

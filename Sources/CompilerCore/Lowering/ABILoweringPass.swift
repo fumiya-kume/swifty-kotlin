@@ -174,6 +174,7 @@ final class ABILoweringPass: LoweringPass, ParallelLoweringPass {
                             boxingCalleeTable: boxingCalleeTable,
                             callee: vcCallee,
                             interner: ctx.interner,
+                            boxTypeParamArguments: isKotlinSourceCallee(vcSymbol, symbols: symbols),
                             newBody: &newBody
                         )
                     } else {

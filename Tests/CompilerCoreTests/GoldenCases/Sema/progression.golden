@@ -1,8 +1,6 @@
 symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.ranges.CharProgression kind=class vis=public flags=synthetic
 symbol fq=kotlin.ranges.CharProgression.Companion kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.ranges.IntProgression kind=class vis=public flags=synthetic
-symbol fq=kotlin.ranges.IntProgression.Companion kind=object vis=public flags=synthetic|static
 symbol fq=kotlin.ranges.IntProgression.reversed kind=function vis=public flags=synthetic sig=recv=kotlin.ranges.IntProgression params=[] ret=kotlin.ranges.IntProgression
 symbol fq=kotlin.ranges.LongProgression kind=class vis=public flags=synthetic
 symbol fq=kotlin.ranges.LongProgression.Companion kind=object vis=public flags=synthetic|static

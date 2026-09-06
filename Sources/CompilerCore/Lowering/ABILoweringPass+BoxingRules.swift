@@ -62,8 +62,6 @@ extension ABILoweringPass {
         "__kk_mutable_map_plusAssign_pair",
         "__kk_sequence_builder_yield",
         "__kk_iterator_builder_yield",
-        "kk_list_iterator_add",
-        "kk_list_iterator_set",
     ]
 
     /// True when the call target is a declaration compiled from Kotlin source —

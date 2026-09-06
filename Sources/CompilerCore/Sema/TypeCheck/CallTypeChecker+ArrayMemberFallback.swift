@@ -437,6 +437,22 @@ extension CallTypeChecker {
             let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
             sema.bindings.bindExprType(id, type: finalType)
             return finalType
+        case "returnType":
+            let kTypeSymbol = sema.symbols.lookup(fqName: [
+                interner.intern("kotlin"),
+                interner.intern("reflect"),
+                interner.intern("KType"),
+            ])
+            let resultType = kTypeSymbol.map { symbol in
+                sema.types.make(.classType(ClassType(
+                    classSymbol: symbol,
+                    args: [],
+                    nullability: .nonNull
+                )))
+            } ?? sema.types.anyType
+            let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
         case "isSuspend":
             let resultType = sema.types.booleanType
             let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType

@@ -165,6 +165,7 @@ public func kk_list_iterator(_ listRaw: Int) -> Int {
             )
         )
         registerListIteratorItable(raw: raw)
+        registerMutableListIteratorItable(raw: raw)
         return raw
     }
     if let set = runtimeSetBox(from: listRaw) {
@@ -242,6 +243,7 @@ public func kk_list_iterator_at(_ listRaw: Int, _ index: Int, _ outThrown: Unsaf
     iter.index = index
     let raw = registerRuntimeObject(iter)
     registerListIteratorItable(raw: raw)
+    registerMutableListIteratorItable(raw: raw)
     return raw
 }
 
@@ -281,36 +283,19 @@ func runtimeListIteratorRemove(_ iterRaw: Int) -> Int {
     return 0
 }
 
-/// `MutableListIterator.remove()` direct-call bridge (KSP-1073). Without a
-/// link name, codegen previously called the bare name "remove", which linked
-/// against — and silently no-oped through — libc's `remove(const char *)`.
-@_cdecl("kk_list_iterator_remove")
-public func kk_list_iterator_remove(_ iterRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    outThrown?.pointee = 0
-    return runtimeListIteratorRemove(iterRaw)
-}
-
-/// `MutableListIterator.set(element)` direct-call bridge: replaces the
-/// element last returned by `next()`/`previous()`.
-@_cdecl("kk_list_iterator_set")
-public func kk_list_iterator_set(_ iterRaw: Int, _ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    outThrown?.pointee = 0
+func runtimeListIteratorSet(_ iterRaw: Int, _ elem: Int) -> Int {
     guard let iter = runtimeListIteratorBox(from: iterRaw) else {
         return 0
     }
-    _ = iter.setLastReturned(value)
-    return value
+    _ = iter.setLastReturned(elem)
+    return 0
 }
 
-/// `MutableListIterator.add(element)` direct-call bridge: inserts before the
-/// cursor and advances past the inserted element.
-@_cdecl("kk_list_iterator_add")
-public func kk_list_iterator_add(_ iterRaw: Int, _ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    outThrown?.pointee = 0
+func runtimeListIteratorAdd(_ iterRaw: Int, _ elem: Int) -> Int {
     guard let iter = runtimeListIteratorBox(from: iterRaw) else {
         return 0
     }
-    iter.addBeforeCursor(value)
+    iter.addBeforeNext(elem)
     return 0
 }
 
