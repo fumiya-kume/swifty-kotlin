@@ -10,7 +10,6 @@ symbol fq=kotlin.collections.MutableSet.E kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.MutableSet.add kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableSet<kotlin.collections.MutableSet.E> params=[kotlin.collections.MutableSet.E] ret=Boolean
 symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Set.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Set.contains kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Set<out kotlin.collections.Set.E> params=[kotlin.collections.Set.E] ret=Boolean
 symbol fq=probe kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_collections_n_HashSet package=_
   decl acceptsHashSet fun acceptsHashSet sym=acceptsHashSet

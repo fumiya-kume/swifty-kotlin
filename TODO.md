@@ -1899,7 +1899,7 @@
     - `kotlin.collections.MutableSet.removeAll` — fun MutableSet.removeAll(Collection): Boolean  -- `abstract fun removeAll(kotlin.collections/Collection<#A>): kotlin/Boolean`
     - `kotlin.collections.MutableSet.retainAll` — fun MutableSet.retainAll(Collection): Boolean  -- `abstract fun retainAll(kotlin.collections/Collection<#A>): kotlin/Boolean`
 
-- [ ] KSP-1078: kotlin.collections.Set.Set の未実装 stdlib API を実装する（4 件）
+- [x] KSP-1078: kotlin.collections.Set.Set の未実装 stdlib API を実装する（4 件）
   - 対象: `kotlin.collections.Set` / receiver `Set`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/Set/Set.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
