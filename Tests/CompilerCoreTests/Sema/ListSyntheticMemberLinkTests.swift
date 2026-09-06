@@ -2937,8 +2937,10 @@ struct ListSyntheticMemberLinkTests {
             let mutableListIteratorSymbol = try #require(sema.symbols.lookup(fqName: mutableListIteratorFQName))
             let mutableListIteratorInfo = try #require(sema.symbols.symbol(mutableListIteratorSymbol))
             #expect(mutableListIteratorInfo.kind == .interface)
-            // KSP-945: the nominal interface is source-backed; mutation members
-            // remain compiler residuals until their separate migration lands.
+            // KSP-945/KSP-1073: the nominal interface and its own `add`/`set`
+            // members are source-backed; `remove` is not redeclared here at
+            // all — it resolves through inheritance from `MutableIterator`
+            // below, matching real Kotlin's MutableListIterator surface.
             #expect(!mutableListIteratorInfo.flags.contains(.synthetic))
             #expect(sema.types.nominalTypeParameterVariances(for: mutableListIteratorSymbol) == [.invariant])
 
@@ -2954,7 +2956,14 @@ struct ListSyntheticMemberLinkTests {
                 #expect(signature.parameterTypes.count == 1)
                 #expect(signature.returnType == sema.types.unitType)
             }
-            let removeSymbol = try #require(sema.symbols.lookup(fqName: mutableListIteratorFQName + [ctx.interner.intern("remove")]))
+            // BUG-232: `remove` must NOT be redeclared directly on
+            // MutableListIterator — a redundant synthetic duplicate there
+            // shadowed the real, itable-wired `MutableIterator.remove` for
+            // any MutableListIterator-typed call site, so `.remove()` silently
+            // no-op'd instead of mutating the list.
+            #expect(sema.symbols.lookup(fqName: mutableListIteratorFQName + [ctx.interner.intern("remove")]) == nil)
+            let removeSymbol = try #require(sema.symbols.lookup(fqName: collectionsPkg + [ctx.interner.intern("MutableIterator"), ctx.interner.intern("remove")]))
+            #expect(sema.symbols.parentSymbol(for: removeSymbol) == mutableIteratorSymbol)
             let removeSignature = try #require(sema.symbols.functionSignature(for: removeSymbol))
             #expect(removeSignature.parameterTypes.isEmpty)
             #expect(removeSignature.returnType == sema.types.unitType)
