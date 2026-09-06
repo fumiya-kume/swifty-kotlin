@@ -3096,13 +3096,14 @@
   - 未実装シンボル一覧:
     - `kotlin.native.ref.WeakReferenceImpl.<init>` — constructor ()  -- `constructor <init>()`
 
-- [ ] KSP-1258: kotlin.native.ref.WeakReferenceImpl.WeakReferenceImpl の未実装 stdlib API を実装する（1 件）
+- [x] KSP-1258: kotlin.native.ref.WeakReferenceImpl.WeakReferenceImpl の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.native.ref.WeakReferenceImpl` / receiver `WeakReferenceImpl`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/native/ref/WeakReferenceImpl/WeakReferenceImpl.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_native_ref_WeakReferenceImpl_WeakReferenceImpl_n.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_native_ref_WeakReferenceImpl_WeakReferenceImpl_n.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_native_ref_WeakReferenceImpl_WeakReferenceImpl_n.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
+  - 完了根拠: Kotlin 2.3.10 公式 `kotlin/native/ref/WeakPrivate.kt` の `@PublishedApi internal abstract class WeakReferenceImpl` と `abstract fun get(): Any?` が、現行 `Sources/CompilerCore/Stdlib/kotlin/native/ref/Stdlib.kt` に source-backed で実装済み。これは merged PR #6340 の commit `209516e01e` で導入され、専用の synthetic/Runtime ABI bridge は存在しない。`WeakReferenceImplSourceMigrationTests` が source path、internal/abstract class、引数なし receiver member、`Any?` 戻り値、非 synthetic、外部 link なし、重複なしを固定する。
   - 未実装シンボル一覧:
     - `kotlin.native.ref.WeakReferenceImpl.get` — fun WeakReferenceImpl.get(): Any  -- `abstract fun get(): kotlin/Any?`
 
