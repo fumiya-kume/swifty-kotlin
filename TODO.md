@@ -31,6 +31,148 @@
 > 優先度は影響ファイル数と「新 primitive 型追加時の修正箇所数」で決定。
 > 完了ゲートは全テスト + golden + `diff_kotlinc.sh` green。
 
+## Lowering 小粒リファクタ（RF-LOWER: 2026-09-06 調査）
+
+> 対象は (1) Collection の source-backed 呼び出し保護・移行済み特例の整理、(2) 式の分類・コピー伝播の一元化、(3) Inline 展開の責務・終了条件の整理。パス計測・順序契約・並列 lowering の有効化は本系列に含めない。以下は静的調査に基づく実行タスクであり、旧経路の到達不能性・性能改善・新規バグの再現を確認済みとは扱わない。
+>
+> **粒度と競合回避**: 原則1 checkbox = 1責務 = 1 PR。処理の移動と挙動変更を混ぜず、対象外の整形・改名をしない。主な編集範囲は各項の「対象」に限定し、呼び出し元の配線・対応テスト以外へ広がる場合は着手前に新IDへ再分割する。ファイル分割だけを最終成果にせず、後続の状態管理・判定・終了条件の改善へ接続する。
+> - **共通ファイルは直列**: `CollectionLiteralLoweringRegistry.swift`、`CollectionLiteralLoweringPass+CallRewrite.swift`、`+CallRewriteFactories.swift`、`+PreScan.swift`、`+VirtualCallRewrite.swift`、`+LookupTables.swift`、`+RewriteState.swift`、`InlineLoweringPass.swift` を変更するPRは、同じファイルを触る先行PRのマージ後のHEADから開始する。前提が満たされても編集範囲が重なれば並列にしない。
+> - **独立した変更だけ並列**: Collection 系と Inline 系は別レーン。STATE-004後の virtual-call の葉ファイルは、共有 dispatcher / state / lookup に追記しない範囲で並列可。抽出前の巨大ファイルを複数PRが同時に分割する運用は禁止する。
+> - **テストも編集範囲を分離**: 既存 suite / helper を再利用し、追加は責務別 extension または既存 fixture に置く。巨大な `CollectionLiteralLoweringTests.swift` の一括移動・既存 diff ケースの無関係な整理を混ぜない。純粋な stdout 比較の新規実行テストは `Tests/CompilerBackendTests/Fixtures/` を使う。
+> - **台帳の運用**: `TODO.md` の更新は自タスクの状態・実績・必要な前提だけに限定し、セクション全体の整形・完了項目の一括削除を同時に行わない。
+>
+> **既存タスクとの境界**: `buildList` capacity の Kotlin 化・Sema stub 削除は KSP-697、collection factory 自体の移行は KSP-699 等の担当。本系列は残存 Lowering の整理であり、同じ移行を別実装しない。由来判定は既存の symbol / import 情報を利用し、RF-GOLDEN-002 の表示用分類や ARCH-021 の well-known 基盤を重複実装しない。全パス verifier・位置配列API変更は ARCH-018/019 の担当で、Inline 内の局所的な検証とは分ける。各系列を始める際に関連PRのマージ状況・現コードを再確認する。
+>
+> **共通完了ゲート**: 対象 Core Lowering / KIR suite、必要な Backend fixture・source注入 / stdlib artifact 経路、該当 Kotlin 差分ケースに加え、`CLAUDE.md` のRF必須ゲート（全 Swift テスト・Golden・全 `diff_kotlinc.sh`、存在する場合の `loc_report.sh` 指標）を各PRで満たす。API / ABI・例外・boxing・決定性を維持し、移動のみのPRではKIR/LLVM IRの不変性も確認する。バグを発見したら最小 Kotlin 再現と回帰テストを同じ修正PRに含め、既存の誤動作を期待値更新で固定しない。ABI export を削除する必要がある場合は利用者ゼロの確認・Spec/parity/リンク検証を同じPRに含め、残存理由がある経路をテストだけ消して完了扱いにしない。
+>
+> 以下のSwiftファイル名は、特記がなければ `Sources/CompilerCore/Lowering/` 配下。新設する責務別ファイル名は案であり、着手時に既存の同責務ファイルがあれば再利用する。
+
+### 1. Collection の source-backed 保護・Builder DSL 残存処理（RF-LOWER-CALL）
+
+> 主な順序: CALL-001 → 002 → 003 → 004 → 005 → 006。CALL-007は002後に分岐でき、007 → 008 → 009 → 010 → 011 → 012 → 013 → 014 → 015。014はSTATE-009、015は006も待つ。Builder側とpolicy側で lookup / dispatcher / test の編集が重なる場合は直列化する。API群単位で不要なrewriteと対応lookupを一緒に減らし、別の巨大な名前allowlistへ移し替えない。
+
+- [ ] RF-LOWER-CALL-001: Builder DSL の現行経路と削除前提を回帰テストにする（前提: なし）
+  - 対象: Builder DSL の既存 Core / Backend tests、`CollectionBuilders.kt` を利用する最小入力。`buildList` / `buildSet` / `buildMap` のcapacity有無、source / artifact、ユーザー同名関数を確認し、必要な `--no-stdlib` fallback と `symbol: nil` の手組みKIRを区別する。KSP-697の残存stub・`__kk_build_*` のemit元も照合する。
+  - 完了条件: 正しい呼び出し先・実行結果・負のcapacity・builderから漏れたreceiverのfreezeを既存テストと対応付け、不足分だけ追加する。旧変換テストだけを根拠に製品経路が必要／不要と判定しない。削除可能な経路と未解決の前提を本項の完了メモに残す。
+- [ ] RF-LOWER-CALL-002: 未消費の `builderLambdaKinds` 事前走査と引数配線を除去する（前提: CALL-001）
+  - 対象: `CollectionLiteralLoweringRegistry.swift`、`+PreScan.swift` の `collectBuilderLambdaKinds` / `scanBuilderLambdaEntries`、`+CallRewrite.swift` / `+CallRewriteFactories.swift` の引数転送。着手時に、辞書が渡されるだけでrewriteの判断に使われないことを再確認する。
+  - 完了条件: 未使用と確認できた辞書構築・走査・引数がなくなり、Builder DSL の呼び出し先と出力が不変。`isStdlibBuilderDSLCall` や他のcollection事前走査は削除せず、lookupの一括整理も混ぜない。
+- [ ] RF-LOWER-CALL-003: 常にfalseを返す source-backed Builder 判定の空実装を畳む（前提: CALL-002）
+  - 対象: `+PreScan.swift` の `isSourceBackedStdlibBuilderDSLCall` と呼び出し元のみ。現行の全分岐がfalseであることを確認し、不要なFQName構築・比較を除去する。
+  - 完了条件: source-backed builderをrewriteしない契約を維持し、nil symbol / synthetic / external linkの既存分岐は変えない。CALL-001の回帰がgreenで、恒偽helperへの参照が0件。
+- [ ] RF-LOWER-CALL-004: `buildList` の旧runtime rewriteを削除する（前提: CALL-003、KSP-697の必要な移行・fallback整理完了）
+  - 対象: `+CallRewriteFactories.swift` のbuildList分岐、`+LookupTables+BuilderDSL.swift` / `+LookupTables.swift` の対応名、該当テスト。capacity有無を一組として扱い、Kotlin本体・Semaの移行をこのPRで重複実装しない。
+  - 完了条件: source / artifactの両経路でKotlin実装が使われ、Loweringの旧 `__kk_build_list*` への置換と不要lookupが0件。手組みKIRの旧期待値はsource-backed契約へ置換する。製品で必要なfallbackが残る場合は削除を強行せず、前提未達として扱う。
+- [ ] RF-LOWER-CALL-005: `buildSet` の旧runtime rewriteを削除する（前提: CALL-004）
+  - 対象: CALL-004と同じ責務ファイルのbuildSet分岐・対応lookup・テストのみ。capacity有無のsource / artifact経路とfallback到達性をCALL-001の結果に照らして再確認する。
+  - 完了条件: 旧 `__kk_build_set*` への置換と不要lookupが0件で、要素重複・挿入順・capacity・freezeの契約を保持する。単に別名のbridgeへrenameして残さない。
+- [ ] RF-LOWER-CALL-006: `buildMap` の旧rewriteと最後のBuilder専用配線を除去する（前提: CALL-005）
+  - 対象: buildMap分岐・対応lookup・テスト、全利用者がなくなった `isStdlibBuilderDSLCall` / `BuilderDSLLookupNames` の登録口。汎用mutable Set / Map操作にまだ必要な名前はBuilder専用名と分ける。
+  - 完了条件: 旧 `__kk_build_map*` への置換がなく、同一keyの更新・順序・capacity・freezeを保持する。Builder専用の未使用引数・lookup転送・predicateが残らず、他のfactory rewriteは不変。
+- [ ] RF-LOWER-CALL-007: source-backed呼び出しの保持判断を専用policyへ抽出する（前提: CALL-002）
+  - 対象: `+CallRewrite.swift` の `shouldPreserveSourceBackedAggregateCall` と `+VirtualCallRewrite.swift` の対応する保持判断、責務別policy。まず現行の判断順序を維持した抽出だけを行い、resolved symbol / source実装 / external bridge / 未解決を区別する入力を用意する。
+  - 完了条件: source-backed member alias・imported宣言・ユーザー同名関数・nil symbolをテストし、direct / virtual callの既存差異を明示する。`isSourceBackedSymbol` の意味やSema flagsを変更せず、Sequenceのruntime表現例外をまだ消さない。CALL-008以降はこの境界を使う。
+- [ ] RF-LOWER-CALL-008: Listの変換・filter系だけをsymbol基準の保持判断へ寄せる（前提: CALL-007）
+  - 対象: policyと `+CallRewriteHOFTransforms.swift` / `+CallRewriteHandlers.swift` の `map*` / `flatMap*` / `filter*` 系のうちsource移行済み経路、必要なlookup・対応テスト。Map / Array / Sequenceの同名APIは対象外。
+  - 完了条件: 選択済みKotlin宣言が保持され、不要なList rewrite・名前列挙を削除できる。通常・indexed・nullable要素・捕捉lambdaの代表ケースを固定し、未移行overloadを同名という理由で消さない。
+- [ ] RF-LOWER-CALL-009: Listの畳み込み・累積系の保持判断を整理する（前提: CALL-008）
+  - 対象: policyと `+CallRewriteHOFAccumulations.swift` の `fold*` / `reduce*` / `scan*` / `running*` 系、必要なlookup・テストのみ。
+  - 完了条件: source移行済みoverloadの旧rewriteと保護用名前列挙が減り、空入力・nullable accumulator・例外・左右の評価順の契約を保持する。型消去境界のboxing/unboxingは別責務として維持する。
+- [ ] RF-LOWER-CALL-010: Listの検索・述語系の保持判断を整理する（前提: CALL-009）
+  - 対象: policyと検索・述語を扱う `+CallRewriteHOFCore.swift` / `+CallRewriteCollectionMember.swift` の該当分岐、必要なlookup・テスト。`find*` / `indexOf*` / `contains*` / `count` / `any` / `all` / `none` / `first*` / `last*` を着手時にoverload単位で照合する。
+  - 完了条件: source移行済み経路だけを削減し、短絡評価・空入力・見つからない場合の戻り値／例外を保持する。Runtime ABIのboxed Bool変更（ARCH-011）を同時に行わない。
+- [ ] RF-LOWER-CALL-011: Listのソート・極値系の保持判断を整理する（前提: CALL-010）
+  - 対象: policyと `+CallRewriteHOFExtrema.swift` のList用 `sorted*` / `min*` / `max*` 分岐、必要なlookup・テスト。
+  - 完了条件: Kotlin実装を削除済みruntime exportへredirectしないことを固定し、comparator / selector・空入力・null・同順位要素の挙動を維持する。名前列挙を別のList専用allowlistへ移すだけにしない。
+- [ ] RF-LOWER-CALL-012: Map HOFのsource-backed保護と残存rewriteを整理する（前提: CALL-011）
+  - 対象: policyと `+CallRewriteHandlers.swift` / Map HOF分岐、Map用lookup・テスト。`mapValues*` / `mapKeys*` / `filterKeys` / `filterValues` 等について解決先を確認する。
+  - 完了条件: source実装の同名overloadを横取りせず、Listを返す操作とMapを返す操作の分類・重複key・挿入順・lambda例外を保持する。Set / factoryの変更は混ぜない。
+- [ ] RF-LOWER-CALL-013: Arrayのsource-backed変換API保護を整理する（前提: CALL-012）
+  - 対象: policy、`+CallRewriteArrayConversions.swift` / `+VirtualCallRewrite+Array.swift` のsource-backed変換分岐、対応lookup・テスト。`asList` / `toList` / `toTypedArray` / `sliceArray` / `copyOf*` / `reversedArray` 等の現在の移行状態を照合する。
+  - 完了条件: generic / primitive / unsigned Arrayの宣言選択とview / copyの違いを保持し、型名・関数名だけを根拠に誤ったruntime表現へredirectしない。Arrayの格納形式やABI変更は対象外。
+- [ ] RF-LOWER-CALL-014: Sequenceの保持例外を明示的な実行時表現に基づく判断へ置き換える（前提: CALL-013、STATE-009）
+  - 対象: policyと `+CallRewriteSequencePipeline.swift` / `+CallRewriteSequenceTerminals.swift` のsource / runtime bridge選択。`Sequence`という静的型だけでは `RuntimeSequenceBox` とsourceオブジェクトを区別できないことを前提にする。
+  - 完了条件: source / runtime由来、引数渡し、copy経由、由来不明をテストし、`map` / `filter` の既存例外を表現判定へ置換する。由来不明をsourceと決め打ちせず、遅延評価・例外タイミング・iterator bridgeを保持する。新しい全プログラム解析やRuntime表現統合は行わない。
+- [ ] RF-LOWER-CALL-015: 移行済みAPIの保護用名前列挙を撤去してpolicyを閉じる（前提: CALL-006・014）
+  - 対象: policyとdirect / virtual callの入口、使われなくなったlookupのみ。List / Map / Array / Sequence各群で保持済みの宣言を共通原則へ統合し、残るintrinsicは識別根拠・runtime表現・対応テストを明確にする。
+  - 完了条件: `shouldPreserveSourceBackedAggregateCall` 相当の巨大なAPI名allowlistがなく、解決済みの通常Kotlin宣言を保持し、必要なbridgeだけを書き換える。別の巨大表への移設・source-backed全件の無条件skipで達成したことにしない。残作業があれば具体的なAPI単位へ再分割し、本項を先に完了しない。
+
+### 2. 式分類・コピー伝播の一元化（RF-LOWER-STATE）
+
+> STATE-001 → 002を先行。003と004はRegistryを共有するため直列。004後の005〜008は各葉ファイルだけなら並列可、共有ファイルを触るなら直列。009は003・007を待ち、010は003〜009の移行を待つ。CALL側と同一ファイルを変更する項目は、そのAPI群のPRとの同時着手を避ける。
+
+- [ ] RF-LOWER-STATE-001: 分類・copy伝播の契約を小さなCoreテストへ固定する（前提: なし）
+  - 対象: `CollectionRewriteState` / static classification / PreScanの既存テストと責務別追加テスト。List / Set / Map / Array / String / Range / Iterator / File / Pathを、直接値・引数・call result・copyの入口で確認する。
+  - 完了条件: RangeとCharRange / ULongRangeの重なり、複数copy、未分類値、同じ変数への別値代入を扱い、単一enum化や無条件unionで意味が変わるケースを検出できる。現行にバグがある場合は誤動作を互換契約として固定しない。
+- [ ] RF-LOWER-STATE-002: `KIRExprID` をキーにする分類ストアを導入する（前提: STATE-001）
+  - 対象: `+RewriteState.swift` と局所テストのみ。複数分類を保持できるfactsを用い、静的型の情報とruntime表現の情報・unknownを別軸で表す。まず既存callerの記法を保つ互換アクセサを用意し、全ファイルの一括置換は行わない。
+  - 完了条件: 状態の正本は一つで、copy伝播をストアの共通操作に集約する。旧 `inout Set<Int32>` の書き戻しと新APIの整合性を検証し、同じfactsの二重管理を残さない。アクセサごとの集合再構築等で走査コストが増えないか局所計測し、悪化時は境界を再設計する。
+- [ ] RF-LOWER-STATE-003: PreScanの大量inout引数をstateに集約する（前提: STATE-002、CALL-002・003）
+  - 対象: `+PreScan.swift` の `collectInitialCollectionExprIDs` / `handleCopyInstruction` / static seedとその内部helper、Registryの呼び出し口。種類別集合を個別に渡さず、STATE-002の状態APIを通す。
+  - 完了条件: PreScanとrewrite本体でcopy伝播が別実装にならず、静的型・factory・call resultの初期分類が不変。走査回数削減や分類精度の変更はこの配線PRへ混ぜない。
+- [ ] RF-LOWER-STATE-004: virtual-call dispatcherの状態受け渡しを一つにする（前提: STATE-003）
+  - 対象: `CollectionLiteralLoweringRegistry.swift` と `+VirtualCallRewrite.swift` の入口・dispatcher。葉の処理は変えず、dispatcherの境界でstateを受け渡す形にする。
+  - 完了条件: Registryから十数個の集合を渡す引数列がなくなり、未rewrite時の元命令・結果型・throw channel・dispatch情報が保たれる。葉ファイルへの機械的な全面置換は005〜008に分ける。
+- [ ] RF-LOWER-STATE-005: Array virtual-callの分類操作をstate APIへ寄せる（前提: STATE-004。CALL-013と同時編集しない）
+  - 対象: `+VirtualCallRewrite+Array.swift` と対応テストのみ。dispatcherへの変更が必要ならSTATE-004との境界を先に調整する。
+  - 完了条件: Array用の集合操作・結果tag付けが共通APIを使い、generic / primitive Arrayの分類と戻り値が不変。calleeやboxing規則の変更はしない。
+- [ ] RF-LOWER-STATE-006: Range virtual-callの重なる分類をstate APIへ寄せる（前提: STATE-004）
+  - 対象: `+VirtualCallRewrite+Range.swift` と対応テストのみ。Range / CharRange / ULongRangeを排他的な一種類へ潰さない。
+  - 完了条件: `step` / `reversed` / iterator経由で必要な複合factsが維持され、境界値・unsigned・copy経路を固定する。rangeのruntime実装は変えない。
+- [ ] RF-LOWER-STATE-007: Sequence virtual-callの分類操作をstate APIへ寄せる（前提: STATE-004）
+  - 対象: `+VirtualCallRewrite+Sequence.swift` と対応テストのみ。既存のsource / runtime経路選択はまだ変更しない。
+  - 完了条件: Sequence / Iterator関連の結果tagとcopy後の判断が不変。静的なSequence型をruntime handleの証拠として新たに登録しない。
+- [ ] RF-LOWER-STATE-008: property virtual-callの分類参照をstate APIへ寄せる（前提: STATE-004）
+  - 対象: `+VirtualCallRewrite+Properties.swift` と対応テストのみ。List / Map / Set / File / Path等の分類参照を移し、既存の型・symbolガードを保持する。
+  - 完了条件: `size`等の同名propertyを持つユーザー型がcollectionへ誤分類されず、未分類時のfallbackが不変。property lowering全体やsource API移行は混ぜない。
+- [ ] RF-LOWER-STATE-009: Sequenceの静的型とruntime由来を分類段階で区別する（前提: STATE-003・007）
+  - 対象: `+StaticTypeClassification.swift` と `+PreScan.swift` のSequence分類・既知producer追跡、対応テスト。source宣言・既知runtime factory / bridge・引数・copyについて、確認できるfactsだけを記録する。
+  - 完了条件: 同じSequence型でもsourceオブジェクト / `RuntimeSequenceBox` / unknownを区別でき、分岐や再代入で根拠が失われた値を既知として扱わない。一般的なCFG固定点解析まで必要なら別IDへ分割し、推測で分類を補わない。CALL-014が消費できる契約を固定する。
+- [ ] RF-LOWER-STATE-010: state互換層を整理し、残存callerと分類コストを検証する（前提: STATE-003〜009）
+  - 対象: `+RewriteState.swift` の不要になったadapter・テスト。direct-call / HOF / factory等の未改名callerは単一ストアのviewを使う限り維持でき、表記統一だけの全ファイル変更は行わない。
+  - 完了条件: 種類追加時のcopy伝播更新が一箇所で済み、複数の正本・失われるinout書き戻し・不要adapterがない。多数のcopy / collection操作を含む入力で時間・メモリを変更前と比較し、集合viewの再構築やストア走査の悪化を隠さない。生成結果と決定性が不変。
+
+### 3. Inline 展開の責務分離・終了条件（RF-LOWER-INLINE）
+
+> INLINE-001 → 002 → 003 → 004 → 005 → 006 → 007 → 008 → 009 → 010 → 011 → 012を基本のマージ順とする。002〜009は `InlineLoweringPass.swift` を共有するため、個別の小PRとして順次マージする。抽出時に展開順序・ラベル採番・ABI・例外処理を変えず、固定回数の撤廃は安全な停止条件を用意した010後に行う。
+
+- [ ] RF-LOWER-INLINE-001: Inlineの抽出前契約を既存回帰テストで固定する（前提: なし）
+  - 対象: Inline関連Core / Backend suitesの不足分のみ。nested inline、同名別symbol、imported inline、捕捉lambda、reified、non-local return、try/catch/finally、virtual / super call、ラベル重複の検証先を対応付ける。
+  - 完了条件: KIR call metadata・型・制御フローと実行結果・決定性を検証でき、巨大suiteの一括移動なしで後続の抽出PRを評価できる。長い依存鎖・循環・展開量制限の仕様変更は010以降で扱う。
+- [ ] RF-LOWER-INLINE-002: ラベル走査・再配置と採番状態を分離する（前提: INLINE-001）
+  - 対象: `nextAvailableLabel` / `remapLabels` / `inlineLabelCounter` の責務、既存 `KIR/KIRLabelRelocation.swift` の再利用可能部分。現在の採番規則を保つ関数単位の状態境界を作る。
+  - 完了条件: `.label` / 各jumpの全参照が同じ規則で移され、caller・lambda・tailrec由来のラベルと衝突しない。既存helperと異なる採番規則を無条件に統合せず、KIR/LLVM IR不変性を確認する。
+- [ ] RF-LOWER-INLINE-003: 式複製・alias置換・命令operand書換えを分離する（前提: INLINE-002）
+  - 対象: `rewriteInstruction` / `definedResult` / `resolveAlias` / `cloneOrReuseExpr` / `cloneExpr` と関連状態。責務別の複製helperへ移し、必要な型置換処理は既存実装へ委譲する。
+  - 完了条件: call / virtualCallのsymbol・throw channel・super / dispatch情報、再代入されるexpr、const / temporaryを正しく保持する。型置換規則や展開順序は変更せず、不要なpublic APIを増やさない。
+- [ ] RF-LOWER-INLINE-004: 型引数代入・reified token生成を分離する（前提: INLINE-003）
+  - 対象: `InlineTypeSubstitution` / `buildInlineTypeSubstitution` / `collectInlineTypeSubstitution` / `substituteInlineType` / `buildTypeParamTokenValues` 等の型代入責務。
+  - 完了条件: generic / nullable / function型・receiver・reified tokenの置換結果が不変で、imported inlineにも同じ処理が適用される。Semaの型推論や制約解決のリファクタは混ぜない。
+- [ ] RF-LOWER-INLINE-005: erased lambda / inline ABIのboxing helperを分離する（前提: INLINE-004）
+  - 対象: `usesErasedLambdaABI` / `boxSubstitutedErasedArguments` / `unboxErasedLambdaArguments` / 戻り値のbox・unbox等、現在Inline内にあるABI補正helper。
+  - 完了条件: primitive / nullable / erased genericの引数・戻り値とimported lambda ABIの契約が不変。`ABILoweringPass` 自体の変更や新たなboxing最適化を混ぜない。
+- [ ] RF-LOWER-INLINE-006: 展開後の例外経路補正を分離する（前提: INLINE-005）
+  - 対象: `rerouteUnprotectedThrows` とその入出力・呼び出し口。callerのthrownResult、ローカルcatch、finally guard、出口ラベルの責務を明示する。
+  - 完了条件: inline内部のcall / virtualCall / rethrowがcallerのcatchへ届き、既に保護された経路を二重に書き換えない。non-local returnを含むtry/finallyの既存回帰がgreenで、例外ABIやcanThrowの意味を変更しない。
+- [ ] RF-LOWER-INLINE-007: 通常inline本体の展開処理を分離する（前提: INLINE-006）
+  - 対象: `expandInlineCall` の本体と局所状態のみ。複製・型代入・ABI・例外補正は003〜006の境界を使い、lambda展開の実装はまだ移さない。
+  - 完了条件: 引数評価順・returnの出口統合・non-local return・receiver / super情報が不変。通常inlineのテストとimported inlineの実行回帰を通し、ファイル移動とアルゴリズム変更を分離できている。
+- [ ] RF-LOWER-INLINE-008: lambda本体の解決・展開処理を分離する（前提: INLINE-007）
+  - 対象: `resolveLambdaFunction` / `expandLambdaBody` とcapture・return処理の局所状態のみ。
+  - 完了条件: 捕捉有無・receiver付きlambda・noinline / crossinline・通常return / non-local returnの契約が不変。同名関数への誤fallbackや二重展開がなく、通常inlineの複製helperを再実装しない。
+- [ ] RF-LOWER-INLINE-009: 展開対象indexと依存スケジューリングを分離する（前提: INLINE-008）
+  - 対象: `run` のfunction snapshot構築、`expandNestedBodylessInlineCalls`、`inlineTransform` の走査制御。SymbolIDを主キーにした依存情報を抽出し、まず既存の4回 / 8回制御を維持する。
+  - 完了条件: module / imported / lambda本体・bodyless inlineを区別し、symbol既知の呼び出しを無関係な同名関数へ結び付けない。辞書の列挙順に依存しない処理順がテストされ、arenaの式ID割当と既存出力が不変。
+- [ ] RF-LOWER-INLINE-010: 固定回数撤廃の前に循環・展開量制限・必須inline残存の契約を実装する（前提: INLINE-009）
+  - 対象: 分離済みschedulerと対応Core / Backend tests。bodyがobjectに存在しない `isInlineOnly` / imported inline等の必須展開と、通常callとして残せる関数を区別する。再帰・相互再帰・大きな非循環グラフでの停止条件を定める。
+  - 完了条件: 必須展開の未解決callをリンク段階まで黙って残さず、循環・予算超過時に決定的な診断で停止する。非必須callを不必要にエラー化しない。既存4回 / 8回境界と境界超えの最小ケースを追加し、不具合が再現したら同じPRで修正する。全パス `KIRVerifier` は重複実装しない。
+- [ ] RF-LOWER-INLINE-011: bodyless inline snapshotの固定4回走査を依存順処理へ置き換える（前提: INLINE-010）
+  - 対象: `expandNestedBodylessInlineCalls` 相当のschedulerのみ。calleeからcallerへ処理する決定的worklistを使い、lambda内の依存も含める。呼び出し側の8回走査はまだ変えない。
+  - 完了条件: 4段を超える正当な依存鎖でも必須callが解消され、同じ元本体の二重展開がない。diamond依存・imported inline・lambda内依存・循環での停止を固定し、010の診断と展開量制限を維持する。
+- [ ] RF-LOWER-INLINE-012: caller本体の固定8回再走査を進捗に基づく展開へ置き換える（前提: INLINE-011）
+  - 対象: `inlineTransform` / `expandInlineCalls` 相当の反復制御のみ。新たに現れた展開対象を追跡し、対象がなくなるまで処理するが、010の循環・予算制限を必ず適用する。
+  - 完了条件: 深い非循環inline・多段lambda・再帰で正しく完了／診断し、必須inline残存チェックがgreen。例外・non-local return・型・ABI・決定性の全回帰を通し、大きな入力で処理時間・生成命令数・arena増加を変更前と比較する。上限を単に増やしただけ、または無制限ループへの置換で完了としない。
+
 ## Stdlib Kotlin 化 実行計画（KSP）
 
 > RF-STDLIB / M1–M17 / MIGRATION-* の**実行体**。設計: [`docs/stdlib-pipeline.md`](docs/stdlib-pipeline.md)。棚卸し日: 2026-07-01（シンボル名は当日時点の実コードで検証済み。行番号は書かない — アンカーは必ず rg で引く）。2026-07-10 ギャップ監査で KSP-CAP / KSP-INF / KSP-W6 / CLEANUP-STUB-096+ / バグバックログを追補。2026-08-12 ギャップ再調査（§9 分類表×実行体タスクの突合 + 「別タスク」言及の棚卸し + ガバナンス enforcing の実装確認）で KSP-683〜692 / CLEANUP-STUB-125 / BUG-211 を追補。
