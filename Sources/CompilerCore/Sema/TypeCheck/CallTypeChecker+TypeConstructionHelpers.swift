@@ -311,6 +311,27 @@ extension CallTypeChecker {
         )))
     }
 
+    func makeSyntheticHashSetType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        elementType: TypeID
+    ) -> TypeID {
+        let hashSetFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("HashSet"),
+        ]
+        guard let hashSetSymbol = symbols.lookup(fqName: hashSetFQName) else {
+            return types.anyType
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: hashSetSymbol,
+            args: [.invariant(elementType)],
+            nullability: .nonNull
+        )))
+    }
+
     func makeSyntheticLinkedHashSetType(
         symbols: SymbolTable,
         types: TypeSystem,

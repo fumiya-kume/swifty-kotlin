@@ -90,20 +90,6 @@ public func kk_list_of(_ arrayRaw: Int, _ count: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: elements), typeID: listRuntimeTypeID)
 }
 
-@_cdecl("kk_list_of_not_null")
-public func kk_list_of_not_null(_ arrayRaw: Int, _ count: Int) -> Int {
-    var elements: [Int] = []
-    if count > 0, let array = runtimeArrayBox(from: arrayRaw) {
-        for element in array.elements.prefix(count) {
-            // swiftlint:disable:next for_where
-            if element != runtimeNullSentinelInt {
-                elements.append(element)
-            }
-        }
-    }
-    return registerRuntimeObject(RuntimeListBox(elements: elements), typeID: listRuntimeTypeID)
-}
-
 // STDLIB-410: emptyList<T>() - allocates a fresh empty list each call to avoid
 // aliasing with mutable collection operations (e.g., kk_mutable_list_add).
 @_cdecl("__kk_emptyList")
@@ -875,6 +861,16 @@ public func kk_iterable_toMutableSet(_ iterableRaw: Int) -> Int {
         return registerRuntimeObject(RuntimeSetBox(values: runtimeDeduplicatePreservingOrder(values)))
     }
     return registerRuntimeObject(RuntimeSetBox(elements: []))
+}
+
+/// HashSet copy-constructor storage with an independent backing box.
+@_cdecl("__kk_iterable_toHashSet")
+public func kk_iterable_toHashSet(_ iterableRaw: Int) -> Int {
+    let values = runtimeIterableValues(from: iterableRaw) ?? []
+    return registerRuntimeObject(
+        RuntimeSetBox(values: runtimeDeduplicatePreservingOrder(values)),
+        typeID: hashSetRuntimeTypeID
+    )
 }
 
 /// Generic `Iterable<T>.last()` that accepts any collection handle (List, Set, etc.).

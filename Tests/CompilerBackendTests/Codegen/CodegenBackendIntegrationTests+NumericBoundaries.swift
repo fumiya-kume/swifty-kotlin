@@ -54,6 +54,36 @@ struct CodegenBackendNumericBoundariesTests {
     }
 
     @Test
+    func testNumericBoundaryUIntCompanionSourceBacked() throws {
+        let source = """
+        fun main() {
+            val directMax: UInt = UInt.MAX_VALUE
+            val directMin: UInt = UInt.MIN_VALUE
+            val receiverMax: UInt = UInt.Companion.MAX_VALUE
+            val receiverMin: UInt = UInt.Companion.MIN_VALUE
+            println(directMax)
+            println(directMin)
+            println(receiverMax)
+            println(receiverMin)
+            println(UInt.MAX_VALUE + 1u)
+            println(UInt.MIN_VALUE - 1u)
+        }
+        """
+        try assertKotlinOutput(
+            source,
+            moduleName: "NumericBoundaryUIntCompanionSourceBacked",
+            expected: """
+            4294967295
+            0
+            4294967295
+            0
+            0
+            4294967295
+            """ + "\n"
+        )
+    }
+
+    @Test
     func testNumericBoundaryConversionTruncation() throws {
         let source = """
         fun main() {

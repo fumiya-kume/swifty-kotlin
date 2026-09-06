@@ -210,6 +210,57 @@ struct BundledSyntheticOverlapDiagnosticTests {
     }
 
     @Test
+    func testKSP696ScalarCompareAndExchangeUsesBundledSource() throws {
+        // KSP-696: compareAndExchange is a bundled Kotlin wrapper over the
+        // internal scalar runtime bridge for all four atomic scalar types.
+        let source = """
+        import kotlin.concurrent.AtomicBoolean
+        import kotlin.concurrent.AtomicInt
+        import kotlin.concurrent.AtomicLong
+        import kotlin.concurrent.AtomicReference
+
+        data class Token(val id: Int)
+
+        fun main() {
+            val int = AtomicInt(1)
+            println(int.compareAndExchange(1, 2))
+            println(int.compareAndExchange(1, 3))
+            val long = AtomicLong(1L)
+            println(long.compareAndExchange(1L, 2L))
+            println(long.compareAndExchange(1L, 3L))
+            val flag = AtomicBoolean(true)
+            println(flag.compareAndExchange(true, false))
+            println(flag.compareAndExchange(true, false))
+            val current = Token(1)
+            val equalButDistinct = Token(1)
+            val replacement = Token(2)
+            val ref = AtomicReference(current)
+            println(ref.compareAndExchange(current, replacement))
+            println(ref.compareAndExchange(equalButDistinct, Token(3)))
+        }
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+        #expect(!ctx.diagnostics.hasError, "Unexpected errors: \(ctx.diagnostics.diagnostics.map(\.message))")
+        let overlapDiags = ctx.diagnostics.diagnostics.filter { $0.code == "KSWIFTK-SEMA-0102" }
+        #expect(overlapDiags.isEmpty, "Unexpected overlap warnings: \(overlapDiags.map(\.message))")
+
+        let sema = try #require(ctx.sema)
+        let compareAndExchangeFQName = ["kotlin", "concurrent", "compareAndExchange"]
+            .map(ctx.interner.intern)
+        let sourceSymbols = sema.symbols.lookupAll(fqName: compareAndExchangeFQName)
+        #expect(sourceSymbols.count == 4, "Expected one bundled overload per scalar atomic type")
+        #expect(
+            sourceSymbols.allSatisfy { sema.symbols.externalLinkName(for: $0) == nil },
+            "Bundled compareAndExchange wrappers must not expose public runtime links"
+        )
+        #expect(
+            sourceSymbols.allSatisfy { !(sema.symbols.symbol($0)?.flags.contains(.synthetic) ?? true) },
+            "Bundled compareAndExchange wrappers must not be synthetic stubs"
+        )
+    }
+
+    @Test
     func testSourceBackedSequenceRuntimeAliasDoesNotWarn() throws {
         let source = """
         fun main() {

@@ -50,10 +50,6 @@ extension BuildASTPhase {
                 tokenIndex += 1
                 continue
             }
-            if case let .keyword(keyword) = token.kind, isLeadingDeclarationKeyword(keyword) {
-                tokenIndex += 1
-                continue
-            }
             tokenIndex += 1
             let upperBound = parseInlineUpperBound(tokens: tokens, tokenIndex: &tokenIndex,
                                                    interner: interner, astArena: astArena)

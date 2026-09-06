@@ -8,7 +8,9 @@ func kirVtableImplementations(
 
     let virtualSlots = Set(layout.vtableSlots.compactMap { methodSymbol, slot -> Int? in
         guard let owner = sema.symbols.parentSymbol(for: methodSymbol),
-              !sema.symbols.directSubtypes(of: owner).isEmpty
+              !sema.symbols.directSubtypes(of: owner).isEmpty,
+              let symbol = sema.symbols.symbol(methodSymbol),
+              symbol.kind == .function || symbol.kind == .property
         else {
             return nil
         }
@@ -20,21 +22,28 @@ func kirVtableImplementations(
 
     var bestBySlot: [Int: (distance: Int, implementation: SymbolID)] = [:]
     for (methodSymbol, slot) in layout.vtableSlots where virtualSlots.contains(slot) {
-        guard sema.symbols.symbol(methodSymbol)?.kind == .function,
+        guard let methodInfo = sema.symbols.symbol(methodSymbol),
+              methodInfo.kind == .function || methodInfo.kind == .property,
               let owner = sema.symbols.parentSymbol(for: methodSymbol),
               let distance = kirNominalDistance(from: nominalSymbol, to: owner, sema: sema)
         else {
             continue
         }
+        let implementation: SymbolID = if methodInfo.kind == .property {
+            sema.symbols.extensionPropertyGetterAccessor(for: methodSymbol)
+                ?? SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: methodSymbol)
+        } else {
+            methodSymbol
+        }
         if let current = bestBySlot[slot] {
             let isMoreSpecific = distance < current.distance
             let isStableTieBreak = distance == current.distance
-                && methodSymbol.rawValue > current.implementation.rawValue
+                && implementation.rawValue > current.implementation.rawValue
             if isMoreSpecific || isStableTieBreak {
-                bestBySlot[slot] = (distance, methodSymbol)
+                bestBySlot[slot] = (distance, implementation)
             }
         } else {
-            bestBySlot[slot] = (distance, methodSymbol)
+            bestBySlot[slot] = (distance, implementation)
         }
     }
 
