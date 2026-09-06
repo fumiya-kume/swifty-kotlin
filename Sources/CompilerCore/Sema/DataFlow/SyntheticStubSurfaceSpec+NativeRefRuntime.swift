@@ -104,7 +104,6 @@ enum SyntheticNativeRefRuntimeSurfaceSpec {
     static let memoryUsageProperties: [SyntheticPropertyStubSpec] = [
         SyntheticPropertyStubSpec(name: "totalObjectsSizeBytes", propertyType: .long),
     ]
-    static let memoryUsageConstructor = constructor(from: memoryUsageProperties)
 
     static let debuggingProperties: [SyntheticPropertyStubSpec] = [
         SyntheticPropertyStubSpec(

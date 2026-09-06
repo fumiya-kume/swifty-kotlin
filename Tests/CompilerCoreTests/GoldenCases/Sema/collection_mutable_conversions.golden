@@ -8,16 +8,13 @@ symbol fq=__local_6.map kind=local vis=private flags=_ type=kotlin.collections.M
 symbol fq=__local_7.mm kind=local vis=private flags=_ type=kotlin.collections.MutableMap<String, Int>
 symbol fq=kotlin.Pair kind=class vis=public flags=_
 symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableList.E kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.MutableList.add#1 kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.MutableList<kotlin.collections.MutableList.E> params=[kotlin.collections.MutableList.E] ret=Boolean
 symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableMap.K kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableMap.V kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableMap.set kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.MutableMap<kotlin.collections.MutableMap.K, kotlin.collections.MutableMap.V> params=[kotlin.collections.MutableMap.K,kotlin.collections.MutableMap.V] ret=Unit
 symbol fq=kotlin.collections.MutableSet kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.MutableSet.E kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.MutableSet.add kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableSet<kotlin.collections.MutableSet.E> params=[kotlin.collections.MutableSet.E] ret=Boolean
@@ -51,7 +48,7 @@ expr e@11:26 int(4) type=Int
 expr e@11:13#1 memberCall recv=e@11:13 callee=contains args=[_:e@11:26] type=Boolean call=kotlin.collections.Set.contains
 expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13#1] type=Unit call=kotlin.io.println#1
 expr e@14:32 name(items) type=kotlin.collections.Iterable<Int> ref=__local_0.items
-expr e@14:32#1 memberCall recv=e@14:32 callee=toHashSet args=[] type=kotlin.collections.MutableSet<Int> call=kotlin.collections.toHashSet targs=[Int]
+expr e@14:32#1 memberCall recv=e@14:32 callee=toHashSet args=[] type=kotlin.collections.HashSet<Int> call=kotlin.collections.toHashSet targs=[Int]
 expr e@14:5 localDecl hs1 mutable=0 type=MutableSet<Int> init=e@14:32#1 type=Unit ref=__local_3.hs1
 expr e@15:5 name(hs1) type=kotlin.collections.MutableSet<Int> ref=__local_3.hs1
 expr e@15:13 int(5) type=Int
@@ -87,7 +84,7 @@ expr e@26:5 localDecl mm mutable=0 type=MutableMap<String,Int> init=e@26:39#1 ty
 expr e@27:5 name(mm) type=kotlin.collections.MutableMap<String, Int> ref=__local_7.mm
 expr e@27:8 string(z) type=String
 expr e@27:15 int(3) type=Int
-expr e@27:5#1 indexedAssign receiver=e@27:5 indices=[e@27:8] value=e@27:15 type=Unit call=kotlin.collections.MutableMap.set targs=[String,Int]
+expr e@27:5#1 indexedAssign receiver=e@27:5 indices=[e@27:8] value=e@27:15 type=Unit call=kotlin.collections.set targs=[String,Int]
 expr e@28:13 name(mm) type=kotlin.collections.MutableMap<String, Int> ref=__local_7.mm
 expr e@28:28 string(z) type=String
 expr e@28:13#1 memberCall recv=e@28:13 callee=containsKey args=[_:e@28:28] type=Boolean call=kotlin.collections.containsKey

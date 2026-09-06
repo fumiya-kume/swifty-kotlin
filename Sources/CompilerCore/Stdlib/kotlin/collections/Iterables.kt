@@ -104,7 +104,7 @@ public fun <T> Iterable<T>.toMutableSet(): MutableSet<T> {
 }
 
 public fun <T> Iterable<T>.toHashSet(): HashSet<T> {
-    val result = mutableSetOf<T>()
+    val result = HashSet<T>()
     for (element in this) result.add(element)
     return result
 }
@@ -113,6 +113,14 @@ public fun <T> Iterable<T>.toHashSet(): HashSet<T> {
 public fun <T, C : MutableCollection<in T>> Iterable<T>.toCollection(destination: C): C {
     for (element in this) destination.add(element)
     return destination
+}
+
+public fun <T> Iterable<Iterable<T>>.flatten(): List<T> {
+    val result = mutableListOf<T>()
+    for (element in this) {
+        for (nestedElement in element) result.add(nestedElement)
+    }
+    return result
 }
 
 // KSP-974: Iterable flat-map transformations are source-backed. Keep the
@@ -479,6 +487,97 @@ public fun <T> Iterable<T>.filter(predicate: (T) -> Boolean): List<T> {
     return result
 }
 
+// KSP-982: source-backed Iterable map-family implementations. Keep these
+// overloads independent from concrete List/Array/Set/Sequence receivers so
+// virtual iterator dispatch also covers custom and one-shot Iterables.
+public inline fun <T, R> Iterable<T>.map(transform: (T) -> R): List<R> {
+    val result = mutableListOf<R>()
+    for (element in this) result.add(transform(element))
+    return result
+}
+
+public inline fun <T, R> Iterable<T>.mapIndexed(transform: (Int, T) -> R): List<R> {
+    val result = mutableListOf<R>()
+    var index = 0
+    for (element in this) {
+        if (index < 0) throw ArithmeticException("Index overflow has happened.")
+        result.add(transform(index, element))
+        index += 1
+    }
+    return result
+}
+
+public inline fun <T, R : Any> Iterable<T>.mapIndexedNotNull(transform: (Int, T) -> R?): List<R> {
+    val result = mutableListOf<R>()
+    var index = 0
+    for (element in this) {
+        if (index < 0) throw ArithmeticException("Index overflow has happened.")
+        val transformed = transform(index, element)
+        if (transformed != null) result.add(transformed)
+        index += 1
+    }
+    return result
+}
+
+@IgnorableReturnValue
+public inline fun <T, R : Any, C : MutableCollection<in R>> Iterable<T>.mapIndexedNotNullTo(
+    destination: C,
+    transform: (Int, T) -> R?
+): C {
+    var index = 0
+    for (element in this) {
+        if (index < 0) throw ArithmeticException("Index overflow has happened.")
+        val transformed = transform(index, element)
+        if (transformed != null) destination.add(transformed)
+        index += 1
+    }
+    return destination
+}
+
+@IgnorableReturnValue
+public inline fun <T, R, C : MutableCollection<in R>> Iterable<T>.mapIndexedTo(
+    destination: C,
+    transform: (Int, T) -> R
+): C {
+    var index = 0
+    for (element in this) {
+        if (index < 0) throw ArithmeticException("Index overflow has happened.")
+        destination.add(transform(index, element))
+        index += 1
+    }
+    return destination
+}
+
+public inline fun <T, R : Any> Iterable<T>.mapNotNull(transform: (T) -> R?): List<R> {
+    val result = mutableListOf<R>()
+    for (element in this) {
+        val transformed = transform(element)
+        if (transformed != null) result.add(transformed)
+    }
+    return result
+}
+
+@IgnorableReturnValue
+public inline fun <T, R : Any, C : MutableCollection<in R>> Iterable<T>.mapNotNullTo(
+    destination: C,
+    transform: (T) -> R?
+): C {
+    for (element in this) {
+        val transformed = transform(element)
+        if (transformed != null) destination.add(transformed)
+    }
+    return destination
+}
+
+@IgnorableReturnValue
+public inline fun <T, R, C : MutableCollection<in R>> Iterable<T>.mapTo(
+    destination: C,
+    transform: (T) -> R
+): C {
+    for (element in this) destination.add(transform(element))
+    return destination
+}
+
 public inline fun <T> Iterable<T>.find(predicate: (T) -> Boolean): T? {
     for (element in this) {
         if (predicate(element)) return element
@@ -617,6 +716,7 @@ public inline fun <T> Iterable<T>.takeWhile(predicate: (T) -> Boolean): List<T> 
     }
     return result
 }
+
 public inline fun <S, T : S> Iterable<T>.reduce(operation: (acc: S, T) -> S): S {
     val iterator = iterator()
     if (!iterator.hasNext()) throw UnsupportedOperationException("Empty collection can't be reduced.")

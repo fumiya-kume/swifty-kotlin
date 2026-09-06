@@ -431,7 +431,7 @@ struct TypeCheckHelpers {
         return sema.types.anyType
     }
 
-    /// For Map<K, V> and MutableMap<K, V>, return Map.Entry<K, V> as the element type.
+    /// For Map<K, V>, return Map.Entry<K, V>; mutable maps iterate mutable entries.
     private func mapEntryElementType(
         for mapType: TypeID,
         sema: SemaModule,
@@ -449,9 +449,12 @@ struct TypeCheckHelpers {
             return nil
         }
 
-        // Look up the Map.Entry type
+        // MutableMap.iterator() returns MutableMap.MutableEntry, while Map.iterator()
+        // returns the read-only Map.Entry surface.
         let kotlinCollectionsPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("collections")]
-        let entryFQName = kotlinCollectionsPkg + [mapName, interner.intern("Entry")]
+        let entryOwnerName = symbol.name == mutableMapName ? mutableMapName : mapName
+        let entryName = symbol.name == mutableMapName ? interner.intern("MutableEntry") : interner.intern("Entry")
+        let entryFQName = kotlinCollectionsPkg + [entryOwnerName, entryName]
         guard let entrySymbol = sema.symbols.lookup(fqName: entryFQName) else {
             return nil
         }

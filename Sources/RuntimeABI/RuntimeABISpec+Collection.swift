@@ -198,6 +198,16 @@ public extension RuntimeABISpec {
             section: "Collection",
             isThrowing: false
         ),
+        RuntimeABIFunctionSpec(
+            name: "__kk_hash_set_of",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+                RuntimeABIParameter(name: "count", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection",
+            isThrowing: false
+        ),
         // STDLIB-410: emptySet
         RuntimeABIFunctionSpec(
             name: "__kk_emptySet",
@@ -282,6 +292,15 @@ public extension RuntimeABISpec {
         // STDLIB-021: Iterable<T>.toMutableSet()
         RuntimeABIFunctionSpec(
             name: "__kk_iterable_toMutableSet",
+            parameters: [
+                RuntimeABIParameter(name: "iterableRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection",
+            isThrowing: false
+        ),
+        RuntimeABIFunctionSpec(
+            name: "__kk_iterable_toHashSet",
             parameters: [
                 RuntimeABIParameter(name: "iterableRaw", type: .intptr),
             ],
@@ -658,6 +677,42 @@ public extension RuntimeABISpec {
             section: "Collection",
             isThrowing: false
         ),
+        RuntimeABIFunctionSpec(
+            name: "__kk_mutable_map_iterator",
+            parameters: [
+                RuntimeABIParameter(name: "mapRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection",
+            isThrowing: false
+        ),
+        RuntimeABIFunctionSpec(
+            name: "__kk_mutable_map_iterator_hasNext",
+            parameters: [
+                RuntimeABIParameter(name: "iterRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection",
+            isThrowing: false
+        ),
+        RuntimeABIFunctionSpec(
+            name: "__kk_mutable_map_iterator_next",
+            parameters: [
+                RuntimeABIParameter(name: "iterRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection",
+            isThrowing: false
+        ),
+        RuntimeABIFunctionSpec(
+            name: "__kk_mutable_map_iterator_remove",
+            parameters: [
+                RuntimeABIParameter(name: "iterRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
         // Array
         RuntimeABIFunctionSpec(
             name: "kk_array_of",
@@ -871,7 +926,79 @@ public extension RuntimeABISpec {
             section: "Collection",
             isThrowing: false
         ),
-        // Primitive array asList view conversions
+        // Primitive and generic array asList view conversions
+        RuntimeABIFunctionSpec(
+            name: "__kk_array_asList",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "__kk_intArray_asList",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "__kk_longArray_asList",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "__kk_shortArray_asList",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "__kk_byteArray_asList",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "__kk_charArray_asList",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "__kk_booleanArray_asList",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "__kk_doubleArray_asList",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "__kk_floatArray_asList",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
         RuntimeABIFunctionSpec(
             name: "__kk_uByteArray_asList",
             parameters: [
@@ -1043,35 +1170,6 @@ public extension RuntimeABISpec {
             name: "__kk_array_copyOf",
             parameters: [
                 RuntimeABIParameter(name: "arrayRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Collection",
-            isThrowing: false
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_array_reversedArray",
-            parameters: [
-                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Collection",
-            isThrowing: false
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_array_sliceArray_range",
-            parameters: [
-                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
-                RuntimeABIParameter(name: "rangeRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Collection",
-            isThrowing: false
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_array_sliceArray_iterable",
-            parameters: [
-                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
-                RuntimeABIParameter(name: "indicesRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Collection",
@@ -1687,6 +1785,27 @@ public extension RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "mapRaw", type: .intptr),
                 RuntimeABIParameter(name: "pairRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection",
+            isThrowing: false
+        ),
+        RuntimeABIFunctionSpec(
+            name: "__kk_mutable_map_withDefault",
+            parameters: [
+                RuntimeABIParameter(name: "mapRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection",
+            isThrowing: false
+        ),
+        RuntimeABIFunctionSpec(
+            name: "__kk_mutable_map_entry_setValue",
+            parameters: [
+                RuntimeABIParameter(name: "entryRaw", type: .intptr),
+                RuntimeABIParameter(name: "value", type: .intptr),
             ],
             returnType: .intptr,
             section: "Collection",

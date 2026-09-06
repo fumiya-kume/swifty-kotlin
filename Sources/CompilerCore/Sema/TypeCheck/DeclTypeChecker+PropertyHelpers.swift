@@ -108,11 +108,13 @@ extension DeclTypeChecker {
             valueType: result,
             ctx: ctx
         )
+        let getValueExpectedType = result
+            ?? mutableMapDelegateValueType(delegateType, sema: sema, interner: interner)
         let getValueResolution = resolvePropertyDelegateFunction(
             named: getValueName,
             receiverType: delegateType,
             argumentTypes: Array(delegateAccessorArgs.prefix(2)),
-            expectedType: result,
+            expectedType: getValueExpectedType,
             range: delegateCallRange,
             ctx: ctx
         )
@@ -137,7 +139,12 @@ extension DeclTypeChecker {
         {
             sema.symbols.setDelegateGetValueSymbol(getValueSymbol, for: symbol)
             if result == nil {
-                result = getValueSig.returnType
+                // MutableMap's source-backed getValue uses the exact value type
+                // from its receiver. The `V1 : V` return type is represented as a
+                // separate source type parameter, so recover that bound here when
+                // projected receiver lookup cannot substitute it automatically.
+                result = mutableMapDelegateValueType(delegateType, sema: sema, interner: interner)
+                    ?? getValueSig.returnType
             }
             getValueResolved = true
         }
@@ -452,13 +459,126 @@ extension DeclTypeChecker {
         for candidate in scopeCandidates + bundledCandidates where seen.insert(candidate).inserted {
             extensionCandidates.append(candidate)
         }
-        if let extensionResolution = resolve(extensionCandidates) {
+        // A MutableMap delegate has both the Map and MutableMap getValue
+        // extensions in an imported stdlib artifact. Prefer the more specific
+        // MutableMap receiver before overload resolution, otherwise the two
+        // projected signatures are reported as ambiguous.
+        var preferredExtensionCandidates = extensionCandidates
+        if name == interner.intern("getValue"),
+           argumentTypes.count == 2,
+           isMutableMapDelegateType(receiverType, sema: sema, interner: interner)
+        {
+            let mutableMapFQName = [
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("MutableMap"),
+            ]
+            let mutableMapCandidates = extensionCandidates.filter { candidate in
+                guard let signature = sema.symbols.functionSignature(for: candidate),
+                      let declaredReceiver = signature.receiverType,
+                      let receiverSymbol = driver.helpers.nominalSymbol(of: declaredReceiver, types: sema.types),
+                      let receiverInfo = sema.symbols.symbol(receiverSymbol)
+                else {
+                    return false
+                }
+                return receiverInfo.fqName == mutableMapFQName
+            }
+            if !mutableMapCandidates.isEmpty {
+                preferredExtensionCandidates = mutableMapCandidates
+            }
+        }
+        if let extensionResolution = resolve(preferredExtensionCandidates) {
             if let diagnostic = extensionResolution.diagnostic {
                 ctx.semaCtx.diagnostics.emit(diagnostic)
             }
             return extensionResolution
         }
+
+        // MutableMap's source-backed delegated accessors are top-level bundled
+        // extensions whose projected receiver is not exposed by the generic
+        // importless bundled-extension fallback. Recover only these declarations
+        // after ordinary member and visible-extension resolution has been attempted.
+        if isMutableMapDelegateType(receiverType, sema: sema, interner: interner),
+           let mutableMapResolution = resolve(
+               bundledMutableMapDelegateCandidates(
+                   named: name,
+                   sema: sema,
+                   interner: interner
+               )
+           )
+        {
+            if let diagnostic = mutableMapResolution.diagnostic {
+                ctx.semaCtx.diagnostics.emit(diagnostic)
+            }
+            return mutableMapResolution
+        }
         return nil
+    }
+
+    private func isMutableMapDelegateType(
+        _ type: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(type)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return symbol.fqName == [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("MutableMap"),
+        ]
+    }
+
+    private func mutableMapDelegateValueType(
+        _ type: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID? {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(type)),
+              classType.args.count == 2,
+              let symbol = sema.symbols.symbol(classType.classSymbol),
+              symbol.fqName == [
+                  interner.intern("kotlin"),
+                  interner.intern("collections"),
+                  interner.intern("MutableMap"),
+              ]
+        else {
+            return nil
+        }
+        return switch classType.args[1] {
+        case let .invariant(value), let .out(value), let .in(value): value
+        case .star: nil
+        }
+    }
+
+    private func bundledMutableMapDelegateCandidates(
+        named: InternedString,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> [SymbolID] {
+        sema.symbols.lookupByShortName(named).filter { candidateID in
+            guard let symbol = sema.symbols.symbol(candidateID),
+                  symbol.kind == .function,
+                  symbol.flags.contains(.operatorFunction),
+                  sema.symbols.isSourceBackedSymbol(candidateID),
+                  let signature = sema.symbols.functionSignature(for: candidateID),
+                  let receiverType = signature.receiverType,
+                  case let .classType(receiverClass) = sema.types.kind(of:
+                      sema.types.makeNonNullable(receiverType)
+                  ),
+                  let receiverSymbol = sema.symbols.symbol(receiverClass.classSymbol)
+            else {
+                return false
+            }
+            return receiverSymbol.fqName == [
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("MutableMap"),
+            ]
+        }
     }
 
     private func propertyDelegateAccessorArgumentTypes(

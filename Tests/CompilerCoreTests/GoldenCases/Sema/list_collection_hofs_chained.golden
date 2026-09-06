@@ -2,7 +2,7 @@ symbol fq=__local_0.result kind=local vis=private flags=_ type=kotlin.collection
 symbol fq=__local_1.groups kind=local vis=private flags=_ type=kotlin.collections.Map<Int, Int>
 symbol fq=chained kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<Int>] ret=Unit
 symbol fq=chained.$0.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Map.Entry kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Map.Entry.value kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.V
@@ -20,7 +20,7 @@ expr e@3:31 name(i) type=Int ref=s-1
 expr e@3:35 name(v) type=Int ref=s-2
 expr e@3:31#1 binary(add) lhs=e@3:31 rhs=e@3:35 type=Int
 expr e@3:21 lambda params=[i,v] body=e@3:31#1 label=mapIndexed type=(Int, Int) -> Any
-expr e@2:18#2 memberCall recv=e@2:18#1 callee=mapIndexed args=[_:e@3:21] type=kotlin.collections.List<Int> call=kotlin.collections.mapIndexed#13 targs=[Int,Int]
+expr e@2:18#2 memberCall recv=e@2:18#1 callee=mapIndexed args=[_:e@3:21] type=kotlin.collections.List<Int> call=kotlin.collections.mapIndexed#14 targs=[Int,Int]
 expr e@4:27 name(it) type=Int ref=s-3
 expr e@4:31 name(it) type=Int ref=s-3
 expr e@4:36 int(2) type=Int

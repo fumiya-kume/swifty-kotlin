@@ -5,7 +5,7 @@ symbol fq=__local_3.byKey kind=local vis=private flags=_ type=kotlin.collections
 symbol fq=__local_4.withVal kind=local vis=private flags=_ type=kotlin.collections.Map<String, Int>
 symbol fq=__local_5.grouped kind=local vis=private flags=_ type=kotlin.collections.Map<Int, kotlin.collections.List<String>>
 symbol fq=kotlin.Pair kind=class vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
 symbol fq=transform kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=Unit
 symbol fq=transform.$0.values kind=valueParameter vis=private flags=_
@@ -16,7 +16,7 @@ expr e@2:56 name(index) type=Int ref=s-0
 expr e@2:64 name(item) type=String ref=s-1
 expr e@2:54 stringTemplate[expr(e@2:56),lit(: ),expr(e@2:64)] type=String
 expr e@2:37 lambda params=[index,item] body=e@2:54 label=mapIndexed type=(Int, String) -> Any
-expr e@2:19#1 memberCall recv=e@2:19 callee=mapIndexed args=[_:e@2:37] type=kotlin.collections.List<String> call=kotlin.collections.mapIndexed#13 targs=[String,String]
+expr e@2:19#1 memberCall recv=e@2:19 callee=mapIndexed args=[_:e@2:37] type=kotlin.collections.List<String> call=kotlin.collections.mapIndexed#14 targs=[String,String]
 expr e@2:5 localDecl indexed mutable=0 type=_ init=e@2:19#1 type=Unit ref=__local_0.indexed
 expr e@3:16 name(values) type=kotlin.collections.List<String> ref=transform.$0.values
 expr e@3:40 name(it) type=String ref=s-2

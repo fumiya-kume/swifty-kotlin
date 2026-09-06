@@ -326,6 +326,16 @@ package final class MetadataEncoder {
                 if symbol.kind == .package {
                     return !symbols.annotations(for: symbol.id).isEmpty
                 }
+                // KSP-911: ULongArray(LongArray) is an internal storage
+                // constructor. Keep it in the stdlib object for source-backed
+                // implementation calls, but do not export it to consumers.
+                if includeNonPublic,
+                   symbol.kind == .function,
+                   symbol.fqName.map({ interner.resolve($0) }) == ["kotlin", "ULongArray"],
+                   symbols.functionSignature(for: symbol.id)?.parameterTypes.count == 1
+                {
+                    return false
+                }
                 // KSP-908: UIntArray(IntArray) is an internal storage
                 // constructor. It must remain in the stdlib object for
                 // source-backed implementation calls, but must not be
@@ -407,19 +417,6 @@ package final class MetadataEncoder {
         mangler: NameMangler,
         interner: StringInterner
     ) -> (selfSignature: String?, supertypeSignatures: [String]) {
-        let typeParameterSymbols = types.nominalTypeParameterSymbols(for: symbol.id)
-        guard !typeParameterSymbols.isEmpty else {
-            return (nil, [])
-        }
-        let variances = types.nominalTypeParameterVariances(for: symbol.id)
-        let selfArgs: [TypeArg] = typeParameterSymbols.enumerated().map { index, parameterSymbol in
-            let parameterType = types.make(.typeParam(TypeParamType(symbol: parameterSymbol, nullability: .nonNull)))
-            switch index < variances.count ? variances[index] : .invariant {
-            case .out: return .out(parameterType)
-            case .in: return .in(parameterType)
-            case .invariant: return .invariant(parameterType)
-            }
-        }
         let encode: ([TypeArg], SymbolID) -> String = { args, classSymbol in
             self.metadataTypeSignature(
                 types.make(.classType(ClassType(classSymbol: classSymbol, args: args, nullability: .nonNull))),
@@ -429,12 +426,28 @@ package final class MetadataEncoder {
                 nameResolver: { interner.resolve($0) }
             )
         }
+        let typeParameterSymbols = types.nominalTypeParameterSymbols(for: symbol.id)
+        let selfSignature: String?
+        if !typeParameterSymbols.isEmpty {
+            let variances = types.nominalTypeParameterVariances(for: symbol.id)
+            let selfArgs: [TypeArg] = typeParameterSymbols.enumerated().map { index, parameterSymbol in
+                let parameterType = types.make(.typeParam(TypeParamType(symbol: parameterSymbol, nullability: .nonNull)))
+                switch index < variances.count ? variances[index] : .invariant {
+                case .out: return .out(parameterType)
+                case .in: return .in(parameterType)
+                case .invariant: return .invariant(parameterType)
+                }
+            }
+            selfSignature = encode(selfArgs, symbol.id)
+        } else {
+            selfSignature = nil
+        }
         let supertypeSignatures: [String] = symbols.directSupertypes(for: symbol.id).compactMap { superSymbol in
             let superArgs = types.nominalSupertypeTypeArgs(for: symbol.id, supertype: superSymbol)
             guard !superArgs.isEmpty else { return nil }
             return encode(superArgs, superSymbol)
         }
-        return (encode(selfArgs, symbol.id), supertypeSignatures)
+        return (selfSignature, supertypeSignatures)
     }
 
     private func metadataTypeSignature(
@@ -1397,6 +1410,19 @@ package final class MetadataEncoder {
         types: TypeSystem? = nil
     ) -> String {
         let pairs: [(String, Int)] = slots.compactMap { symbolID, slot in
+            if let decoded = SyntheticSymbolScheme.decodedPropertyAccessor(symbolID),
+               let property = symbols.symbol(decoded.property)
+            {
+                let fqName = property.fqName.map { interner.resolve($0) }.joined(separator: ".")
+                guard !fqName.isEmpty else { return nil }
+                let prefix = decoded.kind == .getter ? "pget:" : "pset:"
+                return ("\(prefix)\(fqName)", slot)
+            }
+            if let property = symbols.symbol(symbolID), property.kind == .property {
+                let fqName = property.fqName.map { interner.resolve($0) }.joined(separator: ".")
+                guard !fqName.isEmpty else { return nil }
+                return ("pget:\(fqName)", slot)
+            }
             guard let symbol = symbols.symbol(symbolID), symbol.kind == .function else {
                 return nil
             }

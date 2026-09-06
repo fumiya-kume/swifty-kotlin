@@ -251,8 +251,8 @@ fiction audit ダンプを起点に棚卸し）:
 | `HeaderHelpers+SyntheticAtomicNativePtrStubs.swift` | 136 | (b) | `AtomicNativePtr`; built on shared NativeConcurrent helpers, may reclassify independently of the rest of the Atomic family (KSP-695 split). |
 | `HeaderHelpers+SyntheticAtomicPackageStubs.swift` | 148 | (b) | `kotlin.concurrent.atomics` package scaffolding: `@ExperimentalAtomicApi`, `MemoryOrder` enum, type aliases (KSP-695 split). |
 | `HeaderHelpers+SyntheticAtomicRegistrationHelpers.swift` | 325 | (b) | Shared constructor/member/property registration primitives used across the scalar and array families (KSP-695 split). |
-| `HeaderHelpers+SyntheticAtomicScalarStubs.swift` | 305 | (b) | `AtomicInt`/`AtomicLong`/`AtomicBoolean`/`AtomicReference<T>`, plus `java.util.concurrent.atomic.AtomicInteger` — a live, tested direct-construction surface sharing the `kk_atomic_int_*` box, not a target-out cleanup pocket (KSP-695 split; see `HeaderHelpers+SyntheticAtomicStubs.swift`'s classification note history below). |
-| `HeaderHelpers+SyntheticAtomicStubs.swift` | 313 | (b) | `AtomicMigration.kt` owner; entry-point/orchestration only after KSP-695 split the registration logic into the five sibling files above. The originally-suspected "Java atomic interop cleanup pocket" (`java.util.concurrent.atomic.AtomicInteger`) turned out to be live (codegen test + non-skipped diff case + `AtomicMigration.kt` extension receiver), not a deletion candidate; the only confirmed dead code was an orphaned helper (`registerAtomicExtensionFunction`, zero call sites since CLEANUP-STUB-100 deleted its callers) which KSP-695 removed. |
+| `HeaderHelpers+SyntheticAtomicScalarStubs.swift` | 306 | (b) | `AtomicInt`/`AtomicLong`/`AtomicBoolean`/`AtomicReference<T>`, plus `java.util.concurrent.atomic.AtomicInteger` — a live, tested direct-construction surface sharing the `kk_atomic_int_create` box and retained Java compatibility members, not a target-out cleanup pocket (KSP-695 split; KSP-696 scalar public wrappers are source-backed). |
+| `HeaderHelpers+SyntheticAtomicResidualRegistry.swift` | 295 | (b) | Residual Atomic orchestration after KSP-696 removed `HeaderHelpers+SyntheticAtomicStubs.swift`: arrays, package metadata/type aliases, NativePtr, Java compatibility, and shared synthetic nominal shells remain registered here. |
 | `HeaderHelpers+SyntheticBase64Stubs.swift` | 830 | (b) | MIGRATION-ENC owner; Kotlin source exists but public stubs still dispatch directly. |
 | `HeaderHelpers+SyntheticBuilderDSLStubs.swift` | 414 | (b) | M3 collection builder source migration. |
 | `HeaderHelpers+SyntheticCInteropStubs.swift` | 3065 | (c) | Kotlin/Native interop compiler/runtime surface; table-driven residual candidate. |
@@ -277,7 +277,7 @@ fiction audit ダンプを起点に棚卸し）:
 | `HeaderHelpers+SyntheticExperimentalTimeStubs.swift` | 463 | (c) | KSP-712 reclassified: `ExperimentalTime` metadata plus TimeSource/TimeMark nominal anchors and fallback dispatch remain compiler/runtime surfaces; public operations are bundled Kotlin source. |
 | `HeaderHelpers+SyntheticFileTreeWalkStubs.swift` | 291 | (a) | JVM file-walk compatibility; cleanup candidate. |
 | `HeaderHelpers+SyntheticFileWalkDirectionStubs.swift` | 113 | (a) | ~~JVM file-walk support enum; cleanup with file-walk surface.~~ **削除済み** (CLEANUP-STUB-109, 2026-08-14)。 |
-| `HeaderHelpers+SyntheticFilesUtilityStubs.swift` | 520 | (a) | `java.nio.file` / files utility surface; target-out cleanup. |
+| `HeaderHelpers+SyntheticFilesUtilityStubs.swift` | ~~520~~ | ~~(a)~~ | ~~`java.nio.file` / files utility surface; target-out cleanup.~~ **削除済み** (CLEANUP-STUB-110, 2026-09-03)。`FileTime` の Path 共有部分は保持。 |
 | `HeaderHelpers+SyntheticFunctionTypeStubs.swift` | 523 | (c) | Function interfaces are compiler-known. |
 | `HeaderHelpers+SyntheticGroupingStubs.swift` | 373 | (b) | M3 grouping/HOF source migration. |
 | `HeaderHelpers+SyntheticHexFormatStubs.swift` | 589 | (b) | MIGRATION-ENC owner; source exists but not fully wired. |
@@ -485,8 +485,8 @@ should follow the same shape:
 2. Split mixed files before touching their residual parts:
    `SyntheticExperimentalMarkerStubs`, `SyntheticMetaprogAnnotationHelpers`,
    `SyntheticRandomStubs`, `SyntheticTODOAndIOStubs`.
-   `SyntheticAtomicStubs` split complete (KSP-695): see the five
-   `HeaderHelpers+SyntheticAtomic*.swift` rows above.
+   `SyntheticAtomicStubs` split complete (KSP-695), and its obsolete entrypoint
+   was removed by KSP-696: see the responsibility-specific Atomic rows above.
 3. After RF-STDLIB-003, migrate one narrow (b) slice end-to-end and use it as the
    template for the remaining M1-M17 rows.
 4. Continue RF-STUB-003 residual table migration only on files classified (c); do not table-drive code
@@ -520,8 +520,9 @@ should follow the same shape:
 TODO.md の「23 スタブファイル」も同じく 2026-07-01 時点の値。2026-07-06 の RF-STUB-005（#4544, commit `8e05a7cd6`）で
 `HeaderHelpers+SyntheticCoroutineHelpers.swift`・`HeaderHelpers+SyntheticCoroutinesStubs.swift` 等の分割ファイルが
 `HeaderHelpers+SyntheticCoroutineRegistry.swift`（3552 行、上表で (c) 計上済み）へ統合された。`Mutex`/`Semaphore`/
-`Channel`/`Flow`/`SharedFlow`/`StateFlow` の宣言は現在すべてこの1ファイルに集約されている。`Atomic` 系宣言のみ
-従来どおり `HeaderHelpers+SyntheticAtomicStubs.swift`（2541 行、上表で (b) 計上済み）に分離されている。
+`Channel`/`Flow`/`SharedFlow`/`StateFlow` の宣言は現在すべてこの1ファイルに集約されている。`Atomic` 系宣言は
+`HeaderHelpers+SyntheticAtomic*.swift` の責務別ファイル群へ分離され、KSP-696 で旧オーケストレータ
+`HeaderHelpers+SyntheticAtomicStubs.swift` は削除された。
 **KSP-499 以降が触るスタブファイルはこの2つのみ**（棚卸し時点の分割ファイル群は現存しない）。
 
 #### (c) 残留（`__kk_` 降格のみ）— 118 関数
@@ -609,17 +610,16 @@ Atomic の内訳:
   `Sources/CompilerCore/Stdlib/kotlin/concurrent/AtomicMigration.kt` で Kotlin 化済み。reverse 変種は
   `addAndFetch`/`incrementAndFetch`/`decrementAndFetch` に、`compareAndSet` は `compareAndExchange` に委譲する。
   `AtomicReference` は Kotlin API の契約どおり参照同一性（`===`）で委譲結果を判定する。
-  委譲先の `kk_atomic_{int,long,ref}_{load,store,exchange,incrementAndFetch,decrementAndFetch,addAndFetch,compareAndExchange}` と
-  `kk_atomic_bool_{load,store,exchange,compareAndExchange}` は実質 (c) ブリッジ（`__kk_` 未リネームのみが残タスク）。`kk_atomic_int_*` は
-  `java.util.concurrent.atomic.AtomicInteger` の直接構築サーフェスと同一ボックス/接頭辞を共有するため、これらの
-  ブリッジは Java interop からも参照される＝削除不可。ただし KSP-672 で member-call / indexed access 解決が
+  委譲先の `__kk_atomic_{int,long,ref}_{load,store,exchange,incrementAndFetch,decrementAndFetch,addAndFetch,compareAndExchange}` と
+  `__kk_atomic_bool_{load,store,exchange,compareAndExchange}` は (c) の内部ブリッジ。`kk_atomic_int_create` と
+  `kk_atomic_int_compareAndSet` は `java.util.concurrent.atomic.AtomicInteger` の直接構築サーフェスと共有する互換経路として保持し、
+  scalar core の `__kk_*` 降格とは分離する。ただし KSP-672 で member-call / indexed access 解決が
   bundled 拡張を atomic レシーバに限り解決できるようになったため、これらの bundled 委譲ソースは休眠ではなく
   **live**（重複合成スタブは登録スキップされ、`isRuntimeBackedAtomicSyntheticRetainedOverlap` による保持は廃止）。KSP-688 では
-  `AtomicBoolean`/`AtomicReference` の `compareAndSet` synthetic stub と `kk_atomic_*_compareAndSet` 公開経路を削除し、
-  `compareAndExchange` の CAS コアだけを残した。
-- **未着手**: `compareAndExchange`/`getAndUpdate`/`updateAndGet`（scalar + 配列 `*At` のうち未移行分）。`updateAndGet`/`getAndUpdate` は `while(true)`
-  ループを要するため、`AtomicMigration.kt` のコメントの通り「bundled ソースで Nothing 型無限ループの型検査が通る」まで
-  **ブロック**。`compareAndExchange` 自体はハードウェア CAS 命令への直接ブリッジなので、移行後も (c) `__kk_` 残留になると想定される
+  `AtomicBoolean`/`AtomicReference` の `compareAndSet` synthetic stub と `kk_atomic_bool/ref_compareAndSet` 公開経路を削除し、
+  `compareAndExchange` の CAS コアだけを残した。KSP-696 では scalar 4型の `compareAndExchange`/lambda 更新系も source-backed 化し、
+  旧オーケストレータを削除した。配列 `*At`、NativePtr、package alias、Java互換、hardware CAS/arithmetic coreは残存対象である。
+- **残存**: 配列 `*At` の未移行メンバと、上記の互換・共有基盤。`while(true)` CAS loop の `Nothing` 型付けは KSP-CAP-004 で非回帰を確認済み。
 
 #### 未分類・KSP-499 着手前に個別判断が必要な項目 — 18 関数
 

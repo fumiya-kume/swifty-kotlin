@@ -111,6 +111,14 @@ final class ABILoweringPass: LoweringPass, ParallelLoweringPass {
         // unboxing a raw `DoubleArray` element would corrupt values such as -0.0.
         let genericArrayGetCallee = ctx.interner.intern("kk_array_get")
 
+        // `kk_array_is_empty` returns a boxed Boolean but is emitted for both
+        // generic and primitive arrays without a Sema function signature. Keep
+        // its result on the same ABI normalization path as other erased
+        // collection results so conditions compare the unboxed Boolean.
+        let boxedBooleanReturnCallees: Set<InternedString> = [
+            ctx.interner.intern("kk_array_is_empty"),
+        ]
+
         // __kk_op_rangeUntil backs the `until` infix function (registered in
         // HeaderHelpers+SyntheticRangeProgressionStubs.swift with a scalar
         // Int/Long return type, matching the isRangeExpr duck-typing convention
@@ -309,7 +317,7 @@ final class ABILoweringPass: LoweringPass, ParallelLoweringPass {
                 // ABI-001: For synthetic setter accessor calls whose callee is still
                 // "set", derive the actual runtime store function name from the getter
                 // link registered on the original property symbol (e.g.
-                // kk_atomic_bool_load → kk_atomic_bool_store).
+                // __kk_atomic_bool_load → __kk_atomic_bool_store).
                 let rewrittenCallee: InternedString? = {
                     guard isSyntheticAccessor,
                           let s = callSymbol,
@@ -456,25 +464,36 @@ final class ABILoweringPass: LoweringPass, ParallelLoweringPass {
                     }
                 }
                 // Box the "value" operand of kk_op_is/kk_op_cast/kk_op_safe_cast
-                // whenever it is a concrete primitive. See typeCheckValueCallees above.
+                // whenever it is a concrete primitive or a non-null enum. See
+                // typeCheckValueCallees above. Enum values resolve to Int for their
+                // unboxed representation, but must retain their nominal class ID when
+                // boxed so nominal and interface checks can recognize them.
                 if signature == nil, let types,
                    typeCheckValueCallees.contains(effectiveCallee),
                    let firstArg = boxedArguments.first
                 {
                     let argType = intrinsicArgType(firstArg, arena: module.arena, types: types)
-                    let argKind = argType.map {
-                        resolveValueClassKind(types.kind(of: $0), types: types, symbols: symbols)
+                    let rawArgKind = argType.map { types.kind(of: $0) }
+                    let argKind = rawArgKind.map {
+                        resolveValueClassKind($0, types: types, symbols: symbols)
                     }
                     if let argKind,
                        let boxCallee = boxCalleeForPrimitive(argKind, boxingCalleeTable: boxingCalleeTable)
                     {
-                        boxedArguments[0] = emitNonThrowingCall(
-                            callee: boxCallee,
-                            arg: firstArg,
+                        let boxedResult = module.arena.appendTemporary(type: types.anyType)
+                        emitBoxCallWithValueClassTag(
+                            boxCallee: boxCallee,
+                            value: firstArg,
+                            rawSourceKind: rawArgKind ?? argKind,
+                            result: boxedResult,
                             resultType: types.anyType,
+                            types: types,
+                            symbols: symbols,
+                            interner: ctx.interner,
                             arena: module.arena,
                             into: &newBody
                         )
+                        boxedArguments[0] = boxedResult
                     }
                 }
 
@@ -504,6 +523,7 @@ final class ABILoweringPass: LoweringPass, ParallelLoweringPass {
                             symbols: symbols,
                             interner: ctx.interner
                         ))
+                    || boxedBooleanReturnCallees.contains(effectiveCallee)
                 if effectiveUnbox == nil,
                    needsErasedResultUnbox,
                    let result, let types,

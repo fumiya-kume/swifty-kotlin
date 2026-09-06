@@ -5,4 +5,4 @@ symbol fq=kotlin.collections.Iterator kind=interface vis=public flags=synthetic
 file fstdlib_kotlin_collections_Iterator_n package=_
   decl identity fun identity sym=identity
 expr e@2:5 name(iterator) type=kotlin.collections.Iterator<identity.$0.T> ref=identity.$0.iterator
-expr e@2:5#1 memberCall recv=e@2:5 callee=iterator args=[] type=kotlin.collections.Iterator<identity.$0.T> call=kotlin.collections.iterator targs=[identity.$0.T]
+expr e@2:5#1 memberCall recv=e@2:5 callee=iterator args=[] type=kotlin.collections.Iterator<identity.$0.T> call=kotlin.collections.iterator#0 targs=[identity.$0.T]

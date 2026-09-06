@@ -117,10 +117,10 @@ extension LibraryMetadataImportIntegrationTests {
                 fqName: "ext.Box",
                 declaredFieldCount: 1,
                 declaredInstanceSizeWords: 3,
-                declaredVtableSize: 1,
+                declaredVtableSize: 2,
                 declaredItableSize: 1,
                 fieldOffsets: "ext.Box.value@2",
-                vtableSlots: "ext.Box.get#0#0@0",
+                vtableSlots: "v2:ext.Box.get#0#0@0|property:ext.Box.value#0#0#I@1",
                 itableSlots: "ext.Face@0"
             ),
             MetadataRecord(kind: .function, mangledName: "_", fqName: "ext.Box.get", typeSignature: "F0<I>"),
@@ -151,9 +151,58 @@ extension LibraryMetadataImportIntegrationTests {
 
                 #expect(layout.fieldOffsets[valueSymbol] == 2)
                 #expect(layout.vtableSlots[getSymbol] == 0)
+                #expect(
+                    layout.vtableSlots[SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: valueSymbol)] == 1
+                )
                 #expect(layout.itableSlots[faceSymbol] == 0)
-                #expect(layout.vtableSize == 1)
+                #expect(layout.vtableSize == 2)
                 #expect(layout.itableSize == 1)
+            }
+        }
+    }
+
+    @Test
+    func testLibraryImportRestoresPropertyAccessorVtableSlots() throws {
+        let records = [
+            MetadataRecord(
+                kind: .class,
+                mangledName: "_",
+                fqName: "ext.AbstractBox",
+                declaredVtableSize: 1,
+                vtableSlots: "v2:pget:ext.AbstractBox.value@0"
+            ),
+            MetadataRecord(
+                kind: .property,
+                mangledName: "_",
+                fqName: "ext.AbstractBox.value",
+                typeSignature: "I"
+            ),
+        ]
+        try withKklibFixture(moduleName: "ExtPropertyLayout", records: records) { libDirPath in
+            try withTemporaryFile(contents: "fun main() = 0") { path in
+                let ctx = makeCompilationContext(
+                    inputs: [path],
+                    moduleName: "PropertyLayoutImport",
+                    emit: .kirDump,
+                    searchPaths: [libDirPath]
+                )
+                try runToKIR(ctx)
+
+                let sema = try #require(ctx.sema)
+                let ext = ctx.interner.intern("ext")
+                let abstractBox = ctx.interner.intern("AbstractBox")
+                let value = ctx.interner.intern("value")
+                let classSymbol = try #require(
+                    sema.symbols.lookupAll(fqName: [ext, abstractBox]).first
+                )
+                let propertySymbol = try #require(
+                    sema.symbols.lookupAll(fqName: [ext, abstractBox, value]).first
+                )
+                let layout = try #require(sema.symbols.nominalLayout(for: classSymbol))
+                let getterSymbol = SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: propertySymbol)
+
+                #expect(layout.vtableSlots[getterSymbol] == 0)
+                #expect(layout.vtableSize == 1)
             }
         }
     }

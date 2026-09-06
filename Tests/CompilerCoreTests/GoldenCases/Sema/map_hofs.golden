@@ -4,7 +4,7 @@ symbol fq=__destructuring_1.key kind=local vis=private flags=_ type=String
 symbol fq=__destructuring_1.value kind=local vis=private flags=_ type=Int
 symbol fq=__destructuring_2.value kind=local vis=private flags=_ type=Int
 symbol fq=kotlin.Pair kind=class vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Map.Entry kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Map.Entry.key kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.K
@@ -35,7 +35,7 @@ expr e@6:24 name(__destructured_0) type=kotlin.collections.Map.Entry<out String,
 expr e@6:24#1 destructuringDecl names=[key,value] mutable=0 init=e@6:24 type=Unit
 expr e@6:24#2 blockExpr stmts=[e@6:24#1] trailing=e@6:42#2 type=Int
 expr e@6:24#3 lambda params=[__destructured_0] body=e@6:24#2 label=map type=(kotlin.collections.Map.Entry<out String, out Int>) -> Any
-expr e@6:13#1 memberCall recv=e@6:13 callee=map args=[_:e@6:24#3] type=kotlin.collections.List<Int> call=kotlin.collections.map#14 targs=[String,Int,Int]
+expr e@6:13#1 memberCall recv=e@6:13 callee=map args=[_:e@6:24#3] type=kotlin.collections.List<Int> call=kotlin.collections.map#15 targs=[String,Int,Int]
 expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13#1] type=Unit call=kotlin.io.println#1
 expr e@7:13 name(values) type=kotlin.collections.Map<String, Int> ref=render.$0.values
 expr e@7:43 name(value) type=Int ref=__destructuring_2.value

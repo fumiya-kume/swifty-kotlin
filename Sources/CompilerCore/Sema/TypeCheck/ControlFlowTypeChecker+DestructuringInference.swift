@@ -302,12 +302,31 @@ extension ControlFlowTypeChecker {
         // call substituteTypeParameters.
         let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
 
-        // Use the TypeSystem's record of the class's own type-parameter symbols
-        // (e.g. [A, B] for Pair) to match each concrete type arg to a TypeVarID.
-        let classOwnParamSymbols = sema.types.nominalTypeParameterSymbols(for: classType.classSymbol)
+        // Use the TypeSystem's record of the declared receiver's own type-parameter
+        // symbols (e.g. [A, B] for Pair) to match each concrete type arg to a
+        // TypeVarID. Inherited members such as Map.Entry.key are declared on a
+        // supertype, so lift the concrete receiver arguments through the nominal
+        // inheritance edge before building the substitution.
+        let declaredReceiver: (symbol: SymbolID, args: [TypeArg])? = {
+            guard let receiverType = signature.receiverType,
+                  case let .classType(receiverClassType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType))
+            else {
+                return nil
+            }
+            let liftedArgs = sema.types.liftedNominalSupertypeArgs(
+                from: classType.classSymbol,
+                childArgs: classType.args,
+                to: receiverClassType.classSymbol
+            ) ?? classType.args
+            return (receiverClassType.classSymbol, liftedArgs)
+        }()
+        let classOwnParamSymbols = sema.types.nominalTypeParameterSymbols(
+            for: declaredReceiver?.symbol ?? classType.classSymbol
+        )
+        let receiverArgs = declaredReceiver?.args ?? classType.args
 
         var substitution: [TypeVarID: TypeID] = [:]
-        for (index, arg) in classType.args.enumerated() {
+        for (index, arg) in receiverArgs.enumerated() {
             let tpSymbol: SymbolID
             if index < classOwnParamSymbols.count {
                 tpSymbol = classOwnParamSymbols[index]

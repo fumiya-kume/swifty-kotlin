@@ -4,7 +4,7 @@ symbol fq=kotlin.collections.Map.Entry.key kind=function vis=public flags=synthe
 symbol fq=kotlin.collections.Map.Entry.value kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.V
 symbol fq=kotlin.collections.Map.K kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Map.V kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableCollection kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.MutableCollection kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.MutableSet kind=interface vis=public flags=synthetic
@@ -30,14 +30,14 @@ expr e@2:25 name(destination) type=kotlin.collections.MutableList<Any?> ref=mapT
 expr e@2:49 name(entry) type=kotlin.collections.Map.Entry<out String, out String?> ref=s-0
 expr e@2:49#1 memberCall recv=e@2:49 callee=value args=[] type=String? call=kotlin.collections.Map.Entry.value targs=[String,String?]
 expr e@2:38 lambda params=[entry] body=e@2:49#1 label=mapTo type=(kotlin.collections.Map.Entry<out String, out String?>) -> Any?
-expr e@2:12#1 memberCall recv=e@2:12 callee=mapTo args=[_:e@2:25,_:e@2:38] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.mapTo#1 targs=[String,String?,String?,kotlin.collections.MutableList<Any?>]
+expr e@2:12#1 memberCall recv=e@2:12 callee=mapTo args=[_:e@2:25,_:e@2:38] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.mapTo#2 targs=[String,String?,String?,kotlin.collections.MutableList<Any?>]
 expr e@2:5 return value=e@2:12#1 type=Nothing
 expr e@6:12 name(source) type=kotlin.collections.Map<String, String?> ref=mapNotNullToCase.$1.source
 expr e@6:32 name(destination) type=kotlin.collections.MutableSet<Any?> ref=mapNotNullToCase.$1.destination
 expr e@6:56 name(entry) type=kotlin.collections.Map.Entry<out String, out String?> ref=s-1
 expr e@6:56#1 memberCall recv=e@6:56 callee=value args=[] type=String? call=kotlin.collections.Map.Entry.value targs=[String,String?]
 expr e@6:45 lambda params=[entry] body=e@6:56#1 label=mapNotNullTo type=(kotlin.collections.Map.Entry<out String, out String?>) -> Any?
-expr e@6:12#1 memberCall recv=e@6:12 callee=mapNotNullTo args=[_:e@6:32,_:e@6:45] type=kotlin.collections.MutableSet<Any?> call=kotlin.collections.mapNotNullTo#1 targs=[String,String?,String,kotlin.collections.MutableSet<Any?>]
+expr e@6:12#1 memberCall recv=e@6:12 callee=mapNotNullTo args=[_:e@6:32,_:e@6:45] type=kotlin.collections.MutableSet<Any?> call=kotlin.collections.mapNotNullTo#2 targs=[String,String?,String,kotlin.collections.MutableSet<Any?>]
 expr e@6:5 return value=e@6:12#1 type=Nothing
 expr e@10:12 name(source) type=kotlin.collections.Map<String, String?> ref=mapKeysToCase.$0.source
 expr e@10:29 name(destination) type=kotlin.collections.MutableMap<Any?, Any?> ref=mapKeysToCase.$0.destination

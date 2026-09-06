@@ -1,3 +1,4 @@
+@Suppress("DEPRECATION")
 fun main() {
     val d = 3.14
     println(d.toInt())
@@ -15,6 +16,9 @@ fun main() {
     println(l.toInt())
     println(l.toByte())
     println(l.toShort())
+    println(Long.MAX_VALUE.toDouble())
+    println(Long.MAX_VALUE.toInt())
+    println(Long.MIN_VALUE.toInt())
 
     val i = 100
     println(i.toDouble())

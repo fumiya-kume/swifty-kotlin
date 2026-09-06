@@ -90,20 +90,6 @@ public func kk_list_of(_ arrayRaw: Int, _ count: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: elements), typeID: listRuntimeTypeID)
 }
 
-@_cdecl("kk_list_of_not_null")
-public func kk_list_of_not_null(_ arrayRaw: Int, _ count: Int) -> Int {
-    var elements: [Int] = []
-    if count > 0, let array = runtimeArrayBox(from: arrayRaw) {
-        for element in array.elements.prefix(count) {
-            // swiftlint:disable:next for_where
-            if element != runtimeNullSentinelInt {
-                elements.append(element)
-            }
-        }
-    }
-    return registerRuntimeObject(RuntimeListBox(elements: elements), typeID: listRuntimeTypeID)
-}
-
 // STDLIB-410: emptyList<T>() - allocates a fresh empty list each call to avoid
 // aliasing with mutable collection operations (e.g., kk_mutable_list_add).
 @_cdecl("__kk_emptyList")
@@ -191,6 +177,19 @@ public func kk_list_iterator(_ listRaw: Int) -> Int {
         registerListIteratorItable(raw: raw)
         return raw
     }
+    // BUG-231: `listRaw` is none of the native runtime boxes above when it is
+    // a hand-written class implementing List/Set/MutableList/MutableSet
+    // directly (Sema resolves their `iterator()` to this fast-path bridge —
+    // see ControlFlowLowerer.concreteListIteratorFastPath's doc comment —
+    // since List/Set are deliberately excluded from the generic dynamic-
+    // dispatch iterator path). Without this fallback the object's own
+    // `iterator()` override is silently skipped in favor of an iterator over
+    // zero elements. Dispatch through the source `Iterable.iterator()` itable
+    // slot, the same bridge `kk_iterable_iterator`/`kk_range_iterator` use for
+    // the shapes they already handle.
+    if let sourceIterator = runtimeSourceIterableIterator(listRaw) {
+        return sourceIterator
+    }
     let raw = registerRuntimeObject(RuntimeListIteratorBox(elements: []))
     registerListIteratorItable(raw: raw)
     return raw
@@ -230,7 +229,12 @@ public func kk_list_iterator_at(_ listRaw: Int, _ index: Int, _ outThrown: Unsaf
 @_cdecl("kk_list_iterator_hasNext")
 public func kk_list_iterator_hasNext(_ iterRaw: Int) -> Int {
     guard let iter = runtimeListIteratorBox(from: iterRaw) else {
-        return 0
+        // BUG-231: `iterRaw` came from the source-iterator fallback in
+        // `kk_list_iterator` above rather than a native `RuntimeListIteratorBox`
+        // (e.g. the user's `iterator()` returned its own Iterator object, not
+        // one backed by a native list/set). Fall back to the generic
+        // kk_iterator_* dispatcher, which knows how to drive it via itable.
+        return kk_iterator_hasNext(iterRaw)
     }
     return iter.index < iter.elements.count ? 1 : 0
 }
@@ -238,7 +242,8 @@ public func kk_list_iterator_hasNext(_ iterRaw: Int) -> Int {
 @_cdecl("kk_list_iterator_next")
 public func kk_list_iterator_next(_ iterRaw: Int) -> Int {
     guard let iter = runtimeListIteratorBox(from: iterRaw) else {
-        return 0
+        // BUG-231: see kk_list_iterator_hasNext above.
+        return kk_iterator_next(iterRaw)
     }
     guard iter.index < iter.elements.count else {
         return 0
@@ -856,6 +861,16 @@ public func kk_iterable_toMutableSet(_ iterableRaw: Int) -> Int {
         return registerRuntimeObject(RuntimeSetBox(values: runtimeDeduplicatePreservingOrder(values)))
     }
     return registerRuntimeObject(RuntimeSetBox(elements: []))
+}
+
+/// HashSet copy-constructor storage with an independent backing box.
+@_cdecl("__kk_iterable_toHashSet")
+public func kk_iterable_toHashSet(_ iterableRaw: Int) -> Int {
+    let values = runtimeIterableValues(from: iterableRaw) ?? []
+    return registerRuntimeObject(
+        RuntimeSetBox(values: runtimeDeduplicatePreservingOrder(values)),
+        typeID: hashSetRuntimeTypeID
+    )
 }
 
 /// Generic `Iterable<T>.last()` that accepts any collection handle (List, Set, etc.).

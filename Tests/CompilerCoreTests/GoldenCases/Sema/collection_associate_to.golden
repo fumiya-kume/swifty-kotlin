@@ -7,7 +7,7 @@ symbol fq=__local_5.result3 kind=local vis=private flags=_ type=kotlin.collectio
 symbol fq=__local_6.dest4 kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<String>>
 symbol fq=__local_7.result4 kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, kotlin.collections.MutableList<String>>
 symbol fq=kotlin.Pair kind=class vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
 symbol fq=testAssociateByTo kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=Unit

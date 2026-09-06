@@ -68,7 +68,10 @@ extension KIRLoweringDriver {
         if let receiverBinding = ctx.activeImplicitReceiver() {
             body.append(.constValue(result: receiverBinding.exprID, value: .symbolRef(receiverBinding.symbol)))
         }
-        let isSecondary = sema.symbols.symbol(ctorSymbol)?.declSite != classDecl.range
+        let constructorDeclSite = sema.symbols.symbol(ctorSymbol)?.declSite
+        let isSecondary = classDecl.secondaryConstructors.contains { constructor in
+            constructor.range == constructorDeclSite
+        }
         if !isSecondary {
             emitSuperConstructorDelegation(
                 classDecl: classDecl, ctorSymbol: ctorSymbol, ownerSymbol: ownerSymbol,
@@ -137,17 +140,109 @@ extension KIRLoweringDriver {
             ?? sema.symbols
             .lookupAll(fqName: superclassInfo.fqName + [compilationCtx.interner.intern("<init>")])
             .first { $0 != ctorSymbol }
-        guard let superCtorSymbol,
-              sema.symbols.externalLinkName(for: superCtorSymbol)?.isEmpty ?? true,
-              // Synthetic nominal shells may expose a constructor for Sema
-              // compatibility without providing a linkable implementation.
-              !(sema.symbols.symbol(superCtorSymbol)?.flags.contains(.synthetic) ?? false)
-        else {
+        guard let superCtorSymbol else {
+            return
+        }
+
+        let superArgs = classDecl.superTypeEntries.first { !$0.constructorArgs.isEmpty }?.constructorArgs ?? []
+        if !(sema.symbols.externalLinkName(for: superCtorSymbol)?.isEmpty ?? true) {
+            // Runtime-backed Throwable construction returns its own native box,
+            // while a Kotlin subclass already owns the compiler-emitted object.
+            // Initialize that object through the message accessor instead of
+            // discarding it in favor of the factory result.
+            let nullableStringType = sema.types.makeNullable(sema.types.stringType)
+            let nullableThrowableType = sema.types.make(.classType(ClassType(
+                classSymbol: superclassSymbol,
+                args: [],
+                nullability: .nullable
+            )))
+            guard superclassInfo.fqName.map({ compilationCtx.interner.resolve($0) }) == ["kotlin", "Throwable"],
+                  let signature = sema.symbols.functionSignature(for: superCtorSymbol)
+            else {
+                return
+            }
+
+            func setterSymbol(named name: String) -> SymbolID? {
+                sema.symbols.lookupAll(
+                    fqName: superclassInfo.fqName.dropLast() + [compilationCtx.interner.intern(name)]
+                ).first(where: { candidate in
+                    sema.symbols.symbol(candidate)?.kind == .function
+                })
+            }
+
+            func emitSetter(_ symbol: SymbolID, argument: KIRExprID, fallbackName: String) {
+                let resultID = arena.appendTemporary(type: sema.types.unitType)
+                body.append(.call(
+                    symbol: symbol,
+                    callee: compilationCtx.interner.intern(
+                        sema.symbols.externalLinkName(for: symbol) ?? fallbackName
+                    ),
+                    arguments: [receiverID, argument],
+                    result: resultID,
+                    canThrow: false,
+                    thrownResult: nil,
+                    isSuperCall: false
+                ))
+            }
+
+            switch signature.parameterTypes.count {
+            case 0:
+                guard superArgs.isEmpty,
+                      let messageSetter = setterSymbol(named: "__kkThrowableSetMessage")
+                else {
+                    return
+                }
+                let messageID = arena.appendExpr(.null, type: nullableStringType)
+                body.append(.constValue(result: messageID, value: .null))
+                emitSetter(messageSetter, argument: messageID, fallbackName: "__kkThrowableSetMessage")
+            case 1:
+                guard signature.parameterTypes[0] == nullableStringType,
+                      superArgs.count == 1,
+                      let messageSetter = setterSymbol(named: "__kkThrowableSetMessage")
+                else {
+                    return
+                }
+                let messageID = lowerExpr(superArgs[0].expr, shared: shared, emit: &body)
+                emitSetter(messageSetter, argument: messageID, fallbackName: "__kkThrowableSetMessage")
+            case 2:
+                guard signature.parameterTypes[0] == nullableStringType,
+                      signature.parameterTypes[1] == nullableThrowableType,
+                      superArgs.count == 2,
+                      let messageSetter = setterSymbol(named: "__kkThrowableSetMessage"),
+                      let causeSetter = setterSymbol(named: "__kkThrowableSetCause")
+                else {
+                    return
+                }
+                let messageID = lowerExpr(superArgs[0].expr, shared: shared, emit: &body)
+                let causeID = lowerExpr(superArgs[1].expr, shared: shared, emit: &body)
+                emitSetter(messageSetter, argument: messageID, fallbackName: "__kkThrowableSetMessage")
+                emitSetter(causeSetter, argument: causeID, fallbackName: "__kkThrowableSetCause")
+            default:
+                return
+            }
+            return
+        }
+        // Synthetic nominal shells may expose a constructor for Sema
+        // compatibility without providing a linkable implementation.
+        guard !(sema.symbols.symbol(superCtorSymbol)?.flags.contains(.synthetic) ?? false) else {
+            return
+        }
+
+        // HashSet is source-backed while AbstractMutableSet remains a synthetic
+        // surface. Its synthetic protected constructor has no emitted body, so
+        // a generated parent call would leave an unresolved `<init>` symbol.
+        let hashSetFQName = [
+            compilationCtx.interner.intern("kotlin"),
+            compilationCtx.interner.intern("collections"),
+            compilationCtx.interner.intern("HashSet"),
+        ]
+        if sema.symbols.symbol(ownerSymbol)?.fqName == hashSetFQName,
+           sema.symbols.symbol(superCtorSymbol)?.flags.contains(.synthetic) == true
+        {
             return
         }
 
         var argIDs: [KIRExprID] = [receiverID]
-        let superArgs = classDecl.superTypeEntries.first { !$0.constructorArgs.isEmpty }?.constructorArgs ?? []
         for arg in superArgs {
             argIDs.append(lowerExpr(arg.expr, shared: shared, emit: &body))
         }
@@ -911,7 +1006,9 @@ extension KIRLoweringDriver {
                 let arity = Int64(signature.parameterTypes.count)
                 let arityExpr = arena.appendExpr(.intLiteral(arity), type: intType)
                 body.append(.constValue(result: arityExpr, value: .intLiteral(arity)))
-                let returnTypeName = sema.types.renderType(signature.returnType)
+                let returnTypeName = sema.types.displayName(
+                    of: signature.returnType, symbols: sema.symbols, interner: interner
+                )
                 let retTypeInterned = interner.intern(returnTypeName)
                 let retTypeExpr = arena.appendExpr(.stringLiteral(retTypeInterned), type: intType)
                 body.append(.constValue(result: retTypeExpr, value: .stringLiteral(retTypeInterned)))
@@ -947,7 +1044,9 @@ extension KIRLoweringDriver {
                 body.append(.constValue(result: propNameExpr, value: .stringLiteral(propNameInterned)))
                 let propTypeName: String
                 if let propTypeID = sema.symbols.propertyType(for: childID) {
-                    propTypeName = sema.types.renderType(propTypeID)
+                    propTypeName = sema.types.displayName(
+                        of: propTypeID, symbols: sema.symbols, interner: interner
+                    )
                 } else {
                     propTypeName = "kotlin.Any"
                 }
