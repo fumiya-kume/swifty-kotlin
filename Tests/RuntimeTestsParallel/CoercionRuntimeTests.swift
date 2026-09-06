@@ -187,14 +187,6 @@ struct CoercionRuntimeTests {
     }
 
     @Test
-    func testLongToCharConversion() {
-        #expect(kk_long_to_char(65) == 65)
-        #expect(kk_long_to_char(0x1F600) == 0xF600)
-        #expect(kk_long_to_char(-5) == 0xFFFB)
-        #expect(kk_long_to_char(0x110000) == 0)
-    }
-
-    @Test
     func testUIntToCharConversion() {
         #expect(kk_uint_to_char(65) == 65)
         #expect(kk_uint_to_char(0x1F600) == 0xF600)

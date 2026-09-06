@@ -1,6 +1,9 @@
 import RuntimeABI
 
-/// Synthetic stdlib stubs split from `HeaderHelpers+SyntheticComparableAndCollectionStubs.swift`:
+// KSP-697: List shell registration remains only as a compatibility fallback;
+// the bundled nominal declaration is now Kotlin source-backed.
+
+/// Synthetic stdlib residuals retained after the KSP-697 nominal shell migration:
 /// List<E> interface and read-only member registrations (iterators, transform, aggregate, conversion).
 ///
 /// Split out to isolate merge conflicts between parallel stdlib PRs adding new
@@ -468,10 +471,12 @@ extension DataFlowSemaPhase {
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,
-        kotlinCollectionsPkg: [InternedString]
+        kotlinCollectionsPkg: [InternedString],
+        bundledIndex: BundledDeclarationIndex? = nil
     ) -> SymbolID {
         let mutableListIteratorName = interner.intern("MutableListIterator")
         let mutableListIteratorFQName = kotlinCollectionsPkg + [mutableListIteratorName]
+        let activeBundledIndex = bundledIndex ?? BundledSyntheticStubRegistration.bundledIndex
         // STDLIB-SHARED-014: MutableListIterator may have been imported as a
         // synthetic nominal anchor with missing members.
         var mutableListIteratorSymbol: SymbolID
@@ -535,7 +540,9 @@ extension DataFlowSemaPhase {
         func registerMutationMember(name: String) {
             let memberName = interner.intern(name)
             let memberFQName = mutableListIteratorFQName + [memberName]
-            guard symbols.lookup(fqName: memberFQName) == nil else { return }
+            guard symbols.lookup(fqName: memberFQName) == nil,
+                  !activeBundledIndex.contains(owner: mutableListIteratorFQName, name: memberName, arity: 1)
+            else { return }
             let memberSymbol = symbols.define(
                 kind: .function,
                 name: memberName,
@@ -571,6 +578,21 @@ extension DataFlowSemaPhase {
         }
 
         func registerRemoveMember() {
+            // BUG-232: `MutableIterator.remove` is already declared (and, for a
+            // native RuntimeListIteratorBox, itable-wired) on
+            // kotlin.collections.MutableIterator, one of MutableListIterator's
+            // direct supertypes set above. Redeclaring it here a second time,
+            // directly on MutableListIterator, shadowed that inherited member
+            // for any MutableListIterator-typed call site (member lookup
+            // prefers the closer declaration): the call resolved to this
+            // synthetic duplicate instead, which never round-trips through a
+            // stdlib-only build (nothing exercises it while compiling just the
+            // bundled sources, so it is missing from imported kklib metadata)
+            // and so silently no-ops instead of invoking `remove()`. Only
+            // synthesize a stand-in when MutableIterator itself could not be
+            // resolved (no bundled/imported source at all), so `.remove()` is
+            // not left completely unresolvable in that narrow fallback case.
+            guard mutableIteratorSymbol == nil else { return }
             let memberName = interner.intern("remove")
             let memberFQName = mutableListIteratorFQName + [memberName]
             guard symbols.lookup(fqName: memberFQName) == nil else { return }
