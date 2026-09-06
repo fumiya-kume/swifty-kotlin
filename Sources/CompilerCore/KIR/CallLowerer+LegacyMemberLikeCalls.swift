@@ -793,18 +793,25 @@ extension CallLowerer {
 
         let anyFallbackReceiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
         let nonNullAnyFallbackReceiverType = sema.types.makeNonNullable(anyFallbackReceiverType)
-        let allowsAnyFallback: Bool = switch sema.types.kind(of: nonNullAnyFallbackReceiverType) {
-        case .stringStruct:
-            false
-        case .primitive:
+        let isKClassReceiver = isKClassReceiverType(
+            anyFallbackReceiverType, sema: sema, interner: interner
+        )
+        let allowsAnyFallback: Bool = if isKClassReceiver {
             true
-        case .typeParam:
-            // All type parameters have an implicit upper bound of Any? in Kotlin,
-            // so Any methods (toString, hashCode, equals) are always available on
-            // type parameter receivers (STDLIB-GEN-055).
-            true
-        default:
-            nonNullAnyFallbackReceiverType == sema.types.anyType
+        } else {
+            switch sema.types.kind(of: nonNullAnyFallbackReceiverType) {
+            case .stringStruct:
+                false
+            case .primitive:
+                true
+            case .typeParam:
+                // All type parameters have an implicit upper bound of Any? in Kotlin,
+                // so Any methods (toString, hashCode, equals) are always available on
+                // type parameter receivers (STDLIB-GEN-055).
+                true
+            default:
+                nonNullAnyFallbackReceiverType == sema.types.anyType
+            }
         }
         // Any.toString(): String — use the member-dispatch bridge so a
         // Throwable override remains visible after erasure to Any. Keep the

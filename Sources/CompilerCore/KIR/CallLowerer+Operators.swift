@@ -79,6 +79,30 @@ extension CallLowerer {
             instructions: &instructions
         )
         let result = arena.appendTemporary(type: boundType)
+        let isKClassEquality = (op == .equal || op == .notEqual)
+            && (
+                isKClassReceiverType(
+                    sema.bindings.exprTypes[lhs] ?? sema.types.anyType,
+                    sema: sema,
+                    interner: interner
+                )
+                || isKClassReceiverType(
+                    sema.bindings.exprTypes[rhs] ?? sema.types.anyType,
+                    sema: sema,
+                    interner: interner
+                )
+            )
+        if isKClassEquality {
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern(op == .equal ? "kk_structural_eq" : "kk_structural_ne"),
+                arguments: [lhsID, rhsID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        }
         // Detect whether this is a compareTo-desugared comparison operator.
         // If so, the call binding targets compareTo (returns Int) and we must
         // wrap the result with a comparison against 0 to produce Bool.
