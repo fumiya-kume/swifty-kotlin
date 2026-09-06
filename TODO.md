@@ -51,9 +51,36 @@
 
 > 主な順序: CALL-001 → 002 → 003 → 004 → 005 → 006。CALL-007は002後に分岐でき、007 → 008 → 009 → 010 → 011 → 012 → 013 → 014 → 015。014はSTATE-009、015は006も待つ。Builder側とpolicy側で lookup / dispatcher / test の編集が重なる場合は直列化する。API群単位で不要なrewriteと対応lookupを一緒に減らし、別の巨大な名前allowlistへ移し替えない。
 
-- [ ] RF-LOWER-CALL-001: Builder DSL の現行経路と削除前提を回帰テストにする（前提: なし）
+- [x] RF-LOWER-CALL-001: Builder DSL の現行経路と削除前提を回帰テストにする（前提: なし）
   - 対象: Builder DSL の既存 Core / Backend tests、`CollectionBuilders.kt` を利用する最小入力。`buildList` / `buildSet` / `buildMap` のcapacity有無、source / artifact、ユーザー同名関数を確認し、必要な `--no-stdlib` fallback と `symbol: nil` の手組みKIRを区別する。KSP-697の残存stub・`__kk_build_*` のemit元も照合する。
   - 完了条件: 正しい呼び出し先・実行結果・負のcapacity・builderから漏れたreceiverのfreezeを既存テストと対応付け、不足分だけ追加する。旧変換テストだけを根拠に製品経路が必要／不要と判定しない。削除可能な経路と未解決の前提を本項の完了メモに残す。
+  - 完了根拠（現行経路の実測。製品コードは無変更、テスト2ファイル追加のみ）:
+    - `CollectionLiteralLoweringPass` は `LoweringPhase.swift:28` で `InlineLoweringPass`（同:40）より前に走る。`buildList` はまだ未展開の `.call` なので、rewrite 判定 `isStdlibBuilderDSLCall`（`+PreScan.swift:36`）は構造的に load-bearing であり「inline が先に潰すから死んでいる」わけではない。
+    - source 経路（bundled stdlib をソース同時コンパイル）: 6オーバーロード（3種 × capacity有無）すべて rewrite されず、`CollectionBuilders.kt` の `__kk_builder_{list,set,map}_{new,freeze}` に落ちる。
+    - artifact 経路（`.kklib` 経由）: 同上。LLVM IR に `__kk_build_*` は1件も現れない。
+    - `--no-stdlib`: `buildList` だけが `HeaderHelpers+SyntheticBuilderDSLStubs.swift` の残存 synthetic stub に解決し、`.synthetic` 分岐経由で `__kk_build_list` / `__kk_build_list_with_capacity` へ rewrite される。`buildSet` / `buildMap` は `KSWIFTK-SEMA-0023` で未解決（stub が無い）。
+    - `symbol: nil` の手組みKIR: 既存 `CollectionLiteralLoweringTests` 専用の形。`Driver.swift:182` が phase ごとに `hasError` で break するため、未解決呼び出しが Lowering に到達する製品経路は無い。
+  - `isStdlibBuilderDSLCall` の分岐別到達性:
+    - `guard let symbol else { return true }` → 製品到達なし。source の `.call` は常に symbol を持ち（KIR dump が `symbol=buildList`）、`CallLowerer.swift` の他の `symbol: nil` 生成箇所（145 / 855 / 962 / 1346 行）はいずれも固定の `kk_*` / `__kk_*` ランタイム名を emit するので、builder 名で nil symbol になる経路が無い。既存6ケースはすべてこの分岐だけを踏んでいる。
+    - `.synthetic` → true → `--no-stdlib` の `buildList` のみ。**唯一の実利用者**。
+    - `externalLinkName?.hasPrefix("kk_build_")` → 恒偽。実名は `__kk_build_list_with_capacity` で prefix が一致せず、かつ該当シンボルは直前の `.synthetic` で先に true を返す。`kk_`→`__kk_` 降格の取り残し。
+    - `isSourceBackedStdlibBuilderDSLCall` → 全分岐 false（CALL-003 の対象）。
+  - `__kk_build_*` の emit / 参照元（製品側4箇所）: `+LookupTables+BuilderDSL.swift`（6名の intern）→ `+CallRewriteFactories.swift:504-541` の rewrite、`HeaderHelpers+SyntheticBuilderDSLStubs.swift`（`__kk_build_list_with_capacity` の externalLinkName 1件）、`RuntimeABISpec+Collection.swift:1287-1340`（6エントリ）、`Sources/Runtime/RuntimeBuilderDSL.swift`（6 `@_cdecl`）。
+  - KSP-697 との照合: `CollectionBuilders.kt` は capacity オーバーロードを含め Kotlin 実装済みで、stdlib 同梱時は `bundledIndex.contains` により stub 登録自体がスキップされる（新テストで synthetic overload 0件を固定）。KSP-697 の残作業は実質「stub ファイルの削除」だけであり、その唯一の消費者が `--no-stdlib` の `buildList`。
+  - 既存テストとの対応付け:
+    - 呼び出し先: `CollectionLiteralLoweringTests` の buildList/buildSet/buildMap 6ケースは `symbol: nil` の手組みKIRで、製品経路の根拠にはならない。`CollectionBuildersKSP950Tests` は source-backed 宣言の存在のみを見る。→ 製品経路の呼び出し先は未固定だったので新規追加。
+    - 実行結果: `CodegenBackendIOHelpersTests.testCodegenBuildListProducesCorrectly` / `CodegenBackendIntegrationTests.testCodegenBuildMapUseRuntimeBuilder` / `testCodegenBuildSetUseRuntimeBuilder`（いずれも capacity なし）、`Scripts/diff_cases/{collection_builders,build_empty_collections}.kt`。
+    - capacity / 負のcapacity / freeze / 例外伝播 / identity: `Scripts/diff_cases/ksp950_build_family.kt` のみ。CI の kotlinc diff ステップは `continue-on-error` なのでブロッキングではなかった。→ capacity・負のcapacity・freeze を Backend 実行テストへ昇格。
+    - ユーザー同名関数: `Scripts/diff_cases/builder_dsl_shadowing.kt` は `Int -> Int` 形のみで、rewrite の `arguments.count == 2` capacity マッピングに当たるレシーバ付きラムダ形が未カバーだった。→ 新規追加。
+  - 追加した不足分: `Tests/CompilerCoreTests/Lowering/BuilderDSLLoweringRoutingTests.swift`（5テスト: source の rewrite 非適用 / 解決先シンボルが全 true 分岐を外すこと + synthetic overload 0件 / ユーザー同名関数のレシーバ付きラムダ形 / `--no-stdlib` の buildList rewrite / `--no-stdlib` の buildSet・buildMap 未解決）、`Tests/CompilerBackendTests/Codegen/CodegenBackendIntegrationTests+CollectionBuilderDSL.swift`（5テスト: source / artifact 双方の LLVM IR 呼び出し先 + capacity・負のcapacity・freeze の実行結果）。artifact 側は `makeArtifactCompilationContext` で `.kklib` を明示指定している — `CompilerOptions.shouldUseDefaultStdlib` はプロセス既定 artifact を `emit == .executable` にしか適用しないため、`allowDefaultStdlibLibrary: true` だけでは IR を見るテストは source 注入になる（実行テストの方は `.executable` なので既定 artifact 経路）。
+  - 削除可能な経路:
+    - CALL-003 の `isSourceBackedStdlibBuilderDSLCall` は恒偽で、削除しても製品挙動は不変。`hasPrefix("kk_build_")` 分岐も同じく恒偽で、CALL-002/003 の範囲で一緒に畳める（症状が無いため本PRでは触っていない）。
+    - CALL-005 / CALL-006（`buildSet` / `buildMap`）は製品到達経路がゼロ。rewrite 分岐・lookup 名・`RuntimeABISpec` エントリ・`@_cdecl` まで削除可能。
+  - 未解決の前提:
+    - **CALL-004 は前提未達**。`--no-stdlib` の `buildList` が rewrite の唯一の実利用者で、消すと `buildList<Int> { }` が呼び出し先を失う。KSP-697（stub 削除）を先に済ませるか、`--no-stdlib` で `buildList` を非サポートにすると明示的に決める必要がある。`--no-stdlib` では `buildSet`/`buildMap` が既に未解決なので、`buildList` だけ生きている現状は非対称。
+    - 削除時の副作用: `__kk_build_*` 6件は `RuntimeABISpec+Collection.swift` と `RuntimeBuilderDSL.swift` の `@_cdecl` に登録済み。`Scripts/validate_runtime_abi_links.sh` と `__kk_cdecl_count` メトリクスが反応するので、CALL-004〜006 側で同時に扱う。
+    - 既存 `CollectionLiteralLoweringTests` の6ケースは `symbol: nil` 契約のテストとして本PRでは温存した。source-backed 契約への置換は CALL-004〜006 の担当。
+  - ゲート: `bash Scripts/swift_test.sh` / `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green。`Scripts/loc_report.sh` の変動は `loc_by_directory Tests` の +493 行（追加テスト分）のみで、`HeaderHelpers+Synthetic*` 行数・KIR/Lowering TODO/FIXME 数・`"kk_` リテラル数・`interner.resolve == "..."` 数・`kk_cdecl_count` / `__kk_cdecl_count` はいずれも不変。
 - [ ] RF-LOWER-CALL-002: 未消費の `builderLambdaKinds` 事前走査と引数配線を除去する（前提: CALL-001）
   - 対象: `CollectionLiteralLoweringRegistry.swift`、`+PreScan.swift` の `collectBuilderLambdaKinds` / `scanBuilderLambdaEntries`、`+CallRewrite.swift` / `+CallRewriteFactories.swift` の引数転送。着手時に、辞書が渡されるだけでrewriteの判断に使われないことを再確認する。
   - 完了条件: 未使用と確認できた辞書構築・走査・引数がなくなり、Builder DSL の呼び出し先と出力が不変。`isStdlibBuilderDSLCall` や他のcollection事前走査は削除せず、lookupの一括整理も混ぜない。
