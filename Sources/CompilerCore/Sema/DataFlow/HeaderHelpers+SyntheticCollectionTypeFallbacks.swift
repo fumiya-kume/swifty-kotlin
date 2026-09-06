@@ -311,7 +311,8 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner,
         kotlinCollectionsPkg: [InternedString],
-        collectionInterfaceSymbol: SymbolID
+        collectionInterfaceSymbol: SymbolID,
+        mutableIterableInterfaceSymbol: SymbolID
     ) -> SymbolID {
         let mutableCollectionName = interner.intern("MutableCollection")
         let mutableCollectionFQName = kotlinCollectionsPkg + [mutableCollectionName]
@@ -348,10 +349,26 @@ extension DataFlowSemaPhase {
         )))
         types.setNominalTypeParameterSymbols([typeParamSymbol], for: mutableCollectionSymbol)
         types.setNominalTypeParameterVariances([.invariant], for: mutableCollectionSymbol)
-        symbols.setDirectSupertypes([collectionInterfaceSymbol], for: mutableCollectionSymbol)
-        types.setNominalDirectSupertypes([collectionInterfaceSymbol], for: mutableCollectionSymbol)
+        symbols.setDirectSupertypes(
+            [collectionInterfaceSymbol, mutableIterableInterfaceSymbol],
+            for: mutableCollectionSymbol
+        )
+        types.setNominalDirectSupertypes(
+            [collectionInterfaceSymbol, mutableIterableInterfaceSymbol],
+            for: mutableCollectionSymbol
+        )
         symbols.setSupertypeTypeArgs([.out(typeParamType)], for: mutableCollectionSymbol, supertype: collectionInterfaceSymbol)
         types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: mutableCollectionSymbol, supertype: collectionInterfaceSymbol)
+        symbols.setSupertypeTypeArgs(
+            [.invariant(typeParamType)],
+            for: mutableCollectionSymbol,
+            supertype: mutableIterableInterfaceSymbol
+        )
+        types.setNominalSupertypeTypeArgs(
+            [.invariant(typeParamType)],
+            for: mutableCollectionSymbol,
+            supertype: mutableIterableInterfaceSymbol
+        )
 
         let mutableCollectionType = types.make(.classType(ClassType(
             classSymbol: mutableCollectionSymbol,

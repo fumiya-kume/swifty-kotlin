@@ -56,10 +56,8 @@ struct CollectionLiteralLookupTables {
     var mutableListOfName: InternedString { listLookup.mutableListOfName }
     var arrayListOfName: InternedString { listLookup.arrayListOfName }
     var emptyListName: InternedString { listLookup.emptyListName }
-    var listOfNotNullName: InternedString { listLookup.listOfNotNullName }
     var arrayListName: InternedString { listLookup.arrayListName }
     var kkListOfName: InternedString { listLookup.kkListOfName }
-    var kkListOfNotNullName: InternedString { listLookup.kkListOfNotNullName }
     var kkEmptyListName: InternedString { listLookup.kkEmptyListName }
     var kkListSizeName: InternedString { listLookup.kkListSizeName }
     var kkListGetName: InternedString { listLookup.kkListGetName }
@@ -152,6 +150,8 @@ struct CollectionLiteralLookupTables {
     var kkSetIsEmptyName: InternedString { setLookup.kkSetIsEmptyName }
     var kkSetToStringName: InternedString { setLookup.kkSetToStringName }
     var kkIterableToMutableSetName: InternedString { setLookup.kkIterableToMutableSetName }
+    var kkHashSetOfName: InternedString { setLookup.kkHashSetOfName }
+    var kkIterableToHashSetName: InternedString { setLookup.kkIterableToHashSetName }
     var setFactoryNames: Set<InternedString> { setLookup.setFactoryNames }
     var mutableSetConstructorNames: Set<InternedString> { setLookup.mutableSetConstructorNames }
 
@@ -289,6 +289,9 @@ struct CollectionLiteralLookupTables {
     var kkArrayOfName: InternedString { arrayLookup.kkArrayOfName }
     var toMutableListName: InternedString { arrayLookup.toMutableListName }
     var toTypedArrayName: InternedString { arrayLookup.toTypedArrayName }
+    var sliceArrayName: InternedString { arrayLookup.sliceArrayName }
+    var reversedArrayName: InternedString { arrayLookup.reversedArrayName }
+    var asListName: InternedString { arrayLookup.asListName }
     var copyOfName: InternedString { arrayLookup.copyOfName }
     var copyOfRangeName: InternedString { arrayLookup.copyOfRangeName }
     var fillName: InternedString { arrayLookup.fillName }

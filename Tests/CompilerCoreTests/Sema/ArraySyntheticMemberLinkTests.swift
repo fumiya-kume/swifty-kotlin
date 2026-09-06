@@ -130,19 +130,24 @@ struct ArraySyntheticMemberLinkTests {
                 #expect(typeParam.nullability == .nullable)
             }
 
-            // === testArrayReversedArrayUsesRuntimeExternalLink ===
+            // === testArrayReversedArrayIsBundledSourceBacked ===
             do {
-                let symbolID = try #require(
-                    sema.symbols.lookup(
+                #expect(
+                    sema.symbols.lookupAll(
                         fqName: [
                             ctx.interner.intern("kotlin"),
                             ctx.interner.intern("Array"),
                             ctx.interner.intern("reversedArray"),
                         ]
-                    ),
-                    "Expected synthetic Array.reversedArray to be registered"
+                    ).isEmpty,
+                    "Generic Array.reversedArray synthetic stub should be removed"
                 )
-                #expect(sema.symbols.externalLinkName(for: symbolID) == "kk_array_reversedArray")
+                let symbolID = try #require(
+                    sourceArrayExtension(named: "reversedArray", receiverName: "Array"),
+                    "Expected bundled source Array.reversedArray extension"
+                )
+                #expect(sema.symbols.isSourceBackedSymbol(symbolID))
+                #expect(sema.symbols.externalLinkName(for: symbolID) == nil)
                 let signature = try #require(sema.symbols.functionSignature(for: symbolID))
                 #expect(signature.parameterTypes.isEmpty)
                 let receiverType = try #require(signature.receiverType)
@@ -450,9 +455,10 @@ struct ArraySyntheticMemberLinkTests {
                 }
             }
 
-            // === testPrimitiveArrayReversedArrayOverloadsUseRuntimeExternalLink ===
+            // === testArrayConversionMembersAreBundledSourceBacked ===
             do {
                 let arrayNames = [
+                    "Array",
                     "IntArray",
                     "LongArray",
                     "ByteArray",
@@ -467,91 +473,33 @@ struct ArraySyntheticMemberLinkTests {
                     "UShortArray",
                 ]
                 for arrayName in arrayNames {
-                    let symbolID = try #require(
-                        sema.symbols.lookup(
+                    for functionName in ["sliceArray", "reversedArray"] {
+                        #expect(
+                            sema.symbols.lookupAll(
+                                fqName: [
+                                    ctx.interner.intern("kotlin"),
+                                    ctx.interner.intern(arrayName),
+                                    ctx.interner.intern(functionName),
+                                ]
+                            ).isEmpty,
+                            "Expected synthetic \(arrayName).\(functionName) overloads to be removed"
+                        )
+                        let sourceSymbols = sema.symbols.lookupAll(
                             fqName: [
                                 ctx.interner.intern("kotlin"),
-                                ctx.interner.intern(arrayName),
-                                ctx.interner.intern("reversedArray"),
+                                ctx.interner.intern("collections"),
+                                ctx.interner.intern(functionName),
                             ]
-                        ),
-                        "Expected \(arrayName).reversedArray to be registered"
-                    )
-                    #expect(sema.symbols.externalLinkName(for: symbolID) == "kk_array_reversedArray")
-                    let signature = try #require(sema.symbols.functionSignature(for: symbolID))
-                    #expect(signature.parameterTypes.isEmpty, "\(arrayName).reversedArray should take no parameters")
-                    let receiverType = try #require(signature.receiverType)
-                    #expect(signature.returnType == receiverType, "\(arrayName).reversedArray should return the same array type")
-                    #expect(signature.valueParameterHasDefaultValues.isEmpty)
-                    #expect(signature.valueParameterIsVararg.isEmpty)
-                }
-            }
-
-            // === testArraySliceArrayOverloadsUseRuntimeExternalLinks ===
-            do {
-                let symbols = sema.symbols.lookupAll(
-                    fqName: [
-                        ctx.interner.intern("kotlin"),
-                        ctx.interner.intern("Array"),
-                        ctx.interner.intern("sliceArray"),
-                    ]
-                )
-                let links = Set(symbols.compactMap { sema.symbols.externalLinkName(for: $0) })
-                #expect(links.contains("kk_array_sliceArray_range"))
-                #expect(links.contains("kk_array_sliceArray_iterable"))
-                for linkName in ["kk_array_sliceArray_range", "kk_array_sliceArray_iterable"] {
-                    let symbolID = try #require(
-                        symbols.first(where: { sema.symbols.externalLinkName(for: $0) == linkName }),
-                        "Expected Array.sliceArray overload linked to \(linkName)"
-                    )
-                    let signature = try #require(sema.symbols.functionSignature(for: symbolID))
-                    #expect(signature.parameterTypes.count == 1)
-                    let receiverType = try #require(signature.receiverType)
-                    #expect(signature.returnType == receiverType)
-                    #expect(signature.valueParameterHasDefaultValues == [false])
-                    #expect(signature.valueParameterIsVararg == [false])
-                    #expect(signature.typeParameterSymbols.count == 1)
-                }
-            }
-
-            // === testPrimitiveArraySliceArrayOverloadsUseRuntimeExternalLinks ===
-            do {
-                let arrayNames = [
-                    "IntArray",
-                    "LongArray",
-                    "ByteArray",
-                    "ShortArray",
-                    "UIntArray",
-                    "ULongArray",
-                    "DoubleArray",
-                    "FloatArray",
-                    "BooleanArray",
-                    "CharArray",
-                    "UByteArray",
-                    "UShortArray",
-                ]
-                for arrayName in arrayNames {
-                    let symbols = sema.symbols.lookupAll(
-                        fqName: [
-                            ctx.interner.intern("kotlin"),
-                            ctx.interner.intern(arrayName),
-                            ctx.interner.intern("sliceArray"),
-                        ]
-                    )
-                    let links = Set(symbols.compactMap { sema.symbols.externalLinkName(for: $0) })
-                    #expect(links.contains("kk_array_sliceArray_range"), "\(arrayName) missing range sliceArray")
-                    #expect(links.contains("kk_array_sliceArray_iterable"), "\(arrayName) missing iterable sliceArray")
-                    for linkName in ["kk_array_sliceArray_range", "kk_array_sliceArray_iterable"] {
-                        let symbolID = try #require(
-                            symbols.first(where: { sema.symbols.externalLinkName(for: $0) == linkName }),
-                            "Expected \(arrayName).sliceArray overload linked to \(linkName)"
-                        )
-                        let signature = try #require(sema.symbols.functionSignature(for: symbolID))
-                        #expect(signature.parameterTypes.count == 1, "\(arrayName).sliceArray should take one parameter")
-                        let receiverType = try #require(signature.receiverType)
-                        #expect(signature.returnType == receiverType, "\(arrayName).sliceArray should return the same array type")
-                        #expect(signature.valueParameterHasDefaultValues == [false])
-                        #expect(signature.valueParameterIsVararg == [false])
+                        ).filter { symbolID in
+                            guard let receiverType = sema.symbols.functionSignature(for: symbolID)?.receiverType,
+                                  case let .classType(receiverClass) = sema.types.kind(of: receiverType),
+                                  let receiverSymbol = sema.symbols.symbol(receiverClass.classSymbol)
+                            else { return false }
+                            return ctx.interner.resolve(receiverSymbol.name) == arrayName
+                        }
+                        #expect(!sourceSymbols.isEmpty, "Expected bundled source \(arrayName).\(functionName) overloads")
+                        #expect(sourceSymbols.allSatisfy { sema.symbols.isSourceBackedSymbol($0) })
+                        #expect(sourceSymbols.allSatisfy { sema.symbols.externalLinkName(for: $0) == nil })
                     }
                 }
             }

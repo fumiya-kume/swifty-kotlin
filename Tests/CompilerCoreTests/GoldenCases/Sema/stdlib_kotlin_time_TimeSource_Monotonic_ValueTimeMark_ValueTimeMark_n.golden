@@ -6,7 +6,7 @@ symbol fq=__local_4.rejected kind=local vis=private flags=mutable type=Boolean
 symbol fq=__try_0_catch_0._ kind=local vis=internal flags=_ type=kotlin.IllegalArgumentException
 symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
 symbol fq=kotlin.time.AbstractLongTimeSource kind=class vis=public flags=abstractType|openType
-symbol fq=kotlin.time.ComparableTimeMark kind=interface vis=public flags=synthetic
+symbol fq=kotlin.time.ComparableTimeMark kind=interface vis=public flags=_
 symbol fq=kotlin.time.Duration.Companion kind=object vis=public flags=synthetic|static
 symbol fq=kotlin.time.TestTimeSource kind=class vis=public flags=_
 symbol fq=kotlin.time.TimeSource kind=interface vis=public flags=_

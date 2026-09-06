@@ -1,6 +1,9 @@
 import RuntimeABI
 
-/// Synthetic stdlib stubs split from `HeaderHelpers+SyntheticComparableAndCollectionStubs.swift`:
+// KSP-697: List shell registration remains only as a compatibility fallback;
+// the bundled nominal declaration is now Kotlin source-backed.
+
+/// Synthetic stdlib residuals retained after the KSP-697 nominal shell migration:
 /// List<E> interface and read-only member registrations (iterators, transform, aggregate, conversion).
 ///
 /// Split out to isolate merge conflicts between parallel stdlib PRs adding new

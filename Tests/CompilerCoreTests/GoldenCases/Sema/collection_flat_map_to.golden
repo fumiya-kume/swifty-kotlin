@@ -3,8 +3,8 @@ symbol fq=__local_1.result kind=local vis=private flags=_ type=kotlin.collection
 symbol fq=__local_2.dest kind=local vis=private flags=_ type=kotlin.collections.MutableList<String>
 symbol fq=__local_3.result kind=local vis=private flags=_ type=kotlin.collections.MutableList<String>
 symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableCollection kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.collections.MutableCollection kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
 symbol fq=testFlatMapIndexedTo kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=Unit
 symbol fq=testFlatMapIndexedTo.$0.values kind=valueParameter vis=private flags=_
