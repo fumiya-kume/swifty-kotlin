@@ -417,19 +417,6 @@ package final class MetadataEncoder {
         mangler: NameMangler,
         interner: StringInterner
     ) -> (selfSignature: String?, supertypeSignatures: [String]) {
-        let typeParameterSymbols = types.nominalTypeParameterSymbols(for: symbol.id)
-        guard !typeParameterSymbols.isEmpty else {
-            return (nil, [])
-        }
-        let variances = types.nominalTypeParameterVariances(for: symbol.id)
-        let selfArgs: [TypeArg] = typeParameterSymbols.enumerated().map { index, parameterSymbol in
-            let parameterType = types.make(.typeParam(TypeParamType(symbol: parameterSymbol, nullability: .nonNull)))
-            switch index < variances.count ? variances[index] : .invariant {
-            case .out: return .out(parameterType)
-            case .in: return .in(parameterType)
-            case .invariant: return .invariant(parameterType)
-            }
-        }
         let encode: ([TypeArg], SymbolID) -> String = { args, classSymbol in
             self.metadataTypeSignature(
                 types.make(.classType(ClassType(classSymbol: classSymbol, args: args, nullability: .nonNull))),
@@ -439,12 +426,28 @@ package final class MetadataEncoder {
                 nameResolver: { interner.resolve($0) }
             )
         }
+        let typeParameterSymbols = types.nominalTypeParameterSymbols(for: symbol.id)
+        let selfSignature: String?
+        if !typeParameterSymbols.isEmpty {
+            let variances = types.nominalTypeParameterVariances(for: symbol.id)
+            let selfArgs: [TypeArg] = typeParameterSymbols.enumerated().map { index, parameterSymbol in
+                let parameterType = types.make(.typeParam(TypeParamType(symbol: parameterSymbol, nullability: .nonNull)))
+                switch index < variances.count ? variances[index] : .invariant {
+                case .out: return .out(parameterType)
+                case .in: return .in(parameterType)
+                case .invariant: return .invariant(parameterType)
+                }
+            }
+            selfSignature = encode(selfArgs, symbol.id)
+        } else {
+            selfSignature = nil
+        }
         let supertypeSignatures: [String] = symbols.directSupertypes(for: symbol.id).compactMap { superSymbol in
             let superArgs = types.nominalSupertypeTypeArgs(for: symbol.id, supertype: superSymbol)
             guard !superArgs.isEmpty else { return nil }
             return encode(superArgs, superSymbol)
         }
-        return (encode(selfArgs, symbol.id), supertypeSignatures)
+        return (selfSignature, supertypeSignatures)
     }
 
     private func metadataTypeSignature(

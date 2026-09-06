@@ -309,10 +309,15 @@ final class RuntimeIntBox {
     /// the raw ordinal once the static enum type has been erased. See
     /// kk_enum_box_ordinal.
     let enumEntryName: String?
+    /// Stable nominal ID for the enum class represented by this box. Unlike a
+    /// plain boxed Int, enum equality must keep two entries from different
+    /// enum classes unequal even when their ordinals match.
+    let enumClassID: Int64?
 
-    init(_ value: Int, enumEntryName: String? = nil) {
+    init(_ value: Int, enumEntryName: String? = nil, enumClassID: Int64? = nil) {
         self.value = value
         self.enumEntryName = enumEntryName
+        self.enumClassID = enumClassID
     }
 }
 

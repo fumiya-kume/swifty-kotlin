@@ -258,6 +258,7 @@ struct RuntimeABIExternalLinkValidationTests {
         var declarations: [BundledKsSymbolNameDeclaration] = []
         var pendingLinkNames: [String] = []
         var pendingScope: ScopeEntry?
+        var pendingScopeKind: ScopeKind?
         var braceDepth = 0
         var scopeStack: [ScopeEntry] = []
         let lines = source.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
@@ -269,8 +270,16 @@ struct RuntimeABIExternalLinkValidationTests {
                 scopeStack.removeLast()
             }
             braceDepth += delta
-            if let kind, delta > 0 {
-                scopeStack.append(ScopeEntry(depth: braceDepth, kind: kind))
+            if delta > 0 {
+                // A class or object header may put its opening brace on the
+                // final line of a multiline constructor/supertype list.
+                // Carry the declaration kind until that brace is observed.
+                if let openedScopeKind = kind ?? pendingScopeKind {
+                    scopeStack.append(ScopeEntry(depth: braceDepth, kind: openedScopeKind))
+                }
+                pendingScopeKind = nil
+            } else if let kind {
+                pendingScopeKind = kind
             }
 
             if let linkName = ksSymbolNameArgument(in: line) {

@@ -1504,24 +1504,28 @@ extension DataFlowSemaPhase {
             args: [],
             nullability: .nonNull
         )))
-        for entry in ["INVARIANT", "IN", "OUT"] {
-            let entryName = interner.intern(entry)
-            let entryFQName = enumFQName + [entryName]
-            let entrySymbol: SymbolID
-            if let existing = symbols.lookup(fqName: entryFQName) {
-                entrySymbol = existing
-            } else {
-                entrySymbol = symbols.define(
-                    kind: .field,
-                    name: entryName,
-                    fqName: entryFQName,
-                    declSite: nil,
-                    visibility: .public,
-                    flags: [.synthetic]
-                )
-                symbols.setParentSymbol(enumSymbol, for: entrySymbol)
+        // The bundled declaration owns its real enum entry symbols. Keep the
+        // synthetic entries only for --no-stdlib compatibility.
+        if !symbols.isSourceBackedSymbol(enumSymbol) {
+            for entry in ["INVARIANT", "IN", "OUT"] {
+                let entryName = interner.intern(entry)
+                let entryFQName = enumFQName + [entryName]
+                let entrySymbol: SymbolID
+                if let existing = symbols.lookup(fqName: entryFQName) {
+                    entrySymbol = existing
+                } else {
+                    entrySymbol = symbols.define(
+                        kind: .field,
+                        name: entryName,
+                        fqName: entryFQName,
+                        declSite: nil,
+                        visibility: .public,
+                        flags: [.synthetic]
+                    )
+                    symbols.setParentSymbol(enumSymbol, for: entrySymbol)
+                }
+                symbols.setPropertyType(enumType, for: entrySymbol)
             }
-            symbols.setPropertyType(enumType, for: entrySymbol)
         }
     }
 

@@ -84,9 +84,25 @@ final class DataFlowSemaPhase: CompilerPhase {
             sourceManager: ctx.sourceManager, diagnostics: ctx.diagnostics,
             interner: ctx.interner, into: &predeclaredEarlyHeaders
         )
+        // KSP-1337: make the source-backed KVariance enum available before
+        // reflection synthetic stubs construct signatures that reference it.
+        predeclareBundledKVarianceHeaders(
+            ast: ast, fileScopes: fileScopes, symbols: symbols,
+            sourceManager: ctx.sourceManager, diagnostics: ctx.diagnostics,
+            interner: ctx.interner, into: &predeclaredEarlyHeaders
+        )
         // KSP-1334: make the source-backed KTypeProjection nominal available
         // before reflection synthetic stubs attach its residual properties.
         predeclareBundledKTypeProjectionHeaders(
+            ast: ast, fileScopes: fileScopes, symbols: symbols,
+            sourceManager: ctx.sourceManager, diagnostics: ctx.diagnostics,
+            interner: ctx.interner, into: &predeclaredEarlyHeaders
+        )
+        // KSP-1150: make the source-backed CancellationException nominal
+        // available before coroutine residual stubs are registered. This lets
+        // the residual pass retain its no-stdlib fallback without recreating
+        // the bundled class or its constructors.
+        predeclareBundledCancellationExceptionHeaders(
             ast: ast, fileScopes: fileScopes, symbols: symbols,
             sourceManager: ctx.sourceManager, diagnostics: ctx.diagnostics,
             interner: ctx.interner, into: &predeclaredEarlyHeaders

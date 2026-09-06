@@ -3,7 +3,6 @@ symbol fq=golden.sema.constructProjection.$0.type kind=valueParameter vis=privat
 symbol fq=golden.sema.constructProjection.$0.variance kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.projectionCompanion kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.reflect.KTypeProjection.Companion
 symbol fq=kotlin.reflect.KType kind=interface vis=public flags=synthetic
-symbol fq=kotlin.reflect.KVariance kind=enumClass vis=public flags=synthetic
 file fstdlib_kotlin_reflect_KTypeProjection_n_n package=golden.sema
   decl golden.sema.constructProjection fun constructProjection sym=golden.sema.constructProjection
   decl golden.sema.projectionCompanion fun projectionCompanion sym=golden.sema.projectionCompanion

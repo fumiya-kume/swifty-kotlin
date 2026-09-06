@@ -282,6 +282,102 @@ struct BundledSyntheticOverlapDiagnosticTests {
         }
     }
 
+    @Test
+    func testImportedSourceBackedOpenEndRangeOverloadDoesNotWarn() {
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+        types.symbolTable = symbols
+        let interner = StringInterner()
+        let diagnostics = DiagnosticEngine()
+        let openEndRangeFQName = ["kotlin", "ranges", "OpenEndRange"].map { interner.intern($0) }
+        let containsName = interner.intern("contains")
+
+        let openEndRangeSymbol = symbols.define(
+            kind: .interface,
+            name: openEndRangeFQName.last!,
+            fqName: openEndRangeFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        let typeParameterSymbol = symbols.define(
+            kind: .typeParameter,
+            name: interner.intern("T"),
+            fqName: openEndRangeFQName + [interner.intern("T")],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        symbols.setParentSymbol(openEndRangeSymbol, for: typeParameterSymbol)
+        let typeParameterType = types.make(.typeParam(TypeParamType(
+            symbol: typeParameterSymbol,
+            nullability: .nonNull
+        )))
+        let genericReceiverType = types.make(.classType(ClassType(
+            classSymbol: openEndRangeSymbol,
+            args: [.invariant(typeParameterType)],
+            nullability: .nonNull
+        )))
+        let genericSymbol = symbols.define(
+            kind: .function,
+            name: containsName,
+            fqName: openEndRangeFQName + [containsName],
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(openEndRangeSymbol, for: genericSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: genericReceiverType,
+                parameterTypes: [typeParameterType],
+                returnType: types.booleanType,
+                classTypeParameterCount: 1
+            ),
+            for: genericSymbol
+        )
+
+        let importedOverload = symbols.define(
+            kind: .function,
+            name: containsName,
+            fqName: [interner.intern("kotlin"), interner.intern("ranges"), containsName],
+            declSite: nil,
+            visibility: .public,
+            flags: [.importedLibrary]
+        )
+        let concreteReceiverType = types.make(.classType(ClassType(
+            classSymbol: openEndRangeSymbol,
+            args: [.invariant(types.intType)],
+            nullability: .nonNull
+        )))
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: concreteReceiverType,
+                parameterTypes: [types.intType],
+                returnType: types.booleanType
+            ),
+            for: importedOverload
+        )
+
+        var bundledIndex = BundledDeclarationIndex.empty
+        bundledIndex.insert(BundledMemberKey(
+            ownerFQName: openEndRangeFQName,
+            name: containsName,
+            arity: 1
+        ))
+        bundledIndex.warnSyntheticOverlaps(
+            symbols: symbols,
+            types: types,
+            diagnostics: diagnostics,
+            interner: interner
+        )
+
+        #expect(
+            diagnostics.diagnostics.filter { $0.code == "KSWIFTK-SEMA-0102" }.isEmpty,
+            "Imported source-backed OpenEndRange overload leaked an overlap warning"
+        )
+    }
+
     private func makeContext(diagnostics: DiagnosticEngine) -> CompilationContext {
         makeCompilationContext(inputs: ["/tmp/test.kt"], diagnostics: diagnostics)
     }
