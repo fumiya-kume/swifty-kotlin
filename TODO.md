@@ -4163,16 +4163,17 @@
     - `kotlin.sequences.sumOf` — fun Sequence.sumOf(Function1): UInt  -- `final inline fun <#A: kotlin/Any?> (kotlin.sequences/Sequence<#A>).kotlin.sequences/sumOf(kotlin/Function1<#A, kotlin/UInt>): kotlin/UInt`
     - `kotlin.sequences.sumOf` — fun Sequence.sumOf(Function1): ULong  -- `final inline fun <#A: kotlin/Any?> (kotlin.sequences/Sequence<#A>).kotlin.sequences/sumOf(kotlin/Function1<#A, kotlin/ULong>): kotlin/ULong`
 
-- [ ] KSP-1360: kotlin.sequences.Sequence.to-family の未実装 stdlib API を実装する（2 件）
+- [x] KSP-1360: kotlin.sequences.Sequence.to-family の未実装 stdlib API を実装する（2 件）
   - 対象: `kotlin.sequences` / receiver `Sequence` / family `to`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/sequences/SequenceConversionsAndSetOps.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_sequences_Sequence_to.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_sequences_Sequence_to.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_sequences_Sequence_to.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
-  - 未実装シンボル一覧:
+  - 実装シンボル一覧:
     - `kotlin.sequences.toCollection` — fun Sequence.toCollection(): #B  -- `final fun <#A: kotlin/Any?, #B: kotlin.collections/MutableCollection<in #A>> (kotlin.sequences/Sequence<#A>).kotlin.sequences/toCollection(#B): #B`
     - `kotlin.sequences.toHashSet` — fun Sequence.toHashSet(): HashSet  -- `final fun <#A: kotlin/Any?> (kotlin.sequences/Sequence<#A>).kotlin.sequences/toHashSet(): kotlin.collections/HashSet<#A>`
+  - 完了根拠 (2026-09-04): `SequenceConversionsAndSetOps.kt` の両 API は KSP-443（PR #5747、commit `5722866682`）で Kotlin 実装が追加済み。`toCollection` は destination に要素を追加して同じ destination を返し、`toHashSet` は `toMutableSet` に委譲する。関連する PR #1334/#1341/#2481/#2482 で Sema・codegen・runtime の表面も検証済みであり、既存の `kk_sequence_*` は runtime bridge として保持する。現行 master で既存の回帰テスト、Kotlin 2.3.10 との diff、Runtime ABI リンク検証を再確認したため、この TODO では実装・bridge/stub の変更および専用の重複テスト追加は行わない。
 
 - [ ] KSP-1361: kotlin.sequences.SequenceScope.SequenceScope の未実装 stdlib API を実装する（4 件）
   - 対象: `kotlin.sequences.SequenceScope` / receiver `SequenceScope`
