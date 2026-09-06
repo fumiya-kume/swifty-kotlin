@@ -2044,7 +2044,14 @@ final class CallTypeChecker {
                         interner: interner,
                         elementType: elementType
                     )
-                } else if name == "mutableSetOf" || name == "hashSetOf" {
+                } else if name == "hashSetOf" {
+                    resultType = makeSyntheticHashSetType(
+                        symbols: sema.symbols,
+                        types: sema.types,
+                        interner: interner,
+                        elementType: elementType
+                    )
+                } else if name == "mutableSetOf" {
                     resultType = makeSyntheticMutableSetType(
                         symbols: sema.symbols,
                         types: sema.types,
@@ -2137,11 +2144,20 @@ final class CallTypeChecker {
                let sourceBackedFactory = sourceBackedCollectionFactoryType(name: resolvedName),
                !hasNonStdlibCollectionFactoryShadow(calleeName, locals: locals, ctx: ctx),
                let chosen = candidates.first(where: { candidate in
-                   guard let symbol = ctx.cachedSymbol(candidate) else {
+                   guard let symbol = ctx.cachedSymbol(candidate),
+                         isKotlinCollectionsFactorySymbol(symbol, named: calleeName)
+                   else {
                        return false
                    }
-                   guard isKotlinCollectionsFactorySymbol(symbol, named: calleeName) else {
-                       return false
+                   if resolvedName == "listOfNotNull" {
+                       // The fixed-arity and vararg overloads share the same
+                       // source shape. Select the fixed overload for one
+                       // argument and the vararg overload for zero or multiple
+                       // arguments so lowering receives the correct packing
+                       // contract.
+                       let isVararg = sema.symbols.functionSignature(for: candidate)?
+                           .valueParameterIsVararg.first ?? false
+                       return isVararg == (args.count != 1)
                    }
                    return args.isEmpty || (sema.symbols.functionSignature(for: candidate)?.parameterTypes.isEmpty == false)
                })
@@ -2180,6 +2196,19 @@ final class CallTypeChecker {
             }
             let constructorElementType = explicitTypeArgs.first
                 ?? expectedCollectionArgs.first
+                ?? (resolvedName == "HashSet" ? argTypes.first.flatMap { argumentType in
+                    guard case let .classType(argumentClassType) = sema.types.kind(
+                        of: sema.types.makeNonNullable(argumentType)
+                    ),
+                    let firstArgument = argumentClassType.args.first
+                    else {
+                        return nil
+                    }
+                    return switch firstArgument {
+                    case let .invariant(type), let .in(type), let .out(type): type
+                    case .star: sema.types.anyType
+                    }
+                } : nil)
                 ?? sema.types.anyType
             switch resolvedName {
             case "ArrayList":
@@ -2194,7 +2223,7 @@ final class CallTypeChecker {
                 sema.bindings.bindExprType(id, type: resultType)
                 return resultType
             case "HashSet":
-                let resultType = makeSyntheticMutableSetType(
+                let resultType = makeSyntheticHashSetType(
                     symbols: sema.symbols,
                     types: sema.types,
                     interner: interner,

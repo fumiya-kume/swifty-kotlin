@@ -457,18 +457,25 @@ extension CallLowerer {
 
         let anyFallbackReceiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
         let nonNullAnyFallbackReceiverType = sema.types.makeNonNullable(anyFallbackReceiverType)
-        let allowsAnyFallback: Bool = switch sema.types.kind(of: nonNullAnyFallbackReceiverType) {
-        case .stringStruct:
-            false
-        case .primitive:
+        let isKClassReceiver = isKClassReceiverType(
+            anyFallbackReceiverType, sema: sema, interner: interner
+        )
+        let allowsAnyFallback: Bool = if isKClassReceiver {
             true
-        case .typeParam:
-            // All type parameters have an implicit upper bound of Any? in Kotlin,
-            // so Any methods (toString, hashCode, equals) are always available on
-            // type parameter receivers (STDLIB-GEN-055).
-            true
-        default:
-            nonNullAnyFallbackReceiverType == sema.types.anyType
+        } else {
+            switch sema.types.kind(of: nonNullAnyFallbackReceiverType) {
+            case .stringStruct:
+                false
+            case .primitive:
+                true
+            case .typeParam:
+                // All type parameters have an implicit upper bound of Any? in Kotlin,
+                // so Any methods (toString, hashCode, equals) are always available on
+                // type parameter receivers (STDLIB-GEN-055).
+                true
+            default:
+                nonNullAnyFallbackReceiverType == sema.types.anyType
+            }
         }
         // Any.toString(): String — no-arg fallback via kk_any_to_string (STDLIB-306)
         if args.isEmpty, interner.resolve(effectiveCalleeName) == "toString", allowsAnyFallback {
@@ -656,7 +663,6 @@ extension CallLowerer {
             case ("toUShort", ulongType, ushortType): interner.intern("kk_ulong_to_ushort")
             case ("toUShort", ubyteType, ushortType): interner.intern("kk_ubyte_to_ushort")
             case ("toUShort", ushortType, ushortType): nil // identity
-            case ("toChar", longType, charType): interner.intern("kk_long_to_char")
             case ("toChar", uintType, charType): interner.intern("kk_uint_to_char")
             case ("toChar", ulongType, charType): interner.intern("kk_ulong_to_char")
             case ("toChar", ubyteType, charType): interner.intern("kk_ubyte_to_char")
@@ -681,7 +687,7 @@ extension CallLowerer {
                     || (calleeStr == "toULong" && nonNullReceiverType == longType && nonNullResultType == ulongType)
                     || (calleeStr == "toInt" && (nonNullReceiverType == byteType || nonNullReceiverType == shortType) && nonNullResultType == intType)
                     || (calleeStr == "toLong" && (nonNullReceiverType == byteType || nonNullReceiverType == shortType) && nonNullResultType == longType)
-            if ["toInt", "toUInt", "toLong", "toULong", "toFloat", "toDouble"].contains(calleeStr),
+            if ["toInt", "toUInt", "toLong", "toULong", "toFloat", "toDouble", "toByte"].contains(calleeStr),
                nonNullReceiverType == nonNullResultType || isRepresentationPreservingConversion,
                nonNullReceiverType == intType || nonNullReceiverType == longType || nonNullReceiverType == uintType || nonNullReceiverType == ulongType || nonNullReceiverType == byteType || nonNullReceiverType == shortType || nonNullReceiverType == floatType || nonNullReceiverType == doubleType
             {
@@ -716,7 +722,8 @@ extension CallLowerer {
         instructions.append(.jump(endLabel))
         instructions.append(.label(callLabel))
 
-        // KCallable.name is shared by KFunction, KConstructor, and KProperty
+        // KCallable metadata properties are shared by KFunction, KConstructor,
+        // and KProperty.
         // boxes. Handle the safe-call form here after the receiver null check;
         // otherwise the generic fallback emits an undefined `name` symbol.
         if tryLowerKCallableNameAccess(

@@ -13,11 +13,10 @@ symbol fq=kotlin.collections.AbstractMutableMap.V kind=typeParameter vis=private
 symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Collection.E kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableCollection kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.MutableCollection kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableSet kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Set.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Set.contains kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Set<out kotlin.collections.Set.E> params=[kotlin.collections.Set.E] ret=Boolean
 file fstdlib_kotlin_collections_AbstractMutableMap_AbstractMutableMap_n package=golden.sema
   decl golden.sema.ProbeMutableMap class ProbeMutableMap sym=golden.sema.ProbeMutableMap
   decl golden.sema.abstractMutableMapSurface fun abstractMutableMapSurface sym=golden.sema.abstractMutableMapSurface

@@ -1,0 +1,11 @@
+symbol fq=golden.sema.escapedPattern kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.escapedReplacement kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+file fstdlib_kotlin_text_Regex_Companion_Companion_n package=golden.sema
+  decl golden.sema.escapedPattern fun escapedPattern sym=golden.sema.escapedPattern
+  decl golden.sema.escapedReplacement fun escapedReplacement sym=golden.sema.escapedReplacement
+expr e@3:32 name(Regex) type=kotlin.text.Regex.Companion ref=kotlin.text.Regex
+expr e@3:45 string(a.b\E) type=String
+expr e@3:32#1 memberCall recv=e@3:32 callee=escape args=[_:e@3:45] type=String call=kotlin.text.escape
+expr e@5:36 name(Regex) type=kotlin.text.Regex.Companion ref=kotlin.text.Regex
+expr e@5:60 string(a$b\c) type=String
+expr e@5:36#1 memberCall recv=e@5:36 callee=escapeReplacement args=[_:e@5:60] type=String call=kotlin.text.escapeReplacement

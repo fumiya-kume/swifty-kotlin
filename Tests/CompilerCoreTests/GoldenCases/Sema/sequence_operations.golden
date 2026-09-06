@@ -6,7 +6,7 @@ symbol fq=__local_4.z kind=local vis=private flags=_ type=kotlin.sequences.Seque
 symbol fq=__local_5.g kind=local vis=private flags=_ type=kotlin.sequences.Sequence<Int>
 symbol fq=__local_6.r kind=local vis=private flags=_ type=kotlin.collections.List<Int>
 symbol fq=kotlin.Pair kind=class vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
 symbol fq=kotlin.sequences.Sequence.toList kind=function vis=public flags=synthetic sig=recv=kotlin.sequences.Sequence<kotlin.sequences.toList.$0.T> params=[] ret=kotlin.collections.List<kotlin.sequences.toList.$0.T>
 symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit

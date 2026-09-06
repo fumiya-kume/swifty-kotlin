@@ -14,6 +14,20 @@ public func kk_set_of(_ arrayRaw: Int, _ count: Int) -> Int {
     return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(elements)))
 }
 
+/// HashSet constructor storage. Keep ordinary Set factories on the shared Set
+/// identity; HashSet constructors need their own nominal tag for `is` checks.
+@_cdecl("__kk_hash_set_of")
+public func kk_hash_set_of(_ arrayRaw: Int, _ count: Int) -> Int {
+    var elements: [Int] = []
+    if count > 0, let array = runtimeArrayBox(from: arrayRaw) {
+        elements = Array(array.elements.prefix(count))
+    }
+    return registerRuntimeObject(
+        RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(elements)),
+        typeID: hashSetRuntimeTypeID
+    )
+}
+
 @_cdecl("__kk_set_of_not_null")
 public func kk_set_of_not_null(_ arrayRaw: Int, _ count: Int) -> Int {
     var elements: [Int] = []

@@ -10,7 +10,9 @@ func kirVtableImplementations(
         guard let owner = sema.symbols.parentSymbol(for: methodSymbol),
               let ownerInfo = sema.symbols.symbol(owner),
               ownerInfo.flags.contains(.abstractType)
-                  || !sema.symbols.directSubtypes(of: owner).isEmpty
+                  || !sema.symbols.directSubtypes(of: owner).isEmpty,
+              let symbol = sema.symbols.symbol(methodSymbol),
+              symbol.kind == .function || symbol.kind == .property
         else {
             return nil
         }
@@ -22,7 +24,8 @@ func kirVtableImplementations(
 
     var candidatesBySlot: [Int: [(distance: Int, method: SymbolID)]] = [:]
     for (methodSymbol, slot) in layout.vtableSlots where virtualSlots.contains(slot) {
-        guard sema.symbols.symbol(methodSymbol)?.kind == .function,
+        guard let methodInfo = sema.symbols.symbol(methodSymbol),
+              methodInfo.kind == .function || methodInfo.kind == .property,
               let owner = sema.symbols.parentSymbol(for: methodSymbol),
               let distance = kirNominalDistance(from: nominalSymbol, to: owner, sema: sema)
         else {
@@ -54,13 +57,24 @@ func kirVtableImplementations(
             return (
                 slot: slot,
                 dispatchMethod: dispatchMethod.method,
-                implementation: implementation.method
+                implementation: kirVtableSlotImplementationSymbol(for: implementation.method, sema: sema)
             )
         }
         .sorted { lhs, rhs in
             if lhs.slot != rhs.slot { return lhs.slot < rhs.slot }
             return lhs.implementation.rawValue < rhs.implementation.rawValue
         }
+}
+
+/// KSP-928: `layout.vtableSlots` may contain real `.property` symbols (open
+/// stored properties emit getters). The function pointer registered for such
+/// a slot is the property's getter accessor; function symbols pass through.
+private func kirVtableSlotImplementationSymbol(for symbol: SymbolID, sema: SemaModule) -> SymbolID {
+    guard sema.symbols.symbol(symbol)?.kind == .property else {
+        return symbol
+    }
+    return sema.symbols.extensionPropertyGetterAccessor(for: symbol)
+        ?? SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: symbol)
 }
 
 func appendObjectVtableMethodRegistrations(
