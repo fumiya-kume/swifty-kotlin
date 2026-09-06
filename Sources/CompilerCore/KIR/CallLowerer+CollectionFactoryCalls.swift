@@ -22,7 +22,7 @@ extension CallLowerer {
 
         let result = arena.appendTemporary(type: boundType ?? sema.types.anyType)
         switch name {
-        case "emptyList", "listOf", "listOfNotNull":
+        case "emptyList", "listOf":
             if loweredArgIDs.isEmpty {
                 emitNoArgCall("__kk_emptyList", result: result, interner: interner, instructions: &instructions)
                 return result
@@ -36,7 +36,7 @@ extension CallLowerer {
                 instructions: &instructions
             )
             emitRuntimeCollectionFactory(
-                name == "listOfNotNull" ? "kk_list_of_not_null" : "__kk_list_of",
+                "__kk_list_of",
                 array: packed.array,
                 count: packed.count,
                 result: result,
@@ -100,9 +100,10 @@ extension CallLowerer {
             return result
 
         case "mutableSetOf", "hashSetOf", "linkedSetOf":
+            let runtimeCallee = name == "hashSetOf" ? "__kk_hash_set_of" : "__kk_set_of"
             if loweredArgIDs.isEmpty {
                 emitNullArrayCountCall(
-                    "__kk_set_of",
+                    runtimeCallee,
                     arity: 1,
                     result: result,
                     sema: sema,
@@ -121,7 +122,7 @@ extension CallLowerer {
                 instructions: &instructions
             )
             emitRuntimeCollectionFactory(
-                "__kk_set_of",
+                runtimeCallee,
                 array: packed.array,
                 count: packed.count,
                 result: result,
@@ -182,7 +183,7 @@ extension CallLowerer {
         interner: StringInterner
     ) -> Bool {
         guard [
-            "emptyList", "listOf", "listOfNotNull", "mutableListOf", "arrayListOf",
+            "emptyList", "listOf", "mutableListOf", "arrayListOf",
             "emptySet", "setOf", "setOfNotNull", "mutableSetOf", "hashSetOf", "linkedSetOf",
             "emptyMap", "mapOf", "mutableMapOf", "hashMapOf", "linkedMapOf",
         ].contains(name),

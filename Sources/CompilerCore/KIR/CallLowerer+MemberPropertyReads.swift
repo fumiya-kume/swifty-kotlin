@@ -247,7 +247,9 @@ extension CallLowerer {
         // write sides symmetric instead of relying on call-order to keep a
         // dead field-offset arm harmless.
         guard args.isEmpty,
-              let propertySymbol = sema.bindings.identifierSymbol(for: exprID),
+              let propertySymbol = sema.bindings.identifierSymbol(for: exprID)
+                  ?? sema.bindings.callBindings[exprID]?.chosenCallee,
+              sema.symbols.symbol(propertySymbol)?.kind == .property,
               let ownerSymbol = sema.symbols.parentSymbol(for: propertySymbol),
               let ownerInfo = sema.symbols.symbol(ownerSymbol),
               ownerInfo.kind == .class || ownerInfo.kind == .interface
@@ -261,6 +263,27 @@ extension CallLowerer {
         // object field layout, so let the collection fallback lower them.
         let knownNames = KnownCompilerNames(interner: interner)
         if knownNames.isArrayLikeName(ownerInfo.name) {
+            return nil
+        }
+
+        // HashSet inherits synthetic collection properties while its storage is
+        // a RuntimeSetBox, not a nominal object-field array. Keep size and
+        // isEmpty on the shared collection dispatch path for the source-backed
+        // HashSet surface, including when the receiver comes from a .kklib.
+        let hashSetFQName = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("HashSet")
+        ]
+        if let propertyInfo = sema.symbols.symbol(propertySymbol),
+           propertyInfo.name == interner.intern("size")
+               || propertyInfo.name == interner.intern("isEmpty"),
+           let receiverType = arena.exprType(loweredReceiverID),
+           let (_, receiverSymbol) = resolveClassTypeSymbol(
+               sema.types.makeNonNullable(receiverType), sema: sema
+           ),
+           receiverSymbol.fqName == hashSetFQName
+        {
             return nil
         }
 
@@ -278,6 +301,35 @@ extension CallLowerer {
         let resultType = sema.bindings.exprTypes[exprID]
             ?? sema.symbols.propertyType(for: propertySymbol)
             ?? sema.types.anyType
+
+        // KSP-928: an abstract/open class property is a getter dispatch point,
+        // not an instance field or a direct abstract getter stub. In
+        // particular, AbstractMap's skeletal methods must observe a concrete
+        // subclass's `entries` override.
+        if ownerInfo.kind == .class,
+           !sema.symbols.directSubtypes(of: ownerSymbol).isEmpty,
+           let propertyInfo = sema.symbols.symbol(propertySymbol),
+           let getterSlot = sema.symbols.nominalLayout(for: ownerSymbol)?.vtableSlots[
+               SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: propertySymbol)
+           ],
+           propertyInfo.flags.contains(.abstractType)
+               || propertyInfo.flags.contains(.openType)
+        {
+            let getterSymbol = sema.symbols.extensionPropertyGetterAccessor(for: propertySymbol)
+                ?? SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: propertySymbol)
+            let result = arena.appendTemporary(type: resultType)
+            instructions.append(.virtualCall(
+                symbol: getterSymbol,
+                callee: interner.intern("get"),
+                receiver: loweredReceiverID,
+                arguments: [],
+                result: result,
+                canThrow: false,
+                thrownResult: nil,
+                dispatch: .vtable(slot: getterSlot)
+            ))
+            return result
+        }
 
         if memberPropertyUsesAccessor(propertySymbol, ast: ast, sema: sema) {
             if let (accessorSymbol, dispatch) = tryResolvePropertyAccessorVirtualDispatch(

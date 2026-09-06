@@ -66,6 +66,99 @@ public fun String.filterNot(predicate: (Char) -> Boolean): String {
     return sb.toString()
 }
 
+public inline fun CharSequence.filter(predicate: (Char) -> Boolean): CharSequence {
+    val sb = StringBuilder()
+    var i = 0
+    val sz = this.length
+    while (i < sz) {
+        val c = this[i]
+        if (predicate(c)) sb.append(c)
+        i++
+    }
+    return sb.toString()
+}
+
+public inline fun CharSequence.filterIndexed(predicate: (index: Int, Char) -> Boolean): CharSequence {
+    val sb = StringBuilder()
+    var i = 0
+    val sz = this.length
+    while (i < sz) {
+        val c = this[i]
+        if (predicate(i, c)) sb.append(c)
+        i++
+    }
+    return sb.toString()
+}
+
+public inline fun String.filterIndexed(predicate: (index: Int, Char) -> Boolean): String {
+    val sb = StringBuilder()
+    var i = 0
+    val sz = length
+    while (i < sz) {
+        val c = this[i]
+        if (predicate(i, c)) sb.append(c)
+        i++
+    }
+    return sb.toString()
+}
+
+@IgnorableReturnValue
+public inline fun <C : Appendable> CharSequence.filterIndexedTo(
+    destination: C,
+    predicate: (index: Int, Char) -> Boolean
+): C {
+    var i = 0
+    val sz = this.length
+    while (i < sz) {
+        val c = this[i]
+        if (predicate(i, c)) destination.append(c)
+        i++
+    }
+    return destination
+}
+
+public inline fun CharSequence.filterNot(predicate: (Char) -> Boolean): CharSequence {
+    val sb = StringBuilder()
+    var i = 0
+    val sz = this.length
+    while (i < sz) {
+        val c = this[i]
+        if (!predicate(c)) sb.append(c)
+        i++
+    }
+    return sb.toString()
+}
+
+@IgnorableReturnValue
+public inline fun <C : Appendable> CharSequence.filterNotTo(
+    destination: C,
+    predicate: (Char) -> Boolean
+): C {
+    var i = 0
+    val sz = this.length
+    while (i < sz) {
+        val c = this[i]
+        if (!predicate(c)) destination.append(c)
+        i++
+    }
+    return destination
+}
+
+@IgnorableReturnValue
+public inline fun <C : Appendable> CharSequence.filterTo(
+    destination: C,
+    predicate: (Char) -> Boolean
+): C {
+    var i = 0
+    val sz = this.length
+    while (i < sz) {
+        val c = this[i]
+        if (predicate(c)) destination.append(c)
+        i++
+    }
+    return destination
+}
+
 public fun <R> CharSequence.map(transform: (Char) -> R): List<R> {
     val result = mutableListOf<R>()
     var i = 0
@@ -233,18 +326,6 @@ public fun CharSequence.sumByDouble(selector: (Char) -> Double): Double {
         i++
     }
     return sum
-}
-
-public fun CharSequence.filterIndexed(predicate: (index: Int, Char) -> Boolean): String {
-    val sb = StringBuilder()
-    var i = 0
-    val sz = this.length
-    while (i < sz) {
-        val c = this[i]
-        if (predicate(i, c)) sb.append(c)
-        i++
-    }
-    return sb.toString()
 }
 
 public fun String.onEachIndexed(action: (index: Int, Char) -> Unit): String {

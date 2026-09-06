@@ -307,10 +307,15 @@ final class RuntimeIntBox {
     /// the raw ordinal once the static enum type has been erased. See
     /// kk_enum_box_ordinal.
     let enumEntryName: String?
+    /// Stable nominal ID for the enum class represented by this box. Unlike a
+    /// plain boxed Int, enum equality must keep two entries from different
+    /// enum classes unequal even when their ordinals match.
+    let enumClassID: Int64?
 
-    init(_ value: Int, enumEntryName: String? = nil) {
+    init(_ value: Int, enumEntryName: String? = nil, enumClassID: Int64? = nil) {
         self.value = value
         self.enumEntryName = enumEntryName
+        self.enumClassID = enumClassID
     }
 }
 
@@ -378,6 +383,7 @@ enum RuntimeCallableRefKind {
 
 struct RuntimeCallableRefMetadata {
     let nameRaw: Int
+    let returnTypeRaw: Int
     let arity: Int
     let kind: RuntimeCallableRefKind
     let isSuspend: Bool
@@ -913,11 +919,20 @@ final class RuntimeListIteratorBox {
     var elements: [Int]
     var index: Int
     let removeAction: ((Int) -> Void)?
+    let setAction: ((Int, Int) -> Void)?
+    let addAction: ((Int, Int) -> Void)?
 
-    init(elements: [Int], removeAction: ((Int) -> Void)? = nil) {
+    init(
+        elements: [Int],
+        removeAction: ((Int) -> Void)? = nil,
+        setAction: ((Int, Int) -> Void)? = nil,
+        addAction: ((Int, Int) -> Void)? = nil
+    ) {
         self.elements = elements
         index = 0
         self.removeAction = removeAction
+        self.setAction = setAction
+        self.addAction = addAction
     }
 
     func removeLastReturned() -> Bool {
@@ -929,6 +944,28 @@ final class RuntimeListIteratorBox {
         index = removedIndex
         removeAction?(removedIndex)
         return true
+    }
+
+    /// `MutableListIterator.set`: replaces the element most recently returned
+    /// by `next()`/`previous()`, at the same position `removeLastReturned()`
+    /// targets.
+    func setLastReturned(_ rawValue: Int) -> Bool {
+        guard index > 0, index <= elements.count else {
+            return false
+        }
+        let targetIndex = index - 1
+        elements[targetIndex] = rawValue
+        setAction?(targetIndex, rawValue)
+        return true
+    }
+
+    /// `MutableListIterator.add`: inserts before the element `next()` would
+    /// return, then advances the cursor past the inserted element so a
+    /// following `next()` does not return it again.
+    func addBeforeNext(_ rawValue: Int) {
+        elements.insert(rawValue, at: index)
+        addAction?(index, rawValue)
+        index += 1
     }
 }
 
@@ -1942,11 +1979,19 @@ final class RuntimeKTypeBox {
     let argumentRaws: [Int]
     /// Whether the type is marked nullable (`T?`).
     let isMarkedNullable: Bool
+    /// Optional compact type descriptor used by callable reflection metadata.
+    let typeNameRaw: Int
 
-    init(classifierRaw: Int, argumentRaws: [Int], isMarkedNullable: Bool) {
+    init(
+        classifierRaw: Int,
+        argumentRaws: [Int],
+        isMarkedNullable: Bool,
+        typeNameRaw: Int = 0
+    ) {
         self.classifierRaw = classifierRaw
         self.argumentRaws = argumentRaws
         self.isMarkedNullable = isMarkedNullable
+        self.typeNameRaw = typeNameRaw
     }
 }
 
