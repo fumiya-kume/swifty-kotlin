@@ -990,9 +990,10 @@ extension CallLowerer {
                     || (calleeStr == "toInt" && (nonNullReceiverType == byteType || nonNullReceiverType == shortType) && nonNullResultType == intType)
                     || (calleeStr == "toLong" && (nonNullReceiverType == byteType || nonNullReceiverType == shortType) && nonNullResultType == longType)
                     || (calleeStr == "toShort" && nonNullReceiverType == byteType && nonNullResultType == shortType)
-            // Representation-preserving primitive conversions have no runtime callee;
-            // keep them from falling through to generic member emission as raw symbols.
-            if ["toInt", "toUInt", "toLong", "toULong", "toFloat", "toDouble", "toShort", "toUByte", "toUShort", "toChar"].contains(calleeStr),
+            // Byte.toByte() and Short.toShort() have no runtime callee; keep
+            // identity/representation-preserving conversions from falling through
+            // to generic member emission as raw symbols.
+            if ["toInt", "toUInt", "toLong", "toULong", "toFloat", "toDouble", "toByte", "toShort", "toUByte", "toUShort", "toChar"].contains(calleeStr),
                nonNullReceiverType == nonNullResultType || isRepresentationPreservingConversion,
                nonNullReceiverType == intType || nonNullReceiverType == longType
                || nonNullReceiverType == uintType || nonNullReceiverType == ulongType

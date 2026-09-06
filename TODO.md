@@ -592,14 +592,16 @@
     - `kotlin.BooleanArray.<init>` — constructor (Int)  -- `constructor <init>(kotlin/Int)`
     - `kotlin.BooleanArray.<init>` — constructor (Int, Function1)  -- `constructor <init>(kotlin/Int, kotlin/Function1<kotlin/Int, kotlin/Boolean>)`
 
-- [ ] KSP-813: kotlin.Byte.Companion.Companion の未実装 stdlib API を実装する（4 件）
+- [x] KSP-813: kotlin.Byte.Companion.Companion の未実装 stdlib API を実装する（4 件）
   - 対象: `kotlin.Byte.Companion` / receiver `Companion`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/Byte/Companion/Companion.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_Byte_Companion_Companion_n.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_Byte_Companion_Companion_n.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_Byte_Companion_Companion_n.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
-  - 未実装シンボル一覧:
+  - 完了根拠: Kotlin 2.3.10 の `Byte.Companion` 契約に合わせ、4 APIをsource-backed `public val` getterとして実装。ByteはTypeSystem上のprimitiveでsource declarationがないため、Companionのnominal anchorを追加し、Byte専用のSema numeric fallback（誤ったInt型返却）を削除した。直接参照・明示Companion receiver・Byte/Intの型・`Any` boxingと`is Byte`を専用Golden/diffで固定し、Byte同型 `toByte()` のno-op loweringも回帰修正した。Runtime/ABI bridgeは存在しないため変更していない。
+  - 検証: focused Sema Golden shard（`UPDATE_GOLDEN=1`）/ `stdlib_kotlin_Byte_Companion_Companion_n.kt` の `diff_kotlinc` / Golden normalization invariant / `check_todo_ids.sh` / `validate_runtime_abi_links.sh` がpass。
+  - 実装シンボル一覧:
     - `kotlin.Byte.Companion.MAX_VALUE` — val Companion.MAX_VALUE: Byte  -- `final const val MAX_VALUE`
     - `kotlin.Byte.Companion.MIN_VALUE` — val Companion.MIN_VALUE: Byte  -- `final const val MIN_VALUE`
     - `kotlin.Byte.Companion.SIZE_BITS` — val Companion.SIZE_BITS: Int  -- `final const val SIZE_BITS`
