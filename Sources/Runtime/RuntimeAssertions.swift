@@ -717,7 +717,7 @@ private func runtimeExceptionMessage(from raw: Int, defaultMessage: String?) -> 
     return extractString(from: UnsafeMutableRawPointer(bitPattern: raw)) ?? defaultMessage
 }
 
-private func runtimeJVMExceptionFQName(from kotlinFQName: String) -> String {
+func runtimeJVMExceptionFQName(from kotlinFQName: String) -> String {
     switch kotlinFQName {
     case "kotlin.Exception":
         return "java.lang.Exception"
@@ -933,6 +933,36 @@ public func kk_illegal_state_exception_new_message_cause(_ messageRaw: Int, _ ca
 public func kk_illegal_state_exception_new_cause(_ causeRaw: Int) -> Int {
     let cause = (causeRaw == 0 || causeRaw == runtimeNullSentinelInt) ? 0 : causeRaw
     return runtimeAllocateIllegalStateException(
+        message: runtimeCauseToString(from: cause),
+        cause: cause
+    )
+}
+
+@_cdecl("__kk_cancellation_exception_new")
+public func kk_cancellation_exception_new() -> Int {
+    runtimeAllocateCancellationException(message: nil)
+}
+
+@_cdecl("__kk_cancellation_exception_new_message")
+public func kk_cancellation_exception_new_message(_ messageRaw: Int) -> Int {
+    runtimeAllocateCancellationException(
+        message: runtimeExceptionMessage(from: messageRaw, defaultMessage: nil)
+    )
+}
+
+@_cdecl("__kk_cancellation_exception_new_message_cause")
+public func kk_cancellation_exception_new_message_cause(_ messageRaw: Int, _ causeRaw: Int) -> Int {
+    let cause = (causeRaw == 0 || causeRaw == runtimeNullSentinelInt) ? 0 : causeRaw
+    return runtimeAllocateCancellationException(
+        message: runtimeExceptionMessage(from: messageRaw, defaultMessage: nil),
+        cause: cause
+    )
+}
+
+@_cdecl("__kk_cancellation_exception_new_cause")
+public func kk_cancellation_exception_new_cause(_ causeRaw: Int) -> Int {
+    let cause = (causeRaw == 0 || causeRaw == runtimeNullSentinelInt) ? 0 : causeRaw
+    return runtimeAllocateCancellationException(
         message: runtimeCauseToString(from: cause),
         cause: cause
     )

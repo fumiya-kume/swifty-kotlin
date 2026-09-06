@@ -130,16 +130,4 @@ extension BuildASTPhase {
         }
     }
 
-    func isLeadingDeclarationKeyword(_ keyword: Keyword) -> Bool {
-        switch keyword {
-        case .class, .object, .interface, .fun, .val, .var, .typealias, .enum, .import, .package, .companion:
-            true
-        case .public, .private, .internal, .protected, .open, .abstract, .sealed, .data, .annotation,
-             .inner, .expect, .actual, .const, .lateinit, .override, .final,
-             .crossinline, .noinline, .tailrec, .inline, .suspend, .operator, .infix, .external, .value:
-            true
-        default:
-            false
-        }
-    }
 }
