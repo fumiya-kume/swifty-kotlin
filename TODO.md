@@ -1547,7 +1547,9 @@
     - `kotlin.collections.ArrayDeque.<init>` — constructor (Collection)  -- `constructor <init>(kotlin.collections/Collection<#A>)`
     - `kotlin.collections.ArrayDeque.<init>` — constructor (Int)  -- `constructor <init>(kotlin/Int)`
 
-- [ ] KSP-1044: kotlin.collections.ArrayDeque.ArrayDeque の未実装 stdlib API を実装する（24 件）
+- [x] KSP-1044: kotlin.collections.ArrayDeque.ArrayDeque の未実装 stdlib API を実装する（24 件）
+  - 完了根拠: KSP-625 で既に source-backed 化されていた `first` / `firstOrNull` / `get` / `last` / `lastOrNull` / `removeFirst` / `removeFirstOrNull` / `removeLast` / `removeLastOrNull` の9件を維持し、残る15件を `ArrayDeque.kt` に追加した。既存のring-buffer runtime primitive、synthetic stub、Runtime ABI は変更していない。
+  - 回帰: 対象24メンバーのSema Golden、`stdlib_kotlin_collections_ArrayDeque_ArrayDeque_n.kt` の kotlinc 差分（`DIFF_REQUIRE_JDK21=0`）、Bundled stdlib実行、共有stdlib artifact経路を検証し、`check_todo_ids.sh` と `validate_runtime_abi_links.sh` もpass。
   - 対象: `kotlin.collections.ArrayDeque` / receiver `ArrayDeque`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/ArrayDeque/ArrayDeque.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
