@@ -938,6 +938,36 @@ public func kk_illegal_state_exception_new_cause(_ causeRaw: Int) -> Int {
     )
 }
 
+@_cdecl("__kk_cancellation_exception_new")
+public func kk_cancellation_exception_new() -> Int {
+    runtimeAllocateCancellationException(message: nil)
+}
+
+@_cdecl("__kk_cancellation_exception_new_message")
+public func kk_cancellation_exception_new_message(_ messageRaw: Int) -> Int {
+    runtimeAllocateCancellationException(
+        message: runtimeExceptionMessage(from: messageRaw, defaultMessage: nil)
+    )
+}
+
+@_cdecl("__kk_cancellation_exception_new_message_cause")
+public func kk_cancellation_exception_new_message_cause(_ messageRaw: Int, _ causeRaw: Int) -> Int {
+    let cause = (causeRaw == 0 || causeRaw == runtimeNullSentinelInt) ? 0 : causeRaw
+    return runtimeAllocateCancellationException(
+        message: runtimeExceptionMessage(from: messageRaw, defaultMessage: nil),
+        cause: cause
+    )
+}
+
+@_cdecl("__kk_cancellation_exception_new_cause")
+public func kk_cancellation_exception_new_cause(_ causeRaw: Int) -> Int {
+    let cause = (causeRaw == 0 || causeRaw == runtimeNullSentinelInt) ? 0 : causeRaw
+    return runtimeAllocateCancellationException(
+        message: runtimeCauseToString(from: cause),
+        cause: cause
+    )
+}
+
 @_cdecl("__kk_illegal_argument_exception_new")
 public func kk_illegal_argument_exception_new() -> Int {
     runtimeAllocateIllegalArgumentException(message: nil)

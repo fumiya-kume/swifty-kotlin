@@ -54,7 +54,8 @@ extension BuildASTPhase {
             let upperBound = parseInlineUpperBound(tokens: tokens, tokenIndex: &tokenIndex,
                                                    interner: interner, astArena: astArena)
             result.append(TypeParamDecl(
-                name: name, variance: pendingVariance, isReified: pendingReified, upperBound: upperBound
+                name: name, variance: pendingVariance, isReified: pendingReified,
+                upperBounds: upperBound.map { [$0] } ?? []
             ))
             pendingVariance = .invariant
             pendingReified = false

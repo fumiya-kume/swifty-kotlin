@@ -17,8 +17,7 @@ import Testing
 //   - TransferMode: kk_transfer_object (STDLIB-NATIVE-CONCURRENT-ABI-003)
 //   - FreezableAtomicReference<T>: kk_freezable_atomic_ref_create / _load / _store / _is_frozen
 //               (STDLIB-NATIVE-CONCURRENT-ABI-004)
-//   - @SharedImmutable: kk_shared_immutable_init (STDLIB-NATIVE-CONCURRENT-ABI-005)
-//   - Worker.executeAfter: kk_worker_execute_after (STDLIB-NATIVE-CONCURRENT-ABI-006)
+//   - Worker.executeAfter: kk_worker_execute_after (STDLIB-NATIVE-CONCURRENT-ABI-005)
 //   - freeze() / isFrozen: kk_freeze_object / kk_is_frozen
 //   - AtomicInt (legacy kotlin.native.concurrent.AtomicInt / unified kotlin.concurrent.AtomicInt):
 //             compareAndSet semantics — already tested in isolation via AtomicInt cdecl wrappers
@@ -573,35 +572,7 @@ struct RuntimeFreezableAtomicRefTests {
 }
 
 // ---------------------------------------------------------------------------
-// MARK: - @SharedImmutable Tests (STDLIB-NATIVE-CONCURRENT-ABI-005)
-// ---------------------------------------------------------------------------
-
-@Suite(.runtimeIsolation(.gcAndThreadLocal))
-struct RuntimeSharedImmutableTests {
-
-    @Test func sharedImmutableInitFreezesObject() {
-        let handle = kk_atomic_int_create(42)
-        #expect(kk_is_frozen(handle) == 0, "Object must not be frozen before init")
-        let returned = kk_shared_immutable_init(handle)
-        #expect(returned == handle, "kk_shared_immutable_init must return the same handle")
-        #expect(kk_is_frozen(handle) == 1, "Object must be frozen after @SharedImmutable init")
-    }
-
-    @Test func sharedImmutableInitWithNullHandleIsNoOp() {
-        let result = kk_shared_immutable_init(0)
-        #expect(result == 0, "Null handle must be a no-op")
-    }
-
-    @Test func sharedImmutableInitIsIdempotent() {
-        let handle = kk_atomic_int_create(10)
-        kk_shared_immutable_init(handle)
-        kk_shared_immutable_init(handle) // second call must not crash
-        #expect(kk_is_frozen(handle) == 1)
-    }
-}
-
-// ---------------------------------------------------------------------------
-// MARK: - Worker.executeAfter Tests (STDLIB-NATIVE-CONCURRENT-ABI-006)
+// MARK: - Worker.executeAfter Tests (STDLIB-NATIVE-CONCURRENT-ABI-005)
 // ---------------------------------------------------------------------------
 
 @Suite(.runtimeIsolation(.gcAndThreadLocal))

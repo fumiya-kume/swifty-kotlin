@@ -361,7 +361,9 @@ extension MemberLowerer {
         )
         body.append(.constValue(result: propertyNameExprID, value: .stringLiteral(propertyName)))
         let propertyType = sema.symbols.propertyType(for: propertySymbol) ?? sema.types.anyType
-        let returnTypeSig = interner.intern(sema.types.renderType(propertyType))
+        let returnTypeSig = interner.intern(
+            sema.types.displayName(of: propertyType, symbols: sema.symbols, interner: interner)
+        )
         let returnTypeExprID = arena.appendExpr(
             .stringLiteral(returnTypeSig),
             type: sema.types.stringType

@@ -964,7 +964,6 @@ extension CallLowerer {
             case ("toUShort", longType, ushortType): interner.intern("kk_long_to_ushort")
             case ("toUShort", uintType, ushortType): interner.intern("kk_uint_to_ushort")
             case ("toUShort", ulongType, ushortType): interner.intern("kk_ulong_to_ushort")
-            case ("toChar", longType, charType): interner.intern("kk_long_to_char")
             case ("toChar", uintType, charType): interner.intern("kk_uint_to_char")
             case ("toChar", ulongType, charType): interner.intern("kk_ulong_to_char")
             case ("toChar", ubyteType, charType): interner.intern("kk_ubyte_to_char")
@@ -990,8 +989,9 @@ extension CallLowerer {
                     || (calleeStr == "toInt" && nonNullReceiverType == charType && nonNullResultType == intType)
                     || (calleeStr == "toInt" && (nonNullReceiverType == byteType || nonNullReceiverType == shortType) && nonNullResultType == intType)
                     || (calleeStr == "toLong" && (nonNullReceiverType == byteType || nonNullReceiverType == shortType) && nonNullResultType == longType)
-            // Short.toShort() has no runtime callee; keep the identity conversion
-            // from falling through to generic member emission as the raw `toShort` symbol.
+                    || (calleeStr == "toShort" && nonNullReceiverType == byteType && nonNullResultType == shortType)
+            // Representation-preserving primitive conversions have no runtime callee;
+            // keep them from falling through to generic member emission as raw symbols.
             if ["toInt", "toUInt", "toLong", "toULong", "toFloat", "toDouble", "toShort", "toUByte", "toUShort", "toChar"].contains(calleeStr),
                nonNullReceiverType == nonNullResultType || isRepresentationPreservingConversion,
                nonNullReceiverType == intType || nonNullReceiverType == longType

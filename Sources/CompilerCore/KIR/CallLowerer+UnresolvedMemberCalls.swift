@@ -76,6 +76,15 @@ extension CallLowerer {
         // count lambda args only) are matched correctly.
         let hofArity = sourceArgumentCount ?? argumentCount
         let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+        // OpenEndRange's generic contains member is still a compiler residual
+        // (KSP-652). Keep its source-backed cross-type overloads executable by
+        // lowering the residual call to the existing range bridge.
+        if memberName == "contains",
+           let (_, receiverSymbol) = resolveClassTypeSymbol(nonNullReceiverType, sema: sema),
+           interner.resolve(receiverSymbol.name) == "OpenEndRange"
+        {
+            return interner.intern("__kk_range_contains")
+        }
         if let rangeKind = MemberRuntimeDispatch.rangeReceiverKind(
             receiverExpr: receiverExpr,
             receiverType: receiverType,

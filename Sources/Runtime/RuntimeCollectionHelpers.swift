@@ -781,6 +781,13 @@ func runtimeValuesEqual(_ lhs: Int, _ rhs: Int) -> Bool {
     if let lhsInt = tryCast(lhsPtr, to: RuntimeIntBox.self),
        let rhsInt = tryCast(rhsPtr, to: RuntimeIntBox.self)
     {
+        // Enum values are represented as boxed ordinals at Any boundaries.
+        // Their nominal class is part of equals semantics: Direction.NORTH
+        // must not equal Color.RED merely because both have ordinal zero.
+        if lhsInt.enumClassID != nil || rhsInt.enumClassID != nil {
+            return lhsInt.enumClassID == rhsInt.enumClassID
+                && lhsInt.value == rhsInt.value
+        }
         return lhsInt.value == rhsInt.value
     }
     if let lhsBool = tryCast(lhsPtr, to: RuntimeBoolBox.self),

@@ -557,11 +557,6 @@ public extension RuntimeABISpec {
             p("streamRaw", .intptr),
             p("outThrown", .nullableIntptrPointer),
         ]),
-        // KSP-676: SharedFlow / StateFlow collect and replayCache are bundled
-        // Kotlin source; the C bridges have been removed.
-        abiParitySpec("kk_shared_immutable_init", parameters: [
-            p("objectRaw", .intptr),
-        ]),
         // KSP-413: kk_string_contentEquals_flat / kk_string_contentEquals_ignoreCase_flat
         // removed; contentEquals is bundled Kotlin source (StringComparison.kt).
         abiParitySpec("__kk_string_isNormalized_flat", parameters: [
