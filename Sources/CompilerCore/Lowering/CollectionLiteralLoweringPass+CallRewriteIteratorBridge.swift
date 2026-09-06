@@ -73,6 +73,23 @@ extension CollectionLiteralConstructionLoweringPass {
             return true
         }
 
+        // Source-backed collection iterator bindings may already carry the
+        // specialized runtime link instead of the source member name. Record
+        // that result so subsequent generic Iterator.hasNext()/next() calls
+        // can retain the list-specific ABI path.
+        if callee == lookup.kkListIteratorName, arguments.count == 1 {
+            if let result { state.listIteratorExprIDs.insert(result.rawValue) }
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: callee,
+                arguments: arguments,
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return true
+        }
+
         // --- Rewrite kk_range_iterator on ULong range → kk_ulong_range_iterator (STDLIB-RANGE-037) ---
         if callee == lookup.kkRangeIteratorName, arguments.count == 1 {
             let argID = arguments[0]
@@ -167,8 +184,12 @@ extension CollectionLiteralConstructionLoweringPass {
             }
         }
 
-        // --- Rewrite kk_range_hasNext on list iterator → kk_list_iterator_hasNext ---
-        if callee == lookup.kkRangeHasNextName, arguments.count == 1 {
+        // --- Rewrite list-iterator hasNext calls → kk_list_iterator_hasNext ---
+        // Source-backed collection shells can bind Iterator.hasNext directly,
+        // which emits the generic kk_iterator_hasNext callee. The iterator
+        // result is still recognized as a concrete list iterator above, so
+        // preserve the specialized runtime path for both spellings.
+        if (callee == lookup.kkRangeHasNextName || callee == ctx.interner.intern("kk_iterator_hasNext")), arguments.count == 1 {
             let argID = arguments[0]
             if state.listIteratorExprIDs.contains(argID.rawValue) {
                 loweredBody.append(.call(
@@ -234,8 +255,8 @@ extension CollectionLiteralConstructionLoweringPass {
             }
         }
 
-        // --- Rewrite kk_range_next on list iterator → kk_list_iterator_next ---
-        if callee == lookup.kkRangeNextName, arguments.count == 1 {
+        // --- Rewrite list-iterator next calls → kk_list_iterator_next ---
+        if (callee == lookup.kkRangeNextName || callee == ctx.interner.intern("kk_iterator_next")), arguments.count == 1 {
             let argID = arguments[0]
             if state.listIteratorExprIDs.contains(argID.rawValue) {
                 appendListIteratorNextWithUnboxing(

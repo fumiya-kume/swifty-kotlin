@@ -20,7 +20,9 @@ struct RuntimeReflectionTypeMetadataTests {
         let functionName = makeRuntimeString("run")
         let propertyName = makeRuntimeString("value")
         let constructorName = makeRuntimeString("<init>")
-        let function = __kk_kfunction_create(functionName, 0, 0, 0, 0, 0)
+        let function = __kk_kfunction_create(
+            functionName, 0, makeRuntimeString("kotlin.String"), 0, 0, 0
+        )
         let property = kk_kproperty_stub_create(propertyName, makeRuntimeString("kotlin.Int"))
         let kclass = __kk_kclass_create(71001, makeRuntimeString("Sample"))
         let constructor = __kk_kconstructor_create(
@@ -44,6 +46,26 @@ struct RuntimeReflectionTypeMetadataTests {
         #expect(__kk_kcallable_get_name(function) == functionName)
         #expect(__kk_kcallable_get_name(property) == propertyName)
         #expect(__kk_kcallable_get_name(constructor) == constructorName)
+
+        let functionReturnType = __kk_kcallable_get_return_type(function)
+        let propertyReturnType = __kk_kcallable_get_return_type(property)
+        let constructorReturnType = __kk_kcallable_get_return_type(constructor)
+        #expect(runtimeObjectTypeID(rawValue: functionReturnType) == kTypeRuntimeTypeID)
+        #expect(runtimeObjectTypeID(rawValue: propertyReturnType) == kTypeRuntimeTypeID)
+        #expect(runtimeObjectTypeID(rawValue: constructorReturnType) == kTypeRuntimeTypeID)
+        #expect(__kk_ktype_classifier(functionReturnType) != runtimeNullSentinelInt)
+        #expect(runtimeRenderAnyForPrint(functionReturnType) == "kotlin.String")
+        #expect(runtimeRenderAnyForPrint(propertyReturnType) == "kotlin.Int")
+        #expect(runtimeRenderAnyForPrint(constructorReturnType) == "Sample")
+
+        let taggedFunction = kk_callable_ref_tag_kfunction(
+            function, functionName, makeRuntimeString("kotlin.String"), 0, 0
+        )
+        let taggedProperty = kk_callable_ref_tag_kproperty(
+            property, propertyName, makeRuntimeString("kotlin.Int"), 0
+        )
+        #expect(runtimeObjectTypeID(rawValue: __kk_kcallable_get_return_type(taggedFunction)) == kTypeRuntimeTypeID)
+        #expect(runtimeObjectTypeID(rawValue: __kk_kcallable_get_return_type(taggedProperty)) == kTypeRuntimeTypeID)
     }
 
     @Test func typeReflectionBoxesCarryTheirDeclaredNominalTypes() {

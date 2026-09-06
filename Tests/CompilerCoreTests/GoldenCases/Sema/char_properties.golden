@@ -8,7 +8,6 @@ symbol fq=charIsTitleCase kind=function vis=public flags=_ sig=recv=_ params=[Ch
 symbol fq=charIsTitleCase.$3.c kind=valueParameter vis=private flags=_
 symbol fq=charIsUnicodeIdentifierPart kind=function vis=public flags=_ sig=recv=_ params=[Char] ret=Boolean
 symbol fq=charIsUnicodeIdentifierPart.$4.c kind=valueParameter vis=private flags=_
-symbol fq=kotlin.text.CharCategory kind=enumClass vis=public flags=synthetic
 symbol fq=kotlin.text.CharDirectionality kind=enumClass vis=public flags=synthetic
 symbol fq=kotlin.text.category kind=function vis=public flags=synthetic sig=recv=Char params=[] ret=kotlin.text.CharCategory
 symbol fq=kotlin.text.directionality kind=function vis=public flags=synthetic sig=recv=Char params=[] ret=kotlin.text.CharDirectionality

@@ -5,6 +5,49 @@
 /// keep the giant `rewriteCalls` body file scoped only to the rewrite
 /// dispatcher.
 extension CollectionLiteralConstructionLoweringPass {
+    /// Recognizes both the legacy bare `HashSet` constructor name and the
+    /// source-backed class constructor symbol emitted for the nominal class.
+    func isHashSetConstructor(
+        callee: InternedString,
+        symbol: SymbolID?,
+        result: KIRExprID?,
+        module: KIRModule,
+        lookup: CollectionLiteralLookupTables,
+        ctx: KIRContext
+    ) -> Bool {
+        if callee == lookup.hashSetName {
+            return true
+        }
+        guard let sema = ctx.sema else { return false }
+        let expectedFQName = [
+            ctx.interner.intern("kotlin"),
+            ctx.interner.intern("collections"),
+            lookup.hashSetName,
+        ]
+        if let symbol,
+           sema.symbols.symbol(symbol)?.kind == .constructor,
+           let owner = sema.symbols.parentSymbol(for: symbol),
+           let ownerInfo = sema.symbols.symbol(owner),
+           ownerInfo.fqName == expectedFQName
+        {
+            return true
+        }
+
+        // Source-backed implicit constructors can lose their constructor
+        // symbol while the call is converted to KIR. Recover the owner from
+        // the resolved result type before falling back to the generic `<init>`
+        // callee.
+        guard callee == ctx.interner.intern("<init>"),
+              let result,
+              let resultType = module.arena.exprType(result),
+              let resultClass = resolveClassType(resultType, sema: sema),
+              let resultInfo = sema.symbols.symbol(resultClass.classSymbol)
+        else {
+            return false
+        }
+        return resultInfo.fqName == expectedFQName
+    }
+
     /// Looks up the primitive boxing callee for `type`, resolving a value
     /// class to its underlying primitive first (see `resolveValueClassKind`)
     /// so `Meters` boxes exactly like the `Int` it wraps — matching

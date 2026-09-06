@@ -1,0 +1,62 @@
+symbol fq=__local_0.first kind=local vis=private flags=_ type=kotlin.time.ComparableTimeMark
+symbol fq=__local_1.absent kind=local vis=private flags=_ type=Any?
+symbol fq=__local_2.shifted kind=local vis=private flags=_ type=kotlin.time.ComparableTimeMark
+symbol fq=__local_3.heap kind=local vis=private flags=_ type=kotlin.time.ComparableTimeMark
+symbol fq=comparableTimeMarkProbe kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=kotlin.time.AbstractLongTimeSource kind=class vis=public flags=abstractType|openType
+symbol fq=kotlin.time.ComparableTimeMark kind=interface vis=public flags=_
+symbol fq=kotlin.time.Duration.Companion kind=object vis=public flags=synthetic|static
+symbol fq=kotlin.time.TestTimeSource kind=class vis=public flags=_
+symbol fq=kotlin.time.TimeSource kind=interface vis=public flags=_
+symbol fq=kotlin.time.TimeSource.Monotonic kind=object vis=public flags=static
+file fstdlib_kotlin_time_ComparableTimeMark_ComparableTimeMark_n package=_
+  decl comparableTimeMarkProbe fun comparableTimeMarkProbe sym=comparableTimeMarkProbe
+expr e@9:37 name(TimeSource) type=kotlin.time.TimeSource ref=kotlin.time.TimeSource
+expr e@9:37#1 memberCall recv=e@9:37 callee=Monotonic args=[] type=kotlin.time.TimeSource.Monotonic ref=kotlin.time.TimeSource.Monotonic
+expr e@9:37#2 memberCall recv=e@9:37#1 callee=markNow args=[] type=kotlin.time.TimeSource.Monotonic.ValueTimeMark call=kotlin.time.TimeSource.Monotonic.markNow
+expr e@9:5 localDecl first mutable=0 type=ComparableTimeMark init=e@9:37#2 type=Unit ref=__local_0.first
+expr e@10:24 name(null) type=Nothing?
+expr e@10:5 localDecl absent mutable=0 type=Any? init=e@10:24 type=Unit ref=__local_1.absent
+expr e@11:39 name(first) type=kotlin.time.ComparableTimeMark ref=__local_0.first
+expr e@11:47 name(Duration) type=kotlin.time.Duration.Companion ref=kotlin.time.Duration
+expr e@11:47#1 memberCall recv=e@11:47 callee=ZERO args=[] type=kotlin.time.Duration call=kotlin.time.ZERO.$get
+expr e@11:39#1 binary(add) lhs=e@11:39 rhs=e@11:47#1 type=kotlin.time.ComparableTimeMark call=kotlin.time.plus#0
+expr e@11:5 localDecl shifted mutable=0 type=ComparableTimeMark init=e@11:39#1 type=Unit ref=__local_2.shifted
+expr e@12:36 call callee=e@12:36#1 args=[] type=kotlin.time.TestTimeSource call=kotlin.time.TestTimeSource.<init>
+expr e@12:36#2 memberCall recv=e@12:36 callee=markNow args=[] type=kotlin.time.ComparableTimeMark call=kotlin.time.AbstractLongTimeSource.markNow
+expr e@12:5 localDecl heap mutable=0 type=ComparableTimeMark init=e@12:36#2 type=Unit ref=__local_3.heap
+expr e@13:12 name(first) type=kotlin.time.ComparableTimeMark ref=__local_0.first
+expr e@13:25 name(first) type=kotlin.time.ComparableTimeMark ref=__local_0.first
+expr e@13:12#1 memberCall recv=e@13:12 callee=equals args=[_:e@13:25] type=Boolean call=kotlin.time.ComparableTimeMark.equals
+expr e@14:10 name(first) type=kotlin.time.ComparableTimeMark ref=__local_0.first
+expr e@14:23 name(absent) type=Any? ref=__local_1.absent
+expr e@14:10#1 memberCall recv=e@14:10 callee=equals args=[_:e@14:23] type=Boolean call=kotlin.time.ComparableTimeMark.equals
+expr e@14:9 unary(not) operand=e@14:10#1 type=Boolean
+expr e@13:12#2 binary(logicalAnd) lhs=e@13:12#1 rhs=e@14:9 type=Boolean
+expr e@15:9 name(first) type=kotlin.time.ComparableTimeMark ref=__local_0.first
+expr e@15:9#1 memberCall recv=e@15:9 callee=hashCode args=[] type=Int call=kotlin.time.ComparableTimeMark.hashCode
+expr e@15:29 name(first) type=kotlin.time.ComparableTimeMark ref=__local_0.first
+expr e@15:29#1 memberCall recv=e@15:29 callee=hashCode args=[] type=Int call=kotlin.time.ComparableTimeMark.hashCode
+expr e@15:9#2 binary(equal) lhs=e@15:9#1 rhs=e@15:29#1 type=Boolean
+expr e@13:12#3 binary(logicalAnd) lhs=e@13:12#2 rhs=e@15:9#2 type=Boolean
+expr e@16:9 name(shifted) type=kotlin.time.ComparableTimeMark ref=__local_2.shifted
+expr e@16:24 name(shifted) type=kotlin.time.ComparableTimeMark ref=__local_2.shifted
+expr e@16:9#1 memberCall recv=e@16:9 callee=equals args=[_:e@16:24] type=Boolean call=kotlin.time.ComparableTimeMark.equals
+expr e@13:12#4 binary(logicalAnd) lhs=e@13:12#3 rhs=e@16:9#1 type=Boolean
+expr e@17:9 name(shifted) type=kotlin.time.ComparableTimeMark ref=__local_2.shifted
+expr e@17:9#1 memberCall recv=e@17:9 callee=hashCode args=[] type=Int call=kotlin.time.ComparableTimeMark.hashCode
+expr e@17:31 name(shifted) type=kotlin.time.ComparableTimeMark ref=__local_2.shifted
+expr e@17:31#1 memberCall recv=e@17:31 callee=hashCode args=[] type=Int call=kotlin.time.ComparableTimeMark.hashCode
+expr e@17:9#2 binary(equal) lhs=e@17:9#1 rhs=e@17:31#1 type=Boolean
+expr e@13:12#5 binary(logicalAnd) lhs=e@13:12#4 rhs=e@17:9#2 type=Boolean
+expr e@18:9 name(heap) type=kotlin.time.ComparableTimeMark ref=__local_3.heap
+expr e@18:21 name(heap) type=kotlin.time.ComparableTimeMark ref=__local_3.heap
+expr e@18:9#1 memberCall recv=e@18:9 callee=equals args=[_:e@18:21] type=Boolean call=kotlin.time.ComparableTimeMark.equals
+expr e@13:12#6 binary(logicalAnd) lhs=e@13:12#5 rhs=e@18:9#1 type=Boolean
+expr e@19:9 name(heap) type=kotlin.time.ComparableTimeMark ref=__local_3.heap
+expr e@19:9#1 memberCall recv=e@19:9 callee=hashCode args=[] type=Int call=kotlin.time.ComparableTimeMark.hashCode
+expr e@19:28 name(heap) type=kotlin.time.ComparableTimeMark ref=__local_3.heap
+expr e@19:28#1 memberCall recv=e@19:28 callee=hashCode args=[] type=Int call=kotlin.time.ComparableTimeMark.hashCode
+expr e@19:9#2 binary(equal) lhs=e@19:9#1 rhs=e@19:28#1 type=Boolean
+expr e@13:12#7 binary(logicalAnd) lhs=e@13:12#6 rhs=e@19:9#2 type=Boolean
+expr e@13:5 return value=e@13:12#7 type=Nothing

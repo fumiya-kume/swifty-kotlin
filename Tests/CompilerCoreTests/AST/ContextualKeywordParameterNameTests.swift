@@ -36,6 +36,73 @@ struct ContextualKeywordParameterNameTests {
         }.first { interner.resolve($0.name) == name }
     }
 
+    private func firstObjectDecl(named name: String, in ast: ASTModule, interner: StringInterner) -> ObjectDecl? {
+        ast.arena.declarations().compactMap { decl -> ObjectDecl? in
+            guard case let .objectDecl(objectDecl) = decl else { return nil }
+            return objectDecl
+        }.first { interner.resolve($0.name) == name }
+    }
+
+    private func firstInterfaceDecl(named name: String, in ast: ASTModule, interner: StringInterner) -> InterfaceDecl? {
+        ast.arena.declarations().compactMap { decl -> InterfaceDecl? in
+            guard case let .interfaceDecl(interfaceDecl) = decl else { return nil }
+            return interfaceDecl
+        }.first { interner.resolve($0.name) == name }
+    }
+
+    private func firstTypeAliasDecl(named name: String, in ast: ASTModule, interner: StringInterner) -> TypeAliasDecl? {
+        ast.arena.declarations().compactMap { decl -> TypeAliasDecl? in
+            guard case let .typeAliasDecl(typeAliasDecl) = decl else { return nil }
+            return typeAliasDecl
+        }.first { interner.resolve($0.name) == name }
+    }
+
+    @Test
+    func testModifierKeywordsRemainDeclarationNames() throws {
+        let source = """
+        package demo
+        open class Base
+        class inner(val x: Int) : Base()
+        object sealed
+        interface operator
+        typealias override = Int
+        """
+        let (ast, ctx) = try buildAST(from: source)
+
+        let innerClass = try #require(firstClassDecl(named: "inner", in: ast, interner: ctx.interner))
+        #expect(innerClass.superTypeEntries.count == 1)
+        #expect(firstObjectDecl(named: "sealed", in: ast, interner: ctx.interner) != nil)
+        #expect(firstInterfaceDecl(named: "operator", in: ast, interner: ctx.interner) != nil)
+        #expect(firstTypeAliasDecl(named: "override", in: ast, interner: ctx.interner) != nil)
+    }
+
+    @Test
+    func testMultilineParameterNameStartingWithModifierKeywordKeepsGroupBalanced() throws {
+        let source = """
+        package demo
+        fun makeIt(
+            inner: Int,
+            tag: Int
+        ): Int = inner + tag
+        """
+        let (ast, ctx) = try buildAST(from: source)
+        let funDecl = try #require(firstFunDecl(named: "makeIt", in: ast, interner: ctx.interner))
+
+        #expect(funDecl.valueParams.map { ctx.interner.resolve($0.name) } == ["inner", "tag"])
+    }
+
+    @Test
+    func testOutParameterNameIsNotReservedAsVariance() throws {
+        let source = """
+        package demo
+        fun read(out: Int): Int = out
+        """
+        let (ast, ctx) = try buildAST(from: source)
+        let funDecl = try #require(firstFunDecl(named: "read", in: ast, interner: ctx.interner))
+
+        #expect(funDecl.valueParams.map { ctx.interner.resolve($0.name) } == ["out"])
+    }
+
     @Test
     func testFunctionParameterNamedInnerIsNotDropped() throws {
         let source = """
