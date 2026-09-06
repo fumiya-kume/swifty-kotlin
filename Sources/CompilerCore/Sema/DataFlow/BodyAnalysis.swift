@@ -448,26 +448,34 @@ extension DataFlowSemaPhase {
             return []
         }
 
-        var candidatePaths: [[InternedString]] = [path]
-        if path.count == 1,
-           let currentPackageFQName,
-           !currentPackageFQName.isEmpty
-        {
-            candidatePaths.append(currentPackageFQName + path)
-        }
-        if path.count == 1,
-           let shortName = path.first
-        {
-            for importDecl in imports {
-                if let alias = importDecl.alias, alias == shortName {
-                    candidatePaths.append(importDecl.path)
-                } else if importDecl.alias == nil,
-                          importDecl.path.last == shortName
+        var candidatePaths: [[InternedString]] = {
+            var paths: [[InternedString]] = []
+            if path.count == 1 {
+                if let currentPackageFQName,
+                   !currentPackageFQName.isEmpty
                 {
-                    candidatePaths.append(importDecl.path)
+                    paths.append(currentPackageFQName + path)
                 }
+                if let shortName = path.first {
+                    for importDecl in imports {
+                        if let alias = importDecl.alias, alias == shortName {
+                            paths.append(importDecl.path)
+                        } else if importDecl.alias == nil,
+                                  importDecl.path.last == shortName
+                        {
+                            paths.append(importDecl.path)
+                        }
+                    }
+                }
+                // An unqualified root symbol is the final fallback. This ordering
+                // keeps an explicit import from being shadowed by a compatibility
+                // alias with the same short name (KSP-1150).
+                paths.append(path)
+            } else {
+                paths = [path]
             }
-        }
+            return paths
+        }()
 
         // For qualified nested-type references within the current package (e.g. a
         // Companion-scoped extension "Duration.Companion.ZERO" written in the same

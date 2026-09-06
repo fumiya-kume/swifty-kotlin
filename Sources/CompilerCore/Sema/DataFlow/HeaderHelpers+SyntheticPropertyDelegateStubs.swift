@@ -78,6 +78,28 @@ extension DataFlowSemaPhase {
         let kCallableSymbol = ensureInterfaceSymbol(
             named: "KCallable", in: kotlinReflectPkg, symbols: symbols, interner: interner
         )
+        // KCallable is source-backed when the bundled stdlib is present. Keep
+        // its generic shell and properties here so early synthetic declarations
+        // can refer to the same symbols before bundled headers are collected.
+        let returnTypeParameterName = interner.intern("R")
+        let returnTypeParameterFQ = (symbols.symbol(kCallableSymbol)?.fqName
+            ?? kotlinReflectPkg + [interner.intern("KCallable")]) + [returnTypeParameterName]
+        let returnTypeParameterSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: returnTypeParameterFQ) {
+            returnTypeParameterSymbol = existing
+        } else {
+            returnTypeParameterSymbol = symbols.define(
+                kind: .typeParameter,
+                name: returnTypeParameterName,
+                fqName: returnTypeParameterFQ,
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(kCallableSymbol, for: returnTypeParameterSymbol)
+        }
+        types.setNominalTypeParameterSymbols([returnTypeParameterSymbol], for: kCallableSymbol)
+        types.setNominalTypeParameterVariances([.out], for: kCallableSymbol)
         addSyntheticDirectSupertypes(
             [kCallableSymbol], to: kPropertySymbol,
             symbols: symbols, types: types
@@ -92,6 +114,23 @@ extension DataFlowSemaPhase {
                 )
                 symbols.setParentSymbol(kCallableSymbol, for: namePropSymbol)
                 symbols.setPropertyType(stringType, for: namePropSymbol)
+            }
+
+            let returnTypeName = interner.intern("returnType")
+            let returnTypeFQ = kCallableInfo.fqName + [returnTypeName]
+            if symbols.lookup(fqName: returnTypeFQ) == nil {
+                let kTypeSymbol = ensureInterfaceSymbol(
+                    named: "KType", in: kotlinReflectPkg, symbols: symbols, interner: interner
+                )
+                let kTypeType = types.make(.classType(ClassType(
+                    classSymbol: kTypeSymbol, args: [], nullability: .nonNull
+                )))
+                let returnTypeSymbol = symbols.define(
+                    kind: .property, name: returnTypeName, fqName: returnTypeFQ,
+                    declSite: nil, visibility: .public, flags: [.synthetic]
+                )
+                symbols.setParentSymbol(kCallableSymbol, for: returnTypeSymbol)
+                symbols.setPropertyType(kTypeType, for: returnTypeSymbol)
             }
         }
         let kMutablePropertySymbol = ensureInterfaceSymbol(
@@ -1465,24 +1504,28 @@ extension DataFlowSemaPhase {
             args: [],
             nullability: .nonNull
         )))
-        for entry in ["INVARIANT", "IN", "OUT"] {
-            let entryName = interner.intern(entry)
-            let entryFQName = enumFQName + [entryName]
-            let entrySymbol: SymbolID
-            if let existing = symbols.lookup(fqName: entryFQName) {
-                entrySymbol = existing
-            } else {
-                entrySymbol = symbols.define(
-                    kind: .field,
-                    name: entryName,
-                    fqName: entryFQName,
-                    declSite: nil,
-                    visibility: .public,
-                    flags: [.synthetic]
-                )
-                symbols.setParentSymbol(enumSymbol, for: entrySymbol)
+        // The bundled declaration owns its real enum entry symbols. Keep the
+        // synthetic entries only for --no-stdlib compatibility.
+        if !symbols.isSourceBackedSymbol(enumSymbol) {
+            for entry in ["INVARIANT", "IN", "OUT"] {
+                let entryName = interner.intern(entry)
+                let entryFQName = enumFQName + [entryName]
+                let entrySymbol: SymbolID
+                if let existing = symbols.lookup(fqName: entryFQName) {
+                    entrySymbol = existing
+                } else {
+                    entrySymbol = symbols.define(
+                        kind: .field,
+                        name: entryName,
+                        fqName: entryFQName,
+                        declSite: nil,
+                        visibility: .public,
+                        flags: [.synthetic]
+                    )
+                    symbols.setParentSymbol(enumSymbol, for: entrySymbol)
+                }
+                symbols.setPropertyType(enumType, for: entrySymbol)
             }
-            symbols.setPropertyType(enumType, for: entrySymbol)
         }
     }
 

@@ -16,7 +16,7 @@ symbol fq=java.io.File.<init>#0 kind=constructor vis=public flags=synthetic sig=
 symbol fq=java.io.File.<init>.path kind=valueParameter vis=private flags=synthetic
 symbol fq=java.io.File.bufferedReader kind=function vis=public flags=synthetic sig=recv=java.io.File params=[] ret=java.io.BufferedReader
 symbol fq=java.io.Reader kind=class vis=public flags=synthetic type=java.io.Reader
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.io.readText kind=function vis=public flags=synthetic sig=recv=java.io.Reader params=[] ret=String
 file fbuffered_reader_use package=golden.sema
   decl golden.sema.readWithBufferedReader fun readWithBufferedReader sym=golden.sema.readWithBufferedReader

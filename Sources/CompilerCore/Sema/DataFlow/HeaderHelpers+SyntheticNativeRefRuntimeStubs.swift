@@ -536,14 +536,6 @@ extension DataFlowSemaPhase {
             ownerFQName: memoryUsageFQName,
             parentSymbol: memoryUsageSymbol
         )
-        registerSyntheticConstructorStubs(
-            [SyntheticNativeRefRuntimeSurfaceSpec.memoryUsageConstructor],
-            ownerType: SyntheticNativeRefRuntimeSurfaceSpec.memoryUsageType,
-            context: memoryUsageContext,
-            symbols: symbols,
-            types: types,
-            interner: interner
-        )
         registerSyntheticPropertyStubs(
             SyntheticNativeRefRuntimeSurfaceSpec.memoryUsageProperties,
             context: memoryUsageContext,

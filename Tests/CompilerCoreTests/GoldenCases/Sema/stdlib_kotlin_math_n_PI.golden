@@ -1,0 +1,15 @@
+symbol fq=__local_0.copied kind=local vis=private flags=_ type=Double
+symbol fq=golden.sema.readPI kind=function vis=public flags=_ sig=recv=_ params=[] ret=Double
+symbol fq=golden.sema.readPICopy kind=function vis=public flags=_ sig=recv=_ params=[] ret=Double
+symbol fq=golden.sema.readPIRawBits kind=function vis=public flags=_ sig=recv=_ params=[] ret=Long
+file fstdlib_kotlin_math_n_PI package=golden.sema
+  decl golden.sema.readPI fun readPI sym=golden.sema.readPI
+  decl golden.sema.readPICopy fun readPICopy sym=golden.sema.readPICopy
+  decl golden.sema.readPIRawBits fun readPIRawBits sym=golden.sema.readPIRawBits
+expr e@5:24 name(PI) type=Double ref=kotlin.math.PI
+expr e@8:18 name(PI) type=Double ref=kotlin.math.PI
+expr e@8:5 localDecl copied mutable=0 type=_ init=e@8:18 type=Unit ref=__local_0.copied
+expr e@9:12 name(copied) type=Double ref=__local_0.copied
+expr e@9:5 return value=e@9:12 type=Nothing
+expr e@12:29 name(PI) type=Double ref=kotlin.math.PI
+expr e@12:29#1 memberCall recv=e@12:29 callee=toRawBits args=[] type=Long call=kotlin.toRawBits#0
