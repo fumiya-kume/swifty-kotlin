@@ -1,0 +1,22 @@
+symbol fq=golden.sema.cause kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Throwable?] ret=kotlin.coroutines.cancellation.CancellationException
+symbol fq=golden.sema.cause.$0.cause kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.message kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=kotlin.coroutines.cancellation.CancellationException
+symbol fq=golden.sema.message.$1.message kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.messageAndCause kind=function vis=public flags=_ sig=recv=_ params=[String?,kotlin.Throwable?] ret=kotlin.coroutines.cancellation.CancellationException
+symbol fq=golden.sema.messageAndCause.$2.cause kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.messageAndCause.$2.message kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.noArg kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.coroutines.cancellation.CancellationException
+symbol fq=kotlin.Throwable kind=class vis=public flags=openType
+file fstdlib_kotlin_coroutines_cancellation_CancellationException_n_n package=golden.sema
+  decl golden.sema.noArg fun noArg sym=golden.sema.noArg
+  decl golden.sema.message fun message sym=golden.sema.message
+  decl golden.sema.cause fun cause sym=golden.sema.cause
+  decl golden.sema.messageAndCause fun messageAndCause sym=golden.sema.messageAndCause
+expr e@5:38 call callee=e@5:38#1 args=[] type=kotlin.coroutines.cancellation.CancellationException call=kotlin.coroutines.cancellation.CancellationException.<init>#0
+expr e@7:78 name(message) type=String? ref=golden.sema.message.$1.message
+expr e@7:56 call callee=e@7:56#1 args=[_:e@7:78] type=kotlin.coroutines.cancellation.CancellationException call=kotlin.coroutines.cancellation.CancellationException.<init>#1
+expr e@9:77 name(cause) type=kotlin.Throwable? ref=golden.sema.cause.$0.cause
+expr e@9:55 call callee=e@9:55#1 args=[_:e@9:77] type=kotlin.coroutines.cancellation.CancellationException call=kotlin.coroutines.cancellation.CancellationException.<init>#3
+expr e@12:27 name(message) type=String? ref=golden.sema.messageAndCause.$2.message
+expr e@12:36 name(cause) type=kotlin.Throwable? ref=golden.sema.messageAndCause.$2.cause
+expr e@12:5 call callee=e@12:5#1 args=[_:e@12:27,_:e@12:36] type=kotlin.coroutines.cancellation.CancellationException call=kotlin.coroutines.cancellation.CancellationException.<init>#2

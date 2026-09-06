@@ -196,7 +196,16 @@ extension CallLowerer {
                         thrownResult: nil
                     ))
                 } else {
-                    let loweredCalleeName: InternedString = if let externalLinkName = sema.symbols.externalLinkName(for: callBinding.chosenCallee),
+                    let sourceBackedHashSetEquality = (op == .equal || op == .notEqual)
+                        && isSourceBackedHashSetType(
+                            sema.bindings.exprTypes[lhs] ?? sema.types.anyType,
+                            sema: sema,
+                            interner: interner
+                        )
+                    let loweredCalleeName: InternedString = if sourceBackedHashSetEquality {
+                        // Source-backed HashSet values are RuntimeSetBox handles, so operator equality must use the structural runtime bridge instead of the inherited AbstractMutableSet.equals body.
+                        interner.intern("kk_structural_eq")
+                    } else if let externalLinkName = sema.symbols.externalLinkName(for: callBinding.chosenCallee),
                                                                !externalLinkName.isEmpty
                     {
                         interner.intern(externalLinkName)
@@ -206,7 +215,7 @@ extension CallLowerer {
                         interner.intern(op.kotlinFunctionName)
                     }
                     instructions.append(.call(
-                        symbol: callBinding.chosenCallee,
+                        symbol: sourceBackedHashSetEquality ? nil : callBinding.chosenCallee,
                         callee: loweredCalleeName,
                         arguments: finalArguments,
                         result: callResult,
