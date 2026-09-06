@@ -2017,19 +2017,10 @@
     - `kotlin.collections.MutableList.set` — fun MutableList.set(Int, ): #A  -- `abstract fun set(kotlin/Int, #A): #A`
     - `kotlin.collections.MutableList.subList` — fun MutableList.subList(Int, Int): MutableList  -- `abstract fun subList(kotlin/Int, kotlin/Int): kotlin.collections/MutableList<#A>`
 
-- [ ] KSP-1073: kotlin.collections.MutableListIterator.MutableListIterator の未実装 stdlib API を実装する（5 件）
+- [x] KSP-1073: kotlin.collections.MutableListIterator.MutableListIterator の未実装 stdlib API を実装する（5 件）
   - 対象: `kotlin.collections.MutableListIterator` / receiver `MutableListIterator`
-  - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/MutableListIterator/MutableListIterator.kt`（該当ファイルが無ければ新規作成）
-  - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
-  - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_collections_MutableListIterator_MutableListIterator_n.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
-  - diff ケース: `Scripts/diff_cases/stdlib_kotlin_collections_MutableListIterator_MutableListIterator_n.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_collections_MutableListIterator_MutableListIterator_n.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
-  - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
-  - 未実装シンボル一覧:
-    - `kotlin.collections.MutableListIterator.add` — fun MutableListIterator.add(): Unit  -- `abstract fun add(#A)`
-    - `kotlin.collections.MutableListIterator.hasNext` — fun MutableListIterator.hasNext(): Boolean  -- `abstract fun hasNext(): kotlin/Boolean`
-    - `kotlin.collections.MutableListIterator.next` — fun MutableListIterator.next(): #A  -- `abstract fun next(): #A`
-    - `kotlin.collections.MutableListIterator.remove` — fun MutableListIterator.remove(): Unit  -- `abstract fun remove()`
-    - `kotlin.collections.MutableListIterator.set` — fun MutableListIterator.set(): Unit  -- `abstract fun set(#A)`
+  - 完了根拠: `hasNext`/`next` は既存の `listIteratorInheritedDispatchCallee` 系の itable 強制ロジックで元々正しく動作していた（未変更）。`add`/`set` は `MutableListIterator.kt` に実宣言を追加し、`HeaderHelpers+SyntheticListResiduals.swift`（`ensureSyntheticMutableListIteratorStub`）の synthetic fallback を `activeBundledIndex.contains` ガードで抑制。`remove` は同ファイルの `registerRemoveMember()` が `MutableListIterator` に冗長な synthetic 重複を宣言し、実際に itable 配線済みの継承元 `MutableIterator.remove` を member lookup で覆い隠していた（BUG: `.remove()` が静かに no-op、`add`/`set` は kklib メタデータへ synthetic シンボルが round-trip しないため link failure）ため、`mutableIteratorSymbol` が解決できる通常時は synthetic 重複を作らないようガードして修正。Runtime 側は `RuntimeListIteratorBox` に `addAction`/`setAction`（`RuntimeTypes.swift`）を追加し、`kk_list_iterator`/`kk_list_iterator_at`（`RuntimeCollections.swift`）で配線、`registerMutableListIteratorItable`（`RuntimeCollectionHelpers.swift`、itable slot 3、既存の #6560 が触る2関数とは非依存）でネイティブ `RuntimeListIteratorBox` にも `add`/`set` の itable dispatch を登録。
+  - 回帰: `Tests/CompilerCoreTests/Sema/ListSyntheticMemberLinkTests.swift`（`testMutableListIteratorSurfaceIsRegistered`/`testCustomMutableListIteratorImplementationResolves` 更新・確認）、`Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_collections_n_MutableListIterator.golden` 再生成（`remove` の解決先が `MutableListIterator.remove` → `MutableIterator.remove` に変化、機械的差分）、新規 `Scripts/diff_cases/mutable_list_iterator_custom_impl_dispatch.kt`（`diff_kotlinc.sh` で real kotlinc と一致確認、ネイティブ `listIterator()` の `set`/`add`/`remove` と直接実装クラス両方をカバー）。
 
 - [ ] KSP-1074: kotlin.collections.MutableMap top-level の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.collections.MutableMap` / top-level
