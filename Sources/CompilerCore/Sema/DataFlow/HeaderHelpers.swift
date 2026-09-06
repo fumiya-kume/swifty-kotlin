@@ -1282,12 +1282,6 @@ extension DataFlowSemaPhase {
         registerSyntheticInstantStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticClockStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticExperimentalTimeStubs(symbols: symbols, types: types, interner: interner, bundledIndex: bundledIndex)
-        let stringBuilderOwner = [interner.intern("kotlin"), interner.intern("text"), interner.intern("StringBuilder")]
-        if bundledIndex.contains(ownerFQName: stringBuilderOwner, name: interner.intern("append"), arity: 1) {
-            patchSourceBackedStringBuilderSupertypes(symbols: symbols, types: types, interner: interner)
-        } else {
-            registerSyntheticStringBuilderStubs(symbols: symbols, types: types, interner: interner)
-        }
         registerSyntheticTODOAndIOStubs(
             symbols: symbols,
             types: types,

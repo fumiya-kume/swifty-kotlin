@@ -383,25 +383,6 @@ final class DataFlowSemaPhase: CompilerPhase {
             types: types,
             interner: ctx.interner
         )
-        // BUG-166: StringBuilder's Appendable/CharSequence conformance is
-        // synthetic (not written in the bundled Kotlin source's `class
-        // StringBuilder { ... }` declaration), so bindInheritanceEdges above —
-        // which recomputes every nominal's directSupertypes from its AST
-        // super-type clause and defaults to just `Any` when that clause is
-        // empty — unconditionally overwrites whatever this patch had set
-        // if it ran any earlier (e.g. before this function, as a prior
-        // version of this fix did). That left `val x: Appendable =
-        // StringBuilder()` unable to satisfy the assignment's subtype
-        // constraint (KSWIFTK-TYPE-0001) despite Appendable's own itable
-        // layout being otherwise correct. Patching here, immediately after
-        // bindInheritanceEdges and before every other validation pass and
-        // synthesizeNominalLayouts below, ensures both the constraint solver
-        // and itable slot synthesis see the complete supertype list.
-        patchSourceBackedStringBuilderSupertypes(
-            symbols: symbols,
-            types: types,
-            interner: ctx.interner
-        )
         // KSP-944: MutableList's source declaration owns its official
         // List/MutableCollection edges, while the retained compiler shell
         // still supplies the MutableIterable residual compatibility edge.
