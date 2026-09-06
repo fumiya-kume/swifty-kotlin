@@ -6,7 +6,7 @@ symbol fq=golden.sema.listOfNotNullSingle.$0.value kind=valueParameter vis=priva
 symbol fq=golden.sema.listOfNotNullValue kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<Int>
 symbol fq=golden.sema.listOfNullable kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<String?>
 symbol fq=golden.sema.listOfSingle kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<Int>
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_n_list package=golden.sema
   decl golden.sema.listOfSingle fun listOfSingle sym=golden.sema.listOfSingle
   decl golden.sema.listOfNullable fun listOfNullable sym=golden.sema.listOfNullable

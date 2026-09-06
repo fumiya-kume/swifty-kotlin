@@ -951,6 +951,18 @@ extension DataFlowSemaPhase {
             return
         }
 
+        // HashSet is source-backed for its nominal surface, while its
+        // iterator/size implementation remains on the shared runtime set
+        // bridge. Do not force the KSP-936 shell to duplicate KSP-1056/1057
+        // collection members just to satisfy the synthetic abstract stub.
+        let hashSetFQName = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("HashSet"),
+        ]
+        if symbolInfo.fqName == hashSetFQName {
+            return
+        }
         // Collect all abstract members from the entire supertype chain
         let abstractMembers = collectInheritedAbstractMembers(
             for: symbol,

@@ -257,9 +257,12 @@ public func kk_vtable_lookup(_ receiver: Int, _ slot: Int) -> Int {
         let registered = runtimeStorage.withMetadataLock { state in
             state.objectVtableMethods[objectKey]?[slot]
         }
-        if let registered {
+        if let registered, registered != 0 {
             return registered
         }
+    }
+    if let throwableMethod = runtimeThrowableVtableMethodRaw(receiver, slot: slot) {
+        return throwableMethod
     }
     guard slot >= 0,
           let typeInfo = runtimeTypeInfo(from: receiver)

@@ -12,11 +12,9 @@ symbol fq=golden.sema.acceptReadonly.$1.values kind=valueParameter vis=private f
 symbol fq=golden.sema.inheritedMapSurface kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.ProbeMutableMap,String] ret=Int?
 symbol fq=golden.sema.inheritedMapSurface.$2.missing kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.inheritedMapSurface.$2.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.Any kind=class vis=public flags=synthetic
-symbol fq=kotlin.Any.equals kind=function vis=public flags=synthetic|openType sig=recv=kotlin.Any params=[Any?] ret=Boolean
-symbol fq=kotlin.Any.equals.p0 kind=valueParameter vis=private flags=synthetic type=Any?
-symbol fq=kotlin.Any.hashCode kind=function vis=public flags=synthetic|openType sig=recv=kotlin.Any params=[] ret=Int
-symbol fq=kotlin.Any.toString kind=function vis=public flags=synthetic|openType sig=recv=kotlin.Any params=[] ret=String
+symbol fq=kotlin.collections.AbstractMap kind=class vis=public flags=abstractType|openType type=kotlin.collections.AbstractMap<kotlin.collections.AbstractMap.K, out kotlin.collections.AbstractMap.V>
+symbol fq=kotlin.collections.AbstractMap.K kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.AbstractMap.V kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Map.Entry kind=interface vis=public flags=synthetic
@@ -58,11 +56,11 @@ expr e@21:21#1 memberCall recv=e@21:21 callee=entries args=[] type=kotlin.collec
 expr e@21:5 localDecl entryView mutable=0 type=_ init=e@21:21#1 type=Unit ref=__local_5.entryView
 expr e@22:5 name(values) type=golden.sema.ProbeMutableMap ref=golden.sema.inheritedMapSurface.$2.values
 expr e@22:19 name(readonly) type=kotlin.collections.Map<String, Int> ref=__local_0.readonly
-expr e@22:5#1 memberCall recv=e@22:5 callee=equals args=[_:e@22:19] type=Boolean call=kotlin.Any.equals
+expr e@22:5#1 memberCall recv=e@22:5 callee=equals args=[_:e@22:19] type=Boolean call=kotlin.collections.AbstractMap.equals targs=[String,Int]
 expr e@23:5 name(values) type=golden.sema.ProbeMutableMap ref=golden.sema.inheritedMapSurface.$2.values
-expr e@23:5#1 memberCall recv=e@23:5 callee=hashCode args=[] type=Int call=kotlin.Any.hashCode
+expr e@23:5#1 memberCall recv=e@23:5 callee=hashCode args=[] type=Int call=kotlin.collections.AbstractMap.hashCode targs=[String,Int]
 expr e@24:5 name(values) type=golden.sema.ProbeMutableMap ref=golden.sema.inheritedMapSurface.$2.values
-expr e@24:5#1 memberCall recv=e@24:5 callee=toString args=[] type=String call=kotlin.Any.toString
+expr e@24:5#1 memberCall recv=e@24:5 callee=toString args=[] type=String call=kotlin.collections.AbstractMap.toString targs=[String,Int]
 expr e@25:5 name(keyView) type=kotlin.collections.Set<String> ref=__local_3.keyView
 expr e@25:5#1 memberCall recv=e@25:5 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
 expr e@26:5 name(valueView) type=kotlin.collections.Collection<Int> ref=__local_4.valueView

@@ -1,0 +1,41 @@
+symbol fq=__local_0.empty kind=local vis=private flags=_ type=kotlin.collections.HashSet<Int>
+symbol fq=__local_1.sized kind=local vis=private flags=_ type=kotlin.collections.HashSet<Int>
+symbol fq=__local_2.copied kind=local vis=private flags=_ type=kotlin.collections.HashSet<Int>
+symbol fq=__local_3.asMutable kind=local vis=private flags=_ type=kotlin.collections.MutableSet<Int>
+symbol fq=__local_4.asSet kind=local vis=private flags=_ type=kotlin.collections.Set<Int>
+symbol fq=acceptsHashSet kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.HashSet<Int>] ret=kotlin.collections.MutableSet<Int>
+symbol fq=acceptsHashSet.$0.values kind=valueParameter vis=private flags=_
+symbol fq=kotlin.collections.MutableSet kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.MutableSet.E kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.MutableSet.add kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableSet<kotlin.collections.MutableSet.E> params=[kotlin.collections.MutableSet.E] ret=Boolean
+symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Set.E kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Set.contains kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Set<out kotlin.collections.Set.E> params=[kotlin.collections.Set.E] ret=Boolean
+symbol fq=probe kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+file fstdlib_kotlin_collections_n_HashSet package=_
+  decl acceptsHashSet fun acceptsHashSet sym=acceptsHashSet
+  decl probe fun probe sym=probe
+expr e@1:61 name(values) type=kotlin.collections.HashSet<Int> ref=acceptsHashSet.$0.values
+expr e@4:31 call callee=e@4:31#1 args=[] type=kotlin.collections.HashSet<Int>
+expr e@4:5 localDecl empty mutable=0 type=HashSet<Int> init=e@4:31 type=Unit ref=__local_0.empty
+expr e@5:30 int(8) type=Int
+expr e@5:17 call callee=e@5:17#1 args=[_:e@5:30] type=kotlin.collections.HashSet<Int>
+expr e@5:5 localDecl sized mutable=0 type=_ init=e@5:17 type=Unit ref=__local_1.sized
+expr e@6:26 name(empty) type=kotlin.collections.HashSet<Int> ref=__local_0.empty
+expr e@6:18 call callee=e@6:18#1 args=[_:e@6:26] type=kotlin.collections.HashSet<Int>
+expr e@6:5 localDecl copied mutable=0 type=_ init=e@6:18 type=Unit ref=__local_2.copied
+expr e@7:38 name(copied) type=kotlin.collections.HashSet<Int> ref=__local_2.copied
+expr e@7:5 localDecl asMutable mutable=0 type=MutableSet<Int> init=e@7:38 type=Unit ref=__local_3.asMutable
+expr e@8:27 name(copied) type=kotlin.collections.HashSet<Int> ref=__local_2.copied
+expr e@8:5 localDecl asSet mutable=0 type=Set<Int> init=e@8:27 type=Unit ref=__local_4.asSet
+expr e@10:20 name(copied) type=kotlin.collections.HashSet<Int> ref=__local_2.copied
+expr e@10:5 call callee=e@10:5#1 args=[_:e@10:20] type=kotlin.collections.MutableSet<Int> call=acceptsHashSet
+expr e@11:5 name(asMutable) type=kotlin.collections.MutableSet<Int> ref=__local_3.asMutable
+expr e@11:19 int(1) type=Int
+expr e@11:5#1 memberCall recv=e@11:5 callee=add args=[_:e@11:19] type=Boolean call=kotlin.collections.MutableSet.add
+expr e@12:5 name(asSet) type=kotlin.collections.Set<Int> ref=__local_4.asSet
+expr e@12:20 int(1) type=Int
+expr e@12:5#1 memberCall recv=e@12:5 callee=contains args=[_:e@12:20] type=Boolean call=kotlin.collections.Set.contains
+expr e@13:5 name(sized) type=kotlin.collections.HashSet<Int> ref=__local_1.sized
+expr e@13:15 int(2) type=Int
+expr e@13:5#1 memberCall recv=e@13:5 callee=add args=[_:e@13:15] type=Boolean call=kotlin.collections.MutableSet.add

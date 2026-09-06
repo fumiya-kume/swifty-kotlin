@@ -487,6 +487,12 @@ extension BuildASTPhase {
             }
             if tokens[introducerIndex].kind == .keyword(.fun),
                index < tokens.count,
+               tokens[index].kind == .keyword(.interface)
+            {
+                index += 1
+            }
+            if tokens[introducerIndex].kind == .keyword(.fun),
+               index < tokens.count,
                tokens[index].kind == .symbol(.lessThan)
             {
                 index = skipBalancedBracket(
@@ -514,17 +520,14 @@ extension BuildASTPhase {
             || token.kind == .symbol(.semicolon)
     }
 
-    /// Returns the first identifier token in `tokens` that isn't a leading
-    /// declaration keyword (e.g. `private`, `open`). Used both for the name slot
-    /// after a recognized introducer and as the fallback scan when none was found.
+    /// Returns the first identifier-like token in the declaration name slot.
+    /// Modifier keywords are valid names once the declaration introducer has
+    /// established that this is a name position.
     private func firstDeclarationName(
         in tokens: ArraySlice<Token>, interner: StringInterner
     ) -> InternedString? {
         for token in tokens {
             if let name = internedIdentifier(from: token, interner: interner) {
-                if case let .keyword(keyword) = token.kind, isLeadingDeclarationKeyword(keyword) {
-                    continue
-                }
                 return name
             }
         }
@@ -711,7 +714,7 @@ extension BuildASTPhase {
         // position). `lastIndex(where:)` already finds that rightmost candidate, so
         // no separate keyword-exclusion pass is needed here.
         guard let nameIndex = nameSearchTokens.lastIndex(where: { token in
-            TypeRefParserCore.isTypeLikeNameToken(token.kind)
+            internedIdentifier(from: token, interner: interner) != nil
         }) else {
             return
         }
