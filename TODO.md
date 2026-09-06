@@ -2003,13 +2003,14 @@
     - `kotlin.concurrent.AtomicInt.toString` — fun AtomicInt.toString(): String  -- `final fun toString(): kotlin/String`
     - `kotlin.concurrent.AtomicInt.value` — val AtomicInt.value: Int  -- `final var value`
 
-- [ ] KSP-1089: kotlin.concurrent.AtomicIntArray top-level の未実装 stdlib API を実装する（2 件）
+- [x] KSP-1089: kotlin.concurrent.AtomicIntArray top-level の未実装 stdlib API を実装する（2 件）
   - 対象: `kotlin.concurrent.AtomicIntArray` / top-level
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/concurrent/AtomicIntArray/Stdlib.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_concurrent_AtomicIntArray_n_n.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_concurrent_AtomicIntArray_n_n.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_concurrent_AtomicIntArray_n_n.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
+  - 完了根拠: Kotlin 2.3.10 Native の public AtomicIntArray(Int) を kk_atomic_int_array_create に接続する source-backed overload として追加し、@PublishedApi internal AtomicIntArray(IntArray) はコピーを作る bundled Kotlin 実装として追加した。既存の residual member bridges と Runtime ABI は保持し、同名の2引数 initializer factory がある場合の compiler special-case は arity 単位で通常 source overload を優先できるようにした。
   - 未実装シンボル一覧:
     - `kotlin.concurrent.AtomicIntArray.<init>` — constructor (Int)  -- `constructor <init>(kotlin/Int)`
     - `kotlin.concurrent.AtomicIntArray.<init>` — constructor (IntArray)  -- `constructor <init>(kotlin/IntArray)`

@@ -840,7 +840,12 @@ final class CallTypeChecker {
         if let calleeName,
            (args.count == 1 || args.count == 2),
            interner.resolve(calleeName) == "AtomicIntArray",
-           !isShadowedByNonSyntheticSymbol(calleeName, locals: locals, ctx: ctx),
+           !isShadowedByNonSyntheticSymbol(
+               calleeName,
+               locals: locals,
+               ctx: ctx,
+               argumentCount: args.count
+           ),
            let arraySymbol = syntheticAtomicArrayClassSymbol(
                calleeName,
                className: "AtomicIntArray",
