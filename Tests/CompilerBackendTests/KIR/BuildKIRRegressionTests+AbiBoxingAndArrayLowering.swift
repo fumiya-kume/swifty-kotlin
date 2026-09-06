@@ -500,10 +500,10 @@ struct BuildKIRCodegenRegressionTests {
     @Test
     func testABILoweringMarksAtomicRuntimeHelpersAsNonThrowing() {
         expectNonThrowingCallees([
-            "kk_atomic_int_load",
-            "kk_atomic_int_store",
-            "kk_atomic_long_compareAndExchange",
-            "kk_atomic_ref_exchange",
+            "__kk_atomic_int_load",
+            "__kk_atomic_int_store",
+            "__kk_atomic_long_compareAndExchange",
+            "__kk_atomic_ref_exchange",
         ])
     }
 

@@ -119,14 +119,42 @@ import Testing
         let invokeSignature = try #require(sema.symbols.functionSignature(for: invokeSymbol))
         #expect(!(invokeSignature.isSuspend))
 
-        // The recursion trampoline lives in the runtime, so the bundled Kotlin
-        // source declares a single non-suspend `callRecursive` per type.
+        // The recursion trampoline lives in the runtime. The bundled Kotlin
+        // source exposes both the scope member and the member extension.
         let callRecursiveSymbols = sema.symbols.lookupAll(fqName: scopeCallFQName)
-        #expect(callRecursiveSymbols.count == 1)
-        let callRecursiveSymbol = try #require(callRecursiveSymbols.first)
+        #expect(callRecursiveSymbols.count == 2)
+        let callRecursiveSymbol = try #require(callRecursiveSymbols.first { symbolID in
+            sema.symbols.externalLinkName(for: symbolID) == "__kk_deep_recursive_scope_callRecursive"
+        })
         let callRecursiveSignature = try #require(sema.symbols.functionSignature(for: callRecursiveSymbol))
         #expect(callRecursiveSignature.parameterTypes.count == 1)
         #expect(!(callRecursiveSignature.isSuspend))
+
+        let functionExtensionSymbol = try #require(callRecursiveSymbols.first { symbolID in
+            sema.symbols.externalLinkName(for: symbolID) == "__kk_deep_recursive_function_callRecursive"
+        })
+        let functionExtensionSignature = try #require(
+            sema.symbols.functionSignature(for: functionExtensionSymbol)
+        )
+        #expect(functionExtensionSignature.receiverType != nil)
+        #expect(functionExtensionSignature.parameterTypes.count == 1)
+        #expect(functionExtensionSignature.isSuspend)
+
+        let scopedInvokeFQName = ["kotlin", "DeepRecursiveScope", "invoke"].map { interner.intern($0) }
+        let scopedInvokeSymbol = try #require(
+            sema.symbols.lookupAll(fqName: scopedInvokeFQName).first
+        )
+        let scopedInvokeSignature = try #require(sema.symbols.functionSignature(for: scopedInvokeSymbol))
+        #expect(scopedInvokeSignature.receiverType != nil)
+        #expect(scopedInvokeSignature.parameterTypes.count == 1)
+        #expect(scopedInvokeSignature.returnType == sema.types.nothingType)
+        #expect(!(scopedInvokeSignature.isSuspend))
+        #expect(sema.symbols.externalLinkName(for: scopedInvokeSymbol) == nil)
+        #expect(
+            sema.symbols.annotations(for: scopedInvokeSymbol).contains {
+                KnownCompilerAnnotation.deprecated.matches($0.annotationFQName)
+            }
+        )
     }
 
 }

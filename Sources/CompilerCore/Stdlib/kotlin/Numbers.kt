@@ -65,6 +65,15 @@ public inline fun Int.toChar(): Char = __charFromCode(this)
 
 public inline fun Int.toDouble(): Double = __intToDouble(this)
 
+// KSP-1537: Long.toChar() is source-backed. Long values are narrowed to the
+// low 16 bits through the existing Long.toInt() and Int.toChar() contracts.
+@Deprecated(
+    "Direct conversion to Char is deprecated. Use toInt().toChar() or Char constructor instead.",
+    ReplaceWith("this.toInt().toChar()")
+)
+@DeprecatedSinceKotlin(warningSince = "1.5", errorSince = "2.3")
+public fun Long.toChar(): Char = this.toInt().toChar()
+
 // KSP-647: Floating-point bit-pattern conversions keep the ABI-specific
 // reinterpretation in the runtime while exposing the public API as Kotlin.
 

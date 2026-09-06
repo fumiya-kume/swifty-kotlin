@@ -1,0 +1,75 @@
+symbol fq=Sample kind=class vis=public flags=_
+symbol fq=Sample.value kind=property vis=public flags=_ type=Int
+symbol fq=__local_0.name kind=local vis=private flags=_ type=String
+symbol fq=__local_1.type kind=local vis=private flags=_ type=kotlin.reflect.KType
+symbol fq=__local_2.function kind=local vis=private flags=_ type=kotlin.reflect.KFunction<*>
+symbol fq=__local_3.property kind=local vis=private flags=_ type=kotlin.reflect.KProperty<*>
+symbol fq=answer kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=kotlin.Any kind=class vis=public flags=synthetic
+symbol fq=kotlin.Any.toString kind=function vis=public flags=synthetic|openType sig=recv=kotlin.Any params=[] ret=String
+symbol fq=kotlin.reflect.KCallable kind=interface vis=public flags=_
+symbol fq=kotlin.reflect.KFunction kind=interface vis=public flags=synthetic
+symbol fq=kotlin.reflect.KProperty kind=interface vis=public flags=synthetic
+symbol fq=kotlin.reflect.KProperty.returnType kind=property vis=public flags=synthetic type=kotlin.reflect.KType
+symbol fq=kotlin.reflect.KType kind=interface vis=public flags=synthetic
+symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=read kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KCallable<*>] ret=String
+symbol fq=read.$0.callable kind=valueParameter vis=private flags=_
+symbol fq=readFunction kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KFunction<*>] ret=String
+symbol fq=readFunction.$1.function kind=valueParameter vis=private flags=_
+symbol fq=readNullable kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KCallable<*>?] ret=Boolean
+symbol fq=readNullable.$2.callable kind=valueParameter vis=private flags=_
+symbol fq=readProperty kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KProperty<*>] ret=String
+symbol fq=readProperty.$3.property kind=valueParameter vis=private flags=_
+file fstdlib_kotlin_reflect_KCallable_KCallable_n package=_
+  decl Sample class Sample sym=Sample
+  decl answer fun answer sym=answer
+  decl read fun read sym=read
+  decl readFunction fun readFunction sym=readFunction
+  decl readProperty fun readProperty sym=readProperty
+  decl readNullable fun readNullable sym=readNullable
+  decl main fun main sym=main
+expr e@7:24 string(answer) type=String
+expr e@10:16 name(callable) type=kotlin.reflect.KCallable<*> ref=read.$0.callable
+expr e@10:16#1 memberCall recv=e@10:16 callee=name args=[] type=String ref=kotlin.reflect.KCallable.name
+expr e@10:5 localDecl name mutable=0 type=_ init=e@10:16#1 type=Unit ref=__local_0.name
+expr e@11:16 name(callable) type=kotlin.reflect.KCallable<*> ref=read.$0.callable
+expr e@11:16#1 memberCall recv=e@11:16 callee=returnType args=[] type=kotlin.reflect.KType ref=kotlin.reflect.KCallable.returnType
+expr e@11:5 localDecl type mutable=0 type=_ init=e@11:16#1 type=Unit ref=__local_1.type
+expr e@12:12 name(name) type=String ref=__local_0.name
+expr e@12:19 string(:) type=String
+expr e@12:12#1 binary(add) lhs=e@12:12 rhs=e@12:19 type=String
+expr e@12:25 name(type) type=kotlin.reflect.KType ref=__local_1.type
+expr e@12:25#1 memberCall recv=e@12:25 callee=toString args=[] type=String call=kotlin.Any.toString
+expr e@12:12#2 binary(add) lhs=e@12:12#1 rhs=e@12:25#1 type=String
+expr e@12:5 return value=e@12:12#2 type=Nothing
+expr e@15:52 name(function) type=kotlin.reflect.KFunction<*> ref=readFunction.$1.function
+expr e@15:52#1 memberCall recv=e@15:52 callee=returnType args=[] type=kotlin.reflect.KType ref=kotlin.reflect.KCallable.returnType
+expr e@15:52#2 memberCall recv=e@15:52#1 callee=toString args=[] type=String call=kotlin.Any.toString
+expr e@17:52 name(property) type=kotlin.reflect.KProperty<*> ref=readProperty.$3.property
+expr e@17:52#1 memberCall recv=e@17:52 callee=returnType args=[] type=kotlin.reflect.KType ref=kotlin.reflect.KProperty.returnType
+expr e@17:52#2 memberCall recv=e@17:52#1 callee=toString args=[] type=String call=kotlin.Any.toString
+expr e@19:54 name(callable) type=kotlin.reflect.KCallable<*>? ref=readNullable.$2.callable
+expr e@19:54#1 safeMemberCall recv=e@19:54 callee=returnType args=[] type=kotlin.reflect.KType? ref=kotlin.reflect.KCallable.returnType
+expr e@19:78 name(null) type=Nothing?
+expr e@19:54#2 binary(equal) lhs=e@19:54#1 rhs=e@19:78 type=Boolean
+expr e@22:34 callableRef recv=_ member=answer type=() -> String ref=answer
+expr e@22:5 localDecl function mutable=0 type=KFunction<*> init=e@22:34 type=Unit ref=__local_2.function
+expr e@23:34 name(Sample) type=Any ref=Sample
+expr e@23:34#1 callableRef recv=e@23:34 member=value type=kotlin.reflect.KProperty1<Sample, Int> ref=Sample.value
+expr e@23:5 localDecl property mutable=0 type=KProperty<*> init=e@23:34#1 type=Unit ref=__local_3.property
+expr e@24:18 name(function) type=kotlin.reflect.KFunction<*> ref=__local_2.function
+expr e@24:13 call callee=e@24:13#1 args=[_:e@24:18] type=String call=read
+expr e@24:5 call callee=e@24:5#1 args=[_:e@24:13] type=Unit call=kotlin.io.println#2
+expr e@25:18 name(property) type=kotlin.reflect.KProperty<*> ref=__local_3.property
+expr e@25:13 call callee=e@25:13#1 args=[_:e@25:18] type=String call=read
+expr e@25:5 call callee=e@25:5#1 args=[_:e@25:13] type=Unit call=kotlin.io.println#2
+expr e@26:26 name(function) type=kotlin.reflect.KFunction<*> ref=__local_2.function
+expr e@26:13 call callee=e@26:13#1 args=[_:e@26:26] type=String call=readFunction
+expr e@26:5 call callee=e@26:5#1 args=[_:e@26:13] type=Unit call=kotlin.io.println#2
+expr e@27:26 name(property) type=kotlin.reflect.KProperty<*> ref=__local_3.property
+expr e@27:13 call callee=e@27:13#1 args=[_:e@27:26] type=String call=readProperty
+expr e@27:5 call callee=e@27:5#1 args=[_:e@27:13] type=Unit call=kotlin.io.println#2
+expr e@28:26 name(null) type=Nothing?
+expr e@28:13 call callee=e@28:13#1 args=[_:e@28:26] type=Boolean call=readNullable
+expr e@28:5 call callee=e@28:5#1 args=[_:e@28:13] type=Unit call=kotlin.io.println#1

@@ -1292,14 +1292,12 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             types: types,
             interner: interner,
-            bundledIndex: bundledIndex,
-            skipStats: skipStats
+            bundledIndex: bundledIndex
         )
         patchKPropertyFunctionSupertypes(symbols: symbols, types: types, interner: interner)
         patchKMutableProperty0FunctionSupertype(symbols: symbols, types: types, interner: interner)
         patchKMutableProperty1FunctionSupertype(symbols: symbols, types: types, interner: interner)
         registerSyntheticFileIOStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticFilesUtilityStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticPathStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCoercionStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticBucketedExtendedStdlibStubs(symbols: symbols, types: types, interner: interner)
@@ -1599,7 +1597,12 @@ extension DataFlowSemaPhase {
     ) -> SymbolID {
         let internedName = interner.intern(name)
         let fqName = pkg + [internedName]
-        if let existing = symbols.lookup(fqName: fqName) {
+        // A factory function may share the class FQName (for example,
+        // `kotlin.concurrent.AtomicIntArray(Int)`). Resolve the nominal class
+        // from all symbols instead of letting the first callable shadow it.
+        if let existing = symbols.lookupAll(fqName: fqName).first(where: { id in
+            symbols.symbol(id)?.kind == .class
+        }) {
             return existing
         }
         return symbols.define(

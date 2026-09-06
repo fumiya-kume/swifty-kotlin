@@ -36,12 +36,12 @@ expr e@14:22 call callee=e@14:22#1 args=[_:e@14:28] type=ULong call=kotlin.ULong
 expr e@14:5 call callee=e@14:5#1 args=[_:e@14:10,_:e@14:22] type=Unit call=golden.sema.show
 expr e@15:10 string(min) type=String
 expr e@15:23 name(Long) type=kotlin.Long.Companion ref=kotlin.Long
-expr e@15:23#1 memberCall recv=e@15:23 callee=MIN_VALUE args=[] type=Long call=kotlin.MIN_VALUE.$get#1
+expr e@15:23#1 memberCall recv=e@15:23 callee=MIN_VALUE args=[] type=Long call=kotlin.MIN_VALUE.$get#2
 expr e@15:17 call callee=e@15:17#1 args=[_:e@15:23#1] type=ULong call=kotlin.ULong#1
 expr e@15:5 call callee=e@15:5#1 args=[_:e@15:10,_:e@15:17] type=Unit call=golden.sema.show
 expr e@16:10 string(max) type=String
 expr e@16:23 name(Long) type=kotlin.Long.Companion ref=kotlin.Long
-expr e@16:23#1 memberCall recv=e@16:23 callee=MAX_VALUE args=[] type=Long call=kotlin.MAX_VALUE.$get#1
+expr e@16:23#1 memberCall recv=e@16:23 callee=MAX_VALUE args=[] type=Long call=kotlin.MAX_VALUE.$get#2
 expr e@16:17 call callee=e@16:17#1 args=[_:e@16:23#1] type=ULong call=kotlin.ULong#1
 expr e@16:5 call callee=e@16:5#1 args=[_:e@16:10,_:e@16:17] type=Unit call=golden.sema.show
 expr e@18:26 long(1) type=Long
