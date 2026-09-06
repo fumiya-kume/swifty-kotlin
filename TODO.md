@@ -1812,13 +1812,14 @@
   - 未実装シンボル一覧:
     - `kotlin.collections.MutableIterable.iterator` — fun MutableIterable.iterator(): MutableIterator  -- `abstract fun iterator(): kotlin.collections/MutableIterator<#A>`
 
-- [ ] KSP-1071: kotlin.collections.MutableIterator.MutableIterator の未実装 stdlib API を実装する（1 件）
+- [x] KSP-1071: kotlin.collections.MutableIterator.MutableIterator の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.collections.MutableIterator` / receiver `MutableIterator`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/MutableIterator/MutableIterator.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_collections_MutableIterator_MutableIterator_n.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_collections_MutableIterator_MutableIterator_n.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_collections_MutableIterator_MutableIterator_n.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
+  - 完了根拠 (2026-09-04): KSP-943 の merged PR #6154（commit `ea4ae69478`）で `Sources/CompilerCore/Stdlib/kotlin/collections/MutableIterator.kt` に `MutableIterator<out T> : Iterator<T>` と public `remove(): Unit` を source-backed 実装済み。既存の `ListSyntheticMemberLinkTests/testMutableIterableSurfaceIsRegistered` が source file、非synthetic、引数なし/Unit の `remove` を検証し、Sema golden と `Scripts/diff_cases/stdlib_kotlin_collections_n_MutableIterator.kt` が custom `remove()` と `MutableIterable` 経路を固定しているため、KSP-1071 の追加実装は不要。
   - 未実装シンボル一覧:
     - `kotlin.collections.MutableIterator.remove` — fun MutableIterator.remove(): Unit  -- `abstract fun remove()`
 
