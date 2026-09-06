@@ -55,8 +55,8 @@ symbol fq=kotlin.ULongArray#0 kind=class vis=public flags=synthetic
 symbol fq=kotlin.UShortArray#0 kind=class vis=public flags=synthetic
 symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Collection.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
 symbol fq=kotlin.ranges.IntRange kind=class vis=public flags=synthetic
 symbol fq=kotlin.ranges.IntRange.first kind=property vis=public flags=synthetic type=Int

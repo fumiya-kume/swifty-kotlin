@@ -31,11 +31,12 @@ extension DataFlowSemaPhase {
             )
         }
 
-        // kotlin.Enum<T> with name: String, ordinal: Int.
-        // KSP-732: the `kotlin.Enum` declaration is source-backed by
-        // `Stdlib/kotlin/Enum.kt`, which reuses this synthetic shell on bundle
-        // load. Register the shell's type parameter in the TypeSystem so that
-        // header collection does not define a fresh, orphaned `kotlin.Enum.$<id>.T`.
+        // Bootstrap kotlin.Enum<T> with name: String, ordinal: Int. KSP-732
+        // and KSP-837 declare the nominal class and its six public members in
+        // `Stdlib/kotlin/Enum.kt`; bundle loading reuses this shell and its
+        // source-backed members replace the fallback properties below. Keep
+        // the shell's type parameter in the TypeSystem so header collection
+        // does not define a fresh, orphaned `kotlin.Enum.$<id>.T`.
         let enumName = interner.intern("Enum")
         let enumFQName = kotlinPkg + [enumName]
         let enumSymbol = ensureEnumClassSymbol(symbols: symbols, interner: interner, kotlinPkg: kotlinPkg)

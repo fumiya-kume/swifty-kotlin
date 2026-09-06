@@ -1,0 +1,122 @@
+symbol fq=__local_0.maxBy kind=local vis=private flags=_ type=kotlin.collections.Map.Entry<String, Int>
+symbol fq=__local_1.maxOfComparable kind=local vis=private flags=_ type=Int
+symbol fq=__local_2.maxOfDouble kind=local vis=private flags=_ type=Double
+symbol fq=__local_3.maxOfFloat kind=local vis=private flags=_ type=Float
+symbol fq=__local_4.maxOfOrNullComparable kind=local vis=private flags=_ type=Int?
+symbol fq=__local_5.maxOfOrNullDouble kind=local vis=private flags=_ type=Double?
+symbol fq=__local_6.maxOfOrNullFloat kind=local vis=private flags=_ type=Float?
+symbol fq=__local_7.maxOfWith kind=local vis=private flags=_ type=Int
+symbol fq=__local_8.maxOfWithOrNull kind=local vis=private flags=_ type=Int?
+symbol fq=__local_9.maxWith kind=local vis=private flags=_ type=kotlin.collections.Map.Entry<String, Int>
+symbol fq=__local_10.maxWithOrNull kind=local vis=private flags=_ type=kotlin.collections.Map.Entry<String, Int>?
+symbol fq=kotlin.Comparable kind=interface vis=public flags=_
+symbol fq=kotlin.Comparator kind=interface vis=public flags=funInterface
+symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map.Entry kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map.Entry.value kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.V
+symbol fq=kotlin.collections.Map.K kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Map.V kind=typeParameter vis=private flags=_
+symbol fq=mapMaxFamilySurface kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<out String, Int>] ret=Unit
+symbol fq=mapMaxFamilySurface.$0.values kind=valueParameter vis=private flags=_
+file fstdlib_kotlin_collections_Map_max package=_
+  decl mapMaxFamilySurface fun mapMaxFamilySurface sym=mapMaxFamilySurface
+expr e@2:41 name(values) type=kotlin.collections.Map<out String, Int> ref=mapMaxFamilySurface.$0.values
+expr e@2:56 name(it) type=kotlin.collections.Map.Entry<out String, out Int> ref=s-0
+expr e@2:56#1 memberCall recv=e@2:56 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value targs=[String,Int]
+expr e@2:54 lambda params=[] body=e@2:56#1 label=maxBy type=(kotlin.collections.Map.Entry<out String, out Int>) -> Any
+expr e@2:41#1 memberCall recv=e@2:41 callee=maxBy args=[_:e@2:54] type=kotlin.collections.Map.Entry<out String, out Int> call=kotlin.collections.maxBy#2 targs=[String,Int,Int]
+expr e@2:5 localDecl maxBy mutable=0 type=Map.Entry<String,Int> init=e@2:41#1 type=Unit ref=__local_0.maxBy
+expr e@3:32 name(values) type=kotlin.collections.Map<out String, Int> ref=mapMaxFamilySurface.$0.values
+expr e@3:47 name(it) type=kotlin.collections.Map.Entry<out String, out Int> ref=s-1
+expr e@3:47#1 memberCall recv=e@3:47 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value targs=[String,Int]
+expr e@3:45 lambda params=[] body=e@3:47#1 label=maxOf type=(kotlin.collections.Map.Entry<out String, out Int>) -> Any
+expr e@3:32#1 memberCall recv=e@3:32 callee=maxOf args=[_:e@3:45] type=Int call=kotlin.collections.maxOf#6 targs=[String,Int,Int]
+expr e@3:5 localDecl maxOfComparable mutable=0 type=Int init=e@3:32#1 type=Unit ref=__local_1.maxOfComparable
+expr e@4:31 name(values) type=kotlin.collections.Map<out String, Int> ref=mapMaxFamilySurface.$0.values
+expr e@4:46 name(it) type=kotlin.collections.Map.Entry<out String, out Int> ref=s-2
+expr e@4:46#1 memberCall recv=e@4:46 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value targs=[String,Int]
+expr e@4:46#2 memberCall recv=e@4:46#1 callee=toDouble args=[] type=Double call=kotlin.toDouble#1
+expr e@4:44 lambda params=[] body=e@4:46#2 label=maxOf type=(kotlin.collections.Map.Entry<out String, out Int>) -> Any
+expr e@4:31#1 memberCall recv=e@4:31 callee=maxOf args=[_:e@4:44] type=Double call=kotlin.collections.maxOf#4 targs=[String,Int]
+expr e@4:5 localDecl maxOfDouble mutable=0 type=Double init=e@4:31#1 type=Unit ref=__local_2.maxOfDouble
+expr e@5:29 name(values) type=kotlin.collections.Map<out String, Int> ref=mapMaxFamilySurface.$0.values
+expr e@5:44 name(it) type=kotlin.collections.Map.Entry<out String, out Int> ref=s-3
+expr e@5:44#1 memberCall recv=e@5:44 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value targs=[String,Int]
+expr e@5:44#2 memberCall recv=e@5:44#1 callee=toFloat args=[] type=Float
+expr e@5:42 lambda params=[] body=e@5:44#2 label=maxOf type=(kotlin.collections.Map.Entry<out String, out Int>) -> Any
+expr e@5:29#1 memberCall recv=e@5:29 callee=maxOf args=[_:e@5:42] type=Float call=kotlin.collections.maxOf#5 targs=[String,Int]
+expr e@5:5 localDecl maxOfFloat mutable=0 type=Float init=e@5:29#1 type=Unit ref=__local_3.maxOfFloat
+expr e@6:39 name(values) type=kotlin.collections.Map<out String, Int> ref=mapMaxFamilySurface.$0.values
+expr e@6:60 name(it) type=kotlin.collections.Map.Entry<out String, out Int> ref=s-4
+expr e@6:60#1 memberCall recv=e@6:60 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value targs=[String,Int]
+expr e@6:58 lambda params=[] body=e@6:60#1 label=maxOfOrNull type=(kotlin.collections.Map.Entry<out String, out Int>) -> Any
+expr e@6:39#1 memberCall recv=e@6:39 callee=maxOfOrNull args=[_:e@6:58] type=Int? call=kotlin.collections.maxOfOrNull#6 targs=[String,Int,Int]
+expr e@6:5 localDecl maxOfOrNullComparable mutable=0 type=Int? init=e@6:39#1 type=Unit ref=__local_4.maxOfOrNullComparable
+expr e@7:38 name(values) type=kotlin.collections.Map<out String, Int> ref=mapMaxFamilySurface.$0.values
+expr e@7:59 name(it) type=kotlin.collections.Map.Entry<out String, out Int> ref=s-5
+expr e@7:59#1 memberCall recv=e@7:59 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value targs=[String,Int]
+expr e@7:59#2 memberCall recv=e@7:59#1 callee=toDouble args=[] type=Double call=kotlin.toDouble#1
+expr e@7:57 lambda params=[] body=e@7:59#2 label=maxOfOrNull type=(kotlin.collections.Map.Entry<out String, out Int>) -> Any
+expr e@7:38#1 memberCall recv=e@7:38 callee=maxOfOrNull args=[_:e@7:57] type=Double? call=kotlin.collections.maxOfOrNull#4 targs=[String,Int]
+expr e@7:5 localDecl maxOfOrNullDouble mutable=0 type=Double? init=e@7:38#1 type=Unit ref=__local_5.maxOfOrNullDouble
+expr e@8:36 name(values) type=kotlin.collections.Map<out String, Int> ref=mapMaxFamilySurface.$0.values
+expr e@8:57 name(it) type=kotlin.collections.Map.Entry<out String, out Int> ref=s-6
+expr e@8:57#1 memberCall recv=e@8:57 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value targs=[String,Int]
+expr e@8:57#2 memberCall recv=e@8:57#1 callee=toFloat args=[] type=Float
+expr e@8:55 lambda params=[] body=e@8:57#2 label=maxOfOrNull type=(kotlin.collections.Map.Entry<out String, out Int>) -> Any
+expr e@8:36#1 memberCall recv=e@8:36 callee=maxOfOrNull args=[_:e@8:55] type=Float? call=kotlin.collections.maxOfOrNull#5 targs=[String,Int]
+expr e@8:5 localDecl maxOfOrNullFloat mutable=0 type=Float? init=e@8:36#1 type=Unit ref=__local_6.maxOfOrNullFloat
+expr e@9:26 name(values) type=kotlin.collections.Map<out String, Int> ref=mapMaxFamilySurface.$0.values
+expr e@9:55 name(it) type=Int ref=s-7
+expr e@9:53 lambda params=[] body=e@9:55 label=compareBy type=(Int) -> Any?
+expr e@9:43 call callee=e@9:43#1 args=[_:e@9:53] type=kotlin.Comparator<Int> call=kotlin.comparisons.compareBy#0 targs=[Int]
+expr e@9:63 name(it) type=kotlin.collections.Map.Entry<out String, out Int> ref=s-8
+expr e@9:63#1 memberCall recv=e@9:63 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value targs=[String,Int]
+expr e@9:61 lambda params=[] body=e@9:63#1 label=maxOfWith type=(kotlin.collections.Map.Entry<out String, out Int>) -> Any
+expr e@9:26#1 memberCall recv=e@9:26 callee=maxOfWith args=[_:e@9:43,_:e@9:61] type=Int call=kotlin.collections.maxOfWith#2 targs=[String,Int,Int]
+expr e@9:5 localDecl maxOfWith mutable=0 type=Int init=e@9:26#1 type=Unit ref=__local_7.maxOfWith
+expr e@10:33 name(values) type=kotlin.collections.Map<out String, Int> ref=mapMaxFamilySurface.$0.values
+expr e@10:68 name(it) type=Int ref=s-9
+expr e@10:66 lambda params=[] body=e@10:68 label=compareBy type=(Int) -> Any?
+expr e@10:56 call callee=e@10:56#1 args=[_:e@10:66] type=kotlin.Comparator<Int> call=kotlin.comparisons.compareBy#0 targs=[Int]
+expr e@10:76 name(it) type=kotlin.collections.Map.Entry<out String, out Int> ref=s-10
+expr e@10:76#1 memberCall recv=e@10:76 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value targs=[String,Int]
+expr e@10:74 lambda params=[] body=e@10:76#1 label=maxOfWithOrNull type=(kotlin.collections.Map.Entry<out String, out Int>) -> Any
+expr e@10:33#1 memberCall recv=e@10:33 callee=maxOfWithOrNull args=[_:e@10:56,_:e@10:74] type=Int? call=kotlin.collections.maxOfWithOrNull#2 targs=[String,Int,Int]
+expr e@10:5 localDecl maxOfWithOrNull mutable=0 type=Int? init=e@10:33#1 type=Unit ref=__local_8.maxOfWithOrNull
+expr e@11:43 name(values) type=kotlin.collections.Map<out String, Int> ref=mapMaxFamilySurface.$0.values
+expr e@11:70 name(it) type=kotlin.collections.Map.Entry<out String, out Int> ref=s-11
+expr e@11:70#1 memberCall recv=e@11:70 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value targs=[String,Int]
+expr e@11:68 lambda params=[] body=e@11:70#1 label=compareBy type=(kotlin.collections.Map.Entry<out String, out Int>) -> Any?
+expr e@11:58 call callee=e@11:58#1 args=[_:e@11:68] type=kotlin.Comparator<kotlin.collections.Map.Entry<out String, out Int>> call=kotlin.comparisons.compareBy#0 targs=[kotlin.collections.Map.Entry<out String, out Int>]
+expr e@11:43#1 memberCall recv=e@11:43 callee=maxWith args=[_:e@11:58] type=kotlin.collections.Map.Entry<out String, out Int> call=kotlin.collections.maxWith#2 targs=[String,Int]
+expr e@11:5 localDecl maxWith mutable=0 type=Map.Entry<String,Int> init=e@11:43#1 type=Unit ref=__local_9.maxWith
+expr e@12:50 name(values) type=kotlin.collections.Map<out String, Int> ref=mapMaxFamilySurface.$0.values
+expr e@12:83 name(it) type=kotlin.collections.Map.Entry<out String, out Int> ref=s-12
+expr e@12:83#1 memberCall recv=e@12:83 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value targs=[String,Int]
+expr e@12:81 lambda params=[] body=e@12:83#1 label=compareBy type=(kotlin.collections.Map.Entry<out String, out Int>) -> Any?
+expr e@12:71 call callee=e@12:71#1 args=[_:e@12:81] type=kotlin.Comparator<kotlin.collections.Map.Entry<out String, out Int>> call=kotlin.comparisons.compareBy#0 targs=[kotlin.collections.Map.Entry<out String, out Int>]
+expr e@12:50#1 memberCall recv=e@12:50 callee=maxWithOrNull args=[_:e@12:71] type=kotlin.collections.Map.Entry<out String, out Int>? call=kotlin.collections.maxWithOrNull#2 targs=[String,Int]
+expr e@12:5 localDecl maxWithOrNull mutable=0 type=Map.Entry<String,Int>? init=e@12:50#1 type=Unit ref=__local_10.maxWithOrNull
+expr e@13:13 name(maxBy) type=kotlin.collections.Map.Entry<String, Int> ref=__local_0.maxBy
+expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13] type=Unit call=kotlin.io.println#1
+expr e@14:13 name(maxOfComparable) type=Int ref=__local_1.maxOfComparable
+expr e@14:5 call callee=e@14:5#1 args=[_:e@14:13] type=Unit call=kotlin.io.println#1
+expr e@15:13 name(maxOfDouble) type=Double ref=__local_2.maxOfDouble
+expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13] type=Unit call=kotlin.io.println#1
+expr e@16:13 name(maxOfFloat) type=Float ref=__local_3.maxOfFloat
+expr e@16:5 call callee=e@16:5#1 args=[_:e@16:13] type=Unit call=kotlin.io.println#1
+expr e@17:13 name(maxOfOrNullComparable) type=Int? ref=__local_4.maxOfOrNullComparable
+expr e@17:5 call callee=e@17:5#1 args=[_:e@17:13] type=Unit call=kotlin.io.println#1
+expr e@18:13 name(maxOfOrNullDouble) type=Double? ref=__local_5.maxOfOrNullDouble
+expr e@18:5 call callee=e@18:5#1 args=[_:e@18:13] type=Unit call=kotlin.io.println#1
+expr e@19:13 name(maxOfOrNullFloat) type=Float? ref=__local_6.maxOfOrNullFloat
+expr e@19:5 call callee=e@19:5#1 args=[_:e@19:13] type=Unit call=kotlin.io.println#1
+expr e@20:13 name(maxOfWith) type=Int ref=__local_7.maxOfWith
+expr e@20:5 call callee=e@20:5#1 args=[_:e@20:13] type=Unit call=kotlin.io.println#1
+expr e@21:13 name(maxOfWithOrNull) type=Int? ref=__local_8.maxOfWithOrNull
+expr e@21:5 call callee=e@21:5#1 args=[_:e@21:13] type=Unit call=kotlin.io.println#1
+expr e@22:13 name(maxWith) type=kotlin.collections.Map.Entry<String, Int> ref=__local_9.maxWith
+expr e@22:5 call callee=e@22:5#1 args=[_:e@22:13] type=Unit call=kotlin.io.println#1
+expr e@23:13 name(maxWithOrNull) type=kotlin.collections.Map.Entry<String, Int>? ref=__local_10.maxWithOrNull
+expr e@23:5 call callee=e@23:5#1 args=[_:e@23:13] type=Unit call=kotlin.io.println#1

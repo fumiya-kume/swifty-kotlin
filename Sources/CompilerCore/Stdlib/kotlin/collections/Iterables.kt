@@ -104,7 +104,7 @@ public fun <T> Iterable<T>.toMutableSet(): MutableSet<T> {
 }
 
 public fun <T> Iterable<T>.toHashSet(): HashSet<T> {
-    val result = mutableSetOf<T>()
+    val result = HashSet<T>()
     for (element in this) result.add(element)
     return result
 }
@@ -113,6 +113,14 @@ public fun <T> Iterable<T>.toHashSet(): HashSet<T> {
 public fun <T, C : MutableCollection<in T>> Iterable<T>.toCollection(destination: C): C {
     for (element in this) destination.add(element)
     return destination
+}
+
+public fun <T> Iterable<Iterable<T>>.flatten(): List<T> {
+    val result = mutableListOf<T>()
+    for (element in this) {
+        for (nestedElement in element) result.add(nestedElement)
+    }
+    return result
 }
 
 // KSP-974: Iterable flat-map transformations are source-backed. Keep the

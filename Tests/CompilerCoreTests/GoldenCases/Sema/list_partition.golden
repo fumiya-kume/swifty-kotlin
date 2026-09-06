@@ -2,7 +2,7 @@ symbol fq=__destructuring_0.evens kind=local vis=private flags=_ type=kotlin.col
 symbol fq=__destructuring_0.odds kind=local vis=private flags=_ type=kotlin.collections.List<Int>
 symbol fq=__local_0.list kind=local vis=private flags=_ type=kotlin.collections.List<out Int>
 symbol fq=kotlin.Pair kind=class vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file flist_partition package=_
   decl main fun main sym=main

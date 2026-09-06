@@ -239,13 +239,18 @@ extension LambdaLowerer {
 
         let nameExpr = arena.appendExpr(.stringLiteral(memberName), type: sema.types.stringType)
         instructions.append(.constValue(result: nameExpr, value: .stringLiteral(memberName)))
+        let returnTypeName = interner.intern(
+            sema.types.displayName(of: accessor.propertyType, symbols: sema.symbols, interner: interner)
+        )
+        let returnTypeExpr = arena.appendExpr(.stringLiteral(returnTypeName), type: sema.types.stringType)
+        instructions.append(.constValue(result: returnTypeExpr, value: .stringLiteral(returnTypeName)))
         let arityExpr = arena.appendExpr(.intLiteral(Int64(shape.arity)), type: intType)
         instructions.append(.constValue(result: arityExpr, value: .intLiteral(Int64(shape.arity))))
         let taggedValue = arena.appendTemporary(type: boundType)
         instructions.append(.call(
             symbol: nil,
             callee: interner.intern("kk_callable_ref_tag_kproperty"),
-            arguments: [wrapperValue, nameExpr, arityExpr],
+            arguments: [wrapperValue, nameExpr, returnTypeExpr, arityExpr],
             result: taggedValue,
             canThrow: false,
             thrownResult: nil
