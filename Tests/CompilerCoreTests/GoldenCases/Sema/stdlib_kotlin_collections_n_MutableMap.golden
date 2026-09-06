@@ -1,0 +1,36 @@
+symbol fq=CustomMutableMap kind=class vis=public flags=abstractType|openType
+symbol fq=kotlin.Pair kind=class vis=public flags=_
+symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=_
+symbol fq=kotlin.collections.MutableMap.K kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.MutableMap.V kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.MutableMap.put kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableMap<kotlin.collections.MutableMap.K, kotlin.collections.MutableMap.V> params=[kotlin.collections.MutableMap.K,kotlin.collections.MutableMap.V] ret=kotlin.collections.MutableMap.V?
+symbol fq=kotlin.collections.MutableMap.putAll kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableMap<kotlin.collections.MutableMap.K, kotlin.collections.MutableMap.V> params=[kotlin.collections.Map<out kotlin.collections.MutableMap.K, out kotlin.collections.MutableMap.V>] ret=Unit
+symbol fq=mutate kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableMap<String, Int?>] ret=kotlin.collections.MutableMap<String, Int?>
+symbol fq=mutate.$0.values kind=valueParameter vis=private flags=_
+symbol fq=widen kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableMap<String, Int>] ret=kotlin.collections.Map<String, kotlin.Number>
+symbol fq=widen.$1.values kind=valueParameter vis=private flags=_
+file fstdlib_kotlin_collections_n_MutableMap package=_
+  decl CustomMutableMap class CustomMutableMap sym=CustomMutableMap
+  decl widen fun widen sym=widen
+  decl mutate fun mutate sym=mutate
+expr e@4:67 name(values) type=kotlin.collections.MutableMap<String, Int> ref=widen.$1.values
+expr e@7:5 name(values) type=kotlin.collections.MutableMap<String, Int?> ref=mutate.$0.values
+expr e@7:12 string(present) type=String
+expr e@7:25 int(1) type=Int
+expr e@7:5#1 indexedAssign receiver=e@7:5 indices=[e@7:12] value=e@7:25 type=Unit call=kotlin.collections.set targs=[String,Int?]
+expr e@8:5 name(values) type=kotlin.collections.MutableMap<String, Int?> ref=mutate.$0.values
+expr e@8:16 string(present) type=String
+expr e@8:27 name(null) type=Nothing?
+expr e@8:5#1 memberCall recv=e@8:5 callee=put args=[_:e@8:16,_:e@8:27] type=Int? call=kotlin.collections.MutableMap.put targs=[String,Int?]
+expr e@9:5 name(values) type=kotlin.collections.MutableMap<String, Int?> ref=mutate.$0.values
+expr e@9:19 string(missing) type=String
+expr e@9:5#1 memberCall recv=e@9:5 callee=remove args=[_:e@9:19] type=Int? call=kotlin.collections.remove#2 targs=[String,Int?]
+expr e@10:5 name(values) type=kotlin.collections.MutableMap<String, Int?> ref=mutate.$0.values
+expr e@10:25 string(from) type=String
+expr e@10:35 int(2) type=Int
+expr e@10:25#1 memberCall recv=e@10:25 callee=to args=[_:e@10:35] type=kotlin.Pair<String, Int> call=kotlin.to targs=[String,Int]
+expr e@10:19 call callee=e@10:19#1 args=[_:e@10:25#1] type=kotlin.collections.Map<String, Int> call=kotlin.collections.mapOf#1 targs=[String,Int]
+expr e@10:5#1 memberCall recv=e@10:5 callee=putAll args=[_:e@10:19] type=Unit call=kotlin.collections.MutableMap.putAll
+expr e@11:12 name(values) type=kotlin.collections.MutableMap<String, Int?> ref=mutate.$0.values
+expr e@11:5 return value=e@11:12 type=Nothing

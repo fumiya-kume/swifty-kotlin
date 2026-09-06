@@ -14,7 +14,7 @@ symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableList.E kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.MutableList.add#1 kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.MutableList<kotlin.collections.MutableList.E> params=[kotlin.collections.MutableList.E] ret=Boolean
-symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableSet kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.MutableSet.E kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.MutableSet.add kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableSet<kotlin.collections.MutableSet.E> params=[kotlin.collections.MutableSet.E] ret=Boolean

@@ -22,7 +22,7 @@ symbol fq=kotlin.collections.Map.Entry.value kind=function vis=public flags=synt
 symbol fq=kotlin.collections.Map.K kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Map.V kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Map.get kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Map<kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[kotlin.collections.Map.K] ret=kotlin.collections.Map.V?
-symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableMap.K kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.MutableMap.MutableEntry kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.MutableMap.V kind=typeParameter vis=private flags=_

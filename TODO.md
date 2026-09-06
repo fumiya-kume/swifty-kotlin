@@ -1097,13 +1097,45 @@
   - 未実装シンボル一覧:
     - `kotlin.collections.MutableCollection` — interface kotlin.collections.MutableCollection  -- `abstract interface <#A: kotlin/Any?> kotlin.collections/MutableCollection : kotlin.collections/Collection<#A>, kotlin.collections/MutableIterable<#A> {`
 
-- [ ] KSP-946: kotlin.collections.MutableMap-family の未実装 stdlib API を実装する（1 件）
+- [ ] KSP-943: kotlin.collections.MutableIterator-family の未実装 stdlib API を実装する（1 件）
+  - 対象: `kotlin.collections` / top-level / family `MutableIterator`
+  - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/MutableIterator.kt`（該当ファイルが無ければ新規作成）
+  - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
+  - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_collections_n_MutableIterator.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
+  - diff ケース: `Scripts/diff_cases/stdlib_kotlin_collections_n_MutableIterator.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_collections_n_MutableIterator.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
+  - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
+  - 未実装シンボル一覧:
+    - `kotlin.collections.MutableIterator` — interface kotlin.collections.MutableIterator  -- `abstract interface <#A: out kotlin/Any?> kotlin.collections/MutableIterator : kotlin.collections/Iterator<#A> {`
+
+- [ ] KSP-944: kotlin.collections.MutableList-family の未実装 stdlib API を実装する（2 件）
+  - 対象: `kotlin.collections` / top-level / family `MutableList`
+  - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/MutableList.kt`（該当ファイルが無ければ新規作成）
+  - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
+  - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_collections_n_MutableList.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
+  - diff ケース: `Scripts/diff_cases/stdlib_kotlin_collections_n_MutableList.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_collections_n_MutableList.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
+  - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
+  - 未実装シンボル一覧:
+    - `kotlin.collections.MutableList` — interface kotlin.collections.MutableList  -- `abstract interface <#A: kotlin/Any?> kotlin.collections/MutableList : kotlin.collections/List<#A>, kotlin.collections/MutableCollection<#A> {`
+    - `kotlin.collections.MutableList` — fun MutableList(Int, Function1): MutableList  -- `final inline fun <#A: kotlin/Any?> kotlin.collections/MutableList(kotlin/Int, kotlin/Function1<kotlin/Int, #A>): kotlin.collections/MutableList<#A>`
+
+- [ ] KSP-945: kotlin.collections.MutableListIterator-family の未実装 stdlib API を実装する（1 件）
+  - 対象: `kotlin.collections` / top-level / family `MutableListIterator`
+  - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/MutableListIterator.kt`（該当ファイルが無ければ新規作成）
+  - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
+  - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_collections_n_MutableListIterator.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
+  - diff ケース: `Scripts/diff_cases/stdlib_kotlin_collections_n_MutableListIterator.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_collections_n_MutableListIterator.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
+  - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
+  - 未実装シンボル一覧:
+    - `kotlin.collections.MutableListIterator` — interface kotlin.collections.MutableListIterator  -- `abstract interface <#A: kotlin/Any?> kotlin.collections/MutableListIterator : kotlin.collections/ListIterator<#A>, kotlin.collections/MutableIterator<#A> {`
+
+- [x] KSP-946: kotlin.collections.MutableMap-family の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.collections` / top-level / family `MutableMap`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/MutableMap.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_collections_n_MutableMap.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_collections_n_MutableMap.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_collections_n_MutableMap.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
+  - 完了根拠: `MutableMap.kt` と `HeaderCollection` のsource ownershipを追加し、Sema回帰でsource declaration・不変型パラメータ・`Map` supertype・`set`/`put`/`remove`/`clear` の既存runtime残余リンクを固定。専用Golden/diffでindexed set・nullable old value・missing key・putAll・view dispatchを確認。`MutableMap` のmember APIはKSP-1075、nested `MutableEntry.setValue` はKSP-1076の別スコープとして保持。
   - 未実装シンボル一覧:
     - `kotlin.collections.MutableMap` — interface kotlin.collections.MutableMap  -- `abstract interface <#A: kotlin/Any?, #B: kotlin/Any?> kotlin.collections/MutableMap : kotlin.collections/Map<#A, #B> {`
 

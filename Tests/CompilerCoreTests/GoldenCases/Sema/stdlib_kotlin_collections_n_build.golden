@@ -6,7 +6,7 @@ symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableList.E kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.MutableList.add#1 kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.MutableList<kotlin.collections.MutableList.E> params=[kotlin.collections.MutableList.E] ret=Boolean
-symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableMap.K kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.MutableMap.V kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.MutableMap.put kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableMap<kotlin.collections.MutableMap.K, kotlin.collections.MutableMap.V> params=[kotlin.collections.MutableMap.K,kotlin.collections.MutableMap.V] ret=kotlin.collections.MutableMap.V?

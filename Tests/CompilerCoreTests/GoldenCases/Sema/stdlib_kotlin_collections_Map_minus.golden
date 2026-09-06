@@ -8,7 +8,7 @@ symbol fq=kotlin.Pair kind=class vis=public flags=_
 symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
 symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=_
 symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
 symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=removeFromArray kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<out removeFromArray.$0.K, removeFromArray.$0.V>,kotlin.Array<out removeFromArray.$0.K>] ret=kotlin.collections.Map<removeFromArray.$0.K, removeFromArray.$0.V>

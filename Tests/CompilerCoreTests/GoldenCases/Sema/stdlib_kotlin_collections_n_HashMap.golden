@@ -5,7 +5,7 @@ symbol fq=__local_3.withLoadFactor kind=local vis=private flags=_ type=kotlin.co
 symbol fq=__local_4.copy kind=local vis=private flags=_ type=kotlin.collections.HashMap<String, Int>
 symbol fq=acceptsHashMap kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.HashMap<String, Int>] ret=kotlin.collections.MutableMap<String, Int>
 symbol fq=acceptsHashMap.$0.map kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=_
 symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_collections_n_HashMap package=_
   decl acceptsHashMap fun acceptsHashMap sym=acceptsHashMap
