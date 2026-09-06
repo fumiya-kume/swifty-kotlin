@@ -39,6 +39,30 @@ extension CollectionVirtualCallRewriteLoweringPass {
             return sourceBackedArrayNames.contains(context.interner.resolve(receiverSymbol.name))
         }
 
+        // KSP-1516: array conversion members are bundled Kotlin source. Keep
+        // the selected declaration so its source body is emitted instead of
+        // the removed synthetic runtime shortcuts.
+        if callee == lookup.sliceArrayName
+            || callee == lookup.reversedArrayName
+            || callee == lookup.asListName
+            || callee == lookup.toTypedArrayName,
+           let symbol,
+           let sema = context.sema,
+           sema.symbols.isSourceBackedSymbol(symbol),
+           let receiverType = context.module.arena.exprType(receiver),
+           let (_, receiverSymbol) = resolveClassTypeSymbol(
+               receiverType,
+               sema: sema
+           )
+        {
+            let sourceBackedArrayNames: Set<String> = [
+                "IntArray", "LongArray", "ShortArray", "ByteArray",
+                "CharArray", "BooleanArray", "DoubleArray", "FloatArray",
+                "UByteArray", "UShortArray", "UIntArray", "ULongArray", "Array",
+            ]
+            return sourceBackedArrayNames.contains(context.interner.resolve(receiverSymbol.name))
+        }
+
         guard callee == lookup.foldName
             || callee == lookup.foldRightName
             || callee == lookup.reduceName
@@ -186,10 +210,36 @@ extension CollectionVirtualCallRewriteLoweringPass {
         fileExprIDs: inout Set<Int32>,
         pathExprIDs: inout Set<Int32>,
         indexingIterableExprIDs: inout Set<Int32>,
+        listIteratorExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
         let module = context.module
         let lookup = context.lookup
+
+        // Handle runtime-backed collection iterators before the generic
+        // source-backed preservation rule. A source-backed Iterable shell can
+        // make the iterator member look like ordinary Kotlin source, while
+        // the concrete list value still requires the shared list iterator ABI.
+        if callee == lookup.iteratorName,
+           arguments.isEmpty,
+           listExprIDs.contains(receiver.rawValue) || setExprIDs.contains(receiver.rawValue) || indexingIterableExprIDs.contains(receiver.rawValue)
+        {
+            let iterCallee = indexingIterableExprIDs.contains(receiver.rawValue)
+                ? lookup.kkIndexingIterableIteratorName
+                : lookup.kkListIteratorName
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: iterCallee,
+                arguments: [receiver],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if iterCallee == lookup.kkListIteratorName, let result {
+                listIteratorExprIDs.insert(result.rawValue)
+            }
+            return true
+        }
 
         if shouldPreserveSourceBackedVirtualCall(
             symbol: symbol,
@@ -271,6 +321,9 @@ extension CollectionVirtualCallRewriteLoweringPass {
                 canThrow: false,
                 thrownResult: nil
             ))
+            if iterCallee == lookup.kkListIteratorName, let result {
+                listIteratorExprIDs.insert(result.rawValue)
+            }
             return true
         }
 

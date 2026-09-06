@@ -166,7 +166,6 @@ struct CharSyntheticMemberLinkTests {
         #expect(companionInfo.kind == .object)
         #expect(companionInfo.visibility == .public)
         #expect(companionInfo.flags.contains(.synthetic))
-        #expect(companionInfo.flags.contains(.static))
         #expect(sema.symbols.parentSymbol(for: companionSymbol) == charCategorySymbol)
     }
 

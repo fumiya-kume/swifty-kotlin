@@ -21,8 +21,16 @@ extension CallTypeChecker {
             "iterator", "step", "take", "drop", "chunked", "windowed",
         ].contains(memberName)
 
+        // An unqualified member call inside an extension body has no receiver
+        // expression to bind. Use the extension receiver carried by the type
+        // inference context in that case.
+        let receiverType = sema.bindings.exprType(for: receiverID) ?? ctx.implicitReceiverType
+        let isOpenEndRangeReceiver = receiverType.map {
+            driver.helpers.isOpenEndRangeType($0, sema: sema, interner: interner)
+        } ?? false
+
         let isTypedUIntRangeReceiver: Bool = {
-            guard let receiverType = sema.bindings.exprType(for: receiverID),
+            guard let receiverType,
                   let receiverKind = MemberRuntimeDispatch.rangeReceiverKind(
                       receiverExpr: receiverID,
                       receiverType: receiverType,
@@ -36,8 +44,10 @@ extension CallTypeChecker {
         }()
         let isSyntacticRangeExpression = ControlFlowTypeChecker.isRangeExpression(receiverID, ast: ctx.ast)
         guard !isClassNameReceiver,
-              (sema.bindings.isRangeExpr(receiverID) || isSyntacticRangeExpression)
-                  || (isTypedUIntRangeReceiver && isUIntRangeSourceMigrationMember)
+              (sema.bindings.isRangeExpr(receiverID)
+                  || isOpenEndRangeReceiver
+                  || isSyntacticRangeExpression
+                  || (isTypedUIntRangeReceiver && isUIntRangeSourceMigrationMember))
         else {
             return nil
         }
@@ -70,8 +80,19 @@ extension CallTypeChecker {
             sema.bindings.bindExprType(id, type: floatingPointResult)
             return floatingPointResult
         }
-        if let receiverType = sema.bindings.exprType(for: receiverID),
-           driver.helpers.isOpenEndRangeType(receiverType, sema: sema, interner: interner),
+        if isOpenEndRangeReceiver,
+           let sourceType = bindSourceOpenEndRangeContainsCall(
+            id,
+            receiverID: receiverID,
+            args: args,
+            safeCall: safeCall,
+            ctx: ctx,
+            locals: &locals
+           )
+        {
+            return sourceType
+        }
+        if isOpenEndRangeReceiver,
            let openEndResult = tryRangeMembershipFallback(
             memberName: memberName,
             args: args,
@@ -89,7 +110,6 @@ extension CallTypeChecker {
             return nil
         }
 
-        let receiverType = sema.bindings.exprType(for: receiverID)
         let rangeKind = MemberRuntimeDispatch.rangeReceiverKind(
             receiverExpr: receiverID,
             receiverType: receiverType ?? sema.types.anyType,
@@ -204,6 +224,87 @@ extension CallTypeChecker {
             mappedElementType: mappedElementType
         )
         let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+        sema.bindings.bindExprType(id, type: finalType)
+        return finalType
+    }
+
+    private func bindSourceOpenEndRangeContainsCall(
+        _ id: ExprID,
+        receiverID: ExprID,
+        args: [CallArgument],
+        safeCall: Bool,
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
+    ) -> TypeID? {
+        guard args.count == 1 else { return nil }
+
+        let sema = ctx.sema
+        let interner = ctx.interner
+        guard let receiverType = sema.bindings.exprType(for: receiverID) ?? ctx.implicitReceiverType,
+              let receiverElementType = driver.helpers.rangeLikeDeclaredElementType(
+                  for: receiverType,
+                  sema: sema,
+                  interner: interner
+              )
+        else {
+            return nil
+        }
+        let argumentType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+
+        let candidates = sema.symbols.lookupByShortName(interner.intern("contains")).filter { candidate in
+            guard let symbol = sema.symbols.symbol(candidate),
+                  symbol.kind == .function,
+                  sema.symbols.isSourceBackedSymbol(candidate),
+                  let signature = sema.symbols.functionSignature(for: candidate),
+                  let declaredReceiver = signature.receiverType,
+                  signature.parameterTypes.count == 1,
+                  signature.parameterTypes[0] == sema.types.makeNonNullable(argumentType),
+                  let declaredElementType = driver.helpers.rangeLikeDeclaredElementType(
+                      for: declaredReceiver,
+                      sema: sema,
+                      interner: interner
+                  ),
+                  declaredElementType == receiverElementType,
+                  driver.helpers.isOpenEndRangeType(
+                      declaredReceiver,
+                      sema: sema,
+                      interner: interner
+                  )
+            else {
+                return false
+            }
+
+            return extensionSyntheticFallbackReceiverMatches(
+                callSiteReceiver: receiverType,
+                declaredReceiver: declaredReceiver,
+                sema: sema
+            )
+        }
+
+        guard let chosen = candidates.first,
+              let signature = sema.symbols.functionSignature(for: chosen)
+        else {
+            return nil
+        }
+
+        _ = driver.inferExpr(
+            args[0].expr,
+            ctx: ctx,
+            locals: &locals,
+            expectedType: signature.parameterTypes[0]
+        )
+        let returnType = bindCallAndResolveReturnType(
+            id,
+            chosen: chosen,
+            resolved: ResolvedCall(
+                chosenCallee: chosen,
+                substitutedTypeArguments: [:],
+                parameterMapping: [0: 0],
+                diagnostic: nil
+            ),
+            sema: sema
+        )
+        let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
         sema.bindings.bindExprType(id, type: finalType)
         return finalType
     }

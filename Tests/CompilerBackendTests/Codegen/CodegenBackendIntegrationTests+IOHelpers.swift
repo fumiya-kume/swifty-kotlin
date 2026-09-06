@@ -209,7 +209,7 @@ struct CodegenBackendIOHelpersTests {
         }
         """
 
-        try assertKotlinOutput(source, moduleName: "RequireLazyRuntime", expected: "Throwable(IllegalArgumentException: value)\n")
+        try assertKotlinOutput(source, moduleName: "RequireLazyRuntime", expected: "java.lang.IllegalArgumentException: value\n")
     }
 
     @Test

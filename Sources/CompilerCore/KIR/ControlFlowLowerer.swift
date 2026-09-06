@@ -837,6 +837,12 @@ final class ControlFlowLowerer {
         }
         guard let (classType, symbol) = resolveClassTypeSymbol(nonNullType, sema: sema),
               !symbol.flags.contains(.synthetic),
+              // KSP-697: List (and other migrated collection shells) are now
+              // Kotlin source-backed, so their class symbol no longer carries
+              // `.synthetic`. Without this check they would be mistaken for an
+              // arbitrary non-synthetic Iterable-implementing class and lose the
+              // dedicated kk_list_iterator_next fast path below.
+              !KnownCompilerNames(interner: interner).isCollectionLikeSymbol(symbol),
               resolveCustomIteratorOperator(
                   iterableType: nonNullType,
                   sema: sema,

@@ -1,0 +1,7 @@
+symbol fq=golden.sema.readSharedValue kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.sharedValue kind=property vis=public flags=_ type=Int
+file fstdlib_kotlin_native_concurrent_SharedImmutable_n_n package=golden.sema annotations=[@file:Suppress("DEPRECATION_ERROR")]
+  decl golden.sema.sharedValue property sharedValue var=0 sym=golden.sema.sharedValue
+  decl golden.sema.readSharedValue fun readSharedValue sym=golden.sema.readSharedValue
+expr e@8:24 int(42) type=Int
+expr e@10:30 name(sharedValue) type=Int ref=golden.sema.sharedValue

@@ -395,10 +395,7 @@ public func __kk_kfunction_get_arity(_ kfunctionRaw: Int) -> Int {
 
 @_cdecl("__kk_kfunction_get_return_type")
 public func __kk_kfunction_get_return_type(_ kfunctionRaw: Int) -> Int {
-    guard let box = runtimeKFunctionBox(from: kfunctionRaw) else {
-        return runtimeNullSentinelInt
-    }
-    return box.returnTypeRaw
+    __kk_kcallable_get_return_type(kfunctionRaw)
 }
 
 @_cdecl("__kk_kfunction_is_suspend")
@@ -678,8 +675,30 @@ private func runtimeKTypeToString(raw ktypeRaw: Int) -> String {
     return runtimeKTypeToString(box)
 }
 
+private func runtimeQualifiedTypeName(_ name: String) -> String {
+    switch name {
+    case "Unit", "Nothing", "Any", "String", "Boolean", "Byte", "Short", "Int", "Long", "Float", "Double", "Char",
+         "UByte", "UShort", "UInt", "ULong":
+        return "kotlin.\(name)"
+    default:
+        return name
+    }
+}
+
 /// Internal helper to render a KTypeBox as a human-readable string.
 func runtimeKTypeToString(_ box: RuntimeKTypeBox) -> String {
+    if box.typeNameRaw != 0,
+       box.typeNameRaw != runtimeNullSentinelInt,
+       let typeName = extractString(from: UnsafeMutableRawPointer(bitPattern: box.typeNameRaw)),
+       !typeName.isEmpty
+    {
+        let descriptorIsNullable = typeName.hasSuffix("?")
+        let baseTypeName = descriptorIsNullable ? String(typeName.dropLast()) : typeName
+        let arguments = runtimeKTypeArgumentsToString(box.argumentRaws)
+        let nullableSuffix = box.isMarkedNullable || descriptorIsNullable ? "?" : ""
+        return runtimeQualifiedTypeName(baseTypeName) + arguments + nullableSuffix
+    }
+
     var baseName = "kotlin.Any"
     if box.classifierRaw != 0,
        box.classifierRaw != runtimeNullSentinelInt,
