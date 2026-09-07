@@ -77,9 +77,53 @@ func resolveEnumOrdinalToNameCallee(
     return (helperName, helperSymbol)
 }
 
-/// Resolves `type`'s own `toString()` symbol — user-defined, or synthesized by
-/// `DataEnumSealedSynthesisPass` for a data class — when one exists and is not
-/// the `kotlin.Any.toString()` placeholder every class inherits by default.
+/// Resolves the nearest class-declared `toString()` symbol — user-defined, or
+/// synthesized by `DataEnumSealedSynthesisPass` for a data class — while
+/// walking the class inheritance chain. The synthetic `kotlin.Any.toString()`
+/// placeholder every class inherits by default is excluded.
+func resolveClassToStringSymbol(
+    for classSymbolID: SymbolID,
+    sema: SemaModule,
+    interner: StringInterner
+) -> SymbolID? {
+    let toStringName = interner.intern("toString")
+    var currentSymbolID = classSymbolID
+    var visited: Set<SymbolID> = []
+
+    while visited.insert(currentSymbolID).inserted {
+        guard let classSymbol = sema.symbols.symbol(currentSymbolID) else {
+            break
+        }
+        let candidate = sema.symbols.lookupAll(
+            fqName: classSymbol.fqName + [toStringName]
+        ).first { id in
+            guard let symbol = sema.symbols.symbol(id), symbol.kind == .function else {
+                return false
+            }
+            return sema.symbols.functionSignature(for: id)?.parameterTypes.isEmpty ?? true
+        }
+        if let candidate,
+           let symbol = sema.symbols.symbol(candidate),
+           !isSyntheticAnyToStringSymbol(symbol, interner: interner)
+        {
+            return candidate
+        }
+
+        guard let superclass = sema.symbols.directSupertypes(for: currentSymbolID).first(where: { id in
+            sema.symbols.symbol(id)?.kind == .class
+        }) else {
+            break
+        }
+        currentSymbolID = superclass
+    }
+    return nil
+}
+
+/// Resolves `type`'s class-declared `toString()` symbol — user-defined, or
+/// synthesized by `DataEnumSealedSynthesisPass` for a data class — when one
+/// exists and is not the `kotlin.Any.toString()` placeholder every class
+/// inherits by default. The class hierarchy is searched from the static class
+/// type toward its direct superclass.
 /// `type` may be nullable: the class symbol is resolved from its non-null
 /// form, but callers passing a nullable `type` are responsible for
 /// null-guarding the receiver before invoking the returned callee (calling a
@@ -102,7 +146,7 @@ func resolveClassOwnToStringCallee(
     interner: StringInterner
 ) -> (callee: InternedString, symbol: SymbolID)? {
     let toStringName = interner.intern("toString")
-    let toStringFQName: [InternedString]
+    let toStringSymbolID: SymbolID?
     if case .unit = sema.types.kind(of: sema.types.makeNonNullable(type)) {
         // Unit has the builtin value representation, so it has no classType
         // symbol to resolve. Its source-backed object member is still the
@@ -112,17 +156,22 @@ func resolveClassOwnToStringCallee(
         else {
             return nil
         }
-        toStringFQName = unitSymbol.fqName + [toStringName]
+        let toStringFQName = unitSymbol.fqName + [toStringName]
+        toStringSymbolID = sema.symbols.lookupAll(fqName: toStringFQName).first { id in
+            guard let symbol = sema.symbols.symbol(id), symbol.kind == .function else {
+                return false
+            }
+            return sema.symbols.functionSignature(for: id)?.parameterTypes.isEmpty ?? true
+        }
     } else {
         guard let (_, classSymbol) = resolveClassTypeSymbol(type, sema: sema) else {
             return nil
         }
-        toStringFQName = classSymbol.fqName + [toStringName]
-    }
-    let toStringSymbolID: SymbolID? = sema.symbols.lookupAll(fqName: toStringFQName).first { id in
-        guard let sym = sema.symbols.symbol(id), sym.kind == .function else { return false }
-        let sig = sema.symbols.functionSignature(for: id)
-        return sig?.parameterTypes.isEmpty ?? true
+        toStringSymbolID = resolveClassToStringSymbol(
+            for: classSymbol.id,
+            sema: sema,
+            interner: interner
+        )
     }
     guard let toStringSymbolID,
           let toStringSymbol = sema.symbols.symbol(toStringSymbolID),
