@@ -446,14 +446,6 @@ extension DataFlowSemaPhase {
             ownerFQName: classFQName,
             parentSymbol: classSymbol
         )
-        registerSyntheticConstructorStubs(
-            [SyntheticNativeRefRuntimeSurfaceSpec.sweepStatisticsConstructor],
-            ownerType: SyntheticNativeRefRuntimeSurfaceSpec.sweepStatisticsType,
-            context: classContext,
-            symbols: symbols,
-            types: types,
-            interner: interner
-        )
         registerSyntheticPropertyStubs(
             SyntheticNativeRefRuntimeSurfaceSpec.sweepStatisticsProperties,
             context: classContext,
@@ -540,14 +532,6 @@ extension DataFlowSemaPhase {
         let memoryUsageContext = SyntheticStubRegistrationContext(
             ownerFQName: memoryUsageFQName,
             parentSymbol: memoryUsageSymbol
-        )
-        registerSyntheticConstructorStubs(
-            [SyntheticNativeRefRuntimeSurfaceSpec.memoryUsageConstructor],
-            ownerType: SyntheticNativeRefRuntimeSurfaceSpec.memoryUsageType,
-            context: memoryUsageContext,
-            symbols: symbols,
-            types: types,
-            interner: interner
         )
         registerSyntheticPropertyStubs(
             SyntheticNativeRefRuntimeSurfaceSpec.memoryUsageProperties,

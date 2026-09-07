@@ -1,0 +1,4 @@
+symbol fq=golden.sema.mainThreadFinalizerProcessorType kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.native.runtime.GC.MainThreadFinalizerProcessor?
+file fstdlib_kotlin_native_runtime_GC_n_n package=golden.sema
+  decl golden.sema.mainThreadFinalizerProcessorType fun mainThreadFinalizerProcessorType sym=golden.sema.mainThreadFinalizerProcessorType
+expr e@6:76 name(null) type=Nothing?
