@@ -5,8 +5,8 @@ symbol fq=__local_3.iterableResult kind=local vis=private flags=_ type=kotlin.co
 symbol fq=__local_4.keyResult kind=local vis=private flags=_ type=kotlin.collections.Map<String?, Int?>
 symbol fq=kotlin.Array kind=class vis=public flags=synthetic
 symbol fq=kotlin.Pair kind=class vis=public flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
 symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
