@@ -1,6 +1,6 @@
 import Foundation
 
-private func runtimeThrowableBox(from raw: Int) -> RuntimeThrowableBox? {
+func runtimeThrowableBox(from raw: Int) -> RuntimeThrowableBox? {
     guard raw != runtimeNullSentinelInt,
           raw != 0,
           let ptr = UnsafeMutableRawPointer(bitPattern: raw)
@@ -14,6 +14,60 @@ private func runtimeThrowableBox(from raw: Int) -> RuntimeThrowableBox? {
         return nil
     }
     return tryCast(ptr, to: RuntimeThrowableBox.self)
+}
+
+private let runtimeThrowableToStringVtableMethod: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int =
+    __kk_throwable_toString
+
+private let runtimeThrowableStackTraceVtableMethod: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int =
+    __kk_throwable_rawStackFrames
+
+// Keep these slots aligned with the bundled Throwable layout. The native
+// getStackTraceAddresses extension occupies slot 2, so toString is slot 1.
+enum RuntimeThrowableVtableSlot {
+    static let getStackTrace = 0
+    static let toString = 1
+}
+
+func runtimeThrowableVtableMethodRaw(_ receiver: Int, slot: Int) -> Int? {
+    guard runtimeIsThrowableRaw(receiver) else {
+        return nil
+    }
+    if runtimeThrowableBox(from: receiver) == nil,
+       let pointer = UnsafeMutableRawPointer(bitPattern: receiver)
+    {
+        let objectKey = UInt(bitPattern: pointer)
+        if let registered = runtimeStorage.withMetadataLock({ state in
+            state.objectVtableMethods[objectKey]?[slot]
+        }), registered != 0 {
+            return registered
+        }
+    }
+    switch slot {
+    case RuntimeThrowableVtableSlot.getStackTrace:
+        return unsafeBitCast(runtimeThrowableStackTraceVtableMethod, to: Int.self)
+    case RuntimeThrowableVtableSlot.toString:
+        return unsafeBitCast(runtimeThrowableToStringVtableMethod, to: Int.self)
+    default:
+        return nil
+    }
+}
+
+func runtimeThrowableToString(_ receiver: Int) -> String? {
+    guard let methodRaw = runtimeThrowableVtableMethodRaw(
+        receiver,
+        slot: RuntimeThrowableVtableSlot.toString
+    ) else {
+        return nil
+    }
+    let method = unsafeBitCast(
+        methodRaw,
+        to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self
+    )
+    guard let rendered = UnsafeMutableRawPointer(bitPattern: method(receiver, nil)) else {
+        return nil
+    }
+    return extractString(from: rendered)
 }
 
 private func runtimeThrowableStackTraceText(from throwableRaw: Int) -> String {
@@ -98,6 +152,31 @@ func runtimeSourceThrowableQualifiedName(for classID: Int64) -> String {
     return runtimeKClassMetadataRegistry.lookup(typeToken: typeToken)?.qualifiedName
         ?? runtimeSourceThrowableQualifiedNames[classID]
         ?? "kotlin.Throwable"
+}
+
+func runtimeIsThrowableRaw(_ raw: Int) -> Bool {
+    guard raw != runtimeNullSentinelInt, raw != 0 else {
+        return false
+    }
+    if runtimeThrowableBox(from: raw) != nil {
+        return true
+    }
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else {
+        return false
+    }
+    let object: RuntimeObjectBox? = runtimeStorage.withGCLock { state in
+        guard state.objectPointers.contains(UInt(bitPattern: ptr)) else {
+            return nil
+        }
+        return tryCast(ptr, to: RuntimeObjectBox.self)
+    }
+    guard let object else {
+        return false
+    }
+    return runtimeIsAssignable(
+        sourceTypeID: object.classID,
+        targetTypeID: runtimeStableNominalTypeID(fqName: "kotlin.Throwable")
+    )
 }
 
 private func runtimeSourceThrowableHeader(from object: RuntimeObjectBox) -> String {
@@ -248,7 +327,11 @@ public func __kk_throwable_cause(_ throwableRaw: Int) -> Int {
 }
 
 @_cdecl("__kk_throwable_rawStackFrames")
-public func __kk_throwable_rawStackFrames(_ throwableRaw: Int) -> Int {
+public func __kk_throwable_rawStackFrames(
+    _ throwableRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>? = nil
+) -> Int {
+    outThrown?.pointee = 0
     let frameStrings = runtimeThrowableRawStackFrameStrings(from: throwableRaw)
     let arrayRaw = kk_array_new(frameStrings.count)
     guard let arrayBox = runtimeArrayBox(from: arrayRaw) else {
@@ -258,6 +341,38 @@ public func __kk_throwable_rawStackFrames(_ throwableRaw: Int) -> Int {
         arrayBox.elements[i] = registerRuntimeObject(RuntimeStringBox(frame))
     }
     return arrayRaw
+}
+
+@_cdecl("__kk_throwable_toString")
+public func __kk_throwable_toString(
+    _ throwableRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>? = nil
+) -> Int {
+    outThrown?.pointee = 0
+    let typeName: String
+    let message: String?
+    if let throwable = runtimeThrowableBox(from: throwableRaw) {
+        typeName = runtimeJVMExceptionFQName(from: throwable.exceptionFQName)
+        message = throwable.message
+    } else if let ptr = UnsafeMutableRawPointer(bitPattern: throwableRaw) {
+        let object: RuntimeObjectBox? = runtimeStorage.withGCLock { state in
+            guard state.objectPointers.contains(UInt(bitPattern: ptr)) else {
+                return nil
+            }
+            return tryCast(ptr, to: RuntimeObjectBox.self)
+        }
+        if let object {
+            typeName = runtimeSourceThrowableQualifiedName(for: object.classID)
+            message = object.throwableMessage
+        } else {
+            typeName = "kotlin.Throwable"
+            message = nil
+        }
+    } else {
+        typeName = "kotlin.Throwable"
+        message = nil
+    }
+    return Int(bitPattern: runtimeMakeStringPointer(runtimeRenderedExceptionMessage(typeName, message)))
 }
 
 @_cdecl("__kk_print_raw")
@@ -1551,6 +1666,48 @@ public func __kk_kclass_safeCast(_ kclassRaw: Int, _ valueRaw: Int) -> Int {
 
 // MARK: - REFL-005: KType and typeOf<T>()
 
+// Source-backed KType properties are dispatched through the interface itable.
+// Runtime-created KType boxes therefore register the same alphabetically sorted
+// getter slots that the compiler assigns to the bundled KType declaration.
+private let runtimeKTypeInterfaceTypeID: Int64 =
+    runtimeStableNominalTypeID(fqName: "kotlin.reflect.KType")
+
+private let runtimeKTypeArgumentsGetter: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = {
+    raw,
+    outThrown in
+    outThrown?.pointee = 0
+    return __kk_ktype_arguments(raw)
+}
+
+private let runtimeKTypeClassifierGetter: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = {
+    raw,
+    outThrown in
+    outThrown?.pointee = 0
+    return __kk_ktype_classifier(raw)
+}
+
+private let runtimeKTypeIsMarkedNullableGetter: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = {
+    raw,
+    outThrown in
+    outThrown?.pointee = 0
+    return __kk_ktype_isMarkedNullable(raw)
+}
+
+func registerRuntimeObject(_ box: RuntimeKTypeBox) -> Int {
+    let raw = registerRuntimeObject(box as AnyObject, typeID: kTypeRuntimeTypeID)
+    _ = kk_object_register_itable_iface(raw, Int(runtimeKTypeInterfaceTypeID), 0)
+    _ = kk_object_register_itable_method(
+        raw, 0, 0, unsafeBitCast(runtimeKTypeArgumentsGetter, to: Int.self)
+    )
+    _ = kk_object_register_itable_method(
+        raw, 0, 1, unsafeBitCast(runtimeKTypeClassifierGetter, to: Int.self)
+    )
+    _ = kk_object_register_itable_method(
+        raw, 0, 2, unsafeBitCast(runtimeKTypeIsMarkedNullableGetter, to: Int.self)
+    )
+    return raw
+}
+
 private func runtimeKTypeCreate(_ classifierRaw: Int, _ argsRaw: Int, _ isNullable: Int) -> Int {
     var argumentRaws: [Int] = []
     if argsRaw != 0 && argsRaw != runtimeNullSentinelInt,
@@ -1568,7 +1725,7 @@ private func runtimeKTypeCreate(_ classifierRaw: Int, _ argsRaw: Int, _ isNullab
         isMarkedNullable: isNullable != 0
     )
     registerReflectionRuntimeTypeMetadata()
-    return registerRuntimeObject(box, typeID: kTypeRuntimeTypeID)
+    return registerRuntimeObject(box)
 }
 
 /// Returns the classifier (KClass) raw handle from a KType, or null sentinel.
@@ -1845,12 +2002,6 @@ public func kk_vararg_spread_concat(_ pairsArrayRaw: Int, _ pairCount: Int) -> I
     return result
 }
 
-/// Runtime support for kotlin.io.DEFAULT_BUFFER_SIZE.
-@_cdecl("kk_io_default_buffer_size")
-public func kk_io_default_buffer_size() -> Int {
-    8192
-}
-
 /// KSP-615: single low-level console input bridge behind `kotlin.io.readLine` /
 /// `readln` / `readlnOrNull`. Reads a line from stdin. Returns a pointer to a
 /// runtime string on success, or `runtimeNullSentinelInt` on EOF; nullability
@@ -1915,8 +2066,8 @@ func runtimeRenderAnyForPrint(_ value: Int) -> String {
         }
         return "?"
     }
-    if let throwable = tryCast(raw, to: RuntimeThrowableBox.self) {
-        return "Throwable(\(throwable.renderedMessage))"
+    if let throwableString = runtimeThrowableToString(value) {
+        return throwableString
     }
     if let instantBox = tryCast(raw, to: RuntimeInstantBox.self) {
         return runtimeInstantToString(instantBox)
