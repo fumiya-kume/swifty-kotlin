@@ -560,7 +560,7 @@ final class CallSupportLowerer {
             return false
         }
         switch interner.resolve(symbol.fqName[2]) {
-        case "emptyList", "listOf", "listOfNotNull", "mutableListOf", "arrayListOf",
+        case "emptyList", "listOf", "mutableListOf", "arrayListOf",
              "emptySet", "setOf", "setOfNotNull", "mutableSetOf", "hashSetOf", "linkedSetOf",
              "emptyMap", "mapOf", "mutableMapOf", "hashMapOf", "linkedMapOf":
             return true
