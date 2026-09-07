@@ -13,6 +13,10 @@ extension CallTypeChecker {
         "copyOf", "copyOfRange", "copyInto",
     ]
 
+    private static let arraySourceConversionNames: Set<String> = [
+        "sliceArray", "reversedArray", "asList", "toTypedArray",
+    ]
+
     /// Finds the exact primitive-array source overload before the default-import
     /// scope fallback can select a same-named Sequence extension. Primitive
     /// arrays are compiler-provided nominal classes, while their bundled HOFs
@@ -30,6 +34,46 @@ extension CallTypeChecker {
               receiverSymbol.fqName.count == 2,
               receiverSymbol.fqName[0] == interner.intern("kotlin"),
               receiverSymbol.name != interner.intern("Array"),
+              KnownCompilerNames(interner: interner).isArrayLikeName(receiverSymbol.name)
+        else {
+            return []
+        }
+
+        let sourceFQName = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            calleeName,
+        ]
+        return sema.symbols.lookupAll(fqName: sourceFQName).filter { candidate in
+            guard sema.symbols.isSourceBackedSymbol(candidate),
+                  let symbol = sema.symbols.symbol(candidate),
+                  symbol.kind == .function,
+                  let signatureReceiver = sema.symbols.functionSignature(for: candidate)?.receiverType,
+                  let signatureClass = driver.helpers.nominalSymbol(of: sema.types.makeNonNullable(signatureReceiver), types: sema.types),
+                  let signatureSymbol = sema.symbols.symbol(signatureClass)
+            else {
+                return false
+            }
+            return signatureSymbol.fqName == receiverSymbol.fqName
+        }
+    }
+
+    /// Finds the exact bundled source overload for an Array or primitive-array
+    /// conversion. These functions are top-level extensions in
+    /// kotlin.collections, so member lookup can otherwise select a synthetic
+    /// array stub or a same-named generic collection extension first.
+    func collectArraySourceConversionCandidates(
+        named calleeName: InternedString,
+        receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> [SymbolID] {
+        let memberName = interner.resolve(calleeName)
+        guard Self.arraySourceConversionNames.contains(memberName),
+              let receiverClass = driver.helpers.nominalSymbol(of: sema.types.makeNonNullable(receiverType), types: sema.types),
+              let receiverSymbol = sema.symbols.symbol(receiverClass),
+              receiverSymbol.fqName.count == 2,
+              receiverSymbol.fqName[0] == interner.intern("kotlin"),
               KnownCompilerNames(interner: interner).isArrayLikeName(receiverSymbol.name)
         else {
             return []
@@ -85,6 +129,14 @@ extension CallTypeChecker {
         // source declaration so the legacy raw-array bridge cannot intercept
         // the call (especially joinToString(transform)).
         if !collectPrimitiveArraySourceHOFs(
+            named: calleeName,
+            receiverType: sema.bindings.exprTypes[receiverID] ?? sema.types.anyType,
+            sema: sema,
+            interner: interner
+        ).isEmpty {
+            return nil
+        }
+        if !collectArraySourceConversionCandidates(
             named: calleeName,
             receiverType: sema.bindings.exprTypes[receiverID] ?? sema.types.anyType,
             sema: sema,
@@ -382,6 +434,22 @@ extension CallTypeChecker {
             return finalType
         case "name":
             let resultType = sema.types.stringType
+            let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+        case "returnType":
+            let kTypeSymbol = sema.symbols.lookup(fqName: [
+                interner.intern("kotlin"),
+                interner.intern("reflect"),
+                interner.intern("KType"),
+            ])
+            let resultType = kTypeSymbol.map { symbol in
+                sema.types.make(.classType(ClassType(
+                    classSymbol: symbol,
+                    args: [],
+                    nullability: .nonNull
+                )))
+            } ?? sema.types.anyType
             let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
             sema.bindings.bindExprType(id, type: finalType)
             return finalType

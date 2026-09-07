@@ -17,8 +17,7 @@ import Testing
 //   - TransferMode: kk_transfer_object (STDLIB-NATIVE-CONCURRENT-ABI-003)
 //   - FreezableAtomicReference<T>: kk_freezable_atomic_ref_create / _load / _store / _is_frozen
 //               (STDLIB-NATIVE-CONCURRENT-ABI-004)
-//   - @SharedImmutable: kk_shared_immutable_init (STDLIB-NATIVE-CONCURRENT-ABI-005)
-//   - Worker.executeAfter: kk_worker_execute_after (STDLIB-NATIVE-CONCURRENT-ABI-006)
+//   - Worker.executeAfter: kk_worker_execute_after (STDLIB-NATIVE-CONCURRENT-ABI-005)
 //   - freeze() / isFrozen: kk_freeze_object / kk_is_frozen
 //   - AtomicInt (legacy kotlin.native.concurrent.AtomicInt / unified kotlin.concurrent.AtomicInt):
 //             compareAndSet semantics — already tested in isolation via AtomicInt cdecl wrappers
@@ -219,48 +218,48 @@ struct RuntimeAtomicIntNativeConcurrentTests {
         let handle = kk_atomic_int_create(10)
         let result = kk_atomic_int_compareAndSet(handle, 10, 20)
         #expect(result == 1, "compareAndSet must return 1 (true) on success")
-        #expect(kk_atomic_int_load(handle) == 20)
+        #expect(__kk_atomic_int_load(handle) == 20)
     }
 
     @Test func compareAndSetFailsWhenExpectMismatches() {
         let handle = kk_atomic_int_create(10)
         let result = kk_atomic_int_compareAndSet(handle, 99, 20)
         #expect(result == 0, "compareAndSet must return 0 (false) when expected != actual")
-        #expect(kk_atomic_int_load(handle) == 10, "Value must not change on failed CAS")
+        #expect(__kk_atomic_int_load(handle) == 10, "Value must not change on failed CAS")
     }
 
     @Test func compareAndExchangeReturnsOldValue() {
         let handle = kk_atomic_int_create(5)
-        let old = kk_atomic_int_compareAndExchange(handle, 5, 15)
+        let old = __kk_atomic_int_compareAndExchange(handle, 5, 15)
         #expect(old == 5)
-        #expect(kk_atomic_int_load(handle) == 15)
+        #expect(__kk_atomic_int_load(handle) == 15)
     }
 
     @Test func compareAndExchangeFailureReturnsCurrentValue() {
         let handle = kk_atomic_int_create(5)
-        let old = kk_atomic_int_compareAndExchange(handle, 99, 15)
+        let old = __kk_atomic_int_compareAndExchange(handle, 99, 15)
         #expect(old == 5, "On failure compareAndExchange must return current value")
-        #expect(kk_atomic_int_load(handle) == 5)
+        #expect(__kk_atomic_int_load(handle) == 5)
     }
 
     @Test func fetchAndAddReturnsOldValue() {
         let handle = kk_atomic_int_create(100)
-        let old = kk_atomic_int_fetchAndAdd(handle, 5)
+        let old = __kk_atomic_int_fetchAndAdd(handle, 5)
         #expect(old == 100)
-        #expect(kk_atomic_int_load(handle) == 105)
+        #expect(__kk_atomic_int_load(handle) == 105)
     }
 
     @Test func incrementDecrement() {
         let handle = kk_atomic_int_create(0)
-        _ = kk_atomic_int_incrementAndFetch(handle)
-        _ = kk_atomic_int_incrementAndFetch(handle)
-        let afterInc = kk_atomic_int_load(handle)
+        _ = __kk_atomic_int_incrementAndFetch(handle)
+        _ = __kk_atomic_int_incrementAndFetch(handle)
+        let afterInc = __kk_atomic_int_load(handle)
         #expect(afterInc == 2)
-        let oldBeforeDec = kk_atomic_int_fetchAndDecrement(handle)
+        let oldBeforeDec = __kk_atomic_int_fetchAndDecrement(handle)
         #expect(oldBeforeDec == 2)
-        #expect(kk_atomic_int_load(handle) == 1)
-        _ = kk_atomic_int_decrementAndFetch(handle)
-        #expect(kk_atomic_int_load(handle) == 0)
+        #expect(__kk_atomic_int_load(handle) == 1)
+        _ = __kk_atomic_int_decrementAndFetch(handle)
+        #expect(__kk_atomic_int_load(handle) == 0)
     }
 }
 
@@ -275,28 +274,28 @@ struct RuntimeAtomicLongNativeConcurrentTests {
         let handle = kk_atomic_long_create(100)
         let result = kk_atomic_long_compareAndSet(handle, 100, 200)
         #expect(result == 1)
-        #expect(kk_atomic_long_load(handle) == 200)
+        #expect(__kk_atomic_long_load(handle) == 200)
     }
 
     @Test func compareAndSetFailsWhenExpectMismatches() {
         let handle = kk_atomic_long_create(100)
         let result = kk_atomic_long_compareAndSet(handle, 999, 200)
         #expect(result == 0)
-        #expect(kk_atomic_long_load(handle) == 100)
+        #expect(__kk_atomic_long_load(handle) == 100)
     }
 
     @Test func compareAndExchangeReturnsOldValue() {
         let handle = kk_atomic_long_create(50)
-        let old = kk_atomic_long_compareAndExchange(handle, 50, 150)
+        let old = __kk_atomic_long_compareAndExchange(handle, 50, 150)
         #expect(old == 50)
-        #expect(kk_atomic_long_load(handle) == 150)
+        #expect(__kk_atomic_long_load(handle) == 150)
     }
 
     @Test func fetchAndDecrementReturnsOldValue() {
         let handle = kk_atomic_long_create(10)
-        let old = kk_atomic_long_fetchAndDecrement(handle)
+        let old = __kk_atomic_long_fetchAndDecrement(handle)
         #expect(old == 10)
-        #expect(kk_atomic_long_load(handle) == 9)
+        #expect(__kk_atomic_long_load(handle) == 9)
     }
 }
 
@@ -311,9 +310,9 @@ struct RuntimeAtomicReferenceNativeConcurrentTests {
         let refA = kk_atomic_int_create(10)
         let refB = kk_atomic_int_create(20)
         let atomicRef = kk_atomic_ref_create(refA)
-        let old = kk_atomic_ref_compareAndExchange(atomicRef, refA, refB)
+        let old = __kk_atomic_ref_compareAndExchange(atomicRef, refA, refB)
         #expect(old == refA)
-        #expect(kk_atomic_ref_load(atomicRef) == refB)
+        #expect(__kk_atomic_ref_load(atomicRef) == refB)
     }
 
     @Test func compareAndExchangeFailsAndRetainsCurrentReference() {
@@ -321,9 +320,9 @@ struct RuntimeAtomicReferenceNativeConcurrentTests {
         let refB = kk_atomic_int_create(20)
         let refC = kk_atomic_int_create(30)
         let atomicRef = kk_atomic_ref_create(refA)
-        let old = kk_atomic_ref_compareAndExchange(atomicRef, refC, refB)
+        let old = __kk_atomic_ref_compareAndExchange(atomicRef, refC, refB)
         #expect(old == refA)
-        #expect(kk_atomic_ref_load(atomicRef) == refA,
+        #expect(__kk_atomic_ref_load(atomicRef) == refA,
                 "A failed compareAndExchange must retain the current reference")
     }
 
@@ -332,24 +331,24 @@ struct RuntimeAtomicReferenceNativeConcurrentTests {
         let equalButDistinct = registerRuntimeObject(RuntimeStringBox("same"))
         let replacement = registerRuntimeObject(RuntimeStringBox("next"))
         let atomicRef = kk_atomic_ref_create(current)
-        let old = kk_atomic_ref_compareAndExchange(atomicRef, equalButDistinct, replacement)
+        let old = __kk_atomic_ref_compareAndExchange(atomicRef, equalButDistinct, replacement)
         #expect(old == current)
-        #expect(kk_atomic_ref_load(atomicRef) == current,
+        #expect(__kk_atomic_ref_load(atomicRef) == current,
                 "Equal but distinct references must not satisfy the CAS expectation")
     }
 
     @Test func nullReferenceRoundTrip() {
         let atomicRef = kk_atomic_ref_create(0)
-        #expect(kk_atomic_ref_load(atomicRef) == 0)
+        #expect(__kk_atomic_ref_load(atomicRef) == 0)
     }
 
     @Test func exchangeReturnsOldReference() {
         let refA = kk_atomic_int_create(1)
         let refB = kk_atomic_int_create(2)
         let atomicRef = kk_atomic_ref_create(refA)
-        let old = kk_atomic_ref_exchange(atomicRef, refB)
+        let old = __kk_atomic_ref_exchange(atomicRef, refB)
         #expect(old == refA)
-        #expect(kk_atomic_ref_load(atomicRef) == refB)
+        #expect(__kk_atomic_ref_load(atomicRef) == refB)
     }
 }
 
@@ -573,35 +572,7 @@ struct RuntimeFreezableAtomicRefTests {
 }
 
 // ---------------------------------------------------------------------------
-// MARK: - @SharedImmutable Tests (STDLIB-NATIVE-CONCURRENT-ABI-005)
-// ---------------------------------------------------------------------------
-
-@Suite(.runtimeIsolation(.gcAndThreadLocal))
-struct RuntimeSharedImmutableTests {
-
-    @Test func sharedImmutableInitFreezesObject() {
-        let handle = kk_atomic_int_create(42)
-        #expect(kk_is_frozen(handle) == 0, "Object must not be frozen before init")
-        let returned = kk_shared_immutable_init(handle)
-        #expect(returned == handle, "kk_shared_immutable_init must return the same handle")
-        #expect(kk_is_frozen(handle) == 1, "Object must be frozen after @SharedImmutable init")
-    }
-
-    @Test func sharedImmutableInitWithNullHandleIsNoOp() {
-        let result = kk_shared_immutable_init(0)
-        #expect(result == 0, "Null handle must be a no-op")
-    }
-
-    @Test func sharedImmutableInitIsIdempotent() {
-        let handle = kk_atomic_int_create(10)
-        kk_shared_immutable_init(handle)
-        kk_shared_immutable_init(handle) // second call must not crash
-        #expect(kk_is_frozen(handle) == 1)
-    }
-}
-
-// ---------------------------------------------------------------------------
-// MARK: - Worker.executeAfter Tests (STDLIB-NATIVE-CONCURRENT-ABI-006)
+// MARK: - Worker.executeAfter Tests (STDLIB-NATIVE-CONCURRENT-ABI-005)
 // ---------------------------------------------------------------------------
 
 @Suite(.runtimeIsolation(.gcAndThreadLocal))

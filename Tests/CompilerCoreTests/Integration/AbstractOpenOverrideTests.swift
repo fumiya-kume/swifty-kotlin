@@ -235,5 +235,20 @@ import Testing
         assertHasDiagnostic("KSWIFTK-SEMA-ABSTRACT", in: ctx)
     }
 
+    @Test func testPrimaryConstructorOpenPropertyCanBeOverridden() throws {
+        let source = """
+        open class Base(open val p: String)
+
+        class Derived(p: String) : Base(p) {
+            override val p: String = p + "!"
+        }
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-FINAL", in: ctx)
+        #expect(!(ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error })))
+    }
+
 }
 #endif
