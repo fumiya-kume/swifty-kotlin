@@ -254,7 +254,7 @@ fiction audit ダンプを起点に棚卸し）:
 | `HeaderHelpers+SyntheticAtomicScalarStubs.swift` | 306 | (b) | `AtomicInt`/`AtomicLong`/`AtomicBoolean`/`AtomicReference<T>`, plus `java.util.concurrent.atomic.AtomicInteger` — a live, tested direct-construction surface sharing the `kk_atomic_int_create` box and retained Java compatibility members, not a target-out cleanup pocket (KSP-695 split; KSP-696 scalar public wrappers are source-backed). |
 | `HeaderHelpers+SyntheticAtomicResidualRegistry.swift` | 295 | (b) | Residual Atomic orchestration after KSP-696 removed `HeaderHelpers+SyntheticAtomicStubs.swift`: arrays, package metadata/type aliases, NativePtr, Java compatibility, and shared synthetic nominal shells remain registered here. |
 | `HeaderHelpers+SyntheticBase64Stubs.swift` | 830 | (b) | MIGRATION-ENC owner; Kotlin source exists but public stubs still dispatch directly. |
-| `HeaderHelpers+SyntheticBuilderDSLStubs.swift` | 414 | (b) | M3 collection builder source migration. |
+| `HeaderHelpers+SyntheticBuilderDSLStubs.swift` | 0 (deleted) | (b) migrated | KSP-697: both `buildList` overloads use `CollectionBuilders.kt`; legacy lowering/ABI cleanup is tracked by RF-LOWER-CALL-004–006. |
 | `HeaderHelpers+SyntheticCInteropStubs.swift` | 3065 | (c) | Kotlin/Native interop compiler/runtime surface; table-driven residual candidate. |
 | `HeaderHelpers+SyntheticCharStubs.swift` | 889 | (c) | Primitive `Char` shell plus helpers; RF-STUB-003 declarative residual registration started here. |
 | `HeaderHelpers+SyntheticClockStubs.swift` | 174 | (c) | KSP-712 reclassified: `Clock.now()` remains a hidden runtime dispatch bridge and `Clock.System` bootstrap anchor; public `Clock.System.now()` is bundled Kotlin source. |
