@@ -6,12 +6,27 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner
     ) {
-        // Primitive types are represented directly by TypeSystem, so Long and
-        // Short have no source declaration from which the Companion nominal
+        // Primitive types are represented directly by TypeSystem, so Byte, Long,
+        // and Short have no source declaration from which the Companion nominal
         // can be collected. Keep only the nominal anchors needed by bundled
         // Companion extensions; the constants themselves are Kotlin
         // source-backed declarations.
         let kotlinPkg = ensurePackage(path: ["kotlin"], symbols: symbols, interner: interner)
+        let byteSymbol = ensureClassSymbol(
+            named: "Byte",
+            in: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let kotlinPkgSymbol = symbols.lookup(fqName: kotlinPkg) {
+            symbols.setParentSymbol(kotlinPkgSymbol, for: byteSymbol)
+        }
+        ensureSyntheticPrimitiveCompanionSymbol(
+            ownerSymbol: byteSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
         let longSymbol = ensureClassSymbol(
             named: "Long",
             in: kotlinPkg,

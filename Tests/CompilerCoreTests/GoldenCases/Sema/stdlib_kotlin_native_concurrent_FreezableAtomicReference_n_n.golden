@@ -1,0 +1,6 @@
+symbol fq=golden.sema.construct kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=kotlin.native.concurrent.FreezableAtomicReference<Int>
+symbol fq=golden.sema.construct.$0.value kind=valueParameter vis=private flags=_
+file fstdlib_kotlin_native_concurrent_FreezableAtomicReference_n_n package=golden.sema annotations=[@file:Suppress("DEPRECATION_ERROR")]
+  decl golden.sema.construct fun construct sym=golden.sema.construct
+expr e@8:30 name(value) type=Int ref=golden.sema.construct.$0.value
+expr e@8:5 call callee=e@8:5#1 args=[_:e@8:30] type=kotlin.native.concurrent.FreezableAtomicReference<Int> call=kotlin.native.concurrent.FreezableAtomicReference.<init> targs=[Int]
