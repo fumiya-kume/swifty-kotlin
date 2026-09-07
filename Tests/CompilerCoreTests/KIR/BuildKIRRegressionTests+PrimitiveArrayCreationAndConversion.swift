@@ -111,7 +111,15 @@ extension BuildKIRRegressionTests {
             """,
             """
             package sample12
-            fun make12() = uintArrayOf(1u, 4000000000u)
+            fun make12() = BooleanArray(4) { it % 2 == 0 }
+            fun main12(): Int {
+                val arr = make12()
+                return arr.size
+            }
+            """,
+            """
+            package sample13
+            fun make13() = uintArrayOf(1u, 4000000000u)
             """
         ]
         var result: CompilationContext?
@@ -317,10 +325,37 @@ extension BuildKIRRegressionTests {
     }
 
     @Test
-    func testUIntArrayOfFactoryLowersToSourceBackedPrimitiveArrayPath() throws {
+    func testBooleanArrayLambdaConstructorLowersToArrayNewAndArraySet() throws {
         let ctx = try sharedPrimitiveArrayCtx()
         let module = try #require(ctx.kir)
         let makeBody = try findKIRFunctionBody(named: "make12", in: module, interner: ctx.interner)
+        let callNames = extractCallees(from: makeBody, interner: ctx.interner)
+
+        #expect(
+            callNames.contains("kk_array_new_checked"),
+            "BooleanArray(n) { init } must emit kk_array_new_checked; got: \(callNames)"
+        )
+        #expect(
+            callNames.contains("kk_array_set"),
+            "BooleanArray(n) { init } must emit kk_array_set in the fill loop; got: \(callNames)"
+        )
+        #expect(
+            !callNames.contains("BooleanArray"),
+            "BooleanArray(n) { init } must not remain as an unresolved call; got: \(callNames)"
+        )
+
+        let throwFlags = extractThrowFlags(from: makeBody, interner: ctx.interner)
+        #expect(
+            throwFlags["kk_array_new_checked"]?.allSatisfy { $0 == true } == true,
+            "kk_array_new_checked inside BooleanArray constructor must be throwing (NegativeArraySizeException)"
+        )
+    }
+
+    @Test
+    func testUIntArrayOfFactoryLowersToSourceBackedPrimitiveArrayPath() throws {
+        let ctx = try sharedPrimitiveArrayCtx()
+        let module = try #require(ctx.kir)
+        let makeBody = try findKIRFunctionBody(named: "make13", in: module, interner: ctx.interner)
         let callNames = extractCallees(from: makeBody, interner: ctx.interner)
 
         #expect(callNames.contains("kk_array_new"), "source-backed uintArrayOf must allocate a primitive array; got: \(callNames)")

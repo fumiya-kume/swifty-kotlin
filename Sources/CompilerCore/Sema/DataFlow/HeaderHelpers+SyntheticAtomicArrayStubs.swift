@@ -1,7 +1,7 @@
 
 /// Array-shaped atomic surfaces (`AtomicIntArray`/`AtomicLongArray`/
 /// `AtomicArray<T>`) and their `atomicArrayOf`/`atomicArrayOfNulls`
-/// factories, extracted from `HeaderHelpers+SyntheticAtomicStubs.swift`.
+/// factories, extracted from the Atomic residual registration surface.
 extension DataFlowSemaPhase {
     func registerAtomicArrayFamily(
         packageFQName: [InternedString],

@@ -97,9 +97,12 @@ struct RuntimeLateinitExceptionTests {
             kk_println_any(UnsafeMutableRawPointer(bitPattern: thrown))
         }
 
+        // Kotlin renders a Throwable as "<qualified class name>: <message>", so a
+        // stdlib exception keeps its `kotlin.` package prefix (verified against
+        // kotlinc by Scripts/diff_cases/lateinit_exception_println.kt).
         #expect(
             rendered
-                == "Throwable(UninitializedPropertyAccessException: lateinit property name has not been initialized)"
+                == "kotlin.UninitializedPropertyAccessException: lateinit property name has not been initialized"
         )
     }
 

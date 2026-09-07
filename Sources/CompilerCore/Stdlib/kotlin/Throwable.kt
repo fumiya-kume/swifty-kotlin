@@ -10,8 +10,8 @@ import kotlin.internal.KsSymbolName
  * the Kotlin-level class declares the type, its public constructor surface and
  * its members. Members are expressed in Kotlin and reach the boxed storage
  * through the small `__kk_throwable_*` accessor bridges below. The mutating /
- * suppressed-list members are declared as extensions so that call sites keep
- * static dispatch: runtime-allocated throwable boxes carry no Kotlin vtable.
+ * suppressed-list members remain extensions with static dispatch, while the
+ * virtual members route through the runtime bridge for boxed Throwable values.
  */
 public open class Throwable {
     @KsSymbolName("__kk_throwable_new")
@@ -31,6 +31,10 @@ public open class Throwable {
 
     public val cause: Throwable?
         get() = __kkThrowableCause(this)
+
+    public fun getStackTrace(): Array<String> = __kkThrowableRawStackFrames(this)
+
+    public override fun toString(): String = __kkThrowableToString(this)
 }
 
 public fun Throwable.initCause(cause: Throwable?): Throwable {
@@ -101,6 +105,9 @@ internal external fun __kkThrowableSuppressedRaw(throwable: Throwable): Array<Th
 
 @KsSymbolName("__kk_throwable_rawStackFrames")
 internal external fun __kkThrowableRawStackFrames(throwable: Throwable): Array<String>
+
+@KsSymbolName("__kk_throwable_toString")
+internal external fun __kkThrowableToString(throwable: Throwable): String
 
 @KsSymbolName("__kk_printStderr")
 internal external fun __kkPrintStderr(message: String)

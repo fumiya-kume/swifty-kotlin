@@ -26,10 +26,10 @@ final class RuntimeKPropertyStub {
         self.isConst = isConst
     }
 }
-
 private func runtimeTagCallableRef(
     _ callable: Int,
     name: Int,
+    returnType: Int,
     arity: Int,
     kind: RuntimeCallableRefKind,
     isSuspend: Bool = false
@@ -37,6 +37,7 @@ private func runtimeTagCallableRef(
     runtimeStorage.withDelegateLock { state in
         state.callableRefMetadataByValue[callable] = RuntimeCallableRefMetadata(
             nameRaw: name,
+            returnTypeRaw: returnType,
             arity: arity,
             kind: kind,
             isSuspend: isSuspend
@@ -46,13 +47,13 @@ private func runtimeTagCallableRef(
 }
 
 @_cdecl("kk_callable_ref_tag_kfunction")
-public func kk_callable_ref_tag_kfunction(_ callable: Int, _ name: Int, _ arity: Int, _ isSuspend: Int) -> Int {
-    runtimeTagCallableRef(callable, name: name, arity: arity, kind: .function, isSuspend: isSuspend != 0)
+public func kk_callable_ref_tag_kfunction(_ callable: Int, _ name: Int, _ returnType: Int, _ arity: Int, _ isSuspend: Int) -> Int {
+    runtimeTagCallableRef(callable, name: name, returnType: returnType, arity: arity, kind: .function, isSuspend: isSuspend != 0)
 }
 
 @_cdecl("kk_callable_ref_tag_kproperty")
-public func kk_callable_ref_tag_kproperty(_ callable: Int, _ name: Int, _ arity: Int) -> Int {
-    runtimeTagCallableRef(callable, name: name, arity: arity, kind: .property, isSuspend: false)
+public func kk_callable_ref_tag_kproperty(_ callable: Int, _ name: Int, _ returnType: Int, _ arity: Int) -> Int {
+    runtimeTagCallableRef(callable, name: name, returnType: returnType, arity: arity, kind: .property, isSuspend: false)
 }
 
 @_cdecl("kk_callable_ref_name")
@@ -200,4 +201,3 @@ private func kk_kproperty_stub_make_string(_ s: String) -> Int {
         Int(bitPattern: kk_string_from_utf8(buffer.baseAddress!, Int32(buffer.count)))
     }
 }
-
