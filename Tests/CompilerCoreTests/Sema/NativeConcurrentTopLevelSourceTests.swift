@@ -35,17 +35,19 @@ struct NativeConcurrentTopLevelSourceTests {
         let context = try sharedContext()
         let sema = try #require(context.sema)
         let package = ["kotlin", "native", "concurrent"]
+        // FreezableAtomicReference is already source-backed by KSP-1236
+        // (its constructor ships in Stdlib/kotlin/native/concurrent/
+        // FreezableAtomicReference/Stdlib.kt), so it is intentionally absent
+        // from this synthetic-anchor inventory.
         let expectedGenericShapes: [String: (TypeVariance, TypeID)] = [
             "AtomicReference": (.invariant, sema.types.nullableAnyType),
             "DetachedObjectGraph": (.invariant, sema.types.nullableAnyType),
-            "FreezableAtomicReference": (.invariant, sema.types.nullableAnyType),
             "WorkerBoundReference": (.out, sema.types.anyType),
         ]
 
         for name in [
             "AtomicInt", "AtomicLong", "AtomicNativePtr", "AtomicReference",
-            "DetachedObjectGraph", "FreezableAtomicReference", "MutableData",
-            "WorkerBoundReference",
+            "DetachedObjectGraph", "MutableData", "WorkerBoundReference",
         ] {
             let path = package + [name]
             let classSymbol = try symbol(path, in: context)
@@ -72,6 +74,15 @@ struct NativeConcurrentTopLevelSourceTests {
                 #expect(sema.types.nominalTypeParameterSymbols(for: classSymbol).isEmpty)
             }
         }
+
+        // FreezableAtomicReference is already source-backed (KSP-1236) with a
+        // value-taking constructor; it is intentionally not a synthetic anchor.
+        let freezablePath = package + ["FreezableAtomicReference"]
+        let freezableSymbol = try symbol(freezablePath, in: context)
+        let freezableInfo = try #require(sema.symbols.symbol(freezableSymbol))
+        #expect(freezableInfo.kind == .class)
+        #expect(!freezableInfo.flags.contains(.synthetic))
+        #expect(sema.symbols.sourceFileID(for: freezableSymbol) != nil)
     }
 
     @Test
