@@ -69,6 +69,34 @@ struct StdlibArtifactRegressionTests {
     }
     """
 
+    /// KSP-697: inferred mutable collection factories must preserve their
+    /// MutableIterable supertype when the stdlib is consumed as an artifact.
+    @Test
+    func testMutableFactoriesWidenThroughPrecompiledStdlibArtifact() throws {
+        let artifactPath = try Self.buildStdlibArtifact()
+        try withTemporaryFile(contents: """
+        fun main() {
+            val list = mutableListOf(1, 2, 3)
+            val listIterable: MutableIterable<Int> = list
+            val set = mutableSetOf(1, 2, 3)
+            val setIterable: MutableIterable<Int> = set
+        }
+        """) { userPath in
+            let ctx = makeCompilationContext(
+                inputs: [userPath],
+                moduleName: "MutableCollectionFactoryArtifact",
+                emit: .kirDump,
+                includeStdlib: false,
+                stdlibLibraryPath: artifactPath
+            )
+            try runToKIR(ctx)
+            #expect(
+                !ctx.diagnostics.hasError,
+                "Mutable collection factories should widen through MutableIterable: \(ctx.diagnostics.diagnostics)"
+            )
+        }
+    }
+
     /// KSP-1165: a named companion object must remain an exact nested type when
     /// the stdlib is consumed through a precompiled artifact.
     @Test
@@ -1787,6 +1815,45 @@ struct StdlibArtifactRegressionTests {
                 8
 
                 """)
+        }
+    }
+
+    /// KSP-1022: an imported non-inline range iterator must not be redirected
+    /// by InlineLoweringPass to the same-named MutableMap inline extension.
+    /// The name fallback is only valid when the call has no known semantic
+    /// symbol; artifact consumers otherwise lose the receiver-specific binding.
+    @Test
+    func testRangeHOFDoesNotUseSameNamedMutableMapIteratorFromArtifact() throws {
+        let artifactPath = try Self.buildStdlibArtifact()
+
+        let source = """
+        fun main() {
+            println((1..5).reduce { acc, value -> acc + value })
+            println((1..5).reduceIndexed { index, acc, value -> acc + index * value })
+        }
+        """
+
+        try withTemporaryFile(contents: source) { userPath in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .path
+            let ctx = makeCompilationContext(
+                inputs: [userPath],
+                moduleName: "KSP1022RangeArtifact",
+                emit: .executable,
+                outputPath: outputBase,
+                includeStdlib: false,
+                stdlibLibraryPath: artifactPath
+            )
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout
+                .replacingOccurrences(of: "\r\n", with: "\n")
+            #expect(normalizedStdout == "15\n41\n")
         }
     }
 }

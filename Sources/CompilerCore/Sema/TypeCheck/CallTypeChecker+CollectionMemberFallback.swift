@@ -282,6 +282,9 @@ extension CallTypeChecker {
         if memberName == "addAll", args.count == 1 {
             _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
         }
+        if memberName == "putAll", args.count == 1 {
+            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+        }
 
         if isCollectionReturningMember(
             calleeName,
@@ -810,6 +813,102 @@ extension CallTypeChecker {
     ) -> SymbolID? {
         let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
         let receiverClassifier = ReceiverClassifier(sema: sema, interner: interner)
+        // MutableMap contributes both the delegated `getValue` accessor and
+        // the read-only Map `getValue(key)` extension. Resolve the latter
+        // before the collection fallback's owner walk can select the delegate
+        // accessor by short name.
+        if interner.resolve(memberName) == "getValue",
+           argCount == 1,
+           receiverClassifier.isMutableMapType(receiverType)
+        {
+            let mapGetValueFQName = [
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                memberName,
+            ]
+            if let chosen = sema.symbols.lookupAll(fqName: mapGetValueFQName).first(where: { candidate in
+                guard let symbol = sema.symbols.symbol(candidate),
+                      symbol.kind == .function,
+                      (!symbol.flags.contains(.synthetic) || sema.symbols.isSourceBackedSymbol(candidate)),
+                      let signature = sema.symbols.functionSignature(for: candidate),
+                      signature.parameterTypes.count == 1,
+                      let receiver = signature.receiverType,
+                      let receiverSymbol = driver.helpers.nominalSymbol(of: receiver, types: sema.types),
+                      let receiverInfo = sema.symbols.symbol(receiverSymbol)
+                else {
+                    return false
+                }
+                return receiverInfo.fqName == [
+                    interner.intern("kotlin"),
+                    interner.intern("collections"),
+                    interner.intern("Map"),
+                ]
+            }) {
+                return chosen
+            }
+        }
+        // MutableMap.putAll(Map) is a member surface; the Iterable/Sequence/
+        // Array overloads are source-backed extensions. Keep the member path
+        // for Map arguments and choose the exact source parameter otherwise.
+        if interner.resolve(memberName) == "putAll",
+           argCount == 1,
+           receiverClassifier.isMutableMapType(receiverType),
+           let firstArgExpr = argExprs.first,
+           let firstArgType = sema.bindings.exprTypes[firstArgExpr],
+           !receiverClassifier.isMapLikeCollectionType(firstArgType)
+        {
+            let isArrayArgument = receiverClassifier.isArrayLikeReceiver(receiverID: firstArgExpr)
+            let isSequenceArgument = receiverClassifier.isSequenceLikeType(firstArgType)
+            if let chosen = sema.symbols.lookupAll(fqName: [
+                   interner.intern("kotlin"),
+                   interner.intern("collections"),
+                   memberName,
+               ]).first(where: { candidate in
+                   guard let symbol = sema.symbols.symbol(candidate),
+                         symbol.kind == .function,
+                         (!symbol.flags.contains(.synthetic) || sema.symbols.isSourceBackedSymbol(candidate)),
+                         let signature = sema.symbols.functionSignature(for: candidate),
+                         signature.parameterTypes.count == 1,
+                         let receiver = signature.receiverType,
+                         let receiverSymbol = driver.helpers.nominalSymbol(of: receiver, types: sema.types),
+                         let receiverInfo = sema.symbols.symbol(receiverSymbol),
+                         let parameterSymbol = driver.helpers.nominalSymbol(
+                             of: signature.parameterTypes[0], types: sema.types
+                         ),
+                         let parameterInfo = sema.symbols.symbol(parameterSymbol)
+                   else {
+                       return false
+                   }
+                   guard receiverInfo.fqName == [
+                       interner.intern("kotlin"),
+                       interner.intern("collections"),
+                       interner.intern("MutableMap"),
+                   ] else {
+                       return false
+                   }
+                   if isArrayArgument {
+                       return parameterInfo.fqName == [
+                           interner.intern("kotlin"),
+                           interner.intern("Array"),
+                       ]
+                   }
+                   if isSequenceArgument {
+                       return parameterInfo.fqName == [
+                           interner.intern("kotlin"),
+                           interner.intern("sequences"),
+                           interner.intern("Sequence"),
+                       ]
+                   }
+                   return parameterInfo.fqName == [
+                       interner.intern("kotlin"),
+                       interner.intern("collections"),
+                       interner.intern("Iterable"),
+                   ]
+               })
+            {
+                return chosen
+            }
+        }
         let roots = driver.helpers.allNominalSymbols(
             of: sema.types.makeNonNullable(receiverType),
             types: sema.types,
@@ -868,20 +967,6 @@ extension CallTypeChecker {
                 }
                 if !labelMatches.isEmpty {
                     allCandidates = labelMatches
-                }
-            }
-            if argCount == 1,
-               allCandidates.count > 1,
-               let firstArgExpr = argExprs.first,
-               allCandidates.contains(where: { sema.symbols.externalLinkName(for: $0) == "kk_array_sliceArray_range" }),
-               allCandidates.contains(where: { sema.symbols.externalLinkName(for: $0) == "kk_array_sliceArray_iterable" })
-            {
-                let isRangeArg = sema.bindings.isRangeExpr(firstArgExpr)
-                let targetLinkName = isRangeArg ? "kk_array_sliceArray_range" : "kk_array_sliceArray_iterable"
-                if let sliceArrayMatch = allCandidates.first(where: { candidate in
-                    sema.symbols.externalLinkName(for: candidate) == targetLinkName
-                }) {
-                    return sliceArrayMatch
                 }
             }
             if memberName == interner.intern("addAll"),
@@ -2760,6 +2845,8 @@ extension CallTypeChecker {
                 ? sema.types.doubleType
                 : memberName == interner.intern("firstNotNullOf") || memberName == interner.intern("firstNotNullOfOrNull")
                 ? sema.types.nullableAnyType
+                : memberName == interner.intern("sortedByDescending")
+                ? sema.types.nullableAnyType
                 : sema.types.anyType
             let expectedType = sema.types.make(.functionType(FunctionType(
                 params: [receiverElementType],
@@ -2782,7 +2869,7 @@ extension CallTypeChecker {
         {
             let expectedType = sema.types.make(.classType(ClassType(
                 classSymbol: comparatorSymbol,
-                args: [.invariant(receiverElementType)],
+                args: [.in(receiverElementType)],
                 nullability: .nonNull
             )))
             return (argumentIndex: 0, expectedType: expectedType)

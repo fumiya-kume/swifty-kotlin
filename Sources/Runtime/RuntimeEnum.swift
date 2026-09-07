@@ -27,7 +27,10 @@ public func kk_enum_valueOf_throw(_ nameRaw: Int, _ outThrown: UnsafeMutablePoin
 @_cdecl("kk_enum_box_ordinal")
 public func kk_enum_box_ordinal(_ ordinal: Int, _ namePtr: Int, _ classID: Int) -> Int {
     let name = extractString(from: UnsafeMutableRawPointer(bitPattern: namePtr))
-    return registerRuntimeObject(RuntimeIntBox(ordinal, enumEntryName: name), typeID: Int64(classID))
+    return registerRuntimeObject(
+        RuntimeIntBox(ordinal, enumEntryName: name, enumClassID: Int64(classID)),
+        typeID: Int64(classID)
+    )
 }
 
 /// Creates an `Array` of enum instances for `enumValues<T>()` and `T.values()`.

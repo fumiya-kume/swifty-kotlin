@@ -6,7 +6,7 @@ import Testing
 // Stability boundaries tested:
 //   GC        - positive return values, repeated kk_gc_collect() idempotent on empty heap,
 //               gc collect after alloc-and-root leaves pinned object alive
-//   Memory    - kk_runtime_getRuntime() stable singleton, totalMemory/freeMemory/maxMemory positive
+//   Memory    - __kk_runtime_getRuntime() stable singleton, totalMemory/freeMemory/maxMemory positive
 //   Pinned    - kk_pin_object returns non-zero handle, kk_pinned_get round-trips original raw value,
 //               kk_unpin_object returns original object raw, pinned object survives GC while pinned,
 //               repeated unpin on already-unpinned handle is safe (returns 0)
@@ -56,7 +56,7 @@ struct RuntimeNativeRefGCStabilityTests {
         withDummyNativeRefTypeInfo { ti in
             _ = kk_alloc(8, ti)
             #expect(kk_runtime_heap_object_count() == 1)
-            kk_system_gc()
+            __kk_system_gc()
             #expect(kk_runtime_heap_object_count() == 0)
         }
     }
@@ -107,31 +107,31 @@ struct RuntimeNativeRefGCStabilityTests {
 @Suite
 struct RuntimeNativeRefMemoryTests {
     @Test func getRuntimeReturnsPositiveHandle() {
-        #expect(kk_runtime_getRuntime() > 0,
-                "kk_runtime_getRuntime must return a non-zero singleton handle")
+        #expect(__kk_runtime_getRuntime() > 0,
+                "__kk_runtime_getRuntime must return a non-zero singleton handle")
     }
 
     @Test func getRuntimeIsSingleton() {
-        #expect(kk_runtime_getRuntime() == kk_runtime_getRuntime(),
-                "kk_runtime_getRuntime must return the same value on repeated calls")
+        #expect(__kk_runtime_getRuntime() == __kk_runtime_getRuntime(),
+                "__kk_runtime_getRuntime must return the same value on repeated calls")
     }
 
     @Test func totalMemoryIsPositive() {
-        #expect(kk_runtime_totalMemory() > 0)
+        #expect(__kk_runtime_totalMemory() > 0)
     }
 
     @Test func freeMemoryIsNonNegative() {
-        #expect(kk_runtime_freeMemory() >= 0)
+        #expect(__kk_runtime_freeMemory() >= 0)
     }
 
     @Test func maxMemoryIsAtLeastTotalMemory() {
-        #expect(kk_runtime_maxMemory() >= kk_runtime_totalMemory())
+        #expect(__kk_runtime_maxMemory() >= __kk_runtime_totalMemory())
     }
 
     @Test func memoryMetricsStableAcrossRepeatedCalls() {
         // Max memory must be non-decreasing (same process, no dealloc between calls).
-        let max1 = kk_runtime_maxMemory()
-        let max2 = kk_runtime_maxMemory()
+        let max1 = __kk_runtime_maxMemory()
+        let max2 = __kk_runtime_maxMemory()
         #expect(max1 == max2,
                 "Max memory must be stable across back-to-back queries")
     }

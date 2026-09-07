@@ -57,6 +57,37 @@ extension DataFlowSemaPhase {
             separator: separator
         )
         return pairs.compactMap { key, slot in
+            let propertyAccessorKind: PropertyAccessorKind?
+            let normalizedKey: String
+            if key.hasPrefix("pget:") {
+                propertyAccessorKind = .getter
+                normalizedKey = String(key.dropFirst("pget:".count))
+            } else if key.hasPrefix("pset:") {
+                propertyAccessorKind = .setter
+                normalizedKey = String(key.dropFirst("pset:".count))
+            } else {
+                propertyAccessorKind = nil
+                normalizedKey = key
+            }
+            if let propertyAccessorKind {
+                let fqName = normalizedKey.split(separator: ".").map { interner.intern(String($0)) }
+                guard !fqName.isEmpty else {
+                    diagnostics.warning(
+                        "KSWIFTK-LIB-0003",
+                        "Invalid property accessor vtable entry in metadata at \(metadataPath): \(key)",
+                        range: nil
+                    )
+                    return nil
+                }
+                return ImportedVTableSlotEntry(
+                    fqName: fqName,
+                    arity: 0,
+                    isSuspend: false,
+                    slot: slot,
+                    typeSignature: nil,
+                    propertyAccessorKind: propertyAccessorKind
+                )
+            }
             let components = key.split(separator: "#", omittingEmptySubsequences: false).map(String.init)
             guard (components.count == 3 || components.count == 4),
                   let arity = Int(components[1])
@@ -68,7 +99,14 @@ extension DataFlowSemaPhase {
                 )
                 return nil
             }
-            let fqName = components[0].split(separator: ".").map { interner.intern(String($0)) }
+            // `property:` was emitted by the initial BUG-227 serializer before
+            // the metadata format gained an explicit accessor discriminator.
+            // Continue accepting it as a getter for already-built libraries.
+            let isLegacyProperty = components[0].hasPrefix("property:")
+            let rawFQName = isLegacyProperty
+                ? String(components[0].dropFirst("property:".count))
+                : components[0]
+            let fqName = rawFQName.split(separator: ".").map { interner.intern(String($0)) }
             guard !fqName.isEmpty else {
                 diagnostics.warning(
                     "KSWIFTK-LIB-0003",
@@ -89,7 +127,8 @@ extension DataFlowSemaPhase {
                 arity: max(0, arity),
                 isSuspend: isSuspend,
                 slot: slot,
-                typeSignature: typeSignature
+                typeSignature: typeSignature,
+                propertyAccessorKind: isLegacyProperty ? .getter : nil
             )
         }
     }
@@ -190,6 +229,29 @@ extension DataFlowSemaPhase {
 
         var resolvedVTableSlots: [SymbolID: Int] = [:]
         for entry in record.vtableSlots {
+            if let propertyAccessorKind = entry.propertyAccessorKind {
+                guard let propertySymbol = resolveImportedPropertySymbol(
+                    fqName: entry.fqName,
+                    typeSignature: entry.typeSignature,
+                    symbols: symbols,
+                    types: types,
+                    interner: interner
+                ) else {
+                    let fq = entry.fqName.map { interner.resolve($0) }.joined(separator: ".")
+                    diagnostics.warning(
+                        "KSWIFTK-LIB-0004",
+                        "Unknown metadata property accessor vtable symbol in \(metadataPath): \(fq)",
+                        range: nil
+                    )
+                    continue
+                }
+                let accessorSymbol = SyntheticSymbolScheme.propertyAccessorSymbol(
+                    for: propertySymbol,
+                    kind: propertyAccessorKind
+                )
+                resolvedVTableSlots[accessorSymbol] = entry.slot
+                continue
+            }
             guard let methodSymbol = resolveImportedMethodSymbol(
                 fqName: entry.fqName,
                 arity: entry.arity,
@@ -323,6 +385,36 @@ extension DataFlowSemaPhase {
             // Fall back to legacy arity-only resolution for metadata that lacks a signature.
         }
 
+        return candidates.first?.id
+    }
+
+    private func resolveImportedPropertySymbol(
+        fqName: [InternedString],
+        typeSignature: String?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> SymbolID? {
+        let candidates = symbols.lookupAll(fqName: fqName)
+            .compactMap { symbols.symbol($0) }
+            .filter { $0.kind == .property }
+            .sorted(by: { $0.id.rawValue < $1.id.rawValue })
+        if let typeSignature, !typeSignature.isEmpty {
+            let mangler = NameMangler()
+            let nameResolver: (InternedString) -> String = { interner.resolve($0) }
+            if let exact = candidates.first(where: { candidate in
+                guard let propertyType = symbols.propertyType(for: candidate.id) else { return false }
+                let candidateSig = mangler.encodeType(
+                    propertyType,
+                    symbols: symbols,
+                    types: types,
+                    nameResolver: nameResolver
+                )
+                return candidateSig == typeSignature
+            }) {
+                return exact.id
+            }
+        }
         return candidates.first?.id
     }
 

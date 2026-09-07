@@ -190,17 +190,25 @@ extension BuildASTPhase {
             return []
         }
         let declName = declarationName(from: nodeID, in: arena, interner: interner)
-        guard let nameIndex = tokens.firstIndex(where: { token in
-            guard let name = internedIdentifier(from: token, interner: interner) else {
-                return false
-            }
-            if case let .keyword(keyword) = token.kind, isLeadingDeclarationKeyword(keyword) {
-                return false
-            }
-            return name == declName
-        }) else {
+        let declarationKeyword: Keyword
+        switch arena.node(nodeID).kind {
+        case .classDecl:
+            declarationKeyword = .class
+        case .objectDecl:
+            declarationKeyword = .object
+        case .interfaceDecl:
+            declarationKeyword = .interface
+        default:
             return []
         }
+        guard let introducerIndex = firstTopLevelKeywordIndex(in: tokens, matching: [declarationKeyword]),
+              introducerIndex + 1 < tokens.count,
+              let name = internedIdentifier(from: tokens[introducerIndex + 1], interner: interner),
+              name == declName
+        else {
+            return []
+        }
+        let nameIndex = introducerIndex + 1
 
         var index = nameIndex + 1
         index = skipBalancedBracket(in: tokens, from: index, open: .symbol(.lessThan), close: .symbol(.greaterThan))

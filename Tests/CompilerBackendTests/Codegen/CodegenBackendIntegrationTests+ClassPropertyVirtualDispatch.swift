@@ -182,6 +182,29 @@ struct CodegenBackendClassPropertyVirtualDispatchTests {
     }
 
     @Test
+    func testAbstractPropertyReadInsideBaseMethodUsesGetterDispatch() throws {
+        let source = """
+        abstract class Shape {
+            abstract val area: Double
+            fun doubledArea(): Double = area * 2.0
+        }
+        class Square(private val side: Double) : Shape() {
+            override val area: Double get() = side * side
+        }
+        fun main() {
+            val shape: Shape = Square(3.0)
+            println(shape.doubledArea())
+        }
+        """
+
+        try assertKotlinOutput(
+            source,
+            moduleName: "Bug223AbstractPropertyInsideBaseMethod",
+            expected: "18.0\n"
+        )
+    }
+
+    @Test
     func testDirectlyTypedReceiverStillReadsItsOwnOverrideDirectly() throws {
         // Non-polymorphic access (no upcast) was already correct before the
         // fix; pin it so virtualizing the base-typed path doesn't regress it.

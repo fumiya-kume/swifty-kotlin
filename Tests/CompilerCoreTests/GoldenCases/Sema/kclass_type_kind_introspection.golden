@@ -16,7 +16,7 @@ symbol fq=golden.sema.Transformer kind=interface vis=public flags=funInterface
 symbol fq=golden.sema.checkTypeKinds kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
 symbol fq=golden.sema.checkViaVariable kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KClass<*>] ret=String
 symbol fq=golden.sema.checkViaVariable.$0.klass kind=valueParameter vis=private flags=_
-symbol fq=kotlin.reflect.KClass kind=interface vis=public flags=synthetic
+symbol fq=kotlin.reflect.KClass kind=interface vis=public flags=_
 file fkclass_type_kind_introspection package=golden.sema
   decl golden.sema.Point class Point sym=golden.sema.Point
   decl golden.sema.Shape class Shape sym=golden.sema.Shape

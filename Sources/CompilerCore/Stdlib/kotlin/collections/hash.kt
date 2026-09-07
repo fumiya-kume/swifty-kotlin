@@ -13,10 +13,10 @@ public fun <K, V> hashMapOf(vararg pairs: Pair<K, V>): HashMap<K, V> {
     return result
 }
 
-public inline fun <T> hashSetOf(): HashSet<T> = mutableSetOf()
+public inline fun <T> hashSetOf(): HashSet<T> = HashSet()
 
 public fun <T> hashSetOf(vararg elements: T): HashSet<T> {
-    val result: HashSet<T> = mutableSetOf()
+    val result = HashSet<T>()
     for (element in elements) {
         result.add(element)
     }
