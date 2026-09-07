@@ -3,8 +3,8 @@ symbol fq=findFirst kind=function vis=public flags=_ sig=recv=_ params=[kotlin.c
 symbol fq=findFirst.$0.values kind=valueParameter vis=private flags=_
 symbol fq=findFirstInList kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<Int>] ret=String?
 symbol fq=findFirstInList.$1.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 file fcollection_firstNotNullOfOrNull package=_
   decl findFirst fun findFirst sym=findFirst
   decl findFirstInList fun findFirstInList sym=findFirstInList

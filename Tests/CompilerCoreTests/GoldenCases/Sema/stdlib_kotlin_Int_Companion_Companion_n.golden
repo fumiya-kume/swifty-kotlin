@@ -12,32 +12,32 @@ symbol fq=kotlin.Int.Companion kind=object vis=public flags=synthetic|static
 file fstdlib_kotlin_Int_Companion_Companion_n package=golden.sema
   decl golden.sema.main fun main sym=golden.sema.main
 expr e@4:21 name(Int) type=kotlin.Int.Companion ref=kotlin.Int
-expr e@4:21#1 memberCall recv=e@4:21 callee=MAX_VALUE args=[] type=Int call=kotlin.MAX_VALUE.$get#0
+expr e@4:21#1 memberCall recv=e@4:21 callee=MAX_VALUE args=[] type=Int call=kotlin.MAX_VALUE.$get#1
 expr e@4:5 localDecl directMax mutable=0 type=_ init=e@4:21#1 type=Unit ref=__local_0.directMax
 expr e@5:21 name(Int) type=kotlin.Int.Companion ref=kotlin.Int
-expr e@5:21#1 memberCall recv=e@5:21 callee=MIN_VALUE args=[] type=Int call=kotlin.MIN_VALUE.$get#0
+expr e@5:21#1 memberCall recv=e@5:21 callee=MIN_VALUE args=[] type=Int call=kotlin.MIN_VALUE.$get#1
 expr e@5:5 localDecl directMin mutable=0 type=_ init=e@5:21#1 type=Unit ref=__local_1.directMin
 expr e@6:22 name(Int) type=kotlin.Int.Companion ref=kotlin.Int
-expr e@6:22#1 memberCall recv=e@6:22 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get#0
+expr e@6:22#1 memberCall recv=e@6:22 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get#1
 expr e@6:5 localDecl directBits mutable=0 type=_ init=e@6:22#1 type=Unit ref=__local_2.directBits
 expr e@7:23 name(Int) type=kotlin.Int.Companion ref=kotlin.Int
-expr e@7:23#1 memberCall recv=e@7:23 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get#0
+expr e@7:23#1 memberCall recv=e@7:23 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get#1
 expr e@7:5 localDecl directBytes mutable=0 type=_ init=e@7:23#1 type=Unit ref=__local_3.directBytes
 expr e@8:23 name(Int) type=kotlin.Int ref=kotlin.Int
 expr e@8:23#1 memberCall recv=e@8:23 callee=Companion args=[] type=kotlin.Int.Companion ref=kotlin.Int.Companion
-expr e@8:23#2 memberCall recv=e@8:23#1 callee=MAX_VALUE args=[] type=Int call=kotlin.MAX_VALUE.$get#0
+expr e@8:23#2 memberCall recv=e@8:23#1 callee=MAX_VALUE args=[] type=Int call=kotlin.MAX_VALUE.$get#1
 expr e@8:5 localDecl receiverMax mutable=0 type=_ init=e@8:23#2 type=Unit ref=__local_4.receiverMax
 expr e@9:23 name(Int) type=kotlin.Int ref=kotlin.Int
 expr e@9:23#1 memberCall recv=e@9:23 callee=Companion args=[] type=kotlin.Int.Companion ref=kotlin.Int.Companion
-expr e@9:23#2 memberCall recv=e@9:23#1 callee=MIN_VALUE args=[] type=Int call=kotlin.MIN_VALUE.$get#0
+expr e@9:23#2 memberCall recv=e@9:23#1 callee=MIN_VALUE args=[] type=Int call=kotlin.MIN_VALUE.$get#1
 expr e@9:5 localDecl receiverMin mutable=0 type=_ init=e@9:23#2 type=Unit ref=__local_5.receiverMin
 expr e@10:24 name(Int) type=kotlin.Int ref=kotlin.Int
 expr e@10:24#1 memberCall recv=e@10:24 callee=Companion args=[] type=kotlin.Int.Companion ref=kotlin.Int.Companion
-expr e@10:24#2 memberCall recv=e@10:24#1 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get#0
+expr e@10:24#2 memberCall recv=e@10:24#1 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get#1
 expr e@10:5 localDecl receiverBits mutable=0 type=_ init=e@10:24#2 type=Unit ref=__local_6.receiverBits
 expr e@11:25 name(Int) type=kotlin.Int ref=kotlin.Int
 expr e@11:25#1 memberCall recv=e@11:25 callee=Companion args=[] type=kotlin.Int.Companion ref=kotlin.Int.Companion
-expr e@11:25#2 memberCall recv=e@11:25#1 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get#0
+expr e@11:25#2 memberCall recv=e@11:25#1 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get#1
 expr e@11:5 localDecl receiverBytes mutable=0 type=_ init=e@11:25#2 type=Unit ref=__local_7.receiverBytes
 expr e@12:13 name(directMax) type=Int ref=__local_0.directMax
 expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13] type=Unit call=kotlin.io.println#1

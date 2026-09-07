@@ -264,9 +264,10 @@ struct CallableRefTypeIdentityTests {
                 return
             }
 
-            // arguments[0] = callable value, arguments[1] = name, arguments[2] = arity,
-            // arguments[3] = isSuspend flag.
-            #expect(arguments.count == 4)
+            // arguments[0] = callable value, arguments[1] = name,
+            // arguments[2] = return type, arguments[3] = arity,
+            // arguments[4] = isSuspend flag.
+            #expect(arguments.count == 5)
 
             // Verify the name argument is the string "add".
             if let nameExpr = module.arena.expr(arguments[1]),
@@ -277,22 +278,31 @@ struct CallableRefTypeIdentityTests {
                 Issue.record("Second argument to tag call should be string literal 'add'.")
             }
 
+            // Verify the return type argument is the compact Int descriptor.
+            if let returnTypeExpr = module.arena.expr(arguments[2]),
+               case let .stringLiteral(returnTypeInterned) = returnTypeExpr
+            {
+                #expect(ctx.interner.resolve(returnTypeInterned) == "Int")
+            } else {
+                Issue.record("Third argument to tag call should be string literal 'Int'.")
+            }
+
             // Verify the arity argument is 2 (two value parameters).
-            if let arityExpr = module.arena.expr(arguments[2]),
+            if let arityExpr = module.arena.expr(arguments[3]),
                case let .intLiteral(arityValue) = arityExpr
             {
                 #expect(arityValue == 2, "::add has arity 2 (a, b).")
             } else {
-                Issue.record("Third argument to tag call should be int literal for arity.")
+                Issue.record("Fourth argument to tag call should be int literal for arity.")
             }
 
             // Non-suspend callable refs should emit an isSuspend flag of 0.
-            if let suspendExpr = module.arena.expr(arguments[3]),
+            if let suspendExpr = module.arena.expr(arguments[4]),
                case let .intLiteral(isSuspendValue) = suspendExpr
             {
                 #expect(isSuspendValue == 0, "::add is not a suspend function.")
             } else {
-                Issue.record("Fourth argument to tag call should be int literal for isSuspend.")
+                Issue.record("Fifth argument to tag call should be int literal for isSuspend.")
             }
         }
     }

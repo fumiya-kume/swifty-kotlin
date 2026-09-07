@@ -201,42 +201,6 @@ extension CollectionLiteralConstructionLoweringPass {
         }
     }
 
-    // forEach on sequence → kk_sequence_forEach (STDLIB-095)
-    if callee == lookup.forEachName,
-       arguments.count == 2 || arguments.count == 3
-    {
-        let receiverID = arguments[0]
-        if state.sequenceExprIDs.contains(receiverID.rawValue) {
-            loweredBody.append(.call(
-                symbol: nil,
-                callee: lookup.kkSequenceForEachName,
-                arguments: arguments,
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return true
-        }
-    }
-
-    // forEachIndexed on sequence → kk_sequence_forEachIndexed
-    if callee == lookup.forEachIndexedName,
-       arguments.count == 2 || arguments.count == 3
-    {
-        let receiverID = arguments[0]
-        if state.sequenceExprIDs.contains(receiverID.rawValue) {
-            loweredBody.append(.call(
-                symbol: nil,
-                callee: lookup.kkSequenceForEachIndexedName,
-                arguments: arguments,
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return true
-        }
-    }
-
     // flatMap on sequence → kk_sequence_flatMap (STDLIB-095)
     if callee == lookup.flatMapName,
        arguments.count == 2 || arguments.count == 3

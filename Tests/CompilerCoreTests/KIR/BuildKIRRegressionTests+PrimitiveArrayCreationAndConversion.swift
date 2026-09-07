@@ -111,7 +111,7 @@ extension BuildKIRRegressionTests {
             """,
             """
             package sample12
-            fun make12() = DoubleArray(4) { it.toDouble() + 0.5 }
+            fun make12() = BooleanArray(4) { it % 2 == 0 }
             fun main12(): Int {
                 val arr = make12()
                 return arr.size
@@ -119,9 +119,17 @@ extension BuildKIRRegressionTests {
             """,
             """
             package sample13
-            fun make13() = DoubleArray(3)
+            fun make13() = DoubleArray(4) { it.toDouble() + 0.5 }
             fun main13(): Int {
                 val arr = make13()
+                return arr.size
+            }
+            """,
+            """
+            package sample14
+            fun make14() = DoubleArray(3)
+            fun main14(): Int {
+                val arr = make14()
                 return arr.size
             }
             """
@@ -329,10 +337,37 @@ extension BuildKIRRegressionTests {
     }
 
     @Test
-    func testDoubleArrayLambdaConstructorLowersToArrayNewAndArraySet() throws {
+    func testBooleanArrayLambdaConstructorLowersToArrayNewAndArraySet() throws {
         let ctx = try sharedPrimitiveArrayCtx()
         let module = try #require(ctx.kir)
         let makeBody = try findKIRFunctionBody(named: "make12", in: module, interner: ctx.interner)
+        let callNames = extractCallees(from: makeBody, interner: ctx.interner)
+
+        #expect(
+            callNames.contains("kk_array_new_checked"),
+            "BooleanArray(n) { init } must emit kk_array_new_checked; got: \(callNames)"
+        )
+        #expect(
+            callNames.contains("kk_array_set"),
+            "BooleanArray(n) { init } must emit kk_array_set in the fill loop; got: \(callNames)"
+        )
+        #expect(
+            !callNames.contains("BooleanArray"),
+            "BooleanArray(n) { init } must not remain as an unresolved call; got: \(callNames)"
+        )
+
+        let throwFlags = extractThrowFlags(from: makeBody, interner: ctx.interner)
+        #expect(
+            throwFlags["kk_array_new_checked"]?.allSatisfy { $0 == true } == true,
+            "kk_array_new_checked inside BooleanArray constructor must be throwing (NegativeArraySizeException)"
+        )
+    }
+
+    @Test
+    func testDoubleArrayLambdaConstructorLowersToArrayNewAndArraySet() throws {
+        let ctx = try sharedPrimitiveArrayCtx()
+        let module = try #require(ctx.kir)
+        let makeBody = try findKIRFunctionBody(named: "make13", in: module, interner: ctx.interner)
         let callNames = extractCallees(from: makeBody, interner: ctx.interner)
 
         #expect(
@@ -353,7 +388,7 @@ extension BuildKIRRegressionTests {
     func testDoubleArraySizeOnlyConstructorLowersToArrayNewWithoutLoop() throws {
         let ctx = try sharedPrimitiveArrayCtx()
         let module = try #require(ctx.kir)
-        let makeBody = try findKIRFunctionBody(named: "make13", in: module, interner: ctx.interner)
+        let makeBody = try findKIRFunctionBody(named: "make14", in: module, interner: ctx.interner)
         let callNames = extractCallees(from: makeBody, interner: ctx.interner)
 
         #expect(
