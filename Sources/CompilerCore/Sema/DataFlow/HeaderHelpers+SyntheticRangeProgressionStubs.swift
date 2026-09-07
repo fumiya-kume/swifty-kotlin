@@ -348,6 +348,9 @@ extension DataFlowSemaPhase {
             returnType: types.booleanType,
             flags: [.synthetic, .operatorFunction],
             classTypeParameterCount: 1,
+            // KSP-1288 adds source-backed cross-type overloads with the same
+            // arity. Keep this generic interface residual alongside them.
+            allowBundledSourceOverlap: true,
             symbols: symbols,
             interner: interner
         )
@@ -814,6 +817,7 @@ extension DataFlowSemaPhase {
         flags: SymbolFlags = [.synthetic],
         typeParameterSymbols: [SymbolID] = [],
         classTypeParameterCount: Int = 0,
+        allowBundledSourceOverlap: Bool = false,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -830,7 +834,8 @@ extension DataFlowSemaPhase {
         let shouldDeferToBundledToList = functionName == interner.intern("toList")
             && !isUnsignedProgressionOwner
         let bundledSkipReceiverType: TypeID? = shouldDeferToBundledToList ? receiverType : nil
-        if let types = BundledSyntheticStubRegistration.types,
+        if !allowBundledSourceOverlap,
+           let types = BundledSyntheticStubRegistration.types,
            BundledSyntheticStubRegistration.shouldSkipRegistration(
                declaredOwnerFQName: ownerInfo.fqName,
                // Most progression helpers are class members; their receiver is the dispatch self type,

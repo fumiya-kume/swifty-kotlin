@@ -14,7 +14,7 @@ symbol fq=inspect.$0.nested kind=valueParameter vis=private flags=_
 symbol fq=inspect.$0.uints kind=valueParameter vis=private flags=_
 symbol fq=inspect.$0.values kind=valueParameter vis=private flags=_
 symbol fq=kotlin.Array kind=class vis=public flags=synthetic
-symbol fq=kotlin.FloatArray kind=class vis=public flags=synthetic
+symbol fq=kotlin.FloatArray#0 kind=class vis=public flags=synthetic
 symbol fq=kotlin.IntArray#0 kind=class vis=public flags=synthetic
 symbol fq=kotlin.UIntArray#0 kind=class vis=public flags=synthetic
 file farray_content_comparison package=_

@@ -2005,8 +2005,11 @@ extension ListSyntheticMemberLinkTests {
     @Test
     func testMapEntryToPairSurfaceIsRegistered() throws {
         let source = """
-        fun probe(values: Map<String, Int>): List<Pair<String, Int>> {
-            return values.map { it.toPair() }
+        fun probe(values: Map<String, Int>): Pair<String, Int> {
+            val entry = values.entries.first()
+            val key = entry.component1()
+            val value = entry.component2()
+            return entry.toPair()
         }
         """
 
@@ -2014,24 +2017,52 @@ extension ListSyntheticMemberLinkTests {
             let ctx = makeCompilationContext(inputs: [path])
             try runSema(ctx)
 
-            #expect(!(ctx.diagnostics.hasError), "Expected Map.Entry.toPair surface to resolve: \(ctx.diagnostics.diagnostics.map(\.message))")
+            #expect(!ctx.diagnostics.hasError, "Expected Map.Entry source-backed surface to resolve: \(ctx.diagnostics.diagnostics.map(\.message))")
 
+            let ast = try #require(ctx.ast)
             let sema = try #require(ctx.sema)
-            let entryFQName: [InternedString] = [
+            let packageFQName: [InternedString] = [
                 ctx.interner.intern("kotlin"),
                 ctx.interner.intern("collections"),
+            ]
+            let entryFQName: [InternedString] = [
+                packageFQName[0],
+                packageFQName[1],
                 ctx.interner.intern("Map"),
                 ctx.interner.intern("Entry"),
             ]
-            let toPairSymbol = try #require(sema.symbols.lookup(fqName: entryFQName + [ctx.interner.intern("toPair")]))
-            #expect(sema.symbols.externalLinkName(for: toPairSymbol) == "kk_map_entry_to_pair")
-            let signature = try #require(sema.symbols.functionSignature(for: toPairSymbol))
-            guard case let .classType(pairType) = sema.types.kind(of: signature.returnType) else {
-                Issue.record("Expected Map.Entry.toPair to return Pair<K, V>"); return
+
+            for memberName in ["component1", "component2", "toPair"] {
+                let callExpr = try #require(firstExprID(in: ast) { exprID, expr in
+                    guard case let .memberCall(_, callee, _, _, _) = expr,
+                          ctx.interner.resolve(callee) == memberName,
+                          let range = ast.arena.exprRange(exprID)
+                    else {
+                        return false
+                    }
+                    return ctx.sourceManager.origin(of: range.start.file)?.isBundledStdlib != true
+                })
+                let chosenCallee = try #require(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+                #expect(
+                    sema.symbols.isSourceBackedSymbol(chosenCallee),
+                    "Map.Entry.\(memberName) must bind to bundled Kotlin source"
+                )
+                #expect(
+                    sema.symbols.externalLinkName(for: chosenCallee) == nil,
+                    "Map.Entry.\(memberName) must not use a direct runtime link"
+                )
+                #expect(
+                    sema.symbols.symbol(chosenCallee)?.fqName == packageFQName + [ctx.interner.intern(memberName)],
+                    "Map.Entry.\(memberName) must resolve to the package-level source extension"
+                )
             }
-            let pairName = try #require(sema.symbols.symbol(pairType.classSymbol)?.name)
-            #expect(ctx.interner.resolve(pairName) == "Pair")
-            #expect(pairType.args.count == 2)
+
+            for memberName in ["component1", "component2", "toPair"] {
+                #expect(
+                    sema.symbols.lookup(fqName: entryFQName + [ctx.interner.intern(memberName)]) == nil,
+                    "Map.Entry.\(memberName) must not leave a synthetic nested alias"
+                )
+            }
         }
     }
 

@@ -1,0 +1,31 @@
+symbol fq=golden.sema.charCategoryCode kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.charCategoryContains kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=golden.sema.charCategoryEntries kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.enums.EnumEntries<kotlin.text.CharCategory>
+symbol fq=golden.sema.charCategoryValueOf kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.text.CharCategory
+symbol fq=golden.sema.charCategoryValues kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Array<kotlin.text.CharCategory>
+symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+symbol fq=kotlin.enums.EnumEntries kind=interface vis=public flags=synthetic
+symbol fq=kotlin.text.CharCategory.Companion.entries kind=property vis=public flags=synthetic|static type=kotlin.enums.EnumEntries<kotlin.text.CharCategory>
+symbol fq=kotlin.text.CharCategory.Companion.valueOf kind=function vis=public flags=synthetic|static sig=recv=kotlin.text.CharCategory.Companion params=[String] ret=kotlin.text.CharCategory
+symbol fq=kotlin.text.CharCategory.Companion.valueOf.name kind=valueParameter vis=private flags=synthetic
+symbol fq=kotlin.text.CharCategory.values kind=function vis=public flags=synthetic|static sig=recv=_ params=[] ret=kotlin.Array<kotlin.text.CharCategory>
+file fstdlib_kotlin_text_CharCategory_CharCategory_n package=golden.sema
+  decl golden.sema.charCategoryCode fun charCategoryCode sym=golden.sema.charCategoryCode
+  decl golden.sema.charCategoryContains fun charCategoryContains sym=golden.sema.charCategoryContains
+  decl golden.sema.charCategoryEntries fun charCategoryEntries sym=golden.sema.charCategoryEntries
+  decl golden.sema.charCategoryValueOf fun charCategoryValueOf sym=golden.sema.charCategoryValueOf
+  decl golden.sema.charCategoryValues fun charCategoryValues sym=golden.sema.charCategoryValues
+expr e@5:34 name(CharCategory) type=kotlin.text.CharCategory ref=kotlin.text.CharCategory
+expr e@5:34#1 memberCall recv=e@5:34 callee=UPPERCASE_LETTER args=[] type=kotlin.text.CharCategory ref=kotlin.text.CharCategory.UPPERCASE_LETTER
+expr e@5:34#2 memberCall recv=e@5:34#1 callee=code args=[] type=String ref=kotlin.text.CharCategory.code
+expr e@7:39 name(CharCategory) type=kotlin.text.CharCategory ref=kotlin.text.CharCategory
+expr e@7:39#1 memberCall recv=e@7:39 callee=UPPERCASE_LETTER args=[] type=kotlin.text.CharCategory ref=kotlin.text.CharCategory.UPPERCASE_LETTER
+expr e@7:78 char(65) type=Char
+expr e@7:39#2 memberCall recv=e@7:39#1 callee=contains args=[_:e@7:78] type=Boolean call=kotlin.text.CharCategory.contains
+expr e@9:69 name(CharCategory) type=kotlin.text.CharCategory.Companion ref=kotlin.text.CharCategory
+expr e@9:69#1 memberCall recv=e@9:69 callee=entries args=[] type=kotlin.enums.EnumEntries<kotlin.text.CharCategory> ref=kotlin.text.CharCategory.Companion.entries
+expr e@11:43 name(CharCategory) type=kotlin.text.CharCategory.Companion ref=kotlin.text.CharCategory
+expr e@11:64 string(LOWERCASE_LETTER) type=String
+expr e@11:43#1 memberCall recv=e@11:43 callee=valueOf args=[_:e@11:64] type=kotlin.text.CharCategory call=kotlin.text.CharCategory.Companion.valueOf
+expr e@13:49 name(CharCategory) type=kotlin.text.CharCategory ref=kotlin.text.CharCategory
+expr e@13:49#1 memberCall recv=e@13:49 callee=values args=[] type=kotlin.Array<kotlin.text.CharCategory> ref=kotlin.text.CharCategory.values call=kotlin.text.CharCategory.values

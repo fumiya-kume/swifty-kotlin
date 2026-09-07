@@ -39,7 +39,11 @@ struct CodegenBackendMatchGroupCollectionTests {
             println(m?.groups?.get("year")?.value)
             println(m?.groups?.get("month")?.value)
             println(m?.groups?.get("day")?.value)
-            println(m?.groups?.get("missing"))
+            try {
+                println(m?.groups?.get("missing"))
+            } catch (e: IllegalArgumentException) {
+                println("invalid-name")
+            }
         }
         """
 
@@ -51,7 +55,7 @@ struct CodegenBackendMatchGroupCollectionTests {
                 2025
                 06
                 09
-                null
+                invalid-name
                 """ + "\n"
         )
     }

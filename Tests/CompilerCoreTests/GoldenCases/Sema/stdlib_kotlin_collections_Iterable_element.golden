@@ -6,8 +6,8 @@ symbol fq=__local_4.nullableElement kind=local vis=private flags=_ type=String?
 symbol fq=__local_5.listAt kind=local vis=private flags=_ type=Int
 symbol fq=__local_6.listElse kind=local vis=private flags=_ type=Int
 symbol fq=__local_7.listNull kind=local vis=private flags=_ type=Int?
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=probe kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>,kotlin.collections.Iterable<String?>,kotlin.collections.List<Int>] ret=Unit
 symbol fq=probe.$0.list kind=valueParameter vis=private flags=_
 symbol fq=probe.$0.nullable kind=valueParameter vis=private flags=_

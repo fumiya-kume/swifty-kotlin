@@ -151,7 +151,7 @@ public inline fun <T, R : Comparable<R>> List<T>.minOfOrNull(selector: (T) -> R)
     return bestKey
 }
 
-public inline fun <T> List<T>.maxWith(comparator: Comparator<T>): T {
+public inline fun <T> List<T>.maxWith(comparator: Comparator<in T>): T {
     if (size == 0) throw NoSuchElementException("List is empty.")
     var best = this[0]
     var i = 1
@@ -162,7 +162,7 @@ public inline fun <T> List<T>.maxWith(comparator: Comparator<T>): T {
     return best
 }
 
-public inline fun <T> List<T>.maxWithOrNull(comparator: Comparator<T>): T? {
+public inline fun <T> List<T>.maxWithOrNull(comparator: Comparator<in T>): T? {
     if (size == 0) return null
     var best = this[0]
     var i = 1
@@ -173,7 +173,7 @@ public inline fun <T> List<T>.maxWithOrNull(comparator: Comparator<T>): T? {
     return best
 }
 
-public inline fun <T> List<T>.minWith(comparator: Comparator<T>): T {
+public inline fun <T> List<T>.minWith(comparator: Comparator<in T>): T {
     if (size == 0) throw NoSuchElementException("List is empty.")
     var best = this[0]
     var i = 1
@@ -184,7 +184,7 @@ public inline fun <T> List<T>.minWith(comparator: Comparator<T>): T {
     return best
 }
 
-public inline fun <T> List<T>.minWithOrNull(comparator: Comparator<T>): T? {
+public inline fun <T> List<T>.minWithOrNull(comparator: Comparator<in T>): T? {
     if (size == 0) return null
     var best = this[0]
     var i = 1
