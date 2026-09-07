@@ -1,7 +1,5 @@
 symbol fq=__local_0.t1 kind=local vis=private flags=_ type=Long
 symbol fq=__local_1.t2 kind=local vis=private flags=_ type=Long
-symbol fq=kotlin.system.System kind=object vis=public flags=synthetic type=kotlin.system.System
-symbol fq=kotlin.system.System.nanoTime kind=function vis=public flags=synthetic sig=recv=kotlin.system.System params=[] ret=Long
 symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fsystem_nano_time package=_
   decl main fun main sym=main

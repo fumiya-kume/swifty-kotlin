@@ -8,7 +8,7 @@ import Testing
 // This file adds extended runtime coverage not addressed by
 // RuntimeNativeConcurrentTests.swift, which covers Worker lifecycle,
 // freeze/isFrozen, Worker.id, Future<T>, TransferMode, FreezableAtomicReference,
-// @SharedImmutable, Worker.executeAfter, and basic AtomicInt/Long/Reference CAS.
+// Worker.executeAfter, and basic AtomicInt/Long/Reference CAS.
 //
 // Implemented APIs tested here:
 //   AtomicBoolean  : kk_atomic_bool_create / load / store / exchange /

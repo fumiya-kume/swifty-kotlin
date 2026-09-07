@@ -10,7 +10,6 @@
 ///   - `Future<T>` value class with `result`, `consume`, `getState` members and the `FutureState` anchor
 ///   - `@ObsoleteWorkersApi` marker annotation
 ///   - `TransferMode` nominal anchor for the early `Worker.execute` registration
-///   - `@SharedImmutable` annotation (PROPERTY target)
 ///   - `@ThreadLocal` annotation (PROPERTY/CLASS target, native variant)
 
 private enum NativeConcurrentRegistrationStep: CaseIterable {
@@ -227,22 +226,6 @@ extension DataFlowSemaPhase {
             defaultValues: [],
             symbols: symbols,
             interner: interner
-        )
-
-        let sharedImmutableSymbol = ensureAnnotationClassSymbol(
-            named: "SharedImmutable",
-            in: packageFQName,
-            symbols: symbols,
-            interner: interner
-        )
-        if let pkgSymbol {
-            symbols.setParentSymbol(pkgSymbol, for: sharedImmutableSymbol)
-        }
-        appendNativeConcurrentAnnotationMetadata(
-            to: sharedImmutableSymbol,
-            targets: ["AnnotationTarget.PROPERTY"],
-            retention: "AnnotationRetention.BINARY",
-            symbols: symbols
         )
 
         let threadLocalNativeAnnotationSymbol = ensureAnnotationClassSymbol(

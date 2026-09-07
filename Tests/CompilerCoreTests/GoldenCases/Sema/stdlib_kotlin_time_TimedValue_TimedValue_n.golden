@@ -1,0 +1,82 @@
+symbol fq=__destructuring_0.d kind=local vis=private flags=_ type=kotlin.time.Duration
+symbol fq=__destructuring_0.v kind=local vis=private flags=_ type=String
+symbol fq=__local_0.tv kind=local vis=private flags=_ type=kotlin.time.TimedValue<String>
+symbol fq=__local_1.copied kind=local vis=private flags=_ type=kotlin.time.TimedValue<String>
+symbol fq=__local_2.valueChanged kind=local vis=private flags=_ type=kotlin.time.TimedValue<String>
+symbol fq=__local_3.durationChanged kind=local vis=private flags=_ type=kotlin.time.TimedValue<String>
+symbol fq=__local_4.bothChanged kind=local vis=private flags=_ type=kotlin.time.TimedValue<String>
+symbol fq=golden.sema.exerciseTimedValueMembers kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.time.TimedValue<String>
+symbol fq=kotlin.time.TimedValue.equals kind=function vis=public flags=synthetic sig=recv=kotlin.time.TimedValue<kotlin.time.TimedValue.$class0.T> params=[Any?] ret=Boolean
+symbol fq=kotlin.time.TimedValue.equals.other kind=valueParameter vis=private flags=synthetic
+symbol fq=kotlin.time.TimedValue.hashCode kind=function vis=public flags=synthetic sig=recv=kotlin.time.TimedValue<kotlin.time.TimedValue.$class0.T> params=[] ret=Int
+symbol fq=kotlin.time.TimedValue.toString kind=function vis=public flags=synthetic sig=recv=kotlin.time.TimedValue<kotlin.time.TimedValue.$class0.T> params=[] ret=String
+file fstdlib_kotlin_time_TimedValue_TimedValue_n package=golden.sema
+  decl golden.sema.exerciseTimedValueMembers fun exerciseTimedValueMembers sym=golden.sema.exerciseTimedValueMembers
+expr e@7:25 string(hello) type=String
+expr e@7:34 int(5) type=Int
+expr e@7:34#1 memberCall recv=e@7:34 callee=seconds args=[] type=kotlin.time.Duration call=kotlin.time.seconds.$get#1
+expr e@7:14 call callee=e@7:14#1 args=[_:e@7:25,_:e@7:34#1] type=kotlin.time.TimedValue<String> call=kotlin.time.TimedValue.<init> targs=[String]
+expr e@7:5 localDecl tv mutable=0 type=_ init=e@7:14 type=Unit ref=__local_0.tv
+expr e@8:18 name(tv) type=kotlin.time.TimedValue<String> ref=__local_0.tv
+expr e@8:5 destructuringDecl names=[v,d] mutable=0 init=e@8:18 type=Unit
+expr e@9:18 name(tv) type=kotlin.time.TimedValue<String> ref=__local_0.tv
+expr e@9:18#1 memberCall recv=e@9:18 callee=copy args=[] type=kotlin.time.TimedValue<String> call=kotlin.time.TimedValue.copy targs=[String]
+expr e@9:5 localDecl copied mutable=0 type=_ init=e@9:18#1 type=Unit ref=__local_1.copied
+expr e@10:24 name(tv) type=kotlin.time.TimedValue<String> ref=__local_0.tv
+expr e@10:40 string(world) type=String
+expr e@10:24#1 memberCall recv=e@10:24 callee=copy args=[value:e@10:40] type=kotlin.time.TimedValue<String> call=kotlin.time.TimedValue.copy targs=[String]
+expr e@10:5 localDecl valueChanged mutable=0 type=_ init=e@10:24#1 type=Unit ref=__local_2.valueChanged
+expr e@11:27 name(tv) type=kotlin.time.TimedValue<String> ref=__local_0.tv
+expr e@11:46 int(10) type=Int
+expr e@11:46#1 memberCall recv=e@11:46 callee=seconds args=[] type=kotlin.time.Duration call=kotlin.time.seconds.$get#1
+expr e@11:27#1 memberCall recv=e@11:27 callee=copy args=[duration:e@11:46#1] type=kotlin.time.TimedValue<String> call=kotlin.time.TimedValue.copy targs=[String]
+expr e@11:5 localDecl durationChanged mutable=0 type=_ init=e@11:27#1 type=Unit ref=__local_3.durationChanged
+expr e@12:23 name(tv) type=kotlin.time.TimedValue<String> ref=__local_0.tv
+expr e@12:31 string(changed) type=String
+expr e@12:42 int(1) type=Int
+expr e@12:42#1 memberCall recv=e@12:42 callee=seconds args=[] type=kotlin.time.Duration call=kotlin.time.seconds.$get#1
+expr e@12:23#1 memberCall recv=e@12:23 callee=copy args=[_:e@12:31,_:e@12:42#1] type=kotlin.time.TimedValue<String> call=kotlin.time.TimedValue.copy targs=[String]
+expr e@12:5 localDecl bothChanged mutable=0 type=_ init=e@12:23#1 type=Unit ref=__local_4.bothChanged
+expr e@14:13 name(tv) type=kotlin.time.TimedValue<String> ref=__local_0.tv
+expr e@14:13#1 memberCall recv=e@14:13 callee=value args=[] type=String ref=kotlin.time.TimedValue.value
+expr e@14:5 call callee=e@14:5#1 args=[_:e@14:13#1] type=Unit call=kotlin.io.println#2
+expr e@15:13 name(tv) type=kotlin.time.TimedValue<String> ref=__local_0.tv
+expr e@15:13#1 memberCall recv=e@15:13 callee=duration args=[] type=kotlin.time.Duration ref=kotlin.time.TimedValue.duration
+expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13#1] type=Unit call=kotlin.io.println#1
+expr e@16:13 name(tv) type=kotlin.time.TimedValue<String> ref=__local_0.tv
+expr e@16:13#1 memberCall recv=e@16:13 callee=component1 args=[] type=String call=kotlin.time.TimedValue.component1 targs=[String]
+expr e@16:5 call callee=e@16:5#1 args=[_:e@16:13#1] type=Unit call=kotlin.io.println#2
+expr e@17:13 name(tv) type=kotlin.time.TimedValue<String> ref=__local_0.tv
+expr e@17:13#1 memberCall recv=e@17:13 callee=component2 args=[] type=kotlin.time.Duration call=kotlin.time.TimedValue.component2 targs=[String]
+expr e@17:5 call callee=e@17:5#1 args=[_:e@17:13#1] type=Unit call=kotlin.io.println#1
+expr e@18:13 name(tv) type=kotlin.time.TimedValue<String> ref=__local_0.tv
+expr e@18:13#1 memberCall recv=e@18:13 callee=toString args=[] type=String call=kotlin.time.TimedValue.toString targs=[String]
+expr e@18:5 call callee=e@18:5#1 args=[_:e@18:13#1] type=Unit call=kotlin.io.println#2
+expr e@19:13 name(v) type=String ref=__destructuring_0.v
+expr e@19:5 call callee=e@19:5#1 args=[_:e@19:13] type=Unit call=kotlin.io.println#2
+expr e@20:13 name(d) type=kotlin.time.Duration ref=__destructuring_0.d
+expr e@20:5 call callee=e@20:5#1 args=[_:e@20:13] type=Unit call=kotlin.io.println#1
+expr e@21:13 name(tv) type=kotlin.time.TimedValue<String> ref=__local_0.tv
+expr e@21:23 name(copied) type=kotlin.time.TimedValue<String> ref=__local_1.copied
+expr e@21:13#1 memberCall recv=e@21:13 callee=equals args=[_:e@21:23] type=Boolean call=kotlin.time.TimedValue.equals targs=[String]
+expr e@21:5 call callee=e@21:5#1 args=[_:e@21:13#1] type=Unit call=kotlin.io.println#1
+expr e@22:13 name(copied) type=kotlin.time.TimedValue<String> ref=__local_1.copied
+expr e@22:23 name(tv) type=kotlin.time.TimedValue<String> ref=__local_0.tv
+expr e@22:13#1 binary(equal) lhs=e@22:13 rhs=e@22:23 type=Boolean
+expr e@22:5 call callee=e@22:5#1 args=[_:e@22:13#1] type=Unit call=kotlin.io.println#1
+expr e@23:13 name(copied) type=kotlin.time.TimedValue<String> ref=__local_1.copied
+expr e@23:13#1 memberCall recv=e@23:13 callee=hashCode args=[] type=Int call=kotlin.time.TimedValue.hashCode targs=[String]
+expr e@23:34 name(tv) type=kotlin.time.TimedValue<String> ref=__local_0.tv
+expr e@23:34#1 memberCall recv=e@23:34 callee=hashCode args=[] type=Int call=kotlin.time.TimedValue.hashCode targs=[String]
+expr e@23:13#2 binary(equal) lhs=e@23:13#1 rhs=e@23:34#1 type=Boolean
+expr e@23:5 call callee=e@23:5#1 args=[_:e@23:13#2] type=Unit call=kotlin.io.println#1
+expr e@24:13 name(valueChanged) type=kotlin.time.TimedValue<String> ref=__local_2.valueChanged
+expr e@24:5 call callee=e@24:5#1 args=[_:e@24:13] type=Unit call=kotlin.io.println#1
+expr e@25:13 name(valueChanged) type=kotlin.time.TimedValue<String> ref=__local_2.valueChanged
+expr e@25:29 name(tv) type=kotlin.time.TimedValue<String> ref=__local_0.tv
+expr e@25:13#1 binary(equal) lhs=e@25:13 rhs=e@25:29 type=Boolean
+expr e@25:5 call callee=e@25:5#1 args=[_:e@25:13#1] type=Unit call=kotlin.io.println#1
+expr e@26:13 name(durationChanged) type=kotlin.time.TimedValue<String> ref=__local_3.durationChanged
+expr e@26:5 call callee=e@26:5#1 args=[_:e@26:13] type=Unit call=kotlin.io.println#1
+expr e@27:12 name(bothChanged) type=kotlin.time.TimedValue<String> ref=__local_4.bothChanged
+expr e@27:5 return value=e@27:12 type=Nothing

@@ -12,9 +12,8 @@ import Foundation
 //                                     kk_future_is_ready
 //   ABI-003  TransferMode           — kk_transfer_object  (SAFE freezes; UNSAFE is pass-through)
 //   ABI-004  FreezableAtomicReference<T> — kk_freezable_atomic_ref_create / _load / _store / _is_frozen
-//   ABI-005  @SharedImmutable       — kk_shared_immutable_init
-//   ABI-006  Worker.executeAfter    — kk_worker_execute_after
-//   ABI-007  Worker receiver helpers — kk_worker_process_queue / kk_worker_park /
+//   ABI-005  Worker.executeAfter    — kk_worker_execute_after
+//   ABI-006  Worker receiver helpers — kk_worker_process_queue / kk_worker_park /
 //                                      kk_worker_platform_thread_id /
 //                                      kk_worker_as_cpointer
 //
@@ -351,25 +350,6 @@ public func kk_freezable_atomic_ref_is_frozen(_ refHandle: Int) -> Int {
         return 0
     }
     return box.isFrozen ? 1 : 0
-}
-
-// MARK: - ABI-005  @SharedImmutable
-
-/// Initializer lowering hook for `@SharedImmutable` annotated globals.
-///
-/// Called immediately after the initializer of a `@SharedImmutable` property
-/// completes.  Freezes the object so that all subsequent cross-thread reads
-/// observe immutable data.
-///
-/// - Returns: the same `objectRaw` handle (pass-through).
-@discardableResult
-@_cdecl("kk_shared_immutable_init")
-public func kk_shared_immutable_init(_ objectRaw: Int) -> Int {
-    guard objectRaw != 0 else {
-        return 0
-    }
-    _ = kk_freeze_object(objectRaw)
-    return objectRaw
 }
 
 // MARK: - Worker receiver helpers

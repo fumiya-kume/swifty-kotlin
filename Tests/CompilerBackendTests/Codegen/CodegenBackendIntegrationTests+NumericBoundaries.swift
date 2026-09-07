@@ -369,6 +369,29 @@ struct CodegenBackendNumericBoundariesTests {
     }
 
     @Test
+    func testNumericBoundaryLongSourceBackedCharAndConversions() throws {
+        let source = """
+        @Suppress("DEPRECATION")
+        fun main() {
+            println(Long.MAX_VALUE.toDouble())
+            println(Long.MAX_VALUE.toInt())
+            println(Long.MIN_VALUE.toInt())
+            println(Long.MAX_VALUE.toChar().code)
+        }
+        """
+        try assertKotlinOutput(
+            source,
+            moduleName: "NumericBoundaryLongSourceBackedConversions",
+            expected: """
+            9.223372036854776E18
+            -1
+            0
+            65535
+            """ + "\n"
+        )
+    }
+
+    @Test
     func testNumericBoundaryCharArithmeticBasics() throws {
         let source = """
         fun main() {

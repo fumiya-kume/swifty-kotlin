@@ -1,0 +1,73 @@
+symbol fq=inspectArrayDeque kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.ArrayDeque<Int>,kotlin.collections.Collection<Int>,kotlin.Array<Int?>] ret=Unit
+symbol fq=inspectArrayDeque.$0.deque kind=valueParameter vis=private flags=_
+symbol fq=inspectArrayDeque.$0.destination kind=valueParameter vis=private flags=_
+symbol fq=inspectArrayDeque.$0.values kind=valueParameter vis=private flags=_
+symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
+file fstdlib_kotlin_collections_ArrayDeque_ArrayDeque_n package=_
+  decl inspectArrayDeque fun inspectArrayDeque sym=inspectArrayDeque
+expr e@6:5 name(deque) type=kotlin.collections.ArrayDeque<Int> ref=inspectArrayDeque.$0.deque
+expr e@6:15 int(1) type=Int
+expr e@6:5#1 memberCall recv=e@6:5 callee=add args=[_:e@6:15] type=Boolean call=kotlin.collections.ArrayDeque.add#1 targs=[Int]
+expr e@7:5 name(deque) type=kotlin.collections.ArrayDeque<Int> ref=inspectArrayDeque.$0.deque
+expr e@7:15 int(0) type=Int
+expr e@7:18 int(2) type=Int
+expr e@7:5#1 memberCall recv=e@7:5 callee=add args=[_:e@7:15,_:e@7:18] type=Unit call=kotlin.collections.ArrayDeque.add#0 targs=[Int]
+expr e@8:5 name(deque) type=kotlin.collections.ArrayDeque<Int> ref=inspectArrayDeque.$0.deque
+expr e@8:18 name(values) type=kotlin.collections.Collection<Int> ref=inspectArrayDeque.$0.values
+expr e@8:5#1 memberCall recv=e@8:5 callee=addAll args=[_:e@8:18] type=Boolean call=kotlin.collections.ArrayDeque.addAll#1 targs=[Int]
+expr e@9:5 name(deque) type=kotlin.collections.ArrayDeque<Int> ref=inspectArrayDeque.$0.deque
+expr e@9:18 int(1) type=Int
+expr e@9:21 name(values) type=kotlin.collections.Collection<Int> ref=inspectArrayDeque.$0.values
+expr e@9:5#1 memberCall recv=e@9:5 callee=addAll args=[_:e@9:18,_:e@9:21] type=Boolean call=kotlin.collections.ArrayDeque.addAll#0 targs=[Int]
+expr e@10:5 name(deque) type=kotlin.collections.ArrayDeque<Int> ref=inspectArrayDeque.$0.deque
+expr e@10:5#1 memberCall recv=e@10:5 callee=clear args=[] type=Unit call=kotlin.collections.ArrayDeque.clear targs=[Int]
+expr e@11:5 name(deque) type=kotlin.collections.ArrayDeque<Int> ref=inspectArrayDeque.$0.deque
+expr e@11:20 int(1) type=Int
+expr e@11:5#1 memberCall recv=e@11:5 callee=contains args=[_:e@11:20] type=Boolean call=kotlin.collections.ArrayDeque.contains targs=[Int]
+expr e@12:5 name(deque) type=kotlin.collections.ArrayDeque<Int> ref=inspectArrayDeque.$0.deque
+expr e@12:5#1 memberCall recv=e@12:5 callee=first args=[] type=Int call=kotlin.collections.ArrayDeque.first targs=[Int]
+expr e@13:5 name(deque) type=kotlin.collections.ArrayDeque<Int> ref=inspectArrayDeque.$0.deque
+expr e@13:5#1 memberCall recv=e@13:5 callee=firstOrNull args=[] type=Int? call=kotlin.collections.ArrayDeque.firstOrNull targs=[Int]
+expr e@14:5 name(deque) type=kotlin.collections.ArrayDeque<Int> ref=inspectArrayDeque.$0.deque
+expr e@14:11 int(0) type=Int
+expr e@14:5#1 indexedAccess receiver=e@14:5 indices=[e@14:11] type=Int call=kotlin.collections.ArrayDeque.get targs=[Int]
+expr e@15:5 name(deque) type=kotlin.collections.ArrayDeque<Int> ref=inspectArrayDeque.$0.deque
+expr e@15:19 int(1) type=Int
+expr e@15:5#1 memberCall recv=e@15:5 callee=indexOf args=[_:e@15:19] type=Int call=kotlin.collections.ArrayDeque.indexOf targs=[Int]
+expr e@16:5 name(deque) type=kotlin.collections.ArrayDeque<Int> ref=inspectArrayDeque.$0.deque
+expr e@16:5#1 memberCall recv=e@16:5 callee=last args=[] type=Int call=kotlin.collections.ArrayDeque.last targs=[Int]
+expr e@17:5 name(deque) type=kotlin.collections.ArrayDeque<Int> ref=inspectArrayDeque.$0.deque
+expr e@17:23 int(1) type=Int
+expr e@17:5#1 memberCall recv=e@17:5 callee=lastIndexOf args=[_:e@17:23] type=Int call=kotlin.collections.ArrayDeque.lastIndexOf targs=[Int]
+expr e@18:5 name(deque) type=kotlin.collections.ArrayDeque<Int> ref=inspectArrayDeque.$0.deque
+expr e@18:5#1 memberCall recv=e@18:5 callee=lastOrNull args=[] type=Int? call=kotlin.collections.ArrayDeque.lastOrNull targs=[Int]
+expr e@19:5 name(deque) type=kotlin.collections.ArrayDeque<Int> ref=inspectArrayDeque.$0.deque
+expr e@19:18 int(1) type=Int
+expr e@19:5#1 memberCall recv=e@19:5 callee=remove args=[_:e@19:18] type=Boolean call=kotlin.collections.ArrayDeque.remove targs=[Int]
+expr e@20:5 name(deque) type=kotlin.collections.ArrayDeque<Int> ref=inspectArrayDeque.$0.deque
+expr e@20:21 name(values) type=kotlin.collections.Collection<Int> ref=inspectArrayDeque.$0.values
+expr e@20:5#1 memberCall recv=e@20:5 callee=removeAll args=[_:e@20:21] type=Boolean call=kotlin.collections.ArrayDeque.removeAll targs=[Int]
+expr e@21:5 name(deque) type=kotlin.collections.ArrayDeque<Int> ref=inspectArrayDeque.$0.deque
+expr e@21:20 int(0) type=Int
+expr e@21:5#1 memberCall recv=e@21:5 callee=removeAt args=[_:e@21:20] type=Int call=kotlin.collections.ArrayDeque.removeAt targs=[Int]
+expr e@22:5 name(deque) type=kotlin.collections.ArrayDeque<Int> ref=inspectArrayDeque.$0.deque
+expr e@22:5#1 memberCall recv=e@22:5 callee=removeFirst args=[] type=Int call=kotlin.collections.ArrayDeque.removeFirst targs=[Int]
+expr e@23:5 name(deque) type=kotlin.collections.ArrayDeque<Int> ref=inspectArrayDeque.$0.deque
+expr e@23:5#1 memberCall recv=e@23:5 callee=removeFirstOrNull args=[] type=Int? call=kotlin.collections.ArrayDeque.removeFirstOrNull targs=[Int]
+expr e@24:5 name(deque) type=kotlin.collections.ArrayDeque<Int> ref=inspectArrayDeque.$0.deque
+expr e@24:5#1 memberCall recv=e@24:5 callee=removeLast args=[] type=Int call=kotlin.collections.ArrayDeque.removeLast targs=[Int]
+expr e@25:5 name(deque) type=kotlin.collections.ArrayDeque<Int> ref=inspectArrayDeque.$0.deque
+expr e@25:5#1 memberCall recv=e@25:5 callee=removeLastOrNull args=[] type=Int? call=kotlin.collections.ArrayDeque.removeLastOrNull targs=[Int]
+expr e@26:5 name(deque) type=kotlin.collections.ArrayDeque<Int> ref=inspectArrayDeque.$0.deque
+expr e@26:21 name(values) type=kotlin.collections.Collection<Int> ref=inspectArrayDeque.$0.values
+expr e@26:5#1 memberCall recv=e@26:5 callee=retainAll args=[_:e@26:21] type=Boolean call=kotlin.collections.ArrayDeque.retainAll targs=[Int]
+expr e@27:5 name(deque) type=kotlin.collections.ArrayDeque<Int> ref=inspectArrayDeque.$0.deque
+expr e@27:15 int(0) type=Int
+expr e@27:18 int(3) type=Int
+expr e@27:5#1 memberCall recv=e@27:5 callee=set args=[_:e@27:15,_:e@27:18] type=Int call=kotlin.collections.ArrayDeque.set targs=[Int]
+expr e@28:5 name(deque) type=kotlin.collections.ArrayDeque<Int> ref=inspectArrayDeque.$0.deque
+expr e@28:5#1 memberCall recv=e@28:5 callee=toArray args=[] type=kotlin.Array<Any?> call=kotlin.collections.ArrayDeque.toArray#0 targs=[Int]
+expr e@29:5 name(deque) type=kotlin.collections.ArrayDeque<Int> ref=inspectArrayDeque.$0.deque
+expr e@29:19 name(destination) type=kotlin.Array<Int?> ref=inspectArrayDeque.$0.destination
+expr e@29:5#1 memberCall recv=e@29:5 callee=toArray args=[_:e@29:19] type=kotlin.Array<Int?> call=kotlin.collections.ArrayDeque.toArray#1 targs=[Int,Int?]

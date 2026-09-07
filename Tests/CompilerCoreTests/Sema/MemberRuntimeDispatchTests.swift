@@ -22,7 +22,7 @@ struct MemberRuntimeDispatchTests {
             (.charProgression, "toList", 0, "kk_char_range_toList"),
             (.charProgression, "step", 1, "__kk_char_range_step"),
             (.longProgression, "step", 0, "kk_long_range_step"),
-            (.uintProgression, "step", 2, "__kk_uint_step"),
+            (.uintProgression, "step", 2, nil),
             (.ulongProgression, "contains", 1, "kk_ulong_range_contains"),
             // step(n) as a dot call (arity 1) must resolve to the progression-
             // constructing runtime function, not the step-property getter
@@ -31,7 +31,7 @@ struct MemberRuntimeDispatchTests {
             (.intRange, "step", 1, "__kk_op_step"),
             (.longRange, "step", 1, "__kk_op_step"),
             (.longProgression, "step", 1, "__kk_op_step"),
-            (.uintRange, "step", 1, "__kk_uint_step"),
+            (.uintRange, "step", 1, nil),
             (.ulongRange, "step", 1, "__kk_ulong_step"),
         ]
 
@@ -46,22 +46,40 @@ struct MemberRuntimeDispatchTests {
 
     @Test func testUIntRangeHOFDispatchDefersToBundledSource() {
         let sourceBackedMembers: [(String, Int)] = [
+            ("iterator", 0), ("step", 1),
             ("forEach", 1),
             ("reduce", 1), ("reduceIndexed", 1), ("fold", 2), ("foldIndexed", 2),
             ("find", 1), ("findLast", 1),
             ("first", 1), ("firstOrNull", 1), ("last", 1), ("lastOrNull", 1),
             ("any", 1), ("all", 1), ("none", 1),
+            ("take", 1), ("drop", 1), ("chunked", 1), ("windowed", 1),
         ]
         for member in sourceBackedMembers {
             let key = MemberDispatchKey(receiverKind: .uintRange, memberName: member.0, arity: member.1)
             #expect(
                 MemberRuntimeDispatch.rangeRuntimeLinkName(for: key) == nil,
-                "UIntRange.\(member.0) should be source-backed after KSP-1526"
+                "UIntRange.\(member.0) should be source-backed after KSP-1529"
+            )
+        }
+
+        let progressionMembers: [(String, Int)] = [
+            ("iterator", 0), ("step", 1),
+            ("take", 1), ("drop", 1), ("chunked", 1), ("windowed", 1),
+        ]
+        for member in progressionMembers {
+            let key = MemberDispatchKey(receiverKind: .uintProgression, memberName: member.0, arity: member.1)
+            #expect(
+                MemberRuntimeDispatch.rangeRuntimeLinkName(for: key) == nil,
+                "UIntProgression.\(member.0) should be source-backed after KSP-1529"
             )
         }
 
         let uintProgressionKey = MemberDispatchKey(receiverKind: .uintProgression, memberName: "reduce", arity: 1)
         #expect(MemberRuntimeDispatch.rangeRuntimeLinkName(for: uintProgressionKey) == "kk_uint_range_reduce")
+
+        // KSP-1523 retains the constant-time step property bridge (arity 0).
+        let uintStepPropertyKey = MemberDispatchKey(receiverKind: .uintProgression, memberName: "step", arity: 0)
+        #expect(MemberRuntimeDispatch.rangeRuntimeLinkName(for: uintStepPropertyKey) == "kk_uint_range_step")
     }
 
     @Test func testCollectionRuntimeDispatchUsesStdlibSurfaceSpec() {
