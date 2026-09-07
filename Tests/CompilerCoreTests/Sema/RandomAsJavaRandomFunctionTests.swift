@@ -3,7 +3,7 @@
 ///
 /// The function is a top-level extension in the `kotlin.random` package with
 /// `kotlin.random.Random` as its receiver and `java.util.Random` as its return
-/// type (Sources/CompilerCore/Stdlib/kotlin/random/JavaRandomInterop.kt). KSP-466:
+/// type (Sources/CompilerCore/Stdlib/kotlin/random/PlatformRandom.kt). KSP-466:
 /// real Kotlin source (`java.util.Random(this)`), not a native bridge.
 
 #if canImport(Testing)
@@ -41,7 +41,7 @@ struct RandomAsJavaRandomFunctionTests {
     }
 
     /// The registered overload accepts no value parameters. KSP-466: asJavaRandom
-    /// is real Kotlin source now (JavaRandomInterop.kt: `java.util.Random(this)`),
+    /// is real Kotlin source now (PlatformRandom.kt: `java.util.Random(this)`),
     /// not a native bridge.
     @Test func testAsJavaRandomLinksToRuntimeStub() throws {
         let (sema, interner) = try sharedSema()
