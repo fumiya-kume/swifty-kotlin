@@ -117,10 +117,33 @@ struct DeepRecursiveSourceMigrationTests {
                 == "__kk_deep_recursive_function_callRecursive"
         )
 
-        let scopeCallRecursive = try #require(member("callRecursive", of: scopeFQName, sema: sema, ctx: ctx))
+        let scopeCallRecursive = try #require(
+            sema.symbols.lookupAll(fqName: scopeFQName + [ctx.interner.intern("callRecursive")]).first { symbolID in
+                sema.symbols.externalLinkName(for: symbolID) == "__kk_deep_recursive_scope_callRecursive"
+            }
+        )
         #expect(
             sema.symbols.externalLinkName(for: scopeCallRecursive) == "__kk_deep_recursive_scope_callRecursive"
         )
+        #expect(bundledSourcePath(for: scopeCallRecursive, sema: sema, ctx: ctx) == true)
+
+        let functionExtension = try #require(
+            sema.symbols.lookupAll(fqName: scopeFQName + [ctx.interner.intern("callRecursive")]).first { symbolID in
+                sema.symbols.externalLinkName(for: symbolID) == "__kk_deep_recursive_function_callRecursive"
+            }
+        )
+        let functionExtensionSignature = try #require(sema.symbols.functionSignature(for: functionExtension))
+        #expect(functionExtensionSignature.receiverType != nil)
+        #expect(functionExtensionSignature.isSuspend)
+        #expect(bundledSourcePath(for: functionExtension, sema: sema, ctx: ctx) == true)
+
+        let scopedInvoke = try #require(
+            sema.symbols.lookupAll(fqName: scopeFQName + [ctx.interner.intern("invoke")]).first
+        )
+        let scopedInvokeSignature = try #require(sema.symbols.functionSignature(for: scopedInvoke))
+        #expect(scopedInvokeSignature.receiverType != nil)
+        #expect(scopedInvokeSignature.returnType == sema.types.nothingType)
+        #expect(bundledSourcePath(for: scopedInvoke, sema: sema, ctx: ctx) == true)
     }
 
     @Test func testDeepRecursiveCallsResolveToBundledKotlinSourceSymbols() throws {

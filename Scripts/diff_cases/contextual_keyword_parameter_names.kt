@@ -3,6 +3,18 @@
 // `vararg`, ...) was silently dropped during AST construction: these keywords
 // are valid plain identifiers outside modifier position, but the parser
 // unconditionally rejected them as parameter names.
+class inner(val x: Int)
+object sealed
+interface operator
+typealias override = Int
+
+fun multiline(
+    inner: Int,
+    tag: Int
+): Int = inner + tag
+
+fun read(out: Int): Int = out
+
 data class Box(val x: Int)
 data class Holder(val inner: Box, val tag: Int)
 
@@ -22,6 +34,10 @@ interface Named { val name: String }
 class Person(override val name: String) : Named
 
 fun main() {
+    println(inner(5).x)
+    println(multiline(1, 2))
+    println(read(7))
+
     val h = Holder(Box(1), 2)
     println(h.inner.x)
     println(h.tag)

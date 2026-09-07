@@ -18,7 +18,7 @@ expr e@2:54 name(it) type=Int ref=s-0
 expr e@2:59 name(it) type=Int ref=s-0
 expr e@2:54#1 binary(multiply) lhs=e@2:54 rhs=e@2:59 type=Int
 expr e@2:52 lambda params=[] body=e@2:54#1 label=associateWith type=(Int) -> Any
-expr e@2:18#2 memberCall recv=e@2:18 callee=associateWith args=[_:e@2:52] type=kotlin.collections.Map<Int, Int> call=kotlin.collections.associateWith#1 targs=[Int,Int]
+expr e@2:18#2 memberCall recv=e@2:18 callee=associateWith args=[_:e@2:52] type=kotlin.collections.Map<Int, Int> call=kotlin.collections.associateWith#2 targs=[Int,Int]
 expr e@2:5 localDecl result mutable=0 type=_ init=e@2:18#2 type=Unit ref=__local_0.result
 expr e@3:13 name(result) type=kotlin.collections.Map<Int, Int> ref=__local_0.result
 expr e@3:20 int(1) type=Int
@@ -39,7 +39,7 @@ expr e@9:18 call callee=e@9:18#1 args=[_:e@9:29,_:e@9:34,_:e@9:40] type=kotlin.s
 expr e@9:63 name(it) type=String ref=s-1
 expr e@9:63#1 memberCall recv=e@9:63 callee=length args=[] type=Int call=kotlin.length.$get
 expr e@9:61 lambda params=[] body=e@9:63#1 label=associateWith type=(String) -> Any
-expr e@9:18#2 memberCall recv=e@9:18 callee=associateWith args=[_:e@9:61] type=kotlin.collections.Map<String, Int> call=kotlin.collections.associateWith#1 targs=[String,String]
+expr e@9:18#2 memberCall recv=e@9:18 callee=associateWith args=[_:e@9:61] type=kotlin.collections.Map<String, Int> call=kotlin.collections.associateWith#2 targs=[String,String]
 expr e@9:5 localDecl result mutable=0 type=_ init=e@9:18#2 type=Unit ref=__local_1.result
 expr e@10:13 name(result) type=kotlin.collections.Map<String, Int> ref=__local_1.result
 expr e@10:20 string(a) type=String

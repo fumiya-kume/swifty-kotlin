@@ -15,7 +15,7 @@ symbol fq=constrain.$0.T kind=typeParameter vis=private flags=_
 symbol fq=constrain.$0.list kind=valueParameter vis=private flags=_
 symbol fq=createList kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.MutableList<Int>
 symbol fq=customExtension kind=function vis=public flags=_ sig=recv=kotlin.collections.MutableList<String> params=[] ret=String
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.collections.List.E kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.List.get kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.List<out kotlin.collections.List.E> params=[Int] ret=kotlin.collections.List.E
 symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_

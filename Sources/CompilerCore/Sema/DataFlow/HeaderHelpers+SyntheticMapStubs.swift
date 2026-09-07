@@ -1,6 +1,6 @@
 import RuntimeABI
 
-/// Synthetic stdlib stubs split from `HeaderHelpers+SyntheticComparableAndCollectionStubs.swift`:
+/// Synthetic stdlib stubs split from the KSP-697 collection residual registry:
 /// Map<K,V>, Map.Entry<K,V>, and MutableMap<K,V> interfaces with higher-order members.
 ///
 /// Split out to isolate merge conflicts between parallel stdlib PRs adding new

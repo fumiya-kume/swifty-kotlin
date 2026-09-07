@@ -280,11 +280,11 @@ extension KIRLoweringDriver {
             interner.intern("collections"),
         ]
         if packageFQName == kotlinCollectionsPackage {
-            // Collection factory call sites are lowered by
+            // Remaining collection factory call sites are lowered by
             // CallLowerer+CollectionFactoryCalls and CollectionLiteralLoweringPass
-            // directly to __kk_* runtime ABI, so source bodies must not be emitted.
+            // directly to __kk_* runtime ABI, so their source bodies must not be emitted.
             switch name {
-            case "emptyList", "listOf", "listOfNotNull", "mutableListOf", "arrayListOf",
+            case "emptyList", "listOf", "mutableListOf", "arrayListOf",
                  "emptySet", "setOf", "setOfNotNull", "mutableSetOf", "hashSetOf", "linkedSetOf",
                  "emptyMap", "mapOf", "mutableMapOf", "hashMapOf", "linkedMapOf":
                 return true

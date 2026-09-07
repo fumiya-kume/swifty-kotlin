@@ -1,0 +1,47 @@
+symbol fq=__local_0.sizeOnly kind=local vis=private flags=_ type=kotlin.FloatArray
+symbol fq=__local_1.initialized kind=local vis=private flags=_ type=kotlin.FloatArray
+symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=kotlin.FloatArray#0 kind=class vis=public flags=synthetic
+file fstdlib_kotlin_FloatArray_n_n package=golden.sema
+  decl golden.sema.main fun main sym=golden.sema.main
+expr e@4:31 int(3) type=Int
+expr e@4:20 call callee=e@4:20#1 args=[_:e@4:31] type=kotlin.FloatArray
+expr e@4:5 localDecl sizeOnly mutable=0 type=_ init=e@4:20 type=Unit ref=__local_0.sizeOnly
+expr e@5:13 name(sizeOnly) type=kotlin.FloatArray ref=__local_0.sizeOnly
+expr e@5:13#1 memberCall recv=e@5:13 callee=size args=[] type=Int call=kotlin.collections.size.$get#5
+expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13#1] type=Unit call=kotlin.io.println#1
+expr e@6:13 name(sizeOnly) type=kotlin.FloatArray ref=__local_0.sizeOnly
+expr e@6:22 int(0) type=Int
+expr e@6:13#1 indexedAccess receiver=e@6:13 indices=[e@6:22] type=Float
+expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13#1] type=Unit call=kotlin.io.println#1
+expr e@8:34 int(4) type=Int
+expr e@9:15 name(index) type=Int ref=s-0
+expr e@10:13 int(0) type=Int
+expr e@10:18 float(1.5) type=Float
+expr e@11:13 int(1) type=Int
+expr e@11:18 float(2.5) type=Float
+expr e@12:13 int(2) type=Int
+expr e@12:19 float(3.5) type=Float
+expr e@12:18 unary(unaryMinus) operand=e@12:19 type=Float
+expr e@13:21 float(4.5) type=Float
+expr e@9:9 when subject=e@9:15 branches=[e@10:13->e@10:18,e@11:13->e@11:18,e@12:13->e@12:18] else=e@13:21 type=Float
+expr e@8:37 lambda params=[index] body=e@9:9 label=FloatArray type=(Int) -> Float
+expr e@8:23 call callee=e@8:23#1 args=[_:e@8:34,_:e@8:37] type=kotlin.FloatArray call=kotlin.FloatArray#1
+expr e@8:5 localDecl initialized mutable=0 type=_ init=e@8:23 type=Unit ref=__local_1.initialized
+expr e@16:13 name(initialized) type=kotlin.FloatArray ref=__local_1.initialized
+expr e@16:13#1 memberCall recv=e@16:13 callee=size args=[] type=Int call=kotlin.collections.size.$get#5
+expr e@16:5 call callee=e@16:5#1 args=[_:e@16:13#1] type=Unit call=kotlin.io.println#1
+expr e@17:13 name(initialized) type=kotlin.FloatArray ref=__local_1.initialized
+expr e@17:25 int(0) type=Int
+expr e@17:13#1 indexedAccess receiver=e@17:13 indices=[e@17:25] type=Float
+expr e@17:5 call callee=e@17:5#1 args=[_:e@17:13#1] type=Unit call=kotlin.io.println#1
+expr e@18:13 name(initialized) type=kotlin.FloatArray ref=__local_1.initialized
+expr e@18:25 int(3) type=Int
+expr e@18:13#1 indexedAccess receiver=e@18:13 indices=[e@18:25] type=Float
+expr e@18:5 call callee=e@18:5#1 args=[_:e@18:13#1] type=Unit call=kotlin.io.println#1
+expr e@19:24 int(0) type=Int
+expr e@19:29 float(42.0) type=Float
+expr e@19:27 lambda params=[] body=e@19:29 label=FloatArray type=(Int) -> Float
+expr e@19:13 call callee=e@19:13#1 args=[_:e@19:24,_:e@19:27] type=kotlin.FloatArray call=kotlin.FloatArray#1
+expr e@19:13#2 memberCall recv=e@19:13 callee=size args=[] type=Int call=kotlin.collections.size.$get#5
+expr e@19:5 call callee=e@19:5#1 args=[_:e@19:13#2] type=Unit call=kotlin.io.println#1

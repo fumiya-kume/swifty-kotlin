@@ -1,0 +1,9 @@
+symbol fq=golden.sema.useDeepRecursiveFunction kind=function vis=public flags=_ sig=recv=_ params=[kotlin.DeepRecursiveFunction<Int, Int>] ret=kotlin.DeepRecursiveFunction<Int, Int>
+symbol fq=golden.sema.useDeepRecursiveFunction.$0.other kind=valueParameter vis=private flags=_
+file fstdlib_kotlin_DeepRecursiveScope_DeepRecursiveFunction_n package=golden.sema
+  decl golden.sema.useDeepRecursiveFunction fun useDeepRecursiveFunction sym=golden.sema.useDeepRecursiveFunction
+expr e@6:48 name(other) type=kotlin.DeepRecursiveFunction<Int, Int> ref=golden.sema.useDeepRecursiveFunction.$0.other
+expr e@6:68 name(value) type=Int ref=s-0
+expr e@6:48#1 memberCall recv=e@6:48 callee=callRecursive args=[_:e@6:68] type=Int call=kotlin.DeepRecursiveFunction.callRecursive targs=[Int,Int]
+expr e@6:37 lambda params=[value] body=e@6:48#1 label=DeepRecursiveFunction type=suspend kotlin.DeepRecursiveScope<Int, Int>.(Int) -> Int
+expr e@6:5 call callee=e@6:5#1 args=[_:e@6:37] type=kotlin.DeepRecursiveFunction<Int, Int> call=kotlin.DeepRecursiveFunction.<init> targs=[Int,Int]
