@@ -49,11 +49,13 @@ extension CollectionLiteralConstructionLoweringPass {
         }
 
         if rewriteArrayConversionCall(
+            symbol: symbol,
             callee: callee,
             arguments: arguments,
             result: result,
             thrownResult: thrownResult,
             module: module,
+            ctx: ctx,
             lookup: lookup,
             state: &state,
             loweredBody: &loweredBody

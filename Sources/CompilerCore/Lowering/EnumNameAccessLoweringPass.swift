@@ -3,15 +3,11 @@
 /// (valueOf result).ordinal to kk_unbox_int(ordinal). Runs after
 /// DataEnumSealedSynthesisPass which creates the $enumOrdinalToName helper.
 ///
-/// Both `name` and `ordinal` are registered as synthetic .property symbols on
-/// the shared kotlin.Enum<T> base class (registerEnumNameOrdinalProperties in
-/// HeaderHelpers+SyntheticEnumStubs.swift), not as real per-class declarations.
-/// Normal call-binding resolution never lands on a usable callee for them (see
-/// the comment on the "name"/"ordinal" case in
-/// CallLowerer+MemberCallEmission.swift's appendReceiverToMemberArguments), so
-/// they always reach this pass as an unresolved `callee: "name"/"ordinal"`
-/// call/virtualCall carrying the receiver as its sole argument, to be rewritten
-/// here by pattern-matching the raw callee name.
+/// `name` and `ordinal` are source-backed properties on the shared kotlin.Enum
+/// base class. Their representation is still compiler-owned, so this pass
+/// rewrites the source member access to the per-enum residual helpers. The
+/// synthetic registration in HeaderHelpers+SyntheticEnumStubs.swift remains a
+/// fallback for source-less enum surfaces.
 final class EnumNameAccessLoweringPass: LoweringPass, ParallelLoweringPass {
     static let name = "EnumNameAccessLowering"
 

@@ -142,6 +142,50 @@ final class ABILoweringPass: LoweringPass, ParallelLoweringPass {
             }
         }
 
+        // ABI-002: An inline body imported from a library artifact records only
+        // the link name for a callee whose declaration is synthetic in this
+        // compilation, so the call arrives with no symbol and no KIR
+        // declaration to recover a signature from (LibraryInlineImport resolves
+        // `linkB64` against imported bindings only). Without the declared
+        // parameter types the boxing rules below cannot see the erased
+        // type-parameter slots of the boundary bridges, and `map[k] = v` — the
+        // bundled inline `kotlin.collections.set` forwarding to `put` — stores a
+        // raw Double/Float/Char/Boolean word that later renders as its bit
+        // pattern. Only the documented boundary bridges are recovered here, and
+        // boxing still follows their declared parameter types, so a bridge's raw
+        // Int parameter (e.g. the index of `__kk_mutable_list_add_at`) stays raw.
+        var boundaryBridgeSignatureByLinkName: [InternedString: FunctionSignature] = [:]
+        if let symbols {
+            var ambiguousBoundaryBridges: Set<InternedString> = []
+            for symbol in symbols.allSymbols() where symbol.kind == .function {
+                guard let linkName = symbols.externalLinkName(for: symbol.id),
+                      Self.typeParamBoxingBoundaryCallees.contains(linkName),
+                      let signature = symbols.functionSignature(for: symbol.id)
+                else {
+                    continue
+                }
+                let key = ctx.interner.intern(linkName)
+                guard !ambiguousBoundaryBridges.contains(key) else { continue }
+                if let existing = boundaryBridgeSignatureByLinkName[key] {
+                    // Two declarations claiming one bridge name give no basis to
+                    // pick a parameter list; leave the call unboxed rather than
+                    // guessing. The comparison is on raw TypeIDs, so distinct
+                    // type parameters (`MutableMap.V` vs a future overrider's
+                    // own `V`) count as a conflict and disable recovery for that
+                    // bridge — the conservative direction, but it means boxing
+                    // can stop for a bridge that gains a second declaration.
+                    if existing.parameterTypes != signature.parameterTypes
+                        || existing.receiverType != signature.receiverType
+                    {
+                        boundaryBridgeSignatureByLinkName.removeValue(forKey: key)
+                        ambiguousBoundaryBridges.insert(key)
+                    }
+                    continue
+                }
+                boundaryBridgeSignatureByLinkName[key] = signature
+            }
+        }
+
         func transformFunction(_ function: KIRFunction) -> KIRFunction {
             var updated: KIRFunction = function
             var newBody: [KIRInstruction] = []
@@ -174,6 +218,7 @@ final class ABILoweringPass: LoweringPass, ParallelLoweringPass {
                             boxingCalleeTable: boxingCalleeTable,
                             callee: vcCallee,
                             interner: ctx.interner,
+                            boxTypeParamArguments: isKotlinSourceCallee(vcSymbol, symbols: symbols),
                             newBody: &newBody
                         )
                     } else {
@@ -317,7 +362,7 @@ final class ABILoweringPass: LoweringPass, ParallelLoweringPass {
                 // ABI-001: For synthetic setter accessor calls whose callee is still
                 // "set", derive the actual runtime store function name from the getter
                 // link registered on the original property symbol (e.g.
-                // kk_atomic_bool_load → kk_atomic_bool_store).
+                // __kk_atomic_bool_load → __kk_atomic_bool_store).
                 let rewrittenCallee: InternedString? = {
                     guard isSyntheticAccessor,
                           let s = callSymbol,
@@ -358,6 +403,10 @@ final class ABILoweringPass: LoweringPass, ParallelLoweringPass {
                 }
                 if signature == nil {
                     signature = signatureByName[effectiveCallee]
+                }
+                // ABI-002: see boundaryBridgeSignatureByLinkName above.
+                if signature == nil, effectiveCallSymbol == nil {
+                    signature = boundaryBridgeSignatureByLinkName[effectiveCallee]
                 }
                 var boxedArguments: [KIRExprID]
                 if let signature, let types {
@@ -464,25 +513,36 @@ final class ABILoweringPass: LoweringPass, ParallelLoweringPass {
                     }
                 }
                 // Box the "value" operand of kk_op_is/kk_op_cast/kk_op_safe_cast
-                // whenever it is a concrete primitive. See typeCheckValueCallees above.
+                // whenever it is a concrete primitive or a non-null enum. See
+                // typeCheckValueCallees above. Enum values resolve to Int for their
+                // unboxed representation, but must retain their nominal class ID when
+                // boxed so nominal and interface checks can recognize them.
                 if signature == nil, let types,
                    typeCheckValueCallees.contains(effectiveCallee),
                    let firstArg = boxedArguments.first
                 {
                     let argType = intrinsicArgType(firstArg, arena: module.arena, types: types)
-                    let argKind = argType.map {
-                        resolveValueClassKind(types.kind(of: $0), types: types, symbols: symbols)
+                    let rawArgKind = argType.map { types.kind(of: $0) }
+                    let argKind = rawArgKind.map {
+                        resolveValueClassKind($0, types: types, symbols: symbols)
                     }
                     if let argKind,
                        let boxCallee = boxCalleeForPrimitive(argKind, boxingCalleeTable: boxingCalleeTable)
                     {
-                        boxedArguments[0] = emitNonThrowingCall(
-                            callee: boxCallee,
-                            arg: firstArg,
+                        let boxedResult = module.arena.appendTemporary(type: types.anyType)
+                        emitBoxCallWithValueClassTag(
+                            boxCallee: boxCallee,
+                            value: firstArg,
+                            rawSourceKind: rawArgKind ?? argKind,
+                            result: boxedResult,
                             resultType: types.anyType,
+                            types: types,
+                            symbols: symbols,
+                            interner: ctx.interner,
                             arena: module.arena,
                             into: &newBody
                         )
+                        boxedArguments[0] = boxedResult
                     }
                 }
 

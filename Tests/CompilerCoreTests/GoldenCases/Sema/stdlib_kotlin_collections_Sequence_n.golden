@@ -10,11 +10,11 @@ symbol fq=testSequenceToMapContracts.$0.source kind=valueParameter vis=private f
 file fstdlib_kotlin_collections_Sequence_n package=_
   decl testSequenceToMapContracts fun testSequenceToMapContracts sym=testSequenceToMapContracts
 expr e@5:35 name(source) type=kotlin.sequences.Sequence<kotlin.Pair<String, Int>> ref=testSequenceToMapContracts.$0.source
-expr e@5:35#1 memberCall recv=e@5:35 callee=toMap args=[] type=kotlin.collections.Map<String, Int> call=kotlin.collections.toMap#3 targs=[String,Int]
+expr e@5:35#1 memberCall recv=e@5:35 callee=toMap args=[] type=kotlin.collections.Map<String, Int> call=kotlin.collections.toMap#5 targs=[String,Int]
 expr e@5:5 localDecl fresh mutable=0 type=Map<String,Int> init=e@5:35#1 type=Unit ref=__local_0.fresh
 expr e@6:44 name(source) type=kotlin.sequences.Sequence<kotlin.Pair<String, Int>> ref=testSequenceToMapContracts.$0.source
 expr e@6:57 name(destination) type=kotlin.collections.MutableMap<Any?, Any?> ref=testSequenceToMapContracts.$0.destination
-expr e@6:44#1 memberCall recv=e@6:44 callee=toMap args=[_:e@6:57] type=kotlin.collections.MutableMap<Any?, Any?> call=kotlin.collections.toMap#4 targs=[String,Int,kotlin.collections.MutableMap<Any?, Any?>]
+expr e@6:44#1 memberCall recv=e@6:44 callee=toMap args=[_:e@6:57] type=kotlin.collections.MutableMap<Any?, Any?> call=kotlin.collections.toMap#6 targs=[String,Int,kotlin.collections.MutableMap<Any?, Any?>]
 expr e@6:5 localDecl returned mutable=0 type=MutableMap<Any?,Any?> init=e@6:44#1 type=Unit ref=__local_1.returned
 expr e@7:13 name(fresh) type=kotlin.collections.Map<String, Int> ref=__local_0.fresh
 expr e@7:5 call callee=e@7:5#1 args=[_:e@7:13] type=Unit call=kotlin.io.println#1

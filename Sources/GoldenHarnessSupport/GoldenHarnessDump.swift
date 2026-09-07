@@ -22,7 +22,12 @@ enum GoldenHarnessDumpError: Error, CustomStringConvertible {
 
 enum GoldenHarnessDump {
     static func dumpLexer(sourcePath: String) throws -> String {
-        let ctx = makeCompilationContext(inputs: [sourcePath], moduleName: "GoldenLexer", emit: .kirDump)
+        let ctx = makeCompilationContext(
+            inputs: [sourcePath],
+            moduleName: "GoldenLexer",
+            emit: .kirDump,
+            includeStdlib: false
+        )
         try LoadSourcesPhase().run(ctx)
         try LexPhase().run(ctx)
 
@@ -38,7 +43,12 @@ enum GoldenHarnessDump {
     }
 
     static func dumpParser(sourcePath: String) throws -> String {
-        let ctx = makeCompilationContext(inputs: [sourcePath], moduleName: "GoldenParser", emit: .kirDump)
+        let ctx = makeCompilationContext(
+            inputs: [sourcePath],
+            moduleName: "GoldenParser",
+            emit: .kirDump,
+            includeStdlib: false
+        )
         try LoadSourcesPhase().run(ctx)
         try LexPhase().run(ctx)
         try ParsePhase().run(ctx)

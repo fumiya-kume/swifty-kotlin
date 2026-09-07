@@ -24,7 +24,9 @@ struct MapOfOverloadResolutionTests {
         let sema = try #require(ctx.sema)
         let mapCalls = ast.arena.exprs.indices.compactMap { rawID -> ExprID? in
             let exprID = ExprID(rawValue: Int32(rawID))
-            guard case let .call(callee, _, args, _) = ast.arena.expr(exprID),
+            guard let range = ast.arena.exprRange(exprID),
+                  ctx.sourceManager.origin(of: range.start.file) == .user,
+                  case let .call(callee, _, args, _) = ast.arena.expr(exprID),
                   case let .nameRef(name, _) = ast.arena.expr(callee),
                   ctx.interner.resolve(name) == "mapOf"
             else {

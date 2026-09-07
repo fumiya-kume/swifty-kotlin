@@ -269,7 +269,7 @@ func emitBoxCallWithValueClassTag(
 /// may not exist yet. Codegen resolves unnamed calls by scanning every KIR
 /// function for one whose name and arity match (`resolveUnnamedInternalFunction`),
 /// which by then includes the synthesized helper regardless of pass order.
-private func emitEnumOrdinalBoxCall(
+func emitEnumOrdinalBoxCall(
     ordinal: KIRExprID,
     classSymbol: SymbolID,
     result: KIRExprID,

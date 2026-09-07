@@ -7,7 +7,7 @@ symbol fq=java.io.File.<init>.path kind=valueParameter vis=private flags=synthet
 symbol fq=java.io.File.readText kind=function vis=public flags=synthetic sig=recv=java.io.File params=[] ret=String
 symbol fq=java.io.File.writeText kind=function vis=public flags=synthetic sig=recv=java.io.File params=[String] ret=Unit
 symbol fq=java.io.File.writeText.text kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file ffile_io_basic package=_
   decl main fun main sym=main

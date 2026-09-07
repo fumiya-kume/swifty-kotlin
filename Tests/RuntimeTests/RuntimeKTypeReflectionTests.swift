@@ -146,6 +146,36 @@ struct RuntimeKTypeReflectionTests {
         #expect(capturePrintln { kk_println_any(UnsafeMutableRawPointer(bitPattern: argumentsRaw)) } == "[kotlin.Int]")
     }
 
+    @Test func ktypeBoxesRegisterSourceBackedPropertyGetters() throws {
+        let elementType = makeKTypeHandle(name: "kotlin.Int", typeToken: 30)
+        let projection = __kk_ktypeprojection_create(elementType, 2)
+        let listType = makeKTypeHandle(
+            name: "kotlin.collections.List",
+            typeToken: 31,
+            arguments: [projection]
+        )
+        let interfaceTypeID = Int(runtimeStableNominalTypeID(fqName: "kotlin.reflect.KType"))
+        let getterType = (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self
+
+        let argumentsGetterRaw = kk_itable_lookup_dynamic(listType, interfaceTypeID, 0)
+        let classifierGetterRaw = kk_itable_lookup_dynamic(listType, interfaceTypeID, 1)
+        let nullableGetterRaw = kk_itable_lookup_dynamic(listType, interfaceTypeID, 2)
+        #expect(argumentsGetterRaw != 0)
+        #expect(classifierGetterRaw != 0)
+        #expect(nullableGetterRaw != 0)
+
+        let argumentsGetter = unsafeBitCast(argumentsGetterRaw, to: getterType)
+        let classifierGetter = unsafeBitCast(classifierGetterRaw, to: getterType)
+        let nullableGetter = unsafeBitCast(nullableGetterRaw, to: getterType)
+        var thrown = 0
+        let argumentsRaw = argumentsGetter(listType, &thrown)
+        #expect(thrown == 0)
+        #expect(runtimeListBox(from: argumentsRaw)?.elements == [projection])
+        #expect(classifierGetter(listType, &thrown) == __kk_ktype_classifier(listType))
+        #expect(nullableGetter(listType, &thrown) == 0)
+        #expect(thrown == 0)
+    }
+
     @Test func invalidHandlesReturnSentinels() {
         #expect(__kk_ktype_classifier(123_456) == runtimeNullSentinelInt)
         #expect(runtimeListBox(from: __kk_ktype_arguments(123_456))?.elements.count == 0)

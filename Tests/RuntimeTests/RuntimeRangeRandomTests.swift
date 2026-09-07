@@ -98,7 +98,7 @@ struct RuntimeRangeRandomTests {
         let longRange = kk_long_rangeTo(Int.min, Int.max)
         #expect(__kk_long_range_randomOrNull(longRange) != runtimeNullSentinelInt)
 
-        let uintRange = kk_uint_rangeTo(0, Int(bitPattern: UInt(UInt32.max)))
+        let uintRange = __kk_uint_rangeTo(0, Int(bitPattern: UInt(UInt32.max)))
         #expect(__kk_uint_range_randomOrNull(uintRange) != runtimeNullSentinelInt)
 
         let ulongRange = kk_ulong_rangeTo(0, Int(bitPattern: UInt.max))
@@ -109,7 +109,7 @@ struct RuntimeRangeRandomTests {
     func testUIntRangeRandomReturnsValueInsideBounds() {
         let lower = Int(bitPattern: UInt(4_294_967_292))
         let upper = Int(bitPattern: UInt(4_294_967_295))
-        let range = kk_uint_rangeTo(lower, upper)
+        let range = __kk_uint_rangeTo(lower, upper)
         var thrown = 0
         let value = __kk_uint_range_random(range, &thrown)
         #expect(thrown == 0)

@@ -1,0 +1,58 @@
+symbol fq=__local_0.source kind=local vis=private flags=_ type=kotlin.collections.Map<String?, Int?>
+symbol fq=__local_1.copied kind=local vis=private flags=_ type=kotlin.collections.Map<String?, Int?>
+symbol fq=__local_2.destination kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Any?, Any?>
+symbol fq=__local_3.returned kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Any?, Any?>
+symbol fq=golden.sema.copyInto kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<out golden.sema.copyInto.$0.K, golden.sema.copyInto.$0.V>,golden.sema.copyInto.$0.C] ret=golden.sema.copyInto.$0.C bounds=[_,_,kotlin.collections.MutableMap<in golden.sema.copyInto.$0.K, in golden.sema.copyInto.$0.V>]
+symbol fq=golden.sema.copyInto.$0.C kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.copyInto.$0.K kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.copyInto.$0.V kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.copyInto.$0.destination kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.copyInto.$0.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.copyMap kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<out golden.sema.copyMap.$1.K, golden.sema.copyMap.$1.V>] ret=kotlin.collections.Map<golden.sema.copyMap.$1.K, golden.sema.copyMap.$1.V>
+symbol fq=golden.sema.copyMap.$1.K kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.copyMap.$1.V kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.copyMap.$1.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=kotlin.Pair kind=class vis=public flags=_
+symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
+file fstdlib_kotlin_collections_Map_to package=golden.sema
+  decl golden.sema.copyMap fun copyMap sym=golden.sema.copyMap
+  decl golden.sema.copyInto fun copyInto sym=golden.sema.copyInto
+  decl golden.sema.main fun main sym=golden.sema.main
+expr e@3:56 name(source) type=kotlin.collections.Map<out golden.sema.copyMap.$1.K, golden.sema.copyMap.$1.V> ref=golden.sema.copyMap.$1.source
+expr e@3:56#1 memberCall recv=e@3:56 callee=toMap args=[] type=kotlin.collections.Map<golden.sema.copyMap.$1.K, golden.sema.copyMap.$1.V> call=kotlin.collections.toMap#3 targs=[golden.sema.copyMap.$1.K,golden.sema.copyMap.$1.V]
+expr e@8:8 name(source) type=kotlin.collections.Map<out golden.sema.copyInto.$0.K, golden.sema.copyInto.$0.V> ref=golden.sema.copyInto.$0.source
+expr e@8:21 name(destination) type=golden.sema.copyInto.$0.C ref=golden.sema.copyInto.$0.destination
+expr e@8:8#1 memberCall recv=e@8:8 callee=toMap args=[_:e@8:21] type=golden.sema.copyInto.$0.C call=kotlin.collections.toMap#4 targs=[golden.sema.copyInto.$0.K,golden.sema.copyInto.$0.V,golden.sema.copyInto.$0.C]
+expr e@11:44 name(null) type=Nothing?
+expr e@11:52 name(null) type=Nothing?
+expr e@11:44#1 memberCall recv=e@11:44 callee=to args=[_:e@11:52] type=kotlin.Pair<Nothing?, Nothing?> call=kotlin.to targs=[Nothing?,Nothing?]
+expr e@11:58 string(b) type=String
+expr e@11:65 int(2) type=Int
+expr e@11:58#1 memberCall recv=e@11:58 callee=to args=[_:e@11:65] type=kotlin.Pair<String, Int> call=kotlin.to targs=[String,Int]
+expr e@11:38 call callee=e@11:38#1 args=[_:e@11:44#1,_:e@11:58#1] type=kotlin.collections.Map<String?, Int?> call=kotlin.collections.mapOf#2 targs=[String?,Int?]
+expr e@11:5 localDecl source mutable=0 type=Map<String?,Int?> init=e@11:38 type=Unit ref=__local_0.source
+expr e@12:26 name(source) type=kotlin.collections.Map<String?, Int?> ref=__local_0.source
+expr e@12:18 call callee=e@12:18#1 args=[_:e@12:26] type=kotlin.collections.Map<String?, Int?> call=golden.sema.copyMap targs=[String?,Int?]
+expr e@12:5 localDecl copied mutable=0 type=_ init=e@12:18 type=Unit ref=__local_1.copied
+expr e@13:60 string(keep) type=String
+expr e@13:70 int(9) type=Int
+expr e@13:60#1 memberCall recv=e@13:60 callee=to args=[_:e@13:70] type=kotlin.Pair<String, Int> call=kotlin.to targs=[String,Int]
+expr e@13:73 string(b) type=String
+expr e@13:80 int(0) type=Int
+expr e@13:73#1 memberCall recv=e@13:73 callee=to args=[_:e@13:80] type=kotlin.Pair<String, Int> call=kotlin.to targs=[String,Int]
+expr e@13:47 call callee=e@13:47#1 args=[_:e@13:60#1,_:e@13:73#1] type=kotlin.collections.MutableMap<Any?, Any?> call=kotlin.collections.mutableMapOf#1 targs=[Any?,Any?]
+expr e@13:5 localDecl destination mutable=0 type=MutableMap<Any?,Any?> init=e@13:47 type=Unit ref=__local_2.destination
+expr e@14:29 name(source) type=kotlin.collections.Map<String?, Int?> ref=__local_0.source
+expr e@14:37 name(destination) type=kotlin.collections.MutableMap<Any?, Any?> ref=__local_2.destination
+expr e@14:20 call callee=e@14:20#1 args=[_:e@14:29,_:e@14:37] type=kotlin.collections.MutableMap<Any?, Any?> call=golden.sema.copyInto targs=[String?,Int?,kotlin.collections.MutableMap<Any?, Any?>]
+expr e@14:5 localDecl returned mutable=0 type=_ init=e@14:20 type=Unit ref=__local_3.returned
+expr e@15:13 name(copied) type=kotlin.collections.Map<String?, Int?> ref=__local_1.copied
+expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13] type=Unit call=kotlin.io.println#1
+expr e@16:13 name(returned) type=kotlin.collections.MutableMap<Any?, Any?> ref=__local_3.returned
+expr e@16:26 name(destination) type=kotlin.collections.MutableMap<Any?, Any?> ref=__local_2.destination
+expr e@16:13#1 binary(identityEqual) lhs=e@16:13 rhs=e@16:26 type=Boolean
+expr e@16:5 call callee=e@16:5#1 args=[_:e@16:13#1] type=Unit call=kotlin.io.println#1
+expr e@17:13 name(destination) type=kotlin.collections.MutableMap<Any?, Any?> ref=__local_2.destination
+expr e@17:5 call callee=e@17:5#1 args=[_:e@17:13] type=Unit call=kotlin.io.println#1
