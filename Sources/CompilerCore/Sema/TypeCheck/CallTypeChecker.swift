@@ -840,7 +840,12 @@ final class CallTypeChecker {
         if let calleeName,
            (args.count == 1 || args.count == 2),
            interner.resolve(calleeName) == "AtomicIntArray",
-           !isShadowedByNonSyntheticSymbol(calleeName, locals: locals, ctx: ctx),
+           !isShadowedByNonSyntheticSymbol(
+               calleeName,
+               locals: locals,
+               ctx: ctx,
+               argumentCount: args.count
+           ),
            let arraySymbol = syntheticAtomicArrayClassSymbol(
                calleeName,
                className: "AtomicIntArray",
@@ -2580,19 +2585,29 @@ final class CallTypeChecker {
                     sema.bindings.markCollectionExpr(id)
                 }
             }
-            if let externalLinkName = sema.symbols.externalLinkName(for: chosen),
-               [
-                   "kk_op_rangeTo",
-                   "__kk_op_rangeUntil",
-                   "kk_uint_rangeTo",
-                   "kk_char_rangeTo",
-                   "__kk_int_progression_fromClosedRange",
-                   "__kk_long_progression_fromClosedRange",
-                   "__kk_uint_progression_fromClosedRange",
-                   "__kk_ulong_progression_fromClosedRange",
-                   "__kk_op_ulong_rangeUntil",
-               ].contains(externalLinkName)
-            {
+            let isRangeCallBinding = if let externalLinkName = sema.symbols.externalLinkName(for: chosen) {
+                [
+                    "kk_op_rangeTo",
+                    "__kk_op_rangeUntil",
+                    "__kk_uint_rangeTo",
+                    "kk_char_rangeTo",
+                    "__kk_int_progression_fromClosedRange",
+                    "__kk_long_progression_fromClosedRange",
+                    "__kk_uint_progression_fromClosedRange",
+                    "__kk_ulong_progression_fromClosedRange",
+                    "__kk_op_ulong_rangeUntil",
+                ].contains(externalLinkName)
+            } else if let symbol = sema.symbols.symbol(chosen) {
+                // Source-backed range constructors have no external link. Keep
+                // the range markers in sync so later member lookup and lowering
+                // can recognize the returned UIntRange/UIntProgression value.
+                ["rangeTo", "until", "rangeUntil", "downTo", "step", "fromClosedRange"].contains(
+                    interner.resolve(symbol.name)
+                ) && driver.helpers.isRangeLikeType(adjustedReturnType, sema: sema, interner: interner)
+            } else {
+                false
+            }
+            if isRangeCallBinding {
                 markRangeCallBindings(id, chosen: chosen, returnType: adjustedReturnType, sema: sema)
             }
             sema.bindings.bindExprType(id, type: adjustedReturnType)

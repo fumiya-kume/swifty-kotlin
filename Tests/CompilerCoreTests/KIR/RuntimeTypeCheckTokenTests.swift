@@ -335,11 +335,12 @@ struct RuntimeTypeCheckTokenTests {
             let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
             try runToKIR(ctx)
             // Not asserting `!hasError` here (unlike most tests in this file) —
-            // bundled stdlib currently emits unrelated pre-existing diagnostics
-            // (KSWIFTK-SEMA-0102 duplicate-stub warnings/errors for
-            // kotlin.time.Instant/TimedValue) on any full compilation that this
-            // test isn't about. The `#require`s below on the classRefTargetType
-            // binding are the actual correctness check for this test.
+            // bundled stdlib currently emits an unrelated pre-existing diagnostic
+            // (KSWIFTK-SEMA-0102 duplicate-stub warning/error for
+            // kotlin.time.Instant) on any full compilation that this test isn't
+            // about. TimedValue is now source-backed and no longer contributes
+            // duplicate-stub noise. The `#require`s below on the
+            // classRefTargetType binding are the actual correctness check.
 
             let sema = try #require(ctx.sema)
             let ast = try #require(ctx.ast)

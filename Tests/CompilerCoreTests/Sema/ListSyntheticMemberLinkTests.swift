@@ -41,9 +41,13 @@ struct ListSyntheticMemberLinkTests {
 
             #expect(ctx.diagnostics.diagnostics.isEmpty, "Expected List.lastIndex to type-check cleanly, got: \(ctx.diagnostics.diagnostics)")
 
-            let propertyExpr = try #require(firstExprID(in: ast) { _, expr in
+            // Bundled stdlib bodies are part of the AST, so inspect only this test input.
+            let propertyExpr = try #require(firstExprID(in: ast) { exprID, expr in
                 guard case let .memberCall(_, callee, _, args, _) = expr else { return false }
-                return ctx.interner.resolve(callee) == "lastIndex" && args.isEmpty
+                guard ctx.interner.resolve(callee) == "lastIndex", args.isEmpty,
+                      let exprRange = ast.arena.exprRange(exprID)
+                else { return false }
+                return ctx.sourceManager.path(of: exprRange.start.file) == path
             })
             #expect(sema.bindings.exprType(for: propertyExpr) == sema.types.intType)
 
@@ -2887,11 +2891,101 @@ struct ListSyntheticMemberLinkTests {
             #expect(entriesInfo.kind == .property)
             #expect(entriesInfo.flags.contains(.abstractType))
 
+            // KSP-1038: the receiver implementation is source-backed by
+            // AbstractMutableMap.kt. Keep the six receiver APIs owned by that
+            // declaration; none may fall back to a synthetic map bridge.
+            for memberName in ["put", "putAll", "remove", "clear"] {
+                let memberFQName = abstractMutableMapFQName + [ctx.interner.intern(memberName)]
+                let memberSymbols = sema.symbols.lookupAll(fqName: memberFQName).filter {
+                    sema.symbols.parentSymbol(for: $0) == abstractMutableMapSymbol &&
+                        sema.symbols.symbol($0)?.kind == .function
+                }
+                #expect(memberSymbols.count == 1)
+                let memberSymbol = try #require(memberSymbols.first)
+                let memberInfo = try #require(sema.symbols.symbol(memberSymbol))
+                #expect(!memberInfo.flags.contains(.synthetic))
+                #expect(memberInfo.declSite != nil)
+                #expect(sema.symbols.isSourceBackedSymbol(memberSymbol))
+                let memberFileID = try #require(sema.symbols.sourceFileID(for: memberSymbol))
+                #expect(ctx.sourceManager.path(of: memberFileID) == "__bundled_kotlin/collections/AbstractMutableMap.kt")
+                #expect(sema.symbols.externalLinkName(for: memberSymbol) == nil)
+            }
+
+            for memberName in ["entries", "keys", "values"] {
+                let memberFQName = abstractMutableMapFQName + [ctx.interner.intern(memberName)]
+                let memberSymbols = sema.symbols.lookupAll(fqName: memberFQName).filter {
+                    sema.symbols.parentSymbol(for: $0) == abstractMutableMapSymbol &&
+                        sema.symbols.symbol($0)?.kind == .property
+                }
+                #expect(memberSymbols.count == 1)
+                let memberSymbol = try #require(memberSymbols.first)
+                let memberInfo = try #require(sema.symbols.symbol(memberSymbol))
+                #expect(!memberInfo.flags.contains(.synthetic))
+                #expect(memberInfo.declSite != nil)
+                #expect(sema.symbols.isSourceBackedSymbol(memberSymbol))
+                #expect(sema.symbols.propertyType(for: memberSymbol) != nil)
+                #expect(memberInfo.flags.contains(.overrideMember))
+                let memberFileID = try #require(sema.symbols.sourceFileID(for: memberSymbol))
+                #expect(ctx.sourceManager.path(of: memberFileID) == "__bundled_kotlin/collections/AbstractMutableMap.kt")
+                #expect(sema.symbols.externalLinkName(for: memberSymbol) == nil)
+            }
+
             let constructorSymbol = try #require(sema.symbols.lookup(fqName: abstractMutableMapFQName + [ctx.interner.intern("<init>")]))
             let constructorInfo = try #require(sema.symbols.symbol(constructorSymbol))
             #expect(constructorInfo.kind == .constructor)
             #expect(constructorInfo.visibility == .protected)
             #expect(try #require(sema.symbols.functionSignature(for: constructorSymbol)).parameterTypes.isEmpty)
+        }
+    }
+
+    @Test
+    func testAbstractMutableMapReceiverMembersBindToSourceDeclarations() throws {
+        let source = """
+        import kotlin.collections.AbstractMutableMap
+        import kotlin.collections.Map
+
+        fun surface(map: AbstractMutableMap<String, Int>, source: Map<String, Int>) {
+            map.putAll(source)
+            map.remove("missing")
+            map.clear()
+            val keys = map.keys
+            val values = map.values
+            keys.size
+            values.size
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try #require(ctx.ast)
+            let sema = try #require(ctx.sema)
+            let abstractMutableMapFQName = ["kotlin", "collections", "AbstractMutableMap"].map(ctx.interner.intern)
+
+            for (memberName, arity) in [("putAll", 1), ("remove", 1), ("clear", 0)] {
+                let callExpr = try #require(firstExprID(in: ast) { _, expr in
+                    guard case let .memberCall(_, callee, _, args, range) = expr else { return false }
+                    return ctx.interner.resolve(callee) == memberName
+                        && args.count == arity
+                        && ctx.sourceManager.path(of: range.start.file) == path
+                })
+                let chosen = try #require(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+                #expect(sema.symbols.parentSymbol(for: chosen) == sema.symbols.lookup(fqName: abstractMutableMapFQName))
+                #expect(sema.symbols.isSourceBackedSymbol(chosen))
+            }
+
+            for memberName in ["keys", "values"] {
+                let propertyExpr = try #require(firstExprID(in: ast) { _, expr in
+                    guard case let .memberCall(_, callee, _, args, range) = expr else { return false }
+                    return ctx.interner.resolve(callee) == memberName
+                        && args.isEmpty
+                        && ctx.sourceManager.path(of: range.start.file) == path
+                })
+                let propertySymbol = try #require(sema.bindings.identifierSymbol(for: propertyExpr))
+                #expect(propertySymbol == sema.symbols.lookup(fqName: abstractMutableMapFQName + [ctx.interner.intern(memberName)]))
+                #expect(sema.symbols.isSourceBackedSymbol(propertySymbol))
+            }
         }
     }
 
@@ -2986,8 +3080,10 @@ struct ListSyntheticMemberLinkTests {
             let mutableListIteratorSymbol = try #require(sema.symbols.lookup(fqName: mutableListIteratorFQName))
             let mutableListIteratorInfo = try #require(sema.symbols.symbol(mutableListIteratorSymbol))
             #expect(mutableListIteratorInfo.kind == .interface)
-            // KSP-945: the nominal interface is source-backed; mutation members
-            // remain compiler residuals until their separate migration lands.
+            // KSP-945/KSP-1073: the nominal interface and its own `add`/`set`
+            // members are source-backed; `remove` is not redeclared here at
+            // all — it resolves through inheritance from `MutableIterator`
+            // below, matching real Kotlin's MutableListIterator surface.
             #expect(!mutableListIteratorInfo.flags.contains(.synthetic))
             #expect(sema.types.nominalTypeParameterVariances(for: mutableListIteratorSymbol) == [.invariant])
 
@@ -3003,7 +3099,14 @@ struct ListSyntheticMemberLinkTests {
                 #expect(signature.parameterTypes.count == 1)
                 #expect(signature.returnType == sema.types.unitType)
             }
-            let removeSymbol = try #require(sema.symbols.lookup(fqName: mutableListIteratorFQName + [ctx.interner.intern("remove")]))
+            // BUG-232: `remove` must NOT be redeclared directly on
+            // MutableListIterator — a redundant synthetic duplicate there
+            // shadowed the real, itable-wired `MutableIterator.remove` for
+            // any MutableListIterator-typed call site, so `.remove()` silently
+            // no-op'd instead of mutating the list.
+            #expect(sema.symbols.lookup(fqName: mutableListIteratorFQName + [ctx.interner.intern("remove")]) == nil)
+            let removeSymbol = try #require(sema.symbols.lookup(fqName: collectionsPkg + [ctx.interner.intern("MutableIterator"), ctx.interner.intern("remove")]))
+            #expect(sema.symbols.parentSymbol(for: removeSymbol) == mutableIteratorSymbol)
             let removeSignature = try #require(sema.symbols.functionSignature(for: removeSymbol))
             #expect(removeSignature.parameterTypes.isEmpty)
             #expect(removeSignature.returnType == sema.types.unitType)

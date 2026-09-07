@@ -207,12 +207,10 @@ struct CollectionLiteralLookupTables {
     var kkIteratorBuilderBuildName: InternedString { sequenceLookup.kkIteratorBuilderBuildName }
     var kkIteratorBuilderHasNextName: InternedString { sequenceLookup.kkIteratorBuilderHasNextName }
     var kkIteratorBuilderNextName: InternedString { sequenceLookup.kkIteratorBuilderNextName }
-    var kkSequenceForEachName: InternedString { sequenceLookup.kkSequenceForEachName }
     var kkSequenceFlatMapName: InternedString { sequenceLookup.kkSequenceFlatMapName }
     var kkSequenceFlatMapIndexedName: InternedString { sequenceLookup.kkSequenceFlatMapIndexedName }
     var kkSequenceShuffledName: InternedString { sequenceLookup.kkSequenceShuffledName }
     var kkSequenceShuffledRandomName: InternedString { sequenceLookup.kkSequenceShuffledRandomName }
-    var kkSequenceForEachIndexedName: InternedString { sequenceLookup.kkSequenceForEachIndexedName }
     var kkSequenceScanName: InternedString { sequenceLookup.kkSequenceScanName }
     var kkSequenceRunningFoldName: InternedString { sequenceLookup.kkSequenceRunningFoldName }
     var kkSequenceRunningReduceName: InternedString { sequenceLookup.kkSequenceRunningReduceName }

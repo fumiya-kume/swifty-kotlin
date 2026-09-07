@@ -540,6 +540,9 @@ public struct ValueParamDecl: Equatable, Codable {
     /// `true` when a primary constructor property parameter carries the
     /// `override` modifier, e.g. `class Foo(override val x: String)`.
     public let isOverrideProperty: Bool
+    /// `true` when a primary constructor property parameter carries the
+    /// `open` modifier, e.g. `open class Foo(open val x: String)`.
+    public let isOpenProperty: Bool
     public let hasDefaultValue: Bool
     public let isVararg: Bool
     /// `true` when a function parameter is declared with `crossinline`.
@@ -555,6 +558,7 @@ public struct ValueParamDecl: Equatable, Codable {
         isProperty: Bool = false,
         isMutableProperty: Bool = false,
         isOverrideProperty: Bool = false,
+        isOpenProperty: Bool = false,
         hasDefaultValue: Bool = false,
         isVararg: Bool = false,
         isCrossinline: Bool = false,
@@ -567,6 +571,7 @@ public struct ValueParamDecl: Equatable, Codable {
         self.isProperty = isProperty
         self.isMutableProperty = isMutableProperty
         self.isOverrideProperty = isOverrideProperty
+        self.isOpenProperty = isOpenProperty
         self.hasDefaultValue = hasDefaultValue
         self.isVararg = isVararg
         self.isCrossinline = isCrossinline

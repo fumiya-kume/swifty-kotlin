@@ -250,6 +250,38 @@ public inline fun <K, V> Map<K, V>.filterNot(predicate: (Map.Entry<K, V>) -> Boo
 }
 
 /**
+ * Appends all entries matching the given [predicate] into the mutable map given as [destination] parameter.
+ */
+@IgnorableReturnValue
+public inline fun <K, V, M : MutableMap<in K, in V>> Map<out K, V>.filterTo(
+    destination: M,
+    predicate: (Map.Entry<K, V>) -> Boolean
+): M {
+    for (entry in this.entries) {
+        if (predicate(entry)) {
+            destination.put(entry.key, entry.value)
+        }
+    }
+    return destination
+}
+
+/**
+ * Appends all entries not matching the given [predicate] into the given [destination].
+ */
+@IgnorableReturnValue
+public inline fun <K, V, M : MutableMap<in K, in V>> Map<out K, V>.filterNotTo(
+    destination: M,
+    predicate: (Map.Entry<K, V>) -> Boolean
+): M {
+    for (entry in this.entries) {
+        if (!predicate(entry)) {
+            destination.put(entry.key, entry.value)
+        }
+    }
+    return destination
+}
+
+/**
  * Returns a map containing all entries with keys matching the given [predicate].
  */
 @Suppress("UNCHECKED_CAST")
