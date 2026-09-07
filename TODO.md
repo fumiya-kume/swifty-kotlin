@@ -1696,7 +1696,7 @@
     - `kotlin.collections.ArrayList.toString` — fun ArrayList.toString(): String  -- `final fun toString(): kotlin/String`
     - `kotlin.collections.ArrayList.trimToSize` — fun ArrayList.trimToSize(): Unit  -- `final fun trimToSize()`
 
-- [ ] KSP-1050: kotlin.collections.Collection.Collection の未実装 stdlib API を実装する（5 件）
+- [x] KSP-1050: kotlin.collections.Collection.Collection の未実装 stdlib API を実装する（5 件）
   - 対象: `kotlin.collections.Collection` / receiver `Collection`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/Collection/Collection.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
