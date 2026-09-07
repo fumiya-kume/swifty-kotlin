@@ -9,8 +9,8 @@ symbol fq=groupFamily.$0.destination kind=valueParameter vis=private flags=_
 symbol fq=groupFamily.$0.list kind=valueParameter vis=private flags=_
 symbol fq=groupFamily.$0.nullable kind=valueParameter vis=private flags=_
 symbol fq=groupFamily.$0.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
