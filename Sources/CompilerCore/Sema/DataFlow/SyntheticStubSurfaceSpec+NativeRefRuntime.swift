@@ -78,7 +78,6 @@ enum SyntheticNativeRefRuntimeSurfaceSpec {
         SyntheticPropertyStubSpec(name: "sweptCount", propertyType: .long),
         SyntheticPropertyStubSpec(name: "keptCount", propertyType: .long),
     ]
-    static let sweepStatisticsConstructor = constructor(from: sweepStatisticsProperties)
 
     static let gcInfoType = nativeRuntimeClass("GCInfo")
     static let memoryUsageType = nativeRuntimeClass("MemoryUsage")

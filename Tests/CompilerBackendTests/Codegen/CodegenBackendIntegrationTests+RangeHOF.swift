@@ -296,5 +296,37 @@ struct CodegenBackendRangeHOFTests {
                 """ + "\n"
         )
     }
+
+    @Test
+    func testCodegenUIntRangeIteratorStepAndWindowingExecution() throws {
+        let source = """
+        fun main() {
+            println((1u..5u).take(3))
+            println((1u..5u).drop(2))
+            println((1u..5u).chunked(2))
+            println((1u..5u).windowed(3))
+            println((1u..5u).windowed(3, 2, true))
+            println((1u..5u step 2).take(2))
+            println((5u downTo 1u).windowed(2, 2, true))
+            for (value in 1u..5u) print("$value ")
+            println()
+        }
+        """
+
+        try assertKotlinOutput(
+            source,
+            moduleName: "UIntRangeIteratorStepAndWindowingExecution",
+            expected:
+                """
+                [1, 2, 3]
+                [3, 4, 5]
+                [[1, 2], [3, 4], [5]]
+                [[1, 2, 3], [2, 3, 4], [3, 4, 5]]
+                [[1, 2, 3], [3, 4, 5], [5]]
+                [1, 3]
+                [[5, 4], [3, 2], [1]]
+                """ + "\n1 2 3 4 5 \n"
+        )
+    }
 }
 #endif
