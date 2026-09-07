@@ -17,18 +17,6 @@ extension CallLowerer {
         return knownNames.isRegexSymbol(symbol)
     }
 
-    func isStringBuilderLikeType(
-        _ receiverType: TypeID,
-        sema: SemaModule,
-        interner: StringInterner
-    ) -> Bool {
-        let knownNames = KnownCompilerNames(interner: interner)
-        guard let (_, symbol) = resolveClassTypeSymbol(receiverType, sema: sema) else {
-            return false
-        }
-        return knownNames.isStringBuilderSymbol(symbol)
-    }
-
     /// Check whether a type is Sequence-like (for member-call and operator
     /// lowering decisions).  Shared across `CallLowerer+MemberCalls` and
     /// `CallLowerer+Operators`; kept `internal` to avoid exposing it beyond
@@ -76,63 +64,6 @@ extension CallLowerer {
         return knownNames.isConcreteListLikeSymbol(symbol)
     }
 
-    func collectionElementPrimitiveCompareKind(
-        of receiverType: TypeID,
-        sema: SemaModule
-    ) -> PrimitiveCompareABIKind? {
-        guard let classType = resolveClassType(receiverType, sema: sema),
-              let firstArg = classType.args.first
-        else {
-            return nil
-        }
-        let elementType: TypeID = switch firstArg {
-        case let .invariant(type), let .out(type), let .in(type):
-            type
-        case .star:
-            sema.types.anyType
-        }
-        return primitiveCompareABIKind(for: elementType, sema: sema)
-    }
-
-    func arraySizeRuntimeCallee(
-        for receiverType: TypeID,
-        sema: SemaModule,
-        interner: StringInterner
-    ) -> InternedString {
-        guard let (_, symbol) = resolveClassTypeSymbol(receiverType, sema: sema) else {
-            return interner.intern("__kk_array_size")
-        }
-        let knownNames = KnownCompilerNames(interner: interner)
-        switch symbol.name {
-        case knownNames.intArray:
-            return interner.intern("__kk_intArray_size")
-        case knownNames.longArray:
-            return interner.intern("__kk_longArray_size")
-        case knownNames.byteArray:
-            return interner.intern("__kk_byteArray_size")
-        case knownNames.shortArray:
-            return interner.intern("__kk_shortArray_size")
-        case knownNames.uintArray:
-            return interner.intern("__kk_uIntArray_size")
-        case knownNames.ulongArray:
-            return interner.intern("__kk_uLongArray_size")
-        case knownNames.doubleArray:
-            return interner.intern("__kk_doubleArray_size")
-        case knownNames.floatArray:
-            return interner.intern("__kk_floatArray_size")
-        case knownNames.booleanArray:
-            return interner.intern("__kk_booleanArray_size")
-        case knownNames.charArray:
-            return interner.intern("__kk_charArray_size")
-        case knownNames.ubyteArray:
-            return interner.intern("__kk_uByteArray_size")
-        case knownNames.ushortArray:
-            return interner.intern("__kk_uShortArray_size")
-        default:
-            return interner.intern("__kk_array_size")
-        }
-    }
-
     func collectionSelectorPrimitiveCompareKind(
         of selectorExpr: ExprID?,
         sema: SemaModule
@@ -173,18 +104,6 @@ extension CallLowerer {
             return false
         }
         return knownNames.isMutableSetSymbol(symbol)
-    }
-
-    func isMapLikeType(
-        _ receiverType: TypeID,
-        sema: SemaModule,
-        interner: StringInterner
-    ) -> Bool {
-        let knownNames = KnownCompilerNames(interner: interner)
-        guard let (_, symbol) = resolveClassTypeSymbol(receiverType, sema: sema) else {
-            return false
-        }
-        return knownNames.isMapLikeSymbol(symbol)
     }
 
     func isConcreteCollectionLikeType(
@@ -232,53 +151,5 @@ extension CallLowerer {
             return false
         }
         return knownNames.isSetLikeSymbol(symbol)
-    }
-
-    /// Returns `true` when the receiver type is `Iterable<Char>` (the type produced by `String.asIterable()`).
-    /// This allows routing `.toList()` and `.iterator()` to the specialised string-iterable runtime functions.
-    func isStringIterableType(
-        _ receiverType: TypeID,
-        sema: SemaModule,
-        interner: StringInterner
-    ) -> Bool {
-        guard let (classType, symbol) = resolveClassTypeSymbol(receiverType, sema: sema) else {
-            return false
-        }
-        let iterableFQName: [InternedString] = [
-            interner.intern("kotlin"),
-            interner.intern("collections"),
-            interner.intern("Iterable"),
-        ]
-        guard symbol.fqName == iterableFQName else {
-            return false
-        }
-        // Verify the type argument is Char
-        guard let firstArg = classType.args.first else {
-            return false
-        }
-        let elementType: TypeID = switch firstArg {
-        case let .invariant(t), let .out(t), let .in(t): t
-        case .star: sema.types.anyType
-        }
-        return sema.types.makeNonNullable(elementType) == sema.types.make(.primitive(.char, .nonNull))
-    }
-
-    /// Checks the fully-qualified name (not just the simple name) so that
-    /// `java.util.Random` — a distinct, real compiled class since KSP-466's
-    /// java.util.Random redesign (Sources/CompilerCore/Stdlib/kotlin/random/
-    /// JavaUtilRandom.kt) — never matches here even though it shares the
-    /// simple name "Random" with kotlin.random.Random.
-    func isRandomType(
-        _ receiverType: TypeID,
-        sema: SemaModule,
-        interner: StringInterner
-    ) -> Bool {
-        guard let (_, symbol) = resolveClassTypeSymbol(receiverType, sema: sema) else { return false }
-        let randomFQName: [InternedString] = [
-            interner.intern("kotlin"),
-            interner.intern("random"),
-            interner.intern("Random"),
-        ]
-        return symbol.fqName == randomFQName
     }
 }
