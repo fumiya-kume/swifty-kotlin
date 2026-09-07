@@ -79,6 +79,7 @@ extension KIRLoweringDriver {
             )
             emitPrimaryConstructorPropertyInitializers(
                 classDecl: classDecl,
+                ownerSymbol: ownerSymbol,
                 shared: shared,
                 compilationCtx: compilationCtx,
                 body: &body
@@ -261,6 +262,7 @@ extension KIRLoweringDriver {
 
     private func emitPrimaryConstructorPropertyInitializers(
         classDecl: ClassDecl,
+        ownerSymbol: SymbolID,
         shared: KIRLoweringSharedContext,
         compilationCtx _: CompilationContext,
         body: inout KIRLoweringEmitContext
@@ -286,6 +288,8 @@ extension KIRLoweringDriver {
             return
         }
 
+        let isDataClass = sema.symbols.symbol(ownerSymbol)?.flags.contains(.dataType) == true
+
         for (index, param) in classDecl.primaryConstructorParams.enumerated() {
             guard param.isProperty,
                   index < ctorSignature.valueParameterSymbols.count,
@@ -308,11 +312,26 @@ extension KIRLoweringDriver {
             let offsetExpr = arena.appendExpr(.intLiteral(Int64(fieldOffset)), type: sema.types.intType)
             body.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(fieldOffset))))
 
-            let unusedResult = arena.appendTemporary(type: sema.types.anyType)
+            var arguments = [receiverID, offsetExpr, parameterExpr]
+            let callee: InternedString
+            let resultType: TypeID
+            if isDataClass {
+                let tagValue = computeAnyFallbackTag(for: propertyType, sema: sema)
+                let tagExpr = arena.appendExpr(.intLiteral(tagValue), type: sema.types.intType)
+                body.append(.constValue(result: tagExpr, value: .intLiteral(tagValue)))
+                arguments.append(tagExpr)
+                callee = shared.interner.intern("kk_array_set_typed")
+                resultType = sema.types.intType
+            } else {
+                callee = shared.interner.intern("kk_array_set")
+                resultType = sema.types.anyType
+            }
+
+            let unusedResult = arena.appendTemporary(type: resultType)
             body.append(.call(
                 symbol: nil,
-                callee: shared.interner.intern("kk_array_set"),
-                arguments: [receiverID, offsetExpr, parameterExpr],
+                callee: callee,
+                arguments: arguments,
                 result: unusedResult,
                 canThrow: false,
                 thrownResult: nil,

@@ -1980,6 +1980,30 @@ public func kk_array_set(_ arrayRaw: Int, _ index: Int, _ value: Int, _ outThrow
     return value
 }
 
+/// Stores an object field together with its static Any-fallback type tag.
+/// Generated data-class constructors use this non-throwing entry point after
+/// the normal inbounds layout checks have been performed by lowering.
+@_cdecl("kk_array_set_typed")
+public func kk_array_set_typed(
+    _ arrayRaw: Int,
+    _ index: Int,
+    _ value: Int,
+    _ anyFallbackTag: Int
+) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw),
+          index >= 0,
+          index < array.count
+    else {
+        return 0
+    }
+    array.setValue(
+        value,
+        at: index,
+        anyFallbackTag: Int32(truncatingIfNeeded: anyFallbackTag)
+    )
+    return value
+}
+
 @_cdecl("kk_vararg_spread_concat")
 public func kk_vararg_spread_concat(_ pairsArrayRaw: Int, _ pairCount: Int) -> Int {
     guard let pairs = runtimeArrayBox(from: pairsArrayRaw),
