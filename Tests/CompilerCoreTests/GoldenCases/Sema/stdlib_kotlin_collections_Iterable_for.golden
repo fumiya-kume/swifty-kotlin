@@ -16,9 +16,9 @@ symbol fq=kotlin.Array kind=class vis=public flags=synthetic
 symbol fq=kotlin.IntArray#0 kind=class vis=public flags=synthetic
 symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Collection.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Iterator kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Map.Entry kind=interface vis=public flags=synthetic
 symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
@@ -64,7 +64,7 @@ expr e@30:5 name(sequence) type=kotlin.sequences.Sequence<Int> ref=golden.sema.r
 expr e@30:32 name(it) type=Int ref=s-6
 expr e@30:24 call callee=e@30:24#1 args=[_:e@30:32] type=Unit call=kotlin.io.println#1
 expr e@30:22 lambda params=[] body=e@30:24 label=forEach type=(Int) -> Unit
-expr e@30:5#1 memberCall recv=e@30:5 callee=forEach args=[_:e@30:22] type=Unit
+expr e@30:5#1 memberCall recv=e@30:5 callee=forEach args=[_:e@30:22] type=Unit call=kotlin.sequences.forEach targs=[Int]
 expr e@31:5 name(iterator) type=kotlin.collections.Iterator<Int> ref=golden.sema.receiverResolution.$2.iterator
 expr e@31:32 name(it) type=Int ref=s-7
 expr e@31:24 call callee=e@31:24#1 args=[_:e@31:32] type=Unit call=kotlin.io.println#1
