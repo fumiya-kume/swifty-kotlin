@@ -16,7 +16,8 @@ import kotlin.coroutines.CoroutineContext.Key
 // Constructors and members remain owned by their dedicated coroutine TODOs.
 public interface Continuation<in T>
 
-public interface ContinuationInterceptor : Element
+// ContinuationInterceptor already lives in ContinuationInterceptor/Stdlib.kt
+// (KSP-1140); redeclaring it here collides in the same package scope.
 
 public interface CoroutineContext
 
