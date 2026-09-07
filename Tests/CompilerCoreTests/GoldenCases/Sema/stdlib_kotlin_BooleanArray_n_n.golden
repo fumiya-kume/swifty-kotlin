@@ -1,0 +1,46 @@
+symbol fq=__local_0.sized kind=local vis=private flags=_ type=kotlin.BooleanArray
+symbol fq=__local_1.initialized kind=local vis=private flags=_ type=kotlin.BooleanArray
+symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=kotlin.BooleanArray#0 kind=class vis=public flags=synthetic
+file fstdlib_kotlin_BooleanArray_n_n package=golden.sema
+  decl golden.sema.main fun main sym=golden.sema.main
+expr e@4:30 int(3) type=Int
+expr e@4:17 call callee=e@4:17#1 args=[_:e@4:30] type=kotlin.BooleanArray
+expr e@4:5 localDecl sized mutable=0 type=_ init=e@4:17 type=Unit ref=__local_0.sized
+expr e@5:13 name(sized) type=kotlin.BooleanArray ref=__local_0.sized
+expr e@5:13#1 memberCall recv=e@5:13 callee=size args=[] type=Int call=kotlin.collections.size.$get#1
+expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13#1] type=Unit call=kotlin.io.println#1
+expr e@6:13 name(sized) type=kotlin.BooleanArray ref=__local_0.sized
+expr e@6:19 int(0) type=Int
+expr e@6:13#1 indexedAccess receiver=e@6:13 indices=[e@6:19] type=Boolean
+expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13#1] type=Unit call=kotlin.io.println#1
+expr e@8:36 int(4) type=Int
+expr e@8:41 name(it) type=Int ref=s-0
+expr e@8:46 int(2) type=Int
+expr e@8:41#1 binary(modulo) lhs=e@8:41 rhs=e@8:46 type=Int
+expr e@8:51 int(0) type=Int
+expr e@8:41#2 binary(equal) lhs=e@8:41#1 rhs=e@8:51 type=Boolean
+expr e@8:39 lambda params=[] body=e@8:41#2 label=BooleanArray type=(Int) -> Boolean
+expr e@8:23 call callee=e@8:23#1 args=[_:e@8:36,_:e@8:39] type=kotlin.BooleanArray call=kotlin.BooleanArray#1
+expr e@8:5 localDecl initialized mutable=0 type=_ init=e@8:23 type=Unit ref=__local_1.initialized
+expr e@9:13 name(initialized) type=kotlin.BooleanArray ref=__local_1.initialized
+expr e@9:13#1 memberCall recv=e@9:13 callee=size args=[] type=Int call=kotlin.collections.size.$get#1
+expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13#1] type=Unit call=kotlin.io.println#1
+expr e@10:13 name(initialized) type=kotlin.BooleanArray ref=__local_1.initialized
+expr e@10:25 int(0) type=Int
+expr e@10:13#1 indexedAccess receiver=e@10:13 indices=[e@10:25] type=Boolean
+expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13#1] type=Unit call=kotlin.io.println#1
+expr e@11:13 name(initialized) type=kotlin.BooleanArray ref=__local_1.initialized
+expr e@11:25 int(1) type=Int
+expr e@11:13#1 indexedAccess receiver=e@11:13 indices=[e@11:25] type=Boolean
+expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13#1] type=Unit call=kotlin.io.println#1
+expr e@12:13 name(initialized) type=kotlin.BooleanArray ref=__local_1.initialized
+expr e@12:25 int(3) type=Int
+expr e@12:13#1 indexedAccess receiver=e@12:13 indices=[e@12:25] type=Boolean
+expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13#1] type=Unit call=kotlin.io.println#1
+expr e@13:26 int(0) type=Int
+expr e@13:31 bool(true) type=Boolean
+expr e@13:29 lambda params=[] body=e@13:31 label=BooleanArray type=(Int) -> Boolean
+expr e@13:13 call callee=e@13:13#1 args=[_:e@13:26,_:e@13:29] type=kotlin.BooleanArray call=kotlin.BooleanArray#1
+expr e@13:13#2 memberCall recv=e@13:13 callee=size args=[] type=Int call=kotlin.collections.size.$get#1
+expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13#2] type=Unit call=kotlin.io.println#1

@@ -1,13 +1,12 @@
 symbol fq=__local_0.emptyMap kind=local vis=private flags=_ type=kotlin.collections.HashMap<String?, Int?>
 symbol fq=__local_1.map kind=local vis=private flags=_ type=kotlin.collections.MutableMap<String?, Int?>
 symbol fq=__local_2.spreadMap kind=local vis=private flags=_ type=kotlin.collections.MutableMap<String, Int>
-symbol fq=__local_3.emptySet kind=local vis=private flags=_ type=kotlin.collections.MutableSet<String?>
-symbol fq=__local_4.set kind=local vis=private flags=_ type=kotlin.collections.MutableSet<String?>
-symbol fq=__local_5.spreadSet kind=local vis=private flags=_ type=kotlin.collections.MutableSet<String>
+symbol fq=__local_3.emptySet kind=local vis=private flags=_ type=kotlin.collections.HashSet<String?>
+symbol fq=__local_4.set kind=local vis=private flags=_ type=kotlin.collections.HashSet<String?>
+symbol fq=__local_5.spreadSet kind=local vis=private flags=_ type=kotlin.collections.HashSet<String>
 symbol fq=kotlin.Array kind=class vis=public flags=synthetic
 symbol fq=kotlin.Pair kind=class vis=public flags=_
 symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableSet kind=interface vis=public flags=synthetic
 symbol fq=probe kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_collections_n_hash package=_
   decl probe fun probe sym=probe
@@ -30,17 +29,17 @@ expr e@4:53#1 memberCall recv=e@4:53 callee=to args=[_:e@4:60] type=kotlin.Pair<
 expr e@4:45 call callee=e@4:45#1 args=[_:e@4:53#1] type=kotlin.Array<kotlin.Pair<String, Int>> call=kotlin.arrayOf targs=[kotlin.Pair<String, Int>]
 expr e@4:21 call callee=e@4:21#1 args=[_:e@4:45] type=kotlin.collections.MutableMap<String, Int> call=kotlin.collections.hashMapOf#1 targs=[String,Int]
 expr e@4:5 localDecl spreadMap mutable=0 type=_ init=e@4:21 type=Unit ref=__local_2.spreadMap
-expr e@6:38 call callee=e@6:38#1 args=[] type=kotlin.collections.MutableSet<String?> call=kotlin.collections.hashSetOf#0 targs=[String?]
+expr e@6:38 call callee=e@6:38#1 args=[] type=kotlin.collections.HashSet<String?> call=kotlin.collections.hashSetOf#0 targs=[String?]
 expr e@6:5 localDecl emptySet mutable=0 type=HashSet<String?> init=e@6:38 type=Unit ref=__local_3.emptySet
 expr e@7:25 name(null) type=Nothing?
 expr e@7:31 name(null) type=Nothing?
 expr e@7:37 string(x) type=String
-expr e@7:15 call callee=e@7:15#1 args=[_:e@7:25,_:e@7:31,_:e@7:37] type=kotlin.collections.MutableSet<String?> call=kotlin.collections.hashSetOf#1 targs=[String?]
+expr e@7:15 call callee=e@7:15#1 args=[_:e@7:25,_:e@7:31,_:e@7:37] type=kotlin.collections.HashSet<String?> call=kotlin.collections.hashSetOf#1 targs=[String?]
 expr e@7:5 localDecl set mutable=0 type=_ init=e@7:15 type=Unit ref=__local_4.set
 expr e@8:48 string(y) type=String
 expr e@8:53 string(y) type=String
 expr e@8:40 call callee=e@8:40#1 args=[_:e@8:48,_:e@8:53] type=kotlin.Array<String> call=kotlin.arrayOf targs=[String]
-expr e@8:21 call callee=e@8:21#1 args=[_:e@8:40] type=kotlin.collections.MutableSet<String> call=kotlin.collections.hashSetOf#1 targs=[String]
+expr e@8:21 call callee=e@8:21#1 args=[_:e@8:40] type=kotlin.collections.HashSet<String> call=kotlin.collections.hashSetOf#1 targs=[String]
 expr e@8:5 localDecl spreadSet mutable=0 type=_ init=e@8:21 type=Unit ref=__local_5.spreadSet
 expr e@10:13 name(emptyMap) type=kotlin.collections.HashMap<String?, Int?> ref=__local_0.emptyMap
 expr e@10:13#1 memberCall recv=e@10:13 callee=size args=[] type=Int
@@ -51,12 +50,12 @@ expr e@10:40 name(spreadMap) type=kotlin.collections.MutableMap<String, Int> ref
 expr e@10:40#1 memberCall recv=e@10:40 callee=size args=[] type=Int
 expr e@10:13#3 binary(add) lhs=e@10:13#2 rhs=e@10:40#1 type=Int
 expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13#3] type=Unit call=kotlin.io.println#1
-expr e@11:13 name(emptySet) type=kotlin.collections.MutableSet<String?> ref=__local_3.emptySet
-expr e@11:13#1 memberCall recv=e@11:13 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
-expr e@11:29 name(set) type=kotlin.collections.MutableSet<String?> ref=__local_4.set
-expr e@11:29#1 memberCall recv=e@11:29 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@11:13 name(emptySet) type=kotlin.collections.HashSet<String?> ref=__local_3.emptySet
+expr e@11:13#1 memberCall recv=e@11:13 callee=size args=[] type=Int ref=kotlin.collections.AbstractMutableSet.size
+expr e@11:29 name(set) type=kotlin.collections.HashSet<String?> ref=__local_4.set
+expr e@11:29#1 memberCall recv=e@11:29 callee=size args=[] type=Int ref=kotlin.collections.AbstractMutableSet.size
 expr e@11:13#2 binary(add) lhs=e@11:13#1 rhs=e@11:29#1 type=Int
-expr e@11:40 name(spreadSet) type=kotlin.collections.MutableSet<String> ref=__local_5.spreadSet
-expr e@11:40#1 memberCall recv=e@11:40 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@11:40 name(spreadSet) type=kotlin.collections.HashSet<String> ref=__local_5.spreadSet
+expr e@11:40#1 memberCall recv=e@11:40 callee=size args=[] type=Int ref=kotlin.collections.AbstractMutableSet.size
 expr e@11:13#3 binary(add) lhs=e@11:13#2 rhs=e@11:40#1 type=Int
 expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13#3] type=Unit call=kotlin.io.println#1

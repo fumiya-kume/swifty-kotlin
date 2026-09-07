@@ -14,6 +14,10 @@ struct CodegenBackendCollectionListOfNotNullTests {
         fun maybeString(value: String?): String? = value
 
         fun main() {
+            val empty = listOfNotNull<Int>()
+            println(empty)
+            println(empty.size)
+
             val ints = listOfNotNull(maybeInt(1), maybeInt(-1), 2)
             println(ints)
             println(ints.size)
@@ -24,7 +28,7 @@ struct CodegenBackendCollectionListOfNotNullTests {
         }
         """
 
-        try assertKotlinOutput(source, moduleName: "CollectionListOfNotNull", expected: "[1, 2]\n2\n[alpha, beta]\n2\n")
+        try assertKotlinOutput(source, moduleName: "CollectionListOfNotNull", expected: "[]\n0\n[1, 2]\n2\n[alpha, beta]\n2\n")
     }
 }
 #endif
