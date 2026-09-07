@@ -163,9 +163,10 @@
 
 > INLINE-001 → 002 → 003 → 004 → 005 → 006 → 007 → 008 → 009 → 010 → 011 → 012を基本のマージ順とする。002〜009は `InlineLoweringPass.swift` を共有するため、個別の小PRとして順次マージする。抽出時に展開順序・ラベル採番・ABI・例外処理を変えず、固定回数の撤廃は安全な停止条件を用意した010後に行う。
 
-- [ ] RF-LOWER-INLINE-001: Inlineの抽出前契約を既存回帰テストで固定する（前提: なし）
+- [~] RF-LOWER-INLINE-001: Inlineの抽出前契約を既存回帰テストで固定する（前提: なし）
   - 対象: Inline関連Core / Backend suitesの不足分のみ。nested inline、同名別symbol、imported inline、捕捉lambda、reified、non-local return、try/catch/finally、virtual / super call、ラベル重複の検証先を対応付ける。
   - 完了条件: KIR call metadata・型・制御フローと実行結果・決定性を検証でき、巨大suiteの一括移動なしで後続の抽出PRを評価できる。長い依存鎖・循環・展開量制限の仕様変更は010以降で扱う。
+  - 2026-09-08 実装: 検証先を `docs/rf-lower-inline-contracts.md` に対応付け、Coreの4テスト（call metadataは通常/ラムダの2ケース）とBackend fixture2件を追加した。inline/ラムダ展開のcall複製で落ちていた `qualifiedSuperType` を保持し、実Kotlinソースの `super<Left>` もKIRで固定する。追加Core4テスト（metadataは2ケース）・既存Backend関連102テスト・Backend fixture suiteはPASS。base `a72cc373f8` の実装でmetadata検証3箇所がFAILし、修正後PASSすることを確認。新fixture2件のKotlin 2.3.10差分はbase/修正後ともPASS。Runtime全2451テストは直列実行でPASS（既知issue 1件）。共通RFゲートは検証中のため未完了。
 - [ ] RF-LOWER-INLINE-002: ラベル走査・再配置と採番状態を分離する（前提: INLINE-001）
   - 対象: `nextAvailableLabel` / `remapLabels` / `inlineLabelCounter` の責務、既存 `KIR/KIRLabelRelocation.swift` の再利用可能部分。現在の採番規則を保つ関数単位の状態境界を作る。
   - 完了条件: `.label` / 各jumpの全参照が同じ規則で移され、caller・lambda・tailrec由来のラベルと衝突しない。既存helperと異なる採番規則を無条件に統合せず、KIR/LLVM IR不変性を確認する。
