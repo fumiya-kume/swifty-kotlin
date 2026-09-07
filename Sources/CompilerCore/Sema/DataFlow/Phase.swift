@@ -170,6 +170,15 @@ final class DataFlowSemaPhase: CompilerPhase {
             predeclared: predeclaredEarlyHeaders
         )
         BundledSyntheticStubRegistration.bundledIndex = previousBundledIndex
+        // KSP-1332: the source declaration spells this as List<KTypeProjection>,
+        // while the compiler's residual List model represents covariant uses
+        // with an explicit out projection. Reapply that existing KType contract
+        // after source collection has claimed the old synthetic anchor.
+        patchKTypeArgumentsType(
+            symbols: symbols,
+            types: types,
+            interner: ctx.interner
+        )
         initializeSourceBackedCloseableTypes(
             symbols: symbols,
             types: types,

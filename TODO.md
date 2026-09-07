@@ -3924,7 +3924,7 @@
     - `kotlin.reflect.KClass.equals` — fun KClass.equals(Any): Boolean  -- `abstract fun equals(kotlin/Any?): kotlin/Boolean`
     - `kotlin.reflect.KClass.hashCode` — fun KClass.hashCode(): Int  -- `abstract fun hashCode(): kotlin/Int`
 
-- [ ] KSP-1332: kotlin.reflect.KType.KType の未実装 stdlib API を実装する（3 件）
+- [x] KSP-1332: kotlin.reflect.KType.KType の未実装 stdlib API を実装する（3 件）
   - 対象: `kotlin.reflect.KType` / receiver `KType`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/reflect/KType/KType.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
