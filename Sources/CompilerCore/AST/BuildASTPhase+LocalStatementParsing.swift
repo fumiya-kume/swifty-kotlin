@@ -188,6 +188,16 @@ extension BuildASTPhase {
             case let .backtickedIdentifier(name):
                 names.append(name)
                 idx += 1
+            case let .keyword(keyword):
+                // Contextual keywords like `value` (used in `value class`) are
+                // valid identifiers here, mirroring `internedIdentifier(from:)`.
+                names.append(interner.intern(keyword.rawValue))
+                idx += 1
+            case let .softKeyword(soft):
+                // Soft keywords like `field`/`get`/`set` are valid identifiers
+                // here, mirroring `internedIdentifier(from:)`.
+                names.append(interner.intern(soft.rawValue))
+                idx += 1
             default:
                 // Skip type annotations (`: Type`) after variable names
                 if token.kind == .symbol(.colon) {

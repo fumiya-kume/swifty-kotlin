@@ -473,10 +473,6 @@ public extension RuntimeABISpec {
             p("n", .intptr),
             p("outThrown", .nullableIntptrPointer),
         ]),
-        abiParitySpec("kk_map_entry_to_pair", parameters: [
-            p("entryRaw", .intptr),
-        ],
-            isThrowing: false),
         // KSP-486: MatchResult iteration / destructuring bridges
         abiParitySpec("__kk_match_result_next", parameters: [
             p("matchRaw", .intptr),

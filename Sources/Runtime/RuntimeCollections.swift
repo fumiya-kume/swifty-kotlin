@@ -169,6 +169,9 @@ public func kk_list_iterator(_ listRaw: Int) -> Int {
         return raw
     }
     if let set = runtimeSetBox(from: listRaw) {
+        // `Set`/`MutableSet` have no `listIterator()`, so this box is only ever
+        // exposed through `Iterator`/`MutableIterator` — no `setAction`/`addAction`
+        // needed here, unlike the `list` branch above.
         let raw = registerRuntimeObject(
             RuntimeListIteratorBox(
                 elements: set.elements,
@@ -267,6 +270,7 @@ public func kk_list_iterator_next(_ iterRaw: Int) -> Int {
         return 0
     }
     let value = iter.elements[iter.index]
+    iter.lastReturnedIndex = iter.index
     iter.index += 1
     return value
 }
@@ -323,6 +327,7 @@ public func kk_list_iterator_previous(_ iterRaw: Int) -> Int {
     // Always decrement index and return the element at the new position
     // This matches the standard ListIterator behavior
     iter.index -= 1
+    iter.lastReturnedIndex = iter.index
     return iter.elements[iter.index]
 }
 

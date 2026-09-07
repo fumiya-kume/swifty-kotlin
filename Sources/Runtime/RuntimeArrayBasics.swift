@@ -123,19 +123,6 @@ public func component2(_ pairRaw: Int) -> Int {
     kk_pair_second(pairRaw)
 }
 
-@_cdecl("kk_map_entry_to_pair")
-public func kk_map_entry_to_pair(_ entryRaw: Int) -> Int {
-    if entryRaw == runtimeNullSentinelInt {
-        return runtimeNullSentinelInt
-    }
-    guard let pointer = UnsafeMutableRawPointer(bitPattern: entryRaw),
-          let pairBox = tryCast(pointer, to: RuntimePairBox.self)
-    else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Map.Entry handle in kk_map_entry_to_pair")
-    }
-    return runtimePairNew(firstValue: pairBox.firstValue, secondValue: pairBox.secondValue)
-}
-
 // MARK: - Triple Functions (STDLIB-120)
 
 @_cdecl("__kk_triple_new")
