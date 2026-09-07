@@ -1,0 +1,53 @@
+symbol fq=__local_0.client kind=local vis=private flags=_ type=golden.sema.NetworkClient
+symbol fq=__local_1.checkedClient kind=local vis=private flags=_ type=golden.sema.NetworkClient
+symbol fq=__local_2.timeout kind=local vis=private flags=_ type=Int
+symbol fq=__local_3.checkedTimeout kind=local vis=private flags=_ type=Int
+symbol fq=__local_4.file kind=local vis=private flags=_ type=golden.sema.FileManager
+symbol fq=__local_5.checkedFile kind=local vis=private flags=_ type=golden.sema.FileManager
+symbol fq=__local_6.max kind=local vis=private flags=_ type=Int
+symbol fq=__local_7.checkedMax kind=local vis=private flags=_ type=Int
+symbol fq=golden.sema.FileManager kind=class vis=public flags=_
+symbol fq=golden.sema.FileManager.<init> kind=constructor vis=public flags=_ sig=recv=golden.sema.FileManager params=[] ret=golden.sema.FileManager
+symbol fq=golden.sema.FileManager.Factory kind=object vis=public flags=_
+symbol fq=golden.sema.NetworkClient kind=class vis=public flags=_
+symbol fq=golden.sema.NetworkClient.<init> kind=constructor vis=public flags=_ sig=recv=golden.sema.NetworkClient params=[] ret=golden.sema.NetworkClient
+symbol fq=golden.sema.NetworkClient.Companion kind=object vis=public flags=_
+symbol fq=golden.sema.createDefault kind=function vis=public flags=_ sig=recv=golden.sema.NetworkClient.Companion params=[] ret=golden.sema.NetworkClient
+symbol fq=golden.sema.createFile kind=function vis=public flags=_ sig=recv=golden.sema.FileManager.Factory params=[] ret=golden.sema.FileManager
+symbol fq=golden.sema.defaultTimeout kind=property vis=public flags=_ type=Int
+symbol fq=golden.sema.defaultTimeout.$get kind=function vis=public flags=synthetic sig=recv=golden.sema.NetworkClient.Companion params=[] ret=Int
+symbol fq=golden.sema.maxFiles kind=property vis=public flags=_ type=Int
+symbol fq=golden.sema.maxFiles.$get kind=function vis=public flags=synthetic sig=recv=golden.sema.FileManager.Factory params=[] ret=Int
+symbol fq=golden.sema.useExtensions kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+file fcompanion_extensions package=golden.sema
+  decl golden.sema.NetworkClient class NetworkClient sym=golden.sema.NetworkClient
+  decl golden.sema.createDefault fun createDefault sym=golden.sema.createDefault
+  decl golden.sema.defaultTimeout property defaultTimeout var=0 sym=golden.sema.defaultTimeout
+  decl golden.sema.FileManager class FileManager sym=golden.sema.FileManager
+  decl golden.sema.createFile fun createFile sym=golden.sema.createFile
+  decl golden.sema.maxFiles property maxFiles var=0 sym=golden.sema.maxFiles
+  decl golden.sema.useExtensions fun useExtensions sym=golden.sema.useExtensions
+expr e@10:62 call callee=e@10:62#1 args=[] type=golden.sema.NetworkClient call=golden.sema.NetworkClient.<init>
+expr e@11:57 int(30000) type=Int
+expr e@17:53 call callee=e@17:53#1 args=[] type=golden.sema.FileManager call=golden.sema.FileManager.<init>
+expr e@18:47 int(1000) type=Int
+expr e@21:18 name(NetworkClient) type=golden.sema.NetworkClient.Companion ref=golden.sema.NetworkClient
+expr e@21:18#1 memberCall recv=e@21:18 callee=createDefault args=[] type=golden.sema.NetworkClient call=golden.sema.createDefault
+expr e@21:5 localDecl client mutable=0 type=_ init=e@21:18#1 type=Unit ref=__local_0.client
+expr e@22:40 name(client) type=golden.sema.NetworkClient ref=__local_0.client
+expr e@22:5 localDecl checkedClient mutable=0 type=NetworkClient init=e@22:40 type=Unit ref=__local_1.checkedClient
+expr e@23:19 name(NetworkClient) type=golden.sema.NetworkClient.Companion ref=golden.sema.NetworkClient
+expr e@23:19#1 memberCall recv=e@23:19 callee=defaultTimeout args=[] type=Int call=golden.sema.defaultTimeout.$get
+expr e@23:5 localDecl timeout mutable=0 type=_ init=e@23:19#1 type=Unit ref=__local_2.timeout
+expr e@24:31 name(timeout) type=Int ref=__local_2.timeout
+expr e@24:5 localDecl checkedTimeout mutable=0 type=Int init=e@24:31 type=Unit ref=__local_3.checkedTimeout
+expr e@25:16 name(FileManager) type=golden.sema.FileManager.Factory ref=golden.sema.FileManager
+expr e@25:16#1 memberCall recv=e@25:16 callee=createFile args=[] type=golden.sema.FileManager call=golden.sema.createFile
+expr e@25:5 localDecl file mutable=0 type=_ init=e@25:16#1 type=Unit ref=__local_4.file
+expr e@26:36 name(file) type=golden.sema.FileManager ref=__local_4.file
+expr e@26:5 localDecl checkedFile mutable=0 type=FileManager init=e@26:36 type=Unit ref=__local_5.checkedFile
+expr e@27:15 name(FileManager) type=golden.sema.FileManager.Factory ref=golden.sema.FileManager
+expr e@27:15#1 memberCall recv=e@27:15 callee=maxFiles args=[] type=Int call=golden.sema.maxFiles.$get
+expr e@27:5 localDecl max mutable=0 type=_ init=e@27:15#1 type=Unit ref=__local_6.max
+expr e@28:27 name(max) type=Int ref=__local_6.max
+expr e@28:5 localDecl checkedMax mutable=0 type=Int init=e@28:27 type=Unit ref=__local_7.checkedMax

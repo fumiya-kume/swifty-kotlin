@@ -1,4 +1,8 @@
-package golden.sema
+// Runtime coverage for companion private access that
+// companion_receiver_extension_function.kt does not reach: private
+// constructors invoked from companion factories, companion <-> instance
+// private member access in both directions, data-class private ctor, and
+// companion extension properties.
 
 class User private constructor(private val name: String, private val age: Int) {
     companion object {
@@ -58,10 +62,9 @@ data class Product private constructor(
     companion object {
         fun createBasicProduct(name: String): Product = Product("basic-$name", name, 0.0)
         fun createPremiumProduct(name: String, price: Double): Product = Product("premium-$name", name, price)
-        fun fromCatalog(id: String, name: String, price: Double): Product = Product(id, name, price)
     }
 
-    fun getDescription(): String = "$name ($$price) - ID: $id"
+    fun getDescription(): String = "$name (${'$'}$price) - ID: $id"
 }
 
 class EmailAddress private constructor(private val address: String) {
@@ -98,27 +101,18 @@ class NetworkClient {
     companion object
 }
 
-fun NetworkClient.Companion.createDefault(): NetworkClient = NetworkClient()
-fun NetworkClient.Companion.createWithTimeout(timeout: Int): NetworkClient = NetworkClient()
+val NetworkClient.Companion.defaultTimeout: Int get() = 30000
 
 class FileManager {
     companion object Factory
 }
 
-fun FileManager.Factory.createFile(): FileManager = FileManager()
-fun FileManager.Factory.createReadOnly(): FileManager = FileManager()
-
-val NetworkClient.Companion.defaultTimeout: Int get() = 30000
 val FileManager.Factory.maxFiles: Int get() = 1000
 
 fun main() {
-    val adult = User.createAdult("Alice")
-    val child = User.createChild("Bob")
-    val custom = User.fromNameAndAge("Charlie", 25)
-
-    println(adult.getInfo())
-    println(child.getInfo())
-    println(custom.getInfo())
+    println(User.createAdult("Alice").getInfo())
+    println(User.createChild("Bob").getInfo())
+    println(User.fromNameAndAge("Charlie", 25).getInfo())
 
     val db = Database()
     println(Database.getConnection(db))
@@ -132,32 +126,17 @@ fun main() {
     println(logger.log("Test message"))
     println(logger.getTag())
 
-    val basic = Product.createBasicProduct("Widget")
-    val premium = Product.createPremiumProduct("Gadget", 99.99)
-    val catalog = Product.fromCatalog("P123", "Thingamajig", 49.95)
+    println(Product.createBasicProduct("Widget").getDescription())
+    println(Product.createPremiumProduct("Gadget", 99.99).getDescription())
 
-    println(basic.getDescription())
-    println(premium.getDescription())
-    println(catalog.getDescription())
-
-    val validEmail = EmailAddress.create("test@example.com")
-    val invalidEmail = EmailAddress.create("invalid-email")
-
-    println(validEmail?.toString())
-    println(invalidEmail?.toString())
+    println(EmailAddress.create("test@example.com")?.toString())
+    println(EmailAddress.create("invalid-email")?.toString())
 
     val outer = OuterClass()
     println(OuterClass.getOuterSecret(outer))
     println(OuterClass.getCompanionSecret())
     println(outer.getCompanionSecretFromOuter())
 
-    val client1 = NetworkClient.createDefault()
-    val client2 = NetworkClient.createWithTimeout(5000)
-
     println("Default timeout: ${NetworkClient.defaultTimeout}")
-
-    val file1 = FileManager.createFile()
-    val file2 = FileManager.createReadOnly()
-
     println("Max files: ${FileManager.maxFiles}")
 }
