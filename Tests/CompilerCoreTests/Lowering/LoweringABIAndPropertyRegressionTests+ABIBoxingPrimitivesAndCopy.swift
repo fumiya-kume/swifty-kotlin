@@ -114,5 +114,49 @@ extension LoweringABIAndPropertyRegressionTests {
         let callees = extractCallees(from: lowered.body, interner: interner)
         #expect(callees.contains("kk_box_int"), "Expected kk_box_int for copy Int -> Int?, got: \(callees)")
     }
+
+    @Test
+    func testABILoweringKeepsNarrowedIntAssignmentsRaw() throws {
+        let source = """
+        fun checksum(value: Int): Int {
+            var result = value
+            result += 2991
+            result++
+            return result
+        }
+        fun nullableResult(value: Int): Int? {
+            var result: Int? = null
+            result = value + 1
+            return result
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "NarrowedIntCopy", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            #expect(!ctx.diagnostics.hasError)
+
+            let module = try #require(ctx.kir)
+            let body = try findKIRFunctionBody(named: "checksum", in: module, interner: ctx.interner)
+            let narrowedResults = Set(body.compactMap { instruction -> KIRExprID? in
+                guard case let .call(_, callee, _, result, _, _, _, _) = instruction,
+                      ctx.interner.resolve(callee) == "kk_int_narrow" else { return nil }
+                return result
+            })
+            #expect(narrowedResults.count >= 2)
+            for instruction in body {
+                guard case let .call(_, callee, arguments, _, _, _, _, _) = instruction,
+                      ctx.interner.resolve(callee) == "kk_unbox_int" else { continue }
+                // A raw integer can coincide with a live box address on Linux.
+                #expect(arguments.allSatisfy { !narrowedResults.contains($0) },
+                        "Narrowed arithmetic results must remain raw when assigned to Int locals")
+            }
+
+            let nullableBody = try findKIRFunctionBody(named: "nullableResult", in: module, interner: ctx.interner)
+            #expect(extractCallees(from: nullableBody, interner: ctx.interner).contains("kk_box_int"),
+                    "Assignments to nullable Int locals must still box their arithmetic result")
+        }
+    }
+
 }
 #endif

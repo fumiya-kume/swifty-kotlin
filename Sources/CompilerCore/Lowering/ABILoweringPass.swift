@@ -23,6 +23,7 @@ final class ABILoweringPass: LoweringPass, ParallelLoweringPass {
     func run(module: KIRModule, ctx: KIRContext) throws {
         let nonThrowingCalleeSet = nonThrowingCallees(interner: ctx.interner)
         let boxingCalleeTable = BoxingCalleeTable(interner: ctx.interner)
+        let intNarrowingCallee = ctx.interner.intern("kk_int_narrow")
 
         let types = ctx.sema?.types
         let symbols = ctx.sema?.symbols
@@ -295,6 +296,22 @@ final class ABILoweringPass: LoweringPass, ParallelLoweringPass {
                     continue
                 }
                 if case .returnValue = instruction {
+                    newBody.append(instruction)
+                    idx += 1
+                    continue
+                }
+
+                // Narrowing produces a raw Int. Unboxing it again can mistake a
+                // positive arithmetic result for a live box address on non-PIE Linux.
+                // Require the adjacent producer and non-null Int types on both sides;
+                // copies into nullable or erased slots still need the normal boxing.
+                if case let .copy(from, to) = instruction, idx > 0,
+                   case let .call(_, callee, _, result, _, _, _, _) = function.body[idx - 1],
+                   callee == intNarrowingCallee, result == from,
+                   let types,
+                   module.arena.exprType(from) == types.intType,
+                   module.arena.exprType(to) == types.intType
+                {
                     newBody.append(instruction)
                     idx += 1
                     continue
