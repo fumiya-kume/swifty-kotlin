@@ -20,9 +20,15 @@
 
 `Scripts/swift_test.sh` wraps `swift test` with parallel execution enabled by default.
 
-- Tune workers: `SWIFT_TEST_WORKERS=4 bash Scripts/swift_test.sh`
+- Tune XCTest and Swift Testing workers (including Golden): `SWIFT_TEST_WORKERS=4 bash Scripts/swift_test.sh`
 - Tune build jobs: `SWIFT_TEST_BUILD_JOBS=4 bash Scripts/swift_test.sh`
 - Disable parallel mode: `SWIFT_TEST_PARALLEL=0 bash Scripts/swift_test.sh`
+
+`SWIFT_TEST_WORKERS` must be a positive integer. Explicit Swift Testing
+`--experimental-maximum-parallelization-width` or
+`SWT_EXPERIMENTAL_MAXIMUM_PARALLELIZATION_WIDTH` settings take precedence for
+Swift Testing. Without a worker override, the runner keeps its default width.
+Limiting workers reduces concurrent CPU load; it does not skip test cases.
 
 If a run crashes with a signal (e.g. `*** Signal 11: ...` / `exited with
 unexpected signal code`) and no per-test failure line was parsed, the whole

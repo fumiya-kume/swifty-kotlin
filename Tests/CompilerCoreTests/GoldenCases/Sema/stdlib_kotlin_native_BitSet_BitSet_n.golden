@@ -1,0 +1,201 @@
+symbol fq=__local_0.bits kind=local vis=private flags=_ type=kotlin.native.BitSet
+symbol fq=__local_1.other kind=local vis=private flags=_ type=kotlin.native.BitSet
+symbol fq=__local_2.indexed kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_3.nextSet kind=local vis=private flags=_ type=Int
+symbol fq=__local_4.nextSetFrom kind=local vis=private flags=_ type=Int
+symbol fq=__local_5.nextClear kind=local vis=private flags=_ type=Int
+symbol fq=__local_6.nextClearFrom kind=local vis=private flags=_ type=Int
+symbol fq=__local_7.previousSet kind=local vis=private flags=_ type=Int
+symbol fq=__local_8.previousClear kind=local vis=private flags=_ type=Int
+symbol fq=__local_9.previous kind=local vis=private flags=_ type=Int
+symbol fq=__local_10.last kind=local vis=private flags=_ type=Int
+symbol fq=__local_11.empty kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_12.size kind=local vis=private flags=_ type=Int
+symbol fq=__local_13.rendered kind=local vis=private flags=_ type=String
+symbol fq=__local_14.hash kind=local vis=private flags=_ type=Int
+symbol fq=__local_15.intersects kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_16.equal kind=local vis=private flags=_ type=Boolean
+symbol fq=golden.sema.bitSetMembers kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=kotlin.ranges.IntRange kind=class vis=public flags=synthetic
+file fstdlib_kotlin_native_BitSet_BitSet_n package=golden.sema annotations=[@file:OptIn(kotlin.native.ObsoleteNativeApi::class)]
+  decl golden.sema.bitSetMembers fun bitSetMembers sym=golden.sema.bitSetMembers
+expr e@8:23 int(2) type=Int
+expr e@8:16 call callee=e@8:16#1 args=[_:e@8:23] type=kotlin.native.BitSet call=kotlin.native.BitSet.<init>#0
+expr e@8:5 localDecl bits mutable=0 type=_ init=e@8:16 type=Unit ref=__local_0.bits
+expr e@9:24 int(130) type=Int
+expr e@9:17 call callee=e@9:17#1 args=[_:e@9:24] type=kotlin.native.BitSet call=kotlin.native.BitSet.<init>#0
+expr e@9:5 localDecl other mutable=0 type=_ init=e@9:17 type=Unit ref=__local_1.other
+expr e@11:5 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@11:14 int(1) type=Int
+expr e@11:5#1 memberCall recv=e@11:5 callee=set args=[_:e@11:14] type=Unit call=kotlin.native.BitSet.set#0
+expr e@12:5 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@12:14 int(2) type=Int
+expr e@12:17 int(5) type=Int
+expr e@12:5#1 memberCall recv=e@12:5 callee=set args=[_:e@12:14,_:e@12:17] type=Unit call=kotlin.native.BitSet.set#1
+expr e@13:5 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@13:14 int(0) type=Int
+expr e@13:17 int(1) type=Int
+expr e@13:14#1 binary(rangeTo) lhs=e@13:14 rhs=e@13:17 type=Int
+expr e@13:20 bool(false) type=Boolean
+expr e@13:5#1 memberCall recv=e@13:5 callee=set args=[_:e@13:14#1,_:e@13:20] type=Unit call=kotlin.native.BitSet.set#2
+expr e@14:5 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@14:14 int(10) type=Int
+expr e@14:18 int(12) type=Int
+expr e@14:22 bool(false) type=Boolean
+expr e@14:5#1 memberCall recv=e@14:5 callee=set args=[_:e@14:14,_:e@14:18,_:e@14:22] type=Unit call=kotlin.native.BitSet.set#1
+expr e@15:5 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@15:15 int(4) type=Int
+expr e@15:5#1 memberCall recv=e@15:5 callee=flip args=[_:e@15:15] type=Unit call=kotlin.native.BitSet.flip#0
+expr e@16:5 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@16:15 int(5) type=Int
+expr e@16:18 int(7) type=Int
+expr e@16:5#1 memberCall recv=e@16:5 callee=flip args=[_:e@16:15,_:e@16:18] type=Unit call=kotlin.native.BitSet.flip#1
+expr e@17:5 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@17:15 int(8) type=Int
+expr e@17:18 int(9) type=Int
+expr e@17:15#1 binary(rangeTo) lhs=e@17:15 rhs=e@17:18 type=Int
+expr e@17:5#1 memberCall recv=e@17:5 callee=flip args=[_:e@17:15#1] type=Unit call=kotlin.native.BitSet.flip#2
+expr e@18:19 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@18:24 int(4) type=Int
+expr e@18:19#1 indexedAccess receiver=e@18:19 indices=[e@18:24] type=Boolean call=kotlin.native.BitSet.get
+expr e@18:5 localDecl indexed mutable=0 type=_ init=e@18:19#1 type=Unit ref=__local_2.indexed
+expr e@19:19 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@19:19#1 memberCall recv=e@19:19 callee=nextSetBit args=[] type=Int call=kotlin.native.BitSet.nextSetBit
+expr e@19:5 localDecl nextSet mutable=0 type=_ init=e@19:19#1 type=Unit ref=__local_3.nextSet
+expr e@20:23 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@20:39 int(5) type=Int
+expr e@20:23#1 memberCall recv=e@20:23 callee=nextSetBit args=[_:e@20:39] type=Int call=kotlin.native.BitSet.nextSetBit
+expr e@20:5 localDecl nextSetFrom mutable=0 type=_ init=e@20:23#1 type=Unit ref=__local_4.nextSetFrom
+expr e@21:21 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@21:21#1 memberCall recv=e@21:21 callee=nextClearBit args=[] type=Int call=kotlin.native.BitSet.nextClearBit
+expr e@21:5 localDecl nextClear mutable=0 type=_ init=e@21:21#1 type=Unit ref=__local_5.nextClear
+expr e@22:25 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@22:43 int(5) type=Int
+expr e@22:25#1 memberCall recv=e@22:25 callee=nextClearBit args=[_:e@22:43] type=Int call=kotlin.native.BitSet.nextClearBit
+expr e@22:5 localDecl nextClearFrom mutable=0 type=_ init=e@22:25#1 type=Unit ref=__local_6.nextClearFrom
+expr e@23:23 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@23:43 int(20) type=Int
+expr e@23:23#1 memberCall recv=e@23:23 callee=previousSetBit args=[_:e@23:43] type=Int call=kotlin.native.BitSet.previousSetBit
+expr e@23:5 localDecl previousSet mutable=0 type=_ init=e@23:23#1 type=Unit ref=__local_7.previousSet
+expr e@24:25 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@24:47 int(4) type=Int
+expr e@24:25#1 memberCall recv=e@24:25 callee=previousClearBit args=[_:e@24:47] type=Int call=kotlin.native.BitSet.previousClearBit
+expr e@24:5 localDecl previousClear mutable=0 type=_ init=e@24:25#1 type=Unit ref=__local_8.previousClear
+expr e@25:20 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@25:37 int(20) type=Int
+expr e@25:41 bool(true) type=Boolean
+expr e@25:20#1 memberCall recv=e@25:20 callee=previousBit args=[_:e@25:37,_:e@25:41] type=Int call=kotlin.native.BitSet.previousBit
+expr e@25:5 localDecl previous mutable=0 type=_ init=e@25:20#1 type=Unit ref=__local_9.previous
+expr e@26:16 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@26:16#1 memberCall recv=e@26:16 callee=lastTrueIndex args=[] type=Int ref=kotlin.native.BitSet.lastTrueIndex
+expr e@26:5 localDecl last mutable=0 type=_ init=e@26:16#1 type=Unit ref=__local_10.last
+expr e@27:17 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@27:17#1 memberCall recv=e@27:17 callee=isEmpty args=[] type=Boolean ref=kotlin.native.BitSet.isEmpty
+expr e@27:5 localDecl empty mutable=0 type=_ init=e@27:17#1 type=Unit ref=__local_11.empty
+expr e@28:16 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@28:16#1 memberCall recv=e@28:16 callee=size args=[] type=Int ref=kotlin.native.BitSet.size
+expr e@28:5 localDecl size mutable=0 type=_ init=e@28:16#1 type=Unit ref=__local_12.size
+expr e@29:20 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@29:20#1 memberCall recv=e@29:20 callee=toString args=[] type=String call=kotlin.native.BitSet.toString
+expr e@29:5 localDecl rendered mutable=0 type=_ init=e@29:20#1 type=Unit ref=__local_13.rendered
+expr e@30:16 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@30:16#1 memberCall recv=e@30:16 callee=hashCode args=[] type=Int call=kotlin.native.BitSet.hashCode
+expr e@30:5 localDecl hash mutable=0 type=_ init=e@30:16#1 type=Unit ref=__local_14.hash
+expr e@32:5 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@32:16 int(4) type=Int
+expr e@32:5#1 memberCall recv=e@32:5 callee=clear args=[_:e@32:16] type=Unit call=kotlin.native.BitSet.clear#1
+expr e@33:5 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@33:16 int(5) type=Int
+expr e@33:19 int(7) type=Int
+expr e@33:5#1 memberCall recv=e@33:5 callee=clear args=[_:e@33:16,_:e@33:19] type=Unit call=kotlin.native.BitSet.clear#2
+expr e@34:5 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@34:16 int(8) type=Int
+expr e@34:19 int(9) type=Int
+expr e@34:16#1 binary(rangeTo) lhs=e@34:16 rhs=e@34:19 type=Int
+expr e@34:5#1 memberCall recv=e@34:5 callee=clear args=[_:e@34:16#1] type=Unit call=kotlin.native.BitSet.clear#3
+expr e@35:5 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@35:16 int(0) type=Int
+expr e@35:19 int(1) type=Int
+expr e@35:5#1 memberCall recv=e@35:5 callee=clear args=[_:e@35:16,_:e@35:19] type=Unit call=kotlin.native.BitSet.clear#2
+expr e@36:5 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@36:5#1 memberCall recv=e@36:5 callee=clear args=[] type=Unit call=kotlin.native.BitSet.clear#0
+expr e@37:5 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@37:14 name(other) type=kotlin.native.BitSet ref=__local_1.other
+expr e@37:5#1 memberCall recv=e@37:5 callee=and args=[_:e@37:14] type=Unit call=kotlin.native.BitSet.and
+expr e@38:5 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@38:13 name(other) type=kotlin.native.BitSet ref=__local_1.other
+expr e@38:5#1 memberCall recv=e@38:5 callee=or args=[_:e@38:13] type=Unit call=kotlin.native.BitSet.or
+expr e@39:5 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@39:14 name(other) type=kotlin.native.BitSet ref=__local_1.other
+expr e@39:5#1 memberCall recv=e@39:5 callee=xor args=[_:e@39:14] type=Unit call=kotlin.native.BitSet.xor
+expr e@40:5 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@40:17 name(other) type=kotlin.native.BitSet ref=__local_1.other
+expr e@40:5#1 memberCall recv=e@40:5 callee=andNot args=[_:e@40:17] type=Unit call=kotlin.native.BitSet.andNot
+expr e@41:22 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@41:38 name(other) type=kotlin.native.BitSet ref=__local_1.other
+expr e@41:22#1 memberCall recv=e@41:22 callee=intersects args=[_:e@41:38] type=Boolean call=kotlin.native.BitSet.intersects
+expr e@41:5 localDecl intersects mutable=0 type=_ init=e@41:22#1 type=Unit ref=__local_15.intersects
+expr e@42:17 name(bits) type=kotlin.native.BitSet ref=__local_0.bits
+expr e@42:29 name(other) type=kotlin.native.BitSet ref=__local_1.other
+expr e@42:17#1 memberCall recv=e@42:17 callee=equals args=[_:e@42:29] type=Boolean call=kotlin.native.BitSet.equals
+expr e@42:5 localDecl equal mutable=0 type=_ init=e@42:17#1 type=Unit ref=__local_16.equal
+expr e@45:9 name(indexed) type=Boolean ref=__local_2.indexed
+expr e@46:9 name(nextSet) type=Int ref=__local_3.nextSet
+expr e@46:20 int(4) type=Int
+expr e@46:9#1 binary(equal) lhs=e@46:9 rhs=e@46:20 type=Boolean
+expr e@45:9#1 binary(logicalAnd) lhs=e@45:9 rhs=e@46:9#1 type=Boolean
+expr e@47:9 name(nextSetFrom) type=Int ref=__local_4.nextSetFrom
+expr e@47:24 int(5) type=Int
+expr e@47:9#1 binary(equal) lhs=e@47:9 rhs=e@47:24 type=Boolean
+expr e@45:9#2 binary(logicalAnd) lhs=e@45:9#1 rhs=e@47:9#1 type=Boolean
+expr e@48:9 name(nextClear) type=Int ref=__local_5.nextClear
+expr e@48:22 int(0) type=Int
+expr e@48:9#1 binary(equal) lhs=e@48:9 rhs=e@48:22 type=Boolean
+expr e@45:9#3 binary(logicalAnd) lhs=e@45:9#2 rhs=e@48:9#1 type=Boolean
+expr e@49:9 name(nextClearFrom) type=Int ref=__local_6.nextClearFrom
+expr e@49:26 int(5) type=Int
+expr e@49:9#1 binary(equal) lhs=e@49:9 rhs=e@49:26 type=Boolean
+expr e@45:9#4 binary(logicalAnd) lhs=e@45:9#3 rhs=e@49:9#1 type=Boolean
+expr e@50:9 name(previousSet) type=Int ref=__local_7.previousSet
+expr e@50:24 int(9) type=Int
+expr e@50:9#1 binary(equal) lhs=e@50:9 rhs=e@50:24 type=Boolean
+expr e@45:9#5 binary(logicalAnd) lhs=e@45:9#4 rhs=e@50:9#1 type=Boolean
+expr e@51:9 name(previousClear) type=Int ref=__local_8.previousClear
+expr e@51:26 int(4) type=Int
+expr e@51:9#1 binary(equal) lhs=e@51:9 rhs=e@51:26 type=Boolean
+expr e@45:9#6 binary(logicalAnd) lhs=e@45:9#5 rhs=e@51:9#1 type=Boolean
+expr e@52:9 name(previous) type=Int ref=__local_9.previous
+expr e@52:21 int(9) type=Int
+expr e@52:9#1 binary(equal) lhs=e@52:9 rhs=e@52:21 type=Boolean
+expr e@45:9#7 binary(logicalAnd) lhs=e@45:9#6 rhs=e@52:9#1 type=Boolean
+expr e@53:9 name(last) type=Int ref=__local_10.last
+expr e@53:17 int(9) type=Int
+expr e@53:9#1 binary(equal) lhs=e@53:9 rhs=e@53:17 type=Boolean
+expr e@45:9#8 binary(logicalAnd) lhs=e@45:9#7 rhs=e@53:9#1 type=Boolean
+expr e@54:10 name(empty) type=Boolean ref=__local_11.empty
+expr e@54:9 unary(not) operand=e@54:10 type=Boolean
+expr e@45:9#9 binary(logicalAnd) lhs=e@45:9#8 rhs=e@54:9 type=Boolean
+expr e@55:9 name(size) type=Int ref=__local_12.size
+expr e@55:17 int(10) type=Int
+expr e@55:9#1 binary(equal) lhs=e@55:9 rhs=e@55:17 type=Boolean
+expr e@45:9#10 binary(logicalAnd) lhs=e@45:9#9 rhs=e@55:9#1 type=Boolean
+expr e@56:9 name(rendered) type=String ref=__local_13.rendered
+expr e@56:21 string([4|5|6|7|8|9]) type=String
+expr e@56:9#1 binary(equal) lhs=e@56:9 rhs=e@56:21 type=Boolean
+expr e@45:9#11 binary(logicalAnd) lhs=e@45:9#10 rhs=e@56:9#1 type=Boolean
+expr e@57:9 name(hash) type=Int ref=__local_14.hash
+expr e@57:17 int(0) type=Int
+expr e@57:9#1 binary(notEqual) lhs=e@57:9 rhs=e@57:17 type=Boolean
+expr e@45:9#12 binary(logicalAnd) lhs=e@45:9#11 rhs=e@57:9#1 type=Boolean
+expr e@58:10 name(intersects) type=Boolean ref=__local_15.intersects
+expr e@58:9 unary(not) operand=e@58:10 type=Boolean
+expr e@45:9#13 binary(logicalAnd) lhs=e@45:9#12 rhs=e@58:9 type=Boolean
+expr e@59:10 name(equal) type=Boolean ref=__local_16.equal
+expr e@59:9 unary(not) operand=e@59:10 type=Boolean
+expr e@45:9#14 binary(logicalAnd) lhs=e@45:9#13 rhs=e@59:9 type=Boolean
+expr e@61:9 int(1) type=Int
+expr e@60:7 blockExpr stmts=[] trailing=e@61:9 type=Int
+expr e@63:9 int(0) type=Int
+expr e@62:12 blockExpr stmts=[] trailing=e@63:9 type=Int
+expr e@44:12 if cond=e@45:9#14 then=e@60:7 else=e@62:12 type=Int
+expr e@44:5 return value=e@44:12 type=Nothing

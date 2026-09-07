@@ -58,6 +58,7 @@ final class MemberLowerer {
             // Skip storage emission here so a plain interface property (with no
             // accessor body) doesn't leak a bogus module-level global.
             let hasExplicitBackingField = propertyDecl.explicitBackingField != nil
+            let isAbstractProperty = sema.symbols.symbol(symbol)?.flags.contains(.abstractType) == true
             let isGetterOnlyComputed = propertyDecl.getter != nil
                 && propertyDecl.setter == nil
                 && propertyDecl.initializer == nil
@@ -65,7 +66,7 @@ final class MemberLowerer {
                 && !hasExplicitBackingField
             let isDelegateProperty = propertyDecl.delegateExpression != nil
 
-            if !isInterfaceContext, !isGetterOnlyComputed, !isDelegateProperty {
+            if !isInterfaceContext, !isAbstractProperty, !isGetterOnlyComputed, !isDelegateProperty {
                 let kirID = arena.appendDecl(.global(KIRGlobal(symbol: symbol, type: propType)))
                 directMembers.append(kirID)
                 allDecls.append(kirID)
@@ -125,7 +126,7 @@ final class MemberLowerer {
             // BUG-227: the same field-reading getter is also exactly what a
             // *class* vtable slot needs behind it, so every property that
             // ever needs virtual dispatch — not just `override` members, but
-            // also the open/abstract root of the chain — gets one here too.
+            // also the open stored-property root of the chain — gets one here too.
             // A `final` property never needs one: LayoutSynthesis never gives
             // it a vtable slot, so no call site ever looks for this accessor.
             let hasCustomGetterBody = (propertyDecl.getter?.body).map { $0 != .unit } ?? false

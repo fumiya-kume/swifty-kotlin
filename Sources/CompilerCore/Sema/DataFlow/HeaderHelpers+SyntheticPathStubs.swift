@@ -567,6 +567,32 @@ extension DataFlowSemaPhase {
         )))
         symbols.setPropertyType(fileTimeType, for: fileTimeSymbol)
 
+        // FileTime is also returned by the Path metadata APIs. Keep its
+        // shared conversion member owned by the Path surface after the
+        // java.nio.file.Files utility stubs are removed.
+        let toMillisName = interner.intern("toMillis")
+        let toMillisFQName = javaNioFileAttributePkg + [interner.intern("FileTime"), toMillisName]
+        if symbols.lookup(fqName: toMillisFQName) == nil {
+            let toMillisSymbol = symbols.define(
+                kind: .function,
+                name: toMillisName,
+                fqName: toMillisFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(fileTimeSymbol, for: toMillisSymbol)
+            symbols.setExternalLinkName("__kk_fileTime_toMillis", for: toMillisSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: fileTimeType,
+                    parameterTypes: [],
+                    returnType: types.longType
+                ),
+                for: toMillisSymbol
+            )
+        }
+
         let posixFilePermissionName = interner.intern("PosixFilePermission")
         let posixFilePermissionFQName = javaNioFileAttributePkg + [posixFilePermissionName]
         let posixFilePermissionSymbol = symbols.lookup(fqName: posixFilePermissionFQName) ?? symbols.define(

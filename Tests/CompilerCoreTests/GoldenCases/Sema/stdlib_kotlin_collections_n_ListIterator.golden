@@ -5,7 +5,7 @@ symbol fq=__local_0.value kind=local vis=private flags=_ type=Int
 symbol fq=__local_1.iterator kind=local vis=private flags=_ type=kotlin.collections.ListIterator<Int>
 symbol fq=inspect kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.ListIterator<Int>] ret=Int
 symbol fq=inspect.$0.iterator kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.collections.List.E kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.List.listIterator#0 kind=function vis=public flags=synthetic sig=recv=kotlin.collections.List<out kotlin.collections.List.E> params=[] ret=kotlin.collections.ListIterator<out kotlin.collections.List.E> type=() -> kotlin.collections.ListIterator<out kotlin.collections.List.E>
 symbol fq=kotlin.collections.ListIterator kind=interface vis=public flags=_
