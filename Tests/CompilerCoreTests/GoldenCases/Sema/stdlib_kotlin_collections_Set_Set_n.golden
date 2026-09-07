@@ -4,9 +4,7 @@ symbol fq=__local_2.containsNull kind=local vis=private flags=_ type=Boolean
 symbol fq=__local_3.iteratorHasNext kind=local vis=private flags=_ type=Boolean
 symbol fq=golden.sema.inspect kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Set<Int?>] ret=String
 symbol fq=golden.sema.inspect.$0.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterator kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Iterator.T kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterator.hasNext kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Iterator<out kotlin.collections.Iterator.T> params=[] ret=Boolean type=() -> Boolean
 symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Set.E kind=typeParameter vis=private flags=_
 file fstdlib_kotlin_collections_Set_Set_n package=golden.sema
