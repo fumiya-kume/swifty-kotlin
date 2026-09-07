@@ -1,4 +1,4 @@
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Iterable.E kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Iterable.iterator kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Iterable<out kotlin.collections.Iterable.E> params=[] ret=kotlin.collections.Iterator<out kotlin.collections.Iterable.E> type=() -> kotlin.collections.Iterator<out kotlin.collections.Iterable.E>
 symbol fq=kotlin.collections.Iterator kind=interface vis=public flags=synthetic
