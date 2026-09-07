@@ -1964,4 +1964,61 @@ struct StdlibArtifactRegressionTests {
             )
         }
     }
+
+    /// `LinkedHashSet()` lowers to the `__kk_set_of` runtime factory, so the
+    /// returned box never passes `kk_object_new` and never received the
+    /// constructor-site `kk_object_register_vtable_method` registrations. Once
+    /// `size` imported as the (Kotlin-correct) open member it is, a subclass in
+    /// the same module marked its slot virtual and `base.size` trapped in
+    /// `kk_vtable_lookup`. The lowering pass now registers the nominal vtable
+    /// implementations on factory-produced boxes.
+    @Test
+    func testLinkedHashSetOpenMembersDispatchOnFactoryBox() throws {
+        let artifactPath = try Self.buildStdlibArtifact()
+        let source = """
+        class Tags : LinkedHashSet<String>()
+
+        fun makeSet(): LinkedHashSet<String> {
+            val s = LinkedHashSet<String>()
+            s.add("x")
+            return s
+        }
+
+        fun main() {
+            val t = Tags()
+            t.add("kotlin")
+            println(t.size)
+            println(t.contains("kotlin"))
+
+            val base = LinkedHashSet<String>()
+            base.add("a")
+            println(base.size)
+            println(base.contains("a"))
+
+            println(makeSet().size)
+        }
+        """
+        try withTemporaryFile(contents: source) { userPath in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .path
+            let ctx = makeCompilationContext(
+                inputs: [userPath],
+                moduleName: "LinkedHashSetFactoryVtable",
+                emit: .executable,
+                outputPath: outputBase,
+                includeStdlib: false,
+                stdlibLibraryPath: artifactPath
+            )
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout
+                .replacingOccurrences(of: "\r\n", with: "\n")
+            #expect(normalizedStdout == "1\ntrue\n1\ntrue\n1\n")
+        }
+    }
 }

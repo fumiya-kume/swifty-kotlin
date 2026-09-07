@@ -666,6 +666,27 @@ final class CallLowerer {
             interner: interner,
             instructions: &instructions
         ) {
+            // Runtime factories like `linkedSetOf()` return concrete-class
+            // boxes that never pass `kk_object_new`, so the constructor-site
+            // vtable registrations never ran for them. Register the nominal
+            // vtable implementations on the box so an open member dispatch
+            // (e.g. `LinkedHashSet.size`) resolves instead of trapping at
+            // `kk_vtable_lookup`. No-ops for interface-typed results.
+            if let factoryResultClass = collectionFactoryResultClassSymbol(
+                result: loweredCollectionFactory,
+                boundType: boundType,
+                arena: arena,
+                sema: sema
+            ) {
+                appendFactoryObjectVtableMethodRegistrations(
+                    objectValue: loweredCollectionFactory,
+                    nominalSymbol: factoryResultClass,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    instructions: &instructions
+                )
+            }
             return loweredCollectionFactory
         }
         if args.count == 1,
@@ -701,6 +722,23 @@ final class CallLowerer {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
+    }
+
+    /// Resolves the concrete class a runtime collection factory result claims
+    /// to be, or nil for interface-typed results (those dispatch through the
+    /// itable, not the class vtable).
+    private func collectionFactoryResultClassSymbol(
+        result: KIRExprID,
+        boundType: TypeID?,
+        arena: KIRArena,
+        sema: SemaModule
+    ) -> SymbolID? {
+        let resultType = boundType ?? arena.exprType(result)
+        guard let resultType,
+              let resolved = resolveClassTypeSymbol(resultType, sema: sema),
+              resolved.symbol.kind == .class
+        else { return nil }
+        return resolved.symbol.id
     }
 
     /// Emits the call/allocation instructions for an already-resolved call
