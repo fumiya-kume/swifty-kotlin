@@ -7,7 +7,7 @@ import kotlin.internal.KsSymbolName
  * handle. Public operations are implemented in Kotlin; only the small mutable
  * buffer bridge below crosses into the runtime.
  */
-public class StringBuilder {
+public class StringBuilder : Appendable, CharSequence {
     constructor()
     constructor(content: String)
     constructor(capacity: Int)
@@ -23,13 +23,13 @@ public class StringBuilder {
     fun subSequence(startIndex: Int, endIndex: Int): CharSequence =
         toString().substring(startIndex, endIndex)
 
-    fun append(value: Char): StringBuilder =
+    override fun append(value: Char): StringBuilder =
         __kk_string_builder_append_obj(value.toString())
 
-    fun append(value: CharSequence?): StringBuilder =
+    override fun append(value: CharSequence?): StringBuilder =
         __kk_string_builder_append_obj(if (value == null) "null" else value as String)
 
-    fun append(value: CharSequence?, startIndex: Int, endIndex: Int): StringBuilder =
+    override fun append(value: CharSequence?, startIndex: Int, endIndex: Int): StringBuilder =
         appendRange(if (value == null) "null" else value as String, startIndex, endIndex)
 
     fun append(value: String?): StringBuilder =

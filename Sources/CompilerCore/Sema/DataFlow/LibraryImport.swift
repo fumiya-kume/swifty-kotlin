@@ -372,6 +372,19 @@ extension DataFlowSemaPhase {
                     ? signature.typeParameterSymbols
                     : Array(ownerTypeParameters.prefix(ownerCount))
                         + signature.typeParameterSymbols.dropFirst(ownerCount)
+                let normalizedUpperBoundsList = signature.typeParameterUpperBoundsList.map { $0.map(normalize) }
+                for index in 0 ..< min(signature.classTypeParameterCount, normalizedTypeParameterSymbols.count) {
+                    guard index < normalizedUpperBoundsList.count else {
+                        continue
+                    }
+                    let upperBounds = normalizedUpperBoundsList[index]
+                    let typeParameterSymbol = normalizedTypeParameterSymbols[index]
+                    if !upperBounds.isEmpty,
+                       symbols.typeParameterUpperBounds(for: typeParameterSymbol).isEmpty
+                    {
+                        symbols.setTypeParameterUpperBounds(upperBounds, for: typeParameterSymbol)
+                    }
+                }
                 symbols.setFunctionSignature(
                     FunctionSignature(
                         receiverType: signature.receiverType.map(normalize),
@@ -384,7 +397,7 @@ extension DataFlowSemaPhase {
                         valueParameterIsVararg: signature.valueParameterIsVararg,
                         typeParameterSymbols: normalizedTypeParameterSymbols,
                         reifiedTypeParameterIndices: signature.reifiedTypeParameterIndices,
-                        typeParameterUpperBoundsList: signature.typeParameterUpperBoundsList.map { $0.map(normalize) },
+                        typeParameterUpperBoundsList: normalizedUpperBoundsList,
                         classTypeParameterCount: signature.classTypeParameterCount
                     ),
                     for: binding.symbol

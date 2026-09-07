@@ -347,6 +347,17 @@ package final class MetadataEncoder {
                 {
                     return false
                 }
+                // KSP-1089: AtomicIntArray(IntArray) is an internal storage
+                // constructor. Keep it in the stdlib object for the public
+                // initializer factory, but do not export it to consumers.
+                if includeNonPublic,
+                   symbol.kind == .function,
+                   symbol.visibility != .public,
+                   symbol.fqName.map({ interner.resolve($0) }) == ["kotlin", "concurrent", "AtomicIntArray"],
+                   symbols.functionSignature(for: symbol.id)?.parameterTypes.count == 1
+                {
+                    return false
+                }
                 // STDLIB-SHARED-016: Compiler-generated enum static helpers
                 // (values/valueOf/entries) for non-public enum classes are not part
                 // of the stdlib surface and cannot be resolved on the consumer side.

@@ -21,7 +21,7 @@ expr e@3:5 name(s) type=kotlin.sequences.Sequence<Int> ref=__local_0.s
 expr e@3:25 name(it) type=Int ref=s-0
 expr e@3:17 call callee=e@3:17#1 args=[_:e@3:25] type=Unit call=kotlin.io.println#1
 expr e@3:15 lambda params=[] body=e@3:17 label=forEach type=(Int) -> Unit
-expr e@3:5#1 memberCall recv=e@3:5 callee=forEach args=[_:e@3:15] type=Unit
+expr e@3:5#1 memberCall recv=e@3:5 callee=forEach args=[_:e@3:15] type=Unit call=kotlin.sequences.forEach targs=[Int]
 expr e@4:14 name(s) type=kotlin.sequences.Sequence<Int> ref=__local_0.s
 expr e@4:37 name(it) type=Int ref=s-1
 expr e@4:26 call callee=e@4:26#1 args=[_:e@4:37] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf targs=[Int]

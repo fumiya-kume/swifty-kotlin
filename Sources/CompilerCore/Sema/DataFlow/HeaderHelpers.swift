@@ -1282,18 +1282,11 @@ extension DataFlowSemaPhase {
         registerSyntheticInstantStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticClockStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticExperimentalTimeStubs(symbols: symbols, types: types, interner: interner, bundledIndex: bundledIndex)
-        let stringBuilderOwner = [interner.intern("kotlin"), interner.intern("text"), interner.intern("StringBuilder")]
-        if bundledIndex.contains(ownerFQName: stringBuilderOwner, name: interner.intern("append"), arity: 1) {
-            patchSourceBackedStringBuilderSupertypes(symbols: symbols, types: types, interner: interner)
-        } else {
-            registerSyntheticStringBuilderStubs(symbols: symbols, types: types, interner: interner)
-        }
         registerSyntheticTODOAndIOStubs(
             symbols: symbols,
             types: types,
             interner: interner,
-            bundledIndex: bundledIndex,
-            skipStats: skipStats
+            bundledIndex: bundledIndex
         )
         patchKPropertyFunctionSupertypes(symbols: symbols, types: types, interner: interner)
         patchKMutableProperty0FunctionSupertype(symbols: symbols, types: types, interner: interner)
@@ -1598,7 +1591,12 @@ extension DataFlowSemaPhase {
     ) -> SymbolID {
         let internedName = interner.intern(name)
         let fqName = pkg + [internedName]
-        if let existing = symbols.lookup(fqName: fqName) {
+        // A factory function may share the class FQName (for example,
+        // `kotlin.concurrent.AtomicIntArray(Int)`). Resolve the nominal class
+        // from all symbols instead of letting the first callable shadow it.
+        if let existing = symbols.lookupAll(fqName: fqName).first(where: { id in
+            symbols.symbol(id)?.kind == .class
+        }) {
             return existing
         }
         return symbols.define(

@@ -226,33 +226,6 @@ extension DataFlowSemaPhase {
                 )
                 return types.make(.classType(ClassType(classSymbol: builtinNestedSymbol.id, args: resolvedArgs, nullability: nullability)))
             }
-            let stringBuilderName = interner.intern("StringBuilder")
-            let kotlinTextStringBuilderFQName = [
-                interner.intern("kotlin"),
-                interner.intern("text"),
-                stringBuilderName,
-            ]
-            if (path.count == 1 && shortName == stringBuilderName) || path == kotlinTextStringBuilderFQName {
-                let stringBuilderSymbol = ensureKotlinTextStringBuilderSymbol(symbols: symbols, interner: interner)
-                let resolvedArgs = resolveTypeArgRefs(
-                    argRefs,
-                    ast: ast,
-                    symbols: symbols,
-                    types: types,
-                    interner: interner,
-                    localTypeParameters: localTypeParameters,
-                    relativeOwnerFQName: relativeOwnerFQName,
-                    currentPackageFQName: currentPackageFQName,
-                    imports: imports,
-                    diagnostics: diagnostics,
-                    usageRange: usageRange
-                )
-                return types.make(.classType(ClassType(
-                    classSymbol: stringBuilderSymbol,
-                    args: resolvedArgs,
-                    nullability: nullability
-                )))
-            }
             diagnostics?.error(
                 "KSWIFTK-SEMA-0025",
                 "Unresolved type '\(interner.resolve(shortName))'.",
@@ -965,7 +938,10 @@ extension DataFlowSemaPhase {
             rootClassSymbol = types.stringClassSymbol
         } else if first == interner.intern("Any") {
             rootClassSymbol = types.anyClassSymbol
-        } else if first == interner.intern("Long") || first == interner.intern("Short") {
+        } else if first == interner.intern("Byte")
+            || first == interner.intern("Long")
+            || first == interner.intern("Short")
+        {
             let kotlinFQName = [interner.intern("kotlin"), first]
             rootClassSymbol = symbols.lookupAll(fqName: kotlinFQName).first(where: { symbolID in
                 guard let symbol = symbols.symbol(symbolID) else { return false }
