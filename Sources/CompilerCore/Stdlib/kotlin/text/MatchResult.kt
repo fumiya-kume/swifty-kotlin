@@ -40,6 +40,9 @@ internal external fun __kkMatchResultGroupEnd(match: MatchResult, index: Int): I
 @KsSymbolName("__kk_match_result_group_index_of_name")
 internal external fun __kkMatchResultGroupIndexOfName(match: MatchResult, name: String): Int
 
+@KsSymbolName("__kk_match_result_has_named_group")
+internal external fun __kkMatchResultHasNamedGroup(match: MatchResult, name: String): Boolean
+
 @KsSymbolName("__kk_match_result_next")
 internal external fun __kkMatchResultNext(match: MatchResult): MatchResult?
 
@@ -123,11 +126,25 @@ public data class MatchGroup(public val value: String, public val range: IntRang
  * or by name for named capture groups. Absent (non-participating) groups read
  * as `null`.
  */
-public class MatchGroupCollection internal constructor(private val match: MatchResult) {
+public interface MatchGroupCollection : Collection<MatchGroup?> {
     public val size: Int
+
+    public operator fun get(index: Int): MatchGroup?
+
+    // Platform implementations expose the named accessor on the base
+    // collection type. Keep that existing KSwiftK surface while the
+    // source-backed MatchNamedGroupCollection interface provides the
+    // corresponding official contract.
+    public operator fun get(name: String): MatchGroup?
+}
+
+private class MatchGroupCollectionImpl(
+    private val match: MatchResult
+) : AbstractCollection<MatchGroup?>(), MatchNamedGroupCollection {
+    override val size: Int
         get() = __kkMatchResultGroupCount(match)
 
-    public operator fun get(index: Int): MatchGroup? {
+    override fun get(index: Int): MatchGroup? {
         if (index < 0 || index >= __kkMatchResultGroupCount(match)) return null
         val start = __kkMatchResultGroupStart(match, index)
         if (start < 0) return null
@@ -135,10 +152,27 @@ public class MatchGroupCollection internal constructor(private val match: MatchR
         return MatchGroup(__kkMatchResultGroupValue(match, index), start..end)
     }
 
-    public operator fun get(name: String): MatchGroup? {
+    override fun get(name: String): MatchGroup? {
+        if (!__kkMatchResultHasNamedGroup(match, name)) {
+            throw IllegalArgumentException("No group with name <$name>")
+        }
         val index = __kkMatchResultGroupIndexOfName(match, name)
         if (index < 0) return null
         return get(index)
+    }
+
+    override fun iterator(): Iterator<MatchGroup?> {
+        val collection = this
+        return object : Iterator<MatchGroup?> {
+            private var index = 0
+
+            override fun hasNext(): Boolean = index < collection.size
+
+            override fun next(): MatchGroup? {
+                if (!hasNext()) throw NoSuchElementException()
+                return collection[index++]
+            }
+        }
     }
 }
 
@@ -170,7 +204,7 @@ public val MatchResult.groupValues: List<String>
     }
 
 public val MatchResult.groups: MatchGroupCollection
-    get() = MatchGroupCollection(this)
+    get() = MatchGroupCollectionImpl(this)
 
 public operator fun MatchResult.component1(): String = __kkMatchResultGroupValue(this, 0)
 

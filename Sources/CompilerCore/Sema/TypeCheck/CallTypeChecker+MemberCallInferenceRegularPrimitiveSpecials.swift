@@ -312,7 +312,7 @@ extension CallTypeChecker {
             case "toShort": (shortType, receiverForCheck == intType || receiverForCheck == longType || receiverForCheck == uintType || receiverForCheck == ulongType || receiverForCheck == ubyteType || receiverForCheck == ushortType || receiverForCheck == byteType || receiverForCheck == shortType)
             case "toUByte": (sema.types.ubyteType, receiverForCheck == intType || receiverForCheck == longType || receiverForCheck == uintType || receiverForCheck == ulongType || receiverForCheck == ubyteType || receiverForCheck == ushortType || receiverForCheck == byteType || receiverForCheck == shortType)
             case "toUShort": (sema.types.ushortType, receiverForCheck == intType || receiverForCheck == longType || receiverForCheck == uintType || receiverForCheck == ulongType || receiverForCheck == ubyteType || receiverForCheck == ushortType || receiverForCheck == byteType || receiverForCheck == shortType)
-            case "toChar": (sema.types.charType, receiverForCheck == longType || receiverForCheck == byteType || receiverForCheck == shortType)
+            case "toChar": (sema.types.charType, receiverForCheck == byteType || receiverForCheck == shortType)
             default: (sema.types.errorType, false)
             }
             if matches {

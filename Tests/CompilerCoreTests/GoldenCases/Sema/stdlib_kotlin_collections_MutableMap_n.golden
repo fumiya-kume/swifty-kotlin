@@ -6,12 +6,12 @@ symbol fq=__local_4.iterator kind=local vis=private flags=_ type=kotlin.collecti
 symbol fq=__local_5.entry kind=local vis=private flags=_ type=kotlin.collections.MutableMap.MutableEntry<String, Int?>
 symbol fq=kotlin.Array kind=class vis=public flags=synthetic
 symbol fq=kotlin.Pair kind=class vis=public flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Iterator kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Iterator.T kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Iterator.hasNext kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Iterator<out kotlin.collections.Iterator.T> params=[] ret=Boolean type=() -> Boolean
 symbol fq=kotlin.collections.Iterator.next kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Iterator<out kotlin.collections.Iterator.T> params=[] ret=kotlin.collections.Iterator.T type=() -> kotlin.collections.Iterator.T
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Map.Entry kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Map.Entry.key kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.K
@@ -101,7 +101,7 @@ expr e@14:34 string(u) type=String
 expr e@14:41 int(20) type=Int
 expr e@14:34#1 memberCall recv=e@14:34 callee=to args=[_:e@14:41] type=kotlin.Pair<String, Int> call=kotlin.to targs=[String,Int]
 expr e@14:16 call callee=e@14:16#1 args=[_:e@14:23#1,_:e@14:34#1] type=kotlin.collections.List<out kotlin.Pair<String, Int>> call=kotlin.collections.listOf#1 targs=[kotlin.Pair<String, Int>]
-expr e@14:5#1 memberCall recv=e@14:5 callee=putAll args=[_:e@14:16] type=Unit call=kotlin.collections.putAll#0
+expr e@14:5#1 memberCall recv=e@14:5 callee=putAll args=[_:e@14:16] type=Unit call=kotlin.collections.putAll#0 targs=[String,Int]
 expr e@15:5 name(map) type=kotlin.collections.MutableMap<String, Int?> ref=__local_0.map
 expr e@15:27 string(u) type=String
 expr e@15:34 int(21) type=Int
@@ -110,7 +110,7 @@ expr e@15:38 string(t) type=String
 expr e@15:45 int(22) type=Int
 expr e@15:38#1 memberCall recv=e@15:38 callee=to args=[_:e@15:45] type=kotlin.Pair<String, Int> call=kotlin.to targs=[String,Int]
 expr e@15:16 call callee=e@15:16#1 args=[_:e@15:27#1,_:e@15:38#1] type=kotlin.sequences.Sequence<kotlin.Pair<String, Int>> call=kotlin.sequences.sequenceOf targs=[kotlin.Pair<String, Int>]
-expr e@15:5#1 memberCall recv=e@15:5 callee=putAll args=[_:e@15:16] type=Unit call=kotlin.collections.putAll#1
+expr e@15:5#1 memberCall recv=e@15:5 callee=putAll args=[_:e@15:16] type=Unit call=kotlin.collections.putAll#1 targs=[String,Int]
 expr e@16:5 name(map) type=kotlin.collections.MutableMap<String, Int?> ref=__local_0.map
 expr e@16:24 string(t) type=String
 expr e@16:31 int(23) type=Int
@@ -119,7 +119,7 @@ expr e@16:35 string(s) type=String
 expr e@16:42 int(24) type=Int
 expr e@16:35#1 memberCall recv=e@16:35 callee=to args=[_:e@16:42] type=kotlin.Pair<String, Int> call=kotlin.to targs=[String,Int]
 expr e@16:16 call callee=e@16:16#1 args=[_:e@16:24#1,_:e@16:35#1] type=kotlin.Array<kotlin.Pair<String, Int>> call=kotlin.arrayOf targs=[kotlin.Pair<String, Int>]
-expr e@16:5#1 memberCall recv=e@16:5 callee=putAll args=[_:e@16:16] type=Unit call=kotlin.collections.putAll#2
+expr e@16:5#1 memberCall recv=e@16:5 callee=putAll args=[_:e@16:16] type=Unit call=kotlin.collections.putAll#2 targs=[String,Int]
 expr e@17:5 name(map) type=kotlin.collections.MutableMap<String, Int?> ref=__local_0.map
 expr e@17:9 string(set) type=String
 expr e@17:18 int(25) type=Int

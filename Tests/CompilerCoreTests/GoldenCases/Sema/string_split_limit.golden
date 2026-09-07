@@ -5,7 +5,7 @@ symbol fq=golden.sema.useSplitLimit kind=function vis=public flags=_ sig=recv=_ 
 symbol fq=golden.sema.useSplitLimitOnly kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<String>
 symbol fq=golden.sema.useSplitLimitOnlyThree kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<String>
 symbol fq=golden.sema.useSplitMultiCharLimit kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<String>
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 file fstring_split_limit package=golden.sema
   decl golden.sema.useSplitLimitOnly fun useSplitLimitOnly sym=golden.sema.useSplitLimitOnly
   decl golden.sema.useSplitLimitOnlyThree fun useSplitLimitOnlyThree sym=golden.sema.useSplitLimitOnlyThree
