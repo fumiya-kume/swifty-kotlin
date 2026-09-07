@@ -1917,6 +1917,22 @@ public func kk_object_register_vtable_method(
     return 0
 }
 
+/// Registers the most-specific user implementation of `Any.equals` for an
+/// object whose equality may later be evaluated through an erased type.
+@_cdecl("kk_object_register_equals_override")
+public func kk_object_register_equals_override(_ objectRaw: Int, _ functionRaw: Int) -> Int {
+    guard functionRaw != 0,
+          let objectPtr = UnsafeMutableRawPointer(bitPattern: objectRaw)
+    else {
+        return 0
+    }
+    let objectKey = UInt(bitPattern: objectPtr)
+    runtimeStorage.withMetadataLock { state in
+        state.objectEqualsOverrides[objectKey] = functionRaw
+    }
+    return 0
+}
+
 @_cdecl("kk_array_get")
 public func kk_array_get(_ arrayRaw: Int, _ index: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0

@@ -40,6 +40,17 @@ extension BuildASTPhase {
                 tokenIndex += 1
                 continue
             }
+            if token.kind == .symbol(.at),
+               let annotation = AnnotationParsingSupport.parseAnnotation(
+                   from: tokens,
+                   start: tokenIndex,
+                   interner: interner,
+                   allowUseSiteTarget: false
+               )
+            {
+                tokenIndex = annotation.nextIndex
+                continue
+            }
             if handleVarianceToken(token.kind, pendingVariance: &pendingVariance, pendingReified: &pendingReified) {
                 tokenIndex += 1
                 continue

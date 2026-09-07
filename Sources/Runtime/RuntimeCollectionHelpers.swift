@@ -964,20 +964,36 @@ public func __kk_values_equal(_ lhs: Int, _ rhs: Int) -> Int {
 /// Returns nil when either operand is not a nominal runtime object, allowing
 /// callers to fall back to `runtimeValuesEqual` for the other runtime types.
 func runtimeAnyObjectEquality(_ lhs: Int, _ rhs: Int) -> Bool? {
-    guard let lhsPtr = UnsafeMutableRawPointer(bitPattern: lhs),
-          let rhsPtr = UnsafeMutableRawPointer(bitPattern: rhs)
+    guard let lhsPtr = UnsafeMutableRawPointer(bitPattern: lhs)
     else {
         return nil
     }
-    let areRegisteredObjects = runtimeStorage.withGCLock { state in
+    let lhsIsRegisteredObject = runtimeStorage.withGCLock { state in
         state.objectPointers.contains(UInt(bitPattern: lhsPtr))
-            && state.objectPointers.contains(UInt(bitPattern: rhsPtr))
     }
-    guard areRegisteredObjects,
-          let lhsObject = tryCast(lhsPtr, to: RuntimeObjectBox.self),
+    guard lhsIsRegisteredObject,
+          let lhsObject = tryCast(lhsPtr, to: RuntimeObjectBox.self)
+    else {
+        return nil
+    }
+
+    if let functionRaw = runtimeStorage.withMetadataLock({ state in
+        state.objectEqualsOverrides[UInt(bitPattern: lhsPtr)]
+    }) {
+        let equals = unsafeBitCast(
+            functionRaw,
+            to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self
+        )
+        return equals(lhs, rhs, nil) != 0
+    }
+
+    guard let rhsPtr = UnsafeMutableRawPointer(bitPattern: rhs),
+          runtimeStorage.withGCLock({ state in
+              state.objectPointers.contains(UInt(bitPattern: rhsPtr))
+          }),
           let rhsObject = tryCast(rhsPtr, to: RuntimeObjectBox.self)
     else {
-        return nil
+        return false
     }
 
     guard lhsObject.classID == rhsObject.classID else {

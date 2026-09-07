@@ -25,7 +25,7 @@ expr e@5:17 name(values) type=kotlin.collections.List<Int> ref=golden.sema.Probe
 expr e@5:17#1 memberCall recv=e@5:17 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
 expr e@7:52 name(values) type=kotlin.collections.List<Int> ref=golden.sema.ProbeSet.values
 expr e@7:68 name(element) type=Int ref=golden.sema.ProbeSet.contains.$0.element
-expr e@7:52#1 memberCall recv=e@7:52 callee=contains args=[_:e@7:68] type=Boolean call=kotlin.collections.contains#1 targs=[Int]
+expr e@7:52#1 memberCall recv=e@7:52 callee=contains args=[_:e@7:68] type=Boolean call=kotlin.collections.contains#2 targs=[Int]
 expr e@10:25 name(elements) type=kotlin.collections.Collection<Int> ref=golden.sema.ProbeSet.containsAll.$1.elements
 expr e@11:27 name(element) type=Int ref=__for_0.element
 expr e@11:18 call callee=e@11:18#1 args=[_:e@11:27] type=Boolean call=golden.sema.ProbeSet.contains

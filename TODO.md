@@ -1260,7 +1260,7 @@
     - `kotlin.collections.collectionSizeOrDefault` — fun Iterable.collectionSizeOrDefault(Int): Int  -- `final fun <#A: kotlin/Any?> (kotlin.collections/Iterable<#A>).kotlin.collections/collectionSizeOrDefault(kotlin/Int): kotlin/Int`
     - `kotlin.collections.collectionSizeOrNull` — fun Iterable.collectionSizeOrNull(): Int  -- `final fun <#A: kotlin/Any?> (kotlin.collections/Iterable<#A>).kotlin.collections/collectionSizeOrNull(): kotlin/Int?`
 
-- [ ] KSP-967: kotlin.collections.Iterable.contains-family の未実装 stdlib API を実装する（1 件）
+- [x] KSP-967: kotlin.collections.Iterable.contains-family の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.collections` / receiver `Iterable` / family `contains`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/Iterables.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -1269,6 +1269,8 @@
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
   - 未実装シンボル一覧:
     - `kotlin.collections.contains` — fun Iterable.contains(): Boolean  -- `final fun <#A: kotlin/Any?> (kotlin.collections/Iterable<#A>).kotlin.collections/contains(#A): kotlin/Boolean`
+  - 完了根拠: Kotlin 2.3.10 ABI の `@OnlyInputTypes` 付き `operator fun Iterable<T>.contains(element: T): Boolean` を `Iterables.kt` に source-backed 実装した。任意 Iterable は既存 source-backed `indexOf`、Collection 実体は Kotlin 原典どおり Collection member の fast path を使う。Iterable 専用 Runtime/RuntimeABI/synthetic stub は存在せず、Collection の `kk_op_contains` と Sequence の `kk_sequence_contains` は別所有の共有経路として残した。明示的に選択された Iterable source symbol を legacy lowering が横取りしないよう限定した。
+  - 回帰: focused Sema で Iterable/custom Iterable と List/Collection/Set の所有分離、Golden で direct/`in`/`!in` と nullable 解決、KIR で `contains` source call と `kk_op_contains`/`kk_sequence_contains` 非参照、runtime/diff で one-shot Iterable・nullable・Collection 実体・user-defined `equals` を固定した。実装時に露見した型パラメータ注釈の誤解析と、generic equality が `override equals` を失う問題も最小回帰付きで修正した。
 
 - [ ] KSP-977: kotlin.collections.Iterable.for-family の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.collections` / receiver `Iterable` / family `for`

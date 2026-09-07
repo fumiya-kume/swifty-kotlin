@@ -175,12 +175,14 @@ struct RuntimeGCTests {
             _ = kk_object_register_itable_iface(objectRaw, 7, 2)
             _ = kk_object_register_itable_method(objectRaw, 2, 3, 0x1000)
             _ = kk_object_register_vtable_method(objectRaw, 4, 0x2000)
+            _ = kk_object_register_equals_override(objectRaw, 0x3000)
 
             runtimeStorage.withMetadataLock { state in
                 #expect(state.objectTypeByPointer[objectKey] == 42)
                 #expect(state.objectInterfaceSlots[objectKey]?[7] == 2)
                 #expect(state.objectItableMethods[objectKey]?[itableKey] == 0x1000)
                 #expect(state.objectVtableMethods[objectKey]?[4] == 0x2000)
+                #expect(state.objectEqualsOverrides[objectKey] == 0x3000)
             }
 
             kk_gc_collect()
@@ -191,6 +193,7 @@ struct RuntimeGCTests {
                 #expect(state.objectInterfaceSlots[objectKey] == nil)
                 #expect(state.objectItableMethods[objectKey] == nil)
                 #expect(state.objectVtableMethods[objectKey] == nil)
+                #expect(state.objectEqualsOverrides[objectKey] == nil)
             }
         }
     }

@@ -169,6 +169,24 @@ extension CallLowerer {
                     interner.intern("Iterable"),
                 ]
             }
+            // KSP-967: Iterable.contains is an ordinary bundled source call.
+            // Collection, Set, List, Map, and Sequence retain their existing
+            // owner-specific member/source/runtime paths.
+            if memberName == "contains",
+               let signature = sema.symbols.functionSignature(for: chosenCallee),
+               let declaredReceiver = signature.receiverType,
+               let (_, declaredReceiverSymbol) = resolveClassTypeSymbol(
+                   sema.types.makeNonNullable(declaredReceiver),
+                   sema: sema
+               ),
+               declaredReceiverSymbol.fqName == [
+                   interner.intern("kotlin"),
+                   interner.intern("collections"),
+                   interner.intern("Iterable"),
+               ]
+            {
+                return true
+            }
             if Self.sourceBackedIterableCollectionMemberNames.contains(memberName) {
                 return true
             }

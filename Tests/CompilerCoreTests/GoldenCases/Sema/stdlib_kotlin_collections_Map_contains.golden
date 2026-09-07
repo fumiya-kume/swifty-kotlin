@@ -21,7 +21,7 @@ file fstdlib_kotlin_collections_Map_contains package=_
 expr e@4:88 name(backing) type=kotlin.collections.Map<String, Int?> ref=CustomMap.<init>.$0.backing
 expr e@6:61 name(custom) type=CustomMap ref=customMapContains.$2.custom
 expr e@6:77 string(custom) type=String
-expr e@6:61#1 memberCall recv=e@6:61 callee=contains args=[_:e@6:77] type=Boolean call=kotlin.collections.contains#2 targs=[String,Int?]
+expr e@6:61#1 memberCall recv=e@6:61 callee=contains args=[_:e@6:77] type=Boolean call=kotlin.collections.contains#3 targs=[String,Int?]
 expr e@9:40 string(present) type=String
 expr e@9:53 name(null) type=Nothing?
 expr e@9:40#1 memberCall recv=e@9:40 callee=to args=[_:e@9:53] type=kotlin.Pair<String, Nothing?> call=kotlin.to targs=[String,Nothing?]
@@ -32,19 +32,19 @@ expr e@9:34 call callee=e@9:34#1 args=[_:e@9:40#1,_:e@9:59#1] type=kotlin.collec
 expr e@9:5 localDecl map mutable=0 type=Map<String,Int?> init=e@9:34 type=Unit ref=__local_0.map
 expr e@10:13 string(present) type=String
 expr e@10:26 name(map) type=kotlin.collections.Map<String, Int?> ref=__local_0.map
-expr e@10:13#1 inExpr lhs=e@10:13 rhs=e@10:26 type=Boolean call=kotlin.collections.contains#2 targs=[String,Int?]
+expr e@10:13#1 inExpr lhs=e@10:13 rhs=e@10:26 type=Boolean call=kotlin.collections.contains#3 targs=[String,Int?]
 expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13#1] type=Unit call=kotlin.io.println#1
 expr e@11:13 string(missing) type=String
 expr e@11:26 name(map) type=kotlin.collections.Map<String, Int?> ref=__local_0.map
-expr e@11:13#1 inExpr lhs=e@11:13 rhs=e@11:26 type=Boolean call=kotlin.collections.contains#2 targs=[String,Int?]
+expr e@11:13#1 inExpr lhs=e@11:13 rhs=e@11:26 type=Boolean call=kotlin.collections.contains#3 targs=[String,Int?]
 expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13#1] type=Unit call=kotlin.io.println#1
 expr e@12:13 name(map) type=kotlin.collections.Map<String, Int?> ref=__local_0.map
 expr e@12:26 string(present) type=String
-expr e@12:13#1 memberCall recv=e@12:13 callee=contains args=[_:e@12:26] type=Boolean call=kotlin.collections.contains#2
+expr e@12:13#1 memberCall recv=e@12:13 callee=contains args=[_:e@12:26] type=Boolean call=kotlin.collections.contains#3
 expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13#1] type=Unit call=kotlin.io.println#1
 expr e@13:13 name(map) type=kotlin.collections.Map<String, Int?> ref=__local_0.map
 expr e@13:26 string(missing) type=String
-expr e@13:13#1 memberCall recv=e@13:13 callee=contains args=[_:e@13:26] type=Boolean call=kotlin.collections.contains#2
+expr e@13:13#1 memberCall recv=e@13:13 callee=contains args=[_:e@13:26] type=Boolean call=kotlin.collections.contains#3
 expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13#1] type=Unit call=kotlin.io.println#1
 expr e@14:13 name(map) type=kotlin.collections.Map<String, Int?> ref=__local_0.map
 expr e@14:31 name(null) type=Nothing?
@@ -66,11 +66,11 @@ expr e@18:32 name(null) type=Nothing?
 expr e@18:5 localDecl nullableKey mutable=0 type=String? init=e@18:32 type=Unit ref=__local_2.nullableKey
 expr e@19:13 name(nullableKey) type=String? ref=__local_2.nullableKey
 expr e@19:28 name(nullableMap) type=kotlin.collections.Map<String?, Int?> ref=__local_1.nullableMap
-expr e@19:13#1 inExpr lhs=e@19:13 rhs=e@19:28 type=Boolean call=kotlin.collections.contains#2 targs=[String?,Int?]
+expr e@19:13#1 inExpr lhs=e@19:13 rhs=e@19:28 type=Boolean call=kotlin.collections.contains#3 targs=[String?,Int?]
 expr e@19:5 call callee=e@19:5#1 args=[_:e@19:13#1] type=Unit call=kotlin.io.println#1
 expr e@20:13 name(nullableMap) type=kotlin.collections.Map<String?, Int?> ref=__local_1.nullableMap
 expr e@20:34 name(null) type=Nothing?
-expr e@20:13#1 memberCall recv=e@20:13 callee=contains args=[_:e@20:34] type=Boolean call=kotlin.collections.contains#2
+expr e@20:13#1 memberCall recv=e@20:13 callee=contains args=[_:e@20:34] type=Boolean call=kotlin.collections.contains#3
 expr e@20:5 call callee=e@20:5#1 args=[_:e@20:13#1] type=Unit call=kotlin.io.println#1
 expr e@21:13 name(nullableMap) type=kotlin.collections.Map<String?, Int?> ref=__local_1.nullableMap
 expr e@21:39 name(null) type=Nothing?
@@ -85,12 +85,12 @@ expr e@23:5 localDecl equalKeys mutable=0 type=Map<EqualKey,String?> init=e@23:4
 expr e@24:22 int(7) type=Int
 expr e@24:13 call callee=e@24:13#1 args=[_:e@24:22] type=EqualKey call=EqualKey.<init>
 expr e@24:28 name(equalKeys) type=kotlin.collections.Map<EqualKey, String?> ref=__local_3.equalKeys
-expr e@24:13#2 inExpr lhs=e@24:13 rhs=e@24:28 type=Boolean call=kotlin.collections.contains#2 targs=[EqualKey,String?]
+expr e@24:13#2 inExpr lhs=e@24:13 rhs=e@24:28 type=Boolean call=kotlin.collections.contains#3 targs=[EqualKey,String?]
 expr e@24:5 call callee=e@24:5#1 args=[_:e@24:13#2] type=Unit call=kotlin.io.println#1
 expr e@25:13 name(equalKeys) type=kotlin.collections.Map<EqualKey, String?> ref=__local_3.equalKeys
 expr e@25:41 int(8) type=Int
 expr e@25:32 call callee=e@25:32#1 args=[_:e@25:41] type=EqualKey call=EqualKey.<init>
-expr e@25:13#1 memberCall recv=e@25:13 callee=contains args=[_:e@25:32] type=Boolean call=kotlin.collections.contains#2
+expr e@25:13#1 memberCall recv=e@25:13 callee=contains args=[_:e@25:32] type=Boolean call=kotlin.collections.contains#3
 expr e@25:5 call callee=e@25:5#1 args=[_:e@25:13#1] type=Unit call=kotlin.io.println#1
 expr e@27:46 int(1) type=Int
 expr e@27:51 name(null) type=Nothing?
@@ -99,9 +99,9 @@ expr e@27:40 call callee=e@27:40#1 args=[_:e@27:46#1] type=kotlin.collections.Ma
 expr e@27:5 localDecl boxedKeys mutable=0 type=Map<Int,String?> init=e@27:40 type=Unit ref=__local_4.boxedKeys
 expr e@28:13 int(1) type=Int
 expr e@28:18 name(boxedKeys) type=kotlin.collections.Map<Int, String?> ref=__local_4.boxedKeys
-expr e@28:13#1 inExpr lhs=e@28:13 rhs=e@28:18 type=Boolean call=kotlin.collections.contains#2 targs=[Int,String?]
+expr e@28:13#1 inExpr lhs=e@28:13 rhs=e@28:18 type=Boolean call=kotlin.collections.contains#3 targs=[Int,String?]
 expr e@28:5 call callee=e@28:5#1 args=[_:e@28:13#1] type=Unit call=kotlin.io.println#1
 expr e@29:13 name(boxedKeys) type=kotlin.collections.Map<Int, String?> ref=__local_4.boxedKeys
 expr e@29:32 int(2) type=Int
-expr e@29:13#1 memberCall recv=e@29:13 callee=contains args=[_:e@29:32] type=Boolean call=kotlin.collections.contains#2
+expr e@29:13#1 memberCall recv=e@29:13 callee=contains args=[_:e@29:32] type=Boolean call=kotlin.collections.contains#3
 expr e@29:5 call callee=e@29:5#1 args=[_:e@29:13#1] type=Unit call=kotlin.io.println#1

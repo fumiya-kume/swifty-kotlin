@@ -127,6 +127,60 @@ func appendObjectVtableMethodRegistrations(
         interner: interner,
         instructions: &instructions
     )
+    appendObjectAnyEqualsOverrideRegistration(
+        objectValue: objectValue,
+        nominalSymbol: nominalSymbol,
+        sema: sema,
+        arena: arena,
+        interner: interner,
+        instructions: &instructions
+    )
+}
+
+/// KSP-967: Generic equality in source-backed functions is lowered through
+/// `kk_structural_eq`, where the concrete receiver type is unavailable. Keep
+/// the most-specific real `Any.equals` override alongside each object so that
+/// erased equality can still honor user-defined semantics.
+private func appendObjectAnyEqualsOverrideRegistration(
+    objectValue: KIRExprID,
+    nominalSymbol: SymbolID,
+    sema: SemaModule,
+    arena: KIRArena,
+    interner: StringInterner,
+    instructions: inout [KIRInstruction]
+) {
+    let anyFQName = [interner.intern("kotlin"), interner.intern("Any")]
+    guard let anySymbol = sema.symbols.lookup(fqName: anyFQName),
+          let anyEquals = sema.symbols.lookupAll(
+              fqName: anyFQName + [interner.intern("equals")]
+          ).first(where: { sema.symbols.parentSymbol(for: $0) == anySymbol }),
+          let implementation = kirFindOverrideMethod(
+              for: anyEquals,
+              in: nominalSymbol,
+              sema: sema,
+              interner: interner
+          ),
+          implementation != anyEquals,
+          sema.symbols.symbol(implementation)?.flags.contains(.overrideMember) == true,
+          let signature = sema.symbols.functionSignature(for: implementation),
+          signature.parameterTypes.count == 1,
+          signature.returnType == sema.types.booleanType
+    else {
+        return
+    }
+
+    let intType = sema.types.intType
+    let methodFnExpr = arena.appendExpr(.symbolRef(implementation), type: intType)
+    instructions.append(.constValue(result: methodFnExpr, value: .symbolRef(implementation)))
+    let registerResult = arena.appendTemporary(type: intType)
+    instructions.append(.call(
+        symbol: nil,
+        callee: interner.intern("kk_object_register_equals_override"),
+        arguments: [objectValue, methodFnExpr],
+        result: registerResult,
+        canThrow: false,
+        thrownResult: nil
+    ))
 }
 
 /// BUG-227: analog of `kirVtableImplementations` for property accessors.

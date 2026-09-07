@@ -20,6 +20,13 @@ private external fun kk_unbox_double(value: Double): Double
 // KSP-963: Kotlin's Iterable.asIterable() is an identity conversion.
 public inline fun <T> Iterable<T>.asIterable(): Iterable<T> = this
 
+// KSP-967: Preserve Kotlin's Collection fast path while keeping arbitrary
+// Iterable implementations on the source-backed indexOf path.
+public operator fun <@kotlin.internal.OnlyInputTypes T> Iterable<T>.contains(element: T): Boolean {
+    if (this is Collection<*>) return this.contains(element)
+    return indexOf(element) >= 0
+}
+
 public fun <T> Iterable<T>.toList(): List<T> {
     val result = mutableListOf<T>()
     for (element in this) result.add(element)
