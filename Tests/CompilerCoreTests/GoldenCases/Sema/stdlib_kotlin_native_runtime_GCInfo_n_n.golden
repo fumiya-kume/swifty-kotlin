@@ -4,9 +4,8 @@ symbol fq=golden.sema.gcInfoConstructor.$0.memoryUsageBefore kind=valueParameter
 symbol fq=golden.sema.gcInfoConstructor.$0.rootSet kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.gcInfoConstructor.$0.sweepStatistics kind=valueParameter vis=private flags=_
 symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
-symbol fq=kotlin.native.runtime.MemoryUsage kind=class vis=public flags=synthetic type=kotlin.native.runtime.MemoryUsage
 symbol fq=kotlin.native.runtime.RootSetStatistics kind=class vis=public flags=synthetic type=kotlin.native.runtime.RootSetStatistics
-symbol fq=kotlin.native.runtime.SweepStatistics kind=class vis=public flags=synthetic type=kotlin.native.runtime.SweepStatistics
+symbol fq=kotlin.native.runtime.SweepStatistics kind=class vis=public flags=_ type=kotlin.native.runtime.SweepStatistics
 file fstdlib_kotlin_native_runtime_GCInfo_n_n package=golden.sema
   decl golden.sema.gcInfoConstructor fun gcInfoConstructor sym=golden.sema.gcInfoConstructor
 expr e@15:5 long(1) type=Long
