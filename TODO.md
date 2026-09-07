@@ -1405,7 +1405,8 @@
     - `kotlin.collections.mapTo` — fun Map.mapTo(, Function1): #D  -- `final inline fun <#A: kotlin/Any?, #B: kotlin/Any?, #C: kotlin/Any?, #D: kotlin.collections/MutableCollection<in #C>> (kotlin.collections/Map<out #A, #B>).kotlin.collections/mapTo(#D, kotlin/Function1<kotlin.collections/Map.Entry<#A, #B>, #C>): #D`
     - `kotlin.collections.mapValuesTo` — fun Map.mapValuesTo(, Function1): #D  -- `final inline fun <#A: kotlin/Any?, #B: kotlin/Any?, #C: kotlin/Any?, #D: kotlin.collections/MutableMap<in #A, in #C>> (kotlin.collections/Map<out #A, #B>).kotlin.collections/mapValuesTo(#D, kotlin/Function1<kotlin.collections/Map.Entry<#A, #B>, #C>): #D`
 
-- [ ] KSP-1015: kotlin.collections.Map.minus-family の未実装 stdlib API を実装する（2 件）
+- [x] KSP-1015: kotlin.collections.Map.minus-family の未実装 stdlib API を実装する（2 件）
+  - 完了根拠（2026-09-04監査、Kotlin 2.3.10）：#6215（merge commit `8cfad068a9`）で `MapHOF.kt` に `Map<out K, V>.minus(Sequence<K>)` / `minus(Array<out K>)` を source-backed 実装済み。現行 `origin/master` に実装・Golden・diff case・KIR 回帰が存在し、対象 KIR 回帰（1 test）、ABI external-link（4 tests）、TODO-ID 検査が PASS、#6215 の Kotlin 2.3.10 diff CI 4 shard も PASS。fresh map、元 Map 不変、entry 順序、重複/不存在キー、nullable key/value、empty input を確認済み。対象専用の synthetic/runtime/ABI bridge は無く、既存 key 経路の共有は保持。Sequence builder の例外伝播は現行 non-throwing `kk_iterator_*` ABI の別スコープ制約。
   - 対象: `kotlin.collections` / receiver `Map` / family `minus`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/MapHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
