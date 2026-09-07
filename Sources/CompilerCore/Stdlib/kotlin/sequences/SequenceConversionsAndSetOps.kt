@@ -4,6 +4,15 @@ import kotlin.internal.KsSymbolName
 
 // KSP-443: Sequence 変換・集合演算を Kotlin 化
 
+public inline fun <T> Sequence<T>.forEach(action: (T) -> Unit): Unit {
+    for (element in this) action(element)
+}
+
+public inline fun <T> Sequence<T>.forEachIndexed(action: (index: Int, T) -> Unit): Unit {
+    var index = 0
+    for (item in this) action(checkIndexOverflow(index++), item)
+}
+
 public inline fun <T> Sequence<T>.find(predicate: (T) -> Boolean): T? {
     val iterator = this.iterator()
     while (iterator.hasNext()) {

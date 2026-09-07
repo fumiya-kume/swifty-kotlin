@@ -550,6 +550,26 @@ struct NativeRefRuntimeSemaTests {
     }
 
     @Test
+    func testSweepStatisticsConstructorIsSourceBacked() throws {
+        let (sema, interner) = try sharedSema()
+        let classFQName = ["kotlin", "native", "runtime", "SweepStatistics"].map { interner.intern($0) }
+        let constructor = try #require(
+            sema.symbols.lookupAll(fqName: classFQName + [interner.intern("<init>")]).first,
+            "SweepStatistics should expose its source-backed primary constructor"
+        )
+
+        #expect(sema.symbols.isSourceBackedSymbol(constructor))
+        #expect(sema.symbols.symbol(constructor)?.flags.contains(.synthetic) == false)
+
+        for property in ["sweptCount", "keptCount"] {
+            let propertySymbol = try #require(
+                sema.symbols.lookup(fqName: classFQName + [interner.intern(property)])
+            )
+            #expect(sema.symbols.symbol(propertySymbol)?.flags.contains(.synthetic) == true)
+        }
+    }
+
+    @Test
     func testSweepStatisticsIsTaggedNativeRuntimeApi() throws {
         let (sema, interner) = try sharedSema()
         let fqName = ["kotlin", "native", "runtime", "SweepStatistics"].map { interner.intern($0) }

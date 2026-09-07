@@ -745,7 +745,7 @@ final class ExprTypeChecker {
         let isPrimitive = if case .primitive = sema.types.kind(of: receiverType) { true } else { false }
         let allowedOnPrimitive = names.contains { name in
             switch interner.resolve(name) {
-            case "downTo", "rangeUntil", "step":
+            case "downTo", "rangeTo", "rangeUntil", "step":
                 return true
             default:
                 return false

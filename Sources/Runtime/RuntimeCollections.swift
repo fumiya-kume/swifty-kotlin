@@ -90,20 +90,6 @@ public func kk_list_of(_ arrayRaw: Int, _ count: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: elements), typeID: listRuntimeTypeID)
 }
 
-@_cdecl("kk_list_of_not_null")
-public func kk_list_of_not_null(_ arrayRaw: Int, _ count: Int) -> Int {
-    var elements: [Int] = []
-    if count > 0, let array = runtimeArrayBox(from: arrayRaw) {
-        for element in array.elements.prefix(count) {
-            // swiftlint:disable:next for_where
-            if element != runtimeNullSentinelInt {
-                elements.append(element)
-            }
-        }
-    }
-    return registerRuntimeObject(RuntimeListBox(elements: elements), typeID: listRuntimeTypeID)
-}
-
 // STDLIB-410: emptyList<T>() - allocates a fresh empty list each call to avoid
 // aliasing with mutable collection operations (e.g., kk_mutable_list_add).
 @_cdecl("__kk_emptyList")
@@ -167,13 +153,25 @@ public func kk_list_iterator(_ listRaw: Int) -> Int {
                 removeAction: { index in
                     guard list.elements.indices.contains(index) else { return }
                     list.elements.remove(at: index)
+                },
+                setAction: { index, value in
+                    guard list.elements.indices.contains(index) else { return }
+                    list.elements[index] = value
+                },
+                addAction: { index, value in
+                    guard (0...list.elements.count).contains(index) else { return }
+                    list.elements.insert(value, at: index)
                 }
             )
         )
         registerListIteratorItable(raw: raw)
+        registerMutableListIteratorItable(raw: raw)
         return raw
     }
     if let set = runtimeSetBox(from: listRaw) {
+        // `Set`/`MutableSet` have no `listIterator()`, so this box is only ever
+        // exposed through `Iterator`/`MutableIterator` — no `setAction`/`addAction`
+        // needed here, unlike the `list` branch above.
         let raw = registerRuntimeObject(
             RuntimeListIteratorBox(
                 elements: set.elements,
@@ -232,11 +230,20 @@ public func kk_list_iterator_at(_ listRaw: Int, _ index: Int, _ outThrown: Unsaf
         removeAction: { removedIndex in
             guard list.elements.indices.contains(removedIndex) else { return }
             list.elements.remove(at: removedIndex)
+        },
+        setAction: { setIndex, value in
+            guard list.elements.indices.contains(setIndex) else { return }
+            list.elements[setIndex] = value
+        },
+        addAction: { addIndex, value in
+            guard (0...list.elements.count).contains(addIndex) else { return }
+            list.elements.insert(value, at: addIndex)
         }
     )
     iter.index = index
     let raw = registerRuntimeObject(iter)
     registerListIteratorItable(raw: raw)
+    registerMutableListIteratorItable(raw: raw)
     return raw
 }
 
@@ -263,6 +270,7 @@ public func kk_list_iterator_next(_ iterRaw: Int) -> Int {
         return 0
     }
     let value = iter.elements[iter.index]
+    iter.lastReturnedIndex = iter.index
     iter.index += 1
     return value
 }
@@ -272,6 +280,22 @@ func runtimeListIteratorRemove(_ iterRaw: Int) -> Int {
         return 0
     }
     _ = iter.removeLastReturned()
+    return 0
+}
+
+func runtimeListIteratorSet(_ iterRaw: Int, _ elem: Int) -> Int {
+    guard let iter = runtimeListIteratorBox(from: iterRaw) else {
+        return 0
+    }
+    _ = iter.setLastReturned(elem)
+    return 0
+}
+
+func runtimeListIteratorAdd(_ iterRaw: Int, _ elem: Int) -> Int {
+    guard let iter = runtimeListIteratorBox(from: iterRaw) else {
+        return 0
+    }
+    iter.addBeforeNext(elem)
     return 0
 }
 
@@ -303,6 +327,7 @@ public func kk_list_iterator_previous(_ iterRaw: Int) -> Int {
     // Always decrement index and return the element at the new position
     // This matches the standard ListIterator behavior
     iter.index -= 1
+    iter.lastReturnedIndex = iter.index
     return iter.elements[iter.index]
 }
 
@@ -875,6 +900,16 @@ public func kk_iterable_toMutableSet(_ iterableRaw: Int) -> Int {
         return registerRuntimeObject(RuntimeSetBox(values: runtimeDeduplicatePreservingOrder(values)))
     }
     return registerRuntimeObject(RuntimeSetBox(elements: []))
+}
+
+/// HashSet copy-constructor storage with an independent backing box.
+@_cdecl("__kk_iterable_toHashSet")
+public func kk_iterable_toHashSet(_ iterableRaw: Int) -> Int {
+    let values = runtimeIterableValues(from: iterableRaw) ?? []
+    return registerRuntimeObject(
+        RuntimeSetBox(values: runtimeDeduplicatePreservingOrder(values)),
+        typeID: hashSetRuntimeTypeID
+    )
 }
 
 /// Generic `Iterable<T>.last()` that accepts any collection handle (List, Set, etc.).
