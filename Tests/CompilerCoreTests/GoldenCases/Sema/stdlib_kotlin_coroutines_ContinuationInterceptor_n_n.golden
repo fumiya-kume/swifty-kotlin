@@ -1,0 +1,8 @@
+symbol fq=golden.sema.continuationInterceptorKey kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.coroutines.CoroutineContext.Key<kotlin.coroutines.ContinuationInterceptor>
+symbol fq=kotlin.coroutines.ContinuationInterceptor kind=interface vis=public flags=_ type=kotlin.coroutines.ContinuationInterceptor
+symbol fq=kotlin.coroutines.CoroutineContext.Key kind=interface vis=internal flags=synthetic type=kotlin.coroutines.CoroutineContext.Key<kotlin.coroutines.CoroutineContext.Key.$synthetic.E>
+symbol fq=kotlin.coroutines.CoroutineContext.Key.$synthetic.E kind=typeParameter vis=private flags=synthetic
+file fstdlib_kotlin_coroutines_ContinuationInterceptor_n_n package=golden.sema
+  decl golden.sema.continuationInterceptorKey fun continuationInterceptorKey sym=golden.sema.continuationInterceptorKey
+expr e@7:5 name(ContinuationInterceptor) type=kotlin.coroutines.ContinuationInterceptor ref=kotlin.coroutines.ContinuationInterceptor
+expr e@7:5#1 memberCall recv=e@7:5 callee=Key args=[] type=kotlin.coroutines.ContinuationInterceptor.Key ref=kotlin.coroutines.ContinuationInterceptor.Key
