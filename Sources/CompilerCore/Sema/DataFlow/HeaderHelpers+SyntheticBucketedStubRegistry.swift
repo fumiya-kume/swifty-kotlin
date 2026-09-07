@@ -113,14 +113,6 @@ private func delegateStubRegistryEntries() -> [SyntheticDelegateStubRegistryEntr
         SyntheticDelegateStubRegistryEntry(bucket: .residualCompilerSurface, name: "ExperimentalTimeAnchors") { phase, symbols, types, interner, context in
             phase.registerSyntheticExperimentalTimeStubs(symbols: symbols, types: types, interner: interner, bundledIndex: context.bundledIndex)
         },
-        SyntheticDelegateStubRegistryEntry(bucket: .sourceBackedMigration, name: "StringBuilder") { phase, symbols, types, interner, context in
-            let owner = [interner.intern("kotlin"), interner.intern("text"), interner.intern("StringBuilder")]
-            if context.bundledIndex.contains(ownerFQName: owner, name: interner.intern("append"), arity: 1) {
-                phase.patchSourceBackedStringBuilderSupertypes(symbols: symbols, types: types, interner: interner)
-                return
-            }
-            phase.registerSyntheticStringBuilderStubs(symbols: symbols, types: types, interner: interner)
-        },
         SyntheticDelegateStubRegistryEntry(bucket: .sourceBackedMigration, name: "TODOAndIO") { phase, symbols, types, interner, context in
             phase.registerSyntheticTODOAndIOStubs(
                 symbols: symbols,

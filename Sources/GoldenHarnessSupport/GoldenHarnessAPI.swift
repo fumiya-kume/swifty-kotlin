@@ -82,9 +82,9 @@ public enum GoldenHarness {
         let stdlibLibraryPath = ProcessInfo.processInfo.environment[stdlibLibraryEnvironmentKey]
         let raw: String = switch resolvedSuite {
         case .lexer:
-            try GoldenHarnessDump.dumpLexer(sourcePath: sourcePath, stdlibLibraryPath: stdlibLibraryPath)
+            try GoldenHarnessDump.dumpLexer(sourcePath: sourcePath)
         case .parser:
-            try GoldenHarnessDump.dumpParser(sourcePath: sourcePath, stdlibLibraryPath: stdlibLibraryPath)
+            try GoldenHarnessDump.dumpParser(sourcePath: sourcePath)
         case .sema:
             try GoldenHarnessDump.dumpSema(sourcePath: sourcePath, stdlibLibraryPath: stdlibLibraryPath)
         case .diagnostics:

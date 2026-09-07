@@ -9,6 +9,7 @@ func makeCompilationContext(
     searchPaths: [String] = [],
     irFlags: [String] = [],
     frontendFlags: [String] = [],
+    includeStdlib: Bool = true,
     stdlibLibraryPath: String? = nil
 ) -> CompilationContext {
     let destination = outputPath ?? FileManager.default.temporaryDirectory
@@ -23,6 +24,7 @@ func makeCompilationContext(
         target: TargetTriple.hostDefault(),
         frontendFlags: frontendFlags,
         irFlags: irFlags,
+        includeStdlib: includeStdlib,
         stdlibLibraryPath: stdlibLibraryPath
     )
     return CompilationContext(
