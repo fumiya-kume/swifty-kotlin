@@ -32,6 +32,8 @@ jobs:
         run: bash Scripts/check_todo_ids.sh
       - name: Check mutation fuzzer keyword set matches lexer
         run: bash Scripts/check_mutation_fuzzer_keywords.sh
+      - name: Check Swift test parallelism overrides
+        run: bash Scripts/test_swift_test_parallelism.sh
 
   build-debug-tests:
     name: Build debug Swift test bundle once
