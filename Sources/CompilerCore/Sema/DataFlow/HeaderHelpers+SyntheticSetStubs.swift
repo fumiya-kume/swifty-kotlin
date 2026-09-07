@@ -1,5 +1,5 @@
 
-/// Synthetic stdlib stubs split from `HeaderHelpers+SyntheticComparableAndCollectionStubs.swift`:
+/// Synthetic stdlib stubs split from the KSP-697 collection residual registry:
 /// Set<E> and MutableSet<E> interfaces with their member helpers.
 ///
 /// Split out to isolate merge conflicts between parallel stdlib PRs adding new
@@ -57,6 +57,19 @@ extension DataFlowSemaPhase {
         )
         registerSetIsEmptyMember(
             symbols: symbols, types: types, interner: interner,
+            setFQName: setFQName,
+            setInterfaceSymbol: setInterfaceSymbol,
+            typeParamSymbol: typeParamSymbol,
+            typeParamType: typeParamType
+        )
+        registerSetSizeMember(
+            symbols: symbols, types: types, interner: interner,
+            setFQName: setFQName,
+            setInterfaceSymbol: setInterfaceSymbol
+        )
+        registerSetIteratorMember(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
             setFQName: setFQName,
             setInterfaceSymbol: setInterfaceSymbol,
             typeParamSymbol: typeParamSymbol,
@@ -241,6 +254,78 @@ extension DataFlowSemaPhase {
                 receiverType: receiverType,
                 parameterTypes: [],
                 returnType: types.booleanType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    private func registerSetSizeMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        setFQName: [InternedString],
+        setInterfaceSymbol: SymbolID
+    ) {
+        let memberName = interner.intern("size")
+        let memberFQName = setFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let memberSymbol = symbols.define(
+            kind: .property,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(setInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("__kk_set_size", for: memberSymbol)
+        symbols.setPropertyType(types.intType, for: memberSymbol)
+    }
+
+    private func registerSetIteratorMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        setFQName: [InternedString],
+        setInterfaceSymbol: SymbolID,
+        typeParamSymbol: SymbolID,
+        typeParamType: TypeID
+    ) {
+        let memberName = interner.intern("iterator")
+        let memberFQName = setFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        guard let iteratorSymbol = symbols.lookup(
+            fqName: kotlinCollectionsPkg + [interner.intern("Iterator")]
+        ) else { return }
+
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: setInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: iteratorSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(setInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_list_iterator", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: returnType,
                 typeParameterSymbols: [typeParamSymbol],
                 classTypeParameterCount: 1
             ),
