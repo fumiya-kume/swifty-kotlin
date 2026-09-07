@@ -3362,7 +3362,7 @@
   - 未実装シンボル一覧:
     - `kotlin.properties.ObservableProperty.<init>` — constructor ()  -- `constructor <init>(#A)`
 
-- [ ] KSP-1276: kotlin.properties.ObservableProperty.ObservableProperty の未実装 stdlib API を実装する（5 件）
+- [x] KSP-1276: kotlin.properties.ObservableProperty.ObservableProperty の未実装 stdlib API を実装する（5 件）
   - 対象: `kotlin.properties.ObservableProperty` / receiver `ObservableProperty`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/properties/ObservableProperty/ObservableProperty.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
