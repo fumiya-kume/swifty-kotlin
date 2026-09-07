@@ -118,7 +118,7 @@ extension DataFlowSemaPhase {
             receiverType: rangeType,
             parameterTypes: [],
             returnType: iteratorType,
-            externalLinkName: "kk_uint_range_iterator",
+            externalLinkName: "__kk_uint_range_iterator",
             symbols: symbols,
             interner: interner
         )
@@ -178,7 +178,7 @@ extension DataFlowSemaPhase {
             receiverType: rangeType,
             parameterTypes: [types.intType],
             returnType: syntheticListType(elementType: types.uintType, symbols: symbols, types: types, interner: interner),
-            externalLinkName: "kk_uint_range_take",
+            externalLinkName: "__kk_uint_range_take",
             symbols: symbols,
             interner: interner
         )
@@ -188,7 +188,7 @@ extension DataFlowSemaPhase {
             receiverType: rangeType,
             parameterTypes: [types.intType],
             returnType: syntheticListType(elementType: types.uintType, symbols: symbols, types: types, interner: interner),
-            externalLinkName: "kk_uint_range_drop",
+            externalLinkName: "__kk_uint_range_drop",
             symbols: symbols,
             interner: interner
         )
@@ -217,7 +217,7 @@ extension DataFlowSemaPhase {
             ownerType: rangeType,
             parameterTypes: [types.uintType, types.uintType],
             parameterNames: ["start", "end"],
-            externalLinkName: "kk_uint_rangeTo",
+            externalLinkName: "__kk_uint_rangeTo",
             symbols: symbols,
             interner: interner
         )
