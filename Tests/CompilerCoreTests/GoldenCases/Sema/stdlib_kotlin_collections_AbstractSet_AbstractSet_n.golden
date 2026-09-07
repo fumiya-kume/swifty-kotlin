@@ -10,7 +10,7 @@ symbol fq=kotlin.collections.AbstractSet.E kind=typeParameter vis=private flags=
 symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Collection.E kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Iterator kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_AbstractSet_AbstractSet_n package=golden.sema
   decl golden.sema.ProbeSet class ProbeSet sym=golden.sema.ProbeSet
