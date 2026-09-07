@@ -15,8 +15,7 @@ symbol fq=golden.sema.projectionType kind=function vis=public flags=_ sig=recv=_
 symbol fq=golden.sema.projectionType.$6.projection kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.projectionVariance kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KTypeProjection] ret=kotlin.reflect.KVariance?
 symbol fq=golden.sema.projectionVariance.$7.projection kind=valueParameter vis=private flags=_
-symbol fq=kotlin.reflect.KType kind=interface vis=public flags=synthetic
-symbol fq=kotlin.reflect.KVariance kind=enumClass vis=public flags=synthetic
+symbol fq=kotlin.reflect.KType kind=interface vis=public flags=_
 file fstdlib_kotlin_reflect_KTypeProjection_KTypeProjection_n package=golden.sema
   decl golden.sema.projectionVariance fun projectionVariance sym=golden.sema.projectionVariance
   decl golden.sema.projectionType fun projectionType sym=golden.sema.projectionType

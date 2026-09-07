@@ -1090,49 +1090,11 @@ extension DataFlowSemaPhase {
             classSymbol: kTypeSymbol, args: [], nullability: .nonNull
         )))
 
-        let kTypeProjectionSymbol = ensureClassSymbol(
+        // KType properties and KTypeProjection members are declared by the bundled sources.
+        // Registering legacy properties here leaves runtime links on those source symbols.
+        _ = ensureClassSymbol(
             named: "KTypeProjection", in: kotlinReflectPkg, symbols: symbols, interner: interner
         )
-        let anyType = types.anyType
-        let boolType = types.make(.primitive(.boolean, .nonNull))
-
-        if let kTypeInfo = symbols.symbol(kTypeSymbol) {
-            let isMarkedNullableName = interner.intern("isMarkedNullable")
-            let isMarkedNullableFQ = kTypeInfo.fqName + [isMarkedNullableName]
-            if symbols.lookup(fqName: isMarkedNullableFQ) == nil {
-                let propSym = symbols.define(
-                    kind: .property, name: isMarkedNullableName, fqName: isMarkedNullableFQ,
-                    declSite: nil, visibility: .public, flags: [.synthetic]
-                )
-                symbols.setParentSymbol(kTypeSymbol, for: propSym)
-                symbols.setPropertyType(boolType, for: propSym)
-                symbols.setExternalLinkName("__kk_ktype_isMarkedNullable", for: propSym)
-            }
-
-            let classifierName = interner.intern("classifier")
-            let classifierFQ = kTypeInfo.fqName + [classifierName]
-            if symbols.lookup(fqName: classifierFQ) == nil {
-                let propSym = symbols.define(
-                    kind: .property, name: classifierName, fqName: classifierFQ,
-                    declSite: nil, visibility: .public, flags: [.synthetic]
-                )
-                symbols.setParentSymbol(kTypeSymbol, for: propSym)
-                symbols.setPropertyType(types.makeNullable(anyType), for: propSym)
-                symbols.setExternalLinkName("__kk_ktype_classifier", for: propSym)
-            }
-
-            let argumentsName = interner.intern("arguments")
-            let argumentsFQ = kTypeInfo.fqName + [argumentsName]
-            if symbols.lookup(fqName: argumentsFQ) == nil {
-                let propSym = symbols.define(
-                    kind: .property, name: argumentsName, fqName: argumentsFQ,
-                    declSite: nil, visibility: .public, flags: [.synthetic]
-                )
-                symbols.setParentSymbol(kTypeSymbol, for: propSym)
-                symbols.setPropertyType(anyType, for: propSym)
-                symbols.setExternalLinkName("__kk_ktype_arguments", for: propSym)
-            }
-        }
 
         registerSyntheticKVarianceStub(
             symbols: symbols,
