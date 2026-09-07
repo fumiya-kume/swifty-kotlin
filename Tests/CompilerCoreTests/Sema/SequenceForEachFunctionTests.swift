@@ -1,15 +1,15 @@
 @testable import CompilerCore
 import Testing
 
-/// STDLIB-SEQ-FN-044: Validates that `kotlin.sequences.Sequence<T>.forEach`
-/// resolves through Sema and is wired to the runtime bridge.
-/// Runtime link name: `kk_sequence_forEach`.
+/// KSP-1347: Validates that Sequence for-family functions resolve to bundled
+/// Kotlin source declarations rather than synthetic runtime bridges.
 @Suite
 struct SequenceForEachFunctionTests {
-    @Test func testSequenceForEachResolvesInSource() throws {
+    @Test func testSequenceForFamilyResolvesToBundledSource() throws {
         let ctx = makeContextFromSource("""
         fun printAll(values: Sequence<Int>) {
             values.forEach { value -> println(value) }
+            values.forEachIndexed { index, value -> println(index + value) }
         }
 
         fun printFromLiteral() {
@@ -24,15 +24,24 @@ struct SequenceForEachFunctionTests {
         )
 
         let sema = try #require(ctx.sema)
-        let memberFQName = ["kotlin", "sequences", "Sequence", "forEach"]
-            .map { ctx.interner.intern($0) }
-        let links = Set(
-            sema.symbols.lookupAll(fqName: memberFQName)
-                .compactMap { sema.symbols.externalLinkName(for: $0) }
-        )
-        #expect(
-            links.contains("kk_sequence_forEach"),
-            Comment(rawValue: "Expected Sequence.forEach to link to kk_sequence_forEach, got: \(links)")
-        )
+        let ast = try #require(ctx.ast)
+        for functionName in ["forEach", "forEachIndexed"] {
+            let functionFQName = ["kotlin", "sequences", functionName]
+                .map { ctx.interner.intern($0) }
+            let sourceSymbol = try #require(
+                sema.symbols.lookupAll(fqName: functionFQName).first(where: {
+                    sema.symbols.isSourceBackedSymbol($0)
+                }),
+                "Expected bundled source declaration for Sequence.\(functionName)"
+            )
+            #expect(sema.symbols.symbol(sourceSymbol)?.declSite != nil)
+            #expect(sema.symbols.externalLinkName(for: sourceSymbol) == nil)
+
+            let callExpr = try #require(firstExprID(in: ast) { _, expr in
+                guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                return ctx.interner.resolve(callee) == functionName
+            })
+            #expect(sema.bindings.callBinding(for: callExpr)?.chosenCallee == sourceSymbol)
+        }
     }
 }

@@ -441,14 +441,6 @@ extension DataFlowSemaPhase {
             ownerFQName: classFQName,
             parentSymbol: classSymbol
         )
-        registerSyntheticConstructorStubs(
-            [SyntheticNativeRefRuntimeSurfaceSpec.sweepStatisticsConstructor],
-            ownerType: SyntheticNativeRefRuntimeSurfaceSpec.sweepStatisticsType,
-            context: classContext,
-            symbols: symbols,
-            types: types,
-            interner: interner
-        )
         registerSyntheticPropertyStubs(
             SyntheticNativeRefRuntimeSurfaceSpec.sweepStatisticsProperties,
             context: classContext,

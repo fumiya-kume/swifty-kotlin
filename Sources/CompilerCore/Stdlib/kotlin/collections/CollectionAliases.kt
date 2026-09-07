@@ -66,6 +66,18 @@ private external fun <E> __kkLinkedHashSetContainsAll(
     elements: Collection<@UnsafeVariance E>
 ): Boolean
 
+@KsSymbolName("__kk_set_contains")
+private external fun <E> __kkLinkedHashSetContains(
+    set: LinkedHashSet<E>,
+    element: E
+): Boolean
+
+@KsSymbolName("__kk_set_is_empty")
+private external fun <E> __kkLinkedHashSetIsEmpty(set: LinkedHashSet<E>): Boolean
+
+@KsSymbolName("kk_list_iterator")
+private external fun <E> __kkLinkedHashSetIterator(set: LinkedHashSet<E>): Iterator<E>
+
 public open class LinkedHashSet<E> : MutableSet<E> {
     init {
         __kkLinkedHashSetInit(this)
@@ -77,6 +89,12 @@ public open class LinkedHashSet<E> : MutableSet<E> {
 
     override val size: Int
         get() = __kkLinkedHashSetSize(this)
+
+    override fun contains(element: E): Boolean = __kkLinkedHashSetContains(this, element)
+
+    override fun isEmpty(): Boolean = __kkLinkedHashSetIsEmpty(this)
+
+    override fun iterator(): Iterator<E> = __kkLinkedHashSetIterator(this)
 
     override fun containsAll(elements: Collection<@UnsafeVariance E>): Boolean =
         __kkLinkedHashSetContainsAll(this, elements)

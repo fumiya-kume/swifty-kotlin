@@ -7,7 +7,7 @@ symbol fq=__local_5.z kind=local vis=private flags=_ type=Char
 symbol fq=golden.sema.charFromInt kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=golden.sema.charFromUShort kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=golden.sema.makeCharArray kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.CharArray
-symbol fq=kotlin.CharArray kind=class vis=public flags=synthetic
+symbol fq=kotlin.CharArray#0 kind=class vis=public flags=synthetic
 symbol fq=kotlin.text.code kind=function vis=public flags=synthetic sig=recv=Char params=[] ret=Int
 file fstdlib_kotlin_n_Char package=golden.sema
   decl golden.sema.charFromInt fun charFromInt sym=golden.sema.charFromInt
