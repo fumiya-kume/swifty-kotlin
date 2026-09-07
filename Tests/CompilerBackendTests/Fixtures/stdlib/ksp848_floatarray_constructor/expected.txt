@@ -1,0 +1,8 @@
+3
+0.0
+4
+1.5
+4.5
+0
+negative-size=-1
+negative-init-size=-2

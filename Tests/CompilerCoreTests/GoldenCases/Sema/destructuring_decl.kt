@@ -12,3 +12,9 @@ fun destructuringWithUnderscore() {
     val (_, second) = p
     println(second)
 }
+
+fun destructuringWithContextualKeywordNames(pair: Pair<Int, String>) {
+    val (value, field) = pair
+    println(value)
+    println(field)
+}

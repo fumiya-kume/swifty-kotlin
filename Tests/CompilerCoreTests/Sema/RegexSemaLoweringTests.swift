@@ -643,9 +643,10 @@ struct RegexSemaLoweringTests {
         let module = try #require(ctx.kir)
         let body = try findKIRFunctionBody(named: "regexCase15", in: module, interner: ctx.interner)
         let callees = extractCallees(from: body, interner: ctx.interner)
+        let dispatchedCallees = callees + extractVirtualCallees(from: body, interner: ctx.interner)
         #expect(
-            callees.contains("get") && callees.contains("groups"),
-            Comment(rawValue: "Named group access must dispatch to the Kotlin MatchGroupCollection API; found: \(callees)")
+            dispatchedCallees.contains("get") && dispatchedCallees.contains("groups"),
+            Comment(rawValue: "Named group access must dispatch to the Kotlin MatchGroupCollection API; found: \(dispatchedCallees)")
         )
         #expect(
             !callees.contains("kk_match_group_collection_get"),
@@ -658,9 +659,10 @@ struct RegexSemaLoweringTests {
         let module = try #require(ctx.kir)
         let body = try findKIRFunctionBody(named: "regexCase16", in: module, interner: ctx.interner)
         let callees = extractCallees(from: body, interner: ctx.interner)
+        let dispatchedCallees = callees + extractVirtualCallees(from: body, interner: ctx.interner)
         #expect(
-            callees.contains("get") && callees.contains("groups"),
-            Comment(rawValue: "Index-based group access must dispatch to the Kotlin MatchGroupCollection API; found: \(callees)")
+            dispatchedCallees.contains("get") && dispatchedCallees.contains("groups"),
+            Comment(rawValue: "Index-based group access must dispatch to the Kotlin MatchGroupCollection API; found: \(dispatchedCallees)")
         )
         #expect(
             !callees.contains("kk_match_group_collection_get_at"),

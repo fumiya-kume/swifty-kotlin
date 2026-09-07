@@ -226,33 +226,6 @@ extension DataFlowSemaPhase {
                 )
                 return types.make(.classType(ClassType(classSymbol: builtinNestedSymbol.id, args: resolvedArgs, nullability: nullability)))
             }
-            let stringBuilderName = interner.intern("StringBuilder")
-            let kotlinTextStringBuilderFQName = [
-                interner.intern("kotlin"),
-                interner.intern("text"),
-                stringBuilderName,
-            ]
-            if (path.count == 1 && shortName == stringBuilderName) || path == kotlinTextStringBuilderFQName {
-                let stringBuilderSymbol = ensureKotlinTextStringBuilderSymbol(symbols: symbols, interner: interner)
-                let resolvedArgs = resolveTypeArgRefs(
-                    argRefs,
-                    ast: ast,
-                    symbols: symbols,
-                    types: types,
-                    interner: interner,
-                    localTypeParameters: localTypeParameters,
-                    relativeOwnerFQName: relativeOwnerFQName,
-                    currentPackageFQName: currentPackageFQName,
-                    imports: imports,
-                    diagnostics: diagnostics,
-                    usageRange: usageRange
-                )
-                return types.make(.classType(ClassType(
-                    classSymbol: stringBuilderSymbol,
-                    args: resolvedArgs,
-                    nullability: nullability
-                )))
-            }
             diagnostics?.error(
                 "KSWIFTK-SEMA-0025",
                 "Unresolved type '\(interner.resolve(shortName))'.",
@@ -448,26 +421,34 @@ extension DataFlowSemaPhase {
             return []
         }
 
-        var candidatePaths: [[InternedString]] = [path]
-        if path.count == 1,
-           let currentPackageFQName,
-           !currentPackageFQName.isEmpty
-        {
-            candidatePaths.append(currentPackageFQName + path)
-        }
-        if path.count == 1,
-           let shortName = path.first
-        {
-            for importDecl in imports {
-                if let alias = importDecl.alias, alias == shortName {
-                    candidatePaths.append(importDecl.path)
-                } else if importDecl.alias == nil,
-                          importDecl.path.last == shortName
+        var candidatePaths: [[InternedString]] = {
+            var paths: [[InternedString]] = []
+            if path.count == 1 {
+                if let currentPackageFQName,
+                   !currentPackageFQName.isEmpty
                 {
-                    candidatePaths.append(importDecl.path)
+                    paths.append(currentPackageFQName + path)
                 }
+                if let shortName = path.first {
+                    for importDecl in imports {
+                        if let alias = importDecl.alias, alias == shortName {
+                            paths.append(importDecl.path)
+                        } else if importDecl.alias == nil,
+                                  importDecl.path.last == shortName
+                        {
+                            paths.append(importDecl.path)
+                        }
+                    }
+                }
+                // An unqualified root symbol is the final fallback. This ordering
+                // keeps an explicit import from being shadowed by a compatibility
+                // alias with the same short name (KSP-1150).
+                paths.append(path)
+            } else {
+                paths = [path]
             }
-        }
+            return paths
+        }()
 
         // For qualified nested-type references within the current package (e.g. a
         // Companion-scoped extension "Duration.Companion.ZERO" written in the same
@@ -957,7 +938,10 @@ extension DataFlowSemaPhase {
             rootClassSymbol = types.stringClassSymbol
         } else if first == interner.intern("Any") {
             rootClassSymbol = types.anyClassSymbol
-        } else if first == interner.intern("Long") || first == interner.intern("Short") {
+        } else if first == interner.intern("Byte")
+            || first == interner.intern("Long")
+            || first == interner.intern("Short")
+        {
             let kotlinFQName = [interner.intern("kotlin"), first]
             rootClassSymbol = symbols.lookupAll(fqName: kotlinFQName).first(where: { symbolID in
                 guard let symbol = symbols.symbol(symbolID) else { return false }

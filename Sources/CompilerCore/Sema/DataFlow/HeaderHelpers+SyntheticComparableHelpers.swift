@@ -1,5 +1,5 @@
 
-/// Synthetic stdlib stubs split from `HeaderHelpers+SyntheticComparableAndCollectionStubs.swift`:
+/// Synthetic Comparable helpers retained after the KSP-697 nominal shell migration.
 /// Comparable<in T> sub-helpers (primitive compatibility and null-safe extensions).
 ///
 /// Split out to isolate merge conflicts between parallel stdlib PRs adding new
@@ -32,10 +32,11 @@ extension DataFlowSemaPhase {
             symbols.setSupertypeTypeArgs([.in(primitiveType)], for: primitiveSymbol, supertype: comparableSymbol)
             types.setNominalSupertypeTypeArgs([.in(primitiveType)], for: primitiveSymbol, supertype: comparableSymbol)
 
-            // KSP-853/KSP-904/KSP-910/KSP-913: Int, UByte, ULong, and UShort
+            // KSP-853/KSP-904/KSP-907/KSP-910/KSP-913: Int, UByte, UInt,
+            // ULong, and UShort
             // are compiler primitives, so retain only the synthetic Companion
             // anchors needed by source-backed extensions.
-            if typeName == "Int" || typeName == "UByte" || typeName == "ULong" || typeName == "UShort" {
+            if typeName == "Int" || typeName == "UByte" || typeName == "UInt" || typeName == "ULong" || typeName == "UShort" {
                 ensureSyntheticPrimitiveCompanionSymbol(
                     ownerSymbol: primitiveSymbol,
                     symbols: symbols,
