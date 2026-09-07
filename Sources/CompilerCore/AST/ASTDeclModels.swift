@@ -383,7 +383,7 @@ public struct ExplicitBackingField: Codable {
     /// The initializer expression for the backing field (required).
     public let initializer: ExprID
 
-    public init(type: TypeRefID?, initializer: ExprID) {
+    public init(type: TypeRefID? = nil, initializer: ExprID) {
         self.type = type
         self.initializer = initializer
     }
@@ -485,7 +485,12 @@ public struct EnumEntryDecl: Codable {
     public let annotations: [AnnotationNode]
     public let constructorArgs: [CallArgument]
 
-    public init(range: SourceRange, name: InternedString, annotations: [AnnotationNode] = [], constructorArgs: [CallArgument] = []) {
+    public init(
+        range: SourceRange,
+        name: InternedString,
+        annotations: [AnnotationNode] = [],
+        constructorArgs: [CallArgument] = []
+    ) {
         self.range = range
         self.name = name
         self.annotations = annotations
@@ -497,6 +502,12 @@ public struct ImportDecl: Sendable, Codable {
     public let range: SourceRange
     public let path: [InternedString]
     public let alias: InternedString?
+
+    public init(range: SourceRange, path: [InternedString], alias: InternedString? = nil) {
+        self.range = range
+        self.path = path
+        self.alias = alias
+    }
 }
 
 public struct TypeParamDecl: Codable {
@@ -504,10 +515,6 @@ public struct TypeParamDecl: Codable {
     public let variance: TypeVariance
     public let isReified: Bool
     public let upperBounds: [TypeRefID]
-
-    public var upperBound: TypeRefID? {
-        upperBounds.first
-    }
 
     public init(
         name: InternedString,
@@ -519,18 +526,6 @@ public struct TypeParamDecl: Codable {
         self.variance = variance
         self.isReified = isReified
         self.upperBounds = upperBounds
-    }
-
-    public init(
-        name: InternedString,
-        variance: TypeVariance = .invariant,
-        isReified: Bool = false,
-        upperBound: TypeRefID?
-    ) {
-        self.name = name
-        self.variance = variance
-        self.isReified = isReified
-        upperBounds = upperBound.map { [$0] } ?? []
     }
 }
 
@@ -545,6 +540,9 @@ public struct ValueParamDecl: Equatable, Codable {
     /// `true` when a primary constructor property parameter carries the
     /// `override` modifier, e.g. `class Foo(override val x: String)`.
     public let isOverrideProperty: Bool
+    /// `true` when a primary constructor property parameter carries the
+    /// `open` modifier, e.g. `open class Foo(open val x: String)`.
+    public let isOpenProperty: Bool
     public let hasDefaultValue: Bool
     public let isVararg: Bool
     /// `true` when a function parameter is declared with `crossinline`.
@@ -560,6 +558,7 @@ public struct ValueParamDecl: Equatable, Codable {
         isProperty: Bool = false,
         isMutableProperty: Bool = false,
         isOverrideProperty: Bool = false,
+        isOpenProperty: Bool = false,
         hasDefaultValue: Bool = false,
         isVararg: Bool = false,
         isCrossinline: Bool = false,
@@ -572,6 +571,7 @@ public struct ValueParamDecl: Equatable, Codable {
         self.isProperty = isProperty
         self.isMutableProperty = isMutableProperty
         self.isOverrideProperty = isOverrideProperty
+        self.isOpenProperty = isOpenProperty
         self.hasDefaultValue = hasDefaultValue
         self.isVararg = isVararg
         self.isCrossinline = isCrossinline

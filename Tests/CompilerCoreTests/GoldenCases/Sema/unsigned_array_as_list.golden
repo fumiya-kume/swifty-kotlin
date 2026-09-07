@@ -54,16 +54,16 @@ expr e@7:19#1 binary(rangeTo) lhs=e@7:19 rhs=e@7:25 type=ULong
 expr e@7:19#2 memberCall recv=e@7:19#1 callee=toULongArray args=[] type=kotlin.ULongArray
 expr e@7:5 localDecl ulongs mutable=0 type=_ init=e@7:19#2 type=Unit ref=__local_3.ulongs
 expr e@9:21 name(ubytes) type=kotlin.UByteArray ref=__local_0.ubytes
-expr e@9:21#1 memberCall recv=e@9:21 callee=asList args=[] type=kotlin.collections.List<UByte> call=kotlin.collections.asList#0
+expr e@9:21#1 memberCall recv=e@9:21 callee=asList args=[] type=kotlin.collections.List<UByte> call=kotlin.collections.asList#9
 expr e@9:5 localDecl ubyteList mutable=0 type=_ init=e@9:21#1 type=Unit ref=__local_4.ubyteList
 expr e@10:22 name(ushorts) type=kotlin.UShortArray ref=__local_1.ushorts
-expr e@10:22#1 memberCall recv=e@10:22 callee=asList args=[] type=kotlin.collections.List<UShort> call=kotlin.collections.asList#3
+expr e@10:22#1 memberCall recv=e@10:22 callee=asList args=[] type=kotlin.collections.List<UShort> call=kotlin.collections.asList#12
 expr e@10:5 localDecl ushortList mutable=0 type=_ init=e@10:22#1 type=Unit ref=__local_5.ushortList
 expr e@11:20 name(uints) type=kotlin.UIntArray ref=__local_2.uints
-expr e@11:20#1 memberCall recv=e@11:20 callee=asList args=[] type=kotlin.collections.List<UInt> call=kotlin.collections.asList#1
+expr e@11:20#1 memberCall recv=e@11:20 callee=asList args=[] type=kotlin.collections.List<UInt> call=kotlin.collections.asList#10
 expr e@11:5 localDecl uintList mutable=0 type=_ init=e@11:20#1 type=Unit ref=__local_6.uintList
 expr e@12:21 name(ulongs) type=kotlin.ULongArray ref=__local_3.ulongs
-expr e@12:21#1 memberCall recv=e@12:21 callee=asList args=[] type=kotlin.collections.List<ULong> call=kotlin.collections.asList#2
+expr e@12:21#1 memberCall recv=e@12:21 callee=asList args=[] type=kotlin.collections.List<ULong> call=kotlin.collections.asList#11
 expr e@12:5 localDecl ulongList mutable=0 type=_ init=e@12:21#1 type=Unit ref=__local_7.ulongList
 expr e@14:26 name(ubytes) type=kotlin.UByteArray ref=__local_0.ubytes
 expr e@14:26#1 memberCall recv=e@14:26 callee=size args=[] type=Int call=kotlin.collections.size.$get#9

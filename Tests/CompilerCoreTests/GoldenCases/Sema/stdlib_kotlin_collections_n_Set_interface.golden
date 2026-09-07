@@ -18,7 +18,6 @@ symbol fq=kotlin.collections.List.E kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.List.isEmpty kind=function vis=public flags=synthetic sig=recv=kotlin.collections.List<out kotlin.collections.List.E> params=[] ret=Boolean
 symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Set.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Set.contains kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Set<out kotlin.collections.Set.E> params=[kotlin.collections.Set.E] ret=Boolean
 file fstdlib_kotlin_collections_n_Set_interface package=golden.sema
   decl golden.sema.ProbeSet class ProbeSet sym=golden.sema.ProbeSet
   decl golden.sema.inspect fun inspect sym=golden.sema.inspect
@@ -43,7 +42,7 @@ expr e@16:39#1 memberCall recv=e@16:39 callee=isEmpty args=[] type=Boolean call=
 expr e@18:46 name(values) type=kotlin.collections.List<Int> ref=golden.sema.ProbeSet.values
 expr e@18:46#1 memberCall recv=e@18:46 callee=iterator args=[] type=kotlin.collections.Iterator<out Int> call=kotlin.collections.Collection.iterator
 expr e@22:20 name(values) type=kotlin.collections.Set<Int> ref=golden.sema.inspect.$2.values
-expr e@22:20#1 memberCall recv=e@22:20 callee=iterator args=[] type=kotlin.collections.Iterator<out Int> call=kotlin.collections.Collection.iterator
+expr e@22:20#1 memberCall recv=e@22:20 callee=iterator args=[] type=kotlin.collections.Iterator<out Int> call=kotlin.collections.Set.iterator
 expr e@22:5 localDecl iterator mutable=0 type=_ init=e@22:20#1 type=Unit ref=__local_0.iterator
 expr e@23:12 name(values) type=kotlin.collections.Set<Int> ref=golden.sema.inspect.$2.values
 expr e@23:28 int(1) type=Int

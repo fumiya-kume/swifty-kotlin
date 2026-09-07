@@ -1,9 +1,9 @@
 package kotlin.collections
 
-// KSP-939: source-backed List nominal declaration and initializer factory.
-// Indexed access and collection members remain compiler/runtime residuals
-// until their dedicated migration tasks land.
-public interface List<out E> : Collection<E>
+// KSP-939: List(size, init) initializer factory. The List<out E> nominal
+// declaration itself already lives in List.kt (KSP-697); indexed access and
+// collection members remain compiler/runtime residuals until their dedicated
+// migration tasks land.
 
 /**
  * Creates a read-only list whose elements are produced in ascending index order.

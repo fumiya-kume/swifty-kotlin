@@ -2,8 +2,9 @@
 @testable import CompilerCore
 import Testing
 
-/// KSP-939: List's nominal shell and size/init factory are bundled Kotlin
-/// declarations; indexed access and collection members remain residuals.
+/// KSP-939: List's size/init factory is a bundled Kotlin declaration; the
+/// nominal shell itself is already source-backed via KSP-697 (List.kt).
+/// Indexed access and collection members remain residuals.
 @Suite
 struct ListInterfaceSourceMigrationTests {
     @Test
@@ -31,7 +32,7 @@ struct ListInterfaceSourceMigrationTests {
         #expect(listInfo.kind == .interface)
         #expect(!listInfo.flags.contains(.synthetic))
         let sourceFile = try #require(sema.symbols.sourceFileID(for: list))
-        #expect(ctx.sourceManager.path(of: sourceFile) == "__bundled_kotlin/collections/ListAccessHOF.kt")
+        #expect(ctx.sourceManager.path(of: sourceFile) == "__bundled_kotlin/collections/List.kt")
         #expect(sema.types.nominalTypeParameterVariances(for: list) == [.out])
 
         let collection = try #require(
