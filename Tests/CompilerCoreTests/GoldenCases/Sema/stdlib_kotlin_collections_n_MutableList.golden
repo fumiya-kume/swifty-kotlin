@@ -1,5 +1,5 @@
 symbol fq=CustomMutableList kind=class vis=public flags=abstractType|openType
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
 symbol fq=mutableListFactoryProbe kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.MutableList<Int>
 symbol fq=mutableListProbe kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableList<Int>] ret=kotlin.collections.List<kotlin.Number>

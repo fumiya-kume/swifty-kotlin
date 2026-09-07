@@ -1,6 +1,7 @@
 package kotlin.concurrent
 
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.internal.KsSymbolName
 
 // MIGRATION-ATOMIC-001 / KSP-670 / KSP-688
 // AtomicInt / AtomicLong / AtomicReference / AtomicBoolean API migrated to
@@ -10,19 +11,36 @@ import java.util.concurrent.atomic.AtomicInteger
 // incrementAndFetch/decrementAndFetch/addAndFetch bridge members.
 // KSP-671: the fetchAnd* reverse variants and compareAndSet delegate to the
 // same retained bridge members (addAndFetch/incrementAndFetch/
-// decrementAndFetch/compareAndExchange). The CPU-instruction cores
-// (compareAndExchange and the *Fetch arithmetic ops) stay as bridges.
+// decrementAndFetch/compareAndExchange). The CPU-instruction cores stay as
+// internal bridges; their public Kotlin API wrappers are defined below.
 // KSP-688: AtomicBoolean and AtomicReference compareAndSet use the same
 // compareAndExchange delegation. AtomicReference compares references by
 // identity, so its wrapper uses referential equality (===).
 // getAndUpdate/updateAndGet/fetchAndUpdate/updateAndFetch are CAS retry loops
 // built on the load/compareAndSet members (KSP-CAP-004 / KSP-673).
-// java.util.concurrent.atomic.AtomicInteger shares the same kk_atomic_int_*
-// bridge, so its update operators are migrated here as well.
+// java.util.concurrent.atomic.AtomicInteger shares the scalar __kk_atomic_int_*
+// core bridge, so its update operators are migrated here as well.
 // Migration source: Sources/Runtime/RuntimeAtomic.swift
-//   kk_atomic_int_*/kk_atomic_long_*/kk_atomic_bool_*/kk_atomic_ref_*
+//   __kk_atomic_int_*/__kk_atomic_long_*/__kk_atomic_bool_*/__kk_atomic_ref_*
+
+// Scalar atomic operations are runtime-backed cores. Keep their public Kotlin
+// surface in this bundled source while exposing only internal bridge symbols.
+@KsSymbolName("__kk_atomic_int_compareAndExchange")
+private external fun AtomicInt.__kkCompareAndExchange(expectedValue: Int, newValue: Int): Int
+
+@KsSymbolName("__kk_atomic_long_compareAndExchange")
+private external fun AtomicLong.__kkCompareAndExchange(expectedValue: Long, newValue: Long): Long
+
+@KsSymbolName("__kk_atomic_bool_compareAndExchange")
+private external fun AtomicBoolean.__kkCompareAndExchange(expectedValue: Boolean, newValue: Boolean): Boolean
+
+@KsSymbolName("__kk_atomic_ref_compareAndExchange")
+private external fun <T> AtomicReference<T>.__kkCompareAndExchange(expectedValue: T, newValue: T): T
 
 // ── AtomicInt ──────────────────────────────────────────────────────────────
+
+public fun AtomicInt.compareAndExchange(expectedValue: Int, newValue: Int): Int =
+    __kkCompareAndExchange(expectedValue, newValue)
 
 public fun AtomicInt.get(): Int = load()
 
@@ -70,6 +88,9 @@ public fun AtomicInt.fetchAndUpdate(transform: (Int) -> Int): Int {
 }
 
 // ── AtomicLong ─────────────────────────────────────────────────────────────
+
+public fun AtomicLong.compareAndExchange(expectedValue: Long, newValue: Long): Long =
+    __kkCompareAndExchange(expectedValue, newValue)
 
 public fun AtomicLong.get(): Long = load()
 
@@ -119,7 +140,10 @@ public fun AtomicLong.fetchAndUpdate(transform: (Long) -> Long): Long {
 // ── AtomicBoolean ──────────────────────────────────────────────────────────
 // KSP-670/KSP-688: get/set/getAndSet and compareAndSet delegate to the
 // load/store/exchange/compareAndExchange bridge members. The compareAndExchange
-// operation remains the runtime CAS core (kk_atomic_bool_*).
+// operation remains the runtime CAS core (__kk_atomic_bool_*).
+
+public fun AtomicBoolean.compareAndExchange(expectedValue: Boolean, newValue: Boolean): Boolean =
+    __kkCompareAndExchange(expectedValue, newValue)
 
 public fun AtomicBoolean.get(): Boolean = load()
 
@@ -155,6 +179,9 @@ public fun AtomicBoolean.fetchAndUpdate(transform: (Boolean) -> Boolean): Boolea
 }
 
 // ── AtomicReference<T> ─────────────────────────────────────────────────────
+
+public fun <T> AtomicReference<T>.compareAndExchange(expectedValue: T, newValue: T): T =
+    __kkCompareAndExchange(expectedValue, newValue)
 
 public fun <T> AtomicReference<T>.get(): T = load()
 

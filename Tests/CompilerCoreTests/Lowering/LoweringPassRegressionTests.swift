@@ -15,7 +15,7 @@ struct LoweringPassRegressionTests {
         }
 
         let callees = extractCallees(from: loweredMain.body, interner: fixture.interner)
-        #expect(callees.contains("kk_uint_range_iterator"), "Callees: \(callees)")
+        #expect(callees.contains("__kk_uint_range_iterator"), "Callees: \(callees)")
         #expect(!callees.contains("kk_range_iterator"), "Callees: \(callees)")
         #expect(callees.contains("kk_range_hasNext"), "Callees: \(callees)")
         #expect(callees.contains("kk_range_next"), "Callees: \(callees)")

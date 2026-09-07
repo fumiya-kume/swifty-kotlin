@@ -389,6 +389,18 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let cancellationIsSourceBacked = !(symbols.symbol(cancellationSymbol)?.flags.contains(.synthetic) ?? true)
+        let illegalStateExceptionSymbol: SymbolID?
+        if cancellationIsSourceBacked {
+            illegalStateExceptionSymbol = nil
+        } else {
+            illegalStateExceptionSymbol = ensureClassSymbol(
+                named: "IllegalStateException",
+                in: kotlinPkg,
+                symbols: symbols,
+                interner: interner
+            )
+        }
         let rootCancellationSymbol: SymbolID = if let existing = symbols.lookup(fqName: [interner.intern("CancellationException")]) {
             existing
         } else {
@@ -640,7 +652,10 @@ extension DataFlowSemaPhase {
         symbols.setPropertyType(continuationType, for: continuationSymbol)
         symbols.setPropertyType(continuationInterceptorType, for: continuationInterceptorSymbol)
         symbols.setPropertyType(rootCancellationType, for: rootCancellationSymbol)
-        symbols.setDirectSupertypes([exceptionSymbol], for: cancellationSymbol)
+        if !cancellationIsSourceBacked, let illegalStateExceptionSymbol {
+            symbols.setDirectSupertypes([illegalStateExceptionSymbol], for: cancellationSymbol)
+            types.setNominalDirectSupertypes([illegalStateExceptionSymbol], for: cancellationSymbol)
+        }
         symbols.setDirectSupertypes([exceptionSymbol], for: rootCancellationSymbol)
         symbols.setDirectSupertypes([continuationInterceptorSymbol], for: dispatcherSymbol)
         types.setNominalTypeParameterSymbols([continuationTypeParameterSymbol], for: continuationSymbol)
@@ -767,28 +782,33 @@ extension DataFlowSemaPhase {
             )
         }
 
-        registerSyntheticPlatformExceptionConstructors(
-            ownerSymbol: cancellationSymbol,
-            ownerType: cancellationType,
-            symbols: symbols,
-            types: types,
-            interner: interner,
-            includeMessageOverload: true,
-            throwableSymbol: throwableSymbol
-        )
-        let nullableThrowableType = types.make(.classType(ClassType(
-            classSymbol: throwableSymbol,
-            args: [],
-            nullability: .nullable
-        )))
-        registerSyntheticPlatformExceptionConstructor(
-            ownerSymbol: cancellationSymbol,
-            ownerType: cancellationType,
-            parameters: [("cause", nullableThrowableType)],
-            externalLinkName: "kk_throwable_new_cause",
-            symbols: symbols,
-            interner: interner
-        )
+        if !cancellationIsSourceBacked {
+            registerSyntheticPlatformExceptionConstructors(
+                ownerSymbol: cancellationSymbol,
+                ownerType: cancellationType,
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                includeMessageOverload: true,
+                throwableSymbol: throwableSymbol,
+                noArgLinkName: "__kk_cancellation_exception_new",
+                messageLinkName: "__kk_cancellation_exception_new_message",
+                messageCauseLinkName: "__kk_cancellation_exception_new_message_cause"
+            )
+            let nullableThrowableType = types.make(.classType(ClassType(
+                classSymbol: throwableSymbol,
+                args: [],
+                nullability: .nullable
+            )))
+            registerSyntheticPlatformExceptionConstructor(
+                ownerSymbol: cancellationSymbol,
+                ownerType: cancellationType,
+                parameters: [("cause", nullableThrowableType)],
+                externalLinkName: "__kk_cancellation_exception_new_cause",
+                symbols: symbols,
+                interner: interner
+            )
+        }
 
         if symbols.lookup(fqName: coroutinesPkg + [cancellationName]) == nil {
             let kotlinxCancellationSymbol = symbols.define(

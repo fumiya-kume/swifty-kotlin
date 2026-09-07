@@ -6,7 +6,7 @@ symbol fq=golden.sema.Container kind=class vis=public flags=abstractType|openTyp
 symbol fq=golden.sema.Dog kind=class vis=public flags=_
 symbol fq=golden.sema.Pet kind=class vis=public flags=abstractType|openType
 symbol fq=golden.sema.Shape kind=class vis=public flags=abstractType|openType
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 file fabstract_class package=golden.sema
   decl golden.sema.Shape class Shape sym=golden.sema.Shape
   decl golden.sema.Circle class Circle sym=golden.sema.Circle
