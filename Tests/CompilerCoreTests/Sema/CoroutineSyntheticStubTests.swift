@@ -375,12 +375,12 @@ struct CoroutineSyntheticStubTests {
                     "Expected kotlin.coroutines.cancellation.CancellationException to be registered"
                 )
                 #expect(sema.symbols.symbol(cancellationSymbol)?.kind == .class)
-                #expect(sema.symbols.symbol(cancellationSymbol)?.flags.contains(.synthetic) == true)
+                #expect(sema.symbols.symbol(cancellationSymbol)?.flags.contains(.synthetic) == false)
 
-                let exceptionSymbol = try #require(
-                    sema.symbols.lookup(fqName: ["kotlin", "Exception"].map { interner.intern($0) })
+                let illegalStateExceptionSymbol = try #require(
+                    sema.symbols.lookup(fqName: ["kotlin", "IllegalStateException"].map { interner.intern($0) })
                 )
-                #expect(sema.symbols.directSupertypes(for: cancellationSymbol).contains(exceptionSymbol))
+                #expect(sema.symbols.directSupertypes(for: cancellationSymbol).contains(illegalStateExceptionSymbol))
 
                 let throwableSymbol = try #require(
                     sema.symbols.lookup(fqName: ["kotlin", "Throwable"].map { interner.intern($0) })
@@ -395,19 +395,28 @@ struct CoroutineSyntheticStubTests {
                     args: [],
                     nullability: .nullable
                 )))
+                let nullableStringType = sema.types.makeNullable(sema.types.stringType)
                 let expectedParameterTypes: Set<[TypeID]> = [
                     [],
-                    [sema.types.stringType],
+                    [nullableStringType],
                     [nullableThrowableType],
-                    [sema.types.stringType, nullableThrowableType],
+                    [nullableStringType, nullableThrowableType],
                 ]
                 let actualParameterTypes = Set(constructors.compactMap { sema.symbols.functionSignature(for: $0)?.parameterTypes })
                 #expect(actualParameterTypes == expectedParameterTypes)
 
-                let causeConstructor = try #require(constructors.first { symbol in
-                    sema.symbols.functionSignature(for: symbol)?.parameterTypes == [sema.types.stringType, nullableThrowableType]
-                })
-                #expect(sema.symbols.externalLinkName(for: causeConstructor) == "__kk_throwable_new_with_cause")
+                let expectedLinks: [[TypeID]: String] = [
+                    []: "__kk_cancellation_exception_new",
+                    [nullableStringType]: "__kk_cancellation_exception_new_message",
+                    [nullableThrowableType]: "__kk_cancellation_exception_new_cause",
+                    [nullableStringType, nullableThrowableType]: "__kk_cancellation_exception_new_message_cause",
+                ]
+                for (parameterTypes, expectedLink) in expectedLinks {
+                    let constructor = try #require(constructors.first { symbol in
+                        sema.symbols.functionSignature(for: symbol)?.parameterTypes == parameterTypes
+                    })
+                    #expect(sema.symbols.externalLinkName(for: constructor) == expectedLink)
+                }
             }
 
             // testCancellationExceptionCauseConstructorIsRegistered
@@ -433,7 +442,7 @@ struct CoroutineSyntheticStubTests {
                 })
                 let causeSignature = try #require(sema.symbols.functionSignature(for: causeConstructor))
                 #expect(causeSignature.returnType == sema.symbols.propertyType(for: cancellationSymbol))
-                #expect(sema.symbols.externalLinkName(for: causeConstructor) == "kk_throwable_new_cause")
+                #expect(sema.symbols.externalLinkName(for: causeConstructor) == "__kk_cancellation_exception_new_cause")
             }
 
             // testEmptyCoroutineContextResolvesThroughWithContext
@@ -530,6 +539,27 @@ struct CoroutineSyntheticStubTests {
                 _ = samplePath
                 #expect(ctx.diagnostics.diagnostics.isEmpty, "\(ctx.diagnostics.diagnostics)")
             }
+        }
+    }
+
+    @Test
+    func testSourceBackedCancellationExceptionConstructorsResolveInCalls() throws {
+        let source = """
+        package sample
+
+        import kotlin.coroutines.cancellation.CancellationException
+
+        fun noArg(): CancellationException = CancellationException()
+        fun message(message: String?): CancellationException = CancellationException(message)
+        fun cause(cause: Throwable?): CancellationException = CancellationException(cause)
+        fun messageAndCause(message: String?, cause: Throwable?): CancellationException =
+            CancellationException(message, cause)
+        """
+
+        try withTemporaryFiles(contents: [source]) { paths in
+            let ctx = makeCompilationContext(inputs: paths)
+            try runSema(ctx)
+            #expect(ctx.diagnostics.diagnostics.isEmpty, "\(ctx.diagnostics.diagnostics)")
         }
     }
 }

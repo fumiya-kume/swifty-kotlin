@@ -1,5 +1,5 @@
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.ranges.IntRange kind=class vis=public flags=synthetic
 symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
 symbol fq=kotlinx.coroutines.flow.Flow kind=interface vis=public flags=synthetic type=kotlinx.coroutines.flow.Flow<out kotlinx.coroutines.flow.Flow.T>

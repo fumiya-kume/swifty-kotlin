@@ -1,7 +1,7 @@
 import RuntimeABI
 
 /// List transform members that are not yet source-backed (e.g. `sum`, `distinctBy`)
-/// extracted from `HeaderHelpers+SyntheticListStubs.swift`.
+/// extracted from the KSP-697 list residual registry.
 /// KSP-421 source-backed transforms (`map`, `mapIndexed`, `mapNotNull`,
 /// `flatMap`, `flatMapIndexed`, `flatten`, and `*To` variants) are no longer
 /// registered here.

@@ -217,7 +217,7 @@ struct CollectionLiteralLoweringTests {
     }
 
     @Test
-    func testListOfNotNullRewrittenToKkListOf() throws {
+    func testListOfNotNullIsNotRewrittenToACollectionRuntimeBridge() throws {
         let interner = StringInterner()
         let arena = KIRArena()
         let callee = interner.intern("listOfNotNull")
@@ -227,8 +227,8 @@ struct CollectionLiteralLoweringTests {
         try runPass(module: module, kirCtx: ctx)
 
         let callees = calleesInDecl(declID, module: module, interner: interner)
-        #expect(!callees.contains("listOfNotNull"), "listOfNotNull should be rewritten")
-        #expect(callees.contains("kk_list_of_not_null"), "listOfNotNull should become kk_list_of_not_null")
+        #expect(callees.contains("listOfNotNull"), "listOfNotNull should remain a source call")
+        #expect(!callees.contains("kk_list_of_not_null"), "listOfNotNull must not use the removed ABI")
     }
 
     // MARK: - mapOf rewriting
@@ -688,7 +688,7 @@ struct CollectionLiteralLoweringTests {
     }
 
     @Test
-    func testZeroArgHashSetOfRewrittenToKkSetOf() throws {
+    func testZeroArgHashSetOfRewrittenToKkHashSetOf() throws {
         let interner = StringInterner()
         let arena = KIRArena()
         let callee = interner.intern("hashSetOf")
@@ -699,7 +699,7 @@ struct CollectionLiteralLoweringTests {
 
         let callees = calleesInDecl(declID, module: module, interner: interner)
         #expect(!callees.contains("hashSetOf"), "hashSetOf() should be rewritten")
-        #expect(callees.contains("__kk_set_of"), "hashSetOf() should become __kk_set_of (fresh mutable)")
+        #expect(callees.contains("__kk_hash_set_of"), "hashSetOf() should become __kk_hash_set_of (fresh mutable)")
     }
 
     @Test
@@ -814,7 +814,7 @@ struct CollectionLiteralLoweringTests {
     }
 
     @Test
-    func testHashSetOfRewrittenToKkSetOf() throws {
+    func testHashSetOfRewrittenToKkHashSetOf() throws {
         let interner = StringInterner()
         let arena = KIRArena()
         let callee = interner.intern("hashSetOf")
@@ -825,7 +825,7 @@ struct CollectionLiteralLoweringTests {
 
         let callees = calleesInDecl(declID, module: module, interner: interner)
         #expect(!callees.contains("hashSetOf"), "hashSetOf should be rewritten")
-        #expect(callees.contains("__kk_set_of"), "hashSetOf should become __kk_set_of")
+        #expect(callees.contains("__kk_hash_set_of"), "hashSetOf should become __kk_hash_set_of")
     }
 
     // MARK: - buildList rewriting (STDLIB-070)

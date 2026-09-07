@@ -86,5 +86,60 @@ struct CodegenBackendEnumAnyTypeChecksTests {
                 + "\n"
         )
     }
+
+    /// BUG-225: enum values use raw ordinal Ints internally, but a type check
+    /// needs a nominally tagged box so the enum class and its interfaces can
+    /// be recognized by `kk_op_is`/`kk_op_cast`.
+    @Test
+    func testCodegenStaticallyTypedEnumAnswersTypeChecks() throws {
+        let source = """
+        interface Labeled
+
+        enum class Medal : Labeled { BRONZE, SILVER, GOLD }
+
+        fun classifyMedal(medal: Medal): String =
+            if (medal is Medal) "enum-yes" else "enum-no"
+
+        fun classifyLabel(medal: Medal): String =
+            if (medal is Labeled) "label-yes" else "label-no"
+
+        fun main() {
+            println(Medal.BRONZE is Medal)
+            println(Medal.BRONZE is Labeled)
+
+            val medal: Medal = Medal.SILVER
+            println(medal is Medal)
+            println(medal is Labeled)
+
+            println(classifyMedal(Medal.GOLD))
+            println(classifyLabel(Medal.GOLD))
+
+            println(Medal.BRONZE as Medal)
+            println(Medal.SILVER as? Medal)
+            println(Medal.GOLD as Labeled)
+            println(Medal.BRONZE as? Labeled)
+        }
+        """
+
+        try assertKotlinOutput(
+            source,
+            moduleName: "EnumStaticTypeChecks",
+            expected:
+                """
+                true
+                true
+                true
+                true
+                enum-yes
+                label-yes
+                BRONZE
+                SILVER
+                GOLD
+                BRONZE
+                """
+                + "\n",
+            allowDefaultStdlibLibrary: false
+        )
+    }
 }
 #endif
