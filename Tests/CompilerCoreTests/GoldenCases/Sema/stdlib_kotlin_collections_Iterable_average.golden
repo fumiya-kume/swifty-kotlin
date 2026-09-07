@@ -14,8 +14,8 @@ symbol fq=averageLong kind=function vis=public flags=_ sig=recv=_ params=[kotlin
 symbol fq=averageLong.$6.values kind=valueParameter vis=private flags=_
 symbol fq=averageShort kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Short>] ret=Double
 symbol fq=averageShort.$7.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Iterable_average package=_
   decl averageByte fun averageByte sym=averageByte
   decl averageDouble fun averageDouble sym=averageDouble

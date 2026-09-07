@@ -3,7 +3,7 @@ symbol fq=__local_1.chars kind=local vis=private flags=_ type=kotlin.collections
 symbol fq=__local_2.doubled kind=local vis=private flags=_ type=kotlin.collections.List<Int>
 symbol fq=flatMapGeneric kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=Unit
 symbol fq=flatMapGeneric.$0.names kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 file fflatmap_generic_preserve package=_
   decl flatMapGeneric fun flatMapGeneric sym=flatMapGeneric
 expr e@2:30 name(names) type=kotlin.collections.List<String> ref=flatMapGeneric.$0.names

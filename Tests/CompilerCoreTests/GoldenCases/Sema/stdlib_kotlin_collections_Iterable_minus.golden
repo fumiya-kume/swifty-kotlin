@@ -1,6 +1,6 @@
 symbol fq=kotlin.Array kind=class vis=public flags=synthetic
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
 symbol fq=removeByArray kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>,kotlin.Array<out Int>] ret=kotlin.collections.List<Int>
 symbol fq=removeByArray.$0.elements kind=valueParameter vis=private flags=_

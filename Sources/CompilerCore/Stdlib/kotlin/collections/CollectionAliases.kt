@@ -16,7 +16,18 @@ import kotlin.internal.KsSymbolName
 
 public typealias ArrayList<E> = MutableList<E>
 
-public typealias HashSet<E> = MutableSet<E>
+/**
+ * Hash-based mutable set implementation.
+ *
+ * The Kotlin/Native `KonanSet` marker is an internal platform type that is not
+ * modeled by KSwiftK. The public nominal hierarchy is preserved here while
+ * the shared runtime set box supplies storage and collection operations.
+ */
+public class HashSet<E> : AbstractMutableSet<E>, MutableSet<E> {
+    constructor()
+    constructor(initialCapacity: Int)
+    constructor(elements: Collection<E>)
+}
 
 /**
  * A mutable hash map backed by the runtime map representation.
@@ -60,6 +71,15 @@ private external fun <E> __kkLinkedHashSetContainsAll(
     elements: Collection<@UnsafeVariance E>
 ): Boolean
 
+@KsSymbolName("__kk_set_contains")
+private external fun <E> __kkLinkedHashSetContains(
+    set: LinkedHashSet<E>,
+    element: E
+): Boolean
+
+@KsSymbolName("__kk_set_is_empty")
+private external fun <E> __kkLinkedHashSetIsEmpty(set: LinkedHashSet<E>): Boolean
+
 public open class LinkedHashSet<E> : MutableSet<E> {
     init {
         __kkLinkedHashSetInit(this)
@@ -71,6 +91,10 @@ public open class LinkedHashSet<E> : MutableSet<E> {
 
     override val size: Int
         get() = __kkLinkedHashSetSize(this)
+
+    override fun contains(element: E): Boolean = __kkLinkedHashSetContains(this, element)
+
+    override fun isEmpty(): Boolean = __kkLinkedHashSetIsEmpty(this)
 
     override fun iterator(): MutableIterator<E> = __kkLinkedHashSetIterator(this)
 

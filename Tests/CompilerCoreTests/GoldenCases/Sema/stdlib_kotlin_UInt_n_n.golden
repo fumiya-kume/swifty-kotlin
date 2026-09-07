@@ -26,11 +26,11 @@ expr e@6:24 unary(unaryMinus) operand=e@6:25 type=Int
 expr e@6:19 call callee=e@6:19#1 args=[_:e@6:24] type=UInt call=kotlin.UInt#1
 expr e@6:5 localDecl allBits mutable=0 type=_ init=e@6:19 type=Unit ref=__local_2.allBits
 expr e@7:20 name(Int) type=kotlin.Int.Companion ref=kotlin.Int
-expr e@7:20#1 memberCall recv=e@7:20 callee=MIN_VALUE args=[] type=Int call=kotlin.MIN_VALUE.$get#0
+expr e@7:20#1 memberCall recv=e@7:20 callee=MIN_VALUE args=[] type=Int call=kotlin.MIN_VALUE.$get#1
 expr e@7:15 call callee=e@7:15#1 args=[_:e@7:20#1] type=UInt call=kotlin.UInt#1
 expr e@7:5 localDecl min mutable=0 type=_ init=e@7:15 type=Unit ref=__local_3.min
 expr e@8:20 name(Int) type=kotlin.Int.Companion ref=kotlin.Int
-expr e@8:20#1 memberCall recv=e@8:20 callee=MAX_VALUE args=[] type=Int call=kotlin.MAX_VALUE.$get#0
+expr e@8:20#1 memberCall recv=e@8:20 callee=MAX_VALUE args=[] type=Int call=kotlin.MAX_VALUE.$get#1
 expr e@8:15 call callee=e@8:15#1 args=[_:e@8:20#1] type=UInt call=kotlin.UInt#1
 expr e@8:5 localDecl max mutable=0 type=_ init=e@8:15 type=Unit ref=__local_4.max
 expr e@9:12 name(zero) type=UInt ref=__local_0.zero

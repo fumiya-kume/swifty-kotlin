@@ -39,6 +39,31 @@ struct StringAppendFunctionTests {
 
         let interner = ctx.interner
         let sema = try #require(ctx.sema)
+
+        let stringBuilderSymbol = try #require(sema.symbols.lookup(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("text"),
+            interner.intern("StringBuilder"),
+        ]))
+        let appendableSymbol = try #require(sema.symbols.lookup(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("text"),
+            interner.intern("Appendable"),
+        ]))
+        let charSequenceSymbol = try #require(sema.symbols.lookup(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("CharSequence"),
+        ]))
+        let anySymbol = try #require(sema.symbols.lookup(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("Any"),
+        ]))
+        #expect(sema.symbols.isSourceBackedSymbol(stringBuilderSymbol))
+        #expect(
+            Set(sema.symbols.directSupertypes(for: stringBuilderSymbol))
+                == Set([appendableSymbol, charSequenceSymbol, anySymbol])
+        )
+
         let stringBuilderAppendSymbols = sema.symbols.lookupAll(fqName: [
             interner.intern("kotlin"),
             interner.intern("text"),

@@ -6,8 +6,8 @@ symbol fq=__local_4.nullableValues kind=local vis=private flags=_ type=kotlin.se
 symbol fq=__local_5.notNullDestination kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>
 symbol fq=__local_6.mixed kind=local vis=private flags=_ type=kotlin.sequences.Sequence<Any?>
 symbol fq=__local_7.instanceDestination kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableCollection kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.collections.MutableCollection kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
 symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
 symbol fq=kotlin.sequences.Sequence.toList kind=function vis=public flags=synthetic sig=recv=kotlin.sequences.Sequence<kotlin.sequences.toList.$0.T> params=[] ret=kotlin.collections.List<kotlin.sequences.toList.$0.T>

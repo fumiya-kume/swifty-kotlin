@@ -2,7 +2,7 @@
 /// `kotlin.concurrent.atomics` package-level scaffolding — the
 /// `@ExperimentalAtomicApi` annotation, the `MemoryOrder` enum, and the
 /// type aliases back to `kotlin.concurrent` — extracted from
-/// `HeaderHelpers+SyntheticAtomicStubs.swift`.
+/// the Atomic residual registration surface.
 extension DataFlowSemaPhase {
     func registerSyntheticAtomicAnnotation(
         named name: String,

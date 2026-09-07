@@ -40,6 +40,8 @@ extension ExprTypeChecker {
         let doubleType = sema.types.doubleType
         let charType = sema.types.charType
         let stringType = sema.types.stringType
+        let ulongType = sema.types.ulongType
+        let uintType = sema.types.uintType
 
         if op == .logicalAnd || op == .logicalOr {
             let lhs = driver.inferExpr(lhsID, ctx: ctx, locals: &locals)
@@ -242,12 +244,42 @@ extension ExprTypeChecker {
             default:
                 returnType
             }
+            if [.rangeTo, .rangeUntil, .downTo, .step].contains(op) {
+                // Source-backed range operators do not reach the legacy range
+                // marker path below when ordinary operator resolution succeeds.
+                driver.callChecker.markRangeCallBindings(
+                    id,
+                    chosen: chosen,
+                    returnType: returnType,
+                    sema: sema
+                )
+                if [.rangeTo, .rangeUntil, .downTo].contains(op) {
+                    sema.bindings.markRangeExpr(id)
+                    if lhs == ulongType || rhs == ulongType {
+                        sema.bindings.markULongRangeExpr(id)
+                    } else if lhs == uintType || rhs == uintType {
+                        sema.bindings.markUIntRangeExpr(id)
+                    }
+                    if lhs == charType || rhs == charType {
+                        sema.bindings.markCharRangeExpr(id)
+                    }
+                } else {
+                    sema.bindings.markRangeExpr(id)
+                    if lhs == uintType || sema.bindings.isUIntRangeExpr(lhsID) {
+                        sema.bindings.markUIntRangeExpr(id)
+                    }
+                    if lhs == ulongType || sema.bindings.isULongRangeExpr(lhsID) {
+                        sema.bindings.markULongRangeExpr(id)
+                    }
+                    if sema.bindings.isCharRangeExpr(lhsID) {
+                        sema.bindings.markCharRangeExpr(id)
+                    }
+                }
+            }
             sema.bindings.bindExprType(id, type: effectiveType)
             return effectiveType
         }
         let type: TypeID
-        let ulongType = sema.types.ulongType
-        let uintType = sema.types.uintType
         let ubyteType = sema.types.make(.primitive(.ubyte, .nonNull))
         let ushortType = sema.types.make(.primitive(.ushort, .nonNull))
 

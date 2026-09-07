@@ -16,6 +16,7 @@ struct NativeConcurrentAPISurfaceInventoryTests {
         TopLevelEntry(name: "Continuation0", kind: .class, todo: nil),
         TopLevelEntry(name: "Continuation1", kind: .class, todo: nil),
         TopLevelEntry(name: "Continuation2", kind: .class, todo: nil),
+        TopLevelEntry(name: "FreezableAtomicReference", kind: .class, todo: nil),
         TopLevelEntry(name: "FreezingException", kind: .class, todo: nil),
         TopLevelEntry(name: "Future", kind: .class, todo: nil),
         TopLevelEntry(name: "FutureState", kind: .enumClass, todo: nil),
@@ -59,8 +60,8 @@ struct NativeConcurrentAPISurfaceInventoryTests {
 
         // Each TopLevelEntry must have a unique name (no two entries share a `name`).
         #expect(targetEntries.count == targetNames.count)
-        #expect(targetEntries.count == 15)
-        #expect(Self.implementedTopLevelEntries.count == 15)
+        #expect(targetEntries.count == 16)
+        #expect(Self.implementedTopLevelEntries.count == 16)
         #expect(Self.knownGapTopLevelEntries.count == 0)
     }
 

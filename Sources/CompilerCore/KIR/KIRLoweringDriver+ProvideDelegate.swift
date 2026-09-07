@@ -39,7 +39,9 @@ extension KIRLoweringDriver {
             type: sema.types.stringType
         )
         body.append(.constValue(result: propertyNameExprID, value: .stringLiteral(propertyName)))
-        let returnTypeSig = interner.intern(sema.types.renderType(propertyType))
+        let returnTypeSig = interner.intern(
+            sema.types.displayName(of: propertyType, symbols: sema.symbols, interner: interner)
+        )
         let returnTypeExprID = arena.appendExpr(
             .stringLiteral(returnTypeSig),
             type: sema.types.stringType
