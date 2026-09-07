@@ -18,10 +18,10 @@ symbol fq=kotlin.Float.Companion kind=object vis=public flags=synthetic|static
 file fstdlib_kotlin_Float_Companion_Companion_n package=golden.sema
   decl golden.sema.main fun main sym=golden.sema.main
 expr e@4:28 name(Float) type=kotlin.Float.Companion ref=kotlin.Float
-expr e@4:28#1 memberCall recv=e@4:28 callee=MAX_VALUE args=[] type=Float call=kotlin.MAX_VALUE.$get#0
+expr e@4:28#1 memberCall recv=e@4:28 callee=MAX_VALUE args=[] type=Float call=kotlin.MAX_VALUE.$get#1
 expr e@4:5 localDecl directMax mutable=0 type=Float init=e@4:28#1 type=Unit ref=__local_0.directMax
 expr e@5:28 name(Float) type=kotlin.Float.Companion ref=kotlin.Float
-expr e@5:28#1 memberCall recv=e@5:28 callee=MIN_VALUE args=[] type=Float call=kotlin.MIN_VALUE.$get#0
+expr e@5:28#1 memberCall recv=e@5:28 callee=MIN_VALUE args=[] type=Float call=kotlin.MIN_VALUE.$get#1
 expr e@5:5 localDecl directMin mutable=0 type=Float init=e@5:28#1 type=Unit ref=__local_1.directMin
 expr e@6:41 name(Float) type=kotlin.Float.Companion ref=kotlin.Float
 expr e@6:41#1 memberCall recv=e@6:41 callee=NEGATIVE_INFINITY args=[] type=Float call=kotlin.NEGATIVE_INFINITY.$get
@@ -33,18 +33,18 @@ expr e@8:41 name(Float) type=kotlin.Float.Companion ref=kotlin.Float
 expr e@8:41#1 memberCall recv=e@8:41 callee=POSITIVE_INFINITY args=[] type=Float call=kotlin.POSITIVE_INFINITY.$get
 expr e@8:5 localDecl directPositiveInfinity mutable=0 type=Float init=e@8:41#1 type=Unit ref=__local_4.directPositiveInfinity
 expr e@9:27 name(Float) type=kotlin.Float.Companion ref=kotlin.Float
-expr e@9:27#1 memberCall recv=e@9:27 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get#0
+expr e@9:27#1 memberCall recv=e@9:27 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get#1
 expr e@9:5 localDecl directBits mutable=0 type=Int init=e@9:27#1 type=Unit ref=__local_5.directBits
 expr e@10:28 name(Float) type=kotlin.Float.Companion ref=kotlin.Float
-expr e@10:28#1 memberCall recv=e@10:28 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get#0
+expr e@10:28#1 memberCall recv=e@10:28 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get#1
 expr e@10:5 localDecl directBytes mutable=0 type=Int init=e@10:28#1 type=Unit ref=__local_6.directBytes
 expr e@11:30 name(Float) type=kotlin.Float ref=kotlin.Float
 expr e@11:30#1 memberCall recv=e@11:30 callee=Companion args=[] type=kotlin.Float.Companion ref=kotlin.Float.Companion
-expr e@11:30#2 memberCall recv=e@11:30#1 callee=MAX_VALUE args=[] type=Float call=kotlin.MAX_VALUE.$get#0
+expr e@11:30#2 memberCall recv=e@11:30#1 callee=MAX_VALUE args=[] type=Float call=kotlin.MAX_VALUE.$get#1
 expr e@11:5 localDecl receiverMax mutable=0 type=Float init=e@11:30#2 type=Unit ref=__local_7.receiverMax
 expr e@12:30 name(Float) type=kotlin.Float ref=kotlin.Float
 expr e@12:30#1 memberCall recv=e@12:30 callee=Companion args=[] type=kotlin.Float.Companion ref=kotlin.Float.Companion
-expr e@12:30#2 memberCall recv=e@12:30#1 callee=MIN_VALUE args=[] type=Float call=kotlin.MIN_VALUE.$get#0
+expr e@12:30#2 memberCall recv=e@12:30#1 callee=MIN_VALUE args=[] type=Float call=kotlin.MIN_VALUE.$get#1
 expr e@12:5 localDecl receiverMin mutable=0 type=Float init=e@12:30#2 type=Unit ref=__local_8.receiverMin
 expr e@13:43 name(Float) type=kotlin.Float ref=kotlin.Float
 expr e@13:43#1 memberCall recv=e@13:43 callee=Companion args=[] type=kotlin.Float.Companion ref=kotlin.Float.Companion
@@ -60,11 +60,11 @@ expr e@15:43#2 memberCall recv=e@15:43#1 callee=POSITIVE_INFINITY args=[] type=F
 expr e@15:5 localDecl receiverPositiveInfinity mutable=0 type=Float init=e@15:43#2 type=Unit ref=__local_11.receiverPositiveInfinity
 expr e@16:29 name(Float) type=kotlin.Float ref=kotlin.Float
 expr e@16:29#1 memberCall recv=e@16:29 callee=Companion args=[] type=kotlin.Float.Companion ref=kotlin.Float.Companion
-expr e@16:29#2 memberCall recv=e@16:29#1 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get#0
+expr e@16:29#2 memberCall recv=e@16:29#1 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get#1
 expr e@16:5 localDecl receiverBits mutable=0 type=Int init=e@16:29#2 type=Unit ref=__local_12.receiverBits
 expr e@17:30 name(Float) type=kotlin.Float ref=kotlin.Float
 expr e@17:30#1 memberCall recv=e@17:30 callee=Companion args=[] type=kotlin.Float.Companion ref=kotlin.Float.Companion
-expr e@17:30#2 memberCall recv=e@17:30#1 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get#0
+expr e@17:30#2 memberCall recv=e@17:30#1 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get#1
 expr e@17:5 localDecl receiverBytes mutable=0 type=Int init=e@17:30#2 type=Unit ref=__local_13.receiverBytes
 expr e@18:13 name(directMax) type=Float ref=__local_0.directMax
 expr e@18:5 call callee=e@18:5#1 args=[_:e@18:13] type=Unit call=kotlin.io.println#1
