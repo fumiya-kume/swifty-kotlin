@@ -79,6 +79,30 @@ extension CallLowerer {
             instructions: &instructions
         )
         let result = arena.appendTemporary(type: boundType)
+        let isKClassEquality = (op == .equal || op == .notEqual)
+            && (
+                isKClassReceiverType(
+                    sema.bindings.exprTypes[lhs] ?? sema.types.anyType,
+                    sema: sema,
+                    interner: interner
+                )
+                || isKClassReceiverType(
+                    sema.bindings.exprTypes[rhs] ?? sema.types.anyType,
+                    sema: sema,
+                    interner: interner
+                )
+            )
+        if isKClassEquality {
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern(op == .equal ? "kk_structural_eq" : "kk_structural_ne"),
+                arguments: [lhsID, rhsID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        }
         // Detect whether this is a compareTo-desugared comparison operator.
         // If so, the call binding targets compareTo (returns Int) and we must
         // wrap the result with a comparison against 0 to produce Bool.
@@ -196,7 +220,16 @@ extension CallLowerer {
                         thrownResult: nil
                     ))
                 } else {
-                    let loweredCalleeName: InternedString = if let externalLinkName = sema.symbols.externalLinkName(for: callBinding.chosenCallee),
+                    let sourceBackedHashSetEquality = (op == .equal || op == .notEqual)
+                        && isSourceBackedHashSetType(
+                            sema.bindings.exprTypes[lhs] ?? sema.types.anyType,
+                            sema: sema,
+                            interner: interner
+                        )
+                    let loweredCalleeName: InternedString = if sourceBackedHashSetEquality {
+                        // Source-backed HashSet values are RuntimeSetBox handles, so operator equality must use the structural runtime bridge instead of the inherited AbstractMutableSet.equals body.
+                        interner.intern("kk_structural_eq")
+                    } else if let externalLinkName = sema.symbols.externalLinkName(for: callBinding.chosenCallee),
                                                                !externalLinkName.isEmpty
                     {
                         interner.intern(externalLinkName)
@@ -206,7 +239,7 @@ extension CallLowerer {
                         interner.intern(op.kotlinFunctionName)
                     }
                     instructions.append(.call(
-                        symbol: callBinding.chosenCallee,
+                        symbol: sourceBackedHashSetEquality ? nil : callBinding.chosenCallee,
                         callee: loweredCalleeName,
                         arguments: finalArguments,
                         result: callResult,
@@ -585,7 +618,7 @@ extension CallLowerer {
         case .elvis:
             preconditionFailure("?: must be lowered through lowerShortCircuitElvisExpr")
         case .rangeTo:
-            // kk_op_rangeTo / kk_uint_rangeTo are still residual operator-core helpers.
+            // kk_op_rangeTo / __kk_uint_rangeTo are residual operator-core helpers.
             let rangeToCallee: InternedString
             if sema.bindings.isFloatingPointRangeExpr(exprID) {
                 let lhsType = sema.bindings.exprTypes[lhs] ?? sema.types.anyType
@@ -596,7 +629,7 @@ extension CallLowerer {
                     rangeToCallee = interner.intern("__kk_double_rangeTo")
                 }
             } else if sema.bindings.isUIntRangeExpr(exprID) {
-                rangeToCallee = interner.intern("kk_uint_rangeTo")
+                rangeToCallee = interner.intern("__kk_uint_rangeTo")
             } else {
                 rangeToCallee = interner.intern("kk_op_rangeTo")
             }

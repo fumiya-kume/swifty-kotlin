@@ -389,6 +389,7 @@ struct RegexAPISurfaceInventoryTests {
             "__kk_match_result_group_start",
             "__kk_match_result_group_end",
             "__kk_match_result_group_index_of_name",
+            "__kk_match_result_has_named_group",
             "__kk_match_result_next",
             "__kk_match_result_destructured",
             "__kk_match_result_destructured_match",

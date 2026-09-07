@@ -48,11 +48,21 @@ extension CallTypeChecker {
     func isShadowedByNonSyntheticSymbol(
         _ name: InternedString,
         locals: LocalBindings,
-        ctx: TypeInferenceContext
+        ctx: TypeInferenceContext,
+        argumentCount: Int? = nil
     ) -> Bool {
         if locals[name] != nil { return true }
         return ctx.cachedScopeLookup(name).contains { candidate in
             guard let sym = ctx.cachedSymbol(candidate) else { return false }
+            if let argumentCount {
+                guard sym.kind == .function,
+                      let signature = ctx.sema.symbols.functionSignature(for: candidate),
+                      signature.receiverType == nil,
+                      signature.parameterTypes.count == argumentCount
+                else {
+                    return false
+                }
+            }
             return !sym.flags.contains(.synthetic)
         }
     }

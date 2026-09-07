@@ -154,5 +154,152 @@ struct PrimitiveArrayConversionSourceMigrationTests {
             #expect(observedMembers == expectedMembers, "Unexpected unsigned/generic array members: \(observedMembers)")
         }
     }
+
+    @Test
+    func arrayConversionMembersResolveToBundledSource() throws {
+        let source = """
+        fun exercise(
+            objects: Array<Int>,
+            ints: IntArray,
+            longs: LongArray,
+            shorts: ShortArray,
+            bytes: ByteArray,
+            chars: CharArray,
+            booleans: BooleanArray,
+            doubles: DoubleArray,
+            floats: FloatArray,
+            ubytes: UByteArray,
+            ushorts: UShortArray,
+            uints: UIntArray,
+            ulongs: ULongArray
+        ) {
+            objects.sliceArray(1..2)
+            objects.sliceArray(listOf(2, 0))
+            objects.reversedArray()
+            objects.asList()
+
+            ints.sliceArray(1..2)
+            ints.sliceArray(listOf(2, 0))
+            ints.reversedArray()
+            ints.asList()
+            ints.toTypedArray()
+
+            longs.sliceArray(1..2)
+            longs.sliceArray(listOf(2, 0))
+            longs.reversedArray()
+            longs.asList()
+            longs.toTypedArray()
+
+            shorts.sliceArray(1..2)
+            shorts.sliceArray(listOf(2, 0))
+            shorts.reversedArray()
+            shorts.asList()
+            shorts.toTypedArray()
+
+            bytes.sliceArray(1..2)
+            bytes.sliceArray(listOf(2, 0))
+            bytes.reversedArray()
+            bytes.asList()
+            bytes.toTypedArray()
+
+            chars.sliceArray(1..2)
+            chars.sliceArray(listOf(2, 0))
+            chars.reversedArray()
+            chars.asList()
+            chars.toTypedArray()
+
+            booleans.sliceArray(1..2)
+            booleans.sliceArray(listOf(2, 0))
+            booleans.reversedArray()
+            booleans.asList()
+            booleans.toTypedArray()
+
+            doubles.sliceArray(1..2)
+            doubles.sliceArray(listOf(2, 0))
+            doubles.reversedArray()
+            doubles.asList()
+            doubles.toTypedArray()
+
+            floats.sliceArray(1..2)
+            floats.sliceArray(listOf(2, 0))
+            floats.reversedArray()
+            floats.asList()
+            floats.toTypedArray()
+
+            ubytes.sliceArray(1..2)
+            ubytes.sliceArray(listOf(2, 0))
+            ubytes.reversedArray()
+            ubytes.asList()
+            ubytes.toTypedArray()
+
+            ushorts.sliceArray(1..2)
+            ushorts.sliceArray(listOf(2, 0))
+            ushorts.reversedArray()
+            ushorts.asList()
+            ushorts.toTypedArray()
+
+            uints.sliceArray(1..2)
+            uints.sliceArray(listOf(2, 0))
+            uints.reversedArray()
+            uints.asList()
+            uints.toTypedArray()
+
+            ulongs.sliceArray(1..2)
+            ulongs.sliceArray(listOf(2, 0))
+            ulongs.reversedArray()
+            ulongs.asList()
+            ulongs.toTypedArray()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            #expect(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected array conversion members to type-check cleanly, got: \(ctx.diagnostics.diagnostics)"
+            )
+
+            let ast = try #require(ctx.ast)
+            let sema = try #require(ctx.sema)
+            let expectedArrayNames = [
+                "Array", "IntArray", "LongArray", "ShortArray", "ByteArray",
+                "CharArray", "BooleanArray", "DoubleArray", "FloatArray",
+                "UByteArray", "UShortArray", "UIntArray", "ULongArray",
+            ]
+            var observedCounts: [String: Int] = [:]
+
+            for index in ast.arena.exprs.indices {
+                let exprID = ExprID(rawValue: Int32(index))
+                guard case let .memberCall(receiver, callee, _, _, range) = ast.arena.expr(exprID),
+                      ["sliceArray", "reversedArray", "asList", "toTypedArray"].contains(ctx.interner.resolve(callee)),
+                      ctx.sourceManager.path(of: range.start.file).hasPrefix("__bundled_") == false,
+                      let chosenCallee = sema.bindings.callBinding(for: exprID)?.chosenCallee,
+                      let receiverType = sema.bindings.exprType(for: receiver),
+                      let (_, receiverSymbol) = resolveClassTypeSymbol(receiverType, sema: sema)
+                else { continue }
+
+                let receiverName = ctx.interner.resolve(receiverSymbol.name)
+                let memberName = ctx.interner.resolve(callee)
+                guard expectedArrayNames.contains(receiverName) else { continue }
+                let key = "\(receiverName).\(memberName)"
+                observedCounts[key, default: 0] += 1
+                #expect(sema.symbols.isSourceBackedSymbol(chosenCallee), "Expected \(key) to resolve to bundled source")
+                #expect(sema.symbols.externalLinkName(for: chosenCallee) == nil, "Expected \(key) to have no public runtime link")
+            }
+
+            var expectedCounts: [String: Int] = [:]
+            for receiverName in expectedArrayNames {
+                expectedCounts["\(receiverName).sliceArray"] = 2
+                expectedCounts["\(receiverName).reversedArray"] = 1
+                expectedCounts["\(receiverName).asList"] = 1
+                if receiverName != "Array" {
+                    expectedCounts["\(receiverName).toTypedArray"] = 1
+                }
+            }
+            #expect(observedCounts == expectedCounts, "Unexpected array conversion calls: \(observedCounts)")
+        }
+    }
 }
 #endif

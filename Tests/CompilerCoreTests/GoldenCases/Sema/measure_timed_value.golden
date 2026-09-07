@@ -1,19 +1,17 @@
-symbol fq=__local_0.result kind=local vis=private flags=_ type=kotlin.time.TimedValue
-symbol fq=__local_1.result2 kind=local vis=private flags=_ type=kotlin.time.TimedValue
-symbol fq=kotlin.time.TimedValue kind=class vis=public flags=synthetic type=kotlin.time.TimedValue<kotlin.time.TimedValue.T>
-symbol fq=kotlin.time.TimedValue.T kind=typeParameter vis=private flags=_
+symbol fq=__local_0.result kind=local vis=private flags=_ type=kotlin.time.TimedValue<Any?>
+symbol fq=__local_1.result2 kind=local vis=private flags=_ type=kotlin.time.TimedValue<Any?>
 symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fmeasure_timed_value package=_
   decl main fun main sym=main
 expr e@6:9 string(hello) type=String
 expr e@5:36 lambda params=[] body=e@6:9 label=measureTimedValue type=() -> Any?
-expr e@5:18 call callee=e@5:18#1 args=[_:e@5:36] type=kotlin.time.TimedValue call=kotlin.time.measureTimedValue
+expr e@5:18 call callee=e@5:18#1 args=[_:e@5:36] type=kotlin.time.TimedValue<Any?> call=kotlin.time.measureTimedValue
 expr e@5:5 localDecl result mutable=0 type=_ init=e@5:18 type=Unit ref=__local_0.result
-expr e@8:13 name(result) type=kotlin.time.TimedValue ref=__local_0.result
-expr e@8:13#1 memberCall recv=e@8:13 callee=value args=[] type=Any? call=kotlin.time.value.$get
+expr e@8:13 name(result) type=kotlin.time.TimedValue<Any?> ref=__local_0.result
+expr e@8:13#1 memberCall recv=e@8:13 callee=value args=[] type=Any? ref=kotlin.time.TimedValue.value
 expr e@8:5 call callee=e@8:5#1 args=[_:e@8:13#1] type=Unit call=kotlin.io.println#1
-expr e@9:13 name(result) type=kotlin.time.TimedValue ref=__local_0.result
-expr e@9:13#1 memberCall recv=e@9:13 callee=duration args=[] type=kotlin.time.Duration call=kotlin.time.duration.$get
+expr e@9:13 name(result) type=kotlin.time.TimedValue<Any?> ref=__local_0.result
+expr e@9:13#1 memberCall recv=e@9:13 callee=duration args=[] type=kotlin.time.Duration ref=kotlin.time.TimedValue.duration
 expr e@9:13#2 memberCall recv=e@9:13#1 callee=inWholeMilliseconds args=[] type=Long call=kotlin.time.inWholeMilliseconds.$get
 expr e@9:52 int(0) type=Int
 expr e@9:13#3 binary(greaterOrEqual) lhs=e@9:13#2 rhs=e@9:52 type=Boolean
@@ -22,13 +20,13 @@ expr e@13:9 int(3) type=Int
 expr e@13:13 int(4) type=Int
 expr e@13:9#1 binary(add) lhs=e@13:9 rhs=e@13:13 type=Int
 expr e@12:37 lambda params=[] body=e@13:9#1 label=measureTimedValue type=() -> Any?
-expr e@12:19 call callee=e@12:19#1 args=[_:e@12:37] type=kotlin.time.TimedValue call=kotlin.time.measureTimedValue
+expr e@12:19 call callee=e@12:19#1 args=[_:e@12:37] type=kotlin.time.TimedValue<Any?> call=kotlin.time.measureTimedValue
 expr e@12:5 localDecl result2 mutable=0 type=_ init=e@12:19 type=Unit ref=__local_1.result2
-expr e@15:13 name(result2) type=kotlin.time.TimedValue ref=__local_1.result2
-expr e@15:13#1 memberCall recv=e@15:13 callee=value args=[] type=Any? call=kotlin.time.value.$get
+expr e@15:13 name(result2) type=kotlin.time.TimedValue<Any?> ref=__local_1.result2
+expr e@15:13#1 memberCall recv=e@15:13 callee=value args=[] type=Any? ref=kotlin.time.TimedValue.value
 expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13#1] type=Unit call=kotlin.io.println#1
-expr e@16:13 name(result2) type=kotlin.time.TimedValue ref=__local_1.result2
-expr e@16:13#1 memberCall recv=e@16:13 callee=duration args=[] type=kotlin.time.Duration call=kotlin.time.duration.$get
+expr e@16:13 name(result2) type=kotlin.time.TimedValue<Any?> ref=__local_1.result2
+expr e@16:13#1 memberCall recv=e@16:13 callee=duration args=[] type=kotlin.time.Duration ref=kotlin.time.TimedValue.duration
 expr e@16:13#2 memberCall recv=e@16:13#1 callee=inWholeMilliseconds args=[] type=Long call=kotlin.time.inWholeMilliseconds.$get
 expr e@16:53 int(0) type=Int
 expr e@16:13#3 binary(greaterOrEqual) lhs=e@16:13#2 rhs=e@16:53 type=Boolean
