@@ -1589,6 +1589,25 @@ final class LambdaLowerer {
         )
         instructions.append(.constValue(result: nameExpr, value: .stringLiteral(memberName)))
 
+        // KCallable.returnType is represented by the same compact type-name
+        // handle used by KClass reflection metadata.
+        let returnType: TypeID = if case let .functionType(functionType) = sema.types.kind(of: callableType) {
+            functionType.returnType
+        } else {
+            sema.types.anyType
+        }
+        let returnTypeName = interner.intern(
+            sema.types.displayName(of: returnType, symbols: sema.symbols, interner: interner)
+        )
+        let returnTypeExpr = arena.appendExpr(
+            .stringLiteral(returnTypeName),
+            type: sema.types.stringType
+        )
+        instructions.append(.constValue(
+            result: returnTypeExpr,
+            value: .stringLiteral(returnTypeName)
+        ))
+
         // Emit the arity literal.
         let arityExpr = arena.appendExpr(.intLiteral(arity), type: sema.types.intType)
         instructions.append(.constValue(result: arityExpr, value: .intLiteral(arity)))
@@ -1601,8 +1620,8 @@ final class LambdaLowerer {
             "kk_callable_ref_tag_kproperty"
         }
 
-        // For function refs, emit the isSuspend flag as a fourth argument.
-        var tagArguments: [KIRExprID] = [callableExpr, nameExpr, arityExpr]
+        // For function refs, emit the isSuspend flag after the metadata fields.
+        var tagArguments: [KIRExprID] = [callableExpr, nameExpr, returnTypeExpr, arityExpr]
         if refKind == .functionRef {
             let isSuspendExpr = arena.appendExpr(.intLiteral(isSuspendFlag), type: sema.types.intType)
             instructions.append(.constValue(result: isSuspendExpr, value: .intLiteral(isSuspendFlag)))

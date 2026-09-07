@@ -7,6 +7,19 @@ private func typeArgInnerType(_ arg: TypeArg) -> TypeID? {
     }
 }
 
+private func starProjectionUpperBound(for type: TypeID, typeSystem: TypeSystem) -> TypeID {
+    guard case let .typeParam(typeParam) = typeSystem.kind(of: type),
+          let symbolTable = typeSystem.symbolTable
+    else {
+        return typeSystem.nullableAnyType
+    }
+    let upperBounds = symbolTable.typeParameterUpperBounds(for: typeParam.symbol)
+    guard !upperBounds.isEmpty else {
+        return typeSystem.nullableAnyType
+    }
+    return typeSystem.glb(upperBounds)
+}
+
 private func comparableArgument(of subtype: TypeID, typeSystem: TypeSystem) -> TypeID? {
     let nonNullSubtype = typeSystem.makeNonNullable(subtype)
     switch typeSystem.kind(of: nonNullSubtype) {
@@ -846,14 +859,16 @@ extension OverloadResolver {
 
         case let (.star, .invariant(superInner)):
             // Subtype is star (e.g. receiver `Box<*>` against signature `Box<T>`).
-            // Star projection is equivalent to `out Any?`, so constrain T = Any?
-            // to ensure the solver can infer the type variable.
+            // A star projection is equivalent to `out TUpperBound`, where the
+            // upper bound comes from the declaration of the projected type.
+            // Use Any? only for an unbounded type parameter.
+            let starUpperBound = starProjectionUpperBound(for: superInner, typeSystem: typeSystem)
             return decomposeSubtypeConstraintImpl(
-                subtype: typeSystem.nullableAnyType, supertype: superInner,
+                subtype: starUpperBound, supertype: superInner,
                 typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
                 blameRange: blameRange, depth: depth
             ) + decomposeSubtypeConstraintImpl(
-                subtype: superInner, supertype: typeSystem.nullableAnyType,
+                subtype: superInner, supertype: starUpperBound,
                 typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
                 blameRange: blameRange, depth: depth
             )

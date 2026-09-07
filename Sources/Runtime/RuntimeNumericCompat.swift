@@ -281,6 +281,14 @@ private func runtimeAnyHashCode(_ value: Int, _ tag: Int32) -> Int {
         }
         return Int(hash)
     }
+    // Kotlin Set.hashCode() is the order-independent sum of element hashes.
+    // RuntimeSetBox is shared by Set, MutableSet, LinkedHashSet, and HashSet,
+    // so keep equal set instances consistent across all of those surfaces.
+    if let setBox = tryCast(pointer, to: RuntimeSetBox.self) {
+        return setBox.elements.reduce(0) { partial, element in
+            partial &+ kk_any_hashCode(element, 0)
+        }
+    }
     // Tagged Pair/Triple boxes hash structurally, matching both
     // runtimeValuesEqual and kotlin/Tuples.kt's hashCode(); an untagged
     // RuntimePairBox is internal runtime state and keeps the pointer hash.
@@ -426,7 +434,19 @@ public func kk_any_equals(_ lhs: Int, _ lhsTag: Int, _ rhs: Int, _ rhsTag: Int) 
 /// tag=1 (object pointer, non-primitive).
 @_cdecl("kk_any_member_to_string")
 public func kk_any_member_to_string(_ raw: Int) -> UnsafeMutableRawPointer {
-    kk_any_to_string(raw, 1)
+    if let throwableMethod = runtimeThrowableVtableMethodRaw(
+        raw,
+        slot: RuntimeThrowableVtableSlot.toString
+    ) {
+        let method = unsafeBitCast(
+            throwableMethod,
+            to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self
+        )
+        if let rendered = UnsafeMutableRawPointer(bitPattern: method(raw, nil)) {
+            return rendered
+        }
+    }
+    return kk_any_to_string(raw, 1)
 }
 
 @_cdecl("kk_any_member_hashCode")

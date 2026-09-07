@@ -84,21 +84,21 @@ public func kk_atomic_int_create(_ initial: Int) -> Int {
     return Int(bitPattern: ptr)
 }
 
-@_cdecl("kk_atomic_int_load")
-public func kk_atomic_int_load(_ receiver: Int) -> Int {
+@_cdecl("__kk_atomic_int_load")
+public func __kk_atomic_int_load(_ receiver: Int) -> Int {
     guard let box = atomicIntBox(from: receiver) else { return 0 }
     return box.load()
 }
 
-@_cdecl("kk_atomic_int_store")
-public func kk_atomic_int_store(_ receiver: Int, _ value: Int) -> Int {
+@_cdecl("__kk_atomic_int_store")
+public func __kk_atomic_int_store(_ receiver: Int, _ value: Int) -> Int {
     guard let box = atomicIntBox(from: receiver) else { return 0 }
     box.store(value)
     return 0
 }
 
-@_cdecl("kk_atomic_int_exchange")
-public func kk_atomic_int_exchange(_ receiver: Int, _ new: Int) -> Int {
+@_cdecl("__kk_atomic_int_exchange")
+public func __kk_atomic_int_exchange(_ receiver: Int, _ new: Int) -> Int {
     guard let box = atomicIntBox(from: receiver) else { return 0 }
     return box.exchange(new)
 }
@@ -109,44 +109,44 @@ public func kk_atomic_int_compareAndSet(_ receiver: Int, _ expect: Int, _ update
     return box.compareAndSet(expect: expect, update: update) ? 1 : 0
 }
 
-@_cdecl("kk_atomic_int_compareAndExchange")
-public func kk_atomic_int_compareAndExchange(_ receiver: Int, _ expect: Int, _ update: Int) -> Int {
+@_cdecl("__kk_atomic_int_compareAndExchange")
+public func __kk_atomic_int_compareAndExchange(_ receiver: Int, _ expect: Int, _ update: Int) -> Int {
     guard let box = atomicIntBox(from: receiver) else { return 0 }
     return box.compareAndExchange(expect: expect, update: update)
 }
 
-@_cdecl("kk_atomic_int_fetchAndAdd")
-public func kk_atomic_int_fetchAndAdd(_ receiver: Int, _ delta: Int) -> Int {
+@_cdecl("__kk_atomic_int_fetchAndAdd")
+public func __kk_atomic_int_fetchAndAdd(_ receiver: Int, _ delta: Int) -> Int {
     guard let box = atomicIntBox(from: receiver) else { return 0 }
     return box.fetchAndAdd(delta)
 }
 
-@_cdecl("kk_atomic_int_addAndFetch")
-public func kk_atomic_int_addAndFetch(_ receiver: Int, _ delta: Int) -> Int {
+@_cdecl("__kk_atomic_int_addAndFetch")
+public func __kk_atomic_int_addAndFetch(_ receiver: Int, _ delta: Int) -> Int {
     guard let box = atomicIntBox(from: receiver) else { return 0 }
     return box.addAndFetch(delta)
 }
 
-@_cdecl("kk_atomic_int_fetchAndIncrement")
-public func kk_atomic_int_fetchAndIncrement(_ receiver: Int) -> Int {
+@_cdecl("__kk_atomic_int_fetchAndIncrement")
+public func __kk_atomic_int_fetchAndIncrement(_ receiver: Int) -> Int {
     guard let box = atomicIntBox(from: receiver) else { return 0 }
     return box.fetchAndAdd(1)
 }
 
-@_cdecl("kk_atomic_int_fetchAndDecrement")
-public func kk_atomic_int_fetchAndDecrement(_ receiver: Int) -> Int {
+@_cdecl("__kk_atomic_int_fetchAndDecrement")
+public func __kk_atomic_int_fetchAndDecrement(_ receiver: Int) -> Int {
     guard let box = atomicIntBox(from: receiver) else { return 0 }
     return box.fetchAndAdd(-1)
 }
 
-@_cdecl("kk_atomic_int_incrementAndFetch")
-public func kk_atomic_int_incrementAndFetch(_ receiver: Int) -> Int {
+@_cdecl("__kk_atomic_int_incrementAndFetch")
+public func __kk_atomic_int_incrementAndFetch(_ receiver: Int) -> Int {
     guard let box = atomicIntBox(from: receiver) else { return 0 }
     return box.addAndFetch(1)
 }
 
-@_cdecl("kk_atomic_int_decrementAndFetch")
-public func kk_atomic_int_decrementAndFetch(_ receiver: Int) -> Int {
+@_cdecl("__kk_atomic_int_decrementAndFetch")
+public func __kk_atomic_int_decrementAndFetch(_ receiver: Int) -> Int {
     guard let box = atomicIntBox(from: receiver) else { return 0 }
     return box.addAndFetch(-1)
 }
@@ -235,21 +235,21 @@ public func kk_atomic_long_create(_ initial: Int) -> Int {
     return Int(bitPattern: ptr)
 }
 
-@_cdecl("kk_atomic_long_load")
-public func kk_atomic_long_load(_ receiver: Int) -> Int {
+@_cdecl("__kk_atomic_long_load")
+public func __kk_atomic_long_load(_ receiver: Int) -> Int {
     guard let box = atomicLongBox(from: receiver) else { return 0 }
     return box.load()
 }
 
-@_cdecl("kk_atomic_long_store")
-public func kk_atomic_long_store(_ receiver: Int, _ value: Int) -> Int {
+@_cdecl("__kk_atomic_long_store")
+public func __kk_atomic_long_store(_ receiver: Int, _ value: Int) -> Int {
     guard let box = atomicLongBox(from: receiver) else { return 0 }
     box.store(value)
     return 0
 }
 
-@_cdecl("kk_atomic_long_exchange")
-public func kk_atomic_long_exchange(_ receiver: Int, _ new: Int) -> Int {
+@_cdecl("__kk_atomic_long_exchange")
+public func __kk_atomic_long_exchange(_ receiver: Int, _ new: Int) -> Int {
     guard let box = atomicLongBox(from: receiver) else { return 0 }
     return box.exchange(new)
 }
@@ -260,44 +260,44 @@ public func kk_atomic_long_compareAndSet(_ receiver: Int, _ expect: Int, _ updat
     return box.compareAndSet(expect: expect, update: update) ? 1 : 0
 }
 
-@_cdecl("kk_atomic_long_compareAndExchange")
-public func kk_atomic_long_compareAndExchange(_ receiver: Int, _ expect: Int, _ update: Int) -> Int {
+@_cdecl("__kk_atomic_long_compareAndExchange")
+public func __kk_atomic_long_compareAndExchange(_ receiver: Int, _ expect: Int, _ update: Int) -> Int {
     guard let box = atomicLongBox(from: receiver) else { return 0 }
     return box.compareAndExchange(expect: expect, update: update)
 }
 
-@_cdecl("kk_atomic_long_fetchAndAdd")
-public func kk_atomic_long_fetchAndAdd(_ receiver: Int, _ delta: Int) -> Int {
+@_cdecl("__kk_atomic_long_fetchAndAdd")
+public func __kk_atomic_long_fetchAndAdd(_ receiver: Int, _ delta: Int) -> Int {
     guard let box = atomicLongBox(from: receiver) else { return 0 }
     return box.fetchAndAdd(delta)
 }
 
-@_cdecl("kk_atomic_long_addAndFetch")
-public func kk_atomic_long_addAndFetch(_ receiver: Int, _ delta: Int) -> Int {
+@_cdecl("__kk_atomic_long_addAndFetch")
+public func __kk_atomic_long_addAndFetch(_ receiver: Int, _ delta: Int) -> Int {
     guard let box = atomicLongBox(from: receiver) else { return 0 }
     return box.addAndFetch(delta)
 }
 
-@_cdecl("kk_atomic_long_fetchAndIncrement")
-public func kk_atomic_long_fetchAndIncrement(_ receiver: Int) -> Int {
+@_cdecl("__kk_atomic_long_fetchAndIncrement")
+public func __kk_atomic_long_fetchAndIncrement(_ receiver: Int) -> Int {
     guard let box = atomicLongBox(from: receiver) else { return 0 }
     return box.fetchAndAdd(1)
 }
 
-@_cdecl("kk_atomic_long_fetchAndDecrement")
-public func kk_atomic_long_fetchAndDecrement(_ receiver: Int) -> Int {
+@_cdecl("__kk_atomic_long_fetchAndDecrement")
+public func __kk_atomic_long_fetchAndDecrement(_ receiver: Int) -> Int {
     guard let box = atomicLongBox(from: receiver) else { return 0 }
     return box.fetchAndAdd(-1)
 }
 
-@_cdecl("kk_atomic_long_incrementAndFetch")
-public func kk_atomic_long_incrementAndFetch(_ receiver: Int) -> Int {
+@_cdecl("__kk_atomic_long_incrementAndFetch")
+public func __kk_atomic_long_incrementAndFetch(_ receiver: Int) -> Int {
     guard let box = atomicLongBox(from: receiver) else { return 0 }
     return box.addAndFetch(1)
 }
 
-@_cdecl("kk_atomic_long_decrementAndFetch")
-public func kk_atomic_long_decrementAndFetch(_ receiver: Int) -> Int {
+@_cdecl("__kk_atomic_long_decrementAndFetch")
+public func __kk_atomic_long_decrementAndFetch(_ receiver: Int) -> Int {
     guard let box = atomicLongBox(from: receiver) else { return 0 }
     return box.addAndFetch(-1)
 }
@@ -362,27 +362,27 @@ public func kk_atomic_bool_create(_ initial: Int) -> Int {
     return Int(bitPattern: ptr)
 }
 
-@_cdecl("kk_atomic_bool_load")
-public func kk_atomic_bool_load(_ receiver: Int) -> Int {
+@_cdecl("__kk_atomic_bool_load")
+public func __kk_atomic_bool_load(_ receiver: Int) -> Int {
     guard let box = atomicBoolBox(from: receiver) else { return 0 }
     return box.load() ? 1 : 0
 }
 
-@_cdecl("kk_atomic_bool_store")
-public func kk_atomic_bool_store(_ receiver: Int, _ value: Int) -> Int {
+@_cdecl("__kk_atomic_bool_store")
+public func __kk_atomic_bool_store(_ receiver: Int, _ value: Int) -> Int {
     guard let box = atomicBoolBox(from: receiver) else { return 0 }
     box.store(value != 0)
     return 0
 }
 
-@_cdecl("kk_atomic_bool_exchange")
-public func kk_atomic_bool_exchange(_ receiver: Int, _ new: Int) -> Int {
+@_cdecl("__kk_atomic_bool_exchange")
+public func __kk_atomic_bool_exchange(_ receiver: Int, _ new: Int) -> Int {
     guard let box = atomicBoolBox(from: receiver) else { return 0 }
     return box.exchange(new != 0) ? 1 : 0
 }
 
-@_cdecl("kk_atomic_bool_compareAndExchange")
-public func kk_atomic_bool_compareAndExchange(_ receiver: Int, _ expect: Int, _ update: Int) -> Int {
+@_cdecl("__kk_atomic_bool_compareAndExchange")
+public func __kk_atomic_bool_compareAndExchange(_ receiver: Int, _ expect: Int, _ update: Int) -> Int {
     guard let box = atomicBoolBox(from: receiver) else { return 0 }
     return box.compareAndExchange(expect: expect != 0, update: update != 0) ? 1 : 0
 }
@@ -449,27 +449,27 @@ public func kk_atomic_ref_create(_ initial: Int) -> Int {
     return Int(bitPattern: ptr)
 }
 
-@_cdecl("kk_atomic_ref_load")
-public func kk_atomic_ref_load(_ receiver: Int) -> Int {
+@_cdecl("__kk_atomic_ref_load")
+public func __kk_atomic_ref_load(_ receiver: Int) -> Int {
     guard let box = atomicRefBox(from: receiver) else { return 0 }
     return box.load()
 }
 
-@_cdecl("kk_atomic_ref_store")
-public func kk_atomic_ref_store(_ receiver: Int, _ value: Int) -> Int {
+@_cdecl("__kk_atomic_ref_store")
+public func __kk_atomic_ref_store(_ receiver: Int, _ value: Int) -> Int {
     guard let box = atomicRefBox(from: receiver) else { return 0 }
     box.store(value)
     return 0
 }
 
-@_cdecl("kk_atomic_ref_exchange")
-public func kk_atomic_ref_exchange(_ receiver: Int, _ new: Int) -> Int {
+@_cdecl("__kk_atomic_ref_exchange")
+public func __kk_atomic_ref_exchange(_ receiver: Int, _ new: Int) -> Int {
     guard let box = atomicRefBox(from: receiver) else { return 0 }
     return box.exchange(new)
 }
 
-@_cdecl("kk_atomic_ref_compareAndExchange")
-public func kk_atomic_ref_compareAndExchange(_ receiver: Int, _ expect: Int, _ update: Int) -> Int {
+@_cdecl("__kk_atomic_ref_compareAndExchange")
+public func __kk_atomic_ref_compareAndExchange(_ receiver: Int, _ expect: Int, _ update: Int) -> Int {
     guard let box = atomicRefBox(from: receiver) else { return 0 }
     return box.compareAndExchange(expect: expect, update: update)
 }

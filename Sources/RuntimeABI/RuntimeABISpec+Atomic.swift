@@ -13,7 +13,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_int_load",
+            name: "__kk_atomic_int_load",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
             ],
@@ -22,7 +22,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_int_store",
+            name: "__kk_atomic_int_store",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
                 RuntimeABIParameter(name: "value", type: .intptr),
@@ -32,7 +32,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_int_exchange",
+            name: "__kk_atomic_int_exchange",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
                 RuntimeABIParameter(name: "new", type: .intptr),
@@ -53,7 +53,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_int_compareAndExchange",
+            name: "__kk_atomic_int_compareAndExchange",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
                 RuntimeABIParameter(name: "expect", type: .intptr),
@@ -65,7 +65,7 @@ public extension RuntimeABISpec {
         ),
 
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_int_fetchAndAdd",
+            name: "__kk_atomic_int_fetchAndAdd",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
                 RuntimeABIParameter(name: "delta", type: .intptr),
@@ -75,7 +75,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_int_addAndFetch",
+            name: "__kk_atomic_int_addAndFetch",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
                 RuntimeABIParameter(name: "delta", type: .intptr),
@@ -85,7 +85,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_int_fetchAndIncrement",
+            name: "__kk_atomic_int_fetchAndIncrement",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
             ],
@@ -94,7 +94,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_int_fetchAndDecrement",
+            name: "__kk_atomic_int_fetchAndDecrement",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
             ],
@@ -103,7 +103,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_int_incrementAndFetch",
+            name: "__kk_atomic_int_incrementAndFetch",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
             ],
@@ -112,7 +112,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_int_decrementAndFetch",
+            name: "__kk_atomic_int_decrementAndFetch",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
             ],
@@ -131,7 +131,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_long_load",
+            name: "__kk_atomic_long_load",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
             ],
@@ -140,7 +140,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_long_store",
+            name: "__kk_atomic_long_store",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
                 RuntimeABIParameter(name: "value", type: .intptr),
@@ -150,7 +150,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_long_exchange",
+            name: "__kk_atomic_long_exchange",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
                 RuntimeABIParameter(name: "new", type: .intptr),
@@ -171,7 +171,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_long_compareAndExchange",
+            name: "__kk_atomic_long_compareAndExchange",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
                 RuntimeABIParameter(name: "expect", type: .intptr),
@@ -183,7 +183,7 @@ public extension RuntimeABISpec {
         ),
 
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_long_fetchAndAdd",
+            name: "__kk_atomic_long_fetchAndAdd",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
                 RuntimeABIParameter(name: "delta", type: .intptr),
@@ -193,7 +193,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_long_addAndFetch",
+            name: "__kk_atomic_long_addAndFetch",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
                 RuntimeABIParameter(name: "delta", type: .intptr),
@@ -203,7 +203,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_long_fetchAndIncrement",
+            name: "__kk_atomic_long_fetchAndIncrement",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
             ],
@@ -212,7 +212,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_long_fetchAndDecrement",
+            name: "__kk_atomic_long_fetchAndDecrement",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
             ],
@@ -221,7 +221,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_long_incrementAndFetch",
+            name: "__kk_atomic_long_incrementAndFetch",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
             ],
@@ -230,7 +230,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_long_decrementAndFetch",
+            name: "__kk_atomic_long_decrementAndFetch",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
             ],
@@ -434,7 +434,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_bool_load",
+            name: "__kk_atomic_bool_load",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
             ],
@@ -443,7 +443,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_bool_store",
+            name: "__kk_atomic_bool_store",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
                 RuntimeABIParameter(name: "value", type: .intptr),
@@ -453,7 +453,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_bool_exchange",
+            name: "__kk_atomic_bool_exchange",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
                 RuntimeABIParameter(name: "new", type: .intptr),
@@ -463,7 +463,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_bool_compareAndExchange",
+            name: "__kk_atomic_bool_compareAndExchange",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
                 RuntimeABIParameter(name: "expect", type: .intptr),
@@ -494,7 +494,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_ref_load",
+            name: "__kk_atomic_ref_load",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
             ],
@@ -503,7 +503,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_ref_store",
+            name: "__kk_atomic_ref_store",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
                 RuntimeABIParameter(name: "value", type: .intptr),
@@ -513,7 +513,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_ref_exchange",
+            name: "__kk_atomic_ref_exchange",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
                 RuntimeABIParameter(name: "new", type: .intptr),
@@ -523,7 +523,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_atomic_ref_compareAndExchange",
+            name: "__kk_atomic_ref_compareAndExchange",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),
                 RuntimeABIParameter(name: "expect", type: .intptr),
