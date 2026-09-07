@@ -246,11 +246,6 @@ public func kk_int_to_char(_ value: Int) -> Int {
     Int(UInt16(truncatingIfNeeded: kk_unbox_int(value)))
 }
 
-@_cdecl("kk_long_to_char")
-public func kk_long_to_char(_ value: Int) -> Int {
-    Int(UInt16(truncatingIfNeeded: value))
-}
-
 @_cdecl("kk_uint_to_char")
 public func kk_uint_to_char(_ value: Int) -> Int {
     Int(UInt16(truncatingIfNeeded: value))

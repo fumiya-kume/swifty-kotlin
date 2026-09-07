@@ -1,0 +1,43 @@
+symbol fq=__local_0.sized kind=local vis=private flags=_ type=kotlin.CharArray
+symbol fq=__local_1.initialized kind=local vis=private flags=_ type=kotlin.CharArray
+symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=kotlin.CharArray#0 kind=class vis=public flags=synthetic
+symbol fq=kotlin.text.code kind=function vis=public flags=synthetic sig=recv=Char params=[] ret=Int
+file fstdlib_kotlin_CharArray_n_n package=golden.sema
+  decl golden.sema.main fun main sym=golden.sema.main
+expr e@4:27 int(3) type=Int
+expr e@4:17 call callee=e@4:17#1 args=[_:e@4:27] type=kotlin.CharArray
+expr e@4:5 localDecl sized mutable=0 type=_ init=e@4:17 type=Unit ref=__local_0.sized
+expr e@5:13 name(sized) type=kotlin.CharArray ref=__local_0.sized
+expr e@5:13#1 memberCall recv=e@5:13 callee=size args=[] type=Int call=kotlin.collections.size.$get#3
+expr e@5:5 call callee=e@5:5#1 args=[_:e@5:13#1] type=Unit call=kotlin.io.println#1
+expr e@6:13 name(sized) type=kotlin.CharArray ref=__local_0.sized
+expr e@6:19 int(0) type=Int
+expr e@6:13#1 indexedAccess receiver=e@6:13 indices=[e@6:19] type=Char
+expr e@6:13#2 memberCall recv=e@6:13#1 callee=code args=[] type=Int call=kotlin.text.code
+expr e@6:5 call callee=e@6:5#1 args=[_:e@6:13#2] type=Unit call=kotlin.io.println#1
+expr e@8:33 int(3) type=Int
+expr e@8:43 name(it) type=Int ref=s-0
+expr e@8:48 int(65) type=Int
+expr e@8:43#1 binary(add) lhs=e@8:43 rhs=e@8:48 type=Int
+expr e@8:38 call callee=e@8:38#1 args=[_:e@8:43#1] type=Char call=kotlin.Char#1
+expr e@8:36 lambda params=[] body=e@8:38 label=CharArray type=(Int) -> Char
+expr e@8:23 call callee=e@8:23#1 args=[_:e@8:33,_:e@8:36] type=kotlin.CharArray call=kotlin.CharArray#1
+expr e@8:5 localDecl initialized mutable=0 type=_ init=e@8:23 type=Unit ref=__local_1.initialized
+expr e@9:13 name(initialized) type=kotlin.CharArray ref=__local_1.initialized
+expr e@9:13#1 memberCall recv=e@9:13 callee=size args=[] type=Int call=kotlin.collections.size.$get#3
+expr e@9:5 call callee=e@9:5#1 args=[_:e@9:13#1] type=Unit call=kotlin.io.println#1
+expr e@10:13 name(initialized) type=kotlin.CharArray ref=__local_1.initialized
+expr e@10:25 int(0) type=Int
+expr e@10:13#1 indexedAccess receiver=e@10:13 indices=[e@10:25] type=Char
+expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13#1] type=Unit call=kotlin.io.println#1
+expr e@11:13 name(initialized) type=kotlin.CharArray ref=__local_1.initialized
+expr e@11:25 int(2) type=Int
+expr e@11:13#1 indexedAccess receiver=e@11:13 indices=[e@11:25] type=Char
+expr e@11:5 call callee=e@11:5#1 args=[_:e@11:13#1] type=Unit call=kotlin.io.println#1
+expr e@12:23 int(0) type=Int
+expr e@12:28 char(120) type=Char
+expr e@12:26 lambda params=[] body=e@12:28 label=CharArray type=(Int) -> Char
+expr e@12:13 call callee=e@12:13#1 args=[_:e@12:23,_:e@12:26] type=kotlin.CharArray call=kotlin.CharArray#1
+expr e@12:13#2 memberCall recv=e@12:13 callee=size args=[] type=Int call=kotlin.collections.size.$get#3
+expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13#2] type=Unit call=kotlin.io.println#1

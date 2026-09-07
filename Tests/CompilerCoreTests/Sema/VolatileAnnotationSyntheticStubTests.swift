@@ -4,7 +4,7 @@ import Foundation
 import Testing
 
 @Suite
-struct VolatileAnnotationSyntheticStubTests {
+struct VolatileAnnotationSourceTests {
 
     // MARK: - Shared Sema context
 
@@ -34,8 +34,6 @@ struct VolatileAnnotationSyntheticStubTests {
         Self._sharedCtx = ctx
         return ctx
     }
-    private static nonisolated(unsafe) var _sharedSema: (SemaModule, StringInterner)?
-
     private func sharedSema() throws -> (SemaModule, StringInterner) {
         var result: (SemaModule, StringInterner)?
         try withTemporaryFile(contents: "fun noop() {}") { path in
@@ -43,30 +41,67 @@ struct VolatileAnnotationSyntheticStubTests {
             try runSema(ctx)
             result = (try #require(ctx.sema), ctx.interner)
         }
-        let semaResult = try #require(result)
-        Self._sharedSema = semaResult
-        return semaResult
+        return try #require(result)
     }
 
     @Test
-    func testVolatileAnnotationClassIsRegisteredWithFieldTarget() throws {
+    func testVolatileAnnotationIsSourceBackedWithOfficialMetadata() throws {
         let (sema, interner) = try sharedSema()
 
         let volatileFQName = ["kotlin", "concurrent", "Volatile"].map { interner.intern($0) }
         let volatileSymbol = try #require(
             sema.symbols.lookup(fqName: volatileFQName),
-            "Expected kotlin.concurrent.Volatile to be registered"
+            "Expected source-backed kotlin.concurrent.Volatile to be registered"
         )
+        let symbol = try #require(sema.symbols.symbol(volatileSymbol))
 
-        #expect(sema.symbols.symbol(volatileSymbol)?.kind == .annotationClass)
-        #expect(sema.symbols.symbol(volatileSymbol)?.flags.contains(.synthetic) == true)
+        #expect(symbol.kind == .annotationClass)
+        #expect(!symbol.flags.contains(.synthetic))
+        #expect(symbol.declSite != nil)
+        #expect(sema.symbols.isSourceBackedSymbol(volatileSymbol))
+        let annotations = sema.symbols.annotations(for: volatileSymbol)
         #expect(
-            sema.symbols.annotations(for: volatileSymbol).contains {
-                $0.annotationFQName == "kotlin.annotation.Target"
+            annotations.contains {
+                ($0.annotationFQName == "Target" || $0.annotationFQName == "kotlin.annotation.Target")
                     && $0.arguments == ["AnnotationTarget.FIELD"]
             },
-            "Expected Volatile to carry @Target(AnnotationTarget.FIELD)"
+            "Expected Volatile to carry @Target(AnnotationTarget.FIELD), got: \(annotations)"
         )
+        #expect(
+            annotations.contains {
+                ($0.annotationFQName == "Retention" || $0.annotationFQName == "kotlin.annotation.Retention")
+                    && $0.arguments == ["AnnotationRetention.SOURCE"]
+            },
+            "Expected Volatile to carry @Retention(AnnotationRetention.SOURCE), got: \(annotations)"
+        )
+        #expect(
+            annotations.contains {
+                ($0.annotationFQName == "MustBeDocumented" || $0.annotationFQName == "kotlin.annotation.MustBeDocumented")
+                    && $0.arguments.isEmpty
+            },
+            "Expected Volatile to carry @MustBeDocumented, got: \(annotations)"
+        )
+
+        let constructorFQName = volatileFQName + [interner.intern("<init>")]
+        let constructorSymbol = try #require(
+            sema.symbols.lookupAll(fqName: constructorFQName).first(where: { id in
+                guard let constructor = sema.symbols.symbol(id),
+                      constructor.kind == .constructor,
+                      let signature = sema.symbols.functionSignature(for: id)
+                else { return false }
+                return signature.parameterTypes.isEmpty
+                    && signature.returnType == sema.types.make(.classType(ClassType(
+                        classSymbol: volatileSymbol,
+                        args: [],
+                        nullability: .nonNull
+                    )))
+            }),
+            "Expected Volatile to expose a source-backed no-argument constructor"
+        )
+        let constructor = try #require(sema.symbols.symbol(constructorSymbol))
+        #expect(!constructor.flags.contains(.synthetic))
+        #expect(constructor.declSite != nil)
+        #expect(sema.symbols.isSourceBackedSymbol(constructorSymbol))
     }
 
     @Test func testVolatileAnnotationResolvesInSource() throws {
