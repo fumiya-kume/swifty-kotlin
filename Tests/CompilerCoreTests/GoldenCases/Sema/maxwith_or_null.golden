@@ -5,7 +5,7 @@ symbol fq=golden.sema.maxFromSequence kind=function vis=public flags=_ sig=recv=
 symbol fq=golden.sema.maxFromSequence.$1.cmp kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.maxFromSequence.$1.xs kind=valueParameter vis=private flags=_
 symbol fq=kotlin.Comparator kind=interface vis=public flags=funInterface
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
 file fmaxwith_or_null package=golden.sema
   decl golden.sema.maxFromList fun maxFromList sym=golden.sema.maxFromList

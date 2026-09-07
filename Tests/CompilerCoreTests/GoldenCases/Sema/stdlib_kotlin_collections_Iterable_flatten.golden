@@ -3,8 +3,8 @@ symbol fq=__local_1.iterable kind=local vis=private flags=_ type=kotlin.collecti
 symbol fq=__local_2.typedInner kind=local vis=private flags=_ type=kotlin.collections.List<kotlin.collections.Iterable<Int>>
 symbol fq=flattenIterable kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<kotlin.collections.Iterable<Int>>] ret=kotlin.collections.List<Int>
 symbol fq=flattenIterable.$0.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_collections_Iterable_flatten package=_
   decl flattenIterable fun flattenIterable sym=flattenIterable

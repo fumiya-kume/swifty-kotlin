@@ -26,6 +26,11 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             sema: sema,
             interner: ctx.interner
         )
+        appendReferencedSourceBackedKVarianceNominalIfNeeded(
+            module: module,
+            sema: sema,
+            interner: ctx.interner
+        )
 
         let intType = sema.types.make(.primitive(.int, .nonNull))
         let existingFunctionSymbols = Set(module.arena.declarations.compactMap { decl -> SymbolID? in
@@ -237,6 +242,71 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             return
         }
         _ = module.arena.appendDecl(.nominalType(KIRNominalType(symbol: osFamilySymbol)))
+    }
+
+    /// Makes the bundled KVariance enum available to the shared enum
+    /// synthesis pass when a consumer KIR references its generated APIs.
+    /// Bundled source declarations are omitted from consumer KIR, but their
+    /// source-backed nominal identity is required by enum helper bodies.
+    private func appendReferencedSourceBackedKVarianceNominalIfNeeded(
+        module: KIRModule,
+        sema: SemaModule,
+        interner: StringInterner
+    ) {
+        let kVarianceFQName = [
+            interner.intern("kotlin"),
+            interner.intern("reflect"),
+            interner.intern("KVariance"),
+        ]
+        guard let kVarianceSymbol = sema.symbols.lookup(fqName: kVarianceFQName),
+              let kVariance = sema.symbols.symbol(kVarianceSymbol),
+              kVariance.kind == .enumClass,
+              sema.symbols.isSourceBackedSymbol(kVarianceSymbol)
+        else {
+            return
+        }
+
+        var generatedMembers = Set(
+            sema.symbols.lookupAll(fqName: kVarianceFQName + [interner.intern("values")])
+        )
+        if let companionSymbol = sema.symbols.companionObjectSymbol(for: kVarianceSymbol),
+           let companion = sema.symbols.symbol(companionSymbol)
+        {
+            generatedMembers.formUnion(
+                sema.symbols.lookupAll(fqName: companion.fqName + [interner.intern("entries")])
+            )
+            generatedMembers.formUnion(
+                sema.symbols.lookupAll(fqName: companion.fqName + [interner.intern("valueOf")])
+            )
+        }
+        guard !generatedMembers.isEmpty else {
+            return
+        }
+
+        let isReferenced = sema.bindings.identifierSymbols.values.contains {
+            generatedMembers.contains($0)
+        } || sema.bindings.callBindings.values.contains {
+            generatedMembers.contains($0.chosenCallee)
+        } || sema.bindings.exprTypes.values.contains {
+            guard case let .classType(classType) = sema.types.kind(of: $0) else {
+                return false
+            }
+            return classType.classSymbol == kVarianceSymbol
+        }
+        guard isReferenced else {
+            return
+        }
+
+        let alreadyDeclared = module.arena.declarations.contains { declaration in
+            guard case let .nominalType(nominal) = declaration else {
+                return false
+            }
+            return nominal.symbol == kVarianceSymbol
+        }
+        guard !alreadyDeclared else {
+            return
+        }
+        _ = module.arena.appendDecl(.nominalType(KIRNominalType(symbol: kVarianceSymbol)))
     }
 
     /// Replaces `constValue(result: r, value: .symbolRef(sym))` where `sym`
@@ -706,17 +776,26 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
     }
 
     private func enumEntrySymbols(owner: SemanticSymbol, symbols: SymbolTable) -> [SemanticSymbol] {
-        symbols.children(ofFQName: owner.fqName)
+        let fieldOffsets = symbols.nominalLayout(for: owner.id)?.fieldOffsets ?? [:]
+        return symbols.children(ofFQName: owner.fqName)
             .compactMap { symbols.symbol($0) }
             .filter { $0.kind == .field }
             .sorted(by: {
-                // Sort by source declaration offset first (Kotlin guarantees
-                // enum entry order matches declaration order).  Fall back to
-                // symbol ID which is monotonically assigned in parse order.
-                let lhsOffset = $0.declSite?.start.offset ?? Int.max
-                let rhsOffset = $1.declSite?.start.offset ?? Int.max
-                if lhsOffset != rhsOffset {
-                    return lhsOffset < rhsOffset
+                // Source-backed entries have precise declaration ranges.
+                let lhsDeclOffset = $0.declSite?.start.offset
+                let rhsDeclOffset = $1.declSite?.start.offset
+                if let lhsDeclOffset, let rhsDeclOffset, lhsDeclOffset != rhsDeclOffset {
+                    return lhsDeclOffset < rhsDeclOffset
+                }
+                if (lhsDeclOffset == nil) != (rhsDeclOffset == nil) {
+                    return lhsDeclOffset != nil
+                }
+                // Imported library entries have no source declaration range;
+                // their metadata field offsets preserve declaration order.
+                let lhsFieldOffset = fieldOffsets[$0.id] ?? Int.max
+                let rhsFieldOffset = fieldOffsets[$1.id] ?? Int.max
+                if lhsFieldOffset != rhsFieldOffset {
+                    return lhsFieldOffset < rhsFieldOffset
                 }
                 return $0.id.rawValue < $1.id.rawValue
             })

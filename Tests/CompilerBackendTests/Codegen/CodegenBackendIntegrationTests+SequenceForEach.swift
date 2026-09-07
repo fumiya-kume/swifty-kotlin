@@ -44,10 +44,11 @@ struct CodegenBackendSequenceForEachTests {
     }
 
     @Test
-    func testCodegenSequenceForEachUsesRuntimeHelper() throws {
+    func testCodegenSequenceForFamilyUsesBundledSource() throws {
         let source = """
         fun process(seq: Sequence<Int>) {
             seq.forEach { value -> println(value) }
+            seq.forEachIndexed { index, value -> println(index + value) }
         }
         """
 
@@ -56,7 +57,7 @@ struct CodegenBackendSequenceForEachTests {
                 .appendingPathComponent(UUID().uuidString).path
             let ctx = try runCodegenPipeline(
                 inputPath: path,
-                moduleName: "SequenceForEachKIR",
+                moduleName: "SequenceForFamilyKIR",
                 emit: .kirDump,
                 outputPath: outputBase
             )
@@ -64,7 +65,10 @@ struct CodegenBackendSequenceForEachTests {
             let module = try #require(ctx.kir)
             let body = try findKIRFunctionBody(named: "process", in: module, interner: ctx.interner)
             let callees = extractCallees(from: body, interner: ctx.interner)
-            #expect(callees.contains("kk_sequence_forEach"))
+            #expect(containsKotlinCallee("forEach", in: callees))
+            #expect(containsKotlinCallee("forEachIndexed", in: callees))
+            #expect(!callees.contains("kk_sequence_forEach"))
+            #expect(!callees.contains("kk_sequence_forEachIndexed"))
         }
     }
 }

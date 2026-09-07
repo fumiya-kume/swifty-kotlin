@@ -1,0 +1,8 @@
+symbol fq=golden.sema.symbolNameProbe kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.useSymbolNameProbe kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+file fstdlib_kotlin_native_SymbolName_n_n package=golden.sema
+  decl golden.sema.symbolNameProbe fun symbolNameProbe sym=golden.sema.symbolNameProbe
+  decl golden.sema.useSymbolNameProbe fun useSymbolNameProbe sym=golden.sema.useSymbolNameProbe
+expr e@6:30 int(42) type=Int
+expr e@8:33 call callee=e@8:33#1 args=[] type=Int call=golden.sema.symbolNameProbe
+diagnostic severity=error code=KSWIFTK-SEMA-OPT-IN at=8:33 msg='kotlin.native.SymbolNameIsInternal' requires opt-in. Annotate the usage with '@kotlin.native.SymbolNameIsInternal' or '@OptIn(kotlin.native.SymbolNameIsInternal::class)'. @SymbolName is dangerous deprecated and internal annotation. See https://youtrack.jetbrains.com/issue/KT-46649
