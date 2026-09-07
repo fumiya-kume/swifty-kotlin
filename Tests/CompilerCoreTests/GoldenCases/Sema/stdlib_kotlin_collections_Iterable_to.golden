@@ -1,7 +1,7 @@
 symbol fq=__local_0.nullableItems kind=local vis=private flags=_ type=kotlin.collections.Iterable<String?>
 symbol fq=__local_1.collectionDestination kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Any?>
 symbol fq=__local_2.collectionResult kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Any?>
-symbol fq=__local_3.hashSetResult kind=local vis=private flags=_ type=kotlin.collections.MutableSet<String?>
+symbol fq=__local_3.hashSetResult kind=local vis=private flags=_ type=kotlin.collections.HashSet<String?>
 symbol fq=__local_4.setResult kind=local vis=private flags=_ type=kotlin.collections.Set<String?>
 symbol fq=__local_5.nullablePairs kind=local vis=private flags=_ type=kotlin.collections.Iterable<kotlin.Pair<String?, Int?>>
 symbol fq=__local_6.mapResult kind=local vis=private flags=_ type=kotlin.collections.Map<String?, Int?>
@@ -13,13 +13,12 @@ symbol fq=__local_11.textDestination kind=local vis=private flags=_ type=kotlin.
 symbol fq=__local_12.textCollectionResult kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Char>
 symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
 symbol fq=kotlin.Pair kind=class vis=public flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableCollection kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.MutableCollection kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableSet kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
 symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
 symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
@@ -39,7 +38,7 @@ expr e@4:80 name(collectionDestination) type=kotlin.collections.MutableCollectio
 expr e@4:53#1 memberCall recv=e@4:53 callee=toCollection args=[_:e@4:80] type=kotlin.collections.MutableCollection<Any?>
 expr e@4:5 localDecl collectionResult mutable=0 type=MutableCollection<Any?> init=e@4:53#1 type=Unit ref=__local_2.collectionResult
 expr e@5:43 name(nullableItems) type=kotlin.collections.Iterable<String?> ref=__local_0.nullableItems
-expr e@5:43#1 memberCall recv=e@5:43 callee=toHashSet args=[] type=kotlin.collections.MutableSet<String?> call=kotlin.collections.toHashSet targs=[String?]
+expr e@5:43#1 memberCall recv=e@5:43 callee=toHashSet args=[] type=kotlin.collections.HashSet<String?> call=kotlin.collections.toHashSet targs=[String?]
 expr e@5:5 localDecl hashSetResult mutable=0 type=HashSet<String?> init=e@5:43#1 type=Unit ref=__local_3.hashSetResult
 expr e@6:35 name(nullableItems) type=kotlin.collections.Iterable<String?> ref=__local_0.nullableItems
 expr e@6:35#1 memberCall recv=e@6:35 callee=toSet args=[] type=kotlin.collections.Set<String?> call=kotlin.collections.toSet#0 targs=[String?]
@@ -88,7 +87,7 @@ expr e@20:57#1 memberCall recv=e@20:57 callee=toCollection args=[_:e@20:75] type
 expr e@20:5 localDecl textCollectionResult mutable=0 type=MutableCollection<Char> init=e@20:57#1 type=Unit ref=__local_12.textCollectionResult
 expr e@22:13 name(collectionResult) type=kotlin.collections.MutableCollection<Any?> ref=__local_2.collectionResult
 expr e@22:5 call callee=e@22:5#1 args=[_:e@22:13] type=Unit call=kotlin.io.println#1
-expr e@23:13 name(hashSetResult) type=kotlin.collections.MutableSet<String?> ref=__local_3.hashSetResult
+expr e@23:13 name(hashSetResult) type=kotlin.collections.HashSet<String?> ref=__local_3.hashSetResult
 expr e@23:5 call callee=e@23:5#1 args=[_:e@23:13] type=Unit call=kotlin.io.println#1
 expr e@24:13 name(setResult) type=kotlin.collections.Set<String?> ref=__local_4.setResult
 expr e@24:5 call callee=e@24:5#1 args=[_:e@24:13] type=Unit call=kotlin.io.println#1

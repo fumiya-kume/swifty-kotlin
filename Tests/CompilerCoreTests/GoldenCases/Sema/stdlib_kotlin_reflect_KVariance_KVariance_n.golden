@@ -1,0 +1,21 @@
+symbol fq=golden.sema.varianceEntries kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.enums.EnumEntries<kotlin.reflect.KVariance>
+symbol fq=golden.sema.varianceValueOf kind=function vis=public flags=_ sig=recv=_ params=[String] ret=kotlin.reflect.KVariance
+symbol fq=golden.sema.varianceValueOf.$0.name kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.varianceValues kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Array<kotlin.reflect.KVariance>
+symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+symbol fq=kotlin.enums.EnumEntries kind=interface vis=public flags=synthetic
+symbol fq=kotlin.reflect.KVariance.Companion.entries kind=property vis=public flags=synthetic|static type=kotlin.enums.EnumEntries<kotlin.reflect.KVariance>
+symbol fq=kotlin.reflect.KVariance.Companion.valueOf kind=function vis=public flags=synthetic|static sig=recv=kotlin.reflect.KVariance.Companion params=[String] ret=kotlin.reflect.KVariance
+symbol fq=kotlin.reflect.KVariance.Companion.valueOf.name kind=valueParameter vis=private flags=synthetic
+symbol fq=kotlin.reflect.KVariance.values kind=function vis=public flags=synthetic|static sig=recv=_ params=[] ret=kotlin.Array<kotlin.reflect.KVariance>
+file fstdlib_kotlin_reflect_KVariance_KVariance_n package=golden.sema
+  decl golden.sema.varianceEntries fun varianceEntries sym=golden.sema.varianceEntries
+  decl golden.sema.varianceValues fun varianceValues sym=golden.sema.varianceValues
+  decl golden.sema.varianceValueOf fun varianceValueOf sym=golden.sema.varianceValueOf
+expr e@5:62 name(KVariance) type=kotlin.reflect.KVariance.Companion ref=kotlin.reflect.KVariance
+expr e@5:62#1 memberCall recv=e@5:62 callee=entries args=[] type=kotlin.enums.EnumEntries<kotlin.reflect.KVariance> ref=kotlin.reflect.KVariance.Companion.entries
+expr e@7:42 name(KVariance) type=kotlin.reflect.KVariance ref=kotlin.reflect.KVariance
+expr e@7:42#1 memberCall recv=e@7:42 callee=values args=[] type=kotlin.Array<kotlin.reflect.KVariance> ref=kotlin.reflect.KVariance.values call=kotlin.reflect.KVariance.values
+expr e@9:48 name(KVariance) type=kotlin.reflect.KVariance.Companion ref=kotlin.reflect.KVariance
+expr e@9:66 name(name) type=String ref=golden.sema.varianceValueOf.$0.name
+expr e@9:48#1 memberCall recv=e@9:48 callee=valueOf args=[_:e@9:66] type=kotlin.reflect.KVariance call=kotlin.reflect.KVariance.Companion.valueOf

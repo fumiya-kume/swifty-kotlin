@@ -50,7 +50,7 @@ extension CallLowerer {
             return lateinitStatus
         }
 
-        // ── KCallable.name → __kk_kcallable_get_name(receiver) ────────────
+        // ── KCallable metadata → shared reflection bridge ─────────────────
         if let kPropertyResult = tryLowerKPropertyMemberAccess(
             exprID,
             receiverExpr: receiverExpr,

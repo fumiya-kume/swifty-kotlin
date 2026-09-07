@@ -44,6 +44,8 @@ final class RuntimeMatchResultBox {
     let groups: [RuntimeMatchGroupBox?]
     /// Named capture group name -> group index mapping.
     let namedGroups: [String: Int]
+    /// Names declared by the pattern, including groups that did not participate.
+    let namedGroupNames: Set<String>
     /// The original input string (for next() iteration).
     let inputString: String?
     /// The end position in the input string where this match ended (UTF-16 offset, for next() iteration).
@@ -56,6 +58,7 @@ final class RuntimeMatchResultBox {
         groupValues: [String],
         groups: [RuntimeMatchGroupBox?] = [],
         namedGroups: [String: Int] = [:],
+        namedGroupNames: Set<String> = [],
         inputString: String? = nil,
         matchEndOffset: Int = 0,
         regexBox: RuntimeRegexBox? = nil
@@ -64,6 +67,7 @@ final class RuntimeMatchResultBox {
         self.groupValues = groupValues
         self.groups = groups
         self.namedGroups = namedGroups
+        self.namedGroupNames = namedGroupNames
         self.inputString = inputString
         self.matchEndOffset = matchEndOffset
         self.regexBox = regexBox
@@ -238,8 +242,10 @@ private func makeMatchResult(from result: NSTextCheckingResult, in str: String, 
 
     // Build named group mapping
     var namedGroups: [String: Int] = [:]
+    var namedGroupNames: Set<String> = []
     if let regexBox = regexBox {
         let names = extractNamedGroupNames(from: regexBox.pattern)
+        namedGroupNames = Set(names)
         for name in names {
             let namedRange = result.range(withName: name)
             guard namedRange.location != NSNotFound else { continue }
@@ -264,6 +270,7 @@ private func makeMatchResult(from result: NSTextCheckingResult, in str: String, 
         groupValues: groupValues,
         groups: groups,
         namedGroups: namedGroups,
+        namedGroupNames: namedGroupNames,
         inputString: str,
         matchEndOffset: matchEnd,
         regexBox: regexBox
@@ -869,6 +876,16 @@ public func __kk_match_result_group_index_of_name(_ matchRaw: Int, _ nameRaw: In
     return index
 }
 
+/// Whether the regex pattern declares a capture group named [nameRaw].
+@_cdecl("__kk_match_result_has_named_group")
+public func __kk_match_result_has_named_group(_ matchRaw: Int, _ nameRaw: Int) -> Int {
+    guard let matchResult = matchResultBoxFromRaw(matchRaw),
+          let name = regexStringFromRaw(nameRaw) else {
+        return 0
+    }
+    return matchResult.namedGroupNames.contains(name) ? 1 : 0
+}
+
 @_cdecl("__kk_match_result_group_index_of_name_flat")
 public func __kk_match_result_group_index_of_name_flat(
     _ matchRaw: Int,
@@ -961,8 +978,10 @@ private func makeMatchResultWithOffset(
     }
 
     var namedGroups: [String: Int] = [:]
+    var namedGroupNames: Set<String> = []
     if let regexBox = regexBox {
         let names = extractNamedGroupNames(from: regexBox.pattern)
+        namedGroupNames = Set(names)
         for name in names {
             let namedRange = result.range(withName: name)
             guard namedRange.location != NSNotFound else { continue }
@@ -983,6 +1002,7 @@ private func makeMatchResultWithOffset(
         groupValues: groupValues,
         groups: groups,
         namedGroups: namedGroups,
+        namedGroupNames: namedGroupNames,
         inputString: fullInput,
         matchEndOffset: matchEnd,
         regexBox: regexBox
