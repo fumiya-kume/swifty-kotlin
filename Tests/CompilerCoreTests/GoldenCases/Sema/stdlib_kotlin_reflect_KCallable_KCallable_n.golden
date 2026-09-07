@@ -11,7 +11,7 @@ symbol fq=kotlin.reflect.KCallable kind=interface vis=public flags=_
 symbol fq=kotlin.reflect.KFunction kind=interface vis=public flags=synthetic
 symbol fq=kotlin.reflect.KProperty kind=interface vis=public flags=synthetic
 symbol fq=kotlin.reflect.KProperty.returnType kind=property vis=public flags=synthetic type=kotlin.reflect.KType
-symbol fq=kotlin.reflect.KType kind=interface vis=public flags=synthetic
+symbol fq=kotlin.reflect.KType kind=interface vis=public flags=_
 symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=read kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KCallable<*>] ret=String
 symbol fq=read.$0.callable kind=valueParameter vis=private flags=_

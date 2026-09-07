@@ -963,21 +963,6 @@ extension DataFlowSemaPhase {
         if symbolInfo.fqName == hashSetFQName {
             return
         }
-
-        // BUG-166/KSP-711: bundled StringBuilder declares no source-level
-        // supertypes. Its Appendable/CharSequence conformance is patched onto
-        // the source-backed class after headers are collected, so its methods
-        // cannot carry `override` modifiers and must not be rejected as
-        // missing implementations here. OpenFinalOverride applies the same
-        // narrowly scoped exception to modifier validation.
-        if symbolInfo.fqName == [
-            interner.intern("kotlin"),
-            interner.intern("text"),
-            interner.intern("StringBuilder"),
-        ] {
-            return
-        }
-
         // Collect all abstract members from the entire supertype chain
         let abstractMembers = collectInheritedAbstractMembers(
             for: symbol,

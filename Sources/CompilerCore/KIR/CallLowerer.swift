@@ -902,6 +902,7 @@ final class CallLowerer {
                 appendObjectVtableMethodRegistrations(
                     objectValue: allocatedObj,
                     nominalSymbol: ownerNominalSymbol,
+                    driver: driver,
                     sema: sema,
                     arena: arena,
                     interner: interner,
@@ -975,8 +976,16 @@ final class CallLowerer {
             // and must dispatch through the receiver's vtable/itable exactly like
             // the explicit form: a subclass override, or a base-class
             // implementation of an interface method, is otherwise bypassed.
+            // SequenceScope calls use runtime-owned builder receivers, so their
+            // remapped ABI entry points must remain direct calls.
             if let implicitReceiver,
-               sema.symbols.externalLinkName(for: chosen)?.isEmpty ?? true
+               sema.symbols.externalLinkName(for: chosen)?.isEmpty ?? true,
+               sequenceBuilderRuntimeCalleeName(
+                   chosenCallee: chosen,
+                   calleeName: sourceCalleeName,
+                   sema: sema,
+                   interner: interner
+               ) == nil
             {
                 implicitReceiverDispatch = resolveVirtualDispatch(
                     callee: chosen,

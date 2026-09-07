@@ -373,7 +373,12 @@ package struct KnownCompilerNames {
     let atomicScalarFactoryFQNames: Set<[InternedString]>
 
     package init(interner: StringInterner) {
+        self = interner.cachedCompilerNames {
+            Self(uncachedInterner: interner)
+        }
+    }
 
+    private init(uncachedInterner interner: StringInterner) {
         byte = interner.intern("Byte")
         short = interner.intern("Short")
         int = interner.intern("Int")

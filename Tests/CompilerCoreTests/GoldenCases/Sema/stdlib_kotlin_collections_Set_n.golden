@@ -19,7 +19,6 @@ symbol fq=kotlin.Array kind=class vis=public flags=synthetic
 symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Set.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Set.isEmpty kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Set<out kotlin.collections.Set.E> params=[] ret=Boolean
 symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Set_n package=_
   decl inspect fun inspect sym=inspect

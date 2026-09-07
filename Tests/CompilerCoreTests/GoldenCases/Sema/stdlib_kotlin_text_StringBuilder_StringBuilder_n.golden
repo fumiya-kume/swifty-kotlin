@@ -15,7 +15,7 @@ symbol fq=golden.sema.stringBuilderInsertMissing kind=function vis=public flags=
 symbol fq=golden.sema.stringBuilderSetLengthMissing kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=golden.sema.stringBuilderSubstringMissing kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 symbol fq=golden.sema.stringBuilderToCharArrayMissing kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.CharArray
-symbol fq=kotlin.CharArray kind=class vis=public flags=synthetic
+symbol fq=kotlin.CharArray#0 kind=class vis=public flags=synthetic
 symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
 file fstdlib_kotlin_text_StringBuilder_StringBuilder_n package=golden.sema
   decl golden.sema.stringBuilderAppendMissing fun stringBuilderAppendMissing sym=golden.sema.stringBuilderAppendMissing

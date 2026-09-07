@@ -160,7 +160,7 @@ struct SequenceFoldIndexedFunctionTests {
     func testRunSemaClean() throws {
 
         let sources: [String] = [
-            // testSequenceFoldIndexedResolvesToRuntimeABIWithMatchingResultType
+            // testSequenceFoldIndexedResolvesToCanonicalSource
             """
             package sample0
 
@@ -196,7 +196,7 @@ struct SequenceFoldIndexedFunctionTests {
 
             let interner = ctx.interner
 
-            // === testSequenceFoldIndexedResolvesToRuntimeABIWithMatchingResultType ===
+            // === testSequenceFoldIndexedResolvesToCanonicalSource ===
 
             do {
 
@@ -219,6 +219,9 @@ struct SequenceFoldIndexedFunctionTests {
                     sema.bindings.callBinding(for: callExprID)?.chosenCallee,
                     "Expected foldIndexed call to be bound"
                 )
+                let fqName = try #require(sema.symbols.symbol(chosenCallee)?.fqName)
+                    .map { interner.resolve($0) }
+                #expect(fqName == ["kotlin", "sequences", "foldIndexed"])
                 #expect(
                     sema.symbols.isSourceBackedSymbol(chosenCallee),
                     "Expected Sequence.foldIndexed to resolve to bundled source"

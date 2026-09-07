@@ -700,6 +700,11 @@ public final class SymbolTable {
                 return symbol.flags.contains(.synthetic)
             case .function, .constructor:
                 return true
+            case .valueParameter:
+                // A source-backed factory can share a FQName with its nominal
+                // return type, so its parameter may collide with a residual
+                // synthetic property on that type (for example `size`).
+                return true
             default:
                 return false
             }

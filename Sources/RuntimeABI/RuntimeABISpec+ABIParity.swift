@@ -24,9 +24,9 @@ public extension RuntimeABISpec {
         abiParitySpec("kk_annotation_get_arguments", parameters: [
             p("p0", .intptr),
         ]),
-        abiParitySpec("kk_any_javaClass", parameters: [
+        abiParitySpec("__kk_any_javaClass", parameters: [
             p("receiverRaw", .intptr),
-        ]),
+        ], isThrowing: false),
         abiParitySpec("kk_future_getState", parameters: [
             p("futureRaw", .intptr),
         ]),
@@ -473,10 +473,6 @@ public extension RuntimeABISpec {
             p("n", .intptr),
             p("outThrown", .nullableIntptrPointer),
         ]),
-        abiParitySpec("kk_map_entry_to_pair", parameters: [
-            p("entryRaw", .intptr),
-        ],
-            isThrowing: false),
         // KSP-486: MatchResult iteration / destructuring bridges
         abiParitySpec("__kk_match_result_next", parameters: [
             p("matchRaw", .intptr),
@@ -643,7 +639,7 @@ public extension RuntimeABISpec {
             p("rangeRaw", .intptr),
         ],
             isThrowing: false),
-        abiParitySpec("kk_uint_range_drop", parameters: [
+        abiParitySpec("__kk_uint_range_drop", parameters: [
             p("rangeRaw", .intptr),
             p("n", .intptr),
             p("outThrown", .nullableIntptrPointer),
@@ -652,7 +648,7 @@ public extension RuntimeABISpec {
             p("rangeRaw", .intptr),
         ],
             isThrowing: false),
-        abiParitySpec("kk_uint_range_take", parameters: [
+        abiParitySpec("__kk_uint_range_take", parameters: [
             p("rangeRaw", .intptr),
             p("n", .intptr),
             p("outThrown", .nullableIntptrPointer),

@@ -648,11 +648,11 @@ extension CallLowerer {
         if loweredCallee == interner.intern("__kk_system_currentTimeMillis")
             || loweredCallee == interner.intern("__kk_system_nanoTime")
             || loweredCallee == interner.intern("__kk_system_process_start_nanos")
-            || loweredCallee == interner.intern("kk_system_gc")
-            || loweredCallee == interner.intern("kk_runtime_getRuntime")
-            || loweredCallee == interner.intern("kk_runtime_totalMemory")
-            || loweredCallee == interner.intern("kk_runtime_freeMemory")
-            || loweredCallee == interner.intern("kk_runtime_maxMemory")
+            || loweredCallee == interner.intern("__kk_system_gc")
+            || loweredCallee == interner.intern("__kk_runtime_getRuntime")
+            || loweredCallee == interner.intern("__kk_runtime_totalMemory")
+            || loweredCallee == interner.intern("__kk_runtime_freeMemory")
+            || loweredCallee == interner.intern("__kk_runtime_maxMemory")
             || loweredCallee == interner.intern("kk_instant_now")
             || loweredCallee == interner.intern("kk_clock_system_now") {
             callArguments = []
@@ -745,7 +745,6 @@ extension CallLowerer {
             interner.intern("__kk_char_progression_fromClosedRange"),
             interner.intern("__kk_op_step"),
             interner.intern("__kk_char_range_step"),
-            interner.intern("kk_sequence_foldIndexed"),
             interner.intern("kk_sequence_reduceOrNull"),
             interner.intern("kk_sequence_reduceRight"),
             interner.intern("kk_sequence_reduce"),
