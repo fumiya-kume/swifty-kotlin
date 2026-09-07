@@ -28,7 +28,7 @@ extension CallLowerer {
             instructions: &instructions
         )
         // Synthetic properties whose getter external link ends in `_load`
-        // (e.g. AtomicBoolean.value → kk_atomic_bool_load) must route their
+        // (e.g. AtomicBoolean.value → __kk_atomic_bool_load) must route their
         // setter to the matching `_store` runtime function rather than a
         // direct field-offset write, which would corrupt the underlying
         // runtime-managed box.
@@ -241,7 +241,7 @@ extension CallLowerer {
             ?? sema.bindings.exprTypes[exprID]
             ?? sema.types.anyType
 
-        // Synthetic runtime accessor (e.g. AtomicBoolean.value -> kk_atomic_bool_load/_store).
+        // Synthetic runtime accessor (e.g. AtomicBoolean.value -> __kk_atomic_bool_load/_store).
         let syntheticLinks: (load: String, store: String)? = {
             guard let propertySymbol,
                   let info = sema.symbols.symbol(propertySymbol),

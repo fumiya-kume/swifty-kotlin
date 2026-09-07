@@ -261,29 +261,37 @@ extension DataFlowSemaPhase {
         interner: StringInterner
     ) {
         let kotlinTextPkg = ensureKotlinTextPackageForCharStubs(symbols: symbols, interner: interner)
+        let charCategoryFQName = kotlinTextPkg + [interner.intern("CharCategory")]
+        let bundledIndex = BundledSyntheticStubRegistration.bundledIndex
+        let hasBundledCharCategory = bundledIndex.containsNominal(fqName: charCategoryFQName)
         let charCategorySymbol = ensureSyntheticCharCategoryEnumClass(
             in: kotlinTextPkg,
             symbols: symbols,
-            interner: interner
+            interner: interner,
+            includeEntries: !hasBundledCharCategory
         )
-        // KSP-1416: Keep CharCategory's public Companion nominal available
-        // while its enum entries and members remain synthetic until KSP-1417.
-        _ = ensureSyntheticCharCompanionSymbol(
-            ownerSymbol: charCategorySymbol,
-            symbols: symbols,
-            interner: interner
-        )
+        if !hasBundledCharCategory {
+            // KSP-1416: Keep CharCategory's public Companion nominal available
+            // while its enum entries and members remain synthetic until KSP-1417.
+            _ = ensureSyntheticCharCompanionSymbol(
+                ownerSymbol: charCategorySymbol,
+                symbols: symbols,
+                interner: interner
+            )
+        }
         let charCategoryType = types.make(.classType(ClassType(
             classSymbol: charCategorySymbol,
             args: [],
             nullability: .nonNull
         )))
-        setSyntheticCharCategoryEntryTypes(
-            enumSymbol: charCategorySymbol,
-            enumType: charCategoryType,
-            symbols: symbols,
-            interner: interner
-        )
+        if !hasBundledCharCategory {
+            setSyntheticCharCategoryEntryTypes(
+                enumSymbol: charCategorySymbol,
+                enumType: charCategoryType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
         let charDirectionalityType = ensureSyntheticCharDirectionalityEnum(
             in: kotlinTextPkg,
             symbols: symbols,
@@ -385,7 +393,8 @@ extension DataFlowSemaPhase {
     private func ensureSyntheticCharCategoryEnumClass(
         in packageFQName: [InternedString],
         symbols: SymbolTable,
-        interner: StringInterner
+        interner: StringInterner,
+        includeEntries: Bool
     ) -> SymbolID {
         let enumName = interner.intern("CharCategory")
         let enumFQName = packageFQName + [enumName]
@@ -408,6 +417,10 @@ extension DataFlowSemaPhase {
                 symbols.setParentSymbol(packageSymbol, for: symbol)
             }
             enumSymbol = symbol
+        }
+
+        guard includeEntries else {
+            return enumSymbol
         }
 
         for entry in syntheticCharCategoryEntries {

@@ -2,15 +2,16 @@
 @testable import CompilerCore
 import Testing
 
-/// KSP-948: the Set nominal declaration is bundled Kotlin source while the
-/// compatibility shell retains only the residual runtime-backed members.
+/// KSP-1078: the Set nominal declaration and its four built-in members are
+/// bundled Kotlin source while the compatibility shell retains runtime links.
 @Suite
 struct SetSourceMigrationTests {
     private func makeSema() throws -> CompilationContext {
         let source = """
         fun inspect(values: Set<Int>, collection: Collection<Int>): Boolean {
             val iterator = values.iterator()
-            return values.contains(1) && values.containsAll(listOf(1)) &&
+            return values.size >= 0 && values.isEmpty() && values.contains(1) &&
+                values.containsAll(listOf(1)) &&
                 collection.contains(1) && iterator.hasNext()
         }
         """
@@ -46,18 +47,30 @@ struct SetSourceMigrationTests {
     }
 
     @Test
-    func setKeepsResidualRuntimeMembersAndBindsSourceContainsAll() throws {
+    func setMembersAreSourceBackedAndRetainOnlyRuntimeStorageLinks() throws {
         let ctx = try makeSema()
         let sema = try #require(ctx.sema)
         let collections = ["kotlin", "collections"].map(ctx.interner.intern)
         let setFQName = collections + [ctx.interner.intern("Set")]
+        let sourcePath = "__bundled_kotlin/collections/SetHOF.kt"
 
-        for member in ["contains", "isEmpty"] {
+        for member in ["contains", "isEmpty", "iterator", "size"] {
             let memberSymbol = try #require(
                 sema.symbols.lookup(fqName: setFQName + [ctx.interner.intern(member)])
             )
-            #expect(sema.symbols.symbol(memberSymbol)?.flags.contains(.synthetic) == true)
-            #expect(sema.symbols.externalLinkName(for: memberSymbol) == (member == "contains" ? "__kk_set_contains" : "__kk_set_is_empty"))
+            let memberInfo = try #require(sema.symbols.symbol(memberSymbol))
+            let sourceFileID = try #require(sema.symbols.sourceFileID(for: memberSymbol))
+            #expect(!memberInfo.flags.contains(.synthetic))
+            #expect(sema.symbols.isSourceBackedSymbol(memberSymbol))
+            #expect(ctx.sourceManager.path(of: sourceFileID) == sourcePath)
+            let expectedLink: String? = switch member {
+            case "contains": "__kk_set_contains"
+            case "isEmpty": "__kk_set_is_empty"
+            case "iterator": "kk_list_iterator"
+            case "size": "__kk_set_size"
+            default: fatalError("unhandled Set member: \(member)")
+            }
+            #expect(sema.symbols.externalLinkName(for: memberSymbol) == expectedLink)
         }
 
         let ast = try #require(ctx.ast)

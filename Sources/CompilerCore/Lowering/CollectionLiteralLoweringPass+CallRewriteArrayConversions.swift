@@ -1,11 +1,13 @@
 /// Array and list conversion call rewrites.
 extension CollectionLiteralConstructionLoweringPass {
     func rewriteArrayConversionCall(
+        symbol: SymbolID?,
         callee: InternedString,
         arguments: [KIRExprID],
         result: KIRExprID?,
         thrownResult: KIRExprID?,
         module: KIRModule,
+        ctx: KIRContext,
         lookup: CollectionLiteralLookupTables,
         state: inout CollectionRewriteState,
         loweredBody: inout [KIRInstruction]
@@ -38,7 +40,10 @@ extension CollectionLiteralConstructionLoweringPass {
     // are source-backed (ArrayConversions.kt) and lower through normal function resolution.
 
     // toTypedArray() on array → __kk_array_copyOf (STDLIB-087)
-    if callee == lookup.toTypedArrayName, arguments.count == 1 {
+    if callee == lookup.toTypedArrayName,
+       arguments.count == 1,
+       symbol.map({ ctx.sema?.symbols.isSourceBackedSymbol($0) != true }) ?? true
+    {
         let receiverID = arguments[0]
         if state.arrayExprIDs.contains(receiverID.rawValue) {
             let toArrayResult = module.arena.appendTemporary(type: nil

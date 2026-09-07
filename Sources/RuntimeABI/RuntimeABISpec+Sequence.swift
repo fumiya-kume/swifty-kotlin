@@ -239,29 +239,7 @@ public extension RuntimeABISpec {
             section: "Sequence",
             isThrowing: false
         ),
-        // Terminal operations (STDLIB-095)
-        RuntimeABIFunctionSpec(
-            name: stdlibSequenceHOFName("forEach", arity: 1, fallback: "kk_sequence_forEach"),
-            parameters: [
-                RuntimeABIParameter(name: "seqRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Sequence",
-            isThrowing: false
-        ),
-        RuntimeABIFunctionSpec(
-            name: stdlibSequenceHOFName("forEachIndexed", arity: 1, fallback: "kk_sequence_forEachIndexed"),
-            parameters: [
-                RuntimeABIParameter(name: "seqRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Sequence",
-            isThrowing: false
-        ),
+        // Terminal operations (STDLIB-095) are source-backed in bundled Kotlin.
         RuntimeABIFunctionSpec(
             name: stdlibSequenceHOFName("flatMap", arity: 1, fallback: "kk_sequence_flatMap"),
             parameters: [

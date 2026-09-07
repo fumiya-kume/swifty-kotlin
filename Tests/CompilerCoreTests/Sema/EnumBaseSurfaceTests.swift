@@ -47,5 +47,44 @@ struct EnumBaseSurfaceTests {
         #expect(!companionInfo.flags.contains(.synthetic))
         #expect(sema.symbols.sourceFileID(for: companion) == enumSourceFileID)
     }
+
+    @Test
+    func testEnumMembersAreSourceBackedAndKeepRuntimeBridges() throws {
+        let (ctx, sema, interner) = try sharedSema()
+        let enumFQName = ["kotlin", "Enum"].map(interner.intern)
+        let enumSourceFileID = try #require(ctx.sourceManager.fileID(forPath: "__bundled_kotlin/Enum.kt"))
+
+        let functionLinks = [
+            "compareTo": "__kk_comparable_compareTo",
+            "equals": "kk_any_member_equals",
+            "hashCode": "kk_any_member_hashCode",
+            "toString": "kk_any_member_to_string",
+        ]
+        for (name, expectedLink) in functionLinks {
+            let symbol = try #require(
+                sema.symbols.lookupAll(fqName: enumFQName + [interner.intern(name)])
+                    .first { sema.symbols.symbol($0)?.kind == .function }
+            )
+            let info = try #require(sema.symbols.symbol(symbol))
+            #expect(!info.flags.contains(.synthetic), "Enum.\(name) must be source-backed")
+            #expect(sema.symbols.sourceFileID(for: symbol) == enumSourceFileID)
+            #expect(sema.symbols.externalLinkName(for: symbol) == expectedLink)
+        }
+
+        let propertyTypes = [
+            "name": sema.types.stringType,
+            "ordinal": sema.types.intType,
+        ]
+        for (name, expectedType) in propertyTypes {
+            let symbols = sema.symbols.lookupAll(fqName: enumFQName + [interner.intern(name)])
+                .filter { sema.symbols.symbol($0)?.kind == .property }
+            #expect(symbols.count == 1, "Enum.\(name) must have one source-backed property")
+            let symbol = try #require(symbols.first)
+            let info = try #require(sema.symbols.symbol(symbol))
+            #expect(!info.flags.contains(.synthetic), "Enum.\(name) must be source-backed")
+            #expect(sema.symbols.sourceFileID(for: symbol) == enumSourceFileID)
+            #expect(sema.symbols.propertyType(for: symbol) == expectedType)
+        }
+    }
 }
 #endif
