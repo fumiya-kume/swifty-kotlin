@@ -1282,18 +1282,11 @@ extension DataFlowSemaPhase {
         registerSyntheticInstantStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticClockStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticExperimentalTimeStubs(symbols: symbols, types: types, interner: interner, bundledIndex: bundledIndex)
-        let stringBuilderOwner = [interner.intern("kotlin"), interner.intern("text"), interner.intern("StringBuilder")]
-        if bundledIndex.contains(ownerFQName: stringBuilderOwner, name: interner.intern("append"), arity: 1) {
-            patchSourceBackedStringBuilderSupertypes(symbols: symbols, types: types, interner: interner)
-        } else {
-            registerSyntheticStringBuilderStubs(symbols: symbols, types: types, interner: interner)
-        }
         registerSyntheticTODOAndIOStubs(
             symbols: symbols,
             types: types,
             interner: interner,
-            bundledIndex: bundledIndex,
-            skipStats: skipStats
+            bundledIndex: bundledIndex
         )
         patchKPropertyFunctionSupertypes(symbols: symbols, types: types, interner: interner)
         patchKMutableProperty0FunctionSupertype(symbols: symbols, types: types, interner: interner)
@@ -1598,8 +1591,10 @@ extension DataFlowSemaPhase {
     ) -> SymbolID {
         let internedName = interner.intern(name)
         let fqName = pkg + [internedName]
-        // Prefer an existing class when a factory function shares the FQName
-        // (Kotlin `class Foo` + `fun Foo(...)`).
+        // A factory function may share the class FQName (for example,
+        // `kotlin.concurrent.AtomicIntArray(Int)` or a Kotlin `class Foo` +
+        // `fun Foo(...)` pair). Prefer an existing nominal class over the
+        // first callable that shadows it.
         if let existing = symbols.lookupAll(fqName: fqName).first(where: { id in
             symbols.symbol(id)?.kind == .class
         }) {

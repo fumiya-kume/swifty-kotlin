@@ -335,7 +335,6 @@ extension CallLowerer {
             let mapName = interner.intern("map")
             let filterName = interner.intern("filter")
             let toListName = interner.intern("toList")
-            let forEachName = interner.intern("forEach")
             let flatMapName = interner.intern("flatMap")
             let flatMapIndexedName = interner.intern("flatMapIndexed")
             let takeLastWhileName = interner.intern("takeLastWhile")
@@ -360,8 +359,6 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_to_list")
             case interner.intern("constrainOnce"):
                 return interner.intern("kk_sequence_constrainOnce")
-            case forEachName:
-                return interner.intern("kk_sequence_forEach")
             case flatMapName:
                 return interner.intern("kk_sequence_flatMap")
             case flatMapIndexedName:

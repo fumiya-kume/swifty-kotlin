@@ -291,7 +291,7 @@ final class ControlFlowLowerer {
                 symbol: nil,
                 callee: isULongRangeLike
                     ? interner.intern("kk_ulong_range_iterator")
-                    : (isUIntRangeLike ? interner.intern("kk_uint_range_iterator") : interner.intern("kk_range_iterator")),
+                    : (isUIntRangeLike ? interner.intern("__kk_uint_range_iterator") : interner.intern("kk_range_iterator")),
                 arguments: [iterableID],
                 result: iteratorID,
                 canThrow: false,
@@ -327,7 +327,7 @@ final class ControlFlowLowerer {
                 symbol: nil,
                 callee: isULongRangeLike
                     ? interner.intern("kk_ulong_range_hasNext")
-                    : (isUIntRangeLike ? interner.intern("kk_uint_range_hasNext") : interner.intern("kk_range_hasNext")),
+                    : (isUIntRangeLike ? interner.intern("__kk_uint_range_hasNext") : interner.intern("kk_range_hasNext")),
                 arguments: [iteratorID],
                 result: hasNextID,
                 canThrow: false,
@@ -367,7 +367,7 @@ final class ControlFlowLowerer {
                 symbol: nil,
                 callee: isULongRangeLike
                     ? interner.intern("kk_ulong_range_next")
-                    : (isUIntRangeLike ? interner.intern("kk_uint_range_next") : interner.intern("kk_range_next")),
+                    : (isUIntRangeLike ? interner.intern("__kk_uint_range_next") : interner.intern("kk_range_next")),
                 arguments: [iteratorID],
                 result: nextValueID,
                 canThrow: false,
@@ -1243,8 +1243,8 @@ final class ControlFlowLowerer {
         }
         let shortName = interner.resolve(classSymbol.fqName.last!)
         switch shortName {
-        case "IntRange", "LongRange", "CharRange",
-             "IntProgression", "LongProgression", "CharProgression":
+        case "IntRange", "LongRange", "CharRange", "UIntRange",
+             "IntProgression", "LongProgression", "CharProgression", "UIntProgression":
             return true
         default:
             return false
@@ -1309,9 +1309,8 @@ final class ControlFlowLowerer {
     /// `resolveCustomIteratorOperator` cannot see the bundled `iterator()`
     /// operator. Resolve it against the nominal range class instead, so a direct
     /// range loop uses the same `.iterator()` chain as a range held in an
-    /// `IntRange` / `LongRange` / `CharRange` typed value. Unsigned ranges keep
-    /// the legacy `kk_uint_range_*` / `kk_ulong_range_*` intrinsics: they have no
-    /// bundled iterator yet.
+    /// `IntRange` / `LongRange` / `CharRange` / `UIntRange` typed value. ULong
+    /// ranges keep their legacy intrinsics until their corresponding migration.
     private func resolveDirectRangeIteratorOperator(
         iterableExpr: ExprID,
         iterableType: TypeID,
@@ -1328,6 +1327,8 @@ final class ControlFlowLowerer {
         let rangeClassName: String
         if sema.bindings.isCharRangeExpr(iterableExpr) || nonNullType == sema.types.charType {
             rangeClassName = "CharRange"
+        } else if sema.bindings.isUIntRangeExpr(iterableExpr) || nonNullType == sema.types.uintType {
+            rangeClassName = "UIntRange"
         } else if nonNullType == sema.types.longType {
             rangeClassName = "LongRange"
         } else if nonNullType == sema.types.intType {

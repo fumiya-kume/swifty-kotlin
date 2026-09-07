@@ -8,11 +8,11 @@ import Testing
 //
 // RUNTIME IMPLEMENTED (tested here and in RuntimeNativeRefRuntimeABITests):
 //   kotlin.native.runtime namespace (via java.lang / System shims):
-//     - System.gc()              -> kk_system_gc()     (calls kk_gc_collect internally)
-//     - Runtime.getRuntime()     -> kk_runtime_getRuntime()
-//     - Runtime.totalMemory()    -> kk_runtime_totalMemory()
-//     - Runtime.freeMemory()     -> kk_runtime_freeMemory()
-//     - Runtime.maxMemory()      -> kk_runtime_maxMemory()
+//     - System.gc()              -> __kk_system_gc()     (calls kk_gc_collect internally)
+//     - Runtime.getRuntime()     -> __kk_runtime_getRuntime()
+//     - Runtime.totalMemory()    -> __kk_runtime_totalMemory()
+//     - Runtime.freeMemory()     -> __kk_runtime_freeMemory()
+//     - Runtime.maxMemory()      -> __kk_runtime_maxMemory()
 //
 //   kotlin.native.ref shim (via kk_pin / kk_freeze):
 //     - Pinned<T> (pin / unpin / get) -> kk_pin_object / kk_unpin_object / kk_pinned_get
@@ -81,8 +81,8 @@ struct RuntimeNativeRefGCTests {
     }
 
     @Test func systemGCIsCallableWithoutCrashing() {
-        // kk_system_gc() is the Kotlin-facing alias; must be callable without crash.
-        kk_system_gc()
+        // __kk_system_gc() is the Kotlin-facing bridge; it must be callable without crash.
+        __kk_system_gc()
     }
 
     @Test func gcCollectOnEmptyHeapIsNoOp() {

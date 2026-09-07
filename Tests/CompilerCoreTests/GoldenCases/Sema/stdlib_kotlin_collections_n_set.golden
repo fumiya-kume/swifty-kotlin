@@ -9,8 +9,6 @@ symbol fq=__local_7.spread kind=local vis=private flags=_ type=kotlin.collection
 symbol fq=kotlin.Array kind=class vis=public flags=synthetic
 symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Set.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Set.contains kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Set<out kotlin.collections.Set.E> params=[kotlin.collections.Set.E] ret=Boolean
-symbol fq=kotlin.collections.Set.isEmpty kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Set<out kotlin.collections.Set.E> params=[] ret=Boolean
 symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_collections_n_set package=_
   decl main fun main sym=main

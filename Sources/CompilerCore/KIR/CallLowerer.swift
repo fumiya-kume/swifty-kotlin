@@ -902,6 +902,7 @@ final class CallLowerer {
                 appendObjectVtableMethodRegistrations(
                     objectValue: allocatedObj,
                     nominalSymbol: ownerNominalSymbol,
+                    driver: driver,
                     sema: sema,
                     arena: arena,
                     interner: interner,
