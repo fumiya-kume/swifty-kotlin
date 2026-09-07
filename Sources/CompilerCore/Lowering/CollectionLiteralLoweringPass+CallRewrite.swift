@@ -7,11 +7,15 @@ extension CollectionLiteralConstructionLoweringPass {
         lookup: CollectionLiteralLookupTables,
         ctx: KIRContext
     ) -> Bool {
-        // KSP-1513: source-backed Array<T>/primitive-array `size` and `toList`
-        // calls on literal arrays must keep their selected Kotlin declaration.
-        // The source body delegates to the typed private runtime bridge.
-        if (callee == lookup.sizeName || callee == lookup.toListName),
-           arguments.count == 1,
+        // KSP-1513/KSP-1516: source-backed Array<T>/primitive-array members on
+        // literal arrays must keep their selected Kotlin declaration. The
+        // source body may delegate to a typed private runtime bridge.
+        let sourceBackedArrayConversionNames: Set<InternedString> = [
+            lookup.sizeName, lookup.toListName, lookup.sliceArrayName,
+            lookup.reversedArrayName, lookup.asListName, lookup.toTypedArrayName,
+        ]
+        if sourceBackedArrayConversionNames.contains(callee),
+           !arguments.isEmpty,
            state.arrayExprIDs.contains(arguments[0].rawValue),
            let symbol,
            let sema = ctx.sema,

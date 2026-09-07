@@ -1,8 +1,8 @@
 
 /// Scalar atomic value boxes (`AtomicInt`/`AtomicLong`/`AtomicBoolean`,
 /// `java.util.concurrent.atomic.AtomicInteger`, and `AtomicReference<T>`),
-/// extracted from `HeaderHelpers+SyntheticAtomicStubs.swift`. `AtomicInteger`
-/// shares the `kk_atomic_int_*` box/prefix with `AtomicInt` (see
+/// extracted from the Atomic residual registration surface. `AtomicInteger`
+/// shares the `__kk_atomic_int_*` bridge prefix with `AtomicInt` (see
 /// `Stdlib/kotlin/concurrent/AtomicMigration.kt`) and is a live, tested
 /// direct-construction surface — not a target-out cleanup pocket.
 extension DataFlowSemaPhase {
@@ -23,6 +23,7 @@ extension DataFlowSemaPhase {
         includeDecrementAndGetAlias: Bool = false,
         includeAddAndGetAlias: Bool = false,
         includeCompareAndSet: Bool = true,
+        compareAndSetLinkName: String? = nil,
         symbols: SymbolTable,
         interner: StringInterner,
         types: TypeSystem
@@ -66,6 +67,7 @@ extension DataFlowSemaPhase {
             prefix: prefix,
             includeGetAndSetAlias: includeGetAndSetAlias,
             includeCompareAndSet: includeCompareAndSet,
+            compareAndSetLinkName: compareAndSetLinkName,
             symbols: symbols,
             interner: interner
         )
@@ -229,6 +231,7 @@ extension DataFlowSemaPhase {
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,
+        constructorLinkName: String,
         externalLinkPrefix: String
     ) {
         let atomicRefSymbol = ensureClassSymbol(
@@ -271,7 +274,7 @@ extension DataFlowSemaPhase {
         registerAtomicConstructor(
             ownerSymbol: atomicRefSymbol,
             ownerType: atomicRefType,
-            externalLinkName: "\(externalLinkPrefix)_create",
+            externalLinkName: constructorLinkName,
             paramType: typeParamType,
             typeParameterSymbols: [typeParamSymbol],
             classTypeParameterCount: 1,

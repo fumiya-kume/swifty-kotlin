@@ -183,6 +183,18 @@ extension DataFlowSemaPhase {
                         // match the `backingFieldSymbol(for:) ?? propertySymbol`
                         // lookup convention used throughout KIR lowering (reads,
                         // writes, lateinit checks, synthesized toString/equals).
+                        guard !symbols.symbol(id)!.flags.contains(.abstractType) else {
+                            return nil
+                        }
+                        // Getter-only computed properties have no instance
+                        // storage. Their accessor is the complete
+                        // implementation, so do not allocate a field that
+                        // would be read as an uninitialized default value.
+                        guard !symbols.propertyHasCustomGetter(for: id)
+                            || symbols.backingFieldSymbol(for: id) != nil
+                        else {
+                            return nil
+                        }
                         return symbols.backingFieldSymbol(for: id) ?? id
                     default:
                         return nil

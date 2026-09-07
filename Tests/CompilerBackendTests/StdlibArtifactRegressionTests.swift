@@ -69,6 +69,34 @@ struct StdlibArtifactRegressionTests {
     }
     """
 
+    /// KSP-697: inferred mutable collection factories must preserve their
+    /// MutableIterable supertype when the stdlib is consumed as an artifact.
+    @Test
+    func testMutableFactoriesWidenThroughPrecompiledStdlibArtifact() throws {
+        let artifactPath = try Self.buildStdlibArtifact()
+        try withTemporaryFile(contents: """
+        fun main() {
+            val list = mutableListOf(1, 2, 3)
+            val listIterable: MutableIterable<Int> = list
+            val set = mutableSetOf(1, 2, 3)
+            val setIterable: MutableIterable<Int> = set
+        }
+        """) { userPath in
+            let ctx = makeCompilationContext(
+                inputs: [userPath],
+                moduleName: "MutableCollectionFactoryArtifact",
+                emit: .kirDump,
+                includeStdlib: false,
+                stdlibLibraryPath: artifactPath
+            )
+            try runToKIR(ctx)
+            #expect(
+                !ctx.diagnostics.hasError,
+                "Mutable collection factories should widen through MutableIterable: \(ctx.diagnostics.diagnostics)"
+            )
+        }
+    }
+
     /// KSP-1151: source-backed coroutine intrinsic fallbacks must not leave a
     /// direct reference to the Kotlin parameter `function` in the stdlib
     /// artifact. A trivial artifact consumer is enough to exercise the native

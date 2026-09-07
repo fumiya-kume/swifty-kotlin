@@ -1,11 +1,13 @@
 package kotlin.ranges
 
 // MIGRATION-RANGE-001
-// iterator() for IntRange, LongRange, CharRange, IntProgression, LongProgression,
-// CharProgression.
+// iterator() for IntRange, LongRange, CharRange, UIntRange, IntProgression,
+// LongProgression, CharProgression, and UIntProgression.
 // Migration source: Sources/Runtime/RuntimeRangeAndDispatch.swift
 //   (kk_range_iterator, kk_range_hasNext, kk_range_next)
 //   Sources/Runtime/RuntimeRangeLongRange.swift (kk_long_range_iterator)
+//   Sources/Runtime/RuntimeRangeUIntULongRange.swift
+//   (__kk_uint_range_iterator, __kk_uint_range_hasNext, __kk_uint_range_next)
 // See RangeMembership.kt for the contains()/isEmpty() half of this migration.
 //
 // KSP-452 removed the `for (x in range)` lowering special case, so plain range
