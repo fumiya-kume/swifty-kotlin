@@ -5,6 +5,8 @@ symbol fq=__local_3.min kind=local vis=private flags=_ type=UByte
 symbol fq=__local_4.inferred kind=local vis=private flags=_ type=UByte
 symbol fq=__local_5.boxed kind=local vis=private flags=_ type=Any
 symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=UByte
+symbol fq=kotlin.Byte kind=class vis=public flags=synthetic
+symbol fq=kotlin.Byte.Companion kind=object vis=public flags=synthetic|static
 file fstdlib_kotlin_UByte_n_n package=golden.sema annotations=[@file:Suppress("INVISIBLE_MEMBER","INVISIBLE_REFERENCE")]
   decl golden.sema.main fun main sym=golden.sema.main
 expr e@6:22 int(0) type=Int
@@ -20,8 +22,9 @@ expr e@8:26 unary(unaryMinus) operand=e@8:27 type=Int
 expr e@8:26#1 memberCall recv=e@8:26 callee=toByte args=[] type=Byte
 expr e@8:19 call callee=e@8:19#1 args=[_:e@8:26#1] type=UByte call=kotlin.UByte#1
 expr e@8:5 localDecl allBits mutable=0 type=_ init=e@8:19 type=Unit ref=__local_2.allBits
-expr e@9:21 memberCall recv=e@9:21#1 callee=MIN_VALUE args=[] type=Int
-expr e@9:21#2 memberCall recv=e@9:21 callee=toByte args=[] type=Byte
+expr e@9:21 name(Byte) type=kotlin.Byte.Companion ref=kotlin.Byte
+expr e@9:21#1 memberCall recv=e@9:21 callee=MIN_VALUE args=[] type=Byte call=kotlin.MIN_VALUE.$get#0
+expr e@9:21#2 memberCall recv=e@9:21#1 callee=toByte args=[] type=Byte
 expr e@9:15 call callee=e@9:15#1 args=[_:e@9:21#2] type=UByte call=kotlin.UByte#1
 expr e@9:5 localDecl min mutable=0 type=_ init=e@9:15 type=Unit ref=__local_3.min
 expr e@10:33 int(0) type=Int

@@ -1,6 +1,5 @@
 symbol fq=charCategory kind=function vis=public flags=_ sig=recv=_ params=[Char] ret=kotlin.text.CharCategory
 symbol fq=charCategory.$0.c kind=valueParameter vis=private flags=_
-symbol fq=kotlin.text.CharCategory kind=enumClass vis=public flags=synthetic
 symbol fq=kotlin.text.category kind=function vis=public flags=synthetic sig=recv=Char params=[] ret=kotlin.text.CharCategory
 file fchar_category package=_
   decl charCategory fun charCategory sym=charCategory

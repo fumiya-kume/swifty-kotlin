@@ -21,8 +21,8 @@ symbol fq=__local_19.subtypeArray kind=local vis=private flags=_ type=kotlin.Arr
 symbol fq=__local_20.widenedByArray kind=local vis=private flags=_ type=kotlin.collections.List<Any?>
 symbol fq=__local_21.sequencePlus kind=local vis=private flags=_ type=kotlin.sequences.Sequence<Int>
 symbol fq=kotlin.Array kind=class vis=public flags=synthetic
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
 symbol fq=kotlin.sequences.Sequence.plus#2 kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.sequences.Sequence<kotlin.sequences.plus.$0.T> params=[kotlin.sequences.Sequence<kotlin.sequences.plus.$0.T>] ret=kotlin.sequences.Sequence<kotlin.sequences.plus.$0.T>
 symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit

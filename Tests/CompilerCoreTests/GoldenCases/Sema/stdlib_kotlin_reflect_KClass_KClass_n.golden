@@ -1,0 +1,29 @@
+symbol fq=golden.sema.First kind=class vis=public flags=_
+symbol fq=golden.sema.Second kind=class vis=public flags=_
+symbol fq=golden.sema.compareClasses kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KClass<*>,Any?] ret=Boolean
+symbol fq=golden.sema.compareClasses.$0.left kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.compareClasses.$0.right kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.hashMatches kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KClass<*>,kotlin.reflect.KClass<*>] ret=Boolean
+symbol fq=golden.sema.hashMatches.$1.left kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.hashMatches.$1.right kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.operatorMatches kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KClass<*>,kotlin.reflect.KClass<*>] ret=Boolean
+symbol fq=golden.sema.operatorMatches.$2.left kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.operatorMatches.$2.right kind=valueParameter vis=private flags=_
+symbol fq=kotlin.reflect.KClass kind=interface vis=public flags=_
+file fstdlib_kotlin_reflect_KClass_KClass_n package=golden.sema
+  decl golden.sema.First class First sym=golden.sema.First
+  decl golden.sema.Second class Second sym=golden.sema.Second
+  decl golden.sema.compareClasses fun compareClasses sym=golden.sema.compareClasses
+  decl golden.sema.hashMatches fun hashMatches sym=golden.sema.hashMatches
+  decl golden.sema.operatorMatches fun operatorMatches sym=golden.sema.operatorMatches
+expr e@9:5 name(left) type=kotlin.reflect.KClass<*> ref=golden.sema.compareClasses.$0.left
+expr e@9:17 name(right) type=Any? ref=golden.sema.compareClasses.$0.right
+expr e@9:5#1 memberCall recv=e@9:5 callee=equals args=[_:e@9:17] type=Boolean call=kotlin.reflect.KClass.equals targs=[Any]
+expr e@12:5 name(left) type=kotlin.reflect.KClass<*> ref=golden.sema.hashMatches.$1.left
+expr e@12:5#1 memberCall recv=e@12:5 callee=hashCode args=[] type=Int call=kotlin.reflect.KClass.hashCode targs=[Any]
+expr e@12:24 name(right) type=kotlin.reflect.KClass<*> ref=golden.sema.hashMatches.$1.right
+expr e@12:24#1 memberCall recv=e@12:24 callee=hashCode args=[] type=Int call=kotlin.reflect.KClass.hashCode targs=[Any]
+expr e@12:5#2 binary(equal) lhs=e@12:5#1 rhs=e@12:24#1 type=Boolean
+expr e@15:5 name(left) type=kotlin.reflect.KClass<*> ref=golden.sema.operatorMatches.$2.left
+expr e@15:13 name(right) type=kotlin.reflect.KClass<*> ref=golden.sema.operatorMatches.$2.right
+expr e@15:5#1 binary(equal) lhs=e@15:5 rhs=e@15:13 type=Boolean call=kotlin.reflect.KClass.equals targs=[Any]
