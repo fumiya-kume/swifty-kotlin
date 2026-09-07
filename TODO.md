@@ -3145,14 +3145,15 @@
   - 未実装シンボル一覧:
     - `kotlin.native.ref.WeakReference.<init>` — constructor ()  -- `constructor <init>(#A)`
 
-- [ ] KSP-1256: kotlin.native.ref.WeakReference.WeakReference の未実装 stdlib API を実装する（4 件）
+- [x] KSP-1256: kotlin.native.ref.WeakReference.WeakReference の未実装 stdlib API を実装する（4 件）
   - 対象: `kotlin.native.ref.WeakReference` / receiver `WeakReference`
-  - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/native/ref/WeakReference/WeakReference.kt`（該当ファイルが無ければ新規作成）
-  - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
-  - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_native_ref_WeakReference_WeakReference_n.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
-  - diff ケース: `Scripts/diff_cases/stdlib_kotlin_native_ref_WeakReference_WeakReference_n.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_native_ref_WeakReference_WeakReference_n.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
-  - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
-  - 未実装シンボル一覧:
+  - 実装: `Sources/CompilerCore/Stdlib/kotlin/native/ref/WeakReference/WeakReference.kt` に source-backed receiver functions/properties を追加。`clear`/`get` は既存の `kk_weak_ref_clear`/`kk_weak_ref_get` ABI bridge を呼び、`value` は `get()` を公開プロパティとして提供。`pointer` は既存の `WeakReferenceImpl` 型に対する source-backed compatibility property として登録し、WeakReference の実体状態は runtime handle が保持する。
+  - bridge/stub 整理: 既存 runtime ABI と synthetic fallback 登録は保持。BundledDeclarationIndex の source-backed 重複抑止により、KSP-1256 の source declarations を優先する。
+  - golden: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_native_ref_WeakReference_WeakReference_n.kt` / `.golden` を追加。`GoldenHarnessWorker` の対象ケース再生成結果と fixture の一致を確認。
+  - diff: `Scripts/diff_cases/stdlib_kotlin_native_ref_WeakReference_WeakReference_n.kt` を追加。`DIFF_REQUIRE_JDK21=0 DIFF_COMPILE_TIMEOUT=600 DIFF_SCRIPT_TIMEOUT=600 DIFF_WORKERS=1 DIFF_PARALLEL=0 bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_native_ref_WeakReference_WeakReference_n.kt` は `SKIP-DIFF` で終了。
+  - 回帰: `WeakReferenceSourceMigrationTests` で4宣言の source-backed 登録・重複抑止・型検査を固定。既存 `NativeRefRuntimeSemaTests` の get/clear 期待値を source extension に更新。
+  - 完了ゲート: `bash Scripts/check_todo_ids.sh` / `bash Scripts/validate_runtime_abi_links.sh` / 対象 Sema / 対象 Golden / 対象 diff を確認。
+  - 実装済み:
     - `kotlin.native.ref.WeakReference.clear` — fun WeakReference.clear(): Unit  -- `final fun clear()`
     - `kotlin.native.ref.WeakReference.get` — fun WeakReference.get(): #A  -- `final fun get(): #A?`
     - `kotlin.native.ref.WeakReference.pointer` — val WeakReference.pointer: WeakReferenceImpl  -- `final var pointer`
