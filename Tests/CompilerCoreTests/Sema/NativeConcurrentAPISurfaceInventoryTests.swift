@@ -17,6 +17,7 @@ struct NativeConcurrentAPISurfaceInventoryTests {
         TopLevelEntry(name: "Continuation1", kind: .class, todo: nil),
         TopLevelEntry(name: "Continuation2", kind: .class, todo: nil),
         TopLevelEntry(name: "AtomicNativePtr", kind: .class, todo: nil),
+        TopLevelEntry(name: "FreezableAtomicReference", kind: .class, todo: nil),
         TopLevelEntry(name: "FreezingException", kind: .class, todo: nil),
         TopLevelEntry(name: "Future", kind: .class, todo: nil),
         TopLevelEntry(name: "FutureState", kind: .enumClass, todo: nil),

@@ -22,7 +22,7 @@ struct RuntimeSwiftTestingIsolationLintTests {
         "kk_runtime_reset_flow",
         "kk_runtime_reset_thread_local",
         "kk_runtime_reset_delegate",
-        "kk_system_gc",
+        "__kk_system_gc",
         "kk_gc_collect",
         "kk_gc_schedule",
     ]

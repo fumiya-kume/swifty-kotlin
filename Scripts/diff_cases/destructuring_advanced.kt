@@ -9,4 +9,6 @@ fun main() {
     val list = listOf(100, 200, 300)
     val (a, b, c) = list
     println("$a $b $c")
+    val (value, field) = Point(5, 6)
+    println("$value $field")
 }
