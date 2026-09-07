@@ -1,6 +1,4 @@
 symbol fq=kotlin.time.TimeSource kind=interface vis=public flags=_
-symbol fq=kotlin.time.TimedValue kind=class vis=public flags=synthetic type=kotlin.time.TimedValue<kotlin.time.TimedValue.T>
-symbol fq=kotlin.time.TimedValue.T kind=typeParameter vis=private flags=_
 symbol fq=measureTimeReceiver kind=function vis=public flags=_ sig=recv=_ params=[kotlin.time.TimeSource] ret=kotlin.time.Duration
 symbol fq=measureTimeReceiver.$0.source kind=valueParameter vis=private flags=_
 symbol fq=measureTimedValueReceiver kind=function vis=public flags=_ sig=recv=_ params=[kotlin.time.TimeSource] ret=kotlin.time.TimedValue<String>
