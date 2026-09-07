@@ -108,7 +108,7 @@ extension CollectionLiteralConstructionLoweringPass {
             if module.arena.exprType(argID) == ctx.sema?.types.uintType {
                 loweredBody.append(.call(
                     symbol: nil,
-                    callee: ctx.interner.intern("kk_uint_range_iterator"),
+                    callee: ctx.interner.intern("__kk_uint_range_iterator"),
                     arguments: arguments,
                     result: result,
                     canThrow: false,

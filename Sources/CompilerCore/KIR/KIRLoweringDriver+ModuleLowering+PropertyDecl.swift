@@ -617,6 +617,7 @@ extension KIRLoweringDriver {
         )
         appendObjectVtableMethodRegistrations(
             objectValue: allocatedObj, nominalSymbol: ownerSymbol,
+            driver: self,
             sema: sema, arena: arena, interner: interner,
             instructions: &instructions.instructions
         )

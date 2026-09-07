@@ -1,14 +1,16 @@
 func kirVtableImplementations(
     for nominalSymbol: SymbolID,
     sema: SemaModule
-) -> [(slot: Int, implementation: SymbolID)] {
+) -> [(slot: Int, dispatchMethod: SymbolID, implementation: SymbolID)] {
     guard let layout = sema.symbols.nominalLayout(for: nominalSymbol) else {
         return []
     }
 
     let virtualSlots = Set(layout.vtableSlots.compactMap { methodSymbol, slot -> Int? in
         guard let owner = sema.symbols.parentSymbol(for: methodSymbol),
-              !sema.symbols.directSubtypes(of: owner).isEmpty,
+              let ownerInfo = sema.symbols.symbol(owner),
+              ownerInfo.flags.contains(.abstractType)
+                  || !sema.symbols.directSubtypes(of: owner).isEmpty,
               let symbol = sema.symbols.symbol(methodSymbol),
               symbol.kind == .function || symbol.kind == .property
         else {
@@ -20,7 +22,7 @@ func kirVtableImplementations(
         return []
     }
 
-    var bestBySlot: [Int: (distance: Int, implementation: SymbolID)] = [:]
+    var candidatesBySlot: [Int: [(distance: Int, method: SymbolID)]] = [:]
     for (methodSymbol, slot) in layout.vtableSlots where virtualSlots.contains(slot) {
         guard let methodInfo = sema.symbols.symbol(methodSymbol),
               methodInfo.kind == .function || methodInfo.kind == .property,
@@ -29,35 +31,56 @@ func kirVtableImplementations(
         else {
             continue
         }
-        let implementation: SymbolID = if methodInfo.kind == .property {
-            sema.symbols.extensionPropertyGetterAccessor(for: methodSymbol)
-                ?? SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: methodSymbol)
-        } else {
-            methodSymbol
-        }
-        if let current = bestBySlot[slot] {
-            let isMoreSpecific = distance < current.distance
-            let isStableTieBreak = distance == current.distance
-                && implementation.rawValue > current.implementation.rawValue
-            if isMoreSpecific || isStableTieBreak {
-                bestBySlot[slot] = (distance, implementation)
-            }
-        } else {
-            bestBySlot[slot] = (distance, implementation)
-        }
+        candidatesBySlot[slot, default: []].append((distance, methodSymbol))
     }
 
-    return bestBySlot
-        .map { (slot: $0.key, implementation: $0.value.implementation) }
+    return candidatesBySlot
+        .compactMap { slot, candidates in
+            // The most-derived declaration is the function pointer stored in
+            // the vtable. Keep the root-most declaration as the ABI contract:
+            // an override such as `ProbeMutableMap.put(String, Int)` may have
+            // a more specific native representation than the generic
+            // `AbstractMutableMap.put(K, V)` slot it replaces.
+            guard let implementation = candidates.min(by: { lhs, rhs in
+                lhs.distance == rhs.distance
+                    ? lhs.method.rawValue > rhs.method.rawValue
+                    : lhs.distance < rhs.distance
+            }),
+                let dispatchMethod = candidates.max(by: { lhs, rhs in
+                    lhs.distance == rhs.distance
+                        ? lhs.method.rawValue < rhs.method.rawValue
+                        : lhs.distance < rhs.distance
+                })
+            else {
+                return nil
+            }
+            return (
+                slot: slot,
+                dispatchMethod: dispatchMethod.method,
+                implementation: kirVtableSlotImplementationSymbol(for: implementation.method, sema: sema)
+            )
+        }
         .sorted { lhs, rhs in
             if lhs.slot != rhs.slot { return lhs.slot < rhs.slot }
             return lhs.implementation.rawValue < rhs.implementation.rawValue
         }
 }
 
+/// KSP-928: `layout.vtableSlots` may contain real `.property` symbols (open
+/// stored properties emit getters). The function pointer registered for such
+/// a slot is the property's getter accessor; function symbols pass through.
+private func kirVtableSlotImplementationSymbol(for symbol: SymbolID, sema: SemaModule) -> SymbolID {
+    guard sema.symbols.symbol(symbol)?.kind == .property else {
+        return symbol
+    }
+    return sema.symbols.extensionPropertyGetterAccessor(for: symbol)
+        ?? SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: symbol)
+}
+
 func appendObjectVtableMethodRegistrations(
     objectValue: KIRExprID,
     nominalSymbol: SymbolID,
+    driver: KIRLoweringDriver,
     sema: SemaModule,
     arena: KIRArena,
     interner: StringInterner,
@@ -68,10 +91,19 @@ func appendObjectVtableMethodRegistrations(
         let intType = sema.types.intType
         let registerCallee = interner.intern("kk_object_register_vtable_method")
         for implementation in implementations {
+            let bridgeSymbol = itableBridgeSymbolForMethod(
+                interfaceMethod: implementation.dispatchMethod,
+                implementation: implementation.implementation,
+                nominalSymbol: nominalSymbol,
+                driver: driver,
+                arena: arena,
+                sema: sema,
+                interner: interner
+            )
             let slotExpr = arena.appendExpr(.intLiteral(Int64(implementation.slot)), type: intType)
             instructions.append(.constValue(result: slotExpr, value: .intLiteral(Int64(implementation.slot))))
-            let methodFnExpr = arena.appendExpr(.symbolRef(implementation.implementation), type: intType)
-            instructions.append(.constValue(result: methodFnExpr, value: .symbolRef(implementation.implementation)))
+            let methodFnExpr = arena.appendExpr(.symbolRef(bridgeSymbol), type: intType)
+            instructions.append(.constValue(result: methodFnExpr, value: .symbolRef(bridgeSymbol)))
             let registerResult = arena.appendTemporary(type: intType)
             instructions.append(.call(
                 symbol: nil,
@@ -120,7 +152,9 @@ func kirVtablePropertyAccessorImplementations(
     let virtualSlots = Set(layout.vtableSlots.compactMap { accessorSymbol, slot -> Int? in
         guard let decoded = SyntheticSymbolScheme.decodedPropertyAccessor(accessorSymbol),
               let owner = sema.symbols.parentSymbol(for: decoded.property),
-              !sema.symbols.directSubtypes(of: owner).isEmpty
+              let ownerInfo = sema.symbols.symbol(owner),
+              ownerInfo.flags.contains(.abstractType)
+                  || !sema.symbols.directSubtypes(of: owner).isEmpty
         else {
             return nil
         }
@@ -151,7 +185,22 @@ func kirVtablePropertyAccessorImplementations(
     }
 
     return bestBySlot
-        .map { (slot: $0.key, implementation: $0.value.implementation) }
+        .map { slot, entry in
+            let implementation: SymbolID = switch SyntheticSymbolScheme.decodedPropertyAccessor(entry.implementation) {
+            case let .some(decoded):
+                switch decoded.kind {
+                case .getter:
+                    sema.symbols.extensionPropertyGetterAccessor(for: decoded.property)
+                        ?? entry.implementation
+                case .setter:
+                    sema.symbols.extensionPropertySetterAccessor(for: decoded.property)
+                        ?? entry.implementation
+                }
+            case .none:
+                entry.implementation
+            }
+            return (slot: slot, implementation: implementation)
+        }
         .sorted { lhs, rhs in
             if lhs.slot != rhs.slot { return lhs.slot < rhs.slot }
             return lhs.implementation.rawValue < rhs.implementation.rawValue
@@ -191,8 +240,8 @@ func appendObjectVtablePropertyAccessorRegistrations(
 }
 
 /// Returns a bridge symbol for `implementation` when its ABI (String aggregate
-/// vs raw pointer) does not match the erased interface method signature used by
-/// itable dispatch. The bridge has the interface ABI, forwards to the
+/// vs raw pointer) does not match the erased dispatch signature used by the
+/// vtable or itable. The bridge has the dispatch ABI, forwards to the
 /// implementation, and relies on the backend's String bridging in `.call` and
 /// `returnValue` to convert across the boundary.
 func itableBridgeSymbolForMethod(

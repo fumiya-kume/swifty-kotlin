@@ -1666,6 +1666,48 @@ public func __kk_kclass_safeCast(_ kclassRaw: Int, _ valueRaw: Int) -> Int {
 
 // MARK: - REFL-005: KType and typeOf<T>()
 
+// Source-backed KType properties are dispatched through the interface itable.
+// Runtime-created KType boxes therefore register the same alphabetically sorted
+// getter slots that the compiler assigns to the bundled KType declaration.
+private let runtimeKTypeInterfaceTypeID: Int64 =
+    runtimeStableNominalTypeID(fqName: "kotlin.reflect.KType")
+
+private let runtimeKTypeArgumentsGetter: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = {
+    raw,
+    outThrown in
+    outThrown?.pointee = 0
+    return __kk_ktype_arguments(raw)
+}
+
+private let runtimeKTypeClassifierGetter: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = {
+    raw,
+    outThrown in
+    outThrown?.pointee = 0
+    return __kk_ktype_classifier(raw)
+}
+
+private let runtimeKTypeIsMarkedNullableGetter: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = {
+    raw,
+    outThrown in
+    outThrown?.pointee = 0
+    return __kk_ktype_isMarkedNullable(raw)
+}
+
+func registerRuntimeObject(_ box: RuntimeKTypeBox) -> Int {
+    let raw = registerRuntimeObject(box as AnyObject, typeID: kTypeRuntimeTypeID)
+    _ = kk_object_register_itable_iface(raw, Int(runtimeKTypeInterfaceTypeID), 0)
+    _ = kk_object_register_itable_method(
+        raw, 0, 0, unsafeBitCast(runtimeKTypeArgumentsGetter, to: Int.self)
+    )
+    _ = kk_object_register_itable_method(
+        raw, 0, 1, unsafeBitCast(runtimeKTypeClassifierGetter, to: Int.self)
+    )
+    _ = kk_object_register_itable_method(
+        raw, 0, 2, unsafeBitCast(runtimeKTypeIsMarkedNullableGetter, to: Int.self)
+    )
+    return raw
+}
+
 private func runtimeKTypeCreate(_ classifierRaw: Int, _ argsRaw: Int, _ isNullable: Int) -> Int {
     var argumentRaws: [Int] = []
     if argsRaw != 0 && argsRaw != runtimeNullSentinelInt,
@@ -1683,7 +1725,7 @@ private func runtimeKTypeCreate(_ classifierRaw: Int, _ argsRaw: Int, _ isNullab
         isMarkedNullable: isNullable != 0
     )
     registerReflectionRuntimeTypeMetadata()
-    return registerRuntimeObject(box, typeID: kTypeRuntimeTypeID)
+    return registerRuntimeObject(box)
 }
 
 /// Returns the classifier (KClass) raw handle from a KType, or null sentinel.
@@ -1958,12 +2000,6 @@ public func kk_vararg_spread_concat(_ pairsArrayRaw: Int, _ pairCount: Int) -> I
         }
     }
     return result
-}
-
-/// Runtime support for kotlin.io.DEFAULT_BUFFER_SIZE.
-@_cdecl("kk_io_default_buffer_size")
-public func kk_io_default_buffer_size() -> Int {
-    8192
 }
 
 /// KSP-615: single low-level console input bridge behind `kotlin.io.readLine` /
