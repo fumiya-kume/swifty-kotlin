@@ -487,8 +487,6 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_min")
             case interner.intern("unzip"):
                 return interner.intern("kk_sequence_unzip")
-            case interner.intern("foldIndexed"):
-                return interner.intern("kk_sequence_foldIndexed")
             case interner.intern("runningFold"):
                 return interner.intern("kk_sequence_runningFold")
             case interner.intern("scan"):
