@@ -1,7 +1,7 @@
 symbol fq=golden.sema.typeNameOf kind=function vis=public flags=inlineFunction sig=recv=_ params=[] ret=String
 symbol fq=golden.sema.typeNameOf.$0.T kind=typeParameter vis=private flags=reifiedTypeParameter
 symbol fq=golden.sema.useReified kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=kotlin.reflect.KClass kind=interface vis=public flags=synthetic
+symbol fq=kotlin.reflect.KClass kind=interface vis=public flags=_
 file freified_type package=golden.sema
   decl golden.sema.typeNameOf fun typeNameOf inline=1 sym=golden.sema.typeNameOf
   decl golden.sema.useReified fun useReified sym=golden.sema.useReified

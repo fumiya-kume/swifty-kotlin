@@ -21,7 +21,7 @@ symbol fq=golden.sema.acceptMutableList kind=function vis=public flags=_ sig=rec
 symbol fq=golden.sema.acceptMutableList.$6.values kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.probe kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Probe] ret=Int
 symbol fq=golden.sema.probe.$7.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.collections.List.E kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.List.get kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.List<out kotlin.collections.List.E> params=[Int] ret=kotlin.collections.List.E
 symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_

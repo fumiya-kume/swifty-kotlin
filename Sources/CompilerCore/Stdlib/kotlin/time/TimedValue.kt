@@ -1,20 +1,16 @@
+/*
+ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Licensed under the Apache License, Version 2.0.
+ *
+ * Derived from kotlin-stdlib libraries/stdlib/src/kotlin/time/measureTime.kt.
+ */
+
 package kotlin.time
 
-// KSP-472
-// TimedValue member accessors.
-// Migration source: Sources/Runtime/RuntimeDuration.swift
-//   kk_timedvalue_value, kk_timedvalue_duration
-//
-// Both properties delegate to __kk_timedvalue_* bridges backed by kk_* ABI
-// functions. Bridge stubs are registered in
-// HeaderHelpers+SyntheticDurationStubs.swift.
-//
-// TimedValue's constructor (kk_timedvalue_new) is only invoked from the
-// measureTimedValue lowering (CallLowerer+StdlibLoops.swift), so it has no
-// Kotlin-source-visible equivalent.
-
-public val TimedValue.value: Any?
-    get() = this.__kk_timedvalue_value()
-
-public val TimedValue.duration: Duration
-    get() = this.__kk_timedvalue_duration()
+/**
+ * A value returned by [measureTimedValue] function.
+ *
+ * @property value a result value of the code block being measured.
+ * @property duration a duration of the code block execution.
+ */
+public data class TimedValue<T>(public val value: T, public val duration: Duration)

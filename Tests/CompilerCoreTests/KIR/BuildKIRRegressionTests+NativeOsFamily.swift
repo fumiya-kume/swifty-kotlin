@@ -51,8 +51,12 @@ extension BuildKIRRegressionTests {
                 }
                 .sorted { $0.id.rawValue < $1.id.rawValue }
                 .map { interner.resolve($0.name) }
+            let expectedEntryNames = [
+                "UNKNOWN", "MACOSX", "IOS", "LINUX", "WINDOWS",
+                "ANDROID", "WASM", "TVOS", "WATCHOS",
+            ]
             #expect(
-                entryNames == ["UNKNOWN", "MACOSX", "IOS", "LINUX", "WINDOWS", "ANDROID", "WASM", "TVOS", "WATCHOS"],
+                entryNames == expectedEntryNames,
                 "OsFamily entries must retain Kotlin 2.3.10 source order"
             )
 
@@ -76,6 +80,24 @@ extension BuildKIRRegressionTests {
             #expect(sema.symbols.symbol(entriesSymbol)?.kind == .property)
 
             let module = try #require(ctx.kir)
+            let classSuffix = NameMangler.enumClassNameSuffix(for: osFamilyFQName, interner: interner)
+            for (expectedOrdinal, entryName) in expectedEntryNames.enumerated() {
+                let ordinalFunction = try findKIRFunction(
+                    named: "\(entryName)$enumOrdinal$\(classSuffix)",
+                    in: module,
+                    interner: interner
+                )
+                let ordinalConstants = ordinalFunction.body.compactMap { instruction -> Int64? in
+                    guard case let .constValue(_, .intLiteral(value)) = instruction else {
+                        return nil
+                    }
+                    return value
+                }
+                #expect(
+                    ordinalConstants.contains(Int64(expectedOrdinal)),
+                    "\(entryName) must retain ordinal \(expectedOrdinal): \(ordinalConstants)"
+                )
+            }
             #expect(
                 module.arena.declarations.contains { declaration in
                     guard case let .nominalType(nominal) = declaration else { return false }

@@ -31,6 +31,14 @@ extension CallTypeChecker {
         ).isEmpty {
             return nil
         }
+        if !collectArraySourceConversionCandidates(
+            named: calleeName,
+            receiverType: receiverType,
+            sema: sema,
+            interner: interner
+        ).isEmpty {
+            return nil
+        }
         // Defer inference of lambda arguments for collection HOFs so that the
         // contextual function type (and thus implicit `it`) is available.
         let collectionHOFNames: Set = [
@@ -2193,7 +2201,7 @@ extension CallTypeChecker {
                     _ = bindBundledSequenceDestinationSourceFunction(typeArguments: typeArguments)
                 }
                 if isMapReceiver,
-                   ["mapTo", "mapNotNullTo", "mapKeysTo", "mapValuesTo"].contains(calleeStr)
+                   ["filterTo", "filterNotTo", "mapTo", "mapNotNullTo", "mapKeysTo", "mapValuesTo"].contains(calleeStr)
                 {
                     _ = bindBundledMapSourceFunction()
                 }
@@ -3684,7 +3692,9 @@ extension CallTypeChecker {
                 }
                 let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
                     params: [collectionElementType],
-                    returnType: sema.types.anyType
+                    returnType: calleeStr == "sortedByDescending"
+                        ? sema.types.nullableAnyType
+                        : sema.types.anyType
                 )))
                 if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
                     sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
@@ -3800,7 +3810,7 @@ extension CallTypeChecker {
                 let comparatorExpectedType: TypeID? = if let comparatorSymbol = sema.symbols.lookup(fqName: comparatorFQName) {
                     sema.types.make(.classType(ClassType(
                         classSymbol: comparatorSymbol,
-                        args: [isSequenceReceiver ? .in(collectionElementType) : .invariant(collectionElementType)],
+                        args: [.in(collectionElementType)],
                         nullability: .nonNull
                     )))
                 } else {
@@ -3881,7 +3891,7 @@ extension CallTypeChecker {
                 let comparatorExpectedType: TypeID? = if let comparatorSymbol = sema.symbols.lookup(fqName: comparatorFQName) {
                     sema.types.make(.classType(ClassType(
                         classSymbol: comparatorSymbol,
-                        args: [isSequenceReceiver ? .in(collectionElementType) : .invariant(collectionElementType)],
+                        args: [.in(collectionElementType)],
                         nullability: .nonNull
                     )))
                 } else {

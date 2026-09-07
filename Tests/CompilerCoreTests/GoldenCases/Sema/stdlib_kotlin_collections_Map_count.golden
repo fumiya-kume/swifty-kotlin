@@ -7,6 +7,7 @@ symbol fq=kotlin.collections.Map.Entry.key kind=function vis=public flags=synthe
 symbol fq=kotlin.collections.Map.Entry.value kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.V
 symbol fq=kotlin.collections.Map.K kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.Map.V kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
 symbol fq=mapCount kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String?, Int?>] ret=Int
 symbol fq=mapCount.$0.values kind=valueParameter vis=private flags=_
 symbol fq=mapPredicateCount kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String?, Int?>] ret=Int
@@ -16,23 +17,25 @@ file fstdlib_kotlin_collections_Map_count package=_
   decl mapCount fun mapCount sym=mapCount
   decl mapPredicateCount fun mapPredicateCount sym=mapPredicateCount
   decl customMapCount fun customMapCount sym=customMapCount
-expr e@3:17 int(2) type=Int
-expr e@8:12 name(values) type=kotlin.collections.Map<String?, Int?> ref=mapCount.$0.values
-expr e@8:12#1 memberCall recv=e@8:12 callee=count args=[] type=Int
-expr e@8:5 return value=e@8:12#1 type=Nothing
-expr e@12:12 name(values) type=kotlin.collections.Map<String?, Int?> ref=mapPredicateCount.$1.values
-expr e@12:27 name(it) type=kotlin.collections.Map.Entry<out String?, out Int?> ref=s-0
-expr e@12:27#1 memberCall recv=e@12:27 callee=key args=[] type=String? call=kotlin.collections.Map.Entry.key targs=[String?,Int?]
-expr e@12:37 name(null) type=Nothing?
-expr e@12:27#2 binary(equal) lhs=e@12:27#1 rhs=e@12:37 type=Boolean
-expr e@12:45 name(it) type=kotlin.collections.Map.Entry<out String?, out Int?> ref=s-0
-expr e@12:45#1 memberCall recv=e@12:45 callee=value args=[] type=Int? call=kotlin.collections.Map.Entry.value targs=[String?,Int?]
-expr e@12:57 name(null) type=Nothing?
-expr e@12:45#2 binary(equal) lhs=e@12:45#1 rhs=e@12:57 type=Boolean
-expr e@12:27#3 binary(logicalOr) lhs=e@12:27#2 rhs=e@12:45#2 type=Boolean
-expr e@12:25 lambda params=[] body=e@12:27#3 label=count type=(kotlin.collections.Map.Entry<out String?, out Int?>) -> Boolean
-expr e@12:12#1 memberCall recv=e@12:12 callee=count args=[_:e@12:25] type=Int call=kotlin.collections.count#31 targs=[String?,Int?]
-expr e@12:5 return value=e@12:12#1 type=Nothing
-expr e@16:12 call callee=e@16:12#1 args=[] type=ObservedMap call=ObservedMap.<init>
-expr e@16:12#2 memberCall recv=e@16:12 callee=count args=[] type=Int call=kotlin.collections.count#32 targs=[String?,Int?]
-expr e@16:5 return value=e@16:12#2 type=Nothing
+expr e@7:17 call callee=e@7:17#1 args=[] type=kotlin.collections.Map<String?, out Int?> call=kotlin.collections.emptyMap targs=[String?,Int?]
+expr e@7:17#2 memberCall recv=e@7:17 callee=entries args=[] type=kotlin.collections.Set<kotlin.collections.Map.Entry<String?, Int?>> call=kotlin.collections.entries targs=[String?,Int?]
+expr e@10:17 int(2) type=Int
+expr e@15:12 name(values) type=kotlin.collections.Map<String?, Int?> ref=mapCount.$0.values
+expr e@15:12#1 memberCall recv=e@15:12 callee=count args=[] type=Int
+expr e@15:5 return value=e@15:12#1 type=Nothing
+expr e@19:12 name(values) type=kotlin.collections.Map<String?, Int?> ref=mapPredicateCount.$1.values
+expr e@19:27 name(it) type=kotlin.collections.Map.Entry<out String?, out Int?> ref=s-0
+expr e@19:27#1 memberCall recv=e@19:27 callee=key args=[] type=String? call=kotlin.collections.Map.Entry.key targs=[String?,Int?]
+expr e@19:37 name(null) type=Nothing?
+expr e@19:27#2 binary(equal) lhs=e@19:27#1 rhs=e@19:37 type=Boolean
+expr e@19:45 name(it) type=kotlin.collections.Map.Entry<out String?, out Int?> ref=s-0
+expr e@19:45#1 memberCall recv=e@19:45 callee=value args=[] type=Int? call=kotlin.collections.Map.Entry.value targs=[String?,Int?]
+expr e@19:57 name(null) type=Nothing?
+expr e@19:45#2 binary(equal) lhs=e@19:45#1 rhs=e@19:57 type=Boolean
+expr e@19:27#3 binary(logicalOr) lhs=e@19:27#2 rhs=e@19:45#2 type=Boolean
+expr e@19:25 lambda params=[] body=e@19:27#3 label=count type=(kotlin.collections.Map.Entry<out String?, out Int?>) -> Boolean
+expr e@19:12#1 memberCall recv=e@19:12 callee=count args=[_:e@19:25] type=Int call=kotlin.collections.count#31 targs=[String?,Int?]
+expr e@19:5 return value=e@19:12#1 type=Nothing
+expr e@23:12 call callee=e@23:12#1 args=[] type=ObservedMap call=ObservedMap.<init>
+expr e@23:12#2 memberCall recv=e@23:12 callee=count args=[] type=Int call=kotlin.collections.count#32 targs=[String?,Int?]
+expr e@23:5 return value=e@23:12#2 type=Nothing
