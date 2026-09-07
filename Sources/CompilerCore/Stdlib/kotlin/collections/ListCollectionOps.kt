@@ -3,6 +3,7 @@ package kotlin.collections
 import kotlin.internal.KsSymbolName
 import kotlin.internal.__valuesEqual
 import kotlin.experimental.ExperimentalTypeInference
+import kotlin.sequences.Sequence
 
 // KSP-428
 // List collection operations and numeric helpers migrated from the Swift
@@ -29,6 +30,20 @@ public operator fun <T> Iterable<T>.plus(elements: Iterable<T>): List<T> {
     return result
 }
 
+public operator fun <T> Iterable<T>.plus(elements: Array<out T>): List<T> {
+    val result = mutableListOf<T>()
+    for (item in this) result.add(item)
+    for (element in elements) result.add(element)
+    return result
+}
+
+public operator fun <T> Iterable<T>.plus(elements: Sequence<T>): List<T> {
+    val result = mutableListOf<T>()
+    for (item in this) result.add(item)
+    for (element in elements) result.add(element)
+    return result
+}
+
 public operator fun <T> Iterable<T>.minus(element: T): List<T> {
     val result = mutableListOf<T>()
     var removed = false
@@ -46,6 +61,26 @@ public operator fun <T> Iterable<T>.minus(elements: Iterable<T>): List<T> {
     val result = mutableListOf<T>()
     for (item in this) {
         if (!listIterableContains(elements, item)) result.add(item)
+    }
+    return result
+}
+
+public operator fun <T> Iterable<T>.minus(elements: Array<out T>): List<T> {
+    if (elements.isEmpty()) return this.toList()
+    val other = elements.toList()
+    val result = mutableListOf<T>()
+    for (item in this) {
+        if (!listIterableContains(other, item)) result.add(item)
+    }
+    return result
+}
+
+public operator fun <T> Iterable<T>.minus(elements: Sequence<T>): List<T> {
+    val other = elements.toList()
+    if (other.isEmpty()) return this.toList()
+    val result = mutableListOf<T>()
+    for (item in this) {
+        if (!listIterableContains(other, item)) result.add(item)
     }
     return result
 }

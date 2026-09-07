@@ -1,5 +1,6 @@
 import kotlin.contracts.*
 
+@OptIn(ExperimentalContracts::class)
 fun requireNonNull(value: Any?): Any {
     contract {
         returns() implies (value != null)
@@ -33,6 +34,7 @@ fun returnsFalse(condition: Boolean): Boolean {
 
 // Multi-effect contract block: exercises blockExpr(statements, trailingExpr, ...)
 // aggregation with multiple effect expressions in a single contract lambda.
+@OptIn(ExperimentalContracts::class)
 fun multiEffect(value: Any?, condition: Boolean): Boolean {
     contract {
         returns() implies (value != null)

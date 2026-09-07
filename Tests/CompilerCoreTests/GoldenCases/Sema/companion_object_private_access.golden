@@ -42,7 +42,7 @@ symbol fq=golden.sema.EmailAddress.Companion.create.$6.address kind=valueParamet
 symbol fq=golden.sema.EmailAddress.Companion.isValidEmail kind=function vis=private flags=_ sig=recv=golden.sema.EmailAddress.Companion params=[String] ret=Boolean
 symbol fq=golden.sema.EmailAddress.Companion.isValidEmail.$7.address kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.EmailAddress.address kind=property vis=public flags=_ type=String
-symbol fq=golden.sema.EmailAddress.toString kind=function vis=public flags=_ sig=recv=golden.sema.EmailAddress params=[] ret=String
+symbol fq=golden.sema.EmailAddress.toString kind=function vis=public flags=overrideMember sig=recv=golden.sema.EmailAddress params=[] ret=String
 symbol fq=golden.sema.FileManager kind=class vis=public flags=_
 symbol fq=golden.sema.FileManager.<init> kind=constructor vis=public flags=_ sig=recv=golden.sema.FileManager params=[] ret=golden.sema.FileManager
 symbol fq=golden.sema.FileManager.Factory kind=object vis=public flags=_
@@ -212,7 +212,7 @@ expr e@77:62 string(.) type=String
 expr e@77:45#1 memberCall recv=e@77:45 callee=contains args=[_:e@77:62] type=Boolean call=kotlin.text.contains#1
 expr e@77:20#2 binary(logicalAnd) lhs=e@77:20#1 rhs=e@77:45#1 type=Boolean
 expr e@77:13 return value=e@77:20#2 type=Nothing
-expr e@81:30 name(address) type=String ref=golden.sema.EmailAddress.address
+expr e@81:39 name(address) type=String ref=golden.sema.EmailAddress.address
 expr e@85:39 string(outer) type=String
 expr e@88:47 string(companion) type=String
 expr e@90:57 name(outer) type=golden.sema.OuterClass ref=golden.sema.OuterClass.Companion.getOuterSecret.$10.outer

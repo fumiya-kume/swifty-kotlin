@@ -22,3 +22,5 @@ expr e@11:5 localDecl p mutable=0 type=Producer<Any> init=e@11:28 type=Unit ref=
 expr e@12:28 call callee=e@12:28#1 args=[] type=golden.sema.Consumer<kotlin.Number> call=golden.sema.Consumer.<init> targs=[kotlin.Number]
 expr e@12:5 localDecl c mutable=0 type=Consumer<Int> init=e@12:28 type=Unit ref=__local_1.c
 expr e@22:25 name(null) type=Nothing?
+diagnostic severity=error code=KSWIFTK-SEMA-VARIANCE at=17:5 msg=Type parameter T is declared as 'out' but occurs in 'in' position
+diagnostic severity=error code=KSWIFTK-SEMA-VARIANCE at=22:5 msg=Type parameter T is declared as 'in' but occurs in 'out' position

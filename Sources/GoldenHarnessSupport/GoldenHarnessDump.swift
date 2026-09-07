@@ -22,7 +22,12 @@ enum GoldenHarnessDumpError: Error, CustomStringConvertible {
 
 enum GoldenHarnessDump {
     static func dumpLexer(sourcePath: String) throws -> String {
-        let ctx = makeCompilationContext(inputs: [sourcePath], moduleName: "GoldenLexer", emit: .kirDump)
+        let ctx = makeCompilationContext(
+            inputs: [sourcePath],
+            moduleName: "GoldenLexer",
+            emit: .kirDump,
+            includeStdlib: false
+        )
         try LoadSourcesPhase().run(ctx)
         try LexPhase().run(ctx)
 
@@ -38,7 +43,12 @@ enum GoldenHarnessDump {
     }
 
     static func dumpParser(sourcePath: String) throws -> String {
-        let ctx = makeCompilationContext(inputs: [sourcePath], moduleName: "GoldenParser", emit: .kirDump)
+        let ctx = makeCompilationContext(
+            inputs: [sourcePath],
+            moduleName: "GoldenParser",
+            emit: .kirDump,
+            includeStdlib: false
+        )
         try LoadSourcesPhase().run(ctx)
         try LexPhase().run(ctx)
         try ParsePhase().run(ctx)
@@ -88,7 +98,8 @@ enum GoldenHarnessDump {
             interner: ctx.interner,
             sourceManager: ctx.sourceManager,
             sourceFileID: sourceFileID,
-            excludedFileIDs: excludedFileIDs
+            excludedFileIDs: excludedFileIDs,
+            diagnostics: ctx.diagnostics
         )
     }
 
@@ -100,7 +111,8 @@ enum GoldenHarnessDump {
         interner: StringInterner,
         sourceManager: SourceManager,
         sourceFileID: FileID,
-        excludedFileIDs: Set<Int32> = []
+        excludedFileIDs: Set<Int32> = [],
+        diagnostics: DiagnosticEngine
     ) -> String {
         let ctx = StableRenderContext(sema: sema, interner: interner, ast: ast, sourceManager: sourceManager)
 
@@ -144,7 +156,41 @@ enum GoldenHarnessDump {
             symbolLines.append(renderSymbol(symbol, ctx: ctx))
         }
 
-        return (symbolLines + bodyLines).joined(separator: "\n") + "\n"
+        let diagnosticLines = renderErrorDiagnostics(
+            diagnostics,
+            sourceManager: sourceManager,
+            sourceFileID: sourceFileID
+        )
+
+        return (symbolLines + bodyLines + diagnosticLines).joined(separator: "\n") + "\n"
+    }
+
+    // A Sema golden case is expected to type-check cleanly; a case that's
+    // deliberately ill-typed belongs in the Diagnostics suite instead. This
+    // dump surfaces error-severity diagnostics anyway (rather than silently
+    // dropping them, as SemaPhase.run's error-recovery would otherwise let
+    // happen) so an accidentally ill-typed Sema fixture shows up as a golden
+    // diff instead of looking identical to a clean one.
+    private static func renderErrorDiagnostics(
+        _ diagnostics: DiagnosticEngine,
+        sourceManager: SourceManager,
+        sourceFileID: FileID
+    ) -> [String] {
+        diagnostics.diagnostics
+            .filter { $0.severity == .error }
+            .compactMap { diagnostic -> (LineColumn, String)? in
+                guard let range = diagnostic.primaryRange, range.start.file == sourceFileID else { return nil }
+                let position = sourceManager.lineColumn(of: range.start)
+                let line = "diagnostic severity=error code=\(diagnostic.code) at=\(position.line):\(position.column) msg=\(diagnostic.message)"
+                return (position, line)
+            }
+            // Multiple diagnostics can land on the same position (e.g. several
+            // unimplemented abstract members reported against one class decl,
+            // collected from an unordered symbol set) — sort the rendered line
+            // itself as a tiebreaker so process-to-process hash-seed variance
+            // in the collector can't make this dump non-deterministic.
+            .sorted { $0.0 != $1.0 ? ($0.0.line, $0.0.column) < ($1.0.line, $1.0.column) : $0.1 < $1.1 }
+            .map(\.1)
     }
 
 

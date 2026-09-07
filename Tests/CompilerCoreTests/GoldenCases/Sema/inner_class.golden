@@ -27,3 +27,4 @@ expr e@17:5 localDecl inner mutable=0 type=_ init=e@17:17#1 type=Unit ref=__loca
 expr e@18:18 name(inner) type=golden.sema.Outer.Inner ref=__local_1.inner
 expr e@18:18#1 memberCall recv=e@18:18 callee=getY args=[] type=Int call=golden.sema.Outer.Inner.getY
 expr e@18:5 localDecl result mutable=0 type=_ init=e@18:18#1 type=Unit ref=__local_2.result
+diagnostic severity=error code=KSWIFTK-SEMA-0053 at=11:32 msg=Unresolved label 'Outer' for qualified 'this'.

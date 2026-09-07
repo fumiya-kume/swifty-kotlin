@@ -104,7 +104,7 @@ public fun <T> Iterable<T>.toMutableSet(): MutableSet<T> {
 }
 
 public fun <T> Iterable<T>.toHashSet(): HashSet<T> {
-    val result = mutableSetOf<T>()
+    val result = HashSet<T>()
     for (element in this) result.add(element)
     return result
 }
@@ -113,6 +113,93 @@ public fun <T> Iterable<T>.toHashSet(): HashSet<T> {
 public fun <T, C : MutableCollection<in T>> Iterable<T>.toCollection(destination: C): C {
     for (element in this) destination.add(element)
     return destination
+}
+
+// KSP-964: Generic Iterable association APIs use virtual iterator dispatch so
+// custom and one-shot Iterable implementations follow Kotlin's encounter-order
+// and last-write-wins map semantics without a runtime bridge.
+@Suppress("UNCHECKED_CAST")
+public inline fun <T, K, V> Iterable<T>.associate(transform: (T) -> Pair<K, V>): Map<K, V> {
+    val result = mutableMapOf<K, V>()
+    for (element in this) {
+        val pair = transform(element)
+        result[pair.first] = pair.second
+    }
+    return result as Map<K, V>
+}
+
+@Suppress("UNCHECKED_CAST")
+public inline fun <T, K> Iterable<T>.associateBy(keySelector: (T) -> K): Map<K, T> {
+    val result = mutableMapOf<K, T>()
+    for (element in this) result[keySelector(element)] = element
+    return result as Map<K, T>
+}
+
+@Suppress("UNCHECKED_CAST")
+public inline fun <T, K, V> Iterable<T>.associateBy(
+    keySelector: (T) -> K,
+    valueTransform: (T) -> V
+): Map<K, V> {
+    val result = mutableMapOf<K, V>()
+    for (element in this) result[keySelector(element)] = valueTransform(element)
+    return result as Map<K, V>
+}
+
+@IgnorableReturnValue
+public inline fun <T, K, M : MutableMap<in K, in T>> Iterable<T>.associateByTo(
+    destination: M,
+    keySelector: (T) -> K
+): M {
+    for (element in this) destination.put(keySelector(element), element)
+    return destination
+}
+
+@IgnorableReturnValue
+public inline fun <T, K, V, M : MutableMap<in K, in V>> Iterable<T>.associateByTo(
+    destination: M,
+    keySelector: (T) -> K,
+    valueTransform: (T) -> V
+): M {
+    for (element in this) destination.put(keySelector(element), valueTransform(element))
+    return destination
+}
+
+@IgnorableReturnValue
+public inline fun <T, K, V, M : MutableMap<in K, in V>> Iterable<T>.associateTo(
+    destination: M,
+    transform: (T) -> Pair<K, V>
+): M {
+    for (element in this) {
+        val pair = transform(element)
+        destination.put(pair.first, pair.second)
+    }
+    return destination
+}
+
+@SinceKotlin("1.3")
+@Suppress("UNCHECKED_CAST")
+public inline fun <K, V> Iterable<K>.associateWith(valueSelector: (K) -> V): Map<K, V> {
+    val result = mutableMapOf<K, V>()
+    for (element in this) result[element] = valueSelector(element)
+    return result as Map<K, V>
+}
+
+@SinceKotlin("1.3")
+@IgnorableReturnValue
+public inline fun <K, V, M : MutableMap<in K, in V>> Iterable<K>.associateWithTo(
+    destination: M,
+    valueSelector: (K) -> V
+): M {
+    for (element in this) destination.put(element, valueSelector(element))
+    return destination
+}
+
+public fun <T> Iterable<Iterable<T>>.flatten(): List<T> {
+    val result = mutableListOf<T>()
+    for (element in this) {
+        for (nestedElement in element) result.add(nestedElement)
+    }
+    return result
 }
 
 // KSP-974: Iterable flat-map transformations are source-backed. Keep the
@@ -479,6 +566,97 @@ public fun <T> Iterable<T>.filter(predicate: (T) -> Boolean): List<T> {
     return result
 }
 
+// KSP-982: source-backed Iterable map-family implementations. Keep these
+// overloads independent from concrete List/Array/Set/Sequence receivers so
+// virtual iterator dispatch also covers custom and one-shot Iterables.
+public inline fun <T, R> Iterable<T>.map(transform: (T) -> R): List<R> {
+    val result = mutableListOf<R>()
+    for (element in this) result.add(transform(element))
+    return result
+}
+
+public inline fun <T, R> Iterable<T>.mapIndexed(transform: (Int, T) -> R): List<R> {
+    val result = mutableListOf<R>()
+    var index = 0
+    for (element in this) {
+        if (index < 0) throw ArithmeticException("Index overflow has happened.")
+        result.add(transform(index, element))
+        index += 1
+    }
+    return result
+}
+
+public inline fun <T, R : Any> Iterable<T>.mapIndexedNotNull(transform: (Int, T) -> R?): List<R> {
+    val result = mutableListOf<R>()
+    var index = 0
+    for (element in this) {
+        if (index < 0) throw ArithmeticException("Index overflow has happened.")
+        val transformed = transform(index, element)
+        if (transformed != null) result.add(transformed)
+        index += 1
+    }
+    return result
+}
+
+@IgnorableReturnValue
+public inline fun <T, R : Any, C : MutableCollection<in R>> Iterable<T>.mapIndexedNotNullTo(
+    destination: C,
+    transform: (Int, T) -> R?
+): C {
+    var index = 0
+    for (element in this) {
+        if (index < 0) throw ArithmeticException("Index overflow has happened.")
+        val transformed = transform(index, element)
+        if (transformed != null) destination.add(transformed)
+        index += 1
+    }
+    return destination
+}
+
+@IgnorableReturnValue
+public inline fun <T, R, C : MutableCollection<in R>> Iterable<T>.mapIndexedTo(
+    destination: C,
+    transform: (Int, T) -> R
+): C {
+    var index = 0
+    for (element in this) {
+        if (index < 0) throw ArithmeticException("Index overflow has happened.")
+        destination.add(transform(index, element))
+        index += 1
+    }
+    return destination
+}
+
+public inline fun <T, R : Any> Iterable<T>.mapNotNull(transform: (T) -> R?): List<R> {
+    val result = mutableListOf<R>()
+    for (element in this) {
+        val transformed = transform(element)
+        if (transformed != null) result.add(transformed)
+    }
+    return result
+}
+
+@IgnorableReturnValue
+public inline fun <T, R : Any, C : MutableCollection<in R>> Iterable<T>.mapNotNullTo(
+    destination: C,
+    transform: (T) -> R?
+): C {
+    for (element in this) {
+        val transformed = transform(element)
+        if (transformed != null) destination.add(transformed)
+    }
+    return destination
+}
+
+@IgnorableReturnValue
+public inline fun <T, R, C : MutableCollection<in R>> Iterable<T>.mapTo(
+    destination: C,
+    transform: (T) -> R
+): C {
+    for (element in this) destination.add(transform(element))
+    return destination
+}
+
 public inline fun <T> Iterable<T>.find(predicate: (T) -> Boolean): T? {
     for (element in this) {
         if (predicate(element)) return element
@@ -617,6 +795,7 @@ public inline fun <T> Iterable<T>.takeWhile(predicate: (T) -> Boolean): List<T> 
     }
     return result
 }
+
 public inline fun <S, T : S> Iterable<T>.reduce(operation: (acc: S, T) -> S): S {
     val iterator = iterator()
     if (!iterator.hasNext()) throw UnsupportedOperationException("Empty collection can't be reduced.")

@@ -49,3 +49,4 @@ expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13#1] type=Unit call=kotlin.io.pri
 expr e@14:13 name(projectedEntry) type=kotlin.collections.Map.Entry<Any?, kotlin.Number?> ref=__local_4.projectedEntry
 expr e@14:13#1 memberCall recv=e@14:13 callee=value args=[] type=kotlin.Number? call=kotlin.collections.Map.Entry.value targs=[Any?,kotlin.Number?]
 expr e@14:5 call callee=e@14:5#1 args=[_:e@14:13#1] type=Unit call=kotlin.io.println#1
+diagnostic severity=error code=KSWIFTK-TYPE-0001 at=9:5 msg=Type constraint could not be satisfied.

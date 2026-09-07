@@ -700,6 +700,11 @@ public final class SymbolTable {
                 return symbol.flags.contains(.synthetic)
             case .function, .constructor:
                 return true
+            case .valueParameter:
+                // A source-backed factory can share a FQName with its nominal
+                // return type, so its parameter may collide with a residual
+                // synthetic property on that type (for example `size`).
+                return true
             default:
                 return false
             }
@@ -1173,6 +1178,12 @@ public final class SymbolTable {
     /// condition is a Boolean parameter at the given index.
     public func setContractConditionEffect(_ effect: ContractConditionEffect, for function: SymbolID) {
         contractConditionEffects[function] = effect
+    }
+
+    /// STDLIB-591: Returns the `returns() implies condition` effect recorded
+    /// for a function, if any.
+    public func contractConditionEffect(for function: SymbolID) -> ContractConditionEffect? {
+        contractConditionEffects[function]
     }
 
     // MARK: - Indexed queries

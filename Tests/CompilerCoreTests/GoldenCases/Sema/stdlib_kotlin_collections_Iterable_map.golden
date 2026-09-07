@@ -1,0 +1,118 @@
+symbol fq=__local_0.mapped kind=local vis=private flags=_ type=kotlin.collections.List<String?>
+symbol fq=__local_1.indexed kind=local vis=private flags=_ type=kotlin.collections.List<String>
+symbol fq=__local_2.indexedNotNull kind=local vis=private flags=_ type=kotlin.collections.List<String>
+symbol fq=__local_3.indexedNotNullTo kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Any?>
+symbol fq=__local_4.indexedTo kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Any?>
+symbol fq=__local_5.notNull kind=local vis=private flags=_ type=kotlin.collections.List<String>
+symbol fq=__local_6.notNullTo kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Any?>
+symbol fq=__local_7.mappedTo kind=local vis=private flags=_ type=kotlin.collections.MutableCollection<Any?>
+symbol fq=__local_8.destination kind=local vis=private flags=_ type=kotlin.collections.MutableList<Any?>
+symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Collection.E kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List.E kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.List.isEmpty kind=function vis=public flags=synthetic sig=recv=kotlin.collections.List<out kotlin.collections.List.E> params=[] ret=Boolean
+symbol fq=kotlin.collections.MutableCollection kind=interface vis=public flags=_
+symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
+symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=mapFamily kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String?>,kotlin.collections.MutableCollection<Any?>] ret=kotlin.collections.MutableCollection<Any?>
+symbol fq=mapFamily.$0.destination kind=valueParameter vis=private flags=_
+symbol fq=mapFamily.$0.source kind=valueParameter vis=private flags=_
+file fstdlib_kotlin_collections_Iterable_map package=_
+  decl mapFamily fun mapFamily sym=mapFamily
+  decl main fun main sym=main
+expr e@5:33 name(source) type=kotlin.collections.Iterable<String?> ref=mapFamily.$0.source
+expr e@5:46 name(it) type=String? ref=s-0
+expr e@5:44 lambda params=[] body=e@5:46 label=map type=(String?) -> String?
+expr e@5:33#1 memberCall recv=e@5:33 callee=map args=[_:e@5:44] type=kotlin.collections.List<String?> call=kotlin.collections.map#13 targs=[String?,String?]
+expr e@5:5 localDecl mapped mutable=0 type=List<String?> init=e@5:33#1 type=Unit ref=__local_0.mapped
+expr e@6:33 name(source) type=kotlin.collections.Iterable<String?> ref=mapFamily.$0.source
+expr e@6:71 name(index) type=Int ref=s-1
+expr e@6:79 name(value) type=String? ref=s-2
+expr e@6:88 string(null) type=String
+expr e@6:79#1 binary(elvis) lhs=e@6:79 rhs=e@6:88 type=String
+expr e@6:69 stringTemplate[expr(e@6:71),lit(:),expr(e@6:79#1)] type=String
+expr e@6:51 lambda params=[index,value] body=e@6:69 label=mapIndexed type=(Int, String?) -> String
+expr e@6:33#1 memberCall recv=e@6:33 callee=mapIndexed args=[_:e@6:51] type=kotlin.collections.List<String> call=kotlin.collections.mapIndexed#13 targs=[String?,String]
+expr e@6:5 localDecl indexed mutable=0 type=List<String> init=e@6:33#1 type=Unit ref=__local_1.indexed
+expr e@7:40 name(source) type=kotlin.collections.Iterable<String?> ref=mapFamily.$0.source
+expr e@8:9 name(value) type=String? ref=s-3
+expr e@8:24 name(index) type=Int ref=s-4
+expr e@8:31 name(it) type=String ref=s-5
+expr e@8:22 stringTemplate[expr(e@8:24),lit(:),expr(e@8:31)] type=String
+expr e@8:20 lambda params=[] body=e@8:22 label=let type=(String) -> String
+expr e@8:9#1 safeMemberCall recv=e@8:9 callee=let args=[_:e@8:20] type=String? call=kotlin.let targs=[String,String]
+expr e@7:65 lambda params=[index,value] body=e@8:9#1 label=mapIndexedNotNull type=(Int, String?) -> String?
+expr e@7:40#1 memberCall recv=e@7:40 callee=mapIndexedNotNull args=[_:e@7:65] type=kotlin.collections.List<String> call=kotlin.collections.mapIndexedNotNull#0 targs=[String?,String]
+expr e@7:5 localDecl indexedNotNull mutable=0 type=List<String> init=e@7:40#1 type=Unit ref=__local_2.indexedNotNull
+expr e@10:53 name(source) type=kotlin.collections.Iterable<String?> ref=mapFamily.$0.source
+expr e@10:80 name(destination) type=kotlin.collections.MutableCollection<Any?> ref=mapFamily.$0.destination
+expr e@11:9 name(value) type=String? ref=s-6
+expr e@11:24 name(index) type=Int ref=s-7
+expr e@11:31 name(it) type=String ref=s-8
+expr e@11:22 stringTemplate[expr(e@11:24),lit(:),expr(e@11:31)] type=String
+expr e@11:20 lambda params=[] body=e@11:22 label=let type=(String) -> String
+expr e@11:9#1 safeMemberCall recv=e@11:9 callee=let args=[_:e@11:20] type=String? call=kotlin.let targs=[String,String]
+expr e@10:93 lambda params=[index,value] body=e@11:9#1 label=mapIndexedNotNullTo type=(Int, String?) -> String?
+expr e@10:53#1 memberCall recv=e@10:53 callee=mapIndexedNotNullTo args=[_:e@10:80,_:e@10:93] type=kotlin.collections.MutableCollection<Any?> call=kotlin.collections.mapIndexedNotNullTo#0 targs=[String?,String,kotlin.collections.MutableCollection<Any?>]
+expr e@10:5 localDecl indexedNotNullTo mutable=0 type=MutableCollection<Any?> init=e@10:53#1 type=Unit ref=__local_3.indexedNotNullTo
+expr e@13:46 name(source) type=kotlin.collections.Iterable<String?> ref=mapFamily.$0.source
+expr e@13:66 name(destination) type=kotlin.collections.MutableCollection<Any?> ref=mapFamily.$0.destination
+expr e@14:11 name(index) type=Int ref=s-9
+expr e@14:18 name(value) type=String? ref=s-10
+expr e@14:9 stringTemplate[expr(e@14:11),lit(:),expr(e@14:18)] type=String
+expr e@13:79 lambda params=[index,value] body=e@14:9 label=mapIndexedTo type=(Int, String?) -> String
+expr e@13:46#1 memberCall recv=e@13:46 callee=mapIndexedTo args=[_:e@13:66,_:e@13:79] type=kotlin.collections.MutableCollection<Any?> call=kotlin.collections.mapIndexedTo#0 targs=[String?,String,kotlin.collections.MutableCollection<Any?>]
+expr e@13:5 localDecl indexedTo mutable=0 type=MutableCollection<Any?> init=e@13:46#1 type=Unit ref=__local_4.indexedTo
+expr e@16:33 name(source) type=kotlin.collections.Iterable<String?> ref=mapFamily.$0.source
+expr e@16:53 name(it) type=String? ref=s-11
+expr e@16:51 lambda params=[] body=e@16:53 label=mapNotNull type=(String?) -> String?
+expr e@16:33#1 memberCall recv=e@16:33 callee=mapNotNull args=[_:e@16:51] type=kotlin.collections.List<String> call=kotlin.collections.mapNotNull#13 targs=[String?,String]
+expr e@16:5 localDecl notNull mutable=0 type=List<String> init=e@16:33#1 type=Unit ref=__local_5.notNull
+expr e@17:46 name(source) type=kotlin.collections.Iterable<String?> ref=mapFamily.$0.source
+expr e@17:66 name(destination) type=kotlin.collections.MutableCollection<Any?> ref=mapFamily.$0.destination
+expr e@17:81 name(it) type=String? ref=s-12
+expr e@17:79 lambda params=[] body=e@17:81 label=mapNotNullTo type=(String?) -> String?
+expr e@17:46#1 memberCall recv=e@17:46 callee=mapNotNullTo args=[_:e@17:66,_:e@17:79] type=kotlin.collections.MutableCollection<Any?> call=kotlin.collections.mapNotNullTo#0 targs=[String?,String,kotlin.collections.MutableCollection<Any?>]
+expr e@17:5 localDecl notNullTo mutable=0 type=MutableCollection<Any?> init=e@17:46#1 type=Unit ref=__local_6.notNullTo
+expr e@18:45 name(source) type=kotlin.collections.Iterable<String?> ref=mapFamily.$0.source
+expr e@18:58 name(destination) type=kotlin.collections.MutableCollection<Any?> ref=mapFamily.$0.destination
+expr e@18:73 name(it) type=String? ref=s-13
+expr e@18:71 lambda params=[] body=e@18:73 label=mapTo type=(String?) -> String?
+expr e@18:45#1 memberCall recv=e@18:45 callee=mapTo args=[_:e@18:58,_:e@18:71] type=kotlin.collections.MutableCollection<Any?> call=kotlin.collections.mapTo#0 targs=[String?,String?,kotlin.collections.MutableCollection<Any?>]
+expr e@18:5 localDecl mappedTo mutable=0 type=MutableCollection<Any?> init=e@18:45#1 type=Unit ref=__local_7.mappedTo
+expr e@19:16 name(mapped) type=kotlin.collections.List<String?> ref=__local_0.mapped
+expr e@19:16#1 memberCall recv=e@19:16 callee=isEmpty args=[] type=Boolean call=kotlin.collections.List.isEmpty
+expr e@19:36 name(indexed) type=kotlin.collections.List<String> ref=__local_1.indexed
+expr e@19:36#1 memberCall recv=e@19:36 callee=isEmpty args=[] type=Boolean call=kotlin.collections.List.isEmpty
+expr e@19:16#2 binary(logicalOr) lhs=e@19:16#1 rhs=e@19:36#1 type=Boolean
+expr e@19:57 name(indexedNotNull) type=kotlin.collections.List<String> ref=__local_2.indexedNotNull
+expr e@19:57#1 memberCall recv=e@19:57 callee=isEmpty args=[] type=Boolean call=kotlin.collections.List.isEmpty
+expr e@19:16#3 binary(logicalOr) lhs=e@19:16#2 rhs=e@19:57#1 type=Boolean
+expr e@20:9 name(indexedNotNullTo) type=kotlin.collections.MutableCollection<Any?> ref=__local_3.indexedNotNullTo
+expr e@19:83 blockExpr stmts=[] trailing=e@20:9 type=kotlin.collections.MutableCollection<Any?>
+expr e@21:16 name(indexedTo) type=kotlin.collections.MutableCollection<Any?> ref=__local_4.indexedTo
+expr e@21:16#1 memberCall recv=e@21:16 callee=isEmpty args=[] type=Boolean call=kotlin.collections.Collection.isEmpty
+expr e@21:39 name(notNull) type=kotlin.collections.List<String> ref=__local_5.notNull
+expr e@21:39#1 memberCall recv=e@21:39 callee=isEmpty args=[] type=Boolean call=kotlin.collections.List.isEmpty
+expr e@21:16#2 binary(logicalOr) lhs=e@21:16#1 rhs=e@21:39#1 type=Boolean
+expr e@21:60 name(notNullTo) type=kotlin.collections.MutableCollection<Any?> ref=__local_6.notNullTo
+expr e@21:60#1 memberCall recv=e@21:60 callee=isEmpty args=[] type=Boolean call=kotlin.collections.Collection.isEmpty
+expr e@21:16#3 binary(logicalOr) lhs=e@21:16#2 rhs=e@21:60#1 type=Boolean
+expr e@22:9 name(mappedTo) type=kotlin.collections.MutableCollection<Any?> ref=__local_7.mappedTo
+expr e@21:81 blockExpr stmts=[] trailing=e@22:9 type=kotlin.collections.MutableCollection<Any?>
+expr e@24:9 name(destination) type=kotlin.collections.MutableCollection<Any?> ref=mapFamily.$0.destination
+expr e@23:12 blockExpr stmts=[] trailing=e@24:9 type=kotlin.collections.MutableCollection<Any?>
+expr e@21:12 if cond=e@21:16#3 then=e@21:81 else=e@23:12 type=kotlin.collections.MutableCollection<Any?>
+expr e@19:12 if cond=e@19:16#3 then=e@19:83 else=e@21:12 type=kotlin.collections.MutableCollection<Any?>
+expr e@19:5 return value=e@19:12 type=Nothing
+expr e@29:43 string(seed) type=String
+expr e@29:23 call callee=e@29:23#1 args=[_:e@29:43] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.mutableListOf#1 targs=[Any?]
+expr e@29:5 localDecl destination mutable=0 type=_ init=e@29:23 type=Unit ref=__local_8.destination
+expr e@30:22 string(a) type=String
+expr e@30:27 name(null) type=Nothing?
+expr e@30:33 string(c) type=String
+expr e@30:15 call callee=e@30:15#1 args=[_:e@30:22,_:e@30:27,_:e@30:33] type=kotlin.collections.List<out String?> call=kotlin.collections.listOf#1 targs=[String?]
+expr e@30:39 name(destination) type=kotlin.collections.MutableList<Any?> ref=__local_8.destination
+expr e@30:5 call callee=e@30:5#1 args=[_:e@30:15,_:e@30:39] type=kotlin.collections.MutableCollection<Any?> call=mapFamily

@@ -8,6 +8,8 @@ symbol fq=__local_6.freezingEnabled kind=local vis=private flags=_ type=Boolean
 symbol fq=__local_7.programName kind=local vis=private flags=_ type=String?
 symbol fq=__local_8.leakChecker kind=local vis=private flags=_ type=Boolean
 symbol fq=__local_9.cleanersChecker kind=local vis=private flags=_ type=Boolean
+symbol fq=kotlin.Enum kind=class vis=public flags=abstractType|openType
+symbol fq=kotlin.Enum.T kind=typeParameter vis=private flags=_
 symbol fq=kotlin.native.CpuArchitecture kind=enumClass vis=public flags=synthetic
 symbol fq=kotlin.native.MemoryModel kind=enumClass vis=public flags=synthetic
 symbol fq=platformContract kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
@@ -68,7 +70,7 @@ expr e@20:97 int(1) type=Int
 expr e@20:104 int(0) type=Int
 expr e@21:13 name(osFamily) type=kotlin.native.OsFamily ref=__local_2.osFamily
 expr e@21:25 name(osFamily) type=kotlin.native.OsFamily ref=__local_2.osFamily
-expr e@21:13#1 binary(equal) lhs=e@21:13 rhs=e@21:25 type=Boolean
+expr e@21:13#1 binary(equal) lhs=e@21:13 rhs=e@21:25 type=Boolean call=kotlin.Enum.equals targs=[kotlin.native.OsFamily]
 expr e@21:37 name(cpuArchitecture) type=kotlin.native.CpuArchitecture ref=__local_3.cpuArchitecture
 expr e@21:56 name(cpuArchitecture) type=kotlin.native.CpuArchitecture ref=__local_3.cpuArchitecture
 expr e@21:37#1 binary(equal) lhs=e@21:37 rhs=e@21:56 type=Boolean

@@ -6,3 +6,4 @@ file fexpect_actual package=golden.sema
   decl golden.sema.platform#1 fun platform sym=golden.sema.platform#1
   decl golden.sema.unresolved fun unresolved sym=golden.sema.unresolved
 expr e@5:33 string(ok) type=String
+diagnostic severity=error code=KSWIFTK-MPP-UNRESOLVED at=8:1 msg=Missing matching 'actual' declaration for expect symbol 'golden.sema.unresolved'. No actual candidates found with same FQ name.

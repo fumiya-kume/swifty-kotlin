@@ -10,10 +10,6 @@ symbol fq=__local_5.holder kind=local vis=private flags=_ type=MapHolder
 symbol fq=createMap kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.HashMap<Int, String>
 symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableMap.K kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableMap.V kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableMap.remove kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableMap<kotlin.collections.MutableMap.K, kotlin.collections.MutableMap.V> params=[kotlin.collections.MutableMap.K] ret=kotlin.collections.MutableMap.V?
-symbol fq=kotlin.collections.MutableMap.set kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.MutableMap<kotlin.collections.MutableMap.K, kotlin.collections.MutableMap.V> params=[kotlin.collections.MutableMap.K,kotlin.collections.MutableMap.V] ret=Unit
 symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=processMap kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.HashMap<String, Int>] ret=Unit
 symbol fq=processMap.$0.map kind=valueParameter vis=private flags=_
@@ -34,17 +30,17 @@ expr e@15:5 localDecl hm mutable=0 type=HashMap<String,Int> init=e@15:36 type=Un
 expr e@16:5 name(hm) type=kotlin.collections.HashMap<String, Int> ref=__local_0.hm
 expr e@16:8 string(x) type=String
 expr e@16:15 int(10) type=Int
-expr e@16:5#1 indexedAssign receiver=e@16:5 indices=[e@16:8] value=e@16:15 type=Unit call=kotlin.collections.MutableMap.set targs=[String,Int]
+expr e@16:5#1 indexedAssign receiver=e@16:5 indices=[e@16:8] value=e@16:15 type=Unit call=kotlin.collections.set targs=[String,Int]
 expr e@17:5 name(hm) type=kotlin.collections.HashMap<String, Int> ref=__local_0.hm
 expr e@17:8 string(y) type=String
 expr e@17:15 int(20) type=Int
-expr e@17:5#1 indexedAssign receiver=e@17:5 indices=[e@17:8] value=e@17:15 type=Unit call=kotlin.collections.MutableMap.set targs=[String,Int]
+expr e@17:5#1 indexedAssign receiver=e@17:5 indices=[e@17:8] value=e@17:15 type=Unit call=kotlin.collections.set targs=[String,Int]
 expr e@18:39 name(hm) type=kotlin.collections.HashMap<String, Int> ref=__local_0.hm
 expr e@18:5 localDecl mm mutable=0 type=MutableMap<String,Int> init=e@18:39 type=Unit ref=__local_1.mm
 expr e@19:5 name(mm) type=kotlin.collections.MutableMap<String, Int> ref=__local_1.mm
 expr e@19:8 string(w) type=String
 expr e@19:15 int(40) type=Int
-expr e@19:5#1 indexedAssign receiver=e@19:5 indices=[e@19:8] value=e@19:15 type=Unit call=kotlin.collections.MutableMap.set targs=[String,Int]
+expr e@19:5#1 indexedAssign receiver=e@19:5 indices=[e@19:8] value=e@19:15 type=Unit call=kotlin.collections.set targs=[String,Int]
 expr e@20:13 name(mm) type=kotlin.collections.MutableMap<String, Int> ref=__local_1.mm
 expr e@20:13#1 memberCall recv=e@20:13 callee=size args=[] type=Int
 expr e@20:5 call callee=e@20:5#1 args=[_:e@20:13#1] type=Unit call=kotlin.io.println#1
@@ -64,7 +60,7 @@ expr e@24:13#1 memberCall recv=e@24:13 callee=containsValue args=[_:e@24:30] typ
 expr e@24:5 call callee=e@24:5#1 args=[_:e@24:13#1] type=Unit call=kotlin.io.println#1
 expr e@25:5 name(hm) type=kotlin.collections.HashMap<String, Int> ref=__local_0.hm
 expr e@25:15 string(y) type=String
-expr e@25:5#1 memberCall recv=e@25:5 callee=remove args=[_:e@25:15] type=Int? call=kotlin.collections.MutableMap.remove targs=[String,Int]
+expr e@25:5#1 memberCall recv=e@25:5 callee=remove args=[_:e@25:15] type=Int? call=kotlin.collections.remove#2 targs=[String,Int]
 expr e@26:13 name(hm) type=kotlin.collections.HashMap<String, Int> ref=__local_0.hm
 expr e@26:13#1 memberCall recv=e@26:13 callee=size args=[] type=Int
 expr e@26:5 call callee=e@26:5#1 args=[_:e@26:13#1] type=Unit call=kotlin.io.println#1
@@ -86,7 +82,7 @@ expr e@33:5 localDecl created mutable=0 type=_ init=e@33:19 type=Unit ref=__loca
 expr e@34:5 name(created) type=kotlin.collections.HashMap<Int, String> ref=__local_4.created
 expr e@34:13 int(1) type=Int
 expr e@34:18 string(one) type=String
-expr e@34:5#1 indexedAssign receiver=e@34:5 indices=[e@34:13] value=e@34:18 type=Unit call=kotlin.collections.MutableMap.set targs=[Int,String]
+expr e@34:5#1 indexedAssign receiver=e@34:5 indices=[e@34:13] value=e@34:18 type=Unit call=kotlin.collections.set targs=[Int,String]
 expr e@35:13 name(created) type=kotlin.collections.HashMap<Int, String> ref=__local_4.created
 expr e@35:13#1 memberCall recv=e@35:13 callee=size args=[] type=Int
 expr e@35:5 call callee=e@35:5#1 args=[_:e@35:13#1] type=Unit call=kotlin.io.println#1
@@ -96,7 +92,7 @@ expr e@38:5 name(holder) type=MapHolder ref=__local_5.holder
 expr e@38:5#1 memberCall recv=e@38:5 callee=scores args=[] type=kotlin.collections.HashMap<String, Int> ref=MapHolder.scores
 expr e@38:19 string(alice) type=String
 expr e@38:30 int(100) type=Int
-expr e@38:5#2 indexedAssign receiver=e@38:5#1 indices=[e@38:19] value=e@38:30 type=Unit call=kotlin.collections.MutableMap.set targs=[String,Int]
+expr e@38:5#2 indexedAssign receiver=e@38:5#1 indices=[e@38:19] value=e@38:30 type=Unit call=kotlin.collections.set targs=[String,Int]
 expr e@39:13 name(holder) type=MapHolder ref=__local_5.holder
 expr e@39:13#1 memberCall recv=e@39:13 callee=scores args=[] type=kotlin.collections.HashMap<String, Int> ref=MapHolder.scores
 expr e@39:13#2 memberCall recv=e@39:13#1 callee=size args=[] type=Int

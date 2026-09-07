@@ -2,7 +2,7 @@ symbol fq=__destructuring_0.num kind=local vis=private flags=_ type=Int
 symbol fq=golden.sema.useDestructuring kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<Int>
 symbol fq=golden.sema.useIt kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<Int>
 symbol fq=kotlin.Pair kind=class vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 file flambda_it_destructuring package=golden.sema
   decl golden.sema.useIt fun useIt sym=golden.sema.useIt
   decl golden.sema.useDestructuring fun useDestructuring sym=golden.sema.useDestructuring
@@ -14,7 +14,7 @@ expr e@3:48 name(it) type=Int ref=s-0
 expr e@3:53 int(2) type=Int
 expr e@3:48#1 binary(multiply) lhs=e@3:48 rhs=e@3:53 type=Int
 expr e@3:46 lambda params=[] body=e@3:48#1 label=map type=(Int) -> Any
-expr e@3:26#2 memberCall recv=e@3:26 callee=map args=[_:e@3:46] type=kotlin.collections.List<Int> call=kotlin.collections.map#13 targs=[Int,Int]
+expr e@3:26#2 memberCall recv=e@3:26 callee=map args=[_:e@3:46] type=kotlin.collections.List<Int> call=kotlin.collections.map#14 targs=[Int,Int]
 expr e@6:12 int(1) type=Int
 expr e@6:17 string(a) type=String
 expr e@6:12#1 memberCall recv=e@6:12 callee=to args=[_:e@6:17] type=kotlin.Pair<Int, String> call=kotlin.to targs=[Int,String]
@@ -27,4 +27,4 @@ expr e@6:36 name(__destructured_0) type=kotlin.Pair<Int, String> ref=s-1
 expr e@6:36#1 destructuringDecl names=[num,_] mutable=0 init=e@6:36 type=Unit
 expr e@6:36#2 blockExpr stmts=[e@6:36#1] trailing=e@6:50 type=Int
 expr e@6:36#3 lambda params=[__destructured_0] body=e@6:36#2 label=map type=(kotlin.Pair<Int, String>) -> Any
-expr e@6:5#2 memberCall recv=e@6:5 callee=map args=[_:e@6:36#3] type=kotlin.collections.List<Int> call=kotlin.collections.map#13 targs=[kotlin.Pair<Int, String>,Int]
+expr e@6:5#2 memberCall recv=e@6:5 callee=map args=[_:e@6:36#3] type=kotlin.collections.List<Int> call=kotlin.collections.map#14 targs=[kotlin.Pair<Int, String>,Int]

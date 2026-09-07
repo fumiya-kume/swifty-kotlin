@@ -10,67 +10,67 @@ symbol fq=myRequire.$0.value kind=valueParameter vis=private flags=_
 file fcontract_smartcast package=_
   decl myRequire fun myRequire sym=myRequire
   decl main fun main sym=main
-expr e@7:9 call callee=e@7:9#1 args=[] type=kotlin.contracts.Returns call=kotlin.contracts.ContractBuilder.returns#0
-expr e@7:28 name(value) type=Boolean ref=myRequire.$0.value
-expr e@7:9#2 memberCall recv=e@7:9 callee=implies args=[_:e@7:28] type=kotlin.contracts.ConditionalEffect call=kotlin.contracts.SimpleEffect.implies
-expr e@6:14 lambda params=[] body=e@7:9#2 label=contract type=kotlin.contracts.ContractBuilder.() -> Unit
-expr e@6:5 call callee=e@6:5#1 args=[_:e@6:14] type=Unit
-expr e@9:10 name(value) type=Boolean ref=myRequire.$0.value
-expr e@9:9 unary(not) operand=e@9:10 type=Boolean
-expr e@9:23 call callee=e@9:23#1 args=[] type=kotlin.IllegalArgumentException call=kotlin.IllegalArgumentException.<init>#0
-expr e@9:17 throw value=e@9:23 type=Nothing
-expr e@9:5 if cond=e@9:9 then=e@9:17 else=_ type=Unit
-expr e@14:22 string(hello) type=String
-expr e@14:5 localDecl x mutable=0 type=String? init=e@14:22 type=Unit ref=__local_0.x
-expr e@15:13 name(x) type=String? ref=__local_0.x
-expr e@15:18 name(null) type=Nothing?
-expr e@15:13#1 binary(notEqual) lhs=e@15:13 rhs=e@15:18 type=Boolean
-expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13#1] type=Unit call=kotlin.require#0
-expr e@16:13 name(x) type=String ref=__local_0.x
-expr e@16:13#1 memberCall recv=e@16:13 callee=length args=[] type=Int call=kotlin.length.$get
-expr e@16:5 call callee=e@16:5#1 args=[_:e@16:13#1] type=Unit call=kotlin.io.println#1
-expr e@19:22 string(world) type=String
-expr e@19:5 localDecl y mutable=0 type=String? init=e@19:22 type=Unit ref=__local_1.y
-expr e@20:11 name(y) type=String? ref=__local_1.y
-expr e@20:16 name(null) type=Nothing?
-expr e@20:11#1 binary(notEqual) lhs=e@20:11 rhs=e@20:16 type=Boolean
-expr e@20:5 call callee=e@20:5#1 args=[_:e@20:11#1] type=Unit call=kotlin.check#0
-expr e@21:13 name(y) type=String ref=__local_1.y
-expr e@21:13#1 memberCall recv=e@21:13 callee=length args=[] type=Int call=kotlin.length.$get
-expr e@21:5 call callee=e@21:5#1 args=[_:e@21:13#1] type=Unit call=kotlin.io.println#1
-expr e@24:18 string(kotlin) type=String
-expr e@24:5 localDecl a mutable=0 type=Any init=e@24:18 type=Unit ref=__local_2.a
-expr e@25:13 name(a) type=Any ref=__local_2.a
-expr e@25:13#1 isCheck expr=e@25:13 type=String type=Boolean
-expr e@25:5 call callee=e@25:5#1 args=[_:e@25:13#1] type=Unit call=kotlin.require#0
-expr e@26:13 name(a) type=String ref=__local_2.a
-expr e@26:13#1 memberCall recv=e@26:13 callee=length args=[] type=Int call=kotlin.length.$get
-expr e@26:5 call callee=e@26:5#1 args=[_:e@26:13#1] type=Unit call=kotlin.io.println#1
-expr e@29:18 string(swift) type=String
-expr e@29:5 localDecl b mutable=0 type=Any init=e@29:18 type=Unit ref=__local_3.b
-expr e@30:11 name(b) type=Any ref=__local_3.b
-expr e@30:11#1 isCheck expr=e@30:11 type=String type=Boolean
-expr e@30:5 call callee=e@30:5#1 args=[_:e@30:11#1] type=Unit call=kotlin.check#0
-expr e@31:13 name(b) type=String ref=__local_3.b
-expr e@31:13#1 memberCall recv=e@31:13 callee=length args=[] type=Int call=kotlin.length.$get
-expr e@31:5 call callee=e@31:5#1 args=[_:e@31:13#1] type=Unit call=kotlin.io.println#1
-expr e@34:22 string(lazy) type=String
-expr e@34:5 localDecl c mutable=0 type=String? init=e@34:22 type=Unit ref=__local_4.c
-expr e@35:13 name(c) type=String? ref=__local_4.c
-expr e@35:18 name(null) type=Nothing?
-expr e@35:13#1 binary(notEqual) lhs=e@35:13 rhs=e@35:18 type=Boolean
-expr e@35:26 string(c must not be null) type=String
-expr e@35:24 lambda params=[] body=e@35:26 label=require type=() -> Any
-expr e@35:5 call callee=e@35:5#1 args=[_:e@35:13#1,_:e@35:24] type=Unit call=kotlin.require#1
-expr e@36:13 name(c) type=String ref=__local_4.c
-expr e@36:13#1 memberCall recv=e@36:13 callee=length args=[] type=Int call=kotlin.length.$get
-expr e@36:5 call callee=e@36:5#1 args=[_:e@36:13#1] type=Unit call=kotlin.io.println#1
-expr e@39:22 string(user) type=String
-expr e@39:5 localDecl d mutable=0 type=String? init=e@39:22 type=Unit ref=__local_5.d
-expr e@40:15 name(d) type=String? ref=__local_5.d
-expr e@40:20 name(null) type=Nothing?
-expr e@40:15#1 binary(notEqual) lhs=e@40:15 rhs=e@40:20 type=Boolean
-expr e@40:5 call callee=e@40:5#1 args=[_:e@40:15#1] type=Unit call=myRequire
-expr e@41:13 name(d) type=String? ref=__local_5.d
-expr e@41:13#1 memberCall recv=e@41:13 callee=length args=[] type=<error>
-expr e@41:5 call callee=e@41:5#1 args=[_:e@41:13#1] type=Unit call=kotlin.io.println#2
+expr e@8:9 call callee=e@8:9#1 args=[] type=kotlin.contracts.Returns call=kotlin.contracts.ContractBuilder.returns#0
+expr e@8:28 name(value) type=Boolean ref=myRequire.$0.value
+expr e@8:9#2 memberCall recv=e@8:9 callee=implies args=[_:e@8:28] type=kotlin.contracts.ConditionalEffect call=kotlin.contracts.SimpleEffect.implies
+expr e@7:14 lambda params=[] body=e@8:9#2 label=contract type=kotlin.contracts.ContractBuilder.() -> Unit
+expr e@7:5 call callee=e@7:5#1 args=[_:e@7:14] type=Unit
+expr e@10:10 name(value) type=Boolean ref=myRequire.$0.value
+expr e@10:9 unary(not) operand=e@10:10 type=Boolean
+expr e@10:23 call callee=e@10:23#1 args=[] type=kotlin.IllegalArgumentException call=kotlin.IllegalArgumentException.<init>#0
+expr e@10:17 throw value=e@10:23 type=Nothing
+expr e@10:5 if cond=e@10:9 then=e@10:17 else=_ type=Unit
+expr e@15:22 string(hello) type=String
+expr e@15:5 localDecl x mutable=0 type=String? init=e@15:22 type=Unit ref=__local_0.x
+expr e@16:13 name(x) type=String? ref=__local_0.x
+expr e@16:18 name(null) type=Nothing?
+expr e@16:13#1 binary(notEqual) lhs=e@16:13 rhs=e@16:18 type=Boolean
+expr e@16:5 call callee=e@16:5#1 args=[_:e@16:13#1] type=Unit call=kotlin.require#0
+expr e@17:13 name(x) type=String ref=__local_0.x
+expr e@17:13#1 memberCall recv=e@17:13 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@17:5 call callee=e@17:5#1 args=[_:e@17:13#1] type=Unit call=kotlin.io.println#1
+expr e@20:22 string(world) type=String
+expr e@20:5 localDecl y mutable=0 type=String? init=e@20:22 type=Unit ref=__local_1.y
+expr e@21:11 name(y) type=String? ref=__local_1.y
+expr e@21:16 name(null) type=Nothing?
+expr e@21:11#1 binary(notEqual) lhs=e@21:11 rhs=e@21:16 type=Boolean
+expr e@21:5 call callee=e@21:5#1 args=[_:e@21:11#1] type=Unit call=kotlin.check#0
+expr e@22:13 name(y) type=String ref=__local_1.y
+expr e@22:13#1 memberCall recv=e@22:13 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@22:5 call callee=e@22:5#1 args=[_:e@22:13#1] type=Unit call=kotlin.io.println#1
+expr e@25:18 string(kotlin) type=String
+expr e@25:5 localDecl a mutable=0 type=Any init=e@25:18 type=Unit ref=__local_2.a
+expr e@26:13 name(a) type=Any ref=__local_2.a
+expr e@26:13#1 isCheck expr=e@26:13 type=String type=Boolean
+expr e@26:5 call callee=e@26:5#1 args=[_:e@26:13#1] type=Unit call=kotlin.require#0
+expr e@27:13 name(a) type=String ref=__local_2.a
+expr e@27:13#1 memberCall recv=e@27:13 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@27:5 call callee=e@27:5#1 args=[_:e@27:13#1] type=Unit call=kotlin.io.println#1
+expr e@30:18 string(swift) type=String
+expr e@30:5 localDecl b mutable=0 type=Any init=e@30:18 type=Unit ref=__local_3.b
+expr e@31:11 name(b) type=Any ref=__local_3.b
+expr e@31:11#1 isCheck expr=e@31:11 type=String type=Boolean
+expr e@31:5 call callee=e@31:5#1 args=[_:e@31:11#1] type=Unit call=kotlin.check#0
+expr e@32:13 name(b) type=String ref=__local_3.b
+expr e@32:13#1 memberCall recv=e@32:13 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@32:5 call callee=e@32:5#1 args=[_:e@32:13#1] type=Unit call=kotlin.io.println#1
+expr e@35:22 string(lazy) type=String
+expr e@35:5 localDecl c mutable=0 type=String? init=e@35:22 type=Unit ref=__local_4.c
+expr e@36:13 name(c) type=String? ref=__local_4.c
+expr e@36:18 name(null) type=Nothing?
+expr e@36:13#1 binary(notEqual) lhs=e@36:13 rhs=e@36:18 type=Boolean
+expr e@36:26 string(c must not be null) type=String
+expr e@36:24 lambda params=[] body=e@36:26 label=require type=() -> Any
+expr e@36:5 call callee=e@36:5#1 args=[_:e@36:13#1,_:e@36:24] type=Unit call=kotlin.require#1
+expr e@37:13 name(c) type=String ref=__local_4.c
+expr e@37:13#1 memberCall recv=e@37:13 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@37:5 call callee=e@37:5#1 args=[_:e@37:13#1] type=Unit call=kotlin.io.println#1
+expr e@40:22 string(user) type=String
+expr e@40:5 localDecl d mutable=0 type=String? init=e@40:22 type=Unit ref=__local_5.d
+expr e@41:15 name(d) type=String? ref=__local_5.d
+expr e@41:20 name(null) type=Nothing?
+expr e@41:15#1 binary(notEqual) lhs=e@41:15 rhs=e@41:20 type=Boolean
+expr e@41:5 call callee=e@41:5#1 args=[_:e@41:15#1] type=Unit call=myRequire
+expr e@42:13 name(d) type=String ref=__local_5.d
+expr e@42:13#1 memberCall recv=e@42:13 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@42:5 call callee=e@42:5#1 args=[_:e@42:13#1] type=Unit call=kotlin.io.println#1

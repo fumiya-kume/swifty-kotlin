@@ -1,7 +1,7 @@
 symbol fq=golden.sema.useBuildList kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<Int>
 symbol fq=golden.sema.useBuildMap kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.Map<String, Int>
 symbol fq=golden.sema.useBuildSet kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.Set<Int>
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableList.E kind=typeParameter vis=private flags=_
@@ -41,3 +41,4 @@ expr e@15:5 call callee=e@15:5#1 args=[_:e@15:9,_:e@15:14] type=Int? call=kotlin
 expr e@14:5#2 blockExpr stmts=[e@14:5] trailing=e@15:5 type=Int?
 expr e@13:51 lambda params=[] body=e@14:5#2 label=buildMap type=kotlin.collections.MutableMap<String, Int>.() -> Unit
 expr e@13:39 call callee=e@13:39#1 args=[_:e@13:48,_:e@13:51] type=kotlin.collections.Map<out String, out Int> call=kotlin.collections.buildMap#0 targs=[String,Int]
+diagnostic severity=error code=KSWIFTK-TYPE-0001 at=13:1 msg=Type constraint could not be satisfied.

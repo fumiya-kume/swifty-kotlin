@@ -1,6 +1,6 @@
 import RuntimeABI
 
-/// Synthetic stdlib stubs split from `HeaderHelpers+SyntheticComparableAndCollectionStubs.swift`:
+/// Synthetic stdlib stubs split from the KSP-697 collection residual registry:
 /// Map<K,V>, Map.Entry<K,V>, and MutableMap<K,V> interfaces with higher-order members.
 ///
 /// Split out to isolate merge conflicts between parallel stdlib PRs adding new
@@ -253,31 +253,49 @@ extension DataFlowSemaPhase {
             kotlinCollectionsPkg: kotlinCollectionsPkg,
             mapInterfaceSymbol: mapInterfaceSymbol,
             keyTypeParamSymbol: keyTypeParamSymbol,
-            valueTypeParamSymbol: valueTypeParamSymbol
+            valueTypeParamSymbol: valueTypeParamSymbol,
+            bundledIndex: bundledIndex,
+            skipStats: skipStats
         )
-
-        // MutableMap is registered before Map higher-order members. Complete
-        // the nested MutableEntry -> Map.Entry edge once Map.Entry exists.
+        // MutableMap is registered before Map.Entry, so its nested entry shell
+        // cannot link its inherited Map.Entry surface during first registration.
+        // Complete that relationship now, after Map.Entry exists, so key/value
+        // lookup follows the Kotlin declaration rather than a duplicate member.
         let mutableMapFQName = kotlinCollectionsPkg + [interner.intern("MutableMap")]
-        let mutableEntryFQName = mutableMapFQName + [interner.intern("MutableEntry")]
-        if let mutableEntrySymbol = symbols.lookup(fqName: mutableEntryFQName),
-           let mapEntrySymbol = symbols.lookup(
-               fqName: kotlinCollectionsPkg + [interner.intern("Map"), interner.intern("Entry")]
+        if let mutableEntrySymbol = symbols.lookup(
+            fqName: mutableMapFQName + [interner.intern("MutableEntry")]
+        ),
+           let mutableEntryKeySymbol = symbols.lookup(
+               fqName: mutableMapFQName
+                   + [interner.intern("MutableEntry"), interner.intern("K")]
            ),
-           let mutableKeyParamSymbol = symbols.lookup(fqName: mutableMapFQName + [interner.intern("K")]),
-           let mutableValueParamSymbol = symbols.lookup(fqName: mutableMapFQName + [interner.intern("V")])
+           let mutableEntryValueSymbol = symbols.lookup(
+               fqName: mutableMapFQName
+                   + [interner.intern("MutableEntry"), interner.intern("V")]
+           ),
+           let mapEntrySymbol = symbols.lookup(fqName: mapFQName + [interner.intern("Entry")])
         {
-            let mutableKeyType = types.make(.typeParam(TypeParamType(symbol: mutableKeyParamSymbol, nullability: .nonNull)))
-            let mutableValueType = types.make(.typeParam(TypeParamType(symbol: mutableValueParamSymbol, nullability: .nonNull)))
+            let mutableEntryKeyType = types.make(.typeParam(TypeParamType(
+                symbol: mutableEntryKeySymbol,
+                nullability: .nonNull
+            )))
+            let mutableEntryValueType = types.make(.typeParam(TypeParamType(
+                symbol: mutableEntryValueSymbol,
+                nullability: .nonNull
+            )))
+            let mutableEntrySupertypeArgs: [TypeArg] = [
+                .out(mutableEntryKeyType),
+                .out(mutableEntryValueType),
+            ]
             symbols.setDirectSupertypes([mapEntrySymbol], for: mutableEntrySymbol)
             types.setNominalDirectSupertypes([mapEntrySymbol], for: mutableEntrySymbol)
             symbols.setSupertypeTypeArgs(
-                [.out(mutableKeyType), .out(mutableValueType)],
+                mutableEntrySupertypeArgs,
                 for: mutableEntrySymbol,
                 supertype: mapEntrySymbol
             )
             types.setNominalSupertypeTypeArgs(
-                [.out(mutableKeyType), .out(mutableValueType)],
+                mutableEntrySupertypeArgs,
                 for: mutableEntrySymbol,
                 supertype: mapEntrySymbol
             )
@@ -790,7 +808,9 @@ extension DataFlowSemaPhase {
         kotlinCollectionsPkg: [InternedString],
         mapInterfaceSymbol: SymbolID,
         keyTypeParamSymbol: SymbolID,
-        valueTypeParamSymbol: SymbolID
+        valueTypeParamSymbol: SymbolID,
+        bundledIndex: BundledDeclarationIndex,
+        skipStats: SyntheticStubSkipStatsCollector?
     ) -> TypeID {
         let entryName = interner.intern("Entry")
         let mapFQName = kotlinCollectionsPkg + [interner.intern("Map")]
@@ -820,18 +840,6 @@ extension DataFlowSemaPhase {
             args: [.out(keyType), .out(valueType)],
             nullability: .nonNull
         )))
-        let pairType: TypeID? = if let pairSymbol = symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Pair")])
-            ?? symbols.lookupByShortName(interner.intern("Pair")).first
-        {
-            types.make(.classType(ClassType(
-                classSymbol: pairSymbol,
-                args: [.invariant(keyType), .invariant(valueType)],
-                nullability: .nonNull
-            )))
-        } else {
-            nil
-        }
-
         func registerMember(
             name: String,
             returnType: TypeID,
@@ -840,6 +848,21 @@ extension DataFlowSemaPhase {
         ) {
             let memberName = interner.intern(name)
             let memberFQName = entryFQName + [memberName]
+            // KSP-961: component1/component2 are source-backed extensions on
+            // Map.Entry in Entry.kt. Keep the shared key/value accessors below
+            // as runtime-backed interface members, but do not register a
+            // competing synthetic extension surface when bundled source exists.
+            if (name == "component1" || name == "component2"),
+               bundledIndex.contains(ownerFQName: entryFQName, name: memberName, arity: 0)
+            {
+                skipStats?.recordSkip(
+                    ownerFQName: entryFQName,
+                    name: memberName,
+                    arity: 0,
+                    interner: interner
+                )
+                return
+            }
             guard symbols.lookup(fqName: memberFQName) == nil else { return }
             let memberSymbol = symbols.define(
                 kind: .function,
@@ -867,9 +890,6 @@ extension DataFlowSemaPhase {
         registerMember(name: "component2", returnType: valueType, externalLinkName: "__kk_pair_second", flags: [.synthetic, .operatorFunction])
         registerMember(name: "key", returnType: keyType, externalLinkName: "__kk_pair_first")
         registerMember(name: "value", returnType: valueType, externalLinkName: "__kk_pair_second")
-        if let pairType {
-            registerMember(name: "toPair", returnType: pairType, externalLinkName: "kk_map_entry_to_pair")
-        }
 
         return receiverType
     }
@@ -1017,26 +1037,24 @@ extension DataFlowSemaPhase {
             args: [.out(keyType), .out(valueType)],
             nullability: .nonNull
         )))
-        let pairSymbol = symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Pair")])
-            ?? symbols.lookupByShortName(interner.intern("Pair")).first
-        let pairType = if let pairSymbol {
-            types.make(.classType(ClassType(
-                classSymbol: pairSymbol,
-                args: [.invariant(keyType), .invariant(valueType)],
-                nullability: .nonNull
-            )))
-        } else {
-            types.anyType
-        }
+        _ = registerSyntheticMutableMapEntryStub(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            mapInterfaceSymbol: mapInterfaceSymbol,
+            mutableMapSymbol: mutableMapSymbol,
+            keyTypeParamSymbol: mutableKeyParamSymbol,
+            valueTypeParamSymbol: mutableValueParamSymbol
+        )
 
         let members: [(name: String, params: [TypeID], ret: TypeID, external: String, flags: SymbolFlags)] = [
-            ("set", [keyType, valueType], types.unitType, "__kk_mutable_map_put", [.synthetic, .operatorFunction, .throwingFunction]),
+            // `set` and the higher-order MutableMap APIs are source-backed in
+            // MapLookupAndTransform.kt; retain only the low-level put bridge.
             ("put", [keyType, valueType], types.makeNullable(valueType), "__kk_mutable_map_put", [.synthetic, .throwingFunction]),
             ("remove", [keyType], types.makeNullable(valueType), "__kk_mutable_map_remove", [.synthetic]),
             ("clear", [], types.unitType, "__kk_mutable_map_clear", [.synthetic]),
             ("putAll", [mapParamType], types.unitType, "__kk_mutable_map_putAll", [.synthetic]),
-            ("plusAssign", [pairType], types.unitType, "__kk_mutable_map_plusAssign_pair", [.synthetic, .operatorFunction]),
-            ("plusAssign", [mapParamType], types.unitType, "__kk_mutable_map_putAll", [.synthetic, .operatorFunction]),
         ]
 
         for member in members {
@@ -1079,6 +1097,124 @@ extension DataFlowSemaPhase {
             mapInterfaceSymbol: mapInterfaceSymbol,
             mutableMapSymbol: mutableMapSymbol
         )
+    }
+
+    private func registerSyntheticMutableMapEntryStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        mapInterfaceSymbol: SymbolID,
+        mutableMapSymbol: SymbolID,
+        keyTypeParamSymbol: SymbolID,
+        valueTypeParamSymbol: SymbolID
+    ) -> TypeID {
+        let mutableEntryName = interner.intern("MutableEntry")
+        let mutableMapFQName = kotlinCollectionsPkg + [interner.intern("MutableMap")]
+        let mutableEntryFQName = mutableMapFQName + [mutableEntryName]
+        let mutableEntrySymbol: SymbolID
+        if let existing = symbols.lookup(fqName: mutableEntryFQName) {
+            mutableEntrySymbol = existing
+        } else {
+            let symbol = symbols.define(
+                kind: .interface,
+                name: mutableEntryName,
+                fqName: mutableEntryFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(mutableMapSymbol, for: symbol)
+            mutableEntrySymbol = symbol
+        }
+
+        let keyName = interner.intern("K")
+        let valueName = interner.intern("V")
+        let mutableKeyParamFQName = mutableEntryFQName + [keyName]
+        let mutableValueParamFQName = mutableEntryFQName + [valueName]
+        let mutableEntryKeyParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: mutableKeyParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: keyName,
+                fqName: mutableKeyParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let mutableEntryValueParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: mutableValueParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: valueName,
+                fqName: mutableValueParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let keyType = types.make(.typeParam(TypeParamType(symbol: mutableEntryKeyParamSymbol, nullability: .nonNull)))
+        let valueType = types.make(.typeParam(TypeParamType(symbol: mutableEntryValueParamSymbol, nullability: .nonNull)))
+        types.setNominalTypeParameterSymbols(
+            [mutableEntryKeyParamSymbol, mutableEntryValueParamSymbol],
+            for: mutableEntrySymbol
+        )
+        types.setNominalTypeParameterVariances([.out, .out], for: mutableEntrySymbol)
+
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: mutableEntrySymbol,
+            args: [.out(keyType), .out(valueType)],
+            nullability: .nonNull
+        )))
+        if let mapEntrySymbol = symbols.lookup(
+            fqName: kotlinCollectionsPkg + [interner.intern("Map"), interner.intern("Entry")]
+        ) {
+            symbols.setDirectSupertypes([mapEntrySymbol], for: mutableEntrySymbol)
+            types.setNominalDirectSupertypes([mapEntrySymbol], for: mutableEntrySymbol)
+            symbols.setSupertypeTypeArgs(
+                [.out(keyType), .out(valueType)],
+                for: mutableEntrySymbol,
+                supertype: mapEntrySymbol
+            )
+            types.setNominalSupertypeTypeArgs(
+                [.out(keyType), .out(valueType)],
+                for: mutableEntrySymbol,
+                supertype: mapEntrySymbol
+            )
+        }
+
+        let setValueName = interner.intern("setValue")
+        let setValueFQName = mutableEntryFQName + [setValueName]
+        if symbols.lookup(fqName: setValueFQName) == nil {
+            let setValueSymbol = symbols.define(
+                kind: .function,
+                name: setValueName,
+                fqName: setValueFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(mutableEntrySymbol, for: setValueSymbol)
+            symbols.setExternalLinkName("__kk_mutable_map_entry_setValue", for: setValueSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [valueType],
+                    returnType: valueType,
+                    typeParameterSymbols: [mutableEntryKeyParamSymbol, mutableEntryValueParamSymbol],
+                    classTypeParameterCount: 2
+                ),
+                for: setValueSymbol
+            )
+        }
+
+        _ = mapInterfaceSymbol
+        _ = keyTypeParamSymbol
+        _ = valueTypeParamSymbol
+        return receiverType
     }
 
     /// Register the fallback `kotlin.collections.AbstractMutableMap<K, V>` surface

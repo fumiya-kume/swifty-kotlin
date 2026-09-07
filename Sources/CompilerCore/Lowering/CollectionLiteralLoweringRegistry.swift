@@ -59,6 +59,7 @@ final class CollectionVirtualCallRewriteLoweringPass: CollectionLiteralLoweringS
             pathExprIDs: &state.pathExprIDs,
             iteratorBuilderExprIDs: state.iteratorBuilderExprIDs,
             indexingIterableExprIDs: &state.indexingIterableExprIDs,
+            listIteratorExprIDs: &state.listIteratorExprIDs,
             loweredBody: &loweredBody
         )
     }

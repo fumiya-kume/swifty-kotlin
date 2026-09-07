@@ -45,3 +45,5 @@ expr e@23:5 localDecl x mutable=0 type=_ init=e@23:13#1 type=Unit ref=__local_0.
 expr e@27:5 name(box) type=golden.sema.Box<*> ref=golden.sema.starWrite.$4.box
 expr e@27:13 int(42) type=Int
 expr e@27:5#1 memberCall recv=e@27:5 callee=set args=[_:e@27:13] type=<error>
+diagnostic severity=error code=KSWIFTK-SEMA-VAR-OUT at=13:5 msg=A type projection on the receiver prevents calling 'set' because the type parameter appears in an 'in' position (parameter type 'T').
+diagnostic severity=error code=KSWIFTK-SEMA-VAR-OUT at=27:5 msg=A type projection on the receiver prevents calling 'set' because the type parameter appears in an 'in' position (parameter type 'T').

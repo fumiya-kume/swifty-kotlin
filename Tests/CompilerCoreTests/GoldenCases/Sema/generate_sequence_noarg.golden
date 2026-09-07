@@ -4,7 +4,7 @@ symbol fq=__local_2.result kind=local vis=private flags=_ type=kotlin.collection
 symbol fq=__local_3.n kind=local vis=private flags=mutable type=Int
 symbol fq=__local_4.naturals kind=local vis=private flags=_ type=kotlin.sequences.Sequence<Int>
 symbol fq=__local_5.first5 kind=local vis=private flags=_ type=kotlin.collections.List<Int>
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
 symbol fq=kotlin.sequences.Sequence.toList kind=function vis=public flags=synthetic sig=recv=kotlin.sequences.Sequence<kotlin.sequences.toList.$0.T> params=[] ret=kotlin.collections.List<kotlin.sequences.toList.$0.T>
 symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
@@ -47,3 +47,4 @@ expr e@14:18#2 memberCall recv=e@14:18#1 callee=toList args=[] type=kotlin.colle
 expr e@14:5 localDecl first5 mutable=0 type=_ init=e@14:18#2 type=Unit ref=__local_5.first5
 expr e@15:13 name(first5) type=kotlin.collections.List<Int> ref=__local_5.first5
 expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13] type=Unit call=kotlin.io.println#1
+diagnostic severity=error code=KSWIFTK-TYPE-0001 at=5:9 msg=Type constraint could not be satisfied.

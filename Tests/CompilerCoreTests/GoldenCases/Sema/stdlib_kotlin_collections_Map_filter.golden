@@ -1,0 +1,33 @@
+symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map.Entry kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map.Entry.value kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.V
+symbol fq=kotlin.collections.Map.K kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Map.V kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
+symbol fq=mapFilterNotToCase kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>,kotlin.collections.MutableMap<Any?, Any?>] ret=kotlin.collections.MutableMap<Any?, Any?>
+symbol fq=mapFilterNotToCase.$0.destination kind=valueParameter vis=private flags=_
+symbol fq=mapFilterNotToCase.$0.source kind=valueParameter vis=private flags=_
+symbol fq=mapFilterToCase kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>,kotlin.collections.MutableMap<Any?, Any?>] ret=kotlin.collections.MutableMap<Any?, Any?>
+symbol fq=mapFilterToCase.$1.destination kind=valueParameter vis=private flags=_
+symbol fq=mapFilterToCase.$1.source kind=valueParameter vis=private flags=_
+file fstdlib_kotlin_collections_Map_filter package=_
+  decl mapFilterToCase fun mapFilterToCase sym=mapFilterToCase
+  decl mapFilterNotToCase fun mapFilterNotToCase sym=mapFilterNotToCase
+expr e@2:12 name(source) type=kotlin.collections.Map<String, Int> ref=mapFilterToCase.$1.source
+expr e@2:28 name(destination) type=kotlin.collections.MutableMap<Any?, Any?> ref=mapFilterToCase.$1.destination
+expr e@2:52 name(entry) type=kotlin.collections.Map.Entry<out String, out Int> ref=s-0
+expr e@2:52#1 memberCall recv=e@2:52 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value targs=[String,Int]
+expr e@2:66 int(1) type=Int
+expr e@2:52#2 binary(greaterThan) lhs=e@2:52#1 rhs=e@2:66 type=Boolean
+expr e@2:41 lambda params=[entry] body=e@2:52#2 label=filterTo type=(kotlin.collections.Map.Entry<out String, out Int>) -> Boolean
+expr e@2:12#1 memberCall recv=e@2:12 callee=filterTo args=[_:e@2:28,_:e@2:41] type=kotlin.collections.MutableMap<Any?, Any?> call=kotlin.collections.filterTo#2 targs=[String,Int,kotlin.collections.MutableMap<Any?, Any?>]
+expr e@2:5 return value=e@2:12#1 type=Nothing
+expr e@6:12 name(source) type=kotlin.collections.Map<String, Int> ref=mapFilterNotToCase.$0.source
+expr e@6:31 name(destination) type=kotlin.collections.MutableMap<Any?, Any?> ref=mapFilterNotToCase.$0.destination
+expr e@6:55 name(entry) type=kotlin.collections.Map.Entry<out String, out Int> ref=s-1
+expr e@6:55#1 memberCall recv=e@6:55 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value targs=[String,Int]
+expr e@6:69 int(1) type=Int
+expr e@6:55#2 binary(greaterThan) lhs=e@6:55#1 rhs=e@6:69 type=Boolean
+expr e@6:44 lambda params=[entry] body=e@6:55#2 label=filterNotTo type=(kotlin.collections.Map.Entry<out String, out Int>) -> Boolean
+expr e@6:12#1 memberCall recv=e@6:12 callee=filterNotTo args=[_:e@6:31,_:e@6:44] type=kotlin.collections.MutableMap<Any?, Any?> call=kotlin.collections.filterNotTo#2 targs=[String,Int,kotlin.collections.MutableMap<Any?, Any?>]
+expr e@6:5 return value=e@6:12#1 type=Nothing

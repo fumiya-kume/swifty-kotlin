@@ -78,7 +78,7 @@ class EmailAddress private constructor(private val address: String) {
         }
     }
 
-    fun toString(): String = address
+    override fun toString(): String = address
 }
 
 class OuterClass {

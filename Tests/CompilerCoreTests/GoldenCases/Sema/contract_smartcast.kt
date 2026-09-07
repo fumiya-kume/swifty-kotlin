@@ -2,6 +2,7 @@
 import kotlin.contracts.*
 
 // User-defined function with contract { returns() implies (value) }
+@OptIn(ExperimentalContracts::class)
 fun myRequire(value: Boolean) {
     contract {
         returns() implies (value)

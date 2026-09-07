@@ -186,6 +186,30 @@ extension ExprLowerer {
                 let receiverMayBeCollection = resolveClassTypeSymbol(nonNullReceiverType, sema: sema)
                     .map { KnownCompilerNames(interner: interner).isCollectionLikeSymbol($0.symbol) }
                     ?? true
+                // Abstract class properties have no usable declaration-local
+                // field value. Resolve them through the class vtable before
+                // collection shortcuts or the stored-field fallback below.
+                if let propertySymbol = sema.bindings.identifierSymbols[exprID],
+                   let (accessorSymbol, dispatch) = driver.callLowerer.tryResolvePropertyAccessorVirtualDispatch(
+                       propertySymbol: propertySymbol,
+                       receiverExpr: exprID,
+                       accessorKind: .getter,
+                       ast: ast,
+                       sema: sema
+                   )
+                {
+                    instructions.append(.virtualCall(
+                        symbol: accessorSymbol,
+                        callee: interner.intern("get"),
+                        receiver: receiverExprID,
+                        arguments: [],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil,
+                        dispatch: dispatch
+                    ))
+                    return result
+                }
 
                 // A user-declared member with a custom getter shadows the built-in
                 // collection shortcuts below: `size` / `isEmpty` inside a class that
@@ -219,6 +243,38 @@ extension ExprLowerer {
                         result: result,
                         into: &instructions
                     )
+                    return result
+                }
+
+                // Some implicit member expressions carry their selected
+                // property only in the call binding. Preserve the same
+                // abstract/open class dispatch in that representation too.
+                if let symbol = sema.bindings.identifierSymbols[exprID]
+                    ?? sema.bindings.callBindings[exprID]?.chosenCallee,
+                   let propertyInfo = sema.symbols.symbol(symbol),
+                   propertyInfo.kind == .property,
+                   propertyInfo.flags.contains(.abstractType)
+                       || propertyInfo.flags.contains(.openType),
+                   let ownerSymbol = sema.symbols.parentSymbol(for: symbol),
+                   let ownerInfo = sema.symbols.symbol(ownerSymbol),
+                   ownerInfo.kind == .class,
+                   !sema.symbols.directSubtypes(of: ownerSymbol).isEmpty,
+                   let getterSlot = sema.symbols.nominalLayout(for: ownerSymbol)?.vtableSlots[
+                       SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: symbol)
+                   ]
+                {
+                    let getterSymbol = sema.symbols.extensionPropertyGetterAccessor(for: symbol)
+                        ?? SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: symbol)
+                    instructions.append(.virtualCall(
+                        symbol: getterSymbol,
+                        callee: interner.intern("get"),
+                        receiver: receiverExprID,
+                        arguments: [],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil,
+                        dispatch: .vtable(slot: getterSlot)
+                    ))
                     return result
                 }
 
@@ -279,6 +335,37 @@ extension ExprLowerer {
                    )
                 {
                     return interfaceRead
+                }
+
+                // KSP-928: implicit reads of abstract/open class properties
+                // must dispatch through the class vtable. This is the path
+                // used by AbstractMap's skeletal methods for `entries`.
+                if let symbol = sema.bindings.identifierSymbols[exprID],
+                   let propertyInfo = sema.symbols.symbol(symbol),
+                   propertyInfo.kind == .property,
+                   propertyInfo.flags.contains(.abstractType)
+                       || propertyInfo.flags.contains(.openType),
+                   let ownerSymbol = sema.symbols.parentSymbol(for: symbol),
+                   let ownerInfo = sema.symbols.symbol(ownerSymbol),
+                   ownerInfo.kind == .class,
+                   !sema.symbols.directSubtypes(of: ownerSymbol).isEmpty,
+                   let getterSlot = sema.symbols.nominalLayout(for: ownerSymbol)?.vtableSlots[
+                       SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: symbol)
+                   ]
+                {
+                    let getterSymbol = sema.symbols.extensionPropertyGetterAccessor(for: symbol)
+                        ?? SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: symbol)
+                    instructions.append(.virtualCall(
+                        symbol: getterSymbol,
+                        callee: interner.intern("get"),
+                        receiver: receiverExprID,
+                        arguments: [],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil,
+                        dispatch: .vtable(slot: getterSlot)
+                    ))
+                    return result
                 }
 
                 // A custom getter must run for implicit-receiver reads just as
@@ -490,7 +577,8 @@ extension ExprLowerer {
                    let receiverExprID = driver.ctx.activeImplicitReceiverExprID(),
                    let ownerSymbol = sema.symbols.parentSymbol(for: symbol),
                    let ownerKind = sema.symbols.symbol(ownerSymbol)?.kind,
-                   ownerKind == .class || ownerKind == .interface
+                   ownerKind == .class,
+                   !sema.symbols.directSubtypes(of: ownerSymbol).isEmpty
                 {
                     let resultType = boundType
                         ?? sema.symbols.propertyType(for: symbol)
@@ -505,6 +593,32 @@ extension ExprLowerer {
                         instructions: &instructions
                     ) {
                         return interfaceRead
+                    }
+                    // KSP-928: the abstract `entries` property in
+                    // AbstractMap is resolved from an implicit receiver in
+                    // its base-class methods, so use the subclass vtable
+                    // entry instead of the generated abstract getter stub.
+                    if let propertyInfo = sema.symbols.symbol(symbol),
+                       propertyInfo.flags.contains(.abstractType)
+                           || propertyInfo.flags.contains(.openType),
+                       let getterSlot = sema.symbols.nominalLayout(for: ownerSymbol)?.vtableSlots[
+                           SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: symbol)
+                       ]
+                    {
+                        let getterSymbol = sema.symbols.extensionPropertyGetterAccessor(for: symbol)
+                            ?? SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: symbol)
+                        let result = arena.appendTemporary(type: resultType)
+                        instructions.append(.virtualCall(
+                            symbol: getterSymbol,
+                            callee: interner.intern("get"),
+                            receiver: receiverExprID,
+                            arguments: [],
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil,
+                            dispatch: .vtable(slot: getterSlot)
+                        ))
+                        return result
                     }
                     if driver.callLowerer.memberPropertyUsesAccessor(symbol, ast: ast, sema: sema) {
                         let getterSymbol = sema.symbols.extensionPropertyGetterAccessor(for: symbol)
@@ -2672,4 +2786,5 @@ extension ExprLowerer {
         }
         return false
     }
+
 }

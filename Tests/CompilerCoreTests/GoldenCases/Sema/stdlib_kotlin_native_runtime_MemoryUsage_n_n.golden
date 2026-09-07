@@ -1,0 +1,5 @@
+symbol fq=golden.sema.memoryUsageConstructor kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.native.runtime.MemoryUsage
+file fstdlib_kotlin_native_runtime_MemoryUsage_n_n package=golden.sema
+  decl golden.sema.memoryUsageConstructor fun memoryUsageConstructor sym=golden.sema.memoryUsageConstructor
+expr e@6:57 long(42) type=Long
+expr e@6:45 call callee=e@6:45#1 args=[_:e@6:57] type=kotlin.native.runtime.MemoryUsage call=kotlin.native.runtime.MemoryUsage.<init>

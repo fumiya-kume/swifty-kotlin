@@ -12,7 +12,7 @@ package kotlin.reflect
 // to bundled Kotlin source. The `() -> V` / `(T) -> V` / `(D, E) -> V` function-type
 // supertypes (KSP-CAP-009) let property references be used as functions; Sema
 // inheritance binding lowers them to the corresponding kotlin.Function{N} nominal
-// interfaces. KProperty / KMutableProperty / KCallable remain synthetic surface.
+// interfaces. KProperty / KMutableProperty remain synthetic nominal surfaces.
 
 public interface KProperty0<out V> : KProperty<V>, () -> V {
     public fun get(): V

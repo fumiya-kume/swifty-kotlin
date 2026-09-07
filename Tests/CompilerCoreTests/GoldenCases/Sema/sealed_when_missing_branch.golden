@@ -17,3 +17,4 @@ expr e@7:18#2 isCheck expr=e@7:18 type=Cat type=Boolean
 expr e@9:19 string(cat) type=String
 expr e@7:12 when subject=e@7:18 branches=[e@7:18#1->e@8:19,e@7:18#2->e@9:19] else=_ type=String
 expr e@7:5 return value=e@7:12 type=Nothing
+diagnostic severity=error code=KSWIFTK-SEMA-0071 at=7:12 msg=Non-exhaustive when expression on sealed type. Missing branches: Bird.

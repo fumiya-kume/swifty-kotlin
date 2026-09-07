@@ -103,3 +103,4 @@ expr e@27:35#1 memberCall recv=e@27:35 callee=value args=[] type=Int call=kotlin
 expr e@27:33 lambda params=[] body=e@27:35#1 label=compareBy type=(kotlin.collections.Map.Entry<out String, out Int>) -> Any?
 expr e@27:23 call callee=e@27:23#1 args=[_:e@27:33] type=kotlin.Comparator<kotlin.collections.Map.Entry<out String, out Int>> call=kotlin.comparisons.compareBy#0 targs=[kotlin.collections.Map.Entry<out String, out Int>]
 expr e@27:5#1 memberCall recv=e@27:5 callee=minWithOrNull args=[_:e@27:23] type=kotlin.collections.Map.Entry<out String, out Int>? call=kotlin.collections.minWithOrNull#1 targs=[String,Int]
+diagnostic severity=error code=KSWIFTK-TYPE-0001 at=26:1 msg=Type constraint could not be satisfied.

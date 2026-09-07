@@ -36,3 +36,4 @@ expr e@20:5 call callee=e@20:5#1 args=[_:e@20:13] type=Unit call=kotlin.io.print
 expr e@24:5 localDecl b mutable=1 type=Int init=_ type=Unit ref=__local_4.b
 expr e@25:13 name(b) type=Int ref=__local_4.b
 expr e@25:5 call callee=e@25:5#1 args=[_:e@25:13] type=Unit call=kotlin.io.println#1
+diagnostic severity=error code=KSWIFTK-SEMA-0031 at=25:13 msg=Variable 'b' must be initialized before use.

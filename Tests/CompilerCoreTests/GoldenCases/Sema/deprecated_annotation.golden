@@ -15,3 +15,4 @@ expr e@11:37 call callee=e@11:37#1 args=[] type=Int call=golden.sema.oldFunWarni
 expr e@11:21#2 binary(add) lhs=e@11:21 rhs=e@11:37 type=Int
 expr e@11:55 call callee=e@11:55#1 args=[] type=Int call=golden.sema.newFun
 expr e@11:21#3 binary(add) lhs=e@11:21#2 rhs=e@11:55 type=Int
+diagnostic severity=error code=KSWIFTK-SEMA-DEPRECATED at=11:21 msg='golden.sema.oldFunError' is deprecated. Use newFun instead

@@ -5,8 +5,8 @@ symbol fq=__local_3.iterableResult kind=local vis=private flags=_ type=kotlin.co
 symbol fq=__local_4.keyResult kind=local vis=private flags=_ type=kotlin.collections.Map<String?, Int?>
 symbol fq=kotlin.Array kind=class vis=public flags=synthetic
 symbol fq=kotlin.Pair kind=class vis=public flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
 symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
@@ -27,10 +27,10 @@ file fstdlib_kotlin_collections_Map_minus package=_
   decl main fun main sym=main
 expr e@1:83 name(map) type=kotlin.collections.Map<out removeFromSequence.$1.K, removeFromSequence.$1.V> ref=removeFromSequence.$1.map
 expr e@1:89 name(keys) type=kotlin.sequences.Sequence<removeFromSequence.$1.K> ref=removeFromSequence.$1.keys
-expr e@1:83#1 binary(subtract) lhs=e@1:83 rhs=e@1:89 type=kotlin.collections.Map<removeFromSequence.$1.K, removeFromSequence.$1.V> call=kotlin.collections.minus#5 targs=[removeFromSequence.$1.K,removeFromSequence.$1.V]
+expr e@1:83#1 binary(subtract) lhs=e@1:83 rhs=e@1:89 type=kotlin.collections.Map<removeFromSequence.$1.K, removeFromSequence.$1.V> call=kotlin.collections.minus#7 targs=[removeFromSequence.$1.K,removeFromSequence.$1.V]
 expr e@3:81 name(map) type=kotlin.collections.Map<out removeFromArray.$0.K, removeFromArray.$0.V> ref=removeFromArray.$0.map
 expr e@3:87 name(keys) type=kotlin.Array<out removeFromArray.$0.K> ref=removeFromArray.$0.keys
-expr e@3:81#1 binary(subtract) lhs=e@3:81 rhs=e@3:87 type=kotlin.collections.Map<removeFromArray.$0.K, removeFromArray.$0.V> call=kotlin.collections.minus#4 targs=[removeFromArray.$0.K,removeFromArray.$0.V]
+expr e@3:81#1 binary(subtract) lhs=e@3:81 rhs=e@3:87 type=kotlin.collections.Map<removeFromArray.$0.K, removeFromArray.$0.V> call=kotlin.collections.minus#6 targs=[removeFromArray.$0.K,removeFromArray.$0.V]
 expr e@6:47 string(a) type=String
 expr e@6:54 int(1) type=Int
 expr e@6:47#1 memberCall recv=e@6:47 callee=to args=[_:e@6:54] type=kotlin.Pair<String, Int> call=kotlin.to targs=[String,Int]
@@ -59,11 +59,11 @@ expr e@8:5 localDecl arrayResult mutable=0 type=_ init=e@8:23 type=Unit ref=__lo
 expr e@9:26 name(map) type=kotlin.collections.Map<String?, Int?> ref=__local_0.map
 expr e@9:39 name(null) type=Nothing?
 expr e@9:32 call callee=e@9:32#1 args=[_:e@9:39] type=kotlin.collections.List<out Nothing?> call=kotlin.collections.listOf#1 targs=[Nothing?]
-expr e@9:26#1 binary(subtract) lhs=e@9:26 rhs=e@9:32 type=kotlin.collections.Map<String?, Int?> call=kotlin.collections.minus#3 targs=[String?,Int?]
+expr e@9:26#1 binary(subtract) lhs=e@9:26 rhs=e@9:32 type=kotlin.collections.Map<String?, Int?> call=kotlin.collections.minus#5 targs=[String?,Int?]
 expr e@9:5 localDecl iterableResult mutable=0 type=_ init=e@9:26#1 type=Unit ref=__local_3.iterableResult
 expr e@10:21 name(map) type=kotlin.collections.Map<String?, Int?> ref=__local_0.map
 expr e@10:27 string(b) type=String
-expr e@10:21#1 binary(subtract) lhs=e@10:21 rhs=e@10:27 type=kotlin.collections.Map<String?, Int?> call=kotlin.collections.minus#2 targs=[String?,Int?]
+expr e@10:21#1 binary(subtract) lhs=e@10:21 rhs=e@10:27 type=kotlin.collections.Map<String?, Int?> call=kotlin.collections.minus#4 targs=[String?,Int?]
 expr e@10:5 localDecl keyResult mutable=0 type=_ init=e@10:21#1 type=Unit ref=__local_4.keyResult
 expr e@12:13 name(sequenceResult) type=kotlin.collections.Map<String?, Int?> ref=__local_1.sequenceResult
 expr e@12:5 call callee=e@12:5#1 args=[_:e@12:13] type=Unit call=kotlin.io.println#1

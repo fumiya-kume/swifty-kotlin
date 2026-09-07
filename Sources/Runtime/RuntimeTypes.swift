@@ -260,8 +260,12 @@ final class RuntimeObjectBox: RuntimeArrayBox {
 }
 
 final class RuntimePairBox {
-    let firstValue: RuntimeValue
-    let secondValue: RuntimeValue
+    var firstValue: RuntimeValue
+    var secondValue: RuntimeValue
+    // MutableMap.MutableEntry pairs retain the destination map so entry.value
+    // and setValue() observe subsequent mutations through the live view.
+    var mutableMapRaw: Int = 0
+    var mutableMapKey: Int = 0
 
     var first: Int { firstValue.legacyRawValue }
     var second: Int { secondValue.legacyRawValue }
@@ -303,10 +307,15 @@ final class RuntimeIntBox {
     /// the raw ordinal once the static enum type has been erased. See
     /// kk_enum_box_ordinal.
     let enumEntryName: String?
+    /// Stable nominal ID for the enum class represented by this box. Unlike a
+    /// plain boxed Int, enum equality must keep two entries from different
+    /// enum classes unequal even when their ordinals match.
+    let enumClassID: Int64?
 
-    init(_ value: Int, enumEntryName: String? = nil) {
+    init(_ value: Int, enumEntryName: String? = nil, enumClassID: Int64? = nil) {
         self.value = value
         self.enumEntryName = enumEntryName
+        self.enumClassID = enumClassID
     }
 }
 
@@ -374,6 +383,7 @@ enum RuntimeCallableRefKind {
 
 struct RuntimeCallableRefMetadata {
     let nameRaw: Int
+    let returnTypeRaw: Int
     let arity: Int
     let kind: RuntimeCallableRefKind
     let isSuspend: Bool
@@ -591,6 +601,7 @@ final class RuntimeSetBox {
 final class RuntimeMapBox {
     private var keyStorage: [RuntimeValue]
     private var valueStorage: [RuntimeValue]
+    private let backingMap: RuntimeMapBox?
     private var keyIndex: [RuntimeElementKey: Int]
     let defaultValueFnPtr: Int
     let defaultValueClosureRaw: Int
@@ -598,49 +609,61 @@ final class RuntimeMapBox {
 
     var keyValues: [RuntimeValue] {
         get {
-            keyStorage
+            backingMap?.keyValues ?? keyStorage
         }
         set {
-            guard !isReadOnly else { return }
-            keyStorage = newValue
-            rebuildKeyIndex()
+            if let backingMap {
+                backingMap.keyValues = newValue
+            } else {
+                guard !isReadOnly else { return }
+                keyStorage = newValue
+                rebuildKeyIndex()
+            }
         }
     }
 
     var entryValues: [RuntimeValue] {
         get {
-            valueStorage
+            backingMap?.entryValues ?? valueStorage
         }
         set {
-            guard !isReadOnly else { return }
-            valueStorage = newValue
+            if let backingMap {
+                backingMap.entryValues = newValue
+            } else {
+                guard !isReadOnly else { return }
+                valueStorage = newValue
+            }
         }
     }
 
     var keys: [Int] {
         get {
-            keyStorage.map(\.legacyRawValue)
+            keyValues.map(\.legacyRawValue)
         }
         set {
-            guard !isReadOnly else { return }
-            keyStorage = newValue.map { RuntimeValue(raw: $0) }
-            rebuildKeyIndex()
+            keyValues = newValue.map { RuntimeValue(raw: $0) }
         }
     }
 
     var values: [Int] {
         get {
-            valueStorage.map(\.legacyRawValue)
+            entryValues.map(\.legacyRawValue)
         }
         set {
-            guard !isReadOnly else { return }
-            valueStorage = newValue.map { RuntimeValue(raw: $0) }
+            entryValues = newValue.map { RuntimeValue(raw: $0) }
         }
     }
 
-    init(keys: [Int], values: [Int], defaultValueFnPtr: Int = 0, defaultValueClosureRaw: Int = 0) {
+    init(
+        keys: [Int],
+        values: [Int],
+        defaultValueFnPtr: Int = 0,
+        defaultValueClosureRaw: Int = 0,
+        backingMap: RuntimeMapBox? = nil
+    ) {
         self.keyStorage = keys.map { RuntimeValue(raw: $0) }
         self.valueStorage = values.map { RuntimeValue(raw: $0) }
+        self.backingMap = backingMap
         self.keyIndex = [:]
         self.defaultValueFnPtr = defaultValueFnPtr
         self.defaultValueClosureRaw = defaultValueClosureRaw
@@ -648,18 +671,24 @@ final class RuntimeMapBox {
     }
 
     var count: Int {
-        keyStorage.count
+        backingMap?.count ?? keyStorage.count
     }
 
     var isEmpty: Bool {
-        keyStorage.isEmpty
+        backingMap?.isEmpty ?? keyStorage.isEmpty
     }
 
     func index(ofRawKey key: Int) -> Int? {
+        if let backingMap {
+            return backingMap.index(ofRawKey: key)
+        }
         return keyIndex[RuntimeElementKey(value: key)]
     }
 
     func rawValue(at index: Int) -> Int? {
+        if let backingMap {
+            return backingMap.rawValue(at: index)
+        }
         guard valueStorage.indices.contains(index) else {
             return nil
         }
@@ -667,6 +696,10 @@ final class RuntimeMapBox {
     }
 
     func updateValue(at index: Int, rawValue: Int) {
+        if let backingMap {
+            backingMap.updateValue(at: index, rawValue: rawValue)
+            return
+        }
         guard valueStorage.indices.contains(index) else {
             valueStorage.append(RuntimeValue(raw: rawValue))
             return
@@ -675,6 +708,10 @@ final class RuntimeMapBox {
     }
 
     func appendEntry(key: Int, value: Int) {
+        if let backingMap {
+            backingMap.appendEntry(key: key, value: value)
+            return
+        }
         let newIndex = keyStorage.count
         keyStorage.append(RuntimeValue(raw: key))
         valueStorage.append(RuntimeValue(raw: value))
@@ -686,6 +723,9 @@ final class RuntimeMapBox {
 
     @discardableResult
     func put(key: Int, value: Int) -> Int? {
+        if let backingMap {
+            return backingMap.put(key: key, value: value)
+        }
         let runtimeKey = RuntimeElementKey(value: key)
         if let index = keyIndex[runtimeKey] {
             let previous = rawValue(at: index)
@@ -698,6 +738,9 @@ final class RuntimeMapBox {
 
     @discardableResult
     func remove(key: Int) -> Int? {
+        if let backingMap {
+            return backingMap.remove(key: key)
+        }
         guard let index = index(ofRawKey: key) else {
             return nil
         }
@@ -708,6 +751,10 @@ final class RuntimeMapBox {
     }
 
     func removeAll() {
+        if let backingMap {
+            backingMap.removeAll()
+            return
+        }
         keyStorage.removeAll()
         valueStorage.removeAll()
         keyIndex.removeAll()
@@ -729,6 +776,7 @@ final class RuntimeMapBox {
     init(capacity: Int, defaultValueFnPtr: Int = 0, defaultValueClosureRaw: Int = 0) {
         self.keyStorage = []
         self.valueStorage = []
+        self.backingMap = nil
         self.keyIndex = [:]
         self.keyStorage.reserveCapacity(max(0, capacity))
         self.valueStorage.reserveCapacity(max(0, capacity))
@@ -870,23 +918,61 @@ final class RuntimeIndexingIteratorBox {
 final class RuntimeListIteratorBox {
     var elements: [Int]
     var index: Int
+    /// Index last returned by `next()`/`previous()`, or -1 before any
+    /// traversal call or once consumed by `remove()`/`add()` — mirrors
+    /// Java/Kotlin's `AbstractList.Itr.lastRet` invariant.
+    var lastReturnedIndex: Int
     let removeAction: ((Int) -> Void)?
+    let setAction: ((Int, Int) -> Void)?
+    let addAction: ((Int, Int) -> Void)?
 
-    init(elements: [Int], removeAction: ((Int) -> Void)? = nil) {
+    init(
+        elements: [Int],
+        removeAction: ((Int) -> Void)? = nil,
+        setAction: ((Int, Int) -> Void)? = nil,
+        addAction: ((Int, Int) -> Void)? = nil
+    ) {
         self.elements = elements
         index = 0
+        lastReturnedIndex = -1
         self.removeAction = removeAction
+        self.setAction = setAction
+        self.addAction = addAction
     }
 
     func removeLastReturned() -> Bool {
-        guard index > 0, index <= elements.count else {
+        guard lastReturnedIndex >= 0, lastReturnedIndex < elements.count else {
             return false
         }
-        let removedIndex = index - 1
-        elements.remove(at: removedIndex)
-        index = removedIndex
-        removeAction?(removedIndex)
+        elements.remove(at: lastReturnedIndex)
+        index = lastReturnedIndex
+        removeAction?(lastReturnedIndex)
+        lastReturnedIndex = -1
         return true
+    }
+
+    /// `MutableListIterator.set`: replaces the element most recently returned
+    /// by `next()`/`previous()`, at the same position `removeLastReturned()`
+    /// targets.
+    func setLastReturned(_ rawValue: Int) -> Bool {
+        guard lastReturnedIndex >= 0, lastReturnedIndex < elements.count else {
+            return false
+        }
+        elements[lastReturnedIndex] = rawValue
+        setAction?(lastReturnedIndex, rawValue)
+        return true
+    }
+
+    /// `MutableListIterator.add`: inserts before the element `next()` would
+    /// return, then advances the cursor past the inserted element so a
+    /// following `next()` does not return it again. Invalidates
+    /// `lastReturnedIndex`: `add()` cannot be followed directly by
+    /// `set()`/`remove()`.
+    func addBeforeNext(_ rawValue: Int) {
+        elements.insert(rawValue, at: index)
+        addAction?(index, rawValue)
+        index += 1
+        lastReturnedIndex = -1
     }
 }
 
@@ -900,6 +986,21 @@ final class RuntimeMapIteratorBox {
         self.keys = keys
         self.values = values
         index = 0
+    }
+}
+
+/// MutableMap iterator whose entries remain connected to the destination map.
+final class RuntimeMutableMapIteratorBox {
+    let mapRaw: Int
+    let keys: [Int]
+    var index: Int
+    var lastKey: Int?
+
+    init(mapRaw: Int, keys: [Int]) {
+        self.mapRaw = mapRaw
+        self.keys = keys
+        index = 0
+        lastKey = nil
     }
 }
 
@@ -1885,11 +1986,19 @@ final class RuntimeKTypeBox {
     let argumentRaws: [Int]
     /// Whether the type is marked nullable (`T?`).
     let isMarkedNullable: Bool
+    /// Optional compact type descriptor used by callable reflection metadata.
+    let typeNameRaw: Int
 
-    init(classifierRaw: Int, argumentRaws: [Int], isMarkedNullable: Bool) {
+    init(
+        classifierRaw: Int,
+        argumentRaws: [Int],
+        isMarkedNullable: Bool,
+        typeNameRaw: Int = 0
+    ) {
         self.classifierRaw = classifierRaw
         self.argumentRaws = argumentRaws
         self.isMarkedNullable = isMarkedNullable
+        self.typeNameRaw = typeNameRaw
     }
 }
 
@@ -2531,6 +2640,7 @@ extension RuntimeArrayBox: RuntimeChildReferenceProviding {
 extension RuntimePairBox: RuntimeChildReferenceProviding {
     var childRefs: [Int] {
         [firstValue, secondValue].compactMap(\.childReferenceRawValue)
+            + (mutableMapRaw == 0 ? [] : [mutableMapRaw])
     }
 }
 
@@ -2553,6 +2663,10 @@ extension RuntimeMapBox: RuntimeChildReferenceProviding {
         keyValues.compactMap(\.childReferenceRawValue)
             + entryValues.compactMap(\.childReferenceRawValue)
     }
+}
+
+extension RuntimeMutableMapIteratorBox: RuntimeChildReferenceProviding {
+    var childRefs: [Int] { mapRaw == 0 ? [] : [mapRaw] }
 }
 
 extension RuntimeArrayDequeBox: RuntimeChildReferenceProviding {

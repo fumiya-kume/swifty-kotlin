@@ -149,7 +149,11 @@ extension CallTypeChecker {
             return nil
         }
 
-        let renderedParamType = sema.types.renderType(violatingParamType)
+        let renderedParamType = sema.types.displayName(
+            of: violatingParamType,
+            symbols: sema.symbols,
+            interner: interner
+        )
         return Diagnostic(
             severity: .error,
             code: "KSWIFTK-SEMA-VAR-OUT",

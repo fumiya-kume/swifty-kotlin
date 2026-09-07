@@ -1,0 +1,45 @@
+symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
+symbol fq=removeByArray kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>,kotlin.Array<out Int>] ret=kotlin.collections.List<Int>
+symbol fq=removeByArray.$0.elements kind=valueParameter vis=private flags=_
+symbol fq=removeByArray.$0.values kind=valueParameter vis=private flags=_
+symbol fq=removeByElement kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=kotlin.collections.List<Int>
+symbol fq=removeByElement.$1.values kind=valueParameter vis=private flags=_
+symbol fq=removeByIterable kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=kotlin.collections.List<Int>
+symbol fq=removeByIterable.$2.values kind=valueParameter vis=private flags=_
+symbol fq=removeBySequence kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>,kotlin.sequences.Sequence<Int>] ret=kotlin.collections.List<Int>
+symbol fq=removeBySequence.$3.elements kind=valueParameter vis=private flags=_
+symbol fq=removeBySequence.$3.values kind=valueParameter vis=private flags=_
+symbol fq=removeNullableByArray kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String?>,kotlin.Array<out String?>] ret=kotlin.collections.List<String?>
+symbol fq=removeNullableByArray.$4.elements kind=valueParameter vis=private flags=_
+symbol fq=removeNullableByArray.$4.values kind=valueParameter vis=private flags=_
+file fstdlib_kotlin_collections_Iterable_minus package=_
+  decl removeBySequence fun removeBySequence sym=removeBySequence
+  decl removeByArray fun removeByArray sym=removeByArray
+  decl removeNullableByArray fun removeNullableByArray sym=removeNullableByArray
+  decl removeByElement fun removeByElement sym=removeByElement
+  decl removeByIterable fun removeByIterable sym=removeByIterable
+expr e@2:12 name(values) type=kotlin.collections.Iterable<Int> ref=removeBySequence.$3.values
+expr e@2:25 name(elements) type=kotlin.sequences.Sequence<Int> ref=removeBySequence.$3.elements
+expr e@2:12#1 memberCall recv=e@2:12 callee=minus args=[_:e@2:25] type=kotlin.collections.List<Int> call=kotlin.collections.minus#3 targs=[Int]
+expr e@2:5 return value=e@2:12#1 type=Nothing
+expr e@6:12 name(values) type=kotlin.collections.Iterable<Int> ref=removeByArray.$0.values
+expr e@6:25 name(elements) type=kotlin.Array<out Int> ref=removeByArray.$0.elements
+expr e@6:12#1 memberCall recv=e@6:12 callee=minus args=[_:e@6:25] type=kotlin.collections.List<Int> call=kotlin.collections.minus#2 targs=[Int]
+expr e@6:5 return value=e@6:12#1 type=Nothing
+expr e@13:12 name(values) type=kotlin.collections.Iterable<String?> ref=removeNullableByArray.$4.values
+expr e@13:25 name(elements) type=kotlin.Array<out String?> ref=removeNullableByArray.$4.elements
+expr e@13:12#1 memberCall recv=e@13:12 callee=minus args=[_:e@13:25] type=kotlin.collections.List<String?> call=kotlin.collections.minus#2 targs=[String?]
+expr e@13:5 return value=e@13:12#1 type=Nothing
+expr e@17:12 name(values) type=kotlin.collections.Iterable<Int> ref=removeByElement.$1.values
+expr e@17:25 int(2) type=Int
+expr e@17:12#1 memberCall recv=e@17:12 callee=minus args=[_:e@17:25] type=kotlin.collections.List<Int> call=kotlin.collections.minus#0 targs=[Int]
+expr e@17:5 return value=e@17:12#1 type=Nothing
+expr e@21:12 name(values) type=kotlin.collections.Iterable<Int> ref=removeByIterable.$2.values
+expr e@21:32 int(2) type=Int
+expr e@21:35 int(3) type=Int
+expr e@21:25 call callee=e@21:25#1 args=[_:e@21:32,_:e@21:35] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf#1 targs=[Int]
+expr e@21:12#1 memberCall recv=e@21:12 callee=minus args=[_:e@21:25] type=kotlin.collections.List<Int> call=kotlin.collections.minus#1 targs=[Int]
+expr e@21:5 return value=e@21:12#1 type=Nothing
