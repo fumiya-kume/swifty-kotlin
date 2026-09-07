@@ -4,7 +4,7 @@ symbol fq=collectionNone.$0.values kind=valueParameter vis=private flags=_
 symbol fq=customMap kind=function vis=public flags=_ sig=recv=_ params=[ProbeMap] ret=Boolean
 symbol fq=customMap.$1.values kind=valueParameter vis=private flags=_
 symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Map.Entry kind=interface vis=public flags=synthetic
 symbol fq=kotlin.collections.Map.Entry.key kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.K

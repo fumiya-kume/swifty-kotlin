@@ -118,6 +118,11 @@ JDK / kotlinx ライブラリのクラスは「Kotlin stdlib ではない」も�
 ユーザー要件の「架空 (実在しない) クラス/メソッド」には該当しない。よって **一律削除は行わず保持**する。
 （もし JVM/kotlinx interop 自体を撤去したい場合は別タスクとして要相談。）
 
+`java.nio.file.Files` は Java SE の実在する JDK API であり、架空シンボルではない。ただし
+CLEANUP-STUB-110 は JVM interop 全体の一律削除ではなく、明示された target-out cleanup として
+この Files utility surface のみを全層から除去した。`java.io.File` の FileIO surface と、Path が
+共有する `java.nio.file.attribute.FileTime` / `toMillis`、`RuntimeFileTimeBox` は対象外として保持した。
+
 ## 真に架空（実在しない）と確認したシンボル → 除去/修正対象
 
 | シンボル | 種別 | 根拠 | 対応 |
@@ -225,3 +230,22 @@ DUMP_SURFACE=1 SWIFT_TEST_PARALLEL=0 bash Scripts/swift_test.sh --skip-build --f
 参考値として、同じ実行時の `SymbolTable.allSymbols()` 総数は **14500**。
 `kotlin.js.JsAny` / `JsNumber` の synthetic Sema 登録、stale RuntimeABI spec、ABI parity の spec-only allowlist を除去した。
 実 Runtime export は存在しないため Runtime 本体は変更していない。`Tests` / `Scripts/diff_cases` に `JsAny` の参照はなく、別問題の `js_annotations.kt` は保持している。
+
+## 2026-09-03 CLEANUP-STUB-110（`java.nio.file.Files` synthetic surface 削除）
+
+実行コマンド:
+
+```bash
+DUMP_SURFACE=1 SWIFT_TEST_PARALLEL=0 bash Scripts/swift_test.sh --filter FictionAuditDumpTests -Xswiftc -swift-version -Xswiftc 6
+```
+
+変更後の実測値:
+
+| 時点 | 追跡対象 | 合計 | root 内訳 |
+|---|---|---:|---|
+| 2026-09-03 CLEANUP-STUB-110 | `.synthetic` フラグ付き残留サーフェス | 2529 | `kotlin=1746`, `java=214`, `kotlinx=191`, `CancellationException=1`（その他の内部生成 root を含む） |
+
+`Files` synthetic registration、16 個の `__kk_files_*` runtime export/ABI parity、専用 diff case を削除した。
+`FileTime` は Path metadata API が共有するため、`RuntimeFileTimeBox` / `__kk_fileTime_toMillis` と
+`FileTime.toMillis` の Path 側登録を保持した。`java.io.File` の `file_isDirectory_test.kt` は
+CLEANUP-STUB-107 の surface であり、誤って削除していない。

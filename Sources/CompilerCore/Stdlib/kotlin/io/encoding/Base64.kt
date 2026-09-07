@@ -36,27 +36,82 @@ public open class Base64 internal constructor(
         return copy
     }
 
-    public open fun encode(source: ByteArray): String {
-        val raw = encodeRaw(source)
+    public open fun encode(source: ByteArray, startIndex: Int = 0, endIndex: Int = source.size): String {
+        checkSourceBounds(source.size, startIndex, endIndex)
+        val raw = encodeRaw(source, startIndex, endIndex)
         return if (lineLength > 0) wrapAtLineLength(raw) else raw
     }
 
-    public open fun decode(source: String): ByteArray {
-        val sanitized = if (lineLength > 0) filterToAlphabet(source) else source
+    public open fun encodeToByteArray(
+        source: ByteArray,
+        startIndex: Int = 0,
+        endIndex: Int = source.size
+    ): ByteArray = encode(source, startIndex, endIndex).encodeToByteArray()
+
+    public open fun encodeIntoByteArray(
+        source: ByteArray,
+        destination: ByteArray,
+        destinationOffset: Int = 0,
+        startIndex: Int = 0,
+        endIndex: Int = source.size
+    ): Int {
+        val encoded = encodeToByteArray(source, startIndex, endIndex)
+        encoded.copyInto(destination, destinationOffset)
+        return encoded.size
+    }
+
+    @IgnorableReturnValue
+    public open fun <A : Appendable> encodeToAppendable(
+        source: ByteArray,
+        destination: A,
+        startIndex: Int = 0,
+        endIndex: Int = source.size
+    ): A {
+        destination.append(encode(source, startIndex, endIndex))
+        return destination
+    }
+
+    public open fun decode(source: ByteArray, startIndex: Int = 0, endIndex: Int = source.size): ByteArray {
+        checkSourceBounds(source.size, startIndex, endIndex)
+        return decode(source.decodeToString(startIndex, endIndex))
+    }
+
+    public open fun decodeIntoByteArray(
+        source: ByteArray,
+        destination: ByteArray,
+        destinationOffset: Int = 0,
+        startIndex: Int = 0,
+        endIndex: Int = source.size
+    ): Int {
+        val decoded = decode(source, startIndex, endIndex)
+        decoded.copyInto(destination, destinationOffset)
+        return decoded.size
+    }
+
+    public open fun decode(source: CharSequence, startIndex: Int = 0, endIndex: Int = source.length): ByteArray {
+        checkSourceBounds(source.length, startIndex, endIndex)
+        val text = source.toString().substring(startIndex, endIndex)
+        val sanitized = if (lineLength > 0) filterToAlphabet(text) else text
         return decodeRaw(sanitized)
     }
 
-    // Real Kotlin overloads `decode` for ByteArray input rather than using a
-    // separate `decodeFromByteArray` name.
-    public open fun decode(source: ByteArray): ByteArray = decode(source.decodeToString())
+    public open fun decodeIntoByteArray(
+        source: CharSequence,
+        destination: ByteArray,
+        destinationOffset: Int = 0,
+        startIndex: Int = 0,
+        endIndex: Int = source.length
+    ): Int {
+        val decoded = decode(source, startIndex, endIndex)
+        decoded.copyInto(destination, destinationOffset)
+        return decoded.size
+    }
 
-    public open fun encodeToByteArray(source: ByteArray): ByteArray = encode(source).encodeToByteArray()
-
-    private fun encodeRaw(source: ByteArray): String {
+    private fun encodeRaw(source: ByteArray, startIndex: Int, endIndex: Int): String {
         val sb = StringBuilder()
         val addPadding = padding == PaddingOption.PRESENT || padding == PaddingOption.PRESENT_OPTIONAL
-        var i = 0
-        while (i + 2 < source.size) {
+        var i = startIndex
+        while (i + 2 < endIndex) {
             val b0 = source[i].toInt() and 0xFF
             val b1 = source[i + 1].toInt() and 0xFF
             val b2 = source[i + 2].toInt() and 0xFF
@@ -66,7 +121,7 @@ public open class Base64 internal constructor(
             sb.append(alphabetChars[b2 and 0x3F])
             i += 3
         }
-        val remaining = source.size - i
+        val remaining = endIndex - i
         if (remaining == 1) {
             val b0 = source[i].toInt() and 0xFF
             sb.append(alphabetChars[b0 shr 2])
@@ -149,6 +204,15 @@ public open class Base64 internal constructor(
             i += 1
         }
         return bytes.toByteArray()
+    }
+
+    private fun checkSourceBounds(sourceSize: Int, startIndex: Int, endIndex: Int) {
+        if (startIndex < 0 || endIndex < 0 || startIndex > sourceSize || endIndex > sourceSize) {
+            throw IndexOutOfBoundsException("startIndex: $startIndex, endIndex: $endIndex, size: $sourceSize")
+        }
+        if (startIndex > endIndex) {
+            throw IllegalArgumentException("startIndex: $startIndex must be less than or equal to endIndex: $endIndex")
+        }
     }
 
     public companion object Default : Base64(STANDARD_ALPHABET, 0) {

@@ -101,3 +101,44 @@ public func __kk_kcallable_get_name(_ callableRaw: Int) -> Int {
     }
     return runtimeNullSentinelInt
 }
+
+/// Shared KCallable.returnType dispatch for runtime reflection boxes and
+/// compiler-tagged callable references.
+@_cdecl("__kk_kcallable_get_return_type")
+public func __kk_kcallable_get_return_type(_ callableRaw: Int) -> Int {
+    let returnTypeRaw: Int?
+    if let taggedReturnType = runtimeStorage.withDelegateLock({ state in
+        state.callableRefMetadataByValue[callableRaw]?.returnTypeRaw
+    }) {
+        returnTypeRaw = taggedReturnType
+    } else if let function = runtimeReflectionObject(from: callableRaw, as: RuntimeKFunctionBox.self) {
+        returnTypeRaw = function.returnTypeRaw
+    } else if let constructor = runtimeReflectionObject(from: callableRaw, as: RuntimeKConstructorBox.self) {
+        returnTypeRaw = constructor.returnTypeRaw
+    } else if let property = runtimeReflectionObject(from: callableRaw, as: RuntimeKPropertyStub.self) {
+        returnTypeRaw = property.returnType
+    } else {
+        returnTypeRaw = nil
+    }
+
+    guard let returnTypeRaw,
+          returnTypeRaw != 0,
+          returnTypeRaw != runtimeNullSentinelInt,
+          extractString(from: UnsafeMutableRawPointer(bitPattern: returnTypeRaw)) != nil
+    else {
+        return runtimeNullSentinelInt
+    }
+
+    // The metadata fields predate RuntimeKTypeBox and store a KKString
+    // descriptor. Box that descriptor at the KCallable boundary so the
+    // source-level return type is an actual KType value.
+    let typeName = extractString(from: UnsafeMutableRawPointer(bitPattern: returnTypeRaw)) ?? ""
+    let box = RuntimeKTypeBox(
+        classifierRaw: __kk_kclass_create(0, returnTypeRaw),
+        argumentRaws: [],
+        isMarkedNullable: typeName.hasSuffix("?"),
+        typeNameRaw: returnTypeRaw
+    )
+    registerReflectionRuntimeTypeMetadata()
+    return registerRuntimeObject(box, typeID: kTypeRuntimeTypeID)
+}

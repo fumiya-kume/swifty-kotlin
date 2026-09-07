@@ -64,7 +64,7 @@ extension BuildKIRRegressionTests {
         }
     }
 
-    @Test func testSystemObjectMembersLowerToRuntimeCallees() throws {
+    @Test func testSystemObjectMembersLowerToBundledKotlinCallees() throws {
         let source = """
         import kotlin.system.System
 
@@ -83,12 +83,19 @@ extension BuildKIRRegressionTests {
             let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let callees = extractCallees(from: body, interner: ctx.interner)
 
-            #expect(callees.contains("__kk_system_currentTimeMillis"), "Expected System.currentTimeMillis runtime call")
-            #expect(callees.contains("__kk_system_nanoTime"), "Expected System.nanoTime runtime call")
+            #expect(callees.contains("currentTimeMillis"), "Expected System.currentTimeMillis bundled call")
+            #expect(callees.contains("nanoTime"), "Expected System.nanoTime bundled call")
             #expect(
-                callees.contains("__kk_system_process_start_nanos"),
-                "Expected System.processStartNanos runtime call"
+                callees.contains("processStartNanos"),
+                "Expected System.processStartNanos bundled call"
             )
+            for bridge in [
+                "__kk_system_currentTimeMillis",
+                "__kk_system_nanoTime",
+                "__kk_system_process_start_nanos",
+            ] {
+                #expect(!callees.contains(bridge), "User KIR must not call \(bridge) directly")
+            }
         }
     }
 
