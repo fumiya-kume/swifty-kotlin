@@ -1,6 +1,6 @@
 
 /// Shared low-level registration primitives for the `kotlin.concurrent`(`.atomics`)
-/// synthetic stub family, extracted from `HeaderHelpers+SyntheticAtomicStubs.swift`.
+/// synthetic stub family, extracted from the Atomic residual registration surface.
 /// Used across the scalar (`HeaderHelpers+SyntheticAtomicScalarStubs.swift`) and
 /// array (`HeaderHelpers+SyntheticAtomicArrayStubs.swift`) registrations, so these
 /// stay `internal` rather than `private`.
@@ -237,6 +237,7 @@ extension DataFlowSemaPhase {
         classTypeParameterCount: Int = 0,
         includeGetAndSetAlias: Bool = false,
         includeCompareAndSet: Bool = true,
+        compareAndSetLinkName: String? = nil,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -297,7 +298,7 @@ extension DataFlowSemaPhase {
             // compareAndSet(expect: T, update: T) -> Boolean
             registerAtomicMember(
                 ownerSymbol: ownerSymbol, ownerType: ownerType,
-                name: "compareAndSet", externalLinkName: "\(prefix)_compareAndSet",
+                name: "compareAndSet", externalLinkName: compareAndSetLinkName ?? "\(prefix)_compareAndSet",
                 returnType: boolType,
                 parameters: [
                     (name: "expect", type: valueType),

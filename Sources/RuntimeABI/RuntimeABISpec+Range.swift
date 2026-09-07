@@ -693,7 +693,7 @@ public extension RuntimeABISpec {
         ),
         // UIntProgression operations (STDLIB-RANGE-039)
         RuntimeABIFunctionSpec(
-            name: "kk_uint_rangeTo",
+            name: "__kk_uint_rangeTo",
             parameters: [
                 RuntimeABIParameter(name: "lhs", type: .intptr),
                 RuntimeABIParameter(name: "rhs", type: .intptr),
@@ -740,7 +740,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_uint_range_iterator",
+            name: "__kk_uint_range_iterator",
             parameters: [
                 RuntimeABIParameter(name: "rangeRaw", type: .intptr),
             ],
@@ -749,7 +749,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_uint_range_hasNext",
+            name: "__kk_uint_range_hasNext",
             parameters: [
                 RuntimeABIParameter(name: "iterRaw", type: .intptr),
             ],
@@ -758,7 +758,7 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_uint_range_next",
+            name: "__kk_uint_range_next",
             parameters: [
                 RuntimeABIParameter(name: "iterRaw", type: .intptr),
             ],
@@ -1234,7 +1234,7 @@ public extension RuntimeABISpec {
             section: "Range"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_uint_range_chunked",
+            name: "__kk_uint_range_chunked",
             parameters: [
                 RuntimeABIParameter(name: "rangeRaw", type: .intptr),
                 RuntimeABIParameter(name: "size", type: .intptr),
@@ -1244,7 +1244,7 @@ public extension RuntimeABISpec {
             section: "Range"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_uint_range_windowed",
+            name: "__kk_uint_range_windowed",
             parameters: [
                 RuntimeABIParameter(name: "rangeRaw", type: .intptr),
                 RuntimeABIParameter(name: "size", type: .intptr),
