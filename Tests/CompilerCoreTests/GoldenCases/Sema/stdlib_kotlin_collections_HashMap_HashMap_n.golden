@@ -36,7 +36,7 @@ expr e@13:20 int(1) type=Int
 expr e@13:5#1 memberCall recv=e@13:5 callee=put args=[_:e@13:13,_:e@13:20] type=Int? call=kotlin.collections.HashMap.put targs=[String,Int?]
 expr e@14:5 name(map) type=kotlin.collections.HashMap<String, Int?> ref=golden.sema.hashMapReceiverMembers.$0.map
 expr e@14:16 name(other) type=kotlin.collections.Map<String, Int?> ref=golden.sema.hashMapReceiverMembers.$0.other
-expr e@14:5#1 memberCall recv=e@14:5 callee=putAll args=[_:e@14:16] type=Unit call=kotlin.collections.HashMap.putAll
+expr e@14:5#1 memberCall recv=e@14:5 callee=putAll args=[_:e@14:16] type=Unit call=kotlin.collections.HashMap.putAll targs=[String,Int?]
 expr e@15:5 name(map) type=kotlin.collections.HashMap<String, Int?> ref=golden.sema.hashMapReceiverMembers.$0.map
 expr e@15:16 string(key) type=String
 expr e@15:5#1 memberCall recv=e@15:5 callee=remove args=[_:e@15:16] type=Int? call=kotlin.collections.remove#2 targs=[String,Int?]

@@ -840,19 +840,6 @@ public extension RuntimeABISpec {
             section: "Sequence",
             isThrowing: false
         ),
-        // STDLIB-557: foldIndexed
-        RuntimeABIFunctionSpec(
-            name: "kk_sequence_foldIndexed",
-            parameters: [
-                RuntimeABIParameter(name: "seqRaw", type: .intptr),
-                RuntimeABIParameter(name: "initial", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Sequence"
-        ),
         // STDLIB-SEQ-016: runningFoldIndexed, scanIndexed
         RuntimeABIFunctionSpec(
             name: "kk_sequence_runningFoldIndexed",
