@@ -22,6 +22,23 @@ let setRuntimeTypeID: Int64 = {
     return id
 }()
 
+/// Nominal identity for source-backed `kotlin.collections.HashSet` instances.
+/// Ordinary Set factories keep using `setRuntimeTypeID`; only HashSet
+/// constructors opt into this more specific identity.
+let hashSetRuntimeTypeID: Int64 = {
+    let id = runtimeStableNominalTypeID(fqName: "kotlin.collections.HashSet")
+    runtimeRegisterTypeEdge(
+        childTypeID: id,
+        parentTypeID: runtimeStableNominalTypeID(fqName: "kotlin.collections.MutableSet")
+    )
+    runtimeRegisterTypeEdge(
+        childTypeID: id,
+        parentTypeID: runtimeStableNominalTypeID(fqName: "kotlin.collections.AbstractMutableSet")
+    )
+    runtimeRegisterTypeEdge(childTypeID: id, parentTypeID: setRuntimeTypeID)
+    return id
+}()
+
 // User-defined subclasses of LinkedHashSet are allocated as RuntimeObjectBox
 // instances. Keep the nominal ID available so runtimeSetBox can lazily attach
 // their storage even when library superclass initializers are not emitted.
@@ -416,6 +433,7 @@ func registerRuntimeObject(_ box: RuntimeMapBox) -> Int {
 private let runtimeIteratorInterfaceTypeID: Int64 = runtimeStableNominalTypeID(fqName: "kotlin.collections.Iterator")
 private let runtimeListIteratorInterfaceTypeID: Int64 = runtimeStableNominalTypeID(fqName: "kotlin.collections.ListIterator")
 private let runtimeMutableIteratorInterfaceTypeID: Int64 = runtimeStableNominalTypeID(fqName: "kotlin.collections.MutableIterator")
+private let runtimeMutableListIteratorInterfaceTypeID: Int64 = runtimeStableNominalTypeID(fqName: "kotlin.collections.MutableListIterator")
 private let runtimeIterableInterfaceTypeID: Int64 = runtimeStableNominalTypeID(fqName: "kotlin.collections.Iterable")
 private let runtimeMutableIterableInterfaceTypeID: Int64 = runtimeStableNominalTypeID(fqName: "kotlin.collections.MutableIterable")
 private let runtimeSequenceInterfaceTypeID: Int64 = runtimeStableNominalTypeID(fqName: "kotlin.sequences.Sequence")
@@ -457,6 +475,34 @@ func registerListIteratorItable(raw: Int) {
     _ = kk_object_register_itable_method(raw, 1, 4, nextIndexPtr)
     let previousIndexPtr = unsafeBitCast(runtimeListIteratorPreviousIndexThunk, to: Int.self)
     _ = kk_object_register_itable_method(raw, 1, 5, previousIndexPtr)
+}
+
+/// Register the `MutableListIterator.set`/`.add` methods on a runtime-backed
+/// mutable list iterator. A separate function (rather than folding this into
+/// `registerListIteratorItable` or the `RuntimeListIteratorBox` overload of
+/// `registerRuntimeObject` above) so it can be called only where the box
+/// actually carries `setAction`/`addAction` (`kk_list_iterator`'s
+/// `List`/`MutableList` branch and `kk_list_iterator_at`), without touching
+/// either of those two call/registration sites. Slot 3 is free: 0=Iterator,
+/// 1=ListIterator, and MutableIterator additionally claims 1 by default on
+/// this same object (a pre-existing, separately-tracked itable slot
+/// collision) — 2 and 3 are the first indices neither one uses.
+func registerMutableListIteratorItable(raw: Int) {
+    _ = kk_object_register_itable_iface(raw, Int(runtimeMutableListIteratorInterfaceTypeID), 3)
+    let setPtr = unsafeBitCast(runtimeListIteratorSetThunk, to: Int.self)
+    _ = kk_object_register_itable_method(raw, 3, 0, setPtr)
+    let addPtr = unsafeBitCast(runtimeListIteratorAddThunk, to: Int.self)
+    _ = kk_object_register_itable_method(raw, 3, 1, addPtr)
+}
+
+private let runtimeListIteratorSetThunk: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { raw, elem, outThrown in
+    outThrown?.pointee = 0
+    return runtimeListIteratorSet(raw, elem)
+}
+
+private let runtimeListIteratorAddThunk: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { raw, elem, outThrown in
+    outThrown?.pointee = 0
+    return runtimeListIteratorAdd(raw, elem)
 }
 
 private let runtimeListIteratorHasPreviousThunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { raw, outThrown in
@@ -764,6 +810,13 @@ func runtimeValuesEqual(_ lhs: Int, _ rhs: Int) -> Bool {
     if let lhsInt = tryCast(lhsPtr, to: RuntimeIntBox.self),
        let rhsInt = tryCast(rhsPtr, to: RuntimeIntBox.self)
     {
+        // Enum values are represented as boxed ordinals at Any boundaries.
+        // Their nominal class is part of equals semantics: Direction.NORTH
+        // must not equal Color.RED merely because both have ordinal zero.
+        if lhsInt.enumClassID != nil || rhsInt.enumClassID != nil {
+            return lhsInt.enumClassID == rhsInt.enumClassID
+                && lhsInt.value == rhsInt.value
+        }
         return lhsInt.value == rhsInt.value
     }
     if let lhsBool = tryCast(lhsPtr, to: RuntimeBoolBox.self),
@@ -1019,8 +1072,8 @@ func runtimeElementToString(_ elem: Int) -> String {
     if let charBox = tryCast(ptr, to: RuntimeCharBox.self) {
         return UnicodeScalar(charBox.value).map(String.init) ?? "?"
     }
-    if let throwable = tryCast(ptr, to: RuntimeThrowableBox.self) {
-        return "Throwable(\(throwable.renderedMessage))"
+    if let throwableString = runtimeThrowableToString(elem) {
+        return throwableString
     }
     if let instantBox = tryCast(ptr, to: RuntimeInstantBox.self) {
         return runtimeInstantToString(instantBox)

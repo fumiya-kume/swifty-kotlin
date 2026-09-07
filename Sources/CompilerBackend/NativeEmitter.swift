@@ -163,41 +163,117 @@ struct NativeEmitter {
                 }
             }
         }
-        guard !rawSymbols.isEmpty else {
-            return []
+        if !rawSymbols.isEmpty {
+            // Dispatch declarations and concrete overrides must share the callback ABI
+            // when a same-shaped implementation is registered for reflection.
+            struct FunctionABIKey: Hashable {
+                let name: InternedString
+                let parameterCount: Int
+            }
+
+            var rawCallbackKeys: Set<FunctionABIKey> = []
+            for declaration in module.arena.declarations {
+                guard case let .function(function) = declaration,
+                      rawSymbols.contains(function.symbol),
+                      Self.isSyntheticCallbackFunction(function, symbols: symbols, interner: interner)
+                else {
+                    continue
+                }
+                rawCallbackKeys.insert(FunctionABIKey(
+                    name: function.name,
+                    parameterCount: function.params.count
+                ))
+            }
+            for declaration in module.arena.declarations {
+                guard case let .function(function) = declaration else {
+                    continue
+                }
+                let key = FunctionABIKey(name: function.name, parameterCount: function.params.count)
+                if rawCallbackKeys.contains(key), Self.isSyntheticCallbackFunction(function, symbols: symbols, interner: interner) {
+                    rawSymbols.insert(function.symbol)
+                }
+            }
         }
 
-        // Dispatch declarations and concrete overrides must share the callback ABI
-        // when a same-shaped implementation is registered for reflection.
-        struct FunctionABIKey: Hashable {
-            let name: InternedString
-            let parameterCount: Int
-        }
-
-        var rawCallbackKeys: Set<FunctionABIKey> = []
+        // Throwable.toString uses the runtime's raw string-handle ABI for both
+        // the bundled implementation and Kotlin-defined overrides. This keeps
+        // the vtable slot ABI uniform with the runtime bridge; call sites bridge
+        // the raw handle back to the Kotlin String aggregate.
         for declaration in module.arena.declarations {
             guard case let .function(function) = declaration,
-                  rawSymbols.contains(function.symbol),
-                  Self.isSyntheticCallbackFunction(function, symbols: symbols, interner: interner)
+                  isThrowableToStringFunction(function, interner: interner, symbols: symbols)
             else {
                 continue
             }
-            rawCallbackKeys.insert(FunctionABIKey(
-                name: function.name,
-                parameterCount: function.params.count
-            ))
-        }
-        for declaration in module.arena.declarations {
-            guard case let .function(function) = declaration else {
-                continue
-            }
-            let key = FunctionABIKey(name: function.name, parameterCount: function.params.count)
-            if rawCallbackKeys.contains(key), Self.isSyntheticCallbackFunction(function, symbols: symbols, interner: interner) {
-                rawSymbols.insert(function.symbol)
-            }
+            rawSymbols.insert(function.symbol)
         }
 
         return rawSymbols
+    }
+
+    private static func isThrowableToStringFunction(
+        _ function: KIRFunction,
+        interner: StringInterner,
+        symbols: SymbolTable?
+    ) -> Bool {
+        guard interner.resolve(function.name) == "toString",
+              let symbols,
+              isThrowableToStringSymbol(function.symbol, interner: interner, symbols: symbols)
+        else {
+            return false
+        }
+        return true
+    }
+
+    static func isThrowableToStringSymbol(
+        _ symbol: SymbolID,
+        interner: StringInterner,
+        symbols: SymbolTable
+    ) -> Bool {
+        guard let owner = symbols.parentSymbol(for: symbol) else {
+            return false
+        }
+        return isThrowableClassSymbol(owner, interner: interner, symbols: symbols)
+    }
+
+    static func isThrowableType(
+        _ type: TypeID?,
+        typeSystem: TypeSystem,
+        interner: StringInterner,
+        symbols: SymbolTable
+    ) -> Bool {
+        guard let type,
+              case let .classType(classType) = typeSystem.kind(of: type)
+        else {
+            return false
+        }
+        return isThrowableClassSymbol(
+            classType.classSymbol,
+            interner: interner,
+            symbols: symbols
+        )
+    }
+
+    private static func isThrowableClassSymbol(
+        _ symbol: SymbolID,
+        interner: StringInterner,
+        symbols: SymbolTable
+    ) -> Bool {
+        let throwableFQName = ["kotlin", "Throwable"]
+        var visited: Set<SymbolID> = []
+        var pending = [symbol]
+        while let candidate = pending.popLast() {
+            guard visited.insert(candidate).inserted,
+                  let symbolInfo = symbols.symbol(candidate)
+            else {
+                continue
+            }
+            if symbolInfo.fqName.map(interner.resolve) == throwableFQName {
+                return true
+            }
+            pending.append(contentsOf: symbols.directSupertypes(for: candidate))
+        }
+        return false
     }
 
     private static func isSyntheticCallbackFunction(

@@ -214,7 +214,7 @@ struct RuntimeRangeStepTests {
     // MARK: - UIntProgression tests (STDLIB-RANGE-039)
 
     @Test func testUIntRangeTo() {
-        let range = kk_uint_rangeTo(1, 10)
+        let range = __kk_uint_rangeTo(1, 10)
         #expect(kk_range_first(range) == 1)
         #expect(kk_range_last(range) == 10)
         let list = kk_uint_range_toList(range)
@@ -229,7 +229,7 @@ struct RuntimeRangeStepTests {
     }
 
     @Test func testUIntStep() {
-        let range = kk_uint_rangeTo(1, 10)
+        let range = __kk_uint_rangeTo(1, 10)
         let stepped = __kk_uint_step(range, 3)
         #expect(kk_range_first(stepped) == 1)
         #expect(kk_range_last(stepped) == 10)
@@ -238,7 +238,7 @@ struct RuntimeRangeStepTests {
     }
 
     @Test func testUIntRangeReversed() {
-        let range = kk_uint_rangeTo(1, 5)
+        let range = __kk_uint_rangeTo(1, 5)
         let reversed = kk_uint_range_reversed(range)
         #expect(kk_range_first(reversed) == 5)
         #expect(kk_range_last(reversed) == 1)
@@ -246,21 +246,21 @@ struct RuntimeRangeStepTests {
     }
 
     @Test func testUIntRangeContainsAndIsEmpty() {
-        let range = kk_uint_rangeTo(1, 10)
+        let range = __kk_uint_rangeTo(1, 10)
         #expect(kk_uint_range_contains(range, 5) == 1)
         #expect(kk_uint_range_contains(range, 15) == 0)
         #expect(kk_uint_range_isEmpty(range) == 0)
-        #expect(kk_uint_range_isEmpty(kk_uint_rangeTo(10, 1)) == 1)
+        #expect(kk_uint_range_isEmpty(__kk_uint_rangeTo(10, 1)) == 1)
     }
 
     @Test func testUIntRangeStartEndAliases() {
-        let range = kk_uint_rangeTo(2, 6)
+        let range = __kk_uint_rangeTo(2, 6)
         #expect(kk_uint_range_first(range) == 2)
         #expect(kk_uint_range_last(range) == 6)
     }
 
     @Test func testUIntRangeToUIntArray() {
-        let range = __kk_uint_step(kk_uint_rangeTo(1, 7), 3)
+        let range = __kk_uint_step(__kk_uint_rangeTo(1, 7), 3)
         let array = kk_uint_range_toUIntArray(range)
         #expect(kk_list_size(array) == 3)
         #expect(kk_list_get(array, 0) == 1)
@@ -271,15 +271,15 @@ struct RuntimeRangeStepTests {
     @Test func testUIntRangeIteratorUsesUnsignedIterator() {
         let start = Int(bitPattern: UInt.max - 2)
         let end = Int(bitPattern: UInt.max)
-        let range = kk_uint_rangeTo(start, end)
-        let iterator = kk_uint_range_iterator(range)
-        #expect(kk_uint_range_hasNext(iterator) == 1)
-        #expect(kk_uint_range_next(iterator) == start)
-        #expect(kk_uint_range_hasNext(iterator) == 1)
-        #expect(kk_uint_range_next(iterator) == Int(bitPattern: UInt.max - 1))
-        #expect(kk_uint_range_hasNext(iterator) == 1)
-        #expect(kk_uint_range_next(iterator) == Int(bitPattern: UInt.max))
-        #expect(kk_uint_range_hasNext(iterator) == 0)
+        let range = __kk_uint_rangeTo(start, end)
+        let iterator = __kk_uint_range_iterator(range)
+        #expect(__kk_uint_range_hasNext(iterator) == 1)
+        #expect(__kk_uint_range_next(iterator) == start)
+        #expect(__kk_uint_range_hasNext(iterator) == 1)
+        #expect(__kk_uint_range_next(iterator) == Int(bitPattern: UInt.max - 1))
+        #expect(__kk_uint_range_hasNext(iterator) == 1)
+        #expect(__kk_uint_range_next(iterator) == Int(bitPattern: UInt.max))
+        #expect(__kk_uint_range_hasNext(iterator) == 0)
     }
 
     @Test func testUIntUntilToList() {
