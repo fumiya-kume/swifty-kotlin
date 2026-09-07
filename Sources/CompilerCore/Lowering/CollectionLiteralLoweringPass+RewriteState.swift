@@ -36,57 +36,33 @@ extension CollectionLiteralLoweringSupport {
         }
 
         mutating func propagateCopy(from: KIRExprID, to: KIRExprID) {
-            if listExprIDs.contains(from.rawValue) {
-                listExprIDs.insert(to.rawValue)
+            // Mutable locals reuse their expression ID. A copy replaces its
+            // value, so facts about the previous value must not survive it.
+            func copyMembership(_ expressions: inout Set<Int32>) {
+                if expressions.contains(from.rawValue) {
+                    expressions.insert(to.rawValue)
+                } else {
+                    expressions.remove(to.rawValue)
+                }
             }
-            if setExprIDs.contains(from.rawValue) {
-                setExprIDs.insert(to.rawValue)
-            }
-            if mapExprIDs.contains(from.rawValue) {
-                mapExprIDs.insert(to.rawValue)
-            }
-            if arrayExprIDs.contains(from.rawValue) {
-                arrayExprIDs.insert(to.rawValue)
-            }
-            if sequenceExprIDs.contains(from.rawValue) {
-                sequenceExprIDs.insert(to.rawValue)
-            }
-            if rangeExprIDs.contains(from.rawValue) {
-                rangeExprIDs.insert(to.rawValue)
-            }
-            if charRangeExprIDs.contains(from.rawValue) {
-                charRangeExprIDs.insert(to.rawValue)
-            }
-            if ulongRangeExprIDs.contains(from.rawValue) {
-                ulongRangeExprIDs.insert(to.rawValue)
-            }
-            if stringExprIDs.contains(from.rawValue) {
-                stringExprIDs.insert(to.rawValue)
-            }
-            if listIteratorExprIDs.contains(from.rawValue) {
-                listIteratorExprIDs.insert(to.rawValue)
-            }
-            if mapIteratorExprIDs.contains(from.rawValue) {
-                mapIteratorExprIDs.insert(to.rawValue)
-            }
-            if fileExprIDs.contains(from.rawValue) {
-                fileExprIDs.insert(to.rawValue)
-            }
-            if pathExprIDs.contains(from.rawValue) {
-                pathExprIDs.insert(to.rawValue)
-            }
-            if iteratorBuilderExprIDs.contains(from.rawValue) {
-                iteratorBuilderExprIDs.insert(to.rawValue)
-            }
-            if indexingIterableExprIDs.contains(from.rawValue) {
-                indexingIterableExprIDs.insert(to.rawValue)
-            }
-            if indexingIterableIteratorExprIDs.contains(from.rawValue) {
-                indexingIterableIteratorExprIDs.insert(to.rawValue)
-            }
-            if ulongRangeIteratorExprIDs.contains(from.rawValue) {
-                ulongRangeIteratorExprIDs.insert(to.rawValue)
-            }
+
+            copyMembership(&listExprIDs)
+            copyMembership(&setExprIDs)
+            copyMembership(&mapExprIDs)
+            copyMembership(&arrayExprIDs)
+            copyMembership(&sequenceExprIDs)
+            copyMembership(&rangeExprIDs)
+            copyMembership(&charRangeExprIDs)
+            copyMembership(&ulongRangeExprIDs)
+            copyMembership(&stringExprIDs)
+            copyMembership(&listIteratorExprIDs)
+            copyMembership(&mapIteratorExprIDs)
+            copyMembership(&fileExprIDs)
+            copyMembership(&pathExprIDs)
+            copyMembership(&iteratorBuilderExprIDs)
+            copyMembership(&indexingIterableExprIDs)
+            copyMembership(&indexingIterableIteratorExprIDs)
+            copyMembership(&ulongRangeIteratorExprIDs)
         }
     }
 }
