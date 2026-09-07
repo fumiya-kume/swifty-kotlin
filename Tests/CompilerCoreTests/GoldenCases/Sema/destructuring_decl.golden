@@ -5,14 +5,20 @@ symbol fq=Point.<init>.$0.y kind=valueParameter vis=private flags=_
 symbol fq=__destructuring_0.a kind=local vis=private flags=_ type=Int
 symbol fq=__destructuring_0.b kind=local vis=private flags=_ type=Int
 symbol fq=__destructuring_1.second kind=local vis=private flags=_ type=Int
+symbol fq=__destructuring_2.field kind=local vis=private flags=_ type=String
+symbol fq=__destructuring_2.value kind=local vis=private flags=_ type=Int
 symbol fq=__local_0.p kind=local vis=private flags=_ type=Point
 symbol fq=__local_1.p kind=local vis=private flags=_ type=Point
 symbol fq=basicDestructuring kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=destructuringWithContextualKeywordNames kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Pair<Int, String>] ret=Unit
+symbol fq=destructuringWithContextualKeywordNames.$1.pair kind=valueParameter vis=private flags=_
 symbol fq=destructuringWithUnderscore kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=kotlin.Pair kind=class vis=public flags=_
 file fdestructuring_decl package=_
   decl Point class Point sym=Point
   decl basicDestructuring fun basicDestructuring sym=basicDestructuring
   decl destructuringWithUnderscore fun destructuringWithUnderscore sym=destructuringWithUnderscore
+  decl destructuringWithContextualKeywordNames fun destructuringWithContextualKeywordNames sym=destructuringWithContextualKeywordNames
 expr e@4:19 int(1) type=Int
 expr e@4:22 int(2) type=Int
 expr e@4:13 call callee=e@4:13#1 args=[_:e@4:19,_:e@4:22] type=Point call=Point.<init>
@@ -31,3 +37,9 @@ expr e@12:23 name(p) type=Point ref=__local_1.p
 expr e@12:5 destructuringDecl names=[_,second] mutable=0 init=e@12:23 type=Unit
 expr e@13:13 name(second) type=Int ref=__destructuring_1.second
 expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13] type=Unit call=kotlin.io.println#1
+expr e@17:26 name(pair) type=kotlin.Pair<Int, String> ref=destructuringWithContextualKeywordNames.$1.pair
+expr e@17:5 destructuringDecl names=[value,field] mutable=0 init=e@17:26 type=Unit
+expr e@18:13 name(value) type=Int ref=__destructuring_2.value
+expr e@18:5 call callee=e@18:5#1 args=[_:e@18:13] type=Unit call=kotlin.io.println#1
+expr e@19:13 name(field) type=String ref=__destructuring_2.field
+expr e@19:5 call callee=e@19:5#1 args=[_:e@19:13] type=Unit call=kotlin.io.println#2

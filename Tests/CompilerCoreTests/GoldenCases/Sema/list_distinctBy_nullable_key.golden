@@ -5,8 +5,8 @@ symbol fq=User.<init>.$0.nickname kind=valueParameter vis=private flags=_
 symbol fq=User.nickname kind=property vis=public flags=_ type=String?
 symbol fq=__local_0.users kind=local vis=private flags=_ type=kotlin.collections.List<out User>
 symbol fq=__local_1.byNickname kind=local vis=private flags=_ type=kotlin.collections.List<User>
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file flist_distinctBy_nullable_key package=_
   decl User class User sym=User

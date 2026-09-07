@@ -1,5 +1,5 @@
 symbol fq=golden.sema.sumPlusOne kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 file ftrailing_lambda_binary_continuation package=golden.sema
   decl golden.sema.sumPlusOne fun sumPlusOne sym=golden.sema.sumPlusOne
 expr e@3:32 int(1) type=Int

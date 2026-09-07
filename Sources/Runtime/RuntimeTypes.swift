@@ -307,10 +307,15 @@ final class RuntimeIntBox {
     /// the raw ordinal once the static enum type has been erased. See
     /// kk_enum_box_ordinal.
     let enumEntryName: String?
+    /// Stable nominal ID for the enum class represented by this box. Unlike a
+    /// plain boxed Int, enum equality must keep two entries from different
+    /// enum classes unequal even when their ordinals match.
+    let enumClassID: Int64?
 
-    init(_ value: Int, enumEntryName: String? = nil) {
+    init(_ value: Int, enumEntryName: String? = nil, enumClassID: Int64? = nil) {
         self.value = value
         self.enumEntryName = enumEntryName
+        self.enumClassID = enumClassID
     }
 }
 
@@ -378,6 +383,7 @@ enum RuntimeCallableRefKind {
 
 struct RuntimeCallableRefMetadata {
     let nameRaw: Int
+    let returnTypeRaw: Int
     let arity: Int
     let kind: RuntimeCallableRefKind
     let isSuspend: Bool
@@ -912,96 +918,61 @@ final class RuntimeIndexingIteratorBox {
 final class RuntimeListIteratorBox {
     var elements: [Int]
     var index: Int
-    var lastReturnedIndex: Int?
+    /// Index last returned by `next()`/`previous()`, or -1 before any
+    /// traversal call or once consumed by `remove()`/`add()` — mirrors
+    /// Java/Kotlin's `AbstractList.Itr.lastRet` invariant.
+    var lastReturnedIndex: Int
     let removeAction: ((Int) -> Void)?
-    let addAction: ((Int, Int) -> Int?)?
-    let setAction: ((Int, Int) -> Int?)?
+    let setAction: ((Int, Int) -> Void)?
+    let addAction: ((Int, Int) -> Void)?
 
     init(
         elements: [Int],
         removeAction: ((Int) -> Void)? = nil,
-        addAction: ((Int, Int) -> Int?)? = nil,
-        setAction: ((Int, Int) -> Int?)? = nil
+        setAction: ((Int, Int) -> Void)? = nil,
+        addAction: ((Int, Int) -> Void)? = nil
     ) {
         self.elements = elements
         index = 0
-        lastReturnedIndex = nil
+        lastReturnedIndex = -1
         self.removeAction = removeAction
-        self.addAction = addAction
         self.setAction = setAction
-    }
-
-    func nextElement() -> Int? {
-        guard index >= 0, index < elements.count else {
-            return nil
-        }
-        let returnedIndex = index
-        index += 1
-        lastReturnedIndex = returnedIndex
-        return elements[returnedIndex]
-    }
-
-    func previousElement() -> Int? {
-        guard index > 0, index <= elements.count else {
-            return nil
-        }
-        index -= 1
-        lastReturnedIndex = index
-        return elements[index]
+        self.addAction = addAction
     }
 
     func removeLastReturned() -> Bool {
-        guard let returnedIndex = lastReturnedIndex,
-              elements.indices.contains(returnedIndex)
-        else {
+        guard lastReturnedIndex >= 0, lastReturnedIndex < elements.count else {
             return false
         }
-        elements.remove(at: returnedIndex)
-        if returnedIndex < index {
-            index -= 1
-        }
-        lastReturnedIndex = nil
-        removeAction?(returnedIndex)
+        elements.remove(at: lastReturnedIndex)
+        index = lastReturnedIndex
+        removeAction?(lastReturnedIndex)
+        lastReturnedIndex = -1
         return true
     }
 
+    /// `MutableListIterator.set`: replaces the element most recently returned
+    /// by `next()`/`previous()`, at the same position `removeLastReturned()`
+    /// targets.
     func setLastReturned(_ rawValue: Int) -> Bool {
-        guard let returnedIndex = lastReturnedIndex,
-              elements.indices.contains(returnedIndex)
-        else {
+        guard lastReturnedIndex >= 0, lastReturnedIndex < elements.count else {
             return false
         }
-        let normalizedValue: Int
-        if let setAction {
-            guard let value = setAction(returnedIndex, rawValue) else {
-                return false
-            }
-            normalizedValue = value
-        } else {
-            normalizedValue = rawValue
-        }
-        elements[returnedIndex] = normalizedValue
+        elements[lastReturnedIndex] = rawValue
+        setAction?(lastReturnedIndex, rawValue)
         return true
     }
 
-    func add(_ rawValue: Int) -> Bool {
-        guard index >= 0, index <= elements.count else {
-            return false
-        }
-        let insertionIndex = index
-        let normalizedValue: Int
-        if let addAction {
-            guard let value = addAction(insertionIndex, rawValue) else {
-                return false
-            }
-            normalizedValue = value
-        } else {
-            normalizedValue = rawValue
-        }
-        elements.insert(normalizedValue, at: insertionIndex)
+    /// `MutableListIterator.add`: inserts before the element `next()` would
+    /// return, then advances the cursor past the inserted element so a
+    /// following `next()` does not return it again. Invalidates
+    /// `lastReturnedIndex`: `add()` cannot be followed directly by
+    /// `set()`/`remove()`.
+    func addBeforeNext(_ rawValue: Int) {
+        elements.insert(rawValue, at: index)
+        addAction?(index, rawValue)
         index += 1
-        lastReturnedIndex = nil
-        return true
+        lastReturnedIndex = -1
     }
 }
 
@@ -2015,11 +1986,19 @@ final class RuntimeKTypeBox {
     let argumentRaws: [Int]
     /// Whether the type is marked nullable (`T?`).
     let isMarkedNullable: Bool
+    /// Optional compact type descriptor used by callable reflection metadata.
+    let typeNameRaw: Int
 
-    init(classifierRaw: Int, argumentRaws: [Int], isMarkedNullable: Bool) {
+    init(
+        classifierRaw: Int,
+        argumentRaws: [Int],
+        isMarkedNullable: Bool,
+        typeNameRaw: Int = 0
+    ) {
         self.classifierRaw = classifierRaw
         self.argumentRaws = argumentRaws
         self.isMarkedNullable = isMarkedNullable
+        self.typeNameRaw = typeNameRaw
     }
 }
 

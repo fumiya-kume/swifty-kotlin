@@ -370,6 +370,41 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
+            name: "__kk_cancellation_exception_new",
+            parameters: [],
+            returnType: .intptr,
+            section: "Exception",
+            isThrowing: false
+        ),
+        RuntimeABIFunctionSpec(
+            name: "__kk_cancellation_exception_new_message",
+            parameters: [
+                RuntimeABIParameter(name: "messageRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Exception",
+            isThrowing: false
+        ),
+        RuntimeABIFunctionSpec(
+            name: "__kk_cancellation_exception_new_message_cause",
+            parameters: [
+                RuntimeABIParameter(name: "messageRaw", type: .intptr),
+                RuntimeABIParameter(name: "causeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Exception",
+            isThrowing: false
+        ),
+        RuntimeABIFunctionSpec(
+            name: "__kk_cancellation_exception_new_cause",
+            parameters: [
+                RuntimeABIParameter(name: "causeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Exception",
+            isThrowing: false
+        ),
+        RuntimeABIFunctionSpec(
             name: "__kk_illegal_argument_exception_new",
             parameters: [],
             returnType: .intptr,
@@ -642,10 +677,19 @@ public extension RuntimeABISpec {
             name: "__kk_throwable_rawStackFrames",
             parameters: [
                 RuntimeABIParameter(name: "throwableRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
-            section: "Exception",
-            isThrowing: false
+            section: "Exception"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "__kk_throwable_toString",
+            parameters: [
+                RuntimeABIParameter(name: "throwableRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Exception"
         ),
         RuntimeABIFunctionSpec(
             name: "__kk_printStderr",
