@@ -290,6 +290,27 @@ struct RuntimeCoroutineIntrinsicsEdgeCaseTests {
         #expect(causeRaw == cause, "CancellationException must preserve its cause reference")
     }
 
+    /// Each source-backed CancellationException constructor bridge must retain
+    /// the cancellation runtime identity and preserve its cause arguments.
+    @Test func cancellationExceptionConstructorBridgesPreserveIdentity() {
+        let message = registerRuntimeObject(RuntimeStringBox("bridge message"))
+        let cause = runtimeAllocateThrowable(message: "bridge cause")
+        let constructors = [
+            kk_cancellation_exception_new(),
+            kk_cancellation_exception_new_message(message),
+            kk_cancellation_exception_new_cause(cause),
+            kk_cancellation_exception_new_message_cause(message, cause),
+        ]
+
+        for exception in constructors {
+            #expect(kk_is_cancellation_exception(exception) == 1)
+        }
+        #expect(__kk_throwable_cause(constructors[0]) == runtimeNullSentinelInt)
+        #expect(__kk_throwable_cause(constructors[1]) == runtimeNullSentinelInt)
+        #expect(__kk_throwable_cause(constructors[2]) == cause)
+        #expect(__kk_throwable_cause(constructors[3]) == cause)
+    }
+
     // MARK: - CancellationException is NOT a regular failure (Result semantics)
 
     /// When a coroutine block throws a CancellationException through runtimeResultRunCatching,
