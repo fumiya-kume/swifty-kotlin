@@ -512,7 +512,7 @@
   - diff: `ulong_range_fold*.kt` 既存 + `reduce` 空 range 例外ケース
   - 前提: KSP-1526, KSP-1527
 
-- [ ] KSP-1529: `UIntRange` の iterator / step / 構築演算子 / windowing を Kotlin 化する
+- [x] KSP-1529: `UIntRange` の iterator / step / 構築演算子 / windowing を Kotlin 化する
   - 対象スタブ: `Sources/CompilerCore/Sema/Models/MemberRuntimeDispatch.swift`（`__kk_uint_step` 等の分岐）+ unsigned range 登録
   - 実装先: `Sources/CompilerCore/Stdlib/kotlin/ranges/RangeIterators.kt` / `ProgressionConstructors.kt` 追記（unsigned 版）
   - 削除/降格 kk_*: `kk_uint_range_iterator`, `_hasNext`, `_next`, `_step`, `_chunked`, `_windowed`, `_take`, `_drop`, および `kk_uint_step`, `kk_uint_downTo`, `kk_uint_rangeTo`（`kk_uint_progression_fromClosedRange` は KSP-456 で整理済みか着手時に確認）

@@ -16,6 +16,10 @@ extension CallTypeChecker {
     ) -> TypeID? {
         let sema = ctx.sema
         let interner = ctx.interner
+        let memberName = interner.resolve(calleeName)
+        let isUIntRangeSourceMigrationMember = [
+            "iterator", "step", "take", "drop", "chunked", "windowed",
+        ].contains(memberName)
 
         // An unqualified member call inside an extension body has no receiver
         // expression to bind. Use the extension receiver carried by the type
@@ -24,13 +28,29 @@ extension CallTypeChecker {
         let isOpenEndRangeReceiver = receiverType.map {
             driver.helpers.isOpenEndRangeType($0, sema: sema, interner: interner)
         } ?? false
+
+        let isTypedUIntRangeReceiver: Bool = {
+            guard let receiverType,
+                  let receiverKind = MemberRuntimeDispatch.rangeReceiverKind(
+                      receiverExpr: receiverID,
+                      receiverType: receiverType,
+                      sema: sema,
+                      interner: interner
+                  )
+            else {
+                return false
+            }
+            return receiverKind == .uintRange || receiverKind == .uintProgression
+        }()
+        let isSyntacticRangeExpression = ControlFlowTypeChecker.isRangeExpression(receiverID, ast: ctx.ast)
         guard !isClassNameReceiver,
-              (sema.bindings.isRangeExpr(receiverID) || isOpenEndRangeReceiver)
+              (sema.bindings.isRangeExpr(receiverID)
+                  || isOpenEndRangeReceiver
+                  || isSyntacticRangeExpression
+                  || (isTypedUIntRangeReceiver && isUIntRangeSourceMigrationMember))
         else {
             return nil
         }
-
-        let memberName = interner.resolve(calleeName)
 
         // KSP-453: IntRange/IntProgression HOFs now have bundled Kotlin source
         // implementations; prefer source-backed resolution instead of the legacy
@@ -337,6 +357,12 @@ extension CallTypeChecker {
     }
 
     private func isUIntRangeSourceBackedHOF(_ memberName: String, argCount: Int) -> Bool {
+        if memberName == "iterator" {
+            return argCount == 0
+        }
+        if memberName == "step" {
+            return argCount == 1
+        }
         if memberName == "first" || memberName == "last"
             || memberName == "firstOrNull" || memberName == "lastOrNull"
         {
@@ -350,15 +376,32 @@ extension CallTypeChecker {
             "find", "findLast",
             "firstOrNull", "lastOrNull",
             "any", "all", "none",
+            "chunked", "windowed", "take", "drop",
         ]
-        return sourceBacked.contains(memberName)
+        if sourceBacked.contains(memberName) {
+            if memberName == "fold" || memberName == "foldIndexed" {
+                return argCount == 2
+            }
+            return memberName == "windowed" ? (1...3).contains(argCount) : argCount == 1
+        }
+        return false
     }
 
     private func isUIntProgressionSourceBackedHOF(_ memberName: String, argCount: Int) -> Bool {
+        if memberName == "iterator" {
+            return argCount == 0
+        }
+        if memberName == "step" {
+            return argCount == 1
+        }
+        if memberName == "windowed" {
+            return (1...3).contains(argCount)
+        }
         guard argCount == 1 else { return false }
         return [
             "map", "mapIndexed", "mapNotNull",
             "filter", "filterIndexed", "filterNot",
+            "chunked", "take", "drop",
         ].contains(memberName)
     }
 
@@ -631,7 +674,7 @@ extension CallTypeChecker {
         case "chunked":
             argCount == 1
         case "windowed":
-            argCount == 3
+            (1...3).contains(argCount)
         default:
             true
         }
