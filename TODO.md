@@ -1354,7 +1354,7 @@
     - `kotlin.collections.minus` — fun Map.minus(Sequence): Map  -- `final fun <#A: kotlin/Any?, #B: kotlin/Any?> (kotlin.collections/Map<out #A, #B>).kotlin.collections/minus(kotlin.sequences/Sequence<#A>): kotlin.collections/Map<#A, #B>`
     - `kotlin.collections.minus` — fun Map.minus(Array): Map  -- `final fun <#A: kotlin/Any?, #B: kotlin/Any?> (kotlin.collections/Map<out #A, #B>).kotlin.collections/minus(kotlin/Array<out #A>): kotlin.collections/Map<#A, #B>`
 
-- [ ] KSP-1016: kotlin.collections.Map.none-family の未実装 stdlib API を実装する（1 件）
+- [x] KSP-1016: kotlin.collections.Map.none-family の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.collections` / receiver `Map` / family `none`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/MapHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -1363,6 +1363,7 @@
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
   - 未実装シンボル一覧:
     - `kotlin.collections.none` — fun Map.none(): Boolean  -- `final fun <#A: kotlin/Any?, #B: kotlin/Any?> (kotlin.collections/Map<out #A, #B>).kotlin.collections/none(): kotlin/Boolean`
+  - 完了根拠（2026-09-04監査）: merged PR #6216（merge commit `346c18370d218126ded5fac35fd9e3a5ec5c2bb4`）で `Map<out K, V>.none(): Boolean` を `MapHOF.kt` に source-backed 実装済み。Sema Golden は zero-argument call を `kotlin.collections.none#29`、predicate overload を `#28` に分離し、`kk_map_none` と対応するsynthetic/Runtime ABIは predicate arity 1 の既存経路として保持している。対象Goldenの直接生成比較、PR #6216のKotlin 2.3.10 kotlinc diff、TODO ID検査、Runtime ABI link検証を確認済み。
 
 - [ ] KSP-1026: kotlin.collections.AbstractCollection.AbstractCollection の未実装 stdlib API を実装する（6 件）
   - 対象: `kotlin.collections.AbstractCollection` / receiver `AbstractCollection`
