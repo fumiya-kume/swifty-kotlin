@@ -1128,6 +1128,64 @@ public fun UIntRange.none(predicate: (UInt) -> Boolean): Boolean {
     return true
 }
 
+public fun UIntRange.take(n: Int): List<UInt> {
+    require(n >= 0) { "Requested element count $n is less than zero." }
+    val result = mutableListOf<UInt>()
+    var count = 0
+    for (element in this) {
+        if (count >= n) break
+        result.add(element)
+        count++
+    }
+    return result
+}
+
+public fun UIntRange.drop(n: Int): List<UInt> {
+    require(n >= 0) { "Requested element count $n is less than zero." }
+    val result = mutableListOf<UInt>()
+    var count = 0
+    for (element in this) {
+        if (count < n) { count++; continue }
+        result.add(element)
+    }
+    return result
+}
+
+public fun UIntRange.chunked(size: Int): List<List<UInt>> {
+    require(size > 0) { "size $size must be greater than zero." }
+    val result = mutableListOf<List<UInt>>()
+    var current = mutableListOf<UInt>()
+    for (element in this) {
+        current.add(element)
+        if (current.size == size) {
+            result.add(current)
+            current = mutableListOf<UInt>()
+        }
+    }
+    if (current.isNotEmpty()) result.add(current)
+    return result
+}
+
+public fun UIntRange.windowed(size: Int, step: Int = 1, partialWindows: Boolean = false): List<List<UInt>> {
+    require(size > 0 && step > 0) { "Both size $size and step $step must be greater than zero." }
+    val result = mutableListOf<List<UInt>>()
+    val values = toList()
+    var i = 0
+    while (i < values.size) {
+        val end = i + size
+        if (end > values.size && !partialWindows) break
+        val window = mutableListOf<UInt>()
+        var j = i
+        while (j < values.size && j < end) {
+            window.add(values[j])
+            j++
+        }
+        result.add(window)
+        i += step
+    }
+    return result
+}
+
 public fun <R> UIntRange.map(transform: (UInt) -> R): List<R> {
     val result = mutableListOf<R>()
     for (element in this) { result.add(transform(element)) }
@@ -1240,6 +1298,64 @@ public fun UIntProgression.filter(predicate: (UInt) -> Boolean): List<UInt> {
 public fun UIntProgression.filterNot(predicate: (UInt) -> Boolean): List<UInt> {
     val result = mutableListOf<UInt>()
     for (element in this) { if (!predicate(element)) result.add(element) }
+    return result
+}
+
+public fun UIntProgression.take(n: Int): List<UInt> {
+    require(n >= 0) { "Requested element count $n is less than zero." }
+    val result = mutableListOf<UInt>()
+    var count = 0
+    for (element in this) {
+        if (count >= n) break
+        result.add(element)
+        count++
+    }
+    return result
+}
+
+public fun UIntProgression.drop(n: Int): List<UInt> {
+    require(n >= 0) { "Requested element count $n is less than zero." }
+    val result = mutableListOf<UInt>()
+    var count = 0
+    for (element in this) {
+        if (count < n) { count++; continue }
+        result.add(element)
+    }
+    return result
+}
+
+public fun UIntProgression.chunked(size: Int): List<List<UInt>> {
+    require(size > 0) { "size $size must be greater than zero." }
+    val result = mutableListOf<List<UInt>>()
+    var current = mutableListOf<UInt>()
+    for (element in this) {
+        current.add(element)
+        if (current.size == size) {
+            result.add(current)
+            current = mutableListOf<UInt>()
+        }
+    }
+    if (current.isNotEmpty()) result.add(current)
+    return result
+}
+
+public fun UIntProgression.windowed(size: Int, step: Int = 1, partialWindows: Boolean = false): List<List<UInt>> {
+    require(size > 0 && step > 0) { "Both size $size and step $step must be greater than zero." }
+    val result = mutableListOf<List<UInt>>()
+    val values = toList()
+    var i = 0
+    while (i < values.size) {
+        val end = i + size
+        if (end > values.size && !partialWindows) break
+        val window = mutableListOf<UInt>()
+        var j = i
+        while (j < values.size && j < end) {
+            window.add(values[j])
+            j++
+        }
+        result.add(window)
+        i += step
+    }
     return result
 }
 

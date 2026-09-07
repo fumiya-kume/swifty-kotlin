@@ -62,10 +62,10 @@ expr e@23:5#1 memberCall recv=e@23:5 callee=hashCode args=[] type=Int call=kotli
 expr e@24:5 name(values) type=golden.sema.ProbeMutableMap ref=golden.sema.inheritedMapSurface.$2.values
 expr e@24:5#1 memberCall recv=e@24:5 callee=toString args=[] type=String call=kotlin.collections.AbstractMap.toString targs=[String,Int]
 expr e@25:5 name(keyView) type=kotlin.collections.Set<String> ref=__local_3.keyView
-expr e@25:5#1 memberCall recv=e@25:5 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@25:5#1 memberCall recv=e@25:5 callee=size args=[] type=Int ref=kotlin.collections.Set.size
 expr e@26:5 name(valueView) type=kotlin.collections.Collection<Int> ref=__local_4.valueView
 expr e@26:5#1 memberCall recv=e@26:5 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
 expr e@27:5 name(entryView) type=kotlin.collections.Set<kotlin.collections.Map.Entry<String, Int>> ref=__local_5.entryView
-expr e@27:5#1 memberCall recv=e@27:5 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@27:5#1 memberCall recv=e@27:5 callee=size args=[] type=Int ref=kotlin.collections.Set.size
 expr e@28:12 name(missingValue) type=Int? ref=__local_2.missingValue
 expr e@28:5 return value=e@28:12 type=Nothing

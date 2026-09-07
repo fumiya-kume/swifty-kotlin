@@ -32,12 +32,15 @@ extension CallLowerer {
             return nil
         }
         guard let propInfo = sema.symbols.symbol(propertySymbol),
-              propInfo.flags.contains(.openType)
-                  || propInfo.flags.contains(.abstractType)
-                  || propInfo.flags.contains(.overrideMember),
               let ownerID = sema.symbols.parentSymbol(for: propertySymbol),
-              sema.symbols.symbol(ownerID)?.kind == .class,
+              let ownerInfo = sema.symbols.symbol(ownerID),
+              ownerInfo.kind == .class,
+              (propInfo.flags.contains(.openType)
+                  || propInfo.flags.contains(.abstractType)
+                  || propInfo.flags.contains(.overrideMember)
+                  || ownerInfo.flags.contains(.abstractType)),
               (propInfo.flags.contains(.abstractType)
+                  || ownerInfo.flags.contains(.abstractType)
                   || !sema.symbols.directSubtypes(of: ownerID).isEmpty),
               let layout = sema.symbols.nominalLayout(for: ownerID)
         else {

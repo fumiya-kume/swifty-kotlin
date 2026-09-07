@@ -63,7 +63,7 @@ public func kk_linked_hash_set_init(_ setRaw: Int) -> Int {
 @_cdecl("__kk_set_size")
 public func kk_set_size(_ setRaw: Int) -> Int {
     guard let set = runtimeSetBox(from: setRaw) else {
-        return 0
+        return runtimeSourceCollectionSize(setRaw) ?? 0
     }
     return set.count
 }
