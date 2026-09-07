@@ -969,20 +969,6 @@ extension CallTypeChecker {
                     allCandidates = labelMatches
                 }
             }
-            if argCount == 1,
-               allCandidates.count > 1,
-               let firstArgExpr = argExprs.first,
-               allCandidates.contains(where: { sema.symbols.externalLinkName(for: $0) == "kk_array_sliceArray_range" }),
-               allCandidates.contains(where: { sema.symbols.externalLinkName(for: $0) == "kk_array_sliceArray_iterable" })
-            {
-                let isRangeArg = sema.bindings.isRangeExpr(firstArgExpr)
-                let targetLinkName = isRangeArg ? "kk_array_sliceArray_range" : "kk_array_sliceArray_iterable"
-                if let sliceArrayMatch = allCandidates.first(where: { candidate in
-                    sema.symbols.externalLinkName(for: candidate) == targetLinkName
-                }) {
-                    return sliceArrayMatch
-                }
-            }
             if memberName == interner.intern("addAll"),
                argCount == 1,
                let firstArgExpr = argExprs.first,
@@ -2859,6 +2845,8 @@ extension CallTypeChecker {
                 ? sema.types.doubleType
                 : memberName == interner.intern("firstNotNullOf") || memberName == interner.intern("firstNotNullOfOrNull")
                 ? sema.types.nullableAnyType
+                : memberName == interner.intern("sortedByDescending")
+                ? sema.types.nullableAnyType
                 : sema.types.anyType
             let expectedType = sema.types.make(.functionType(FunctionType(
                 params: [receiverElementType],
@@ -2881,7 +2869,7 @@ extension CallTypeChecker {
         {
             let expectedType = sema.types.make(.classType(ClassType(
                 classSymbol: comparatorSymbol,
-                args: [.invariant(receiverElementType)],
+                args: [.in(receiverElementType)],
                 nullability: .nonNull
             )))
             return (argumentIndex: 0, expectedType: expectedType)

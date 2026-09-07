@@ -38,6 +38,18 @@ struct TypeCheckScopeBuilder {
 
             let packageScope = PackageScope(parent: explicitImportScope, symbols: sema.symbols)
             for packageSymbol in topLevelSymbolsByPackage[file.packageFQName] ?? [] {
+                // KSP-1150: the coroutine registry retains a root-level
+                // CancellationException compatibility class. An explicit
+                // import of the source-backed class must take precedence over
+                // that residual alias in the root package.
+                if shouldSkipRootCancellationCompatibilityAlias(
+                    packageSymbol,
+                    file: file,
+                    sema: sema,
+                    interner: interner
+                ) {
+                    continue
+                }
                 packageScope.insert(packageSymbol)
             }
 
@@ -46,6 +58,39 @@ struct TypeCheckScopeBuilder {
         }
 
         return fileScopes
+    }
+
+    private func shouldSkipRootCancellationCompatibilityAlias(
+        _ symbolID: SymbolID,
+        file: ASTFile,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard file.packageFQName.isEmpty,
+              let symbol = sema.symbols.symbol(symbolID),
+              symbol.kind == .class,
+              symbol.flags.contains(.synthetic),
+              symbol.fqName.count == 1,
+              symbol.name == interner.intern("CancellationException")
+        else {
+            return false
+        }
+
+        return file.imports.contains { importDecl in
+            guard importDecl.alias == nil,
+                  importDecl.path.last == symbol.name
+            else {
+                return false
+            }
+            return sema.symbols.lookupAll(fqName: importDecl.path).contains { importedID in
+                guard let imported = sema.symbols.symbol(importedID) else {
+                    return false
+                }
+                return imported.kind == .class
+                    && imported.fqName.count > 1
+                    && importedID != symbolID
+            }
+        }
     }
 
     func collectTopLevelSymbolsByPackage(

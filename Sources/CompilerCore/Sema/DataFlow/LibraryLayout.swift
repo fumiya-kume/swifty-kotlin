@@ -88,7 +88,7 @@ extension DataFlowSemaPhase {
                     propertyAccessorKind: propertyAccessorKind
                 )
             }
-            let components = normalizedKey.split(separator: "#", omittingEmptySubsequences: false).map(String.init)
+            let components = key.split(separator: "#", omittingEmptySubsequences: false).map(String.init)
             guard (components.count == 3 || components.count == 4),
                   let arity = Int(components[1])
             else {
@@ -99,7 +99,14 @@ extension DataFlowSemaPhase {
                 )
                 return nil
             }
-            let fqName = components[0].split(separator: ".").map { interner.intern(String($0)) }
+            // `property:` was emitted by the initial BUG-227 serializer before
+            // the metadata format gained an explicit accessor discriminator.
+            // Continue accepting it as a getter for already-built libraries.
+            let isLegacyProperty = components[0].hasPrefix("property:")
+            let rawFQName = isLegacyProperty
+                ? String(components[0].dropFirst("property:".count))
+                : components[0]
+            let fqName = rawFQName.split(separator: ".").map { interner.intern(String($0)) }
             guard !fqName.isEmpty else {
                 diagnostics.warning(
                     "KSWIFTK-LIB-0003",
@@ -121,7 +128,7 @@ extension DataFlowSemaPhase {
                 isSuspend: isSuspend,
                 slot: slot,
                 typeSignature: typeSignature,
-                propertyAccessorKind: nil
+                propertyAccessorKind: isLegacyProperty ? .getter : nil
             )
         }
     }
@@ -223,7 +230,13 @@ extension DataFlowSemaPhase {
         var resolvedVTableSlots: [SymbolID: Int] = [:]
         for entry in record.vtableSlots {
             if let propertyAccessorKind = entry.propertyAccessorKind {
-                guard let propertySymbol = resolveImportedPropertySymbol(entry.fqName, symbols: symbols) else {
+                guard let propertySymbol = resolveImportedPropertySymbol(
+                    fqName: entry.fqName,
+                    typeSignature: entry.typeSignature,
+                    symbols: symbols,
+                    types: types,
+                    interner: interner
+                ) else {
                     let fq = entry.fqName.map { interner.resolve($0) }.joined(separator: ".")
                     diagnostics.warning(
                         "KSWIFTK-LIB-0004",
@@ -333,16 +346,6 @@ extension DataFlowSemaPhase {
             .id
     }
 
-    private func resolveImportedPropertySymbol(
-        _ fqName: [InternedString],
-        symbols: SymbolTable
-    ) -> SymbolID? {
-        symbols.lookupAll(fqName: fqName)
-            .compactMap { symbols.symbol($0) }
-            .first(where: { $0.kind == .property })?
-            .id
-    }
-
     private func resolveImportedMethodSymbol(
         fqName: [InternedString],
         arity: Int,
@@ -382,6 +385,36 @@ extension DataFlowSemaPhase {
             // Fall back to legacy arity-only resolution for metadata that lacks a signature.
         }
 
+        return candidates.first?.id
+    }
+
+    private func resolveImportedPropertySymbol(
+        fqName: [InternedString],
+        typeSignature: String?,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> SymbolID? {
+        let candidates = symbols.lookupAll(fqName: fqName)
+            .compactMap { symbols.symbol($0) }
+            .filter { $0.kind == .property }
+            .sorted(by: { $0.id.rawValue < $1.id.rawValue })
+        if let typeSignature, !typeSignature.isEmpty {
+            let mangler = NameMangler()
+            let nameResolver: (InternedString) -> String = { interner.resolve($0) }
+            if let exact = candidates.first(where: { candidate in
+                guard let propertyType = symbols.propertyType(for: candidate.id) else { return false }
+                let candidateSig = mangler.encodeType(
+                    propertyType,
+                    symbols: symbols,
+                    types: types,
+                    nameResolver: nameResolver
+                )
+                return candidateSig == typeSignature
+            }) {
+                return exact.id
+            }
+        }
         return candidates.first?.id
     }
 

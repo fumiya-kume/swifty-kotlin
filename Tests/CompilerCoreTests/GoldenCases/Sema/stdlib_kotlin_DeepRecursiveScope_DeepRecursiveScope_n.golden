@@ -9,7 +9,7 @@ expr e@5:32 name(value) type=Int ref=s-0
 expr e@5:54 name(value) type=Int ref=s-0
 expr e@5:62 int(1) type=Int
 expr e@5:54#1 binary(subtract) lhs=e@5:54 rhs=e@5:62 type=Int
-expr e@5:40 call callee=e@5:40#1 args=[_:e@5:54#1] type=Int call=kotlin.DeepRecursiveScope.callRecursive targs=[Int,Int]
+expr e@5:40 call callee=e@5:40#1 args=[_:e@5:54#1] type=Int call=kotlin.DeepRecursiveScope.callRecursive#0 targs=[Int,Int]
 expr e@5:32#1 binary(add) lhs=e@5:32 rhs=e@5:40 type=Int
 expr e@5:9 if cond=e@5:13#1 then=e@5:25 else=e@5:32#1 type=Int
 expr e@4:37 lambda params=[value] body=e@5:9 label=DeepRecursiveFunction type=suspend kotlin.DeepRecursiveScope<Int, Int>.(Int) -> Int

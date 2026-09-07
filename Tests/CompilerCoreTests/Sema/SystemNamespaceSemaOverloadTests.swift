@@ -101,27 +101,40 @@ struct SystemNamespaceSemaOverloadTests {
             "kotlin.system.System object must be registered"
         )
         let systemName = try #require(sema.symbols.symbol(systemSymbol)?.fqName)
-        let expectedSystemMembers: [(String, String)] = [
-            ("currentTimeMillis", "__kk_system_currentTimeMillis"),
-            ("nanoTime", "__kk_system_nanoTime"),
-            ("processStartNanos", "__kk_system_process_start_nanos"),
+        let expectedSystemMembers = [
+            "currentTimeMillis",
+            "nanoTime",
+            "processStartNanos",
         ]
-        for (member, link) in expectedSystemMembers {
+        for member in expectedSystemMembers {
             let memberFQ = systemName + [interner.intern(member)]
-            #expect(
-                sema.symbols.lookupAll(fqName: memberFQ).contains {
-                    sema.symbols.externalLinkName(for: $0) == link
-                },
-                "kotlin.system.System.\(member) should remain linked to \(link)"
+            let memberSymbol = try #require(
+                sema.symbols.lookupAll(fqName: memberFQ).first,
+                "kotlin.system.System.\(member) should be declared"
             )
+            #expect(
+                sema.symbols.isSourceBackedSymbol(memberSymbol),
+                "kotlin.system.System.\(member) should resolve to bundled Kotlin source"
+            )
+            #expect(
+                sema.symbols.externalLinkName(for: memberSymbol) == nil,
+                "kotlin.system.System.\(member) must not expose a runtime link"
+            )
+        }
+
+        for bridge in [
+            "__kk_system_currentTimeMillis",
+            "__kk_system_nanoTime",
+            "__kk_system_process_start_nanos",
+        ] {
+            #expect(links.contains(bridge), "\(bridge) bridge must be declared")
         }
     }
 
     // MARK: - STDLIB-SYSTEM-002: Sema overload resolution
 
-    /// Verifies that calls to kotlin.system top-level functions resolve through
-    /// ordinary source-backed declarations, while System object members retain
-    /// their existing synthetic shims.
+    /// Verifies that calls to kotlin.system top-level functions and System
+    /// object members resolve through ordinary source-backed declarations.
     @Test
     func testKotlinSystemCallExpressionsResolve() throws {
         let source = """
