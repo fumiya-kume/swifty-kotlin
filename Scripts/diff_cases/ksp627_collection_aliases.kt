@@ -37,6 +37,11 @@ fun main() {
     linked.add(7)
     println(linked.size)
 
+    val linkedOf = linkedSetOf(1, 2, 3)
+    println(linkedOf.size)
+    println(linkedOf.remove(2))
+    println(linkedOf.contains(2))
+
     val linkedCopy = LinkedHashSet(listOf(8, 8, 9))
     println(linkedCopy.size)
 
