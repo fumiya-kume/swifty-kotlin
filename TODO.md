@@ -1142,7 +1142,7 @@
     - `kotlin.collections.onEachIndexed` — fun onEachIndexed(Function2): #B  -- `final inline fun <#A: kotlin/Any?, #B: kotlin.collections/Iterable<#A>> (#B).kotlin.collections/onEachIndexed(kotlin/Function2<kotlin/Int, #A, kotlin/Unit>): #B`
     - `kotlin.collections.onEachIndexed` — fun onEachIndexed(Function2): #C  -- `final inline fun <#A: kotlin/Any?, #B: kotlin/Any?, #C: kotlin.collections/Map<out #A, #B>> (#C).kotlin.collections/onEachIndexed(kotlin/Function2<kotlin/Int, kotlin.collections/Map.Entry<#A, #B>, kotlin/Unit>): #C`
 
-- [ ] KSP-961: kotlin.collections.Entry の未実装 stdlib API を実装する（3 件）
+- [x] KSP-961: kotlin.collections.Entry の未実装 stdlib API を実装する（3 件）
   - 対象: `kotlin.collections` / receiver `Entry`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/collections/Entry.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -1153,6 +1153,8 @@
     - `kotlin.collections.component1` — fun Entry.component1(): #A  -- `final inline fun <#A: kotlin/Any?, #B: kotlin/Any?> (kotlin.collections/Map.Entry<#A, #B>).kotlin.collections/component1(): #A`
     - `kotlin.collections.component2` — fun Entry.component2(): #B  -- `final inline fun <#A: kotlin/Any?, #B: kotlin/Any?> (kotlin.collections/Map.Entry<#A, #B>).kotlin.collections/component2(): #B`
     - `kotlin.collections.toPair` — fun Entry.toPair(): Pair  -- `final inline fun <#A: kotlin/Any?, #B: kotlin/Any?> (kotlin.collections/Map.Entry<#A, #B>).kotlin.collections/toPair(): kotlin/Pair<#A, #B>`
+  - 完了根拠（2026-09-04）: Kotlin 2.3.10 の `libraries/stdlib/src/kotlin/collections/Maps.kt` に一致する `@kotlin.internal.InlineOnly` の `component1` / `component2` / `toPair` を `Entry.kt` に source-backed 実装し、Map.Entry receiver の型・順序・Pair 生成契約を保持した。Map.Entry の component1/component2 synthetic alias は bundled declaration index で source-backed extension を優先するよう抑止し、専用 `kk_map_entry_to_pair` runtime export と ABI parity 登録を削除した。`__kk_pair_first` / `__kk_pair_second` は Map.Entry.key/value と Pair の共有 bridge のため維持した。
+  - 回帰: 専用 Sema 回帰で3 call binding が package-level bundled source（外部リンクなし）になり nested synthetic alias が残らないこと、Golden で型と call routing、`diff_kotlinc` で実行結果を固定した。
 
 - [ ] KSP-962: kotlin.collections.Grouping の未実装 stdlib API を実装する（5 件）
   - 対象: `kotlin.collections` / receiver `Grouping`

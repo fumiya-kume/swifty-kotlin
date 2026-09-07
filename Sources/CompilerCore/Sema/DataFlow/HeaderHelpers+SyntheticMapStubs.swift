@@ -253,7 +253,9 @@ extension DataFlowSemaPhase {
             kotlinCollectionsPkg: kotlinCollectionsPkg,
             mapInterfaceSymbol: mapInterfaceSymbol,
             keyTypeParamSymbol: keyTypeParamSymbol,
-            valueTypeParamSymbol: valueTypeParamSymbol
+            valueTypeParamSymbol: valueTypeParamSymbol,
+            bundledIndex: bundledIndex,
+            skipStats: skipStats
         )
         // MutableMap is registered before Map.Entry, so its nested entry shell
         // cannot link its inherited Map.Entry surface during first registration.
@@ -806,7 +808,9 @@ extension DataFlowSemaPhase {
         kotlinCollectionsPkg: [InternedString],
         mapInterfaceSymbol: SymbolID,
         keyTypeParamSymbol: SymbolID,
-        valueTypeParamSymbol: SymbolID
+        valueTypeParamSymbol: SymbolID,
+        bundledIndex: BundledDeclarationIndex,
+        skipStats: SyntheticStubSkipStatsCollector?
     ) -> TypeID {
         let entryName = interner.intern("Entry")
         let mapFQName = kotlinCollectionsPkg + [interner.intern("Map")]
@@ -836,18 +840,6 @@ extension DataFlowSemaPhase {
             args: [.out(keyType), .out(valueType)],
             nullability: .nonNull
         )))
-        let pairType: TypeID? = if let pairSymbol = symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Pair")])
-            ?? symbols.lookupByShortName(interner.intern("Pair")).first
-        {
-            types.make(.classType(ClassType(
-                classSymbol: pairSymbol,
-                args: [.invariant(keyType), .invariant(valueType)],
-                nullability: .nonNull
-            )))
-        } else {
-            nil
-        }
-
         func registerMember(
             name: String,
             returnType: TypeID,
@@ -856,6 +848,21 @@ extension DataFlowSemaPhase {
         ) {
             let memberName = interner.intern(name)
             let memberFQName = entryFQName + [memberName]
+            // KSP-961: component1/component2 are source-backed extensions on
+            // Map.Entry in Entry.kt. Keep the shared key/value accessors below
+            // as runtime-backed interface members, but do not register a
+            // competing synthetic extension surface when bundled source exists.
+            if (name == "component1" || name == "component2"),
+               bundledIndex.contains(ownerFQName: entryFQName, name: memberName, arity: 0)
+            {
+                skipStats?.recordSkip(
+                    ownerFQName: entryFQName,
+                    name: memberName,
+                    arity: 0,
+                    interner: interner
+                )
+                return
+            }
             guard symbols.lookup(fqName: memberFQName) == nil else { return }
             let memberSymbol = symbols.define(
                 kind: .function,
@@ -883,9 +890,6 @@ extension DataFlowSemaPhase {
         registerMember(name: "component2", returnType: valueType, externalLinkName: "__kk_pair_second", flags: [.synthetic, .operatorFunction])
         registerMember(name: "key", returnType: keyType, externalLinkName: "__kk_pair_first")
         registerMember(name: "value", returnType: valueType, externalLinkName: "__kk_pair_second")
-        if let pairType {
-            registerMember(name: "toPair", returnType: pairType, externalLinkName: "kk_map_entry_to_pair")
-        }
 
         return receiverType
     }
