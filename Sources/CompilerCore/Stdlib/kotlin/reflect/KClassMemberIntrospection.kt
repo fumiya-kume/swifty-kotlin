@@ -11,7 +11,7 @@ import kotlin.internal.KsSymbolName
 // NOTE: the collection accessors below (`members`, `constructors`, etc.)
 // return `List<Any?>` rather than their real stdlib signatures (e.g.
 // `Collection<KCallable<*>>`) — the returned runtime handles carry stable
-// reflection nominal IDs (KSP-689), so `is`/`as` and shared `KCallable.name`
+// reflection nominal IDs (KSP-689), so `is`/`as` and shared `KCallable` metadata
 // dispatch are valid at the Kotlin boundary, but the containing collection
 // itself is not yet precisely typed.
 //

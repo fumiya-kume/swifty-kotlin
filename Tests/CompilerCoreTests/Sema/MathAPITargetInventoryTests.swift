@@ -247,6 +247,25 @@ struct MathAPITargetInventoryTests {
         #expect(value.bitPattern == 0x4005BF0A8B145769)
     }
 
+    @Test func testPIIsPublicDoubleConstWithExactBitPattern() throws {
+        let (sema, interner) = try sharedSema()
+        let piFQName = ["kotlin", "math", "PI"].map { interner.intern($0) }
+        let piSymbol = try #require(sema.symbols.lookup(fqName: piFQName))
+        let piInfo = try #require(sema.symbols.symbol(piSymbol))
+
+        #expect(piInfo.kind == .property)
+        #expect(piInfo.visibility == .public)
+        #expect(!piInfo.flags.contains(.mutable))
+        #expect(piInfo.flags.contains(.constValue))
+        #expect(sema.symbols.propertyType(for: piSymbol) == sema.types.make(.primitive(.double, .nonNull)))
+
+        guard case let .doubleLiteral(value) = sema.symbols.constValueExprKind(for: piSymbol) else {
+            Issue.record("Expected kotlin.math.PI to carry a double literal constant")
+            return
+        }
+        #expect(value.bitPattern == 0x400921FB54442D18)
+    }
+
     @Test func testKnownGapsCoverEveryUnimplementedTargetSignature() {
         let implemented = Set(Self.implementedLinksBySignature.keys).union(Self.sourceBackedSignatures)
         let gaps = Self.knownGapSignaturesByTodo.values.reduce(into: Set<String>()) { result, signatures in

@@ -361,7 +361,9 @@ extension MemberLowerer {
         )
         body.append(.constValue(result: propertyNameExprID, value: .stringLiteral(propertyName)))
         let propertyType = sema.symbols.propertyType(for: propertySymbol) ?? sema.types.anyType
-        let returnTypeSig = interner.intern(sema.types.renderType(propertyType))
+        let returnTypeSig = interner.intern(
+            sema.types.displayName(of: propertyType, symbols: sema.symbols, interner: interner)
+        )
         let returnTypeExprID = arena.appendExpr(
             .stringLiteral(returnTypeSig),
             type: sema.types.stringType
@@ -563,7 +565,7 @@ extension MemberLowerer {
         driver.ctx.clearImplicitReceiver()
     }
 
-    // MARK: - BUG-141: interface property getter dispatch
+    // MARK: - BUG-141/KSP-928: interface and abstract class property dispatch
 
     /// Emits a getter accessor function (`(receiver) -> PropertyType`) that
     /// reads a stored property from its instance field. Concrete classes and
@@ -591,6 +593,7 @@ extension MemberLowerer {
         let receiverSymbol = driver.callSupportLowerer.syntheticReceiverParameterSymbol(functionSymbol: propertySymbol)
         let params = [KIRParameter(symbol: receiverSymbol, type: ownerType)]
         let receiverExpr = arena.appendExpr(.symbolRef(receiverSymbol), type: ownerType)
+        let getterSymbol = SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: propertySymbol)
 
         var body: KIRLoweringEmitContext = [.beginBlock]
         body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSymbol)))
@@ -608,7 +611,6 @@ extension MemberLowerer {
         body.append(.returnValue(result))
         body.append(.endBlock)
 
-        let getterSymbol = SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: propertySymbol)
         let kirID = arena.appendDecl(
             .function(
                 KIRFunction(

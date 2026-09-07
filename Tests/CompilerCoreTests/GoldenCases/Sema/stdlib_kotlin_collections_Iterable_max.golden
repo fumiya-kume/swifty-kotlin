@@ -40,7 +40,7 @@ symbol fq=golden.sema.iterableMaxWithOrNull.$17.comparator kind=valueParameter v
 symbol fq=golden.sema.iterableMaxWithOrNull.$17.values kind=valueParameter vis=private flags=_
 symbol fq=kotlin.Comparable kind=interface vis=public flags=_
 symbol fq=kotlin.Comparator kind=interface vis=public flags=funInterface
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Iterable_max package=golden.sema
   decl golden.sema.iterableMaxComparable fun iterableMaxComparable sym=golden.sema.iterableMaxComparable
   decl golden.sema.iterableMaxDouble fun iterableMaxDouble sym=golden.sema.iterableMaxDouble
