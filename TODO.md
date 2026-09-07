@@ -2336,7 +2336,7 @@
     - `kotlin.concurrent.atomics.AtomicArray.storeAt` — fun AtomicArray.storeAt(Int, ): Unit  -- `final fun storeAt(kotlin/Int, #A)`
     - `kotlin.concurrent.atomics.AtomicArray.toString` — fun AtomicArray.toString(): String  -- `final fun toString(): kotlin/String`
 
-- [ ] KSP-1110: kotlin.concurrent.atomics.AtomicBoolean top-level の未実装 stdlib API を実装する（1 件）
+- [x] KSP-1110: kotlin.concurrent.atomics.AtomicBoolean top-level の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.concurrent.atomics.AtomicBoolean` / top-level
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/concurrent/atomics/AtomicBoolean/Stdlib.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -2345,6 +2345,7 @@
   - 完了ゲート: `bash Scripts/swift_test.sh --filter Golden` / `bash Scripts/diff_kotlinc.sh Scripts/diff_cases` green / `bash Scripts/check_todo_ids.sh` pass / `bash Scripts/validate_runtime_abi_links.sh`（存在すれば）
   - 未実装シンボル一覧:
     - `kotlin.concurrent.atomics.AtomicBoolean.<init>` — constructor (Boolean)  -- `constructor <init>(kotlin/Boolean)`
+  - 完了根拠 (2026-09-04): `kotlin.concurrent.atomics.AtomicBoolean(Boolean)` を `AtomicBoolean/Stdlib.kt` の public source-backed factory として追加し、`AtomicBoolean` typealias を介して既存 runtime-backed constructor に委譲。constructor の `kk_atomic_bool_create` bridge と receiver 側 synthetic surface は KSP-1111 の所有範囲のため保持。
 
 - [ ] KSP-1111: kotlin.concurrent.atomics.AtomicBoolean.AtomicBoolean の未実装 stdlib API を実装する（5 件）
   - 対象: `kotlin.concurrent.atomics.AtomicBoolean` / receiver `AtomicBoolean`
