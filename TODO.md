@@ -224,7 +224,7 @@
 > stdlib を本家形の Kotlin で書くために必要な言語機能の台帳。再現 .kt は各タスク着手時に `Scripts/diff_cases/` or 回帰テストへ固定する（プローブ時の最小再現はセッション記録 probes/p01〜p12b にあり、診断コードから容易に再構成可能）。完了条件は共通で「再現ケースが期待動作でコンパイル・実行され、回帰テストとして固定される + G」。
 
 - [~] KSP-CAP-004: `while(true)` CAS ループ / `Nothing` 戻り値無限ループの型検査を通す（`KSWIFTK-TYPE-0001`。PR #4984 で実装・検証済み、マージ後に [x] 化。ブロック対象: KSP-673・`AtomicMigration.kt` コメントの保留解除）
-- [~] KSP-CAP-018: object 式によるクラス継承を通す（= BUG-215）。ブロック対象: KSP-491・KSP-681（`Delegates.observable`/`vetoable` が返す `object : ObservableProperty<T>(initialValue) { override fun ... }`）・KSP-441（object 式でパイプラインを表現する方針）
+- [~] KSP-CAP-018: object 式によるクラス継承を通す（= BUG-215）。ブロック対象: KSP-441（object 式でパイプラインを表現する方針）
   - **注記**: 旧 KSP-CAP-016/017（同一症状、2026-08-06 記録）と旧 BUG-187/188 は、名前不明の TODO.md 編集（`f9dea8961c` 付近、DEBT-DIFF-005 統合コミット群）でブロッカー台帳から本文ごと消失し、`[x]` 化されないまま記録が失われていた。名前付きサブクラスのスーパークラス primary constructor 実引数伝搬（旧 KSP-CAP-016 症状の一部）は別途 `1128468186`（PR #5506, "Fix BUG-155: run superclass constructors and class-body initializers"）で修正済みと 2026-08-18 実機確認したため当該部分はクローズ、object 式経由の残り2症状のみ本項として採番し直す。
   - 症状は2系統（interface を実装する object 式のプロパティ dispatch は BUG-141 で修正済み。本項目は**クラス**継承）:
     1. 基底クラスの `open`/`abstract` メンバを object 式が override しても dispatch されない。`open class Base { open fun describe(): String = "base" }` `fun make(): Base = object : Base() { override fun describe() = "anon" }` に対し `make().describe()` が基底実装 `"base"` を返す
@@ -310,8 +310,9 @@
 
 #### delegates / reflect
 
-- [ ] KSP-681: ObservableProperty/Delegates 残余を Kotlin 化する（KSP-491 の範囲を超える残り約20系統。前提: KSP-491, KSP-680）。BUG-017はKSP-CAP-013のPR #4976で独立に修正済みのため本タスクの前提から外れた
-  - **2026-08-18 着手前ブロック中**: 前提 KSP-491 が KSP-CAP-018/019/020（object 式クラス継承 / delegate トレーリングラムダ / 拡張 operator getValue 解決）で着手前ブロック中のため、本タスクも同じ理由で着手不可。「KSP-491 の範囲を超える残り約20系統」の内訳を棚卸しした限りでは全て `kotlin.properties`/`ObservableProperty`/`Delegates` 系（`kotlin.reflect` の KProperty0/1/2 等は KSP-682/KSP-689 が別途カバー済み）で、KSP-491 と同じ「operator 規約による本家準拠の delegate 実装」を要するため、同じ3ブロッカーの影響を受ける可能性が高い。KSP-491 側のブロッカー解消（またはブロッカーを回避できる具体的な残り20系統の切り出し）が先決。詳細は KSP-491 の 2026-08-18 実機再プローブ注記を参照
+- [x] KSP-681: ObservableProperty/Delegates 残余を Kotlin 化する（KSP-491 の範囲を超える残り約20系統。前提: KSP-491, KSP-680）。BUG-017はKSP-CAP-013のPR #4976で独立に修正済みのため本タスクの前提から外れた
+  - **完了（2026-09-03）**: `ObservableProperty`/`Delegates` を Kotlin 2.3.10 の source-backed 実装へ整合させ、observable/vetoable/notNull の top-level/member 初期化を通常の delegate 式 lowering に統一。KSP-CAP-018/019/020 の現行最小ケースは全て PASS、Kotlin 2.3.10 差分ケース `ksp_681_source_backed_delegates.kt` と Codegen 回帰を追加。lazy の専用 `LazyImpl` 経路は保持
+  - **検証根拠（2026-09-04）**: 共通ゲート相当の `swift build`、`bash Scripts/validate_runtime_abi_links.sh`（4/4）、`git diff --check`、および `bash Scripts/check_todo_ids.sh`（重複タスク ID なし）は PASS。Kotlin 2.3.10 差分は KSP-681 本体 + KSP-CAP-018/019/020 の 6 ケース、delegate Sema Golden は 8/8、`DelegatePropertyKIRTests`/`LocalDelegatePropertyKIRTests` は 15/15、`CodegenBackendPropertyDelegateEdgeCasesTests` は 28/28 が PASS。全体 `bash Scripts/swift_test.sh --filter Golden` は共有ホスト上の既定 Golden worker timeout で完走せず、全体 `swift_test.sh`/`diff_kotlinc.sh Scripts/diff_cases` は未実行として扱う（内容 mismatch は未検出）。
 #### bucket (b) 未起票追補（2026-08-14）
 
 > `HeaderHelpers+SyntheticBucketedStubRegistry.swift` の `sourceBackedMigration` 登録で §9 分類表 (b) かつ既存 KSP タスクに未追跡だった residual 群。`TODO.md` 棚卸し日 2026-08-14。採番は KSP-695 の続き。
