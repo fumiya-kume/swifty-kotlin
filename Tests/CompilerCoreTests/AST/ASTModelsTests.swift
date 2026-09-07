@@ -421,10 +421,10 @@ struct ASTModelsTests {
         let typeRef = TypeRefID(rawValue: 0)
         let name = interner.intern("x")
 
-        let typeParam = TypeParamDecl(name: name, variance: .out, isReified: true, upperBound: typeRef)
+        let typeParam = TypeParamDecl(name: name, variance: .out, isReified: true, upperBounds: [typeRef])
         #expect(typeParam.variance == .out)
         #expect(typeParam.isReified)
-        #expect(typeParam.upperBound == typeRef)
+        #expect(typeParam.upperBounds.first == typeRef)
     }
 
     @Test
@@ -435,7 +435,7 @@ struct ASTModelsTests {
         let exprID = ExprID(rawValue: 0)
         let name = interner.intern("x")
 
-        let typeParam = TypeParamDecl(name: name, variance: .out, isReified: true, upperBound: typeRef)
+        let typeParam = TypeParamDecl(name: name, variance: .out, isReified: true, upperBounds: [typeRef])
         let param = ValueParamDecl(name: name, type: typeRef, hasDefaultValue: true, isVararg: true, defaultValue: exprID)
         let funDecl = FunDecl(
             range: range, name: name, modifiers: [.suspend, .inline],
@@ -456,7 +456,7 @@ struct ASTModelsTests {
         let typeRef = TypeRefID(rawValue: 0)
         let name = interner.intern("x")
 
-        let typeParam = TypeParamDecl(name: name, variance: .out, isReified: true, upperBound: typeRef)
+        let typeParam = TypeParamDecl(name: name, variance: .out, isReified: true, upperBounds: [typeRef])
         let alias = TypeAliasDecl(range: range, name: name, modifiers: [], typeParams: [typeParam], underlyingType: typeRef)
         #expect(alias.underlyingType == typeRef)
         let iface = InterfaceDecl(

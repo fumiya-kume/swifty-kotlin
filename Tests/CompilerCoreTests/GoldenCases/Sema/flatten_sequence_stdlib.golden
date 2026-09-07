@@ -4,7 +4,7 @@ symbol fq=__local_1.flattenedSeq kind=local vis=private flags=_ type=kotlin.coll
 symbol fq=__local_2.nestedSeq kind=local vis=private flags=_ type=kotlin.sequences.Sequence<kotlin.sequences.Sequence<Int>>
 symbol fq=__local_3.mixedSeq kind=local vis=private flags=_ type=kotlin.sequences.Sequence<Any>
 symbol fq=__local_4.singleSeq kind=local vis=private flags=_ type=kotlin.sequences.Sequence<kotlin.collections.List<out Int>>
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
 symbol fq=kotlin.sequences.Sequence.toList kind=function vis=public flags=synthetic sig=recv=kotlin.sequences.Sequence<kotlin.sequences.toList.$0.T> params=[] ret=kotlin.collections.List<kotlin.sequences.toList.$0.T>
 symbol fq=kotlin.sequences.SequenceScope kind=class vis=public flags=synthetic
