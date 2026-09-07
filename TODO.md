@@ -1136,6 +1136,7 @@
   - 未実装シンボル一覧:
     - `kotlin.collections.List` — interface kotlin.collections.List  -- `abstract interface <#A: out kotlin/Any?> kotlin.collections/List : kotlin.collections/Collection<#A> {`
     - `kotlin.collections.List` — fun List(Int, Function1): List  -- `final inline fun <#A: kotlin/Any?> kotlin.collections/List(kotlin/Int, kotlin/Function1<kotlin/Int, #A>): kotlin.collections/List<#A>`
+  - 補足（master マージ時に判明）: interface 宣言は本タスク着手後に KSP-697（#5904、`List.kt`）が並行して先行実装済みだった。`ListAccessHOF.kt` 側の重複 interface 宣言はマージ時に削除し、本タスクが実装したのは `List(size, init)` factory のみ。`kotlin.collections.List` の nominal 所有者は `List.kt` を参照すること。
 
 - [ ] KSP-941: kotlin.collections.Map-family の未実装 stdlib API を実装する（1 件）
   - 対象: `kotlin.collections` / top-level / family `Map`
