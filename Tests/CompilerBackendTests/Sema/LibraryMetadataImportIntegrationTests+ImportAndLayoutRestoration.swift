@@ -117,10 +117,10 @@ extension LibraryMetadataImportIntegrationTests {
                 fqName: "ext.Box",
                 declaredFieldCount: 1,
                 declaredInstanceSizeWords: 3,
-                declaredVtableSize: 1,
+                declaredVtableSize: 2,
                 declaredItableSize: 1,
                 fieldOffsets: "ext.Box.value@2",
-                vtableSlots: "ext.Box.get#0#0@0",
+                vtableSlots: "v2:ext.Box.get#0#0@0|property:ext.Box.value#0#0#I@1",
                 itableSlots: "ext.Face@0"
             ),
             MetadataRecord(kind: .function, mangledName: "_", fqName: "ext.Box.get", typeSignature: "F0<I>"),
@@ -151,8 +151,11 @@ extension LibraryMetadataImportIntegrationTests {
 
                 #expect(layout.fieldOffsets[valueSymbol] == 2)
                 #expect(layout.vtableSlots[getSymbol] == 0)
+                #expect(
+                    layout.vtableSlots[SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: valueSymbol)] == 1
+                )
                 #expect(layout.itableSlots[faceSymbol] == 0)
-                #expect(layout.vtableSize == 1)
+                #expect(layout.vtableSize == 2)
                 #expect(layout.itableSize == 1)
             }
         }

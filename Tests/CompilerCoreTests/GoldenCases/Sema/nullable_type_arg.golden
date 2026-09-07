@@ -1,7 +1,7 @@
 symbol fq=__local_0.list kind=local vis=private flags=_ type=kotlin.collections.List<String?>
 symbol fq=__local_1.first kind=local vis=private flags=_ type=String?
 symbol fq=golden.sema.useNullableArg kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.collections.List.E kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.List.get kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.List<out kotlin.collections.List.E> params=[Int] ret=kotlin.collections.List.E
 file fnullable_type_arg package=golden.sema

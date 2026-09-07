@@ -302,12 +302,32 @@ extension ControlFlowTypeChecker {
         // call substituteTypeParameters.
         let typeVarBySymbol = sema.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
 
-        // Use the TypeSystem's record of the declared receiver's own type-parameter
-        // symbols (e.g. [A, B] for Pair) to match each concrete type arg to a
-        // TypeVarID. Inherited members such as Map.Entry.key are declared on a
-        // supertype, so lift the concrete receiver arguments through the nominal
-        // inheritance edge before building the substitution.
-        let declaredReceiver: (symbol: SymbolID, args: [TypeArg])? = {
+        // A bare type-parameter type argument (e.g. the `K` in `Map.Entry<K, V>`)
+        // names the symbol the return type is actually parameterized over. This is
+        // the receiver class's own nominal K/V when componentN is declared as a
+        // genuine member reusing those symbols (the historical synthetic Map.Entry
+        // stubs), but is a distinct, freshly-declared K/V when componentN is a
+        // standalone generic extension such as the bundled
+        // `operator fun <K, V> Map.Entry<K, V>.component1(): K`. Reading the symbol
+        // straight out of the declared receiver's own type argument — rather than
+        // assuming it matches the receiver class's nominal parameters — keeps both
+        // shapes working.
+        func typeParamSymbol(in arg: TypeArg) -> SymbolID? {
+            let typeID: TypeID
+            switch arg {
+            case let .invariant(t): typeID = t
+            case let .out(t): typeID = t
+            case let .in(t): typeID = t
+            case .star: return nil
+            }
+            guard case let .typeParam(typeParam) = sema.types.kind(of: typeID) else { return nil }
+            return typeParam.symbol
+        }
+
+        // Inherited members such as Map.Entry.key are declared on a supertype, so
+        // lift the concrete receiver arguments through the nominal inheritance edge
+        // before building the substitution.
+        let declaredReceiver: (args: [TypeArg], paramSymbols: [SymbolID?])? = {
             guard let receiverType = signature.receiverType,
                   case let .classType(receiverClassType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType))
             else {
@@ -318,17 +338,28 @@ extension ControlFlowTypeChecker {
                 childArgs: classType.args,
                 to: receiverClassType.classSymbol
             ) ?? classType.args
-            return (receiverClassType.classSymbol, liftedArgs)
+            return (liftedArgs, receiverClassType.args.map(typeParamSymbol))
         }()
-        let classOwnParamSymbols = sema.types.nominalTypeParameterSymbols(
-            for: declaredReceiver?.symbol ?? classType.classSymbol
-        )
         let receiverArgs = declaredReceiver?.args ?? classType.args
+        let declaredParamSymbols = declaredReceiver?.paramSymbols ?? []
+        // Fallback for the rare shape where the declared receiver's type argument
+        // isn't a bare type-parameter reference (so `typeParamSymbol` found
+        // nothing): fall back to the receiver class's own nominal parameters,
+        // which is what this substitution relied on before extension componentN
+        // declarations existed.
+        let classOwnParamSymbols = sema.types.nominalTypeParameterSymbols(for: classType.classSymbol)
 
         var substitution: [TypeVarID: TypeID] = [:]
         for (index, arg) in receiverArgs.enumerated() {
             let tpSymbol: SymbolID
-            if index < classOwnParamSymbols.count {
+            if index < declaredParamSymbols.count,
+               let symbol = declaredParamSymbols[index],
+               typeVarBySymbol[symbol] != nil
+            {
+                tpSymbol = symbol
+            } else if index < classOwnParamSymbols.count,
+                      typeVarBySymbol[classOwnParamSymbols[index]] != nil
+            {
                 tpSymbol = classOwnParamSymbols[index]
             } else if index < signature.classTypeParameterCount,
                       index < signature.typeParameterSymbols.count
