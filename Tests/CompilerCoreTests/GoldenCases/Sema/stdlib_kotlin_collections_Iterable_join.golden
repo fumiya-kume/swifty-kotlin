@@ -10,7 +10,7 @@ symbol fq=joinFamily.$0.values kind=valueParameter vis=private flags=_
 symbol fq=kotlin.Any kind=class vis=public flags=synthetic
 symbol fq=kotlin.Any.toString kind=function vis=public flags=synthetic|openType sig=recv=kotlin.Any params=[] ret=String
 symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Iterable_join package=_
   decl joinFamily fun joinFamily sym=joinFamily
 expr e@8:36 name(values) type=kotlin.collections.Iterable<Int> ref=joinFamily.$0.values

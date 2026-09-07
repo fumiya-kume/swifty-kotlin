@@ -11,19 +11,21 @@ struct TypeCheckScopeBuilder {
             topLevelSymbolsByPackage[packagePath, default: []].append(contentsOf: symbols)
         }
         let defaultImportPackages = makeDefaultImportPackages(interner: interner)
+        // Default imports are identical for every file in this compilation.
+        // Populate this shared parent once; file-specific bindings stay in
+        // the child scopes and never mutate the default-import scope.
+        let defaultImportScope = ImportScope(parent: nil, symbols: sema.symbols)
+        for packagePath in defaultImportPackages {
+            for importedSymbol in topLevelSymbolsByPackage[packagePath] ?? [] {
+                if shouldSkipDefaultImport(importedSymbol, sema: sema, interner: interner) {
+                    continue
+                }
+                defaultImportScope.insert(importedSymbol)
+            }
+        }
         var fileScopes: [Int32: FileScope] = [:]
 
         for file in ast.sortedFiles {
-            let defaultImportScope = ImportScope(parent: nil, symbols: sema.symbols)
-            for packagePath in defaultImportPackages {
-                for importedSymbol in topLevelSymbolsByPackage[packagePath] ?? [] {
-                    if shouldSkipDefaultImport(importedSymbol, sema: sema, interner: interner) {
-                        continue
-                    }
-                    defaultImportScope.insert(importedSymbol)
-                }
-            }
-
             let wildcardImportScope = ImportScope(parent: defaultImportScope, symbols: sema.symbols)
             let explicitImportScope = ImportScope(parent: wildcardImportScope, symbols: sema.symbols)
             populateImportScopes(
