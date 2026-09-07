@@ -3198,6 +3198,41 @@ struct ListSyntheticMemberLinkTests {
     }
 
     @Test
+    func testMutableMapEntryIteratorRetainsMutableEntryType() throws {
+        let source = """
+        fun probe(map: MutableMap<String, Int>): String {
+            val iterator = map.entries.iterator()
+            val entry = iterator.next()
+            entry.setValue(42)
+            iterator.remove()
+            return entry.key
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            #expect(!ctx.diagnostics.hasError, "Expected mutable map entry iteration to type-check: \(ctx.diagnostics.diagnostics)")
+
+            let ast = try #require(ctx.ast)
+            let sema = try #require(ctx.sema)
+            let iteratorCall = try #require(firstExprID(in: ast) { exprID, expr in
+                guard isUserSourceExpr(exprID, in: ctx),
+                      case let .memberCall(_, callee, _, args, _) = expr
+                else { return false }
+                return ctx.interner.resolve(callee) == "iterator" && args.isEmpty
+            })
+            let callType = try #require(sema.bindings.exprType(for: iteratorCall))
+            guard case let .classType(iteratorType) = sema.types.kind(of: callType) else {
+                Issue.record("Expected MutableIterator for a mutable entry set")
+                return
+            }
+            let iteratorSymbol = try #require(sema.symbols.symbol(iteratorType.classSymbol))
+            #expect(iteratorSymbol.fqName == ["kotlin", "collections", "MutableIterator"].map(ctx.interner.intern))
+        }
+    }
+
+    @Test
     func testMutableListIteratorMembersResolveFromMutableList() throws {
         let source = """
         fun probe(values: MutableList<Int>) {

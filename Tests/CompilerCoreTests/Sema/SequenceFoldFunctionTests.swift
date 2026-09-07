@@ -3,11 +3,11 @@ import Testing
 
 /// STDLIB-SEQ-FN-042: Validates that `Sequence<T>.fold(initial: R, operation: (R, T) -> R): R`
 /// resolves via the source-backed Sequence aggregate HOF implementation.
-/// KSP-441: Sequence.fold is now implemented in SequenceAggregateHOF.kt, so
-/// there is no synthetic `kk_sequence_fold` runtime stub.
+/// KSP-1346: Sequence.fold is implemented in the canonical kotlin.sequences
+/// source file, so there is no synthetic `kk_sequence_fold` runtime stub.
 @Suite
 struct SequenceFoldFunctionTests {
-    @Test func testSequenceFoldResolvesToRuntimeABIWithMatchingResultType() throws {
+    @Test func testSequenceFoldResolvesToCanonicalSource() throws {
         let ctx = makeContextFromSource("""
         fun sumValues(values: Sequence<Int>): Int {
             return values.fold(0) { acc, value -> acc + value }
@@ -35,6 +35,9 @@ struct SequenceFoldFunctionTests {
 
         let binding = try #require(sema.bindings.callBinding(for: callExprID))
         let chosenCallee = try #require(binding.chosenCallee)
+        let fqName = try #require(sema.symbols.symbol(chosenCallee)?.fqName)
+            .map { ctx.interner.resolve($0) }
+        #expect(fqName == ["kotlin", "sequences", "fold"])
         #expect(
             sema.symbols.symbol(chosenCallee)?.declSite != nil,
             "Expected Sequence.fold call to resolve to the source-backed extension"

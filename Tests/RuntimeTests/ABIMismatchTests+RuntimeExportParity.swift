@@ -186,9 +186,8 @@ struct ABIMismatchRuntimeExportParityTests {
             "kk_list_takeLastWhile",
             "kk_list_dropWhile",
             "kk_list_dropLastWhile",
-            // KSP-445: Sequence fold/scan HOFs are source-backed in bundled
-            // kotlin.collections/sequences; runtime bridge is no longer exported.
-            "kk_sequence_foldIndexed",
+            // KSP-445: Sequence scan HOFs are source-backed in bundled
+            // kotlin.collections/sequences; runtime bridges are no longer exported.
             "kk_sequence_reduceIndexed",
             "kk_sequence_reduceIndexedOrNull",
             "kk_sequence_runningFold",
