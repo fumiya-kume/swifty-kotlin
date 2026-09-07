@@ -1,48 +1,48 @@
-symbol fq=golden.sema.bitwiseAnd kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int
-symbol fq=golden.sema.bitwiseAnd.$0.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.bitwiseAnd.$0.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.bitwiseInv kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Int
-symbol fq=golden.sema.bitwiseInv.$1.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.bitwiseOr kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int
-symbol fq=golden.sema.bitwiseOr.$2.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.bitwiseOr.$2.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.bitwiseXor kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int
-symbol fq=golden.sema.bitwiseXor.$3.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.bitwiseXor.$3.b kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.shiftLeft kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int
-symbol fq=golden.sema.shiftLeft.$4.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.shiftLeft.$4.n kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.shiftRight kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int
-symbol fq=golden.sema.shiftRight.$5.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.shiftRight.$5.n kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.unsignedShiftRight kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int
-symbol fq=golden.sema.unsignedShiftRight.$6.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.unsignedShiftRight.$6.n kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.bitwiseAnd.$0.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.bitwiseAnd.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.bitwiseAnd[kind=fun;params=Int,Int] kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int
+symbol fq=golden.sema.bitwiseInv.$1.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.bitwiseInv[kind=fun;params=Int] kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Int
+symbol fq=golden.sema.bitwiseOr.$2.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.bitwiseOr.$2.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.bitwiseOr[kind=fun;params=Int,Int] kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int
+symbol fq=golden.sema.bitwiseXor.$3.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.bitwiseXor.$3.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.bitwiseXor[kind=fun;params=Int,Int] kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int
+symbol fq=golden.sema.shiftLeft.$4.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.shiftLeft.$4.n[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.shiftLeft[kind=fun;params=Int,Int] kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int
+symbol fq=golden.sema.shiftRight.$5.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.shiftRight.$5.n[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.shiftRight[kind=fun;params=Int,Int] kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int
+symbol fq=golden.sema.unsignedShiftRight.$6.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.unsignedShiftRight.$6.n[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.unsignedShiftRight[kind=fun;params=Int,Int] kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int
 file fbitwise_operators package=golden.sema
-  decl golden.sema.bitwiseAnd fun bitwiseAnd sym=golden.sema.bitwiseAnd
-  decl golden.sema.bitwiseOr fun bitwiseOr sym=golden.sema.bitwiseOr
-  decl golden.sema.bitwiseXor fun bitwiseXor sym=golden.sema.bitwiseXor
-  decl golden.sema.bitwiseInv fun bitwiseInv sym=golden.sema.bitwiseInv
-  decl golden.sema.shiftLeft fun shiftLeft sym=golden.sema.shiftLeft
-  decl golden.sema.shiftRight fun shiftRight sym=golden.sema.shiftRight
-  decl golden.sema.unsignedShiftRight fun unsignedShiftRight sym=golden.sema.unsignedShiftRight
-expr e@3:39 name(a) type=Int ref=golden.sema.bitwiseAnd.$0.a
-expr e@3:45 name(b) type=Int ref=golden.sema.bitwiseAnd.$0.b
+  decl golden.sema.bitwiseAnd[kind=fun;params=Int,Int] fun bitwiseAnd sym=golden.sema.bitwiseAnd[kind=fun;params=Int,Int]
+  decl golden.sema.bitwiseOr[kind=fun;params=Int,Int] fun bitwiseOr sym=golden.sema.bitwiseOr[kind=fun;params=Int,Int]
+  decl golden.sema.bitwiseXor[kind=fun;params=Int,Int] fun bitwiseXor sym=golden.sema.bitwiseXor[kind=fun;params=Int,Int]
+  decl golden.sema.bitwiseInv[kind=fun;params=Int] fun bitwiseInv sym=golden.sema.bitwiseInv[kind=fun;params=Int]
+  decl golden.sema.shiftLeft[kind=fun;params=Int,Int] fun shiftLeft sym=golden.sema.shiftLeft[kind=fun;params=Int,Int]
+  decl golden.sema.shiftRight[kind=fun;params=Int,Int] fun shiftRight sym=golden.sema.shiftRight[kind=fun;params=Int,Int]
+  decl golden.sema.unsignedShiftRight[kind=fun;params=Int,Int] fun unsignedShiftRight sym=golden.sema.unsignedShiftRight[kind=fun;params=Int,Int]
+expr e@3:39 name(a) type=Int ref=golden.sema.bitwiseAnd.$0.a[kind=vparam]
+expr e@3:45 name(b) type=Int ref=golden.sema.bitwiseAnd.$0.b[kind=vparam]
 expr e@3:39#1 memberCall recv=e@3:39 callee=and args=[_:e@3:45] type=Int
-expr e@4:38 name(a) type=Int ref=golden.sema.bitwiseOr.$2.a
-expr e@4:43 name(b) type=Int ref=golden.sema.bitwiseOr.$2.b
+expr e@4:38 name(a) type=Int ref=golden.sema.bitwiseOr.$2.a[kind=vparam]
+expr e@4:43 name(b) type=Int ref=golden.sema.bitwiseOr.$2.b[kind=vparam]
 expr e@4:38#1 memberCall recv=e@4:38 callee=or args=[_:e@4:43] type=Int
-expr e@5:39 name(a) type=Int ref=golden.sema.bitwiseXor.$3.a
-expr e@5:45 name(b) type=Int ref=golden.sema.bitwiseXor.$3.b
+expr e@5:39 name(a) type=Int ref=golden.sema.bitwiseXor.$3.a[kind=vparam]
+expr e@5:45 name(b) type=Int ref=golden.sema.bitwiseXor.$3.b[kind=vparam]
 expr e@5:39#1 memberCall recv=e@5:39 callee=xor args=[_:e@5:45] type=Int
-expr e@6:31 name(a) type=Int ref=golden.sema.bitwiseInv.$1.a
+expr e@6:31 name(a) type=Int ref=golden.sema.bitwiseInv.$1.a[kind=vparam]
 expr e@6:31#1 memberCall recv=e@6:31 callee=inv args=[] type=Int
-expr e@7:38 name(a) type=Int ref=golden.sema.shiftLeft.$4.a
-expr e@7:44 name(n) type=Int ref=golden.sema.shiftLeft.$4.n
+expr e@7:38 name(a) type=Int ref=golden.sema.shiftLeft.$4.a[kind=vparam]
+expr e@7:44 name(n) type=Int ref=golden.sema.shiftLeft.$4.n[kind=vparam]
 expr e@7:38#1 memberCall recv=e@7:38 callee=shl args=[_:e@7:44] type=Int
-expr e@8:39 name(a) type=Int ref=golden.sema.shiftRight.$5.a
-expr e@8:45 name(n) type=Int ref=golden.sema.shiftRight.$5.n
+expr e@8:39 name(a) type=Int ref=golden.sema.shiftRight.$5.a[kind=vparam]
+expr e@8:45 name(n) type=Int ref=golden.sema.shiftRight.$5.n[kind=vparam]
 expr e@8:39#1 memberCall recv=e@8:39 callee=shr args=[_:e@8:45] type=Int
-expr e@9:47 name(a) type=Int ref=golden.sema.unsignedShiftRight.$6.a
-expr e@9:54 name(n) type=Int ref=golden.sema.unsignedShiftRight.$6.n
+expr e@9:47 name(a) type=Int ref=golden.sema.unsignedShiftRight.$6.a[kind=vparam]
+expr e@9:54 name(n) type=Int ref=golden.sema.unsignedShiftRight.$6.n[kind=vparam]
 expr e@9:47#1 memberCall recv=e@9:47 callee=ushr args=[_:e@9:54] type=Int

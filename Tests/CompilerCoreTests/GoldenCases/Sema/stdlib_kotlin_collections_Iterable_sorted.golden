@@ -1,45 +1,45 @@
-symbol fq=golden.sema.useSorted kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=kotlin.collections.List<Int>
-symbol fq=golden.sema.useSorted.$0.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.useSortedBy kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String>] ret=kotlin.collections.List<String>
-symbol fq=golden.sema.useSortedBy.$1.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.useSortedByDescending kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String>] ret=kotlin.collections.List<String>
-symbol fq=golden.sema.useSortedByDescending.$2.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.useSortedDescending kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=kotlin.collections.List<Int>
-symbol fq=golden.sema.useSortedDescending.$3.values kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.useSortedWith kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String?>,kotlin.Comparator<in String?>] ret=kotlin.collections.List<String?>
-symbol fq=golden.sema.useSortedWith.$4.comparator kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.useSortedWith.$4.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
-symbol fq=kotlin.Comparable kind=interface vis=public flags=_
-symbol fq=kotlin.Comparator kind=interface vis=public flags=funInterface
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=golden.sema.useSorted.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.useSortedBy.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.useSortedByDescending.$2.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.useSortedByDescending[kind=fun;params=kotlin.collections.Iterable<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String>] ret=kotlin.collections.List<String>
+symbol fq=golden.sema.useSortedBy[kind=fun;params=kotlin.collections.Iterable<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String>] ret=kotlin.collections.List<String>
+symbol fq=golden.sema.useSortedDescending.$3.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.useSortedDescending[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=kotlin.collections.List<Int>
+symbol fq=golden.sema.useSortedWith.$4.comparator[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.useSortedWith.$4.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.useSortedWith[kind=fun;params=kotlin.collections.Iterable<String?>,kotlin.Comparator<in String?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<String?>,kotlin.Comparator<in String?>] ret=kotlin.collections.List<String?>
+symbol fq=golden.sema.useSorted[kind=fun;params=kotlin.collections.Iterable<Int>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=kotlin.collections.List<Int>
+symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
+symbol fq=kotlin.Comparable[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.Comparator[kind=iface;gen=1] kind=interface vis=public flags=funInterface
+symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Iterable_sorted package=golden.sema
-  decl golden.sema.useSorted fun useSorted sym=golden.sema.useSorted
-  decl golden.sema.useSortedBy fun useSortedBy sym=golden.sema.useSortedBy
-  decl golden.sema.useSortedByDescending fun useSortedByDescending sym=golden.sema.useSortedByDescending
-  decl golden.sema.useSortedDescending fun useSortedDescending sym=golden.sema.useSortedDescending
-  decl golden.sema.useSortedWith fun useSortedWith sym=golden.sema.useSortedWith
-expr e@3:51 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.useSorted.$0.values
-expr e@3:51#1 memberCall recv=e@3:51 callee=sorted args=[] type=kotlin.collections.List<Int> call=kotlin.collections.sorted#0 targs=[Int]
-expr e@6:5 name(values) type=kotlin.collections.Iterable<String> ref=golden.sema.useSortedBy.$1.values
+  decl golden.sema.useSorted[kind=fun;params=kotlin.collections.Iterable<Int>] fun useSorted sym=golden.sema.useSorted[kind=fun;params=kotlin.collections.Iterable<Int>]
+  decl golden.sema.useSortedBy[kind=fun;params=kotlin.collections.Iterable<String>] fun useSortedBy sym=golden.sema.useSortedBy[kind=fun;params=kotlin.collections.Iterable<String>]
+  decl golden.sema.useSortedByDescending[kind=fun;params=kotlin.collections.Iterable<String>] fun useSortedByDescending sym=golden.sema.useSortedByDescending[kind=fun;params=kotlin.collections.Iterable<String>]
+  decl golden.sema.useSortedDescending[kind=fun;params=kotlin.collections.Iterable<Int>] fun useSortedDescending sym=golden.sema.useSortedDescending[kind=fun;params=kotlin.collections.Iterable<Int>]
+  decl golden.sema.useSortedWith[kind=fun;params=kotlin.collections.Iterable<String?>,kotlin.Comparator<in String?>] fun useSortedWith sym=golden.sema.useSortedWith[kind=fun;params=kotlin.collections.Iterable<String?>,kotlin.Comparator<in String?>]
+expr e@3:51 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.useSorted.$0.values[kind=vparam]
+expr e@3:51#1 memberCall recv=e@3:51 callee=sorted args=[] type=kotlin.collections.List<Int> call=kotlin.collections.sorted[kind=fun;recv=kotlin.collections.Iterable<T0>;params=;gen=1] targs=[Int]
+expr e@6:5 name(values) type=kotlin.collections.Iterable<String> ref=golden.sema.useSortedBy.$1.values[kind=vparam]
 expr e@6:36 name(value) type=String ref=s-0
-expr e@6:36#1 memberCall recv=e@6:36 callee=isEmpty args=[] type=Boolean call=kotlin.text.isEmpty
+expr e@6:36#1 memberCall recv=e@6:36 callee=isEmpty args=[] type=Boolean call=kotlin.text.isEmpty[kind=fun;recv=kotlin.CharSequence;params=]
 expr e@6:53 name(null) type=Nothing?
 expr e@6:63 name(value) type=String ref=s-0
 expr e@6:32 if cond=e@6:36#1 then=e@6:53 else=e@6:63 type=String?
 expr e@6:21 lambda params=[value] body=e@6:32 label=sortedBy type=(String) -> String?
-expr e@6:5#1 memberCall recv=e@6:5 callee=sortedBy args=[_:e@6:21] type=kotlin.collections.List<String> call=kotlin.collections.sortedBy#0 targs=[String,String]
-expr e@9:5 name(values) type=kotlin.collections.Iterable<String> ref=golden.sema.useSortedByDescending.$2.values
+expr e@6:5#1 memberCall recv=e@6:5 callee=sortedBy args=[_:e@6:21] type=kotlin.collections.List<String> call=kotlin.collections.sortedBy[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=T1?};gen=2] targs=[String,String]
+expr e@9:5 name(values) type=kotlin.collections.Iterable<String> ref=golden.sema.useSortedByDescending.$2.values[kind=vparam]
 expr e@9:46 name(value) type=String ref=s-1
-expr e@9:46#1 memberCall recv=e@9:46 callee=isEmpty args=[] type=Boolean call=kotlin.text.isEmpty
+expr e@9:46#1 memberCall recv=e@9:46 callee=isEmpty args=[] type=Boolean call=kotlin.text.isEmpty[kind=fun;recv=kotlin.CharSequence;params=]
 expr e@9:63 name(null) type=Nothing?
 expr e@9:73 name(value) type=String ref=s-1
 expr e@9:42 if cond=e@9:46#1 then=e@9:63 else=e@9:73 type=String?
 expr e@9:31 lambda params=[value] body=e@9:42 label=sortedByDescending type=(String) -> String?
-expr e@9:5#1 memberCall recv=e@9:5 callee=sortedByDescending args=[_:e@9:31] type=kotlin.collections.List<String> call=kotlin.collections.sortedByDescending#0 targs=[String,String]
-expr e@11:61 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.useSortedDescending.$3.values
-expr e@11:61#1 memberCall recv=e@11:61 callee=sortedDescending args=[] type=kotlin.collections.List<Int> call=kotlin.collections.sortedDescending#0 targs=[Int]
-expr e@14:5 name(values) type=kotlin.collections.Iterable<String?> ref=golden.sema.useSortedWith.$4.values
-expr e@14:23 name(comparator) type=kotlin.Comparator<in String?> ref=golden.sema.useSortedWith.$4.comparator
-expr e@14:5#1 memberCall recv=e@14:5 callee=sortedWith args=[_:e@14:23] type=kotlin.collections.List<String?> call=kotlin.collections.sortedWith#0 targs=[String?]
+expr e@9:5#1 memberCall recv=e@9:5 callee=sortedByDescending args=[_:e@9:31] type=kotlin.collections.List<String> call=kotlin.collections.sortedByDescending[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=T1?};gen=2] targs=[String,String]
+expr e@11:61 name(values) type=kotlin.collections.Iterable<Int> ref=golden.sema.useSortedDescending.$3.values[kind=vparam]
+expr e@11:61#1 memberCall recv=e@11:61 callee=sortedDescending args=[] type=kotlin.collections.List<Int> call=kotlin.collections.sortedDescending[kind=fun;recv=kotlin.collections.Iterable<T0>;params=;gen=1] targs=[Int]
+expr e@14:5 name(values) type=kotlin.collections.Iterable<String?> ref=golden.sema.useSortedWith.$4.values[kind=vparam]
+expr e@14:23 name(comparator) type=kotlin.Comparator<in String?> ref=golden.sema.useSortedWith.$4.comparator[kind=vparam]
+expr e@14:5#1 memberCall recv=e@14:5 callee=sortedWith args=[_:e@14:23] type=kotlin.collections.List<String?> call=kotlin.collections.sortedWith[kind=fun;recv=kotlin.collections.Iterable<T0>;params=kotlin.Comparator<in T0>;gen=1] targs=[String?]

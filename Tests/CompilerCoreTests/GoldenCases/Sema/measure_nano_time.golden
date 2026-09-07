@@ -1,11 +1,11 @@
-symbol fq=__local_0.x kind=local vis=private flags=_ type=Int
-symbol fq=useMeasureNanoTime kind=function vis=public flags=_ sig=recv=_ params=[] ret=Long
+symbol fq=__local_0.x[kind=local] kind=local vis=private flags=_ type=Int
+symbol fq=useMeasureNanoTime[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Long
 file fmeasure_nano_time package=_
-  decl useMeasureNanoTime fun useMeasureNanoTime sym=useMeasureNanoTime
+  decl useMeasureNanoTime[kind=fun;params=] fun useMeasureNanoTime sym=useMeasureNanoTime[kind=fun;params=]
 expr e@4:13 int(1) type=Int
 expr e@4:17 int(2) type=Int
 expr e@4:13#1 binary(add) lhs=e@4:13 rhs=e@4:17 type=Int
-expr e@4:5 localDecl x mutable=0 type=_ init=e@4:13#1 type=Unit ref=__local_0.x
+expr e@4:5 localDecl x mutable=0 type=_ init=e@4:13#1 type=Unit ref=__local_0.x[kind=local]
 expr e@4:5#1 blockExpr stmts=[e@4:5] trailing=_ type=Unit
 expr e@3:50 lambda params=[] body=e@4:5#1 label=measureNanoTime type=() -> Unit
-expr e@3:34 call callee=e@3:34#1 args=[_:e@3:50] type=Long call=kotlin.system.measureNanoTime
+expr e@3:34 call callee=e@3:34#1 args=[_:e@3:50] type=Long call=kotlin.system.measureNanoTime[kind=fun;params=fn{p=;ret=Unit}]

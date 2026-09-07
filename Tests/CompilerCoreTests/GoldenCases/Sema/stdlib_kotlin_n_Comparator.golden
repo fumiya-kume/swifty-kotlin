@@ -1,17 +1,17 @@
-symbol fq=__local_0.cmp kind=local vis=private flags=_ type=kotlin.Comparator<Int>
-symbol fq=golden.sema.useComparator kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=kotlin.Comparator kind=interface vis=public flags=funInterface
-symbol fq=kotlin.Comparator.T kind=typeParameter vis=private flags=_
+symbol fq=__local_0.cmp[kind=local] kind=local vis=private flags=_ type=kotlin.Comparator<Int>
+symbol fq=golden.sema.useComparator[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=kotlin.Comparator.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.Comparator[kind=iface;gen=1] kind=interface vis=public flags=funInterface
 file fstdlib_kotlin_n_Comparator package=golden.sema
-  decl golden.sema.useComparator fun useComparator sym=golden.sema.useComparator
+  decl golden.sema.useComparator[kind=fun;params=] fun useComparator sym=golden.sema.useComparator[kind=fun;params=]
 expr e@4:41 name(a) type=Int ref=s-0
 expr e@4:45 name(b) type=Int ref=s-1
 expr e@4:41#1 binary(subtract) lhs=e@4:41 rhs=e@4:45 type=Int
 expr e@4:31 lambda params=[a,b] body=e@4:41#1 label=Comparator type=kotlin.Comparator<Int>
 expr e@4:15 call callee=e@4:15#1 args=[_:e@4:31] type=kotlin.Comparator<Int>
-expr e@4:5 localDecl cmp mutable=0 type=_ init=e@4:15 type=Unit ref=__local_0.cmp
-expr e@5:12 name(cmp) type=kotlin.Comparator<Int> ref=__local_0.cmp
+expr e@4:5 localDecl cmp mutable=0 type=_ init=e@4:15 type=Unit ref=__local_0.cmp[kind=local]
+expr e@5:12 name(cmp) type=kotlin.Comparator<Int> ref=__local_0.cmp[kind=local]
 expr e@5:24 int(3) type=Int
 expr e@5:27 int(4) type=Int
-expr e@5:12#1 memberCall recv=e@5:12 callee=compare args=[_:e@5:24,_:e@5:27] type=Int call=kotlin.Comparator.compare targs=[Int]
+expr e@5:12#1 memberCall recv=e@5:12 callee=compare args=[_:e@5:24,_:e@5:27] type=Int call=kotlin.Comparator.compare[kind=fun;recv=kotlin.Comparator<T0>;params=T0,T0;gen=1] targs=[Int]
 expr e@5:5 return value=e@5:12#1 type=Nothing

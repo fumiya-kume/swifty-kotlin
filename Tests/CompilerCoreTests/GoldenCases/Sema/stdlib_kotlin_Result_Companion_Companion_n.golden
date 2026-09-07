@@ -1,16 +1,16 @@
-symbol fq=golden.sema.resultFailure kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Result<String>
-symbol fq=golden.sema.resultSuccess kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Result<Int>
-symbol fq=kotlin.Result kind=class vis=public flags=_ type=kotlin.Result<kotlin.Result.T>
-symbol fq=kotlin.Result.T kind=typeParameter vis=private flags=_
-symbol fq=kotlin.RuntimeException kind=class vis=public flags=openType
-symbol fq=kotlin.Throwable kind=class vis=public flags=openType
+symbol fq=golden.sema.resultFailure[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Result<String>
+symbol fq=golden.sema.resultSuccess[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Result<Int>
+symbol fq=kotlin.Result.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.Result[kind=class;gen=1] kind=class vis=public flags=_ type=kotlin.Result<kotlin.Result.T>
+symbol fq=kotlin.RuntimeException[kind=class] kind=class vis=public flags=openType
+symbol fq=kotlin.Throwable[kind=class] kind=class vis=public flags=openType
 file fstdlib_kotlin_Result_Companion_Companion_n package=golden.sema
-  decl golden.sema.resultSuccess fun resultSuccess sym=golden.sema.resultSuccess
-  decl golden.sema.resultFailure fun resultFailure sym=golden.sema.resultFailure
-expr e@3:36 name(Result) type=kotlin.Result.Companion ref=kotlin.Result
+  decl golden.sema.resultSuccess[kind=fun;params=] fun resultSuccess sym=golden.sema.resultSuccess[kind=fun;params=]
+  decl golden.sema.resultFailure[kind=fun;params=] fun resultFailure sym=golden.sema.resultFailure[kind=fun;params=]
+expr e@3:36 name(Result) type=kotlin.Result.Companion ref=kotlin.Result[kind=class;gen=1]
 expr e@3:51 int(42) type=Int
-expr e@3:36#1 memberCall recv=e@3:36 callee=success args=[_:e@3:51] type=kotlin.Result<Int> call=kotlin.success targs=[Int]
-expr e@5:39 name(Result) type=kotlin.Result.Companion ref=kotlin.Result
+expr e@3:36#1 memberCall recv=e@3:36 callee=success args=[_:e@3:51] type=kotlin.Result<Int> call=kotlin.success[kind=fun;recv=kotlin.Result.Companion;params=T0;gen=1] targs=[Int]
+expr e@5:39 name(Result) type=kotlin.Result.Companion ref=kotlin.Result[kind=class;gen=1]
 expr e@5:71 string(boom) type=String
-expr e@5:54 call callee=e@5:54#1 args=[_:e@5:71] type=kotlin.RuntimeException call=kotlin.RuntimeException.<init>#1
-expr e@5:39#1 memberCall recv=e@5:39 callee=failure args=[_:e@5:54] type=kotlin.Result<String> call=kotlin.failure targs=[String]
+expr e@5:54 call callee=e@5:54#1 args=[_:e@5:71] type=kotlin.RuntimeException call=kotlin.RuntimeException.<init>[kind=ctor;recv=kotlin.RuntimeException;params=String?]
+expr e@5:39#1 memberCall recv=e@5:39 callee=failure args=[_:e@5:54] type=kotlin.Result<String> call=kotlin.failure[kind=fun;recv=kotlin.Result.Companion;params=kotlin.Throwable;gen=1] targs=[String]

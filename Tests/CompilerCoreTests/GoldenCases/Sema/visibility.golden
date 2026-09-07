@@ -1,17 +1,17 @@
-symbol fq=golden.sema.internalFun kind=function vis=internal flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=golden.sema.privateFun kind=function vis=private flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=golden.sema.publicFun kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=golden.sema.useAll kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.internalFun[kind=fun;params=] kind=function vis=internal flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.privateFun[kind=fun;params=] kind=function vis=private flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.publicFun[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.useAll[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 file fvisibility package=golden.sema
-  decl golden.sema.publicFun fun publicFun sym=golden.sema.publicFun
-  decl golden.sema.internalFun fun internalFun sym=golden.sema.internalFun
-  decl golden.sema.privateFun fun privateFun sym=golden.sema.privateFun
-  decl golden.sema.useAll fun useAll sym=golden.sema.useAll
+  decl golden.sema.publicFun[kind=fun;params=] fun publicFun sym=golden.sema.publicFun[kind=fun;params=]
+  decl golden.sema.internalFun[kind=fun;params=] fun internalFun sym=golden.sema.internalFun[kind=fun;params=]
+  decl golden.sema.privateFun[kind=fun;params=] fun privateFun sym=golden.sema.privateFun[kind=fun;params=]
+  decl golden.sema.useAll[kind=fun;params=] fun useAll sym=golden.sema.useAll[kind=fun;params=]
 expr e@3:31 int(1) type=Int
 expr e@4:35 int(2) type=Int
 expr e@5:33 int(3) type=Int
-expr e@7:21 call callee=e@7:21#1 args=[] type=Int call=golden.sema.publicFun
-expr e@7:35 call callee=e@7:35#1 args=[] type=Int call=golden.sema.internalFun
+expr e@7:21 call callee=e@7:21#1 args=[] type=Int call=golden.sema.publicFun[kind=fun;params=]
+expr e@7:35 call callee=e@7:35#1 args=[] type=Int call=golden.sema.internalFun[kind=fun;params=]
 expr e@7:21#2 binary(add) lhs=e@7:21 rhs=e@7:35 type=Int
-expr e@7:51 call callee=e@7:51#1 args=[] type=Int call=golden.sema.privateFun
+expr e@7:51 call callee=e@7:51#1 args=[] type=Int call=golden.sema.privateFun[kind=fun;params=]
 expr e@7:21#3 binary(add) lhs=e@7:21#2 rhs=e@7:51 type=Int

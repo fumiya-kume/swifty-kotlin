@@ -1,20 +1,20 @@
-symbol fq=__local_0.checked kind=local vis=private flags=_ type=String
-symbol fq=__local_1.checkedWithMessage kind=local vis=private flags=_ type=String
-symbol fq=golden.sema.useCheckNotNull kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=Int
-symbol fq=golden.sema.useCheckNotNull.$0.value kind=valueParameter vis=private flags=_
+symbol fq=__local_0.checked[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=__local_1.checkedWithMessage[kind=local] kind=local vis=private flags=_ type=String
+symbol fq=golden.sema.useCheckNotNull.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.useCheckNotNull[kind=fun;params=String?] kind=function vis=public flags=_ sig=recv=_ params=[String?] ret=Int
 file fstdlib_kotlin_n_check package=golden.sema
-  decl golden.sema.useCheckNotNull fun useCheckNotNull sym=golden.sema.useCheckNotNull
-expr e@4:32 name(value) type=String? ref=golden.sema.useCheckNotNull.$0.value
-expr e@4:19 call callee=e@4:19#1 args=[_:e@4:32] type=String call=kotlin.checkNotNull#0 targs=[String]
-expr e@4:5 localDecl checked mutable=0 type=_ init=e@4:19 type=Unit ref=__local_0.checked
-expr e@5:43 name(value) type=String? ref=golden.sema.useCheckNotNull.$0.value
+  decl golden.sema.useCheckNotNull[kind=fun;params=String?] fun useCheckNotNull sym=golden.sema.useCheckNotNull[kind=fun;params=String?]
+expr e@4:32 name(value) type=String? ref=golden.sema.useCheckNotNull.$0.value[kind=vparam]
+expr e@4:19 call callee=e@4:19#1 args=[_:e@4:32] type=String call=kotlin.checkNotNull[kind=fun;params=T0?;gen=1] targs=[String]
+expr e@4:5 localDecl checked mutable=0 type=_ init=e@4:19 type=Unit ref=__local_0.checked[kind=local]
+expr e@5:43 name(value) type=String? ref=golden.sema.useCheckNotNull.$0.value[kind=vparam]
 expr e@5:52 string(unused) type=String
 expr e@5:50 lambda params=[] body=e@5:52 label=checkNotNull type=() -> Any
-expr e@5:30 call callee=e@5:30#1 args=[_:e@5:43,_:e@5:50] type=String call=kotlin.checkNotNull#1 targs=[String]
-expr e@5:5 localDecl checkedWithMessage mutable=0 type=_ init=e@5:30 type=Unit ref=__local_1.checkedWithMessage
-expr e@6:12 name(checked) type=String ref=__local_0.checked
-expr e@6:12#1 memberCall recv=e@6:12 callee=length args=[] type=Int call=kotlin.length.$get
-expr e@6:29 name(checkedWithMessage) type=String ref=__local_1.checkedWithMessage
-expr e@6:29#1 memberCall recv=e@6:29 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@5:30 call callee=e@5:30#1 args=[_:e@5:43,_:e@5:50] type=String call=kotlin.checkNotNull[kind=fun;params=T0?,fn{p=;ret=Any};gen=1] targs=[String]
+expr e@5:5 localDecl checkedWithMessage mutable=0 type=_ init=e@5:30 type=Unit ref=__local_1.checkedWithMessage[kind=local]
+expr e@6:12 name(checked) type=String ref=__local_0.checked[kind=local]
+expr e@6:12#1 memberCall recv=e@6:12 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
+expr e@6:29 name(checkedWithMessage) type=String ref=__local_1.checkedWithMessage[kind=local]
+expr e@6:29#1 memberCall recv=e@6:29 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
 expr e@6:12#2 binary(add) lhs=e@6:12#1 rhs=e@6:29#1 type=Int
 expr e@6:5 return value=e@6:12#2 type=Nothing

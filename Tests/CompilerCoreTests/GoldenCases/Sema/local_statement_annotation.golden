@@ -1,44 +1,44 @@
-symbol fq=__local_0.result kind=local vis=private flags=_ type=uncheckedCastLocal.$0.T
-symbol fq=__local_1.counter kind=local vis=private flags=mutable type=Int
-symbol fq=__localfun_0.helper kind=function vis=private flags=_ sig=recv=_ params=[Int] ret=Int
-symbol fq=__localfun_0.x kind=valueParameter vis=private flags=_ type=Int
-symbol fq=annotatedAssignment kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=annotatedExpressionStatement kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=annotatedLocalFun kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=uncheckedCastLocal kind=function vis=public flags=_ sig=recv=_ params=[Any?] ret=uncheckedCastLocal.$0.T
-symbol fq=uncheckedCastLocal.$0.T kind=typeParameter vis=private flags=_
-symbol fq=uncheckedCastLocal.$0.value kind=valueParameter vis=private flags=_
-symbol fq=uncheckedCastReturn kind=function vis=public flags=_ sig=recv=_ params=[Any?] ret=uncheckedCastReturn.$1.T
-symbol fq=uncheckedCastReturn.$1.T kind=typeParameter vis=private flags=_
-symbol fq=uncheckedCastReturn.$1.value kind=valueParameter vis=private flags=_
+symbol fq=__local_0.result[kind=local] kind=local vis=private flags=_ type=uncheckedCastLocal.$0.T
+symbol fq=__local_1.counter[kind=local] kind=local vis=private flags=mutable type=Int
+symbol fq=__localfun_0.helper[kind=fun;params=Int] kind=function vis=private flags=_ sig=recv=_ params=[Int] ret=Int
+symbol fq=__localfun_0.x[kind=vparam] kind=valueParameter vis=private flags=_ type=Int
+symbol fq=annotatedAssignment[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=annotatedExpressionStatement[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=annotatedLocalFun[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=uncheckedCastLocal.$0.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=uncheckedCastLocal.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=uncheckedCastLocal[kind=fun;params=Any?;gen=1] kind=function vis=public flags=_ sig=recv=_ params=[Any?] ret=uncheckedCastLocal.$0.T
+symbol fq=uncheckedCastReturn.$1.T[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=uncheckedCastReturn.$1.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=uncheckedCastReturn[kind=fun;params=Any?;gen=1] kind=function vis=public flags=_ sig=recv=_ params=[Any?] ret=uncheckedCastReturn.$1.T
 file flocal_statement_annotation package=_
-  decl uncheckedCastReturn fun uncheckedCastReturn sym=uncheckedCastReturn
-  decl uncheckedCastLocal fun uncheckedCastLocal sym=uncheckedCastLocal
-  decl annotatedLocalFun fun annotatedLocalFun sym=annotatedLocalFun
-  decl annotatedAssignment fun annotatedAssignment sym=annotatedAssignment
-  decl annotatedExpressionStatement fun annotatedExpressionStatement sym=annotatedExpressionStatement
-expr e@3:12 name(value) type=Any? ref=uncheckedCastReturn.$1.value
+  decl uncheckedCastReturn[kind=fun;params=Any?;gen=1] fun uncheckedCastReturn sym=uncheckedCastReturn[kind=fun;params=Any?;gen=1]
+  decl uncheckedCastLocal[kind=fun;params=Any?;gen=1] fun uncheckedCastLocal sym=uncheckedCastLocal[kind=fun;params=Any?;gen=1]
+  decl annotatedLocalFun[kind=fun;params=] fun annotatedLocalFun sym=annotatedLocalFun[kind=fun;params=]
+  decl annotatedAssignment[kind=fun;params=] fun annotatedAssignment sym=annotatedAssignment[kind=fun;params=]
+  decl annotatedExpressionStatement[kind=fun;params=] fun annotatedExpressionStatement sym=annotatedExpressionStatement[kind=fun;params=]
+expr e@3:12 name(value) type=Any? ref=uncheckedCastReturn.$1.value[kind=vparam]
 expr e@3:12#1 asCast expr=e@3:12 type=uncheckedCastReturn.$1.T type=uncheckedCastReturn.$1.T
 expr e@3:5 return value=e@3:12#1 type=Nothing
-expr e@8:18 name(value) type=Any? ref=uncheckedCastLocal.$0.value
+expr e@8:18 name(value) type=Any? ref=uncheckedCastLocal.$0.value[kind=vparam]
 expr e@8:18#1 asCast expr=e@8:18 type=uncheckedCastLocal.$0.T type=uncheckedCastLocal.$0.T
-expr e@8:5 localDecl result mutable=0 type=_ init=e@8:18#1 type=Unit ref=__local_0.result
-expr e@9:12 name(result) type=uncheckedCastLocal.$0.T ref=__local_0.result
+expr e@8:5 localDecl result mutable=0 type=_ init=e@8:18#1 type=Unit ref=__local_0.result[kind=local]
+expr e@9:12 name(result) type=uncheckedCastLocal.$0.T ref=__local_0.result[kind=local]
 expr e@9:5 return value=e@9:12 type=Nothing
-expr e@14:31 name(x) type=Int ref=__localfun_0.x
+expr e@14:31 name(x) type=Int ref=__localfun_0.x[kind=vparam]
 expr e@14:35 int(1) type=Int
 expr e@14:31#1 binary(add) lhs=e@14:31 rhs=e@14:35 type=Int
-expr e@14:5 localFunDecl helper params=[x] returnType=Int body=e@14:31#1 type=Unit ref=__localfun_0.helper
+expr e@14:5 localFunDecl helper params=[x] returnType=Int body=e@14:31#1 type=Unit ref=__localfun_0.helper[kind=fun;params=Int]
 expr e@15:19 int(41) type=Int
-expr e@15:12 call callee=e@15:12#1 args=[_:e@15:19] type=Int call=__localfun_0.helper
+expr e@15:12 call callee=e@15:12#1 args=[_:e@15:19] type=Int call=__localfun_0.helper[kind=fun;params=Int]
 expr e@15:5 return value=e@15:12 type=Nothing
 expr e@19:19 int(1) type=Int
-expr e@19:5 localDecl counter mutable=1 type=_ init=e@19:19 type=Unit ref=__local_1.counter
+expr e@19:5 localDecl counter mutable=1 type=_ init=e@19:19 type=Unit ref=__local_1.counter[kind=local]
 expr e@21:15 int(2) type=Int
-expr e@21:5 localAssign counter value=e@21:15 type=Unit ref=__local_1.counter
-expr e@22:12 name(counter) type=Int ref=__local_1.counter
+expr e@21:5 localAssign counter value=e@21:15 type=Unit ref=__local_1.counter[kind=local]
+expr e@22:12 name(counter) type=Int ref=__local_1.counter[kind=local]
 expr e@22:5 return value=e@22:12 type=Nothing
 expr e@27:13 string(first) type=String
-expr e@27:5 call callee=e@27:5#1 args=[_:e@27:13] type=Unit call=kotlin.io.println#2
+expr e@27:5 call callee=e@27:5#1 args=[_:e@27:13] type=Unit call=kotlin.io.println[kind=fun;params=String]
 expr e@28:13 string(second) type=String
-expr e@28:5 call callee=e@28:5#1 args=[_:e@28:13] type=Unit call=kotlin.io.println#2
+expr e@28:5 call callee=e@28:5#1 args=[_:e@28:13] type=Unit call=kotlin.io.println[kind=fun;params=String]

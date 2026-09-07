@@ -1,32 +1,32 @@
-symbol fq=__local_0.r kind=local vis=private flags=_ type=golden.sema.MyAutoResource
-symbol fq=__local_1.r kind=local vis=private flags=_ type=kotlin.AutoCloseable
-symbol fq=golden.sema.MyAutoResource kind=class vis=public flags=_
-symbol fq=golden.sema.MyAutoResource.<init> kind=constructor vis=public flags=_ sig=recv=golden.sema.MyAutoResource params=[] ret=golden.sema.MyAutoResource
-symbol fq=golden.sema.autoCloseableFactory kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.AutoCloseable
-symbol fq=golden.sema.useAutoCloseable kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useFactory kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=__local_0.r[kind=local] kind=local vis=private flags=_ type=golden.sema.MyAutoResource
+symbol fq=__local_1.r[kind=local] kind=local vis=private flags=_ type=kotlin.AutoCloseable
+symbol fq=golden.sema.MyAutoResource.<init>[kind=ctor;recv=golden.sema.MyAutoResource;params=] kind=constructor vis=public flags=_ sig=recv=golden.sema.MyAutoResource params=[] ret=golden.sema.MyAutoResource
+symbol fq=golden.sema.MyAutoResource[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.autoCloseableFactory[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.AutoCloseable
+symbol fq=golden.sema.useAutoCloseable[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useFactory[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 file fstdlib_kotlin_n_AutoCloseable package=golden.sema
-  decl golden.sema.MyAutoResource class MyAutoResource sym=golden.sema.MyAutoResource
-  decl golden.sema.autoCloseableFactory fun autoCloseableFactory sym=golden.sema.autoCloseableFactory
-  decl golden.sema.useAutoCloseable fun useAutoCloseable sym=golden.sema.useAutoCloseable
-  decl golden.sema.useFactory fun useFactory sym=golden.sema.useFactory
+  decl golden.sema.MyAutoResource[kind=class] class MyAutoResource sym=golden.sema.MyAutoResource[kind=class]
+  decl golden.sema.autoCloseableFactory[kind=fun;params=] fun autoCloseableFactory sym=golden.sema.autoCloseableFactory[kind=fun;params=]
+  decl golden.sema.useAutoCloseable[kind=fun;params=] fun useAutoCloseable sym=golden.sema.useAutoCloseable[kind=fun;params=]
+  decl golden.sema.useFactory[kind=fun;params=] fun useFactory sym=golden.sema.useFactory[kind=fun;params=]
 expr e@7:17 string(closed) type=String
-expr e@7:9 call callee=e@7:9#1 args=[_:e@7:17] type=Unit call=kotlin.io.println#2
+expr e@7:9 call callee=e@7:9#1 args=[_:e@7:17] type=Unit call=kotlin.io.println[kind=fun;params=String]
 expr e@13:17 string(factory closed) type=String
-expr e@13:9 call callee=e@13:9#1 args=[_:e@13:17] type=Unit call=kotlin.io.println#2
+expr e@13:9 call callee=e@13:9#1 args=[_:e@13:17] type=Unit call=kotlin.io.println[kind=fun;params=String]
 expr e@12:26 lambda params=[] body=e@13:9 label=AutoCloseable type=() -> Unit
-expr e@12:12 call callee=e@12:12#1 args=[_:e@12:26] type=kotlin.AutoCloseable call=kotlin.AutoCloseable#1
+expr e@12:12 call callee=e@12:12#1 args=[_:e@12:26] type=kotlin.AutoCloseable call=kotlin.AutoCloseable[kind=fun;params=fn{p=;ret=Unit}]
 expr e@12:5 return value=e@12:12 type=Nothing
-expr e@18:13 call callee=e@18:13#1 args=[] type=golden.sema.MyAutoResource call=golden.sema.MyAutoResource.<init>
-expr e@18:5 localDecl r mutable=0 type=_ init=e@18:13 type=Unit ref=__local_0.r
-expr e@19:12 name(r) type=golden.sema.MyAutoResource ref=__local_0.r
+expr e@18:13 call callee=e@18:13#1 args=[] type=golden.sema.MyAutoResource call=golden.sema.MyAutoResource.<init>[kind=ctor;recv=golden.sema.MyAutoResource;params=]
+expr e@18:5 localDecl r mutable=0 type=_ init=e@18:13 type=Unit ref=__local_0.r[kind=local]
+expr e@19:12 name(r) type=golden.sema.MyAutoResource ref=__local_0.r[kind=local]
 expr e@19:20 string(used) type=String
 expr e@19:18 lambda params=[] body=e@19:20 label=use type=(golden.sema.MyAutoResource) -> String
 expr e@19:12#1 memberCall recv=e@19:12 callee=use args=[_:e@19:18] type=String
 expr e@19:5 return value=e@19:12#1 type=Nothing
-expr e@23:13 call callee=e@23:13#1 args=[] type=kotlin.AutoCloseable call=golden.sema.autoCloseableFactory
-expr e@23:5 localDecl r mutable=0 type=_ init=e@23:13 type=Unit ref=__local_1.r
-expr e@24:12 name(r) type=kotlin.AutoCloseable ref=__local_1.r
+expr e@23:13 call callee=e@23:13#1 args=[] type=kotlin.AutoCloseable call=golden.sema.autoCloseableFactory[kind=fun;params=]
+expr e@23:5 localDecl r mutable=0 type=_ init=e@23:13 type=Unit ref=__local_1.r[kind=local]
+expr e@24:12 name(r) type=kotlin.AutoCloseable ref=__local_1.r[kind=local]
 expr e@24:20 string(factory-used) type=String
 expr e@24:18 lambda params=[] body=e@24:20 label=use type=(kotlin.AutoCloseable) -> String
 expr e@24:12#1 memberCall recv=e@24:12 callee=use args=[_:e@24:18] type=String

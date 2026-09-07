@@ -1,6 +1,6 @@
-symbol fq=golden.sema.InternalBox kind=class vis=internal flags=_
-symbol fq=golden.sema.InternalBox.value kind=property vis=internal flags=_ type=Int
+symbol fq=golden.sema.InternalBox.value[kind=prop] kind=property vis=internal flags=_ type=Int
+symbol fq=golden.sema.InternalBox[kind=class] kind=class vis=internal flags=_
 file fstdlib_kotlin_n_PublishedApi package=golden.sema
-  decl golden.sema.InternalBox class InternalBox sym=golden.sema.InternalBox
+  decl golden.sema.InternalBox[kind=class] class InternalBox sym=golden.sema.InternalBox[kind=class]
 expr e@6:31 int(0) type=Int
-expr e@9:36 name(value) type=Int ref=golden.sema.InternalBox.value
+expr e@9:36 name(value) type=Int ref=golden.sema.InternalBox.value[kind=prop]

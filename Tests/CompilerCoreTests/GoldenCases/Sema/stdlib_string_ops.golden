@@ -1,196 +1,196 @@
-symbol fq=golden.sema.useContains kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=golden.sema.useEndsWith kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=golden.sema.useEquals kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=golden.sema.useEqualsIgnoreCase kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=golden.sema.useFirst kind=function vis=public flags=_ sig=recv=_ params=[] ret=Char
-symbol fq=golden.sema.useFirstOrNull kind=function vis=public flags=_ sig=recv=_ params=[] ret=Char?
-symbol fq=golden.sema.useFormat kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useIsBlank kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=golden.sema.useIsEmpty kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=golden.sema.useIsNotBlank kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=golden.sema.useIsNotEmpty kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=golden.sema.useLowercase kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.usePrependIndent kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useRemovePrefix kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useRemoveSuffix kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useRemoveSurrounding1 kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useRemoveSurrounding2 kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useReplace kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useReplaceFirst kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useReplaceFirstIgnoreCase kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useReplaceIndent kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useReplaceRange kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useSplit kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<String>
-symbol fq=golden.sema.useStartsWith kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=golden.sema.useSubstring1 kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useSubstring2 kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useSubstringAfter kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useSubstringAfterLast kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useSubstringBefore kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useSubstringBeforeLast kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useToDouble kind=function vis=public flags=_ sig=recv=_ params=[] ret=Double
-symbol fq=golden.sema.useToDoubleOrNullInvalid kind=function vis=public flags=_ sig=recv=_ params=[] ret=Double?
-symbol fq=golden.sema.useToDoubleOrNullValid kind=function vis=public flags=_ sig=recv=_ params=[] ret=Double?
-symbol fq=golden.sema.useToInt kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=golden.sema.useToIntOrNullInvalid kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int?
-symbol fq=golden.sema.useToIntOrNullValid kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int?
-symbol fq=golden.sema.useTrim kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=golden.sema.useUppercase kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
-symbol fq=kotlin.ranges.IntRange kind=class vis=public flags=synthetic
-symbol fq=kotlin.text.equals#1 kind=function vis=public flags=synthetic sig=recv=String params=[String?] ret=Boolean
-symbol fq=kotlin.text.equals.other kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.text.format kind=function vis=public flags=synthetic sig=recv=String params=[Any?] ret=String vararg=[1]
-symbol fq=kotlin.text.format.args kind=valueParameter vis=private flags=synthetic
+symbol fq=golden.sema.useContains[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=golden.sema.useEndsWith[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=golden.sema.useEqualsIgnoreCase[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=golden.sema.useEquals[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=golden.sema.useFirstOrNull[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Char?
+symbol fq=golden.sema.useFirst[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Char
+symbol fq=golden.sema.useFormat[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useIsBlank[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=golden.sema.useIsEmpty[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=golden.sema.useIsNotBlank[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=golden.sema.useIsNotEmpty[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=golden.sema.useLowercase[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.usePrependIndent[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useRemovePrefix[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useRemoveSuffix[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useRemoveSurrounding1[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useRemoveSurrounding2[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useReplaceFirstIgnoreCase[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useReplaceFirst[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useReplaceIndent[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useReplaceRange[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useReplace[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useSplit[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.List<String>
+symbol fq=golden.sema.useStartsWith[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=golden.sema.useSubstring1[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useSubstring2[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useSubstringAfterLast[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useSubstringAfter[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useSubstringBeforeLast[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useSubstringBefore[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useToDoubleOrNullInvalid[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Double?
+symbol fq=golden.sema.useToDoubleOrNullValid[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Double?
+symbol fq=golden.sema.useToDouble[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Double
+symbol fq=golden.sema.useToIntOrNullInvalid[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int?
+symbol fq=golden.sema.useToIntOrNullValid[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int?
+symbol fq=golden.sema.useToInt[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.useTrim[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=golden.sema.useUppercase[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=kotlin.CharSequence[kind=iface] kind=interface vis=public flags=_ type=kotlin.CharSequence
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.ranges.IntRange[kind=class] kind=class vis=public flags=synthetic
+symbol fq=kotlin.text.equals.other[kind=vparam] kind=valueParameter vis=private flags=synthetic
+symbol fq=kotlin.text.equals[kind=fun;recv=String;params=String?] kind=function vis=public flags=synthetic sig=recv=String params=[String?] ret=Boolean
+symbol fq=kotlin.text.format.args[kind=vparam] kind=valueParameter vis=private flags=synthetic
+symbol fq=kotlin.text.format[kind=fun;recv=String;params=*Any?] kind=function vis=public flags=synthetic sig=recv=String params=[Any?] ret=String vararg=[1]
 file fstdlib_string_ops package=golden.sema
-  decl golden.sema.useTrim fun useTrim sym=golden.sema.useTrim
-  decl golden.sema.useSplit fun useSplit sym=golden.sema.useSplit
-  decl golden.sema.useReplace fun useReplace sym=golden.sema.useReplace
-  decl golden.sema.useStartsWith fun useStartsWith sym=golden.sema.useStartsWith
-  decl golden.sema.useEndsWith fun useEndsWith sym=golden.sema.useEndsWith
-  decl golden.sema.useContains fun useContains sym=golden.sema.useContains
-  decl golden.sema.useToInt fun useToInt sym=golden.sema.useToInt
-  decl golden.sema.useToDouble fun useToDouble sym=golden.sema.useToDouble
-  decl golden.sema.useFormat fun useFormat sym=golden.sema.useFormat
-  decl golden.sema.useSubstring1 fun useSubstring1 sym=golden.sema.useSubstring1
-  decl golden.sema.useSubstring2 fun useSubstring2 sym=golden.sema.useSubstring2
-  decl golden.sema.useLowercase fun useLowercase sym=golden.sema.useLowercase
-  decl golden.sema.useUppercase fun useUppercase sym=golden.sema.useUppercase
-  decl golden.sema.useToIntOrNullValid fun useToIntOrNullValid sym=golden.sema.useToIntOrNullValid
-  decl golden.sema.useToIntOrNullInvalid fun useToIntOrNullInvalid sym=golden.sema.useToIntOrNullInvalid
-  decl golden.sema.useToDoubleOrNullValid fun useToDoubleOrNullValid sym=golden.sema.useToDoubleOrNullValid
-  decl golden.sema.useToDoubleOrNullInvalid fun useToDoubleOrNullInvalid sym=golden.sema.useToDoubleOrNullInvalid
-  decl golden.sema.useRemovePrefix fun useRemovePrefix sym=golden.sema.useRemovePrefix
-  decl golden.sema.useRemoveSuffix fun useRemoveSuffix sym=golden.sema.useRemoveSuffix
-  decl golden.sema.useRemoveSurrounding1 fun useRemoveSurrounding1 sym=golden.sema.useRemoveSurrounding1
-  decl golden.sema.useRemoveSurrounding2 fun useRemoveSurrounding2 sym=golden.sema.useRemoveSurrounding2
-  decl golden.sema.useSubstringBefore fun useSubstringBefore sym=golden.sema.useSubstringBefore
-  decl golden.sema.useSubstringAfter fun useSubstringAfter sym=golden.sema.useSubstringAfter
-  decl golden.sema.useSubstringBeforeLast fun useSubstringBeforeLast sym=golden.sema.useSubstringBeforeLast
-  decl golden.sema.useSubstringAfterLast fun useSubstringAfterLast sym=golden.sema.useSubstringAfterLast
-  decl golden.sema.useIsEmpty fun useIsEmpty sym=golden.sema.useIsEmpty
-  decl golden.sema.useIsNotEmpty fun useIsNotEmpty sym=golden.sema.useIsNotEmpty
-  decl golden.sema.useIsBlank fun useIsBlank sym=golden.sema.useIsBlank
-  decl golden.sema.useIsNotBlank fun useIsNotBlank sym=golden.sema.useIsNotBlank
-  decl golden.sema.useFirst fun useFirst sym=golden.sema.useFirst
-  decl golden.sema.useFirstOrNull fun useFirstOrNull sym=golden.sema.useFirstOrNull
-  decl golden.sema.usePrependIndent fun usePrependIndent sym=golden.sema.usePrependIndent
-  decl golden.sema.useReplaceIndent fun useReplaceIndent sym=golden.sema.useReplaceIndent
-  decl golden.sema.useEquals fun useEquals sym=golden.sema.useEquals
-  decl golden.sema.useEqualsIgnoreCase fun useEqualsIgnoreCase sym=golden.sema.useEqualsIgnoreCase
-  decl golden.sema.useReplaceFirst fun useReplaceFirst sym=golden.sema.useReplaceFirst
-  decl golden.sema.useReplaceFirstIgnoreCase fun useReplaceFirstIgnoreCase sym=golden.sema.useReplaceFirstIgnoreCase
-  decl golden.sema.useReplaceRange fun useReplaceRange sym=golden.sema.useReplaceRange
+  decl golden.sema.useTrim[kind=fun;params=] fun useTrim sym=golden.sema.useTrim[kind=fun;params=]
+  decl golden.sema.useSplit[kind=fun;params=] fun useSplit sym=golden.sema.useSplit[kind=fun;params=]
+  decl golden.sema.useReplace[kind=fun;params=] fun useReplace sym=golden.sema.useReplace[kind=fun;params=]
+  decl golden.sema.useStartsWith[kind=fun;params=] fun useStartsWith sym=golden.sema.useStartsWith[kind=fun;params=]
+  decl golden.sema.useEndsWith[kind=fun;params=] fun useEndsWith sym=golden.sema.useEndsWith[kind=fun;params=]
+  decl golden.sema.useContains[kind=fun;params=] fun useContains sym=golden.sema.useContains[kind=fun;params=]
+  decl golden.sema.useToInt[kind=fun;params=] fun useToInt sym=golden.sema.useToInt[kind=fun;params=]
+  decl golden.sema.useToDouble[kind=fun;params=] fun useToDouble sym=golden.sema.useToDouble[kind=fun;params=]
+  decl golden.sema.useFormat[kind=fun;params=] fun useFormat sym=golden.sema.useFormat[kind=fun;params=]
+  decl golden.sema.useSubstring1[kind=fun;params=] fun useSubstring1 sym=golden.sema.useSubstring1[kind=fun;params=]
+  decl golden.sema.useSubstring2[kind=fun;params=] fun useSubstring2 sym=golden.sema.useSubstring2[kind=fun;params=]
+  decl golden.sema.useLowercase[kind=fun;params=] fun useLowercase sym=golden.sema.useLowercase[kind=fun;params=]
+  decl golden.sema.useUppercase[kind=fun;params=] fun useUppercase sym=golden.sema.useUppercase[kind=fun;params=]
+  decl golden.sema.useToIntOrNullValid[kind=fun;params=] fun useToIntOrNullValid sym=golden.sema.useToIntOrNullValid[kind=fun;params=]
+  decl golden.sema.useToIntOrNullInvalid[kind=fun;params=] fun useToIntOrNullInvalid sym=golden.sema.useToIntOrNullInvalid[kind=fun;params=]
+  decl golden.sema.useToDoubleOrNullValid[kind=fun;params=] fun useToDoubleOrNullValid sym=golden.sema.useToDoubleOrNullValid[kind=fun;params=]
+  decl golden.sema.useToDoubleOrNullInvalid[kind=fun;params=] fun useToDoubleOrNullInvalid sym=golden.sema.useToDoubleOrNullInvalid[kind=fun;params=]
+  decl golden.sema.useRemovePrefix[kind=fun;params=] fun useRemovePrefix sym=golden.sema.useRemovePrefix[kind=fun;params=]
+  decl golden.sema.useRemoveSuffix[kind=fun;params=] fun useRemoveSuffix sym=golden.sema.useRemoveSuffix[kind=fun;params=]
+  decl golden.sema.useRemoveSurrounding1[kind=fun;params=] fun useRemoveSurrounding1 sym=golden.sema.useRemoveSurrounding1[kind=fun;params=]
+  decl golden.sema.useRemoveSurrounding2[kind=fun;params=] fun useRemoveSurrounding2 sym=golden.sema.useRemoveSurrounding2[kind=fun;params=]
+  decl golden.sema.useSubstringBefore[kind=fun;params=] fun useSubstringBefore sym=golden.sema.useSubstringBefore[kind=fun;params=]
+  decl golden.sema.useSubstringAfter[kind=fun;params=] fun useSubstringAfter sym=golden.sema.useSubstringAfter[kind=fun;params=]
+  decl golden.sema.useSubstringBeforeLast[kind=fun;params=] fun useSubstringBeforeLast sym=golden.sema.useSubstringBeforeLast[kind=fun;params=]
+  decl golden.sema.useSubstringAfterLast[kind=fun;params=] fun useSubstringAfterLast sym=golden.sema.useSubstringAfterLast[kind=fun;params=]
+  decl golden.sema.useIsEmpty[kind=fun;params=] fun useIsEmpty sym=golden.sema.useIsEmpty[kind=fun;params=]
+  decl golden.sema.useIsNotEmpty[kind=fun;params=] fun useIsNotEmpty sym=golden.sema.useIsNotEmpty[kind=fun;params=]
+  decl golden.sema.useIsBlank[kind=fun;params=] fun useIsBlank sym=golden.sema.useIsBlank[kind=fun;params=]
+  decl golden.sema.useIsNotBlank[kind=fun;params=] fun useIsNotBlank sym=golden.sema.useIsNotBlank[kind=fun;params=]
+  decl golden.sema.useFirst[kind=fun;params=] fun useFirst sym=golden.sema.useFirst[kind=fun;params=]
+  decl golden.sema.useFirstOrNull[kind=fun;params=] fun useFirstOrNull sym=golden.sema.useFirstOrNull[kind=fun;params=]
+  decl golden.sema.usePrependIndent[kind=fun;params=] fun usePrependIndent sym=golden.sema.usePrependIndent[kind=fun;params=]
+  decl golden.sema.useReplaceIndent[kind=fun;params=] fun useReplaceIndent sym=golden.sema.useReplaceIndent[kind=fun;params=]
+  decl golden.sema.useEquals[kind=fun;params=] fun useEquals sym=golden.sema.useEquals[kind=fun;params=]
+  decl golden.sema.useEqualsIgnoreCase[kind=fun;params=] fun useEqualsIgnoreCase sym=golden.sema.useEqualsIgnoreCase[kind=fun;params=]
+  decl golden.sema.useReplaceFirst[kind=fun;params=] fun useReplaceFirst sym=golden.sema.useReplaceFirst[kind=fun;params=]
+  decl golden.sema.useReplaceFirstIgnoreCase[kind=fun;params=] fun useReplaceFirstIgnoreCase sym=golden.sema.useReplaceFirstIgnoreCase[kind=fun;params=]
+  decl golden.sema.useReplaceRange[kind=fun;params=] fun useReplaceRange sym=golden.sema.useReplaceRange[kind=fun;params=]
 expr e@3:25 string(  hi  ) type=String
-expr e@3:25#1 memberCall recv=e@3:25 callee=trim args=[] type=String call=kotlin.text.trim#0
+expr e@3:25#1 memberCall recv=e@3:25 callee=trim args=[] type=String call=kotlin.text.trim[kind=fun;recv=String;params=]
 expr e@5:32 string(1,2,3) type=String
 expr e@5:46 string(,) type=String
-expr e@5:32#1 memberCall recv=e@5:32 callee=split args=[_:e@5:46] type=kotlin.collections.List<String> call=kotlin.text.split#0
+expr e@5:32#1 memberCall recv=e@5:32 callee=split args=[_:e@5:46] type=kotlin.collections.List<String> call=kotlin.text.split[kind=fun;recv=String;params=String]
 expr e@7:28 string(abc) type=String
 expr e@7:42 string(a) type=String
 expr e@7:47 string(z) type=String
-expr e@7:28#1 memberCall recv=e@7:28 callee=replace args=[_:e@7:42,_:e@7:47] type=String call=kotlin.text.replace#1
+expr e@7:28#1 memberCall recv=e@7:28 callee=replace args=[_:e@7:42,_:e@7:47] type=String call=kotlin.text.replace[kind=fun;recv=String;params=String,String,Boolean]
 expr e@9:32 string(Kotlin) type=String
 expr e@9:52 string(Ko) type=String
-expr e@9:32#1 memberCall recv=e@9:32 callee=startsWith args=[_:e@9:52] type=Boolean call=kotlin.text.startsWith#1
+expr e@9:32#1 memberCall recv=e@9:32 callee=startsWith args=[_:e@9:52] type=Boolean call=kotlin.text.startsWith[kind=fun;recv=kotlin.CharSequence;params=kotlin.CharSequence,Boolean]
 expr e@11:30 string(Kotlin) type=String
 expr e@11:48 string(lin) type=String
-expr e@11:30#1 memberCall recv=e@11:30 callee=endsWith args=[_:e@11:48] type=Boolean call=kotlin.text.endsWith#1
+expr e@11:30#1 memberCall recv=e@11:30 callee=endsWith args=[_:e@11:48] type=Boolean call=kotlin.text.endsWith[kind=fun;recv=kotlin.CharSequence;params=kotlin.CharSequence,Boolean]
 expr e@13:30 string(Kotlin) type=String
 expr e@13:48 string(otl) type=String
-expr e@13:30#1 memberCall recv=e@13:30 callee=contains args=[_:e@13:48] type=Boolean call=kotlin.text.contains#1
+expr e@13:30#1 memberCall recv=e@13:30 callee=contains args=[_:e@13:48] type=Boolean call=kotlin.text.contains[kind=fun;recv=kotlin.CharSequence;params=kotlin.CharSequence]
 expr e@15:23 string(42) type=String
-expr e@15:23#1 memberCall recv=e@15:23 callee=toInt args=[] type=Int call=kotlin.text.toInt#0
+expr e@15:23#1 memberCall recv=e@15:23 callee=toInt args=[] type=Int call=kotlin.text.toInt[kind=fun;recv=String;params=]
 expr e@17:29 string(3.14) type=String
-expr e@17:29#1 memberCall recv=e@17:29 callee=toDouble args=[] type=Double call=kotlin.text.toDouble#1
+expr e@17:29#1 memberCall recv=e@17:29 callee=toDouble args=[] type=Double call=kotlin.text.toDouble[kind=fun;recv=String;params=]
 expr e@19:27 string(%s:%d) type=String
 expr e@19:42 string(age) type=String
 expr e@19:49 int(7) type=Int
-expr e@19:27#1 memberCall recv=e@19:27 callee=format args=[_:e@19:42,_:e@19:49] type=String call=kotlin.text.format
+expr e@19:27#1 memberCall recv=e@19:27 callee=format args=[_:e@19:42,_:e@19:49] type=String call=kotlin.text.format[kind=fun;recv=String;params=*Any?]
 expr e@21:31 string(hello) type=String
 expr e@21:49 int(1) type=Int
-expr e@21:31#1 memberCall recv=e@21:31 callee=substring args=[_:e@21:49] type=String call=kotlin.text.substring#0
+expr e@21:31#1 memberCall recv=e@21:31 callee=substring args=[_:e@21:49] type=String call=kotlin.text.substring[kind=fun;recv=String;params=Int]
 expr e@23:31 string(hello) type=String
 expr e@23:49 int(1) type=Int
 expr e@23:52 int(3) type=Int
-expr e@23:31#1 memberCall recv=e@23:31 callee=substring args=[_:e@23:49,_:e@23:52] type=String call=kotlin.text.substring#1
+expr e@23:31#1 memberCall recv=e@23:31 callee=substring args=[_:e@23:49,_:e@23:52] type=String call=kotlin.text.substring[kind=fun;recv=String;params=Int,Int]
 expr e@25:30 string(Hello) type=String
-expr e@25:30#1 memberCall recv=e@25:30 callee=lowercase args=[] type=String call=kotlin.text.lowercase#2
+expr e@25:30#1 memberCall recv=e@25:30 callee=lowercase args=[] type=String call=kotlin.text.lowercase[kind=fun;recv=String;params=]
 expr e@27:30 string(Hello) type=String
-expr e@27:30#1 memberCall recv=e@27:30 callee=uppercase args=[] type=String call=kotlin.text.uppercase#2
+expr e@27:30#1 memberCall recv=e@27:30 callee=uppercase args=[] type=String call=kotlin.text.uppercase[kind=fun;recv=String;params=]
 expr e@29:35 string(123) type=String
-expr e@29:35#1 memberCall recv=e@29:35 callee=toIntOrNull args=[] type=Int? call=kotlin.text.toIntOrNull#1
+expr e@29:35#1 memberCall recv=e@29:35 callee=toIntOrNull args=[] type=Int? call=kotlin.text.toIntOrNull[kind=fun;recv=String;params=]
 expr e@31:37 string(abc) type=String
-expr e@31:37#1 memberCall recv=e@31:37 callee=toIntOrNull args=[] type=Int? call=kotlin.text.toIntOrNull#1
+expr e@31:37#1 memberCall recv=e@31:37 callee=toIntOrNull args=[] type=Int? call=kotlin.text.toIntOrNull[kind=fun;recv=String;params=]
 expr e@33:41 string( 3.14 ) type=String
-expr e@33:41#1 memberCall recv=e@33:41 callee=toDoubleOrNull args=[] type=Double? call=kotlin.text.toDoubleOrNull#1
+expr e@33:41#1 memberCall recv=e@33:41 callee=toDoubleOrNull args=[] type=Double? call=kotlin.text.toDoubleOrNull[kind=fun;recv=String;params=]
 expr e@35:43 string(abc) type=String
-expr e@35:43#1 memberCall recv=e@35:43 callee=toDoubleOrNull args=[] type=Double? call=kotlin.text.toDoubleOrNull#1
+expr e@35:43#1 memberCall recv=e@35:43 callee=toDoubleOrNull args=[] type=Double? call=kotlin.text.toDoubleOrNull[kind=fun;recv=String;params=]
 expr e@37:33 string(hello) type=String
 expr e@37:54 string(he) type=String
-expr e@37:33#1 memberCall recv=e@37:33 callee=removePrefix args=[_:e@37:54] type=String call=kotlin.text.removePrefix#0
+expr e@37:33#1 memberCall recv=e@37:33 callee=removePrefix args=[_:e@37:54] type=String call=kotlin.text.removePrefix[kind=fun;recv=String;params=kotlin.CharSequence]
 expr e@39:33 string(hello) type=String
 expr e@39:54 string(lo) type=String
-expr e@39:33#1 memberCall recv=e@39:33 callee=removeSuffix args=[_:e@39:54] type=String call=kotlin.text.removeSuffix#0
+expr e@39:33#1 memberCall recv=e@39:33 callee=removeSuffix args=[_:e@39:54] type=String call=kotlin.text.removeSuffix[kind=fun;recv=String;params=kotlin.CharSequence]
 expr e@41:39 string([hello]) type=String
 expr e@41:67 string([) type=String
 expr e@41:72 string(]) type=String
-expr e@41:39#1 memberCall recv=e@41:39 callee=removeSurrounding args=[_:e@41:67,_:e@41:72] type=String call=kotlin.text.removeSurrounding#1
+expr e@41:39#1 memberCall recv=e@41:39 callee=removeSurrounding args=[_:e@41:67,_:e@41:72] type=String call=kotlin.text.removeSurrounding[kind=fun;recv=String;params=kotlin.CharSequence,kotlin.CharSequence]
 expr e@43:39 string(**foo**) type=String
 expr e@43:67 string(*) type=String
-expr e@43:39#1 memberCall recv=e@43:39 callee=removeSurrounding args=[_:e@43:67] type=String call=kotlin.text.removeSurrounding#0
+expr e@43:39#1 memberCall recv=e@43:39 callee=removeSurrounding args=[_:e@43:67] type=String call=kotlin.text.removeSurrounding[kind=fun;recv=String;params=kotlin.CharSequence]
 expr e@45:36 string(hello.world.kt) type=String
 expr e@45:69 string(.) type=String
-expr e@45:36#1 memberCall recv=e@45:36 callee=substringBefore args=[_:e@45:69] type=String call=kotlin.text.substringBefore#1
+expr e@45:36#1 memberCall recv=e@45:36 callee=substringBefore args=[_:e@45:69] type=String call=kotlin.text.substringBefore[kind=fun;recv=String;params=String,String]
 expr e@47:35 string(hello.world.kt) type=String
 expr e@47:67 string(.) type=String
-expr e@47:35#1 memberCall recv=e@47:35 callee=substringAfter args=[_:e@47:67] type=String call=kotlin.text.substringAfter#1
+expr e@47:35#1 memberCall recv=e@47:35 callee=substringAfter args=[_:e@47:67] type=String call=kotlin.text.substringAfter[kind=fun;recv=String;params=String,String]
 expr e@49:40 string(hello.world.kt) type=String
 expr e@49:77 string(.) type=String
-expr e@49:40#1 memberCall recv=e@49:40 callee=substringBeforeLast args=[_:e@49:77] type=String call=kotlin.text.substringBeforeLast#1
+expr e@49:40#1 memberCall recv=e@49:40 callee=substringBeforeLast args=[_:e@49:77] type=String call=kotlin.text.substringBeforeLast[kind=fun;recv=String;params=String,String]
 expr e@51:39 string(hello.world.kt) type=String
 expr e@51:75 string(.) type=String
-expr e@51:39#1 memberCall recv=e@51:39 callee=substringAfterLast args=[_:e@51:75] type=String call=kotlin.text.substringAfterLast#1
+expr e@51:39#1 memberCall recv=e@51:39 callee=substringAfterLast args=[_:e@51:75] type=String call=kotlin.text.substringAfterLast[kind=fun;recv=String;params=String,String]
 expr e@53:29 string() type=String
-expr e@53:29#1 memberCall recv=e@53:29 callee=isEmpty args=[] type=Boolean call=kotlin.text.isEmpty
+expr e@53:29#1 memberCall recv=e@53:29 callee=isEmpty args=[] type=Boolean call=kotlin.text.isEmpty[kind=fun;recv=kotlin.CharSequence;params=]
 expr e@55:32 string(x) type=String
-expr e@55:32#1 memberCall recv=e@55:32 callee=isNotEmpty args=[] type=Boolean call=kotlin.text.isNotEmpty
+expr e@55:32#1 memberCall recv=e@55:32 callee=isNotEmpty args=[] type=Boolean call=kotlin.text.isNotEmpty[kind=fun;recv=kotlin.CharSequence;params=]
 expr e@57:29 string(  ) type=String
-expr e@57:29#1 memberCall recv=e@57:29 callee=isBlank args=[] type=Boolean call=kotlin.text.isBlank
+expr e@57:29#1 memberCall recv=e@57:29 callee=isBlank args=[] type=Boolean call=kotlin.text.isBlank[kind=fun;recv=kotlin.CharSequence;params=]
 expr e@59:32 string(x) type=String
-expr e@59:32#1 memberCall recv=e@59:32 callee=isNotBlank args=[] type=Boolean call=kotlin.text.isNotBlank
+expr e@59:32#1 memberCall recv=e@59:32 callee=isNotBlank args=[] type=Boolean call=kotlin.text.isNotBlank[kind=fun;recv=kotlin.CharSequence;params=]
 expr e@61:24 string(hello) type=String
-expr e@61:24#1 memberCall recv=e@61:24 callee=first args=[] type=Char call=kotlin.text.first#0
+expr e@61:24#1 memberCall recv=e@61:24 callee=first args=[] type=Char call=kotlin.text.first[kind=fun;recv=String;params=]
 expr e@63:31 string() type=String
-expr e@63:31#1 memberCall recv=e@63:31 callee=firstOrNull args=[] type=Char? call=kotlin.text.firstOrNull#0
+expr e@63:31#1 memberCall recv=e@63:31 callee=firstOrNull args=[] type=Char? call=kotlin.text.firstOrNull[kind=fun;recv=String;params=]
 expr e@65:34 string(abc
 def) type=String
 expr e@65:59 string(  ) type=String
-expr e@65:34#1 memberCall recv=e@65:34 callee=prependIndent args=[_:e@65:59] type=String call=kotlin.text.prependIndent
+expr e@65:34#1 memberCall recv=e@65:34 callee=prependIndent args=[_:e@65:59] type=String call=kotlin.text.prependIndent[kind=fun;recv=String;params=String]
 expr e@67:34 string(  abc
   def) type=String
 expr e@67:63 string() type=String
-expr e@67:34#1 memberCall recv=e@67:34 callee=replaceIndent args=[_:e@67:63] type=String call=kotlin.text.replaceIndent
+expr e@67:34#1 memberCall recv=e@67:34 callee=replaceIndent args=[_:e@67:63] type=String call=kotlin.text.replaceIndent[kind=fun;recv=String;params=String]
 expr e@69:28 string(abc) type=String
 expr e@69:41 string(abc) type=String
-expr e@69:28#1 memberCall recv=e@69:28 callee=equals args=[_:e@69:41] type=Boolean call=kotlin.text.equals#1
+expr e@69:28#1 memberCall recv=e@69:28 callee=equals args=[_:e@69:41] type=Boolean call=kotlin.text.equals[kind=fun;recv=String;params=String?]
 expr e@71:38 string(abc) type=String
 expr e@71:51 string(ABC) type=String
 expr e@71:71 bool(true) type=Boolean
-expr e@71:38#1 memberCall recv=e@71:38 callee=equals args=[_:e@71:51,ignoreCase:e@71:71] type=Boolean call=kotlin.text.equals#0
+expr e@71:38#1 memberCall recv=e@71:38 callee=equals args=[_:e@71:51,ignoreCase:e@71:71] type=Boolean call=kotlin.text.equals[kind=fun;recv=String?;params=String?,Boolean]
 expr e@73:33 string(abcabc) type=String
 expr e@73:55 string(abc) type=String
 expr e@73:62 string(X) type=String
-expr e@73:33#1 memberCall recv=e@73:33 callee=replaceFirst args=[_:e@73:55,_:e@73:62] type=String call=kotlin.text.replaceFirst#1
+expr e@73:33#1 memberCall recv=e@73:33 callee=replaceFirst args=[_:e@73:55,_:e@73:62] type=String call=kotlin.text.replaceFirst[kind=fun;recv=String;params=String,String,Boolean]
 expr e@75:43 string(abcABC) type=String
 expr e@75:65 string(abc) type=String
 expr e@75:72 string(X) type=String
 expr e@75:90 bool(true) type=Boolean
-expr e@75:43#1 memberCall recv=e@75:43 callee=replaceFirst args=[_:e@75:65,_:e@75:72,ignoreCase:e@75:90] type=String call=kotlin.text.replaceFirst#1
+expr e@75:43#1 memberCall recv=e@75:43 callee=replaceFirst args=[_:e@75:65,_:e@75:72,ignoreCase:e@75:90] type=String call=kotlin.text.replaceFirst[kind=fun;recv=String;params=String,String,Boolean]
 expr e@77:33 string(hello) type=String
 expr e@77:54 int(0) type=Int
 expr e@77:57 int(2) type=Int
 expr e@77:54#1 binary(rangeTo) lhs=e@77:54 rhs=e@77:57 type=Int
 expr e@77:60 string(HE) type=String
-expr e@77:33#1 memberCall recv=e@77:33 callee=replaceRange args=[_:e@77:54#1,_:e@77:60] type=String call=kotlin.text.replaceRange#1
+expr e@77:33#1 memberCall recv=e@77:33 callee=replaceRange args=[_:e@77:54#1,_:e@77:60] type=String call=kotlin.text.replaceRange[kind=fun;recv=String;params=kotlin.ranges.IntRange,kotlin.CharSequence]

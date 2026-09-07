@@ -1,70 +1,70 @@
-symbol fq=ProbeMap kind=class vis=public flags=abstractType|openType
-symbol fq=collectionNone kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Collection<Int?>] ret=Boolean
-symbol fq=collectionNone.$0.values kind=valueParameter vis=private flags=_
-symbol fq=customMap kind=function vis=public flags=_ sig=recv=_ params=[ProbeMap] ret=Boolean
-symbol fq=customMap.$1.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map.Entry kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map.Entry.key kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.K
-symbol fq=kotlin.collections.Map.Entry.value kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.V
-symbol fq=kotlin.collections.Map.K kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.V kind=typeParameter vis=private flags=_
-symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
-symbol fq=listNone kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<Int?>] ret=Boolean
-symbol fq=listNone.$2.values kind=valueParameter vis=private flags=_
-symbol fq=memberIsEmpty kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String?, Int?>] ret=Boolean
-symbol fq=memberIsEmpty.$3.values kind=valueParameter vis=private flags=_
-symbol fq=noArg kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String?, Int?>] ret=Boolean
-symbol fq=noArg.$4.values kind=valueParameter vis=private flags=_
-symbol fq=predicate kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String?, Int?>] ret=Boolean
-symbol fq=predicate.$5.values kind=valueParameter vis=private flags=_
-symbol fq=projected kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<Any?, kotlin.Number>] ret=Boolean
-symbol fq=projected.$6.values kind=valueParameter vis=private flags=_
-symbol fq=sequenceNone kind=function vis=public flags=_ sig=recv=_ params=[kotlin.sequences.Sequence<Int?>] ret=Boolean
-symbol fq=sequenceNone.$7.values kind=valueParameter vis=private flags=_
+symbol fq=ProbeMap[kind=class] kind=class vis=public flags=abstractType|openType
+symbol fq=collectionNone.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=collectionNone[kind=fun;params=kotlin.collections.Collection<Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Collection<Int?>] ret=Boolean
+symbol fq=customMap.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=customMap[kind=fun;params=ProbeMap] kind=function vis=public flags=_ sig=recv=_ params=[ProbeMap] ret=Boolean
+symbol fq=kotlin.collections.Collection[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Map.Entry.key[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.K
+symbol fq=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.V
+symbol fq=kotlin.collections.Map.Entry[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Map.K[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Map.V[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Map[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.sequences.Sequence[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=listNone.$2.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=listNone[kind=fun;params=kotlin.collections.List<Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<Int?>] ret=Boolean
+symbol fq=memberIsEmpty.$3.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=memberIsEmpty[kind=fun;params=kotlin.collections.Map<String?,Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String?, Int?>] ret=Boolean
+symbol fq=noArg.$4.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=noArg[kind=fun;params=kotlin.collections.Map<String?,Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String?, Int?>] ret=Boolean
+symbol fq=predicate.$5.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=predicate[kind=fun;params=kotlin.collections.Map<String?,Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String?, Int?>] ret=Boolean
+symbol fq=projected.$6.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=projected[kind=fun;params=kotlin.collections.Map<Any?,kotlin.Number>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<Any?, kotlin.Number>] ret=Boolean
+symbol fq=sequenceNone.$7.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=sequenceNone[kind=fun;params=kotlin.sequences.Sequence<Int?>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.sequences.Sequence<Int?>] ret=Boolean
 file fstdlib_kotlin_collections_Map_none package=_
-  decl ProbeMap class ProbeMap sym=ProbeMap
-  decl noArg fun noArg sym=noArg
-  decl predicate fun predicate sym=predicate
-  decl projected fun projected sym=projected
-  decl memberIsEmpty fun memberIsEmpty sym=memberIsEmpty
-  decl listNone fun listNone sym=listNone
-  decl collectionNone fun collectionNone sym=collectionNone
-  decl sequenceNone fun sequenceNone sym=sequenceNone
-  decl customMap fun customMap sym=customMap
-expr e@4:12 name(values) type=kotlin.collections.Map<String?, Int?> ref=noArg.$4.values
-expr e@4:12#1 memberCall recv=e@4:12 callee=none args=[] type=Boolean call=kotlin.collections.none#29 targs=[String?,Int?]
+  decl ProbeMap[kind=class] class ProbeMap sym=ProbeMap[kind=class]
+  decl noArg[kind=fun;params=kotlin.collections.Map<String?,Int?>] fun noArg sym=noArg[kind=fun;params=kotlin.collections.Map<String?,Int?>]
+  decl predicate[kind=fun;params=kotlin.collections.Map<String?,Int?>] fun predicate sym=predicate[kind=fun;params=kotlin.collections.Map<String?,Int?>]
+  decl projected[kind=fun;params=kotlin.collections.Map<Any?,kotlin.Number>] fun projected sym=projected[kind=fun;params=kotlin.collections.Map<Any?,kotlin.Number>]
+  decl memberIsEmpty[kind=fun;params=kotlin.collections.Map<String?,Int?>] fun memberIsEmpty sym=memberIsEmpty[kind=fun;params=kotlin.collections.Map<String?,Int?>]
+  decl listNone[kind=fun;params=kotlin.collections.List<Int?>] fun listNone sym=listNone[kind=fun;params=kotlin.collections.List<Int?>]
+  decl collectionNone[kind=fun;params=kotlin.collections.Collection<Int?>] fun collectionNone sym=collectionNone[kind=fun;params=kotlin.collections.Collection<Int?>]
+  decl sequenceNone[kind=fun;params=kotlin.sequences.Sequence<Int?>] fun sequenceNone sym=sequenceNone[kind=fun;params=kotlin.sequences.Sequence<Int?>]
+  decl customMap[kind=fun;params=ProbeMap] fun customMap sym=customMap[kind=fun;params=ProbeMap]
+expr e@4:12 name(values) type=kotlin.collections.Map<String?, Int?> ref=noArg.$4.values[kind=vparam]
+expr e@4:12#1 memberCall recv=e@4:12 callee=none args=[] type=Boolean call=kotlin.collections.none[kind=fun;recv=kotlin.collections.Map<out T0,T1>;params=;gen=2] targs=[String?,Int?]
 expr e@4:5 return value=e@4:12#1 type=Nothing
-expr e@8:12 name(values) type=kotlin.collections.Map<String?, Int?> ref=predicate.$5.values
+expr e@8:12 name(values) type=kotlin.collections.Map<String?, Int?> ref=predicate.$5.values[kind=vparam]
 expr e@8:35 name(entry) type=kotlin.collections.Map.Entry<out String?, out Int?> ref=s-0
-expr e@8:35#1 memberCall recv=e@8:35 callee=key args=[] type=String? call=kotlin.collections.Map.Entry.key targs=[String?,Int?]
+expr e@8:35#1 memberCall recv=e@8:35 callee=key args=[] type=String? call=kotlin.collections.Map.Entry.key[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] targs=[String?,Int?]
 expr e@8:48 name(null) type=Nothing?
 expr e@8:35#2 binary(equal) lhs=e@8:35#1 rhs=e@8:48 type=Boolean
 expr e@8:56 name(entry) type=kotlin.collections.Map.Entry<out String?, out Int?> ref=s-0
-expr e@8:56#1 memberCall recv=e@8:56 callee=value args=[] type=Int? call=kotlin.collections.Map.Entry.value targs=[String?,Int?]
+expr e@8:56#1 memberCall recv=e@8:56 callee=value args=[] type=Int? call=kotlin.collections.Map.Entry.value[kind=fun;recv=kotlin.collections.Map.Entry<out T0,out T1>;params=;gen=2] targs=[String?,Int?]
 expr e@8:71 name(null) type=Nothing?
 expr e@8:56#2 binary(equal) lhs=e@8:56#1 rhs=e@8:71 type=Boolean
 expr e@8:35#3 binary(logicalAnd) lhs=e@8:35#2 rhs=e@8:56#2 type=Boolean
 expr e@8:24 lambda params=[entry] body=e@8:35#3 label=none type=(kotlin.collections.Map.Entry<out String?, out Int?>) -> Boolean
-expr e@8:12#1 memberCall recv=e@8:12 callee=none args=[_:e@8:24] type=Boolean call=kotlin.collections.none#28 targs=[String?,Int?]
+expr e@8:12#1 memberCall recv=e@8:12 callee=none args=[_:e@8:24] type=Boolean call=kotlin.collections.none[kind=fun;recv=kotlin.collections.Map<T0,T1>;params=fn{p=kotlin.collections.Map.Entry<T0,T1>;ret=Boolean};gen=2] targs=[String?,Int?]
 expr e@8:5 return value=e@8:12#1 type=Nothing
-expr e@12:12 name(values) type=kotlin.collections.Map<Any?, kotlin.Number> ref=projected.$6.values
-expr e@12:12#1 memberCall recv=e@12:12 callee=none args=[] type=Boolean call=kotlin.collections.none#29 targs=[Any?,kotlin.Number]
+expr e@12:12 name(values) type=kotlin.collections.Map<Any?, kotlin.Number> ref=projected.$6.values[kind=vparam]
+expr e@12:12#1 memberCall recv=e@12:12 callee=none args=[] type=Boolean call=kotlin.collections.none[kind=fun;recv=kotlin.collections.Map<out T0,T1>;params=;gen=2] targs=[Any?,kotlin.Number]
 expr e@12:5 return value=e@12:12#1 type=Nothing
-expr e@16:12 name(values) type=kotlin.collections.Map<String?, Int?> ref=memberIsEmpty.$3.values
+expr e@16:12 name(values) type=kotlin.collections.Map<String?, Int?> ref=memberIsEmpty.$3.values[kind=vparam]
 expr e@16:12#1 memberCall recv=e@16:12 callee=isEmpty args=[] type=Boolean
 expr e@16:5 return value=e@16:12#1 type=Nothing
-expr e@20:12 name(values) type=kotlin.collections.List<Int?> ref=listNone.$2.values
-expr e@20:12#1 memberCall recv=e@20:12 callee=none args=[] type=Boolean call=kotlin.collections.none#26 targs=[Int?]
+expr e@20:12 name(values) type=kotlin.collections.List<Int?> ref=listNone.$2.values[kind=vparam]
+expr e@20:12#1 memberCall recv=e@20:12 callee=none args=[] type=Boolean call=kotlin.collections.none[kind=fun;recv=kotlin.collections.List<T0>;params=;gen=1] targs=[Int?]
 expr e@20:5 return value=e@20:12#1 type=Nothing
-expr e@24:12 name(values) type=kotlin.collections.Collection<Int?> ref=collectionNone.$0.values
+expr e@24:12 name(values) type=kotlin.collections.Collection<Int?> ref=collectionNone.$0.values[kind=vparam]
 expr e@24:12#1 memberCall recv=e@24:12 callee=none args=[] type=Boolean
 expr e@24:5 return value=e@24:12#1 type=Nothing
-expr e@28:12 name(values) type=kotlin.sequences.Sequence<Int?> ref=sequenceNone.$7.values
-expr e@28:12#1 memberCall recv=e@28:12 callee=none args=[] type=Boolean call=kotlin.collections.none#32 targs=[Int?]
+expr e@28:12 name(values) type=kotlin.sequences.Sequence<Int?> ref=sequenceNone.$7.values[kind=vparam]
+expr e@28:12#1 memberCall recv=e@28:12 callee=none args=[] type=Boolean call=kotlin.collections.none[kind=fun;recv=kotlin.sequences.Sequence<T0>;params=;gen=1] targs=[Int?]
 expr e@28:5 return value=e@28:12#1 type=Nothing
-expr e@32:12 name(values) type=ProbeMap ref=customMap.$1.values
-expr e@32:12#1 memberCall recv=e@32:12 callee=none args=[] type=Boolean call=kotlin.collections.none#29 targs=[String?,Int?]
+expr e@32:12 name(values) type=ProbeMap ref=customMap.$1.values[kind=vparam]
+expr e@32:12#1 memberCall recv=e@32:12 callee=none args=[] type=Boolean call=kotlin.collections.none[kind=fun;recv=kotlin.collections.Map<out T0,T1>;params=;gen=2] targs=[String?,Int?]
 expr e@32:5 return value=e@32:12#1 type=Nothing

@@ -1,104 +1,104 @@
-symbol fq=__local_0.triple kind=local vis=private flags=_ type=kotlin.Triple<Int, String, Boolean>
-symbol fq=__local_1.copied kind=local vis=private flags=_ type=kotlin.Triple<Int, String, Boolean>
-symbol fq=__local_2.firstChanged kind=local vis=private flags=_ type=kotlin.Triple<Int, String, Boolean>
-symbol fq=__local_3.secondChanged kind=local vis=private flags=_ type=kotlin.Triple<Int, String, Boolean>
-symbol fq=__local_4.thirdChanged kind=local vis=private flags=_ type=kotlin.Triple<Int, String, Boolean>
-symbol fq=__local_5.partialChanged kind=local vis=private flags=_ type=kotlin.Triple<Int, String, Boolean>
-symbol fq=__local_6.allChanged kind=local vis=private flags=_ type=kotlin.Triple<Int, String, Boolean>
-symbol fq=__local_7.genericCopied kind=local vis=private flags=_ type=kotlin.Triple<Int, String, Boolean>
-symbol fq=__local_8.nullable kind=local vis=private flags=_ type=kotlin.Triple<Int?, String?, Boolean?>
-symbol fq=__local_9.nullableChanged kind=local vis=private flags=_ type=kotlin.Triple<Int?, String?, Boolean?>
-symbol fq=golden.sema.copyTriple kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Triple<golden.sema.copyTriple.$0.A, golden.sema.copyTriple.$0.B, golden.sema.copyTriple.$0.C>] ret=kotlin.Triple<golden.sema.copyTriple.$0.A, golden.sema.copyTriple.$0.B, golden.sema.copyTriple.$0.C>
-symbol fq=golden.sema.copyTriple.$0.A kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.copyTriple.$0.B kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.copyTriple.$0.C kind=typeParameter vis=private flags=_
-symbol fq=golden.sema.copyTriple.$0.value kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.exerciseTripleMembers kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Triple<Int, String, Boolean>
-symbol fq=kotlin.Triple kind=class vis=public flags=_
+symbol fq=__local_0.triple[kind=local] kind=local vis=private flags=_ type=kotlin.Triple<Int, String, Boolean>
+symbol fq=__local_1.copied[kind=local] kind=local vis=private flags=_ type=kotlin.Triple<Int, String, Boolean>
+symbol fq=__local_2.firstChanged[kind=local] kind=local vis=private flags=_ type=kotlin.Triple<Int, String, Boolean>
+symbol fq=__local_3.secondChanged[kind=local] kind=local vis=private flags=_ type=kotlin.Triple<Int, String, Boolean>
+symbol fq=__local_4.thirdChanged[kind=local] kind=local vis=private flags=_ type=kotlin.Triple<Int, String, Boolean>
+symbol fq=__local_5.partialChanged[kind=local] kind=local vis=private flags=_ type=kotlin.Triple<Int, String, Boolean>
+symbol fq=__local_6.allChanged[kind=local] kind=local vis=private flags=_ type=kotlin.Triple<Int, String, Boolean>
+symbol fq=__local_7.genericCopied[kind=local] kind=local vis=private flags=_ type=kotlin.Triple<Int, String, Boolean>
+symbol fq=__local_8.nullable[kind=local] kind=local vis=private flags=_ type=kotlin.Triple<Int?, String?, Boolean?>
+symbol fq=__local_9.nullableChanged[kind=local] kind=local vis=private flags=_ type=kotlin.Triple<Int?, String?, Boolean?>
+symbol fq=golden.sema.copyTriple.$0.A[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.copyTriple.$0.B[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.copyTriple.$0.C[kind=tparam] kind=typeParameter vis=private flags=_
+symbol fq=golden.sema.copyTriple.$0.value[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.copyTriple[kind=fun;params=kotlin.Triple<T0,T1,T2>;gen=3] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.Triple<golden.sema.copyTriple.$0.A, golden.sema.copyTriple.$0.B, golden.sema.copyTriple.$0.C>] ret=kotlin.Triple<golden.sema.copyTriple.$0.A, golden.sema.copyTriple.$0.B, golden.sema.copyTriple.$0.C>
+symbol fq=golden.sema.exerciseTripleMembers[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Triple<Int, String, Boolean>
+symbol fq=kotlin.Triple[kind=class;gen=3] kind=class vis=public flags=_
 file fstdlib_kotlin_Triple_Triple_n package=golden.sema
-  decl golden.sema.copyTriple fun copyTriple sym=golden.sema.copyTriple
-  decl golden.sema.exerciseTripleMembers fun exerciseTripleMembers sym=golden.sema.exerciseTripleMembers
-expr e@3:69 name(value) type=kotlin.Triple<golden.sema.copyTriple.$0.A, golden.sema.copyTriple.$0.B, golden.sema.copyTriple.$0.C> ref=golden.sema.copyTriple.$0.value
-expr e@3:69#1 memberCall recv=e@3:69 callee=copy args=[] type=kotlin.Triple<golden.sema.copyTriple.$0.A, golden.sema.copyTriple.$0.B, golden.sema.copyTriple.$0.C> call=kotlin.copy#1 targs=[golden.sema.copyTriple.$0.A,golden.sema.copyTriple.$0.B,golden.sema.copyTriple.$0.C]
+  decl golden.sema.copyTriple[kind=fun;params=kotlin.Triple<T0,T1,T2>;gen=3] fun copyTriple sym=golden.sema.copyTriple[kind=fun;params=kotlin.Triple<T0,T1,T2>;gen=3]
+  decl golden.sema.exerciseTripleMembers[kind=fun;params=] fun exerciseTripleMembers sym=golden.sema.exerciseTripleMembers[kind=fun;params=]
+expr e@3:69 name(value) type=kotlin.Triple<golden.sema.copyTriple.$0.A, golden.sema.copyTriple.$0.B, golden.sema.copyTriple.$0.C> ref=golden.sema.copyTriple.$0.value[kind=vparam]
+expr e@3:69#1 memberCall recv=e@3:69 callee=copy args=[] type=kotlin.Triple<golden.sema.copyTriple.$0.A, golden.sema.copyTriple.$0.B, golden.sema.copyTriple.$0.C> call=kotlin.copy[kind=fun;recv=kotlin.Triple<T0,T1,T2>;params=T0,T1,T2;gen=3] targs=[golden.sema.copyTriple.$0.A,golden.sema.copyTriple.$0.B,golden.sema.copyTriple.$0.C]
 expr e@6:25 int(1) type=Int
 expr e@6:28 string(one) type=String
 expr e@6:35 bool(true) type=Boolean
-expr e@6:18 call callee=e@6:18#1 args=[_:e@6:25,_:e@6:28,_:e@6:35] type=kotlin.Triple<Int, String, Boolean> call=kotlin.Triple.<init> targs=[Int,String,Boolean]
-expr e@6:5 localDecl triple mutable=0 type=_ init=e@6:18 type=Unit ref=__local_0.triple
-expr e@7:18 name(triple) type=kotlin.Triple<Int, String, Boolean> ref=__local_0.triple
-expr e@7:18#1 memberCall recv=e@7:18 callee=copy args=[] type=kotlin.Triple<Int, String, Boolean> call=kotlin.copy#1 targs=[Int,String,Boolean]
-expr e@7:5 localDecl copied mutable=0 type=_ init=e@7:18#1 type=Unit ref=__local_1.copied
-expr e@8:24 name(triple) type=kotlin.Triple<Int, String, Boolean> ref=__local_0.triple
+expr e@6:18 call callee=e@6:18#1 args=[_:e@6:25,_:e@6:28,_:e@6:35] type=kotlin.Triple<Int, String, Boolean> call=kotlin.Triple.<init>[kind=ctor;recv=kotlin.Triple<T0,T1,T2>;params=T0,T1,T2;gen=3] targs=[Int,String,Boolean]
+expr e@6:5 localDecl triple mutable=0 type=_ init=e@6:18 type=Unit ref=__local_0.triple[kind=local]
+expr e@7:18 name(triple) type=kotlin.Triple<Int, String, Boolean> ref=__local_0.triple[kind=local]
+expr e@7:18#1 memberCall recv=e@7:18 callee=copy args=[] type=kotlin.Triple<Int, String, Boolean> call=kotlin.copy[kind=fun;recv=kotlin.Triple<T0,T1,T2>;params=T0,T1,T2;gen=3] targs=[Int,String,Boolean]
+expr e@7:5 localDecl copied mutable=0 type=_ init=e@7:18#1 type=Unit ref=__local_1.copied[kind=local]
+expr e@8:24 name(triple) type=kotlin.Triple<Int, String, Boolean> ref=__local_0.triple[kind=local]
 expr e@8:44 int(2) type=Int
-expr e@8:24#1 memberCall recv=e@8:24 callee=copy args=[first:e@8:44] type=kotlin.Triple<Int, String, Boolean> call=kotlin.copy#1 targs=[Int,String,Boolean]
-expr e@8:5 localDecl firstChanged mutable=0 type=_ init=e@8:24#1 type=Unit ref=__local_2.firstChanged
-expr e@9:25 name(triple) type=kotlin.Triple<Int, String, Boolean> ref=__local_0.triple
+expr e@8:24#1 memberCall recv=e@8:24 callee=copy args=[first:e@8:44] type=kotlin.Triple<Int, String, Boolean> call=kotlin.copy[kind=fun;recv=kotlin.Triple<T0,T1,T2>;params=T0,T1,T2;gen=3] targs=[Int,String,Boolean]
+expr e@8:5 localDecl firstChanged mutable=0 type=_ init=e@8:24#1 type=Unit ref=__local_2.firstChanged[kind=local]
+expr e@9:25 name(triple) type=kotlin.Triple<Int, String, Boolean> ref=__local_0.triple[kind=local]
 expr e@9:46 string(two) type=String
-expr e@9:25#1 memberCall recv=e@9:25 callee=copy args=[second:e@9:46] type=kotlin.Triple<Int, String, Boolean> call=kotlin.copy#1 targs=[Int,String,Boolean]
-expr e@9:5 localDecl secondChanged mutable=0 type=_ init=e@9:25#1 type=Unit ref=__local_3.secondChanged
-expr e@10:24 name(triple) type=kotlin.Triple<Int, String, Boolean> ref=__local_0.triple
+expr e@9:25#1 memberCall recv=e@9:25 callee=copy args=[second:e@9:46] type=kotlin.Triple<Int, String, Boolean> call=kotlin.copy[kind=fun;recv=kotlin.Triple<T0,T1,T2>;params=T0,T1,T2;gen=3] targs=[Int,String,Boolean]
+expr e@9:5 localDecl secondChanged mutable=0 type=_ init=e@9:25#1 type=Unit ref=__local_3.secondChanged[kind=local]
+expr e@10:24 name(triple) type=kotlin.Triple<Int, String, Boolean> ref=__local_0.triple[kind=local]
 expr e@10:44 bool(false) type=Boolean
-expr e@10:24#1 memberCall recv=e@10:24 callee=copy args=[third:e@10:44] type=kotlin.Triple<Int, String, Boolean> call=kotlin.copy#1 targs=[Int,String,Boolean]
-expr e@10:5 localDecl thirdChanged mutable=0 type=_ init=e@10:24#1 type=Unit ref=__local_4.thirdChanged
-expr e@11:26 name(triple) type=kotlin.Triple<Int, String, Boolean> ref=__local_0.triple
+expr e@10:24#1 memberCall recv=e@10:24 callee=copy args=[third:e@10:44] type=kotlin.Triple<Int, String, Boolean> call=kotlin.copy[kind=fun;recv=kotlin.Triple<T0,T1,T2>;params=T0,T1,T2;gen=3] targs=[Int,String,Boolean]
+expr e@10:5 localDecl thirdChanged mutable=0 type=_ init=e@10:24#1 type=Unit ref=__local_4.thirdChanged[kind=local]
+expr e@11:26 name(triple) type=kotlin.Triple<Int, String, Boolean> ref=__local_0.triple[kind=local]
 expr e@11:46 int(3) type=Int
 expr e@11:57 bool(false) type=Boolean
-expr e@11:26#1 memberCall recv=e@11:26 callee=copy args=[first:e@11:46,third:e@11:57] type=kotlin.Triple<Int, String, Boolean> call=kotlin.copy#1 targs=[Int,String,Boolean]
-expr e@11:5 localDecl partialChanged mutable=0 type=_ init=e@11:26#1 type=Unit ref=__local_5.partialChanged
-expr e@12:22 name(triple) type=kotlin.Triple<Int, String, Boolean> ref=__local_0.triple
+expr e@11:26#1 memberCall recv=e@11:26 callee=copy args=[first:e@11:46,third:e@11:57] type=kotlin.Triple<Int, String, Boolean> call=kotlin.copy[kind=fun;recv=kotlin.Triple<T0,T1,T2>;params=T0,T1,T2;gen=3] targs=[Int,String,Boolean]
+expr e@11:5 localDecl partialChanged mutable=0 type=_ init=e@11:26#1 type=Unit ref=__local_5.partialChanged[kind=local]
+expr e@12:22 name(triple) type=kotlin.Triple<Int, String, Boolean> ref=__local_0.triple[kind=local]
 expr e@12:34 int(4) type=Int
 expr e@12:37 string(four) type=String
 expr e@12:45 bool(false) type=Boolean
-expr e@12:22#1 memberCall recv=e@12:22 callee=copy args=[_:e@12:34,_:e@12:37,_:e@12:45] type=kotlin.Triple<Int, String, Boolean> call=kotlin.copy#1 targs=[Int,String,Boolean]
-expr e@12:5 localDecl allChanged mutable=0 type=_ init=e@12:22#1 type=Unit ref=__local_6.allChanged
-expr e@13:36 name(triple) type=kotlin.Triple<Int, String, Boolean> ref=__local_0.triple
-expr e@13:25 call callee=e@13:25#1 args=[_:e@13:36] type=kotlin.Triple<Int, String, Boolean> call=golden.sema.copyTriple targs=[Int,String,Boolean]
-expr e@13:5 localDecl genericCopied mutable=0 type=_ init=e@13:25 type=Unit ref=__local_7.genericCopied
+expr e@12:22#1 memberCall recv=e@12:22 callee=copy args=[_:e@12:34,_:e@12:37,_:e@12:45] type=kotlin.Triple<Int, String, Boolean> call=kotlin.copy[kind=fun;recv=kotlin.Triple<T0,T1,T2>;params=T0,T1,T2;gen=3] targs=[Int,String,Boolean]
+expr e@12:5 localDecl allChanged mutable=0 type=_ init=e@12:22#1 type=Unit ref=__local_6.allChanged[kind=local]
+expr e@13:36 name(triple) type=kotlin.Triple<Int, String, Boolean> ref=__local_0.triple[kind=local]
+expr e@13:25 call callee=e@13:25#1 args=[_:e@13:36] type=kotlin.Triple<Int, String, Boolean> call=golden.sema.copyTriple[kind=fun;params=kotlin.Triple<T0,T1,T2>;gen=3] targs=[Int,String,Boolean]
+expr e@13:5 localDecl genericCopied mutable=0 type=_ init=e@13:25 type=Unit ref=__local_7.genericCopied[kind=local]
 expr e@14:60 name(null) type=Nothing?
 expr e@14:66 string(nullable) type=String
 expr e@14:78 name(null) type=Nothing?
-expr e@14:53 call callee=e@14:53#1 args=[_:e@14:60,_:e@14:66,_:e@14:78] type=kotlin.Triple<Nothing?, String, Nothing?> call=kotlin.Triple.<init> targs=[Nothing?,String,Nothing?]
-expr e@14:5 localDecl nullable mutable=0 type=Triple<Int?,String?,Boolean?> init=e@14:53 type=Unit ref=__local_8.nullable
-expr e@15:27 name(nullable) type=kotlin.Triple<Int?, String?, Boolean?> ref=__local_8.nullable
+expr e@14:53 call callee=e@14:53#1 args=[_:e@14:60,_:e@14:66,_:e@14:78] type=kotlin.Triple<Nothing?, String, Nothing?> call=kotlin.Triple.<init>[kind=ctor;recv=kotlin.Triple<T0,T1,T2>;params=T0,T1,T2;gen=3] targs=[Nothing?,String,Nothing?]
+expr e@14:5 localDecl nullable mutable=0 type=Triple<Int?,String?,Boolean?> init=e@14:53 type=Unit ref=__local_8.nullable[kind=local]
+expr e@15:27 name(nullable) type=kotlin.Triple<Int?, String?, Boolean?> ref=__local_8.nullable[kind=local]
 expr e@15:49 int(42) type=Int
 expr e@15:61 bool(true) type=Boolean
-expr e@15:27#1 memberCall recv=e@15:27 callee=copy args=[first:e@15:49,third:e@15:61] type=kotlin.Triple<Int?, String?, Boolean?> call=kotlin.copy#1 targs=[Int?,String?,Boolean?]
-expr e@15:5 localDecl nullableChanged mutable=0 type=_ init=e@15:27#1 type=Unit ref=__local_9.nullableChanged
-expr e@17:13 name(triple) type=kotlin.Triple<Int, String, Boolean> ref=__local_0.triple
-expr e@17:13#1 memberCall recv=e@17:13 callee=first args=[] type=Int ref=kotlin.Triple.first
-expr e@17:5 call callee=e@17:5#1 args=[_:e@17:13#1] type=Unit call=kotlin.io.println#1
-expr e@18:13 name(triple) type=kotlin.Triple<Int, String, Boolean> ref=__local_0.triple
-expr e@18:13#1 memberCall recv=e@18:13 callee=second args=[] type=String ref=kotlin.Triple.second
-expr e@18:5 call callee=e@18:5#1 args=[_:e@18:13#1] type=Unit call=kotlin.io.println#2
-expr e@19:13 name(triple) type=kotlin.Triple<Int, String, Boolean> ref=__local_0.triple
-expr e@19:13#1 memberCall recv=e@19:13 callee=third args=[] type=Boolean ref=kotlin.Triple.third
-expr e@19:5 call callee=e@19:5#1 args=[_:e@19:13#1] type=Unit call=kotlin.io.println#1
-expr e@20:13 name(triple) type=kotlin.Triple<Int, String, Boolean> ref=__local_0.triple
-expr e@20:13#1 memberCall recv=e@20:13 callee=component1 args=[] type=Int call=kotlin.Triple.component1 targs=[Int,String,Boolean]
-expr e@20:5 call callee=e@20:5#1 args=[_:e@20:13#1] type=Unit call=kotlin.io.println#1
-expr e@21:13 name(triple) type=kotlin.Triple<Int, String, Boolean> ref=__local_0.triple
-expr e@21:13#1 memberCall recv=e@21:13 callee=component2 args=[] type=String call=kotlin.Triple.component2 targs=[Int,String,Boolean]
-expr e@21:5 call callee=e@21:5#1 args=[_:e@21:13#1] type=Unit call=kotlin.io.println#2
-expr e@22:13 name(triple) type=kotlin.Triple<Int, String, Boolean> ref=__local_0.triple
-expr e@22:13#1 memberCall recv=e@22:13 callee=component3 args=[] type=Boolean call=kotlin.Triple.component3 targs=[Int,String,Boolean]
-expr e@22:5 call callee=e@22:5#1 args=[_:e@22:13#1] type=Unit call=kotlin.io.println#1
-expr e@23:13 name(copied) type=kotlin.Triple<Int, String, Boolean> ref=__local_1.copied
-expr e@23:5 call callee=e@23:5#1 args=[_:e@23:13] type=Unit call=kotlin.io.println#1
-expr e@24:13 name(firstChanged) type=kotlin.Triple<Int, String, Boolean> ref=__local_2.firstChanged
-expr e@24:5 call callee=e@24:5#1 args=[_:e@24:13] type=Unit call=kotlin.io.println#1
-expr e@25:13 name(secondChanged) type=kotlin.Triple<Int, String, Boolean> ref=__local_3.secondChanged
-expr e@25:5 call callee=e@25:5#1 args=[_:e@25:13] type=Unit call=kotlin.io.println#1
-expr e@26:13 name(thirdChanged) type=kotlin.Triple<Int, String, Boolean> ref=__local_4.thirdChanged
-expr e@26:5 call callee=e@26:5#1 args=[_:e@26:13] type=Unit call=kotlin.io.println#1
-expr e@27:13 name(partialChanged) type=kotlin.Triple<Int, String, Boolean> ref=__local_5.partialChanged
-expr e@27:5 call callee=e@27:5#1 args=[_:e@27:13] type=Unit call=kotlin.io.println#1
-expr e@28:13 name(allChanged) type=kotlin.Triple<Int, String, Boolean> ref=__local_6.allChanged
-expr e@28:5 call callee=e@28:5#1 args=[_:e@28:13] type=Unit call=kotlin.io.println#1
-expr e@29:13 name(genericCopied) type=kotlin.Triple<Int, String, Boolean> ref=__local_7.genericCopied
-expr e@29:5 call callee=e@29:5#1 args=[_:e@29:13] type=Unit call=kotlin.io.println#1
-expr e@30:13 name(nullable) type=kotlin.Triple<Int?, String?, Boolean?> ref=__local_8.nullable
-expr e@30:5 call callee=e@30:5#1 args=[_:e@30:13] type=Unit call=kotlin.io.println#1
-expr e@31:13 name(nullableChanged) type=kotlin.Triple<Int?, String?, Boolean?> ref=__local_9.nullableChanged
-expr e@31:5 call callee=e@31:5#1 args=[_:e@31:13] type=Unit call=kotlin.io.println#1
-expr e@32:12 name(copied) type=kotlin.Triple<Int, String, Boolean> ref=__local_1.copied
+expr e@15:27#1 memberCall recv=e@15:27 callee=copy args=[first:e@15:49,third:e@15:61] type=kotlin.Triple<Int?, String?, Boolean?> call=kotlin.copy[kind=fun;recv=kotlin.Triple<T0,T1,T2>;params=T0,T1,T2;gen=3] targs=[Int?,String?,Boolean?]
+expr e@15:5 localDecl nullableChanged mutable=0 type=_ init=e@15:27#1 type=Unit ref=__local_9.nullableChanged[kind=local]
+expr e@17:13 name(triple) type=kotlin.Triple<Int, String, Boolean> ref=__local_0.triple[kind=local]
+expr e@17:13#1 memberCall recv=e@17:13 callee=first args=[] type=Int ref=kotlin.Triple.first[kind=prop]
+expr e@17:5 call callee=e@17:5#1 args=[_:e@17:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@18:13 name(triple) type=kotlin.Triple<Int, String, Boolean> ref=__local_0.triple[kind=local]
+expr e@18:13#1 memberCall recv=e@18:13 callee=second args=[] type=String ref=kotlin.Triple.second[kind=prop]
+expr e@18:5 call callee=e@18:5#1 args=[_:e@18:13#1] type=Unit call=kotlin.io.println[kind=fun;params=String]
+expr e@19:13 name(triple) type=kotlin.Triple<Int, String, Boolean> ref=__local_0.triple[kind=local]
+expr e@19:13#1 memberCall recv=e@19:13 callee=third args=[] type=Boolean ref=kotlin.Triple.third[kind=prop]
+expr e@19:5 call callee=e@19:5#1 args=[_:e@19:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@20:13 name(triple) type=kotlin.Triple<Int, String, Boolean> ref=__local_0.triple[kind=local]
+expr e@20:13#1 memberCall recv=e@20:13 callee=component1 args=[] type=Int call=kotlin.Triple.component1[kind=fun;recv=kotlin.Triple<T0,T1,T2>;params=;gen=3] targs=[Int,String,Boolean]
+expr e@20:5 call callee=e@20:5#1 args=[_:e@20:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@21:13 name(triple) type=kotlin.Triple<Int, String, Boolean> ref=__local_0.triple[kind=local]
+expr e@21:13#1 memberCall recv=e@21:13 callee=component2 args=[] type=String call=kotlin.Triple.component2[kind=fun;recv=kotlin.Triple<T0,T1,T2>;params=;gen=3] targs=[Int,String,Boolean]
+expr e@21:5 call callee=e@21:5#1 args=[_:e@21:13#1] type=Unit call=kotlin.io.println[kind=fun;params=String]
+expr e@22:13 name(triple) type=kotlin.Triple<Int, String, Boolean> ref=__local_0.triple[kind=local]
+expr e@22:13#1 memberCall recv=e@22:13 callee=component3 args=[] type=Boolean call=kotlin.Triple.component3[kind=fun;recv=kotlin.Triple<T0,T1,T2>;params=;gen=3] targs=[Int,String,Boolean]
+expr e@22:5 call callee=e@22:5#1 args=[_:e@22:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@23:13 name(copied) type=kotlin.Triple<Int, String, Boolean> ref=__local_1.copied[kind=local]
+expr e@23:5 call callee=e@23:5#1 args=[_:e@23:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@24:13 name(firstChanged) type=kotlin.Triple<Int, String, Boolean> ref=__local_2.firstChanged[kind=local]
+expr e@24:5 call callee=e@24:5#1 args=[_:e@24:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@25:13 name(secondChanged) type=kotlin.Triple<Int, String, Boolean> ref=__local_3.secondChanged[kind=local]
+expr e@25:5 call callee=e@25:5#1 args=[_:e@25:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@26:13 name(thirdChanged) type=kotlin.Triple<Int, String, Boolean> ref=__local_4.thirdChanged[kind=local]
+expr e@26:5 call callee=e@26:5#1 args=[_:e@26:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@27:13 name(partialChanged) type=kotlin.Triple<Int, String, Boolean> ref=__local_5.partialChanged[kind=local]
+expr e@27:5 call callee=e@27:5#1 args=[_:e@27:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@28:13 name(allChanged) type=kotlin.Triple<Int, String, Boolean> ref=__local_6.allChanged[kind=local]
+expr e@28:5 call callee=e@28:5#1 args=[_:e@28:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@29:13 name(genericCopied) type=kotlin.Triple<Int, String, Boolean> ref=__local_7.genericCopied[kind=local]
+expr e@29:5 call callee=e@29:5#1 args=[_:e@29:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@30:13 name(nullable) type=kotlin.Triple<Int?, String?, Boolean?> ref=__local_8.nullable[kind=local]
+expr e@30:5 call callee=e@30:5#1 args=[_:e@30:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@31:13 name(nullableChanged) type=kotlin.Triple<Int?, String?, Boolean?> ref=__local_9.nullableChanged[kind=local]
+expr e@31:5 call callee=e@31:5#1 args=[_:e@31:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@32:12 name(copied) type=kotlin.Triple<Int, String, Boolean> ref=__local_1.copied[kind=local]
 expr e@32:5 return value=e@32:12 type=Nothing

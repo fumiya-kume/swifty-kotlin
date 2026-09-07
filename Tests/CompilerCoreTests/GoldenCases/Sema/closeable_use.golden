@@ -1,39 +1,39 @@
-symbol fq=__local_0.r kind=local vis=private flags=_ type=golden.sema.MyResource
-symbol fq=__local_1.r kind=local vis=private flags=_ type=golden.sema.MyResource
-symbol fq=__local_2.r kind=local vis=private flags=_ type=golden.sema.MyResource
-symbol fq=golden.sema.MyResource kind=class vis=public flags=_
-symbol fq=golden.sema.MyResource.<init> kind=constructor vis=public flags=_ sig=recv=golden.sema.MyResource params=[] ret=golden.sema.MyResource
-symbol fq=golden.sema.useBasic kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=golden.sema.useReturnValue kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=golden.sema.useWithIt kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=kotlin.Any kind=class vis=public flags=synthetic
-symbol fq=kotlin.Any.toString kind=function vis=public flags=synthetic|openType sig=recv=kotlin.Any params=[] ret=String
+symbol fq=__local_0.r[kind=local] kind=local vis=private flags=_ type=golden.sema.MyResource
+symbol fq=__local_1.r[kind=local] kind=local vis=private flags=_ type=golden.sema.MyResource
+symbol fq=__local_2.r[kind=local] kind=local vis=private flags=_ type=golden.sema.MyResource
+symbol fq=golden.sema.MyResource.<init>[kind=ctor;recv=golden.sema.MyResource;params=] kind=constructor vis=public flags=_ sig=recv=golden.sema.MyResource params=[] ret=golden.sema.MyResource
+symbol fq=golden.sema.MyResource[kind=class] kind=class vis=public flags=_
+symbol fq=golden.sema.useBasic[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=golden.sema.useReturnValue[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
+symbol fq=golden.sema.useWithIt[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=kotlin.Any.toString[kind=fun;recv=kotlin.Any;params=] kind=function vis=public flags=synthetic|openType sig=recv=kotlin.Any params=[] ret=String
+symbol fq=kotlin.Any[kind=class] kind=class vis=public flags=synthetic
 file fcloseable_use package=golden.sema
-  decl golden.sema.MyResource class MyResource sym=golden.sema.MyResource
-  decl golden.sema.useBasic fun useBasic sym=golden.sema.useBasic
-  decl golden.sema.useReturnValue fun useReturnValue sym=golden.sema.useReturnValue
-  decl golden.sema.useWithIt fun useWithIt sym=golden.sema.useWithIt
+  decl golden.sema.MyResource[kind=class] class MyResource sym=golden.sema.MyResource[kind=class]
+  decl golden.sema.useBasic[kind=fun;params=] fun useBasic sym=golden.sema.useBasic[kind=fun;params=]
+  decl golden.sema.useReturnValue[kind=fun;params=] fun useReturnValue sym=golden.sema.useReturnValue[kind=fun;params=]
+  decl golden.sema.useWithIt[kind=fun;params=] fun useWithIt sym=golden.sema.useWithIt[kind=fun;params=]
 expr e@7:17 string(closed) type=String
-expr e@7:9 call callee=e@7:9#1 args=[_:e@7:17] type=Unit call=kotlin.io.println#2
-expr e@12:13 call callee=e@12:13#1 args=[] type=golden.sema.MyResource call=golden.sema.MyResource.<init>
-expr e@12:5 localDecl r mutable=0 type=_ init=e@12:13 type=Unit ref=__local_0.r
-expr e@13:5 name(r) type=golden.sema.MyResource ref=__local_0.r
+expr e@7:9 call callee=e@7:9#1 args=[_:e@7:17] type=Unit call=kotlin.io.println[kind=fun;params=String]
+expr e@12:13 call callee=e@12:13#1 args=[] type=golden.sema.MyResource call=golden.sema.MyResource.<init>[kind=ctor;recv=golden.sema.MyResource;params=]
+expr e@12:5 localDecl r mutable=0 type=_ init=e@12:13 type=Unit ref=__local_0.r[kind=local]
+expr e@13:5 name(r) type=golden.sema.MyResource ref=__local_0.r[kind=local]
 expr e@13:21 string(using) type=String
-expr e@13:13 call callee=e@13:13#1 args=[_:e@13:21] type=Unit call=kotlin.io.println#2
+expr e@13:13 call callee=e@13:13#1 args=[_:e@13:21] type=Unit call=kotlin.io.println[kind=fun;params=String]
 expr e@13:11 lambda params=[] body=e@13:13 label=use type=(golden.sema.MyResource) -> Any?
 expr e@13:5#1 memberCall recv=e@13:5 callee=use args=[_:e@13:11] type=Unit
-expr e@17:13 call callee=e@17:13#1 args=[] type=golden.sema.MyResource call=golden.sema.MyResource.<init>
-expr e@17:5 localDecl r mutable=0 type=_ init=e@17:13 type=Unit ref=__local_1.r
-expr e@18:12 name(r) type=golden.sema.MyResource ref=__local_1.r
+expr e@17:13 call callee=e@17:13#1 args=[] type=golden.sema.MyResource call=golden.sema.MyResource.<init>[kind=ctor;recv=golden.sema.MyResource;params=]
+expr e@17:5 localDecl r mutable=0 type=_ init=e@17:13 type=Unit ref=__local_1.r[kind=local]
+expr e@18:12 name(r) type=golden.sema.MyResource ref=__local_1.r[kind=local]
 expr e@18:20 int(42) type=Int
 expr e@18:18 lambda params=[] body=e@18:20 label=use type=(golden.sema.MyResource) -> Int
 expr e@18:12#1 memberCall recv=e@18:12 callee=use args=[_:e@18:18] type=Int
 expr e@18:5 return value=e@18:12#1 type=Nothing
-expr e@22:13 call callee=e@22:13#1 args=[] type=golden.sema.MyResource call=golden.sema.MyResource.<init>
-expr e@22:5 localDecl r mutable=0 type=_ init=e@22:13 type=Unit ref=__local_2.r
-expr e@23:12 name(r) type=golden.sema.MyResource ref=__local_2.r
+expr e@22:13 call callee=e@22:13#1 args=[] type=golden.sema.MyResource call=golden.sema.MyResource.<init>[kind=ctor;recv=golden.sema.MyResource;params=]
+expr e@22:5 localDecl r mutable=0 type=_ init=e@22:13 type=Unit ref=__local_2.r[kind=local]
+expr e@23:12 name(r) type=golden.sema.MyResource ref=__local_2.r[kind=local]
 expr e@23:20 name(it) type=golden.sema.MyResource ref=s-0
-expr e@23:20#1 memberCall recv=e@23:20 callee=toString args=[] type=String call=kotlin.Any.toString
+expr e@23:20#1 memberCall recv=e@23:20 callee=toString args=[] type=String call=kotlin.Any.toString[kind=fun;recv=kotlin.Any;params=]
 expr e@23:18 lambda params=[] body=e@23:20#1 label=use type=(golden.sema.MyResource) -> String
 expr e@23:12#1 memberCall recv=e@23:12 callee=use args=[_:e@23:18] type=String
 expr e@23:5 return value=e@23:12#1 type=Nothing

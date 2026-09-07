@@ -1,8 +1,8 @@
-symbol fq=golden.sema.twoArgMinByte kind=function vis=public flags=_ sig=recv=_ params=[Byte,Byte] ret=Byte
-symbol fq=golden.sema.twoArgMinByte.$0.a kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.twoArgMinByte.$0.b kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.twoArgMinByte.$0.a[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.twoArgMinByte.$0.b[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.twoArgMinByte[kind=fun;params=Byte,Byte] kind=function vis=public flags=_ sig=recv=_ params=[Byte,Byte] ret=Byte
 file fminof_byte_2args package=golden.sema
-  decl golden.sema.twoArgMinByte fun twoArgMinByte sym=golden.sema.twoArgMinByte
-expr e@3:51 name(a) type=Byte ref=golden.sema.twoArgMinByte.$0.a
-expr e@3:54 name(b) type=Byte ref=golden.sema.twoArgMinByte.$0.b
-expr e@3:45 call callee=e@3:45#1 args=[_:e@3:51,_:e@3:54] type=Byte call=kotlin.comparisons.minOf#0
+  decl golden.sema.twoArgMinByte[kind=fun;params=Byte,Byte] fun twoArgMinByte sym=golden.sema.twoArgMinByte[kind=fun;params=Byte,Byte]
+expr e@3:51 name(a) type=Byte ref=golden.sema.twoArgMinByte.$0.a[kind=vparam]
+expr e@3:54 name(b) type=Byte ref=golden.sema.twoArgMinByte.$0.b[kind=vparam]
+expr e@3:45 call callee=e@3:45#1 args=[_:e@3:51,_:e@3:54] type=Byte call=kotlin.comparisons.minOf[kind=fun;params=Byte,Byte]

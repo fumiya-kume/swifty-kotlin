@@ -1,49 +1,49 @@
-symbol fq=FixedClock kind=class vis=public flags=_
-symbol fq=FixedClock.<init> kind=constructor vis=public flags=_ sig=recv=FixedClock params=[] ret=FixedClock
-symbol fq=__local_0.companion kind=local vis=private flags=_ type=kotlin.time.Clock.Companion
-symbol fq=__local_1.system kind=local vis=private flags=_ type=kotlin.time.Clock.System
-symbol fq=__local_2.asClock kind=local vis=private flags=_ type=kotlin.time.Clock
-symbol fq=__local_3.custom kind=local vis=private flags=_ type=kotlin.time.Clock
-symbol fq=kotlin.time.Clock kind=interface vis=public flags=synthetic
-symbol fq=kotlin.time.Clock.Companion kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.time.Clock.System kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.time.Clock.now kind=function vis=public flags=synthetic sig=recv=kotlin.time.Clock params=[] ret=kotlin.time.Instant
-symbol fq=kotlin.time.Instant kind=class vis=public flags=synthetic
-symbol fq=kotlin.time.Instant.Companion kind=object vis=public flags=synthetic|static
-symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+symbol fq=FixedClock.<init>[kind=ctor;recv=FixedClock;params=] kind=constructor vis=public flags=_ sig=recv=FixedClock params=[] ret=FixedClock
+symbol fq=FixedClock[kind=class] kind=class vis=public flags=_
+symbol fq=__local_0.companion[kind=local] kind=local vis=private flags=_ type=kotlin.time.Clock.Companion
+symbol fq=__local_1.system[kind=local] kind=local vis=private flags=_ type=kotlin.time.Clock.System
+symbol fq=__local_2.asClock[kind=local] kind=local vis=private flags=_ type=kotlin.time.Clock
+symbol fq=__local_3.custom[kind=local] kind=local vis=private flags=_ type=kotlin.time.Clock
+symbol fq=kotlin.time.Clock.Companion[kind=obj] kind=object vis=public flags=synthetic|static
+symbol fq=kotlin.time.Clock.System[kind=obj] kind=object vis=public flags=synthetic|static
+symbol fq=kotlin.time.Clock.now[kind=fun;recv=kotlin.time.Clock;params=] kind=function vis=public flags=synthetic sig=recv=kotlin.time.Clock params=[] ret=kotlin.time.Instant
+symbol fq=kotlin.time.Clock[kind=iface] kind=interface vis=public flags=synthetic
+symbol fq=kotlin.time.Instant.Companion[kind=obj] kind=object vis=public flags=synthetic|static
+symbol fq=kotlin.time.Instant[kind=class] kind=class vis=public flags=synthetic
+symbol fq=main[kind=fun;params=] kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_time_Clock_n_n package=_
-  decl FixedClock class FixedClock sym=FixedClock
-  decl main fun main sym=main
-expr e@5:35 name(Instant) type=kotlin.time.Instant.Companion ref=kotlin.time.Instant
+  decl FixedClock[kind=class] class FixedClock sym=FixedClock[kind=class]
+  decl main[kind=fun;params=] fun main sym=main[kind=fun;params=]
+expr e@5:35 name(Instant) type=kotlin.time.Instant.Companion ref=kotlin.time.Instant[kind=class]
 expr e@5:65 long(1234) type=Long
-expr e@5:35#1 memberCall recv=e@5:35 callee=fromEpochMilliseconds args=[_:e@5:65] type=kotlin.time.Instant call=kotlin.time.fromEpochMilliseconds
-expr e@9:38 name(Clock) type=kotlin.time.Clock ref=kotlin.time.Clock
-expr e@9:38#1 memberCall recv=e@9:38 callee=Companion args=[] type=kotlin.time.Clock.Companion ref=kotlin.time.Clock.Companion
-expr e@9:5 localDecl companion mutable=0 type=Clock.Companion init=e@9:38#1 type=Unit ref=__local_0.companion
-expr e@10:32 name(Clock) type=kotlin.time.Clock ref=kotlin.time.Clock
-expr e@10:32#1 memberCall recv=e@10:32 callee=System args=[] type=kotlin.time.Clock.System ref=kotlin.time.Clock.System
-expr e@10:5 localDecl system mutable=0 type=Clock.System init=e@10:32#1 type=Unit ref=__local_1.system
-expr e@11:26 name(Clock) type=kotlin.time.Clock ref=kotlin.time.Clock
-expr e@11:26#1 memberCall recv=e@11:26 callee=System args=[] type=kotlin.time.Clock.System ref=kotlin.time.Clock.System
-expr e@11:5 localDecl asClock mutable=0 type=Clock init=e@11:26#1 type=Unit ref=__local_2.asClock
-expr e@12:25 call callee=e@12:25#1 args=[] type=FixedClock call=FixedClock.<init>
-expr e@12:5 localDecl custom mutable=0 type=Clock init=e@12:25 type=Unit ref=__local_3.custom
-expr e@13:13 name(companion) type=kotlin.time.Clock.Companion ref=__local_0.companion
-expr e@13:27 name(Clock) type=kotlin.time.Clock ref=kotlin.time.Clock
-expr e@13:27#1 memberCall recv=e@13:27 callee=Companion args=[] type=kotlin.time.Clock.Companion ref=kotlin.time.Clock.Companion
+expr e@5:35#1 memberCall recv=e@5:35 callee=fromEpochMilliseconds args=[_:e@5:65] type=kotlin.time.Instant call=kotlin.time.fromEpochMilliseconds[kind=fun;recv=kotlin.time.Instant.Companion;params=Long]
+expr e@9:38 name(Clock) type=kotlin.time.Clock ref=kotlin.time.Clock[kind=iface]
+expr e@9:38#1 memberCall recv=e@9:38 callee=Companion args=[] type=kotlin.time.Clock.Companion ref=kotlin.time.Clock.Companion[kind=obj]
+expr e@9:5 localDecl companion mutable=0 type=Clock.Companion init=e@9:38#1 type=Unit ref=__local_0.companion[kind=local]
+expr e@10:32 name(Clock) type=kotlin.time.Clock ref=kotlin.time.Clock[kind=iface]
+expr e@10:32#1 memberCall recv=e@10:32 callee=System args=[] type=kotlin.time.Clock.System ref=kotlin.time.Clock.System[kind=obj]
+expr e@10:5 localDecl system mutable=0 type=Clock.System init=e@10:32#1 type=Unit ref=__local_1.system[kind=local]
+expr e@11:26 name(Clock) type=kotlin.time.Clock ref=kotlin.time.Clock[kind=iface]
+expr e@11:26#1 memberCall recv=e@11:26 callee=System args=[] type=kotlin.time.Clock.System ref=kotlin.time.Clock.System[kind=obj]
+expr e@11:5 localDecl asClock mutable=0 type=Clock init=e@11:26#1 type=Unit ref=__local_2.asClock[kind=local]
+expr e@12:25 call callee=e@12:25#1 args=[] type=FixedClock call=FixedClock.<init>[kind=ctor;recv=FixedClock;params=]
+expr e@12:5 localDecl custom mutable=0 type=Clock init=e@12:25 type=Unit ref=__local_3.custom[kind=local]
+expr e@13:13 name(companion) type=kotlin.time.Clock.Companion ref=__local_0.companion[kind=local]
+expr e@13:27 name(Clock) type=kotlin.time.Clock ref=kotlin.time.Clock[kind=iface]
+expr e@13:27#1 memberCall recv=e@13:27 callee=Companion args=[] type=kotlin.time.Clock.Companion ref=kotlin.time.Clock.Companion[kind=obj]
 expr e@13:13#1 binary(identityEqual) lhs=e@13:13 rhs=e@13:27#1 type=Boolean
-expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13#1] type=Unit call=kotlin.io.println#1
-expr e@14:13 name(system) type=kotlin.time.Clock.System ref=__local_1.system
-expr e@14:24 name(Clock) type=kotlin.time.Clock ref=kotlin.time.Clock
-expr e@14:24#1 memberCall recv=e@14:24 callee=System args=[] type=kotlin.time.Clock.System ref=kotlin.time.Clock.System
+expr e@13:5 call callee=e@13:5#1 args=[_:e@13:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@14:13 name(system) type=kotlin.time.Clock.System ref=__local_1.system[kind=local]
+expr e@14:24 name(Clock) type=kotlin.time.Clock ref=kotlin.time.Clock[kind=iface]
+expr e@14:24#1 memberCall recv=e@14:24 callee=System args=[] type=kotlin.time.Clock.System ref=kotlin.time.Clock.System[kind=obj]
 expr e@14:13#1 binary(identityEqual) lhs=e@14:13 rhs=e@14:24#1 type=Boolean
-expr e@14:5 call callee=e@14:5#1 args=[_:e@14:13#1] type=Unit call=kotlin.io.println#1
-expr e@15:13 name(asClock) type=kotlin.time.Clock ref=__local_2.asClock
-expr e@15:25 name(Clock) type=kotlin.time.Clock ref=kotlin.time.Clock
-expr e@15:25#1 memberCall recv=e@15:25 callee=System args=[] type=kotlin.time.Clock.System ref=kotlin.time.Clock.System
+expr e@14:5 call callee=e@14:5#1 args=[_:e@14:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@15:13 name(asClock) type=kotlin.time.Clock ref=__local_2.asClock[kind=local]
+expr e@15:25 name(Clock) type=kotlin.time.Clock ref=kotlin.time.Clock[kind=iface]
+expr e@15:25#1 memberCall recv=e@15:25 callee=System args=[] type=kotlin.time.Clock.System ref=kotlin.time.Clock.System[kind=obj]
 expr e@15:13#1 binary(identityEqual) lhs=e@15:13 rhs=e@15:25#1 type=Boolean
-expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13#1] type=Unit call=kotlin.io.println#1
-expr e@16:13 name(custom) type=kotlin.time.Clock ref=__local_3.custom
-expr e@16:13#1 memberCall recv=e@16:13 callee=now args=[] type=kotlin.time.Instant call=kotlin.time.Clock.now
-expr e@16:13#2 memberCall recv=e@16:13#1 callee=epochSeconds args=[] type=Long call=kotlin.time.epochSeconds.$get
-expr e@16:5 call callee=e@16:5#1 args=[_:e@16:13#2] type=Unit call=kotlin.io.println#1
+expr e@15:5 call callee=e@15:5#1 args=[_:e@15:13#1] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@16:13 name(custom) type=kotlin.time.Clock ref=__local_3.custom[kind=local]
+expr e@16:13#1 memberCall recv=e@16:13 callee=now args=[] type=kotlin.time.Instant call=kotlin.time.Clock.now[kind=fun;recv=kotlin.time.Clock;params=]
+expr e@16:13#2 memberCall recv=e@16:13#1 callee=epochSeconds args=[] type=Long call=kotlin.time.epochSeconds.$get[kind=fun;recv=kotlin.time.Instant;params=]
+expr e@16:5 call callee=e@16:5#1 args=[_:e@16:13#2] type=Unit call=kotlin.io.println[kind=fun;params=Any?]

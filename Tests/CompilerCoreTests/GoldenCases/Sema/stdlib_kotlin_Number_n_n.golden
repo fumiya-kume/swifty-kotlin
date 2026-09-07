@@ -1,6 +1,6 @@
-symbol fq=golden.sema.NumberChild kind=class vis=public flags=_
+symbol fq=golden.sema.NumberChild[kind=class] kind=class vis=public flags=_
 file fstdlib_kotlin_Number_n_n package=golden.sema
-  decl golden.sema.NumberChild class NumberChild sym=golden.sema.NumberChild
+  decl golden.sema.NumberChild[kind=class] class NumberChild sym=golden.sema.NumberChild[kind=class]
 expr e@4:39 double(42.0) type=Double
 expr e@5:37 float(42.0) type=Float
 expr e@6:35 long(42) type=Long

@@ -1,56 +1,56 @@
-symbol fq=__local_0.dest kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, Int>
-symbol fq=__local_1.result kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, Int>
-symbol fq=__local_2.dest kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, Int>
-symbol fq=__local_3.result kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, Int>
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
-symbol fq=testGroupingFoldTo kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=Unit
-symbol fq=testGroupingFoldTo.$0.values kind=valueParameter vis=private flags=_
-symbol fq=testGroupingFoldToWithSelector kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=Unit
-symbol fq=testGroupingFoldToWithSelector.$1.values kind=valueParameter vis=private flags=_
+symbol fq=__local_0.dest[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, Int>
+symbol fq=__local_1.result[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, Int>
+symbol fq=__local_2.dest[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, Int>
+symbol fq=__local_3.result[kind=local] kind=local vis=private flags=_ type=kotlin.collections.MutableMap<Int, Int>
+symbol fq=kotlin.collections.Iterable[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List[kind=iface;gen=1] kind=interface vis=public flags=_
+symbol fq=kotlin.collections.MutableMap[kind=iface;gen=2] kind=interface vis=public flags=synthetic
+symbol fq=testGroupingFoldTo.$0.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=testGroupingFoldToWithSelector.$1.values[kind=vparam] kind=valueParameter vis=private flags=_
+symbol fq=testGroupingFoldToWithSelector[kind=fun;params=kotlin.collections.List<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=Unit
+symbol fq=testGroupingFoldTo[kind=fun;params=kotlin.collections.List<String>] kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<String>] ret=Unit
 file fcollection_grouping_fold_to package=_
-  decl testGroupingFoldTo fun testGroupingFoldTo sym=testGroupingFoldTo
-  decl testGroupingFoldToWithSelector fun testGroupingFoldToWithSelector sym=testGroupingFoldToWithSelector
-expr e@2:16 call callee=e@2:16#1 args=[] type=kotlin.collections.MutableMap<Int, Int> call=kotlin.collections.mutableMapOf#0 targs=[Int,Int]
-expr e@2:5 localDecl dest mutable=0 type=_ init=e@2:16 type=Unit ref=__local_0.dest
-expr e@3:18 name(values) type=kotlin.collections.List<String> ref=testGroupingFoldTo.$0.values
+  decl testGroupingFoldTo[kind=fun;params=kotlin.collections.List<String>] fun testGroupingFoldTo sym=testGroupingFoldTo[kind=fun;params=kotlin.collections.List<String>]
+  decl testGroupingFoldToWithSelector[kind=fun;params=kotlin.collections.List<String>] fun testGroupingFoldToWithSelector sym=testGroupingFoldToWithSelector[kind=fun;params=kotlin.collections.List<String>]
+expr e@2:16 call callee=e@2:16#1 args=[] type=kotlin.collections.MutableMap<Int, Int> call=kotlin.collections.mutableMapOf[kind=fun;params=;gen=2] targs=[Int,Int]
+expr e@2:5 localDecl dest mutable=0 type=_ init=e@2:16 type=Unit ref=__local_0.dest[kind=local]
+expr e@3:18 name(values) type=kotlin.collections.List<String> ref=testGroupingFoldTo.$0.values[kind=vparam]
 expr e@3:38 name(it) type=String ref=s-0
-expr e@3:38#1 memberCall recv=e@3:38 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@3:38#1 memberCall recv=e@3:38 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
 expr e@3:36 lambda params=[] body=e@3:38#1 label=groupingBy type=(String) -> Int
-expr e@3:18#1 memberCall recv=e@3:18 callee=groupingBy args=[_:e@3:36] type=kotlin.collections.Grouping<String, Int> call=kotlin.collections.groupingBy targs=[String,Int]
-expr e@4:9 name(dest) type=kotlin.collections.MutableMap<Int, Int> ref=__local_0.dest
+expr e@3:18#1 memberCall recv=e@3:18 callee=groupingBy args=[_:e@3:36] type=kotlin.collections.Grouping<String, Int> call=kotlin.collections.groupingBy[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=T1};gen=2] targs=[String,Int]
+expr e@4:9 name(dest) type=kotlin.collections.MutableMap<Int, Int> ref=__local_0.dest[kind=local]
 expr e@5:24 int(0) type=Int
 expr e@7:13 name(accumulator) type=Int ref=s-1
 expr e@7:27 name(element) type=String ref=s-2
-expr e@7:27#1 memberCall recv=e@7:27 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@7:27#1 memberCall recv=e@7:27 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
 expr e@7:13#1 binary(add) lhs=e@7:13 rhs=e@7:27#1 type=Int
 expr e@6:21 lambda params=[accumulator,element] body=e@7:13#1 label=foldTo type=(Int, String) -> Int
-expr e@3:18#2 memberCall recv=e@3:18#1 callee=foldTo args=[_:e@4:9,initialValue:e@5:24,operation:e@6:21] type=kotlin.collections.MutableMap<Int, Int> call=kotlin.collections.foldTo#1 targs=[String,Int,Int]
-expr e@3:5 localDecl result mutable=0 type=_ init=e@3:18#2 type=Unit ref=__local_1.result
-expr e@10:13 name(result) type=kotlin.collections.MutableMap<Int, Int> ref=__local_1.result
-expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13] type=Unit call=kotlin.io.println#1
-expr e@14:16 call callee=e@14:16#1 args=[] type=kotlin.collections.MutableMap<Int, Int> call=kotlin.collections.mutableMapOf#0 targs=[Int,Int]
-expr e@14:5 localDecl dest mutable=0 type=_ init=e@14:16 type=Unit ref=__local_2.dest
-expr e@15:18 name(values) type=kotlin.collections.List<String> ref=testGroupingFoldToWithSelector.$1.values
+expr e@3:18#2 memberCall recv=e@3:18#1 callee=foldTo args=[_:e@4:9,initialValue:e@5:24,operation:e@6:21] type=kotlin.collections.MutableMap<Int, Int> call=kotlin.collections.foldTo[kind=fun;recv=kotlin.collections.Grouping<T0,T1>;params=kotlin.collections.MutableMap<T1,T2>,T2,fn{p=T2,T0;ret=T2};gen=3] targs=[String,Int,Int]
+expr e@3:5 localDecl result mutable=0 type=_ init=e@3:18#2 type=Unit ref=__local_1.result[kind=local]
+expr e@10:13 name(result) type=kotlin.collections.MutableMap<Int, Int> ref=__local_1.result[kind=local]
+expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
+expr e@14:16 call callee=e@14:16#1 args=[] type=kotlin.collections.MutableMap<Int, Int> call=kotlin.collections.mutableMapOf[kind=fun;params=;gen=2] targs=[Int,Int]
+expr e@14:5 localDecl dest mutable=0 type=_ init=e@14:16 type=Unit ref=__local_2.dest[kind=local]
+expr e@15:18 name(values) type=kotlin.collections.List<String> ref=testGroupingFoldToWithSelector.$1.values[kind=vparam]
 expr e@15:38 name(it) type=String ref=s-3
-expr e@15:38#1 memberCall recv=e@15:38 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@15:38#1 memberCall recv=e@15:38 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
 expr e@15:36 lambda params=[] body=e@15:38#1 label=groupingBy type=(String) -> Int
-expr e@15:18#1 memberCall recv=e@15:18 callee=groupingBy args=[_:e@15:36] type=kotlin.collections.Grouping<String, Int> call=kotlin.collections.groupingBy targs=[String,Int]
-expr e@16:9 name(dest) type=kotlin.collections.MutableMap<Int, Int> ref=__local_2.dest
+expr e@15:18#1 memberCall recv=e@15:18 callee=groupingBy args=[_:e@15:36] type=kotlin.collections.Grouping<String, Int> call=kotlin.collections.groupingBy[kind=fun;recv=kotlin.collections.Iterable<T0>;params=fn{p=T0;ret=T1};gen=2] targs=[String,Int]
+expr e@16:9 name(dest) type=kotlin.collections.MutableMap<Int, Int> ref=__local_2.dest[kind=local]
 expr e@18:13 name(key) type=Int ref=s-4
 expr e@18:19 name(element) type=String ref=s-5
-expr e@18:19#1 memberCall recv=e@18:19 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@18:19#1 memberCall recv=e@18:19 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
 expr e@18:13#1 binary(add) lhs=e@18:13 rhs=e@18:19#1 type=Int
 expr e@17:32 lambda params=[key,element] body=e@18:13#1 label=foldTo type=(Int, String) -> Int
 expr e@21:13 name(accumulator) type=Int ref=s-6
 expr e@21:27 name(key) type=Int ref=s-7
 expr e@21:13#1 binary(add) lhs=e@21:13 rhs=e@21:27 type=Int
 expr e@21:33 name(element) type=String ref=s-8
-expr e@21:33#1 memberCall recv=e@21:33 callee=length args=[] type=Int call=kotlin.length.$get
+expr e@21:33#1 memberCall recv=e@21:33 callee=length args=[] type=Int call=kotlin.length.$get[kind=fun;recv=String;params=]
 expr e@21:13#2 binary(add) lhs=e@21:13#1 rhs=e@21:33#1 type=Int
 expr e@20:21 lambda params=[key,accumulator,element] body=e@21:13#2 label=foldTo type=(Int, Int, String) -> Int
-expr e@15:18#2 memberCall recv=e@15:18#1 callee=foldTo args=[_:e@16:9,initialValueSelector:e@17:32,operation:e@20:21] type=kotlin.collections.MutableMap<Int, Int> call=kotlin.collections.foldTo#0 targs=[String,Int,Int]
-expr e@15:5 localDecl result mutable=0 type=_ init=e@15:18#2 type=Unit ref=__local_3.result
-expr e@24:13 name(result) type=kotlin.collections.MutableMap<Int, Int> ref=__local_3.result
-expr e@24:5 call callee=e@24:5#1 args=[_:e@24:13] type=Unit call=kotlin.io.println#1
+expr e@15:18#2 memberCall recv=e@15:18#1 callee=foldTo args=[_:e@16:9,initialValueSelector:e@17:32,operation:e@20:21] type=kotlin.collections.MutableMap<Int, Int> call=kotlin.collections.foldTo[kind=fun;recv=kotlin.collections.Grouping<T0,T1>;params=kotlin.collections.MutableMap<T1,T2>,fn{p=T1,T0;ret=T2},fn{p=T1,T2,T0;ret=T2};gen=3] targs=[String,Int,Int]
+expr e@15:5 localDecl result mutable=0 type=_ init=e@15:18#2 type=Unit ref=__local_3.result[kind=local]
+expr e@24:13 name(result) type=kotlin.collections.MutableMap<Int, Int> ref=__local_3.result[kind=local]
+expr e@24:5 call callee=e@24:5#1 args=[_:e@24:13] type=Unit call=kotlin.io.println[kind=fun;params=Any?]
