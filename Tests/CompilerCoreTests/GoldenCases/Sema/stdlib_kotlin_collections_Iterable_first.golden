@@ -10,7 +10,7 @@ symbol fq=firstValue kind=function vis=public flags=_ sig=recv=_ params=[kotlin.
 symbol fq=firstValue.$4.values kind=valueParameter vis=private flags=_
 symbol fq=firstValueOrNull kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>] ret=Int?
 symbol fq=firstValueOrNull.$5.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_Iterable_first package=_
   decl firstValue fun firstValue sym=firstValue
   decl firstMatching fun firstMatching sym=firstMatching

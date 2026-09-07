@@ -1,0 +1,22 @@
+symbol fq=__local_0.values kind=local vis=private flags=_ type=kotlin.sequences.Sequence<Int>
+symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
+symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
+file fstdlib_kotlin_sequences_Sequence_for package=_
+  decl main fun main sym=main
+expr e@2:29 int(1) type=Int
+expr e@2:32 int(2) type=Int
+expr e@2:35 int(3) type=Int
+expr e@2:18 call callee=e@2:18#1 args=[_:e@2:29,_:e@2:32,_:e@2:35] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf targs=[Int]
+expr e@2:5 localDecl values mutable=0 type=_ init=e@2:18 type=Unit ref=__local_0.values
+expr e@4:5 name(values) type=kotlin.sequences.Sequence<Int> ref=__local_0.values
+expr e@4:39 name(value) type=Int ref=s-0
+expr e@4:31 call callee=e@4:31#1 args=[_:e@4:39] type=Unit call=kotlin.io.println#1
+expr e@4:20 lambda params=[value] body=e@4:31 label=forEach type=(Int) -> Unit
+expr e@4:5#1 memberCall recv=e@4:5 callee=forEach args=[_:e@4:20] type=Unit call=kotlin.sequences.forEach targs=[Int]
+expr e@5:5 name(values) type=kotlin.sequences.Sequence<Int> ref=__local_0.values
+expr e@5:53 name(index) type=Int ref=s-1
+expr e@5:61 name(value) type=Int ref=s-2
+expr e@5:53#1 binary(add) lhs=e@5:53 rhs=e@5:61 type=Int
+expr e@5:45 call callee=e@5:45#1 args=[_:e@5:53#1] type=Unit call=kotlin.io.println#1
+expr e@5:27 lambda params=[index,value] body=e@5:45 label=forEachIndexed type=(Int, Int) -> Unit
+expr e@5:5#1 memberCall recv=e@5:5 callee=forEachIndexed args=[_:e@5:27] type=Unit call=kotlin.sequences.forEachIndexed targs=[Int]

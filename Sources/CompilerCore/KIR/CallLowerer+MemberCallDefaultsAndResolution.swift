@@ -323,6 +323,14 @@ extension CallLowerer {
         }
 
         if let chosenCallee {
+            if let setMember = runtimeBackedSetMemberCallee(
+                memberName: fallbackName,
+                receiverType: receiverType,
+                sema: sema,
+                interner: interner
+            ) {
+                return setMember
+            }
             if let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
                !externalLinkName.isEmpty
             {

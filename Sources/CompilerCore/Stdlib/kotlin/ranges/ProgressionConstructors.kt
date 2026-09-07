@@ -11,9 +11,14 @@ package kotlin.ranges
 import kotlin.internal.KsSymbolName
 
 // KSP-456: progression construction APIs migrated from Swift runtime entry points
-// to bundled Kotlin sources. The public operators delegate to the __kk_* bridges
-// below; the runtime entry points themselves have been renamed from kk_* to
-// __kk_* so they are only reachable from the stdlib layer.
+// to bundled Kotlin sources. The remaining runtime bridges below are private to
+// the stdlib layer; source-backed operators use them only where their construction
+// semantics still need a runtime handle.
+
+// MARK: - UInt rangeTo bridge
+
+@KsSymbolName("__kk_uint_rangeTo")
+internal external fun __uintRangeTo(a: UInt, b: UInt): UIntRange
 
 // MARK: - rangeUntil / until bridges
 
@@ -154,7 +159,8 @@ public infix fun Char.until(to: Char): CharRange = __rangeUntil(this, to)
 public operator infix fun Char.rangeUntil(to: Char): CharRange = __rangeUntil(this, to)
 public operator infix fun Char.downTo(to: Char): CharProgression = CharProgression.fromClosedRange(this, to, -1)
 
-// MARK: - UInt until / rangeUntil / downTo
+// MARK: - UInt rangeTo / until / rangeUntil / downTo
+public operator fun UInt.rangeTo(to: UInt): UIntRange = __uintRangeTo(this, to)
 public infix fun UInt.until(to: UInt): UIntRange = __rangeUntil(this, to)
 public operator infix fun UInt.rangeUntil(to: UInt): UIntRange = __rangeUntil(this, to)
 public operator infix fun UInt.downTo(to: UInt): UIntProgression = UIntProgression.fromClosedRange(this, to, -1)
@@ -169,14 +175,20 @@ public operator infix fun IntProgression.step(step: Int): IntProgression = __int
 public operator infix fun LongProgression.step(step: Int): LongProgression = __longProgressionStep(this, step)
 public operator infix fun LongProgression.step(step: Long): LongProgression = __longProgressionStep(this, step)
 public operator infix fun CharProgression.step(step: Int): CharProgression = __charProgressionStep(this, step)
-public operator infix fun UIntProgression.step(step: Int): UIntProgression = __uintProgressionStep(this, step)
+public operator infix fun UIntProgression.step(step: Int): UIntProgression {
+    require(step > 0) { "Step must be positive, was: $step." }
+    return UIntProgression.fromClosedRange(first, last, if (this.step > 0) step else -step)
+}
 public operator infix fun ULongProgression.step(step: Int): ULongProgression = __ulongProgressionStep(this, step)
 public operator infix fun ULongProgression.step(step: Long): ULongProgression = __ulongProgressionStep(this, step)
 public operator infix fun IntRange.step(step: Int): IntProgression = __intRangeStep(this, step)
 public operator infix fun LongRange.step(step: Int): LongProgression = __longRangeStep(this, step)
 public operator infix fun LongRange.step(step: Long): LongProgression = __longRangeStep(this, step)
 public operator infix fun CharRange.step(step: Int): CharProgression = __charRangeStep(this, step)
-public operator infix fun UIntRange.step(step: Int): UIntProgression = __uintRangeStep(this, step)
+public operator infix fun UIntRange.step(step: Int): UIntProgression {
+    require(step > 0) { "Step must be positive, was: $step." }
+    return UIntProgression.fromClosedRange(first, last, if (this.step > 0) step else -step)
+}
 public operator infix fun ULongRange.step(step: Int): ULongProgression = __ulongRangeStep(this, step)
 public operator infix fun ULongRange.step(step: Long): ULongProgression = __ulongRangeStep(this, step)
 

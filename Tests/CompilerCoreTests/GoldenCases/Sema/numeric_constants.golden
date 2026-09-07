@@ -10,13 +10,13 @@ symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fnumeric_constants package=_
   decl main fun main sym=main
 expr e@2:13 name(Int) type=kotlin.Int.Companion ref=kotlin.Int
-expr e@2:13#1 memberCall recv=e@2:13 callee=MAX_VALUE args=[] type=Int call=kotlin.MAX_VALUE.$get#0
+expr e@2:13#1 memberCall recv=e@2:13 callee=MAX_VALUE args=[] type=Int call=kotlin.MAX_VALUE.$get#1
 expr e@2:5 localDecl a mutable=0 type=_ init=e@2:13#1 type=Unit ref=__local_0.a
 expr e@3:13 name(Int) type=kotlin.Int.Companion ref=kotlin.Int
-expr e@3:13#1 memberCall recv=e@3:13 callee=MIN_VALUE args=[] type=Int call=kotlin.MIN_VALUE.$get#0
+expr e@3:13#1 memberCall recv=e@3:13 callee=MIN_VALUE args=[] type=Int call=kotlin.MIN_VALUE.$get#1
 expr e@3:5 localDecl b mutable=0 type=_ init=e@3:13#1 type=Unit ref=__local_1.b
 expr e@4:13 name(Long) type=kotlin.Long.Companion ref=kotlin.Long
-expr e@4:13#1 memberCall recv=e@4:13 callee=MAX_VALUE args=[] type=Long call=kotlin.MAX_VALUE.$get#1
+expr e@4:13#1 memberCall recv=e@4:13 callee=MAX_VALUE args=[] type=Long call=kotlin.MAX_VALUE.$get#2
 expr e@4:5 localDecl c mutable=0 type=_ init=e@4:13#1 type=Unit ref=__local_2.c
 expr e@5:13 memberCall recv=e@5:13#1 callee=NaN args=[] type=Double
 expr e@5:5 localDecl d mutable=0 type=_ init=e@5:13 type=Unit ref=__local_3.d
