@@ -901,20 +901,42 @@ struct NativeConcurrentSyntheticStubTests {
             "Expected kotlin.native.concurrent.SharedImmutable annotation to be registered"
         )
         #expect(sema.symbols.symbol(symbol)?.kind == .annotationClass)
+        #expect(
+            sema.symbols.symbol(symbol)?.flags.contains(.synthetic) == false,
+            "SharedImmutable should be provided by bundled Kotlin source"
+        )
 
         let annotations = sema.symbols.annotations(for: symbol)
-        let targetAnnotation = annotations.first { $0.annotationFQName == "kotlin.annotation.Target" }
+        let targetAnnotation = annotations.first { $0.annotationFQName == "Target" }
         #expect(targetAnnotation != nil, "Expected @Target annotation on @SharedImmutable")
         let targetArguments = targetAnnotation?.arguments ?? []
         #expect(
             Set(targetArguments) == ["AnnotationTarget.PROPERTY"],
             "Expected only PROPERTY target for @SharedImmutable"
         )
+
+        #expect(annotations.contains { $0.annotationFQName == "Deprecated" })
+        #expect(annotations.contains {
+            $0.annotationFQName == "DeprecatedSinceKotlin"
+                && $0.arguments.contains { $0.contains("errorSince") && $0.contains("2.1") }
+        })
+
+        let constructor = try #require(
+            sema.symbols.lookupAll(fqName: fqName + [interner.intern("<init>")]).first {
+                sema.symbols.symbol($0)?.kind == .constructor
+            },
+            "Expected SharedImmutable to expose a public implicit no-arg constructor"
+        )
+        let signature = try #require(sema.symbols.functionSignature(for: constructor))
+        #expect(signature.parameterTypes.isEmpty)
+        #expect(sema.symbols.externalLinkName(for: constructor) == nil)
     }
 
     @Test
     func testSharedImmutableAnnotationResolvesOnProperty() {
         let source = """
+        @file:Suppress("DEPRECATION_ERROR")
+
         import kotlin.native.concurrent.SharedImmutable
 
         @SharedImmutable
@@ -932,6 +954,8 @@ struct NativeConcurrentSyntheticStubTests {
         // @SharedImmutable is only valid on PROPERTY, not on functions.
         // The AnnotationTargetValidation phase should emit KSWIFTK-SEMA-ANNOTATION-TARGET.
         let source = """
+        @file:Suppress("DEPRECATION_ERROR")
+
         import kotlin.native.concurrent.SharedImmutable
 
         @SharedImmutable
@@ -951,6 +975,8 @@ struct NativeConcurrentSyntheticStubTests {
     @Test
     func testSharedImmutableFieldUseSiteTargetIsRejected() {
         let source = """
+        @file:Suppress("DEPRECATION_ERROR")
+
         import kotlin.native.concurrent.SharedImmutable
 
         class Box {

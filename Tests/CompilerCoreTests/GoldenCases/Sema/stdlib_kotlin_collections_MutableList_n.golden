@@ -18,8 +18,8 @@ symbol fq=__local_16.safeFirst kind=local vis=private flags=_ type=Int?
 symbol fq=__local_17.safeRemoveAll kind=local vis=private flags=_ type=Boolean?
 symbol fq=__local_18.safeReverse kind=local vis=private flags=_ type=Unit
 symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.collections.List kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableCollection kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.collections.MutableCollection kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableCollection.E kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.MutableCollection.remove kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableCollection<kotlin.collections.MutableCollection.E> params=[kotlin.collections.MutableCollection.E] ret=Boolean
 symbol fq=kotlin.collections.MutableCollection.remove.element kind=valueParameter vis=private flags=synthetic
