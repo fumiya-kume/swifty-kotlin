@@ -1,0 +1,54 @@
+symbol fq=CustomCollection kind=class vis=public flags=_
+symbol fq=CustomMap kind=class vis=public flags=_
+symbol fq=__local_0.collectionResult kind=local vis=private flags=_ type=Any?
+symbol fq=__local_1.mapResult kind=local vis=private flags=_ type=Any?
+symbol fq=__local_2.collectionEmpty kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_3.checkedCollection kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_4.empty kind=local vis=private flags=_ type=Boolean
+symbol fq=__local_5.checked kind=local vis=private flags=_ type=Boolean
+symbol fq=isEmptyViaInterface kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String?, Int?>] ret=Unit
+symbol fq=isEmptyViaInterface.$0.map kind=valueParameter vis=private flags=_
+symbol fq=kotlin.Pair kind=class vis=public flags=_
+symbol fq=kotlin.collections.AbstractCollection kind=class vis=public flags=abstractType|openType type=kotlin.collections.AbstractCollection<out kotlin.collections.AbstractCollection.E>
+symbol fq=kotlin.collections.AbstractCollection.E kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Collection.E kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Iterator kind=interface vis=public flags=synthetic
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
+symbol fq=subtypeResolution kind=function vis=public flags=_ sig=recv=_ params=[CustomCollection,CustomMap] ret=Unit
+symbol fq=subtypeResolution.$1.collection kind=valueParameter vis=private flags=_
+symbol fq=subtypeResolution.$1.map kind=valueParameter vis=private flags=_
+file fcollection_if_empty_subtypes package=_
+  decl CustomCollection class CustomCollection sym=CustomCollection
+  decl CustomMap class CustomMap sym=CustomMap
+  decl subtypeResolution fun subtypeResolution sym=subtypeResolution
+  decl isEmptyViaInterface fun isEmptyViaInterface sym=isEmptyViaInterface
+expr e@8:36 int(1) type=Int
+expr e@9:50 call callee=e@9:50#1 args=[] type=kotlin.collections.List<out String?> call=kotlin.collections.emptyList targs=[String?]
+expr e@9:50#2 memberCall recv=e@9:50 callee=iterator args=[] type=kotlin.collections.Iterator<out String?> call=kotlin.collections.Collection.iterator
+expr e@13:36 int(1) type=Int
+expr e@12:62 string(key) type=String
+expr e@12:71 int(1) type=Int
+expr e@12:62#1 memberCall recv=e@12:62 callee=to args=[_:e@12:71] type=kotlin.Pair<String, Int> call=kotlin.to targs=[String,Int]
+expr e@12:41 call callee=e@12:41#1 args=[_:e@12:62#1] type=kotlin.collections.Map<String?, Int?> call=kotlin.collections.mapOf#1 targs=[String?,Int?]
+expr e@17:34 name(collection) type=CustomCollection ref=subtypeResolution.$1.collection
+expr e@17:55 string(fallback) type=String
+expr e@17:53 lambda params=[] body=e@17:55 label=ifEmpty type=() -> Any
+expr e@17:34#1 memberCall recv=e@17:34 callee=ifEmpty args=[_:e@17:53] type=Any call=kotlin.collections.ifEmpty#0 targs=[CustomCollection,Any]
+expr e@17:5 localDecl collectionResult mutable=0 type=Any? init=e@17:34#1 type=Unit ref=__local_0.collectionResult
+expr e@18:27 name(map) type=CustomMap ref=subtypeResolution.$1.map
+expr e@18:41 string(fallback) type=String
+expr e@18:39 lambda params=[] body=e@18:41 label=ifEmpty type=() -> Any
+expr e@18:27#1 memberCall recv=e@18:27 callee=ifEmpty args=[_:e@18:39] type=Any call=kotlin.collections.ifEmpty#1 targs=[CustomMap,Any]
+expr e@18:5 localDecl mapResult mutable=0 type=Any? init=e@18:27#1 type=Unit ref=__local_1.mapResult
+expr e@19:27 name(collection) type=CustomCollection ref=subtypeResolution.$1.collection
+expr e@19:27#1 memberCall recv=e@19:27 callee=isEmpty args=[] type=Boolean call=kotlin.collections.AbstractCollection.isEmpty targs=[String?]
+expr e@19:5 localDecl collectionEmpty mutable=0 type=_ init=e@19:27#1 type=Unit ref=__local_2.collectionEmpty
+expr e@20:38 name(collectionEmpty) type=Boolean ref=__local_2.collectionEmpty
+expr e@20:5 localDecl checkedCollection mutable=0 type=Boolean init=e@20:38 type=Unit ref=__local_3.checkedCollection
+expr e@24:17 name(map) type=kotlin.collections.Map<String?, Int?> ref=isEmptyViaInterface.$0.map
+expr e@24:17#1 memberCall recv=e@24:17 callee=isEmpty args=[] type=Boolean
+expr e@24:5 localDecl empty mutable=0 type=_ init=e@24:17#1 type=Unit ref=__local_4.empty
+expr e@25:28 name(empty) type=Boolean ref=__local_4.empty
+expr e@25:5 localDecl checked mutable=0 type=Boolean init=e@25:28 type=Unit ref=__local_5.checked
