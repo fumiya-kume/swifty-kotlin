@@ -7,4 +7,4 @@ file fminof_uint_3args package=golden.sema
 expr e@3:62 name(a) type=UInt ref=golden.sema.threeArgMinUInt.$0.a
 expr e@3:65 name(b) type=UInt ref=golden.sema.threeArgMinUInt.$0.b
 expr e@3:68 name(c) type=UInt ref=golden.sema.threeArgMinUInt.$0.c
-expr e@3:56 call callee=e@3:56#1 args=[_:e@3:62,_:e@3:65,_:e@3:68] type=UInt call=kotlin.comparisons.minOf#23
+expr e@3:56 call callee=e@3:56#1 args=[_:e@3:62,_:e@3:65,_:e@3:68] type=UInt call=kotlin.comparisons.minOf#29

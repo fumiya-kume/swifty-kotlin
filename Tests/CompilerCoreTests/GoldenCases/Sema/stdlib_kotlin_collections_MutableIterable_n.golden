@@ -6,13 +6,6 @@ symbol fq=ProbeIterator.<init>.$0.values kind=valueParameter vis=private flags=_
 symbol fq=ProbeIterator.index kind=property vis=private flags=mutable type=Int
 symbol fq=ProbeIterator.values kind=property vis=public flags=_ type=kotlin.collections.MutableList<Int>
 symbol fq=__local_0.value kind=local vis=private flags=_ type=Int
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.List.get kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.List<out kotlin.collections.List.E> params=[Int] ret=kotlin.collections.List.E
-symbol fq=kotlin.collections.MutableIterable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableList.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableList.removeAt kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.MutableList<kotlin.collections.MutableList.E> params=[Int] ret=kotlin.collections.MutableList.E
 symbol fq=probe kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableIterable<Int>] ret=Boolean
 symbol fq=probe.$1.values kind=valueParameter vis=private flags=_
 file fstdlib_kotlin_collections_MutableIterable_n package=_

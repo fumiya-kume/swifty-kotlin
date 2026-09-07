@@ -89,8 +89,6 @@ symbol fq=golden.sema.minUShortVararg.$19.a kind=valueParameter vis=private flag
 symbol fq=golden.sema.minUShortVararg.$19.b kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.minUShortVararg.$19.c kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.minUShortVararg.$19.d kind=valueParameter vis=private flags=_
-symbol fq=kotlin.Comparable kind=interface vis=public flags=_
-symbol fq=kotlin.Comparator kind=interface vis=public flags=funInterface
 file fstdlib_kotlin_comparisons_n_min package=golden.sema
   decl golden.sema.minComparable2 fun minComparable2 sym=golden.sema.minComparable2
   decl golden.sema.minComparableVararg fun minComparableVararg sym=golden.sema.minComparableVararg
@@ -114,12 +112,12 @@ file fstdlib_kotlin_comparisons_n_min package=golden.sema
   decl golden.sema.minComparator3 fun minComparator3 sym=golden.sema.minComparator3
 expr e@3:58 name(a) type=String ref=golden.sema.minComparable2.$3.a
 expr e@3:61 name(b) type=String ref=golden.sema.minComparable2.$3.b
-expr e@3:52 call callee=e@3:52#1 args=[_:e@3:58,_:e@3:61] type=String call=kotlin.comparisons.minOf#30 targs=[String]
+expr e@3:52 call callee=e@3:52#1 args=[_:e@3:58,_:e@3:61] type=String call=kotlin.comparisons.minOf#18 targs=[String]
 expr e@4:85 name(a) type=String ref=golden.sema.minComparableVararg.$5.a
 expr e@4:88 name(b) type=String ref=golden.sema.minComparableVararg.$5.b
 expr e@4:91 name(c) type=String ref=golden.sema.minComparableVararg.$5.c
 expr e@4:94 name(d) type=String ref=golden.sema.minComparableVararg.$5.d
-expr e@4:79 call callee=e@4:79#1 args=[_:e@4:85,_:e@4:88,_:e@4:91,_:e@4:94] type=String call=kotlin.comparisons.minOf#32 targs=[String]
+expr e@4:79 call callee=e@4:79#1 args=[_:e@4:85,_:e@4:88,_:e@4:91,_:e@4:94] type=String call=kotlin.comparisons.minOf#20 targs=[String]
 expr e@6:69 name(a) type=Byte ref=golden.sema.minByteVararg.$2.a
 expr e@6:72 name(b) type=Byte ref=golden.sema.minByteVararg.$2.b
 expr e@6:75 name(c) type=Byte ref=golden.sema.minByteVararg.$2.c
@@ -154,22 +152,22 @@ expr e@12:75 name(a) type=UByte ref=golden.sema.minUByteVararg.$16.a
 expr e@12:78 name(b) type=UByte ref=golden.sema.minUByteVararg.$16.b
 expr e@12:81 name(c) type=UByte ref=golden.sema.minUByteVararg.$16.c
 expr e@12:84 name(d) type=UByte ref=golden.sema.minUByteVararg.$16.d
-expr e@12:69 call callee=e@12:69#1 args=[_:e@12:75,_:e@12:78,_:e@12:81,_:e@12:84] type=UByte call=kotlin.comparisons.minOf#19
+expr e@12:69 call callee=e@12:69#1 args=[_:e@12:75,_:e@12:78,_:e@12:81,_:e@12:84] type=UByte call=kotlin.comparisons.minOf#25
 expr e@13:69 name(a) type=UInt ref=golden.sema.minUIntVararg.$17.a
 expr e@13:72 name(b) type=UInt ref=golden.sema.minUIntVararg.$17.b
 expr e@13:75 name(c) type=UInt ref=golden.sema.minUIntVararg.$17.c
 expr e@13:78 name(d) type=UInt ref=golden.sema.minUIntVararg.$17.d
-expr e@13:63 call callee=e@13:63#1 args=[_:e@13:69,_:e@13:72,_:e@13:75,_:e@13:78] type=UInt call=kotlin.comparisons.minOf#22
+expr e@13:63 call callee=e@13:63#1 args=[_:e@13:69,_:e@13:72,_:e@13:75,_:e@13:78] type=UInt call=kotlin.comparisons.minOf#28
 expr e@14:75 name(a) type=ULong ref=golden.sema.minULongVararg.$18.a
 expr e@14:78 name(b) type=ULong ref=golden.sema.minULongVararg.$18.b
 expr e@14:81 name(c) type=ULong ref=golden.sema.minULongVararg.$18.c
 expr e@14:84 name(d) type=ULong ref=golden.sema.minULongVararg.$18.d
-expr e@14:69 call callee=e@14:69#1 args=[_:e@14:75,_:e@14:78,_:e@14:81,_:e@14:84] type=ULong call=kotlin.comparisons.minOf#25
+expr e@14:69 call callee=e@14:69#1 args=[_:e@14:75,_:e@14:78,_:e@14:81,_:e@14:84] type=ULong call=kotlin.comparisons.minOf#31
 expr e@15:81 name(a) type=UShort ref=golden.sema.minUShortVararg.$19.a
 expr e@15:84 name(b) type=UShort ref=golden.sema.minUShortVararg.$19.b
 expr e@15:87 name(c) type=UShort ref=golden.sema.minUShortVararg.$19.c
 expr e@15:90 name(d) type=UShort ref=golden.sema.minUShortVararg.$19.d
-expr e@15:75 call callee=e@15:75#1 args=[_:e@15:81,_:e@15:84,_:e@15:87,_:e@15:90] type=UShort call=kotlin.comparisons.minOf#28
+expr e@15:75 call callee=e@15:75#1 args=[_:e@15:81,_:e@15:84,_:e@15:87,_:e@15:90] type=UShort call=kotlin.comparisons.minOf#34
 expr e@17:46 name(a) type=Byte ref=golden.sema.minByte2.$0.a
 expr e@17:49 name(b) type=Byte ref=golden.sema.minByte2.$0.b
 expr e@17:40 call callee=e@17:40#1 args=[_:e@17:46,_:e@17:49] type=Byte call=kotlin.comparisons.minOf#0
@@ -179,17 +177,17 @@ expr e@18:44 call callee=e@18:44#1 args=[_:e@18:50,_:e@18:53] type=Short call=ko
 expr e@20:78 name(a) type=Int ref=golden.sema.minComparator2.$6.a
 expr e@20:81 name(b) type=Int ref=golden.sema.minComparator2.$6.b
 expr e@20:84 name(comparator) type=kotlin.Comparator<Int> ref=golden.sema.minComparator2.$6.comparator
-expr e@20:72 call callee=e@20:72#1 args=[_:e@20:78,_:e@20:81,_:e@20:84] type=Int call=kotlin.comparisons.minOf#33 targs=[Int]
+expr e@20:72 call callee=e@20:72#1 args=[_:e@20:78,_:e@20:81,_:e@20:84] type=Int call=kotlin.comparisons.minOf#21 targs=[Int]
 expr e@21:99 name(a) type=Int ref=golden.sema.minComparatorVararg.$8.a
 expr e@21:102 name(b) type=Int ref=golden.sema.minComparatorVararg.$8.b
 expr e@21:105 name(c) type=Int ref=golden.sema.minComparatorVararg.$8.c
 expr e@21:108 name(d) type=Int ref=golden.sema.minComparatorVararg.$8.d
 expr e@21:124 name(comparator) type=kotlin.Comparator<Int> ref=golden.sema.minComparatorVararg.$8.comparator
-expr e@21:93 call callee=e@21:93#1 args=[_:e@21:99,_:e@21:102,_:e@21:105,_:e@21:108,comparator:e@21:124] type=Int call=kotlin.comparisons.minOf#35 targs=[Int]
+expr e@21:93 call callee=e@21:93#1 args=[_:e@21:99,_:e@21:102,_:e@21:105,_:e@21:108,comparator:e@21:124] type=Int call=kotlin.comparisons.minOf#23 targs=[Int]
 expr e@22:69 name(a) type=String ref=golden.sema.minComparable3.$4.a
 expr e@22:72 name(b) type=String ref=golden.sema.minComparable3.$4.b
 expr e@22:75 name(c) type=String ref=golden.sema.minComparable3.$4.c
-expr e@22:63 call callee=e@22:63#1 args=[_:e@22:69,_:e@22:72,_:e@22:75] type=String call=kotlin.comparisons.minOf#31 targs=[String]
+expr e@22:63 call callee=e@22:63#1 args=[_:e@22:69,_:e@22:72,_:e@22:75] type=String call=kotlin.comparisons.minOf#19 targs=[String]
 expr e@23:55 name(a) type=Byte ref=golden.sema.minByte3.$1.a
 expr e@23:58 name(b) type=Byte ref=golden.sema.minByte3.$1.b
 expr e@23:61 name(c) type=Byte ref=golden.sema.minByte3.$1.c
@@ -202,4 +200,4 @@ expr e@25:86 name(a) type=Int ref=golden.sema.minComparator3.$7.a
 expr e@25:89 name(b) type=Int ref=golden.sema.minComparator3.$7.b
 expr e@25:92 name(c) type=Int ref=golden.sema.minComparator3.$7.c
 expr e@25:108 name(comparator) type=kotlin.Comparator<Int> ref=golden.sema.minComparator3.$7.comparator
-expr e@25:80 call callee=e@25:80#1 args=[_:e@25:86,_:e@25:89,_:e@25:92,comparator:e@25:108] type=Int call=kotlin.comparisons.minOf#34 targs=[Int]
+expr e@25:80 call callee=e@25:80#1 args=[_:e@25:86,_:e@25:89,_:e@25:92,comparator:e@25:108] type=Int call=kotlin.comparisons.minOf#22 targs=[Int]

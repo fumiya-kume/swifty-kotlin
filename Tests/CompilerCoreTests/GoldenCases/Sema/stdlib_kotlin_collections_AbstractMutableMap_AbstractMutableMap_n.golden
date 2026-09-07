@@ -7,16 +7,6 @@ symbol fq=golden.sema.abstractMutableMapSurface.$0.amount kind=valueParameter vi
 symbol fq=golden.sema.abstractMutableMapSurface.$0.key kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.abstractMutableMapSurface.$0.source kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.abstractMutableMapSurface.$0.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.AbstractMutableMap kind=class vis=public flags=abstractType|openType type=kotlin.collections.AbstractMutableMap<kotlin.collections.AbstractMutableMap.K, kotlin.collections.AbstractMutableMap.V>
-symbol fq=kotlin.collections.AbstractMutableMap.K kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.AbstractMutableMap.V kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Collection.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableCollection kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableSet kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Set.E kind=typeParameter vis=private flags=_
 file fstdlib_kotlin_collections_AbstractMutableMap_AbstractMutableMap_n package=golden.sema
   decl golden.sema.ProbeMutableMap class ProbeMutableMap sym=golden.sema.ProbeMutableMap
   decl golden.sema.abstractMutableMapSurface fun abstractMutableMapSurface sym=golden.sema.abstractMutableMapSurface

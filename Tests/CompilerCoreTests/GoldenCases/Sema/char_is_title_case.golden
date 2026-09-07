@@ -1,6 +1,5 @@
 symbol fq=charIsTitleCase kind=function vis=public flags=_ sig=recv=_ params=[Char] ret=Boolean
 symbol fq=charIsTitleCase.$0.c kind=valueParameter vis=private flags=_
-symbol fq=kotlin.text.isTitleCase kind=function vis=public flags=synthetic sig=recv=Char params=[] ret=Boolean
 file fchar_is_title_case package=_
   decl charIsTitleCase fun charIsTitleCase sym=charIsTitleCase
 expr e@1:41 name(c) type=Char ref=charIsTitleCase.$0.c

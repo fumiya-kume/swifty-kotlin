@@ -8,9 +8,6 @@ symbol fq=golden.sema.makeULongRange kind=function vis=public flags=_ sig=recv=_
 symbol fq=golden.sema.makeULongRange.$3.endInclusive kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.makeULongRange.$3.start kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.useULongRangeCompanion kind=function vis=public flags=_ sig=recv=_ params=[] ret=Any
-symbol fq=kotlin.ranges.ClosedRange kind=interface vis=public flags=_
-symbol fq=kotlin.ranges.ULongProgression kind=class vis=public flags=synthetic|openType
-symbol fq=kotlin.ranges.ULongRange kind=class vis=public flags=_
 file fstdlib_kotlin_ranges_ULongRange_n_n package=golden.sema
   decl golden.sema.makeULongRange fun makeULongRange sym=golden.sema.makeULongRange
   decl golden.sema.acceptULongRangeProgression fun acceptULongRangeProgression sym=golden.sema.acceptULongRangeProgression

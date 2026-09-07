@@ -5,4 +5,4 @@ file fminof_ubyte_2args package=golden.sema
   decl golden.sema.twoArgMinUByte fun twoArgMinUByte sym=golden.sema.twoArgMinUByte
 expr e@3:55 name(a) type=UByte ref=golden.sema.twoArgMinUByte.$0.a
 expr e@3:58 name(b) type=UByte ref=golden.sema.twoArgMinUByte.$0.b
-expr e@3:49 call callee=e@3:49#1 args=[_:e@3:55,_:e@3:58] type=UByte call=kotlin.comparisons.minOf#18
+expr e@3:49 call callee=e@3:49#1 args=[_:e@3:55,_:e@3:58] type=UByte call=kotlin.comparisons.minOf#24

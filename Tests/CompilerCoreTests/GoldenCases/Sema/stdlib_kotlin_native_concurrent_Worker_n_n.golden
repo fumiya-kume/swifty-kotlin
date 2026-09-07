@@ -1,5 +1,3 @@
-symbol fq=kotlin.native.concurrent.Worker kind=class vis=public flags=synthetic|valueType type=kotlin.native.concurrent.Worker
-symbol fq=kotlin.native.concurrent.Worker.Companion kind=object vis=public flags=synthetic type=kotlin.native.concurrent.Worker.Companion
 symbol fq=passWorker kind=function vis=public flags=_ sig=recv=_ params=[kotlin.native.concurrent.Worker] ret=kotlin.native.concurrent.Worker
 symbol fq=passWorker.$0.worker kind=valueParameter vis=private flags=_
 symbol fq=workerCompanionType kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.native.concurrent.Worker.Companion

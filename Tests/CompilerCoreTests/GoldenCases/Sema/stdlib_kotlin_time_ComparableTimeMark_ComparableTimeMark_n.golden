@@ -3,12 +3,6 @@ symbol fq=__local_1.absent kind=local vis=private flags=_ type=Any?
 symbol fq=__local_2.shifted kind=local vis=private flags=_ type=kotlin.time.ComparableTimeMark
 symbol fq=__local_3.heap kind=local vis=private flags=_ type=kotlin.time.ComparableTimeMark
 symbol fq=comparableTimeMarkProbe kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=kotlin.time.AbstractLongTimeSource kind=class vis=public flags=abstractType|openType
-symbol fq=kotlin.time.ComparableTimeMark kind=interface vis=public flags=_
-symbol fq=kotlin.time.Duration.Companion kind=object vis=public flags=synthetic|static
-symbol fq=kotlin.time.TestTimeSource kind=class vis=public flags=_
-symbol fq=kotlin.time.TimeSource kind=interface vis=public flags=_
-symbol fq=kotlin.time.TimeSource.Monotonic kind=object vis=public flags=static
 file fstdlib_kotlin_time_ComparableTimeMark_ComparableTimeMark_n package=_
   decl comparableTimeMarkProbe fun comparableTimeMarkProbe sym=comparableTimeMarkProbe
 expr e@9:37 name(TimeSource) type=kotlin.time.TimeSource ref=kotlin.time.TimeSource

@@ -5,7 +5,6 @@ symbol fq=golden.sema.max.$0.T kind=typeParameter vis=private flags=_
 symbol fq=golden.sema.max.$0.a kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.max.$0.b kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.useMax kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.Comparable kind=interface vis=public flags=_
 file ff_bound_generics package=golden.sema
   decl golden.sema.max fun max sym=golden.sema.max
   decl golden.sema.useMax fun useMax sym=golden.sema.useMax

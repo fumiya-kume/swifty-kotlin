@@ -5,17 +5,6 @@ symbol fq=__local_3.vararg kind=local vis=private flags=_ type=kotlin.collection
 symbol fq=__local_4.entry kind=local vis=private flags=_ type=kotlin.collections.Map.Entry<String?, Int?>
 symbol fq=__local_5.hash kind=local vis=private flags=_ type=Int
 symbol fq=golden.sema.mapSingletonOverload kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.Map<String?, Int?>
-symbol fq=kotlin.Any kind=class vis=public flags=synthetic
-symbol fq=kotlin.Any.hashCode kind=function vis=public flags=synthetic|openType sig=recv=kotlin.Any params=[] ret=Int
-symbol fq=kotlin.Pair kind=class vis=public flags=_
-symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map.Entry kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map.Entry.key kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.K
-symbol fq=kotlin.collections.Map.Entry.value kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.V
-symbol fq=kotlin.collections.Map.K kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.V kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.get kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Map<kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[kotlin.collections.Map.K] ret=kotlin.collections.Map.V?
-symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_n_map package=golden.sema
   decl golden.sema.mapSingletonOverload fun mapSingletonOverload sym=golden.sema.mapSingletonOverload
 expr e@4:65 name(null) type=Nothing?

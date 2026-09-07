@@ -5,8 +5,6 @@ symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[]
 symbol fq=golden.sema.show kind=function vis=private flags=_ sig=recv=_ params=[String,UShort] ret=Unit
 symbol fq=golden.sema.show.$0.label kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.show.$0.value kind=valueParameter vis=private flags=_
-symbol fq=kotlin.Short kind=class vis=public flags=synthetic
-symbol fq=kotlin.Short.Companion kind=object vis=public flags=synthetic|static
 file fstdlib_kotlin_UShort_n_n package=golden.sema annotations=[@file:Suppress("INVISIBLE_MEMBER","INVISIBLE_REFERENCE")]
   decl golden.sema.show fun show sym=golden.sema.show
   decl golden.sema.main fun main sym=golden.sema.main

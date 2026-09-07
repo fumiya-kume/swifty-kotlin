@@ -1,14 +1,6 @@
 symbol fq=__local_0.entries kind=local vis=private flags=_ type=kotlin.enums.EnumEntries<kotlin.LazyThreadSafetyMode>
 symbol fq=__local_1.values kind=local vis=private flags=_ type=kotlin.Array<kotlin.LazyThreadSafetyMode>
 symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
-symbol fq=kotlin.LazyThreadSafetyMode.Companion.entries kind=property vis=public flags=synthetic|static type=kotlin.enums.EnumEntries<kotlin.LazyThreadSafetyMode>
-symbol fq=kotlin.LazyThreadSafetyMode.Companion.valueOf kind=function vis=public flags=synthetic|static sig=recv=kotlin.LazyThreadSafetyMode.Companion params=[String] ret=kotlin.LazyThreadSafetyMode
-symbol fq=kotlin.LazyThreadSafetyMode.Companion.valueOf.name kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.LazyThreadSafetyMode.values kind=function vis=public flags=synthetic|static sig=recv=_ params=[] ret=kotlin.Array<kotlin.LazyThreadSafetyMode>
-symbol fq=kotlin.enums.EnumEntries kind=interface vis=public flags=synthetic
-symbol fq=kotlin.enums.EnumEntries.T kind=typeParameter vis=private flags=_
-symbol fq=kotlin.enums.EnumEntries.get kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.enums.EnumEntries<out kotlin.enums.EnumEntries.T> params=[Int] ret=kotlin.enums.EnumEntries.T
 file fstdlib_kotlin_LazyThreadSafetyMode_LazyThreadSafetyMode_n package=golden.sema
   decl golden.sema.main fun main sym=golden.sema.main
 expr e@4:19 name(LazyThreadSafetyMode) type=kotlin.LazyThreadSafetyMode.Companion ref=kotlin.LazyThreadSafetyMode

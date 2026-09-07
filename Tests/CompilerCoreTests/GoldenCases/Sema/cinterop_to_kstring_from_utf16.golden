@@ -1,9 +1,5 @@
 symbol fq=golden.sema.decodeUtf16 kind=function vis=public flags=_ sig=recv=_ params=[kotlinx.cinterop.CPointer<kotlinx.cinterop.UShortVar>] ret=String
 symbol fq=golden.sema.decodeUtf16.$0.ptr kind=valueParameter vis=private flags=_
-symbol fq=kotlinx.cinterop.CPointer kind=class vis=public flags=synthetic type=kotlinx.cinterop.CPointer<kotlinx.cinterop.CPointer.T>
-symbol fq=kotlinx.cinterop.CPointer.T kind=typeParameter vis=private flags=_
-symbol fq=kotlinx.cinterop.UShortVar kind=class vis=public flags=synthetic type=kotlinx.cinterop.UShortVar
-symbol fq=kotlinx.cinterop.toKStringFromUtf16 kind=function vis=public flags=synthetic sig=recv=kotlinx.cinterop.CPointer<kotlinx.cinterop.UShortVar> params=[] ret=String
 file fcinterop_to_kstring_from_utf16 package=golden.sema
   decl golden.sema.decodeUtf16 fun decodeUtf16 sym=golden.sema.decodeUtf16
 expr e@9:53 name(ptr) type=kotlinx.cinterop.CPointer<kotlinx.cinterop.UShortVar> ref=golden.sema.decodeUtf16.$0.ptr

@@ -143,7 +143,8 @@ final class DataFlowSemaPhase: CompilerPhase {
             symbols: symbols,
             types: types,
             diagnostics: ctx.diagnostics,
-            interner: ctx.interner
+            interner: ctx.interner,
+            bundledIndex: bundledIndex
         )
         normalizeImportedLibraryMemberSignatures(
             importDeferredWork,

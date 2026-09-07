@@ -2,13 +2,6 @@ symbol fq=golden.sema.futureStateEntries kind=function vis=public flags=_ sig=re
 symbol fq=golden.sema.futureStateValue kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 symbol fq=golden.sema.futureStateValueOf kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.native.concurrent.FutureState
 symbol fq=golden.sema.futureStateValues kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Array<kotlin.native.concurrent.FutureState>
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
-symbol fq=kotlin.enums.EnumEntries kind=interface vis=public flags=synthetic
-symbol fq=kotlin.native.concurrent.FutureState kind=enumClass vis=public flags=_
-symbol fq=kotlin.native.concurrent.FutureState.Companion.entries kind=property vis=public flags=synthetic|static type=kotlin.enums.EnumEntries<kotlin.native.concurrent.FutureState>
-symbol fq=kotlin.native.concurrent.FutureState.Companion.valueOf kind=function vis=public flags=synthetic|static sig=recv=kotlin.native.concurrent.FutureState.Companion params=[String] ret=kotlin.native.concurrent.FutureState
-symbol fq=kotlin.native.concurrent.FutureState.Companion.valueOf.name kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.native.concurrent.FutureState.values kind=function vis=public flags=synthetic|static sig=recv=_ params=[] ret=kotlin.Array<kotlin.native.concurrent.FutureState>
 file fstdlib_kotlin_native_concurrent_FutureState_FutureState_n package=golden.sema annotations=[@file:OptIn(kotlin.native.concurrent.ObsoleteWorkersApi::class)]
   decl golden.sema.futureStateEntries fun futureStateEntries sym=golden.sema.futureStateEntries
   decl golden.sema.futureStateValue fun futureStateValue sym=golden.sema.futureStateValue

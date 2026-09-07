@@ -9,9 +9,6 @@ symbol fq=golden.sema.fromMessageCause.$2.cause kind=valueParameter vis=private 
 symbol fq=golden.sema.fromMessageCause.$2.message kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.fromNoArg kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.RuntimeException
 symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.Exception kind=class vis=public flags=openType type=kotlin.Exception
-symbol fq=kotlin.RuntimeException kind=class vis=public flags=openType
-symbol fq=kotlin.Throwable kind=class vis=public flags=openType
 file fstdlib_kotlin_RuntimeException_n_n package=golden.sema
   decl golden.sema.fromNoArg fun fromNoArg sym=golden.sema.fromNoArg
   decl golden.sema.fromMessage fun fromMessage sym=golden.sema.fromMessage

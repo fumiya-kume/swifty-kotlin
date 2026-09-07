@@ -1,6 +1,5 @@
 symbol fq=__local_0.r kind=local vis=private flags=_ type=kotlin.random.Random
 symbol fq=__local_1.a kind=local vis=private flags=_ type=Int
-symbol fq=kotlin.ranges.IntRange kind=class vis=public flags=synthetic
 symbol fq=useRandomNextIntRange kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file frandom_nextint_range package=_
   decl useRandomNextIntRange fun useRandomNextIntRange sym=useRandomNextIntRange

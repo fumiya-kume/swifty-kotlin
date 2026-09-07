@@ -5,7 +5,6 @@ symbol fq=golden.sema.assign.$0.V kind=typeParameter vis=private flags=_
 symbol fq=golden.sema.assign.$0.property kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.assign.$0.receiver kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.assign.$0.value kind=valueParameter vis=private flags=_
-symbol fq=kotlin.reflect.KProperty kind=interface vis=public flags=synthetic
 file fstdlib_kotlin_KMutableProperty1_n package=golden.sema
   decl golden.sema.Counter class Counter sym=golden.sema.Counter
   decl golden.sema.assign fun assign sym=golden.sema.assign

@@ -1,5 +1,4 @@
 symbol fq=golden.sema.makeSweepStatistics kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.native.runtime.SweepStatistics
-symbol fq=kotlin.native.runtime.SweepStatistics kind=class vis=public flags=_ type=kotlin.native.runtime.SweepStatistics
 file fstdlib_kotlin_native_runtime_SweepStatistics_n_n package=golden.sema
   decl golden.sema.makeSweepStatistics fun makeSweepStatistics sym=golden.sema.makeSweepStatistics
 expr e@7:62 long(1) type=Long

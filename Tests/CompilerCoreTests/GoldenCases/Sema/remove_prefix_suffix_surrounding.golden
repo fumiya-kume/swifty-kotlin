@@ -1,4 +1,3 @@
-symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
 symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fremove_prefix_suffix_surrounding package=_
   decl main fun main sym=main

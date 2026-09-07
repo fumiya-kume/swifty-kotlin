@@ -6,7 +6,6 @@ symbol fq=golden.sema.messageAndCause kind=function vis=public flags=_ sig=recv=
 symbol fq=golden.sema.messageAndCause.$2.cause kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.messageAndCause.$2.message kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.noArg kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.IllegalStateException
-symbol fq=kotlin.Throwable kind=class vis=public flags=openType
 file fstdlib_kotlin_IllegalStateException_n_n package=golden.sema
   decl golden.sema.noArg fun noArg sym=golden.sema.noArg
   decl golden.sema.message fun message sym=golden.sema.message

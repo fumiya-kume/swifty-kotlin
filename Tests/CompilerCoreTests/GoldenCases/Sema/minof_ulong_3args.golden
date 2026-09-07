@@ -7,4 +7,4 @@ file fminof_ulong_3args package=golden.sema
 expr e@3:69 name(a) type=ULong ref=golden.sema.minOfULongThreeArg.$0.a
 expr e@3:72 name(b) type=ULong ref=golden.sema.minOfULongThreeArg.$0.b
 expr e@3:75 name(c) type=ULong ref=golden.sema.minOfULongThreeArg.$0.c
-expr e@3:63 call callee=e@3:63#1 args=[_:e@3:69,_:e@3:72,_:e@3:75] type=ULong call=kotlin.comparisons.minOf#26
+expr e@3:63 call callee=e@3:63#1 args=[_:e@3:69,_:e@3:72,_:e@3:75] type=ULong call=kotlin.comparisons.minOf#32

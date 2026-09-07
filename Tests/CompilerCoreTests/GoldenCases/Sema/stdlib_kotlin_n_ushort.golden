@@ -5,7 +5,6 @@ symbol fq=__local_3.values kind=local vis=private flags=_ type=kotlin.UShortArra
 symbol fq=__local_4.spreadValues kind=local vis=private flags=_ type=kotlin.UShortArray
 symbol fq=__local_5.spread kind=local vis=private flags=_ type=kotlin.UShortArray
 symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.UShortArray#0 kind=class vis=public flags=synthetic
 file fstdlib_kotlin_n_ushort package=golden.sema
   decl golden.sema.main fun main sym=golden.sema.main
 expr e@4:17 call callee=e@4:17#1 args=[] type=kotlin.UShortArray call=kotlin.ushortArrayOf

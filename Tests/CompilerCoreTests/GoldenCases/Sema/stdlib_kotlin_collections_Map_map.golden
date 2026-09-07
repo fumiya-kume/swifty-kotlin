@@ -1,13 +1,3 @@
-symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map.Entry kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map.Entry.key kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.K
-symbol fq=kotlin.collections.Map.Entry.value kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.V
-symbol fq=kotlin.collections.Map.K kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.V kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableCollection kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableSet kind=interface vis=public flags=synthetic
 symbol fq=mapKeysToCase kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, String?>,kotlin.collections.MutableMap<Any?, Any?>] ret=kotlin.collections.MutableMap<Any?, Any?>
 symbol fq=mapKeysToCase.$0.destination kind=valueParameter vis=private flags=_
 symbol fq=mapKeysToCase.$0.source kind=valueParameter vis=private flags=_

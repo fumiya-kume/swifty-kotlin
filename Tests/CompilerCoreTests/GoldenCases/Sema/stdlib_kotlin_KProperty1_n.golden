@@ -10,7 +10,6 @@ symbol fq=golden.sema.read.$1.V kind=typeParameter vis=private flags=_
 symbol fq=golden.sema.read.$1.metadata kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.read.$1.property kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.read.$1.receiver kind=valueParameter vis=private flags=_
-symbol fq=kotlin.reflect.KProperty kind=interface vis=public flags=synthetic
 file fstdlib_kotlin_KProperty1_n package=golden.sema
   decl golden.sema.Person class Person sym=golden.sema.Person
   decl golden.sema.read fun read sym=golden.sema.read

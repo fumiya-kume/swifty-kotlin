@@ -4,28 +4,6 @@ symbol fq=__local_2.delegated kind=local vis=private flags=mutable type=Int
 symbol fq=__local_3.defaulted kind=local vis=private flags=_ type=kotlin.collections.MutableMap<String, Int?>
 symbol fq=__local_4.iterator kind=local vis=private flags=_ type=kotlin.collections.MutableIterator<kotlin.collections.MutableMap.MutableEntry<String, Int?>>
 symbol fq=__local_5.entry kind=local vis=private flags=_ type=kotlin.collections.MutableMap.MutableEntry<String, Int?>
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
-symbol fq=kotlin.Pair kind=class vis=public flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Iterator kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Iterator.T kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterator.hasNext kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Iterator<out kotlin.collections.Iterator.T> params=[] ret=Boolean type=() -> Boolean
-symbol fq=kotlin.collections.Iterator.next kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Iterator<out kotlin.collections.Iterator.T> params=[] ret=kotlin.collections.Iterator.T type=() -> kotlin.collections.Iterator.T
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map.Entry kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map.Entry.key kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.K
-symbol fq=kotlin.collections.Map.K kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.V kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.get kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Map<kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[kotlin.collections.Map.K] ret=kotlin.collections.Map.V?
-symbol fq=kotlin.collections.MutableIterator kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableIterator.T kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableMap.MutableEntry kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableMap.MutableEntry.K kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableMap.MutableEntry.V kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableMap.MutableEntry.setValue kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableMap.MutableEntry<out kotlin.collections.MutableMap.MutableEntry.K, out kotlin.collections.MutableMap.MutableEntry.V> params=[kotlin.collections.MutableMap.MutableEntry.V] ret=kotlin.collections.MutableMap.MutableEntry.V
-symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
 symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_collections_MutableMap_n package=_
   decl main fun main sym=main
@@ -156,7 +134,7 @@ expr e@24:21#1 memberCall recv=e@24:21 callee=withDefault args=[_:e@24:37] type=
 expr e@24:5 localDecl defaulted mutable=0 type=_ init=e@24:21#1 type=Unit ref=__local_3.defaulted
 expr e@25:13 name(defaulted) type=kotlin.collections.MutableMap<String, Int?> ref=__local_3.defaulted
 expr e@25:32 string(null) type=String
-expr e@25:13#1 memberCall recv=e@25:13 callee=getValue args=[_:e@25:32] type=Int? call=kotlin.collections.getValue#1
+expr e@25:13#1 memberCall recv=e@25:13 callee=getValue args=[_:e@25:32] type=Int? call=kotlin.collections.getValue#0
 expr e@25:5 call callee=e@25:5#1 args=[_:e@25:13#1] type=Unit call=kotlin.io.println#1
 expr e@26:5 name(defaulted) type=kotlin.collections.MutableMap<String, Int?> ref=__local_3.defaulted
 expr e@26:15 string(wrapper) type=String

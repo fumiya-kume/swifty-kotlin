@@ -8,10 +8,6 @@ symbol fq=__local_6.freezingEnabled kind=local vis=private flags=_ type=Boolean
 symbol fq=__local_7.programName kind=local vis=private flags=_ type=String?
 symbol fq=__local_8.leakChecker kind=local vis=private flags=_ type=Boolean
 symbol fq=__local_9.cleanersChecker kind=local vis=private flags=_ type=Boolean
-symbol fq=kotlin.Enum kind=class vis=public flags=abstractType|openType
-symbol fq=kotlin.Enum.T kind=typeParameter vis=private flags=_
-symbol fq=kotlin.native.CpuArchitecture kind=enumClass vis=public flags=synthetic
-symbol fq=kotlin.native.MemoryModel kind=enumClass vis=public flags=synthetic
 symbol fq=platformContract kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 file fstdlib_kotlin_native_Platform_Platform_n package=_ annotations=[@file:OptIn(kotlin.experimental.ExperimentalNativeApi::class),@file:Suppress("DEPRECATION")]
   decl platformContract fun platformContract sym=platformContract

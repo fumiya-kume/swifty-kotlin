@@ -9,4 +9,4 @@ expr e@3:81 name(a) type=UShort ref=golden.sema.varargMinUShort.$0.a
 expr e@3:84 name(b) type=UShort ref=golden.sema.varargMinUShort.$0.b
 expr e@3:87 name(c) type=UShort ref=golden.sema.varargMinUShort.$0.c
 expr e@3:90 name(d) type=UShort ref=golden.sema.varargMinUShort.$0.d
-expr e@3:75 call callee=e@3:75#1 args=[_:e@3:81,_:e@3:84,_:e@3:87,_:e@3:90] type=UShort call=kotlin.comparisons.minOf#28
+expr e@3:75 call callee=e@3:75#1 args=[_:e@3:81,_:e@3:84,_:e@3:87,_:e@3:90] type=UShort call=kotlin.comparisons.minOf#34

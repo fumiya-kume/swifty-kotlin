@@ -5,4 +5,4 @@ file fminof_ushort_2args package=golden.sema
   decl golden.sema.twoArgMinUShort fun twoArgMinUShort sym=golden.sema.twoArgMinUShort
 expr e@3:59 name(a) type=UShort ref=golden.sema.twoArgMinUShort.$0.a
 expr e@3:62 name(b) type=UShort ref=golden.sema.twoArgMinUShort.$0.b
-expr e@3:53 call callee=e@3:53#1 args=[_:e@3:59,_:e@3:62] type=UShort call=kotlin.comparisons.minOf#27
+expr e@3:53 call callee=e@3:53#1 args=[_:e@3:59,_:e@3:62] type=UShort call=kotlin.comparisons.minOf#33

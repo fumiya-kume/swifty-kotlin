@@ -12,12 +12,6 @@ symbol fq=golden.sema.takesPointer kind=function vis=public flags=_ sig=recv=_ p
 symbol fq=golden.sema.takesPointer.$2.ints kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.takesPointer.$2.opaque kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.takesPointer.$2.ptr kind=valueParameter vis=private flags=_
-symbol fq=kotlinx.cinterop.CPointed kind=class vis=public flags=synthetic|abstractType type=kotlinx.cinterop.CPointed
-symbol fq=kotlinx.cinterop.CPointer kind=class vis=public flags=synthetic type=kotlinx.cinterop.CPointer<kotlinx.cinterop.CPointer.T>
-symbol fq=kotlinx.cinterop.CPointer.T kind=typeParameter vis=private flags=_
-symbol fq=kotlinx.cinterop.CValuesRef kind=class vis=public flags=synthetic|abstractType type=kotlinx.cinterop.CValuesRef<kotlinx.cinterop.CValuesRef.T>
-symbol fq=kotlinx.cinterop.CValuesRef.T kind=typeParameter vis=private flags=_
-symbol fq=kotlinx.cinterop.IntVar kind=class vis=public flags=synthetic type=kotlinx.cinterop.IntVar
 file fnative_annotations package=golden.sema annotations=[@file:OptIn(kotlin.experimental.ExperimentalNativeApi::class,kotlin.experimental.ExperimentalObjCEnum::class,kotlin.experimental.ExperimentalObjCName::class,kotlin.experimental.ExperimentalObjCRefinement::class)]
   decl golden.sema.SwiftRefined class SwiftRefined sym=golden.sema.SwiftRefined
   decl golden.sema.NativeEnumBridge class NativeEnumBridge sym=golden.sema.NativeEnumBridge

@@ -1,9 +1,5 @@
 symbol fq=golden.sema.resultFailure kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Result<String>
 symbol fq=golden.sema.resultSuccess kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Result<Int>
-symbol fq=kotlin.Result kind=class vis=public flags=_ type=kotlin.Result<kotlin.Result.T>
-symbol fq=kotlin.Result.T kind=typeParameter vis=private flags=_
-symbol fq=kotlin.RuntimeException kind=class vis=public flags=openType
-symbol fq=kotlin.Throwable kind=class vis=public flags=openType
 file fstdlib_kotlin_Result_Companion_Companion_n package=golden.sema
   decl golden.sema.resultSuccess fun resultSuccess sym=golden.sema.resultSuccess
   decl golden.sema.resultFailure fun resultFailure sym=golden.sema.resultFailure

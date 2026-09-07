@@ -2,12 +2,6 @@ symbol fq=__local_0.pinned kind=local vis=private flags=_ type=kotlinx.cinterop.
 symbol fq=__local_1.retrieved kind=local vis=private flags=_ type=Any
 symbol fq=golden.sema.testPin kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=Any
 symbol fq=golden.sema.testPin.$0.obj kind=valueParameter vis=private flags=_
-symbol fq=kotlinx.cinterop.Pinned kind=class vis=public flags=synthetic type=kotlinx.cinterop.Pinned<kotlinx.cinterop.Pinned.T>
-symbol fq=kotlinx.cinterop.Pinned.T kind=typeParameter vis=private flags=_
-symbol fq=kotlinx.cinterop.Pinned.get kind=function vis=public flags=synthetic sig=recv=kotlinx.cinterop.Pinned<kotlinx.cinterop.Pinned.T> params=[] ret=kotlinx.cinterop.Pinned.T bounds=[Any]
-symbol fq=kotlinx.cinterop.Pinned.unpin kind=function vis=public flags=synthetic sig=recv=kotlinx.cinterop.Pinned<kotlinx.cinterop.Pinned.T> params=[] ret=Unit bounds=[Any]
-symbol fq=kotlinx.cinterop.pin kind=function vis=public flags=inlineFunction|synthetic sig=recv=kotlinx.cinterop.pin.T params=[] ret=kotlinx.cinterop.Pinned<kotlinx.cinterop.pin.T> bounds=[Any]
-symbol fq=kotlinx.cinterop.pin.T kind=typeParameter vis=private flags=synthetic
 file fcinterop_pin package=golden.sema
   decl golden.sema.testPin fun testPin sym=golden.sema.testPin
 expr e@9:31 name(obj) type=Any ref=golden.sema.testPin.$0.obj

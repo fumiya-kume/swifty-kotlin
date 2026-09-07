@@ -4,13 +4,6 @@ symbol fq=checkIn.$0.y kind=valueParameter vis=private flags=_
 symbol fq=checkNotIn kind=function vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean
 symbol fq=checkNotIn.$1.x kind=valueParameter vis=private flags=_
 symbol fq=checkNotIn.$1.y kind=valueParameter vis=private flags=_
-symbol fq=kotlin.Comparable kind=interface vis=public flags=_
-symbol fq=kotlin.ranges.OpenEndRange kind=interface vis=public flags=_
-symbol fq=kotlin.ranges.OpenEndRange.T kind=typeParameter vis=private flags=_
-symbol fq=kotlin.ranges.OpenEndRange.endExclusive kind=property vis=public flags=synthetic type=kotlin.ranges.OpenEndRange.T
-symbol fq=kotlin.ranges.rangeUntil#19 kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.ranges.rangeUntil.T params=[kotlin.ranges.rangeUntil.T] ret=kotlin.ranges.OpenEndRange<kotlin.ranges.rangeUntil.T> bounds=[kotlin.Comparable<in kotlin.ranges.rangeUntil.T>]
-symbol fq=kotlin.ranges.rangeUntil.T kind=typeParameter vis=private flags=_
-symbol fq=kotlin.ranges.rangeUntil.that kind=valueParameter vis=private flags=synthetic
 symbol fq=rangeUntilEndExclusive kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 symbol fq=rangeUntilExpr kind=function vis=public flags=_ sig=recv=_ params=[Int] ret=Boolean
 symbol fq=rangeUntilExpr.$2.n kind=valueParameter vis=private flags=_
@@ -32,9 +25,9 @@ expr e@3:43#1 notInExpr lhs=e@3:43 rhs=e@3:49#1 type=Boolean
 expr e@5:39 name(n) type=Int ref=rangeUntilExpr.$2.n
 expr e@5:44 int(0) type=Int
 expr e@5:48 int(10) type=Int
-expr e@5:44#1 binary(rangeUntil) lhs=e@5:44 rhs=e@5:48 type=kotlin.ranges.OpenEndRange<Int> call=kotlin.ranges.rangeUntil#19 targs=[Int]
-expr e@5:39#1 inExpr lhs=e@5:39 rhs=e@5:44#1 type=Boolean
+expr e@5:44#1 binary(rangeUntil) lhs=e@5:44 rhs=e@5:48 type=kotlin.ranges.IntRange call=kotlin.ranges.rangeUntil#6
+expr e@5:39#1 inExpr lhs=e@5:39 rhs=e@5:44#1 type=Boolean call=kotlin.ranges.contains#3
 expr e@7:37 int(0) type=Int
 expr e@7:50 int(10) type=Int
-expr e@7:37#1 memberCall recv=e@7:37 callee=rangeUntil args=[_:e@7:50] type=kotlin.ranges.OpenEndRange<Int> call=kotlin.ranges.rangeUntil#19 targs=[Int]
-expr e@7:37#2 memberCall recv=e@7:37#1 callee=endExclusive args=[] type=Int ref=kotlin.ranges.OpenEndRange.endExclusive
+expr e@7:37#1 memberCall recv=e@7:37 callee=rangeUntil args=[_:e@7:50] type=kotlin.ranges.IntRange call=kotlin.ranges.rangeUntil#6
+expr e@7:37#2 memberCall recv=e@7:37#1 callee=endExclusive args=[] type=Int ref=kotlin.ranges.IntRange.endExclusive

@@ -28,7 +28,6 @@ symbol fq=__local_26.usToBub kind=local vis=private flags=_ type=UByte
 symbol fq=__local_27.ubId kind=local vis=private flags=_ type=UByte
 symbol fq=__local_28.usId kind=local vis=private flags=_ type=UShort
 symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.ULongArray#0 kind=class vis=public flags=synthetic
 file funsigned_integers package=golden.sema
   decl golden.sema.main fun main sym=golden.sema.main
 expr e@4:19 uint(42) type=UInt

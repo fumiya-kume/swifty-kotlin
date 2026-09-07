@@ -5,4 +5,4 @@ file fminof_ulong_2args package=golden.sema
   decl golden.sema.minOfULongTwoArg fun minOfULongTwoArg sym=golden.sema.minOfULongTwoArg
 expr e@3:57 name(a) type=ULong ref=golden.sema.minOfULongTwoArg.$0.a
 expr e@3:60 name(b) type=ULong ref=golden.sema.minOfULongTwoArg.$0.b
-expr e@3:51 call callee=e@3:51#1 args=[_:e@3:57,_:e@3:60] type=ULong call=kotlin.comparisons.minOf#24
+expr e@3:51 call callee=e@3:51#1 args=[_:e@3:57,_:e@3:60] type=ULong call=kotlin.comparisons.minOf#30

@@ -7,8 +7,6 @@ symbol fq=__local_5.explicitMin kind=local vis=private flags=_ type=Long
 symbol fq=__local_6.explicitBits kind=local vis=private flags=_ type=Int
 symbol fq=__local_7.explicitBytes kind=local vis=private flags=_ type=Int
 symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.Long kind=class vis=public flags=synthetic
-symbol fq=kotlin.Long.Companion kind=object vis=public flags=synthetic|static
 file fstdlib_kotlin_Long_Companion_Companion_n package=golden.sema
   decl golden.sema.main fun main sym=golden.sema.main
 expr e@4:15 name(Long) type=kotlin.Long.Companion ref=kotlin.Long

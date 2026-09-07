@@ -4,7 +4,6 @@ symbol fq=golden.sema.makeNullablePair.$0.second kind=valueParameter vis=private
 symbol fq=golden.sema.makePair kind=function vis=public flags=_ sig=recv=_ params=[Int,String] ret=kotlin.Pair<Int, String>
 symbol fq=golden.sema.makePair.$1.first kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.makePair.$1.second kind=valueParameter vis=private flags=_
-symbol fq=kotlin.Pair kind=class vis=public flags=_
 file fstdlib_kotlin_Pair_n_n package=golden.sema
   decl golden.sema.makePair fun makePair sym=golden.sema.makePair
   decl golden.sema.makeNullablePair fun makeNullablePair sym=golden.sema.makeNullablePair

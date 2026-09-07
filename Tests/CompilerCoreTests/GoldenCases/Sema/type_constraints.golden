@@ -31,7 +31,6 @@ symbol fq=golden.sema.processItem kind=function vis=public flags=_ sig=recv=_ pa
 symbol fq=golden.sema.processItem.$5.T kind=typeParameter vis=private flags=_
 symbol fq=golden.sema.processItem.$5.v kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.useConstraints kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.Comparable kind=interface vis=public flags=_
 file ftype_constraints package=golden.sema
   decl golden.sema.clamp fun clamp sym=golden.sema.clamp
   decl golden.sema.maxItem fun maxItem sym=golden.sema.maxItem

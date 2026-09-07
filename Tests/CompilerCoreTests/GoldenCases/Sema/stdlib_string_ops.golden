@@ -36,13 +36,6 @@ symbol fq=golden.sema.useToIntOrNullInvalid kind=function vis=public flags=_ sig
 symbol fq=golden.sema.useToIntOrNullValid kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int?
 symbol fq=golden.sema.useTrim kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
 symbol fq=golden.sema.useUppercase kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
-symbol fq=kotlin.ranges.IntRange kind=class vis=public flags=synthetic
-symbol fq=kotlin.text.equals#1 kind=function vis=public flags=synthetic sig=recv=String params=[String?] ret=Boolean
-symbol fq=kotlin.text.equals.other kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.text.format kind=function vis=public flags=synthetic sig=recv=String params=[Any?] ret=String vararg=[1]
-symbol fq=kotlin.text.format.args kind=valueParameter vis=private flags=synthetic
 file fstdlib_string_ops package=golden.sema
   decl golden.sema.useTrim fun useTrim sym=golden.sema.useTrim
   decl golden.sema.useSplit fun useSplit sym=golden.sema.useSplit

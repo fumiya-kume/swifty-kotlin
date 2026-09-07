@@ -2,7 +2,6 @@ symbol fq=golden.sema.charSequenceAny kind=function vis=public flags=_ sig=recv=
 symbol fq=golden.sema.charSequenceAny.$0.cs kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.emptyAny kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
 symbol fq=golden.sema.stringAny kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
-symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
 file fstdlib_kotlin_text_CharSequence_any package=golden.sema
   decl golden.sema.charSequenceAny fun charSequenceAny sym=golden.sema.charSequenceAny
   decl golden.sema.stringAny fun stringAny sym=golden.sema.stringAny

@@ -5,8 +5,6 @@ symbol fq=golden.sema.acceptSet kind=function vis=public flags=_ sig=recv=_ para
 symbol fq=golden.sema.acceptSet.$1.values kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.probe kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.ProbeSet] ret=Unit
 symbol fq=golden.sema.probe.$2.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_n_AbstractSet package=golden.sema
   decl golden.sema.ProbeSet class ProbeSet sym=golden.sema.ProbeSet
   decl golden.sema.acceptCollection fun acceptCollection sym=golden.sema.acceptCollection

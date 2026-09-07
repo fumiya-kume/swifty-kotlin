@@ -1,9 +1,8 @@
 symbol fq=golden.sema.pickSmallerString kind=function vis=public flags=_ sig=recv=_ params=[String,String] ret=String
 symbol fq=golden.sema.pickSmallerString.$0.a kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.pickSmallerString.$0.b kind=valueParameter vis=private flags=_
-symbol fq=kotlin.Comparable kind=interface vis=public flags=_
 file fminof_comparable_2arg package=golden.sema
   decl golden.sema.pickSmallerString fun pickSmallerString sym=golden.sema.pickSmallerString
 expr e@4:61 name(a) type=String ref=golden.sema.pickSmallerString.$0.a
 expr e@4:64 name(b) type=String ref=golden.sema.pickSmallerString.$0.b
-expr e@4:55 call callee=e@4:55#1 args=[_:e@4:61,_:e@4:64] type=String call=kotlin.comparisons.minOf#30 targs=[String]
+expr e@4:55 call callee=e@4:55#1 args=[_:e@4:61,_:e@4:64] type=String call=kotlin.comparisons.minOf#18 targs=[String]

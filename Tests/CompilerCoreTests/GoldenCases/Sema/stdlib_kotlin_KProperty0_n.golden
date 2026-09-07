@@ -1,6 +1,5 @@
 symbol fq=__local_0.property kind=local vis=private flags=_ type=kotlin.reflect.KProperty0<Int>
 symbol fq=delegatedValue kind=property vis=public flags=_ type=Int
-symbol fq=kotlin.reflect.KProperty kind=interface vis=public flags=synthetic
 symbol fq=lateinitValue kind=property vis=public flags=mutable type=String
 symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=sourceValue kind=property vis=public flags=mutable type=Int

@@ -6,15 +6,6 @@ symbol fq=golden.sema.appendWithBufferedWriter.$0.path kind=valueParameter vis=p
 symbol fq=golden.sema.writeWithBufferedWriter kind=function vis=public flags=_ sig=recv=_ params=[String,String] ret=Unit
 symbol fq=golden.sema.writeWithBufferedWriter.$1.path kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.writeWithBufferedWriter.$1.text kind=valueParameter vis=private flags=_
-symbol fq=java.io.BufferedWriter kind=class vis=public flags=synthetic type=java.io.BufferedWriter
-symbol fq=java.io.BufferedWriter.flush kind=function vis=public flags=synthetic sig=recv=java.io.BufferedWriter params=[] ret=Unit
-symbol fq=java.io.BufferedWriter.newLine kind=function vis=public flags=synthetic sig=recv=java.io.BufferedWriter params=[] ret=Unit
-symbol fq=java.io.BufferedWriter.write kind=function vis=public flags=synthetic sig=recv=java.io.BufferedWriter params=[String] ret=Unit
-symbol fq=java.io.BufferedWriter.write.text kind=valueParameter vis=private flags=synthetic
-symbol fq=java.io.File kind=class vis=public flags=synthetic type=java.io.File
-symbol fq=java.io.File.<init>#0 kind=constructor vis=public flags=synthetic sig=recv=_ params=[String] ret=java.io.File
-symbol fq=java.io.File.<init>.path kind=valueParameter vis=private flags=synthetic
-symbol fq=java.io.File.bufferedWriter kind=function vis=public flags=synthetic sig=recv=java.io.File params=[] ret=java.io.BufferedWriter
 file fbuffered_writer_use package=golden.sema
   decl golden.sema.writeWithBufferedWriter fun writeWithBufferedWriter sym=golden.sema.writeWithBufferedWriter
   decl golden.sema.appendWithBufferedWriter fun appendWithBufferedWriter sym=golden.sema.appendWithBufferedWriter

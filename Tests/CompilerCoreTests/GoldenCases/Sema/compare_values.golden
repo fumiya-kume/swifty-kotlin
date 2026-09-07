@@ -7,7 +7,6 @@ symbol fq=golden.sema.compareNullableInts.$1.b kind=valueParameter vis=private f
 symbol fq=golden.sema.compareStrings kind=function vis=public flags=_ sig=recv=_ params=[String,String] ret=Int
 symbol fq=golden.sema.compareStrings.$2.a kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.compareStrings.$2.b kind=valueParameter vis=private flags=_
-symbol fq=kotlin.Comparable kind=interface vis=public flags=_
 file fcompare_values package=golden.sema
   decl golden.sema.compareInts fun compareInts sym=golden.sema.compareInts
   decl golden.sema.compareStrings fun compareStrings sym=golden.sema.compareStrings

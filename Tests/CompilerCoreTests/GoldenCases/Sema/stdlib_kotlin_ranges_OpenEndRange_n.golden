@@ -1,4 +1,3 @@
-symbol fq=kotlin.ranges.OpenEndRange kind=interface vis=public flags=_
 symbol fq=openEndRangeByteContainsInt kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.OpenEndRange<Byte>,Int] ret=Boolean
 symbol fq=openEndRangeByteContainsInt.$0.range kind=valueParameter vis=private flags=_
 symbol fq=openEndRangeByteContainsInt.$0.value kind=valueParameter vis=private flags=_

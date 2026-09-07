@@ -2,8 +2,6 @@ symbol fq=__local_0.set kind=local vis=private flags=_ type=kotlin.collections.L
 symbol fq=__local_1.emptySet kind=local vis=private flags=_ type=kotlin.collections.LinkedHashSet<String>
 symbol fq=__local_2.map kind=local vis=private flags=_ type=kotlin.collections.MutableMap<String, Int>
 symbol fq=__local_3.emptyMap kind=local vis=private flags=_ type=kotlin.collections.MutableMap<String, Int>
-symbol fq=kotlin.Pair kind=class vis=public flags=_
-symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
 symbol fq=linkedFactoryTypes kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_collections_n_linked package=_
   decl linkedFactoryTypes fun linkedFactoryTypes sym=linkedFactoryTypes

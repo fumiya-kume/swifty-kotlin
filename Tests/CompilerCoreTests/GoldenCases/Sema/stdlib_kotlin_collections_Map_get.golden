@@ -10,10 +10,6 @@ symbol fq=golden.sema.mapGetOrElse.$2.map kind=valueParameter vis=private flags=
 symbol fq=golden.sema.mapGetValue kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Map<String, Int>,String] ret=Int
 symbol fq=golden.sema.mapGetValue.$3.key kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.mapGetValue.$3.map kind=valueParameter vis=private flags=_
-symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map.K kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.V kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.get kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Map<kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[kotlin.collections.Map.K] ret=kotlin.collections.Map.V?
 file fstdlib_kotlin_collections_Map_get package=golden.sema
   decl golden.sema.mapGet fun mapGet sym=golden.sema.mapGet
   decl golden.sema.mapGetOrElse fun mapGetOrElse sym=golden.sema.mapGetOrElse
@@ -29,7 +25,7 @@ expr e@7:82 lambda params=[] body=e@7:84 label=getOrElse type=() -> Int?
 expr e@7:63#1 memberCall recv=e@7:63 callee=getOrElse args=[_:e@7:77,_:e@7:82] type=Int? call=kotlin.collections.getOrElse#1
 expr e@9:60 name(map) type=kotlin.collections.Map<String, Int> ref=golden.sema.mapGetValue.$3.map
 expr e@9:73 name(key) type=String ref=golden.sema.mapGetValue.$3.key
-expr e@9:60#1 memberCall recv=e@9:60 callee=getValue args=[_:e@9:73] type=Int call=kotlin.collections.getValue#1
+expr e@9:60#1 memberCall recv=e@9:60 callee=getValue args=[_:e@9:73] type=Int call=kotlin.collections.getValue#0
 expr e@12:32 name(map) type=kotlin.collections.Map<in String, Int> ref=golden.sema.mapDelegate.$0.map
 expr e@12:5 localDecl delegatedValue mutable=0 type=Int init=e@12:32 delegated=1 type=Unit ref=__local_0.delegatedValue
 expr e@13:13 name(delegatedValue) type=Int ref=__local_0.delegatedValue

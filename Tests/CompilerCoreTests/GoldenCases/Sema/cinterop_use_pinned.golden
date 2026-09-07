@@ -1,8 +1,5 @@
 symbol fq=golden.sema.testUsePinned kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=Any
 symbol fq=golden.sema.testUsePinned.$0.obj kind=valueParameter vis=private flags=_
-symbol fq=kotlinx.cinterop.Pinned kind=class vis=public flags=synthetic type=kotlinx.cinterop.Pinned<kotlinx.cinterop.Pinned.T>
-symbol fq=kotlinx.cinterop.Pinned.T kind=typeParameter vis=private flags=_
-symbol fq=kotlinx.cinterop.Pinned.get kind=function vis=public flags=synthetic sig=recv=kotlinx.cinterop.Pinned<kotlinx.cinterop.Pinned.T> params=[] ret=kotlinx.cinterop.Pinned.T bounds=[Any]
 file fcinterop_use_pinned package=golden.sema
   decl golden.sema.testUsePinned fun testUsePinned sym=golden.sema.testUsePinned
 expr e@9:12 name(obj) type=Any ref=golden.sema.testUsePinned.$0.obj

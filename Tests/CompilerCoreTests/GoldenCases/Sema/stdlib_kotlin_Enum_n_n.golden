@@ -1,6 +1,5 @@
 symbol fq=golden.sema.Direction kind=enumClass vis=public flags=_
 symbol fq=golden.sema.enumCompanion kind=function vis=public flags=_ sig=recv=_ params=[] ret=Any
-symbol fq=kotlin.Enum kind=class vis=public flags=abstractType|openType
 file fstdlib_kotlin_Enum_n_n package=golden.sema
   decl golden.sema.Direction class Direction sym=golden.sema.Direction
   decl golden.sema.enumCompanion fun enumCompanion sym=golden.sema.enumCompanion

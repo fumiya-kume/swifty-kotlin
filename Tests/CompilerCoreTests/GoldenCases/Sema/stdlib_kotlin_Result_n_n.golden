@@ -1,9 +1,7 @@
 symbol fq=golden.sema.resultType kind=function vis=public flags=_ sig=recv=_ params=[Any?] ret=kotlin.Result<Any?>
 symbol fq=golden.sema.resultType.$0.value kind=valueParameter vis=private flags=_
-symbol fq=kotlin.Result kind=class vis=public flags=_ type=kotlin.Result<kotlin.Result.T>
-symbol fq=kotlin.Result.T kind=typeParameter vis=private flags=_
 file fstdlib_kotlin_Result_n_n package=golden.sema
   decl golden.sema.resultType fun resultType sym=golden.sema.resultType
 expr e@3:59 name(value) type=Any? ref=golden.sema.resultType.$0.value
 expr e@3:57 lambda params=[] body=e@3:59 label=runCatching type=() -> Any?
-expr e@3:45 call callee=e@3:45#1 args=[_:e@3:57] type=kotlin.Result<Any?> call=kotlin.runCatching#0 targs=[Any?]
+expr e@3:45 call callee=e@3:45#1 args=[_:e@3:57] type=kotlin.Result<Any?> call=kotlin.runCatching#1 targs=[Any?]

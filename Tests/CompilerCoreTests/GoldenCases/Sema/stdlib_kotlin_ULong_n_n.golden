@@ -5,8 +5,6 @@ symbol fq=golden.sema.show kind=function vis=private flags=_ sig=recv=_ params=[
 symbol fq=golden.sema.show.$0.label kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.show.$0.value kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.ulongConstructorSemantics kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.Long kind=class vis=public flags=synthetic
-symbol fq=kotlin.Long.Companion kind=object vis=public flags=synthetic|static
 file fstdlib_kotlin_ULong_n_n package=golden.sema annotations=[@file:Suppress("INVISIBLE_MEMBER","INVISIBLE_REFERENCE")]
   decl golden.sema.show fun show sym=golden.sema.show
   decl golden.sema.ulongConstructorSemantics fun ulongConstructorSemantics sym=golden.sema.ulongConstructorSemantics

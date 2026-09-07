@@ -18,11 +18,6 @@ symbol fq=constrainLinked kind=function vis=public flags=_ sig=recv=_ params=[co
 symbol fq=constrainLinked.$0.T kind=typeParameter vis=private flags=_
 symbol fq=constrainLinked.$0.set kind=valueParameter vis=private flags=_
 symbol fq=createLinkedSet kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.collections.LinkedHashSet<Int>
-symbol fq=kotlin.collections.MutableSet kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableSet.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableSet.add kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableSet<kotlin.collections.MutableSet.E> params=[kotlin.collections.MutableSet.E] ret=Boolean
-symbol fq=kotlin.collections.MutableSet.remove kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableSet<kotlin.collections.MutableSet.E> params=[kotlin.collections.MutableSet.E] ret=Boolean
-symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
 symbol fq=linkedExtension kind=function vis=public flags=_ sig=recv=kotlin.collections.LinkedHashSet<String> params=[] ret=String
 symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=nestedLinkedSets kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit

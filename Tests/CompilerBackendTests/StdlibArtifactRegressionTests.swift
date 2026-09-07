@@ -1856,4 +1856,112 @@ struct StdlibArtifactRegressionTests {
             #expect(normalizedStdout == "15\n41\n")
         }
     }
+
+    /// Imported enum declarations have no AST, so the per-decl synthesis that
+    /// normally registers `values()` / `valueOf(_:)` / `entries` / `name` /
+    /// `ordinal` never ran for them. Consumers of a precompiled stdlib
+    /// artifact must still resolve the full implicit enum API.
+    @Test
+    func testImportedEnumImplicitMembersThroughPrecompiledStdlibArtifact() throws {
+        let artifactPath = try Self.buildStdlibArtifact()
+        let source = """
+        @file:OptIn(kotlin.native.concurrent.ObsoleteWorkersApi::class)
+
+        import kotlin.native.concurrent.FutureState
+
+        fun futureStateEntries(): kotlin.enums.EnumEntries<FutureState> = FutureState.entries
+        fun futureStateValue(): Int = FutureState.COMPUTED.value
+        fun futureStateValueOf(): FutureState = FutureState.valueOf("THROWN")
+        fun futureStateValues(): Array<FutureState> = FutureState.values()
+        fun futureStateOrdinal(): Int = FutureState.CANCELLED.ordinal
+        fun futureStateName(): String = FutureState.INVALID.name
+        """
+        try withTemporaryFile(contents: source) { userPath in
+            let ctx = makeCompilationContext(
+                inputs: [userPath],
+                moduleName: "ImportedEnumMembersArtifact",
+                emit: .kirDump,
+                includeStdlib: false,
+                stdlibLibraryPath: artifactPath
+            )
+            try runToKIR(ctx)
+            #expect(
+                !ctx.diagnostics.hasError,
+                "Imported enum implicit members should resolve: \(ctx.diagnostics.diagnostics)"
+            )
+        }
+    }
+
+    /// An `override` member is implicitly open in Kotlin, but the serializer
+    /// dropped that, so an imported `AbstractMap.size` decoded as final and
+    /// consumers could not override it.
+    @Test
+    func testAbstractMapSizeOverrideThroughPrecompiledStdlibArtifact() throws {
+        let artifactPath = try Self.buildStdlibArtifact()
+        let source = """
+        import kotlin.collections.AbstractMap
+        import kotlin.collections.Map
+        import kotlin.collections.Set
+
+        class ObservedMap : AbstractMap<String?, Int?>() {
+            override val entries: Set<Map.Entry<String?, Int?>>
+                get() = emptyMap<String?, Int?>().entries
+
+            override val size: Int
+                get() = 2
+        }
+
+        fun customMapCount(): Int {
+            return ObservedMap().size
+        }
+        """
+        try withTemporaryFile(contents: source) { userPath in
+            let ctx = makeCompilationContext(
+                inputs: [userPath],
+                moduleName: "AbstractMapSizeOverrideArtifact",
+                emit: .kirDump,
+                includeStdlib: false,
+                stdlibLibraryPath: artifactPath
+            )
+            try runToKIR(ctx)
+            #expect(
+                !ctx.diagnostics.hasError,
+                "Overriding imported AbstractMap.size should not be rejected: \(ctx.diagnostics.diagnostics)"
+            )
+        }
+    }
+
+    /// Two metadata-path warnings used to fire on every artifact compile:
+    /// `KSWIFTK-LIB-0004` because serialized `fieldOffsets` referenced
+    /// `backingField` records the layout resolver did not accept, and
+    /// `KSWIFTK-SEMA-0102` because synthesized enum `values` stubs collided
+    /// with source-backed enum extensions (e.g. `RequiresOptIn.Level.values`).
+    @Test
+    func testStdlibArtifactImportDoesNotEmitLayoutOrStubOverlapWarnings() throws {
+        let artifactPath = try Self.buildStdlibArtifact()
+        let source = """
+        fun main() {
+            println("ok")
+        }
+        """
+        try withTemporaryFile(contents: source) { userPath in
+            let ctx = makeCompilationContext(
+                inputs: [userPath],
+                moduleName: "CleanArtifactImport",
+                emit: .kirDump,
+                includeStdlib: false,
+                stdlibLibraryPath: artifactPath
+            )
+            try runToKIR(ctx)
+            let codes = ctx.diagnostics.diagnostics.map(\.code)
+            #expect(
+                !codes.contains("KSWIFTK-LIB-0004"),
+                "Imported layout should not warn about backingField entries: \(ctx.diagnostics.diagnostics)"
+            )
+            #expect(
+                !codes.contains("KSWIFTK-SEMA-0102"),
+                "Imported enum synthesis should not emit stub-overlap warnings: \(ctx.diagnostics.diagnostics)"
+            )
+        }
+    }
 }

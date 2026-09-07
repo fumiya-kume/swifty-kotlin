@@ -385,9 +385,10 @@ struct BundledDeclarationIndex: Sendable {
             return false
         }
         return symbols.allSymbols().contains { candidate in
+            // Imported library members have no declSite but stand in for the
+            // bundled source declaration, so accept either source form.
             guard candidate.kind == .function,
-                  !candidate.flags.contains(.synthetic),
-                  candidate.declSite != nil,
+                  symbols.isSourceBackedSymbol(candidate.id),
                   let candidateKey = memberKey(
                       for: candidate,
                       symbolID: candidate.id,

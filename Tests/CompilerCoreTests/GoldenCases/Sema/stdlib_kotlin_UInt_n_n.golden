@@ -8,8 +8,6 @@ symbol fq=golden.sema.inferredUInt kind=function vis=public flags=_ sig=recv=_ p
 symbol fq=golden.sema.isUInt kind=function vis=public flags=_ sig=recv=_ params=[Any] ret=Boolean
 symbol fq=golden.sema.isUInt.$0.value kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.uintFromInt kind=function vis=public flags=_ sig=recv=_ params=[] ret=UInt
-symbol fq=kotlin.Int kind=class vis=public flags=synthetic
-symbol fq=kotlin.Int.Companion kind=object vis=public flags=synthetic|static
 file fstdlib_kotlin_UInt_n_n package=golden.sema
   decl golden.sema.uintFromInt fun uintFromInt sym=golden.sema.uintFromInt
   decl golden.sema.inferredUInt fun inferredUInt sym=golden.sema.inferredUInt

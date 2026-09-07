@@ -10,8 +10,6 @@ symbol fq=__local_8.maxBoundary kind=local vis=private flags=_ type=UInt
 symbol fq=__local_9.minBoundary kind=local vis=private flags=_ type=UInt
 symbol fq=__local_10.bitProduct kind=local vis=private flags=_ type=Int
 symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.UByte#0 kind=class vis=public flags=synthetic
-symbol fq=kotlin.UByte.Companion kind=object vis=public flags=synthetic|static
 file fstdlib_kotlin_UByte_Companion_Companion_n package=golden.sema
   decl golden.sema.main fun main sym=golden.sema.main
 expr e@4:28 name(UByte) type=kotlin.UByte.Companion ref=kotlin.UByte#0

@@ -4,7 +4,6 @@ symbol fq=__local_2.firstChanged kind=local vis=private flags=_ type=kotlin.Pair
 symbol fq=__local_3.secondChanged kind=local vis=private flags=_ type=kotlin.Pair<Int, String>
 symbol fq=__local_4.bothChanged kind=local vis=private flags=_ type=kotlin.Pair<Int, String>
 symbol fq=golden.sema.exercisePairMembers kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Pair<Int, String>
-symbol fq=kotlin.Pair kind=class vis=public flags=_
 file fstdlib_kotlin_Pair_Pair_n package=golden.sema
   decl golden.sema.exercisePairMembers fun exercisePairMembers sym=golden.sema.exercisePairMembers
 expr e@4:21 int(1) type=Int

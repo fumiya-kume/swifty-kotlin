@@ -3,7 +3,6 @@ symbol fq=golden.sema.assignWithSetValue.$0.V kind=typeParameter vis=private fla
 symbol fq=golden.sema.assignWithSetValue.$0.property kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.assignWithSetValue.$0.value kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.topLevel kind=property vis=public flags=mutable type=Int
-symbol fq=kotlin.reflect.KProperty kind=interface vis=public flags=synthetic
 file fstdlib_kotlin_KMutableProperty0_n package=golden.sema
   decl golden.sema.topLevel property topLevel var=1 sym=golden.sema.topLevel
   decl golden.sema.assignWithSetValue fun assignWithSetValue sym=golden.sema.assignWithSetValue

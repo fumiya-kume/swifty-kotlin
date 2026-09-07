@@ -9,8 +9,6 @@ symbol fq=__local_7.receiverBytes kind=local vis=private flags=_ type=Int
 symbol fq=__local_8.boxedMax kind=local vis=private flags=_ type=Any
 symbol fq=__local_9.boxedMin kind=local vis=private flags=_ type=Any
 symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.Short kind=class vis=public flags=synthetic
-symbol fq=kotlin.Short.Companion kind=object vis=public flags=synthetic|static
 file fstdlib_kotlin_Short_Companion_Companion_n package=golden.sema
   decl golden.sema.main fun main sym=golden.sema.main
 expr e@4:28 name(Short) type=kotlin.Short.Companion ref=kotlin.Short

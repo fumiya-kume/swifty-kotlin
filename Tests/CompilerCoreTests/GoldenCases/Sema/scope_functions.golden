@@ -21,12 +21,12 @@ expr e@3:21#1 memberCall recv=e@3:21 callee=let args=[_:e@3:33] type=Int call=ko
 expr e@4:21 string(hello) type=String
 expr e@4:35 name(length) type=Int
 expr e@4:33 lambda params=[] body=e@4:35 label=run type=String.() -> Int
-expr e@4:21#1 memberCall recv=e@4:21 callee=run args=[_:e@4:33] type=Int call=kotlin.run#1 targs=[String,Int]
+expr e@4:21#1 memberCall recv=e@4:21 callee=run args=[_:e@4:33] type=Int call=kotlin.run#0 targs=[String,Int]
 expr e@5:29 string(hello) type=String
 expr e@5:43 this type=String
 expr e@5:43#1 memberCall recv=e@5:43 callee=length args=[] type=Int call=kotlin.length.$get
 expr e@5:41 lambda params=[] body=e@5:43#1 label=run type=String.() -> Int
-expr e@5:29#1 memberCall recv=e@5:29 callee=run args=[_:e@5:41] type=Int call=kotlin.run#1 targs=[String,Int]
+expr e@5:29#1 memberCall recv=e@5:29 callee=run args=[_:e@5:41] type=Int call=kotlin.run#0 targs=[String,Int]
 expr e@6:26 string(hello) type=String
 expr e@6:50 this type=String
 expr e@6:50#1 memberCall recv=e@6:50 callee=length args=[] type=Int call=kotlin.length.$get

@@ -6,7 +6,6 @@ symbol fq=charProgressionLast kind=function vis=public flags=_ sig=recv=_ params
 symbol fq=charProgressionLast.$2.progression kind=valueParameter vis=private flags=_
 symbol fq=charProgressionLastOrNull kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.CharProgression] ret=Char?
 symbol fq=charProgressionLastOrNull.$3.progression kind=valueParameter vis=private flags=_
-symbol fq=kotlin.ranges.CharProgression kind=class vis=public flags=synthetic
 file fstdlib_kotlin_ranges_CharProgression_n package=_
   decl charProgressionFirst fun charProgressionFirst sym=charProgressionFirst
   decl charProgressionFirstOrNull fun charProgressionFirstOrNull sym=charProgressionFirstOrNull

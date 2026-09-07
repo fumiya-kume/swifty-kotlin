@@ -18,13 +18,6 @@ symbol fq=golden.sema.uintClosedRangeValue kind=function vis=public flags=_ sig=
 symbol fq=golden.sema.ulongClosedRangeStart kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.ClosedRange<ULong>] ret=ULong
 symbol fq=golden.sema.ulongClosedRangeStart.$5.range kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.ulongClosedRangeValue kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.ranges.ClosedRange<ULong>
-symbol fq=kotlin.ranges.ClosedRange kind=interface vis=public flags=_
-symbol fq=kotlin.ranges.ClosedRange.T kind=typeParameter vis=private flags=_
-symbol fq=kotlin.ranges.ClosedRange.contains kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.ranges.ClosedRange<kotlin.ranges.ClosedRange.T> params=[kotlin.ranges.ClosedRange.T] ret=Boolean type=(kotlin.ranges.ClosedRange.T) -> Boolean
-symbol fq=kotlin.ranges.ClosedRange.contains.value kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.ranges.ClosedRange.endInclusive kind=property vis=public flags=synthetic type=kotlin.ranges.ClosedRange.T
-symbol fq=kotlin.ranges.ClosedRange.isEmpty kind=function vis=public flags=synthetic sig=recv=kotlin.ranges.ClosedRange<kotlin.ranges.ClosedRange.T> params=[] ret=Boolean type=() -> Boolean
-symbol fq=kotlin.ranges.ClosedRange.start kind=property vis=public flags=synthetic type=kotlin.ranges.ClosedRange.T
 file fclosed_range_interface package=golden.sema
   decl golden.sema.intClosedRangeValue fun intClosedRangeValue sym=golden.sema.intClosedRangeValue
   decl golden.sema.longClosedRangeValue fun longClosedRangeValue sym=golden.sema.longClosedRangeValue

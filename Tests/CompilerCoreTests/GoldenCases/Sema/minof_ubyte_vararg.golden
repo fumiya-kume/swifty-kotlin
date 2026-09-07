@@ -9,4 +9,4 @@ expr e@3:75 name(a) type=UByte ref=golden.sema.varargMinUByte.$0.a
 expr e@3:78 name(b) type=UByte ref=golden.sema.varargMinUByte.$0.b
 expr e@3:81 name(c) type=UByte ref=golden.sema.varargMinUByte.$0.c
 expr e@3:84 name(d) type=UByte ref=golden.sema.varargMinUByte.$0.d
-expr e@3:69 call callee=e@3:69#1 args=[_:e@3:75,_:e@3:78,_:e@3:81,_:e@3:84] type=UByte call=kotlin.comparisons.minOf#19
+expr e@3:69 call callee=e@3:69#1 args=[_:e@3:75,_:e@3:78,_:e@3:81,_:e@3:84] type=UByte call=kotlin.comparisons.minOf#25

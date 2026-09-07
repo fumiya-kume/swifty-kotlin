@@ -2,8 +2,6 @@ symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[]
 symbol fq=golden.sema.receiverRun kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 symbol fq=golden.sema.receiverRunCatching kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Result<Int>
 symbol fq=golden.sema.topLevelRun kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=kotlin.Result kind=class vis=public flags=_ type=kotlin.Result<kotlin.Result.T>
-symbol fq=kotlin.Result.T kind=typeParameter vis=private flags=_
 file fstdlib_kotlin_n_run package=golden.sema
   decl golden.sema.topLevelRun fun topLevelRun sym=golden.sema.topLevelRun
   decl golden.sema.receiverRun fun receiverRun sym=golden.sema.receiverRun
@@ -11,15 +9,15 @@ file fstdlib_kotlin_n_run package=golden.sema
   decl golden.sema.main fun main sym=golden.sema.main
 expr e@3:32 int(41) type=Int
 expr e@3:30 lambda params=[] body=e@3:32 label=run type=() -> Int
-expr e@3:26 call callee=e@3:26#1 args=[_:e@3:30] type=Int call=kotlin.run#0 targs=[Int]
+expr e@3:26 call callee=e@3:26#1 args=[_:e@3:30] type=Int call=kotlin.run#1 targs=[Int]
 expr e@5:26 string(hello) type=String
 expr e@5:40 name(length) type=Int
 expr e@5:38 lambda params=[] body=e@5:40 label=run type=String.() -> Int
-expr e@5:26#1 memberCall recv=e@5:26 callee=run args=[_:e@5:38] type=Int call=kotlin.run#1 targs=[String,Int]
+expr e@5:26#1 memberCall recv=e@5:26 callee=run args=[_:e@5:38] type=Int call=kotlin.run#0 targs=[String,Int]
 expr e@7:42 string(hello) type=String
 expr e@7:64 name(length) type=Int
 expr e@7:62 lambda params=[] body=e@7:64 label=runCatching type=String.() -> Int
-expr e@7:42#1 memberCall recv=e@7:42 callee=runCatching args=[_:e@7:62] type=kotlin.Result<Int> call=kotlin.runCatching#1 targs=[String,Int]
+expr e@7:42#1 memberCall recv=e@7:42 callee=runCatching args=[_:e@7:62] type=kotlin.Result<Int> call=kotlin.runCatching#0 targs=[String,Int]
 expr e@10:13 call callee=e@10:13#1 args=[] type=Int call=golden.sema.topLevelRun
 expr e@10:5 call callee=e@10:5#1 args=[_:e@10:13] type=Unit call=kotlin.io.println#1
 expr e@11:13 call callee=e@11:13#1 args=[] type=Int call=golden.sema.receiverRun

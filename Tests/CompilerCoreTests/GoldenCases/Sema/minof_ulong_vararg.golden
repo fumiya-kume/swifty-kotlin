@@ -9,4 +9,4 @@ expr e@3:77 name(a) type=ULong ref=golden.sema.minOfULongVararg.$0.a
 expr e@3:80 name(b) type=ULong ref=golden.sema.minOfULongVararg.$0.b
 expr e@3:83 name(c) type=ULong ref=golden.sema.minOfULongVararg.$0.c
 expr e@3:86 name(d) type=ULong ref=golden.sema.minOfULongVararg.$0.d
-expr e@3:71 call callee=e@3:71#1 args=[_:e@3:77,_:e@3:80,_:e@3:83,_:e@3:86] type=ULong call=kotlin.comparisons.minOf#25
+expr e@3:71 call callee=e@3:71#1 args=[_:e@3:77,_:e@3:80,_:e@3:83,_:e@3:86] type=ULong call=kotlin.comparisons.minOf#31

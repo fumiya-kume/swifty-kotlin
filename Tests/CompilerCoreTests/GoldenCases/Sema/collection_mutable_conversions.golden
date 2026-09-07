@@ -6,20 +6,6 @@ symbol fq=__local_4.col kind=local vis=private flags=_ type=kotlin.collections.C
 symbol fq=__local_5.ml2 kind=local vis=private flags=_ type=kotlin.collections.MutableList<String>
 symbol fq=__local_6.map kind=local vis=private flags=_ type=kotlin.collections.Map<String, Int>
 symbol fq=__local_7.mm kind=local vis=private flags=_ type=kotlin.collections.MutableMap<String, Int>
-symbol fq=kotlin.Pair kind=class vis=public flags=_
-symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableList.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableList.add#1 kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.MutableList<kotlin.collections.MutableList.E> params=[kotlin.collections.MutableList.E] ret=Boolean
-symbol fq=kotlin.collections.MutableMap kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableSet kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.MutableSet.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableSet.add kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableSet<kotlin.collections.MutableSet.E> params=[kotlin.collections.MutableSet.E] ret=Boolean
-symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Set.E kind=typeParameter vis=private flags=_
 symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fcollection_mutable_conversions package=_
   decl main fun main sym=main

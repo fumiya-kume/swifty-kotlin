@@ -20,11 +20,6 @@ symbol fq=__local_18.widened kind=local vis=private flags=_ type=kotlin.collecti
 symbol fq=__local_19.subtypeArray kind=local vis=private flags=_ type=kotlin.Array<String>
 symbol fq=__local_20.widenedByArray kind=local vis=private flags=_ type=kotlin.collections.List<Any?>
 symbol fq=__local_21.sequencePlus kind=local vis=private flags=_ type=kotlin.sequences.Sequence<Int>
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
-symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
-symbol fq=kotlin.sequences.Sequence.plus#2 kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.sequences.Sequence<kotlin.sequences.plus.$0.T> params=[kotlin.sequences.Sequence<kotlin.sequences.plus.$0.T>] ret=kotlin.sequences.Sequence<kotlin.sequences.plus.$0.T>
 symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_collections_Iterable_plus package=_
   decl main fun main sym=main
@@ -131,5 +126,5 @@ expr e@27:50 int(13) type=Int
 expr e@27:39 call callee=e@27:39#1 args=[_:e@27:50] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf targs=[Int]
 expr e@27:67 int(14) type=Int
 expr e@27:56 call callee=e@27:56#1 args=[_:e@27:67] type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.sequenceOf targs=[Int]
-expr e@27:39#2 binary(add) lhs=e@27:39 rhs=e@27:56 type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.Sequence.plus#2 targs=[Int]
+expr e@27:39#2 binary(add) lhs=e@27:39 rhs=e@27:56 type=kotlin.sequences.Sequence<Int> call=kotlin.sequences.plus#2 targs=[Int]
 expr e@27:5 localDecl sequencePlus mutable=0 type=Sequence<Int> init=e@27:39#2 type=Unit ref=__local_21.sequencePlus

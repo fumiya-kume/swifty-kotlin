@@ -2,7 +2,6 @@ symbol fq=golden.sema.useIndexOfIgnoreCase kind=function vis=public flags=_ sig=
 symbol fq=golden.sema.useIndexOfIgnoreCaseFalse kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 symbol fq=golden.sema.useLastIndexOfIgnoreCase kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 symbol fq=golden.sema.useLastIndexOfIgnoreCaseFalse kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
 file fstring_indexof_ignorecase package=golden.sema
   decl golden.sema.useIndexOfIgnoreCase fun useIndexOfIgnoreCase sym=golden.sema.useIndexOfIgnoreCase
   decl golden.sema.useLastIndexOfIgnoreCase fun useLastIndexOfIgnoreCase sym=golden.sema.useLastIndexOfIgnoreCase

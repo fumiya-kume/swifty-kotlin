@@ -1,6 +1,5 @@
 symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=golden.sema.name kind=property vis=public flags=mutable type=String
-symbol fq=kotlin.reflect.KProperty kind=interface vis=public flags=synthetic
 file fdelegate_observable package=golden.sema
   decl golden.sema.name property name var=1 sym=golden.sema.name
   decl golden.sema.main fun main sym=golden.sema.main

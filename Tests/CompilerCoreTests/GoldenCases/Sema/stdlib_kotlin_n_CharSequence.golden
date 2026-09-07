@@ -6,7 +6,6 @@ symbol fq=golden.sema.charSequenceSubSequence kind=function vis=public flags=_ s
 symbol fq=golden.sema.charSequenceSubSequence.$2.cs kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.stringAsCharSequence kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.CharSequence
 symbol fq=golden.sema.stringBuilderAsCharSequence kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.CharSequence
-symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
 file fstdlib_kotlin_n_CharSequence package=golden.sema
   decl golden.sema.charSequenceLength fun charSequenceLength sym=golden.sema.charSequenceLength
   decl golden.sema.charSequenceGet fun charSequenceGet sym=golden.sema.charSequenceGet

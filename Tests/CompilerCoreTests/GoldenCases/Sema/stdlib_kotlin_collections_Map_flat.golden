@@ -20,22 +20,6 @@ symbol fq=__local_17.customResult kind=local vis=private flags=_ type=kotlin.col
 symbol fq=__local_18.exceptionDestination kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>
 symbol fq=__local_19.exceptionCalls kind=local vis=private flags=mutable type=Int
 symbol fq=__try_0_catch_0.exception kind=local vis=internal flags=_ type=kotlin.IllegalStateException
-symbol fq=kotlin.Pair kind=class vis=public flags=_
-symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Collection.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Iterator kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
-symbol fq=kotlin.collections.Map kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map.Entry kind=interface vis=public flags=synthetic
-symbol fq=kotlin.collections.Map.Entry.key kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.K
-symbol fq=kotlin.collections.Map.Entry.value kind=function vis=public flags=synthetic sig=recv=kotlin.collections.Map.Entry<out kotlin.collections.Map.K, out kotlin.collections.Map.V> params=[] ret=kotlin.collections.Map.V
-symbol fq=kotlin.collections.Map.K kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.Map.V kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableCollection kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
-symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
-symbol fq=kotlin.sequences.Sequence.constrainOnce kind=function vis=public flags=synthetic sig=recv=kotlin.sequences.Sequence<kotlin.sequences.constrainOnce.$0.T> params=[] ret=kotlin.sequences.Sequence<kotlin.sequences.constrainOnce.$0.T>
 symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file fstdlib_kotlin_collections_Map_flat package=_
   decl main fun main sym=main
@@ -89,8 +73,8 @@ expr e@18:28 name(it) type=kotlin.collections.Map.Entry<String, Int> ref=s-1
 expr e@18:28#1 memberCall recv=e@18:28 callee=value args=[] type=Int call=kotlin.collections.Map.Entry.value targs=[String,Int]
 expr e@18:38 string(sequence) type=String
 expr e@18:9 call callee=e@18:9#1 args=[_:e@18:20#1,_:e@18:28#1,_:e@18:38] type=kotlin.sequences.Sequence<Any> call=kotlin.sequences.sequenceOf targs=[Any]
-expr e@18:9#2 memberCall recv=e@18:9 callee=constrainOnce args=[] type=kotlin.sequences.Sequence<out Any> call=kotlin.sequences.Sequence.constrainOnce
-expr e@17:9#1 blockExpr stmts=[e@17:9] trailing=e@18:9#2 type=kotlin.sequences.Sequence<out Any>
+expr e@18:9#2 memberCall recv=e@18:9 callee=constrainOnce args=[] type=kotlin.sequences.Sequence<Any> call=kotlin.sequences.constrainOnce targs=[Any]
+expr e@17:9#1 blockExpr stmts=[e@17:9] trailing=e@18:9#2 type=kotlin.sequences.Sequence<Any>
 expr e@16:82 lambda params=[] body=e@17:9#1 label=flatMapTo type=(kotlin.collections.Map.Entry<String, Int>) -> Any
 expr e@16:44#1 memberCall recv=e@16:44 callee=flatMapTo args=[_:e@16:61,_:e@16:82] type=kotlin.collections.MutableList<Any> call=kotlin.collections.flatMapTo#4 targs=[String,Int,Any,kotlin.collections.MutableList<Any>]
 expr e@16:5 localDecl sequenceResult mutable=0 type=MutableList<Any> init=e@16:44#1 type=Unit ref=__local_6.sequenceResult
@@ -154,7 +138,7 @@ expr e@39:34 name(it) type=kotlin.collections.Map.Entry<String?, Int?> ref=s-3
 expr e@39:34#1 memberCall recv=e@39:34 callee=value args=[] type=Int? call=kotlin.collections.Map.Entry.value targs=[String?,Int?]
 expr e@39:44 name(null) type=Nothing?
 expr e@39:9 call callee=e@39:9#1 args=[_:e@39:26#1,_:e@39:34#1,_:e@39:44] type=kotlin.sequences.Sequence<Any?> call=kotlin.sequences.sequenceOf targs=[Any?]
-expr e@39:9#2 memberCall recv=e@39:9 callee=constrainOnce args=[] type=kotlin.sequences.Sequence<out Any?> call=kotlin.sequences.Sequence.constrainOnce
+expr e@39:9#2 memberCall recv=e@39:9 callee=constrainOnce args=[] type=kotlin.sequences.Sequence<Any?> call=kotlin.sequences.constrainOnce targs=[Any?]
 expr e@38:107 lambda params=[] body=e@39:9#2 label=flatMapTo type=(kotlin.collections.Map.Entry<String?, Int?>) -> Any
 expr e@38:53#1 memberCall recv=e@38:53 callee=flatMapTo args=[_:e@38:78,_:e@38:107] type=kotlin.collections.MutableList<Any?> call=kotlin.collections.flatMapTo#4 targs=[String?,Int?,Any?,kotlin.collections.MutableList<Any?>]
 expr e@38:5 localDecl nullableSequenceResult mutable=0 type=MutableList<Any?> init=e@38:53#1 type=Unit ref=__local_13.nullableSequenceResult

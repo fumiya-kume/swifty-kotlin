@@ -1,6 +1,5 @@
 symbol fq=charIsUnicodeIdentifierPart kind=function vis=public flags=_ sig=recv=_ params=[Char] ret=Boolean
 symbol fq=charIsUnicodeIdentifierPart.$0.c kind=valueParameter vis=private flags=_
-symbol fq=kotlin.text.isUnicodeIdentifierPart kind=function vis=public flags=synthetic sig=recv=Char params=[] ret=Boolean
 file fchar_unicode_identifier_part package=_
   decl charIsUnicodeIdentifierPart fun charIsUnicodeIdentifierPart sym=charIsUnicodeIdentifierPart
 expr e@1:53 name(c) type=Char ref=charIsUnicodeIdentifierPart.$0.c

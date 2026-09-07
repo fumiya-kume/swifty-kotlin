@@ -1,7 +1,3 @@
-symbol fq=kotlin.ranges.OpenEndRange kind=interface vis=public flags=_
-symbol fq=kotlin.ranges.OpenEndRange.T kind=typeParameter vis=private flags=_
-symbol fq=kotlin.ranges.OpenEndRange.endExclusive kind=property vis=public flags=synthetic type=kotlin.ranges.OpenEndRange.T
-symbol fq=kotlin.ranges.OpenEndRange.start kind=property vis=public flags=synthetic type=kotlin.ranges.OpenEndRange.T
 symbol fq=useOpenEndRange kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.OpenEndRange<Int>,Int] ret=Boolean
 symbol fq=useOpenEndRange.$0.range kind=valueParameter vis=private flags=_
 symbol fq=useOpenEndRange.$0.value kind=valueParameter vis=private flags=_

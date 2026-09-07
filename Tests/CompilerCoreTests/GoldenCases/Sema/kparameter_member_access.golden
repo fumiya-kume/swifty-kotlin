@@ -8,13 +8,6 @@ symbol fq=golden.sema.inspectOptional kind=function vis=public flags=_ sig=recv=
 symbol fq=golden.sema.inspectOptional.$3.p kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.inspectType kind=function vis=public flags=_ sig=recv=_ params=[kotlin.reflect.KParameter] ret=kotlin.reflect.KType
 symbol fq=golden.sema.inspectType.$4.p kind=valueParameter vis=private flags=_
-symbol fq=kotlin.reflect.KParameter kind=interface vis=public flags=synthetic
-symbol fq=kotlin.reflect.KParameter.index kind=property vis=public flags=synthetic type=Int
-symbol fq=kotlin.reflect.KParameter.isOptional kind=property vis=public flags=synthetic type=Boolean
-symbol fq=kotlin.reflect.KParameter.kind kind=property vis=public flags=synthetic type=Int
-symbol fq=kotlin.reflect.KParameter.name kind=property vis=public flags=synthetic type=String?
-symbol fq=kotlin.reflect.KParameter.type kind=property vis=public flags=synthetic type=kotlin.reflect.KType
-symbol fq=kotlin.reflect.KType kind=interface vis=public flags=synthetic
 file fkparameter_member_access package=golden.sema
   decl golden.sema.inspectIndex fun inspectIndex sym=golden.sema.inspectIndex
   decl golden.sema.inspectName fun inspectName sym=golden.sema.inspectName

@@ -16,7 +16,6 @@ symbol fq=__local_14.hash kind=local vis=private flags=_ type=Int
 symbol fq=__local_15.intersects kind=local vis=private flags=_ type=Boolean
 symbol fq=__local_16.equal kind=local vis=private flags=_ type=Boolean
 symbol fq=golden.sema.bitSetMembers kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
-symbol fq=kotlin.ranges.IntRange kind=class vis=public flags=synthetic
 file fstdlib_kotlin_native_BitSet_BitSet_n package=golden.sema annotations=[@file:OptIn(kotlin.native.ObsoleteNativeApi::class)]
   decl golden.sema.bitSetMembers fun bitSetMembers sym=golden.sema.bitSetMembers
 expr e@8:23 int(2) type=Int

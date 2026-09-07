@@ -89,8 +89,6 @@ symbol fq=golden.sema.maxOfUShortVararg.$19.a kind=valueParameter vis=private fl
 symbol fq=golden.sema.maxOfUShortVararg.$19.b kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.maxOfUShortVararg.$19.c kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.maxOfUShortVararg.$19.d kind=valueParameter vis=private flags=_
-symbol fq=kotlin.Comparable kind=interface vis=public flags=_
-symbol fq=kotlin.Comparator kind=interface vis=public flags=funInterface
 file fstdlib_kotlin_comparisons_n_max package=golden.sema
   decl golden.sema.maxOfComparable2 fun maxOfComparable2 sym=golden.sema.maxOfComparable2
   decl golden.sema.maxOfComparableVararg fun maxOfComparableVararg sym=golden.sema.maxOfComparableVararg
@@ -114,12 +112,12 @@ file fstdlib_kotlin_comparisons_n_max package=golden.sema
   decl golden.sema.maxOfComparator3 fun maxOfComparator3 sym=golden.sema.maxOfComparator3
 expr e@3:60 name(a) type=String ref=golden.sema.maxOfComparable2.$3.a
 expr e@3:63 name(b) type=String ref=golden.sema.maxOfComparable2.$3.b
-expr e@3:54 call callee=e@3:54#1 args=[_:e@3:60,_:e@3:63] type=String call=kotlin.comparisons.maxOf#30 targs=[String]
+expr e@3:54 call callee=e@3:54#1 args=[_:e@3:60,_:e@3:63] type=String call=kotlin.comparisons.maxOf#18 targs=[String]
 expr e@4:87 name(a) type=String ref=golden.sema.maxOfComparableVararg.$5.a
 expr e@4:90 name(b) type=String ref=golden.sema.maxOfComparableVararg.$5.b
 expr e@4:93 name(c) type=String ref=golden.sema.maxOfComparableVararg.$5.c
 expr e@4:96 name(d) type=String ref=golden.sema.maxOfComparableVararg.$5.d
-expr e@4:81 call callee=e@4:81#1 args=[_:e@4:87,_:e@4:90,_:e@4:93,_:e@4:96] type=String call=kotlin.comparisons.maxOf#32 targs=[String]
+expr e@4:81 call callee=e@4:81#1 args=[_:e@4:87,_:e@4:90,_:e@4:93,_:e@4:96] type=String call=kotlin.comparisons.maxOf#20 targs=[String]
 expr e@5:71 name(a) type=Byte ref=golden.sema.maxOfByteVararg.$2.a
 expr e@5:74 name(b) type=Byte ref=golden.sema.maxOfByteVararg.$2.b
 expr e@5:77 name(c) type=Byte ref=golden.sema.maxOfByteVararg.$2.c
@@ -154,22 +152,22 @@ expr e@11:77 name(a) type=UByte ref=golden.sema.maxOfUByteVararg.$16.a
 expr e@11:80 name(b) type=UByte ref=golden.sema.maxOfUByteVararg.$16.b
 expr e@11:83 name(c) type=UByte ref=golden.sema.maxOfUByteVararg.$16.c
 expr e@11:86 name(d) type=UByte ref=golden.sema.maxOfUByteVararg.$16.d
-expr e@11:71 call callee=e@11:71#1 args=[_:e@11:77,_:e@11:80,_:e@11:83,_:e@11:86] type=UByte call=kotlin.comparisons.maxOf#19
+expr e@11:71 call callee=e@11:71#1 args=[_:e@11:77,_:e@11:80,_:e@11:83,_:e@11:86] type=UByte call=kotlin.comparisons.maxOf#25
 expr e@12:71 name(a) type=UInt ref=golden.sema.maxOfUIntVararg.$17.a
 expr e@12:74 name(b) type=UInt ref=golden.sema.maxOfUIntVararg.$17.b
 expr e@12:77 name(c) type=UInt ref=golden.sema.maxOfUIntVararg.$17.c
 expr e@12:80 name(d) type=UInt ref=golden.sema.maxOfUIntVararg.$17.d
-expr e@12:65 call callee=e@12:65#1 args=[_:e@12:71,_:e@12:74,_:e@12:77,_:e@12:80] type=UInt call=kotlin.comparisons.maxOf#22
+expr e@12:65 call callee=e@12:65#1 args=[_:e@12:71,_:e@12:74,_:e@12:77,_:e@12:80] type=UInt call=kotlin.comparisons.maxOf#28
 expr e@13:77 name(a) type=ULong ref=golden.sema.maxOfULongVararg.$18.a
 expr e@13:80 name(b) type=ULong ref=golden.sema.maxOfULongVararg.$18.b
 expr e@13:83 name(c) type=ULong ref=golden.sema.maxOfULongVararg.$18.c
 expr e@13:86 name(d) type=ULong ref=golden.sema.maxOfULongVararg.$18.d
-expr e@13:71 call callee=e@13:71#1 args=[_:e@13:77,_:e@13:80,_:e@13:83,_:e@13:86] type=ULong call=kotlin.comparisons.maxOf#25
+expr e@13:71 call callee=e@13:71#1 args=[_:e@13:77,_:e@13:80,_:e@13:83,_:e@13:86] type=ULong call=kotlin.comparisons.maxOf#31
 expr e@14:83 name(a) type=UShort ref=golden.sema.maxOfUShortVararg.$19.a
 expr e@14:86 name(b) type=UShort ref=golden.sema.maxOfUShortVararg.$19.b
 expr e@14:89 name(c) type=UShort ref=golden.sema.maxOfUShortVararg.$19.c
 expr e@14:92 name(d) type=UShort ref=golden.sema.maxOfUShortVararg.$19.d
-expr e@14:77 call callee=e@14:77#1 args=[_:e@14:83,_:e@14:86,_:e@14:89,_:e@14:92] type=UShort call=kotlin.comparisons.maxOf#28
+expr e@14:77 call callee=e@14:77#1 args=[_:e@14:83,_:e@14:86,_:e@14:89,_:e@14:92] type=UShort call=kotlin.comparisons.maxOf#34
 expr e@15:48 name(a) type=Byte ref=golden.sema.maxOfByte2.$0.a
 expr e@15:51 name(b) type=Byte ref=golden.sema.maxOfByte2.$0.b
 expr e@15:42 call callee=e@15:42#1 args=[_:e@15:48,_:e@15:51] type=Byte call=kotlin.comparisons.maxOf#0
@@ -179,17 +177,17 @@ expr e@16:46 call callee=e@16:46#1 args=[_:e@16:52,_:e@16:55] type=Short call=ko
 expr e@17:89 name(a) type=String ref=golden.sema.maxOfComparator2.$6.a
 expr e@17:92 name(b) type=String ref=golden.sema.maxOfComparator2.$6.b
 expr e@17:95 name(comparator) type=kotlin.Comparator<Any> ref=golden.sema.maxOfComparator2.$6.comparator
-expr e@17:83 call callee=e@17:83#1 args=[_:e@17:89,_:e@17:92,_:e@17:95] type=String call=kotlin.comparisons.maxOf#33 targs=[String]
+expr e@17:83 call callee=e@17:83#1 args=[_:e@17:89,_:e@17:92,_:e@17:95] type=String call=kotlin.comparisons.maxOf#21 targs=[String]
 expr e@18:116 name(a) type=String ref=golden.sema.maxOfComparatorVararg.$8.a
 expr e@18:119 name(b) type=String ref=golden.sema.maxOfComparatorVararg.$8.b
 expr e@18:122 name(c) type=String ref=golden.sema.maxOfComparatorVararg.$8.c
 expr e@18:125 name(d) type=String ref=golden.sema.maxOfComparatorVararg.$8.d
 expr e@18:141 name(comparator) type=kotlin.Comparator<Any> ref=golden.sema.maxOfComparatorVararg.$8.comparator
-expr e@18:110 call callee=e@18:110#1 args=[_:e@18:116,_:e@18:119,_:e@18:122,_:e@18:125,comparator:e@18:141] type=String call=kotlin.comparisons.maxOf#35 targs=[String]
+expr e@18:110 call callee=e@18:110#1 args=[_:e@18:116,_:e@18:119,_:e@18:122,_:e@18:125,comparator:e@18:141] type=String call=kotlin.comparisons.maxOf#23 targs=[String]
 expr e@19:71 name(a) type=String ref=golden.sema.maxOfComparable3.$4.a
 expr e@19:74 name(b) type=String ref=golden.sema.maxOfComparable3.$4.b
 expr e@19:77 name(c) type=String ref=golden.sema.maxOfComparable3.$4.c
-expr e@19:65 call callee=e@19:65#1 args=[_:e@19:71,_:e@19:74,_:e@19:77] type=String call=kotlin.comparisons.maxOf#31 targs=[String]
+expr e@19:65 call callee=e@19:65#1 args=[_:e@19:71,_:e@19:74,_:e@19:77] type=String call=kotlin.comparisons.maxOf#19 targs=[String]
 expr e@20:57 name(a) type=Byte ref=golden.sema.maxOfByte3.$1.a
 expr e@20:60 name(b) type=Byte ref=golden.sema.maxOfByte3.$1.b
 expr e@20:63 name(c) type=Byte ref=golden.sema.maxOfByte3.$1.c
@@ -202,4 +200,4 @@ expr e@22:100 name(a) type=String ref=golden.sema.maxOfComparator3.$7.a
 expr e@22:103 name(b) type=String ref=golden.sema.maxOfComparator3.$7.b
 expr e@22:106 name(c) type=String ref=golden.sema.maxOfComparator3.$7.c
 expr e@22:109 name(comparator) type=kotlin.Comparator<Any> ref=golden.sema.maxOfComparator3.$7.comparator
-expr e@22:94 call callee=e@22:94#1 args=[_:e@22:100,_:e@22:103,_:e@22:106,_:e@22:109] type=String call=kotlin.comparisons.maxOf#34 targs=[String]
+expr e@22:94 call callee=e@22:94#1 args=[_:e@22:100,_:e@22:103,_:e@22:106,_:e@22:109] type=String call=kotlin.comparisons.maxOf#22 targs=[String]

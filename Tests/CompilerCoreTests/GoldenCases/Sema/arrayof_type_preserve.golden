@@ -26,15 +26,6 @@ symbol fq=charArrayOfLiteral kind=function vis=public flags=_ sig=recv=_ params=
 symbol fq=doubleArrayOfLiteral kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=floatArrayOfLiteral kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=intArrayOfLiteral kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
-symbol fq=kotlin.BooleanArray#0 kind=class vis=public flags=synthetic
-symbol fq=kotlin.ByteArray kind=class vis=public flags=synthetic type=kotlin.ByteArray
-symbol fq=kotlin.CharArray#0 kind=class vis=public flags=synthetic
-symbol fq=kotlin.DoubleArray kind=class vis=public flags=synthetic
-symbol fq=kotlin.FloatArray#0 kind=class vis=public flags=synthetic
-symbol fq=kotlin.IntArray#0 kind=class vis=public flags=synthetic
-symbol fq=kotlin.LongArray#0 kind=class vis=public flags=synthetic
-symbol fq=kotlin.ShortArray#0 kind=class vis=public flags=synthetic
 symbol fq=longArrayOfLiteral kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 symbol fq=shortArrayOfLiteral kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file farrayof_type_preserve package=_
