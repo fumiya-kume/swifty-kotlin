@@ -1,0 +1,116 @@
+name: macOS CI
+
+on:
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Keep this lane aligned with the optimized debug configuration used by CI.
+  KSWIFTK_OPTIMIZE_COMPILER_CORE: "1"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  macos-build-smoke-link:
+    name: macOS build, SmokeTests, and LinkPhase
+    runs-on: macos-26
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: /opt/homebrew/bin/bash --noprofile --norc -eo pipefail {0}
+    env:
+      KSWIFTK_CI_FAST_BUILD: "1"
+      SWIFT_BUILD_SYSTEM: swiftbuild
+      SWIFT_ENABLE_COMPILE_CACHE: "1"
+      SWIFT_ENABLE_CACHE_REMARKS: "1"
+      SWIFT_CAS_PATH: ${{ github.workspace }}/.build/out/CompilationCache.noindex
+      SWIFT_TEST_BUILD_TARGETS: CompilerCoreTests CompilerBackendTests
+      SWIFT_TEST_BUILD_JOBS: "2"
+      SWIFT_TEST_WORKERS: "2"
+      SWT_EXPERIMENTAL_MAXIMUM_PARALLELIZATION_WIDTH: "2"
+      SWIFT_XSWIFTC_FLAGS: -Xswiftc -swift-version -Xswiftc 6 -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Prepare macOS runner
+        uses: ./.github/actions/setup-self-hosted
+
+      - name: Setup Swift 6.3
+        uses: ./.github/actions/setup-swift
+        with:
+          swift-version: "6.3"
+
+      - name: Setup LLVM 20
+        run: |
+          set -euo pipefail
+
+          llvm_prefix="$(brew --prefix llvm@20)"
+          include_dir="$llvm_prefix/include"
+          lib_dir="$llvm_prefix/lib"
+          llvm_dylib="$lib_dir/libLLVM.dylib"
+
+          if [[ ! -f "$llvm_dylib" ]]; then
+            llvm_dylib="$(find "$lib_dir" -maxdepth 1 -type f -name 'libLLVM*.dylib' -print | sort | head -n 1)"
+          fi
+          if [[ ! -d "$include_dir" || ! -d "$lib_dir" || ! -f "$llvm_dylib" ]]; then
+            echo "Homebrew LLVM 20 is incomplete under $llvm_prefix." >&2
+            exit 1
+          fi
+
+          echo "$llvm_prefix/bin" >> "$GITHUB_PATH"
+          {
+            echo "C_INCLUDE_PATH=$include_dir"
+            echo "LIBRARY_PATH=$lib_dir"
+            echo "DYLD_LIBRARY_PATH=$lib_dir${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}"
+            echo "KSWIFTK_LLVM_DYLIB=$llvm_dylib"
+          } >> "$GITHUB_ENV"
+          echo "LLVM $("$llvm_prefix/bin/llvm-config" --version) include=$include_dir lib=$lib_dir dylib=$llvm_dylib"
+
+      - name: Show macOS toolchain
+        run: |
+          sw_vers
+          xcode-select --print-path
+          xcodebuild -version
+          swift --version
+          ls -l "$KSWIFTK_LLVM_DYLIB"
+
+      - name: Restore SwiftPM build cache
+        uses: ./.github/actions/setup-swiftpm-cache
+        with:
+          swift-version: "6.3"
+          build-variant: macos-arch027
+          save: "false"
+
+      - name: Build CompilerCore and CompilerBackend test products
+        run: /opt/homebrew/bin/bash Scripts/build_swift_tests.sh --disable-sandbox -j "$SWIFT_TEST_BUILD_JOBS" $SWIFT_XSWIFTC_FLAGS
+
+      - name: Run SmokeTests
+        env:
+          SWIFT_TEST_PRODUCT: CompilerCoreTests
+          SWIFT_TEST_PARALLEL: "0"
+        run: /opt/homebrew/bin/bash Scripts/swift_test.sh --skip-build --disable-sandbox --filter '^CompilerCoreTests\.SmokeTests/' $SWIFT_XSWIFTC_FLAGS
+
+      - name: Run LinkPhaseIntegrationTests
+        env:
+          SWIFT_TEST_PRODUCT: CompilerBackendTests
+          SWIFT_TEST_PARALLEL: "0"
+        run: /opt/homebrew/bin/bash Scripts/swift_test.sh --skip-build --disable-sandbox --filter '^CompilerBackendTests\.LinkPhaseIntegrationTests/' $SWIFT_XSWIFTC_FLAGS
+
+      - name: Write reproduction commands
+        if: always()
+        run: |
+          {
+            echo '## macOS CI reproduction'
+            echo
+            echo '```bash'
+            echo 'SWIFT_BUILD_SYSTEM=swiftbuild SWIFT_TEST_BUILD_TARGETS="CompilerCoreTests CompilerBackendTests" SWIFT_TEST_BUILD_JOBS=2 /opt/homebrew/bin/bash Scripts/build_swift_tests.sh --disable-sandbox -j 2 -Xswiftc -swift-version -Xswiftc 6 -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency'
+            echo 'SWIFT_BUILD_SYSTEM=swiftbuild SWIFT_TEST_PRODUCT=CompilerCoreTests SWIFT_TEST_PARALLEL=0 /opt/homebrew/bin/bash Scripts/swift_test.sh --skip-build --disable-sandbox --filter '\''^CompilerCoreTests\.SmokeTests/'\'' -Xswiftc -swift-version -Xswiftc 6 -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency'
+            echo 'SWIFT_BUILD_SYSTEM=swiftbuild SWIFT_TEST_PRODUCT=CompilerBackendTests SWIFT_TEST_PARALLEL=0 /opt/homebrew/bin/bash Scripts/swift_test.sh --skip-build --disable-sandbox --filter '\''^CompilerBackendTests\.LinkPhaseIntegrationTests/'\'' -Xswiftc -swift-version -Xswiftc 6 -Xswiftc -strict-concurrency=complete -Xswiftc -warn-concurrency'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
