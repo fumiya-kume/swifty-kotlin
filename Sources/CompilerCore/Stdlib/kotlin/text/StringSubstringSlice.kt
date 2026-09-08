@@ -32,6 +32,13 @@ public fun String.substring(startIndex: Int, endIndex: Int): String {
     return buildStringFromCharRange(chars, startIndex, endIndex)
 }
 
+@kotlin.internal.InlineOnly
+public inline fun CharSequence.substring(startIndex: Int, endIndex: Int = length): String =
+    this.subSequence(startIndex, endIndex).toString()
+
+public fun CharSequence.substring(range: IntRange): String =
+    this.subSequence(range.start, range.endInclusive + 1).toString()
+
 @Deprecated(
     "Use substring(startIndex, endIndex) instead.",
     ReplaceWith("substring(startIndex, endIndex)")

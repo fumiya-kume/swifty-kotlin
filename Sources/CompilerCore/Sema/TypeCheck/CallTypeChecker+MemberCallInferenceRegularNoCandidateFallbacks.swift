@@ -689,6 +689,25 @@ extension CallTypeChecker {
         ) {
             return boundType
         }
+
+        // KSP-1403: CharSequence.substring(Int, Int) and substring(IntRange)
+        // are bundled Kotlin source overloads. Route their source-backed
+        // declarations before the legacy String-only two-argument fallback.
+        if let boundType = tryBindSyntheticStringSubstringFallback(
+            id,
+            calleeName: calleeName,
+            receiverType: stringHOFReceiverType,
+            args: args,
+            argTypes: argTypes,
+            range: range,
+            ctx: ctx,
+            expectedType: expectedType,
+            explicitTypeArgs: explicitTypeArgs,
+            safeCall: safeCall
+        ) {
+            return boundType
+        }
+
         if args.count == 1 {
             let receiverTypeForCheck = safeCall
                 ? sema.types.makeNonNullable(lookupReceiverType)
