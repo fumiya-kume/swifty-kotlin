@@ -4436,7 +4436,8 @@
     - `kotlin.text.foldRight` — fun CharSequence.foldRight(, Function2): #A  -- `final inline fun <#A: kotlin/Any?> (kotlin/CharSequence).kotlin.text/foldRight(#A, kotlin/Function2<kotlin/Char, #A, #A>): #A`
     - `kotlin.text.foldRightIndexed` — fun CharSequence.foldRightIndexed(, Function3): #A  -- `final inline fun <#A: kotlin/Any?> (kotlin/CharSequence).kotlin.text/foldRightIndexed(#A, kotlin/Function3<kotlin/Int, kotlin/Char, #A, #A>): #A`
 
-- [ ] KSP-1377: kotlin.text.CharSequence.for-family の未実装 stdlib API を実装する（2 件）
+- [~] KSP-1377: kotlin.text.CharSequence.for-family の未実装 stdlib API を実装する（2 件）
+  - 実装中: Kotlin source の `forEach` / `forEachIndexed` と UTF-16、動的 `CharSequence` length/get、callback throw、inline non-local return の回帰を追加。共通 G は未完了。
   - 対象: `kotlin.text` / receiver `CharSequence` / family `for`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。

@@ -1,0 +1,97 @@
+symbol fq=__local_0.expected kind=local vis=private flags=_ type=Char
+symbol fq=golden.sema.capturedNonLocal kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Char] ret=Char
+symbol fq=golden.sema.capturedNonLocal.$0.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.capturedNonLocal.$0.target kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceForEach kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Unit
+symbol fq=golden.sema.charSequenceForEach.$1.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceForEachIndexed kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Unit
+symbol fq=golden.sema.charSequenceForEachIndexed.$2.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.directNonLocal kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Char] ret=Char
+symbol fq=golden.sema.directNonLocal.$3.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.directNonLocal.$3.target kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.namedIndexedNonLocal kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=Char
+symbol fq=golden.sema.namedIndexedNonLocal.$4.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.namedNonLocal kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Char] ret=Char
+symbol fq=golden.sema.namedNonLocal.$5.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.namedNonLocal.$5.target kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.safeNonLocal kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence?,Char] ret=Char
+symbol fq=golden.sema.safeNonLocal.$6.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.safeNonLocal.$6.target kind=valueParameter vis=private flags=_
+symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
+file fstdlib_kotlin_text_CharSequence_for package=golden.sema
+  decl golden.sema.charSequenceForEach fun charSequenceForEach sym=golden.sema.charSequenceForEach
+  decl golden.sema.charSequenceForEachIndexed fun charSequenceForEachIndexed sym=golden.sema.charSequenceForEachIndexed
+  decl golden.sema.directNonLocal fun directNonLocal sym=golden.sema.directNonLocal
+  decl golden.sema.safeNonLocal fun safeNonLocal sym=golden.sema.safeNonLocal
+  decl golden.sema.capturedNonLocal fun capturedNonLocal sym=golden.sema.capturedNonLocal
+  decl golden.sema.namedNonLocal fun namedNonLocal sym=golden.sema.namedNonLocal
+  decl golden.sema.namedIndexedNonLocal fun namedIndexedNonLocal sym=golden.sema.namedIndexedNonLocal
+expr e@4:5 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceForEach.$1.source
+expr e@4:21 blockExpr stmts=[] trailing=_ type=Unit
+expr e@4:20 lambda params=[_] body=e@4:21 label=forEach type=(Char) -> Unit
+expr e@4:5#1 memberCall recv=e@4:5 callee=forEach args=[_:e@4:20] type=Unit call=kotlin.text.forEach
+expr e@8:5 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceForEachIndexed.$2.source
+expr e@8:45 name(index) type=Int ref=s-0
+expr e@8:53 int(0) type=Int
+expr e@8:45#1 binary(lessThan) lhs=e@8:45 rhs=e@8:53 type=Boolean
+expr e@8:56 return@forEachIndexed value=_ type=Nothing
+expr e@8:41 if cond=e@8:45#1 then=e@8:56 else=_ type=Unit
+expr e@8:27 lambda params=[index,_] body=e@8:41 label=forEachIndexed type=(Int, Char) -> Unit
+expr e@8:5#1 memberCall recv=e@8:5 callee=forEachIndexed args=[_:e@8:27] type=Unit call=kotlin.text.forEachIndexed
+expr e@12:5 name(source) type=kotlin.CharSequence ref=golden.sema.directNonLocal.$3.source
+expr e@12:26 name(it) type=Char ref=s-1
+expr e@12:32 name(target) type=Char ref=golden.sema.directNonLocal.$3.target
+expr e@12:26#1 binary(equal) lhs=e@12:26 rhs=e@12:32 type=Boolean
+expr e@12:47 name(it) type=Char ref=s-1
+expr e@12:40 return value=e@12:47 type=Nothing
+expr e@12:22 if cond=e@12:26#1 then=e@12:40 else=_ type=Unit
+expr e@12:20 lambda params=[] body=e@12:22 label=forEach type=(Char) -> Unit
+expr e@12:5#1 memberCall recv=e@12:5 callee=forEach args=[_:e@12:20] type=Unit call=kotlin.text.forEach
+expr e@13:12 char(63) type=Char
+expr e@13:5 return value=e@13:12 type=Nothing
+expr e@17:5 name(source) type=kotlin.CharSequence? ref=golden.sema.safeNonLocal.$6.source
+expr e@17:27 name(it) type=Char ref=s-2
+expr e@17:33 name(target) type=Char ref=golden.sema.safeNonLocal.$6.target
+expr e@17:27#1 binary(equal) lhs=e@17:27 rhs=e@17:33 type=Boolean
+expr e@17:48 name(it) type=Char ref=s-2
+expr e@17:41 return value=e@17:48 type=Nothing
+expr e@17:23 if cond=e@17:27#1 then=e@17:41 else=_ type=Unit
+expr e@17:21 lambda params=[] body=e@17:23 label=forEach type=(Char) -> Unit
+expr e@17:5#1 safeMemberCall recv=e@17:5 callee=forEach args=[_:e@17:21] type=Unit call=kotlin.text.forEach
+expr e@18:12 char(63) type=Char
+expr e@18:5 return value=e@18:12 type=Nothing
+expr e@22:20 name(target) type=Char ref=golden.sema.capturedNonLocal.$0.target
+expr e@22:5 localDecl expected mutable=0 type=_ init=e@22:20 type=Unit ref=__local_0.expected
+expr e@23:5 name(source) type=kotlin.CharSequence ref=golden.sema.capturedNonLocal.$0.source
+expr e@23:26 name(it) type=Char ref=s-3
+expr e@23:32 name(expected) type=Char ref=__local_0.expected
+expr e@23:26#1 binary(equal) lhs=e@23:26 rhs=e@23:32 type=Boolean
+expr e@23:49 name(it) type=Char ref=s-3
+expr e@23:42 return value=e@23:49 type=Nothing
+expr e@23:22 if cond=e@23:26#1 then=e@23:42 else=_ type=Unit
+expr e@23:20 lambda params=[] body=e@23:22 label=forEach type=(Char) -> Unit
+expr e@23:5#1 memberCall recv=e@23:5 callee=forEach args=[_:e@23:20] type=Unit call=kotlin.text.forEach
+expr e@24:12 char(63) type=Char
+expr e@24:5 return value=e@24:12 type=Nothing
+expr e@28:5 name(source) type=kotlin.CharSequence ref=golden.sema.namedNonLocal.$5.source
+expr e@28:35 name(it) type=Char ref=s-4
+expr e@28:41 name(target) type=Char ref=golden.sema.namedNonLocal.$5.target
+expr e@28:35#1 binary(equal) lhs=e@28:35 rhs=e@28:41 type=Boolean
+expr e@28:56 name(it) type=Char ref=s-4
+expr e@28:49 return value=e@28:56 type=Nothing
+expr e@28:31 if cond=e@28:35#1 then=e@28:49 else=_ type=Unit
+expr e@28:29 lambda params=[] body=e@28:31 label=forEach type=(Char) -> Unit
+expr e@28:5#1 memberCall recv=e@28:5 callee=forEach args=[action:e@28:29] type=Unit call=kotlin.text.forEach
+expr e@29:12 char(63) type=Char
+expr e@29:5 return value=e@29:12 type=Nothing
+expr e@33:5 name(source) type=kotlin.CharSequence ref=golden.sema.namedIndexedNonLocal.$4.source
+expr e@33:58 name(index) type=Int ref=s-5
+expr e@33:67 int(1) type=Int
+expr e@33:58#1 binary(equal) lhs=e@33:58 rhs=e@33:67 type=Boolean
+expr e@33:77 name(value) type=Char ref=s-6
+expr e@33:70 return value=e@33:77 type=Nothing
+expr e@33:54 if cond=e@33:58#1 then=e@33:70 else=_ type=Unit
+expr e@33:36 lambda params=[index,value] body=e@33:54 label=forEachIndexed type=(Int, Char) -> Unit
+expr e@33:5#1 memberCall recv=e@33:5 callee=forEachIndexed args=[action:e@33:36] type=Unit call=kotlin.text.forEachIndexed
+expr e@34:12 char(63) type=Char
+expr e@34:5 return value=e@34:12 type=Nothing
