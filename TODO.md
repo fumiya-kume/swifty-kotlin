@@ -473,13 +473,13 @@
   - diff: `sequence_builder*.kt` 既存 + `yieldAll(sequence)` の遅延評価順序ケース、`iterator {}` ケース
   - 前提: KSP-651, KSP-713, KSP-1518
 
-- [ ] KSP-1520: `kotlin.Comparator` fun interface 宣言を Kotlin source 化し `HeaderHelpers+SyntheticComparatorStubs.swift` を削除する
-  - 対象スタブ: `Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticComparatorStubs.swift`（120行。KSP-309/KSP-461 後は interface 本体のみ残存）
-  - 実装先: `Sources/CompilerCore/Stdlib/kotlin/comparisons/Comparator.kt` 新設（`fun interface Comparator<T> { fun compare(a: T, b: T): Int }`）
-  - 削除/降格 kk_*: 対象 `kk_*` なし（比較コアは `__kk_compare_with_comparator` を継続使用）
-  - 手順: T
-  - diff: `comparator_*.kt` 既存 + SAM 変換（ラムダから Comparator）と `Comparator` 明示実装クラスの両ケース
-  - 前提: KSP-461。compiler-known anchor として Sema 初期化が先行参照している場合は (c) 残置と結論付け、根拠を `docs/stdlib-pipeline.md` §9 に記録して完了とする
+- [x] KSP-1520: `kotlin.Comparator` fun interface 宣言を Kotlin source 化し `HeaderHelpers+SyntheticComparatorStubs.swift` を削除する
+  - 正規宣言: KSP-725 で追加済みの `Sources/CompilerCore/Stdlib/kotlin/Comparator.kt` を使用（`kotlin/comparisons/Comparator.kt` の重複追加は行わない）
+  - 対象スタブ: `Sources/CompilerCore/Sema/DataFlow/HeaderHelpers+SyntheticComparatorStubs.swift` を削除し、`SyntheticBucketedStubRegistry` と Comparator 専用 member allow-list を整理
+  - 早期参照: `predeclareBundledComparatorHeaders` で source header を先行収集し、`String.Companion.CASE_INSENSITIVE_ORDER` の型解決を維持。Comparator 固有の synthetic itable/vtable anchor は不要
+  - 削除/降格 kk_*: 対象 `kk_*` なし（比較コア `__kk_compare_with_comparator`、CASE_INSENSITIVE_ORDER singleton、RuntimeABI は継続使用）
+  - 回帰: 既存 Golden / `comparator_*.kt` / CASE_INSENSITIVE_ORDER と、SAM 変換・Comparator 明示実装の focused/diff を確認
+  - 前提: KSP-461。実装根拠と header collection 順序は `docs/stdlib-pipeline.md` §9 に記録
 
 - [ ] KSP-1523: `UIntRange` の property / membership / aggregate を Kotlin 化する
   - 対象スタブ: `Sources/CompilerCore/Sema/Models/MemberRuntimeDispatch.swift` の `kk_uint_range_*` 名前生成、`HeaderHelpers+SyntheticUnsignedRangeStubs.swift` の該当メンバ登録

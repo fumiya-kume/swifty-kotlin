@@ -326,6 +326,55 @@ extension DataFlowSemaPhase {
         }
     }
 
+    /// KSP-1520: make the source-backed Comparator nominal available to early
+    /// synthetic registrations without creating a duplicate declaration.
+    func predeclareBundledComparatorHeaders(
+        ast: ASTModule,
+        fileScopes: [Int32: FileScope],
+        symbols: SymbolTable,
+        sourceManager: SourceManager,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner,
+        into predeclared: inout [DeclID: SymbolID]
+    ) {
+        let comparatorPath = "__bundled_kotlin/Comparator.kt"
+        let kotlinPackage = [interner.intern("kotlin")]
+        let comparatorName = interner.intern("Comparator")
+
+        for file in ast.sortedFiles
+            where sourceManager.origin(of: file.fileID)?.isBundledStdlib == true
+                && sourceManager.path(of: file.fileID) == comparatorPath
+                && file.packageFQName == kotlinPackage
+        {
+            guard file.topLevelDecls.contains(where: { declID in
+                guard case let .interfaceDecl(interfaceDecl)? = ast.arena.decl(declID) else {
+                    return false
+                }
+                return interfaceDecl.name == comparatorName
+            }) else {
+                continue
+            }
+            guard let fileScope = fileScopes[file.fileID.rawValue] else {
+                continue
+            }
+            if symbols.lookup(fqName: kotlinPackage + [comparatorName]) != nil {
+                // An imported stdlib artifact already owns the nominal. Do not
+                // predeclare the bundled source over that imported layout.
+                continue
+            }
+            predeclareNominalTypeHeaders(
+                file: file,
+                ast: ast,
+                symbols: symbols,
+                scope: fileScope,
+                sourceManager: sourceManager,
+                diagnostics: diagnostics,
+                interner: interner,
+                into: &predeclared
+            )
+        }
+    }
+
     /// KSP-711: forward-declares `Charset` and `Charsets` from
     /// `StringEncoding.kt` before synthetic FileIO bridges are registered.
     /// Their source symbols must be available while bridge signatures are
