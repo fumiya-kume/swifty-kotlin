@@ -177,12 +177,13 @@ public class StringBuilder : Appendable, CharSequence {
                 "startIndex=$startIndex, endIndex=$endIndex, length=$sourceLength"
             )
         }
+        val chars = CharArray(endIndex - startIndex)
         var index = startIndex
         while (index < endIndex) {
-            append(value[index])
+            chars[index - startIndex] = value[index]
             index++
         }
-        return this
+        return appendRange(chars, 0, chars.size)
     }
 
     fun insertRange(index: Int, value: CharSequence, startIndex: Int, endIndex: Int): StringBuilder =

@@ -57,6 +57,32 @@ extension BuildKIRRegressionTests {
         }
     }
 
+    // KSP-1390: CharSequence.subSequence must use the adjacent dynamic method slot.
+    @Test func testKsp1390CharSequenceSubSequenceUsesDynamicItableDispatch() throws {
+        let source = """
+        fun subSequenceOf(value: CharSequence): CharSequence = value.subSequence(0, 1)
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try #require(ctx.kir)
+            let body = try findKIRFunctionBody(named: "subSequenceOf", in: module, interner: ctx.interner)
+            let dispatches = body.compactMap { instruction -> KIRDispatchKind? in
+                guard case let .virtualCall(_, _, _, _, _, _, _, dispatch) = instruction else {
+                    return nil
+                }
+                return dispatch
+            }
+
+            #expect(dispatches.contains { dispatch in
+                if case .itableDynamic(_, 1) = dispatch { return true }
+                return false
+            })
+        }
+    }
+
     @Test func testDirectSafeMemberCallConstFoldNonNullAndNullablePaths() {
         let fixture = makeKIRDirectLoweringFixture()
         let range = makeRange()

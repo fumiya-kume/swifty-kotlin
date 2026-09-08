@@ -21,6 +21,17 @@ private class RecordingCharSequence(private val value: String) : CharSequence {
     }
 }
 
+private fun charCodes(value: CharSequence): String {
+    var result = ""
+    var index = 0
+    while (index < value.length) {
+        if (index > 0) result += ","
+        result += value[index].code.toString()
+        index++
+    }
+    return result
+}
+
 fun main() {
     val custom: CharSequence = RecordingCharSequence("abc")
     println("short-start=${custom.padStart(2, '0')}")
@@ -53,5 +64,12 @@ fun main() {
     }
 
     val utf16: CharSequence = RecordingCharSequence("🥦")
-    println("utf16=${utf16.padStart(3, '0').length}:${utf16.padEnd(3, '0').length}")
+    val utf16Start = utf16.padStart(3, '0')
+    val utf16End = utf16.padEnd(3, '0')
+    println("utf16-start=$utf16Start:${charCodes(utf16Start)}")
+    println("utf16-end=$utf16End:${charCodes(utf16End)}")
+
+    val self = StringBuilder("🥦")
+    self.append(self)
+    println("utf16-self=${self.toString()}:${charCodes(self)}")
 }
