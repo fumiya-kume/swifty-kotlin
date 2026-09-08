@@ -12,6 +12,17 @@ private class RecordingCharSequence(private val value: String) : CharSequence {
     override fun toString(): String = "wrong-toString"
 }
 
+private class PlainSequence(private val value: String) : CharSequence {
+    override val length: Int
+        get() = value.length
+
+    override fun get(index: Int): Char = value[index]
+
+    override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
+        return value.substring(startIndex, endIndex)
+    }
+}
+
 private fun describe(label: String, value: CharSequence) {
     println("$label=${value.toString()}")
 }
@@ -37,6 +48,12 @@ fun main() {
 
     val builder: CharSequence = StringBuilder("abcdef")
     describe("builder-middle", builder.subSequence(2..4))
+
+    val concreteBuilder = StringBuilder("abcdef")
+    describe("builder-concrete", concreteBuilder.subSequence(0..1))
+
+    val plain = PlainSequence("abcdef")
+    describe("plain-range", plain.subSequence(0..1))
 
     failure("reversed", { custom.subSequence(3..1) })
     failure("negative", { custom.subSequence(-1..0) })

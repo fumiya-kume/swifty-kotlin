@@ -6,6 +6,18 @@ import Foundation
 /// Split out to isolate merge conflicts between parallel stdlib PRs.
 extension CallTypeChecker {
 
+    func isSyntheticCharSequenceReceiverType(_ type: TypeID, sema: SemaModule) -> Bool {
+        let nonNullType = sema.types.makeNonNullable(type)
+        if nonNullType == sema.types.stringType {
+            return true
+        }
+        guard let charSequenceType = syntheticCharSequenceType(sema: sema) else {
+            return false
+        }
+        return nonNullType == charSequenceType
+            || sema.types.isSubtype(nonNullType, charSequenceType)
+    }
+
     func isJavaUtilLocaleType(
         _ type: TypeID,
         sema: SemaModule,
@@ -162,7 +174,7 @@ extension CallTypeChecker {
     ) -> TypeID? {
         guard ctx.interner.resolve(calleeName) == "subSequence",
               args.count == 1,
-              isSyntheticStringLikeType(receiverType, sema: ctx.sema),
+              isSyntheticCharSequenceReceiverType(receiverType, sema: ctx.sema),
               let rangeType = sourceLevelRangeMemberLookupType(
                   receiverExpr: args[0].expr,
                   receiverType: argTypes[0],
@@ -246,18 +258,6 @@ extension CallTypeChecker {
     /// range argument is refined from its source-level receiver classification
     /// so inline range literals keep their IntRange overload instead of being
     /// mistaken for a scalar index.
-    func isSyntheticCharSequenceReceiverType(_ type: TypeID, sema: SemaModule) -> Bool {
-        let nonNullType = sema.types.makeNonNullable(type)
-        if nonNullType == sema.types.stringType {
-            return true
-        }
-        guard let charSequenceType = syntheticCharSequenceType(sema: sema) else {
-            return false
-        }
-        return nonNullType == charSequenceType
-            || sema.types.isSubtype(nonNullType, charSequenceType)
-    }
-
     func tryBindSyntheticStringSubstringFallback(
         _ id: ExprID,
         calleeName: InternedString,
