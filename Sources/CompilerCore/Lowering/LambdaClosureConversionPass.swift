@@ -101,7 +101,7 @@ final class LambdaClosureConversionPass: LoweringPass {
         let lambdaPrefix = "kk_lambda_"
         let callSiteIndex = CallSiteIndex.build(from: module)
         for decl in module.arena.declarations {
-            guard case let .function(function) = decl else { continue }
+            guard case let .function(function) = decl, !function.isInlineOnly else { continue }
             let name = ctx.interner.resolve(function.name)
             if name.hasPrefix(lambdaPrefix),
                detectCaptureParamCount(
@@ -224,7 +224,9 @@ final class LambdaClosureConversionPass: LoweringPass {
         var results: [LambdaCaptureInfo] = []
 
         for decl in module.arena.declarations {
-            guard case let .function(function) = decl else { continue }
+            // Non-local-return lambdas are expanded before closure conversion.
+            // They have no emitted body for a runtime invoke wrapper to call.
+            guard case let .function(function) = decl, !function.isInlineOnly else { continue }
             let name = ctx.interner.resolve(function.name)
             guard name.hasPrefix(lambdaPrefix), function.params.count > 0 else {
                 continue
