@@ -67,6 +67,13 @@ public class StringBuilder : Appendable, CharSequence {
     fun append(value: CharArray): StringBuilder =
         appendRange(value, 0, value.size)
 
+    fun append(str: CharArray, offset: Int, len: Int): StringBuilder {
+        if (offset < 0 || len < 0 || offset > str.size - len) {
+            throw IndexOutOfBoundsException("offset=$offset, length=$len, size=${str.size}")
+        }
+        return appendRange(str, offset, offset + len)
+    }
+
     fun append(vararg value: Any?): StringBuilder {
         var index = 0
         while (index < value.size) {
@@ -81,6 +88,28 @@ public class StringBuilder : Appendable, CharSequence {
         __kk_string_builder_append_obj("\n")
         return this
     }
+
+    inline fun appendLine(value: Boolean): StringBuilder = append(value).appendLine()
+
+    inline fun appendLine(value: Byte): StringBuilder = append(value.toInt()).appendLine()
+
+    inline fun appendLine(value: Char): StringBuilder = append(value).appendLine()
+
+    inline fun appendLine(value: CharArray): StringBuilder = append(value).appendLine()
+
+    inline fun appendLine(value: CharSequence?): StringBuilder = append(value).appendLine()
+
+    inline fun appendLine(value: Double): StringBuilder = append(value).appendLine()
+
+    inline fun appendLine(value: Float): StringBuilder = append(value).appendLine()
+
+    inline fun appendLine(value: Int): StringBuilder = append(value).appendLine()
+
+    inline fun appendLine(value: Long): StringBuilder = append(value).appendLine()
+
+    inline fun appendLine(value: Short): StringBuilder = append(value.toInt()).appendLine()
+
+    inline fun appendLine(value: String?): StringBuilder = append(value).appendLine()
 
     fun appendLine(): StringBuilder {
         __kk_string_builder_append_obj("\n")
