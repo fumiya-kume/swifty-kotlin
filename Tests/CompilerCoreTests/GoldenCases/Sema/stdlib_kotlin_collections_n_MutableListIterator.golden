@@ -9,6 +9,8 @@ symbol fq=golden.sema.probe kind=function vis=public flags=_ sig=recv=_ params=[
 symbol fq=golden.sema.probe.$3.iterator kind=valueParameter vis=private flags=_
 symbol fq=kotlin.collections.ListIterator kind=interface vis=public flags=_
 symbol fq=kotlin.collections.ListIterator.T kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.ListIterator.hasNext kind=function vis=public flags=synthetic sig=recv=kotlin.collections.ListIterator<out kotlin.collections.ListIterator.T> params=[] ret=Boolean type=() -> Boolean
+symbol fq=kotlin.collections.ListIterator.next kind=function vis=public flags=synthetic sig=recv=kotlin.collections.ListIterator<out kotlin.collections.ListIterator.T> params=[] ret=kotlin.collections.ListIterator.T type=() -> kotlin.collections.ListIterator.T
 symbol fq=kotlin.collections.MutableIterator kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableIterator.T kind=typeParameter vis=private flags=_
 symbol fq=kotlin.collections.MutableListIterator kind=interface vis=public flags=_
@@ -38,9 +40,9 @@ expr e@22:5#1 memberCall recv=e@22:5 callee=set args=[_:e@22:18] type=Unit call=
 expr e@23:5 name(iterator) type=kotlin.collections.MutableListIterator<Int> ref=golden.sema.probe.$3.iterator
 expr e@23:5#1 memberCall recv=e@23:5 callee=remove args=[] type=Unit call=kotlin.collections.MutableIterator.remove targs=[Int]
 expr e@24:5 name(iterator) type=kotlin.collections.MutableListIterator<Int> ref=golden.sema.probe.$3.iterator
-expr e@24:5#1 memberCall recv=e@24:5 callee=hasNext args=[] type=Boolean call=kotlin.collections.MutableListIterator.hasNext targs=[Int]
+expr e@24:5#1 memberCall recv=e@24:5 callee=hasNext args=[] type=Boolean call=kotlin.collections.ListIterator.hasNext targs=[Int]
 expr e@25:5 name(iterator) type=kotlin.collections.MutableListIterator<Int> ref=golden.sema.probe.$3.iterator
-expr e@25:5#1 memberCall recv=e@25:5 callee=next args=[] type=Int call=kotlin.collections.MutableListIterator.next targs=[Int]
+expr e@25:5#1 memberCall recv=e@25:5 callee=next args=[] type=Int call=kotlin.collections.ListIterator.next targs=[Int]
 expr e@26:5 name(iterator) type=kotlin.collections.MutableListIterator<Int> ref=golden.sema.probe.$3.iterator
 expr e@26:5#1 memberCall recv=e@26:5 callee=hasPrevious args=[] type=Boolean call=kotlin.collections.ListIterator.hasPrevious targs=[Int]
 expr e@27:5 name(iterator) type=kotlin.collections.MutableListIterator<Int> ref=golden.sema.probe.$3.iterator

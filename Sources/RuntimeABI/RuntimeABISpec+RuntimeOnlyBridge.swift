@@ -54,21 +54,6 @@ private let kclassBridgeFunctions = [
     "__kk_kclass_get_arity",
 ].map { bridgeSpec($0, section: "TypeCheck", params: ["kclassRaw"]) }
 
-private let sequenceOnlyBridgeFunctions: [RuntimeABIFunctionSpec] =
-    [
-        bridgeSpec(
-            "kk_sequence_fold",
-            section: "Sequence",
-            typedParams: [
-                ("seqRaw", .intptr),
-                ("initial", .intptr),
-                ("fnPtr", .intptr),
-                ("closureRaw", .intptr),
-                ("outThrown", .nullableIntptrPointer),
-            ]
-        ),
-    ]
-
 public extension RuntimeABISpec {
     static let runtimeOnlyBridgeFunctions: [RuntimeABIFunctionSpec] =
         arraySpecialBridgeFunctions
@@ -76,5 +61,4 @@ public extension RuntimeABISpec {
         + minMaxFloatDoubleBridgeFunctions
         + coroutineOnlyBridgeFunctions
         + kclassBridgeFunctions
-        + sequenceOnlyBridgeFunctions
 }

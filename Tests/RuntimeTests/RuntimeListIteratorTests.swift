@@ -443,17 +443,25 @@ final class RuntimeListIteratorTests {
         let interfaceTypeID = Int(runtimeStableNominalTypeID(
             fqName: "kotlin.collections.MutableListIterator"
         ))
+        let iteratorTypeID = Int(runtimeStableNominalTypeID(
+            fqName: "kotlin.collections.Iterator"
+        ))
+        let mutableIteratorTypeID = Int(runtimeStableNominalTypeID(
+            fqName: "kotlin.collections.MutableIterator"
+        ))
 
-        let hasNextPtr = kk_itable_lookup_dynamic(iterHandle, interfaceTypeID, 1)
-        let nextPtr = kk_itable_lookup_dynamic(iterHandle, interfaceTypeID, 0)
-        let removePtr = kk_itable_lookup_dynamic(iterHandle, interfaceTypeID, 2)
-        let setPtr = kk_itable_lookup_dynamic(iterHandle, interfaceTypeID, 3)
-        let addPtr = kk_itable_lookup_dynamic(iterHandle, interfaceTypeID, 4)
-        #expect(hasNextPtr != 0)
-        #expect(nextPtr != 0)
-        #expect(removePtr != 0)
-        #expect(setPtr != 0)
-        #expect(addPtr != 0)
+        // Slots belong to each declaring interface: Iterator hasNext/next,
+        // MutableIterator remove, and MutableListIterator set/add.
+        let hasNextPtr = kk_itable_lookup_dynamic(iterHandle, iteratorTypeID, 0)
+        let nextPtr = kk_itable_lookup_dynamic(iterHandle, iteratorTypeID, 1)
+        let removePtr = kk_itable_lookup_dynamic(iterHandle, mutableIteratorTypeID, 0)
+        let setPtr = kk_itable_lookup_dynamic(iterHandle, interfaceTypeID, 0)
+        let addPtr = kk_itable_lookup_dynamic(iterHandle, interfaceTypeID, 1)
+        try #require(hasNextPtr != 0)
+        try #require(nextPtr != 0)
+        try #require(removePtr != 0)
+        try #require(setPtr != 0)
+        try #require(addPtr != 0)
 
         let unaryCall = { (functionRaw: Int) -> (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int) in
             unsafeBitCast(functionRaw, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
@@ -487,7 +495,7 @@ final class RuntimeListIteratorTests {
         var creationThrown = 0
         let indexedIterHandle = kk_list_iterator_at(indexedListHandle, 1, &creationThrown)
         #expect(creationThrown == 0)
-        let indexedAddPtr = kk_itable_lookup_dynamic(indexedIterHandle, interfaceTypeID, 4)
+        let indexedAddPtr = kk_itable_lookup_dynamic(indexedIterHandle, interfaceTypeID, 1)
         guard indexedAddPtr != 0 else {
             Issue.record("Indexed MutableList.listIterator should expose MutableListIterator.add")
             return
