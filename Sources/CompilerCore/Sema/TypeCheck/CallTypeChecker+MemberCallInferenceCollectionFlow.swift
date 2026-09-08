@@ -160,6 +160,12 @@ extension CallTypeChecker {
         } else {
             activeCollectionHOFNames.remove("mapIndexedNotNull")
             activeCollectionHOFNames.remove("dropLastWhile")
+            // Sequence.flatMapTo/flatMapIndexedTo have Iterable- and
+            // Sequence-return overloads. Let regular overload resolution use
+            // the lambda return type instead of the single-shape destination
+            // fast path below, which otherwise binds the first declaration.
+            activeCollectionHOFNames.remove("flatMapTo")
+            activeCollectionHOFNames.remove("flatMapIndexedTo")
         }
         if isMapReceiver {
             activeCollectionHOFNames.formUnion(mapOnlyCollectionHOFNames)

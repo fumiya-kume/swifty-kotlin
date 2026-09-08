@@ -4042,9 +4042,9 @@
     - `kotlin.sequences.firstOrNull` — fun Sequence.firstOrNull(): #A  -- `final fun <#A: kotlin/Any?> (kotlin.sequences/Sequence<#A>).kotlin.sequences/firstOrNull(): #A?`
     - `kotlin.sequences.firstOrNull` — fun Sequence.firstOrNull(Function1): #A  -- `final inline fun <#A: kotlin/Any?> (kotlin.sequences/Sequence<#A>).kotlin.sequences/firstOrNull(kotlin/Function1<#A, kotlin/Boolean>): #A?`
 
-- [ ] KSP-1345: kotlin.sequences.Sequence.flat-family の未実装 stdlib API を実装する（4 件）
+- [~] KSP-1345: kotlin.sequences.Sequence.flat-family の未実装 stdlib API を実装する（4 件）
   - 対象: `kotlin.sequences` / receiver `Sequence` / family `flat`
-  - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/sequences/SequenceTransformHOF.kt`
+  - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/sequences/SequenceDestinationHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_sequences_Sequence_flat.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_sequences_Sequence_flat.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_sequences_Sequence_flat.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。
@@ -4054,6 +4054,10 @@
     - `kotlin.sequences.flatMapIndexedTo` — fun Sequence.flatMapIndexedTo(, Function2): #C  -- `final inline fun <#A: kotlin/Any?, #B: kotlin/Any?, #C: kotlin.collections/MutableCollection<in #B>> (kotlin.sequences/Sequence<#A>).kotlin.sequences/flatMapIndexedTo(#C, kotlin/Function2<kotlin/Int, #A, kotlin.sequences/Sequence<#B>>): #C`
     - `kotlin.sequences.flatMapTo` — fun Sequence.flatMapTo(, Function1): #C  -- `final inline fun <#A: kotlin/Any?, #B: kotlin/Any?, #C: kotlin.collections/MutableCollection<in #B>> (kotlin.sequences/Sequence<#A>).kotlin.sequences/flatMapTo(#C, kotlin/Function1<#A, kotlin.collections/Iterable<#B>>): #C`
     - `kotlin.sequences.flatMapTo` — fun Sequence.flatMapTo(, Function1): #C  -- `final inline fun <#A: kotlin/Any?, #B: kotlin/Any?, #C: kotlin.collections/MutableCollection<in #B>> (kotlin.sequences/Sequence<#A>).kotlin.sequences/flatMapTo(#C, kotlin/Function1<#A, kotlin.sequences/Sequence<#B>>): #C`
+  - 完了根拠（focused）: Kotlin 2.3.10 の4 overload contract（`MutableCollection<in R>`、lambda return overload、indexed overflow、destination identity、順序・例外伝播）を `SequenceDestinationHOF.kt` に実装し、Sequence の flat destination HOF だけを通常 resolver に通す最小経路修正を追加した。既存 Iterable overload と共有 bridge/API は保持した。
+  - 回帰（focused）: 専用 Sema Golden と `Scripts/diff_cases/stdlib_kotlin_sequences_Sequence_flat.kt` で Iterable/Sequence の overload 選択、型推論、空Sequence、index、destination identity、同名ユーザー関数、例外伝播を固定。既存 Sequence filter/fold と Iterable flat の worker Golden は無差分。Core resolver 所有PRの実パッチhunkは `/tmp/swifty-todo50-01a07dee/evidence/ksp1345/ownership-audit.md` に記録した。
+  - 検証（focused PASS）: `swift build --disable-sandbox`、Sema Golden shard 64/75、対象 `diff_kotlinc`（Kotlin 2.3.10）、`RuntimeABIExternalLinkValidationTests` 4件、`check_todo_ids.sh`、`git diff --check`。
+  - 保留: 共通G（全Swift/全Golden/全diff）は親タスク側で継続中のため、完了判定は保留し Draft PR とする。
 
 - [x] KSP-1346: kotlin.sequences.Sequence.fold-family の未実装 stdlib API を実装する（2 件）
   - 対象: `kotlin.sequences` / receiver `Sequence` / family `fold`

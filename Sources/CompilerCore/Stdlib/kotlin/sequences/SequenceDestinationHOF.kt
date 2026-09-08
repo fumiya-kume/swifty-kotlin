@@ -61,14 +61,30 @@ public fun <T, R, C : MutableCollection<R>> Sequence<T>.mapIndexedTo(
     return destination
 }
 
-public fun <T, R, C : MutableCollection<R>> Sequence<T>.flatMapTo(
+@SinceKotlin("1.4")
+@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
+@OverloadResolutionByLambdaReturnType
+@kotlin.jvm.JvmName("flatMapIterableTo")
+@IgnorableReturnValue
+public inline fun <T, R, C : MutableCollection<in R>> Sequence<T>.flatMapTo(
     destination: C,
     transform: (T) -> Iterable<R>
 ): C {
-    val iterator = this.iterator()
-    while (iterator.hasNext()) {
-        val nestedIterator = transform(iterator.next()).iterator()
-        while (nestedIterator.hasNext()) destination.add(nestedIterator.next())
+    for (element in this) {
+        val list = transform(element)
+        destination.addAll(list)
+    }
+    return destination
+}
+
+@IgnorableReturnValue
+public inline fun <T, R, C : MutableCollection<in R>> Sequence<T>.flatMapTo(
+    destination: C,
+    transform: (T) -> Sequence<R>
+): C {
+    for (element in this) {
+        val list = transform(element)
+        destination.addAll(list)
     }
     return destination
 }
@@ -101,16 +117,38 @@ public fun <T, R : Any, C : MutableCollection<R>> Sequence<T>.mapIndexedNotNullT
     return destination
 }
 
-public fun <T, R, C : MutableCollection<R>> Sequence<T>.flatMapIndexedTo(
+@SinceKotlin("1.4")
+@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
+@OverloadResolutionByLambdaReturnType
+@kotlin.jvm.JvmName("flatMapIndexedIterableTo")
+@IgnorableReturnValue
+@kotlin.internal.InlineOnly
+public inline fun <T, R, C : MutableCollection<in R>> Sequence<T>.flatMapIndexedTo(
     destination: C,
     transform: (Int, T) -> Iterable<R>
 ): C {
-    val iterator = this.iterator()
     var index = 0
-    while (iterator.hasNext()) {
-        val nestedIterator = transform(index, iterator.next()).iterator()
-        while (nestedIterator.hasNext()) destination.add(nestedIterator.next())
-        index = index + 1
+    for (element in this) {
+        val list = transform(checkIndexOverflow(index++), element)
+        destination.addAll(list)
+    }
+    return destination
+}
+
+@SinceKotlin("1.4")
+@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
+@OverloadResolutionByLambdaReturnType
+@kotlin.jvm.JvmName("flatMapIndexedSequenceTo")
+@IgnorableReturnValue
+@kotlin.internal.InlineOnly
+public inline fun <T, R, C : MutableCollection<in R>> Sequence<T>.flatMapIndexedTo(
+    destination: C,
+    transform: (index: Int, T) -> Sequence<R>
+): C {
+    var index = 0
+    for (element in this) {
+        val list = transform(checkIndexOverflow(index++), element)
+        destination.addAll(list)
     }
     return destination
 }
