@@ -30,7 +30,7 @@ struct InlineNonLocalReturnTypeTests {
         }
 
         fun labeledPredicateReturn(source: CharSequence): Char {
-            return source.first predicate@ { return@predicate true }
+            return source.first { return@first true }
         }
         """)
 
@@ -43,4 +43,52 @@ struct InlineNonLocalReturnTypeTests {
             )
         )
     }
+
+    @Test func wrongEnclosingReturnTypeIsRejected() throws {
+        let ctx = makeContextFromSource("""
+        fun wrongOuterReturnType(source: CharSequence): Char {
+            source.first { return "!" }
+            return '?'
+        }
+        """)
+
+        try runSema(ctx)
+        assertHasDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+    }
+
+    @Test func wrongLabeledPredicateReturnTypeIsRejected() throws {
+        let ctx = makeContextFromSource("""
+        fun wrongLabeledReturnType(source: CharSequence): Char {
+            return source.first { return@first '!' }
+        }
+        """)
+
+        try runSema(ctx)
+        assertHasDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+    }
+
+    @Test func localNamedFunctionResetsTheEnclosingReturnType() throws {
+        let ctx = makeContextFromSource("""
+        fun localNamedFunctionReturn(source: CharSequence): String {
+            fun local(): Char {
+                return source.first { return '!' }
+            }
+            local()
+            return "?"
+        }
+        """)
+
+        try runSema(ctx)
+        #expect(!ctx.diagnostics.hasError, Comment(rawValue: diagnosticSummary(in: ctx)))
+    }
+}
+
+private func assertHasDiagnostic(_ code: String, in ctx: CompilationContext) {
+    let found = ctx.diagnostics.diagnostics.contains { $0.code == code }
+    let descriptions = ctx.diagnostics.diagnostics.map { "\($0.code): \($0.message)" }
+    #expect(found, "Expected diagnostic \(code), got: \(descriptions)")
+}
+
+private func diagnosticSummary(in ctx: CompilationContext) -> String {
+    ctx.diagnostics.diagnostics.map { "\($0.code): \($0.message)" }.joined(separator: " | ")
 }
