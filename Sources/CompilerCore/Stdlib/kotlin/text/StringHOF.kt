@@ -336,8 +336,7 @@ public fun CharSequence.sumByDouble(selector: (Char) -> Double): Double {
 public inline fun CharSequence.sumOf(selector: (Char) -> Double): Double {
     var sum: Double = 0.toDouble()
     var i = 0
-    val sz = this.length
-    while (i < sz) {
+    while (i < this.length) {
         sum += selector(this[i])
         i++
     }
@@ -350,8 +349,7 @@ public inline fun CharSequence.sumOf(selector: (Char) -> Double): Double {
 public inline fun CharSequence.sumOf(selector: (Char) -> Int): Int {
     var sum: Int = 0.toInt()
     var i = 0
-    val sz = this.length
-    while (i < sz) {
+    while (i < this.length) {
         sum += selector(this[i])
         i++
     }
@@ -366,8 +364,7 @@ public inline fun CharSequence.sumOf(selector: (Char) -> Int): Int {
 public inline fun CharSequence.sumOf(selector: (Char) -> Long): Long {
     var sum: Long = 0.toLong()
     var i = 0
-    val sz = this.length
-    while (i < sz) {
+    while (i < this.length) {
         sum += selector(this[i])
         i++
     }
@@ -380,8 +377,7 @@ public inline fun CharSequence.sumOf(selector: (Char) -> Long): Long {
 public inline fun CharSequence.sumOf(selector: (Char) -> UInt): UInt {
     var sum: UInt = 0.toUInt()
     var i = 0
-    val sz = this.length
-    while (i < sz) {
+    while (i < this.length) {
         sum += selector(this[i])
         i++
     }
@@ -396,8 +392,7 @@ public inline fun CharSequence.sumOf(selector: (Char) -> UInt): UInt {
 public inline fun CharSequence.sumOf(selector: (Char) -> ULong): ULong {
     var sum: ULong = 0.toULong()
     var i = 0
-    val sz = this.length
-    while (i < sz) {
+    while (i < this.length) {
         sum += selector(this[i])
         i++
     }
