@@ -27,13 +27,14 @@ public class StringBuilder : Appendable, CharSequence {
         __kk_string_builder_append_obj(value.toString())
 
     override fun append(value: CharSequence?): StringBuilder {
-        val source: CharSequence = if (value == null) "null" else value!!
-        return appendCharSequenceRange(source, 0, source.length)
+        if (value == null) return append("null")
+        val endIndex = value.length
+        return appendCharSequenceRange(value, 0, endIndex)
     }
 
     override fun append(value: CharSequence?, startIndex: Int, endIndex: Int): StringBuilder {
-        val source: CharSequence = if (value == null) "null" else value!!
-        return appendCharSequenceRange(source, startIndex, endIndex)
+        if (value == null) return appendCharSequenceRange("null", startIndex, endIndex)
+        return appendCharSequenceRange(value, startIndex, endIndex)
     }
 
     fun append(value: String?): StringBuilder =
