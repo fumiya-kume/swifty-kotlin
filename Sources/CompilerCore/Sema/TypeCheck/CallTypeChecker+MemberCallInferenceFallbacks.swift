@@ -211,12 +211,43 @@ extension CallTypeChecker {
         for candidate in scopedCandidates where !normalCandidates.contains(candidate) {
             normalCandidates.append(candidate)
         }
-        if !normalCandidates.isEmpty {
+        // Kotlin gives an applicable concrete member precedence over all
+        // extensions. Keep that ordering when the source-backed range
+        // declaration is recovered after ordinary member lookup.
+        var memberOwnerFQNames = Set<[InternedString]>()
+        if let receiverNominal = driver.helpers.nominalSymbol(
+            of: nonNullReceiver,
+            types: ctx.sema.types
+        ) {
+            var pendingOwners = [receiverNominal]
+            while let owner = pendingOwners.first {
+                pendingOwners.removeFirst()
+                guard let ownerSymbol = ctx.sema.symbols.symbol(owner),
+                      memberOwnerFQNames.insert(ownerSymbol.fqName).inserted
+                else {
+                    continue
+                }
+                pendingOwners.append(contentsOf: ctx.sema.symbols.directSupertypes(for: owner))
+            }
+        }
+        let concreteMemberCandidates = normalCandidates.filter { candidate in
+            guard let symbol = ctx.sema.symbols.symbol(candidate),
+                  symbol.kind == .function,
+                  symbol.fqName.count > 1
+            else {
+                return false
+            }
+            return memberOwnerFQNames.contains(Array(symbol.fqName.dropLast()))
+        }
+        let candidateGroups = concreteMemberCandidates.isEmpty
+            ? [normalCandidates]
+            : [concreteMemberCandidates, normalCandidates]
+        for candidates in candidateGroups where !candidates.isEmpty {
             let resolvedArgs = zip(args, refinedArgTypes).map { argument, type in
                 CallArg(label: argument.label, isSpread: argument.isSpread, type: type)
             }
             let resolved = ctx.resolver.resolveCall(
-                candidates: normalCandidates,
+                candidates: candidates,
                 call: CallExpr(
                     range: range,
                     calleeName: calleeName,
