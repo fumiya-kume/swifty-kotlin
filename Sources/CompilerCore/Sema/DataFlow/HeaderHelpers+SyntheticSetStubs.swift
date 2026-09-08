@@ -521,14 +521,19 @@ extension DataFlowSemaPhase {
         )))
         symbols.setPropertyType(abstractMutableSetType, for: abstractMutableSetSymbol)
 
-        let abstractSetSymbol = symbols.lookup(
-            fqName: kotlinCollectionsPkg + [interner.intern("AbstractSet")]
+        // KSP-936 gave AbstractMutableSet a bundled source declaration
+        // (`AbstractMutableCollection<E>(), MutableSet<E>`). Mirror that shape
+        // here rather than the pre-migration `AbstractSet`-based fallback —
+        // see the matching fix in registerSyntheticAbstractMutableListStub for
+        // why a .kklib consumer only ever sees this bootstrap edge.
+        let abstractMutableCollectionSymbol = symbols.lookup(
+            fqName: kotlinCollectionsPkg + [interner.intern("AbstractMutableCollection")]
         )
-        let readonlySupertype = abstractSetSymbol ?? setInterfaceSymbol
-        symbols.setDirectSupertypes([readonlySupertype, mutableSetInterfaceSymbol], for: abstractMutableSetSymbol)
-        types.setNominalDirectSupertypes([readonlySupertype, mutableSetInterfaceSymbol], for: abstractMutableSetSymbol)
-        symbols.setSupertypeTypeArgs([.out(typeParamType)], for: abstractMutableSetSymbol, supertype: readonlySupertype)
-        types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: abstractMutableSetSymbol, supertype: readonlySupertype)
+        let firstSupertype = abstractMutableCollectionSymbol ?? setInterfaceSymbol
+        symbols.setDirectSupertypes([firstSupertype, mutableSetInterfaceSymbol], for: abstractMutableSetSymbol)
+        types.setNominalDirectSupertypes([firstSupertype, mutableSetInterfaceSymbol], for: abstractMutableSetSymbol)
+        symbols.setSupertypeTypeArgs([.invariant(typeParamType)], for: abstractMutableSetSymbol, supertype: firstSupertype)
+        types.setNominalSupertypeTypeArgs([.invariant(typeParamType)], for: abstractMutableSetSymbol, supertype: firstSupertype)
         symbols.setSupertypeTypeArgs([.invariant(typeParamType)], for: abstractMutableSetSymbol, supertype: mutableSetInterfaceSymbol)
         types.setNominalSupertypeTypeArgs(
             [.invariant(typeParamType)],

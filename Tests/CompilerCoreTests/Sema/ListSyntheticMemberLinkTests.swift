@@ -177,7 +177,7 @@ struct ListSyntheticMemberLinkTests {
     }
 
     @Test
-    func testArrayListOfFactoryInfersMutableListType() throws {
+    func testArrayListOfFactoryInfersArrayListType() throws {
         let source = """
         fun probe() {
             val values = arrayListOf(1, 2)
@@ -203,9 +203,9 @@ struct ListSyntheticMemberLinkTests {
             })
             let callType = try #require(sema.bindings.exprTypes[arrayListCall])
             guard case let .classType(classType) = sema.types.kind(of: callType) else {
-                Issue.record("Expected arrayListOf to produce a MutableList class type"); return
+                Issue.record("Expected arrayListOf to produce an ArrayList class type"); return
             }
-            #expect(try ctx.interner.resolve(#require(sema.symbols.symbol(classType.classSymbol)?.name)) == "MutableList")
+            #expect(try ctx.interner.resolve(#require(sema.symbols.symbol(classType.classSymbol)?.name)) == "ArrayList")
             #expect(classType.args == [.invariant(sema.types.intType)])
             #expect(sema.bindings.isCollectionExpr(arrayListCall), "Expected arrayListOf to be tracked as a collection expression")
         }
@@ -441,7 +441,6 @@ struct ListSyntheticMemberLinkTests {
             // `Sources/CompilerCore/Stdlib/kotlin/collections/CollectionAliases.kt`,
             // not by synthetic self-registration.
             for (aliasName, targetName) in [
-                ("ArrayList", "MutableList"),
                 ("LinkedHashMap", "MutableMap"),
             ] {
                 let aliasSymbol = try #require(
@@ -472,6 +471,60 @@ struct ListSyntheticMemberLinkTests {
                 sema.symbols.lookup(fqName: kotlinCollections + [interner.intern("MutableMap")])
             )
             #expect(sema.symbols.directSupertypes(for: hashMapSymbol).contains(mutableMapSymbol))
+        }
+    }
+
+    @Test
+    func testArrayListConcreteClassAndConstructorSurfaceIsRegistered() throws {
+        let source = """
+        fun probe(input: Collection<Int>): Boolean {
+            val empty: ArrayList<Int> = ArrayList()
+            val capacity = ArrayList<Int>(4)
+            val copied = ArrayList(input)
+            val mutable: MutableList<Int> = empty
+            mutable.add(1)
+            return empty is ArrayList<*> && empty is MutableList<*> && empty is RandomAccess
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            #expect(ctx.diagnostics.diagnostics.isEmpty, "Expected ArrayList concrete class calls to type-check cleanly, got: \(ctx.diagnostics.diagnostics)")
+
+            let sema = try #require(ctx.sema)
+            let interner = ctx.interner
+            let collections = [interner.intern("kotlin"), interner.intern("collections")]
+            let arrayListFQName = collections + [interner.intern("ArrayList")]
+            let arrayListSymbol = try #require(sema.symbols.lookup(fqName: arrayListFQName))
+            let arrayListInfo = try #require(sema.symbols.symbol(arrayListSymbol))
+            #expect(arrayListInfo.kind == .class)
+            #expect(!arrayListInfo.flags.contains(.synthetic))
+            #expect(!arrayListInfo.flags.contains(.openType))
+            #expect(sema.types.nominalTypeParameterVariances(for: arrayListSymbol) == [.invariant])
+
+            let mutableListSymbol = try #require(sema.symbols.lookup(fqName: collections + [interner.intern("MutableList")]))
+            let abstractMutableListSymbol = try #require(sema.symbols.lookup(fqName: collections + [interner.intern("AbstractMutableList")]))
+            let randomAccessSymbol = try #require(sema.symbols.lookup(fqName: collections + [interner.intern("RandomAccess")]))
+            let directSupertypes = sema.symbols.directSupertypes(for: arrayListSymbol)
+            #expect(directSupertypes.contains(mutableListSymbol))
+            #expect(directSupertypes.contains(abstractMutableListSymbol))
+            #expect(directSupertypes.contains(randomAccessSymbol))
+
+            let constructors = sema.symbols.lookupAll(fqName: arrayListFQName + [interner.intern("<init>")])
+                .filter { sema.symbols.symbol($0)?.kind == .constructor }
+            let signatures = constructors.compactMap { sema.symbols.functionSignature(for: $0) }
+            #expect(signatures.count == 3, "Expected ArrayList() / ArrayList(Int) / ArrayList(Collection) constructors, got \(signatures.count)")
+            #expect(signatures.contains { $0.parameterTypes.isEmpty })
+            #expect(signatures.contains { $0.parameterTypes == [sema.types.intType] })
+            #expect(signatures.contains {
+                guard let parameter = $0.parameterTypes.first,
+                      case let .classType(classType) = sema.types.kind(of: parameter),
+                      let symbol = sema.symbols.symbol(classType.classSymbol)
+                else { return false }
+                return interner.resolve(symbol.name) == "Collection"
+            })
         }
     }
 

@@ -10,11 +10,51 @@ package kotlin.collections
 
 import kotlin.internal.KsSymbolName
 
-// The runtime represents every mutable collection with a single boxed
-// implementation per kind, so the aliases target the mutable interfaces directly
-// instead of the java.util classes the JVM stdlib points at.
+// ArrayList has a concrete nominal identity in Kotlin/Native and Kotlin/Wasm.
+// CollectionLiteralLoweringPass maps its constructors to the tagged list box
+// bridges, while the declaration preserves the public class hierarchy.
+@KsSymbolName("__kk_array_list_init")
+private external fun <E> __kkArrayListInit(list: ArrayList<E>)
 
-public typealias ArrayList<E> = MutableList<E>
+@KsSymbolName("__kk_collection_size")
+private external fun <E> __kkArrayListSize(list: ArrayList<E>): Int
+
+public final class ArrayList<E> : MutableList<E>, RandomAccess, AbstractMutableList<E> {
+    init {
+        __kkArrayListInit(this)
+    }
+
+    constructor()
+    constructor(initialCapacity: Int)
+    constructor(elements: Collection<E>)
+
+    override val size: Int
+        get() = __kkArrayListSize(this)
+
+    @KsSymbolName("__kk_list_get")
+    override external operator fun get(index: Int): E
+
+    @KsSymbolName("kk_op_contains")
+    override external operator fun contains(element: @UnsafeVariance E): Boolean
+
+    @KsSymbolName("__kk_collection_containsAll")
+    override external fun containsAll(elements: Collection<@UnsafeVariance E>): Boolean
+
+    @KsSymbolName("kk_list_iterator")
+    override external fun iterator(): Iterator<E>
+
+    @KsSymbolName("__kk_mutable_list_add")
+    override external fun add(element: E): Boolean
+
+    @KsSymbolName("__kk_mutable_list_add_at")
+    override external fun add(index: Int, element: E)
+
+    @KsSymbolName("__kk_mutable_list_removeAt")
+    override external fun removeAt(index: Int): E
+
+    @KsSymbolName("__kk_mutable_list_set")
+    override external fun set(index: Int, element: E): E
+}
 
 /**
  * Hash-based mutable set implementation.

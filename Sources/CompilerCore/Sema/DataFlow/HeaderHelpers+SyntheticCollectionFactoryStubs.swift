@@ -71,7 +71,7 @@ extension DataFlowSemaPhase {
         register(name: "emptyList", typeParameterNames: ["T"], isVararg: false, externalLinkName: "__kk_emptyList")
         register(name: "listOf", typeParameterNames: ["T"], isVararg: false, externalLinkName: "__kk_emptyList")
         register(name: "listOf", typeParameterNames: ["T"], isVararg: true, externalLinkName: "__kk_list_of")
-        register(name: "arrayListOf", typeParameterNames: ["T"], isVararg: true, externalLinkName: "__kk_list_of")
+        register(name: "arrayListOf", typeParameterNames: ["T"], isVararg: true, externalLinkName: "__kk_array_list_of")
         register(name: "mutableListOf", typeParameterNames: ["T"], isVararg: false, externalLinkName: "__kk_list_of")
         register(name: "mutableListOf", typeParameterNames: ["T"], isVararg: true, externalLinkName: "__kk_list_of")
 

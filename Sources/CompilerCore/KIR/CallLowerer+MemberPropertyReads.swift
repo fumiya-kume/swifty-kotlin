@@ -233,8 +233,8 @@ extension CallLowerer {
 
     func tryLowerStoredMemberPropertyRead(
         _ exprID: ExprID,
-        loweredReceiverID: KIRExprID,
         receiverExpr: ExprID,
+        loweredReceiverID: KIRExprID,
         args: [CallArgument],
         ast: ASTModule,
         sema: SemaModule,
@@ -258,6 +258,15 @@ extension CallLowerer {
               ownerInfo.kind == .class || ownerInfo.kind == .interface
                   || ownerInfo.kind == .enumClass || ownerInfo.kind == .annotationClass
         else {
+            return nil
+        }
+
+        // KSP-933: ArrayList is a concrete list class, but inherited
+        // Collection.size can otherwise look like a stored field on the
+        // source-backed nominal class. Let the list runtime fallback handle
+        // the property instead of indexing the opaque collection handle.
+        let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+        if isConcreteListLikeType(receiverType, sema: sema, interner: interner) {
             return nil
         }
 

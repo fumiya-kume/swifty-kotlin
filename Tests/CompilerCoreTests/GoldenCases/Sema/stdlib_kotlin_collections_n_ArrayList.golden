@@ -1,0 +1,68 @@
+symbol fq=__local_0.empty kind=local vis=private flags=_ type=kotlin.collections.ArrayList<Int>
+symbol fq=__local_1.capacity kind=local vis=private flags=_ type=kotlin.collections.ArrayList<Int>
+symbol fq=__local_2.copied kind=local vis=private flags=_ type=kotlin.collections.ArrayList<Int>
+symbol fq=__local_3.fromFactory kind=local vis=private flags=_ type=kotlin.collections.ArrayList<Int>
+symbol fq=__local_4.mutable kind=local vis=private flags=_ type=kotlin.collections.MutableList<Int>
+symbol fq=__local_5.readonly kind=local vis=private flags=_ type=kotlin.collections.List<Int>
+symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
+symbol fq=kotlin.collections.List kind=interface vis=public flags=_
+symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
+symbol fq=kotlin.collections.MutableList.E kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.MutableList.add#1 kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.MutableList<kotlin.collections.MutableList.E> params=[kotlin.collections.MutableList.E] ret=Boolean
+symbol fq=kotlin.collections.RandomAccess kind=interface vis=public flags=_ type=kotlin.collections.RandomAccess
+symbol fq=kotlin.collections.arrayListOf kind=function vis=public flags=synthetic sig=recv=_ params=[Any] ret=Any vararg=[1]
+symbol fq=kotlin.collections.arrayListOf.T kind=typeParameter vis=private flags=synthetic
+symbol fq=kotlin.collections.arrayListOf.elements kind=valueParameter vis=private flags=synthetic
+symbol fq=probeArrayList kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Collection<Int>] ret=Boolean
+symbol fq=probeArrayList.$0.input kind=valueParameter vis=private flags=_
+file fstdlib_kotlin_collections_n_ArrayList package=_
+  decl probeArrayList fun probeArrayList sym=probeArrayList
+expr e@2:33 call callee=e@2:33#1 args=[] type=kotlin.collections.ArrayList<Int>
+expr e@2:5 localDecl empty mutable=0 type=ArrayList<Int> init=e@2:33 type=Unit ref=__local_0.empty
+expr e@3:35 int(4) type=Int
+expr e@3:20 call callee=e@3:20#1 args=[_:e@3:35] type=kotlin.collections.ArrayList<Int>
+expr e@3:5 localDecl capacity mutable=0 type=_ init=e@3:20 type=Unit ref=__local_1.capacity
+expr e@4:28 name(input) type=kotlin.collections.Collection<Int> ref=probeArrayList.$0.input
+expr e@4:18 call callee=e@4:18#1 args=[_:e@4:28] type=kotlin.collections.ArrayList<Int>
+expr e@4:5 localDecl copied mutable=0 type=_ init=e@4:18 type=Unit ref=__local_2.copied
+expr e@5:51 int(1) type=Int
+expr e@5:54 int(2) type=Int
+expr e@5:39 call callee=e@5:39#1 args=[_:e@5:51,_:e@5:54] type=kotlin.collections.ArrayList<Int> call=kotlin.collections.arrayListOf targs=[Int]
+expr e@5:5 localDecl fromFactory mutable=0 type=ArrayList<Int> init=e@5:39 type=Unit ref=__local_3.fromFactory
+expr e@6:37 name(empty) type=kotlin.collections.ArrayList<Int> ref=__local_0.empty
+expr e@6:5 localDecl mutable mutable=0 type=MutableList<Int> init=e@6:37 type=Unit ref=__local_4.mutable
+expr e@7:31 name(empty) type=kotlin.collections.ArrayList<Int> ref=__local_0.empty
+expr e@7:5 localDecl readonly mutable=0 type=List<Int> init=e@7:31 type=Unit ref=__local_5.readonly
+expr e@8:5 name(mutable) type=kotlin.collections.MutableList<Int> ref=__local_4.mutable
+expr e@8:17 int(3) type=Int
+expr e@8:5#1 memberCall recv=e@8:5 callee=add args=[_:e@8:17] type=Boolean call=kotlin.collections.MutableList.add#1
+expr e@9:12 name(empty) type=kotlin.collections.ArrayList<Int> ref=__local_0.empty
+expr e@9:12#1 isCheck expr=e@9:12 type=kotlin.collections.ArrayList<*> type=Boolean
+expr e@10:12 name(empty) type=kotlin.collections.ArrayList<*> ref=__local_0.empty
+expr e@10:12#1 isCheck expr=e@10:12 type=kotlin.collections.MutableList<*> type=Boolean
+expr e@9:12#2 binary(logicalAnd) lhs=e@9:12#1 rhs=e@10:12#1 type=Boolean
+expr e@11:12 name(empty) type=kotlin.collections.ArrayList<*> ref=__local_0.empty
+expr e@11:12#1 isCheck expr=e@11:12 type=kotlin.collections.RandomAccess type=Boolean
+expr e@9:12#3 binary(logicalAnd) lhs=e@9:12#2 rhs=e@11:12#1 type=Boolean
+expr e@12:12 name(capacity) type=kotlin.collections.ArrayList<Int> ref=__local_1.capacity
+expr e@12:12#1 memberCall recv=e@12:12 callee=size args=[] type=Int ref=kotlin.collections.ArrayList.size
+expr e@12:29 int(0) type=Int
+expr e@12:12#2 binary(equal) lhs=e@12:12#1 rhs=e@12:29 type=Boolean
+expr e@9:12#4 binary(logicalAnd) lhs=e@9:12#3 rhs=e@12:12#2 type=Boolean
+expr e@13:12 name(copied) type=kotlin.collections.ArrayList<Int> ref=__local_2.copied
+expr e@13:12#1 memberCall recv=e@13:12 callee=size args=[] type=Int ref=kotlin.collections.ArrayList.size
+expr e@13:27 name(input) type=kotlin.collections.Collection<Int> ref=probeArrayList.$0.input
+expr e@13:27#1 memberCall recv=e@13:27 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@13:12#2 binary(equal) lhs=e@13:12#1 rhs=e@13:27#1 type=Boolean
+expr e@9:12#5 binary(logicalAnd) lhs=e@9:12#4 rhs=e@13:12#2 type=Boolean
+expr e@14:12 name(fromFactory) type=kotlin.collections.ArrayList<Int> ref=__local_3.fromFactory
+expr e@14:12#1 memberCall recv=e@14:12 callee=size args=[] type=Int ref=kotlin.collections.ArrayList.size
+expr e@14:32 int(2) type=Int
+expr e@14:12#2 binary(equal) lhs=e@14:12#1 rhs=e@14:32 type=Boolean
+expr e@9:12#6 binary(logicalAnd) lhs=e@9:12#5 rhs=e@14:12#2 type=Boolean
+expr e@15:12 name(readonly) type=kotlin.collections.List<Int> ref=__local_5.readonly
+expr e@15:12#1 memberCall recv=e@15:12 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@15:29 int(1) type=Int
+expr e@15:12#2 binary(equal) lhs=e@15:12#1 rhs=e@15:29 type=Boolean
+expr e@9:12#7 binary(logicalAnd) lhs=e@9:12#6 rhs=e@15:12#2 type=Boolean
+expr e@9:5 return value=e@9:12#7 type=Nothing

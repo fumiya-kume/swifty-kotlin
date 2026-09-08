@@ -1,18 +1,12 @@
 symbol fq=ProbeIterable kind=class vis=public flags=_
-symbol fq=ProbeIterable.values kind=property vis=public flags=_ type=kotlin.collections.MutableList<Int>
+symbol fq=ProbeIterable.values kind=property vis=public flags=_ type=kotlin.collections.ArrayList<Int>
 symbol fq=ProbeIterator kind=class vis=public flags=_
-symbol fq=ProbeIterator.<init> kind=constructor vis=public flags=_ sig=recv=ProbeIterator params=[kotlin.collections.MutableList<Int>] ret=ProbeIterator
+symbol fq=ProbeIterator.<init> kind=constructor vis=public flags=_ sig=recv=ProbeIterator params=[kotlin.collections.ArrayList<Int>] ret=ProbeIterator
 symbol fq=ProbeIterator.<init>.$0.values kind=valueParameter vis=private flags=_
 symbol fq=ProbeIterator.index kind=property vis=private flags=mutable type=Int
-symbol fq=ProbeIterator.values kind=property vis=public flags=_ type=kotlin.collections.MutableList<Int>
+symbol fq=ProbeIterator.values kind=property vis=public flags=_ type=kotlin.collections.ArrayList<Int>
 symbol fq=__local_0.value kind=local vis=private flags=_ type=Int
-symbol fq=kotlin.collections.List kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.List.get kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.List<out kotlin.collections.List.E> params=[Int] ret=kotlin.collections.List.E
 symbol fq=kotlin.collections.MutableIterable kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
-symbol fq=kotlin.collections.MutableList.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableList.removeAt kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.MutableList<kotlin.collections.MutableList.E> params=[Int] ret=kotlin.collections.MutableList.E
 symbol fq=probe kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableIterable<Int>] ret=Boolean
 symbol fq=probe.$1.values kind=valueParameter vis=private flags=_
 file fstdlib_kotlin_collections_MutableIterable_n package=_
@@ -21,12 +15,12 @@ file fstdlib_kotlin_collections_MutableIterable_n package=_
   decl probe fun probe sym=probe
 expr e@4:25 int(0) type=Int
 expr e@6:39 name(index) type=Int ref=ProbeIterator.index
-expr e@6:47 name(values) type=kotlin.collections.MutableList<Int> ref=ProbeIterator.values
-expr e@6:47#1 memberCall recv=e@6:47 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@6:47 name(values) type=kotlin.collections.ArrayList<Int> ref=ProbeIterator.values
+expr e@6:47#1 memberCall recv=e@6:47 callee=size args=[] type=Int ref=kotlin.collections.ArrayList.size
 expr e@6:39#1 binary(lessThan) lhs=e@6:39 rhs=e@6:47#1 type=Boolean
-expr e@9:21 name(values) type=kotlin.collections.MutableList<Int> ref=ProbeIterator.values
+expr e@9:21 name(values) type=kotlin.collections.ArrayList<Int> ref=ProbeIterator.values
 expr e@9:28 name(index) type=Int ref=ProbeIterator.index
-expr e@9:21#1 indexedAccess receiver=e@9:21 indices=[e@9:28] type=Int call=kotlin.collections.List.get targs=[Int]
+expr e@9:21#1 indexedAccess receiver=e@9:21 indices=[e@9:28] type=Int call=kotlin.collections.ArrayList.get targs=[Int]
 expr e@9:9 localDecl value mutable=0 type=_ init=e@9:21#1 type=Unit ref=__local_0.value
 expr e@10:18 int(1) type=Int
 expr e@10:9 compoundAssign(plusAssign) name=index value=e@10:18 type=Unit ref=ProbeIterator.index
@@ -34,10 +28,10 @@ expr e@11:16 name(value) type=Int ref=__local_0.value
 expr e@11:9 return value=e@11:16 type=Nothing
 expr e@15:18 int(1) type=Int
 expr e@15:9 compoundAssign(minusAssign) name=index value=e@15:18 type=Unit ref=ProbeIterator.index
-expr e@16:9 name(values) type=kotlin.collections.MutableList<Int> ref=ProbeIterator.values
+expr e@16:9 name(values) type=kotlin.collections.ArrayList<Int> ref=ProbeIterator.values
 expr e@16:25 name(index) type=Int ref=ProbeIterator.index
-expr e@16:9#1 memberCall recv=e@16:9 callee=removeAt args=[_:e@16:25] type=Int call=kotlin.collections.MutableList.removeAt targs=[Int]
-expr e@21:67 name(values) type=kotlin.collections.MutableList<Int> ref=ProbeIterable.values
+expr e@16:9#1 memberCall recv=e@16:9 callee=removeAt args=[_:e@16:25] type=Int call=kotlin.collections.ArrayList.removeAt targs=[Int]
+expr e@21:67 name(values) type=kotlin.collections.ArrayList<Int> ref=ProbeIterable.values
 expr e@21:53 call callee=e@21:53#1 args=[_:e@21:67] type=ProbeIterator call=ProbeIterator.<init>
 expr e@25:12 name(values) type=kotlin.collections.MutableIterable<Int> ref=probe.$1.values
 expr e@25:31 name(it) type=Int ref=s-0

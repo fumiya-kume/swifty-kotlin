@@ -9,12 +9,12 @@ symbol fq=golden.sema.Probe.get.$1.index kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.Probe.removeAt.$2.index kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.Probe.set.$3.element kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.Probe.set.$3.index kind=valueParameter vis=private flags=_
-symbol fq=golden.sema.Probe.storage kind=property vis=private flags=_ type=kotlin.collections.MutableList<Int>
+symbol fq=golden.sema.Probe.storage kind=property vis=private flags=_ type=kotlin.collections.ArrayList<Int>
 symbol fq=golden.sema.ProbeIterator kind=class vis=public flags=_
-symbol fq=golden.sema.ProbeIterator.<init> kind=constructor vis=public flags=_ sig=recv=golden.sema.ProbeIterator params=[kotlin.collections.MutableList<Int>] ret=golden.sema.ProbeIterator
+symbol fq=golden.sema.ProbeIterator.<init> kind=constructor vis=public flags=_ sig=recv=golden.sema.ProbeIterator params=[kotlin.collections.ArrayList<Int>] ret=golden.sema.ProbeIterator
 symbol fq=golden.sema.ProbeIterator.<init>.$4.storage kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.ProbeIterator.index kind=property vis=private flags=mutable type=Int
-symbol fq=golden.sema.ProbeIterator.storage kind=property vis=public flags=_ type=kotlin.collections.MutableList<Int>
+symbol fq=golden.sema.ProbeIterator.storage kind=property vis=public flags=_ type=kotlin.collections.ArrayList<Int>
 symbol fq=golden.sema.acceptList kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.List<Int>] ret=Int
 symbol fq=golden.sema.acceptList.$5.values kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.acceptMutableList kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.MutableList<Int>] ret=Int
@@ -22,14 +22,9 @@ symbol fq=golden.sema.acceptMutableList.$6.values kind=valueParameter vis=privat
 symbol fq=golden.sema.probe kind=function vis=public flags=_ sig=recv=_ params=[golden.sema.Probe] ret=Int
 symbol fq=golden.sema.probe.$7.values kind=valueParameter vis=private flags=_
 symbol fq=kotlin.collections.List kind=interface vis=public flags=_
-symbol fq=kotlin.collections.List.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.List.get kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.List<out kotlin.collections.List.E> params=[Int] ret=kotlin.collections.List.E
 symbol fq=kotlin.collections.MutableList#0 kind=interface vis=public flags=_
 symbol fq=kotlin.collections.MutableList.E kind=typeParameter vis=private flags=_
-symbol fq=kotlin.collections.MutableList.add#0 kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableList<kotlin.collections.MutableList.E> params=[Int,kotlin.collections.MutableList.E] ret=Unit
 symbol fq=kotlin.collections.MutableList.listIterator#0 kind=function vis=public flags=synthetic sig=recv=kotlin.collections.MutableList<kotlin.collections.MutableList.E> params=[] ret=kotlin.collections.MutableListIterator<kotlin.collections.MutableList.E> type=() -> kotlin.collections.MutableListIterator<kotlin.collections.MutableList.E>
-symbol fq=kotlin.collections.MutableList.removeAt kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.MutableList<kotlin.collections.MutableList.E> params=[Int] ret=kotlin.collections.MutableList.E
-symbol fq=kotlin.collections.MutableList.set kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.MutableList<kotlin.collections.MutableList.E> params=[Int,kotlin.collections.MutableList.E] ret=kotlin.collections.MutableList.E
 symbol fq=kotlin.collections.MutableListIterator kind=interface vis=public flags=_
 symbol fq=kotlin.collections.arrayListOf kind=function vis=public flags=synthetic sig=recv=_ params=[Any] ret=Any vararg=[1]
 symbol fq=kotlin.collections.arrayListOf.T kind=typeParameter vis=private flags=synthetic
@@ -42,44 +37,44 @@ file fstdlib_kotlin_collections_n_AbstractMutableList package=golden.sema
   decl golden.sema.probe fun probe sym=golden.sema.probe
 expr e@8:25 int(0) type=Int
 expr e@10:39 name(index) type=Int ref=golden.sema.ProbeIterator.index
-expr e@10:47 name(storage) type=kotlin.collections.MutableList<Int> ref=golden.sema.ProbeIterator.storage
-expr e@10:47#1 memberCall recv=e@10:47 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
+expr e@10:47 name(storage) type=kotlin.collections.ArrayList<Int> ref=golden.sema.ProbeIterator.storage
+expr e@10:47#1 memberCall recv=e@10:47 callee=size args=[] type=Int ref=kotlin.collections.ArrayList.size
 expr e@10:39#1 binary(lessThan) lhs=e@10:39 rhs=e@10:47#1 type=Boolean
-expr e@12:32 name(storage) type=kotlin.collections.MutableList<Int> ref=golden.sema.ProbeIterator.storage
+expr e@12:32 name(storage) type=kotlin.collections.ArrayList<Int> ref=golden.sema.ProbeIterator.storage
 expr e@12:40 name(index) type=Int ref=golden.sema.ProbeIterator.index
 expr e@12:45 int(1) type=Int
 expr e@12:40#1 compoundAssign(plusAssign) name=index value=e@12:45 type=Unit ref=golden.sema.ProbeIterator.index
 expr e@12:40#2 localDecl $incdec$345$1 mutable=0 type=_ init=e@12:40 type=Unit ref=__local_0.$incdec$345$1
 expr e@12:40#3 name($incdec$345$1) type=Int ref=__local_0.$incdec$345$1
 expr e@12:40#4 blockExpr stmts=[e@12:40#2,e@12:40#1] trailing=e@12:40#3 type=Int
-expr e@12:32#1 indexedAccess receiver=e@12:32 indices=[e@12:40#4] type=Int call=kotlin.collections.List.get targs=[Int]
-expr e@15:9 name(storage) type=kotlin.collections.MutableList<Int> ref=golden.sema.ProbeIterator.storage
+expr e@12:32#1 indexedAccess receiver=e@12:32 indices=[e@12:40#4] type=Int call=kotlin.collections.ArrayList.get targs=[Int]
+expr e@15:9 name(storage) type=kotlin.collections.ArrayList<Int> ref=golden.sema.ProbeIterator.storage
 expr e@15:28 name(index) type=Int ref=golden.sema.ProbeIterator.index
 expr e@15:26 int(1) type=Int
 expr e@15:28#1 compoundAssign(minusAssign) name=index value=e@15:26 type=Unit ref=golden.sema.ProbeIterator.index
 expr e@15:28#2 blockExpr stmts=[e@15:28#1] trailing=e@15:28 type=Int
-expr e@15:9#1 memberCall recv=e@15:9 callee=removeAt args=[_:e@15:28#2] type=Int call=kotlin.collections.MutableList.removeAt targs=[Int]
+expr e@15:9#1 memberCall recv=e@15:9 callee=removeAt args=[_:e@15:28#2] type=Int call=kotlin.collections.ArrayList.removeAt targs=[Int]
 expr e@20:39 int(1) type=Int
 expr e@20:42 int(2) type=Int
 expr e@20:45 int(3) type=Int
-expr e@20:27 call callee=e@20:27#1 args=[_:e@20:39,_:e@20:42,_:e@20:45] type=kotlin.collections.MutableList<Int> call=kotlin.collections.arrayListOf targs=[Int]
-expr e@23:17 name(storage) type=kotlin.collections.MutableList<Int> ref=golden.sema.Probe.storage
-expr e@23:17#1 memberCall recv=e@23:17 callee=size args=[] type=Int ref=kotlin.collections.Collection.size
-expr e@25:41 name(storage) type=kotlin.collections.MutableList<Int> ref=golden.sema.Probe.storage
+expr e@20:27 call callee=e@20:27#1 args=[_:e@20:39,_:e@20:42,_:e@20:45] type=kotlin.collections.ArrayList<Int> call=kotlin.collections.arrayListOf targs=[Int]
+expr e@23:17 name(storage) type=kotlin.collections.ArrayList<Int> ref=golden.sema.Probe.storage
+expr e@23:17#1 memberCall recv=e@23:17 callee=size args=[] type=Int ref=kotlin.collections.ArrayList.size
+expr e@25:41 name(storage) type=kotlin.collections.ArrayList<Int> ref=golden.sema.Probe.storage
 expr e@25:49 name(index) type=Int ref=golden.sema.Probe.get.$1.index
-expr e@25:41#1 indexedAccess receiver=e@25:41 indices=[e@25:49] type=Int call=kotlin.collections.List.get targs=[Int]
-expr e@27:55 name(storage) type=kotlin.collections.MutableList<Int> ref=golden.sema.Probe.storage
+expr e@25:41#1 indexedAccess receiver=e@25:41 indices=[e@25:49] type=Int call=kotlin.collections.ArrayList.get targs=[Int]
+expr e@27:55 name(storage) type=kotlin.collections.ArrayList<Int> ref=golden.sema.Probe.storage
 expr e@27:67 name(index) type=Int ref=golden.sema.Probe.set.$3.index
 expr e@27:74 name(element) type=Int ref=golden.sema.Probe.set.$3.element
-expr e@27:55#1 memberCall recv=e@27:55 callee=set args=[_:e@27:67,_:e@27:74] type=Int call=kotlin.collections.MutableList.set targs=[Int]
-expr e@30:9 name(storage) type=kotlin.collections.MutableList<Int> ref=golden.sema.Probe.storage
+expr e@27:55#1 memberCall recv=e@27:55 callee=set args=[_:e@27:67,_:e@27:74] type=Int call=kotlin.collections.ArrayList.set targs=[Int]
+expr e@30:9 name(storage) type=kotlin.collections.ArrayList<Int> ref=golden.sema.Probe.storage
 expr e@30:21 name(index) type=Int ref=golden.sema.Probe.add.$0.index
 expr e@30:28 name(element) type=Int ref=golden.sema.Probe.add.$0.element
-expr e@30:9#1 memberCall recv=e@30:9 callee=add args=[_:e@30:21,_:e@30:28] type=Unit call=kotlin.collections.MutableList.add#0 targs=[Int]
-expr e@33:46 name(storage) type=kotlin.collections.MutableList<Int> ref=golden.sema.Probe.storage
+expr e@30:9#1 memberCall recv=e@30:9 callee=add args=[_:e@30:21,_:e@30:28] type=Unit call=kotlin.collections.ArrayList.add#0 targs=[Int]
+expr e@33:46 name(storage) type=kotlin.collections.ArrayList<Int> ref=golden.sema.Probe.storage
 expr e@33:63 name(index) type=Int ref=golden.sema.Probe.removeAt.$2.index
-expr e@33:46#1 memberCall recv=e@33:46 callee=removeAt args=[_:e@33:63] type=Int call=kotlin.collections.MutableList.removeAt targs=[Int]
-expr e@35:67 name(storage) type=kotlin.collections.MutableList<Int> ref=golden.sema.Probe.storage
+expr e@33:46#1 memberCall recv=e@33:46 callee=removeAt args=[_:e@33:63] type=Int call=kotlin.collections.ArrayList.removeAt targs=[Int]
+expr e@35:67 name(storage) type=kotlin.collections.ArrayList<Int> ref=golden.sema.Probe.storage
 expr e@35:53 call callee=e@35:53#1 args=[_:e@35:67] type=golden.sema.ProbeIterator call=golden.sema.ProbeIterator.<init>
 expr e@38:37 name(values) type=kotlin.collections.List<Int> ref=golden.sema.acceptList.$5.values
 expr e@38:37#1 memberCall recv=e@38:37 callee=size args=[] type=Int ref=kotlin.collections.Collection.size

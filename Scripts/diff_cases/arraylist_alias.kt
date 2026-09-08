@@ -18,4 +18,12 @@ fun main() {
 
     val items: List<String> = ArrayList()
     println(items.size)
+
+    val fromCapacity = ArrayList<String>(4)
+    fromCapacity.add("capacity")
+    val copied = ArrayList(list)
+    println(copied.size)
+    println(fromCapacity is ArrayList<*>)
+    println(fromCapacity is MutableList<*>)
+    println(fromCapacity is RandomAccess)
 }

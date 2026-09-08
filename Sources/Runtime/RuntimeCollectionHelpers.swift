@@ -16,6 +16,27 @@ let listRuntimeTypeID: Int64 = {
     return id
 }()
 
+private let mutableListRuntimeTypeID: Int64 = {
+    let id = runtimeStableNominalTypeID(fqName: "kotlin.collections.MutableList")
+    runtimeRegisterTypeEdge(childTypeID: id, parentTypeID: listRuntimeTypeID)
+    return id
+}()
+
+private let abstractMutableListRuntimeTypeID = runtimeStableNominalTypeID(
+    fqName: "kotlin.collections.AbstractMutableList"
+)
+private let randomAccessRuntimeTypeID = runtimeStableNominalTypeID(
+    fqName: "kotlin.collections.RandomAccess"
+)
+
+let arrayListRuntimeTypeID: Int64 = {
+    let id = runtimeStableNominalTypeID(fqName: "kotlin.collections.ArrayList")
+    runtimeRegisterTypeEdge(childTypeID: id, parentTypeID: mutableListRuntimeTypeID)
+    runtimeRegisterTypeEdge(childTypeID: id, parentTypeID: abstractMutableListRuntimeTypeID)
+    runtimeRegisterTypeEdge(childTypeID: id, parentTypeID: randomAccessRuntimeTypeID)
+    return id
+}()
+
 let setRuntimeTypeID: Int64 = {
     let id = runtimeStableNominalTypeID(fqName: "kotlin.collections.Set")
     runtimeRegisterTypeEdge(childTypeID: id, parentTypeID: collectionRuntimeTypeID)
@@ -170,7 +191,25 @@ func runtimeListBox(from rawValue: Int) -> RuntimeListBox? {
     guard isObjectPointer else {
         return nil
     }
-    return tryCast(ptr, to: RuntimeListBox.self)
+    if let box = tryCast(ptr, to: RuntimeListBox.self) {
+        return box
+    }
+    if let objectBox = tryCast(ptr, to: RuntimeObjectBox.self) {
+        if let backingListBox = objectBox.backingListBox {
+            return backingListBox
+        }
+        if let objectTypeID = runtimeObjectTypeID(rawValue: rawValue),
+           runtimeIsAssignable(
+               sourceTypeID: objectTypeID,
+               targetTypeID: arrayListRuntimeTypeID
+           )
+        {
+            let backingListBox = RuntimeListBox(elements: [])
+            objectBox.backingListBox = backingListBox
+            return backingListBox
+        }
+    }
+    return nil
 }
 
 func runtimeMapBox(from rawValue: Int) -> RuntimeMapBox? {

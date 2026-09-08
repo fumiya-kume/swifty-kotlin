@@ -104,6 +104,33 @@ extension CollectionLiteralConstructionLoweringPass {
             || fqName == lookup.linkedMapOfFQName
     }
 
+    /// Source-backed concrete classes lower through the same runtime bridge as
+    /// the historical name-based constructor path. The resolved callee is
+    /// `<init>` once ArrayList is a real class, so the owner FQName is the
+    /// authoritative discriminator.
+    func isStdlibArrayListConstructor(
+        symbol: SymbolID?,
+        callee: InternedString,
+        lookup: CollectionLiteralLookupTables,
+        ctx: KIRContext
+    ) -> Bool {
+        if lookup.mutableListConstructorNames.contains(callee) {
+            return true
+        }
+        guard let symbol,
+              let resolved = ctx.sema?.symbols.symbol(symbol),
+              resolved.kind == .constructor
+        else {
+            return false
+        }
+        return resolved.fqName == [
+            lookup.kotlinName,
+            ctx.interner.intern("collections"),
+            lookup.arrayListName,
+            lookup.initName,
+        ]
+    }
+
     func isStdlibArrayFactoryCall(
         symbol: SymbolID?,
         callee: InternedString,

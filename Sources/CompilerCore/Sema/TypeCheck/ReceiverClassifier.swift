@@ -245,6 +245,7 @@ struct ReceiverClassifier {
         return (
             symbol.name == knownNames.mutableList
                 || symbol.fqName == knownNames.kotlinCollectionsMutableListFQName
+                || symbol.fqName == knownNames.kotlinCollectionsArrayListFQName
         ) && classType.args.count == 1
     }
 

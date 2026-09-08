@@ -282,6 +282,34 @@ public extension RuntimeABISpec {
             isThrowing: false
         ),
         RuntimeABIFunctionSpec(
+            name: "__kk_array_list_of",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+                RuntimeABIParameter(name: "count", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection",
+            isThrowing: false
+        ),
+        RuntimeABIFunctionSpec(
+            name: "__kk_array_list_init",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection",
+            isThrowing: false
+        ),
+        RuntimeABIFunctionSpec(
+            name: "__kk_collection_toArrayList",
+            parameters: [
+                RuntimeABIParameter(name: "collRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection",
+            isThrowing: false
+        ),
+        RuntimeABIFunctionSpec(
             name: "__kk_collection_toTypedArray",
             parameters: [
                 RuntimeABIParameter(name: "collRaw", type: .intptr),

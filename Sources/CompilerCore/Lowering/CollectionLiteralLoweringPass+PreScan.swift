@@ -340,6 +340,7 @@ extension CollectionLiteralLoweringSupport {
         guard let result else { return }
         if lookup.listFactoryNames.contains(callee) || lookup.mutableListConstructorNames.contains(callee)
             || callee == lookup.kkListOfName
+            || callee == lookup.kkArrayListOfName
             || callee == lookup.kkStringSplitName
             || callee == lookup.kkArrayToListName
         {

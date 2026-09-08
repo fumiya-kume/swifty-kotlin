@@ -187,7 +187,7 @@ struct CollectionLiteralLoweringTests {
     }
 
     @Test
-    func testArrayListOfRewrittenToKkListOf() throws {
+    func testArrayListOfRewrittenToKkArrayListOf() throws {
         let interner = StringInterner()
         let arena = KIRArena()
         let callee = interner.intern("arrayListOf")
@@ -198,7 +198,7 @@ struct CollectionLiteralLoweringTests {
 
         let callees = calleesInDecl(declID, module: module, interner: interner)
         #expect(!callees.contains("arrayListOf"), "arrayListOf should be rewritten")
-        #expect(callees.contains("__kk_list_of"), "arrayListOf should become __kk_list_of")
+        #expect(callees.contains("__kk_array_list_of"), "arrayListOf should become __kk_array_list_of")
     }
 
     @Test
@@ -643,7 +643,7 @@ struct CollectionLiteralLoweringTests {
     }
 
     @Test
-    func testZeroArgArrayListOfRewrittenToKkListOf() throws {
+    func testZeroArgArrayListOfRewrittenToKkArrayListOf() throws {
         let interner = StringInterner()
         let arena = KIRArena()
         let callee = interner.intern("arrayListOf")
@@ -654,7 +654,7 @@ struct CollectionLiteralLoweringTests {
 
         let callees = calleesInDecl(declID, module: module, interner: interner)
         #expect(!callees.contains("arrayListOf"), "arrayListOf() should be rewritten")
-        #expect(callees.contains("__kk_list_of"), "arrayListOf() should become __kk_list_of (fresh mutable)")
+        #expect(callees.contains("__kk_array_list_of"), "arrayListOf() should become __kk_array_list_of (fresh mutable)")
     }
 
     @Test

@@ -137,6 +137,20 @@ extension KIRLoweringDriver {
         else {
             return
         }
+        // KSP-933: ArrayList keeps the synthetic AbstractMutableList anchor
+        // until KSP-929 supplies its bundled implementation. That bootstrap
+        // constructor has no emitted body, so delegating to its bare `<init>`
+        // would leave an unresolved linker symbol in the bundled stdlib.
+        let syntheticAbstractMutableListFQName = [
+            compilationCtx.interner.intern("kotlin"),
+            compilationCtx.interner.intern("collections"),
+            compilationCtx.interner.intern("AbstractMutableList"),
+        ]
+        if superclassInfo.flags.contains(.synthetic),
+           superclassInfo.fqName == syntheticAbstractMutableListFQName
+        {
+            return
+        }
         let superCtorSymbol = sema.bindings.constructorDelegationTarget(for: ctorSymbol)
             ?? sema.symbols
             .lookupAll(fqName: superclassInfo.fqName + [compilationCtx.interner.intern("<init>")])

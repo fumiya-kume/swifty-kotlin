@@ -346,6 +346,7 @@ package struct KnownCompilerNames {
     let kotlinSequenceFQName: [InternedString]
     let kotlinContinuationFQName: [InternedString]
     let kotlinSuspendCoroutineFQName: [InternedString]
+    let kotlinCollectionsArrayListFQName: [InternedString]
     let kotlinCollectionsListFQName: [InternedString]
     let kotlinCollectionsMutableListFQName: [InternedString]
     let kotlinCollectionsSetFQName: [InternedString]
@@ -548,6 +549,7 @@ package struct KnownCompilerNames {
         kotlinSequenceFQName = [kotlin, kotlinSequences, sequence]
         kotlinContinuationFQName = [kotlin, kotlinCoroutines, continuation]
         kotlinSuspendCoroutineFQName = [kotlin, kotlinCoroutines, suspendCoroutine]
+        kotlinCollectionsArrayListFQName = [kotlin, kotlinCollections, interner.intern("ArrayList")]
         kotlinCollectionsListFQName = [kotlin, kotlinCollections, list]
         kotlinCollectionsMutableListFQName = [kotlin, kotlinCollections, mutableList]
         kotlinCollectionsSetFQName = [kotlin, kotlinCollections, set]
@@ -751,6 +753,7 @@ package struct KnownCompilerNames {
 
     func isConcreteListLikeSymbol(_ symbol: SemanticSymbol) -> Bool {
         symbol.name == list || symbol.name == mutableList
+            || symbolMatches(symbol, fqName: kotlinCollectionsArrayListFQName)
             || symbolMatches(symbol, fqName: kotlinCollectionsListFQName)
             || symbolMatches(symbol, fqName: kotlinCollectionsMutableListFQName)
             // kotlin.enums.EnumEntries<T> is a read-only List<T> subtype (Kotlin

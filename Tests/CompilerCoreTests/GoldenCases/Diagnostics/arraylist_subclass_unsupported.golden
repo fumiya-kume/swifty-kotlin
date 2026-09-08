@@ -9,36 +9,10 @@
       },
       "severity": 1,
       "severityLabel": "error",
-      "code": "KSWIFTK-SEMA-ABSTRACT",
+      "code": "KSWIFTK-SEMA-FINAL",
       "source": "kswiftk",
-      "message": "Class 'MyList' must override abstract member 'contains' or be declared abstract.",
-      "codeActions": []
-    },
-    {
-      "file": "arraylist_subclass_unsupported.kt",
-      "range": {
-        "start": { "line": 15, "character": 0 },
-        "end": { "line": 17, "character": 1 }
-      },
-      "severity": 1,
-      "severityLabel": "error",
-      "code": "KSWIFTK-SEMA-ABSTRACT",
-      "source": "kswiftk",
-      "message": "Class 'MyList' must override abstract member 'containsAll' or be declared abstract.",
-      "codeActions": []
-    },
-    {
-      "file": "arraylist_subclass_unsupported.kt",
-      "range": {
-        "start": { "line": 15, "character": 0 },
-        "end": { "line": 17, "character": 1 }
-      },
-      "severity": 1,
-      "severityLabel": "error",
-      "code": "KSWIFTK-SEMA-ABSTRACT",
-      "source": "kswiftk",
-      "message": "Class 'MyList' must override abstract member 'size' or be declared abstract.",
-      "codeActions": []
+      "message": "Cannot inherit from final class 'kotlin.collections.ArrayList'. Mark it as 'open' to allow subclassing.",
+      "codeActions": [{ "title": "Remove 'final' modifier from base declaration", "kind": "quickfix" }]
     }
   ]
 }

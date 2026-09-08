@@ -2015,19 +2015,30 @@ final class CallTypeChecker {
                     : argTypes
                 let elementType = explicitTypeArgs.first
                     ?? (elementTypes.isEmpty ? sema.types.nothingType : sema.types.lub(elementTypes))
-                let resultType = name == "mutableListOf" || name == "arrayListOf"
-                    ? makeSyntheticMutableListType(
+                let resultType: TypeID
+                if name == "arrayListOf" {
+                    resultType = makeSyntheticListConstructorType(
+                        name: "ArrayList",
                         symbols: sema.symbols,
                         types: sema.types,
                         interner: interner,
                         elementType: elementType
                     )
-                    : makeSyntheticListType(
+                } else if name == "mutableListOf" {
+                    resultType = makeSyntheticMutableListType(
                         symbols: sema.symbols,
                         types: sema.types,
                         interner: interner,
                         elementType: elementType
                     )
+                } else {
+                    resultType = makeSyntheticListType(
+                        symbols: sema.symbols,
+                        types: sema.types,
+                        interner: interner,
+                        elementType: elementType
+                    )
+                }
                 return (resultType, [elementType])
 
             case "emptySet", "setOf", "setOfNotNull", "mutableSetOf", "hashSetOf", "linkedSetOf":
@@ -2217,12 +2228,28 @@ final class CallTypeChecker {
                 ?? sema.types.anyType
             switch resolvedName {
             case "ArrayList":
+                let arrayListElementType: TypeID = if let explicit = explicitTypeArgs.first {
+                    explicit
+                } else if let expected = expectedCollectionArgs.first {
+                    expected
+                } else if argTypes.count == 1,
+                          let argumentType = argTypes.first,
+                          case let .classType(argumentClassType) = sema.types.kind(of: argumentType),
+                          let argumentElementType = argumentClassType.args.first
+                {
+                    switch argumentElementType {
+                    case let .invariant(type), let .in(type), let .out(type): type
+                    case .star: sema.types.anyType
+                    }
+                } else {
+                    constructorElementType
+                }
                 let resultType = makeSyntheticListConstructorType(
                     name: resolvedName,
                     symbols: sema.symbols,
                     types: sema.types,
                     interner: interner,
-                    elementType: constructorElementType
+                    elementType: arrayListElementType
                 )
                 sema.bindings.markCollectionExpr(id)
                 sema.bindings.bindExprType(id, type: resultType)

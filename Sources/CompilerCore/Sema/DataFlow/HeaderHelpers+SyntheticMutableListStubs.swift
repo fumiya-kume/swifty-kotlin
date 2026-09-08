@@ -403,14 +403,23 @@ extension DataFlowSemaPhase {
         )))
         symbols.setPropertyType(abstractMutableListType, for: abstractMutableListSymbol)
 
-        let abstractListSymbol = symbols.lookup(
-            fqName: kotlinCollectionsPkg + [interner.intern("AbstractList")]
+        // KSP-929 gave AbstractMutableList a bundled source declaration
+        // (`AbstractMutableCollection<E>(), MutableList<E>`). Mirror that shape
+        // here rather than the pre-KSP-929 `AbstractList`-based fallback: a
+        // .kklib consumer never re-runs bindInheritanceEdges over the bundled
+        // source, so this bootstrap edge is the only one it sees, and a stale
+        // AbstractList edge broke transitive MutableCollection/MutableIterable
+        // subtyping for every concrete AbstractMutableList subclass (ArrayList,
+        // HashSet's own AbstractMutableSet sibling, etc.) compiled against a
+        // cached artifact.
+        let abstractMutableCollectionSymbol = symbols.lookup(
+            fqName: kotlinCollectionsPkg + [interner.intern("AbstractMutableCollection")]
         )
-        let readonlySupertype = abstractListSymbol ?? listInterfaceSymbol
-        symbols.setDirectSupertypes([readonlySupertype, mutableListInterfaceSymbol], for: abstractMutableListSymbol)
-        types.setNominalDirectSupertypes([readonlySupertype, mutableListInterfaceSymbol], for: abstractMutableListSymbol)
-        symbols.setSupertypeTypeArgs([.out(typeParamType)], for: abstractMutableListSymbol, supertype: readonlySupertype)
-        types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: abstractMutableListSymbol, supertype: readonlySupertype)
+        let firstSupertype = abstractMutableCollectionSymbol ?? listInterfaceSymbol
+        symbols.setDirectSupertypes([firstSupertype, mutableListInterfaceSymbol], for: abstractMutableListSymbol)
+        types.setNominalDirectSupertypes([firstSupertype, mutableListInterfaceSymbol], for: abstractMutableListSymbol)
+        symbols.setSupertypeTypeArgs([.invariant(typeParamType)], for: abstractMutableListSymbol, supertype: firstSupertype)
+        types.setNominalSupertypeTypeArgs([.invariant(typeParamType)], for: abstractMutableListSymbol, supertype: firstSupertype)
         symbols.setSupertypeTypeArgs([.invariant(typeParamType)], for: abstractMutableListSymbol, supertype: mutableListInterfaceSymbol)
         types.setNominalSupertypeTypeArgs(
             [.invariant(typeParamType)],
