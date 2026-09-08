@@ -562,6 +562,40 @@ public inline fun CharSequence.dropWhile(predicate: (Char) -> Boolean): CharSequ
     return ""
 }
 
+public fun CharSequence.take(n: Int): CharSequence {
+    require(n >= 0) { "Requested character count $n is less than zero." }
+    return this.subSequence(0, n.coerceAtMost(length))
+}
+
+public fun CharSequence.takeLast(n: Int): CharSequence {
+    require(n >= 0) { "Requested character count $n is less than zero." }
+    val length = this.length
+    return this.subSequence(length - n.coerceAtMost(length), length)
+}
+
+public inline fun CharSequence.takeLastWhile(predicate: (Char) -> Boolean): CharSequence {
+    var index = this.length - 1
+    while (index >= 0) {
+        if (predicate(this[index]) == false) {
+            return this.subSequence(index + 1, this.length)
+        }
+        index--
+    }
+    return this.subSequence(0, this.length)
+}
+
+public inline fun CharSequence.takeWhile(predicate: (Char) -> Boolean): CharSequence {
+    var index = 0
+    val endIndex = this.length
+    while (index < endIndex) {
+        if (predicate(this[index]) == false) {
+            return this.subSequence(0, index)
+        }
+        index++
+    }
+    return this.subSequence(0, this.length)
+}
+
 public fun CharSequence.padStart(length: Int, padChar: Char = ' '): CharSequence {
     if (length < 0)
         throw IllegalArgumentException("Desired length $length is less than zero.")
