@@ -495,3 +495,117 @@ public fun <R> CharSequence.foldRightIndexed(initial: R, operation: (index: Int,
     }
     return accumulator
 }
+
+// KSP-1366: CharSequence association functions are source-backed. The
+// explicit index walk keeps CharSequence receiver dispatch and the source
+// implementation visible to the compiler while matching the standard map
+// capacity and dynamic length behavior.
+public inline fun <K, V> CharSequence.associate(transform: (Char) -> Pair<K, V>): Map<K, V> {
+    val result = LinkedHashMap<K, V>(mapCapacity(this.length).coerceAtLeast(16))
+    var i = 0
+    while (i < this.length) {
+        val e: Char = this[i]
+        val pair = transform(e)
+        result[pair.first] = pair.second
+        i++
+    }
+    return result as Map<K, V>
+}
+
+public inline fun <K> CharSequence.associateBy(keySelector: (Char) -> K): Map<K, Char> {
+    val result = LinkedHashMap<K, Char>(mapCapacity(this.length).coerceAtLeast(16))
+    var i = 0
+    while (i < this.length) {
+        val e: Char = this[i]
+        result[keySelector(e)] = e
+        i++
+    }
+    return result as Map<K, Char>
+}
+
+public inline fun <K, V> CharSequence.associateBy(
+    keySelector: (Char) -> K,
+    valueTransform: (Char) -> V
+): Map<K, V> {
+    val result = LinkedHashMap<K, V>(mapCapacity(this.length).coerceAtLeast(16))
+    var i = 0
+    while (i < this.length) {
+        val e: Char = this[i]
+        result[keySelector(e)] = valueTransform(e)
+        i++
+    }
+    return result as Map<K, V>
+}
+
+@IgnorableReturnValue
+public inline fun <K, M : MutableMap<in K, in Char>> CharSequence.associateByTo(
+    destination: M,
+    keySelector: (Char) -> K
+): M {
+    var i = 0
+    while (i < this.length) {
+        val e: Char = this[i]
+        destination.put(keySelector(e), e)
+        i++
+    }
+    return destination
+}
+
+@IgnorableReturnValue
+public inline fun <K, V, M : MutableMap<in K, in V>> CharSequence.associateByTo(
+    destination: M,
+    keySelector: (Char) -> K,
+    valueTransform: (Char) -> V
+): M {
+    var i = 0
+    while (i < this.length) {
+        val e: Char = this[i]
+        destination.put(keySelector(e), valueTransform(e))
+        i++
+    }
+    return destination
+}
+
+@IgnorableReturnValue
+public inline fun <K, V, M : MutableMap<in K, in V>> CharSequence.associateTo(
+    destination: M,
+    transform: (Char) -> Pair<K, V>
+): M {
+    var i = 0
+    while (i < this.length) {
+        val e: Char = this[i]
+        val pair = transform(e)
+        destination.put(pair.first, pair.second)
+        i++
+    }
+    return destination
+}
+
+@SinceKotlin("1.3")
+public inline fun <V> CharSequence.associateWith(valueSelector: (Char) -> V): Map<Char, V> {
+    val result = LinkedHashMap<Char, V>(
+        mapCapacity(this.length.coerceAtMost(128)).coerceAtLeast(16)
+    )
+    var i = 0
+    while (i < this.length) {
+        val e: Char = this[i]
+        result[e] = valueSelector(e)
+        i++
+    }
+    return result as Map<Char, V>
+}
+
+@SinceKotlin("1.3")
+@IgnorableReturnValue
+public inline fun <V, M : MutableMap<in Char, in V>> CharSequence.associateWithTo(
+    destination: M,
+    valueSelector: (Char) -> V
+): M {
+    var i = 0
+    while (i < this.length) {
+        val e: Char = this[i]
+        destination.put(e, valueSelector(e))
+        i++
+    }
+    return destination
+}
