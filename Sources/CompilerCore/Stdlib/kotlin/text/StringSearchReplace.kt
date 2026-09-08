@@ -154,6 +154,24 @@ public operator fun String.contains(regex: Regex): Boolean =
     __kk_string_contains_regex(regex)
 
 /**
+ * Returns `true` if this char sequence contains at least one match of [regex].
+ */
+public operator fun CharSequence.contains(regex: Regex): Boolean =
+    regex.containsMatchIn(charSequenceRegexInput(this))
+
+private fun charSequenceRegexInput(value: CharSequence): String {
+    if (value is String) return value.toString()
+    val length = value.length
+    val result = StringBuilder(length)
+    var index = 0
+    while (index < length) {
+        result.append(value[index])
+        index++
+    }
+    return result.toString()
+}
+
+/**
  * Returns a [Regex] that matches this string as a pattern.
  */
 public fun String.toRegex(): Regex =

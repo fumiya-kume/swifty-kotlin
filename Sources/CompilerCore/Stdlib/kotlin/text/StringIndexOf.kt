@@ -89,8 +89,74 @@ private fun backwardSearchStart(startIndex: Int?, ignoreCase: Boolean, size: Int
 public operator fun CharSequence.contains(other: CharSequence): Boolean =
     contains(other, ignoreCase = false)
 
+private fun charSequenceContains(
+    self: CharSequence,
+    other: CharSequence,
+    ignoreCase: Boolean
+): Boolean {
+    // String's flat representation does not expose reliable Kotlin character
+    // indices for non-ASCII input. Keep String on the normalized list path,
+    // while custom CharSequence implementations are read through length/get.
+    val selfChars = if (self is String) self.toString().toList() else null
+    val otherChars = if (other is String) other.toString().toList() else null
+    val selfLength = selfChars?.size ?: self.length
+    val otherLength = otherChars?.size ?: other.length
+    if (otherLength == 0) return true
+    if (otherLength > selfLength) return false
+
+    var start = 0
+    val lastStart = selfLength - otherLength
+    while (start <= lastStart) {
+        var offset = 0
+        var matched = true
+        while (offset < otherLength) {
+            var equal = false
+            if (selfChars != null) {
+                if (otherChars != null) {
+                    equal = __kkCharsEqual(selfChars[start + offset], otherChars[offset], ignoreCase)
+                } else {
+                    equal = __kkCharsEqual(selfChars[start + offset], other[offset], ignoreCase)
+                }
+            } else {
+                if (otherChars != null) {
+                    equal = __kkCharsEqual(self[start + offset], otherChars[offset], ignoreCase)
+                } else {
+                    equal = __kkCharsEqual(self[start + offset], other[offset], ignoreCase)
+                }
+            }
+            if (!equal) {
+                matched = false
+                break
+            }
+            offset++
+        }
+        if (matched) return true
+        start++
+    }
+    return false
+}
+
 public fun CharSequence.contains(other: CharSequence, ignoreCase: Boolean): Boolean =
-    this.toString().indexOf(other.toString(), 0, ignoreCase) >= 0
+    charSequenceContains(this, other, ignoreCase)
+
+/**
+ * Returns `true` if this char sequence contains the specified [char].
+ */
+public operator fun CharSequence.contains(char: Char): Boolean =
+    contains(char, ignoreCase = false)
+
+public fun CharSequence.contains(char: Char, ignoreCase: Boolean): Boolean {
+    // Preserve the existing String search implementation, including its
+    // UTF-16 normalization, while custom receivers use indexed access.
+    if (this is String) return indexOf(char, 0, ignoreCase) >= 0
+    var index = 0
+    val length = this.length
+    while (index < length) {
+        if (__kkCharsEqual(this[index], char, ignoreCase)) return true
+        index++
+    }
+    return false
+}
 
 /**
  * Returns the first index of [string] in this char sequence starting from [startIndex], or -1 if not found.
