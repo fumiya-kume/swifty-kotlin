@@ -100,10 +100,6 @@ enum SyntheticNativeRefRuntimeSurfaceSpec {
     ]
     static let gcInfoConstructor = constructor(from: gcInfoProperties)
 
-    static let memoryUsageProperties: [SyntheticPropertyStubSpec] = [
-        SyntheticPropertyStubSpec(name: "totalObjectsSizeBytes", propertyType: .long),
-    ]
-
     static let debuggingProperties: [SyntheticPropertyStubSpec] = [
         SyntheticPropertyStubSpec(
             name: "isThreadStateRunnable",

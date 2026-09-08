@@ -1,0 +1,13 @@
+symbol fq=__local_0.memoryUsage kind=local vis=private flags=_ type=kotlin.native.runtime.MemoryUsage
+symbol fq=golden.sema.memoryUsageTotalObjectsSizeBytes kind=function vis=public flags=_ sig=recv=_ params=[] ret=Long
+file fstdlib_kotlin_native_runtime_MemoryUsage_totalObjectsSizeBytes_n package=golden.sema
+  decl golden.sema.memoryUsageTotalObjectsSizeBytes fun memoryUsageTotalObjectsSizeBytes sym=golden.sema.memoryUsageTotalObjectsSizeBytes
+expr e@7:36 long(9223372036854775807) type=Long
+expr e@7:35 unary(unaryMinus) operand=e@7:36 type=Long
+expr e@7:59 long(1) type=Long
+expr e@7:35#1 binary(subtract) lhs=e@7:35 rhs=e@7:59 type=Long
+expr e@7:23 call callee=e@7:23#1 args=[_:e@7:35#1] type=kotlin.native.runtime.MemoryUsage call=kotlin.native.runtime.MemoryUsage.<init>
+expr e@7:5 localDecl memoryUsage mutable=0 type=_ init=e@7:23 type=Unit ref=__local_0.memoryUsage
+expr e@8:12 name(memoryUsage) type=kotlin.native.runtime.MemoryUsage ref=__local_0.memoryUsage
+expr e@8:12#1 memberCall recv=e@8:12 callee=totalObjectsSizeBytes args=[] type=Long ref=kotlin.native.runtime.MemoryUsage.totalObjectsSizeBytes
+expr e@8:5 return value=e@8:12#1 type=Nothing

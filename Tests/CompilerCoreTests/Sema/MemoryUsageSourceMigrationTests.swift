@@ -2,9 +2,8 @@
 @testable import CompilerCore
 import Testing
 
-/// KSP-1266: The MemoryUsage nominal declaration and Long constructor are
-/// backed by bundled Kotlin source. The property remains synthetic for
-/// KSP-1267 and is intentionally not covered by this migration.
+/// KSP-1267: The MemoryUsage nominal declaration, Long constructor, and
+/// immutable memory-size property are backed by bundled Kotlin source.
 @Suite
 struct MemoryUsageSourceMigrationTests {
     @Test
@@ -50,8 +49,12 @@ struct MemoryUsageSourceMigrationTests {
                 sema.symbols.lookup(fqName: memoryUsageFQName + [ctx.interner.intern("totalObjectsSizeBytes")])
             )
             let propertyInfo = try #require(sema.symbols.symbol(propertySymbol))
-            #expect(propertyInfo.flags.contains(.synthetic))
-            #expect(!sema.symbols.isSourceBackedSymbol(propertySymbol))
+            #expect(!propertyInfo.flags.contains(.synthetic))
+            #expect(!propertyInfo.flags.contains(.mutable))
+            #expect(sema.symbols.isSourceBackedSymbol(propertySymbol))
+            #expect(sema.symbols.externalLinkName(for: propertySymbol) == nil)
+            let propertyFileID = try #require(sema.symbols.sourceFileID(for: propertySymbol))
+            #expect(ctx.sourceManager.path(of: propertyFileID) == "__bundled_kotlin/native/runtime/MemoryUsage/Stdlib.kt")
             #expect(sema.symbols.propertyType(for: propertySymbol) == sema.types.longType)
         }
     }

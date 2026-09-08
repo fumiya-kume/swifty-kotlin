@@ -503,7 +503,6 @@ extension DataFlowSemaPhase {
         )
 
         let gcInfoFQName = packageFQName + [interner.intern("GCInfo")]
-        let memoryUsageFQName = packageFQName + [interner.intern("MemoryUsage")]
         let gcInfoContext = SyntheticStubRegistrationContext(
             ownerFQName: gcInfoFQName,
             parentSymbol: gcInfoSymbol
@@ -524,17 +523,6 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        let memoryUsageContext = SyntheticStubRegistrationContext(
-            ownerFQName: memoryUsageFQName,
-            parentSymbol: memoryUsageSymbol
-        )
-        registerSyntheticPropertyStubs(
-            SyntheticNativeRefRuntimeSurfaceSpec.memoryUsageProperties,
-            context: memoryUsageContext,
-            symbols: symbols,
-            types: types,
-            interner: interner
-        )
     }
 
     // MARK: - Debugging object
