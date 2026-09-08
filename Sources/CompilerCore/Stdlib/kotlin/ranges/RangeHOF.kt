@@ -750,6 +750,37 @@ public external fun LongRange.reversed(): LongProgression
 
 // MARK: - LongProgression
 
+private fun longProgressionDescription(progression: LongProgression): String {
+    // Widen before negation so the existing Int-typed synthetic step also
+    // renders Int.MIN_VALUE as 2147483648 when used in an empty message.
+    val step = progression.step.toLong()
+    return if (step > 0) {
+        "${progression.first}..${progression.last} step $step"
+    } else {
+        "${progression.first} downTo ${progression.last} step ${-step}"
+    }
+}
+
+@SinceKotlin("1.7")
+public fun LongProgression.first(): Long {
+    if (isEmpty())
+        throw NoSuchElementException("Progression ${longProgressionDescription(this)} is empty.")
+    return this.first
+}
+
+@SinceKotlin("1.7")
+public fun LongProgression.firstOrNull(): Long? = if (isEmpty()) null else this.first
+
+@SinceKotlin("1.7")
+public fun LongProgression.last(): Long {
+    if (isEmpty())
+        throw NoSuchElementException("Progression ${longProgressionDescription(this)} is empty.")
+    return this.last
+}
+
+@SinceKotlin("1.7")
+public fun LongProgression.lastOrNull(): Long? = if (isEmpty()) null else this.last
+
 public fun LongProgression.forEach(action: (Long) -> Unit) {
     for (element in this) { action(element) }
 }

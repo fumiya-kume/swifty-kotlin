@@ -356,6 +356,14 @@ extension CallTypeChecker {
             || memberName == "lastOrNull"
     }
 
+    private func isLongProgressionSourceBackedHOF(_ memberName: String, argCount: Int) -> Bool {
+        guard argCount == 0 else { return false }
+        return memberName == "first"
+            || memberName == "firstOrNull"
+            || memberName == "last"
+            || memberName == "lastOrNull"
+    }
+
     private func isUIntRangeSourceBackedHOF(_ memberName: String, argCount: Int) -> Bool {
         if memberName == "iterator" {
             return argCount == 0
@@ -437,6 +445,8 @@ extension CallTypeChecker {
                 && isUIntProgressionSourceBackedHOF(memberName, argCount: args.count))
             || (rangeKind == .charProgression
                 && isCharProgressionSourceBackedHOF(memberName, argCount: args.count))
+            || (rangeKind == .longProgression
+                && isLongProgressionSourceBackedHOF(memberName, argCount: args.count))
             || ((memberName == "random" || memberName == "randomOrNull")
                 && (rangeKind == .longRange || rangeKind == .charRange
                     || rangeKind == .uintRange || rangeKind == .ulongRange))
@@ -617,6 +627,8 @@ extension CallTypeChecker {
             return [kotlin, ranges, interner.intern("IntRange")]
         case .intProgression:
             return [kotlin, ranges, interner.intern("IntProgression")]
+        case .longProgression:
+            return [kotlin, ranges, interner.intern("LongProgression")]
         case .charProgression:
             return [kotlin, ranges, interner.intern("CharProgression")]
         case .longRange:

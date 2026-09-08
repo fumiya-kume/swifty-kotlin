@@ -3468,7 +3468,7 @@
     - `kotlin.ranges.contains` — fun IntRange.contains(Long): Boolean  -- `final inline fun (kotlin.ranges/IntRange).kotlin.ranges/contains(kotlin/Long): kotlin/Boolean`
     - `kotlin.ranges.contains` — fun IntRange.contains(Short): Boolean  -- `final inline fun (kotlin.ranges/IntRange).kotlin.ranges/contains(kotlin/Short): kotlin/Boolean`
 
-- [ ] KSP-1286: kotlin.ranges.LongProgression の未実装 stdlib API を実装する（4 件）
+- [~] KSP-1286: kotlin.ranges.LongProgression の未実装 stdlib API を実装する（4 件）
   - 対象: `kotlin.ranges` / receiver `LongProgression`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/ranges/RangeHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -3480,6 +3480,9 @@
     - `kotlin.ranges.firstOrNull` — fun LongProgression.firstOrNull(): Long  -- `final fun (kotlin.ranges/LongProgression).kotlin.ranges/firstOrNull(): kotlin/Long?`
     - `kotlin.ranges.last` — fun LongProgression.last(): Long  -- `final fun (kotlin.ranges/LongProgression).kotlin.ranges/last(): kotlin/Long`
     - `kotlin.ranges.lastOrNull` — fun LongProgression.lastOrNull(): Long  -- `final fun (kotlin.ranges/LongProgression).kotlin.ranges/lastOrNull(): kotlin/Long?`
+  - 実装（focused）: Kotlin 2.3.10 contract の no-argument first/firstOrNull/last/lastOrNull と空 progression の exact exception message を `RangeHOF.kt` に追加。LongProgression receiver の source routing、legacy lowering 回避、runtime dispatch の source-backed guard を更新し、既存 synthetic property/bridge は保持。
+  - 回帰（focused）: 専用 Sema test/Golden/diff fixture で source-backed binding、property/function distinction、正向き・負向き・empty・Long の min/max、firstOrNull/lastOrNull の null 結果を固定。LongProgression の既存 synthetic `step: Int` は KSP-1306/1307 の別契約として維持し、今回の4 APIの範囲外。
+  - 保留: 共通 G（全 Swift/全 Golden/全 diff）は未実行/pending のため Draft PR。親の head G も未実行。
 
 - [ ] KSP-1287: kotlin.ranges.LongRange の未実装 stdlib API を実装する（3 件）
   - 対象: `kotlin.ranges` / receiver `LongRange`
