@@ -495,3 +495,20 @@ public fun <R> CharSequence.foldRightIndexed(initial: R, operation: (index: Int,
     }
     return accumulator
 }
+
+public inline fun CharSequence.forEach(action: (Char) -> Unit): Unit {
+    // Read length and get through the CharSequence interface on every iteration.
+    var index = 0
+    while (index < this.length) {
+        action(this[index])
+        index++
+    }
+}
+
+public inline fun CharSequence.forEachIndexed(action: (index: Int, Char) -> Unit): Unit {
+    var index = 0
+    while (index < this.length) {
+        action(index, this[index])
+        index++
+    }
+}
