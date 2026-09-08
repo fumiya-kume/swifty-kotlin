@@ -50,7 +50,7 @@ expr e@8:36 name(Char) type=kotlin.Char.Companion ref=kotlin.Char#0
 expr e@8:36#1 memberCall recv=e@8:36 callee=MAX_SURROGATE args=[] type=Char call=kotlin.MAX_SURROGATE.$get
 expr e@8:5 localDecl directMaxSurrogate mutable=0 type=Char init=e@8:36#1 type=Unit ref=__local_4.directMaxSurrogate
 expr e@9:32 name(Char) type=kotlin.Char.Companion ref=kotlin.Char#0
-expr e@9:32#1 memberCall recv=e@9:32 callee=MAX_VALUE args=[] type=Char call=kotlin.MAX_VALUE.$get#0
+expr e@9:32#1 memberCall recv=e@9:32 callee=MAX_VALUE args=[] type=Char call=kotlin.MAX_VALUE.$get#1
 expr e@9:5 localDecl directMaxValue mutable=0 type=Char init=e@9:32#1 type=Unit ref=__local_5.directMaxValue
 expr e@10:35 name(Char) type=kotlin.Char.Companion ref=kotlin.Char#0
 expr e@10:35#1 memberCall recv=e@10:35 callee=MIN_CODE_POINT args=[] type=Int call=kotlin.MIN_CODE_POINT.$get
@@ -71,13 +71,13 @@ expr e@15:36 name(Char) type=kotlin.Char.Companion ref=kotlin.Char#0
 expr e@15:36#1 memberCall recv=e@15:36 callee=MIN_SURROGATE args=[] type=Char call=kotlin.MIN_SURROGATE.$get
 expr e@15:5 localDecl directMinSurrogate mutable=0 type=Char init=e@15:36#1 type=Unit ref=__local_11.directMinSurrogate
 expr e@16:32 name(Char) type=kotlin.Char.Companion ref=kotlin.Char#0
-expr e@16:32#1 memberCall recv=e@16:32 callee=MIN_VALUE args=[] type=Char call=kotlin.MIN_VALUE.$get#0
+expr e@16:32#1 memberCall recv=e@16:32 callee=MIN_VALUE args=[] type=Char call=kotlin.MIN_VALUE.$get#1
 expr e@16:5 localDecl directMinValue mutable=0 type=Char init=e@16:32#1 type=Unit ref=__local_12.directMinValue
 expr e@17:31 name(Char) type=kotlin.Char.Companion ref=kotlin.Char#0
-expr e@17:31#1 memberCall recv=e@17:31 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get#0
+expr e@17:31#1 memberCall recv=e@17:31 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get#1
 expr e@17:5 localDecl directSizeBits mutable=0 type=Int init=e@17:31#1 type=Unit ref=__local_13.directSizeBits
 expr e@18:32 name(Char) type=kotlin.Char.Companion ref=kotlin.Char#0
-expr e@18:32#1 memberCall recv=e@18:32 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get#0
+expr e@18:32#1 memberCall recv=e@18:32 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get#1
 expr e@18:5 localDecl directSizeBytes mutable=0 type=Int init=e@18:32#1 type=Unit ref=__local_14.directSizeBytes
 expr e@20:37 name(Char) type=kotlin.Char ref=kotlin.Char#0
 expr e@20:37#1 memberCall recv=e@20:37 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion
@@ -101,7 +101,7 @@ expr e@24:38#2 memberCall recv=e@24:38#1 callee=MAX_SURROGATE args=[] type=Char 
 expr e@24:5 localDecl explicitMaxSurrogate mutable=0 type=Char init=e@24:38#2 type=Unit ref=__local_19.explicitMaxSurrogate
 expr e@25:34 name(Char) type=kotlin.Char ref=kotlin.Char#0
 expr e@25:34#1 memberCall recv=e@25:34 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion
-expr e@25:34#2 memberCall recv=e@25:34#1 callee=MAX_VALUE args=[] type=Char call=kotlin.MAX_VALUE.$get#0
+expr e@25:34#2 memberCall recv=e@25:34#1 callee=MAX_VALUE args=[] type=Char call=kotlin.MAX_VALUE.$get#1
 expr e@25:5 localDecl explicitMaxValue mutable=0 type=Char init=e@25:34#2 type=Unit ref=__local_20.explicitMaxValue
 expr e@26:37 name(Char) type=kotlin.Char ref=kotlin.Char#0
 expr e@26:37#1 memberCall recv=e@26:37 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion
@@ -129,15 +129,15 @@ expr e@31:38#2 memberCall recv=e@31:38#1 callee=MIN_SURROGATE args=[] type=Char 
 expr e@31:5 localDecl explicitMinSurrogate mutable=0 type=Char init=e@31:38#2 type=Unit ref=__local_26.explicitMinSurrogate
 expr e@32:34 name(Char) type=kotlin.Char ref=kotlin.Char#0
 expr e@32:34#1 memberCall recv=e@32:34 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion
-expr e@32:34#2 memberCall recv=e@32:34#1 callee=MIN_VALUE args=[] type=Char call=kotlin.MIN_VALUE.$get#0
+expr e@32:34#2 memberCall recv=e@32:34#1 callee=MIN_VALUE args=[] type=Char call=kotlin.MIN_VALUE.$get#1
 expr e@32:5 localDecl explicitMinValue mutable=0 type=Char init=e@32:34#2 type=Unit ref=__local_27.explicitMinValue
 expr e@33:33 name(Char) type=kotlin.Char ref=kotlin.Char#0
 expr e@33:33#1 memberCall recv=e@33:33 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion
-expr e@33:33#2 memberCall recv=e@33:33#1 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get#0
+expr e@33:33#2 memberCall recv=e@33:33#1 callee=SIZE_BITS args=[] type=Int call=kotlin.SIZE_BITS.$get#1
 expr e@33:5 localDecl explicitSizeBits mutable=0 type=Int init=e@33:33#2 type=Unit ref=__local_28.explicitSizeBits
 expr e@34:34 name(Char) type=kotlin.Char ref=kotlin.Char#0
 expr e@34:34#1 memberCall recv=e@34:34 callee=Companion args=[] type=kotlin.Char.Companion ref=kotlin.Char.Companion
-expr e@34:34#2 memberCall recv=e@34:34#1 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get#0
+expr e@34:34#2 memberCall recv=e@34:34#1 callee=SIZE_BYTES args=[] type=Int call=kotlin.SIZE_BYTES.$get#1
 expr e@34:5 localDecl explicitSizeBytes mutable=0 type=Int init=e@34:34#2 type=Unit ref=__local_29.explicitSizeBytes
 expr e@36:13 name(directMaxCodePoint) type=Int ref=__local_0.directMaxCodePoint
 expr e@36:5 call callee=e@36:5#1 args=[_:e@36:13] type=Unit call=kotlin.io.println#1

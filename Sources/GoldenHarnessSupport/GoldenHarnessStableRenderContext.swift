@@ -49,23 +49,24 @@ final class StableRenderContext {
 
         var suffixes: [Int32: String] = [:]
         for (_, symbols) in fqGroups where symbols.count > 1 {
-            let sorted = symbols.sorted { lhs, rhs in
-                let lhsKey = Self.overloadSortKey(
-                    lhs,
-                    sema: sema,
-                    fqMap: fqMap,
-                    stableTypeParameterFQ: stableTypeParameterFQ
+            // Rendering and stabilizing a signature is independent of the
+            // comparison partner, so compute each key only once per symbol.
+            let keyedSymbols = symbols.map { symbol in
+                (
+                    id: symbol.id,
+                    key: Self.overloadSortKey(
+                        symbol,
+                        sema: sema,
+                        fqMap: fqMap,
+                        stableTypeParameterFQ: stableTypeParameterFQ
+                    )
                 )
-                let rhsKey = Self.overloadSortKey(
-                    rhs,
-                    sema: sema,
-                    fqMap: fqMap,
-                    stableTypeParameterFQ: stableTypeParameterFQ
-                )
-                return Self.overloadSortKeyPrecedes(
-                    lhsKey,
+            }
+            let sorted = keyedSymbols.sorted { lhs, rhs in
+                Self.overloadSortKeyPrecedes(
+                    lhs.key,
                     lhsSymbolID: lhs.id.rawValue,
-                    rhsKey,
+                    rhs.key,
                     rhsSymbolID: rhs.id.rawValue
                 )
             }
