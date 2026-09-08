@@ -20,17 +20,21 @@ public class StringBuilder : Appendable, CharSequence {
         return toString()[index]
     }
 
-    fun subSequence(startIndex: Int, endIndex: Int): CharSequence =
+    override fun subSequence(startIndex: Int, endIndex: Int): CharSequence =
         toString().substring(startIndex, endIndex)
 
     override fun append(value: Char): StringBuilder =
         __kk_string_builder_append_obj(value.toString())
 
-    override fun append(value: CharSequence?): StringBuilder =
-        __kk_string_builder_append_obj(if (value == null) "null" else value as String)
+    override fun append(value: CharSequence?): StringBuilder {
+        val source: CharSequence = if (value == null) "null" else value!!
+        return appendCharSequenceRange(source, 0, source.length)
+    }
 
-    override fun append(value: CharSequence?, startIndex: Int, endIndex: Int): StringBuilder =
-        appendRange(if (value == null) "null" else value as String, startIndex, endIndex)
+    override fun append(value: CharSequence?, startIndex: Int, endIndex: Int): StringBuilder {
+        val source: CharSequence = if (value == null) "null" else value!!
+        return appendCharSequenceRange(source, startIndex, endIndex)
+    }
 
     fun append(value: String?): StringBuilder =
         __kk_string_builder_append_obj(value)
@@ -155,12 +159,30 @@ public class StringBuilder : Appendable, CharSequence {
     }
 
     fun appendRange(value: CharSequence, startIndex: Int, endIndex: Int): StringBuilder {
-        append((value as String).substring(startIndex, endIndex))
-        return this
+        return appendCharSequenceRange(value, startIndex, endIndex)
     }
 
     fun appendRange(value: CharArray, startIndex: Int, endIndex: Int): StringBuilder =
         __kk_string_builder_append_char_array(value, startIndex, endIndex)
+
+    private fun appendCharSequenceRange(
+        value: CharSequence,
+        startIndex: Int,
+        endIndex: Int
+    ): StringBuilder {
+        val sourceLength = value.length
+        if (startIndex < 0 || startIndex > sourceLength || endIndex < startIndex || endIndex > sourceLength) {
+            throw IndexOutOfBoundsException(
+                "startIndex=$startIndex, endIndex=$endIndex, length=$sourceLength"
+            )
+        }
+        var index = startIndex
+        while (index < endIndex) {
+            append(value[index])
+            index++
+        }
+        return this
+    }
 
     fun insertRange(index: Int, value: CharSequence, startIndex: Int, endIndex: Int): StringBuilder =
         insertString(index, (value as String).substring(startIndex, endIndex))

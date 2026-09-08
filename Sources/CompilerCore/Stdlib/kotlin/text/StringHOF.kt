@@ -475,3 +475,27 @@ public fun <R> CharSequence.foldRightIndexed(initial: R, operation: (index: Int,
     }
     return accumulator
 }
+
+public fun CharSequence.padStart(length: Int, padChar: Char = ' '): CharSequence {
+    if (length < 0)
+        throw IllegalArgumentException("Desired length $length is less than zero.")
+    if (length <= this.length)
+        return this.subSequence(0, this.length)
+    val sb = StringBuilder(length)
+    for (i in 1..(length - this.length))
+        sb.append(padChar)
+    sb.append(this)
+    return sb
+}
+
+public fun CharSequence.padEnd(length: Int, padChar: Char = ' '): CharSequence {
+    if (length < 0)
+        throw IllegalArgumentException("Desired length $length is less than zero.")
+    if (length <= this.length)
+        return this.subSequence(0, this.length)
+    val sb = StringBuilder(length)
+    sb.append(this)
+    for (i in 1..(length - this.length))
+        sb.append(padChar)
+    return sb
+}
