@@ -42,19 +42,17 @@ extension CallTypeChecker {
             }
             return receiverKind == .uintRange || receiverKind == .uintProgression
         }()
-        let isTypedIntRangeReceiver: Bool = {
-            guard let receiverType,
-                  let receiverKind = MemberRuntimeDispatch.rangeReceiverKind(
-                      receiverExpr: receiverID,
-                      receiverType: receiverType,
-                      sema: sema,
-                      interner: interner
-                  )
-            else {
-                return false
-            }
-            return receiverKind == .intRange
+        let typedRangeKind: MemberDispatchReceiverKind? = {
+            guard let receiverType else { return nil }
+            return MemberRuntimeDispatch.rangeReceiverKind(
+                receiverExpr: receiverID,
+                receiverType: receiverType,
+                sema: sema,
+                interner: interner
+            )
         }()
+        let isTypedIntRangeReceiver = typedRangeKind == .intRange
+        let isTypedLongRangeReceiver = typedRangeKind == .longRange
         let isSyntacticRangeExpression = ControlFlowTypeChecker.isRangeExpression(receiverID, ast: ctx.ast)
         guard !isClassNameReceiver,
               (sema.bindings.isRangeExpr(receiverID)
@@ -62,6 +60,8 @@ extension CallTypeChecker {
                   || isSyntacticRangeExpression
                   || (isTypedIntRangeReceiver
                       && isIntRangeSourceBackedHOF(memberName, argCount: args.count))
+                  || (isTypedLongRangeReceiver
+                      && isLongRangeSourceBackedHOF(memberName, argCount: args.count))
                   || (isTypedUIntRangeReceiver && isUIntRangeSourceMigrationMember))
         else {
             return nil
@@ -70,7 +70,7 @@ extension CallTypeChecker {
         // Let normal overload resolution report invalid labels instead of
         // accepting them through the legacy range fallback. The source-backed
         // contains overloads all use Kotlin's `value` parameter name.
-        if isTypedIntRangeReceiver,
+        if (isTypedIntRangeReceiver || isTypedLongRangeReceiver),
            memberName == "contains",
            args.contains(where: { argument in
                guard let label = argument.label else { return false }
@@ -379,6 +379,10 @@ extension CallTypeChecker {
         return sourceBacked.contains(memberName)
     }
 
+    private func isLongRangeSourceBackedHOF(_ memberName: String, argCount: Int) -> Bool {
+        memberName == "contains" && argCount == 1
+    }
+
     private func isCharProgressionSourceBackedHOF(_ memberName: String, argCount: Int) -> Bool {
         guard argCount == 0 else { return false }
         return memberName == "first"
@@ -462,6 +466,8 @@ extension CallTypeChecker {
         let isSourceBackedRangeCall =
             ((rangeKind == .intRange || rangeKind == .intProgression)
                 && isIntRangeSourceBackedHOF(memberName, argCount: args.count))
+            || (rangeKind == .longRange
+                && isLongRangeSourceBackedHOF(memberName, argCount: args.count))
             || (rangeKind == .uintRange
                 && isUIntRangeSourceBackedHOF(memberName, argCount: args.count))
             || (rangeKind == .uintProgression
@@ -488,15 +494,16 @@ extension CallTypeChecker {
             sema: sema,
             interner: interner
         ) ?? receiverType
-        let scopedRangeUserCandidates: [SymbolID] = if memberName == "contains", rangeKind == .intRange {
+        let scopedRangeUserCandidates: [SymbolID] = if memberName == "contains",
+                                                          rangeKind == .intRange || rangeKind == .longRange {
             collectScopedRangeUserExtensionCandidates(
                 named: calleeName,
                 receiverType: sourceLookupReceiverType,
                 ctx: ctx,
                 sema: sema,
                 interner: interner
-            ).filter {
-                isIntRangeCrossTypeContainsCandidate($0, sema: sema)
+            ).filter { candidate in
+                rangeKind != .intRange || isIntRangeCrossTypeContainsCandidate(candidate, sema: sema)
             }
         } else {
             []

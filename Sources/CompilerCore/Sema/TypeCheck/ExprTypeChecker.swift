@@ -576,12 +576,13 @@ final class ExprTypeChecker {
             sema: sema,
             interner: interner
         ),
-        MemberRuntimeDispatch.rangeReceiverKind(
+        let rangeReceiverKind = MemberRuntimeDispatch.rangeReceiverKind(
             receiverExpr: containerExpr,
             receiverType: containerType,
             sema: sema,
             interner: interner
-        ) == .intRange {
+        ),
+        rangeReceiverKind == .intRange || rangeReceiverKind == .longRange {
             let scopedRangeUserCandidates = driver.callChecker
                 .collectScopedRangeUserExtensionCandidates(
                     named: containsName,
@@ -596,10 +597,13 @@ final class ExprTypeChecker {
                     else {
                         return false
                     }
-                    return driver.callChecker.isIntRangeCrossTypeContainsCandidate(
-                        candidate,
-                        sema: sema
-                    )
+                    if rangeReceiverKind == .intRange {
+                        return driver.callChecker.isIntRangeCrossTypeContainsCandidate(
+                            candidate,
+                            sema: sema
+                        )
+                    }
+                    return true
                 }
             if !scopedRangeUserCandidates.isEmpty {
                 let resolved = ctx.resolver.resolveCall(

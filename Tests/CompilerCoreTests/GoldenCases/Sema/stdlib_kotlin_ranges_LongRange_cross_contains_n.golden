@@ -1,0 +1,44 @@
+symbol fq=golden.sema.longRangeContainsByte kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.LongRange,Byte] ret=Boolean
+symbol fq=golden.sema.longRangeContainsByte.$0.range kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.longRangeContainsByte.$0.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.longRangeContainsInt kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.LongRange,Int] ret=Boolean
+symbol fq=golden.sema.longRangeContainsInt.$1.range kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.longRangeContainsInt.$1.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.longRangeContainsShort kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.LongRange,Short] ret=Boolean
+symbol fq=golden.sema.longRangeContainsShort.$2.range kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.longRangeContainsShort.$2.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.longRangeInByte kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.LongRange,Byte] ret=Boolean
+symbol fq=golden.sema.longRangeInByte.$3.range kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.longRangeInByte.$3.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.longRangeInInt kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.LongRange,Int] ret=Boolean
+symbol fq=golden.sema.longRangeInInt.$4.range kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.longRangeInInt.$4.value kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.longRangeInShort kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ranges.LongRange,Short] ret=Boolean
+symbol fq=golden.sema.longRangeInShort.$5.range kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.longRangeInShort.$5.value kind=valueParameter vis=private flags=_
+symbol fq=kotlin.ranges.LongRange kind=class vis=public flags=synthetic
+file fstdlib_kotlin_ranges_LongRange_cross_contains_n package=golden.sema
+  decl golden.sema.longRangeContainsByte fun longRangeContainsByte sym=golden.sema.longRangeContainsByte
+  decl golden.sema.longRangeContainsInt fun longRangeContainsInt sym=golden.sema.longRangeContainsInt
+  decl golden.sema.longRangeContainsShort fun longRangeContainsShort sym=golden.sema.longRangeContainsShort
+  decl golden.sema.longRangeInByte fun longRangeInByte sym=golden.sema.longRangeInByte
+  decl golden.sema.longRangeInInt fun longRangeInInt sym=golden.sema.longRangeInInt
+  decl golden.sema.longRangeInShort fun longRangeInShort sym=golden.sema.longRangeInShort
+expr e@4:5 name(range) type=kotlin.ranges.LongRange ref=golden.sema.longRangeContainsByte.$0.range
+expr e@4:20 name(value) type=Byte ref=golden.sema.longRangeContainsByte.$0.value
+expr e@4:5#1 memberCall recv=e@4:5 callee=contains args=[_:e@4:20] type=Boolean call=kotlin.ranges.contains#8
+expr e@7:5 name(range) type=kotlin.ranges.LongRange ref=golden.sema.longRangeContainsInt.$1.range
+expr e@7:20 name(value) type=Int ref=golden.sema.longRangeContainsInt.$1.value
+expr e@7:5#1 memberCall recv=e@7:5 callee=contains args=[_:e@7:20] type=Boolean call=kotlin.ranges.contains#9
+expr e@10:5 name(range) type=kotlin.ranges.LongRange ref=golden.sema.longRangeContainsShort.$2.range
+expr e@10:20 name(value) type=Short ref=golden.sema.longRangeContainsShort.$2.value
+expr e@10:5#1 memberCall recv=e@10:5 callee=contains args=[_:e@10:20] type=Boolean call=kotlin.ranges.contains#11
+expr e@13:5 name(value) type=Byte ref=golden.sema.longRangeInByte.$3.value
+expr e@13:14 name(range) type=kotlin.ranges.LongRange ref=golden.sema.longRangeInByte.$3.range
+expr e@13:5#1 inExpr lhs=e@13:5 rhs=e@13:14 type=Boolean call=kotlin.ranges.contains#8
+expr e@16:5 name(value) type=Int ref=golden.sema.longRangeInInt.$4.value
+expr e@16:14 name(range) type=kotlin.ranges.LongRange ref=golden.sema.longRangeInInt.$4.range
+expr e@16:5#1 inExpr lhs=e@16:5 rhs=e@16:14 type=Boolean call=kotlin.ranges.contains#9
+expr e@19:5 name(value) type=Short ref=golden.sema.longRangeInShort.$5.value
+expr e@19:14 name(range) type=kotlin.ranges.LongRange ref=golden.sema.longRangeInShort.$5.range
+expr e@19:5#1 inExpr lhs=e@19:5 rhs=e@19:14 type=Boolean call=kotlin.ranges.contains#11
