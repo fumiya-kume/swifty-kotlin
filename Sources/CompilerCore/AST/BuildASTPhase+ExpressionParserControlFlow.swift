@@ -43,7 +43,11 @@ extension BuildASTPhase.ExpressionParser {
                     nestedIfs -= 1
                 }
             }
-            depth.track(token.kind)
+            // Angle tokens can be comparison operators. Type arguments cannot
+            // contain an if/else branch, so only expression delimiters matter.
+            if token.kind != .symbol(.lessThan), token.kind != .symbol(.greaterThan) {
+                depth.track(token.kind)
+            }
         }
         return end
     }

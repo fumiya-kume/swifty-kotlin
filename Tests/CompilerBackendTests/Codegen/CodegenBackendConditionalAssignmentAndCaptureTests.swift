@@ -38,7 +38,7 @@ struct CodegenBackendConditionalAssignmentAndCaptureTests {
     func unbracedAssignmentsExecuteTheCorrectElseBranch() throws {
         try checkExecution(
             fixture: "unbraced_if_assignments.kt",
-            expected: "1\n2\n10\n20\n30\n1\n2\n3\n22\n"
+            expected: "1\n2\n10\n20\n30\n1\n2\n3\n22\ntrue\nfalse\ntrue\ntrue\n"
         )
     }
 

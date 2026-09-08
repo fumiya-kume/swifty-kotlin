@@ -16,6 +16,12 @@ private fun dangling(outer: Boolean, inner: Boolean): Int {
     return value
 }
 
+private fun comparison(flag: Boolean, input: Int): Boolean {
+    var value = false
+    if (flag) value = input < 0 else value = true
+    return value
+}
+
 fun main() {
     println(choose(true))
     println(choose(false))
@@ -30,4 +36,8 @@ fun main() {
         if (index % 2 == 0) total += 1 else total += 10
     }
     println(total)
+    println(comparison(true, -1))
+    println(comparison(true, 1))
+    println(comparison(false, -1))
+    println(comparison(false, 1))
 }

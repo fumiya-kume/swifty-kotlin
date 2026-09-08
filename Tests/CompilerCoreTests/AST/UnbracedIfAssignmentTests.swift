@@ -51,6 +51,26 @@ struct UnbracedIfAssignmentTests {
     }
 
     @Test
+    func comparisonInAssignmentDoesNotHideElse() throws {
+        let context = makeContextFromSource("""
+        fun choose(flag: Boolean, input: Int) {
+            var value = false
+            if (flag) value = input < 0 else value = true
+        }
+        """)
+        try runFrontend(context)
+        let (ast, branch) = try parsedIf(in: context)
+        guard case let .ifExpr(_, _, elseID, _) = branch,
+              let elseID,
+              case let .localAssign(_, elseValue, _) = ast.arena.expr(elseID),
+              case .boolLiteral(true, _) = ast.arena.expr(elseValue)
+        else {
+            Issue.record("A comparison must preserve the enclosing else assignment")
+            return
+        }
+    }
+
+    @Test
     func nestedIfValueKeepsItsElseAndTheEnclosingElse() throws {
         let context = makeContextFromSource("""
         fun choose(outer: Boolean, inner: Boolean) {
