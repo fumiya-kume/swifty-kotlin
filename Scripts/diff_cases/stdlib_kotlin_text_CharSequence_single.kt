@@ -1,0 +1,84 @@
+private class IndexedSequence(
+    private val chars: CharArray,
+    private val rendered: String
+) : CharSequence {
+    var lengthReads: Int = 0
+    var getReads: Int = 0
+
+    override val length: Int
+        get() {
+            lengthReads += 1
+            return chars.size
+        }
+
+    override fun get(index: Int): Char {
+        getReads += 1
+        return chars[index]
+    }
+
+    override fun subSequence(startIndex: Int, endIndex: Int): CharSequence =
+        IndexedSequence(chars.copyOfRange(startIndex, endIndex), rendered)
+
+    override fun toString(): String = rendered
+}
+
+private fun exceptionLabel(block: () -> Unit): String =
+    try {
+        block()
+        "none"
+    } catch (error: NoSuchElementException) {
+        "NoSuchElementException:${error.message}"
+    } catch (error: IllegalArgumentException) {
+        "IllegalArgumentException:${error.message}"
+    }
+
+private fun directSingle(source: CharSequence): Char = source.single { it == 'b' }
+
+private fun capturedSingleOrNull(source: CharSequence, wanted: Char): Char? =
+    source.singleOrNull(predicate = { it == wanted })
+
+private fun safeNonLocal(source: CharSequence): Char? {
+    return source.singleOrNull {
+        if (it == 'b') return it
+        false
+    }
+}
+
+fun main() {
+    val customOne: CharSequence = IndexedSequence(charArrayOf('Z'), "wrong-custom-one")
+    val customEmpty: CharSequence = IndexedSequence(charArrayOf(), "wrong-custom-empty")
+    val customMultiple: CharSequence = IndexedSequence(charArrayOf('a', 'b'), "wrong-custom-multiple")
+
+    println("single-custom=${customOne.single() == 'Z'}")
+    println("single-custom-or-null=${customOne.singleOrNull() == 'Z'}")
+    println("single-empty=${exceptionLabel { customEmpty.single() }}")
+    println("single-multiple=${exceptionLabel { customMultiple.single() }}")
+    println("single-or-null-empty=${customEmpty.singleOrNull() == null}")
+    println("single-or-null-multiple=${customMultiple.singleOrNull() == null}")
+
+    val customPredicate = IndexedSequence(charArrayOf('a', 'b', 'b'), "wrong-predicate")
+    println("single-predicate-first=${exceptionLabel { customPredicate.single { it == 'b' } }}")
+    println("single-predicate-counters=${customPredicate.lengthReads},${customPredicate.getReads}")
+
+    val customPredicateOrNull = IndexedSequence(charArrayOf('a', 'b', 'b', 'c'), "wrong-predicate-null")
+    println("single-or-null-predicate-second=${customPredicateOrNull.singleOrNull { it == 'b' } == null}")
+    println("single-or-null-predicate-counters=${customPredicateOrNull.lengthReads},${customPredicateOrNull.getReads}")
+
+    val noMatch = IndexedSequence(charArrayOf('a', 'c'), "wrong-no-match")
+    println("single-predicate-none=${exceptionLabel { noMatch.single(predicate = { it == 'b' }) }}")
+    println("single-or-null-predicate-none=${noMatch.singleOrNull { it == 'b' } == null}")
+
+    val direct = IndexedSequence(charArrayOf('a', 'b'), "wrong-direct")
+    println("direct=${directSingle(direct)}")
+    println("captured=${capturedSingleOrNull(IndexedSequence(charArrayOf('a', 'b'), "wrong-captured"), 'b')}")
+    println("safe-nonlocal=${safeNonLocal(IndexedSequence(charArrayOf('a', 'b', 'c'), "wrong-nonlocal"))}")
+
+    val builder: CharSequence = StringBuilder("Q")
+    println("builder=${builder.single()}")
+    val string: CharSequence = "R"
+    println("string=${string.singleOrNull()}")
+
+    val utf16: CharSequence = IndexedSequence(charArrayOf('\uD83D', '\uDE00'), "wrong-utf16")
+    println("utf16-length=${utf16.length}")
+    println("utf16-single-or-null=${utf16.singleOrNull() == null}")
+}
