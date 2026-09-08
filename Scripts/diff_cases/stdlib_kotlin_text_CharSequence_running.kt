@@ -160,6 +160,9 @@ private fun throwingReduce(source: CharSequence): String {
 fun main() {
     val intFold = "abc".runningFold(0) { accumulator, value -> accumulator + value.code }
     println(renderInts(intFold))
+    println("abc".runningFold(0) { accumulator, _ -> accumulator + 1 })
+    println("abc".runningFoldIndexed(0) { index, accumulator, _ -> accumulator + index + 1 })
+    println("abc".runningReduce { accumulator, value -> if (accumulator < value) value else accumulator })
 
     val booleanFold = "ab".runningFold(false) { accumulator, value -> accumulator || value == 'b' }
     println(renderBooleans(booleanFold))
