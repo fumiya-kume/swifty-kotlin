@@ -18,7 +18,7 @@ symbol fq=__local_16.objects kind=local vis=private flags=_ type=kotlin.Array<In
 symbol fq=__local_17.objectSize kind=local vis=private flags=_ type=Int
 symbol fq=__local_18.objectCopy kind=local vis=private flags=_ type=kotlin.collections.List<Int>
 symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+symbol fq=kotlin.Array#0 kind=class vis=public flags=synthetic
 symbol fq=kotlin.UByteArray#0 kind=class vis=public flags=synthetic
 symbol fq=kotlin.UIntArray#0 kind=class vis=public flags=synthetic
 symbol fq=kotlin.ULongArray#0 kind=class vis=public flags=synthetic

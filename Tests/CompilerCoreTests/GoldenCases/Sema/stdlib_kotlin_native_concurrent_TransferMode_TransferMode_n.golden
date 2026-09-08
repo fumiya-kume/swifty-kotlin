@@ -2,7 +2,7 @@ symbol fq=golden.sema.transferModeEntries kind=function vis=public flags=_ sig=r
 symbol fq=golden.sema.transferModeValue kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 symbol fq=golden.sema.transferModeValueOf kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.native.concurrent.TransferMode
 symbol fq=golden.sema.transferModeValues kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Array<kotlin.native.concurrent.TransferMode>
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+symbol fq=kotlin.Array#0 kind=class vis=public flags=synthetic
 symbol fq=kotlin.enums.EnumEntries kind=interface vis=public flags=synthetic
 symbol fq=kotlin.native.concurrent.TransferMode.Companion.entries kind=property vis=public flags=synthetic|static type=kotlin.enums.EnumEntries<kotlin.native.concurrent.TransferMode>
 symbol fq=kotlin.native.concurrent.TransferMode.Companion.valueOf kind=function vis=public flags=synthetic|static sig=recv=kotlin.native.concurrent.TransferMode.Companion params=[String] ret=kotlin.native.concurrent.TransferMode

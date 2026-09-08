@@ -685,7 +685,7 @@ final class CallTypeChecker {
         }()
         if let calleeName,
            knownNames.isPrimitiveArrayConstructorTypeName(calleeName),
-           args.count == 2 || (args.count == 1 && calleeName != knownNames.array),
+           args.count == 1 || args.count == 2,
            locals[calleeName] == nil,
            !hasSourceBackedArrayConstructor
         {
@@ -713,7 +713,26 @@ final class CallTypeChecker {
                         symbols: sema.symbols,
                         types: sema.types,
                         interner: interner,
-                        elementType: explicitTypeArgs.first ?? expectedType ?? sema.types.anyType
+                        elementType: {
+                            if let explicitTypeArg = explicitTypeArgs.first {
+                                explicitTypeArg
+                            } else if let kotlinArraySymbol = sema.symbols.lookup(
+                                fqName: [interner.intern("kotlin"), interner.intern("Array")]
+                            ), let expectedType,
+                                      case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
+                                      expectedClassType.classSymbol == kotlinArraySymbol,
+                                      let firstArg = expectedClassType.args.first
+                            {
+                                switch firstArg {
+                                case let .invariant(type), let .in(type), let .out(type):
+                                    type
+                                case .star:
+                                    sema.types.anyType
+                                }
+                            } else {
+                                sema.types.anyType
+                            }
+                        }()
                     )
                 } else {
                     makeSyntheticPrimitiveArrayType(

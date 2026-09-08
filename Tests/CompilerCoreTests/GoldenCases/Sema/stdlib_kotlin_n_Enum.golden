@@ -4,7 +4,7 @@ symbol fq=golden.sema.identity kind=function vis=public flags=_ sig=recv=_ param
 symbol fq=golden.sema.identity.$0.T kind=typeParameter vis=private flags=_
 symbol fq=golden.sema.identity.$0.value kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+symbol fq=kotlin.Array#0 kind=class vis=public flags=synthetic
 symbol fq=kotlin.Comparable kind=interface vis=public flags=_
 symbol fq=kotlin.Enum kind=class vis=public flags=abstractType|openType
 file fstdlib_kotlin_n_Enum package=golden.sema

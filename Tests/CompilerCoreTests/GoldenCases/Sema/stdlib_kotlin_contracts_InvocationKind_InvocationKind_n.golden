@@ -1,7 +1,7 @@
 symbol fq=golden.sema.invocationKindEntries kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.enums.EnumEntries<kotlin.contracts.InvocationKind>
 symbol fq=golden.sema.invocationKindValueOf kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.contracts.InvocationKind
 symbol fq=golden.sema.invocationKindValues kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Array<kotlin.contracts.InvocationKind>
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+symbol fq=kotlin.Array#0 kind=class vis=public flags=synthetic
 symbol fq=kotlin.enums.EnumEntries kind=interface vis=public flags=synthetic
 file fstdlib_kotlin_contracts_InvocationKind_InvocationKind_n package=golden.sema
   decl golden.sema.invocationKindEntries fun invocationKindEntries sym=golden.sema.invocationKindEntries

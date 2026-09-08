@@ -1,4 +1,4 @@
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+symbol fq=kotlin.Array#0 kind=class vis=public flags=synthetic
 symbol fq=kotlin.enums.EnumEntries kind=interface vis=public flags=synthetic
 symbol fq=kotlin.native.OsFamily.Companion.entries kind=property vis=public flags=synthetic|static type=kotlin.enums.EnumEntries<kotlin.native.OsFamily>
 symbol fq=kotlin.native.OsFamily.Companion.valueOf kind=function vis=public flags=synthetic|static sig=recv=kotlin.native.OsFamily.Companion params=[String] ret=kotlin.native.OsFamily

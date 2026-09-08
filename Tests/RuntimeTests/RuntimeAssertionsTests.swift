@@ -623,6 +623,17 @@ struct RuntimeAssertionsTests {
     }
 
     @Test
+    func testArrayNewCheckedZeroFillsReferenceSlots() {
+        var thrown: Int = 0
+        let result = withUnsafeMutablePointer(to: &thrown) { kk_array_new_checked(2, $0) }
+        #expect(thrown == 0)
+        #expect(result != 0)
+        #expect(kk_array_get(result, 0, &thrown) == 0)
+        #expect(kk_array_get(result, 1, &thrown) == 0)
+        #expect(thrown == 0)
+    }
+
+    @Test
     func testArrayNewCheckedZeroSizeDoesNotThrow() {
         var thrown: Int = 0
         let result = withUnsafeMutablePointer(to: &thrown) { kk_array_new_checked(0, $0) }

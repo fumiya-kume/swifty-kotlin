@@ -2,7 +2,7 @@ symbol fq=golden.sema.futureStateEntries kind=function vis=public flags=_ sig=re
 symbol fq=golden.sema.futureStateValue kind=function vis=public flags=_ sig=recv=_ params=[] ret=Int
 symbol fq=golden.sema.futureStateValueOf kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.native.concurrent.FutureState
 symbol fq=golden.sema.futureStateValues kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Array<kotlin.native.concurrent.FutureState>
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+symbol fq=kotlin.Array#0 kind=class vis=public flags=synthetic
 symbol fq=kotlin.enums.EnumEntries kind=interface vis=public flags=synthetic
 symbol fq=kotlin.native.concurrent.FutureState kind=enumClass vis=public flags=_
 symbol fq=kotlin.native.concurrent.FutureState.Companion.entries kind=property vis=public flags=synthetic|static type=kotlin.enums.EnumEntries<kotlin.native.concurrent.FutureState>

@@ -1,7 +1,7 @@
 symbol fq=golden.sema.levelEntries kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.enums.EnumEntries<kotlin.RequiresOptIn.Level>
 symbol fq=golden.sema.levelValueOf kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.RequiresOptIn.Level
 symbol fq=golden.sema.levelValues kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Array<kotlin.RequiresOptIn.Level>
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+symbol fq=kotlin.Array#0 kind=class vis=public flags=synthetic
 symbol fq=kotlin.enums.EnumEntries kind=interface vis=public flags=synthetic
 file fstdlib_kotlin_RequiresOptIn_Level_Level_n package=golden.sema
   decl golden.sema.levelEntries fun levelEntries sym=golden.sema.levelEntries

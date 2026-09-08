@@ -6,7 +6,7 @@ symbol fq=__local_4.allNull kind=local vis=private flags=_ type=kotlin.collectio
 symbol fq=__local_5.mixed kind=local vis=private flags=_ type=kotlin.collections.Set<String>
 symbol fq=__local_6.source kind=local vis=private flags=_ type=kotlin.Array<String?>
 symbol fq=__local_7.spread kind=local vis=private flags=_ type=kotlin.collections.Set<String>
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+symbol fq=kotlin.Array#0 kind=class vis=public flags=synthetic
 symbol fq=kotlin.collections.Set kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Set.E kind=typeParameter vis=private flags=_
 symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit

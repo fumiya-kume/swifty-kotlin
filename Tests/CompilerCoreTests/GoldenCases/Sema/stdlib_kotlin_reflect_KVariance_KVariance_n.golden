@@ -2,7 +2,7 @@ symbol fq=golden.sema.varianceEntries kind=function vis=public flags=_ sig=recv=
 symbol fq=golden.sema.varianceValueOf kind=function vis=public flags=_ sig=recv=_ params=[String] ret=kotlin.reflect.KVariance
 symbol fq=golden.sema.varianceValueOf.$0.name kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.varianceValues kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Array<kotlin.reflect.KVariance>
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+symbol fq=kotlin.Array#0 kind=class vis=public flags=synthetic
 symbol fq=kotlin.enums.EnumEntries kind=interface vis=public flags=synthetic
 symbol fq=kotlin.reflect.KVariance.Companion.entries kind=property vis=public flags=synthetic|static type=kotlin.enums.EnumEntries<kotlin.reflect.KVariance>
 symbol fq=kotlin.reflect.KVariance.Companion.valueOf kind=function vis=public flags=synthetic|static sig=recv=kotlin.reflect.KVariance.Companion params=[String] ret=kotlin.reflect.KVariance

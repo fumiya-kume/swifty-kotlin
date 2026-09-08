@@ -21,7 +21,7 @@ symbol fq=__local_11.customCollection kind=local vis=private flags=_ type=Custom
 symbol fq=__local_12.customMap kind=local vis=private flags=_ type=CustomMap
 symbol fq=collectionIsEmpty kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Collection<String?>] ret=Boolean
 symbol fq=collectionIsEmpty.$0.value kind=valueParameter vis=private flags=_
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+symbol fq=kotlin.Array#0 kind=class vis=public flags=synthetic
 symbol fq=kotlin.Pair kind=class vis=public flags=_
 symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Collection.E kind=typeParameter vis=private flags=_

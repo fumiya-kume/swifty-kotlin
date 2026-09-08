@@ -2,7 +2,7 @@ symbol fq=inspectArrayDeque kind=function vis=public flags=_ sig=recv=_ params=[
 symbol fq=inspectArrayDeque.$0.deque kind=valueParameter vis=private flags=_
 symbol fq=inspectArrayDeque.$0.destination kind=valueParameter vis=private flags=_
 symbol fq=inspectArrayDeque.$0.values kind=valueParameter vis=private flags=_
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+symbol fq=kotlin.Array#0 kind=class vis=public flags=synthetic
 symbol fq=kotlin.collections.Collection kind=interface vis=public flags=_
 file fstdlib_kotlin_collections_ArrayDeque_ArrayDeque_n package=_
   decl inspectArrayDeque fun inspectArrayDeque sym=inspectArrayDeque

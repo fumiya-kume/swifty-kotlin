@@ -1,7 +1,7 @@
 symbol fq=golden.sema.entries kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.enums.EnumEntries<kotlin.text.RegexOption>
 symbol fq=golden.sema.valueOf kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.text.RegexOption
 symbol fq=golden.sema.values kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.Array<kotlin.text.RegexOption>
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+symbol fq=kotlin.Array#0 kind=class vis=public flags=synthetic
 symbol fq=kotlin.enums.EnumEntries kind=interface vis=public flags=synthetic
 symbol fq=kotlin.text.RegexOption.Companion.entries kind=property vis=public flags=synthetic|static type=kotlin.enums.EnumEntries<kotlin.text.RegexOption>
 symbol fq=kotlin.text.RegexOption.Companion.valueOf kind=function vis=public flags=synthetic|static sig=recv=kotlin.text.RegexOption.Companion params=[String] ret=kotlin.text.RegexOption

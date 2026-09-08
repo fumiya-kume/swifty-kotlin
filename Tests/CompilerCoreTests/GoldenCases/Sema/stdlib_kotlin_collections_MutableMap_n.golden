@@ -4,7 +4,7 @@ symbol fq=__local_2.delegated kind=local vis=private flags=mutable type=Int
 symbol fq=__local_3.defaulted kind=local vis=private flags=_ type=kotlin.collections.MutableMap<String, Int?>
 symbol fq=__local_4.iterator kind=local vis=private flags=_ type=kotlin.collections.MutableIterator<kotlin.collections.MutableMap.MutableEntry<String, Int?>>
 symbol fq=__local_5.entry kind=local vis=private flags=_ type=kotlin.collections.MutableMap.MutableEntry<String, Int?>
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+symbol fq=kotlin.Array#0 kind=class vis=public flags=synthetic
 symbol fq=kotlin.Pair kind=class vis=public flags=_
 symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
 symbol fq=kotlin.collections.Iterator kind=interface vis=public flags=synthetic

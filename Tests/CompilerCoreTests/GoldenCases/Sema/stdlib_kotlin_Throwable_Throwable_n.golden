@@ -36,7 +36,7 @@ symbol fq=golden.sema.throwableStackTraceSize kind=function vis=public flags=_ s
 symbol fq=golden.sema.throwableSubclassToString kind=function vis=public flags=_ sig=recv=_ params=[String] ret=String
 symbol fq=golden.sema.throwableSubclassToString.$6.message kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.throwableWithCauseToString kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+symbol fq=kotlin.Array#0 kind=class vis=public flags=synthetic
 symbol fq=kotlin.Throwable kind=class vis=public flags=openType
 file fstdlib_kotlin_Throwable_Throwable_n package=golden.sema
   decl golden.sema.NamedThrowable class NamedThrowable sym=golden.sema.NamedThrowable

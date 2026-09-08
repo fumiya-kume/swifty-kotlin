@@ -2,7 +2,7 @@ symbol fq=golden.sema.readReplaceWithExpression kind=function vis=public flags=_
 symbol fq=golden.sema.readReplaceWithExpression.$0.replaceWith kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.readReplaceWithImports kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ReplaceWith] ret=kotlin.Array<out String>
 symbol fq=golden.sema.readReplaceWithImports.$1.replaceWith kind=valueParameter vis=private flags=_
-symbol fq=kotlin.Array kind=class vis=public flags=synthetic
+symbol fq=kotlin.Array#0 kind=class vis=public flags=synthetic
 file fstdlib_kotlin_ReplaceWith_ReplaceWith_n package=golden.sema
   decl golden.sema.readReplaceWithExpression fun readReplaceWithExpression sym=golden.sema.readReplaceWithExpression
   decl golden.sema.readReplaceWithImports fun readReplaceWithImports sym=golden.sema.readReplaceWithImports
