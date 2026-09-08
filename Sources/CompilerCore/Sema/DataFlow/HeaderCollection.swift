@@ -421,7 +421,7 @@ extension DataFlowSemaPhase {
 
     /// KSP-1522: forward-declares the source-backed `kotlin.random.Random` and
     /// `java.util.Random` nominal types before synthetic collection and Sequence
-    /// members resolve their parameter types. `JavaRandomInterop.kt` can also be
+    /// members resolve their parameter types. `PlatformRandom.kt` can also be
     /// collected before `JavaUtilRandom.kt`, so both owners must be available in
     /// the same early pass.
     func predeclareBundledRandomHeaders(
