@@ -622,8 +622,8 @@ public inline fun <K> CharSequence.groupBy(keySelector: (Char) -> K): Map<K, Lis
         val existing = result[key]
         if (existing == null) {
             val bucket = mutableListOf<Char>()
-            bucket.add(element)
             result[key] = bucket
+            bucket.add(element)
         } else {
             existing.add(element)
         }
@@ -641,14 +641,13 @@ public inline fun <K, V> CharSequence.groupBy(
     while (i < this.length) {
         val element: Char = this[i]
         val key = keySelector(element)
-        val value = valueTransform(element)
         val existing = result[key]
         if (existing == null) {
             val bucket = mutableListOf<V>()
-            bucket.add(value)
             result[key] = bucket
+            bucket.add(valueTransform(element))
         } else {
-            existing.add(value)
+            existing.add(valueTransform(element))
         }
         i++
     }
@@ -667,8 +666,8 @@ public inline fun <K, M : MutableMap<in K, MutableList<Char>>> CharSequence.grou
         val existing = destination[key]
         if (existing == null) {
             val bucket = mutableListOf<Char>()
-            bucket.add(element)
             destination[key] = bucket
+            bucket.add(element)
         } else {
             existing.add(element)
         }
@@ -687,14 +686,13 @@ public inline fun <K, V, M : MutableMap<in K, MutableList<V>>> CharSequence.grou
     while (i < this.length) {
         val element: Char = this[i]
         val key = keySelector(element)
-        val value = valueTransform(element)
         val existing = destination[key]
         if (existing == null) {
             val bucket = mutableListOf<V>()
-            bucket.add(value)
             destination[key] = bucket
+            bucket.add(valueTransform(element))
         } else {
-            existing.add(value)
+            existing.add(valueTransform(element))
         }
         i++
     }

@@ -21,6 +21,15 @@ private fun groupNonLocal(source: CharSequence): String {
     return "?"
 }
 
+private fun groupValueNonLocal(destination: MutableMap<Int, MutableList<String>>): String {
+    val source: CharSequence = "ab"
+    source.groupByTo(destination, { 0 }, { ch ->
+        if (ch == 'a') return "!"
+        "v"
+    })
+    return "?"
+}
+
 fun main() {
     val source: CharSequence = "abca"
     var groupCalls = 0
@@ -64,4 +73,15 @@ fun main() {
 
     println(groupNonLocal("ab"))
     println(groupNonLocal("!a"))
+
+    val orderDestination = mutableMapOf<Int, MutableList<String>>()
+    val orderSource: CharSequence = "ab"
+    orderSource.groupByTo(orderDestination, { 0 }, {
+        println(orderDestination[0] != null)
+        "v"
+    })
+    println(orderDestination)
+    val nonLocalDestination = mutableMapOf<Int, MutableList<String>>()
+    println(groupValueNonLocal(nonLocalDestination))
+    println(nonLocalDestination)
 }
