@@ -505,6 +505,15 @@ extension CallLowerer {
             guard case let .functionType(functionType) = sema.types.kind(of: parameterType) else {
                 continue
             }
+            // A non-local return must be expanded into its caller. Wrapping
+            // that lambda in a Function object hides its body from imported
+            // inline expansion and turns the return into a runtime callback.
+            if isInline,
+               let callable = driver.ctx.callableValueInfo(for: arguments[finalArgIndex]),
+               arena.function(for: callable.symbol)?.isInlineOnly == true
+            {
+                continue
+            }
             arguments[finalArgIndex] = materializeFunctionValueArgument(
                 loweredArgID: arguments[finalArgIndex],
                 argExprID: sourceArgExprs[sourceArgExprIndex],

@@ -136,6 +136,8 @@ extension CallTypeChecker {
                 case let .lambdaLiteral(lambdaParams, _, _, _):
                     let expectation = lambdaLiteralExpectedType(
                         at: index,
+                        argumentCount: args.count,
+                        argumentLabel: argument.label,
                         candidates: expectedTypeCandidates,
                         explicitTypeArgs: explicitTypeArgs,
                         receiverType: receiverType,
@@ -146,6 +148,8 @@ extension CallTypeChecker {
                     contextualArgExpectedTypes[index] = expectation.type
                     if declaresConcreteLambdaParameterTypes(
                         at: index,
+                        argumentCount: args.count,
+                        argumentLabel: argument.label,
                         candidates: expectedTypeCandidates,
                         sema: sema
                     ) {
@@ -271,11 +275,22 @@ extension CallTypeChecker {
         })
         let functionParameterArgumentPositions = Set(args.indices.filter { argIndex in
             candidates.contains { candidate in
-                guard let signature = ctx.sema.symbols.functionSignature(for: candidate),
-                      let parameterType = parameterTypeForArgument(at: argIndex, in: signature)
-                else {
+                guard let signature = ctx.sema.symbols.functionSignature(for: candidate) else {
                     return false
                 }
+                let parameterType: TypeID?
+                if lambdaLiteralIndices.contains(argIndex) {
+                    parameterType = lambdaParameterTypeForArgument(
+                        at: argIndex,
+                        argumentCount: args.count,
+                        argumentLabel: args[argIndex].label,
+                        in: signature,
+                        sema: ctx.sema
+                    )
+                } else {
+                    parameterType = parameterTypeForArgument(at: argIndex, in: signature)
+                }
+                guard let parameterType else { return false }
                 if case .functionType = ctx.sema.types.kind(of: parameterType) {
                     return true
                 }
@@ -380,6 +395,8 @@ extension CallTypeChecker {
             candidateSymbols: viableSymbols,
             lambdaArgumentIndex: lambdaIndex,
             argType: argTypes[lambdaIndex],
+            argumentCount: args.count,
+            argumentLabel: args[lambdaIndex].label,
             sema: ctx.sema
         )
         if refinedCandidates.isEmpty {
@@ -524,7 +541,13 @@ extension CallTypeChecker {
                 else {
                     continue
                 }
-                guard let parameterType = parameterTypeForArgument(at: argIndex, in: signature),
+                guard let parameterType = lambdaParameterTypeForArgument(
+                    at: argIndex,
+                    argumentCount: args.count,
+                    argumentLabel: argument.label,
+                    in: signature,
+                    sema: sema
+                ),
                       case let .functionType(functionType) = sema.types.kind(
                           of: sema.types.makeNonNullable(parameterType)
                       ),
@@ -554,7 +577,13 @@ extension CallTypeChecker {
         let lambdaShapeIndices = emptyLambdaIndices.filter { argIndex in
             let hasFunctionCandidate = narrowed.contains { candidate in
                 guard let signature = sema.symbols.functionSignature(for: candidate),
-                      let parameterType = parameterTypeForArgument(at: argIndex, in: signature)
+                      let parameterType = lambdaParameterTypeForArgument(
+                          at: argIndex,
+                          argumentCount: args.count,
+                          argumentLabel: args[argIndex].label,
+                          in: signature,
+                          sema: sema
+                      )
                 else {
                     return false
                 }
@@ -562,7 +591,13 @@ extension CallTypeChecker {
             }
             let hasNonFunctionCandidate = narrowed.contains { candidate in
                 guard let signature = sema.symbols.functionSignature(for: candidate),
-                      let parameterType = parameterTypeForArgument(at: argIndex, in: signature)
+                      let parameterType = lambdaParameterTypeForArgument(
+                          at: argIndex,
+                          argumentCount: args.count,
+                          argumentLabel: args[argIndex].label,
+                          in: signature,
+                          sema: sema
+                      )
                 else {
                     return false
                 }
@@ -573,7 +608,13 @@ extension CallTypeChecker {
         let lambdaShapeNarrowed = narrowed.filter { candidate in
             lambdaShapeIndices.allSatisfy { argIndex in
                 guard let signature = sema.symbols.functionSignature(for: candidate),
-                      let parameterType = parameterTypeForArgument(at: argIndex, in: signature)
+                      let parameterType = lambdaParameterTypeForArgument(
+                          at: argIndex,
+                          argumentCount: args.count,
+                          argumentLabel: args[argIndex].label,
+                          in: signature,
+                          sema: sema
+                      )
                 else {
                     return false
                 }
@@ -596,7 +637,13 @@ extension CallTypeChecker {
         let nullProducerNarrowed = narrowed.filter { candidate in
             nullOnlyLambdaIndices.allSatisfy { argIndex in
                 guard let signature = sema.symbols.functionSignature(for: candidate),
-                      let parameterType = parameterTypeForArgument(at: argIndex, in: signature),
+                      let parameterType = lambdaParameterTypeForArgument(
+                          at: argIndex,
+                          argumentCount: args.count,
+                          argumentLabel: args[argIndex].label,
+                          in: signature,
+                          sema: sema
+                      ),
                       case let .functionType(functionType) = sema.types.kind(
                           of: sema.types.makeNonNullable(parameterType)
                       )
@@ -867,6 +914,8 @@ extension CallTypeChecker {
     /// falls back to when a type variable stays unsolved (BUG-163).
     private func declaresConcreteLambdaParameterTypes(
         at index: Int,
+        argumentCount: Int,
+        argumentLabel: InternedString?,
         candidates: [SymbolID],
         sema: SemaModule
     ) -> Bool {
@@ -874,16 +923,71 @@ extension CallTypeChecker {
               let candidate = candidates.first,
               sema.symbols.isSourceBackedSymbol(candidate),
               let signature = sema.symbols.functionSignature(for: candidate),
-              index < signature.parameterTypes.count,
-              case let .functionType(declared) = sema.types.kind(of: signature.parameterTypes[index])
+              let parameterType = lambdaParameterTypeForArgument(
+                  at: index,
+                  argumentCount: argumentCount,
+                  argumentLabel: argumentLabel,
+                  in: signature,
+                  sema: sema
+              ),
+              case let .functionType(declared) = sema.types.kind(of: parameterType)
         else {
             return false
         }
         return !declared.params.contains { typeMentionsTypeParameter($0, sema: sema) }
     }
 
+    /// Returns the parameter type for a lambda argument, including Kotlin's
+    /// trailing-lambda rule: a final lambda may bind to a later function
+    /// parameter when the parameters between the explicit arguments and that
+    /// function parameter all have defaults (for example
+    /// `joinToString("|") { ... }`).
+    private func lambdaParameterTypeForArgument(
+        at index: Int,
+        argumentCount: Int,
+        argumentLabel: InternedString?,
+        in signature: FunctionSignature,
+        sema: SemaModule
+    ) -> TypeID? {
+        guard index >= 0 else {
+            return nil
+        }
+
+        if let argumentLabel {
+            for (parameterIndex, parameterSymbol) in signature.valueParameterSymbols.enumerated() {
+                if sema.symbols.symbol(parameterSymbol)?.name == argumentLabel,
+                   parameterIndex < signature.parameterTypes.count
+                {
+                    return signature.parameterTypes[parameterIndex]
+                }
+            }
+            return nil
+        }
+
+        guard index == argumentCount - 1,
+              let lastParameterIndex = signature.parameterTypes.indices.last,
+              case .functionType = sema.types.kind(
+                  of: sema.types.makeNonNullable(signature.parameterTypes[lastParameterIndex])
+              )
+        else {
+            return parameterTypeForArgument(at: index, in: signature)
+        }
+
+        guard index <= lastParameterIndex,
+              (index ..< lastParameterIndex).allSatisfy({ parameterIndex in
+                  signature.valueParameterHasDefaultValues.indices.contains(parameterIndex)
+                      && signature.valueParameterHasDefaultValues[parameterIndex]
+              })
+        else {
+            return parameterTypeForArgument(at: index, in: signature)
+        }
+        return signature.parameterTypes[lastParameterIndex]
+    }
+
     private func lambdaLiteralExpectedType(
         at index: Int,
+        argumentCount: Int,
+        argumentLabel: InternedString?,
         candidates: [SymbolID],
         explicitTypeArgs: [TypeID] = [],
         receiverType: TypeID? = nil,
@@ -904,9 +1008,14 @@ extension CallTypeChecker {
                Self.inputOnlyExternalLinkNames.contains(sema.symbols.externalLinkName(for: $0) ?? "")
            }),
            let signature = sema.symbols.functionSignature(for: candidates[0]),
-           index < signature.parameterTypes.count
+           let rawType = lambdaParameterTypeForArgument(
+               at: index,
+               argumentCount: argumentCount,
+               argumentLabel: argumentLabel,
+               in: signature,
+               sema: sema
+           )
         {
-            let rawType = signature.parameterTypes[index]
             let explicitSubstituted = applyExplicitTypeArgs(
                 to: rawType,
                 signature: signature,
@@ -932,9 +1041,14 @@ extension CallTypeChecker {
 
         if candidates.count == 1,
            let signature = sema.symbols.functionSignature(for: candidates[0]),
-           index < signature.parameterTypes.count
+           let rawType = lambdaParameterTypeForArgument(
+               at: index,
+               argumentCount: argumentCount,
+               argumentLabel: argumentLabel,
+               in: signature,
+               sema: sema
+           )
         {
-            let rawType = signature.parameterTypes[index]
             let explicitSubstituted = applyExplicitTypeArgs(
                 to: rawType,
                 signature: signature,
@@ -967,6 +1081,8 @@ extension CallTypeChecker {
 
         let parameterCandidates = lambdaParameterCandidates(
             at: index,
+            argumentCount: argumentCount,
+            argumentLabel: argumentLabel,
             candidates: candidates,
             explicitTypeArgs: explicitTypeArgs,
             receiverType: receiverType,
@@ -1053,6 +1169,8 @@ extension CallTypeChecker {
 
     private func lambdaParameterCandidates(
         at index: Int,
+        argumentCount: Int,
+        argumentLabel: InternedString?,
         candidates: [SymbolID],
         explicitTypeArgs: [TypeID] = [],
         receiverType: TypeID? = nil,
@@ -1062,7 +1180,13 @@ extension CallTypeChecker {
     ) -> [LambdaParameterCandidate] {
         candidates.compactMap { candidate in
             guard let signature = sema.symbols.functionSignature(for: candidate),
-                  index < signature.parameterTypes.count
+                  let rawParameterType = lambdaParameterTypeForArgument(
+                      at: index,
+                      argumentCount: argumentCount,
+                      argumentLabel: argumentLabel,
+                      in: signature,
+                      sema: sema
+                  )
             else {
                 return nil
             }
@@ -1071,7 +1195,7 @@ extension CallTypeChecker {
             // (`Iterable<T>.f(transform: (T) -> R)` called on `List<Int>` must
             // expose `it: Int`, not the bare declaration type parameter `T`).
             let explicitSubstituted = applyExplicitTypeArgs(
-                to: signature.parameterTypes[index],
+                to: rawParameterType,
                 signature: signature,
                 candidate: candidate,
                 explicitTypeArgs: explicitTypeArgs,
@@ -1168,6 +1292,8 @@ extension CallTypeChecker {
         candidateSymbols: [SymbolID],
         lambdaArgumentIndex: Int,
         argType: TypeID,
+        argumentCount: Int,
+        argumentLabel: InternedString?,
         sema: SemaModule
     ) -> [SymbolID] {
         guard case let .functionType(argumentFunctionType) = sema.types.kind(of: argType) else {
@@ -1176,7 +1302,13 @@ extension CallTypeChecker {
 
         return candidateSymbols.filter { candidate in
             guard let signature = sema.symbols.functionSignature(for: candidate),
-                  let parameterType = parameterTypeForArgument(at: lambdaArgumentIndex, in: signature),
+                  let parameterType = lambdaParameterTypeForArgument(
+                      at: lambdaArgumentIndex,
+                      argumentCount: argumentCount,
+                      argumentLabel: argumentLabel,
+                      in: signature,
+                      sema: sema
+                  ),
                   case let .functionType(parameterFunctionType) = sema.types.kind(of: parameterType)
             else {
                 return false

@@ -39,6 +39,14 @@ struct CodegenBackendCollectionJoinToStringTests {
             // the plain (separator, prefix, postfix) overload.
             println(list.joinToString(prefix = "<", postfix = ">"))
 
+            val nullable: List<String>? = listOf("one", "two")
+            println(nullable?.joinToString(","))
+            println(nullable?.joinToString(prefix = "<", postfix = ">"))
+            println(nullable?.joinToString(limit = 1))
+            println(nullable?.joinToString(truncated = "more", limit = 1))
+            val absent: List<String>? = null
+            println(absent?.joinToString(limit = 1))
+
             try {
                 println(listOf(1, 2, 3).joinToString(",") {
                     if (it == 2) throw IllegalStateException("boom")
@@ -67,6 +75,11 @@ struct CodegenBackendCollectionJoinToStringTests {
 
                 <a>-<bb>-<ccc>
                 <a, bb, ccc>
+                one,two
+                <one, two>
+                one, ...
+                one, more
+                null
                 caught: boom
                 """ + "\n"
         )

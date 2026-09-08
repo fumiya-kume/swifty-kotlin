@@ -1,5 +1,9 @@
 package kotlin.text
 
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
+
 // MIGRATION-TEXT-008 / KSP-410
 // String higher-order functions migrated from Swift runtime (RuntimeStringHOF.swift).
 //
@@ -193,6 +197,22 @@ public fun <R : Any> CharSequence.mapNotNull(transform: (Char) -> R?): List<R> {
     return result
 }
 
+@kotlin.internal.InlineOnly
+public inline fun CharSequence.elementAt(index: Int): Char = get(index)
+
+@kotlin.internal.InlineOnly
+@OptIn(kotlin.contracts.ExperimentalContracts::class)
+public inline fun CharSequence.elementAtOrElse(index: Int, defaultValue: (Int) -> Char): Char {
+    contract {
+        callsInPlace(defaultValue, InvocationKind.AT_MOST_ONCE)
+    }
+    return if (index >= 0 && index < length) get(index) else defaultValue(index)
+}
+
+@kotlin.internal.InlineOnly
+public inline fun CharSequence.elementAtOrNull(index: Int): Char? =
+    if (index >= 0 && index < length) get(index) else null
+
 public fun <R : Any> CharSequence.firstNotNullOf(transform: (Char) -> R?): R {
     var i = 0
     val sz = this.length
@@ -204,6 +224,22 @@ public fun <R : Any> CharSequence.firstNotNullOf(transform: (Char) -> R?): R {
     throw NoSuchElementException("No element of the char sequence was transformed to a non-null value.")
 }
 
+public fun CharSequence.first(): Char {
+    if (isEmpty())
+        throw NoSuchElementException("Char sequence is empty.")
+    return this[0]
+}
+
+public inline fun CharSequence.first(predicate: (Char) -> Boolean): Char {
+    var index = 0
+    while (index < length) {
+        val element = this[index]
+        if (predicate(element)) return element
+        index++
+    }
+    throw NoSuchElementException("Char sequence contains no character matching the predicate.")
+}
+
 public fun <R : Any> CharSequence.firstNotNullOfOrNull(transform: (Char) -> R?): R? {
     var i = 0
     val sz = this.length
@@ -211,6 +247,20 @@ public fun <R : Any> CharSequence.firstNotNullOfOrNull(transform: (Char) -> R?):
         val transformed = transform(this[i])
         if (transformed != null) return transformed
         i++
+    }
+    return null
+}
+
+public fun CharSequence.firstOrNull(): Char? {
+    return if (isEmpty()) null else this[0]
+}
+
+public inline fun CharSequence.firstOrNull(predicate: (Char) -> Boolean): Char? {
+    var index = 0
+    while (index < length) {
+        val element = this[index]
+        if (predicate(element)) return element
+        index++
     }
     return null
 }
