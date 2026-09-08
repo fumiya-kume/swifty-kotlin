@@ -1,6 +1,6 @@
 symbol fq=golden.sema.decodeBytes kind=function vis=public flags=_ sig=recv=_ params=[kotlin.ByteArray] ret=String
 symbol fq=golden.sema.decodeBytes.$0.bytes kind=valueParameter vis=private flags=_
-symbol fq=kotlin.ByteArray kind=class vis=public flags=synthetic type=kotlin.ByteArray
+symbol fq=kotlin.ByteArray#0 kind=class vis=public flags=synthetic type=kotlin.ByteArray
 file fcinterop_bytearray_to_kstring package=golden.sema
   decl golden.sema.decodeBytes fun decodeBytes sym=golden.sema.decodeBytes
 expr e@7:45 name(bytes) type=kotlin.ByteArray ref=golden.sema.decodeBytes.$0.bytes

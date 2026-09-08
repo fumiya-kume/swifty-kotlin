@@ -13,7 +13,7 @@ symbol fq=golden.sema.uuidInstanceApiSurface kind=function vis=public flags=_ si
 symbol fq=golden.sema.uuidInstanceApiSurface.$0.a kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.uuidInstanceApiSurface.$0.b kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.uuidInstanceApiSurface.$0.other kind=valueParameter vis=private flags=_
-symbol fq=kotlin.ByteArray kind=class vis=public flags=synthetic type=kotlin.ByteArray
+symbol fq=kotlin.ByteArray#0 kind=class vis=public flags=synthetic type=kotlin.ByteArray
 symbol fq=kotlin.UByteArray#0 kind=class vis=public flags=synthetic
 file fstdlib_kotlin_uuid_Uuid_Uuid_n package=golden.sema annotations=[@file:OptIn(kotlin.uuid.ExperimentalUuidApi::class,kotlin.ExperimentalUnsignedTypes::class)]
   decl golden.sema.uuidInstanceApiSurface fun uuidInstanceApiSurface sym=golden.sema.uuidInstanceApiSurface

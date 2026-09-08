@@ -979,7 +979,7 @@
     - `kotlin.Byte.Companion.SIZE_BITS` — val Companion.SIZE_BITS: Int  -- `final const val SIZE_BITS`
     - `kotlin.Byte.Companion.SIZE_BYTES` — val Companion.SIZE_BYTES: Int  -- `final const val SIZE_BYTES`
 
-- [ ] KSP-814: kotlin.ByteArray top-level の未実装 stdlib API を実装する（2 件）
+- [x] KSP-814: kotlin.ByteArray top-level の未実装 stdlib API を実装する（2 件）
   - 対象: `kotlin.ByteArray` / top-level
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/ByteArray/Stdlib.kt`（該当ファイルが無ければ新規作成）
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
@@ -989,6 +989,7 @@
   - 未実装シンボル一覧:
     - `kotlin.ByteArray.<init>` — constructor (Int)  -- `constructor <init>(kotlin/Int)`
     - `kotlin.ByteArray.<init>` — constructor (Int, Function1)  -- `constructor <init>(kotlin/Int, kotlin/Function1<kotlin/Int, kotlin/Byte>)`
+  - 完了根拠 (2026-09-04): `ByteArray(Int)` は既存の compiler-provided array constructor special call と `kk_array_new_checked` で実装済みのため重複実装せず、`ByteArray(Int, (Int) -> Byte)` のみ `Sources/CompilerCore/Stdlib/kotlin/ByteArray/Stdlib.kt` に source-backed 実装を追加した。専用 Sema/Golden/KIR/runtime/diff 回帰で、source-backed initializer、size-only special、0 初期値、初期化値、0 長、負サイズ例外を固定した。既存の `kk_array_new_checked` / `kk_array_set` ABI は利用中のため保持した。
 
 - [ ] KSP-815: kotlin.Char.Companion.Companion の未実装 stdlib API を実装する（15 件）
   - 対象: `kotlin.Char.Companion` / receiver `Companion`

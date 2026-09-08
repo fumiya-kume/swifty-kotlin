@@ -5,7 +5,7 @@ symbol fq=java.io.File.<init>#0 kind=constructor vis=public flags=synthetic sig=
 symbol fq=java.io.File.<init>.path kind=valueParameter vis=private flags=synthetic
 symbol fq=java.io.File.appendBytes#0 kind=function vis=public flags=synthetic sig=recv=java.io.File params=[kotlin.ByteArray] ret=Unit
 symbol fq=java.io.File.appendBytes.array kind=valueParameter vis=private flags=synthetic
-symbol fq=kotlin.ByteArray kind=class vis=public flags=synthetic type=kotlin.ByteArray
+symbol fq=kotlin.ByteArray#0 kind=class vis=public flags=synthetic type=kotlin.ByteArray
 symbol fq=main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
 file ffile_append_bytes package=_
   decl main fun main sym=main

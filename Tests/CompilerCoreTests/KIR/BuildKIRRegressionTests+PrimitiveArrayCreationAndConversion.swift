@@ -234,6 +234,10 @@ extension BuildKIRRegressionTests {
             callNames.contains("kk_array_set"),
             "ByteArray(n) { init } must emit kk_array_set; got: \(callNames)"
         )
+        #expect(
+            !callNames.contains("ByteArray"),
+            "source-backed ByteArray(n) { init } must not remain as a direct call; got: \(callNames)"
+        )
     }
 
     @Test

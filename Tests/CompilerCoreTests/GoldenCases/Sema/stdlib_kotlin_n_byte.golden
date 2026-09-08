@@ -1,7 +1,7 @@
 symbol fq=__local_0.empty kind=local vis=private flags=_ type=kotlin.ByteArray
 symbol fq=__local_1.values kind=local vis=private flags=_ type=kotlin.ByteArray
 symbol fq=golden.sema.main kind=function vis=public flags=_ sig=recv=_ params=[] ret=Unit
-symbol fq=kotlin.ByteArray kind=class vis=public flags=synthetic type=kotlin.ByteArray
+symbol fq=kotlin.ByteArray#0 kind=class vis=public flags=synthetic type=kotlin.ByteArray
 file fstdlib_kotlin_n_byte package=golden.sema
   decl golden.sema.main fun main sym=golden.sema.main
 expr e@4:17 call callee=e@4:17#1 args=[] type=kotlin.ByteArray call=kotlin.byteArrayOf

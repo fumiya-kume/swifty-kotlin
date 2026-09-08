@@ -21,7 +21,7 @@ symbol fq=golden.sema.uuidCompanionParseHexOrNull.$6.text kind=valueParameter vi
 symbol fq=golden.sema.uuidCompanionParseOrNull kind=function vis=public flags=_ sig=recv=_ params=[String] ret=kotlin.uuid.Uuid?
 symbol fq=golden.sema.uuidCompanionParseOrNull.$7.text kind=valueParameter vis=private flags=_
 symbol fq=golden.sema.uuidCompanionRandom kind=function vis=public flags=_ sig=recv=_ params=[] ret=kotlin.uuid.Uuid
-symbol fq=kotlin.ByteArray kind=class vis=public flags=synthetic type=kotlin.ByteArray
+symbol fq=kotlin.ByteArray#0 kind=class vis=public flags=synthetic type=kotlin.ByteArray
 symbol fq=kotlin.UByteArray#0 kind=class vis=public flags=synthetic
 file fstdlib_kotlin_uuid_Uuid_n_n package=golden.sema annotations=[@file:OptIn(kotlin.uuid.ExperimentalUuidApi::class)]
   decl golden.sema.uuidCompanionConstants fun uuidCompanionConstants sym=golden.sema.uuidCompanionConstants
