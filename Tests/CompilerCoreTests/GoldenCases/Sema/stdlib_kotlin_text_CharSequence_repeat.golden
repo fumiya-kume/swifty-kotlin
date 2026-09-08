@@ -1,0 +1,26 @@
+symbol fq=golden.sema.charSequenceRepeat kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Int] ret=String
+symbol fq=golden.sema.charSequenceRepeat.$0.count kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceRepeat.$0.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceRepeatBuilder kind=function vis=public flags=_ sig=recv=_ params=[kotlin.text.StringBuilder] ret=String
+symbol fq=golden.sema.charSequenceRepeatBuilder.$1.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceRepeatEmpty kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence] ret=String
+symbol fq=golden.sema.charSequenceRepeatEmpty.$2.source kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.stringRepeat kind=function vis=public flags=_ sig=recv=_ params=[] ret=String
+symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
+file fstdlib_kotlin_text_CharSequence_repeat package=golden.sema
+  decl golden.sema.charSequenceRepeat fun charSequenceRepeat sym=golden.sema.charSequenceRepeat
+  decl golden.sema.charSequenceRepeatBuilder fun charSequenceRepeatBuilder sym=golden.sema.charSequenceRepeatBuilder
+  decl golden.sema.charSequenceRepeatEmpty fun charSequenceRepeatEmpty sym=golden.sema.charSequenceRepeatEmpty
+  decl golden.sema.stringRepeat fun stringRepeat sym=golden.sema.stringRepeat
+expr e@3:68 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceRepeat.$0.source
+expr e@3:82 name(count) type=Int ref=golden.sema.charSequenceRepeat.$0.count
+expr e@3:68#1 memberCall recv=e@3:68 callee=repeat args=[_:e@3:82] type=String call=kotlin.text.repeat#1
+expr e@5:64 name(source) type=kotlin.text.StringBuilder ref=golden.sema.charSequenceRepeatBuilder.$1.source
+expr e@5:78 int(2) type=Int
+expr e@5:64#1 memberCall recv=e@5:64 callee=repeat args=[_:e@5:78] type=String call=kotlin.text.repeat#1
+expr e@7:61 name(source) type=kotlin.CharSequence ref=golden.sema.charSequenceRepeatEmpty.$2.source
+expr e@7:75 int(0) type=Int
+expr e@7:61#1 memberCall recv=e@7:61 callee=repeat args=[_:e@7:75] type=String call=kotlin.text.repeat#1
+expr e@9:30 string(x) type=String
+expr e@9:41 int(2) type=Int
+expr e@9:30#1 memberCall recv=e@9:30 callee=repeat args=[_:e@9:41] type=String call=kotlin.text.repeat#0
