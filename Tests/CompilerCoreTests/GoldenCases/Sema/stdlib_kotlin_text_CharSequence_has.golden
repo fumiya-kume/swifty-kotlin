@@ -1,0 +1,19 @@
+symbol fq=golden.sema.charSequenceHasSurrogatePairAt kind=function vis=public flags=_ sig=recv=_ params=[kotlin.CharSequence,Int] ret=Boolean
+symbol fq=golden.sema.charSequenceHasSurrogatePairAt.$0.cs kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.charSequenceHasSurrogatePairAt.$0.index kind=valueParameter vis=private flags=_
+symbol fq=golden.sema.emptyHasSurrogatePairAt kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=golden.sema.stringHasSurrogatePairAt kind=function vis=public flags=_ sig=recv=_ params=[] ret=Boolean
+symbol fq=kotlin.CharSequence kind=interface vis=public flags=_ type=kotlin.CharSequence
+file fstdlib_kotlin_text_CharSequence_has package=golden.sema
+  decl golden.sema.charSequenceHasSurrogatePairAt fun charSequenceHasSurrogatePairAt sym=golden.sema.charSequenceHasSurrogatePairAt
+  decl golden.sema.stringHasSurrogatePairAt fun stringHasSurrogatePairAt sym=golden.sema.stringHasSurrogatePairAt
+  decl golden.sema.emptyHasSurrogatePairAt fun emptyHasSurrogatePairAt sym=golden.sema.emptyHasSurrogatePairAt
+expr e@4:5 name(cs) type=kotlin.CharSequence ref=golden.sema.charSequenceHasSurrogatePairAt.$0.cs
+expr e@4:27 name(index) type=Int ref=golden.sema.charSequenceHasSurrogatePairAt.$0.index
+expr e@4:5#1 memberCall recv=e@4:5 callee=hasSurrogatePairAt args=[_:e@4:27] type=Boolean call=kotlin.text.hasSurrogatePairAt
+expr e@6:43 string(😀) type=String
+expr e@6:77 int(0) type=Int
+expr e@6:43#1 memberCall recv=e@6:43 callee=hasSurrogatePairAt args=[_:e@6:77] type=Boolean call=kotlin.text.hasSurrogatePairAt
+expr e@8:42 string() type=String
+expr e@8:64 int(0) type=Int
+expr e@8:42#1 memberCall recv=e@8:42 callee=hasSurrogatePairAt args=[_:e@8:64] type=Boolean call=kotlin.text.hasSurrogatePairAt

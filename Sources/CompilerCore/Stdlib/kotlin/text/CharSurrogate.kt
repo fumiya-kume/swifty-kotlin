@@ -22,6 +22,16 @@ public fun Char.isHighSurrogate(): Boolean = this >= '\uD800' && this <= '\uDBFF
 public fun Char.isLowSurrogate(): Boolean = this >= '\uDC00' && this <= '\uDFFF'
 
 /**
+ * Returns `true` if this CharSequence has Unicode surrogate pair at the specified [index].
+ */
+public fun CharSequence.hasSurrogatePairAt(index: Int): Boolean {
+    return index >= 0
+            && index <= length - 2
+            && this[index].isHighSurrogate()
+            && this[index + 1].isLowSurrogate()
+}
+
+/**
  * Checks if the codepoint specified is a supplementary codepoint or not.
  */
 @kotlin.experimental.ExperimentalNativeApi
