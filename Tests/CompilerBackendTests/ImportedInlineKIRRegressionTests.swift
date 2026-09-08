@@ -78,4 +78,36 @@ struct ImportedInlineKIRRegressionTests {
             #expect(result.stdout.replacingOccurrences(of: "\r\n", with: "\n") == "33\n")
         }
     }
+
+    @Test
+    func importedFlatMapWithoutThrowDoesNotRethrowZeroFallback() throws {
+        let artifactPath = try Self.buildStdlibArtifact()
+        let source = """
+        fun main() {
+            println(listOf('a', 'b').flatMap { listOf(it) })
+        }
+        """
+
+        try withTemporaryFile(contents: source) { userPath in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent("KSP1374-ImportedInlineKIR-FlatMap-\(UUID().uuidString)")
+                .path
+            let ctx = makeCompilationContext(
+                inputs: [userPath],
+                moduleName: "KSP1374ImportedInlineKIRFlatMap",
+                emit: .executable,
+                outputPath: outputBase,
+                includeStdlib: false,
+                stdlibLibraryPath: artifactPath
+            )
+            try runToKIR(ctx)
+            #expect(!ctx.diagnostics.hasError, "unexpected diagnostics: \(ctx.diagnostics.diagnostics)")
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            #expect(result.stdout.replacingOccurrences(of: "\r\n", with: "\n") == "[a, b]\n")
+        }
+    }
 }

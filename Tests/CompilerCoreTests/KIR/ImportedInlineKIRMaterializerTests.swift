@@ -269,6 +269,55 @@ struct ImportedInlineKIRMaterializerTests {
         }
     }
 
+    @Test
+    func keepsZeroFallbackForUnresolvedImportedThrowCheckSlot() {
+        let interner = StringInterner()
+        let types = TypeSystem()
+        let arena = KIRArena()
+        let symbol = SymbolID(rawValue: 11)
+        let definedID = KIRExprID(rawValue: 4_900_300)
+        let unresolvedThrowSlot = KIRExprID(rawValue: 4_900_301)
+        let function = KIRFunction(
+            symbol: symbol,
+            name: interner.intern("unresolved_throw_slot"),
+            params: [],
+            returnType: types.unitType,
+            body: [
+                .constValue(result: definedID, value: .unit),
+                // A serialized body can retain a throw-check operand whose
+                // defining exception channel is supplied only by codegen.
+                .jumpIfNotNull(value: unresolvedThrowSlot, target: 1),
+                .returnValue(definedID),
+            ],
+            isSuspend: false,
+            isInline: true
+        )
+        var imported = [symbol: function]
+
+        ImportedInlineKIRMaterializer.materialize(
+            importedFunctions: &imported,
+            arena: arena,
+            types: types,
+            interner: interner
+        )
+
+        guard case let .constValue(remappedDefinedID, _) = imported[symbol]!.body[0],
+              case let .jumpIfNotNull(remappedThrowSlot, _) = imported[symbol]!.body[1]
+        else {
+            Issue.record("Expected remapped constant and throw-check instructions")
+            return
+        }
+        #expect(remappedDefinedID != remappedThrowSlot)
+        guard case let .temporary(definedFallback) = arena.expr(remappedDefinedID),
+              case let .temporary(throwFallback) = arena.expr(remappedThrowSlot)
+        else {
+            Issue.record("Expected materialized temporary expressions")
+            return
+        }
+        #expect(definedFallback == 0)
+        #expect(throwFallback == 0)
+    }
+
     private func resultID(in instruction: KIRInstruction) -> KIRExprID {
         guard case let .call(_, _, _, result, _, _, _, _) = instruction,
               let result
