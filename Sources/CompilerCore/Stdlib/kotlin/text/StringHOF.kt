@@ -197,6 +197,68 @@ public fun <R : Any> CharSequence.mapNotNull(transform: (Char) -> R?): List<R> {
     return result
 }
 
+/**
+ * Returns a single list of all elements yielded from results of [transform] function being invoked on each character of original char sequence.
+ */
+public inline fun <R> CharSequence.flatMap(transform: (Char) -> Iterable<R>): List<R> {
+    return flatMapTo(ArrayList<R>(), transform)
+}
+
+/**
+ * Returns a single list of all elements yielded from results of [transform] function being invoked on each character
+ * and its index in the original char sequence.
+ */
+@SinceKotlin("1.4")
+@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
+@OverloadResolutionByLambdaReturnType
+@kotlin.jvm.JvmName("flatMapIndexedIterable")
+@kotlin.internal.InlineOnly
+public inline fun <R> CharSequence.flatMapIndexed(transform: (index: Int, Char) -> Iterable<R>): List<R> {
+    return flatMapIndexedTo(ArrayList<R>(), transform)
+}
+
+/**
+ * Appends all elements yielded from results of [transform] function being invoked on each character
+ * and its index in the original char sequence, to the given [destination].
+ */
+@SinceKotlin("1.4")
+@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
+@OverloadResolutionByLambdaReturnType
+@kotlin.jvm.JvmName("flatMapIndexedIterableTo")
+@IgnorableReturnValue
+@kotlin.internal.InlineOnly
+public inline fun <R, C : MutableCollection<in R>> CharSequence.flatMapIndexedTo(
+    destination: C,
+    transform: (index: Int, Char) -> Iterable<R>
+): C {
+    var index = 0
+    while (index < this.length) {
+        val list = transform(index, this[index])
+        index++
+        val resultIterator = list.iterator()
+        while (resultIterator.hasNext()) destination.add(resultIterator.next())
+    }
+    return destination
+}
+
+/**
+ * Appends all elements yielded from results of [transform] function being invoked on each character of original char sequence, to the given [destination].
+ */
+@IgnorableReturnValue
+public inline fun <R, C : MutableCollection<in R>> CharSequence.flatMapTo(
+    destination: C,
+    transform: (Char) -> Iterable<R>
+): C {
+    var index = 0
+    while (index < this.length) {
+        val list = transform(this[index])
+        index++
+        val resultIterator = list.iterator()
+        while (resultIterator.hasNext()) destination.add(resultIterator.next())
+    }
+    return destination
+}
+
 @kotlin.internal.InlineOnly
 public inline fun CharSequence.elementAt(index: Int): Char = get(index)
 
