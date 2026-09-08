@@ -46,7 +46,6 @@ private let kotlinCompilerTargetVersion = KotlinCompilerVersion(major: 2, minor:
 
 extension TypeCheckHelpers {
     private enum DeprecatedLevel {
-        case hidden
         case warning
         case error
     }
@@ -68,7 +67,6 @@ extension TypeCheckHelpers {
     ///
     /// - `@Deprecated("msg")` or `@Deprecated("msg", level = WARNING)` -> warning
     /// - `@Deprecated("msg", level = ERROR)` -> error
-    /// - `@Deprecated("msg", level = HIDDEN)` -> no diagnostic
     func checkDeprecation(
         for symbolID: SymbolID,
         sema: SemaModule,
@@ -98,14 +96,12 @@ extension TypeCheckHelpers {
         // the stdlib as the target compiler version advances.
         let severity: DeprecatedSeverity = if parsed.level == .error {
             .error
-        } else if parsed.level == .hidden {
-            .hidden
         } else if let sinceArguments {
             deprecatedSeverity(for: sinceArguments)
         } else {
             .warning
         }
-        guard severity != .hidden else {
+        guard severity != .none else {
             return
         }
 
@@ -212,7 +208,7 @@ extension TypeCheckHelpers {
     }
 
     private enum DeprecatedSeverity {
-        case hidden
+        case none
         case warning
         case error
     }
@@ -256,14 +252,18 @@ extension TypeCheckHelpers {
     }
 
     private func deprecatedSeverity(for arguments: DeprecatedSinceKotlinArguments) -> DeprecatedSeverity {
-        if let hiddenSince = arguments.hiddenSince, kotlinCompilerTargetVersion >= hiddenSince {
-            return .hidden
-        }
         if let errorSince = arguments.errorSince, kotlinCompilerTargetVersion >= errorSince {
             return .error
         }
         if let warningSince = arguments.warningSince, kotlinCompilerTargetVersion >= warningSince {
             return .warning
+        }
+        // A SinceKotlin annotation keeps the declaration available without a
+        // deprecation diagnostic until its first visible threshold is reached.
+        // Lookup hiding based on hiddenSince is outside this helper and remains
+        // unsupported, so hiddenSince-only metadata keeps the historical warning.
+        if arguments.warningSince != nil || arguments.errorSince != nil {
+            return .none
         }
         return .warning
     }
@@ -291,9 +291,7 @@ extension TypeCheckHelpers {
         return switch levelName {
         case "ERROR":
             .error
-        case "HIDDEN":
-            .hidden
-        case "WARNING":
+        case "WARNING", "HIDDEN":
             .warning
         default:
             nil

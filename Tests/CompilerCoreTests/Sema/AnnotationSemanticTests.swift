@@ -404,16 +404,17 @@ struct AnnotationSemanticTests {
                     fun sinceWarning(): Int = 2
 
                     @Deprecated("Use replacement")
-                    @DeprecatedSinceKotlin(hiddenSince = "1.0")
-                    fun sinceHidden(): Int = 3
+                    @DeprecatedSinceKotlin(warningSince = "3.0", errorSince = "3.1")
+                    fun sinceFuture(): Int = 3
 
-                    @Deprecated("Use replacement", level = DeprecationLevel.HIDDEN)
-                    fun hiddenByLevel(): Int = 4
+                    @Deprecated("Use replacement")
+                    @DeprecatedSinceKotlin(warningSince = "3.0")
+                    fun sinceFutureWarningOnly(): Int = 4
 
                     @Suppress("DEPRECATION_ERROR")
                     fun suppressed(): Int = sinceError()
 
-                    fun caller(): Int = sinceError() + sinceWarning() + sinceHidden() + hiddenByLevel()
+                    fun caller(): Int = sinceError() + sinceWarning() + sinceFuture() + sinceFutureWarningOnly()
 
             """
         ]
@@ -823,7 +824,8 @@ struct AnnotationSemanticTests {
                 #expect(diagnostics.contains(where: isWarning), "Expected warningSince to retain a warning, got: \(diagnostics)")
                 #expect(diagnostics.contains(where: { $0.message.contains("sinceError") }))
                 #expect(diagnostics.contains(where: { $0.message.contains("sinceWarning") }))
-                #expect(!diagnostics.contains(where: { $0.message.contains("sinceHidden") }))
+                #expect(!diagnostics.contains(where: { $0.message.contains("sinceFuture") }))
+                #expect(!diagnostics.contains(where: { $0.message.contains("sinceFutureWarningOnly") }))
             }
 
         }
