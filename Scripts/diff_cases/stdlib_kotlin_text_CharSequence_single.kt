@@ -44,6 +44,27 @@ private fun safeNonLocal(source: CharSequence): Char? {
     }
 }
 
+private fun safeNonLocalSentinel(source: CharSequence): Char? {
+    return source.singleOrNull {
+        if (it == 'b') return '!'
+        false
+    }
+}
+
+private fun discardedNonLocal(source: CharSequence): Char? {
+    source.singleOrNull {
+        if (it == 'b') return '?'
+        false
+    }
+    return '?'
+}
+
+private fun nullableSingleOrNull(source: CharSequence?): Char? =
+    source?.singleOrNull()
+
+private fun nullableSingleOrNullPredicate(source: CharSequence?, wanted: Char): Char? =
+    source?.singleOrNull { it == wanted }
+
 fun main() {
     val customOne: CharSequence = IndexedSequence(charArrayOf('Z'), "wrong-custom-one")
     val customEmpty: CharSequence = IndexedSequence(charArrayOf(), "wrong-custom-empty")
@@ -72,6 +93,13 @@ fun main() {
     println("direct=${directSingle(direct)}")
     println("captured=${capturedSingleOrNull(IndexedSequence(charArrayOf('a', 'b'), "wrong-captured"), 'b')}")
     println("safe-nonlocal=${safeNonLocal(IndexedSequence(charArrayOf('a', 'b', 'c'), "wrong-nonlocal"))}")
+    println("safe-nonlocal-sentinel=${safeNonLocalSentinel(IndexedSequence(charArrayOf('a', 'b', 'c'), "wrong-sentinel"))}")
+    println("discarded-nonlocal=${discardedNonLocal(IndexedSequence(charArrayOf('a', 'c'), "wrong-discarded"))}")
+
+    println("nullable-null=${nullableSingleOrNull(null) == null}")
+    println("nullable-one=${nullableSingleOrNull(IndexedSequence(charArrayOf('N'), "wrong-nullable-one"))}")
+    println("nullable-predicate-null=${nullableSingleOrNullPredicate(null, 'b') == null}")
+    println("nullable-predicate-nonnull=${nullableSingleOrNullPredicate(IndexedSequence(charArrayOf('a', 'b'), "wrong-nullable-predicate"), 'b')}")
 
     val builder: CharSequence = StringBuilder("Q")
     println("builder=${builder.single()}")
