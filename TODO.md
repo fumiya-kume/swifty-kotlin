@@ -128,10 +128,10 @@
 
 > STATE-001 → 002を先行。003と004はRegistryを共有するため直列。004後の005〜008は各葉ファイルだけなら並列可、共有ファイルを触るなら直列。009は003・007を待ち、010は003〜009の移行を待つ。CALL側と同一ファイルを変更する項目は、そのAPI群のPRとの同時着手を避ける。
 
-- [~] RF-LOWER-STATE-001: 分類・copy伝播の契約を小さなCoreテストへ固定する（前提: なし）
+- [x] RF-LOWER-STATE-001: 分類・copy伝播の契約を小さなCoreテストへ固定する（前提: なし）
   - 対象: `CollectionRewriteState` / static classification / PreScanの既存テストと責務別追加テスト。List / Set / Map / Array / String / Range / Iterator / File / Pathを、直接値・引数・call result・copyの入口で確認する。
   - 完了条件: RangeとCharRange / ULongRangeの重なり、複数copy、未分類値、同じ変数への別値代入を扱い、単一enum化や無条件unionで意味が変わるケースを検出できる。現行にバグがある場合は誤動作を互換契約として固定しない。
-  - 2026-09-08 実装: `CollectionRewriteStateTests` / `CollectionClassificationTests` に11テストを追加し、17分類のcopy・複合Range・unknown・静的型とfactory由来・再代入時のthrow channelを固定。再代入後も古いList Iterator分類が残り、ユーザーIteratorの例外がcatchへ届かずpanicする不具合を、`propagateCopy`で代入先の分類を置換することで修正した。最小Kotlin再現はBackend fixture `collections/iterator_reassignment`。base `a72cc373f8`でFAIL、修正後はKotlin 2.3.10差分PASS。関連Core 79テストとBackend fixture suiteはPASS。全Swift並列実行でRuntimeAnyEqualityの失敗を検出したが、同じheadのビルド済みRuntime targetは直列実行で全2451テストPASS（既知issue 1件）。残る共通RFゲートは検証中のため未完了。
+  - 2026-09-08 完了: `CollectionRewriteStateTests` / `CollectionClassificationTests` に11テストを追加し、17分類のcopy・複合Range・unknown・静的型とfactory由来・再代入時のthrow channelを固定。再代入後も古いList Iterator分類が残り、ユーザーIteratorの例外がcatchへ届かずpanicする不具合を、`propagateCopy`で代入先の分類を置換することで修正した。最小Kotlin再現はBackend fixture `collections/iterator_reassignment`。base `a72cc373f8`でFAIL、修正後はKotlin 2.3.10差分PASS。`bash Scripts/swift_test.sh --disable-sandbox --skip-build` でCore 3527・Backend 1548・CLI/LSP/RuntimeTestsParallelはPASS、Runtime並列実行のhash比較1件はFAILを記録。`SWIFT_TEST_PARALLEL=0 bash Scripts/swift_test.sh --disable-sandbox --skip-build --filter RuntimeTests` ではRuntime全2451テストPASS（既知issue 1件、base直列もPASS）。この分割実行で全Swift targetを検証した。Golden 4系統は全実行内でPASS、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases` は1241 PASS / 0 FAIL / 既存SKIP 59。`loc_report.sh` はSources -24行、テスト由来の指標増加と後続STATE-002/003をPR本文に記録した。
 - [ ] RF-LOWER-STATE-002: `KIRExprID` をキーにする分類ストアを導入する（前提: STATE-001）
   - 対象: `+RewriteState.swift` と局所テストのみ。複数分類を保持できるfactsを用い、静的型の情報とruntime表現の情報・unknownを別軸で表す。まず既存callerの記法を保つ互換アクセサを用意し、全ファイルの一括置換は行わない。
   - 完了条件: 状態の正本は一つで、copy伝播をストアの共通操作に集約する。旧 `inout Set<Int32>` の書き戻しと新APIの整合性を検証し、同じfactsの二重管理を残さない。アクセサごとの集合再構築等で走査コストが増えないか局所計測し、悪化時は境界を再設計する。
