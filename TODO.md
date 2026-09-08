@@ -3504,7 +3504,8 @@
     - `kotlin.ranges.last` — fun UIntProgression.last(): UInt  -- `final fun (kotlin.ranges/UIntProgression).kotlin.ranges/last(): kotlin/UInt`
     - `kotlin.ranges.lastOrNull` — fun UIntProgression.lastOrNull(): UInt  -- `final fun (kotlin.ranges/UIntProgression).kotlin.ranges/lastOrNull(): kotlin/UInt?`
 
-- [ ] KSP-1290: kotlin.ranges.UIntRange の未実装 stdlib API を実装する（3 件）
+- [~] KSP-1290: kotlin.ranges.UIntRange の未実装 stdlib API を実装する（3 件）
+  - 実装中: Kotlin 2.3.10 の UByte/ULong/UShort contains wrapper と専用 Sema/Golden/diff fixture を追加。direct source lookup は KSP-1285 の exact lookup helper に積み、UInt receiver gate だけを追加した。全体 G は未完了。
   - 対象: `kotlin.ranges` / receiver `UIntRange`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/ranges/RangeHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。

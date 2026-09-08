@@ -18,7 +18,7 @@ extension CallTypeChecker {
         let interner = ctx.interner
         let memberName = interner.resolve(calleeName)
         let isUIntRangeSourceMigrationMember = [
-            "iterator", "step", "take", "drop", "chunked", "windowed",
+            "iterator", "step", "take", "drop", "chunked", "windowed", "contains",
         ].contains(memberName)
 
         // An unqualified member call inside an extension body has no receiver
@@ -70,7 +70,7 @@ extension CallTypeChecker {
         // Let normal overload resolution report invalid labels instead of
         // accepting them through the legacy range fallback. The source-backed
         // contains overloads all use Kotlin's `value` parameter name.
-        if isTypedIntRangeReceiver,
+        if (isTypedIntRangeReceiver || isTypedUIntRangeReceiver),
            memberName == "contains",
            args.contains(where: { argument in
                guard let label = argument.label else { return false }
@@ -388,6 +388,9 @@ extension CallTypeChecker {
     }
 
     private func isUIntRangeSourceBackedHOF(_ memberName: String, argCount: Int) -> Bool {
+        if memberName == "contains" {
+            return argCount == 1
+        }
         if memberName == "iterator" {
             return argCount == 0
         }

@@ -1057,6 +1057,18 @@ public external fun CharProgression.reversed(): CharProgression
 
 // MARK: - UIntRange
 
+// KSP-1290: Kotlin exposes concrete UIntRange contains overloads for the
+// unsigned primitive types that do not match UInt directly. ULong values must
+// be range-checked before narrowing so high bits cannot wrap into UInt.
+public operator fun UIntRange.contains(value: UByte): Boolean =
+    contains(value.toUInt())
+
+public operator fun UIntRange.contains(value: ULong): Boolean =
+    (value shr UInt.SIZE_BITS) == 0uL && contains(value.toUInt())
+
+public operator fun UIntRange.contains(value: UShort): Boolean =
+    contains(value.toUInt())
+
 public fun UIntRange.forEach(action: (UInt) -> Unit) {
     for (element in this) { action(element) }
 }
