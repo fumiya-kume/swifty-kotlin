@@ -23,6 +23,9 @@ Metrics:
   interner_resolve_literal_comparison_count Occurrences of interner.resolve(...) == "..." in Swift sources
   typecheck_interner_resolve_literal_comparison_count
                                             Same as above, scoped to Sources/CompilerCore/Sema/TypeCheck
+  typecheck_string_literal_switch_case_count
+                                            `case "..."` clauses in TypeCheck Swift sources
+  typecheck_inline_string_set_entry_count   String literal entries in TypeCheck `Set<String> = [...]` tables
 USAGE
 }
 
@@ -32,6 +35,9 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
 fi
 
 cd "$ROOT_DIR"
+
+PYTHON_BIN="${PYTHON_BIN:-python3}"
+LOC_REPORT_METRICS="$SCRIPT_DIR/loc_report_metrics.py"
 
 # File lists are fed to xargs as NUL-separated stdin (printf is a builtin, so
 # no exec() argument limit applies); xargs may split them across several tool
@@ -90,6 +96,14 @@ count_unique_regex_matches() {
   fi
 
   grep_matches "$pattern" "$@" | LC_ALL=C sort -u | awk 'END { print NR + 0 }'
+}
+
+count_typecheck_string_switch_cases() {
+  "$PYTHON_BIN" "$LOC_REPORT_METRICS" string-switch-cases "$@"
+}
+
+count_typecheck_inline_string_set_entries() {
+  "$PYTHON_BIN" "$LOC_REPORT_METRICS" inline-string-set-entries "$@"
 }
 
 emit_directory_loc() {
@@ -189,3 +203,7 @@ printf 'interner_resolve_literal_comparison_count\tSwift sources\t%s\n' \
   "$(count_regex_occurrences 'interner\.resolve[^=]*==[[:space:]]*"[^"]+"' "${SWIFT_FILES[@]}")"
 printf 'typecheck_interner_resolve_literal_comparison_count\tSources/CompilerCore/Sema/TypeCheck\t%s\n' \
   "$(count_regex_occurrences 'interner\.resolve[^=]*==[[:space:]]*"[^"]+"' "${SEMA_TYPECHECK_FILES[@]}")"
+printf 'typecheck_string_literal_switch_case_count\tSources/CompilerCore/Sema/TypeCheck/*.swift\t%s\n' \
+  "$(count_typecheck_string_switch_cases "${SEMA_TYPECHECK_FILES[@]}")"
+printf 'typecheck_inline_string_set_entry_count\tSources/CompilerCore/Sema/TypeCheck/*.swift\t%s\n' \
+  "$(count_typecheck_inline_string_set_entries "${SEMA_TYPECHECK_FILES[@]}")"

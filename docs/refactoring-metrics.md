@@ -10,8 +10,9 @@ Command:
 bash Scripts/loc_report.sh
 ```
 
-`loc_report.sh` itself is compatible with macOS's system Bash 3.2. Other scripts
-under `Scripts/` may require Bash 4+.
+`loc_report.sh` itself is compatible with macOS's system Bash 3.2 and uses
+Python 3 for the syntax-aware name-dispatch metrics. Other scripts under
+`Scripts/` may require Bash 4+.
 
 The KSP-691 task note captured `__kk_` 390 / `kk_` 1,770 on 2026-08-12;
 this table is the current post-fetch baseline after subsequent master changes.
@@ -37,6 +38,8 @@ kk_cdecl_count	Sources/Runtime/@_cdecl("kk_*")	1582
 __kk_cdecl_count	Sources/Runtime/@_cdecl("__kk_*")	463
 interner_resolve_literal_comparison_count	Swift sources	728
 typecheck_interner_resolve_literal_comparison_count	Sources/CompilerCore/Sema/TypeCheck	78
+typecheck_string_literal_switch_case_count	Sources/CompilerCore/Sema/TypeCheck/*.swift	402
+typecheck_inline_string_set_entry_count	Sources/CompilerCore/Sema/TypeCheck/*.swift	142
 ```
 
 Notes:
@@ -47,6 +50,33 @@ Notes:
 - `__kk_cdecl_count` counts distinct `@_cdecl("__kk_...")` names in the same scope. These two metrics count bridge definitions only; they do not count references, `RuntimeABISpec` entries, generated files, fixtures, docs, or arbitrary string literals.
 - `kir_lowering_todo_fixme_count` counts remaining `TODO` / `FIXME` markers in `Sources/CompilerCore/KIR/*.swift` and `Sources/CompilerCore/Lowering/*.swift`.
 - `call_lowerer_legacy_total_lines` and `typecheck_interner_resolve_literal_comparison_count` track RF4 reduction goals directly.
+
+## Name Dispatch Metrics
+
+ARCH-022 adds two syntax-aware metrics for the remaining name-based Sema
+dispatch surface. The scanner reads tracked Swift files under
+`Sources/CompilerCore/Sema/TypeCheck/` and removes comments before tokenizing,
+so examples in documentation or comments do not inflate the count.
+
+| Metric | Definition | Baseline (2026-09-08) |
+|---|---|---:|
+| `typecheck_string_literal_switch_case_count` | `case` clauses whose first pattern token is a string literal; a clause with multiple comma-separated literals counts once | 402 |
+| `typecheck_inline_string_set_entry_count` | Direct string literal elements in explicit `Set<String> = [...]` array literals; non-literal expressions and nested arrays are excluded | 142 |
+
+The baseline was measured at base revision `a72cc373f859aaf408c6a4e9510404a1e21c92dc`
+with:
+
+```bash
+bash Scripts/loc_report.sh
+```
+
+The scanner regression fixture covers nested comments, string contents,
+multiline type formatting, inline comments, multiple table entries, and a
+non-string switch case:
+
+```bash
+bash Scripts/test_loc_report.sh
+```
 
 CI publishes the same TSV from the `refactoring-metrics` job as artifact `refactoring-metrics-${run_id}` and mirrors it into the job summary.
 
