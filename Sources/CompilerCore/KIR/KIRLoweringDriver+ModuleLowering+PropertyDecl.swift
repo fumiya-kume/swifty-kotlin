@@ -329,21 +329,8 @@ extension KIRLoweringDriver {
                 delegateType: delegateType, shared: shared,
                 compilationCtx: compilationCtx, initInstructions: &initInstructions
             )
-        case .observable, .vetoable:
-            emitCallbackDelegateInit(
-                delegateKind: delegateKind, propertyDecl: propertyDecl,
-                symbol: symbol, delegateStorageSymbol: delegateStorageSymbol,
-                delegateType: delegateType, shared: shared, initInstructions: &initInstructions
-            )
-        case .notNull:
-            emitNotNullDelegateInit(
-                propertyDecl: propertyDecl, symbol: symbol,
-                delegateStorageSymbol: delegateStorageSymbol,
-                delegateType: delegateType, shared: shared,
-                initInstructions: &initInstructions
-            )
-        case .custom:
-            emitCustomDelegateInit(
+        case .observable, .vetoable, .notNull, .custom:
+            emitDelegateInit(
                 propertyDecl: propertyDecl, symbol: symbol,
                 delegateStorageSymbol: delegateStorageSymbol,
                 delegateType: delegateType, shared: shared,
@@ -446,83 +433,6 @@ extension KIRLoweringDriver {
         )
     }
 
-    private func emitCallbackDelegateInit(
-        delegateKind: StdlibDelegateKind,
-        propertyDecl: PropertyDecl,
-        symbol: SymbolID,
-        delegateStorageSymbol: SymbolID,
-        delegateType: TypeID,
-        shared: KIRLoweringSharedContext,
-        initInstructions: inout KIRLoweringEmitContext
-    ) {
-        let arena = shared.arena
-        let sema = shared.sema
-        let interner = shared.interner
-        let initialValueExpr = lowerDelegateInitialValue(
-            delegateExpr: propertyDecl.delegateExpression, shared: shared, emit: &initInstructions
-        )
-        let callbackFnPtr = lowerDelegateLambdaBody(
-            delegateBody: propertyDecl.delegateBody,
-            delegateBodyParams: propertyDecl.delegateBodyParams,
-            valueType: shared.sema.symbols.propertyType(for: symbol), propertySymbol: symbol,
-            paramCount: 3, shared: shared, emit: &initInstructions
-        )
-        let className = delegateKind == .observable ? "SimpleObservableProperty" : "SimpleVetoableProperty"
-        guard let ctorSymbol = stdlibDelegateSymbol(
-            fqName: [
-                interner.intern("kotlin"), interner.intern("properties"),
-                interner.intern(className), interner.intern("<init>"),
-            ],
-            parameterCount: 2, sema: sema
-        ), let ownerSymbol = sema.symbols.parentSymbol(for: ctorSymbol) else {
-            preconditionFailure("KSP-491: missing kotlin.properties.\(className) constructor")
-        }
-        let allocatedObj = allocateStdlibDelegateInstance(
-            ownerSymbol: ownerSymbol, resultType: delegateType,
-            sema: sema, arena: arena, interner: interner, emit: &initInstructions
-        )
-        let createResult = arena.appendTemporary(type: delegateType)
-        initInstructions.append(.call(
-            symbol: ctorSymbol, callee: interner.intern("<init>"),
-            arguments: [allocatedObj, initialValueExpr, callbackFnPtr],
-            result: createResult, canThrow: false, thrownResult: nil
-        ))
-        initInstructions.append(.storeGlobal(value: createResult, symbol: delegateStorageSymbol))
-    }
-
-    private func emitNotNullDelegateInit(
-        propertyDecl _: PropertyDecl,
-        symbol _: SymbolID,
-        delegateStorageSymbol: SymbolID,
-        delegateType: TypeID,
-        shared: KIRLoweringSharedContext,
-        initInstructions: inout KIRLoweringEmitContext
-    ) {
-        let arena = shared.arena
-        let sema = shared.sema
-        let interner = shared.interner
-        guard let ctorSymbol = stdlibDelegateSymbol(
-            fqName: [
-                interner.intern("kotlin"), interner.intern("properties"),
-                interner.intern("NotNullVar"), interner.intern("<init>"),
-            ],
-            parameterCount: 0, sema: sema
-        ), let ownerSymbol = sema.symbols.parentSymbol(for: ctorSymbol) else {
-            preconditionFailure("KSP-491: missing kotlin.properties.NotNullVar constructor")
-        }
-        let allocatedObj = allocateStdlibDelegateInstance(
-            ownerSymbol: ownerSymbol, resultType: delegateType,
-            sema: sema, arena: arena, interner: interner, emit: &initInstructions
-        )
-        let createResult = arena.appendTemporary(type: delegateType)
-        initInstructions.append(.call(
-            symbol: ctorSymbol, callee: interner.intern("<init>"),
-            arguments: [allocatedObj],
-            result: createResult, canThrow: false, thrownResult: nil
-        ))
-        initInstructions.append(.storeGlobal(value: createResult, symbol: delegateStorageSymbol))
-    }
-
     /// Looks up a bundled stdlib delegate implementation's constructor or
     /// factory-function symbol by exact parameter count. KSP-491's stdlib
     /// delegate kinds are never overloaded on anything but arity, so arity
@@ -558,8 +468,7 @@ extension KIRLoweringDriver {
     }
 
     /// Allocates a heap object for a direct constructor call (KSP-491: the
-    /// bundled `LazyImpl`/`SimpleObservableProperty`/`SimpleVetoableProperty`/
-    /// `NotNullVar` delegate implementations), mirroring the allocation
+    /// bundled `LazyImpl` delegate implementation), mirroring the allocation
     /// `CallLowerer.lowerCallExpr` performs for an ordinary `NewExpr(...)`
     /// call before invoking its constructor (`kk_object_new` sized from the
     /// class's `NominalLayout`, then itable/vtable/supertype-edge
@@ -624,7 +533,7 @@ extension KIRLoweringDriver {
         return allocatedObj
     }
 
-    private func emitCustomDelegateInit(
+    private func emitDelegateInit(
         propertyDecl: PropertyDecl,
         symbol: SymbolID,
         delegateStorageSymbol: SymbolID,
@@ -635,11 +544,11 @@ extension KIRLoweringDriver {
     ) {
         let sema = shared.sema
         guard let delegateExpr = propertyDecl.delegateExpression else {
-            // Internal error: emitCustomDelegateInit called for a property without delegate expression.
+            // Internal error: emitDelegateInit called for a property without delegate expression.
             // This indicates an AST invariant violation — emit a diagnostic and bail out.
             compilationCtx.diagnostics.error(
                 "KSWIFTK-KIR-0002",
-                "Internal error: emitCustomDelegateInit called for a property without a delegate expression.",
+                "Internal error: emitDelegateInit called for a property without a delegate expression.",
                 range: propertyDecl.range
             )
             return
