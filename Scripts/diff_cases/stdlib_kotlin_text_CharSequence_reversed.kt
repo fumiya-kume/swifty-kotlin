@@ -20,6 +20,31 @@ private class TrackingCharSequence(initial: String) : CharSequence {
     override fun toString(): String = "custom-display"
 }
 
+private class StatefulCharSequence(private val size: Int) : CharSequence {
+    var lengthReads = 0
+    var characterReads = 0
+    var indices = ""
+
+    override val length: Int
+        get() {
+            lengthReads++
+            return size
+        }
+
+    override fun get(index: Int): Char {
+        if (indices.isNotEmpty()) indices += ","
+        indices += index.toString()
+        val value = ('a'.code + characterReads).toChar()
+        characterReads++
+        return value
+    }
+
+    override fun subSequence(startIndex: Int, endIndex: Int): CharSequence =
+        "".substring(startIndex, endIndex)
+
+    override fun toString(): String = "stateful-display"
+}
+
 private fun reverse(source: CharSequence): String = source.reversed().toString()
 
 fun main() {
@@ -41,6 +66,9 @@ fun main() {
     val tracked = TrackingCharSequence("A\uD83D\uDE00B")
     val trackedSequence: CharSequence = tracked
     println("tracked='${reverse(trackedSequence)}':length=${tracked.lengthReads > 0}:chars=${tracked.characterReads > 0}")
+
+    val stateful = StatefulCharSequence(4)
+    println("stateful='${reverse(stateful)}':length=${stateful.lengthReads}:gets=${stateful.indices}")
 
     println("string='${"abc".reversed()}'")
 }

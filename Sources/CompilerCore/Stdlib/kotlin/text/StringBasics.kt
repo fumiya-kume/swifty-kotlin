@@ -17,12 +17,15 @@ public fun String.reversed(): String {
 }
 
 public fun CharSequence.reversed(): CharSequence {
+    val source = StringBuilder(this.length)
+    source.append(this)
+    val content = source.toString()
     val sb = StringBuilder()
-    var i = this.length - 1
+    var i = content.length - 1
     while (i >= 0) {
-        val current = this[i]
+        val current = content[i]
         if (i > 0 && (current.isLowSurrogate() || current.isHighSurrogate())) {
-            val previous = this[i - 1]
+            val previous = content[i - 1]
             if (current.isLowSurrogate() && previous.isHighSurrogate()) {
                 val pair = CharArray(2)
                 pair[0] = previous
