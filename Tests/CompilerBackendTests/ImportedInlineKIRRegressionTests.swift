@@ -110,4 +110,42 @@ struct ImportedInlineKIRRegressionTests {
             #expect(result.stdout.replacingOccurrences(of: "\r\n", with: "\n") == "[a, b]\n")
         }
     }
+
+    @Test
+    func importedFlatMapPropagatesAndCatchesCallbackException() throws {
+        let artifactPath = try Self.buildStdlibArtifact()
+        let source = """
+        fun main() {
+            val marker = try {
+                listOf('a').flatMap { throw IllegalStateException("callback") }
+                "not-caught"
+            } catch (e: IllegalStateException) {
+                "caught"
+            }
+            println(marker)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { userPath in
+            let outputBase = FileManager.default.temporaryDirectory
+                .appendingPathComponent("KSP1374-ImportedInlineKIR-FlatMapThrow-\(UUID().uuidString)")
+                .path
+            let ctx = makeCompilationContext(
+                inputs: [userPath],
+                moduleName: "KSP1374ImportedInlineKIRFlatMapThrow",
+                emit: .executable,
+                outputPath: outputBase,
+                includeStdlib: false,
+                stdlibLibraryPath: artifactPath
+            )
+            try runToKIR(ctx)
+            #expect(!ctx.diagnostics.hasError, "unexpected diagnostics: \(ctx.diagnostics.diagnostics)")
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            #expect(result.stdout.replacingOccurrences(of: "\r\n", with: "\n") == "caught\n")
+        }
+    }
 }
