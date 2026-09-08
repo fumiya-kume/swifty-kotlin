@@ -157,7 +157,8 @@ extension CallTypeChecker {
         ctx: TypeInferenceContext,
         expectedType: TypeID?,
         explicitTypeArgs: [TypeID],
-        safeCall: Bool
+        safeCall: Bool,
+        existingCandidates: [SymbolID]
     ) -> TypeID? {
         guard ctx.interner.resolve(calleeName) == "subSequence",
               args.count == 1,
@@ -173,6 +174,59 @@ extension CallTypeChecker {
         }
         var refinedArgTypes = argTypes
         refinedArgTypes[0] = rangeType
+
+        // Member lookup can stop after finding CharSequence.subSequence(Int,
+        // Int), even when the source file also declares a visible extension
+        // with the same name and an IntRange parameter. Resolve that normal
+        // candidate set first so member and user-extension precedence remains
+        // intact; the source fallback is only the final recovery path.
+        let nonNullReceiver = ctx.sema.types.makeNonNullable(receiverType)
+        let scopedCandidates = ctx.filterByVisibility(ctx.cachedScopeLookup(calleeName)).visible.filter { candidate in
+            guard let symbol = ctx.cachedSymbol(candidate),
+                  symbol.kind == .function,
+                  let signature = ctx.sema.symbols.functionSignature(for: candidate),
+                  let declaredReceiver = signature.receiverType
+            else {
+                return false
+            }
+            return extensionSyntheticFallbackReceiverMatches(
+                callSiteReceiver: nonNullReceiver,
+                declaredReceiver: declaredReceiver,
+                sema: ctx.sema
+            )
+        }
+        var normalCandidates = existingCandidates
+        for candidate in scopedCandidates where !normalCandidates.contains(candidate) {
+            normalCandidates.append(candidate)
+        }
+        if !normalCandidates.isEmpty {
+            let resolvedArgs = zip(args, refinedArgTypes).map { argument, type in
+                CallArg(label: argument.label, isSpread: argument.isSpread, type: type)
+            }
+            let resolved = ctx.resolver.resolveCall(
+                candidates: normalCandidates,
+                call: CallExpr(
+                    range: range,
+                    calleeName: calleeName,
+                    args: resolvedArgs,
+                    explicitTypeArgs: explicitTypeArgs
+                ),
+                expectedType: expectedType,
+                implicitReceiverType: receiverType,
+                ctx: ctx.semaCtx
+            )
+            if let chosen = resolved.chosenCallee {
+                let returnType = bindCallAndResolveReturnType(
+                    id,
+                    chosen: chosen,
+                    resolved: resolved,
+                    sema: ctx.sema
+                )
+                let finalType = safeCall ? ctx.sema.types.makeNullable(returnType) : returnType
+                ctx.sema.bindings.bindExprType(id, type: finalType)
+                return finalType
+            }
+        }
         return tryBindSyntheticStringMemberFallback(
             id,
             calleeName: calleeName,

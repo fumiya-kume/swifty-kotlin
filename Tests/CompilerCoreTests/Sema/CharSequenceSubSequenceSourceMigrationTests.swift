@@ -98,6 +98,63 @@ struct CharSequenceSubSequenceSourceMigrationTests {
         #expect(chosen.count == 2, "Expected two CharSequence.subSequence(IntRange) calls")
         #expect(Set(chosen).count == 1, "Range calls should bind to one source-backed overload")
     }
+
+    @Test
+    func visibleUserRangeExtensionWinsOverSyntheticFallback() throws {
+        let source = """
+        fun CharSequence.subSequence(range: IntRange): CharSequence = "user"
+
+        fun probe(source: CharSequence, text: String): CharSequence {
+            val literalRange = source.subSequence(0..1)
+            val namedRange = source.subSequence(range = 0..1)
+            val variableRange = source.subSequence(0..1)
+            val stringRange = text.subSequence(0..1)
+            return literalRange
+        }
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+        #expect(!ctx.diagnostics.hasError, Comment(rawValue: diagnosticSummary(in: ctx)))
+
+        let ast = try #require(ctx.ast)
+        let sema = try #require(ctx.sema)
+        let userFileID = try #require(ctx.sourceManager.fileIDs().first {
+            ctx.sourceManager.origin(of: $0) == .user
+        })
+        var chosen: [SymbolID] = []
+        for index in ast.arena.exprs.indices {
+            let exprID = ExprID(rawValue: Int32(index))
+            guard case let .memberCall(_, callee, _, _, range) = ast.arena.expr(exprID),
+                  range.start.file == userFileID,
+                  ctx.interner.resolve(callee) == "subSequence",
+                  let binding = sema.bindings.callBinding(for: exprID)
+            else {
+                continue
+            }
+            let signature = try #require(sema.symbols.functionSignature(for: binding.chosenCallee))
+            guard signature.parameterTypes.count == 1 else { continue }
+            #expect(sema.symbols.sourceFileID(for: binding.chosenCallee) == userFileID)
+            #expect(!sema.symbols.symbol(binding.chosenCallee)!.flags.contains(.synthetic))
+            chosen.append(binding.chosenCallee)
+        }
+
+        #expect(chosen.count == 4, "All visible IntRange extension calls should bind to the user declaration")
+        #expect(Set(chosen).count == 1)
+    }
+
+    @Test
+    func invalidRangeCallsDoNotUseSyntheticFallback() throws {
+        let source = """
+        fun probe(source: CharSequence) {
+            source.subSequence(unexpected = 0..1)
+            source.subSequence("not a range")
+        }
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        #expect(ctx.diagnostics.hasError)
+    }
 }
 
 private func diagnosticSummary(in ctx: CompilationContext) -> String {

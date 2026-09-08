@@ -1222,7 +1222,8 @@ extension CallTypeChecker {
             ctx: ctx,
             expectedType: expectedType,
             explicitTypeArgs: explicitTypeArgs,
-            safeCall: safeCall
+            safeCall: safeCall,
+            existingCandidates: allCandidates
         ) {
             return boundType
         }
