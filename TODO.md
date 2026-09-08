@@ -4513,9 +4513,9 @@
     - `kotlin.text.iterator` — fun CharSequence.iterator(): CharIterator  -- `final fun (kotlin/CharSequence).kotlin.text/iterator(): kotlin.collections/CharIterator`
 
 - [~] KSP-1384: kotlin.text.CharSequence.last-family の未実装 stdlib API を実装する（5 件）
-  - 実装中: CharSequence の last / lastOrNull（predicate を含む）と lastIndex を Kotlin source に追加。#6690 の source-backed inline/member return 配線を基点とし、全体 G はこの PR head で未完了。
+  - 実装中: CharSequence の last / lastOrNull（predicate を含む）と lastIndex を Kotlin source に追加。#6698（#6690 系列）の source-backed inline/member return 配線を基点とし、全体 G はこの PR head で未完了。
   - 対象: `kotlin.text` / receiver `CharSequence` / family `last`
-  - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringIndexOf.kt`
+  - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringQuery.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
   - golden テスト: `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_kotlin_text_CharSequence_last.kt` を追加し、`UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter matchesGolden -Xswiftc -swift-version -Xswiftc 6` で更新。差分が機械的であることを確認。
   - diff ケース: `Scripts/diff_cases/stdlib_kotlin_text_CharSequence_last.kt` を追加し、`bash Scripts/diff_kotlinc.sh Scripts/diff_cases/stdlib_kotlin_text_CharSequence_last.kt` green（JDK17 環境では `DIFF_REQUIRE_JDK21=0` を付与）。

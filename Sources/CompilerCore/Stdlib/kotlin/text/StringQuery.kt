@@ -83,7 +83,7 @@ public fun String.lastOrNull(predicate: (Char) -> Boolean): Char? {
 public fun CharSequence.last(): Char {
     if (isEmpty())
         throw NoSuchElementException("Char sequence is empty.")
-    return this[lastIndex]
+    return this[length - 1]
 }
 
 public inline fun CharSequence.last(predicate: (Char) -> Boolean): Char {

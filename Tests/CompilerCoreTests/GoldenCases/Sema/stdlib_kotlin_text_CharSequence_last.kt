@@ -15,6 +15,12 @@ fun stringLast(): Char = "x".last()
 
 fun stringLastOrNull(): Char? = "".lastOrNull()
 
+fun stringBuilderLast(source: StringBuilder): Char = source.last()
+
+fun stringBuilderLastOrNull(source: StringBuilder): Char? = source.lastOrNull()
+
+fun stringBuilderLastIndex(source: StringBuilder): Int = source.lastIndex
+
 fun capturedLast(source: CharSequence): Char {
     val expected = 'x'
     return source.last { it == expected }

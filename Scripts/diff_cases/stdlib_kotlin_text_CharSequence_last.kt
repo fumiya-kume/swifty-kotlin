@@ -42,6 +42,8 @@ fun main() {
 
     val builder: CharSequence = StringBuilder("xy")
     println(builder.last().code)
+    println(builder.lastOrNull()?.code ?: -1)
+    println(builder.lastIndex)
 
     val empty: CharSequence = ""
     try {
