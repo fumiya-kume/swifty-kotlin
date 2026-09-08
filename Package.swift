@@ -81,6 +81,7 @@ let package = Package(
                 "GoldenHarnessPaths.swift",
                 "GoldenHarnessSemaFormat.swift",
                 "GoldenHarnessStableRenderContext.swift",
+                "GoldenHarnessSymbolOrigin.swift",
                 "GoldenHarnessSyntaxFormat.swift",
             ]
         ),
