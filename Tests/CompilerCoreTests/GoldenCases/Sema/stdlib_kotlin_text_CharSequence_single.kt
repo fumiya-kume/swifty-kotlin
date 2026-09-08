@@ -38,3 +38,28 @@ fun singleCustom(): Char {
 
 fun singleOrNullEmpty(source: CharSequence): Char? =
     source.singleOrNull()
+
+fun directNonLocal(source: CharSequence): Char {
+    source.singleOrNull { return '!' }
+    return '?'
+}
+
+fun safeNonLocal(source: CharSequence?): Char {
+    source?.singleOrNull { return '!' }
+    return '?'
+}
+
+fun capturedNonLocal(source: CharSequence, captured: Char): Char {
+    source.singleOrNull { return captured }
+    return '?'
+}
+
+fun nullableNonLocal(source: CharSequence?, captured: Char): Char {
+    source?.singleOrNull { return captured }
+    return '?'
+}
+
+fun discardedNonLocal(source: CharSequence): Char {
+    source.singleOrNull { return '!' }
+    return '?'
+}

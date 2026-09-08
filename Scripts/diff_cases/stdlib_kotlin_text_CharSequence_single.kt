@@ -37,25 +37,28 @@ private fun directSingle(source: CharSequence): Char = source.single { it == 'b'
 private fun capturedSingleOrNull(source: CharSequence, wanted: Char): Char? =
     source.singleOrNull(predicate = { it == wanted })
 
-private fun safeNonLocal(source: CharSequence): Char? {
-    return source.singleOrNull {
-        if (it == 'b') return it
-        false
-    }
+private fun directNonLocal(source: CharSequence): Char {
+    source.singleOrNull { return '!' }
+    return '?'
 }
 
-private fun safeNonLocalSentinel(source: CharSequence): Char? {
-    return source.singleOrNull {
-        if (it == 'b') return '!'
-        false
-    }
+private fun safeNonLocal(source: CharSequence?): Char {
+    source?.singleOrNull { return '!' }
+    return '?'
 }
 
-private fun discardedNonLocal(source: CharSequence): Char? {
-    source.singleOrNull {
-        if (it == 'b') return '?'
-        false
-    }
+private fun capturedNonLocal(source: CharSequence, captured: Char): Char {
+    source.singleOrNull { return captured }
+    return '?'
+}
+
+private fun nullableNonLocal(source: CharSequence?, captured: Char): Char {
+    source?.singleOrNull { return captured }
+    return '?'
+}
+
+private fun discardedNonLocal(source: CharSequence): Char {
+    source.singleOrNull { return '!' }
     return '?'
 }
 
@@ -92,9 +95,13 @@ fun main() {
     val direct = IndexedSequence(charArrayOf('a', 'b'), "wrong-direct")
     println("direct=${directSingle(direct)}")
     println("captured=${capturedSingleOrNull(IndexedSequence(charArrayOf('a', 'b'), "wrong-captured"), 'b')}")
-    println("safe-nonlocal=${safeNonLocal(IndexedSequence(charArrayOf('a', 'b', 'c'), "wrong-nonlocal"))}")
-    println("safe-nonlocal-sentinel=${safeNonLocalSentinel(IndexedSequence(charArrayOf('a', 'b', 'c'), "wrong-sentinel"))}")
-    println("discarded-nonlocal=${discardedNonLocal(IndexedSequence(charArrayOf('a', 'c'), "wrong-discarded"))}")
+    println("direct-nonlocal=${directNonLocal(IndexedSequence(charArrayOf('a', 'b'), "wrong-direct-nonlocal"))}")
+    println("safe-nonlocal=${safeNonLocal(IndexedSequence(charArrayOf('a', 'b'), "wrong-safe-nonlocal"))}")
+    println("safe-nonlocal-null=${safeNonLocal(null)}")
+    println("captured-nonlocal=${capturedNonLocal(IndexedSequence(charArrayOf('a', 'b'), "wrong-captured-nonlocal"), '!')}")
+    println("nullable-nonlocal=${nullableNonLocal(IndexedSequence(charArrayOf('a', 'b'), "wrong-nullable-nonlocal"), '!')}")
+    println("nullable-nonlocal-null=${nullableNonLocal(null, '!')}")
+    println("discarded-nonlocal=${discardedNonLocal(IndexedSequence(charArrayOf('a', 'b'), "wrong-discarded"))}")
 
     println("nullable-null=${nullableSingleOrNull(null) == null}")
     println("nullable-one=${nullableSingleOrNull(IndexedSequence(charArrayOf('N'), "wrong-nullable-one"))}")
