@@ -829,7 +829,8 @@
 
 ### タスク
 
-- [ ] RF-GOLDEN-001: 通常 Golden に残す情報と専用テストへ移す情報の契約をテストケースで固定する（前提: 010）
+- [x] RF-GOLDEN-001: 通常 Golden に残す情報と専用テストへ移す情報の契約をテストケースで固定する（前提: 010）
+  - 実施済み: `GoldenHarnessMetadataContractTests` 新設。情報区分→検証先の対応表をテストヘッダに固定（fixture 宣言 binding / expr 型 / ref=・call=・targs= / fixture 所有 symbol の kind・vis・flags・sig・type は通常出力に残す。外部 symbol の推移的 sig/type/flags・由来・nominal 宣言 variance・supertype・typealias underlyingType・symbol 注釈は専用節（011）へ。canThrow/throwing・ABI/externalLinkName は RuntimeABI 等の専用テスト（005）へ）。error diagnostic 15件・`<error>` 型3件の inventory を列挙固定し、正例 fixture への新規 error の機械受理を検出。flag 語彙19件を完全一致で固定し `throwingFunction` 非出力を確認。代表ケース（linkedhashmap_alias / map_hofs / Pair / data class / enum / object literal / accessor）で情報区分の維持を検証。既定 renderer・既存 golden は未変更。
   - 対象: `GoldenHarnessPersistenceTests.swift` / `GoldenHarnessSemaComparisonNormalizationTests.swift` と既存 stdlib Sema suites。`linkedhashmap_alias`、`map_hofs`、Pair / List を含む型、ユーザーの data / enum / object literal / accessor を代表ケースに、宣言・型・callee・診断・由来・flags・ABI の検証先を列挙する。
   - 「削る出力項目 → 具体的な既存 assertion または追加する assertion」を対応付ける。source / synthetic の実装差と、公開 signature / 解決先 / 診断の意味差を分け、現出力の特徴を固定する。既存 Golden に出ない throwingFunction / canThrow 等も専用契約側の監査対象として区別する。
   - メタデータ契約を kind 別に棚卸しする。現 formatter の flags / functionSignature / propertyType だけでは nominal の型パラメータ・宣言側 variance・上限・supertype と型引数、typealias の underlyingType / 型パラメータ、注釈等を網羅しない。既に出力される visibility も保持し、callable の reified / default / vararg / non-local-return 許可等と併せて、専用節か既存 Sema / Lowering / ABI assertion のどちらで検証するか明示する。全項目を無条件にキーへ詰めず、宣言の識別条件と検証したいメタデータを分ける。
