@@ -45,11 +45,15 @@ fun main() {
     println("empty-zero='${empty.repeat(0)}'")
     println("empty-max-length=${empty.repeat(Int.MAX_VALUE).length}")
 
-    val tracked = TrackingCharSequence("A\uD83D\uDE00B")
-    val trackedSequence: CharSequence = tracked
-    println("tracked-one='${trackedSequence.repeat(1)}'")
-    println("tracked-two='${trackedSequence.repeat(2)}'")
-    println("tracked-reads=${tracked.lengthReads > 0}:${tracked.characterReads > 0}")
+    val trackedZero = TrackingCharSequence("A\uD83D\uDE00B")
+    println("tracked-zero='${trackedZero.repeat(0)}':length=${trackedZero.lengthReads}:chars=${trackedZero.characterReads}")
+
+    val trackedOne = TrackingCharSequence("A\uD83D\uDE00B")
+    println("tracked-one='${trackedOne.repeat(1)}':length=${trackedOne.lengthReads}:chars=${trackedOne.characterReads}")
+
+    val trackedTwo = TrackingCharSequence("A\uD83D\uDE00B")
+    val trackedSequence: CharSequence = trackedTwo
+    println("tracked-two='${trackedSequence.repeat(n = 2)}':length=${trackedTwo.lengthReads}:chars=${trackedTwo.characterReads}")
 
     println("utf16='${"a\uD83D\uDE00".repeat(2)}'")
     println("string='${"z".repeat(2)}'")
