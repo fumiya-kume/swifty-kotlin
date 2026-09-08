@@ -185,6 +185,37 @@ public fun <R> CharSequence.mapIndexed(transform: (Int, Char) -> R): List<R> {
     return result
 }
 
+public inline fun <R : Any> CharSequence.mapIndexedNotNull(transform: (index: Int, Char) -> R?): List<R> {
+    return mapIndexedNotNullTo(ArrayList<R>(), transform)
+}
+
+@IgnorableReturnValue
+public inline fun <R : Any, C : MutableCollection<in R>> CharSequence.mapIndexedNotNullTo(
+    destination: C,
+    transform: (index: Int, Char) -> R?
+): C {
+    var index = 0
+    while (index < this.length) {
+        val transformed = transform(index, this[index])
+        if (transformed != null) destination.add(transformed)
+        index++
+    }
+    return destination
+}
+
+@IgnorableReturnValue
+public inline fun <R, C : MutableCollection<in R>> CharSequence.mapIndexedTo(
+    destination: C,
+    transform: (index: Int, Char) -> R
+): C {
+    var index = 0
+    while (index < this.length) {
+        destination.add(transform(index, this[index]))
+        index++
+    }
+    return destination
+}
+
 public fun <R : Any> CharSequence.mapNotNull(transform: (Char) -> R?): List<R> {
     val result = mutableListOf<R>()
     var i = 0
@@ -195,6 +226,33 @@ public fun <R : Any> CharSequence.mapNotNull(transform: (Char) -> R?): List<R> {
         i++
     }
     return result
+}
+
+@IgnorableReturnValue
+public inline fun <R : Any, C : MutableCollection<in R>> CharSequence.mapNotNullTo(
+    destination: C,
+    transform: (Char) -> R?
+): C {
+    var index = 0
+    while (index < this.length) {
+        val transformed = transform(this[index])
+        if (transformed != null) destination.add(transformed)
+        index++
+    }
+    return destination
+}
+
+@IgnorableReturnValue
+public inline fun <R, C : MutableCollection<in R>> CharSequence.mapTo(
+    destination: C,
+    transform: (Char) -> R
+): C {
+    var index = 0
+    while (index < this.length) {
+        destination.add(transform(this[index]))
+        index++
+    }
+    return destination
 }
 
 /**
