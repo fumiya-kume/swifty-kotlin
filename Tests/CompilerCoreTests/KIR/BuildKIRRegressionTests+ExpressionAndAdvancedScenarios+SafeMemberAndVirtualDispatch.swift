@@ -24,8 +24,23 @@ extension BuildKIRRegressionTests {
                 return dispatch
             }
 
+            let sema = try #require(ctx.sema)
+            let charSequenceFQName = ["kotlin", "CharSequence"].map { ctx.interner.intern($0) }
+            let charSequence = try #require(sema.symbols.lookup(fqName: charSequenceFQName))
+            let length = try #require(
+                sema.symbols.lookup(fqName: charSequenceFQName + [ctx.interner.intern("length")])
+            )
+            let expectedLengthSlot = try #require(
+                kirInterfacePropertyGetterSlot(
+                    interfaceProperty: length,
+                    interfaceSymbol: charSequence,
+                    sema: sema,
+                    interner: ctx.interner
+                )
+            )
+
             #expect(dispatches.contains { dispatch in
-                if case .itableDynamic(_, 1) = dispatch { return true }
+                if case .itableDynamic(_, expectedLengthSlot) = dispatch { return true }
                 return false
             })
         }
