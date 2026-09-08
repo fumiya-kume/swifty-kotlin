@@ -83,9 +83,6 @@ private func delegateStubRegistryEntries() -> [SyntheticDelegateStubRegistryEntr
         SyntheticDelegateStubRegistryEntry(bucket: .sourceBackedMigration, name: "BuilderDSL") { phase, symbols, types, interner, _ in
             phase.registerSyntheticBuilderDSLStubs(symbols: symbols, types: types, interner: interner)
         },
-        SyntheticDelegateStubRegistryEntry(bucket: .sourceBackedMigration, name: "Comparator") { phase, symbols, types, interner, _ in
-            phase.registerSyntheticComparatorStubs(symbols: symbols, types: types, interner: interner)
-        },
         SyntheticDelegateStubRegistryEntry(bucket: .sourceBackedMigration, name: "String") { phase, symbols, types, interner, _ in
             phase.registerSyntheticStringStubs(symbols: symbols, types: types, interner: interner)
         },
