@@ -302,8 +302,8 @@ struct CodegenBackendSequenceLazyEdgeCasesTests {
         try assertKotlinOutput(source, moduleName: "GenerateSequenceFilterIsInstance", expected: "[1, 2, 3]\n")
     }
 
-    @Test
-    func testSequenceBuilderYieldAndYieldAll() throws {
+    @Test(arguments: [false, true])
+    func testSequenceBuilderYieldAndYieldAll(allowDefaultStdlibLibrary: Bool) throws {
         let source = """
         fun main() {
             val seq = sequence {
@@ -312,10 +312,20 @@ struct CodegenBackendSequenceLazyEdgeCasesTests {
                 yield(5)
             }
             println(seq.toList())
+            val chars = sequence {
+                yield('a')
+                this.yield('b')
+            }
+            println(chars.toList())
         }
         """
 
-        try assertKotlinOutput(source, moduleName: "SequenceBuilderYieldAll", expected: "[1, 2, 3, 4, 5]\n")
+        try assertKotlinOutput(
+            source,
+            moduleName: "SequenceBuilderYieldAll",
+            expected: "[1, 2, 3, 4, 5]\n[a, b]\n",
+            allowDefaultStdlibLibrary: allowDefaultStdlibLibrary
+        )
     }
 
     @Test
@@ -344,8 +354,8 @@ struct CodegenBackendSequenceLazyEdgeCasesTests {
         )
     }
 
-    @Test
-    func testSequenceBuilderRangeLoopYieldUsesCPSProducer() throws {
+    @Test(arguments: [false, true])
+    func testSequenceBuilderRangeLoopYieldUsesCPSProducer(allowDefaultStdlibLibrary: Bool) throws {
         let source = """
         fun main() {
             val seq = sequence {
@@ -365,7 +375,8 @@ struct CodegenBackendSequenceLazyEdgeCasesTests {
                 """
                 [1, 4, 9, 16, 25]
                 [1, 4, 9]
-                """ + "\n"
+                """ + "\n",
+            allowDefaultStdlibLibrary: allowDefaultStdlibLibrary
         )
     }
 

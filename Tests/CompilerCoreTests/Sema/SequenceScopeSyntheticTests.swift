@@ -44,7 +44,8 @@ struct SequenceScopeSyntheticTests {
             fqName: collectionsPackage + [interner.intern("Iterable")]
         ))
         #expect(sema.symbols.symbol(scopeSymbol)?.kind == .class)
-        #expect(sema.symbols.symbol(scopeSymbol)?.flags.contains(.synthetic) == true)
+        #expect(sema.symbols.symbol(scopeSymbol)?.flags.contains(.synthetic) == false)
+        #expect(sema.symbols.isSourceBackedSymbol(scopeSymbol))
 
         let typeParams = sema.types.nominalTypeParameterSymbols(for: scopeSymbol)
         #expect(typeParams.count == 1)
@@ -66,6 +67,11 @@ struct SequenceScopeSyntheticTests {
         #expect(yieldSignature.receiverType == receiverType)
         #expect(yieldSignature.parameterTypes == [elementType])
         #expect(yieldSignature.returnType == sema.types.unitType)
+        #expect(sema.symbols.isSourceBackedSymbol(yieldSymbol))
+        #expect(sema.symbols.externalLinkName(for: yieldSymbol) == nil)
+        #expect(sema.symbols.symbol(yieldSymbol)?.flags.contains(.abstractType) == true)
+        #expect(sema.symbols.symbol(yieldSymbol)?.flags.contains(.suspendFunction) == true)
+        #expect(yieldSignature.isSuspend)
 
         let yieldAllSymbols = sema.symbols.lookupAll(
             fqName: sequencePackage + [interner.intern("SequenceScope"), interner.intern("yieldAll")]
@@ -75,17 +81,17 @@ struct SequenceScopeSyntheticTests {
         let expectedParameterTypes: Set<TypeID> = [
             sema.types.make(.classType(ClassType(
                 classSymbol: iteratorSymbol,
-                args: [.out(elementType)],
+                args: [.invariant(elementType)],
                 nullability: .nonNull
             ))),
             sema.types.make(.classType(ClassType(
                 classSymbol: iterableSymbol,
-                args: [.out(elementType)],
+                args: [.invariant(elementType)],
                 nullability: .nonNull
             ))),
             sema.types.make(.classType(ClassType(
                 classSymbol: sequenceSymbol,
-                args: [.out(elementType)],
+                args: [.invariant(elementType)],
                 nullability: .nonNull
             ))),
         ]
@@ -93,5 +99,12 @@ struct SequenceScopeSyntheticTests {
             try #require(sema.symbols.functionSignature(for: symbolID)).parameterTypes[0]
         })
         #expect(actualParameterTypes == expectedParameterTypes)
+        for symbolID in yieldAllSymbols {
+            let signature = try #require(sema.symbols.functionSignature(for: symbolID))
+            #expect(sema.symbols.isSourceBackedSymbol(symbolID))
+            #expect(sema.symbols.externalLinkName(for: symbolID) == nil)
+            #expect(sema.symbols.symbol(symbolID)?.flags.contains(.suspendFunction) == true)
+            #expect(signature.isSuspend)
+        }
     }
 }

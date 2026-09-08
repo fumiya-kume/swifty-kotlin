@@ -7,10 +7,7 @@ symbol fq=__local_4.singleSeq kind=local vis=private flags=_ type=kotlin.sequenc
 symbol fq=kotlin.collections.List kind=interface vis=public flags=_
 symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
 symbol fq=kotlin.sequences.Sequence.toList kind=function vis=public flags=synthetic sig=recv=kotlin.sequences.Sequence<kotlin.sequences.toList.$0.T> params=[] ret=kotlin.collections.List<kotlin.sequences.toList.$0.T>
-symbol fq=kotlin.sequences.SequenceScope kind=class vis=public flags=synthetic
 symbol fq=kotlin.sequences.SequenceScope.T kind=typeParameter vis=private flags=_
-symbol fq=kotlin.sequences.SequenceScope.yield kind=function vis=public flags=synthetic sig=recv=kotlin.sequences.SequenceScope<kotlin.sequences.SequenceScope.T> params=[kotlin.sequences.SequenceScope.T] ret=Unit
-symbol fq=kotlin.sequences.SequenceScope.yield.value kind=valueParameter vis=private flags=synthetic
 symbol fq=kotlin.sequences.sequence kind=function vis=public flags=synthetic sig=recv=_ params=[suspend kotlin.sequences.SequenceScope<kotlin.sequences.sequence.T>.() -> Unit] ret=kotlin.sequences.Sequence<out kotlin.sequences.sequence.T>
 symbol fq=kotlin.sequences.sequence.T kind=typeParameter vis=private flags=_
 symbol fq=kotlin.sequences.sequence.block kind=valueParameter vis=private flags=synthetic
@@ -38,7 +35,7 @@ expr e@8:22 int(10) type=Int
 expr e@8:19#1 binary(rangeTo) lhs=e@8:19 rhs=e@8:22 type=Int
 expr e@9:26 name(i) type=Int ref=__for_0.i
 expr e@9:19 call callee=e@9:19#1 args=[_:e@9:26] type=kotlin.collections.List<out Int> call=kotlin.collections.listOf#1 targs=[Int]
-expr e@9:13 call callee=e@9:13#1 args=[_:e@9:19] type=Unit call=kotlin.sequences.SequenceScope.yield
+expr e@9:13 call callee=e@9:13#1 args=[_:e@9:19] type=Unit call=kotlin.sequences.SequenceScope.yield targs=[kotlin.collections.List<out Int>]
 expr e@8:26 blockExpr stmts=[] trailing=e@9:13 type=Unit
 expr e@8:9 for var=i iterable=e@8:19#1 body=e@8:26 type=Unit ref=__for_0.i
 expr e@7:29 lambda params=[] body=e@8:9 label=sequence type=suspend kotlin.sequences.SequenceScope<kotlin.collections.List<out <error>>>.() -> Unit

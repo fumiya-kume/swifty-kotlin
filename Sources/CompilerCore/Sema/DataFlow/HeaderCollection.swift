@@ -1590,6 +1590,9 @@ extension DataFlowSemaPhase {
             || resolvedFQName == ["kotlin", "time", "DurationUnit"]
             || resolvedFQName == ["kotlin", "text", "CharCategory"]
             || resolvedFQName == ["kotlin", "native", "concurrent", "TransferMode"]
+            // KSP-1361: Reusing the synthetic SequenceScope shell must still
+            // leave the bundled Kotlin declaration source-backed.
+            || resolvedFQName == ["kotlin", "sequences", "SequenceScope"]
     }
 
     /// The fully-qualified names a bundled source file is allowed to claim from

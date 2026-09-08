@@ -289,6 +289,14 @@ extension CallLowerer {
         sema: SemaModule,
         interner: StringInterner
     ) -> InternedString {
+        if let sequenceBuilderCallee = sequenceBuilderRuntimeCalleeName(
+            chosenCallee: chosenCallee,
+            calleeName: fallback,
+            sema: sema,
+            interner: interner
+        ) {
+            return sequenceBuilderCallee
+        }
         let callArgumentCount = sourceArgumentCount ?? argumentCount
         let fallbackName = interner.resolve(fallback)
         let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType

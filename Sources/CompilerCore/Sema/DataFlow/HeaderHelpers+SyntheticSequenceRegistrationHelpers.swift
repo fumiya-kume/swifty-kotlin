@@ -211,8 +211,10 @@ extension DataFlowSemaPhase {
         let scopeName = interner.intern("SequenceScope")
         let scopeFQName = kotlinSequencesPkg + [scopeName]
         let scopeSymbol: SymbolID
+        let sourceBackedScope: Bool
         if let existing = symbols.lookup(fqName: scopeFQName) {
             scopeSymbol = existing
+            sourceBackedScope = symbols.isSourceBackedSymbol(existing)
         } else {
             let sym = symbols.define(
                 kind: .class,
@@ -226,12 +228,15 @@ extension DataFlowSemaPhase {
                 symbols.setParentSymbol(packageSymbol, for: sym)
             }
             scopeSymbol = sym
+            sourceBackedScope = false
         }
         let scopeTypeParamName = interner.intern("T")
         let scopeTypeParamFQName = scopeFQName + [scopeTypeParamName]
         let scopeTypeParamSymbol: SymbolID
+        let hasExistingScopeTypeParameter: Bool
         if let existing = symbols.lookup(fqName: scopeTypeParamFQName) {
             scopeTypeParamSymbol = existing
+            hasExistingScopeTypeParameter = true
         } else {
             let param = symbols.define(
                 kind: .typeParameter,
@@ -243,9 +248,12 @@ extension DataFlowSemaPhase {
             )
             symbols.setParentSymbol(scopeSymbol, for: param)
             scopeTypeParamSymbol = param
+            hasExistingScopeTypeParameter = false
         }
-        types.setNominalTypeParameterSymbols([scopeTypeParamSymbol], for: scopeSymbol)
-        types.setNominalTypeParameterVariances([.in], for: scopeSymbol)
+        if !sourceBackedScope || !hasExistingScopeTypeParameter {
+            types.setNominalTypeParameterSymbols([scopeTypeParamSymbol], for: scopeSymbol)
+            types.setNominalTypeParameterVariances([.in], for: scopeSymbol)
+        }
 
         let scopeTypeParamType = types.make(.typeParam(TypeParamType(symbol: scopeTypeParamSymbol)))
         let scopeReceiverType = types.make(.classType(ClassType(
@@ -272,51 +280,74 @@ extension DataFlowSemaPhase {
             args: [.out(scopeTypeParamType)],
             nullability: .nonNull
         )))
-        registerSequenceScopeMember(
-            named: "yield",
-            sequenceScopeSymbol: scopeSymbol,
-            sequenceScopeFQName: scopeFQName,
-            receiverType: scopeReceiverType,
-            parameters: [(name: "value", type: scopeTypeParamType)],
-            returnType: types.unitType,
-            externalLinkName: "__kk_sequence_builder_yield",
-            symbols: symbols,
-            interner: interner
-        )
+        if !sourceBackedScope {
+            registerSequenceScopeMember(
+                named: "yield",
+                sequenceScopeSymbol: scopeSymbol,
+                sequenceScopeFQName: scopeFQName,
+                receiverType: scopeReceiverType,
+                parameters: [(name: "value", type: scopeTypeParamType)],
+                returnType: types.unitType,
+                externalLinkName: "__kk_sequence_builder_yield",
+                symbols: symbols,
+                interner: interner
+            )
 
-        registerSequenceScopeMember(
-            named: "yieldAll",
-            sequenceScopeSymbol: scopeSymbol,
-            sequenceScopeFQName: scopeFQName,
-            receiverType: scopeReceiverType,
-            parameters: [(name: "iterator", type: iteratorType)],
-            returnType: types.unitType,
-            externalLinkName: "__kk_sequence_builder_yieldAll",
-            symbols: symbols,
-            interner: interner
-        )
-        registerSequenceScopeMember(
-            named: "yieldAll",
-            sequenceScopeSymbol: scopeSymbol,
-            sequenceScopeFQName: scopeFQName,
-            receiverType: scopeReceiverType,
-            parameters: [(name: "elements", type: iterableType)],
-            returnType: types.unitType,
-            externalLinkName: "__kk_sequence_builder_yieldAll",
-            symbols: symbols,
-            interner: interner
-        )
-        registerSequenceScopeMember(
-            named: "yieldAll",
-            sequenceScopeSymbol: scopeSymbol,
-            sequenceScopeFQName: scopeFQName,
-            receiverType: scopeReceiverType,
-            parameters: [(name: "sequence", type: sequenceType)],
-            returnType: types.unitType,
-            externalLinkName: "__kk_sequence_builder_yieldAll",
-            symbols: symbols,
-            interner: interner
-        )
+            registerSequenceScopeMember(
+                named: "yieldAll",
+                sequenceScopeSymbol: scopeSymbol,
+                sequenceScopeFQName: scopeFQName,
+                receiverType: scopeReceiverType,
+                parameters: [(name: "iterator", type: iteratorType)],
+                returnType: types.unitType,
+                externalLinkName: "__kk_sequence_builder_yieldAll",
+                symbols: symbols,
+                interner: interner
+            )
+            registerSequenceScopeMember(
+                named: "yieldAll",
+                sequenceScopeSymbol: scopeSymbol,
+                sequenceScopeFQName: scopeFQName,
+                receiverType: scopeReceiverType,
+                parameters: [(name: "elements", type: iterableType)],
+                returnType: types.unitType,
+                externalLinkName: "__kk_sequence_builder_yieldAll",
+                symbols: symbols,
+                interner: interner
+            )
+            registerSequenceScopeMember(
+                named: "yieldAll",
+                sequenceScopeSymbol: scopeSymbol,
+                sequenceScopeFQName: scopeFQName,
+                receiverType: scopeReceiverType,
+                parameters: [(name: "sequence", type: sequenceType)],
+                returnType: types.unitType,
+                externalLinkName: "__kk_sequence_builder_yieldAll",
+                symbols: symbols,
+                interner: interner
+            )
+        } else {
+            // A precompiled stdlib carries SequenceScope's source declarations,
+            // but the builder suspension points still need their runtime ABI
+            // entry points. Attach the bridge only to the imported declarations;
+            // bundled source declarations are cleared back to source dispatch by
+            // MemberHeaderCollection when their synthetic shell is reused.
+            for (memberName, externalLinkName) in [
+                ("yield", "__kk_sequence_builder_yield"),
+                ("yieldAll", "__kk_sequence_builder_yieldAll"),
+            ] {
+                let memberFQName = scopeFQName + [interner.intern(memberName)]
+                for memberSymbol in symbols.lookupAll(fqName: memberFQName) {
+                    guard let signature = symbols.functionSignature(for: memberSymbol),
+                          signature.parameterTypes.count == 1,
+                          symbols.isSourceBackedSymbol(memberSymbol)
+                    else {
+                        continue
+                    }
+                    symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+                }
+            }
+        }
 
         let functionName = interner.intern("sequence")
         let functionFQName = kotlinSequencesPkg + [functionName]

@@ -1,0 +1,27 @@
+symbol fq=kotlin.collections.Iterable kind=interface vis=public flags=_
+symbol fq=kotlin.collections.Iterable.E kind=typeParameter vis=private flags=_
+symbol fq=kotlin.collections.Iterable.iterator kind=function vis=public flags=synthetic|operatorFunction sig=recv=kotlin.collections.Iterable<out kotlin.collections.Iterable.E> params=[] ret=kotlin.collections.Iterator<out kotlin.collections.Iterable.E> type=() -> kotlin.collections.Iterator<out kotlin.collections.Iterable.E>
+symbol fq=kotlin.collections.Iterator kind=interface vis=public flags=synthetic
+symbol fq=kotlin.sequences.Sequence kind=interface vis=public flags=_
+symbol fq=kotlin.sequences.SequenceScope.T kind=typeParameter vis=private flags=_
+symbol fq=kotlin.sequences.sequence kind=function vis=public flags=synthetic sig=recv=_ params=[suspend kotlin.sequences.SequenceScope<kotlin.sequences.sequence.T>.() -> Unit] ret=kotlin.sequences.Sequence<out kotlin.sequences.sequence.T>
+symbol fq=kotlin.sequences.sequence.T kind=typeParameter vis=private flags=_
+symbol fq=kotlin.sequences.sequence.block kind=valueParameter vis=private flags=synthetic
+symbol fq=sequenceScopeContract kind=function vis=public flags=_ sig=recv=_ params=[kotlin.collections.Iterable<Int>,kotlin.sequences.Sequence<Int>] ret=kotlin.sequences.Sequence<Int>
+symbol fq=sequenceScopeContract.$0.source kind=valueParameter vis=private flags=_
+symbol fq=sequenceScopeContract.$0.values kind=valueParameter vis=private flags=_
+file fstdlib_kotlin_sequences_SequenceScope_SequenceScope_n package=_
+  decl sequenceScopeContract fun sequenceScopeContract sym=sequenceScopeContract
+expr e@6:15 int(1) type=Int
+expr e@6:9 call callee=e@6:9#1 args=[_:e@6:15] type=Unit call=kotlin.sequences.SequenceScope.yield targs=[Int]
+expr e@7:18 name(values) type=kotlin.collections.Iterable<Int> ref=sequenceScopeContract.$0.values
+expr e@7:18#1 memberCall recv=e@7:18 callee=iterator args=[] type=kotlin.collections.Iterator<out Int> call=kotlin.collections.Iterable.iterator targs=[Int]
+expr e@7:9 call callee=e@7:9#1 args=[_:e@7:18#1] type=Unit call=kotlin.sequences.SequenceScope.yieldAll#1 targs=[Int]
+expr e@8:18 name(values) type=kotlin.collections.Iterable<Int> ref=sequenceScopeContract.$0.values
+expr e@8:9 call callee=e@8:9#1 args=[_:e@8:18] type=Unit call=kotlin.sequences.SequenceScope.yieldAll#0 targs=[Int]
+expr e@9:18 name(source) type=kotlin.sequences.Sequence<Int> ref=sequenceScopeContract.$0.source
+expr e@9:9 call callee=e@9:9#1 args=[_:e@9:18] type=Unit call=kotlin.sequences.SequenceScope.yieldAll#2 targs=[Int]
+expr e@6:9#2 blockExpr stmts=[e@6:9,e@7:9,e@8:9] trailing=e@9:9 type=Unit
+expr e@5:21 lambda params=[] body=e@6:9#2 label=sequence type=suspend kotlin.sequences.SequenceScope<Int>.() -> Unit
+expr e@5:12 call callee=e@5:12#1 args=[_:e@5:21] type=kotlin.sequences.Sequence<out Int> call=kotlin.sequences.sequence
+expr e@5:5 return value=e@5:12 type=Nothing

@@ -142,6 +142,14 @@ extension DataFlowSemaPhase {
                 // flags that the bundled declaration actually declares.
                 symbols.removeFlags([.abstractType, .static, .finalMember, .overrideMember], for: memberSymbol)
                 symbols.insertFlags(memberFlags, for: memberSymbol)
+                // SequenceScope's yield methods are rewritten by the builder
+                // lowering pass, so the bundled declarations must not retain
+                // the synthetic runtime bridge. Other bundled members may be
+                // intentionally retained runtime bridges (for example the
+                // Collection interface methods), so do not clear them globally.
+                if ownerFQName.map(interner.resolve) == ["kotlin", "sequences", "SequenceScope"] {
+                    symbols.clearExternalLinkName(for: memberSymbol)
+                }
                 symbols.setDeclSite(funDecl.range, for: memberSymbol)
             } else {
                 memberSymbol = symbols.define(

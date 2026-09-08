@@ -1615,6 +1615,12 @@ extension CoroutineLoweringPass {
         arity: Int,
         using rewrite: SuspendRewriteContext
     ) -> LoweredSuspendFunction? {
+        // Source-backed SequenceScope declarations provide the signature for
+        // boxing, but builder bridges already implement their suspension ABI.
+        // Rebinding them to the source suspend body would discard each yield.
+        guard callee != rewrite.sequenceBuilderYieldCallee,
+              callee != rewrite.sequenceBuilderYieldAllCallee
+        else { return nil }
         if let symbol {
             if let loweredBySymbol = rewrite.loweredBySymbol[symbol] {
                 return loweredBySymbol

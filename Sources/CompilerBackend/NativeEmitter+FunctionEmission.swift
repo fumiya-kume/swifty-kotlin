@@ -2342,7 +2342,13 @@ extension NativeEmitter {
                 // a captured parameter such as `transform` into an undefined
                 // external `_transform` symbol (KSP-499 compiler regression).
                 let isFunctionValueInvoke = Self.functionValueInvokeCallees.contains(calleeName)
+                // SequenceScope symbols retain generic parameter types for ABI
+                // boxing, but their source bodies do not implement the runtime
+                // builder. Honor the remapped bridge after boxing is complete.
+                let isSequenceBuilderRuntimeCall = calleeName == "__kk_sequence_builder_yield"
+                    || calleeName == "__kk_sequence_builder_yieldAll"
                 let normalizedSymbol: SymbolID? = if !isFunctionValueInvoke,
+                                                       !isSequenceBuilderRuntimeCall,
                                                        let symbol,
                                                        symbol != .invalid
                 {
