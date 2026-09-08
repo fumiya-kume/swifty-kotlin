@@ -43,10 +43,10 @@ file fstdlib_kotlin_collections_n_if package=_
   decl main fun main sym=main
 expr e@4:36 int(1) type=Int
 expr e@5:50 call callee=e@5:50#1 args=[] type=kotlin.collections.List<out String?> call=kotlin.collections.emptyList targs=[String?]
-expr e@5:50#2 memberCall recv=e@5:50 callee=iterator args=[] type=kotlin.collections.Iterator<out String?> call=kotlin.collections.Collection.iterator
+expr e@5:50#2 memberCall recv=e@5:50 callee=iterator args=[] type=kotlin.collections.Iterator<String?> call=kotlin.collections.Collection.iterator targs=[String?]
 expr e@9:36 int(0) type=Int
 expr e@10:50 call callee=e@10:50#1 args=[] type=kotlin.collections.List<out String?> call=kotlin.collections.emptyList targs=[String?]
-expr e@10:50#2 memberCall recv=e@10:50 callee=iterator args=[] type=kotlin.collections.Iterator<out String?> call=kotlin.collections.Collection.iterator
+expr e@10:50#2 memberCall recv=e@10:50 callee=iterator args=[] type=kotlin.collections.Iterator<String?> call=kotlin.collections.Collection.iterator targs=[String?]
 expr e@14:36 int(1) type=Int
 expr e@13:62 string(key) type=String
 expr e@13:71 int(1) type=Int
