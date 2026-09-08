@@ -417,6 +417,7 @@ enum MemberRuntimeDispatch {
         }
         if kind == .uintProgression {
             let sourceBacked: Set<String> = [
+                "first", "firstOrNull", "last", "lastOrNull",
                 "iterator", "chunked", "windowed", "take", "drop",
                 "map", "mapIndexed", "mapNotNull",
                 "filter", "filterIndexed", "filterNot",

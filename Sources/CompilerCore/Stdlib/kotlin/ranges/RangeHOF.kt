@@ -1333,6 +1333,35 @@ public external fun UIntRange.reversed(): UIntProgression
 
 // MARK: - UIntProgression
 
+private fun uintProgressionDescription(progression: UIntProgression): String {
+    val step = progression.step
+    return if (step > 0) {
+        "${progression.first}..${progression.last} step $step"
+    } else {
+        "${progression.first} downTo ${progression.last} step ${-step}"
+    }
+}
+
+@SinceKotlin("1.7")
+public fun UIntProgression.first(): UInt {
+    if (isEmpty())
+        throw NoSuchElementException("Progression ${uintProgressionDescription(this)} is empty.")
+    return this.first
+}
+
+@SinceKotlin("1.7")
+public fun UIntProgression.firstOrNull(): UInt? = if (isEmpty()) null else this.first
+
+@SinceKotlin("1.7")
+public fun UIntProgression.last(): UInt {
+    if (isEmpty())
+        throw NoSuchElementException("Progression ${uintProgressionDescription(this)} is empty.")
+    return this.last
+}
+
+@SinceKotlin("1.7")
+public fun UIntProgression.lastOrNull(): UInt? = if (isEmpty()) null else this.last
+
 public fun UIntProgression.forEach(action: (UInt) -> Unit) {
     for (element in this) { action(element) }
 }

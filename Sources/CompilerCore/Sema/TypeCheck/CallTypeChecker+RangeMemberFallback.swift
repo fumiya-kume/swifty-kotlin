@@ -402,6 +402,11 @@ extension CallTypeChecker {
         if memberName == "step" {
             return argCount == 1
         }
+        if memberName == "first" || memberName == "firstOrNull"
+            || memberName == "last" || memberName == "lastOrNull"
+        {
+            return argCount == 0
+        }
         if memberName == "windowed" {
             return (1...3).contains(argCount)
         }
