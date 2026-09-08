@@ -796,6 +796,47 @@ extension CallTypeChecker {
                     interner: interner
                 )
             } ?? []
+            // Source-backed range overloads are recovered from the bundled
+            // declaration index because their extensions are not generally
+            // visible through member lookup. A same-named extension in the
+            // active Kotlin scope still has normal overload priority, though;
+            // keep it ahead of the bundled candidates so a user declaration
+            // is not silently replaced by the stdlib fallback.
+            let scopedRangeUserCandidates: [SymbolID] = if interner.resolve(calleeName) == "contains",
+                                                               let rangeSourceMemberLookupType,
+                                                               MemberRuntimeDispatch.rangeReceiverKind(
+                                                                   receiverExpr: receiverID,
+                                                                   receiverType: lookupReceiverType,
+                                                                   sema: sema,
+                                                                   interner: interner
+                                                               ) == .intRange
+            {
+                collectScopedRangeUserExtensionCandidates(
+                    named: calleeName,
+                    receiverType: rangeSourceMemberLookupType,
+                    ctx: ctx,
+                    sema: sema,
+                    interner: interner
+                ).filter { candidate in
+                    guard isIntRangeCrossTypeContainsCandidate(candidate, sema: sema),
+                          args.count == 1,
+                          argTypes.count == 1,
+                          let signature = sema.symbols.functionSignature(for: candidate),
+                          signature.parameterTypes[0] == argTypes[0]
+                    else {
+                        return false
+                    }
+                    guard let label = args[0].label else { return true }
+                    guard signature.valueParameterSymbols.count == 1,
+                          let parameter = sema.symbols.symbol(signature.valueParameterSymbols[0])
+                    else {
+                        return false
+                    }
+                    return parameter.name == label
+                }
+            } else {
+                []
+            }
             let atomicSourceCandidates: [SymbolID] = if rangeSourceCandidates.isEmpty,
                 isBundledAtomicSourceMember(calleeName, interner: interner),
                 isBundledAtomicSourceReceiver(memberLookupType, sema: sema, interner: interner)
@@ -891,6 +932,8 @@ extension CallTypeChecker {
                 // exact source receiver over synthetic member stubs, including
                 // joinToString(transform), whose legacy stub shares the same name.
                 memberCandidates = primitiveArraySourceCandidates
+            } else if !scopedRangeUserCandidates.isEmpty {
+                memberCandidates = scopedRangeUserCandidates
             } else if !rangeSourceCandidates.isEmpty {
                 memberCandidates = rangeSourceCandidates
             } else if !atomicSourceCandidates.isEmpty {
@@ -2186,7 +2229,7 @@ extension CallTypeChecker {
         return nil
     }
 
-    private func collectRangeSourceExtensionCandidates(
+    func collectRangeSourceExtensionCandidates(
         named calleeName: InternedString,
         receiverType: TypeID,
         sema: SemaModule,
@@ -2228,6 +2271,38 @@ extension CallTypeChecker {
                 )
             }
             .sorted { $0.rawValue < $1.rawValue }
+    }
+
+    func collectScopedRangeUserExtensionCandidates(
+        named calleeName: InternedString,
+        receiverType: TypeID,
+        ctx: TypeInferenceContext,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> [SymbolID] {
+        let rangesPackageFQName = [
+            interner.intern("kotlin"),
+            interner.intern("ranges"),
+        ]
+        let nonNullReceiver = sema.types.makeNonNullable(receiverType)
+        return ctx.cachedScopeLookup(calleeName).filter { candidate in
+            guard let symbol = ctx.cachedSymbol(candidate),
+                  symbol.kind == .function,
+                  sema.symbols.isSourceBackedSymbol(candidate),
+                  let parentID = sema.symbols.parentSymbol(for: candidate),
+                  let parent = sema.symbols.symbol(parentID),
+                  parent.fqName != rangesPackageFQName,
+                  let signature = sema.symbols.functionSignature(for: candidate),
+                  let declaredReceiver = signature.receiverType
+            else {
+                return false
+            }
+            return extensionSyntheticFallbackReceiverMatches(
+                callSiteReceiver: nonNullReceiver,
+                declaredReceiver: declaredReceiver,
+                sema: sema
+            )
+        }
     }
 
     /// The CAS-loop update operators migrated to bundled Kotlin source
