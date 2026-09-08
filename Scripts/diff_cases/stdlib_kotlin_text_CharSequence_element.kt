@@ -41,6 +41,16 @@ private fun capturedDefault(source: CharSequence, value: Char): Char {
     return '?'
 }
 
+private fun namedDefault(source: CharSequence, value: Char): Char {
+    source.elementAtOrElse(defaultValue = { return value }, index = -1)
+    return '?'
+}
+
+private fun namedSafeDefault(source: CharSequence?, value: Char): Char {
+    source?.elementAtOrElse(defaultValue = { return value }, index = -1)
+    return '?'
+}
+
 fun main() {
     val text: CharSequence = "a\uD83D\uDE00"
     println(codeAt(text, 0))
@@ -69,6 +79,9 @@ fun main() {
     println(nonLocalSafeDefault(source))
     println(nonLocalSafeDefault(null))
     println(capturedDefault(source, 'c'))
+    println(namedDefault(source, 'n'))
+    println(namedSafeDefault(source, 'v'))
+    println(namedSafeDefault(null, 'v'))
 
     try {
         source.elementAt(3)

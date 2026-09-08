@@ -13,6 +13,10 @@ struct CharSequenceElementSourceMigrationTests {
         fun nonLocal(source: CharSequence): Char {
             return source.elementAtOrElse(-1) { return 'x' }
         }
+        fun named(source: CharSequence, value: Char): Char {
+            source.elementAtOrElse(defaultValue = { return value }, index = -1)
+            return '?'
+        }
         """)
         try runSema(context)
         let errors = context.diagnostics.diagnostics.filter { $0.severity == .error }
@@ -40,6 +44,6 @@ struct CharSequenceElementSourceMigrationTests {
                 ? sema.types.makeNullable(sema.types.charType) : sema.types.charType
             #expect(signature.returnType == expectedReturn)
         }
-        #expect(calls == 4)
+        #expect(calls == 5)
     }
 }

@@ -4383,7 +4383,7 @@
     - `kotlin.text.dropWhile` — fun CharSequence.dropWhile(Function1): CharSequence  -- `final inline fun (kotlin/CharSequence).kotlin.text/dropWhile(kotlin/Function1<kotlin/Char, kotlin/Boolean>): kotlin/CharSequence`
 
 - [~] KSP-1372: kotlin.text.CharSequence.element-family の未実装 stdlib API を実装する（3 件）
-  - 実装中: 3 API の Kotlin source 宣言と member/safe-member inline lambda の non-local return 配線を追加。名前付き引数を逆順に渡す lambda の型推論は既存 PR #6608 の修正が前提（`source.elementAtOrElse(defaultValue = { return 'x' }, index = -1)`）。重複修正せず、同 PR 取り込み後の再検証と全体 G を残す。
+  - 実装中: 3 API の Kotlin source 宣言と member/safe-member inline lambda の non-local return 配線を追加。名前付き引数の型推論修正 PR #6608 を基点とする依存 PR とし、共有修正の重複を避ける。全体 G はこの PR head で未完了。
   - 対象: `kotlin.text` / receiver `CharSequence` / family `element`
   - 実装先 .kt: `Sources/CompilerCore/Stdlib/kotlin/text/StringHOF.kt`
   - bridge/stub 整理: 対象シンボルの `__kk_*` / `kk_*` Runtime 関数、`HeaderHelpers+Synthetic*Stubs.swift` 登録、`RuntimeABISpec` エントリ、`CallTypeChecker+*` / `CallLowerer+*` の name-string 特例があれば同 PR で削除。無ければ新規 Kotlin 実装のみ。
