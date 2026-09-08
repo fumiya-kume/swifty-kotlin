@@ -183,6 +183,22 @@ public external fun IntRange.reversed(): IntRange
 
 public fun IntRange.toIntArray(): IntArray = toList().toIntArray()
 
+// KSP-1285: Kotlin exposes exact IntRange overloads for the other signed
+// primitive integer types. Long values must be range-checked before narrowing.
+@kotlin.internal.InlineOnly
+public inline operator fun IntRange.contains(value: Byte): Boolean =
+    contains(value.toInt())
+
+@kotlin.internal.InlineOnly
+public inline operator fun IntRange.contains(value: Long): Boolean {
+    if (value < -2147483648L || value > 2147483647L) return false
+    return contains(value.toInt())
+}
+
+@kotlin.internal.InlineOnly
+public inline operator fun IntRange.contains(value: Short): Boolean =
+    contains(value.toInt())
+
 public fun IntRange.average(): Double {
     if (isEmpty()) return Double.NaN
     var sum = 0.0

@@ -42,13 +42,41 @@ extension CallTypeChecker {
             }
             return receiverKind == .uintRange || receiverKind == .uintProgression
         }()
+        let isTypedIntRangeReceiver: Bool = {
+            guard let receiverType,
+                  let receiverKind = MemberRuntimeDispatch.rangeReceiverKind(
+                      receiverExpr: receiverID,
+                      receiverType: receiverType,
+                      sema: sema,
+                      interner: interner
+                  )
+            else {
+                return false
+            }
+            return receiverKind == .intRange
+        }()
         let isSyntacticRangeExpression = ControlFlowTypeChecker.isRangeExpression(receiverID, ast: ctx.ast)
         guard !isClassNameReceiver,
               (sema.bindings.isRangeExpr(receiverID)
                   || isOpenEndRangeReceiver
                   || isSyntacticRangeExpression
+                  || (isTypedIntRangeReceiver
+                      && isIntRangeSourceBackedHOF(memberName, argCount: args.count))
                   || (isTypedUIntRangeReceiver && isUIntRangeSourceMigrationMember))
         else {
+            return nil
+        }
+
+        // Let normal overload resolution report invalid labels instead of
+        // accepting them through the legacy range fallback. The source-backed
+        // contains overloads all use Kotlin's `value` parameter name.
+        if isTypedIntRangeReceiver,
+           memberName == "contains",
+           args.contains(where: { argument in
+               guard let label = argument.label else { return false }
+               return interner.resolve(label) != "value"
+           })
+        {
             return nil
         }
 
@@ -330,6 +358,9 @@ extension CallTypeChecker {
     }
 
     private func isIntRangeSourceBackedHOF(_ memberName: String, argCount: Int) -> Bool {
+        if memberName == "contains" {
+            return argCount == 1
+        }
         if memberName == "first" || memberName == "last" {
             return argCount > 0
         }
@@ -441,11 +472,23 @@ extension CallTypeChecker {
                 && (rangeKind == .longRange || rangeKind == .charRange
                     || rangeKind == .uintRange || rangeKind == .ulongRange))
 
+        let argumentTypesForSourceLookup: [TypeID]? = if memberName == "contains" {
+            args.map { driver.inferExpr($0.expr, ctx: ctx, locals: &locals) }
+        } else {
+            nil
+        }
+        let argumentLabelsForSourceLookup: [InternedString?]? = if memberName == "contains" {
+            args.map(\.label)
+        } else {
+            nil
+        }
         guard isSourceBackedRangeCall,
               let sourceSymbol = sourceRangeHOFSymbol(
                   memberName: memberName,
                   rangeKind: rangeKind,
                   argCount: args.count,
+                  argumentTypes: argumentTypesForSourceLookup,
+                  argumentLabels: argumentLabelsForSourceLookup,
                   sema: sema,
                   interner: interner
               ),
@@ -562,6 +605,8 @@ extension CallTypeChecker {
         memberName: String,
         rangeKind: MemberDispatchReceiverKind,
         argCount: Int,
+        argumentTypes: [TypeID]? = nil,
+        argumentLabels: [InternedString?]? = nil,
         sema: SemaModule,
         interner: StringInterner
     ) -> SymbolID? {
@@ -580,6 +625,28 @@ extension CallTypeChecker {
             }
 
             guard argCount <= signature.parameterTypes.count else { return false }
+            if let argumentTypes {
+                guard argumentTypes.count == signature.parameterTypes.count,
+                      zip(argumentTypes, signature.parameterTypes).allSatisfy({ $0 == $1 })
+                else {
+                    return false
+                }
+            }
+            if let argumentLabels {
+                guard argumentLabels.count == signature.parameterTypes.count,
+                      argumentLabels.indices.allSatisfy({ index in
+                          guard let label = argumentLabels[index] else { return true }
+                          guard index < signature.valueParameterSymbols.count,
+                                let parameter = sema.symbols.symbol(signature.valueParameterSymbols[index])
+                          else {
+                              return false
+                          }
+                          return parameter.name == label
+                      })
+                else {
+                    return false
+                }
+            }
             for missingIndex in argCount..<signature.parameterTypes.count {
                 guard missingIndex < signature.valueParameterHasDefaultValues.count,
                       signature.valueParameterHasDefaultValues[missingIndex]
