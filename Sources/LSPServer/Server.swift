@@ -4,7 +4,8 @@ import Foundation
 /// compiler frontend.
 ///
 /// Supported requests: `initialize`, `shutdown`, `textDocument/hover`,
-/// `textDocument/definition`, `textDocument/documentSymbol`.
+/// `textDocument/definition`, `textDocument/documentSymbol`,
+/// `textDocument/codeAction`.
 /// Supported notifications: `initialized`, `exit`, and the
 /// `textDocument/did{Open,Change,Save,Close}` synchronization family.
 /// Diagnostics are pushed via `textDocument/publishDiagnostics` whenever a
@@ -101,6 +102,8 @@ public final class Server: @unchecked Sendable {
             handleDefinition(id: id, params)
         case "textDocument/documentSymbol":
             handleDocumentSymbol(id: id, params)
+        case "textDocument/codeAction":
+            handleCodeAction(id: id, params)
         default:
             if id != nil {
                 respondError(id: id, code: -32601, message: "Method not found: \(method)")
@@ -116,7 +119,8 @@ public final class Server: @unchecked Sendable {
             textDocumentSync: 1, // full document sync
             hoverProvider: true,
             definitionProvider: true,
-            documentSymbolProvider: true
+            documentSymbolProvider: true,
+            codeActionProvider: true
         )
         let result = InitializeResult(
             capabilities: capabilities,
@@ -247,6 +251,20 @@ public final class Server: @unchecked Sendable {
         }
         let symbols = DocumentSymbolFeature.documentSymbols(for: analysis)
         respond(id: id, result: JSONCoding.toObject(symbols) ?? [Any]())
+    }
+
+    private func handleCodeAction(id: Any?, _ params: Any?) {
+        guard
+            let params,
+            let parsed = JSONCoding.decode(CodeActionParams.self, from: params),
+            store.document(for: parsed.textDocument.uri) != nil,
+            let analysis = ensureAnalysis(uri: parsed.textDocument.uri)
+        else {
+            respond(id: id, result: [Any]())
+            return
+        }
+        let actions = CodeActionFeature.codeActions(for: analysis, params: parsed)
+        respond(id: id, result: JSONCoding.toObject(actions) ?? [Any]())
     }
 
     // MARK: - Analysis helpers

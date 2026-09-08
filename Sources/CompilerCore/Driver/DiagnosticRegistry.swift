@@ -1,15 +1,35 @@
 import Foundation
 
+/// A source edit that can be applied by a diagnostic code action.
+public struct DiagnosticTextEdit: Equatable, Sendable {
+    /// The source range to replace. An empty range represents insertion.
+    public let range: SourceRange
+    /// The replacement text, or an empty string for deletion.
+    public let newText: String
+
+    public init(range: SourceRange, newText: String) {
+        self.range = range
+        self.newText = newText
+    }
+}
+
 /// Describes a single code action (quick-fix) that an LSP client can offer to the user.
 public struct DiagnosticCodeAction: Equatable, Sendable {
     /// Human-readable title shown in the editor UI.
     public let title: String
     /// LSP code action kind (e.g. "quickfix", "refactor").
     public let kind: String
+    /// Edits that make this action applicable to the diagnostic's source.
+    public let edits: [DiagnosticTextEdit]
 
-    public init(title: String, kind: String = "quickfix") {
+    public init(
+        title: String,
+        kind: String = "quickfix",
+        edits: [DiagnosticTextEdit] = []
+    ) {
         self.title = title
         self.kind = kind
+        self.edits = edits
     }
 }
 
